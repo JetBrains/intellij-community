@@ -397,10 +397,10 @@
       <keyboard-shortcut first-keystroke="control shift SEMICOLON" keymap="$default"/>
     </action>
 
-    <action class="com.intellij.execution.testDiscovery.ShowDiscoveredTestsAction" internal="true" id="ShowDiscoveredTests" text="Show Discovered Tests">
+    <action class="com.intellij.execution.testDiscovery.actions.ShowDiscoveredTestsAction" internal="true" id="ShowDiscoveredTests" text="Show Discovered Tests">
       <add-to-group group-id="Internal" anchor="last"/>
     </action>
-    <action class="com.intellij.execution.testDiscovery.ShowDiscoveredTestsAction$FromChangeList" internal="true" id="ShowDiscoveredTestsFromChangeList" text="Show Discovered Tests">
+    <action class="com.intellij.execution.testDiscovery.actions.ShowDiscoveredTestsFromChangesAction" internal="true" id="ShowDiscoveredTestsFromChangeList" text="Show Discovered Tests">
       <add-to-group group-id="ChangesViewPopupMenu" anchor="last"/>
     </action>
 

@@ -1,5 +1,5 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.execution.testDiscovery;
+package com.intellij.execution.testDiscovery.actions;
 
 import com.intellij.codeInsight.actions.FormatChangedTextUtil;
 import com.intellij.codeInsight.navigation.ListBackgroundUpdaterTask;
@@ -9,6 +9,8 @@ import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionUtil;
+import com.intellij.execution.testDiscovery.TestDiscoveryConfigurationProducer;
+import com.intellij.execution.testDiscovery.TestDiscoveryProducer;
 import com.intellij.find.FindUtil;
 import com.intellij.find.actions.CompositeActiveComponent;
 import com.intellij.icons.AllIcons;
@@ -88,7 +90,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
     String methodPresentationName = c.getName() + "." + methodName;
 
     DataContext dataContext = DataManager.getInstance().getDataContext(e.getRequiredData(EDITOR).getContentComponent());
-    showDiscoveredTests(project, dataContext, methodPresentationName, Collections.singletonList(method));
+    showDiscoveredTests(project, dataContext, methodPresentationName, method);
   }
 
   @Nullable
@@ -100,59 +102,10 @@ public class ShowDiscoveredTestsAction extends AnAction {
     return uMethod == null ? null : ObjectUtils.tryCast(uMethod.getJavaPsi(), PsiMethod.class);
   }
 
-  public static class FromChangeList extends AnAction {
-    @Override
-    public void update(AnActionEvent e) {
-      Project project = e.getProject();
-      Change[] changes = e.getData(VcsDataKeys.CHANGES);
-
-      e.getPresentation().setEnabledAndVisible(project != null && changes != null);
-    }
-
-    @Override
-    public void actionPerformed(AnActionEvent e) {
-      Change[] changes = e.getRequiredData(VcsDataKeys.CHANGES);
-      Project project = e.getProject();
-      assert project != null;
-      UastMetaLanguage jvmLanguage = Language.findInstance(UastMetaLanguage.class);
-
-
-      List<PsiElement> methods = FormatChangedTextUtil.getInstance().getChangedElements(project, changes, file -> {
-        PsiFile psiFile = PsiUtilCore.getPsiFile(project, file);
-        if (!jvmLanguage.matchesLanguage(psiFile.getLanguage())) {
-          return null;
-        }
-        Document document = FileDocumentManager.getInstance().getDocument(file);
-        if (document == null) return null;
-        UFile uFile = UastContextKt.toUElement(psiFile, UFile.class);
-        if (uFile == null) return null;
-
-
-        PsiDocumentManager.getInstance(project).commitDocument(document);
-        List<PsiElement> physicalMethods = new ArrayList<>();
-        uFile.accept(new AbstractUastVisitor() {
-          @Override
-          public boolean visitMethod(@NotNull UMethod node) {
-            physicalMethods.add(node.getSourcePsi());
-            return true;
-          }
-        });
-
-        return physicalMethods;
-      });
-
-      List<PsiMethod> asJavaMethods = methods
-        .stream()
-        .map(m -> (PsiMethod)Objects.requireNonNull(UastContextKt.toUElement(m)).getJavaPsi())
-        .collect(Collectors.toList());
-      showDiscoveredTests(project, e.getDataContext(), "Selected Changes", asJavaMethods);
-    }
-  }
-
-  private static void showDiscoveredTests(@NotNull Project project,
-                                          @NotNull DataContext dataContext,
-                                          @NotNull String title,
-                                          @NotNull List<PsiMethod> methods) {
+  static void showDiscoveredTests(@NotNull Project project,
+                                  @NotNull DataContext dataContext,
+                                  @NotNull String title,
+                                  @NotNull PsiMethod... methods) {
     CollectionListModel<PsiElement> model = new CollectionListModel<>();
     final JBList<PsiElement> list = new JBList<>(model);
     //list.setFixedCellHeight();
