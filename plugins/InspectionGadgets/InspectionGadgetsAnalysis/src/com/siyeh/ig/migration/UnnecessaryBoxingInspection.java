@@ -137,8 +137,8 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
           return text + 'L';
         }
         else if (!text.startsWith("0")) { // no octal & hex
-          if (unboxedType.equals(PsiType.FLOAT) && (expressionType.equals(PsiType.INT) || (expressionType.equals(PsiType.DOUBLE)) &&
-                                                                                          !StringUtil.endsWithIgnoreCase(text, "d"))) {
+          if (unboxedType.equals(PsiType.FLOAT) &&
+              (expressionType.equals(PsiType.INT) || expressionType.equals(PsiType.DOUBLE) && !StringUtil.endsWithIgnoreCase(text, "d"))) {
             return text + 'f';
           }
           else if (unboxedType.equals(PsiType.DOUBLE) && expressionType.equals(PsiType.INT)) {
