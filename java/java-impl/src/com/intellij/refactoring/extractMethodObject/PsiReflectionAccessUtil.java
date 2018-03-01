@@ -3,12 +3,10 @@ package com.intellij.refactoring.extractMethodObject;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import one.util.streamex.StreamEx;
+import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Set;
 
 /**
  * @author Vitaliy.Bibaev
@@ -65,18 +63,9 @@ public class PsiReflectionAccessUtil {
     return psiClass == null ? null : psiClass.getQualifiedName();
   }
 
-  private static final Set<String> PRIMITIVE_TYPES = StreamEx.of("byte", "short", "int", "long", "float", "double", "boolean", "char")
-                                                             .toImmutableSet();
-
   @NotNull
   @Contract(pure = true)
   public static String classForName(@NotNull String typeName) {
-    return PRIMITIVE_TYPES.contains(typeName) ? typeName + ".class" : "java.lang.Class.forName(\"" + typeName + "\")";
-  }
-
-  @NotNull
-  @Contract(pure = true)
-  public static String escape(String str) {
-    return "\"" + str + "\"";
+    return TypeConversionUtil.isPrimitive(typeName) ? typeName + ".class" : "java.lang.Class.forName(\"" + typeName + "\")";
   }
 }

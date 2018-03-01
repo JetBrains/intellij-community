@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethodObject.reflect;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -174,7 +175,7 @@ public class ReflectionAccessMethodBuilder {
     public String getMemberLookupBlock() {
       return "while (member == null) {\n" +
              "  try {\n" +
-             "    member = klass.getDeclaredField(" + PsiReflectionAccessUtil.escape(myFieldName) + ");\n" +
+             "    member = klass.getDeclaredField(" + StringUtil.wrapWithDoubleQuote(myFieldName) + ");\n" +
              "  }\n" +
              "  catch(java.lang.NoSuchFieldException e) {\n" +
              "    klass = klass.getSuperclass();\n" +
@@ -213,7 +214,7 @@ public class ReflectionAccessMethodBuilder {
     @Override
     public String getMemberLookupBlock() {
       String args = StreamEx.of(myParameters).skip(1).map(x -> PsiReflectionAccessUtil.classForName(x.jvmTypeName))
-                            .prepend(PsiReflectionAccessUtil.escape(myMethodName))
+                            .prepend(StringUtil.wrapWithDoubleQuote(myMethodName))
                             .joining(", ", "(", ")");
       return "while (member == null) {\n" +
              "  try {\n" +
