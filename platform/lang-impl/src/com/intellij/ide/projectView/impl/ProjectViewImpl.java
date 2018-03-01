@@ -1578,6 +1578,11 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     return isFoldersAlwaysOnTop();
   }
 
+  /**
+   * @return {@code true} if folders should be placed before files in the same node, {@code false} otherwise
+   * @see ProjectView#isFoldersAlwaysOnTop(String)
+   * @deprecated use the corresponding API method instead
+   */
   @Deprecated
   @SuppressWarnings("DeprecatedIsStillUsed")
   public boolean isFoldersAlwaysOnTop() {
