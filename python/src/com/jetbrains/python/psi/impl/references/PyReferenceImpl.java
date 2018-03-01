@@ -266,8 +266,9 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     boolean unreachableLocalDeclaration = false;
     boolean resolveInParentScope = false;
     final ResolveResultList resultList = new ResolveResultList();
-    final ScopeOwner referenceOwner = ScopeUtil.getScopeOwner(realContext);
     final TypeEvalContext typeEvalContext = myContext.getTypeEvalContext();
+
+    ScopeOwner referenceOwner = ScopeUtil.getScopeOwner(realContext);
     ScopeOwner resolvedOwner = processor.getOwner();
 
     if (resolvedOwner != null && !processor.getResults().isEmpty()) {
@@ -336,6 +337,11 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
         }
       }
 
+      ResolveResultList scopeResultList = resolveInAvailableScopes(referencedName, referenceOwner, resolvedOwner, realContext, typeEvalContext);
+      if (!scopeResultList.isEmpty()) {
+        return scopeResultList;
+      }
+
       for (Map.Entry<PsiElement, PyImportedNameDefiner> entry : processor.getResults().entrySet()) {
         final PsiElement resolved = entry.getKey();
         final PyImportedNameDefiner definer = entry.getValue();
@@ -366,6 +372,39 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
     return resolveByReferenceResolveProviders();
   }
+
+  private ResolveResultList resolveInAvailableScopes(@NotNull String name,
+                                                            ScopeOwner nameOwner,
+                                                            ScopeOwner outerScopeOwner,
+                                                            PsiElement realContext,
+                                                            TypeEvalContext typeEvalContext) {
+    while (true) {
+      if (nameOwner == null) {
+        break;
+      }
+      Scope scope = ControlFlowCache.getScope(nameOwner);
+      if (nameOwner instanceof PyClass || scope.isGlobal(name)) {
+        nameOwner = ScopeUtil.getScopeOwner(nameOwner);
+        continue;
+      }
+
+      final List<Instruction> instructions = getLatestDefinitions(name, nameOwner, realContext);
+      final ResolveResultList scopeDefinitions = resolveToLatestDefs(instructions, nameOwner, name, typeEvalContext);
+
+      if (!scopeDefinitions.isEmpty()) {
+        return scopeDefinitions;
+      }
+
+      if (nameOwner == outerScopeOwner) {
+        break;
+      }
+      realContext = nameOwner;
+      nameOwner = ScopeUtil.getScopeOwner(nameOwner);
+    }
+
+    return new ResolveResultList();
+  }
+
 
   @NotNull
   protected List<Instruction> getLatestDefinitions(@NotNull String referencedName,
@@ -794,13 +833,8 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   // our very own caching resolver
 
   private static class CachingResolver implements ResolveCache.PolyVariantResolver<PyReferenceImpl> {
-    public static CachingResolver INSTANCE = new CachingResolver();
-    private final ThreadLocal<AtomicInteger> myNesting = new ThreadLocal<AtomicInteger>() {
-      @Override
-      protected AtomicInteger initialValue() {
-        return new AtomicInteger();
-      }
-    };
+    public static final CachingResolver INSTANCE = new CachingResolver();
+    private final ThreadLocal<AtomicInteger> myNesting = ThreadLocal.withInitial(() -> new AtomicInteger());
 
     private static final int MAX_NESTING_LEVEL = 30;
 
