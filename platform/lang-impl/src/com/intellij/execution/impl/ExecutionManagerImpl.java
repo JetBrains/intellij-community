@@ -244,7 +244,7 @@ public abstract class ExecutionManagerImpl extends ExecutionManager implements D
   @NotNull
   @Override
   public RunContentManager getContentManager() {
-    return RunContentManager.SERVICE.getInstance(myProject);
+    return RunContentManager.getInstance(myProject);
   }
 
   @NotNull

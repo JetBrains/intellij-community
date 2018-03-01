@@ -39,10 +39,8 @@ public interface RunContentManager {
   Topic<RunContentWithExecutorListener> TOPIC =
     Topic.create("Run Content", RunContentWithExecutorListener.class);
 
-  class SERVICE {
-    public static RunContentManager getInstance(Project project) {
-      return ServiceManager.getService(project, RunContentManager.class);
-    }
+  static RunContentManager getInstance(Project project) {
+    return ServiceManager.getService(project, RunContentManager.class);
   }
 
   /** @deprecated Use {@link LangDataKeys#RUN_CONTENT_DESCRIPTOR} instead (to be removed in IDEA 16) */
