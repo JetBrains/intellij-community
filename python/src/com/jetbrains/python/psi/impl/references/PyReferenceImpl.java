@@ -381,20 +381,17 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     while (nameOwner != null && nameOwner != resolveRoof) {
       final Scope scope = ControlFlowCache.getScope(nameOwner);
       final PsiElement anchor = nameOwner;
+
       nameOwner = ScopeUtil.getScopeOwner(nameOwner);
       if (nameOwner instanceof PyClass || scope.isGlobal(name)) {
-        nameOwner = ScopeUtil.getScopeOwner(nameOwner);
         continue;
       }
-
-      if (nameOwner == null) {
-        break;
-      }
-
-      final List<Instruction> instructions = getLatestDefinitions(name, nameOwner, anchor);
-      final ResolveResultList scopeDefinitions = resolveToLatestDefs(instructions, nameOwner, name, typeEvalContext);
-      if (!scopeDefinitions.isEmpty()) {
-        return scopeDefinitions;
+      if (nameOwner != null) {
+        final List<Instruction> instructions = getLatestDefinitions(name, nameOwner, anchor);
+        final ResolveResultList scopeDefinitions = resolveToLatestDefs(instructions, nameOwner, name, typeEvalContext);
+        if (!scopeDefinitions.isEmpty()) {
+          return scopeDefinitions;
+        }
       }
     }
 
