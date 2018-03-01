@@ -177,6 +177,7 @@ public class ImportCandidateHolder implements Comparable<ImportCandidateHolder> 
   }
 
   int getRelevance() {
+    if (myImportElement != null) return 4;
     final Project project = myImportable.getProject();
     final PsiFile psiFile = myImportable.getContainingFile();
     final VirtualFile vFile = psiFile == null ? null : psiFile.getVirtualFile();
