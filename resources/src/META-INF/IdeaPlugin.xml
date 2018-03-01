@@ -147,6 +147,9 @@
     <applicationService serviceInterface="com.intellij.openapi.application.IdeUrlTrackingParametersProvider"
                         serviceImplementation="com.intellij.ide.customization.UtmIdeUrlTrackingParametersProvider"
                         overrides="true"/>
+    <applicationService serviceInterface="com.intellij.lang.IdeLanguageCustomization"
+                        serviceImplementation="com.intellij.ide.java.IntelliJIdeaLanguageCustomization"
+                        overrides="true"/>
 
     <!--<expectedTypesProvider implementation="com.intellij.codeInsight.JavaExpectedTypesProvider"/>-->
 
