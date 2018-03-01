@@ -35,7 +35,6 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.InplaceButton;
@@ -43,12 +42,15 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PsiNavigateUtil;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.JBDimension;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.UMethod;
+import org.jetbrains.uast.UastContextKt;
 
 import javax.swing.*;
 import java.awt.event.ActionListener;
@@ -63,24 +65,15 @@ import static com.intellij.openapi.actionSystem.CommonDataKeys.PSI_FILE;
 public class ShowDiscoveredTestsAction extends AnAction {
   @Override
   public void update(AnActionEvent e) {
-    Editor editor = e.getData(EDITOR);
-    PsiFile file = e.getData(PSI_FILE);
-    Project project = e.getProject();
-
-    PsiElement at = file == null || editor == null ? null : file.findElementAt(editor.getCaretModel().getOffset());
-    PsiMethod method = PsiTreeUtil.getParentOfType(at, PsiMethod.class);
-    e.getPresentation().setEnabledAndVisible(method != null && project != null);
+    e.getPresentation().setEnabledAndVisible(e.getProject() != null && findMethodAtCaret(e) != null);
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    Editor editor = e.getRequiredData(EDITOR);
-    PsiFile file = e.getRequiredData(PSI_FILE);
     Project project = e.getProject();
     assert project != null;
 
-    PsiElement at = file.findElementAt(editor.getCaretModel().getOffset());
-    PsiMethod method = PsiTreeUtil.getParentOfType(at, PsiMethod.class);
+    PsiMethod method = findMethodAtCaret(e);
     assert method != null;
 
     Couple<String> couple = getMethodQualifiedName(method);
@@ -90,8 +83,17 @@ public class ShowDiscoveredTestsAction extends AnAction {
     String methodName = couple.second;
     String methodPresentationName = c.getName() + "." + methodName;
 
-    DataContext dataContext = DataManager.getInstance().getDataContext(editor.getContentComponent());
+    DataContext dataContext = DataManager.getInstance().getDataContext(e.getRequiredData(EDITOR).getContentComponent());
     showDiscoveredTests(project, dataContext, methodPresentationName, Collections.singletonList(method));
+  }
+
+  @Nullable
+  private static PsiMethod findMethodAtCaret(AnActionEvent e) {
+    Editor editor = e.getData(EDITOR);
+    PsiFile file = e.getData(PSI_FILE);
+    if (editor == null || file == null) return null;
+    UMethod uMethod = UastContextKt.findUElementAt(file, editor.getCaretModel().getOffset(), UMethod.class);
+    return uMethod == null ? null : ObjectUtils.tryCast(uMethod.getJavaPsi(), PsiMethod.class);
   }
 
   public static class FromChangeList extends AnAction {
@@ -202,6 +204,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
 
     JavaPsiFacade javaFacade = JavaPsiFacade.getInstance(project);
     GlobalSearchScope scope = GlobalSearchScope.projectScope(project);
+    //noinspection unchecked
     list.setCellRenderer(renderer);
 
     ListBackgroundUpdaterTask loadTestsTask = new ListBackgroundUpdaterTask(project, "Load tests", renderer.getComparator()) {
