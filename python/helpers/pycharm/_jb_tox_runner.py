@@ -105,7 +105,8 @@ class _Nose(object):
 
 _RUNNERS = [_Unit2(), _PyTest(), _Nose()]
 
-config = tox_config.parseconfig(args=[])
+import sys
+config = tox_config.parseconfig(args=sys.argv)
 for env, tmp_config in config.envconfigs.items():
     if not tmp_config.setenv:
         tmp_config.setenv = dict()
