@@ -57,11 +57,12 @@ class AppUIExecutorImpl implements AppUIExecutor {
   @NotNull
   @Override
   public AppUIExecutor later() {
-    int eventCount = IdeEventQueue.getInstance().getEventCount();
+    Integer edtEventCount = ApplicationManager.getApplication().isDispatchThread() ? IdeEventQueue.getInstance().getEventCount() : null;
     return withConstraint(new ConstrainedExecutor() {
       @Override
       public boolean isCorrectContext() {
-        return eventCount != IdeEventQueue.getInstance().getEventCount();
+        return edtEventCount == null ? ApplicationManager.getApplication().isDispatchThread()
+                                     : edtEventCount != IdeEventQueue.getInstance().getEventCount();
       }
 
       @Override
