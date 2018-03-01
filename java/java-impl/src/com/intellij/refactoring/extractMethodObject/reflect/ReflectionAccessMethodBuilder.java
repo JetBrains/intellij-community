@@ -11,7 +11,6 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -33,11 +32,32 @@ public class ReflectionAccessMethodBuilder {
                          @Nullable PsiElement context) {
     checkRequirements();
     String parameters = StreamEx.of(myParameters).map(p -> p.type + " " + p.name).joining(", ", "(", ")");
-    String returnExpression = ("void".equals(myReturnType) ? "" : "return (" + myReturnType + ")") + myMemberAccessor.getAccessExpression();
-    String methodBody = "    java.lang.Class<?> klass = " + myMemberAccessor.getClassLookupExpression() + ";\n" +
-                        "    " + myMemberAccessor.getMemberType() + " member = null;\n" +
-                        "    " + myMemberAccessor.getMemberLookupBlock() +
-                        "    " + returnExpression + ";\n";
+    String returnExpression =
+      ("void".equals(myReturnType) ? "member." : "return (" + myReturnType + ")member.") + myMemberAccessor.getAccessExpression();
+    String methodBody = "  java.lang.Class<?> klass = " + myMemberAccessor.getClassLookupExpression() + ";\n" +
+                        "  " + myMemberAccessor.getMemberType() + " member = null;\n" +
+                        "  int interfaceNumber = -1;\n" +
+                        "  Class<?>[] interfaces = null;\n" +
+                        "  while (member == null) {\n" +
+                        "    try {\n" +
+                        "      member = klass." + myMemberAccessor.getMemberLookupExpression() + ";\n" +
+                        "    } catch (java.lang.ReflectiveOperationException e) {\n" +
+                        "      if (interfaceNumber == -1) {\n" +
+                        "        interfaces = klass.getInterfaces();\n" +
+                        "        interfaceNumber = 0;\n" +
+                        "      }\n" +
+                        "      if (interfaceNumber < interfaces.length) {\n" +
+                        "        klass = interfaces[interfaceNumber];\n" +
+                        "        interfaceNumber += 1;\n" +
+                        "      } else {\n" +
+                        "        klass = klass.getSuperclass();\n" +
+                        "        if (klass == null) throw e;\n" +
+                        "        interfaceNumber = -1;\n" +
+                        "      }\n" +
+                        "    }\n" +
+                        "  }\n" +
+                        "  member.setAccessible(true);\n" +
+                        "  " + returnExpression + ";\n";
     List<String> possibleExceptions = myMemberAccessor.getPossibleExceptions();
     if (!possibleExceptions.isEmpty()) {
       methodBody = "try {\n" +
@@ -136,7 +156,7 @@ public class ReflectionAccessMethodBuilder {
   }
 
   private interface MyMemberAccessor {
-    String getMemberLookupBlock();
+    String getMemberLookupExpression();
 
     String getClassLookupExpression();
 
@@ -149,9 +169,8 @@ public class ReflectionAccessMethodBuilder {
 
 
   private static class MyFieldAccessor implements MyMemberAccessor {
-    private static final List<String> EXCEPTIONS = Collections.unmodifiableList(Arrays.asList("java.lang.NoSuchFieldException",
-                                                                                              "java.lang.IllegalAccessException",
-                                                                                              "java.lang.ClassNotFoundException"));
+    private static final List<String> EXCEPTIONS = Collections.unmodifiableList(
+      Collections.singletonList("java.lang.ReflectiveOperationException"));
     private final String myFieldName;
     private final String myClassName;
     private final FieldAccessType myAccessType;
@@ -172,22 +191,13 @@ public class ReflectionAccessMethodBuilder {
     }
 
     @Override
-    public String getMemberLookupBlock() {
-      return "while (member == null) {\n" +
-             "  try {\n" +
-             "    member = klass.getDeclaredField(" + StringUtil.wrapWithDoubleQuote(myFieldName) + ");\n" +
-             "  }\n" +
-             "  catch(java.lang.NoSuchFieldException e) {\n" +
-             "    klass = klass.getSuperclass();\n" +
-             "    if (klass == null) throw e;\n" +
-             "  }\n" +
-             "}\n" +
-             "member.setAccessible(true);";
+    public String getMemberLookupExpression() {
+      return "getDeclaredField(" + StringUtil.wrapWithDoubleQuote(myFieldName) + ")";
     }
 
     @Override
     public String getAccessExpression() {
-      return FieldAccessType.GET.equals(myAccessType) ? "member.get(object)" : "member.set(object, value)";
+      return FieldAccessType.GET.equals(myAccessType) ? "get(object)" : "set(object, value)";
     }
 
     @Override
@@ -212,20 +222,11 @@ public class ReflectionAccessMethodBuilder {
     }
 
     @Override
-    public String getMemberLookupBlock() {
+    public String getMemberLookupExpression() {
       String args = StreamEx.of(myParameters).skip(1).map(x -> PsiReflectionAccessUtil.classForName(x.jvmTypeName))
                             .prepend(StringUtil.wrapWithDoubleQuote(myMethodName))
                             .joining(", ", "(", ")");
-      return "while (member == null) {\n" +
-             "  try {\n" +
-             "    member = klass.getDeclaredMethod" + args + ";\n" +
-             "  }\n" +
-             "  catch(java.lang.NoSuchMethodException e) {\n" +
-             "    klass = klass.getSuperclass();\n" +
-             "    if (klass == null) throw e;\n" +
-             "  }\n" +
-             "}\n" +
-             "member.setAccessible(true);\n";
+      return "getDeclaredMethod" + args;
     }
 
     @Override
@@ -242,16 +243,12 @@ public class ReflectionAccessMethodBuilder {
 
     @Override
     public List<String> getPossibleExceptions() {
-      return Collections.unmodifiableList(Arrays.asList(
-        "java.lang.NoSuchMethodException",
-        "java.lang.IllegalAccessException",
-        "java.lang.ClassNotFoundException",
-        "java.lang.reflect.InvocationTargetException"));
+      return Collections.unmodifiableList(Collections.singletonList("java.lang.ReflectiveOperationException"));
     }
 
     @Override
     public String getAccessExpression() {
-      return StreamEx.of(myParameters).map(x -> x.name).joining(", ", "member.invoke(", ")");
+      return StreamEx.of(myParameters).map(x -> x.name).joining(", ", "invoke(", ")");
     }
   }
 
@@ -264,18 +261,9 @@ public class ReflectionAccessMethodBuilder {
     }
 
     @Override
-    public String getMemberLookupBlock() {
+    public String getMemberLookupExpression() {
       String args = StreamEx.of(myParameters).map(x -> x.jvmTypeName).map(PsiReflectionAccessUtil::classForName).joining(", ", "(", ")");
-      return "while (member == null) {\n" +
-             "  try {\n" +
-             "    member = klass.getDeclaredConstructor" + args + ";\n" +
-             "  }\n" +
-             "  catch(java.lang.NoSuchMethodException e) {\n" +
-             "    klass = klass.getSuperclass();\n" +
-             "    if (klass == null) throw e;\n" +
-             "  }\n" +
-             "}\n" +
-             "member.setAccessible(true);\n";
+      return "getDeclaredConstructor" + args;
     }
 
     @Override
@@ -286,7 +274,7 @@ public class ReflectionAccessMethodBuilder {
     @Override
     public String getAccessExpression() {
       String args = StreamEx.of(myParameters).map(x -> x.name).joining(", ", "(", ")");
-      return "member.newInstance" + args;
+      return "newInstance" + args;
     }
 
     @Override
@@ -296,12 +284,7 @@ public class ReflectionAccessMethodBuilder {
 
     @Override
     public List<String> getPossibleExceptions() {
-      return Collections.unmodifiableList(Arrays.asList(
-        "java.lang.NoSuchMethodException",
-        "java.lang.IllegalAccessException",
-        "java.lang.ClassNotFoundException",
-        "java.lang.reflect.InvocationTargetException",
-        "java.lang.InstantiationException"
+      return Collections.unmodifiableList(Collections.singletonList("java.lang.ReflectiveOperationException"
       ));
     }
   }
