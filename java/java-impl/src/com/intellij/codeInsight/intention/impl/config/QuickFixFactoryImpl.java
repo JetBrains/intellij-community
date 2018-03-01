@@ -52,10 +52,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author cdr
@@ -523,6 +520,20 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public IntentionAction createCreateConstructorFromThisFix(@NotNull PsiMethodCallExpression call) {
     return new CreateConstructorFromThisFix(call);
+  }
+
+  @NotNull
+  @Override
+  public List<IntentionAction> createCreateConstructorFromCallExpressionFixes(@NotNull PsiMethodCallExpression call) {
+    if (JvmElementActionFactories.useInterlaguageActions()) {
+      return CreateConstructorFromUsage.generateConstructorActions(call);
+    }
+    else {
+      return Arrays.asList(
+        createCreateConstructorFromSuperFix(call),
+        createCreateConstructorFromThisFix(call)
+      );
+    }
   }
 
   @NotNull
