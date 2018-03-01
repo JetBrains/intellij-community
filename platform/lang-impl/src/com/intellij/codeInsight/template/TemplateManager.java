@@ -16,11 +16,11 @@
 
 package com.intellij.codeInsight.template;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.PairProcessor;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,11 +28,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 
 public abstract class TemplateManager {
+  public static final Topic<TemplateManagerListener> TEMPLATE_STARTED_TOPIC = Topic.create("TEMPLATE_STARTED", TemplateManagerListener.class);
+
   public static TemplateManager getInstance(Project project) {
     return ServiceManager.getService(project, TemplateManager.class);
   }
-
-  public abstract void addTemplateManagerListener(@NotNull Disposable disposable, @NotNull TemplateManagerListener listener);
 
   public abstract void startTemplate(@NotNull Editor editor, @NotNull Template template);
 

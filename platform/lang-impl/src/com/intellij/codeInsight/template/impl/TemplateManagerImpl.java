@@ -39,11 +39,10 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.EventDispatcher;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashMap;
+import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -54,13 +53,14 @@ import java.util.concurrent.ConcurrentMap;
 public class TemplateManagerImpl extends TemplateManager implements Disposable {
   private static final TemplateContextType[] ourContextTypes = Extensions.getExtensions(TemplateContextType.EP_NAME);
   private final Project myProject;
+  private final MessageBus myMessageBus;
   private boolean myTemplateTesting;
 
   private static final Key<TemplateState> TEMPLATE_STATE_KEY = Key.create("TEMPLATE_STATE_KEY");
-  private final EventDispatcher<TemplateManagerListener> myDispatcher = EventDispatcher.create(TemplateManagerListener.class);
 
-  public TemplateManagerImpl(Project project) {
+  public TemplateManagerImpl(Project project, MessageBus messageBus) {
     myProject = project;
+    myMessageBus = messageBus;
     final EditorFactoryListener myEditorFactoryListener = new EditorFactoryAdapter() {
       @Override
       public void editorReleased(@NotNull EditorFactoryEvent event) {
@@ -147,11 +147,6 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
       runnable.run();
     }
     return runnable != null;
-  }
-
-  @Override
-  public void addTemplateManagerListener(@NotNull Disposable disposable, @NotNull final TemplateManagerListener listener) {
-    myDispatcher.addListener(listener, disposable);
   }
 
   @Override
@@ -461,7 +456,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
   }
 
   private void fireTemplateStarted(TemplateState templateState) {
-    myDispatcher.getMulticaster().templateStarted(templateState);
+    myMessageBus.syncPublisher(TEMPLATE_STARTED_TOPIC).templateStarted(templateState);
   }
 
   private static List<TemplateImpl> filterApplicableCandidates(PsiFile file, int caretOffset, List<TemplateImpl> candidates) {
