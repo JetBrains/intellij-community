@@ -135,6 +135,10 @@ public class AddSingleStaticImportActionTest extends JavaCodeInsightFixtureTestC
     doTest("Add static import for 'java.util.Arrays.asList'");
   }
 
+  public void testLineComment() {
+    doTest("Add static import for 'java.lang.System.currentTimeMillis'");
+  }
+
   private void doTest(String intentionName) {
     myFixture.configureByFile(getTestName(false) + ".java");
     IntentionAction intention = myFixture.findSingleIntention(intentionName);
