@@ -145,22 +145,19 @@ public class FindUsagesTest extends PsiTestCase{
     tdf.setUp();
 
     try {
-      new WriteCommandAction(getProject()) {
-        @Override
-        protected void run(@NotNull Result result) throws Throwable {
-          final ModifiableModuleModel moduleModel = ModuleManager.getInstance(getProject()).getModifiableModel();
-          moduleModel.newModule("independent/independent.iml", StdModuleTypes.JAVA.getId());
-          moduleModel.commit();
+      WriteCommandAction.writeCommandAction(getProject()).run(() -> {
+        final ModifiableModuleModel moduleModel = ModuleManager.getInstance(getProject()).getModifiableModel();
+        moduleModel.newModule("independent/independent.iml", StdModuleTypes.JAVA.getId());
+        moduleModel.commit();
 
-          tdf.createFile("plugin.xml", "<document>\n" +
-                                       "  <action class=\"com.Foo\" />\n" +
-                                       "  <action class=\"com.Foo.Bar\" />\n" +
-                                       "  <action class=\"com.Foo$Bar\" />\n" +
-                                       "</document>");
+        tdf.createFile("plugin.xml", "<document>\n" +
+                                     "  <action class=\"com.Foo\" />\n" +
+                                     "  <action class=\"com.Foo.Bar\" />\n" +
+                                     "  <action class=\"com.Foo$Bar\" />\n" +
+                                     "</document>");
 
-          PsiTestUtil.addContentRoot(ModuleManager.getInstance(getProject()).findModuleByName("independent"), tdf.getFile(""));
-        }
-      }.execute();
+        PsiTestUtil.addContentRoot(ModuleManager.getInstance(getProject()).findModuleByName("independent"), tdf.getFile(""));
+      });
 
       GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
       PsiClass foo = myJavaFacade.findClass("com.Foo", scope);

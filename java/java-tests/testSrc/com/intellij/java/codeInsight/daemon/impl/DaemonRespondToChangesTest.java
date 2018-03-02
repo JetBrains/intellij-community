@@ -47,7 +47,6 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -2306,12 +2305,9 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       waitForDaemon();
       checkFoldingState("[FoldRegion +(25:33), placeholder='{}']");
 
-      new WriteCommandAction<Void>(myProject) {
-        @Override
-        protected void run(@NotNull Result<Void> result) {
-          myEditor.getDocument().insertString(0, "/*");
-        }
-      }.execute();
+      WriteCommandAction.runWriteCommandAction(myProject, () -> {
+        myEditor.getDocument().insertString(0, "/*");
+      });
       waitForDaemon();
       checkFoldingState("[FoldRegion -(0:37), placeholder='/.../', FoldRegion +(27:35), placeholder='{}']");
 

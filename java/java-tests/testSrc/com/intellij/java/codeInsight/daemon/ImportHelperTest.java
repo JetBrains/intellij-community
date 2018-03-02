@@ -203,17 +203,14 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
     final PsiFile file = configureByText(StdFileTypes.JAVA, "package java.util; class X{ Date d;}");
     assertEmpty(highlightErrors());
 
-    new WriteCommandAction.Simple(getProject()) {
-      @Override
-      protected void run() {
-        CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
-        ImportHelper importHelper = new ImportHelper(settings);
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> {
+      CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+      ImportHelper importHelper = new ImportHelper(settings);
 
-        PsiClass psiClass = JavaPsiFacade.getInstance(getProject()).findClass("java.sql.Date", GlobalSearchScope.allScope(getProject()));
-        boolean b = importHelper.addImport((PsiJavaFile)file, psiClass);
-        assertFalse(b); // must fail
-      }
-    }.execute().throwException();
+      PsiClass psiClass = JavaPsiFacade.getInstance(getProject()).findClass("java.sql.Date", GlobalSearchScope.allScope(getProject()));
+      boolean b = importHelper.addImport((PsiJavaFile)file, psiClass);
+      assertFalse(b); // must fail;
+    });
   }
 
   public void testAutoImportCaretLocation() {

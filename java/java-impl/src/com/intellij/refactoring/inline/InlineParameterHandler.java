@@ -137,15 +137,12 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
               final PsiElement[] refs = DefUseUtil.getRefs(codeBlock, psiParameter, toInline);
 
               if (InlineLocalHandler.checkRefsInAugmentedAssignmentOrUnaryModified(refs, def) == null) {
-                new WriteCommandAction(project) {
-                  @Override
-                  protected void run(@NotNull Result result) throws Throwable {
-                    for (final PsiElement ref : refs) {
-                      InlineUtil.inlineVariable(psiParameter, rExpr, (PsiJavaCodeReferenceElement)ref);
-                    }
-                    def.getParent().delete();
+                WriteCommandAction.writeCommandAction(project).run(() -> {
+                  for (final PsiElement ref : refs) {
+                    InlineUtil.inlineVariable(psiParameter, rExpr, (PsiJavaCodeReferenceElement)ref);
                   }
-                }.execute();
+                  def.getParent().delete();
+                });
                 return;
               }
             }

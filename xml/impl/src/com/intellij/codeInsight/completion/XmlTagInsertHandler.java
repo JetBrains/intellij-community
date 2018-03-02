@@ -154,12 +154,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
         if (chooseAttributeName && offset > 0) {
           char c = editor.getDocument().getCharsSequence().charAt(offset - 1);
           if (c == '/' || (c == ' ' && brokenOff)) {
-            new WriteCommandAction.Simple(project) {
-              @Override
-              protected void run() throws Throwable {
-                editor.getDocument().replaceString(offset, offset + 3, ">");
-              }
-            }.execute();
+            WriteCommandAction.writeCommandAction(project).run(() -> editor.getDocument().replaceString(offset, offset + 3, ">"));
           }
         }
       }
@@ -178,12 +173,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
         if (chooseAttributeName && myAttrValueMarker.isValid()) {
           final int startOffset = myAttrValueMarker.getStartOffset();
           final int endOffset = myAttrValueMarker.getEndOffset();
-          new WriteCommandAction.Simple(project) {
-            @Override
-            protected void run() throws Throwable {
-              editor.getDocument().replaceString(startOffset, endOffset, ">");
-            }
-          }.execute();
+          WriteCommandAction.writeCommandAction(project).run(() -> editor.getDocument().replaceString(startOffset, endOffset, ">"));
         }
       }
     });

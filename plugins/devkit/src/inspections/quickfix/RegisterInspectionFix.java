@@ -72,17 +72,13 @@ class RegisterInspectionFix implements IntentionAction {
   }
 
   private void doFix(final DomFileElement<IdeaPlugin> selectedValue, final Project project, final PsiFile file) {
-    Extension extension = new WriteCommandAction<Extension>(project, file) {
-
-      @Override
-      protected void run(@NotNull Result<Extension> result) throws Throwable {
-        final Extensions extensions = PluginDescriptorChooser.findOrCreateExtensionsForEP(selectedValue, myEp.getName());
-        Extension extension = extensions.addExtension(myEp.getName());
-        XmlTag tag = extension.getXmlTag();
-        tag.setAttribute("implementationClass", myPsiClass.getQualifiedName());
-        result.setResult(extension);
-      }
-    }.execute().throwException().getResultObject();
+    Extension extension = WriteCommandAction.writeCommandAction(project, file).compute(() -> {
+      final Extensions extensions = PluginDescriptorChooser.findOrCreateExtensionsForEP(selectedValue, myEp.getName());
+      Extension e = extensions.addExtension(myEp.getName());
+      XmlTag tag = e.getXmlTag();
+      tag.setAttribute("implementationClass", myPsiClass.getQualifiedName());
+      return e;
+    });
     PsiNavigateUtil.navigate(extension.getXmlTag());
   }
 

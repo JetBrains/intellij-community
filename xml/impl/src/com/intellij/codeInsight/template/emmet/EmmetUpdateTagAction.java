@@ -24,7 +24,6 @@ import com.intellij.codeInsight.template.emmet.generators.XmlZenCodingGeneratorI
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PopupAction;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -41,6 +40,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.PairProcessor;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
@@ -133,7 +133,7 @@ public class EmmetUpdateTagAction extends BaseCodeInsightAction implements DumbA
         return true;
       });
 
-      doUpdateTagAttributes(tag, file, newTagName.get(), classNames, attributes).execute();
+      WriteCommandAction.writeCommandAction(file.getProject(), file).run(doUpdateTagAttributes(tag, file, newTagName.get(), classNames, attributes));
     }
   }
 
@@ -164,43 +164,40 @@ public class EmmetUpdateTagAction extends BaseCodeInsightAction implements DumbA
   }
 
   @NotNull
-  private static WriteCommandAction<Void> doUpdateTagAttributes(@NotNull final XmlTag tag,
-                                                                @NotNull final PsiFile file,
-                                                                @Nullable final String newTagName,
-                                                                @NotNull final Collection<String> classes,
-                                                                @NotNull final Map<String, String> attributes) {
-    return new WriteCommandAction<Void>(file.getProject(), file) {
-      @Override
-      protected void run(@NotNull Result<Void> result) throws Throwable {
-        if (tag.isValid()) {
-          if (!ReadonlyStatusHandler.getInstance(file.getProject()).ensureFilesWritable(file.getVirtualFile()).hasReadonlyFiles()) {
-            tag.setAttribute(HtmlUtil.CLASS_ATTRIBUTE_NAME, StringUtil.join(classes, " ").trim());
+  private static ThrowableRunnable<RuntimeException> doUpdateTagAttributes(@NotNull final XmlTag tag,
+                                                         @NotNull final PsiFile file,
+                                                         @Nullable final String newTagName,
+                                                         @NotNull final Collection<String> classes,
+                                                         @NotNull final Map<String, String> attributes) {
+    return ()->{
+      if (tag.isValid()) {
+        if (!ReadonlyStatusHandler.getInstance(file.getProject()).ensureFilesWritable(file.getVirtualFile()).hasReadonlyFiles()) {
+          tag.setAttribute(HtmlUtil.CLASS_ATTRIBUTE_NAME, StringUtil.join(classes, " ").trim());
 
-            for (Map.Entry<String, String> attribute : attributes.entrySet()) {
-              final String attributeName = attribute.getKey();
-              if (StringUtil.startsWithChar(attributeName, '+')) {
-                final XmlAttribute existingAttribute = tag.getAttribute(attributeName.substring(1));
-                if (existingAttribute != null) {
-                  existingAttribute.setValue(StringUtil.notNullize(existingAttribute.getValue() + attribute.getValue()));
-                }
-                else {
-                  tag.setAttribute(attributeName.substring(1), attribute.getValue());
-                }
-              }
-              else if (StringUtil.startsWithChar(attributeName, '-')) {
-                final XmlAttribute existingAttribute = tag.getAttribute(attributeName.substring(1));
-                if (existingAttribute != null) {
-                  existingAttribute.delete();
-                }
+          for (Map.Entry<String, String> attribute : attributes.entrySet()) {
+            final String attributeName = attribute.getKey();
+            if (StringUtil.startsWithChar(attributeName, '+')) {
+              final XmlAttribute existingAttribute = tag.getAttribute(attributeName.substring(1));
+              if (existingAttribute != null) {
+                existingAttribute.setValue(StringUtil.notNullize(existingAttribute.getValue() + attribute.getValue()));
               }
               else {
-                tag.setAttribute(attributeName, attribute.getValue());
+                tag.setAttribute(attributeName.substring(1), attribute.getValue());
               }
             }
-
-            if (newTagName != null) {
-              tag.setName(newTagName);
+            else if (StringUtil.startsWithChar(attributeName, '-')) {
+              final XmlAttribute existingAttribute = tag.getAttribute(attributeName.substring(1));
+              if (existingAttribute != null) {
+                existingAttribute.delete();
+              }
             }
+            else {
+              tag.setAttribute(attributeName, attribute.getValue());
+            }
+          }
+
+          if (newTagName != null) {
+            tag.setName(newTagName);
           }
         }
       }

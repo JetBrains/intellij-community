@@ -220,12 +220,10 @@ public class ImportFromExistingAction implements QuestionAction {
     if (src == null) {
       return;
     }
-    new WriteCommandAction(src.getProject(), PyBundle.message("ACT.CMD.use.import"), myTarget.getContainingFile()) {
-      @Override
-      protected void run(@NotNull Result result) {
-        doIt(item);
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(src.getProject(), myTarget.getContainingFile()).withName(PyBundle.message("ACT.CMD.use.import"))
+                      .run(() -> {
+                        doIt(item);
+                      });
     if (myOnDoneCallback != null) {
       myOnDoneCallback.run();
     }

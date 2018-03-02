@@ -139,12 +139,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
       }
       typeParams.addAll(typeParamSet);
     }
-    myClass = new WriteCommandAction<PsiClass>(myProject, getCommandName()){
-      @Override
-      protected void run(@NotNull Result<PsiClass> result) throws Throwable {
-        result.setResult(buildClass(false));
-      }
-    }.execute().getResultObject();
+    myClass = WriteCommandAction.writeCommandAction(myProject).withName(getCommandName()).compute(() -> buildClass(false));
     myExtractEnumProcessor = new ExtractEnumProcessor(myProject, this.enumConstants, myClass);
   }
 

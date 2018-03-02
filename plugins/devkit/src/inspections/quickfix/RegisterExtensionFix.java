@@ -17,7 +17,6 @@ package org.jetbrains.idea.devkit.inspections.quickfix;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.LanguageExtensionPoint;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.KeyedFactoryEPBean;
@@ -97,17 +96,16 @@ public class RegisterExtensionFix implements IntentionAction {
   }
 
   private void registerExtension(final DomFileElement<IdeaPlugin> selectedValue, final ExtensionPointCandidate candidate) {
-    PsiElement navTarget = new WriteCommandAction<PsiElement>(selectedValue.getFile().getProject(), selectedValue.getFile()) {
-      @Override
-      protected void run(@NotNull Result<PsiElement> result) throws Throwable {
+    PsiElement navTarget =
+      WriteCommandAction.writeCommandAction(selectedValue.getFile().getProject(), selectedValue.getFile()).compute(() -> {
         Extensions extensions = PluginDescriptorChooser.findOrCreateExtensionsForEP(selectedValue, candidate.epName);
         Extension extension = extensions.addExtension(candidate.epName);
         XmlTag tag = extension.getXmlTag();
-        PsiElement navTarget = null;
+        PsiElement target = null;
         String keyAttrName = KEY_MAP.get(candidate.beanClassName);
         if (keyAttrName != null) {
           XmlAttribute attr = tag.setAttribute(keyAttrName, "");
-          navTarget = attr.getValueElement();
+          target = attr.getValueElement();
         }
         if (candidate.attributeName != null) {
           tag.setAttribute(candidate.attributeName, myExtensionClass.getQualifiedName());
@@ -116,9 +114,8 @@ public class RegisterExtensionFix implements IntentionAction {
           XmlTag subTag = tag.createChildTag(candidate.tagName, null, myExtensionClass.getQualifiedName(), false);
           tag.addSubTag(subTag, false);
         }
-        result.setResult(navTarget != null ? navTarget : extension.getXmlTag());
-      }
-    }.execute().throwException().getResultObject();
+        return target != null ? target : extension.getXmlTag();
+      });
     PsiNavigateUtil.navigate(navTarget);
   }
 

@@ -19,11 +19,11 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.PerFileMappings;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.command.undo.UnexpectedUndoException;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
@@ -52,7 +52,7 @@ import java.util.List;
  * @author gregsh
  */
 public abstract class LRUPopupBuilder<T> {
-
+  private static final Logger LOG = Logger.getInstance(LRUPopupBuilder.class);
   private static final int MAX_VISIBLE_SIZE = 20;
   private static final int LRU_ITEMS = 4;
 
@@ -70,12 +70,16 @@ public abstract class LRUPopupBuilder<T> {
   public static ListPopup forFileLanguages(@NotNull Project project, @NotNull Iterable<VirtualFile> files, @NotNull final PerFileMappings<Language> mappings) {
     final VirtualFile[] filesCopy = VfsUtilCore.toVirtualFileArray(JBIterable.from(files).toList());
     Arrays.sort(filesCopy, (o1, o2) -> StringUtil.compare(o1.getName(), o2.getName(), !o1.getFileSystem().isCaseSensitive()));
-    return forFileLanguages(project, null, t -> new WriteCommandAction(project, "Change Language") {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        changeLanguageWithUndo(project, t, filesCopy, mappings);
+    return forFileLanguages(project, null, t -> {
+      try {
+        WriteCommandAction.writeCommandAction(project).withName("Change Language").run(() -> {
+          changeLanguageWithUndo(project, t, filesCopy, mappings);
+        });
       }
-    }.execute());
+      catch (UnexpectedUndoException e) {
+        LOG.error(e);
+      }
+    });
   }
 
   @NotNull

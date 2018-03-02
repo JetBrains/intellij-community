@@ -291,12 +291,8 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
       PsiFile file = (PsiFile)elementToCopy;
       String name = newName == null ? file.getName() : newName;
       if (checkFileExist(targetDirectory, choice, file, name, "Copy")) return null;
-      return new WriteCommandAction<PsiFile>(targetDirectory.getProject(), title) {
-        @Override
-        protected void run(@NotNull Result<PsiFile> result) throws Throwable {
-          result.setResult(targetDirectory.copyFileFrom(name, file));
-        }
-      }.execute().getResultObject();
+      return WriteCommandAction.writeCommandAction(targetDirectory.getProject()).withName(title)
+                               .compute(() -> targetDirectory.copyFileFrom(name, file));
     }
     else if (elementToCopy instanceof PsiDirectory) {
       PsiDirectory directory = (PsiDirectory)elementToCopy;
@@ -308,12 +304,8 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
       final PsiDirectory subdirectory;
       if (existing == null) {
         String finalNewName = newName;
-        subdirectory = new WriteCommandAction<PsiDirectory>(targetDirectory.getProject(), title) {
-          @Override
-          protected void run(@NotNull Result<PsiDirectory> result) throws Throwable {
-            result.setResult(targetDirectory.createSubdirectory(finalNewName));
-          }
-        }.execute().getResultObject();
+        subdirectory = WriteCommandAction.writeCommandAction(targetDirectory.getProject()).withName(title)
+                                         .compute(() -> targetDirectory.createSubdirectory(finalNewName));
       }
       else {
         subdirectory = existing;

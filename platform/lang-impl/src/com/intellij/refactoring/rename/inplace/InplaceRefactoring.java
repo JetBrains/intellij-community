@@ -279,7 +279,8 @@ public abstract class InplaceRefactoring {
     boolean hasReferenceOnNameIdentifier = false;
     for (PsiReference ref : refs) {
       if (isReferenceAtCaret(selectedElement, ref)) {
-        builder.replaceElement(ref.getElement(), getRangeToRename(ref), PRIMARY_VARIABLE_NAME, createLookupExpression(selectedElement), true);
+        builder
+          .replaceElement(ref.getElement(), getRangeToRename(ref), PRIMARY_VARIABLE_NAME, createLookupExpression(selectedElement), true);
         subrefOnPrimaryElement = true;
         continue;
       }
@@ -288,7 +289,7 @@ public abstract class InplaceRefactoring {
     }
     if (nameIdentifier != null) {
       hasReferenceOnNameIdentifier |= selectedElement.getTextRange().contains(nameIdentifier.getTextRange());
-      if (!subrefOnPrimaryElement || !hasReferenceOnNameIdentifier){
+      if (!subrefOnPrimaryElement || !hasReferenceOnNameIdentifier) {
         addVariable(nameIdentifier, selectedElement, builder);
       }
     }
@@ -296,12 +297,12 @@ public abstract class InplaceRefactoring {
       addVariable(usage.first, usage.second, selectedElement, builder);
     }
     addAdditionalVariables(builder);
-    
+
     int segmentsLimit = Registry.intValue("inplace.rename.segments.limit", -1);
     if (segmentsLimit != -1 && builder.getElementsCount() > segmentsLimit) {
       return false;
     }
-    
+
     try {
       myMarkAction = startRename();
     }
@@ -334,12 +335,9 @@ public abstract class InplaceRefactoring {
 
     beforeTemplateStart();
 
-    new WriteCommandAction(myProject, getCommandName()) {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        startTemplate(builder);
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(myProject).withName(getCommandName()).run(() -> {
+      startTemplate(builder);
+    });
 
     if (myBalloon == null) {
       showBalloon();

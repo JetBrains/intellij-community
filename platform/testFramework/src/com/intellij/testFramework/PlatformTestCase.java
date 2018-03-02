@@ -351,12 +351,12 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   protected void setUpModule() {
-    new WriteCommandAction.Simple(getProject()) {
-      @Override
-      protected void run() throws Throwable {
-        myModule = createMainModule();
-      }
-    }.execute().throwException();
+    try {
+      WriteCommandAction.writeCommandAction(getProject()).run(() -> myModule = createMainModule());
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @NotNull
@@ -844,7 +844,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
   protected static void rename(@NotNull final VirtualFile vFile1, @NotNull final String newName) {
     try {
-      WriteAction.runAndWait(()-> vFile1.rename(vFile1, newName));
+      WriteCommandAction.writeCommandAction(null).run(() -> vFile1.rename(vFile1, newName));
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -857,7 +857,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
   public static void move(@NotNull final VirtualFile vFile1, @NotNull final VirtualFile newFile) {
     try {
-      WriteAction.runAndWait(()-> vFile1.move(vFile1, newFile));
+      WriteCommandAction.writeCommandAction(null).run(() -> vFile1.move(vFile1, newFile));
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -866,17 +866,20 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   
   @NotNull
   protected static VirtualFile copy(@NotNull final VirtualFile file, @NotNull final VirtualFile newParent, @NotNull final String copyName) {
+    final VirtualFile[] copy = new VirtualFile[1];
+
     try {
-      return WriteAction.computeAndWait(() -> file.copy(file, newParent, copyName));
+      WriteCommandAction.writeCommandAction(null).run(() -> copy[0] = file.copy(file, newParent, copyName));
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
+    return copy[0];
   }
 
   public static void copyDirContentsTo(@NotNull final VirtualFile vTestRoot, @NotNull final VirtualFile toDir) {
     try {
-      WriteAction.runAndWait(() -> {
+      WriteCommandAction.writeCommandAction(null).run(() -> {
         for (VirtualFile file : vTestRoot.getChildren()) {
           VfsUtil.copy(file, file, toDir);
         }

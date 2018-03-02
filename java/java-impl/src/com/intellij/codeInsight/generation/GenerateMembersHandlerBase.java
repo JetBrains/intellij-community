@@ -25,7 +25,6 @@ import com.intellij.ide.util.MemberChooser;
 import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -187,12 +186,9 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
       @Override
       public void templateFinished(Template template, boolean brokenOff) {
         if (index + 1 < templates.size()){
-          ApplicationManager.getApplication().invokeLater(() -> new WriteCommandAction(myProject) {
-            @Override
-            protected void run(@NotNull Result result) throws Throwable {
-              runTemplates(myProject, editor, templates, index + 1);
-            }
-          }.execute());
+          ApplicationManager.getApplication().invokeLater(() -> WriteCommandAction.runWriteCommandAction(myProject, ()->
+              runTemplates(myProject, editor, templates, index + 1)
+          ));
         }
       }
     });
