@@ -202,10 +202,6 @@ public abstract class ChooseByNameBase {
     myInitIsDone = true;
   }
 
-  public void setShowListAfterCompletionKeyStroke(boolean showListAfterCompletionKeyStroke) {
-    myShowListAfterCompletionKeyStroke = showListAfterCompletionKeyStroke;
-  }
-
   public boolean isSearchInAnyPlace() {
     return mySearchInAnyPlace;
   }
@@ -294,9 +290,6 @@ public abstract class ChooseByNameBase {
       }
       else if (PlatformDataKeys.DOMINANT_HINT_AREA_RECTANGLE.is(dataId)) {
         return getBounds();
-      }
-      else if (PlatformDataKeys.SEARCH_INPUT_TEXT.is(dataId)) {
-        return myTextField.getText();
       }
       return null;
     }
@@ -864,14 +857,11 @@ public abstract class ChooseByNameBase {
     JLayeredPane layeredPane;
     final Window window = WindowManager.getInstance().suggestParentWindow(myProject);
 
-    //Component parent = UIUtil.findUltimateParent(window);
-    Component parent= window;
-
-    if (parent instanceof JFrame) {
-      layeredPane = ((JFrame)parent).getLayeredPane();
+    if (window instanceof JFrame) {
+      layeredPane = ((JFrame)window).getLayeredPane();
     }
-    else if (parent instanceof JDialog) {
-      layeredPane = ((JDialog)parent).getLayeredPane();
+    else if (window instanceof JDialog) {
+      layeredPane = ((JDialog)window).getLayeredPane();
     }
     else {
       throw new IllegalStateException("cannot find parent window: project=" + myProject +
@@ -1148,7 +1138,7 @@ public abstract class ChooseByNameBase {
     protected void processKeyEvent(@NotNull KeyEvent e) {
       final KeyStroke keyStroke = KeyStroke.getKeyStrokeForEvent(e);
 
-      if (myCompletionKeyStroke != null && keyStroke.equals(myCompletionKeyStroke)) {
+      if (keyStroke.equals(myCompletionKeyStroke)) {
         completionKeyStrokeHappened = true;
         e.consume();
         final String pattern = getTrimmedText();
@@ -1158,7 +1148,7 @@ public abstract class ChooseByNameBase {
         rebuildList(SelectMostRelevant.INSTANCE, 0, ModalityState.current(), postRunnable);
         return;
       }
-      if (backStroke != null && keyStroke.equals(backStroke)) {
+      if (keyStroke.equals(backStroke)) {
         e.consume();
         if (!myHistory.isEmpty()) {
           final String oldText = getTrimmedText();
@@ -1170,7 +1160,7 @@ public abstract class ChooseByNameBase {
         }
         return;
       }
-      if (forwardStroke != null && keyStroke.equals(forwardStroke)) {
+      if (keyStroke.equals(forwardStroke)) {
         e.consume();
         if (!myFuture.isEmpty()) {
           final String oldText = getTrimmedText();
@@ -1498,7 +1488,7 @@ public abstract class ChooseByNameBase {
   private static class HintLabel extends JLabel {
     private HintLabel(String text) {
       super(text, RIGHT);
-      setForeground(Color.darkGray);
+      setForeground(JBColor.DARK_GRAY);
     }
   }
 
@@ -1545,7 +1535,7 @@ public abstract class ChooseByNameBase {
       PsiElement[] elements = getElements();
       final List<PsiElement> targets = new ArrayList<>();
       final Set<Usage> usages = new LinkedHashSet<>();
-      fillUsages(Arrays.asList(elements), usages, targets, false);
+      fillUsages(Arrays.asList(elements), usages, targets);
       if (myListModel.contains(EXTRA_ELEM)) { //start searching for the rest
         final boolean everywhere = myCheckBox.isSelected();
         final Set<Object> collected = new LinkedHashSet<>();
@@ -1573,7 +1563,7 @@ public abstract class ChooseByNameBase {
               myCalcUsagesThread.addElementsByPattern(text, collected, indicator, everywhere);
 
               indicator.setText("Prepare...");
-              fillUsages(collected, usages, targets, false);
+              fillUsages(collected, usages, targets);
             });
           }
 
@@ -1602,13 +1592,12 @@ public abstract class ChooseByNameBase {
 
     private void fillUsages(Collection<Object> matchElementsArray,
                             Collection<Usage> usages,
-                            List<PsiElement> targets,
-                            final boolean separateGroup) {
+                            List<PsiElement> targets) {
       for (Object o : matchElementsArray) {
         if (o instanceof PsiElement) {
           PsiElement element = (PsiElement)o;
           if (element.getTextRange() != null) {
-            usages.add(new MyUsageInfo2UsageAdapter(element, separateGroup));
+            usages.add(new MyUsageInfo2UsageAdapter(element, false));
           }
           else {
             targets.add(element);
