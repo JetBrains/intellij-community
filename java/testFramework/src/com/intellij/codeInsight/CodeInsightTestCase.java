@@ -136,7 +136,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
 
   protected PsiFile configureByText(@NotNull final FileType fileType, @NotNull final String text, @Nullable String _extension) {
     try {
-      final String extension = _extension == null ? fileType.getDefaultExtension():_extension;
+      final String extension = _extension == null ? fileType.getDefaultExtension() : _extension;
 
       File dir = createTempDirectory();
       final File tempFile = FileUtil.createTempFile(dir, "tempFile", "." + extension, true);
@@ -151,13 +151,10 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
       }
       final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempFile);
       assert vFile != null;
-      new WriteAction() {
-        @Override
-        protected void run(@NotNull Result result) throws Throwable {
-          vFile.setCharset(CharsetToolkit.UTF8_CHARSET);
-          VfsUtil.saveText(vFile, text);
-        }
-      }.execute();
+      WriteAction.runAndWait(() -> {
+        vFile.setCharset(CharsetToolkit.UTF8_CHARSET);
+        VfsUtil.saveText(vFile, text);
+      });
 
       final VirtualFile vdir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
 

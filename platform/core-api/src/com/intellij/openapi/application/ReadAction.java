@@ -32,12 +32,19 @@ public abstract class ReadAction<T> extends BaseActionRunnable<T> {
   }
 
   /**
-   * @deprecated use {@link #run(ThrowableRunnable)}, {@link #run(Result)} or {@link #compute(ThrowableComputable)} instead
+   * @deprecated use {@link #run(ThrowableRunnable)} or {@link #compute(ThrowableComputable)} instead
    */
   @Deprecated
   public static AccessToken start() {
     return ApplicationManager.getApplication().acquireReadActionLock();
   }
+
+  /**
+   * @deprecated use {@link #run(ThrowableRunnable)} or {@link #compute(ThrowableComputable)} instead
+   */
+  @Deprecated
+  @Override
+  protected abstract void run(@NotNull Result<T> result) throws Throwable;
 
   public static <E extends Throwable> void run(@NotNull ThrowableRunnable<E> action) throws E {
     compute(() -> {action.run(); return null; });

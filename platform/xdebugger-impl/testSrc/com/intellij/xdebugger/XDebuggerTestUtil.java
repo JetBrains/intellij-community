@@ -79,20 +79,12 @@ public class XDebuggerTestUtil {
   public static <P extends XBreakpointProperties> XBreakpoint<P> insertBreakpoint(final Project project,
                                                                                   final P properties,
                                                                                   final Class<? extends XBreakpointType<XBreakpoint<P>, P>> typeClass) {
-    return new WriteAction<XBreakpoint<P>>() {
-      protected void run(@NotNull final Result<XBreakpoint<P>> result) {
-        result.setResult(XDebuggerManager.getInstance(project).getBreakpointManager().addBreakpoint(
-          XBreakpointType.EXTENSION_POINT_NAME.findExtension(typeClass), properties));
-      }
-    }.execute().getResultObject();
+    return WriteAction.computeAndWait(() -> XDebuggerManager.getInstance(project).getBreakpointManager().addBreakpoint(
+      XBreakpointType.EXTENSION_POINT_NAME.findExtension(typeClass), properties));
   }
 
   public static void removeBreakpoint(final Project project, final XBreakpoint<?> breakpoint) {
-    new WriteAction() {
-      protected void run(@NotNull final Result result) {
-        XDebuggerManager.getInstance(project).getBreakpointManager().removeBreakpoint(breakpoint);
-      }
-    }.execute();
+    WriteAction.runAndWait(() -> XDebuggerManager.getInstance(project).getBreakpointManager().removeBreakpoint(breakpoint));
   }
 
   public static void assertPosition(XSourcePosition pos, VirtualFile file, int line) throws IOException {
@@ -420,11 +412,7 @@ public class XDebuggerTestUtil {
 
   @NotNull
   public static String getConsoleText(final @NotNull ConsoleViewImpl consoleView) {
-    new WriteAction() {
-      protected void run(@NotNull Result result) {
-        consoleView.flushDeferredText();
-      }
-    }.execute();
+    WriteAction.runAndWait(() -> consoleView.flushDeferredText());
 
     return consoleView.getEditor().getDocument().getText();
   }
@@ -435,12 +423,10 @@ public class XDebuggerTestUtil {
     XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
     Ref<XBreakpoint> breakpoint = Ref.create(null);
     XBreakpointUtil.breakpointTypes().select(exceptionType).findFirst().ifPresent(type ->
-      new WriteAction() {
-        @Override
-        protected void run(@NotNull Result result) {
-          breakpoint.set(breakpointManager.addBreakpoint(type, properties));
-        }
-      }.execute()
+                                                                                    WriteAction.runAndWait(()->
+          breakpoint.set(breakpointManager.addBreakpoint(type, properties))
+                                                                                    )
+      
     );
     return breakpoint.get();
   }
@@ -449,12 +435,7 @@ public class XDebuggerTestUtil {
     final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
     XBreakpoint<?>[] breakpoints = getBreakpoints(breakpointManager);
     for (final XBreakpoint b : breakpoints) {
-      new WriteAction() {
-        @Override
-        protected void run(@NotNull Result result) {
-          breakpointManager.removeBreakpoint(b);
-        }
-      }.execute();
+      WriteAction.runAndWait(() -> breakpointManager.removeBreakpoint(b));
     }
   }
 
@@ -479,12 +460,7 @@ public class XDebuggerTestUtil {
         final XLineBreakpoint lineBreakpoint = (XLineBreakpoint)breakpoint;
 
         if (lineBreakpoint.getLine() == line) {
-          new WriteAction() {
-            @Override
-            protected void run(@NotNull Result result) {
-              lineBreakpoint.setCondition(condition);
-            }
-          }.execute();
+          WriteAction.runAndWait(() -> lineBreakpoint.setCondition(condition));
         }
       }
     }
@@ -497,26 +473,21 @@ public class XDebuggerTestUtil {
         final XLineBreakpoint lineBreakpoint = (XLineBreakpoint)breakpoint;
 
         if (lineBreakpoint.getLine() == line) {
-          new WriteAction() {
-            @Override
-            protected void run(@NotNull Result result) {
-              lineBreakpoint.setLogExpression(logExpression);
-              lineBreakpoint.setLogMessage(true);
-            }
-          }.execute();
+          WriteAction.runAndWait(() -> {
+            lineBreakpoint.setLogExpression(logExpression);
+            lineBreakpoint.setLogMessage(true);
+          });
         }
       }
     }
   }
 
   public static void disposeDebugSession(final XDebugSession debugSession) {
-    new WriteAction() {
-      protected void run(@NotNull Result result) {
-        XDebugSessionImpl session = (XDebugSessionImpl)debugSession;
-        Disposer.dispose(session.getSessionTab());
-        Disposer.dispose(session.getConsoleView());
-      }
-    }.execute();
+    WriteAction.runAndWait(() -> {
+      XDebugSessionImpl session = (XDebugSessionImpl)debugSession;
+      Disposer.dispose(session.getSessionTab());
+      Disposer.dispose(session.getConsoleView());
+    });
   }
 
   public static void assertVariable(Pair<XValue, String> varAndErrorMessage,

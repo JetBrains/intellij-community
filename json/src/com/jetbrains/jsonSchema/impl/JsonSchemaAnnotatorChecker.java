@@ -374,7 +374,7 @@ class JsonSchemaAnnotatorChecker {
         list.addAll(variants);
       }
     }
-    return list.isEmpty() ? NO_TYPES : list.toArray(new JsonSchemaType[0]);
+    return list.isEmpty() ? NO_TYPES : list.toArray(NO_TYPES);
   }
 
   public static boolean areSchemaTypesCompatible(@NotNull final JsonSchemaObject schema, @NotNull final JsonSchemaType type) {

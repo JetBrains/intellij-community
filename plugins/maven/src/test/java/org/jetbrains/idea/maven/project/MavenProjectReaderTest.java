@@ -32,6 +32,7 @@ import org.jetbrains.idea.maven.MavenTestCase;
 import org.jetbrains.idea.maven.model.*;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -239,19 +240,16 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertEquals("name", p.getName());
   }
 
-  public void testDefaults() {
-    VirtualFile file = new WriteAction<VirtualFile>() {
-      @Override
-      protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
-        VirtualFile res = myProjectRoot.createChildData(this, "pom.xml");
-        result.setResult(res);
-        VfsUtil.saveText(res, "<project>" +
-                               "  <groupId>test</groupId>" +
-                               "  <artifactId>project</artifactId>" +
-                               "  <version>1</version>" +
-                               "</project>");
-      }
-    }.execute().getResultObject();
+  public void testDefaults() throws IOException {
+    VirtualFile file = WriteAction.compute(() -> {
+      VirtualFile res = myProjectRoot.createChildData(this, "pom.xml");
+      VfsUtil.saveText(res, "<project>" +
+                            "  <groupId>test</groupId>" +
+                            "  <artifactId>project</artifactId>" +
+                            "  <version>1</version>" +
+                            "</project>");
+      return res;
+    });
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     MavenModel p = readProject(file);
 
@@ -304,55 +302,52 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertEquals("1", id.getVersion());
   }
 
-  public void testCustomSettings() {
-    VirtualFile file = new WriteAction<VirtualFile>() {
-      @Override
-      protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
-        VirtualFile res = myProjectRoot.createChildData(this, "pom.xml");
-        result.setResult(res);
-        VfsUtil.saveText(res, "<project>" +
-                               "  <modelVersion>1.2.3</modelVersion>" +
-                               "  <groupId>test</groupId>" +
-                               "  <artifactId>project</artifactId>" +
-                               "  <version>1</version>" +
-                               "  <name>foo</name>" +
-                               "  <packaging>pom</packaging>" +
+  public void testCustomSettings() throws IOException {
+    VirtualFile file = WriteAction.compute(() -> {
+      VirtualFile res = myProjectRoot.createChildData(this, "pom.xml");
+      VfsUtil.saveText(res, "<project>" +
+                            "  <modelVersion>1.2.3</modelVersion>" +
+                            "  <groupId>test</groupId>" +
+                            "  <artifactId>project</artifactId>" +
+                            "  <version>1</version>" +
+                            "  <name>foo</name>" +
+                            "  <packaging>pom</packaging>" +
 
-                               "  <parent>" +
-                               "    <groupId>testParent</groupId>" +
-                               "    <artifactId>projectParent</artifactId>" +
-                               "    <version>2</version>" +
-                               "    <relativePath>../parent/pom.xml</relativePath>" +
-                               "  </parent>" +
+                            "  <parent>" +
+                            "    <groupId>testParent</groupId>" +
+                            "    <artifactId>projectParent</artifactId>" +
+                            "    <version>2</version>" +
+                            "    <relativePath>../parent/pom.xml</relativePath>" +
+                            "  </parent>" +
 
-                               "  <build>" +
-                               "    <finalName>xxx</finalName>" +
-                               "    <defaultGoal>someGoal</defaultGoal>" +
-                               "    <sourceDirectory>mySrc</sourceDirectory>" +
-                               "    <testSourceDirectory>myTestSrc</testSourceDirectory>" +
-                               "    <scriptSourceDirectory>myScriptSrc</scriptSourceDirectory>" +
-                               "    <resources>" +
-                               "      <resource>" +
-                               "        <directory>myRes</directory>" +
-                               "        <filtering>true</filtering>" +
-                               "        <targetPath>dir</targetPath>" +
-                               "        <includes><include>**.properties</include></includes>" +
-                               "        <excludes><exclude>**.xml</exclude></excludes>" +
-                               "      </resource>" +
-                               "    </resources>" +
-                               "    <testResources>" +
-                               "      <testResource>" +
-                               "        <directory>myTestRes</directory>" +
-                               "        <includes><include>**.properties</include></includes>" +
-                               "      </testResource>" +
-                               "    </testResources>" +
-                               "    <directory>myOutput</directory>" +
-                               "    <outputDirectory>myClasses</outputDirectory>" +
-                               "    <testOutputDirectory>myTestClasses</testOutputDirectory>" +
-                               "  </build>" +
-                               "</project>");
-      }
-    }.execute().getResultObject();
+                            "  <build>" +
+                            "    <finalName>xxx</finalName>" +
+                            "    <defaultGoal>someGoal</defaultGoal>" +
+                            "    <sourceDirectory>mySrc</sourceDirectory>" +
+                            "    <testSourceDirectory>myTestSrc</testSourceDirectory>" +
+                            "    <scriptSourceDirectory>myScriptSrc</scriptSourceDirectory>" +
+                            "    <resources>" +
+                            "      <resource>" +
+                            "        <directory>myRes</directory>" +
+                            "        <filtering>true</filtering>" +
+                            "        <targetPath>dir</targetPath>" +
+                            "        <includes><include>**.properties</include></includes>" +
+                            "        <excludes><exclude>**.xml</exclude></excludes>" +
+                            "      </resource>" +
+                            "    </resources>" +
+                            "    <testResources>" +
+                            "      <testResource>" +
+                            "        <directory>myTestRes</directory>" +
+                            "        <includes><include>**.properties</include></includes>" +
+                            "      </testResource>" +
+                            "    </testResources>" +
+                            "    <directory>myOutput</directory>" +
+                            "    <outputDirectory>myClasses</outputDirectory>" +
+                            "    <testOutputDirectory>myTestClasses</testOutputDirectory>" +
+                            "  </build>" +
+                            "</project>");
+      return res;
+    });
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     MavenModel p = readProject(file);
 

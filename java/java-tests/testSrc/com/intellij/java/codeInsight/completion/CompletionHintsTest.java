@@ -917,6 +917,16 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     assertTrue(doc.contains("<code>null</code> if there is no property with that key"));
   }
 
+  public void testHighlightingOfHintsOnMultipleLines() throws Exception {
+    configureJava("class C { void m() { System.setPro<caret> } }");
+    complete("setProperty");
+    next();
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER);
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { void m() { System.setProperty(<Hint text=\"key:\"/>, \n" +
+                          "        <HINT text=\"value:\"/><caret>) } }");
+  }
+
   private void checkResultWithInlays(String text) {
     myFixture.checkResultWithInlays(text);
   }

@@ -20,7 +20,6 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImportListener;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
@@ -73,30 +72,24 @@ public class GradleProjectOpenProcessorTest extends GradleImportingTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    new WriteAction() {
-      @Override
-      protected void run(@NotNull Result result) {
-        for (Sdk sdk : ProjectJdkTable.getInstance().getAllJdks()) {
-          if (GRADLE_JDK_NAME.equals(sdk.getName())) continue;
-          ProjectJdkTable.getInstance().removeJdk(sdk);
-          removedSdks.add(sdk);
-        }
+    WriteAction.runAndWait(() -> {
+      for (Sdk sdk : ProjectJdkTable.getInstance().getAllJdks()) {
+        if (GRADLE_JDK_NAME.equals(sdk.getName())) continue;
+        ProjectJdkTable.getInstance().removeJdk(sdk);
+        removedSdks.add(sdk);
       }
-    }.execute();
+    });
   }
 
   @Override
   public void tearDown() throws Exception {
     try {
-      new WriteAction() {
-        @Override
-        protected void run(@NotNull Result result) {
-          for (Sdk sdk : removedSdks) {
-            SdkConfigurationUtil.addSdk(sdk);
-          }
-          removedSdks.clear();
+      WriteAction.runAndWait(() -> {
+        for (Sdk sdk : removedSdks) {
+          SdkConfigurationUtil.addSdk(sdk);
         }
-      }.execute();
+        removedSdks.clear();
+      });
     }
     finally {
       super.tearDown();

@@ -26,6 +26,10 @@ import org.jetbrains.annotations.NotNull;
 /** Use {@link WriteAction} */
 @Deprecated
 public abstract class ActionRunner {
+  /**
+   * @deprecated use {@link WriteAction#run(ThrowableRunnable)} or {@link WriteAction#compute(ThrowableComputable)} instead
+   */
+  @Deprecated
   public static  void runInsideWriteAction(@NotNull final InterruptibleRunnable runnable) throws Exception {
     RunResult result = new WriteAction() {
       @Override
@@ -37,6 +41,9 @@ public abstract class ActionRunner {
     result.throwException();
   }
 
+  /**
+   * @deprecated use {@link WriteAction#run(ThrowableRunnable)} or {@link WriteAction#compute(ThrowableComputable)} instead
+   */
   @Deprecated
   public static <T> T runInsideWriteAction(@NotNull final InterruptibleRunnableWithResult<T> runnable) throws Exception {
     RunResult<T> result = new WriteAction<T>() {
@@ -49,6 +56,9 @@ public abstract class ActionRunner {
     return result.throwException().getResultObject();
   }
 
+  /**
+   * @deprecated use {@link com.intellij.openapi.application.ReadAction#run(ThrowableRunnable)} or {@link com.intellij.openapi.application.ReadAction#compute(ThrowableComputable)} instead
+   */
   @Deprecated
   public static void runInsideReadAction(@NotNull final InterruptibleRunnable runnable) throws Exception {
     ApplicationManager.getApplication().runReadAction(new ThrowableComputable<Void, Exception>() {

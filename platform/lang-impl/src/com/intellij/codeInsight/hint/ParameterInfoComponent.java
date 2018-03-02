@@ -369,7 +369,7 @@ public class ParameterInfoComponent extends JPanel {
 
         String before = escapeString(hr == null ? line : line.substring(0, hr.getStartOffset()), escapeFunction);
         String in = hr == null ? "" : escapeString(hr.substring(line), escapeFunction);
-        String after = hr == null ? "" : escapeString(line.substring(hr.getEndOffset(), line.length()), escapeFunction);
+        String after = hr == null ? "" : escapeString(line.substring(hr.getEndOffset()), escapeFunction);
 
         TextRange escapedHighlightingRange = in.isEmpty() ? null : TextRange.create(before.length(), before.length() + in.length());
         buf.append(myOneLineComponents[i].setup(before + in + after, isDisabled, strikeout, background, escapedHighlightingRange));

@@ -487,7 +487,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
       int index = fileAndLineNumber.lastIndexOf(':');
       if (index != -1) {
         String fileName = fileAndLineNumber.substring(0, index);
-        String lineNumberStr = fileAndLineNumber.substring(index + 1, fileAndLineNumber.length()).trim();
+        String lineNumberStr = fileAndLineNumber.substring(index + 1).trim();
         try {
           int line = Integer.parseInt(lineNumberStr);
 

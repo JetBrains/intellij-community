@@ -40,25 +40,14 @@ public class TestDiscoveryDataSocketListener {
     myPort = myServer.getLocalPort();
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      Socket socket;
-      while (true) {
-        if (myClosed) {
-          return;
-        }
-        try {
-          socket = myServer.accept();
-          if (socket != null) {
-            break;
-          }
-        }
-        catch (IOException e) {
-          LOG.error(e);
-          return;
-        }
-        TimeoutUtil.sleep(10);
+      if (myClosed) {
+        return;
       }
-
+      Socket socket = null;
       try {
+        socket = myServer.accept();
+        socket.setReceiveBufferSize(1024 * 1024);
+        socket.setTcpNoDelay(true);
         InputStream testDataStream = socket.getInputStream();
         IdeaTestDiscoveryProtocolReader protocolReader = new IdeaTestDiscoveryProtocolReader(myTestDiscoveryIndex, myModuleName,
                                                                                              myFrameworkId);
@@ -71,7 +60,9 @@ public class TestDiscoveryDataSocketListener {
         }
       } finally {
         try {
-          socket.close();
+          if (socket != null) {
+            socket.close();
+          }
         }
         catch (IOException e) {
           LOG.error(e);

@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.actions;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -52,7 +51,13 @@ public class TestFileStructure {
 
   @NotNull
   public PsiFile addTestFile(@NotNull String name, @NotNull String content) {
-    PsiFile createdFile = createFile(myModule, myCurrentLevelDirectory.getVirtualFile(), name, content);
+    PsiFile createdFile = null;
+    try {
+      createdFile = createFile(myModule, myCurrentLevelDirectory.getVirtualFile(), name, content);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
     getCurrentDirectoryFiles().add(createdFile);
     return createdFile;
   }
@@ -80,22 +85,19 @@ public class TestFileStructure {
     return myFilesForLevel.get(level);
   }
 
-  private PsiFile createFile(final Module module, final VirtualFile vDir, final String fileName, final String text) {
-    return new WriteAction<PsiFile>() {
-      @Override
-      protected void run(@NotNull Result<PsiFile> result) throws Throwable {
-        if (!ModuleRootManager.getInstance(module).getFileIndex().isInSourceContent(vDir)) {
-          PsiTestUtil.addSourceContentToRoots(module, vDir);
-        }
-
-        final VirtualFile vFile = vDir.createChildData(vDir, fileName);
-        VfsUtil.saveText(vFile, text);
-        PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-        final PsiFile file = PsiManager.getInstance(myProject).findFile(vFile);
-        assert (file != null);
-        result.setResult(file);
+  private PsiFile createFile(final Module module, final VirtualFile vDir, final String fileName, final String text) throws IOException {
+    return WriteAction.computeAndWait(() -> {
+      if (!ModuleRootManager.getInstance(module).getFileIndex().isInSourceContent(vDir)) {
+        PsiTestUtil.addSourceContentToRoots(module, vDir);
       }
-    }.execute().getResultObject();
+
+      final VirtualFile vFile = vDir.createChildData(vDir, fileName);
+      VfsUtil.saveText(vFile, text);
+      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+      final PsiFile file = PsiManager.getInstance(myProject).findFile(vFile);
+      assert (file != null);
+      return file;
+    });
   }
 
   public static PsiDirectory createDirectory(@NotNull Project project, @NotNull final VirtualFile parent, @NotNull final String name) {

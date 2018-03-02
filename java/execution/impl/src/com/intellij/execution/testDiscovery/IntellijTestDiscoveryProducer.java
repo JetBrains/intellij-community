@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.annotations.SerializedName;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.MultiMap;
@@ -28,6 +29,9 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
                                                      @NotNull String classFQName,
                                                      @NotNull String methodName,
                                                      byte frameworkId) {
+    if (!ApplicationManager.getApplication().isInternal()) {
+      return MultiMap.emptyInstance();
+    }
     String methodFqn = classFQName + "." + methodName;
     RequestBuilder r = HttpRequests.request(INTELLIJ_TEST_DISCOVERY_HOST + "/search/tests/by-method/" + methodFqn);
 

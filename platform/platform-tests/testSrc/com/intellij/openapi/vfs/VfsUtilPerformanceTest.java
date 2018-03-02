@@ -17,7 +17,6 @@ package com.intellij.openapi.vfs;
 
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.concurrency.JobSchedulerImpl;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.progress.ProgressManager;
@@ -46,7 +45,6 @@ import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntHashSet;
-import org.jetbrains.annotations.NotNull;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -75,15 +73,12 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
     assertNotNull(vDir);
     assertTrue(vDir.isDirectory());
 
-    new WriteCommandAction.Simple(null) {
-      @Override
-      protected void run() throws Throwable {
-        for (int i = 0; i < 10_000; i++) {
-          String name = i + ".txt";
-          vDir.createChildData(vDir, name);
-        }
+    WriteAction.runAndWait(() -> {
+      for (int i = 0; i < 10_000; i++) {
+        String name = i + ".txt";
+        vDir.createChildData(vDir, name);
       }
-    }.execute();
+    });
 
     VirtualFile theChild = vDir.findChild("5111.txt");
     assertNotNull(theChild);
@@ -97,14 +92,11 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
       }
     }).assertTiming();
 
-    new WriteCommandAction.Simple(null) {
-      @Override
-      protected void run() throws Throwable {
-        for (VirtualFile file : vDir.getChildren()) {
-          file.delete(this);
-        }
+    WriteAction.runAndWait(() -> {
+      for (VirtualFile file : vDir.getChildren()) {
+        file.delete(this);
       }
-    }.execute().throwException();
+    });
   }
 
   @Test
@@ -283,7 +275,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void PersistentFS_performance_ofManyFilesCreateDelete() {
+  public void PersistentFS_performance_ofManyFilesCreateDelete() throws IOException {
     int N = 30_000;
     List<VFileEvent> events = new ArrayList<>(N);
     VirtualDirectoryImpl temp = createTempFsDirectory();
@@ -327,16 +319,12 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
     );
   }
 
-  private VirtualDirectoryImpl createTempFsDirectory() {
-    VirtualDirectoryImpl temp = new WriteAction<VirtualDirectoryImpl>(){
-      @Override
-      protected void run(@NotNull Result<VirtualDirectoryImpl> result) throws Throwable {
-        result.setResult((VirtualDirectoryImpl)TempFileSystem.getInstance().findFileByPath("/").createChildDirectory(this, "temp"));
-      }
-    }.execute().getResultObject();
+  private VirtualDirectoryImpl createTempFsDirectory() throws IOException {
+    VirtualDirectoryImpl temp = WriteAction.computeAndWait(() ->
+         (VirtualDirectoryImpl)TempFileSystem.getInstance().findFileByPath("/").createChildDirectory(this, "temp"));
     Disposer.register(getTestRootDisposable(), () -> {
       try {
-        WriteAction.run(() -> temp.delete(this));
+        WriteAction.runAndWait(() -> temp.delete(this));
       }
       catch (IOException e) {
         throw new RuntimeException();

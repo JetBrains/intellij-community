@@ -1647,7 +1647,7 @@ public class FileUtil extends FileUtilRt {
       list.add(path.substring(index, nextSeparator));
       index = nextSeparator + 1;
     }
-    list.add(path.substring(index, path.length()));
+    list.add(path.substring(index));
     return list;
   }
 

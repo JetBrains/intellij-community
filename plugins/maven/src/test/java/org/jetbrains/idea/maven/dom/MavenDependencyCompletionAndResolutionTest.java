@@ -17,7 +17,6 @@ package org.jetbrains.idea.maven.dom;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -25,13 +24,13 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.xml.XmlCodeStyleSettings;
 import com.intellij.util.PathUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.dom.intentions.ChooseFileIntentionAction;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -342,11 +341,11 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
     assertCompletionVariants(myProjectPom);
   }
 
-  public void testRemovingExistingProjects() {
+  public void testRemovingExistingProjects() throws IOException {
     final VirtualFile m = createModulePom("m1",
-                                    "<groupId>project-group</groupId>" +
-                                    "<artifactId>m1</artifactId>" +
-                                    "<version>1</version>");
+                                          "<groupId>project-group</groupId>" +
+                                          "<artifactId>m1</artifactId>" +
+                                          "<version>1</version>");
 
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -364,11 +363,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
     assertCompletionVariants(myProjectPom, "m1");
 
     myProjectsManager.listenForExternalChanges();
-    new WriteAction() {
-      protected void run(@NotNull Result result) throws Throwable {
-        m.delete(null);
-      }
-    }.execute();
+    WriteAction.runAndWait(() -> m.delete(null));
 
     waitForReadingCompletion();
 

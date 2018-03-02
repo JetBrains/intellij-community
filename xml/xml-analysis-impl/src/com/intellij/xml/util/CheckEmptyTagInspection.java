@@ -69,7 +69,7 @@ public class CheckEmptyTagInspection extends XmlSuppressableInspectionTool {
            (language.isKindOf(HTMLLanguage.INSTANCE) || language.isKindOf(XHTMLLanguage.INSTANCE)) ||
 
            (language.isKindOf(HTMLLanguage.INSTANCE) &&
-           !HtmlUtil.isSingleHtmlTagL(tagName) &&
+           !HtmlUtil.isSingleHtmlTag(tag, false) &&
            tagName.indexOf(':') == -1 &&
            !XmlExtension.isCollapsible(tag));
   }

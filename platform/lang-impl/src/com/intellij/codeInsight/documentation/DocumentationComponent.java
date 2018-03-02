@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.documentation;
 
@@ -809,7 +809,13 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
         hintSize = new Dimension(width, height);
       } else {
         hintSize = DimensionService.getInstance().getSize(DocumentationManager.NEW_JAVADOC_LOCATION_AND_SIZE, myManager.myProject);
-        hintSize = hintSize != null ? hintSize : MIN_DEFAULT;
+        if (hintSize == null) {
+          hintSize = new Dimension(MIN_DEFAULT);
+        }
+        else {
+          hintSize.width = Math.max(hintSize.width, MIN_DEFAULT.width);
+          hintSize.height = Math.max(hintSize.height, MIN_DEFAULT.height);
+        }
       }
 
       Point location = myHint.getLocationOnScreen();

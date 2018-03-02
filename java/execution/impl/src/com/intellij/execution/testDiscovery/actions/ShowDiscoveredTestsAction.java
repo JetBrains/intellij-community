@@ -1,5 +1,5 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.execution.testDiscovery;
+package com.intellij.execution.testDiscovery.actions;
 
 import com.intellij.codeInsight.actions.FormatChangedTextUtil;
 import com.intellij.codeInsight.navigation.ListBackgroundUpdaterTask;
@@ -9,18 +9,18 @@ import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionUtil;
+import com.intellij.execution.testDiscovery.TestDiscoveryConfigurationProducer;
+import com.intellij.execution.testDiscovery.TestDiscoveryExtension;
+import com.intellij.execution.testDiscovery.TestDiscoveryProducer;
 import com.intellij.find.FindUtil;
 import com.intellij.find.actions.CompositeActiveComponent;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -30,29 +30,26 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vcs.VcsDataKeys;
-import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PsiNavigateUtil;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.JBDimension;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
+import org.jetbrains.uast.*;
 import javax.swing.*;
 import java.awt.event.ActionListener;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -63,24 +60,15 @@ import static com.intellij.openapi.actionSystem.CommonDataKeys.PSI_FILE;
 public class ShowDiscoveredTestsAction extends AnAction {
   @Override
   public void update(AnActionEvent e) {
-    Editor editor = e.getData(EDITOR);
-    PsiFile file = e.getData(PSI_FILE);
-    Project project = e.getProject();
-
-    PsiElement at = file == null || editor == null ? null : file.findElementAt(editor.getCaretModel().getOffset());
-    PsiMethod method = PsiTreeUtil.getParentOfType(at, PsiMethod.class);
-    e.getPresentation().setEnabledAndVisible(method != null && project != null);
+    e.getPresentation().setEnabledAndVisible(Registry.is(TestDiscoveryExtension.TEST_DISCOVERY_REGISTRY_KEY) && e.getProject() != null && findMethodAtCaret(e) != null);
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    Editor editor = e.getRequiredData(EDITOR);
-    PsiFile file = e.getRequiredData(PSI_FILE);
     Project project = e.getProject();
     assert project != null;
 
-    PsiElement at = file.findElementAt(editor.getCaretModel().getOffset());
-    PsiMethod method = PsiTreeUtil.getParentOfType(at, PsiMethod.class);
+    PsiMethod method = findMethodAtCaret(e);
     assert method != null;
 
     Couple<String> couple = getMethodQualifiedName(method);
@@ -90,44 +78,23 @@ public class ShowDiscoveredTestsAction extends AnAction {
     String methodName = couple.second;
     String methodPresentationName = c.getName() + "." + methodName;
 
-    DataContext dataContext = DataManager.getInstance().getDataContext(editor.getContentComponent());
-    showDiscoveredTests(project, dataContext, methodPresentationName, Collections.singletonList(method));
+    DataContext dataContext = DataManager.getInstance().getDataContext(e.getRequiredData(EDITOR).getContentComponent());
+    showDiscoveredTests(project, dataContext, methodPresentationName, method);
   }
 
-  public static class FromChangeList extends AnAction {
-    @Override
-    public void update(AnActionEvent e) {
-      Project project = e.getProject();
-      Change[] changes = e.getData(VcsDataKeys.CHANGES);
-
-      e.getPresentation().setEnabledAndVisible(project != null && changes != null);
-    }
-
-    @Override
-    public void actionPerformed(AnActionEvent e) {
-      Change[] changes = e.getRequiredData(VcsDataKeys.CHANGES);
-      Project project = e.getProject();
-      assert project != null;
-
-      List<PsiMethod> methods = FormatChangedTextUtil.getInstance().getChangedElements(project, changes, file -> {
-        if (file.getFileType() != JavaFileType.INSTANCE) return null;
-        PsiFile psiFile = PsiUtilCore.getPsiFile(project, file);
-
-        Document document = FileDocumentManager.getInstance().getDocument(file);
-        if (document == null) return null;
-        PsiDocumentManager.getInstance(project).commitDocument(document);
-
-        return SyntaxTraverser.psiTraverser(psiFile).filter(PsiMethod.class).toList();
-      });
-
-      showDiscoveredTests(project, e.getDataContext(), "Selected Changes", methods);
-    }
+  @Nullable
+  private static PsiMethod findMethodAtCaret(AnActionEvent e) {
+    Editor editor = e.getData(EDITOR);
+    PsiFile file = e.getData(PSI_FILE);
+    if (editor == null || file == null) return null;
+    UMethod uMethod = UastContextKt.findUElementAt(file, editor.getCaretModel().getOffset(), UMethod.class);
+    return uMethod == null ? null : ObjectUtils.tryCast(uMethod.getJavaPsi(), PsiMethod.class);
   }
 
-  private static void showDiscoveredTests(@NotNull Project project,
-                                          @NotNull DataContext dataContext,
-                                          @NotNull String title,
-                                          @NotNull List<PsiMethod> methods) {
+  static void showDiscoveredTests(@NotNull Project project,
+                                  @NotNull DataContext dataContext,
+                                  @NotNull String title,
+                                  @NotNull PsiMethod... methods) {
     CollectionListModel<PsiElement> model = new CollectionListModel<>();
     final JBList<PsiElement> list = new JBList<>(model);
     //list.setFixedCellHeight();
@@ -202,6 +169,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
 
     JavaPsiFacade javaFacade = JavaPsiFacade.getInstance(project);
     GlobalSearchScope scope = GlobalSearchScope.projectScope(project);
+    //noinspection unchecked
     list.setCellRenderer(renderer);
 
     ListBackgroundUpdaterTask loadTestsTask = new ListBackgroundUpdaterTask(project, "Load tests", renderer.getComparator()) {
@@ -225,7 +193,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
             ((JavaTestConfigurationBase)producer.getConfigurationFactory().createTemplateConfiguration(project)).getTestFrameworkId();
           TestDiscoveryProducer.consumeDiscoveredTests(project, fqn, methodName, frameworkId, (testClass, testMethod) -> {
             PsiMethod psiMethod = ReadAction.compute(() -> {
-              PsiClass cc = testClass == null ? null : javaFacade.findClass(testClass, scope);
+              PsiClass cc = testClass == null ? null : ClassUtil.findPsiClass(PsiManager.getInstance(project), testClass, null, true, scope);
               return cc == null ? null : ArrayUtil.getFirstElement(cc.findMethodsByName(testMethod, false));
             });
             if (psiMethod != null) {
