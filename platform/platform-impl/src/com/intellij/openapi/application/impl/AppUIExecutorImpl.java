@@ -4,6 +4,7 @@ package com.intellij.openapi.application.impl;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -17,12 +18,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
 
 /**
  * @author peter
  */
 class AppUIExecutorImpl implements AppUIExecutor {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.impl.AppUIExecutorImpl");
   private final ModalityState myModality;
   private final Set<Disposable> myDisposables;
   private final ConstrainedExecutor[] myConstraints;
@@ -31,12 +32,17 @@ class AppUIExecutorImpl implements AppUIExecutor {
     this(modality, Collections.emptySet(), new ConstrainedExecutor[]{new ConstrainedExecutor() {
       @Override
       public boolean isCorrectContext() {
-        return ApplicationManager.getApplication().isDispatchThread() && !modality.dominates(ModalityState.current());
+        return ApplicationManager.getApplication().isDispatchThread() && !ModalityState.current().dominates(modality);
       }
 
       @Override
-      public void execute(@NotNull Runnable runnable) {
+      public void doExecute(@NotNull Runnable runnable) {
         ApplicationManager.getApplication().invokeLater(runnable, modality);
+      }
+
+      @Override
+      public String toString() {
+        return "onUiThread(" + modality + ")";
       }
     }});
   }
@@ -59,15 +65,25 @@ class AppUIExecutorImpl implements AppUIExecutor {
   public AppUIExecutor later() {
     Integer edtEventCount = ApplicationManager.getApplication().isDispatchThread() ? IdeEventQueue.getInstance().getEventCount() : null;
     return withConstraint(new ConstrainedExecutor() {
+      volatile boolean usedOnce; 
+      
       @Override
       public boolean isCorrectContext() {
         return edtEventCount == null ? ApplicationManager.getApplication().isDispatchThread()
-                                     : edtEventCount != IdeEventQueue.getInstance().getEventCount();
+                                     : edtEventCount != IdeEventQueue.getInstance().getEventCount() || usedOnce;
       }
 
       @Override
-      public void execute(@NotNull Runnable runnable) {
-        ApplicationManager.getApplication().invokeLater(runnable, myModality);
+      public void doExecute(@NotNull Runnable runnable) {
+        ApplicationManager.getApplication().invokeLater(() -> {
+          usedOnce = true;
+          runnable.run();
+        }, myModality);
+      }
+
+      @Override
+      public String toString() {
+        return "later";
       }
     });
   }
@@ -82,8 +98,13 @@ class AppUIExecutorImpl implements AppUIExecutor {
       }
 
       @Override
-      public void execute(@NotNull Runnable runnable) {
+      public void doExecute(@NotNull Runnable runnable) {
         PsiDocumentManager.getInstance(project).performLaterWhenAllCommitted(runnable, myModality);
+      }
+
+      @Override
+      public String toString() {
+        return "withDocumentsCommitted";
       }
     }).expireWith(project);
   }
@@ -98,8 +119,13 @@ class AppUIExecutorImpl implements AppUIExecutor {
       }
 
       @Override
-      public void execute(@NotNull Runnable runnable) {
+      public void doExecute(@NotNull Runnable runnable) {
         DumbService.getInstance(project).smartInvokeLater(runnable, myModality);
+      }
+
+      @Override
+      public String toString() {
+        return "inSmartMode";
       }
     }).expireWith(project);
   }
@@ -115,8 +141,13 @@ class AppUIExecutorImpl implements AppUIExecutor {
       }
 
       @Override
-      public void execute(@NotNull Runnable runnable) {
+      public void doExecute(@NotNull Runnable runnable) {
         TransactionGuard.getInstance().submitTransaction(parentDisposable, id, runnable);
+      }
+
+      @Override
+      public String toString() {
+        return "inTransaction";
       }
     }).expireWith(parentDisposable);
   }
@@ -150,13 +181,13 @@ class AppUIExecutorImpl implements AppUIExecutor {
       future.whenComplete((v, t) -> children.forEach(Disposer::dispose));
     }
 
-    checkConstraints(runnable, future);
+    checkConstraints(runnable, future, new ArrayList<>());
   }
 
-  private void checkConstraints(@NotNull Runnable runnable, CompletableFuture<Void> future) {
+  private void checkConstraints(@NotNull Runnable runnable, CompletableFuture<Void> future, List<ConstrainedExecutor> log) {
     Application app = ApplicationManager.getApplication();
     if (!app.isDispatchThread()) {
-      app.invokeLater(() -> checkConstraints(runnable, future), myModality);
+      app.invokeLater(() -> checkConstraints(runnable, future, log), myModality);
       return;
     }
     
@@ -164,7 +195,11 @@ class AppUIExecutorImpl implements AppUIExecutor {
 
     for (ConstrainedExecutor constraint : myConstraints) {
       if (!constraint.isCorrectContext()) {
-        constraint.execute(() -> checkConstraints(runnable, future));
+        log.add(constraint);
+        if (log.size() > 1000) {
+          LOG.error("Too many reschedule requests, probably constraints can't be satisfied all together: " + log.subList(100, 120));
+        }
+        constraint.execute(() -> checkConstraints(runnable, future, log));
         return;
       }
     }
@@ -178,7 +213,16 @@ class AppUIExecutorImpl implements AppUIExecutor {
     }
   }
 
-  private interface ConstrainedExecutor extends Executor {
-    boolean isCorrectContext();
+  private abstract static class ConstrainedExecutor {
+    public abstract boolean isCorrectContext();
+    public abstract void doExecute(Runnable r);
+    public abstract String toString();
+
+    void execute(Runnable r) {
+      doExecute(() -> {
+        LOG.assertTrue(isCorrectContext(), this);
+        r.run();
+      });
+    }
   }
 }
