@@ -20,6 +20,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -64,7 +65,7 @@ public class DarculaButtonUI extends BasicButtonUI {
   }
 
   public static boolean isComboButton(JComponent c) {
-    return c instanceof AbstractButton && c.getClientProperty("styleCombo") == Boolean.TRUE;
+    return c instanceof AbstractButton && c.getClientProperty("styleCombo") != null;
   }
 
   /**
@@ -122,7 +123,7 @@ public class DarculaButtonUI extends BasicButtonUI {
   @Override
   public void paint(Graphics g, JComponent c) {
     if (paintDecorations((Graphics2D)g, c)) {
-      super.paint(g, c);
+      paintContents(g, (AbstractButton)c);
     }
   }
 
@@ -203,15 +204,17 @@ public class DarculaButtonUI extends BasicButtonUI {
   }
 
   protected Dimension getDarculaButtonSize(JComponent c, Dimension prefSize) {
-    float bw = DarculaUIUtil.bw();
-
-    Insets i = c.getInsets();
-    int helpDiam = JBUI.scale(HELP_BUTTON_DIAMETER);
-    return UIUtil.isHelpButton(c) ?
-           new Dimension(Math.max(prefSize.width, helpDiam + i.left + i.right),
-                         Math.max(prefSize.height, helpDiam + i.top + i.bottom)):
-           new Dimension(Math.max(prefSize.width, (int)(JBUI.scale(74) + bw * 2)),
-                         Math.max(prefSize.height, (int)(JBUI.scale(26) + bw * 2)));
+    if (isComboButton(c)) {
+      return prefSize;
+    } else {
+      Insets i = c.getInsets();
+      int helpDiam = JBUI.scale(HELP_BUTTON_DIAMETER);
+      return UIUtil.isHelpButton(c) ?
+             new Dimension(Math.max(prefSize.width, helpDiam + i.left + i.right),
+                           Math.max(prefSize.height, helpDiam + i.top + i.bottom)):
+             new Dimension(Math.max(JBUI.scale(26) + prefSize.width, JBUI.scale(72) + i.left + i.right),
+                           Math.max(prefSize.height, JBUI.scale(24) + i.top + i.bottom));
+    }
   }
 
   @Override
@@ -263,14 +266,11 @@ public class DarculaButtonUI extends BasicButtonUI {
       b, fm, text, icon,
       b.getVerticalAlignment(), b.getHorizontalAlignment(),
       b.getVerticalTextPosition(), b.getHorizontalTextPosition(),
-      viewRect, iconRect, textRect, text == null ? 0 : b.getIconTextGap());
+      viewRect, iconRect, textRect,
+      StringUtil.isEmpty(text) || icon == null ? 0 : b.getIconTextGap());
   }
 
   protected void modifyViewRect(AbstractButton b, Rectangle rect) {
     JBInsets.removeFrom(rect, b.getInsets());
-
-    if (isComboButton(b)) {
-      rect.x += 6;
-    }
   }
 }

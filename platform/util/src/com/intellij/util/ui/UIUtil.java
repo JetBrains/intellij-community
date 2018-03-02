@@ -1293,15 +1293,7 @@ public class UIUtil {
   }
 
   public static Color getSeparatorColor() {
-    Color separatorColor = getSeparatorForeground();
-    if (false) {
-      separatorColor = getSeparatorShadow();
-    }
-    //under GTK+ L&F colors set hard
-    if (isUnderGTKLookAndFeel()) {
-      separatorColor = Gray._215;
-    }
-    return separatorColor;
+    return isUnderGTKLookAndFeel() ? Gray._215 : getSeparatorForeground();
   }
 
   public static Border getTableFocusCellHighlightBorder() {

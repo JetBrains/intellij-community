@@ -86,6 +86,6 @@ public abstract class ActionButtonLook {
   }
 
   public Insets getInsets() {
-    return JBUI.emptyInsets();
+    return JBUI.insets(2);
   }
 }

@@ -143,7 +143,7 @@ public class DarculaUIUtil {
   @SuppressWarnings("SuspiciousNameCombination")
   private static void doPaint(Graphics2D g, int width, int height, float arc, boolean symmetric) {
     float bw = UIUtil.isUnderDefaultMacTheme() ? JBUI.scale(3) : bw();
-    float lw = UIUtil.isUnderDefaultMacTheme() ? JBUI.scale(UIUtil.isRetina(g) ? 0.5f : 1.0f) : JBUI.scale(0.5f);
+    float lw = UIUtil.isUnderDefaultMacTheme() ? JBUI.scale(UIUtil.isRetina(g) ? 0.5f : 1.0f) : lw(g);
 
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
@@ -391,8 +391,9 @@ public class DarculaUIUtil {
     }
   }
 
+  @SuppressWarnings("unused")
   public static float lw(Graphics2D g2) {
-    return UIUtil.isJreHiDPI(g2) ? JBUI.scale(0.5f) : 1.0f;
+    return JBUI.scale(1.0f);
   }
 
   public static float bw() {
