@@ -1579,9 +1579,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   /**
-   * @return {@code true} if folders should be placed before files in the same node, {@code false} otherwise
-   * @see ProjectView#isFoldersAlwaysOnTop(String)
-   * @deprecated use the corresponding API method instead
+   * @deprecated use {@link ProjectView#isFoldersAlwaysOnTop(String)} instead
    */
   @Deprecated
   @SuppressWarnings("DeprecatedIsStillUsed")
