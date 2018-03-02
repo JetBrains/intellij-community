@@ -33,6 +33,10 @@
           <option name="issueRegexp" value="Change-Id: (.+)" />
           <option name="linkRegexp" value="http://ag/$1" />
         </IssueNavigationLink>
+        <IssueNavigationLink>
+          <option name="issueRegexp" value="PiperOrigin-RevId: (.+)" />
+          <option name="linkRegexp" value="http://cl/$1" />
+        </IssueNavigationLink>
       </list>
     </option>
   </component>
