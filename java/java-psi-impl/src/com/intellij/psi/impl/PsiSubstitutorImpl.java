@@ -245,7 +245,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
       }
       PsiClassType result = JavaPsiFacade.getElementFactory(aClass.getProject()).createType(aClass, createSubstitutor(hashMap), classType.getLanguageLevel());
       PsiUtil.ensureValidType(result);
-      return result;
+      return result.annotate(classType.getAnnotationProvider());
     }
 
     private PsiType substituteTypeParameter(@NotNull PsiTypeParameter typeParameter) {
