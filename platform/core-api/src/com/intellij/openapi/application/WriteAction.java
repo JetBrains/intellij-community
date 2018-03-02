@@ -17,6 +17,7 @@ package com.intellij.openapi.application;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThrowableRunnable;
@@ -132,6 +133,9 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
   /**
    * Executes {@code action} inside write action.
    * If called from outside the EDT, transfers control to the EDT first, executes write action there and waits for the execution end.
+   * <br/><span color=red>CAUTION</span>: if called from outside EDT, please be aware of possible deadlocks (e.g. when EDT is busy)
+   * or invalid data (e.g. when something is changed during control transferred to EDT and back).
+   * <br/>Instead, please use {@link #run(ThrowableRunnable)}.
    */
   public static <E extends Throwable> void runAndWait(@NotNull ThrowableRunnable<E> action) throws E {
     computeAndWait(()->{
@@ -142,6 +146,9 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
   /**
    * Executes {@code action} inside write action.
    * If called from outside the EDT, transfers control to the EDT first, executes write action there and waits for the execution end.
+   * <br/><span color=red>CAUTION</span>: if called from outside EDT, please be aware of possible deadlocks (e.g. when EDT is busy)
+   * or invalid data (e.g. when something is changed during control transferred to EDT and back).
+   * <br/>Instead, please use {@link #compute(ThrowableComputable)}.
    */
   public static <T, E extends Throwable> T computeAndWait(@NotNull ThrowableComputable<T, E> action) throws E {
     Application application = ApplicationManager.getApplication();
@@ -175,8 +182,8 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
 
     Throwable t = exception.get();
     if (t != null) {
-      if (t instanceof Error) throw (Error)t;
-      if (t instanceof RuntimeException) throw (RuntimeException)t;
+      t.addSuppressed(new RuntimeException()); // preserve the calling thread stacktrace
+      ExceptionUtil.rethrowUnchecked(t);
       //noinspection unchecked
       throw (E)t;
     }
