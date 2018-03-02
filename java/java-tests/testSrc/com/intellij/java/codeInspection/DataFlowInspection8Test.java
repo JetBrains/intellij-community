@@ -222,4 +222,6 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testMapUpdateInlining() { doTestWithCustomAnnotations(); }
 
   public void testOptionalTooComplex() { doTest(); }
+
+  public void testMethodReferenceBoundToNullable() { doTestWithCustomAnnotations(); }
 }

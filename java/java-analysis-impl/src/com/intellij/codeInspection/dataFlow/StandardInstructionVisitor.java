@@ -204,9 +204,10 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     PsiMethod method = ObjectUtils.tryCast(resolveResult.getElement(), PsiMethod.class);
     if (method == null || !ControlFlowAnalyzer.isPure(method)) return;
     List<? extends MethodContract> contracts = ControlFlowAnalyzer.getMethodCallContracts(method, null);
-    if (contracts.isEmpty()) return;
     PsiSubstitutor substitutor = resolveResult.getSubstitutor();
     DfaCallArguments callArguments = getMethodReferenceCallArguments(methodRef, qualifier, runner, sam, method, substitutor);
+    dereference(state, callArguments.myQualifier, NullabilityProblemKind.callMethodRefNPE.problem(methodRef));
+    if (contracts.isEmpty()) return;
     PsiType returnType = substitutor.substitute(method.getReturnType());
     DfaValue defaultResult = runner.getFactory().createTypeValue(returnType, DfaPsiUtil.getElementNullability(returnType, method));
     Stream<DfaValue> returnValues = possibleReturnValues(callArguments, state, contracts, runner.getFactory(), defaultResult);
