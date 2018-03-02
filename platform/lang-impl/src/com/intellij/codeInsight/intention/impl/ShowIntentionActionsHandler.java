@@ -67,7 +67,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     ShowIntentionsPass.IntentionsInfo intentions = new ShowIntentionsPass.IntentionsInfo();
     ShowIntentionsPass.getActionsToShow(editor, file, intentions, -1);
 
-    IntentionsUI.SERVICE.getInstance().hide();
+    IntentionsUI.getInstance(project).hide();
 
     if (HintManagerImpl.getInstanceImpl().performCurrentQuestionAction()) return;
 

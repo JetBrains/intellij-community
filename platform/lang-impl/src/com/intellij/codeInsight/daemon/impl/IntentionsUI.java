@@ -3,15 +3,15 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.intention.impl.CachedIntentions;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 public interface IntentionsUI {
-  class SERVICE {
-    public static IntentionsUI getInstance() {
-      return ServiceManager.getService(IntentionsUI.class);
-    }
+  static IntentionsUI getInstance(Project project) {
+    return ServiceManager.getService(project, IntentionsUI.class);
   }
 
-  void update(CachedIntentions cachedIntentions, boolean actionsChanged);
+  void update(@NotNull CachedIntentions cachedIntentions, boolean actionsChanged);
 
   void hide();
 }

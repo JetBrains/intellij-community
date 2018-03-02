@@ -184,7 +184,7 @@ public class DaemonListeners implements Disposable {
           if (!application.isUnitTestMode()) {
             ApplicationManager.getApplication().invokeLater(() -> {
               if ((editor.getComponent().isShowing() || application.isHeadlessEnvironment()) && !myProject.isDisposed()) {
-                IntentionsUI.SERVICE.getInstance().hide();
+                IntentionsUI.getInstance(myProject).hide();
               }
             }, ModalityState.current());
           }
@@ -237,7 +237,7 @@ public class DaemonListeners implements Disposable {
       @Override
       public void editorReleased(@NotNull EditorFactoryEvent event) {
         // mem leak after closing last editor otherwise
-        UIUtil.invokeLaterIfNeeded(IntentionsUI.SERVICE.getInstance()::hide);
+        UIUtil.invokeLaterIfNeeded(IntentionsUI.getInstance(myProject)::hide);
       }
     };
     editorFactory.addEditorFactoryListener(editorFactoryListener, this);

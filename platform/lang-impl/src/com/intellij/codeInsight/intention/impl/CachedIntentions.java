@@ -84,13 +84,13 @@ public class CachedIntentions {
     return myOffset;
   }
 
-  public static CachedIntentions create(Project project, PsiFile file, Editor editor, @NotNull ShowIntentionsPass.IntentionsInfo intentions) {
+  public static CachedIntentions create(@NotNull Project project, @NotNull PsiFile file, @Nullable Editor editor, @NotNull ShowIntentionsPass.IntentionsInfo intentions) {
     CachedIntentions res = new CachedIntentions(project, file, editor);
     res.wrapAndUpdateActions(intentions, false);
     return res;
   }
 
-  public CachedIntentions(Project project, PsiFile file, Editor editor) {
+  public CachedIntentions(@NotNull Project project, @NotNull PsiFile file, @Nullable Editor editor) {
     myProject = project;
     myFile = file;
     myEditor = editor;

@@ -257,7 +257,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     ApplicationManager.getApplication().assertIsDispatchThread();
     TemplateState state = TemplateManagerImpl.getTemplateState(myEditor);
     if ((state == null || state.isFinished())) {
-      IntentionsUI.SERVICE.getInstance().update(myCachedIntentions, myActionsChanged);
+      IntentionsUI.getInstance(myProject).update(myCachedIntentions, myActionsChanged);
     }
   }
 

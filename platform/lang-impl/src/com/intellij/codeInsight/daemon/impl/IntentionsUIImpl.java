@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
@@ -20,7 +21,7 @@ public class IntentionsUIImpl implements IntentionsUI {
   }
 
   @Override
-  public void update(CachedIntentions cachedIntentions, boolean actionsChanged) {
+  public void update(@NotNull CachedIntentions cachedIntentions, boolean actionsChanged) {
     Editor editor = cachedIntentions.getEditor();
     if (!ApplicationManager.getApplication().isUnitTestMode() && !editor.getContentComponent().hasFocus()) return;
     if (HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(false)) return;
