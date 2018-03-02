@@ -21,6 +21,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.impl.VcsLogManager;
@@ -47,6 +48,16 @@ public class FileHistoryUiFactory implements VcsLogManager.VcsLogUiFactory<FileH
     VirtualFile root = ObjectUtils.assertNotNull(VcsUtil.getVcsRootFor(project, myFilePath));
     return new FileHistoryUi(logData, new VcsLogColorManagerImpl(Collections.singleton(root)), properties,
                              new VisiblePackRefresherImpl(project, logData, PermanentGraph.SortType.Normal,
-                                                          new FileHistoryFilterer(logData, myFilePath, myHash)), myFilePath, myHash);
+                                                          new FileHistoryFilterer(logData, myFilePath, myHash)) {
+                               @Override
+                               public void onRefresh() {
+                                 // this is a hack here:
+                                 // file history for a file does not use non-full data packs
+                                 // so no reason to interrupt it with a new pack
+                                 DataPack pack = logData.getDataPack();
+                                 if (!myFilePath.isDirectory() && pack != DataPack.EMPTY && !pack.isFull()) return;
+                                 super.onRefresh();
+                               }
+                             }, myFilePath, myHash);
   }
 }
