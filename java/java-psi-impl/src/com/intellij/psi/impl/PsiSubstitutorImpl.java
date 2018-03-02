@@ -20,6 +20,7 @@ import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightTypeParameter;
+import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
@@ -154,6 +155,23 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
     return PsiType.getJavaLangObject(typeParameter.getManager(), typeParameter.getResolveScope());
   }
 
+  @NotNull
+  private static TypeAnnotationProvider getMergedProvider(@NotNull PsiType type1, @NotNull PsiType type2) {
+    if(type1.getAnnotationProvider() == TypeAnnotationProvider.EMPTY && !(type1 instanceof PsiClassReferenceType)) {
+      return type2.getAnnotationProvider();
+    }
+    if(type2.getAnnotationProvider() == TypeAnnotationProvider.EMPTY && !(type2 instanceof PsiClassReferenceType)) {
+      return type1.getAnnotationProvider();
+    }
+    return new TypeAnnotationProvider() {
+      @NotNull
+      @Override
+      public PsiAnnotation[] getAnnotations() {
+        return ArrayUtil.mergeArrays(type1.getAnnotations(), type2.getAnnotations());
+      }
+    };
+  }
+
   private class SubstitutionVisitor extends PsiTypeMapper {
 
     @Override
@@ -214,13 +232,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
           if (result != null) {
             PsiUtil.ensureValidType(result);
             if (result instanceof PsiClassType || result instanceof PsiArrayType || result instanceof PsiWildcardType) {
-              return result.annotate(new TypeAnnotationProvider() {
-                @NotNull
-                @Override
-                public PsiAnnotation[] getAnnotations() {
-                  return ArrayUtil.mergeArrays(result.getAnnotations(), classType.getAnnotations());
-                }
-              });
+              return result.annotate(getMergedProvider(classType, result));
             }
           }
           return result;
