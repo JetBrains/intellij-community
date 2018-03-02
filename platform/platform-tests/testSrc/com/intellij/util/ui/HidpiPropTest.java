@@ -2,12 +2,9 @@
 package com.intellij.util.ui;
 
 import com.intellij.idea.StartupUtil;
-import com.intellij.util.MethodInvocator;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SystemProperties;
 import org.junit.*;
 
-import javax.swing.*;
 import java.awt.*;
 
 /**
@@ -28,9 +25,7 @@ public class HidpiPropTest {
   @Before
   public void setState() {
     TestScaleHelper.setProperty(HIDPI_PROP, "false");
-    MethodInvocator m = new MethodInvocator(StartupUtil.class, "checkHiDPISettings");
-    Assume.assumeTrue("StartupUtil.checkHiDPISettings method not available", m.isAvailable());
-    m.invoke(null);
+    StartupUtil.test_checkHiDPISettings();
   }
 
   @After

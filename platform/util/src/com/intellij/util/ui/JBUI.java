@@ -207,7 +207,7 @@ public class JBUI {
     @NotNull
     @Override
     public Float initialize() {
-      if (SystemProperties.has("hidpi") && !SystemProperties.is("hidpi")) {
+      if (!SystemProperties.getBooleanProperty("hidpi", true)) {
         return 1f;
       }
       if (UIUtil.isJreHiDPIEnabled()) {
@@ -421,7 +421,7 @@ public class JBUI {
       return debugScale;
     }
 
-    if (SystemProperties.has("hidpi") && !SystemProperties.is("hidpi")) {
+    if (!SystemProperties.getBooleanProperty("hidpi", true)) {
       setUserScaleFactorProperty(1f);
       return 1f;
     }
