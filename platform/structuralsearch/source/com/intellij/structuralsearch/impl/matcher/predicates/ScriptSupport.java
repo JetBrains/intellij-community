@@ -83,7 +83,7 @@ public class ScriptSupport {
       final HashMap<String, Object> variableMap = new HashMap<>();
       variableMap.put(ScriptLog.SCRIPT_LOG_VAR_NAME, myScriptLog);
       if (result != null) {
-        buildVariableMap(result, variableMap);
+        buildVariableMap(result.getRoot(), variableMap);
         if (context == null) {
           context = result.getMatch();
         }
