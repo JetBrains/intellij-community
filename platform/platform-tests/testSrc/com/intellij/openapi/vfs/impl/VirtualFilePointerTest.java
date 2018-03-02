@@ -690,14 +690,11 @@ public class VirtualFilePointerTest extends PlatformTestCase {
         // ptr is now null, cached as map
 
         VirtualFile v = PlatformTestUtil.notNull(LocalFileSystem.getInstance().findFileByIoFile(ioSandPtr));
-        new WriteCommandAction.Simple(getProject()) {
-          @Override
-          protected void run() throws Throwable {
-            v.delete(this); //inc FS modCount
-            VirtualFile file = PlatformTestUtil.notNull(LocalFileSystem.getInstance().findFileByIoFile(ioSand));
-            file.createChildData(this, ioSandPtr.getName());
-          }
-        }.execute().throwException();
+        WriteCommandAction.writeCommandAction(getProject()).run(() -> {
+          v.delete(this); //inc FS modCount
+          VirtualFile file = PlatformTestUtil.notNull(LocalFileSystem.getInstance().findFileByIoFile(ioSand));
+          file.createChildData(this, ioSandPtr.getName());
+        });
 
         // ptr is still null
 
@@ -1048,5 +1045,26 @@ public class VirtualFilePointerTest extends PlatformTestCase {
 
     createChildData(deep, "1");
     assertEquals("[before:true, after:true]", listener.getLog().toString());
+  }
+
+  public void testNotQuiteCanonicalPath() throws Exception {
+    final File dir = createTempDirectory();
+    VirtualFile vDir = LocalFileSystem.getInstance().findFileByIoFile(dir);
+    assertNotNull(vDir);
+    VirtualFile deep = createChildDirectory(vDir, "deep");
+    VirtualFile file = createChildData(deep, "x..txt");
+    VirtualFilePointer ptr = myVirtualFilePointerManager.create(file, disposable, null);
+    assertTrue(ptr.isValid());
+    assertTrue(ptr.getUrl(), ptr.getUrl().contains(".."));
+
+    VirtualFile existing = createChildData(vDir, "existing.txt");
+    assertNotNull(existing);
+    VirtualFilePointer ptr2 = myVirtualFilePointerManager.create(deep.getUrl()+"/../existing.txt", disposable, null);
+    assertTrue(ptr2.isValid());
+    assertFalse(ptr2.getUrl(), ptr2.getUrl().contains(".."));
+
+    VirtualFilePointer ptr3 = myVirtualFilePointerManager.create(deep.getUrl()+"/../madeup.txt", disposable, null);
+    assertFalse(ptr3.isValid());
+    assertTrue(ptr3.getUrl(), ptr3.getUrl().contains(".."));
   }
 }
