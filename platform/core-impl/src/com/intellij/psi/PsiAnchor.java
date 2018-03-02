@@ -160,7 +160,7 @@ public abstract class PsiAnchor {
 
     StubElement liveStub = psi instanceof StubBasedPsiElementBase ? ((StubBasedPsiElementBase)psi).getGreenStub() : psi.getStub();
     if (liveStub != null) {
-      return ((StubBase)liveStub).id;
+      return ((StubBase)liveStub).getStubId();
     }
 
     return ((PsiFileImpl)psi.getContainingFile()).calcTreeElement().getStubbedSpine().getStubIndex(psi);

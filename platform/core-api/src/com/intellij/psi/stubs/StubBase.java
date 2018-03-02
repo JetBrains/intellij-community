@@ -227,4 +227,14 @@ public abstract class StubBase<T extends PsiElement> extends ObjectStubBase<Stub
   public String toString() {
     return getClass().getSimpleName();
   }
+
+  /**
+   * @return comparison result (as in {@link Comparable}) of this stub with {@code another},
+   * where "a<b" means that "a" occurs before "b" in the deep-first traversal of the stub tree,
+   * and the same holds for their AST equivalents.
+   */
+  public int compareByOrderWith(ObjectStubBase<?> another) {
+    return Integer.compare(getStubId(), another.getStubId());
+  }
+
 }
