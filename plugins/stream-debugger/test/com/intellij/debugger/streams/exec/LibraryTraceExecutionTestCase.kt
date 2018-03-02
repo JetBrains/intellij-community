@@ -1,7 +1,6 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.streams.exec
 
-import com.intellij.debugger.impl.OutputChecker
 import com.intellij.debugger.streams.test.TraceExecutionTestCase
 import com.intellij.execution.configurations.JavaParameters
 import com.intellij.openapi.application.ApplicationManager
@@ -23,12 +22,9 @@ abstract class LibraryTraceExecutionTestCase(private val jarName: String) : Trac
     }
   }
 
-  override fun initOutputChecker(): OutputChecker {
-    return object : OutputChecker(testAppPath, appOutputPath) {
-      override fun replaceAdditionalInOutput(str: String): String {
-        return str.replaceFirst("$libraryDirectory/$jarName", "!LIBRARY_JAR!")
-      }
-    }
+  override fun replaceAdditionalInOutput(str: String): String {
+    return super.replaceAdditionalInOutput(str)
+      .replaceFirst("$libraryDirectory/$jarName", "!LIBRARY_JAR!")
   }
 
   override fun createJavaParameters(mainClass: String?): JavaParameters {
