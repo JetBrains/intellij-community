@@ -55,7 +55,8 @@ class BuildUtils {
         classLoader.addURL(new File(path).toURI().toURL())
       }
       else {
-        throw new BuildException("Cannot add to classpath: non-groovy or ant classloader $classLoader")
+        ant.project.log("Cannot add to classpath: non-groovy or ant classloader $classLoader")
+//        throw new BuildException("Cannot add to classpath: non-groovy or ant classloader $classLoader")
       }
       ant.project.log("'$path' added to classpath", Project.MSG_INFO)
     }
