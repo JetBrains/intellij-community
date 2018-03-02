@@ -388,9 +388,14 @@ public class UIUtil {
     return isJreHiDPIEnabled() && JBUI.isHiDPI(JBUI.sysScale(ctx));
   }
 
-  // accessed from com.intellij.util.ui.TestScaleHelper via reflect
   private static final AtomicReference<Boolean> jreHiDPI = new AtomicReference<Boolean>();
   private static volatile boolean jreHiDPI_earlierVersion;
+
+  @TestOnly
+  public static final AtomicReference<Boolean> test_jreHiDPI() {
+    if (jreHiDPI.get() == null) isJreHiDPIEnabled(); // force init
+    return jreHiDPI;
+  }
 
   /**
    * Returns whether the JRE-managed HiDPI mode is enabled.
@@ -405,7 +410,7 @@ public class UIUtil {
       if (jreHiDPI.get() != null) return jreHiDPI.get();
 
       jreHiDPI.set(false);
-      if (SystemProperties.has("hidpi") && !SystemProperties.is("hidpi")) {
+      if (!SystemProperties.getBooleanProperty("hidpi", true)) {
         return false;
       }
       jreHiDPI_earlierVersion = true;

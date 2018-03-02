@@ -375,7 +375,7 @@ public class JBUI {
    * ide.ui.scale=[float]
    */
   public static void setUserScaleFactor(float scale) {
-    if (SystemProperties.has("hidpi") && !SystemProperties.is("hidpi")) {
+    if (!SystemProperties.getBooleanProperty("hidpi", true)) {
       setUserScaleFactorProperty(1.0f);
       return;
     }
