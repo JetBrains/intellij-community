@@ -872,7 +872,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     private MyPsiTreeChangeListener(PsiModificationTracker modTracker, Runnable onChange) {
       this.modTracker = modTracker;
       this.onChange = onChange;
-      prevModCount = modTracker.getOutOfCodeBlockModificationCount();
+      prevModCount = modTracker.getModificationCount();
     }
 
     @Override
