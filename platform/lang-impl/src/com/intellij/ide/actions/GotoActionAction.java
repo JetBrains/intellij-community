@@ -44,12 +44,12 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Random;
 import java.util.Set;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
 public class GotoActionAction extends GotoActionBase implements DumbAware {
-
   @Override
   public void gotoActionPerformed(@NotNull final AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
@@ -86,6 +86,9 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
       oldPopup.close(false);
     }
     final Disposable disposable = Disposer.newDisposable();
+    ShortcutSet altEnterShortcutSet = getActiveKeymapShortcuts(IdeActions.ACTION_SHOW_INTENTION_ACTIONS);
+    KeymapManager km = KeymapManager.getInstance();
+    Keymap activeKeymap = km != null ? km.getActiveKeymap() : null;
     final ChooseByNamePopup popup = new ChooseByNamePopup(project, model, new GotoActionItemProvider(model), oldPopup, initialText, false, initialIndex) {
       private boolean myPaintInternalInfo;
 
@@ -121,6 +124,18 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
               if (mv.value instanceof BooleanOptionDescription ||
                   mv.value instanceof GotoActionModel.ActionWrapper && ((GotoActionModel.ActionWrapper)mv.value).getAction() instanceof ToggleAction) {
                 return "Press " + KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)) + " to toggle option";
+              }
+
+              if (altEnterShortcutSet.getShortcuts().length > 0 && mv.value instanceof GotoActionModel.ActionWrapper && activeKeymap != null) {
+                GotoActionModel.ActionWrapper aw = (GotoActionModel.ActionWrapper)mv.value;
+                if (aw.isAvailable()) {
+                  String actionId = ActionManager.getInstance().getId(aw.getAction());
+                  boolean actionWithoutShortcuts = activeKeymap.getShortcuts(actionId).length == 0;
+                  if (actionWithoutShortcuts && new Random().nextInt(2) > 0) {
+                    String altEnter = KeymapUtil.getFirstKeyboardShortcutText(altEnterShortcutSet);
+                    return "Press " + altEnter + " to assign a shortcut for the selected action";
+                  }
+                }
               }
             }
             return getAdText();
@@ -217,26 +232,20 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
       }
     });
 
-    ShortcutSet shortcutSet = getActiveKeymapShortcuts(IdeActions.ACTION_SHOW_INTENTION_ACTIONS);
     DumbAwareAction.create(e -> {
       Object o = popup.getChosenElement();
-      if (o instanceof GotoActionModel.MatchedValue) {
+      if (o instanceof GotoActionModel.MatchedValue && activeKeymap != null) {
         Comparable value = ((GotoActionModel.MatchedValue)o).value;
         if (value instanceof GotoActionModel.ActionWrapper) {
           GotoActionModel.ActionWrapper aw = (GotoActionModel.ActionWrapper)value;
-          boolean available = aw.isAvailable();
-          if (available) {
-            AnAction action = aw.getAction();
-            String id = ActionManager.getInstance().getId(action);
-            KeymapManager km = KeymapManager.getInstance();
-            Keymap k = km != null ? km.getActiveKeymap() : null;
-            if (k == null) return;
-            KeymapPanel.addKeyboardShortcut(id, ActionShortcutRestrictions.getInstance().getForActionId(id), k, component);
+          if (aw.isAvailable()) {
+            String id = ActionManager.getInstance().getId(aw.getAction());
+            KeymapPanel.addKeyboardShortcut(id, ActionShortcutRestrictions.getInstance().getForActionId(id), activeKeymap, component);
             popup.repaintListImmediate();
           }
         }
       }
-    }).registerCustomShortcutSet(shortcutSet, popup.getTextField(), disposable);
+    }).registerCustomShortcutSet(altEnterShortcutSet, popup.getTextField(), disposable);
     return popup;
   }
 
