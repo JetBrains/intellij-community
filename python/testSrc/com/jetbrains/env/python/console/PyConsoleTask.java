@@ -21,7 +21,10 @@ import com.intellij.execution.console.LanguageConsoleView;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Disposer;
@@ -171,7 +174,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
     }
 
     if (myConsoleView != null) {
-      WriteAction.run(() -> {
+      WriteAction.runAndWait(() -> {
         Disposer.dispose(myConsoleView);
         myConsoleView = null;
       });
