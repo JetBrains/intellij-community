@@ -46,6 +46,11 @@ public abstract class RunAnythingGroup {
 
   /**
    * Gets current group items to add into the main list.
+   *
+   * @param listModel main list model
+   * @param pattern   input search string
+   * @param check     checks 'load more' calculation process to be cancelled
+   * @param isMore    limits group items to get by a constant group specific value
    */
   protected abstract SearchResult getItems(@NotNull Project project,
                                            @Nullable Module module,
@@ -55,7 +60,7 @@ public abstract class RunAnythingGroup {
                                            @NotNull Runnable check);
 
   /**
-   * Defines whether this group should be shown with empty input or not.
+   * @return Defines whether this group should be shown with empty input or not.
    */
   public boolean isRecent() {
     return false;
@@ -63,6 +68,11 @@ public abstract class RunAnythingGroup {
 
   /**
    * Adds current group matched items into the list.
+   *
+   * @param listModel  main list model
+   * @param pattern    input search string
+   * @param check      checks 'load more' calculation process to be cancelled
+   * @param isCanceled computes if 'load more' calculation process has already cancelled
    */
   public final synchronized void buildToList(@NotNull Project project,
                                              @Nullable Module module,
@@ -90,6 +100,12 @@ public abstract class RunAnythingGroup {
   /**
    * Adds limited number of matched items into the list.
    *
+   * @param listModel   main list model
+   * @param pattern     input search string
+   * @param result      collection items to be added to
+   * @param isMore      limits group items to get by a constant group specific value
+   * @param textToMatch an item presentation text to be matched with
+   *
    * @return true if limit exceeded
    */
   boolean addToList(@NotNull RunAnythingSearchListModel listModel,
@@ -110,6 +126,11 @@ public abstract class RunAnythingGroup {
 
   /**
    * Gets all current group matched items if its visibility turned on and empty collection otherwise
+   *
+   * @param listModel main list model
+   * @param pattern   input search string
+   * @param check     checks 'load more' calculation process to be cancelled
+   * @param isMore    limits group items to get by a constant group specific value
    */
   public SearchResult getAllItems(@NotNull Project project,
                                   @Nullable Module module,
