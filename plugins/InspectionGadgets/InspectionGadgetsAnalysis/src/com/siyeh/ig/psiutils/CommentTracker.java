@@ -111,15 +111,8 @@ public class CommentTracker {
   public void deleteAndRestoreComments(@NotNull PsiElement element) {
     grabCommentsOnDelete(element);
     PsiElement anchor = element;
-    if (element instanceof PsiVariable) {
-      anchor = element.getParent();
-    }
-    else if ((element.getParent() instanceof PsiJavaCodeReferenceElement &&
-              ((PsiJavaCodeReferenceElement)element.getParent()).getQualifier() == element)) {
-      anchor = element.getParent();
-      if (anchor.getParent() instanceof PsiMethodCallExpression) {
-        anchor = anchor.getParent();
-      }
+    while (anchor.getParent() != null && anchor.getParent().getFirstChild() == anchor) {
+      anchor = anchor.getParent();
     }
     insertCommentsBefore(anchor);
     element.delete();
