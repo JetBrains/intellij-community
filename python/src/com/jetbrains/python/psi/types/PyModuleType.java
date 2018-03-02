@@ -116,7 +116,13 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
                                                     @NotNull Processor<List<? extends RatedResolveResult>> resultProcessor) {
     final List<PyImportElement> importElements = new ArrayList<>();
     final PyFile module = PyUtil.as(PyUtil.turnDirIntoInit(anchor), PyFile.class);
-
+    if (anchor.getVirtualFile() == null) {
+      return;
+    }
+    final PsiElement footHold = location != null ? location.getContainingFile() : module;
+    if (footHold == null) {
+      return;
+    }
     final PyImportElement origImportElement = importedModule != null ? importedModule.getImportElement() : null;
     if (importedModule != null && (location == null || !inSameFile(location, importedModule))) {
       if (origImportElement != null) {
@@ -139,50 +145,75 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
         }
       }
     }
-    else {
+
+    if (importElements.isEmpty()) {
       return;
     }
 
-    if (anchor.getVirtualFile() == null) {
-      return;
-    }
-    final PsiElement footHold = location != null ? location.getContainingFile() : module;
-
-    if (footHold == null) {
-      return;
-    }
-
-    final List<QualifiedName> myQnames = QualifiedNameFinder.findImportableQNames(footHold, anchor.getVirtualFile());
     final Set<String> seen = Sets.newHashSet();
+    if (!processImplicitlyImportedByImportElements(anchor, footHold,
+                                                   importElements, name -> filter.test(name) && seen.add(name),
+                                                   resultProcessor)) {
+      return;
+    }
+
+    if (location != null) {
+      processImplicitlyImportedByLocation(anchor, location,
+                                          name -> filter.test(name) && seen.add(name),
+                                          resultProcessor);
+    }
+  }
+
+  private static boolean processImplicitlyImportedByImportElements(@NotNull PsiFileSystemItem anchor,
+                                                                   @NotNull PsiElement footHold,
+                                                                   @NotNull List<PyImportElement> importElements,
+                                                                   @NotNull Predicate<String> filter,
+                                                                   @NotNull Processor<List<? extends RatedResolveResult>> resultProcessor) {
+    final PyFile module = PyUtil.as(PyUtil.turnDirIntoInit(anchor), PyFile.class);
+    final List<QualifiedName> packageQNames = QualifiedNameFinder.findImportableQNames(footHold, anchor.getVirtualFile());
     for (PyImportElement importElement : importElements) {
-      for (QualifiedName packageQName : myQnames) {
-        for (QualifiedName importedQname : getImportedQNames(importElement)) {
-          final String directChild = findFirstComponentAfterPrefix(importedQname, packageQName);
-          if (directChild != null && seen.add(directChild) && filter.test(directChild)) {
+      for (QualifiedName packageQName : packageQNames) {
+        for (QualifiedName importedQName : getImportedQNames(importElement)) {
+          final String directChild = findFirstComponentAfterPrefix(importedQName, packageQName);
+          if (directChild != null && filter.test(directChild)) {
             final List<RatedResolveResult> results =
               ResolveImportUtil.resolveChildren(anchor, directChild, module, true, true, false, false);
             if (!resultProcessor.process(ResolveResultList.asImportedResults(results, importElement))) {
-              return;
+              return false;
             }
           }
         }
       }
     }
+    return true;
+  }
 
-    final List<QualifiedName> locationQnames;
-    if (location != null && location.getContainingFile().getVirtualFile() != null) {
-      locationQnames = QualifiedNameFinder.findImportableQNames(location, location.getContainingFile().getVirtualFile());
+  private static void processImplicitlyImportedByLocation(@NotNull PsiFileSystemItem anchor,
+                                                          @NotNull PsiElement location,
+                                                          @NotNull Predicate<String> filter,
+                                                          @NotNull Processor<List<? extends RatedResolveResult>> resultProcessor) {
+
+    if (location.getContainingFile().getVirtualFile() == null) {
+      return;
     }
-    else {
-      locationQnames = Collections.emptyList();
+    final ScopeOwner owner = ScopeUtil.getScopeOwner(location);
+    if (owner == null) {
+      return;
     }
-    for (QualifiedName locationQname : locationQnames) {
-      for (QualifiedName packageQName : myQnames) {
-        final String directChild = findFirstComponentAfterPrefix(locationQname, packageQName);
-        if (directChild != null && seen.add(directChild) && filter.test(directChild)) {
-          final QualifiedName mainPackage = QualifiedName.fromComponents(locationQname.getFirstComponent());
+
+    final List<PyImportElement> visibleImports = getVisibleImports(owner);
+    final PyFile module = PyUtil.as(PyUtil.turnDirIntoInit(anchor), PyFile.class);
+    final List<QualifiedName> packageQNames =
+      QualifiedNameFinder.findImportableQNames(location.getContainingFile(), anchor.getVirtualFile());
+    final List<QualifiedName> locationQNames =
+      QualifiedNameFinder.findImportableQNames(location, location.getContainingFile().getVirtualFile());
+    for (QualifiedName locationQName : locationQNames) {
+      for (QualifiedName packageQName : packageQNames) {
+        final String directChild = findFirstComponentAfterPrefix(locationQName, packageQName);
+        if (directChild != null && filter.test(directChild)) {
+          final QualifiedName mainPackage = QualifiedName.fromComponents(locationQName.getFirstComponent());
           final PyImportElement packageImportElement =
-            importElements.stream().filter(el -> getImportedQNames(el).stream().anyMatch(qname -> qname.matchesPrefix(mainPackage)))
+            visibleImports.stream().filter(el -> getImportedQNames(el).stream().anyMatch(qName -> qName.matchesPrefix(mainPackage)))
                           .findFirst().orElse(null);
 
           if (packageImportElement != null) {
@@ -197,7 +228,8 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
     }
   }
 
-  private static String findFirstComponentAfterPrefix(QualifiedName qualifiedName, QualifiedName prefix) {
+  private static @Nullable
+  String findFirstComponentAfterPrefix(@NotNull QualifiedName qualifiedName, @NotNull QualifiedName prefix) {
     if (qualifiedName.matchesPrefix(prefix) && qualifiedName.getComponentCount() > prefix.getComponentCount()) {
       return qualifiedName.removeHead(prefix.getComponentCount()).getFirstComponent();
     }
