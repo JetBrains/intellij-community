@@ -66,10 +66,9 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
   @NotNull protected VisiblePack myVisiblePack;
 
   public AbstractVcsLogUi(@NotNull VcsLogData logData,
-                          @NotNull Project project,
                           @NotNull VcsLogColorManager manager,
                           @NotNull VisiblePackRefresher refresher) {
-    myProject = project;
+    myProject = logData.getProject();
     myLogData = logData;
     myRefresher = refresher;
     myColorManager = manager;

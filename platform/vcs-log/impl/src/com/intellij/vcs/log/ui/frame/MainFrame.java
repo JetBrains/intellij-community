@@ -71,7 +71,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
   public MainFrame(@NotNull VcsLogData logData,
                    @NotNull VcsLogUiImpl ui,
-                   @NotNull Project project,
                    @NotNull MainVcsLogUiProperties uiProperties,
                    @NotNull VcsLog log,
                    @NotNull VisiblePack initialDataPack) {
@@ -95,7 +94,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       }
     };
 
-    myChangesBrowser = new VcsLogChangesBrowser(project, myUiProperties, (commitId) -> {
+    myChangesBrowser = new VcsLogChangesBrowser(logData.getProject(), myUiProperties, (commitId) -> {
       int index = myLogData.getCommitIndex(commitId.getHash(), commitId.getRoot());
       return myLogData.getMiniDetailsGetter().getCommitData(index, Collections.singleton(index));
     }, this);

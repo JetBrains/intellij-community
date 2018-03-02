@@ -32,13 +32,12 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
   @NotNull private final VcsLogUiPropertiesImpl.MainVcsLogUiPropertiesListener myPropertiesListener;
 
   public VcsLogUiImpl(@NotNull VcsLogData logData,
-                      @NotNull Project project,
                       @NotNull VcsLogColorManager manager,
                       @NotNull MainVcsLogUiProperties uiProperties,
                       @NotNull VisiblePackRefresher refresher) {
-    super(logData, project, manager, refresher);
+    super(logData, manager, refresher);
     myUiProperties = uiProperties;
-    myMainFrame = new MainFrame(logData, this, project, uiProperties, myLog, myVisiblePack);
+    myMainFrame = new MainFrame(logData, this, uiProperties, myLog, myVisiblePack);
 
     for (VcsLogHighlighterFactory factory : Extensions.getExtensions(LOG_HIGHLIGHTER_FACTORY_EP, myProject)) {
       getTable().addHighlighter(factory.createHighlighter(logData, this));

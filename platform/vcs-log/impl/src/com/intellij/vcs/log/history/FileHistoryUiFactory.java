@@ -39,8 +39,8 @@ public class FileHistoryUiFactory implements VcsLogManager.VcsLogUiFactory<FileH
   @Override
   public FileHistoryUi createLogUi(@NotNull Project project, @NotNull VcsLogData logData, @NotNull VcsLogColorManager colorManager) {
     FileHistoryUiProperties properties = ServiceManager.getService(project, FileHistoryUiProperties.class);
-    return new FileHistoryUi(logData, project, colorManager, properties,
+    return new FileHistoryUi(logData, colorManager, properties,
                              new VisiblePackRefresherImpl(project, logData, PermanentGraph.SortType.Normal,
-                                                    new FileHistoryFilterer(logData, myFilePath, myHash)), myFilePath, myHash);
+                                                          new FileHistoryFilterer(logData, myFilePath, myHash)), myFilePath, myHash);
   }
 }

@@ -17,7 +17,6 @@ package com.intellij.vcs.log.history;
 
 import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
@@ -73,13 +72,12 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   @NotNull private final MyPropertiesChangeListener myPropertiesChangeListener;
 
   public FileHistoryUi(@NotNull VcsLogData logData,
-                       @NotNull Project project,
                        @NotNull VcsLogColorManager manager,
                        @NotNull FileHistoryUiProperties uiProperties,
                        @NotNull VisiblePackRefresher refresher,
                        @NotNull FilePath path,
                        @Nullable Hash revision) {
-    super(logData, project, manager, refresher);
+    super(logData, manager, refresher);
     myUiProperties = uiProperties;
 
     myIndexDataGetter = ObjectUtils.assertNotNull(logData.getIndex().getDataGetter());
