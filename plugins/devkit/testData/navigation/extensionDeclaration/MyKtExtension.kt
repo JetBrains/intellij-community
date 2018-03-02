@@ -1,0 +1,3 @@
+class My<caret>KtExtension {
+
+}
