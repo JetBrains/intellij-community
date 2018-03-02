@@ -106,6 +106,7 @@ iml_project(
         "//tools/adt/idea/jps-plugin:android-jps-plugin",
         "//tools/adt/idea/kotlin-integration:kotlin-integration-tests",
         "//tools/adt/idea/layoutlib",
+        "//tools/adt/idea/native-symbolizer",
         "//tools/adt/idea/observable",
         "//tools/adt/idea/observable-demo",
         "//tools/adt/idea/observable-ui",
