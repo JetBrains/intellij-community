@@ -29,9 +29,8 @@ public abstract class ReflectionAccessorBase<T extends ItemToReplaceDescriptor> 
   @Override
   public void accessThroughReflection(@NotNull PsiElement element) {
     List<T> toReplace = findItemsToReplace(element);
-    int order = 1;
     for (T item : toReplace) {
-      grantAccess(item, order++);
+      grantAccess(item);
     }
 
     List<T> remaining = findItemsToReplace(element);
@@ -52,5 +51,5 @@ public abstract class ReflectionAccessorBase<T extends ItemToReplaceDescriptor> 
 
   protected abstract List<T> findItemsToReplace(@NotNull PsiElement element);
 
-  protected abstract void grantAccess(@NotNull T descriptor, int order);
+  protected abstract void grantAccess(@NotNull T descriptor);
 }

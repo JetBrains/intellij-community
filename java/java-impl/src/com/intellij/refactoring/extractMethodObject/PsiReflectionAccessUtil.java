@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethodObject;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -67,5 +68,19 @@ public class PsiReflectionAccessUtil {
   @Contract(pure = true)
   public static String classForName(@NotNull String typeName) {
     return TypeConversionUtil.isPrimitive(typeName) ? typeName + ".class" : "java.lang.Class.forName(\"" + typeName + "\")";
+  }
+
+  @NotNull
+  public static String getUniqueMethodName(@NotNull PsiClass psiClass, @NotNull String prefix) {
+    if (!StringUtil.isJavaIdentifier(prefix)) throw new IllegalArgumentException("prefix must be a correct java identifier: " + prefix);
+    int i = 1;
+    String name;
+    do {
+      name = prefix + i;
+      i++;
+    }
+    while (psiClass.findMethodsByName(name, false).length != 0);
+
+    return name;
   }
 }

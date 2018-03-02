@@ -13,9 +13,11 @@ import org.jetbrains.annotations.Nullable;
  */
 public class MethodReferenceReflectionAccessor
   extends ReferenceReflectionAccessorBase<MethodReferenceReflectionAccessor.MethodReferenceDescriptor> {
+  private final MethodReflectionAccessor myMethodAccessor;
   public MethodReferenceReflectionAccessor(@NotNull PsiClass psiClass,
                                            @NotNull PsiElementFactory elementFactory) {
     super(psiClass, elementFactory);
+    myMethodAccessor = new MethodReflectionAccessor(psiClass, elementFactory);
   }
 
   @Nullable
@@ -35,11 +37,17 @@ public class MethodReferenceReflectionAccessor
   }
 
   @Override
-  protected void grantAccess(@NotNull MethodReferenceDescriptor descriptor, int order) {
-    MethodReflectionAccessor methodAccessor = new MethodReflectionAccessor(getOuterClass(), getElementFactory());
+  protected void grantAccess(@NotNull MethodReferenceDescriptor descriptor) {
     PsiLambdaExpression lambda = LambdaRefactoringUtil.convertMethodReferenceToLambda(descriptor.expression, false, true);
     if (lambda != null) {
-      methodAccessor.accessThroughReflection(lambda);
+      PsiElement lambdaBody = lambda.getBody();
+      if (lambdaBody instanceof PsiMethodCallExpression) {
+        PsiMethodCallExpression callExpression = (PsiMethodCallExpression)lambdaBody;
+        PsiMethod method = callExpression.resolveMethod();
+        if (method != null) {
+          myMethodAccessor.grantAccess(new MethodReflectionAccessor.MethodCallDescriptor(callExpression, method));
+        }
+      }
     }
   }
 

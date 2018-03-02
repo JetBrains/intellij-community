@@ -20,7 +20,7 @@ import java.util.List;
 public class ReflectionAccessMethodBuilder {
   private boolean myIsStatic = false;
   private String myReturnType = "void";
-  private String myName;
+  private final String myName;
   private MyMemberAccessor myMemberAccessor;
   private final List<ParameterInfo> myParameters = new SmartList<>();
 
@@ -73,11 +73,6 @@ public class ReflectionAccessMethodBuilder {
   }
 
   private void checkRequirements() {
-  }
-
-  public ReflectionAccessMethodBuilder setName(@NotNull String name) {
-    myName = name;
-    return this;
   }
 
   public ReflectionAccessMethodBuilder accessedMethod(@NotNull String jvmClassName, @NotNull String methodName) {

@@ -2,6 +2,7 @@
 package com.intellij.refactoring.extractMethodObject.reflect;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.refactoring.extractMethodObject.ItemToReplaceDescriptor;
@@ -44,7 +45,7 @@ public class MethodReflectionAccessor extends ReflectionAccessorBase<MethodRefle
   }
 
   @Override
-  protected void grantAccess(@NotNull MethodCallDescriptor descriptor, int order) {
+  protected void grantAccess(@NotNull MethodCallDescriptor descriptor) {
     PsiClass outerClass = getOuterClass();
     String returnType = PsiReflectionAccessUtil.getAccessibleReturnType(descriptor.method.getReturnType());
     PsiClass containingClass = descriptor.method.getContainingClass();
@@ -60,7 +61,8 @@ public class MethodReflectionAccessor extends ReflectionAccessorBase<MethodRefle
       return;
     }
 
-    ReflectionAccessMethodBuilder methodBuilder = new ReflectionAccessMethodBuilder(descriptor.method.getName() + "ReflectionCall" + order);
+    String newMethodName = PsiReflectionAccessUtil.getUniqueMethodName(outerClass, "call" + StringUtil.capitalize(name));
+    ReflectionAccessMethodBuilder methodBuilder = new ReflectionAccessMethodBuilder(newMethodName);
     PsiMethod newMethod = methodBuilder.accessedMethod(containingClassName, descriptor.method.getName())
                                        .setStatic(outerClass.hasModifierProperty(PsiModifier.STATIC))
                                        .addParameter("java.lang.Object", "object")

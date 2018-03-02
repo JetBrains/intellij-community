@@ -53,7 +53,7 @@ public class ConstructorReflectionAccessor extends ReflectionAccessorBase<Constr
   }
 
   @Override
-  protected void grantAccess(@NotNull ConstructorDescriptor descriptor, int order) {
+  protected void grantAccess(@NotNull ConstructorDescriptor descriptor) {
     String className = ClassUtil.getJVMClassName(descriptor.psiClass);
     String returnType = PsiReflectionAccessUtil.getAccessibleReturnType(descriptor.psiClass);
     PsiExpressionList argumentList = descriptor.newExpression.getArgumentList();
@@ -61,7 +61,9 @@ public class ConstructorReflectionAccessor extends ReflectionAccessorBase<Constr
       LOG.debug("expression is incomplete");
       return;
     }
-    ReflectionAccessMethodBuilder methodBuilder = new ReflectionAccessMethodBuilder("reflectionConstructorAccess" + order);
+
+    String methodName = PsiReflectionAccessUtil.getUniqueMethodName(getOuterClass(), "new" + className);
+    ReflectionAccessMethodBuilder methodBuilder = new ReflectionAccessMethodBuilder(methodName);
     methodBuilder.accessedConstructor(className)
                  .setStatic(getOuterClass().hasModifierProperty(PsiModifier.STATIC))
                  .setReturnType(returnType);

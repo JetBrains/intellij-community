@@ -2,6 +2,7 @@
 package com.intellij.refactoring.extractMethodObject.reflect;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.refactoring.extractMethodObject.ItemToReplaceDescriptor;
@@ -28,7 +29,8 @@ public class FieldReflectionAccessor extends ReferenceReflectionAccessorBase<Fie
     final PsiElement resolved = expression.resolve();
     if (resolved instanceof PsiField) {
       final PsiField field = (PsiField)resolved;
-      if (!Objects.equals(field.getContainingClass(), getOuterClass()) && needReplace(field)) {
+      String name = field.getName();
+      if (name != null && !Objects.equals(field.getContainingClass(), getOuterClass()) && needReplace(field)) {
         return new FieldDescriptor(field, expression);
       }
     }
@@ -37,20 +39,20 @@ public class FieldReflectionAccessor extends ReferenceReflectionAccessorBase<Fie
   }
 
   @Override
-  protected void grantAccess(@NotNull FieldDescriptor descriptor, int order) {
+  protected void grantAccess(@NotNull FieldDescriptor descriptor) {
     PsiElement parent = descriptor.expression.getParent();
     if (parent instanceof PsiAssignmentExpression &&
         Objects.equals(descriptor.expression, ((PsiAssignmentExpression)parent).getLExpression())) {
-      grantUpdateAccess((PsiAssignmentExpression)parent, descriptor, order);
+      grantUpdateAccess((PsiAssignmentExpression)parent, descriptor);
     }
     else {
-      grantReadAccess(descriptor, order);
+      grantReadAccess(descriptor);
     }
   }
 
-  private void grantReadAccess(@NotNull FieldDescriptor descriptor, int order) {
+  private void grantReadAccess(@NotNull FieldDescriptor descriptor) {
     PsiClass outerClass = getOuterClass();
-    PsiMethod newMethod = createPsiMethod(descriptor, order, FieldAccessType.GET);
+    PsiMethod newMethod = createPsiMethod(descriptor, FieldAccessType.GET);
     if (newMethod == null) return;
 
     outerClass.add(newMethod);
@@ -60,9 +62,9 @@ public class FieldReflectionAccessor extends ReferenceReflectionAccessorBase<Fie
     descriptor.expression.replace(getElementFactory().createExpressionFromText(methodCall, descriptor.expression));
   }
 
-  private void grantUpdateAccess(@NotNull PsiAssignmentExpression assignmentExpression, @NotNull FieldDescriptor descriptor, int order) {
+  private void grantUpdateAccess(@NotNull PsiAssignmentExpression assignmentExpression, @NotNull FieldDescriptor descriptor) {
     PsiClass outerClass = getOuterClass();
-    PsiMethod newMethod = createPsiMethod(descriptor, order, FieldAccessType.SET);
+    PsiMethod newMethod = createPsiMethod(descriptor, FieldAccessType.SET);
     if (newMethod == null) return;
 
     outerClass.add(newMethod);
@@ -82,7 +84,7 @@ public class FieldReflectionAccessor extends ReferenceReflectionAccessorBase<Fie
   }
 
   @Nullable
-  private PsiMethod createPsiMethod(@NotNull FieldDescriptor descriptor, int order, FieldAccessType accessType) {
+  private PsiMethod createPsiMethod(@NotNull FieldDescriptor descriptor, FieldAccessType accessType) {
     PsiClass outerClass = getOuterClass();
     PsiClass containingClass = descriptor.field.getContainingClass();
     String returnType = PsiReflectionAccessUtil.getAccessibleReturnType(descriptor.field.getType());
@@ -97,7 +99,8 @@ public class FieldReflectionAccessor extends ReferenceReflectionAccessorBase<Fie
       return null;
     }
 
-    ReflectionAccessMethodBuilder methodBuilder = new ReflectionAccessMethodBuilder("reflectionFieldAccess" + order);
+    String methodName = PsiReflectionAccessUtil.getUniqueMethodName(outerClass, "accessToField" + StringUtil.capitalize(fieldName));
+    ReflectionAccessMethodBuilder methodBuilder = new ReflectionAccessMethodBuilder(methodName);
     if (FieldAccessType.GET.equals(accessType)) {
       methodBuilder.accessedField(className, fieldName)
                    .setReturnType(returnType);
