@@ -8,6 +8,12 @@ if test -f ~/.config/fish/config.fish
   . ~/.config/fish/config.fish
 end
 
+if test -d ~/.config/fish/functions
+  for f in ~/.config/fish/functions/*.fish
+    source $f
+  end
+end
+
 if test -n "$JEDITERM_USER_RCFILE"
   . "$JEDITERM_USER_RCFILE"
   set -e JEDITERM_USER_RCFILE
