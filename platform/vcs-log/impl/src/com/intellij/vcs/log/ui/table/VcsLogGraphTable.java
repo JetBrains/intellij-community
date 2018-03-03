@@ -142,7 +142,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     setIntercellSpacing(JBUI.emptySize());
     setTableHeader(new InvisibleResizableHeader());
 
-    myController = new GraphTableController(this, ui, logData, graphCellPainter, myGraphCommitCellRenderer);
+    myController = new GraphTableController(logData, myColorManager, myProperties, this, graphCellPainter, myGraphCommitCellRenderer);
 
     getSelectionModel().addListSelectionListener(e -> mySelection = null);
     getColumnModel().setColumnSelectionAllowed(false);
