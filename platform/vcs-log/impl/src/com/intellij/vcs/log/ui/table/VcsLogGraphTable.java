@@ -103,9 +103,10 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   public static final String LOADING_COMMITS_TEXT = "Loading commits...";
   public static final String CHANGES_LOG_TEXT = "Changes log";
 
-  @NotNull private final AbstractVcsLogUi myUi;
-  @NotNull private final VcsLogUiProperties myProperties;
   @NotNull private final VcsLogData myLogData;
+  @NotNull private final VcsLogUiProperties myProperties;
+  @NotNull private final VcsLogColorManager myColorManager;
+  @NotNull private final AbstractVcsLogUi myUi;
   @NotNull private final MyDummyTableCellEditor myDummyEditor = new MyDummyTableCellEditor();
   @NotNull private final TableCellRenderer myDummyRenderer = new MyDefaultTableCellRenderer();
   @NotNull private final GraphCommitCellRenderer myGraphCommitCellRenderer;
@@ -123,6 +124,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     super(new GraphTableModel(initialDataPack, logData, ui));
     myLogData = logData;
     myProperties = ui.getProperties();
+    myColorManager = ui.getColorManager();
     myUi = ui;
     GraphCellPainter graphCellPainter = new SimpleGraphCellPainter(new DefaultColorGenerator()) {
       @Override
@@ -395,7 +397,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   private void setRootColumnSize() {
     TableColumn column = getColumnByModelIndex(ROOT_COLUMN);
     int rootWidth;
-    if (!myUi.isMultipleRoots()) {
+    if (!myColorManager.isMultipleRoots()) {
       rootWidth = 0;
     }
     else if (!isShowRootNames()) {
@@ -654,8 +656,8 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     if (lastRow >= 0) {
       g.setColor(getStyle(lastRow, convertColumnIndexToView(COMMIT_COLUMN), hasFocus(), false).getBackground());
       g.fillRect(x, y, width, height);
-      if (myUi.isMultipleRoots()) {
-        g.setColor(getRootBackgroundColor(getModel().getRoot(lastRow), myUi.getColorManager()));
+      if (myColorManager.isMultipleRoots()) {
+        g.setColor(getRootBackgroundColor(getModel().getRoot(lastRow), myColorManager));
 
         int rootWidth = getColumnByModelIndex(ROOT_COLUMN).getWidth();
         if (!isShowRootNames()) rootWidth -= JBUI.scale(ROOT_INDICATOR_WHITE_WIDTH);
