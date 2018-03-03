@@ -104,6 +104,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   public static final String CHANGES_LOG_TEXT = "Changes log";
 
   @NotNull private final AbstractVcsLogUi myUi;
+  @NotNull private final VcsLogUiProperties myProperties;
   @NotNull private final VcsLogData myLogData;
   @NotNull private final MyDummyTableCellEditor myDummyEditor = new MyDummyTableCellEditor();
   @NotNull private final TableCellRenderer myDummyRenderer = new MyDefaultTableCellRenderer();
@@ -120,8 +121,9 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
                           @NotNull VcsLogData logData,
                           @NotNull VisiblePack initialDataPack) {
     super(new GraphTableModel(initialDataPack, logData, ui));
-    myUi = ui;
     myLogData = logData;
+    myProperties = ui.getProperties();
+    myUi = ui;
     GraphCellPainter graphCellPainter = new SimpleGraphCellPainter(new DefaultColorGenerator()) {
       @Override
       protected int getRowHeight() {
@@ -160,7 +162,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   }
 
   protected void initColumns() {
-    setColumnModel(new MyTableColumnModel(myUi.getProperties()));
+    setColumnModel(new MyTableColumnModel(myProperties));
     createDefaultColumnsFromModel();
     setAutoCreateColumnsFromModel(false); // otherwise sizes are recalculated after each TableColumn re-initialization
     onColumnOrderSettingChanged();
@@ -220,8 +222,8 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   }
 
   public void onColumnOrderSettingChanged() {
-    if (myUi.getProperties().exists(CommonUiProperties.COLUMN_ORDER)) {
-      List<Integer> columnOrder = myUi.getProperties().get(CommonUiProperties.COLUMN_ORDER);
+    if (myProperties.exists(CommonUiProperties.COLUMN_ORDER)) {
+      List<Integer> columnOrder = myProperties.get(CommonUiProperties.COLUMN_ORDER);
 
       int columnCount = getColumnModel().getColumnCount();
       boolean dataCorrect = true;
@@ -268,14 +270,14 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   }
 
   private void saveColumnOrderToSettings() {
-    if (myUi.getProperties().exists(CommonUiProperties.COLUMN_ORDER)) {
+    if (myProperties.exists(CommonUiProperties.COLUMN_ORDER)) {
       List<Integer> columnOrder = ContainerUtil.newArrayList();
 
       for (int i = 0; i < getColumnModel().getColumnCount(); i++) {
         columnOrder.add(getColumnModel().getColumn(i).getModelIndex());
       }
 
-      myUi.getProperties().set(CommonUiProperties.COLUMN_ORDER, columnOrder);
+      myProperties.set(CommonUiProperties.COLUMN_ORDER, columnOrder);
     }
   }
 
@@ -301,8 +303,8 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   }
 
   public void resetColumnWidth(int column) {
-    if (CommonUiProperties.getColumnWidth(myUi.getProperties(), column) != -1) {
-      CommonUiProperties.saveColumnWidth(myUi.getProperties(), column, -1);
+    if (CommonUiProperties.getColumnWidth(myProperties, column) != -1) {
+      CommonUiProperties.saveColumnWidth(myProperties, column, -1);
     }
     else {
       forceReLayout(column);
@@ -311,7 +313,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
   private void updateAuthorAndDataWidth() {
     for (int i : new int[]{AUTHOR_COLUMN, DATE_COLUMN}) {
-      int width = CommonUiProperties.getColumnWidth(myUi.getProperties(), i);
+      int width = CommonUiProperties.getColumnWidth(myProperties, i);
       if (width <= 0 || width > getWidth()) {
         if (i != AUTHOR_COLUMN || !myAuthorColumnInitialized) {
           width = getColumnWidthFromData(i);
@@ -396,7 +398,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     if (!myUi.isMultipleRoots()) {
       rootWidth = 0;
     }
-    else if (!myUi.isShowRootNames()) {
+    else if (!isShowRootNames()) {
       rootWidth = JBUI.scale(ROOT_INDICATOR_WIDTH);
     }
     else {
@@ -433,11 +435,15 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
         return "<html><b>" +
                ((VirtualFile)at).getPresentableUrl() +
                "</b><br/>Click to " +
-               (myUi.isShowRootNames() ? "collapse" : "expand") +
+               (isShowRootNames() ? "collapse" : "expand") +
                "</html>";
       }
     }
     return null;
+  }
+
+  private boolean isShowRootNames() {
+    return myProperties.exists(CommonUiProperties.SHOW_ROOT_NAMES) && myProperties.get(CommonUiProperties.SHOW_ROOT_NAMES);
   }
 
   public void jumpToRow(int rowIndex) {
@@ -652,7 +658,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
         g.setColor(getRootBackgroundColor(getModel().getRoot(lastRow), myUi.getColorManager()));
 
         int rootWidth = getColumnByModelIndex(ROOT_COLUMN).getWidth();
-        if (!myUi.isShowRootNames()) rootWidth -= JBUI.scale(ROOT_INDICATOR_WHITE_WIDTH);
+        if (!isShowRootNames()) rootWidth -= JBUI.scale(ROOT_INDICATOR_WHITE_WIDTH);
 
         g.fillRect(x, y, rootWidth, height);
       }

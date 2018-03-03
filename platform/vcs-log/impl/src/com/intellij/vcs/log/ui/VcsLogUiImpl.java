@@ -4,7 +4,6 @@ import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.util.PairFunction;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.VcsLogFilterUi;
@@ -105,7 +104,7 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
   }
 
   public boolean isShowRootNames() {
-    return myUiProperties.get(MainVcsLogUiProperties.SHOW_ROOT_NAMES);
+    return myUiProperties.get(CommonUiProperties.SHOW_ROOT_NAMES);
   }
 
   @Override

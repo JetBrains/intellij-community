@@ -20,7 +20,6 @@ import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
-import com.intellij.ui.HintHint;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.ui.JBUI;
 import com.intellij.vcs.log.CommitId;
@@ -32,7 +31,7 @@ import com.intellij.vcs.log.graph.NodePrintElement;
 import com.intellij.vcs.log.graph.PrintElement;
 import com.intellij.vcs.log.graph.actions.GraphAction;
 import com.intellij.vcs.log.graph.actions.GraphAnswer;
-import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
+import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
@@ -221,9 +220,9 @@ public class GraphTableController {
 
   private void performRootColumnAction() {
     VcsLogUiProperties properties = myUi.getProperties();
-    if (myUi.isMultipleRoots() && properties.exists(MainVcsLogUiProperties.SHOW_ROOT_NAMES)) {
+    if (myUi.isMultipleRoots() && properties.exists(CommonUiProperties.SHOW_ROOT_NAMES)) {
       VcsLogUtil.triggerUsage("RootColumnClick");
-      properties.set(MainVcsLogUiProperties.SHOW_ROOT_NAMES, !properties.get(MainVcsLogUiProperties.SHOW_ROOT_NAMES));
+      properties.set(CommonUiProperties.SHOW_ROOT_NAMES, !properties.get(CommonUiProperties.SHOW_ROOT_NAMES));
     }
   }
 
