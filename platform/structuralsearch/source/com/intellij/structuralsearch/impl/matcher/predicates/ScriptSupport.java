@@ -3,6 +3,7 @@ package com.intellij.structuralsearch.impl.matcher.predicates;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.SSRBundle;
@@ -23,15 +24,19 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Maxim.Mossienko
  */
 public class ScriptSupport {
+  /**
+   * Artificial filename without extension must be different from any variable name or the variable will get hidden by the script.
+   * We use a randomly generated uuid for this, so the chance of accidental collision with an existing variable name is extremely small.
+   * This also enables to filter out this uuid from Groovy error messages, to clarify for which SSR variable the script failed.
+   */
+  private static final String UUID = "a3cd264774bf4efb9ab609b250c5165c";
+
   private final Script script;
   private final ScriptLog myScriptLog;
   private final String myName;
@@ -39,10 +44,10 @@ public class ScriptSupport {
   public ScriptSupport(Project project, String text, String name) {
     myScriptLog = new ScriptLog(project);
     myName = name;
-    File scriptFile = new File(text);
-    GroovyShell shell = new GroovyShell();
+    final File scriptFile = new File(text);
+    final GroovyShell shell = new GroovyShell();
     try {
-      script = scriptFile.exists() ? shell.parse(scriptFile) : shell.parse(text, name + ".groovy");
+      script = scriptFile.exists() ? shell.parse(scriptFile) : shell.parse(text, name + UUID + ".groovy");
     } catch (Exception ex) {
       Logger.getInstance(getClass().getName()).error(ex);
       throw new RuntimeException(ex);
@@ -98,7 +103,7 @@ public class ScriptSupport {
       final Object o = script.run();
       return String.valueOf(o);
     } catch (GroovyRuntimeException ex) {
-      throw new StructuralSearchException(SSRBundle.message("groovy.script.error", ex.getMessage()));
+      throw new StructuralSearchException(SSRBundle.message("groovy.script.error", StringUtil.replace(ex.getMessage(), UUID, "")));
     } finally {
       script.setBinding(null);
     }
@@ -114,7 +119,7 @@ public class ScriptSupport {
       return e.getMessage();
     } catch (MultipleCompilationErrorsException e) {
       final ErrorCollector errorCollector = e.getErrorCollector();
-      final List<Message> errors = errorCollector.getErrors();
+      @SuppressWarnings("unchecked") final List<Message> errors = errorCollector.getErrors();
       for (Message error : errors) {
         if (error instanceof SyntaxErrorMessage) {
           final SyntaxErrorMessage errorMessage = (SyntaxErrorMessage)error;
