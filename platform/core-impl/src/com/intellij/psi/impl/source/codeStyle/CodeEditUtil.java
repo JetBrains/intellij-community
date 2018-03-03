@@ -142,7 +142,7 @@ public class CodeEditUtil {
     assert child == last : last + " is not a successor of " + first + " in the .getTreeNext() chain";
 
     final ASTNode prevLeaf = TreeUtil.prevLeaf(first);
-    final ASTNode nextLeaf = TreeUtil.nextLeaf(first);
+    final ASTNode nextLeaf = TreeUtil.nextLeaf(last);
     parent.removeRange(first, last.getTreeNext());
     ASTNode nextLeafToAdjust = nextLeaf;
     if (nextLeafToAdjust != null && prevLeaf != null && nextLeafToAdjust.getTreeParent() == null) {

@@ -10,7 +10,7 @@ class Return {
 
   public void contextLValue() {
       myReturn = method();
-    myReturn = null;
+      myReturn = null;
   }
 
   public void contextNoUsage() {
@@ -19,11 +19,11 @@ class Return {
 
   public void contextRValue() {
       myReturn = method();
-    Return r = myReturn;
+      Return r = myReturn;
   }
 
   public void contextRValueQualified() {
       myReturn = method();
-    Return r = this.myReturn;
+      Return r = this.myReturn;
   }
 }
