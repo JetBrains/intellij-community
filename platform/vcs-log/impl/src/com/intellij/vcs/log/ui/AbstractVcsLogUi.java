@@ -120,11 +120,6 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
   @NotNull
   public abstract VcsLogUiProperties getProperties();
 
-  @Override
-  public boolean areGraphActionsEnabled() {
-    return getTable().getRowCount() > 0;
-  }
-
   @NotNull
   public VisiblePackRefresher getRefresher() {
     return myRefresher;

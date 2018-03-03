@@ -29,8 +29,6 @@ public interface VcsLogUi {
 
   void removeLogListener(@NotNull VcsLogListener listener);
 
-  boolean areGraphActionsEnabled();
-
   boolean isMultipleRoots();
 
   boolean isHighlighterEnabled(@NotNull String id);

@@ -245,11 +245,6 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   }
 
   @Override
-  public boolean areGraphActionsEnabled() {
-    return false;
-  }
-
-  @Override
   public boolean isMultipleRoots() {
     return false;
   }
