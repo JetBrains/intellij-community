@@ -17,14 +17,11 @@ package com.intellij.vcs.log.ui.table;
 
 import com.google.common.primitives.Ints;
 import com.intellij.ide.CopyProvider;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
-import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.LoadingDecorator;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.registry.Registry;
@@ -40,7 +37,6 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsCommitStyleFactory;
 import com.intellij.vcs.log.VcsLogDataKeys;
@@ -59,12 +55,10 @@ import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.paint.GraphCellPainter;
 import com.intellij.vcs.log.paint.SimpleGraphCellPainter;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
-import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
 import com.intellij.vcs.log.ui.render.GraphCommitCell;
 import com.intellij.vcs.log.ui.render.GraphCommitCellRenderer;
-import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
 import org.jetbrains.annotations.NonNls;
@@ -140,7 +134,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
     initColumns();
 
-    setDefaultRenderer(VirtualFile.class, new RootCellRenderer(myUi.getProperties(), myUi.getColorManager()));
+    setDefaultRenderer(VirtualFile.class, new RootCellRenderer(myProperties, myColorManager));
     setDefaultRenderer(GraphCommitCell.class, myGraphCommitCellRenderer);
     setDefaultRenderer(String.class, myStringCellRenderer);
 
@@ -181,27 +175,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   }
 
   protected void updateEmptyText() {
-    StatusText statusText = getEmptyText();
-    VisiblePack visiblePack = getModel().getVisiblePack();
-
-    if (visiblePack.getVisibleGraph().getVisibleCommitCount() == 0) {
-      if (visiblePack.getFilters().isEmpty()) {
-        statusText.setText("No changes committed.").
-          appendSecondaryText("Commit local changes", VcsLogUiUtil.getLinkAttributes(),
-                              ActionUtil.createActionListener(VcsLogActionPlaces.CHECKIN_PROJECT_ACTION, this, ActionPlaces.UNKNOWN));
-        String shortcutText = KeymapUtil.getFirstKeyboardShortcutText(VcsLogActionPlaces.CHECKIN_PROJECT_ACTION);
-        if (!shortcutText.isEmpty()) {
-          statusText.appendSecondaryText(" (" + shortcutText + ")", StatusText.DEFAULT_ATTRIBUTES, null);
-        }
-      }
-      else {
-        statusText.setText("No commits matching filters.").appendSecondaryText("Reset filters", VcsLogUiUtil.getLinkAttributes(),
-                                                                               e -> myUi.getFilterUi().setFilter(null));
-      }
-    }
-    else {
-      statusText.setText(CHANGES_LOG_TEXT);
-    }
+    getEmptyText().setText(CHANGES_LOG_TEXT);
   }
 
   public void updateDataPack(@NotNull VisiblePack visiblePack, boolean permGraphChanged) {

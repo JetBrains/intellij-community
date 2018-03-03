@@ -3,8 +3,9 @@ package com.intellij.vcs.log.ui.frame;
 import com.google.common.primitives.Ints;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.util.ProgressWindow;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -19,13 +20,16 @@ import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
 import com.intellij.vcs.CommittedChangeListForRevision;
-import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.CommitId;
+import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.VcsLog;
+import com.intellij.vcs.log.VcsLogFilterUi;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
-import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
@@ -36,6 +40,7 @@ import com.intellij.vcs.log.ui.table.CommitSelectionListener;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.util.BekUtil;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NonNls;
@@ -83,7 +88,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myFilterUi = new VcsLogClassicFilterUi(ui, logData, myUiProperties, initialDataPack);
 
     // initialize components
-    myGraphTable = new VcsLogGraphTable(ui, logData, initialDataPack);
+    myGraphTable = new MyVcsLogGraphTable(ui, logData, initialDataPack);
     myGraphTable.setCompactReferencesView(myUiProperties.get(MainVcsLogUiProperties.COMPACT_REFERENCES_VIEW));
     myGraphTable.setShowTagNames(myUiProperties.get(MainVcsLogUiProperties.SHOW_TAG_NAMES));
     PopupHandler.installPopupHandler(myGraphTable, VcsLogActionPlaces.POPUP_ACTION_GROUP, VcsLogActionPlaces.VCS_LOG_TABLE_PLACE);
@@ -305,6 +310,37 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     @Override
     protected List<Component> getOrderedComponents() {
       return Arrays.asList(myGraphTable, myChangesBrowser.getPreferredFocusedComponent(), myTextFilter.getTextEditor());
+    }
+  }
+
+  private class MyVcsLogGraphTable extends VcsLogGraphTable {
+    public MyVcsLogGraphTable(@NotNull VcsLogUiImpl ui, @NotNull VcsLogData logData, @NotNull VisiblePack initialDataPack) {
+      super(ui, logData, initialDataPack);
+    }
+
+    @Override
+    protected void updateEmptyText() {
+      StatusText statusText = getEmptyText();
+      VisiblePack visiblePack = getModel().getVisiblePack();
+
+      if (visiblePack.getVisibleGraph().getVisibleCommitCount() == 0) {
+        if (visiblePack.getFilters().isEmpty()) {
+          statusText.setText("No changes committed.").
+            appendSecondaryText("Commit local changes", VcsLogUiUtil.getLinkAttributes(),
+                                ActionUtil.createActionListener(VcsLogActionPlaces.CHECKIN_PROJECT_ACTION, this, ActionPlaces.UNKNOWN));
+          String shortcutText = KeymapUtil.getFirstKeyboardShortcutText(VcsLogActionPlaces.CHECKIN_PROJECT_ACTION);
+          if (!shortcutText.isEmpty()) {
+            statusText.appendSecondaryText(" (" + shortcutText + ")", StatusText.DEFAULT_ATTRIBUTES, null);
+          }
+        }
+        else {
+          statusText.setText("No commits matching filters.").appendSecondaryText("Reset filters", VcsLogUiUtil.getLinkAttributes(),
+                                                                                 e -> myFilterUi.setFilter(null));
+        }
+      }
+      else {
+        statusText.setText(CHANGES_LOG_TEXT);
+      }
     }
   }
 }
