@@ -100,7 +100,6 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   @NotNull private final VcsLogData myLogData;
   @NotNull private final VcsLogUiProperties myProperties;
   @NotNull private final VcsLogColorManager myColorManager;
-  @NotNull private final AbstractVcsLogUi myUi;
   @NotNull private final MyDummyTableCellEditor myDummyEditor = new MyDummyTableCellEditor();
   @NotNull private final TableCellRenderer myDummyRenderer = new MyDefaultTableCellRenderer();
   @NotNull private final GraphCommitCellRenderer myGraphCommitCellRenderer;
@@ -119,7 +118,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     myLogData = logData;
     myProperties = ui.getProperties();
     myColorManager = ui.getColorManager();
-    myUi = ui;
+
     GraphCellPainter graphCellPainter = new SimpleGraphCellPainter(new DefaultColorGenerator()) {
       @Override
       protected int getRowHeight() {
