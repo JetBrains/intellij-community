@@ -120,8 +120,6 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
   @NotNull
   public abstract VcsLogUiProperties getProperties();
 
-  public abstract boolean isShowRootNames();
-
   @Override
   public boolean areGraphActionsEnabled() {
     return getTable().getRowCount() > 0;

@@ -103,10 +103,6 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
     }
   }
 
-  public boolean isShowRootNames() {
-    return myUiProperties.get(CommonUiProperties.SHOW_ROOT_NAMES);
-  }
-
   @Override
   public boolean isHighlighterEnabled(@NotNull String id) {
     VcsLogHighlighterProperty property = VcsLogHighlighterProperty.get(id);
