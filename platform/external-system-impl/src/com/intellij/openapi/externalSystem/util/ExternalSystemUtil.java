@@ -133,6 +133,8 @@ public class ExternalSystemUtil {
 
   @NotNull private static final Map<String, String> RUNNER_IDS = ContainerUtilRt.newHashMap();
 
+  public enum ShowFinishMessage {YES, NO}
+
   public static final TObjectHashingStrategy<Pair<ProjectSystemId, File>> HASHING_STRATEGY =
     new TObjectHashingStrategy<Pair<ProjectSystemId, File>>() {
       @Override
@@ -298,7 +300,7 @@ public class ExternalSystemUtil {
         .clearNotifications(null, NotificationSource.PROJECT_SYNC, spec.getExternalSystemId());
 
       for (String path : toRefresh) {
-        refreshProject(path, new ImportSpecBuilder(spec).callback(callback).build());
+        refreshProject(path, new ImportSpecBuilder(spec).callback(callback).build(), ShowFinishMessage.YES);
       }
     }
   }
@@ -320,7 +322,8 @@ public class ExternalSystemUtil {
                                     @NotNull final ProgressExecutionMode progressExecutionMode) {
     refreshProject(project, externalSystemId, externalProjectPath, new ExternalProjectRefreshCallback() {
       @Override
-      public void onSuccess(@Nullable final DataNode<ProjectData> externalProject) {
+      public void onSuccess(@NotNull ExternalSystemTaskId id,
+                            @Nullable final DataNode<ProjectData> externalProject) {
         if (externalProject == null) {
           return;
         }
@@ -329,9 +332,10 @@ public class ExternalSystemUtil {
       }
 
       @Override
-      public void onFailure(@NotNull String errorMessage, @Nullable String errorDetails) {
+      public void onFailure(@NotNull String errorMessage,
+                            @Nullable String errorDetails) {
       }
-    }, isPreviewMode, progressExecutionMode, true);
+    }, progressExecutionMode, ShowFinishMessage.YES, isPreviewMode, true);
   }
 
   /**
@@ -351,16 +355,18 @@ public class ExternalSystemUtil {
                                     @NotNull final ExternalProjectRefreshCallback callback,
                                     final boolean isPreviewMode,
                                     @NotNull final ProgressExecutionMode progressExecutionMode) {
-    refreshProject(project, externalSystemId, externalProjectPath, callback, isPreviewMode, progressExecutionMode, true);
+    refreshProject(project, externalSystemId, externalProjectPath, callback, progressExecutionMode, ShowFinishMessage.YES, isPreviewMode,
+                   true);
   }
 
   /**
    * <p>
    * Refresh target gradle project.
-   *
    * @param project             target intellij project to use
    * @param externalProjectPath path of the target external project
    * @param callback            callback to be notified on refresh result
+   * @param showFinishMessage   indicates whether the "Build View" should display a "sync successful" message and stop the "progress"
+   *                            animation once project refresh finishes successfully. If {@link ShowFinishMessage#NO} is passed, client code
    * @param isPreviewMode       flag that identifies whether libraries should be resolved during the refresh
    * @param reportRefreshError  prevent to show annoying error notification, e.g. if auto-import mode used
    */
@@ -368,16 +374,17 @@ public class ExternalSystemUtil {
                                     @NotNull final ProjectSystemId externalSystemId,
                                     @NotNull final String externalProjectPath,
                                     @NotNull final ExternalProjectRefreshCallback callback,
-                                    final boolean isPreviewMode,
                                     @NotNull final ProgressExecutionMode progressExecutionMode,
+                                    @NotNull final ShowFinishMessage showFinishMessage,
+                                    final boolean isPreviewMode,
                                     final boolean reportRefreshError) {
     ImportSpecBuilder builder = new ImportSpecBuilder(project, externalSystemId).callback(callback).use(progressExecutionMode);
     if (isPreviewMode) builder.usePreviewMode();
     if (!reportRefreshError) builder.dontReportRefreshErrors();
-    refreshProject(externalProjectPath, builder.build());
+    refreshProject(externalProjectPath, builder.build(), showFinishMessage);
   }
 
-  public static void refreshProject(@NotNull final String externalProjectPath, @NotNull final ImportSpec importSpec) {
+  public static void refreshProject(@NotNull final String externalProjectPath, @NotNull final ImportSpec importSpec, @NotNull final ShowFinishMessage showFinishMessage) {
     Project project = importSpec.getProject();
     ProjectSystemId externalSystemId = importSpec.getExternalSystemId();
     ExternalProjectRefreshCallback callback = importSpec.getCallback();
@@ -474,7 +481,7 @@ public class ExternalSystemUtil {
 
               @Override
               public void actionPerformed(AnActionEvent e) {
-                refreshProject(externalProjectPath, importSpec);
+                refreshProject(externalProjectPath, importSpec, showFinishMessage);
               }
             };
             String systemId = id.getProjectSystemId().getReadableName();
@@ -525,9 +532,11 @@ public class ExternalSystemUtil {
 
           @Override
           public void onSuccess(@NotNull ExternalSystemTaskId id) {
-            String message = isPreviewMode ? "project preview created" : "synced successfully";
-            ServiceManager.getService(project, SyncViewManager.class).onEvent(new FinishBuildEventImpl(
-              id, null, System.currentTimeMillis(), message, new SuccessResultImpl()));
+            if (showFinishMessage == ShowFinishMessage.YES) {
+              String message = isPreviewMode ? "project preview created" : "synced successfully";
+              ServiceManager.getService(project, SyncViewManager.class).onEvent(new FinishBuildEventImpl(
+                id, null, System.currentTimeMillis(), message, new SuccessResultImpl()));
+            }
             processHandler.notifyProcessTerminated(0);
           }
 
@@ -553,7 +562,7 @@ public class ExternalSystemUtil {
                 if (externalProject != null && importSpec.shouldCreateDirectoriesForEmptyContentRoots()) {
                   externalProject.putUserData(ContentRootDataService.CREATE_EMPTY_DIRECTORIES, Boolean.TRUE);
                 }
-                callback.onSuccess(externalProject);
+                callback.onSuccess(myTask.getId(), externalProject);
               }
             }
             if (!isPreviewMode) {
@@ -1010,7 +1019,8 @@ public class ExternalSystemUtil {
     ExternalProjectRefreshCallback callback = new ExternalProjectRefreshCallback() {
       @SuppressWarnings("unchecked")
       @Override
-      public void onSuccess(@Nullable final DataNode<ProjectData> externalProject) {
+      public void onSuccess(@NotNull ExternalSystemTaskId id,
+                            @Nullable final DataNode<ProjectData> externalProject) {
         if (externalProject == null) {
           if (executionResultCallback != null) {
             executionResultCallback.consume(false);
@@ -1136,7 +1146,8 @@ public class ExternalSystemUtil {
     }
 
     @Override
-    public void onSuccess(@Nullable final DataNode<ProjectData> externalProject) {
+    public void onSuccess(@NotNull ExternalSystemTaskId id,
+                          @Nullable final DataNode<ProjectData> externalProject) {
       if (externalProject == null) {
         return;
       }

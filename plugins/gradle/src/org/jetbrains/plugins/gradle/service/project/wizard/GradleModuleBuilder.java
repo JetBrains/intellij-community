@@ -63,6 +63,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
+import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.ShowFinishMessage;
+
 /**
  * @author Denis Zhdanov
  * @since 6/26/13 11:10 AM
@@ -249,7 +251,7 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
           .createDirectoriesForEmptyContentRoots()
           .useDefaultCallback()
           .build();
-        ExternalSystemUtil.refreshProject(rootProjectPath, importSpec);
+        ExternalSystemUtil.refreshProject(rootProjectPath, importSpec, ShowFinishMessage.YES);
 
         final PsiFile psiFile;
         if (finalBuildScriptFile != null) {

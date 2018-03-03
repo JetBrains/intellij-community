@@ -35,6 +35,8 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.util.List;
 
+import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.ShowFinishMessage;
+
 /**
  * @author Vladislav.Soroka
  * @since 3/1/2017
@@ -87,6 +89,6 @@ public class GradleRefreshProjectDependenciesAction extends RefreshExternalProje
                                         .useDefaultCallback()
                                         .use(ProgressExecutionMode.IN_BACKGROUND_ASYNC)
                                         .withArguments("--refresh-dependencies")
-                                        .build());
+                                        .build(), ShowFinishMessage.YES);
   }
 }
