@@ -17,11 +17,19 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public interface EditorTracker {
+  static EditorTracker getInstance(Project project) {
+    return project.getComponent(EditorTracker.class);
+  }
+
+  /**
+   * Returns the list of editors for which daemon should run
+   */
   @NotNull
   List<Editor> getActiveEditors();
 
