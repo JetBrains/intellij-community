@@ -58,7 +58,7 @@ public class VcsLogFeaturesCollector extends AbstractProjectsUsagesCollector {
         usages.add(StatisticsUtilKt.getBooleanUsage("ui.sort.bek", sortType.equals(PermanentGraph.SortType.Bek)));
         usages.add(StatisticsUtilKt.getBooleanUsage("ui.sort.normal", sortType.equals(PermanentGraph.SortType.Normal)));
 
-        if (ui.isMultipleRoots()) {
+        if (ui.getColorManager().isMultipleRoots()) {
           usages.add(StatisticsUtilKt.getBooleanUsage("ui.roots", properties.get(CommonUiProperties.SHOW_ROOT_NAMES)));
         }
 
