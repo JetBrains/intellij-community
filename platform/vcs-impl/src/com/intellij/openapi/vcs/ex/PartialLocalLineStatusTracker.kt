@@ -74,6 +74,7 @@ class PartialLocalLineStatusTracker(project: Project,
   private var currentMarker: ChangeListMarker? = null
 
   private var initialChangeListId: String? = null
+  private var lastKnownTrackerChangeListId: String? = null
   private val affectedChangeLists = HashSet<String>()
 
   private val batchChangeTaskCounter: AtomicInteger = AtomicInteger()
@@ -120,12 +121,12 @@ class PartialLocalLineStatusTracker(project: Project,
     if (!isInitialized) initialChangeListId?.let { newIds.add(it) }
 
     if (newIds.isEmpty()) {
-      if (affectedChangeLists.size == 1) {
-        newIds.add(affectedChangeLists.single())
-      }
-      else {
-        newIds.add(defaultMarker.changelistId)
-      }
+      val listId = lastKnownTrackerChangeListId ?: defaultMarker.changelistId
+      newIds.add(listId)
+    }
+
+    if (newIds.size == 1) {
+      lastKnownTrackerChangeListId = newIds.single()
     }
 
     oldIds.addAll(affectedChangeLists)
@@ -185,6 +186,8 @@ class PartialLocalLineStatusTracker(project: Project,
 
       if (!isInitialized) initialChangeListId = fileChangelistId
 
+      lastKnownTrackerChangeListId = fileChangelistId
+
       val idsSet = changelistsIds.toSet()
       moveMarkers({ !idsSet.contains(it.marker.changelistId) }, defaultMarker)
 
@@ -205,12 +208,9 @@ class PartialLocalLineStatusTracker(project: Project,
 
       if (!isInitialized && initialChangeListId == listId) initialChangeListId = null
 
-      moveMarkers({ it.marker.changelistId == listId }, defaultMarker)
+      if (lastKnownTrackerChangeListId == listId) lastKnownTrackerChangeListId = null
 
-      if (affectedChangeLists.size == 1 && affectedChangeLists.contains(listId)) {
-        affectedChangeLists.clear()
-        affectedChangeLists.add(defaultMarker.changelistId)
-      }
+      moveMarkers({ it.marker.changelistId == listId }, defaultMarker)
 
       updateAffectedChangeLists(false)
     }
@@ -222,6 +222,8 @@ class PartialLocalLineStatusTracker(project: Project,
 
       if (!isInitialized && initialChangeListId == fromListId) initialChangeListId = toListId
 
+      if (lastKnownTrackerChangeListId == fromListId) lastKnownTrackerChangeListId = toListId
+
       moveMarkers({ it.marker.changelistId == fromListId }, ChangeListMarker(toListId))
 
       updateAffectedChangeLists(false)
@@ -231,6 +233,8 @@ class PartialLocalLineStatusTracker(project: Project,
   override fun moveChangesTo(toListId: String) {
     documentTracker.writeLock {
       if (!isInitialized) initialChangeListId = toListId
+
+      lastKnownTrackerChangeListId = toListId
 
       moveMarkers({ true }, ChangeListMarker(toListId))
 
