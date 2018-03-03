@@ -61,11 +61,10 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.concurrency.Semaphore
+import com.intellij.util.ui.UIUtil
 import com.intellij.vcsUtil.VcsUtil
-import org.jetbrains.annotations.CalledInAny
-import org.jetbrains.annotations.CalledInAwt
-import org.jetbrains.annotations.CalledInBackground
-import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.*
 import java.nio.charset.Charset
 import java.util.*
 
@@ -954,6 +953,43 @@ class LineStatusTrackerManager(
         window.activate { ChangesViewManager.getInstance(project).selectChanges(changes) }
         expire()
       })
+    }
+  }
+
+
+  @TestOnly
+  fun waitUntilBaseContentsLoaded() {
+    val semaphore = Semaphore()
+    semaphore.down()
+
+    loader.addAfterUpdateRunnable(Runnable {
+      semaphore.up()
+    })
+
+    val start = System.currentTimeMillis()
+    while (true) {
+      if (ApplicationManager.getApplication().isDispatchThread) {
+        UIUtil.dispatchAllInvocationEvents()
+      }
+      if (semaphore.waitFor(10)) {
+        return
+      }
+      if (System.currentTimeMillis() - start > 2000) {
+        throw IllegalStateException("Couldn't await base contents")
+      }
+    }
+  }
+
+  @TestOnly
+  fun releaseAllTrackers() {
+    synchronized(LOCK) {
+      forcedDocuments.clear()
+
+      for (data in trackers.values) {
+        unregisterTrackerInCLM(data)
+        data.tracker.release()
+      }
+      trackers.clear()
     }
   }
 }
