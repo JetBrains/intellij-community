@@ -25,6 +25,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.VcsShowConfirmationOption.Value;
 import com.intellij.openapi.vcs.changes.ChangeListWorker.ChangeListUpdater;
 import com.intellij.openapi.vcs.changes.actions.ChangeListRemoveConfirmation;
 import com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictTracker;
@@ -95,7 +96,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   @NotNull private ProgressIndicator myUpdateChangesProgressIndicator = createProgressIndicator();
   private volatile String myFreezeName;
 
-  @NotNull private final Collection<LocalChangeList> myListsToBeDeleted = new HashSet<>();
+  @NotNull private final Set<String> myListsToBeDeletedSilently = new HashSet<>();
+  @NotNull private final Set<String> myListsToBeDeleted = new HashSet<>();
+  private boolean myEmptyListDeletionScheduled;
   private boolean myModalNotificationsBlocked;
 
   private final List<CommitExecutor> myRegisteredCommitExecutors = new ArrayList<>();
@@ -149,33 +152,71 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   @Override
-  public void scheduleAutomaticEmptyChangeListDeletion(@NotNull LocalChangeList oldList) {
-    if (ApplicationManager.getApplication().isUnitTestMode() &&
-        myConfig.REMOVE_EMPTY_INACTIVE_CHANGELISTS == VcsShowConfirmationOption.Value.SHOW_CONFIRMATION) {
-      return;
-    }
-
-    invokeAfterUpdate(() -> {
-      LocalChangeList actualList = getChangeList(oldList.getId());
-      if (actualList == null || actualList.isDefault() || !actualList.getChanges().isEmpty()) {
-        return;
-      }
-
-      if (myModalNotificationsBlocked &&
-          myConfig.REMOVE_EMPTY_INACTIVE_CHANGELISTS == VcsShowConfirmationOption.Value.SHOW_CONFIRMATION) {
-        myListsToBeDeleted.add(oldList);
-      } else {
-        deleteEmptyChangeLists(Collections.singletonList(actualList));
-      }
-    }, InvokeAfterUpdateMode.SILENT, null, null);
+  public void scheduleAutomaticEmptyChangeListDeletion(@NotNull LocalChangeList list) {
+    scheduleAutomaticEmptyChangeListDeletion(list, false);
   }
 
-  private void deleteEmptyChangeLists(@NotNull Collection<LocalChangeList> lists) {
-    if (lists.isEmpty() || myConfig.REMOVE_EMPTY_INACTIVE_CHANGELISTS == VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) {
-      return;
+  @Override
+  public void scheduleAutomaticEmptyChangeListDeletion(@NotNull LocalChangeList oldList, boolean silently) {
+    synchronized (myDataLock) {
+      if (silently) {
+        myListsToBeDeletedSilently.add(oldList.getId());
+      }
+      else {
+        myListsToBeDeleted.add(oldList.getId());
+      }
+
+      if (!myEmptyListDeletionScheduled) {
+        myEmptyListDeletionScheduled = true;
+        invokeAfterUpdate(() -> deleteEmptyChangeLists(), InvokeAfterUpdateMode.SILENT, null, null);
+      }
+    }
+  }
+
+  @CalledInAwt
+  private void deleteEmptyChangeLists() {
+    List<LocalChangeList> listsToBeDeletedSilently;
+    List<LocalChangeList> listsToBeDeleted;
+
+    Function<String, LocalChangeList> toDeleteMapping = id -> {
+      LocalChangeList list = getChangeList(id);
+      if (list == null || list.isDefault() || list.isReadOnly() || !list.getChanges().isEmpty()) return null;
+      return list;
+    };
+
+    synchronized (myDataLock) {
+      myListsToBeDeleted.removeAll(myListsToBeDeletedSilently);
+
+      listsToBeDeletedSilently = ContainerUtil.mapNotNull(myListsToBeDeletedSilently, toDeleteMapping);
+      myListsToBeDeletedSilently.clear();
+
+      boolean askLater = myModalNotificationsBlocked &&
+                         myConfig.REMOVE_EMPTY_INACTIVE_CHANGELISTS == Value.SHOW_CONFIRMATION;
+      if (!askLater) {
+        listsToBeDeleted = ContainerUtil.mapNotNull(myListsToBeDeleted, toDeleteMapping);
+        myListsToBeDeleted.clear();
+      }
+      else {
+        listsToBeDeleted = Collections.emptyList();
+      }
+
+      myEmptyListDeletionScheduled = false;
     }
 
-    ChangeListRemoveConfirmation.processLists(myProject, false, lists, new ChangeListRemoveConfirmation() {
+    if (myConfig.REMOVE_EMPTY_INACTIVE_CHANGELISTS == Value.DO_NOTHING_SILENTLY ||
+        myConfig.REMOVE_EMPTY_INACTIVE_CHANGELISTS == Value.SHOW_CONFIRMATION &&
+        ApplicationManager.getApplication().isUnitTestMode()) {
+      listsToBeDeleted.clear();
+    }
+
+    ChangeListRemoveConfirmation.processLists(myProject, false, listsToBeDeletedSilently, new ChangeListRemoveConfirmation() {
+      @Override
+      public boolean askIfShouldRemoveChangeLists(@NotNull List<? extends LocalChangeList> toAsk) {
+        return true;
+      }
+    });
+
+    ChangeListRemoveConfirmation.processLists(myProject, false, listsToBeDeleted, new ChangeListRemoveConfirmation() {
       @Override
       public boolean askIfShouldRemoveChangeLists(@NotNull List<? extends LocalChangeList> toAsk) {
         return myConfig.REMOVE_EMPTY_INACTIVE_CHANGELISTS == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY ||
@@ -235,8 +276,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   @CalledInAwt
   public void unblockModalNotifications() {
     myModalNotificationsBlocked = false;
-    deleteEmptyChangeLists(myListsToBeDeleted);
-    myListsToBeDeleted.clear();
+    deleteEmptyChangeLists();
   }
 
   @Override
