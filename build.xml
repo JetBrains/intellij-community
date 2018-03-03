@@ -65,7 +65,10 @@
   </macrodef>
 
   <target name="build" depends="init">
-    <bazel if:set="include.aswb" action="build" target="@blaze//java/com/google/devtools/intellij/blaze/plugin/aswb:aswb_blaze_zip" config="release"/>
+    <bazel if:set="include.aswb"
+           action="build"
+           target="@blaze//java/com/google/devtools/intellij/blaze/plugin/aswb:aswb_blaze_zip"
+           config="release"/>
     <call_gant script="${project.home}/build/scripts/idea_community.gant"/>
   </target>
 
@@ -73,11 +76,10 @@
     <call_gant script="${project.home}/build/scripts/tests_in_community.gant"/>
   </target>
 
-  <target name="aswb">
-    <ant antfile="${project.home}/../adt/idea/android/build.xml" target="unzip_aswb" />
-  </target>
-
-  <target name="uitest" depends="init,aswb">
+  <target name="uitest" depends="init">
+    <bazel action="build"
+           target="//tools/adt/idea/android-uitests:aswb_plugin"
+           config="release"/>
     <call_gant script="${project.home}/build/scripts/uitests_in_studio.gant"/>
   </target>
 
