@@ -140,7 +140,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
     initColumns();
 
-    setDefaultRenderer(VirtualFile.class, new RootCellRenderer(myUi));
+    setDefaultRenderer(VirtualFile.class, new RootCellRenderer(myUi.getProperties(), myUi.getColorManager()));
     setDefaultRenderer(GraphCommitCell.class, myGraphCommitCellRenderer);
     setDefaultRenderer(String.class, myStringCellRenderer);
 
