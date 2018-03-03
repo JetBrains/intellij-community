@@ -66,7 +66,7 @@ public class GoEnvCompletionProvider extends BaseEnvCompletionProvider implement
 
         if(candidate instanceof GoCallExpr) {
             GoCallExpr callExpression = (GoCallExpr) candidate;
-            if(GoPsiHelper.checkGetMethodCall(callExpression)
+            if(GoPsiHelper.checkEnvMethodCall(callExpression)
                     && callExpression.getArgumentList().getExpressionList().size() > 0
                     && callExpression.getArgumentList().getExpressionList().get(0).isEquivalentTo(parent)) {
 

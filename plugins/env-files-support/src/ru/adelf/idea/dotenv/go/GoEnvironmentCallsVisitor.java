@@ -23,7 +23,7 @@ class GoEnvironmentCallsVisitor extends PsiRecursiveElementVisitor {
     }
 
     private void visitCall(GoCallExpr expression) {
-        if(GoPsiHelper.checkGetMethodCall(expression)
+        if(GoPsiHelper.checkEnvMethodCall(expression)
                 && expression.getArgumentList().getExpressionList().size() > 0
                 && expression.getArgumentList().getExpressionList().get(0) instanceof GoStringLiteral) {
 
