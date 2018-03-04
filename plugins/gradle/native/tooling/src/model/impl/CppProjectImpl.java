@@ -17,6 +17,15 @@ public class CppProjectImpl implements CppProject {
   private final Set<SourceFolder> mySourceFolders = new LinkedHashSet<SourceFolder>();
   private final Set<CppBinary> binaries = new LinkedHashSet<CppBinary>();
 
+  public CppProjectImpl(CppProject cppProject) {
+    for (CppBinary binary : cppProject.getBinaries()) {
+      addBinary(new CppBinaryImpl(binary));
+    }
+    for (SourceFolder sourceFolder : cppProject.getSourceFolders()) {
+      addSourceFolder(new SourceFolderImpl(sourceFolder));
+    }
+  }
+
   @Override
   public Set<SourceFolder> getSourceFolders() {
     return Collections.unmodifiableSet(mySourceFolders);

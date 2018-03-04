@@ -32,6 +32,11 @@ public class CppBinaryImpl implements CppBinary {
     myTargetType = targetType;
   }
 
+  public CppBinaryImpl(CppBinary binary) {
+    this(binary.getBaseName(), binary.getVariantName(), binary.getSources(),
+         new CompilerDetailsImpl(binary.getCompilerDetails()), new LinkerDetailsImpl(binary.getLinkerDetails()), binary.getTargetType());
+  }
+
   @Override
   public String getBaseName() {
     return myBaseName;

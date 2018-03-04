@@ -13,8 +13,9 @@ import com.intellij.util.containers.ContainerUtil;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.nativeplatform.tooling.builder.CppModelBuilder;
-import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.*;
-import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.*;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.CppProject;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.SourceFolder;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.CppProjectImpl;
 import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
@@ -34,7 +35,7 @@ public class GradleNativeProjectResolver extends AbstractProjectResolverExtensio
     CppProject cppProject = resolverCtx.getExtraProject(gradleModule, CppProject.class);
     if (cppProject != null) {
       // store a local process copy of the object to get rid of proxy types for further serialization
-      ideModule.createChild(CPP_PROJECT, copy(cppProject));
+      ideModule.createChild(CPP_PROJECT, new CppProjectImpl(cppProject));
 
       Set<SourceFolder> sourceFolders = cppProject.getSourceFolders();
       for (SourceFolder folder : sourceFolders) {
@@ -61,38 +62,5 @@ public class GradleNativeProjectResolver extends AbstractProjectResolverExtensio
       // native-gradle-tooling jar
       CppModelBuilder.class
     );
-  }
-
-  @NotNull
-  private static CppProject copy(@NotNull CppProject cppProject) {
-    CppProjectImpl copy = new CppProjectImpl();
-    for (CppBinary binary : cppProject.getBinaries()) {
-      copy.addBinary(copy(binary));
-    }
-    for (SourceFolder sourceFolder : cppProject.getSourceFolders()) {
-      copy.addSourceFolder(copy(sourceFolder));
-    }
-    return copy;
-  }
-
-  private static SourceFolder copy(SourceFolder sourceFolder) {
-    FilePatternSet patterns = sourceFolder.getPatterns();
-    return new SourceFolderImpl(sourceFolder.getBaseDir(), new FilePatternSetImpl(patterns.getIncludes(),
-                                                                                  patterns.getExcludes()));
-  }
-
-  @NotNull
-  private static CppBinary copy(@NotNull CppBinary binary) {
-    return new CppBinaryImpl(binary.getBaseName(), binary.getVariantName(), binary.getSources(),
-                             copy(binary.getCompilerDetails()), copy(binary.getLinkerDetails()), binary.getTargetType());
-  }
-
-  private static LinkerDetails copy(LinkerDetails details) {
-    return new LinkerDetailsImpl(details.getLinkTaskName(), details.getOutputFile());
-  }
-
-  private static CompilerDetails copy(CompilerDetails details) {
-    return new CompilerDetailsImpl(details.getCompileTaskName(), details.getExecutable(), details.getWorkingDir(), details.getArgs(),
-                                   details.getIncludePath(), details.getSystemIncludes());
   }
 }

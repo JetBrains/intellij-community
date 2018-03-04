@@ -17,6 +17,10 @@ public class LinkerDetailsImpl implements LinkerDetails {
     myOutputFile = outputFile;
   }
 
+  public LinkerDetailsImpl(LinkerDetails details) {
+    this(details.getLinkTaskName(), details.getOutputFile());
+  }
+
   @Override
   public File getOutputFile() {
     return myOutputFile;

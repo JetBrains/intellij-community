@@ -18,6 +18,11 @@ public class SourceFolderImpl implements SourceFolder {
     myPatterns = patterns;
   }
 
+  public SourceFolderImpl(SourceFolder folder) {
+    this(folder.getBaseDir(), folder.getPatterns() != null
+                              ? new FilePatternSetImpl(folder.getPatterns().getIncludes(), folder.getPatterns().getExcludes()) : null);
+  }
+
   @Override
   public File getBaseDir() {
     return myBaseDir;

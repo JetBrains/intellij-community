@@ -35,6 +35,11 @@ public class CompilerDetailsImpl implements CompilerDetails {
     mySystemIncludes = new LinkedHashSet<File>(systemIncludes);
   }
 
+  public CompilerDetailsImpl(CompilerDetails details) {
+    this(details.getCompileTaskName(), details.getExecutable(), details.getWorkingDir(), details.getArgs(),
+         details.getIncludePath(), details.getSystemIncludes());
+  }
+
   @Override
   public String getCompileTaskName() {
     return myCompileTaskName;
