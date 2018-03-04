@@ -29,7 +29,5 @@ public interface VcsLogUi {
 
   void removeLogListener(@NotNull VcsLogListener listener);
 
-  boolean isMultipleRoots();
-
   boolean isHighlighterEnabled(@NotNull String id);
 }

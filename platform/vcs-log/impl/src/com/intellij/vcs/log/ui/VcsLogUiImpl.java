@@ -109,11 +109,6 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
     return myUiProperties.exists(property) && myUiProperties.get(property);
   }
 
-  @Override
-  public boolean isMultipleRoots() {
-    return myColorManager.isMultipleRoots(); // somewhy color manager knows about this
-  }
-
   public void applyFiltersAndUpdateUi(@NotNull VcsLogFilterCollection filters) {
     myRefresher.onFiltersChange(filters);
   }

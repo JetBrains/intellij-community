@@ -245,11 +245,6 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   }
 
   @Override
-  public boolean isMultipleRoots() {
-    return false;
-  }
-
-  @Override
   public boolean isHighlighterEnabled(@NotNull String id) {
     return HIGHLIGHTERS.contains(id);
   }
