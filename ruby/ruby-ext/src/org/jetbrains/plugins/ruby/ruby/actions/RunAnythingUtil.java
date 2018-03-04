@@ -264,12 +264,6 @@ public class RunAnythingUtil {
     return panel;
   }
 
-  @NotNull
-  public static String getPresentationText(AnAction it) {
-    String text = it.getTemplatePresentation().getText();
-    return text != null ? text : "undefined";
-  }
-
   static Component getRunConfigurationCellRendererComponent(ChooseRunConfigurationPopup.ItemWrapper value, boolean isSelected) {
     boolean showIcon = UISettings.getInstance().getShowIconsInMenus();
     JPanel panel = new JPanel(new BorderLayout());

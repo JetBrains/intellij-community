@@ -10,7 +10,6 @@ import org.jetbrains.plugins.ruby.RBundle;
 import org.jetbrains.plugins.ruby.ruby.actions.RunAnythingAction;
 import org.jetbrains.plugins.ruby.ruby.actions.RunAnythingActionItem;
 import org.jetbrains.plugins.ruby.ruby.actions.RunAnythingSearchListModel;
-import org.jetbrains.plugins.ruby.ruby.actions.RunAnythingUtil;
 
 public abstract class RunAnythingActionGroup<T extends AnAction> extends RunAnythingGroup {
   @NotNull
@@ -40,7 +39,7 @@ public abstract class RunAnythingActionGroup<T extends AnAction> extends RunAnyt
       RunAnythingActionItem actionItem = new RunAnythingActionItem(action, actionText == null ? ObjectUtils
         .notNull(action.getTemplatePresentation().getText(), RBundle.message("run.anything.acton.group.title")) : actionText);
 
-      if (addToList(listModel, result, pattern, actionItem, getPrefix() + " " + RunAnythingUtil.getPresentationText(action), isMore)) break;
+      if (addToList(listModel, result, pattern, actionItem, getPrefix() + " " + actionItem.getText(), isMore)) break;
       check.run();
     }
 
