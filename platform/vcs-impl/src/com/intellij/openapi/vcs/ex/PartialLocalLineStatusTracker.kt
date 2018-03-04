@@ -21,6 +21,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.CommandEvent
 import com.intellij.openapi.command.CommandListener
@@ -42,7 +43,6 @@ import com.intellij.openapi.vcs.ex.DocumentTracker.Block
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker.LocalRange
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.GuiUtils
 import com.intellij.ui.components.labels.ActionGroupLink
 import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.ContainerUtil
@@ -179,6 +179,9 @@ class PartialLocalLineStatusTracker(project: Project,
 
       val idsSet = changelistsIds.toSet()
       moveMarkers({ !idsSet.contains(it.marker.changelistId) }, defaultMarker)
+
+      // no need to notify CLM, as we're inside it's action
+      updateAffectedChangeLists(false)
     }
   }
 
@@ -198,6 +201,8 @@ class PartialLocalLineStatusTracker(project: Project,
         affectedChangeLists.clear()
         affectedChangeLists.add(defaultMarker.changelistId)
       }
+
+      updateAffectedChangeLists(false)
     }
   }
 
@@ -206,17 +211,20 @@ class PartialLocalLineStatusTracker(project: Project,
       if (!affectedChangeLists.contains(fromListId)) return@writeLock
 
       moveMarkers({ it.marker.changelistId == fromListId }, ChangeListMarker(toListId))
+
+      updateAffectedChangeLists(false)
     }
   }
 
   override fun moveChangesTo(toListId: String) {
     documentTracker.writeLock {
       moveMarkers({ true }, ChangeListMarker(toListId))
+
+      updateAffectedChangeLists(false)
     }
   }
 
-  private fun moveMarkers(condition: (Block) -> Boolean, toMarker: ChangeListMarker,
-                          notifyChangeListManager: Boolean = false) {
+  private fun moveMarkers(condition: (Block) -> Boolean, toMarker: ChangeListMarker) {
     val affectedBlocks = mutableListOf<Block>()
 
     for (block in blocks) {
@@ -229,14 +237,12 @@ class PartialLocalLineStatusTracker(project: Project,
 
     if (!affectedBlocks.isEmpty()) {
       dropExistingUndoActions()
-      updateAffectedChangeLists(notifyChangeListManager) // no need to notify CLM, as we're inside it's action
 
-      GuiUtils.invokeLaterIfNeeded(
-        {
-          for (block in affectedBlocks) {
-            updateHighlighter(block)
-          }
-        }, ModalityState.any())
+      runInEdt(ModalityState.any()) {
+        for (block in affectedBlocks) {
+          updateHighlighter(block)
+        }
+      }
     }
   }
 
@@ -560,7 +566,8 @@ class PartialLocalLineStatusTracker(project: Project,
       val newMarker = ChangeListMarker(changelist)
 
       documentTracker.writeLock {
-        moveMarkers(condition, newMarker, notifyChangeListManager = true)
+        moveMarkers(condition, newMarker)
+        updateAffectedChangeLists()
       }
     }
   }
