@@ -273,11 +273,11 @@ public class GradleResourceCompilerConfigurationGenerator {
       rootConfiguration.targetPath = FileUtil.toSystemIndependentName(target);
 
       rootConfiguration.includes.clear();
-      for (String include : directorySet.getIncludes()) {
+      for (String include : directorySet.getPatterns().getIncludes()) {
         rootConfiguration.includes.add(include.trim());
       }
       rootConfiguration.excludes.clear();
-      for (String exclude : directorySet.getExcludes()) {
+      for (String exclude : directorySet.getPatterns().getExcludes()) {
         rootConfiguration.excludes.add(exclude.trim());
       }
       if (sourcesDirectorySet != null && sourcesDirectorySet.getSrcDirs().contains(file)) {

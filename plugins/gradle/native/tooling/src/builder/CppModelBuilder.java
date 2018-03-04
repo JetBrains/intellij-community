@@ -28,6 +28,7 @@ import org.gradle.nativeplatform.toolchain.internal.tools.CommandLineToolSearchR
 import org.gradle.nativeplatform.toolchain.internal.tools.ToolSearchPath;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.model.FilePatternSetImpl;
 import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.CompilerDetails;
 import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.CppBinary.TargetType;
 import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.CppProject;

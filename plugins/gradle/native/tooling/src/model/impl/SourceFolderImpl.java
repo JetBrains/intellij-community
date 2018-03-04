@@ -1,7 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl;
 
-import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.FilePatternSet;
+import org.jetbrains.plugins.gradle.model.FilePatternSet;
+import org.jetbrains.plugins.gradle.model.FilePatternSetImpl;
 import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.SourceFolder;
 
 import java.io.File;
