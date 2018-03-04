@@ -15,7 +15,7 @@ public class RunAnythingBundlerActionGroup extends RunAnythingActionGroup {
 
   @NotNull
   @Override
-  protected String getSettingsKey() {
+  public String getVisibilityKey() {
     return "run.anything.settings.bundler.actions";
   }
 

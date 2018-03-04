@@ -14,12 +14,12 @@ public class RunAnythingCommandGroup extends RunAnythingGroup {
   @NotNull
   @Override
   public String getTitle() {
-    return RBundle.message("run.anything.group.title.recent");
+    return RBundle.message("run.anything.group.title.commands");
   }
 
   @NotNull
   @Override
-  protected String getSettingsKey() {
+  public String getVisibilityKey() {
     return "run.anything.settings.commands";
   }
 

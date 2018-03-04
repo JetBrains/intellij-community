@@ -8,8 +8,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.ruby.ruby.actions.groups.RunAnythingGroup;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 @State(name = "RunAnythingCache", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class RunAnythingCache implements PersistentStateComponent<RunAnythingCache.State> {
@@ -33,6 +36,22 @@ public class RunAnythingCache implements PersistentStateComponent<RunAnythingCac
 
   public static RunAnythingCache getInstance(Project project) {
     return ServiceManager.getService(project, RunAnythingCache.class);
+  }
+
+  /**
+   * @return true is group is visible; false if it's hidden
+   */
+  public boolean isGroupVisible(@NotNull String key) {
+    return mySettings.keys.get(key);
+  }
+
+  /**
+   * Saves group visibility flag
+   * @param key to store visibility flag
+   * @param visible true if group should be shown
+   */
+  public void saveGroupVisibilityKey(@NotNull String key, boolean visible) {
+    mySettings.keys.put(key, visible);
   }
 
   @NotNull
@@ -67,7 +86,11 @@ public class RunAnythingCache implements PersistentStateComponent<RunAnythingCac
   }
 
   public static class State {
-    @NotNull
-    public List<String> undefinedCommands = ContainerUtil.newArrayList();
+    @NotNull public Map<String, Boolean> keys = ContainerUtil.newHashMap();
+    @NotNull public List<String> undefinedCommands = ContainerUtil.newArrayList();
+
+    public State() {
+      Arrays.stream(RunAnythingGroup.EP_NAME.getExtensions()).forEach(group -> keys.put(group.getVisibilityKey(), true));
+    }
   }
 }

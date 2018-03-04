@@ -14,7 +14,7 @@ public class RunAnythingTemporaryRunConfigurationGroup extends RunAnythingRunCon
 
   @NotNull
   @Override
-  protected String getSettingsKey() {
+  public String getVisibilityKey() {
     return "run.anything.settings.temporary.configurations";
   }
 

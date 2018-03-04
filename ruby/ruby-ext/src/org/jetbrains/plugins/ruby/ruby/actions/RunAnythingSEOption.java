@@ -1,23 +1,26 @@
 package org.jetbrains.plugins.ruby.ruby.actions;
 
 import com.intellij.ide.ui.search.BooleanOptionDescription;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 class RunAnythingSEOption extends BooleanOptionDescription {
-  private final String myKey;
+  @NotNull private final String myKey;
+  @NotNull private final Project myProject;
 
-  public RunAnythingSEOption(String option, String registryKey) {
+  public RunAnythingSEOption(@NotNull Project project, @NotNull String option, @NotNull String registryKey) {
     super(option, null);
+    myProject = project;
     myKey = registryKey;
   }
 
   @Override
   public boolean isOptionEnabled() {
-    return Registry.is(myKey);
+    return RunAnythingCache.getInstance(myProject).isGroupVisible(myKey);
   }
 
   @Override
   public void setOptionState(boolean enabled) {
-    Registry.get(myKey).setValue(enabled);
+    RunAnythingCache.getInstance(myProject).saveGroupVisibilityKey(myKey, enabled);
   }
 }

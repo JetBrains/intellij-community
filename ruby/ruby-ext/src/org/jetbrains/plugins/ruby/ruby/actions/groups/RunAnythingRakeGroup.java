@@ -19,7 +19,7 @@ public class RunAnythingRakeGroup extends RunAnythingActionGroup<RakeAction> {
 
   @NotNull
   @Override
-  protected String getSettingsKey() {
+  public String getVisibilityKey() {
     return "run.anything.settings.rake.tasks";
   }
 

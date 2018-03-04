@@ -783,12 +783,9 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   private void showSettings() {
     myPopupField.setText("");
     final RunAnythingSettingsModel model = new RunAnythingSettingsModel();
-    model.addElement(new RunAnythingSEOption("Show generators", "run.anything.settings.generators"));
-    model.addElement(new RunAnythingSEOption("Show rake tasks", "run.anything.settings.rake.tasks"));
-    model.addElement(new RunAnythingSEOption("Show bundler actions", "run.anything.settings.bundler.actions"));
-    model.addElement(new RunAnythingSEOption("Show permanent run configurations", "run.anything.settings.permanent.configurations"));
-    model.addElement(new RunAnythingSEOption("Show temporary run configurations", "run.anything.settings.temporary.configurations"));
-    model.addElement(new RunAnythingSEOption("Show recent commands", "run.anything.settings.commands"));
+    Arrays.stream(RunAnythingGroup.EP_NAME.getExtensions()).map(
+      group -> new RunAnythingSEOption(getProject(), RBundle.message("run.anything.group.settings.title", group.getTitle()),
+                                       group.getVisibilityKey())).forEach(model::addElement);
 
     if (myCalcThread != null && !myCurrentWorker.isProcessed()) {
       myCurrentWorker = myCalcThread.cancel();
@@ -1440,6 +1437,6 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     }
   }
 
-  private static class RunAnythingSettingsModel extends DefaultListModel {
+  private static class RunAnythingSettingsModel extends DefaultListModel<RunAnythingSEOption> {
   }
 }

@@ -4,12 +4,12 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.codeStyle.NameUtil;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.ruby.actions.RunAnythingAction.SearchResult;
+import org.jetbrains.plugins.ruby.ruby.actions.RunAnythingCache;
 import org.jetbrains.plugins.ruby.ruby.actions.RunAnythingItem;
 import org.jetbrains.plugins.ruby.ruby.actions.RunAnythingSearchListModel;
 
@@ -37,7 +37,7 @@ public abstract class RunAnythingGroup {
    * @return Unique settings key to store current group visibility property.
    */
   @NotNull
-  protected abstract String getSettingsKey();
+  public abstract String getVisibilityKey();
 
   /**
    * @return Current group maximum number of items to be shown.
@@ -138,7 +138,8 @@ public abstract class RunAnythingGroup {
                                   @NotNull String pattern,
                                   boolean isMore,
                                   @NotNull Runnable check) {
-    return !Registry.is(getSettingsKey()) ? new SearchResult() : getItems(project, module, listModel, pattern, isMore, check);
+    return RunAnythingCache.getInstance(project).isGroupVisible(getVisibilityKey())
+           ? getItems(project, module, listModel, pattern, isMore, check) : new SearchResult();
   }
 
   public void dropMoreIndex() {
