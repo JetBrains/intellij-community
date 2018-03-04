@@ -115,8 +115,6 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
   @NotNull
   public abstract Component getMainComponent();
 
-  protected abstract VcsLogFilterCollection getFilters();
-
   @NotNull
   public abstract VcsLogUiProperties getProperties();
 

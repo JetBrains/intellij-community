@@ -91,7 +91,7 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
 
   @Override
   protected <T> void handleCommitNotFound(@NotNull T commitId, @NotNull PairFunction<GraphTableModel, T, Integer> rowGetter) {
-    if (getFilters().isEmpty()) {
+    if (getFilterUi().getFilters().isEmpty()) {
       super.handleCommitNotFound(commitId, rowGetter);
     }
     else {
@@ -117,12 +117,6 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
   @Override
   public VcsLogGraphTable getTable() {
     return myMainFrame.getGraphTable();
-  }
-
-  @Override
-  @NotNull
-  protected VcsLogFilterCollection getFilters() {
-    return myMainFrame.getFilterUi().getFilters();
   }
 
   @NotNull
