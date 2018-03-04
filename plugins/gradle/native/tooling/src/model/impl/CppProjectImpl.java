@@ -17,6 +17,9 @@ public class CppProjectImpl implements CppProject {
   private final Set<SourceFolder> mySourceFolders = new LinkedHashSet<SourceFolder>();
   private final Set<CppBinary> binaries = new LinkedHashSet<CppBinary>();
 
+  public CppProjectImpl() {
+  }
+
   public CppProjectImpl(CppProject cppProject) {
     for (CppBinary binary : cppProject.getBinaries()) {
       addBinary(new CppBinaryImpl(binary));
