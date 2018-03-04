@@ -29,7 +29,6 @@ import git4idea.repo.GitRepository;
 import git4idea.validators.GitRefNameValidator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.text.ParseException;
 import java.util.Collection;
@@ -77,7 +76,6 @@ public class GitPushTarget implements PushTarget {
     return myIsNewBranchCreated;
   }
 
-  @TestOnly
   boolean isSpecialRef() {
     return myPushingToSpecialRef;
   }
