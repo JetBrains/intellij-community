@@ -107,8 +107,11 @@ public class CppModelBuilder implements ModelBuilderService {
             targetType = TargetType.STATIC_LIBRARY;
           }
 
-          CompilerDetails compilerDetails =
-            new CompilerDetailsImpl(compileTaskName, cppCompilerExecutable, compilerArgs, compileIncludePath, systemIncludes);
+          // resolve compiler working dir as compiler executable file parent dir
+          // https://github.com/gradle/gradle/blob/7422d5fc2e04d564dfd73bc539a37b62f8e2113a/subprojects/platform-native/src/main/java/org/gradle/nativeplatform/toolchain/internal/metadata/AbstractMetadataProvider.java#L61
+          File compilerWorkingDir = cppCompilerExecutable == null ? null : cppCompilerExecutable.getParentFile();
+          CompilerDetails compilerDetails = new CompilerDetailsImpl(
+            compileTaskName, cppCompilerExecutable, compilerWorkingDir, compilerArgs, compileIncludePath, systemIncludes);
           LinkerDetails linkerDetails = new LinkerDetailsImpl(linkTaskName, executableFile);
           cppProject.addBinary(new CppBinaryImpl(baseName, variantName, sources, compilerDetails, linkerDetails, targetType));
         }

@@ -17,16 +17,19 @@ public class CompilerDetailsImpl implements CompilerDetails {
   private final Set<File> myIncludePath;
   private final Set<File> mySystemIncludes;
   private final String myCompileTaskName;
-  private File myExecutable;
+  private final File myExecutable;
+  private final File myWorkingDir;
   private final List<String> myArgs;
 
   public CompilerDetailsImpl(String compileTaskName,
                              File executable,
+                             File workingDir,
                              List<String> args,
                              Set<File> includePath,
                              Set<File> systemIncludes) {
     myCompileTaskName = compileTaskName;
     myExecutable = executable;
+    myWorkingDir = workingDir;
     myArgs = args;
     myIncludePath = new LinkedHashSet<File>(includePath);
     mySystemIncludes = new LinkedHashSet<File>(systemIncludes);
@@ -50,6 +53,11 @@ public class CompilerDetailsImpl implements CompilerDetails {
   @Override
   public File getExecutable() {
     return myExecutable;
+  }
+
+  @Override
+  public File getWorkingDir() {
+    return myWorkingDir;
   }
 
   @Override

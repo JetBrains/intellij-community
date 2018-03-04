@@ -18,5 +18,7 @@ public interface CompilerDetails extends Serializable {
 
   File getExecutable();
 
+  File getWorkingDir();
+
   List<String> getArgs();
 }

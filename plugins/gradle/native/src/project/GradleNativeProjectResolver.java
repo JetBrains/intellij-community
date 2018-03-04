@@ -92,7 +92,7 @@ public class GradleNativeProjectResolver extends AbstractProjectResolverExtensio
   }
 
   private static CompilerDetails copy(CompilerDetails details) {
-    return new CompilerDetailsImpl(details.getCompileTaskName(), details.getExecutable(), details.getArgs(),
+    return new CompilerDetailsImpl(details.getCompileTaskName(), details.getExecutable(), details.getWorkingDir(), details.getArgs(),
                                    details.getIncludePath(), details.getSystemIncludes());
   }
 }
