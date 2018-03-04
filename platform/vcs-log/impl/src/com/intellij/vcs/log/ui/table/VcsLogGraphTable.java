@@ -34,6 +34,7 @@ import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
@@ -113,8 +114,9 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
   public VcsLogGraphTable(@NotNull AbstractVcsLogUi ui,
                           @NotNull VcsLogData logData,
-                          @NotNull VisiblePack initialDataPack) {
-    super(new GraphTableModel(initialDataPack, logData, ui));
+                          @NotNull VisiblePack initialDataPack,
+                          @NotNull Consumer<Runnable> requestMore) {
+    super(new GraphTableModel(initialDataPack, logData, requestMore));
     myLogData = logData;
     myProperties = ui.getProperties();
     myColorManager = ui.getColorManager();

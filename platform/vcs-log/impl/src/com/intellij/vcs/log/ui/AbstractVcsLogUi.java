@@ -145,6 +145,11 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
     return myLogData;
   }
 
+  public void requestMore(@NotNull Runnable onLoaded) {
+    myRefresher.moreCommitsNeeded(onLoaded);
+    getTable().setPaintBusy(true);
+  }
+
   @Override
   @NotNull
   public VisiblePack getDataPack() {
