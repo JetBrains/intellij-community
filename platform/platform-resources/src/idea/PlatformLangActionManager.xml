@@ -27,7 +27,6 @@
   <xi:include href="/idea/PlatformActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/idea/VcsActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/idea/LangActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/idea/ExternalSystemActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <actions>
     <group id="WelcomeScreen.QuickStart.Platform">
