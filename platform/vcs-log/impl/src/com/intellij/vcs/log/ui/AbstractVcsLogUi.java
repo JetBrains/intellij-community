@@ -127,12 +127,7 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
   public VcsLogColorManager getColorManager() {
     return myColorManager;
   }
-
-  @NotNull
-  public Project getProject() {
-    return myProject;
-  }
-
+  
   @NotNull
   public VcsLog getVcsLog() {
     return myLog;
