@@ -124,7 +124,7 @@ fun QualifiedName.getElementAndResolvableName(context: QNameResolveContext, stop
     }
 
     if (element == null) { // Resolve against roots
-      element = resolveQualifiedName(currentName, resolveContext).firstOrNull()
+      element = resolveQualifiedNameWithClasses(currentName, resolveContext).firstOrNull()
     }
 
     if (element != null || stopOnFirstFail) {
