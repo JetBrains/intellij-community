@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle;
 
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleConsoleProperties;
@@ -12,7 +13,8 @@ import org.jetbrains.plugins.gradle.execution.test.runner.GradleConsolePropertie
  */
 public class GradleJavaIdeManager extends GradleIdeManager {
 
-  public Object createTestConsoleProperties(Project project, Executor executor, RunConfiguration runConfiguration) {
+  @Override
+  public SMTRunnerConsoleProperties createTestConsoleProperties(Project project, Executor executor, RunConfiguration runConfiguration) {
     if (runConfiguration instanceof ExternalSystemRunConfiguration) {
       return new GradleConsoleProperties((ExternalSystemRunConfiguration)runConfiguration, executor);
     }
