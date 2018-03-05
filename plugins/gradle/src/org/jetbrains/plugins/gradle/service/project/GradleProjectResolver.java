@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.execution.configurations.ParametersList;
-import com.intellij.externalSystem.JavaProjectData;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,7 +28,8 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotifica
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemDebugEnvironment;
-import com.intellij.openapi.module.StdModuleTypes;
+import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Key;
@@ -125,8 +125,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       final String mainModuleFileDirectoryPath = ideProjectPath == null ? projectPath : ideProjectPath;
 
       projectDataNode
-        .createChild(ProjectKeys.MODULE, new ModuleData(projectName, GradleConstants.SYSTEM_ID, StdModuleTypes.JAVA.getId(),
-                                                                     projectName, mainModuleFileDirectoryPath, projectPath))
+        .createChild(ProjectKeys.MODULE, new ModuleData(projectName, GradleConstants.SYSTEM_ID, getDefaultModuleTypeId(),
+                                                        projectName, mainModuleFileDirectoryPath, projectPath))
         .createChild(ProjectKeys.CONTENT_ROOT, new ContentRootData(GradleConstants.SYSTEM_ID, projectPath));
       return projectDataNode;
     }
@@ -319,10 +319,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     // import project data
     ProjectData projectData = projectResolverChain.createProject();
     DataNode<ProjectData> projectDataNode = new DataNode<>(ProjectKeys.PROJECT, projectData, null);
-
-    // import java project data
-    JavaProjectData javaProjectData = projectResolverChain.createJavaProjectData();
-    projectDataNode.createChild(JavaProjectData.KEY, javaProjectData);
 
     IdeaProject ideaProject = resolverCtx.getModels().getIdeaProject();
 
@@ -881,7 +877,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
     if (projectConnectionDataNodeFunction.myResolverContext.isPreviewMode()) {
       ModuleData buildSrcModuleData =
-        new ModuleData(":buildSrc", GradleConstants.SYSTEM_ID, StdModuleTypes.JAVA.getId(), "buildSrc", projectPath, projectPath);
+        new ModuleData(":buildSrc", GradleConstants.SYSTEM_ID, getDefaultModuleTypeId(), "buildSrc", projectPath, projectPath);
       resultProjectDataNode.createChild(ProjectKeys.MODULE, buildSrcModuleData);
       return;
     }

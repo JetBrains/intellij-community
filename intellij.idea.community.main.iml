@@ -84,7 +84,7 @@
     <orderEntry type="module" module-name="intellij.vcs.github" />
     <orderEntry type="module" module-name="intellij.vcs.hg" />
     <orderEntry type="module" module-name="intellij.relaxng" />
-    <orderEntry type="module" module-name="intellij.gradle" />
+    <orderEntry type="module" module-name="intellij.gradle.java" />
     <orderEntry type="module" module-name="intellij.platform.remoteServers.impl" />
     <orderEntry type="module" module-name="intellij.xml.dom.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.colorSchemes" />

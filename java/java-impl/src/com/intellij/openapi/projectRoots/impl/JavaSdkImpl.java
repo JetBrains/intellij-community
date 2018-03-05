@@ -36,6 +36,8 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
+import static com.intellij.openapi.projectRoots.SimpleJavaSdkType.suggestJavaSdkName;
+
 /**
  * @author Eugene Zhuravlev
  * @since Sep 17, 2004
@@ -212,14 +214,7 @@ public class JavaSdkImpl extends JavaSdk {
 
   @Override
   public String suggestSdkName(String currentSdkName, String sdkHome) {
-    JavaVersion version = JavaVersion.tryParse(getVersionString(sdkHome));
-    if (version == null) return currentSdkName;
-
-    StringBuilder suggested = new StringBuilder();
-    if (version.feature < 9) suggested.append("1.");
-    suggested.append(version.feature);
-    if (version.ea) suggested.append("-ea");
-    return suggested.toString();
+    return suggestJavaSdkName(this, currentSdkName, sdkHome);
   }
 
   @Override
