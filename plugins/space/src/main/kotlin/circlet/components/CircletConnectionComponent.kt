@@ -40,9 +40,7 @@ class CircletConnectionComponent(private val project: Project) :
                 loginModel = LoginModel(
                     IdeaPersistence.substorage("$url-"), url,
                     EmptyLoggedStateWatcher, { authCheckFailedNotification(urlLifetime) }, NotificationKind.Ide
-                ) {
-                    // TODO: NOTIFY
-                }
+                )
 
                 loginModel!!.client.connectionStatus.view(urlLifetime) { stateLifetime, state ->
                     when (state) {
