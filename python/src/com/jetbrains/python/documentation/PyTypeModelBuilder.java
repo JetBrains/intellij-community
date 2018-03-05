@@ -583,12 +583,15 @@ public class PyTypeModelBuilder {
 
     @Override
     public void tuple(TupleType type) {
-      add("Tuple[");
-      processList(type.members);
-      if (type.homogeneous) {
-        add(", ...");
+      add("Tuple");
+      if (!type.members.isEmpty()) {
+        add("[");
+        processList(type.members);
+        if (type.homogeneous) {
+          add(", ...");
+        }
+        add("]");
       }
-      add("]");
     }
 
     @Override

@@ -269,6 +269,11 @@ public class PyAnnotateVariableTypeIntentionTest extends PyIntentionTestCase {
     doAnnotationTest();
   }
 
+  // PY-28808
+  public void testAnnotationEmptyTupleType() {
+    doAnnotationTest();
+  }
+
   private void doAnnotationTest() {
     doTest(LanguageLevel.PYTHON36);
   }
