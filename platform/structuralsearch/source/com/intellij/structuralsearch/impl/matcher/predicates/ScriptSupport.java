@@ -11,7 +11,6 @@ import com.intellij.structuralsearch.StructuralSearchException;
 import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import groovy.lang.Binding;
-import groovy.lang.GroovyRuntimeException;
 import groovy.lang.GroovyShell;
 import groovy.lang.Script;
 import org.codehaus.groovy.control.CompilationFailedException;
@@ -105,7 +104,7 @@ public class ScriptSupport {
 
       final Object o = script.run();
       return String.valueOf(o);
-    } catch (GroovyRuntimeException ex) {
+    } catch (RuntimeException ex) {
       throw new StructuralSearchException(SSRBundle.message("groovy.script.error", StringUtil.replace(ex.getMessage(), UUID, "")));
     } finally {
       script.setBinding(null);
