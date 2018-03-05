@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import org.apache.tools.ant.BuildException
 import org.jetbrains.intellij.build.*
 import org.jetbrains.jps.model.artifact.JpsArtifactService
 import org.jetbrains.jps.model.java.JavaResourceRootType
@@ -15,6 +16,7 @@ import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.Callable
+import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
 import java.util.function.Function
@@ -531,6 +533,9 @@ idea.fatal.error.notification=disabled
         }
         futures.collect { it.get() }
       }
+    }
+    catch (ExecutionException e) {
+      throw e.cause
     }
     finally {
       buildContext.messages.onAllForksFinished()
