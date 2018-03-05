@@ -4,9 +4,12 @@ package com.intellij.refactoring.extractMethodObject.reflect;
 import com.intellij.psi.*;
 import com.intellij.refactoring.extractMethodObject.ItemToReplaceDescriptor;
 import com.intellij.refactoring.extractMethodObject.PsiReflectionAccessUtil;
+import com.intellij.refactoring.extractMethodObject.reflect.ConstructorReflectionAccessor.ConstructorDescriptor;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.refactoring.extractMethodObject.reflect.ConstructorReflectionAccessor.ConstructorDescriptor.createIfInaccessible;
 
 /**
  * @author Vitaliy.Bibaev
@@ -14,10 +17,12 @@ import org.jetbrains.annotations.Nullable;
 public class MethodReferenceReflectionAccessor
   extends ReferenceReflectionAccessorBase<MethodReferenceReflectionAccessor.MethodReferenceDescriptor> {
   private final MethodReflectionAccessor myMethodAccessor;
+  private final ConstructorReflectionAccessor myConstructorReflectionAccessor;
   public MethodReferenceReflectionAccessor(@NotNull PsiClass psiClass,
                                            @NotNull PsiElementFactory elementFactory) {
     super(psiClass, elementFactory);
     myMethodAccessor = new MethodReflectionAccessor(psiClass, elementFactory);
+    myConstructorReflectionAccessor = new ConstructorReflectionAccessor(psiClass, elementFactory);
   }
 
   @Nullable
@@ -41,7 +46,13 @@ public class MethodReferenceReflectionAccessor
     PsiLambdaExpression lambda = LambdaRefactoringUtil.convertMethodReferenceToLambda(descriptor.expression, false, true);
     if (lambda != null) {
       PsiElement lambdaBody = lambda.getBody();
-      if (lambdaBody instanceof PsiMethodCallExpression) {
+      if (lambdaBody instanceof PsiNewExpression) {
+        ConstructorDescriptor constructorDescriptor = createIfInaccessible((PsiNewExpression)lambdaBody);
+        if (constructorDescriptor != null) {
+          myConstructorReflectionAccessor.grantAccess(constructorDescriptor);
+        }
+      }
+      else if (lambdaBody instanceof PsiMethodCallExpression) {
         PsiMethodCallExpression callExpression = (PsiMethodCallExpression)lambdaBody;
         PsiMethod method = callExpression.resolveMethod();
         if (method != null) {
