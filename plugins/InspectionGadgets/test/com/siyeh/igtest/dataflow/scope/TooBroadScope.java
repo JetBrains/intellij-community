@@ -10,6 +10,14 @@ public class TooBroadScope
         <error descr="Unknown class: 'b'">b</error> renderer = new <error descr="Cannot resolve symbol 'b'">b</error>();
     }
 
+    void looseThreads() {
+        Map before = Thread.getAllStackTraces();
+        System.out.println();
+        System.out.println();
+        System.out.println();
+        System.out.println(before);
+    }
+
     // Option "Only report variables that can be moved to inner blocks" is OFF
     public void test() {
         // Example #1
