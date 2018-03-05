@@ -1,20 +1,6 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package com.intellij.psi.impl.source.text;
+package com.intellij.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.FileASTNode;
@@ -31,9 +17,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -82,40 +65,45 @@ public class BlockSupportImpl extends BlockSupport {
                               @NotNull final CharSequence newFileText,
                               @NotNull final ProgressIndicator indicator,
                               @NotNull CharSequence lastCommittedText) {
-    final PsiFileImpl fileImpl = (PsiFileImpl)file;
-    
-    final Couple<ASTNode> reparseableRoots = findReparseableRoots(fileImpl, oldFileNode, changedPsiRange, newFileText);
-    return reparseableRoots != null
-           ? mergeTrees(fileImpl, reparseableRoots.first, reparseableRoots.second, indicator, lastCommittedText)
-           : makeFullParse(fileImpl, oldFileNode, newFileText, indicator, lastCommittedText).getFirst();
+    try (ReparseResult result = reparse(file, oldFileNode, changedPsiRange, newFileText, indicator, lastCommittedText)) {
+      return result.log;
+    }
   }
 
+  static class ReparseResult implements AutoCloseable {
+    final DiffLog log;
+    final ASTNode oldRoot;
+    final ASTNode newRoot;
+
+    ReparseResult(DiffLog log, ASTNode oldRoot, ASTNode newRoot) {
+      this.log = log;
+      this.oldRoot = oldRoot;
+      this.newRoot = newRoot;
+    }
+
+    @Override
+    public void close() {
+    }
+  }
   // return diff log, old node to replace, new node (in dummy file)
+  // MUST call .close() on the returned result
   @NotNull
-  public static Trinity<DiffLog, ASTNode, ASTNode> reparse(@NotNull final PsiFile file,
-                                                           @NotNull FileASTNode oldFileNode,
-                                                           @NotNull TextRange changedPsiRange,
-                                                           @NotNull final CharSequence newFileText,
-                                                           @NotNull final ProgressIndicator indicator,
-                                                           @NotNull CharSequence lastCommittedText) {
+  static ReparseResult reparse(@NotNull final PsiFile file,
+                               @NotNull FileASTNode oldFileNode,
+                               @NotNull TextRange changedPsiRange,
+                               @NotNull final CharSequence newFileText,
+                               @NotNull final ProgressIndicator indicator,
+                               @NotNull CharSequence lastCommittedText) {
     PsiFileImpl fileImpl = (PsiFileImpl)file;
 
     final Couple<ASTNode> reparseableRoots = findReparseableRoots(fileImpl, oldFileNode, changedPsiRange, newFileText);
-    DiffLog diffLog;
-    ASTNode oldRoot;
-    ASTNode newRoot;
     if (reparseableRoots == null) {
-      Pair.NonNull<DiffLog, FileElement> pair = makeFullParse(fileImpl, oldFileNode, newFileText, indicator, lastCommittedText);
-      oldRoot = oldFileNode;
-      newRoot = pair.getSecond();
-      diffLog = pair.getFirst();
+      return makeFullParse(fileImpl, oldFileNode, newFileText, indicator, lastCommittedText);
     }
-    else {
-      oldRoot = reparseableRoots.first;
-      newRoot = reparseableRoots.second;
-      diffLog = mergeTrees(fileImpl, oldRoot, newRoot, indicator, lastCommittedText);
-    }
-    return Trinity.create(diffLog, oldRoot, newRoot);
+    ASTNode oldRoot = reparseableRoots.first;
+    ASTNode newRoot = reparseableRoots.second;
+    DiffLog diffLog = mergeTrees(fileImpl, oldRoot, newRoot, indicator, lastCommittedText);
+    return new ReparseResult(diffLog, oldRoot, newRoot);
   }
 
 
@@ -125,7 +113,7 @@ public class BlockSupportImpl extends BlockSupport {
    *         or {@code null} if can't parse incrementally.
    */
   @Nullable
-  public static Couple<ASTNode> findReparseableRoots(@NotNull PsiFileImpl file,
+  static Couple<ASTNode> findReparseableRoots(@NotNull PsiFileImpl file,
                                                      @NotNull FileASTNode oldFileNode,
                                                      @NotNull TextRange changedPsiRange,
                                                      @NotNull CharSequence newFileText) {
@@ -204,20 +192,27 @@ public class BlockSupportImpl extends BlockSupport {
 
   // returns diff log, new file element
   @NotNull
-  public static Pair.NonNull<DiffLog, FileElement> makeFullParse(@NotNull PsiFileImpl fileImpl,
-                                                             @NotNull FileASTNode oldFileNode,
-                                                             @NotNull CharSequence newFileText,
-                                                             @NotNull ProgressIndicator indicator,
-                                                             @NotNull CharSequence lastCommittedText) {
+  static ReparseResult makeFullParse(@NotNull PsiFileImpl fileImpl,
+                                     @NotNull FileASTNode oldFileNode,
+                                     @NotNull CharSequence newFileText,
+                                     @NotNull ProgressIndicator indicator,
+                                     @NotNull CharSequence lastCommittedText) {
     if (fileImpl instanceof PsiCodeFragment) {
       FileElement parent = fileImpl.getTreeElement();
       PsiElement context = fileImpl.getContext();
-      FileElement holderElement = new DummyHolder(fileImpl.getManager(), context != null && context.isValid() ? context : null).getTreeElement();
+      DummyHolder dummyHolder = new DummyHolder(fileImpl.getManager(), context != null && context.isValid() ? context : null);
+      FileElement holderElement = dummyHolder.getTreeElement();
       holderElement.rawAddChildren(fileImpl.createContentLeafElement(holderElement.getCharTable().intern(newFileText, 0, newFileText.length())));
       DiffLog diffLog = new DiffLog();
       diffLog.appendReplaceFileElement(parent, (FileElement)holderElement.getFirstChildNode());
 
-      return Pair.createNonNull(diffLog, holderElement);
+      return new ReparseResult(diffLog, oldFileNode, holderElement) {
+        @Override
+        public void close() {
+          VirtualFile lightFile = dummyHolder.getViewProvider().getVirtualFile();
+          ((PsiManagerEx)fileImpl.getManager()).getFileManager().setViewProvider(lightFile, null);
+        }
+      };
     }
     FileViewProvider viewProvider = fileImpl.getViewProvider();
     viewProvider.getLanguages();
@@ -245,8 +240,12 @@ public class BlockSupportImpl extends BlockSupport {
     }
     DiffLog diffLog = mergeTrees(fileImpl, oldFileElement, newFileElement, indicator, lastCommittedText);
 
-    ((PsiManagerEx)fileImpl.getManager()).getFileManager().setViewProvider(lightFile, null);
-    return Pair.createNonNull(diffLog, newFileElement);
+    return new ReparseResult(diffLog, oldFileElement, newFileElement) {
+      @Override
+      public void close() {
+        ((PsiManagerEx)fileImpl.getManager()).getFileManager().setViewProvider(lightFile, null);
+      }
+    };
   }
 
   @NotNull
