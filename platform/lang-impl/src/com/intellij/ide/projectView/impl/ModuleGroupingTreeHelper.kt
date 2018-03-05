@@ -150,22 +150,18 @@ class ModuleGroupingTreeHelper<M: Any, N: MutableTreeNode> private constructor(
    * If [bulkOperation] is true, no events will be fired and new node will be added into arbitrary place in the children list
    */
   private fun getOrCreateNodeForModuleGroup(group: ModuleGroup, rootNode: N, model: DefaultTreeModel, bulkOperation: Boolean): N {
-    if (!groupingEnabled) return rootNode
-
-    var parentNode = rootNode
     val path = group.groupPathList
-    for (i in path.indices) {
-      val current = ModuleGroup(path.subList(0, i+1))
-      var node = nodeForGroup[current]
-      if (node == null) {
-        node = moduleGroupNodeFactory(current)
-        insertNode(node, parentNode, model, bulkOperation)
-        nodeForGroup[current] = node
-        nodeData[node] = ModuleTreeNodeData<M>(null,group)
-      }
-      parentNode = node
-    }
-    return parentNode
+    if (!groupingEnabled || path.isEmpty()) return rootNode
+
+    val existingNode = nodeForGroup[group]
+    if (existingNode != null) return existingNode
+
+    val parentNode = getOrCreateNodeForModuleGroup(ModuleGroup(path.subList(0, path.size - 1)), rootNode, model, bulkOperation)
+    val node = moduleGroupNodeFactory(group)
+    insertNode(node, parentNode, model, bulkOperation)
+    nodeForGroup[group] = node
+    nodeData[node] = ModuleTreeNodeData<M>(null, group)
+    return node
   }
 
   private fun insertNode(node: N, parentNode: N, model: DefaultTreeModel, bulkOperation: Boolean) {
