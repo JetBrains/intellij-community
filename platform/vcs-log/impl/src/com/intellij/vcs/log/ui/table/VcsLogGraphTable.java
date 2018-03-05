@@ -475,7 +475,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       int row = selectedRows[i];
       for (int j = ROOT_COLUMN + 1; j < getModel().getColumnCount(); j++) {
         sb.append(getModel().getValueAt(row, j).toString());
-        if (j < getModel().getRowCount() - 1) sb.append(" ");
+        if (j < getModel().getColumnCount() - 1) sb.append(" ");
       }
       if (i != selectedRows.length - 1) sb.append("\n");
     }
