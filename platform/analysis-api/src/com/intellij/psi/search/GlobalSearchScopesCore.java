@@ -63,12 +63,16 @@ public class GlobalSearchScopesCore {
 
   @NotNull
   public static GlobalSearchScope directoriesScope(@NotNull Project project, boolean withSubdirectories, @NotNull VirtualFile... directories) {
-    if (directories.length == 1) {
-      return directoryScope(project, directories[0], withSubdirectories);
+    Set<VirtualFile> dirSet = ContainerUtil.newHashSet(directories);
+    if (dirSet.isEmpty()) {
+      return GlobalSearchScope.EMPTY_SCOPE;
+    }
+    if (dirSet.size() == 1) {
+      return directoryScope(project, dirSet.iterator().next(), withSubdirectories);
     }
     return new DirectoriesScope(project,
-                                withSubdirectories ? Collections.emptySet() : ContainerUtil.newHashSet(directories),
-                                withSubdirectories ? ContainerUtil.newHashSet(directories) : Collections.emptySet());
+                                withSubdirectories ? Collections.emptySet() : dirSet,
+                                withSubdirectories ? dirSet : Collections.emptySet());
   }
 
   public static GlobalSearchScope filterScope(@NotNull Project project, @NotNull NamedScope set) {
