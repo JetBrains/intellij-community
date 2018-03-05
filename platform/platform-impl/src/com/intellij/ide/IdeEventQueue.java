@@ -1227,6 +1227,7 @@ public class IdeEventQueue extends EventQueue {
     if (!delayKeyEvents.get()) return false;
     long currentTypeaheadDelay = System.currentTimeMillis() - lastTypeaheadTimestamp;
     if (currentTypeaheadDelay > Registry.get("action.aware.typeaheadTimout").asDouble()) {
+      // This is a workaround for IDEA-187695
       super.postEvent(new InvocationEvent(this, () -> {
         TYPEAHEAD_LOG.error(new RuntimeException("Typeahead timeout is exceeded: " + currentTypeaheadDelay));
       }));
