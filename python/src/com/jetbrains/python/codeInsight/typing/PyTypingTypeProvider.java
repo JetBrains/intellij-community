@@ -1006,7 +1006,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   @Nullable
   private static Ref<PyType> getVariableTypeCommentType(@NotNull String contents, @NotNull PsiElement anchor, @NotNull Context context) {
     // TODO pass the real anchor as the context element for the fragment to resolve local classes/type aliases
-    final PyExpression expr = PyUtil.createExpressionFromFragment(contents, anchor.getContainingFile());
+    final PyExpression expr = PyPsiUtils.flattenParens(PyUtil.createExpressionFromFragment(contents, anchor.getContainingFile()));
     if (expr != null) {
       // Such syntax is specific to "# type:" comments, unpacking in type hints is not allowed anywhere else
       if (expr instanceof PyTupleExpression) {
