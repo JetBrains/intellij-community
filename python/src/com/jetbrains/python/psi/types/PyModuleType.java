@@ -92,7 +92,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
     if (PyUtil.isPackage(anchor, location)) {
       final ResolveResultList implicitMembers = new ResolveResultList();
       processImplicitPackageMembers(anchor, location, importedModule, n -> name.endsWith(n), results -> {
-        implicitMembers.addAll(results);
+        implicitMembers.addAll(convertDirsToInit(results));
         return implicitMembers.isEmpty();
       });
       if (!implicitMembers.isEmpty()) {
@@ -236,6 +236,20 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
     else {
       return null;
     }
+  }
+
+  private static @NotNull
+  List<? extends RatedResolveResult> convertDirsToInit(@NotNull List<? extends RatedResolveResult> ratedResolveList) {
+    return ContainerUtil.map(ratedResolveList, result -> {
+      final PsiElement element = result.getElement();
+      if (element instanceof PsiDirectory) {
+        final PsiElement pkgInit = PyUtil.turnDirIntoInit(element);
+        return pkgInit != null ? result.replace(pkgInit) : result;
+      }
+      else {
+        return result;
+      }
+    });
   }
 
   @Nullable
