@@ -70,7 +70,9 @@ public class TooBroadScopeInspection extends TooBroadScopeInspectionBase {
       final PsiElement variableScope = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class, PsiForStatement.class, PsiTryStatement.class);
       final List<PsiReferenceExpression> references = findReferences(variable);
       PsiElement commonParent = ScopeUtils.getCommonParent(references);
-      assert commonParent != null;
+      if (commonParent == null) {
+        return;
+      }
       final PsiExpression initializer = variable.getInitializer();
       if (initializer != null) {
         assert variableScope != null;
