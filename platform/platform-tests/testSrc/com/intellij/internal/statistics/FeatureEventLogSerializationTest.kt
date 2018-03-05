@@ -4,7 +4,9 @@ package com.intellij.internal.statistics
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.intellij.internal.statistic.eventLog.LogEvent
+import com.intellij.internal.statistic.eventLog.LogEventContent
 import com.intellij.internal.statistic.eventLog.LogEventSerializer
+import com.intellij.openapi.util.io.FileUtil
 import org.junit.Test
 import kotlin.test.assertEquals
 
@@ -59,6 +61,81 @@ class FeatureEventLogSerializationTest {
 
     val json = JsonParser().parse(LogEventSerializer.toString(FakeLogEventContent(events))).asJsonObject
     assertLogEventContentIsValid(json)
+  }
+
+  @Test
+  fun testDeserializationNoEvents() {
+    testDeserialization()
+  }
+
+  @Test
+  fun testDeserializationSingleEvent() {
+    val events = ArrayList<LogEvent>()
+    events.add(LogEvent("session-id", "-1", "recorder-id", "1", "test-event-type"))
+
+    testDeserialization(events)
+  }
+
+  @Test
+  fun testDeserializationSingleBatch() {
+    val events = ArrayList<LogEvent>()
+    events.add(LogEvent("session-id", "-1", "recorder-id", "1", "first"))
+    events.add(LogEvent("session-id", "-1", "recorder-id-1", "1", "second"))
+    events.add(LogEvent("session-id", "-1", "recorder-id-2", "1", "third"))
+
+    testDeserialization(events)
+  }
+
+  @Test
+  fun testDeserializationTwoCompleteBatches() {
+    val firstBatch = ArrayList<LogEvent>()
+    val secondBatch = ArrayList<LogEvent>()
+    firstBatch.add(LogEvent("session-id", "-1", "recorder-id", "1", "first"))
+    firstBatch.add(LogEvent("session-id", "-1", "recorder-id-1", "1", "second"))
+    firstBatch.add(LogEvent("session-id", "-1", "recorder-id-2", "1", "third"))
+    secondBatch.add(LogEvent("session-id", "-1", "recorder-id", "1", "fourth"))
+    secondBatch.add(LogEvent("session-id", "-1", "recorder-id-1", "1", "fifth"))
+    secondBatch.add(LogEvent("session-id", "-1", "recorder-id-2", "1", "sixth"))
+
+    testDeserialization(firstBatch, secondBatch)//events, expected)
+  }
+
+  @Test
+  fun testDeserializationIncompleteBatch() {
+    val firstBatch = ArrayList<LogEvent>()
+    val secondBatch = ArrayList<LogEvent>()
+    firstBatch.add(LogEvent("session-id", "-1", "recorder-id", "1", "first"))
+    firstBatch.add(LogEvent("session-id", "-1", "recorder-id-1", "1", "second"))
+    firstBatch.add(LogEvent("session-id", "-1", "recorder-id-2", "1", "third"))
+    secondBatch.add(LogEvent("session-id", "-1", "recorder-id", "1", "fourth"))
+
+    testDeserialization(firstBatch, secondBatch)
+  }
+
+  private fun testDeserialization(vararg batches: List<LogEvent>) {
+    val events = ArrayList<LogEvent>()
+    val expected = ArrayList<FakeLogEventContent>()
+    for (batch in batches) {
+      events.addAll(batch)
+      expected.add(FakeLogEventContent(batch))
+    }
+
+    val log = FileUtil.createTempFile("feature-event-log", ".log")
+    try {
+      val out = StringBuilder()
+      for (event in events) {
+        out.append(LogEventSerializer.toString(event)).append("\n")
+      }
+      FileUtil.writeToFile(log, out.toString())
+      val actual = LogEventContent.create(log, "IU", "user-id", 3)
+      assertEquals(expected.size, actual.size)
+      for ((index, content) in actual.withIndex()) {
+        assertEquals(expected.get(index).events, content.events)
+      }
+    }
+    finally {
+      FileUtil.delete(log)
+    }
   }
 
   private fun testEventSerialization(event: LogEvent, vararg dataOptions: String) {

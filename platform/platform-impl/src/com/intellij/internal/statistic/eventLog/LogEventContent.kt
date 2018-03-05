@@ -11,27 +11,27 @@ import java.io.FileReader
 import java.io.IOException
 import java.util.*
 
-class LogEventContent(val events: List<LogEvent>) {
-  val product = ApplicationInfo.getInstance().build.productCode
-  val user = PermanentInstallationID.get()
+class LogEventContent(val product : String, val user: String, val events: List<LogEvent>) {
 
   companion object {
+    private const val BATCH_SIZE = 500
     private val LOG = Logger.getInstance(LogEventContent::class.java)
 
-    fun create(file: File): LogEventContent? {
+    fun create(file: File): List<LogEventContent> {
+      return create(file, ApplicationInfo.getInstance().build.productCode, PermanentInstallationID.get(), BATCH_SIZE)
+    }
+
+    fun create(file: File, product: String, user: String, batchSize: Int): List<LogEventContent> {
       try {
-        val events = ArrayList<LogEvent>()
+        val batches = ArrayList<LogEventContent>()
         BufferedReader(FileReader(file.path)).use { reader ->
-          var line = reader.readLine()
-          while (line != null) {
-            events.add(LogEventSerializer.fromString(line))
-            line = reader.readLine()
+          var events = readNextBatch(reader, batchSize)
+          while (!events.isEmpty()) {
+            batches.add(LogEventContent(product, user, events))
+            events = readNextBatch(reader, batchSize)
           }
         }
-
-        if (!events.isEmpty()) {
-          return LogEventContent(events)
-        }
+        return batches
       }
       catch (e: JsonSyntaxException) {
         LOG.warn(e)
@@ -39,8 +39,17 @@ class LogEventContent(val events: List<LogEvent>) {
       catch (e: IOException) {
         LOG.warn(e)
       }
+      return Collections.emptyList()
+    }
 
-      return null
+    private fun readNextBatch(reader : BufferedReader, batchSize: Int) : List<LogEvent> {
+      val events = ArrayList<LogEvent>()
+      var line = reader.readLine()
+      while (line != null) {
+        events.add(LogEventSerializer.fromString(line))
+        line = if (events.size < batchSize) reader.readLine() else null
+      }
+      return events
     }
   }
 }
