@@ -36,7 +36,7 @@ class AppUIExecutorImpl implements AppUIExecutor {
       }
 
       @Override
-      public void doExecute(@NotNull Runnable runnable) {
+      public void doReschedule(@NotNull Runnable runnable) {
         ApplicationManager.getApplication().invokeLater(runnable, modality);
       }
 
@@ -74,7 +74,7 @@ class AppUIExecutorImpl implements AppUIExecutor {
       }
 
       @Override
-      public void doExecute(@NotNull Runnable runnable) {
+      public void doReschedule(@NotNull Runnable runnable) {
         ApplicationManager.getApplication().invokeLater(() -> {
           usedOnce = true;
           runnable.run();
@@ -98,7 +98,7 @@ class AppUIExecutorImpl implements AppUIExecutor {
       }
 
       @Override
-      public void doExecute(@NotNull Runnable runnable) {
+      public void doReschedule(@NotNull Runnable runnable) {
         PsiDocumentManager.getInstance(project).performLaterWhenAllCommitted(runnable, myModality);
       }
 
@@ -119,7 +119,7 @@ class AppUIExecutorImpl implements AppUIExecutor {
       }
 
       @Override
-      public void doExecute(@NotNull Runnable runnable) {
+      public void doReschedule(@NotNull Runnable runnable) {
         DumbService.getInstance(project).smartInvokeLater(runnable, myModality);
       }
 
@@ -141,7 +141,7 @@ class AppUIExecutorImpl implements AppUIExecutor {
       }
 
       @Override
-      public void doExecute(@NotNull Runnable runnable) {
+      public void doReschedule(@NotNull Runnable runnable) {
         TransactionGuard.getInstance().submitTransaction(parentDisposable, id, runnable);
       }
 
@@ -199,7 +199,7 @@ class AppUIExecutorImpl implements AppUIExecutor {
         if (log.size() > 1000) {
           LOG.error("Too many reschedule requests, probably constraints can't be satisfied all together: " + log.subList(100, 120));
         }
-        constraint.execute(() -> checkConstraints(runnable, future, log));
+        constraint.rescheduleInCorrectContext(() -> checkConstraints(runnable, future, log));
         return;
       }
     }
@@ -215,11 +215,11 @@ class AppUIExecutorImpl implements AppUIExecutor {
 
   private abstract static class ConstrainedExecutor {
     public abstract boolean isCorrectContext();
-    public abstract void doExecute(Runnable r);
+    public abstract void doReschedule(Runnable r);
     public abstract String toString();
 
-    void execute(Runnable r) {
-      doExecute(() -> {
+    void rescheduleInCorrectContext(Runnable r) {
+      doReschedule(() -> {
         LOG.assertTrue(isCorrectContext(), this);
         r.run();
       });
