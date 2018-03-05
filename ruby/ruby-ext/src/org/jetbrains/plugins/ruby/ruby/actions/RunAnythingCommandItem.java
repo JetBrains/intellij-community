@@ -66,7 +66,7 @@ public class RunAnythingCommandItem extends RunAnythingItem<String> {
                                 @NotNull String commandString,
                                 @Nullable Module module,
                                 @NotNull Executor executor) {
-    Collection<String> commands = RunAnythingCache.getInstance(project).getState().undefinedCommands;
+    Collection<String> commands = RunAnythingCache.getInstance(project).getState().getCommands();
     commands.remove(commandString);
     commands.add(commandString);
 

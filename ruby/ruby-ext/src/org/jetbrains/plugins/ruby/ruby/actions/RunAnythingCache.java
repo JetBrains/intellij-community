@@ -7,12 +7,15 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import com.intellij.util.xmlb.annotations.XCollection;
+import com.intellij.util.xmlb.annotations.XMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ruby.ruby.actions.groups.RunAnythingGroup;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @State(name = "RunAnythingCache", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class RunAnythingCache implements PersistentStateComponent<RunAnythingCache.State> {
@@ -86,11 +89,16 @@ public class RunAnythingCache implements PersistentStateComponent<RunAnythingCac
   }
 
   public static class State {
-    @NotNull public Map<String, Boolean> keys = ContainerUtil.newHashMap();
-    @NotNull public List<String> undefinedCommands = ContainerUtil.newArrayList();
+    @XMap(entryTagName = "visibility", keyAttributeName = "group", valueAttributeName = "flag")
+    @NotNull private final Map<String, Boolean> keys =
+      Arrays.stream(RunAnythingGroup.EP_NAME.getExtensions()).collect(Collectors.toMap(group -> group.getVisibilityKey(), group -> true));
 
-    public State() {
-      Arrays.stream(RunAnythingGroup.EP_NAME.getExtensions()).forEach(group -> keys.put(group.getVisibilityKey(), true));
+    @XCollection(elementName = "command")
+    @NotNull private final List<String> commands = ContainerUtil.newArrayList();
+
+    @NotNull
+    public List<String> getCommands() {
+      return commands;
     }
   }
 }

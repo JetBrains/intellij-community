@@ -869,7 +869,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       int index = myList.getSelectedIndex();
       if (!(selectedValue instanceof RunAnythingCommandItem) || isMoreItem(index)) return;
 
-      RunAnythingCache.getInstance(getProject()).getState().undefinedCommands.remove(((RunAnythingCommandItem)selectedValue).getText());
+      RunAnythingCache.getInstance(getProject()).getState().getCommands().remove(((RunAnythingCommandItem)selectedValue).getText());
 
       model.remove(index);
       RunAnythingGroup.shiftIndexes(index, -1);

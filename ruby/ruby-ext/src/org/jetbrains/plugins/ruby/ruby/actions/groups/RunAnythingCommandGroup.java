@@ -37,7 +37,7 @@ public class RunAnythingCommandGroup extends RunAnythingGroup {
     RunAnythingAction.SearchResult result = new RunAnythingAction.SearchResult();
 
     check.run();
-    for (String command : ContainerUtil.iterateBackward(RunAnythingCache.getInstance(project).getState().undefinedCommands)) {
+    for (String command : ContainerUtil.iterateBackward(RunAnythingCache.getInstance(project).getState().getCommands())) {
       if (addToList(listModel, result, pattern, new RunAnythingCommandItem(project, module, command), command, isMore)) break;
       check.run();
     }
