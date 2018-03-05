@@ -59,7 +59,7 @@ class FeatureEventLogSerializationTest {
     events.add(LogEvent("session-id", "-1", "recorder-id", "1", "first-type"))
     events.add(LogEvent("session-id", "-1", "recorder-id-2", "1", "second-type"))
 
-    val json = JsonParser().parse(LogEventSerializer.toString(FakeLogEventContent(events))).asJsonObject
+    val json = JsonParser().parse(LogEventSerializer.toString(eventBatch(events))).asJsonObject
     assertLogEventContentIsValid(json)
   }
 
@@ -114,10 +114,10 @@ class FeatureEventLogSerializationTest {
 
   private fun testDeserialization(vararg batches: List<LogEvent>) {
     val events = ArrayList<LogEvent>()
-    val expected = ArrayList<FakeLogEventContent>()
+    val expected = ArrayList<LogEventContent>()
     for (batch in batches) {
       events.addAll(batch)
-      expected.add(FakeLogEventContent(batch))
+      expected.add(eventBatch(batch))
     }
 
     val log = FileUtil.createTempFile("feature-event-log", ".log")
@@ -190,9 +190,7 @@ class FeatureEventLogSerializationTest {
     return str.indexOf(" ") == -1 && str.indexOf("\t") == -1 && str.indexOf("\"") == -1
   }
 
-  @Suppress("unused")
-  private class FakeLogEventContent(val events: List<LogEvent>) {
-    val product = "IU"
-    val user = "user-id"
+  private fun eventBatch(events: List<LogEvent>) : LogEventContent {
+    return LogEventContent("IU", "user-id", events)
   }
 }
