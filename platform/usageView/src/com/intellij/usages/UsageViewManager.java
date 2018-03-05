@@ -34,11 +34,6 @@ public abstract class UsageViewManager {
   }
 
   @NotNull
-  public abstract UsageView createEmptyUsageView(@NotNull UsageTarget[] targets,
-                                                 @NotNull UsageViewPresentation presentation,
-                                                 Factory<UsageSearcher> usageSearcherFactory);
-
-  @NotNull
   public abstract UsageView createUsageView(@NotNull UsageTarget[] targets, @NotNull Usage[] usages, @NotNull UsageViewPresentation presentation, Factory<UsageSearcher> usageSearcherFactory);
 
   @NotNull

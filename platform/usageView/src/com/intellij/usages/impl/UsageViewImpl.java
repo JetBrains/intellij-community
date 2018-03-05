@@ -88,7 +88,7 @@ import com.intellij.util.containers.Queue;
 /**
  * @author max
  */
-public class UsageViewImpl implements UsageView {
+public class UsageViewImpl implements UsageViewEx {
   @NonNls public static final String SHOW_RECENT_FIND_USAGES_ACTION_ID = "UsageView.ShowRecentFindUsages";
 
   private final UsageNodeTreeBuilder myBuilder;

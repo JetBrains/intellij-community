@@ -79,7 +79,7 @@ class SearchForUsagesRunnable implements Runnable {
   private final AtomicReference<Usage> myFirstUsage = new AtomicReference<>();
   @NotNull
   private final Project myProject;
-  private final AtomicReference<UsageView> myUsageViewRef;
+  private final AtomicReference<UsageViewEx> myUsageViewRef;
   private final UsageViewPresentation myPresentation;
   private final UsageTarget[] mySearchFor;
   private final Factory<UsageSearcher> mySearcherFactory;
@@ -91,7 +91,7 @@ class SearchForUsagesRunnable implements Runnable {
 
   SearchForUsagesRunnable(@NotNull UsageViewManagerImpl usageViewManager,
                           @NotNull Project project,
-                          @NotNull AtomicReference<UsageView> usageViewRef,
+                          @NotNull AtomicReference<UsageViewEx> usageViewRef,
                           @NotNull UsageViewPresentation presentation,
                           @NotNull UsageTarget[] searchFor,
                           @NotNull Factory<UsageSearcher> searcherFactory,
@@ -303,8 +303,8 @@ class SearchForUsagesRunnable implements Runnable {
     rangeBlinker.startBlinking();
   }
 
-  private UsageView getUsageView(@NotNull ProgressIndicator indicator) {
-    UsageView usageView = myUsageViewRef.get();
+  private UsageViewEx getUsageView(@NotNull ProgressIndicator indicator) {
+    UsageViewEx usageView = myUsageViewRef.get();
     if (usageView != null) return usageView;
     int usageCount = myUsageCountWithoutDefinition.get();
     if (usageCount >= 2 || usageCount == 1 && myProcessPresentation.isShowPanelIfOnlyOneUsage()) {
@@ -394,7 +394,7 @@ class SearchForUsagesRunnable implements Runnable {
           myFirstUsage.compareAndSet(null, usage);
         }
 
-        final UsageView usageView = getUsageView(indicator1);
+        final UsageViewEx usageView = getUsageView(indicator1);
 
         TooManyUsagesStatus tooManyUsagesStatus= TooManyUsagesStatus.getFrom(indicator1);
         if (usageCount > UsageLimitUtil.USAGES_LIMIT && tooManyUsagesStatus.switchTooManyUsagesStatus()) {
@@ -470,7 +470,7 @@ class SearchForUsagesRunnable implements Runnable {
       }, ModalityState.NON_MODAL, myProject.getDisposed());
     }
     else {
-      final UsageView usageView = myUsageViewRef.get();
+      final UsageViewEx usageView = myUsageViewRef.get();
       usageView.searchFinished();
       final List<String> lines;
       final HyperlinkListener hyperlinkListener;
@@ -494,7 +494,7 @@ class SearchForUsagesRunnable implements Runnable {
       }
     }
 
-    UsageView usageView = myUsageViewRef.get();
+    UsageViewEx usageView = myUsageViewRef.get();
     if (usageView != null) {
       usageView.waitForUpdateRequestsCompletion();
     }

@@ -63,8 +63,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
 
 
   @NotNull
-  @Override
-  public UsageView createEmptyUsageView(@NotNull UsageTarget[] targets,
+  protected UsageViewEx createEmptyUsageView(@NotNull UsageTarget[] targets,
                                         @NotNull UsageViewPresentation presentation,
                                         Factory<UsageSearcher> usageSearcherFactory) {
     return new UsageViewImpl(myProject, presentation, targets, usageSearcherFactory);
@@ -76,7 +75,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
                                    @NotNull Usage[] usages,
                                    @NotNull UsageViewPresentation presentation,
                                    Factory<UsageSearcher> usageSearcherFactory) {
-    UsageView usageView = createEmptyUsageView(targets, presentation, usageSearcherFactory);
+    UsageViewEx usageView = createEmptyUsageView(targets, presentation, usageSearcherFactory);
     usageView.appendUsagesInBulk(Arrays.asList(usages));
     ProgressManager.getInstance().run(new Task.Modal(myProject, "Waiting For Usages", false) {
       @Override
@@ -151,7 +150,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
       throw new IllegalStateException("Can't start find usages from under write action. Please consider Application.invokeLater() it instead.");
     }
     final SearchScope searchScopeToWarnOfFallingOutOf = getMaxSearchScopeToWarnOfFallingOutOf(searchFor);
-    final AtomicReference<UsageView> usageViewRef = new AtomicReference<>();
+    final AtomicReference<UsageViewEx> usageViewRef = new AtomicReference<>();
     long start = System.currentTimeMillis();
     Task.Backgroundable task = new Task.Backgroundable(myProject, getProgressTitle(presentation), true, new SearchInBackgroundOption()) {
       @Override
@@ -230,7 +229,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
                                                    @NotNull final ProgressIndicator indicator,
                                                    @NotNull final UsageViewPresentation presentation,
                                                    final int usageCount,
-                                                   @Nullable final UsageView usageView) {
+                                                   @Nullable final UsageViewEx usageView) {
     UIUtil.invokeLaterIfNeeded(() -> {
       if (usageView != null && usageView.searchHasBeenCancelled() || indicator.isCanceled()) return;
       int shownUsageCount = usageView instanceof  UsageViewImpl ? ((UsageViewImpl)usageView).getRoot().getRecursiveUsageCount() : usageCount;
