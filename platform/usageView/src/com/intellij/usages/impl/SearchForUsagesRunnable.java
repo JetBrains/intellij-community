@@ -79,7 +79,7 @@ class SearchForUsagesRunnable implements Runnable {
   private final AtomicReference<Usage> myFirstUsage = new AtomicReference<>();
   @NotNull
   private final Project myProject;
-  private final AtomicReference<UsageViewImpl> myUsageViewRef;
+  private final AtomicReference<UsageViewEx> myUsageViewRef;
   private final UsageViewPresentation myPresentation;
   private final UsageTarget[] mySearchFor;
   private final Factory<UsageSearcher> mySearcherFactory;
@@ -91,7 +91,7 @@ class SearchForUsagesRunnable implements Runnable {
 
   SearchForUsagesRunnable(@NotNull UsageViewManagerImpl usageViewManager,
                           @NotNull Project project,
-                          @NotNull AtomicReference<UsageViewImpl> usageViewRef,
+                          @NotNull AtomicReference<UsageViewEx> usageViewRef,
                           @NotNull UsageViewPresentation presentation,
                           @NotNull UsageTarget[] searchFor,
                           @NotNull Factory<UsageSearcher> searcherFactory,
@@ -303,19 +303,19 @@ class SearchForUsagesRunnable implements Runnable {
     rangeBlinker.startBlinking();
   }
 
-  private UsageViewImpl getUsageView(@NotNull ProgressIndicator indicator) {
-    UsageViewImpl usageView = myUsageViewRef.get();
+  private UsageViewEx getUsageView(@NotNull ProgressIndicator indicator) {
+    UsageViewEx usageView = myUsageViewRef.get();
     if (usageView != null) return usageView;
     int usageCount = myUsageCountWithoutDefinition.get();
     if (usageCount >= 2 || usageCount == 1 && myProcessPresentation.isShowPanelIfOnlyOneUsage()) {
-      usageView = new UsageViewImpl(myProject, myPresentation, mySearchFor, mySearcherFactory);
+      usageView = myUsageViewManager.createEmptyUsageView(mySearchFor, myPresentation, mySearcherFactory);
       usageView.associateProgress(indicator);
       if (myUsageViewRef.compareAndSet(null, usageView)) {
         if (myProcessPresentation.isShowFindOptionsPrompt()) {
           openView(usageView);
         }
         else {
-          UsageViewImpl finalView = usageView;
+          UsageViewEx finalView = usageView;
           SwingUtilities.invokeLater(() -> {
             if (myProject.isDisposed()) return;
             if (myListener != null) {
@@ -325,12 +325,12 @@ class SearchForUsagesRunnable implements Runnable {
         }
         final Usage firstUsage = myFirstUsage.get();
         if (firstUsage != null) {
-          final UsageViewImpl finalUsageView = usageView;
+          final UsageViewEx finalUsageView = usageView;
           ApplicationManager.getApplication().runReadAction(() -> finalUsageView.appendUsage(firstUsage));
         }
       }
       else {
-        UsageViewImpl finalUsageView = usageView;
+        UsageViewEx finalUsageView = usageView;
         // later because dispose does some sort of swing magic e.g. AnAction.unregisterCustomShortcutSet()
         UIUtil.invokeLaterIfNeeded(() -> Disposer.dispose(finalUsageView));
       }
@@ -339,10 +339,10 @@ class SearchForUsagesRunnable implements Runnable {
     return null;
   }
 
-  private void openView(@NotNull final UsageViewImpl usageView) {
+  private void openView(@NotNull final UsageViewEx usageView) {
     SwingUtilities.invokeLater(() -> {
       if (myProject.isDisposed()) return;
-      myUsageViewManager.addContent(usageView, myPresentation);
+      myUsageViewManager.showUsageView(usageView, myPresentation);
       if (myListener != null) {
         myListener.usageViewCreated(usageView);
       }
@@ -394,7 +394,7 @@ class SearchForUsagesRunnable implements Runnable {
           myFirstUsage.compareAndSet(null, usage);
         }
 
-        final UsageViewImpl usageView = getUsageView(indicator1);
+        final UsageViewEx usageView = getUsageView(indicator1);
 
         TooManyUsagesStatus tooManyUsagesStatus= TooManyUsagesStatus.getFrom(indicator1);
         if (usageCount > UsageLimitUtil.USAGES_LIMIT && tooManyUsagesStatus.switchTooManyUsagesStatus()) {
@@ -470,12 +470,8 @@ class SearchForUsagesRunnable implements Runnable {
       }, ModalityState.NON_MODAL, myProject.getDisposed());
     }
     else {
-      final UsageViewImpl usageView = myUsageViewRef.get();
-      if (usageView != null) {
-        usageView.drainQueuedUsageNodes();
-        usageView.setSearchInProgress(false);
-      }
-
+      final UsageViewEx usageView = myUsageViewRef.get();
+      usageView.searchFinished();
       final List<String> lines;
       final HyperlinkListener hyperlinkListener;
       if (myOutOfScopeUsages.get() == 0 || getPsiElement(mySearchFor)==null) {
@@ -498,7 +494,7 @@ class SearchForUsagesRunnable implements Runnable {
       }
     }
 
-    UsageViewImpl usageView = myUsageViewRef.get();
+    UsageViewEx usageView = myUsageViewRef.get();
     if (usageView != null) {
       usageView.waitForUpdateRequestsCompletion();
     }
