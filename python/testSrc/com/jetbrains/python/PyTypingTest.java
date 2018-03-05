@@ -344,6 +344,12 @@ public class PyTypingTest extends PyTestCase {
            "        pass\n");
   }
 
+  // PY-21191
+  public void testTypeCommentWithParenthesizedTuple() {
+    doTest("int",
+           "expr, x = undefined()  # type: (int, str) ");
+  }
+
   // PY-16585
   public void testCommentAfterComprehensionInAssignment() {
     doTest("int",
