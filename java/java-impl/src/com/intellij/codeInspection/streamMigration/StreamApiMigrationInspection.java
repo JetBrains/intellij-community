@@ -1091,17 +1091,10 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
             PsiType type = myExpression.getType();
             if (type instanceof PsiArrayType) {
               PsiType componentType = ((PsiArrayType)type).getComponentType();
-              if (componentType.equals(PsiType.INT)) {
-                return CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM + ".of(" + initializerText + ")";
-              }
-              else if (componentType.equals(PsiType.LONG)) {
-                return CommonClassNames.JAVA_UTIL_STREAM_LONG_STREAM + ".of(" + initializerText + ")";
-              }
-              else if (componentType.equals(PsiType.DOUBLE)) {
-                return CommonClassNames.JAVA_UTIL_STREAM_DOUBLE_STREAM + ".of(" + initializerText + ")";
-              }
-              else if (componentType instanceof PsiClassType) {
-                return CommonClassNames.JAVA_UTIL_STREAM_STREAM + ".<" + componentType.getCanonicalText() + ">of(" + initializerText + ")";
+              String streamClass = StreamApiUtil.getStreamClassForType(componentType);
+              if (streamClass != null) {
+                return streamClass + "." + (componentType instanceof PsiClassType ? "<" + componentType.getCanonicalText() + ">" : "")
+                       + ".of(" + initializerText + ")";
               }
             }
           }
@@ -1307,25 +1300,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
       }
       String maybeCondition = myCondition != null ? ct.lambdaText(myVariable, myCondition) + "," : "";
 
-      return getStreamClass(myVariable.getType()) + ".iterate(" + ct.text(myInitializer) + "," + maybeCondition + lambda + ")";
-    }
-
-    @Contract(value = "null -> null", pure = true)
-    private static String getStreamClass(@Nullable PsiType type) {
-      if (type == null) return null;
-      if (ClassUtils.isPrimitive(type)) {
-        if (type.equals(PsiType.INT)) {
-          return CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM;
-        }
-        else if (type.equals(PsiType.DOUBLE)) {
-          return CommonClassNames.JAVA_UTIL_STREAM_DOUBLE_STREAM;
-        }
-        else if (type.equals(PsiType.LONG)) {
-          return CommonClassNames.JAVA_UTIL_STREAM_LONG_STREAM;
-        }
-        return null;
-      }
-      return CommonClassNames.JAVA_UTIL_STREAM_STREAM;
+      return StreamApiUtil.getStreamClassForType(myVariable.getType()) + ".iterate(" + ct.text(myInitializer) + "," + maybeCondition + lambda + ")";
     }
 
     @Override
@@ -1358,7 +1333,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
       if (initStmt == null || initStmt.getDeclaredElements().length != 1) return null;
       PsiLocalVariable variable = tryCast(initStmt.getDeclaredElements()[0], PsiLocalVariable.class);
       if (variable == null) return null;
-      if (getStreamClass(variable.getType()) == null) return null;
+      if (StreamApiUtil.getStreamClassForType(variable.getType()) == null) return null;
       PsiExpression initializer = variable.getInitializer();
       if (initializer == null) return null;
       PsiStatement update = forStatement.getUpdate();
