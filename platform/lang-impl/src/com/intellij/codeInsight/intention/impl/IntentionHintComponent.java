@@ -6,13 +6,9 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.hint.*;
-import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
-import com.intellij.codeInsight.intention.impl.config.IntentionActionWrapper;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
-import com.intellij.codeInsight.intention.impl.config.IntentionsConfigurable;
-import com.intellij.codeInsight.intention.impl.config.IntentionsConfigurableProvider;
 import com.intellij.codeInsight.unwrap.ScopeHighlighter;
 import com.intellij.codeInspection.SuppressIntentionActionFromFix;
 import com.intellij.icons.AllIcons;
@@ -27,11 +23,8 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.options.ShowSettingsUtil;
-import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -45,7 +38,6 @@ import com.intellij.ui.RowIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.util.Alarm;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
@@ -553,82 +545,6 @@ public class IntentionHintComponent implements Disposable, ScrollAwareHint {
 
     private void setShouldDelay(boolean shouldDelay) {
       myShouldDelay = shouldDelay;
-    }
-  }
-
-  public static class EnableDisableIntentionAction extends AbstractEditIntentionSettingsAction {
-    private final IntentionAction myAction;
-
-    public EnableDisableIntentionAction(@NotNull IntentionAction action) {
-      super(action);
-      myAction = action;
-    }
-
-    @Override
-    @NotNull
-    public String getText() {
-      final IntentionManagerSettings mySettings = IntentionManagerSettings.getInstance();
-      return CodeInsightBundle.message(mySettings.isEnabled(myAction) ? "disable.intention.action" : "enable.intention.action", myFamilyName);
-    }
-
-    @Override
-    public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-      final IntentionManagerSettings mySettings = IntentionManagerSettings.getInstance();
-      mySettings.setEnabled(myAction, !mySettings.isEnabled(myAction));
-    }
-
-    @Override
-    public String toString() {
-      return getText();
-    }
-  }
-
-  public static class EditIntentionSettingsAction extends AbstractEditIntentionSettingsAction implements HighPriorityAction {
-    public EditIntentionSettingsAction(IntentionAction action) {
-      super(action);
-    }
-
-    @NotNull
-    @Override
-    public String getText() {
-      return "Edit intention settings";
-    }
-
-    @Override
-    public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-      final IntentionsConfigurable configurable = (IntentionsConfigurable)ConfigurableExtensionPointUtil
-        .createApplicationConfigurableForProvider(IntentionsConfigurableProvider.class);
-      ShowSettingsUtil.getInstance().editConfigurable(project, configurable, () -> SwingUtilities.invokeLater(() -> configurable.selectIntention(myFamilyName)));
-    }
-  }
-
-  private abstract static class AbstractEditIntentionSettingsAction implements IntentionAction {
-    @NotNull final String myFamilyName;
-    private final boolean myEnabled;
-
-    private AbstractEditIntentionSettingsAction(@NotNull IntentionAction action) {
-      myFamilyName = action.getFamilyName();
-      // needed for checking errors in user written actions
-      //noinspection ConstantConditions
-      LOG.assertTrue(myFamilyName != null, "action "+action.getClass()+" family returned null");
-      myEnabled = !(action instanceof IntentionActionWrapper) ||
-                  !Comparing.equal(action.getFamilyName(), ((IntentionActionWrapper)action).getFullFamilyName());
-    }
-
-    @NotNull
-    @Override
-    public String getFamilyName() {
-      return getText();
-    }
-
-    @Override
-    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-      return myEnabled;
-    }
-
-    @Override
-    public boolean startInWriteAction() {
-      return false;
     }
   }
 }
