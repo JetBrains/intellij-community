@@ -256,7 +256,12 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     final ScopeOwner roof = findResolveRoof(referencedName, realContext);
     PyResolveUtil.scopeCrawlUp(processor, myElement, referencedName, roof);
 
-    return getResultsFromProcessor(referencedName, processor, realContext, roof);
+    final List<RatedResolveResult> resultsFromProcessor = getResultsFromProcessor(referencedName, processor, realContext, roof);
+    if (!resultsFromProcessor.isEmpty()) {
+      return resultsFromProcessor;
+    }
+
+    return resolveByReferenceResolveProviders();
   }
 
   protected final List<RatedResolveResult> getResultsFromProcessor(@NotNull String referencedName,
@@ -326,19 +331,19 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
     if (!unreachableLocalDeclaration) {
       if (referenceOwner != null) {
-        ResolveResultList outerScopeResults = resolveInOuterScopes(referencedName, referenceOwner, resolveRoof, typeEvalContext);
+        final ResolveResultList outerScopeResults = resolveInOuterScopes(referencedName, referenceOwner, resolveRoof, typeEvalContext);
         if (!outerScopeResults.isEmpty()) {
           return outerScopeResults;
         }
       }
 
-      ResolveResultList localScopeResults = getLocalDeclarationResults(processor, realContext, typeEvalContext, referenceOwner);
+      final ResolveResultList localScopeResults = getLocalDeclarationResults(processor, realContext, typeEvalContext, referenceOwner);
       if (!localScopeResults.isEmpty()) {
         return localScopeResults;
       }
     }
 
-    return resolveByReferenceResolveProviders();
+    return Collections.emptyList();
   }
 
   @NotNull
