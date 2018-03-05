@@ -646,9 +646,7 @@ public abstract class ChooseByNameBase {
       }
     });
 
-    myListScrollPane = ScrollPaneFactory.createScrollPane(myList);
-    myListScrollPane.setViewportBorder(JBUI.Borders.empty());
-    myListScrollPane.putClientProperty(UIUtil.KEEP_BORDER_SIDES, SideBorder.ALL);
+    myListScrollPane = ScrollPaneFactory.createScrollPane(myList, true);
 
     myTextFieldPanel.setBorder(JBUI.Borders.empty(5));
 

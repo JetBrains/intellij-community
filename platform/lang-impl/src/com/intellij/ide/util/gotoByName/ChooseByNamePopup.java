@@ -12,7 +12,6 @@ import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.statistics.StatisticsInfo;
@@ -130,8 +129,8 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
 
     final JLayeredPane layeredPane = myTextField.getRootPane().getLayeredPane();
 
-    Rectangle bounds = new Rectangle(layeredPane.getLocationOnScreen(), myTextField.getSize());
-    bounds.y += layeredPane.getHeight();
+    Point location = layeredPane.getLocationOnScreen();
+    location.y += layeredPane.getHeight();
 
     final Dimension preferredScrollPaneSize = myListScrollPane.getPreferredSize();
     preferredScrollPaneSize.width = Math.max(myTextFieldPanel.getWidth(), preferredScrollPaneSize.width);
@@ -143,27 +142,17 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
       if (preferredScrollPaneSize.height < currentSize.height) preferredScrollPaneSize.height = currentSize.height;
     }
 
-    Rectangle preferredBounds = new Rectangle(bounds.x, bounds.y, preferredScrollPaneSize.width, preferredScrollPaneSize.height);
-    Rectangle original = new Rectangle(preferredBounds);
+    // calculate maximal size for the popup window
+    Rectangle screen = ScreenUtil.getScreenRectangle(location);
+    screen.width -= location.x - screen.x;
+    screen.height -= location.y - screen.y;
 
-    ScreenUtil.fitToScreen(preferredBounds);
-    JScrollBar hsb = myListScrollPane.getHorizontalScrollBar();
-    if (original.width > preferredBounds.width && (!SystemInfo.isMac || hsb.isOpaque())) {
-      int height = hsb.getPreferredSize().height;
-      preferredBounds.y -= height;
-      preferredBounds.height += height;
-    }
-    if (original.y > preferredBounds.y) {
-      int height = original.y - preferredBounds.y;
-      preferredBounds.y += height;
-      preferredBounds.height -= height;
-    }
+    if (preferredScrollPaneSize.width > screen.width) preferredScrollPaneSize.width = screen.width;
+    if (preferredScrollPaneSize.height > screen.height) preferredScrollPaneSize.height = screen.height;
 
-    myListScrollPane.setVisible(true);
-    myListScrollPane.setBorder(null);
     String adText = getAdText();
     if (myDropdownPopup == null) {
-      ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(myListScrollPane, myListScrollPane);
+      ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(myListScrollPane, myList);
       builder.setFocusable(false)
         .setLocateWithinScreenBounds(false)
         .setRequestFocus(false)
@@ -175,13 +164,11 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
         .setMayBeParent(true);
       builder.setCancelCallback(() -> Boolean.TRUE);
       myDropdownPopup = builder.createPopup();
-      myDropdownPopup.setLocation(preferredBounds.getLocation());
-      myDropdownPopup.setSize(preferredBounds.getSize());
-      myDropdownPopup.show(layeredPane);
+      myDropdownPopup.showInScreenCoordinates(layeredPane, location);
     }
     else {
-      myDropdownPopup.setLocation(preferredBounds.getLocation());
-      myDropdownPopup.setSize(preferredBounds.getSize());
+      myDropdownPopup.setLocation(location);
+      myDropdownPopup.setSize(preferredScrollPaneSize);
     }
   }
 
