@@ -90,6 +90,12 @@ public class CachedIntentions {
     return res;
   }
 
+  public static CachedIntentions createAndUpdateActions(@NotNull Project project, @NotNull PsiFile file, @Nullable Editor editor, @NotNull ShowIntentionsPass.IntentionsInfo intentions) {
+    CachedIntentions res = new CachedIntentions(project, file, editor);
+    res.wrapAndUpdateActions(intentions, true);
+    return res;
+  }
+
   public CachedIntentions(@NotNull Project project, @NotNull PsiFile file, @Nullable Editor editor) {
     myProject = project;
     myFile = file;
