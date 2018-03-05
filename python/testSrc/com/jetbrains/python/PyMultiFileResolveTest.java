@@ -571,4 +571,9 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
     prepareTestDirectory();
     assertSameElements(doMultiResolveAndGetFileUrls("pkg1/pkg2/mod1.py"), "pkg1/pkg2/mod1.py");
   }
+
+  public void testImportResolvesToPkgInit() {
+    prepareTestDirectory();
+    assertSameElements(doMultiResolveAndGetFileUrls("pkg1/pkg2/mod1.py"), "pkg1/pkg2/__init__.py");
+  }
 }
