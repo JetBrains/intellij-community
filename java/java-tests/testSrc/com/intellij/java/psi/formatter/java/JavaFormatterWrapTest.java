@@ -314,12 +314,12 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
                  ") { }");
   }
 
-  @SuppressWarnings("SpellCheckingInspection")
   public void testLineLongEnoughToExceedAfterFirstWrapping() {
     // Inspired by IDEA-103624
     getSettings().WRAP_LONG_LINES = true;
     getSettings().RIGHT_MARGIN = 40;
     getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    // No wrapping for now
     doMethodTest(
       "test(1,\n" +
       "     2,\n" +
@@ -328,8 +328,7 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
       "int j = 2;",
       "test(1,\n" +
       "     2,\n" +
-      "     MyTestClass\n" +
-      "             .loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooongMethod());\n" +
+      "     MyTestClass.loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooongMethod());\n" +
       "int i = 1;\n" +
       "int j = 2;"
     );
@@ -705,20 +704,98 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
       "        String thatsDirection = \"\";\n" +
       "\n" +
       "        return 0 < 0\n" +
-      "                + (direction != null && thatsDirection != null ? direction\n" +
-      "                .equalsIgnoreCase(thatsDirection) ? 1 : -100 : 0)\n" +
+      "                + (direction != null && thatsDirection != null ?\n" +
+      "                direction.equalsIgnoreCase(thatsDirection) ? 1 : -100 : 0)\n" +
       "                // @formatter:off\n" +
       "                + (humanId      != null && thatsDirection  != null ? humanId.equalsIgnoreCase(thatsDirection)        ? 1 : -100 : 0)\n" +
       "                + (instrument   != null && thatsDirection  != null ? instrument.equals(thatsDirection)               ? 1 : -100 : 0)\n" +
       "                + (price        != null && thatsDirection  != null ? price.equals(thatsDirection)                    ? 1 : -100 : 0)\n" +
       "                // @formatter:on\n" +
-      "                + (quantity != null && thatsDirection != null ? quantity\n" +
-      "                .equals(thatsDirection) ? 1 : -100 : 0)\n" +
-      "                + (stopLoss != null && thatsDirection != null ? stopLoss\n" +
-      "                .equals(thatsDirection) ? 1 : -100 : 0);\n" +
+      "                + (quantity != null && thatsDirection != null ?\n" +
+      "                quantity.equals(thatsDirection) ? 1 : -100 : 0)\n" +
+      "                + (stopLoss != null && thatsDirection != null ?\n" +
+      "                stopLoss.equals(thatsDirection) ? 1 : -100 : 0);\n" +
       "    }\n" +
       "}"
     );
   }
-  
+
+  public void testNoImportWrap() {
+    getSettings().WRAP_LONG_LINES = true;
+    getSettings().RIGHT_MARGIN = 40;
+
+    doTextTest(
+      "package com.company;\n" +
+      "\n" +
+      "import com.company.subpackage.TestClassOne;\n" +
+      "import com.company.subpackage.TestClassTwo;\n" +
+      "\n" +
+      "public class Test {\n" +
+      "    void foo() {\n" +
+      "        TestClassOne testClassOne = new TestClassOne();\n" +
+      "        TestClassTwo testClassTwo = new TestClassTwo();\n" +
+      "    }\n" +
+      "}",
+
+      "package com.company;\n" +
+      "\n" +
+      "import com.company.subpackage.TestClassOne;\n" +
+      "import com.company.subpackage.TestClassTwo;\n" +
+      "\n" +
+      "public class Test {\n" +
+      "    void foo() {\n" +
+      "        TestClassOne testClassOne =\n" +
+      "                new TestClassOne();\n" +
+      "        TestClassTwo testClassTwo =\n" +
+      "                new TestClassTwo();\n" +
+      "    }\n" +
+      "}"
+    );
+  }
+
+  public void testNoWrapOnEllipsis() {
+    getSettings().WRAP_LONG_LINES = true;
+    getSettings().RIGHT_MARGIN = 35;
+
+    doTextTest(
+      "package org.example.sandbox;\n" +
+      "\n" +
+      "public class Test {\n" +
+      "    void test(String a, String... b) {\n" +
+      "    }\n" +
+      "}",
+
+      "package org.example.sandbox;\n" +
+      "\n" +
+      "public class Test {\n" +
+      "    void test(String a,\n" +
+      "              String... b) {\n" +
+      "    }\n" +
+      "}"
+    );
+  }
+
+  public void testNoWrapInDouble() {
+    getSettings().WRAP_LONG_LINES = true;
+    getSettings().RIGHT_MARGIN = 35;
+
+    doTextTest(
+      "package org.example.sandbox;\n" +
+      "\n" +
+      "public class Test {\n" +
+      "    void test() {\n" +
+      "        double doubleNumber = 12.456;\n" +
+      "    }\n" +
+      "}",
+
+      "package org.example.sandbox;\n" +
+      "\n" +
+      "public class Test {\n" +
+      "    void test() {\n" +
+      "        double doubleNumber =\n" +
+      "                12.456;\n" +
+      "    }\n" +
+      "}"
+    );
+  }
 }
