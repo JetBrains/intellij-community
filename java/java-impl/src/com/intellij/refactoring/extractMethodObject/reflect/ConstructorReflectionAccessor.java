@@ -33,18 +33,9 @@ public class ConstructorReflectionAccessor extends ReflectionAccessorBase<Constr
       public void visitNewExpression(PsiNewExpression expression) {
         super.visitNewExpression(expression);
         if (expression.getAnonymousClass() != null || expression.getArrayInitializer() != null) return;
-        PsiMethod constructor = expression.resolveConstructor();
-        if (constructor != null) {
-          PsiClass containingClass = constructor.getContainingClass();
-          if (containingClass != null && !PsiReflectionAccessUtil.isAccessibleMember(constructor)) {
-            result.add(new ConstructorDescriptor(expression, constructor, containingClass));
-          }
-        }
-        else {
-          PsiJavaCodeReferenceElement classReference = expression.getClassReference();
-          if (classReference instanceof PsiClass && !PsiReflectionAccessUtil.isAccessible((PsiClass)classReference)) {
-            result.add(new ConstructorDescriptor(expression, null, (PsiClass)classReference));
-          }
+        ConstructorDescriptor descriptor = ConstructorDescriptor.createIfInaccessible(expression);
+        if (descriptor != null) {
+          result.add(descriptor);
         }
       }
     });
@@ -84,6 +75,25 @@ public class ConstructorReflectionAccessor extends ReflectionAccessorBase<Constr
 
     // null if and only if default constructor is used
     @Nullable public final PsiMethod constructor;
+
+    @Nullable
+    public static ConstructorDescriptor createIfInaccessible(@NotNull PsiNewExpression expression) {
+      PsiMethod constructor = expression.resolveConstructor();
+      if (constructor != null) {
+        PsiClass containingClass = constructor.getContainingClass();
+        if (containingClass != null && !PsiReflectionAccessUtil.isAccessibleMember(constructor)) {
+          return new ConstructorDescriptor(expression, constructor, containingClass);
+        }
+      }
+      else {
+        PsiJavaCodeReferenceElement classReference = expression.getClassReference();
+        if (classReference instanceof PsiClass && !PsiReflectionAccessUtil.isAccessible((PsiClass)classReference)) {
+          return new ConstructorDescriptor(expression, null, (PsiClass)classReference);
+        }
+      }
+
+      return null;
+    }
 
     public ConstructorDescriptor(@NotNull PsiNewExpression expression, @Nullable PsiMethod constructor, PsiClass psiClass) {
       newExpression = expression;
