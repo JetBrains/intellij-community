@@ -26,8 +26,8 @@ java_test(
     test_class = "com.android.testutils.JarTestSuite",
     deps = [
         "//tools/base/annotations",
-        "//tools/base/perf-logger:studio.perf-logger",
-        "//tools/base/testutils:tools.testutils",
+        "//tools/base/perf-logger:studio.perf-logger_testlib",
+        "//tools/base/testutils:studio.testutils_testlib",
         "//tools/base/third_party:com.google.truth_truth",
         "//tools/base/third_party:junit_junit",
     ],

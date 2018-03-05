@@ -170,6 +170,7 @@ iml_project(
         "//tools/base/sdk-common:studio.sdk-common",
         "//tools/base/sdklib:studio.sdklib",
         "//tools/base/testutils:studio.testutils",
+        "//tools/base/testutils:studio.testutils-tests",
         "//tools/base/usb-devices:studio.usb-devices",
         "//tools/data-binding:studio.baseLibrary",
         "//tools/data-binding:studio.compiler",
