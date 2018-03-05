@@ -240,5 +240,8 @@ class TryWithResources {
             System.out.println(closeable3);
         }
         System.out.println(closeable3);
+
+        String s = "file.name";
+        try (java.io.FileInputStream in = new java.io.FileInputStream(s)) {}
     }
 }
