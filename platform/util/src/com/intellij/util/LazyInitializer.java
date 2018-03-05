@@ -50,10 +50,10 @@ public class LazyInitializer {
           }
           if (initializer != null) {
             value = initializer.init();
+            initializer = null;
           }
         }
         finally {
-          initializer = null;
           init.lock.unlock();
         }
         onInitialized(value);
@@ -67,20 +67,7 @@ public class LazyInitializer {
      * @return true if the value is initialized to not-null
      */
     public final boolean isNotNull() {
-      Initializer init = initializer;
-      if (init == null) {
-        return get() != null; // already initialized, just get
-      }
-      init.lock.lock();
-      try {
-        if (init.lock.getHoldCount() > 1) {
-          return false;
-        }
-        return get() != null; // initialize and get
-      }
-      finally {
-        init.lock.unlock();
-      }
+      return get() != null;
     }
 
     /**
