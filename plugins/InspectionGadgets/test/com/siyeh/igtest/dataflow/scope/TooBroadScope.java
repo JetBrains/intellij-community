@@ -4,6 +4,12 @@ import java.util.*;
 
 public class TooBroadScope
 {
+
+    void noClassCastException() {
+        <error descr="Cannot resolve symbol 'a'">a</error> b;
+        <error descr="Unknown class: 'b'">b</error> renderer = new <error descr="Cannot resolve symbol 'b'">b</error>();
+    }
+
     // Option "Only report variables that can be moved to inner blocks" is OFF
     public void test() {
         // Example #1
