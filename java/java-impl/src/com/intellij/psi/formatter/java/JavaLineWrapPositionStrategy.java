@@ -18,6 +18,7 @@ package com.intellij.psi.formatter.java;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.PsiAwareDefaultLineWrapPositionStrategy;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
@@ -63,6 +64,16 @@ public class JavaLineWrapPositionStrategy extends PsiAwareDefaultLineWrapPositio
         return refStart;
       }
     }
-    return super.doCalculateWrapPosition(document, project, element, startOffset, endOffset, maxPreferredOffset, isSoftWrap);
+    int wrapPos = super.doCalculateWrapPosition(document, project, element, startOffset, endOffset, maxPreferredOffset, isSoftWrap);
+    if (element.getNode().getElementType() == JavaTokenType.STRING_LITERAL) {
+      TextRange range = element.getTextRange();
+      if (range.getEndOffset() - wrapPos <= 1) {
+        wrapPos = range.getEndOffset();
+      }
+      else if (wrapPos - range.getStartOffset() <= 1) {
+        wrapPos = range.getStartOffset();
+      }
+    }
+    return wrapPos;
   }
 }

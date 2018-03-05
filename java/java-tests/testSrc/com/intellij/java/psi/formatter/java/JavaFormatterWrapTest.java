@@ -798,4 +798,28 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
       "}"
     );
   }
+
+  public void testIdea186225() {
+    getSettings().WRAP_LONG_LINES = true;
+    getSettings().RIGHT_MARGIN = 100;
+    getSettings().KEEP_LINE_BREAKS = false;
+    getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    getSettings().BINARY_OPERATION_SIGN_ON_NEXT_LINE = true;
+    getIndentOptions().CONTINUATION_INDENT_SIZE = 4;
+
+    doTextTest(
+      "interface Test {\n" +
+      "    @SuppressWarnings(\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\" + \" \"\n" +
+      "        + \"xxxxxxxxxxxxxxxxxxx\")\n" +
+      "    void test();\n" +
+      "}",
+
+      "interface Test {\n" +
+      "    @SuppressWarnings(\n" +
+      "        \"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\" + \" \"\n" +
+      "            + \"xxxxxxxxxxxxxxxxxxx\")\n" +
+      "    void test();\n" +
+      "}"
+    );
+  }
 }
