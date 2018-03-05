@@ -27,6 +27,7 @@ import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.util.TypeConversionUtil
 import com.siyeh.InspectionGadgetsBundle
 import com.siyeh.ig.junit.JUnitCommonClassNames
+import com.siyeh.ig.psiutils.StreamApiUtil
 import com.siyeh.ig.psiutils.TestUtils
 import org.jetbrains.annotations.Nls
 import java.util.*
@@ -185,7 +186,7 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTo
                                                 sourceProviderName: String) {
         var createFix: CreateMethodQuickFix? = null
         if (holder.isOnTheFly) {
-          val staticModifier = if (!TestUtils.testInstancePerClass(containingClass)) " static" else "";
+          val staticModifier = if (!TestUtils.testInstancePerClass(containingClass)) " static" else ""
           createFix = CreateMethodQuickFix.createFix(containingClass,
                                                      "private$staticModifier Object[][] $sourceProviderName()",
                                                      "return new Object[][] {};")
@@ -272,11 +273,7 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTo
           return collectionItemType
         }
 
-        if (InheritanceUtil.isInheritor(returnType, CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM)) return PsiType.INT
-        if (InheritanceUtil.isInheritor(returnType, CommonClassNames.JAVA_UTIL_STREAM_LONG_STREAM)) return PsiType.LONG
-        if (InheritanceUtil.isInheritor(returnType, CommonClassNames.JAVA_UTIL_STREAM_DOUBLE_STREAM)) return PsiType.DOUBLE
-
-        val streamItemType = PsiUtil.substituteTypeParameter(returnType, CommonClassNames.JAVA_UTIL_STREAM_STREAM, 0, true)
+        val streamItemType = StreamApiUtil.getStreamElementType(returnType)
         if (streamItemType != null) {
           return streamItemType
         }
