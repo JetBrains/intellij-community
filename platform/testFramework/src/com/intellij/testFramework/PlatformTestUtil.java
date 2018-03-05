@@ -173,12 +173,7 @@ public class PlatformTestUtil {
                              boolean withSelection,
                              @Nullable Queryable.PrintInfo printInfo,
                              @Nullable Predicate<String> nodePrintCondition) {
-    StringBuilder buffer = new StringBuilder();
-    final Collection<String> strings = printAsList(tree, path, withSelection, printInfo, nodePrintCondition);
-    for (String string : strings) {
-      buffer.append(string).append("\n");
-    }
-    return buffer.toString();
+    return StringUtil.join(printAsList(tree, path, withSelection, printInfo, nodePrintCondition), "\n");
   }
 
   private static Collection<String> printAsList(JTree tree,
@@ -198,7 +193,6 @@ public class PlatformTestUtil {
                                 boolean withSelection,
                                 @Nullable Queryable.PrintInfo printInfo,
                                 @Nullable Predicate<String> nodePrintCondition) {
-
     Object pathComponent = path.getLastPathComponent();
     Object userObject = TreeUtil.getUserObject(pathComponent);
     String nodeText = toString(userObject, printInfo);
@@ -249,7 +243,7 @@ public class PlatformTestUtil {
 
   public static void assertTreeEqual(JTree tree, String expected, boolean checkSelected) {
     String treeStringPresentation = print(tree, checkSelected);
-    assertEquals(expected, treeStringPresentation);
+    assertEquals(expected.trim(), treeStringPresentation.trim());
   }
 
   public static void expand(JTree tree, int... rows) {
@@ -967,7 +961,7 @@ public class PlatformTestUtil {
       }
       catch (AssertionError | Exception e) {
         captureMemorySnapshot();
-        ExceptionUtil.rethrowAllAsUnchecked(e);
+        ExceptionUtil.rethrow(e);
       }
       finally {
         application.setDisposeInProgress(true);
@@ -975,7 +969,6 @@ public class PlatformTestUtil {
         UIUtil.dispatchAllInvocationEvents();
       }
     });
-
   }
 
   public static void captureMemorySnapshot() {
