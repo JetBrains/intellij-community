@@ -3,7 +3,10 @@ package com.intellij.structuralsearch.impl.matcher.predicates;
 
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.structuralsearch.plugin.ui.UIUtil;
+
+import static com.intellij.structuralsearch.impl.matcher.predicates.ScriptSupport.UUID;
 
 /**
  * @author Bas Leijdekkers
@@ -36,7 +39,7 @@ public class ScriptLog {
     for (StackTraceElement e : stackTrace) {
       final String methodName = e.getMethodName();
       if ("run".equals(methodName)) {
-        location = "(" + e.getFileName() + ":" + e.getLineNumber() + ") ";
+        location = "(" + StringUtil.replace(e.getFileName(), UUID + ".groovy", "") + ":" + e.getLineNumber() + ") ";
         break;
       }
     }
