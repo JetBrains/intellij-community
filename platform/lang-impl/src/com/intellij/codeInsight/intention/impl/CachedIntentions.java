@@ -262,7 +262,7 @@ public class CachedIntentions {
     myCachedNotifications.remove(action);
   }
 
-  public List<IntentionActionWithTextCaching> getAllAction() {
+  public List<IntentionActionWithTextCaching> getAllActions() {
     List<IntentionActionWithTextCaching> result = new ArrayList<>(myCachedErrorFixes);
     result.addAll(myCachedInspectionFixes);
     result.addAll(myCachedIntentions);
@@ -282,7 +282,7 @@ public class CachedIntentions {
 
   private int getWeight(IntentionActionWithTextCaching action) {
     IntentionAction a = action.getAction();
-    int group = getGroup(action);
+    int group = getGroup(action).getPriority();
     while (a instanceof IntentionActionDelegate) {
       a = ((IntentionActionDelegate)a).getDelegate();
     }
@@ -309,23 +309,23 @@ public class CachedIntentions {
     return group;
   }
 
-  public int getGroup(IntentionActionWithTextCaching action) {
+  public IntentionGroup getGroup(IntentionActionWithTextCaching action) {
     if (myCachedErrorFixes.contains(action)) {
-      return 20;
+      return IntentionGroup.ERROR;
     }
     if (myCachedInspectionFixes.contains(action)) {
-      return 10;
+      return IntentionGroup.INSPECTION;
     }
     if (myCachedNotifications.contains(action)) {
-      return 7;
+      return IntentionGroup.NOTIFICATION;
     }
     if (myCachedGutters.contains(action)) {
-      return 5;
+      return IntentionGroup.GUTTER;
     }
     if (action.getAction() instanceof EmptyIntentionAction) {
-      return -10;
+      return IntentionGroup.EMPTY_ACTION;
     }
-    return 0;
+    return IntentionGroup.OTHER;
   }
 
   public Icon getIcon(IntentionActionWithTextCaching value) {
@@ -362,7 +362,7 @@ public class CachedIntentions {
   }
 
   public boolean showBulb() {
-    return ContainerUtil.exists(getAllAction(), info -> IntentionManagerSettings.getInstance().isShowLightBulb(info.getAction()));
+    return ContainerUtil.exists(getAllActions(), info -> IntentionManagerSettings.getInstance().isShowLightBulb(info.getAction()));
   }
 
 }

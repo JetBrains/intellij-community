@@ -172,7 +172,7 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
   @Override
   @NotNull
   public List<IntentionActionWithTextCaching> getValues() {
-    return myCachedIntentions.getAllAction();
+    return myCachedIntentions.getAllActions();
   }
 
   @Override

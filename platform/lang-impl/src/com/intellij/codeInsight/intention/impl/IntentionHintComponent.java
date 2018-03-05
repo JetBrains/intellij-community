@@ -208,7 +208,7 @@ public class IntentionHintComponent implements Disposable, ScrollAwareHint {
     if (myPopup == null || myPopup.isDisposed()) {
       return null;
     }
-    List<IntentionActionWithTextCaching> values = myCachedIntentions.getAllAction();
+    List<IntentionActionWithTextCaching> values = myCachedIntentions.getAllActions();
     if (values.size() <= index) {
       return null;
     }
