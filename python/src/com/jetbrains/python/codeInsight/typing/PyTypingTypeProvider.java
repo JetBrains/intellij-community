@@ -352,17 +352,17 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
 
   @NotNull
   private static PyType createTypingGenericType(@NotNull PsiElement anchor) {
-    return new PyCustomType(GENERIC, null, false, PyBuiltinCache.getInstance(anchor).getObjectType());
+    return new PyCustomType(GENERIC, null, false, true, PyBuiltinCache.getInstance(anchor).getObjectType());
   }
 
   @NotNull
   private static PyType createTypingProtocolType(@NotNull PsiElement anchor) {
-    return new PyCustomType(PROTOCOL, null, false, PyBuiltinCache.getInstance(anchor).getObjectType());
+    return new PyCustomType(PROTOCOL, null, false, true, PyBuiltinCache.getInstance(anchor).getObjectType());
   }
 
   @NotNull
   public static PyType createTypingCallableType(@NotNull PsiElement anchor) {
-    return new PyCustomType(CALLABLE, null, false, PyBuiltinCache.getInstance(anchor).getObjectType());
+    return new PyCustomType(CALLABLE, null, false, true, PyBuiltinCache.getInstance(anchor).getObjectType());
   }
 
   private static boolean omitFirstParamInTypeComment(@NotNull PyFunction func, @NotNull PyFunctionTypeAnnotation annotation) {
