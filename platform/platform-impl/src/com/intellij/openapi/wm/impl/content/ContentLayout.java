@@ -6,10 +6,10 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerEvent;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
 abstract class ContentLayout {
@@ -60,13 +60,13 @@ abstract class ContentLayout {
       title += ":";
     }
     label.setText(title);
-    label.setBorder(new EmptyBorder(0, 2, 0, 8));
+    label.setBorder(JBUI.Borders.empty(0, 2, 0, 8));
 
     if (myUi.myManager.getContentCount() == 1) {
       final String text = myUi.myManager.getContent(0).getDisplayName();
       if (text != null && text.trim().length() > 0) {
         label.setText(label.getText() + " ");
-        label.setBorder(new EmptyBorder(0, 2, 0, 0));
+        label.setBorder(JBUI.Borders.emptyLeft(2));
       }
     }
 
