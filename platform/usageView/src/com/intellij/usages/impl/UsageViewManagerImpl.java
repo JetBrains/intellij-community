@@ -71,7 +71,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
 
   @Override
   @NotNull
-  public UsageView createUsageView(@NotNull UsageTarget[] targets,
+  public UsageViewEx createUsageView(@NotNull UsageTarget[] targets,
                                    @NotNull Usage[] usages,
                                    @NotNull UsageViewPresentation presentation,
                                    Factory<UsageSearcher> usageSearcherFactory) {
@@ -94,7 +94,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
                               @NotNull Usage[] foundUsages,
                               @NotNull UsageViewPresentation presentation,
                               Factory<UsageSearcher> factory) {
-    UsageView usageView = createUsageView(searchedFor, foundUsages, presentation, factory);
+    UsageViewEx usageView = createUsageView(searchedFor, foundUsages, presentation, factory);
     if (usageView instanceof UsageViewImpl) {
       showToolWindow(true);
       UIUtil.invokeLaterIfNeeded(() -> {
@@ -113,7 +113,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
     return showUsages(searchedFor, foundUsages, presentation, null);
   }
 
-  void showUsageView(@NotNull UsageView usageView, @NotNull UsageViewPresentation presentation) {
+  void showUsageView(@NotNull UsageViewEx usageView, @NotNull UsageViewPresentation presentation) {
     Content content = com.intellij.usageView.UsageViewManager.getInstance(myProject).addContent(
       presentation.getTabText(),
       presentation.getTabName(),

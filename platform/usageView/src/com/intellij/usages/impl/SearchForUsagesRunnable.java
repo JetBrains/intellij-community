@@ -339,7 +339,7 @@ class SearchForUsagesRunnable implements Runnable {
     return null;
   }
 
-  private void openView(@NotNull final UsageView usageView) {
+  private void openView(@NotNull final UsageViewEx usageView) {
     SwingUtilities.invokeLater(() -> {
       if (myProject.isDisposed()) return;
       myUsageViewManager.showUsageView(usageView, myPresentation);
