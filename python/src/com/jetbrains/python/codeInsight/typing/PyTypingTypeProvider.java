@@ -94,7 +94,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   private static final String PY3_BINARY_FILE_TYPE = "typing.BinaryIO";
   private static final String PY3_TEXT_FILE_TYPE = "typing.TextIO";
 
-  public static final Pattern TYPE_COMMENT_PATTERN = Pattern.compile("# *type: *(.*)");
+  public static final Pattern TYPE_COMMENT_PATTERN = Pattern.compile("# *type: *([^#]*?) *(#.*)?");
 
   public static final ImmutableMap<String, String> BUILTIN_COLLECTION_CLASSES = ImmutableMap.<String, String>builder()
     .put(LIST, "list")

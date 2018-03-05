@@ -395,6 +395,18 @@ public class PyTypingTest extends PyTestCase {
                        "int, int");
   }
 
+  // PY-21195
+  public void testVariableTypeCommentWithSubsequentComment() {
+    doTestInjectedText("x, y = undefined()  # type: int,<caret> str # comment",
+                       "int, str");
+  }
+
+  // PY-21195
+  public void testVariableTypeCommentWithSubsequentCommentWithoutSpacesInBetween() {
+    doTestInjectedText("x, y = undefined()  # type: int,<caret> str# comment",
+                       "int, str");
+  }
+
   // PY-22620
   public void testVariableTypeCommentInjectionParenthesisedTuple() {
     doTestInjectedText("x, y = undefined()  # type: (int,<caret> int)", 
