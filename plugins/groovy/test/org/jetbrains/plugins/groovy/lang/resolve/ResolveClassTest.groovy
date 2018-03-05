@@ -612,5 +612,24 @@ new B<caret>ar() {}
     assert resolved.qualifiedName == 'test.Bar'
   }
 
+  // https://issues.apache.org/jira/browse/GROOVY-7949
+  void "test don't resolve to inner class of anonymous class"() {
+    resolveByText '''\
+new <caret>Foo() {
+  static class Foo {} 
+}
+''', null
+  }
+
+  void "test resolve to inner class of anonymous containing class"() {
+    resolveByText '''\
+class Foo {
+  def foo() {
+    new <caret>Bar() {}
+  }
+  private abstract static class Bar {}
+}''', PsiClass
+  }
+
   private void doTest(String fileName = getTestName(false) + ".groovy") { resolve(fileName, PsiClass) }
 }
