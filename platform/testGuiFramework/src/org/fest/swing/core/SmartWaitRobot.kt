@@ -138,6 +138,13 @@ class SmartWaitRobot : BasicRobot(null, ExistingHierarchy()) {
     fastReleaseModifiers(updatedModifiers)
   }
 
+  fun fastPressAndReleaseModifiers(vararg modifiers: Int) {
+    val unifiedModifiers = InputModifiers.unify(*modifiers)
+    fastPressModifiers(unifiedModifiers)
+    Pause.pause(50)
+    fastReleaseModifiers(unifiedModifiers)
+  }
+
   fun fastPressAndReleaseKeyWithoutModifiers(keyCode: Int) {
     fastPressKey(keyCode)
     fastReleaseKey(keyCode)
