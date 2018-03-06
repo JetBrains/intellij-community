@@ -919,9 +919,9 @@ public class MavenProject {
 
   public void addAnnotationProcessors(@NotNull Collection<MavenArtifact> annotationProcessors) {
     State state = myState;
-    List<MavenArtifact> dependenciesCopy = new ArrayList<>(state.myDependencies);
-    dependenciesCopy.addAll(annotationProcessors);
-    state.myDependencies = dependenciesCopy;
+    List<MavenArtifact> annotationProcessorsCopy = new ArrayList<>(state.myAnnotationProcessors);
+    annotationProcessorsCopy.addAll(annotationProcessors);
+    state.myAnnotationProcessors = annotationProcessorsCopy;
 
     state.myUnresolvedAnnotationProcessors = null;
   }
