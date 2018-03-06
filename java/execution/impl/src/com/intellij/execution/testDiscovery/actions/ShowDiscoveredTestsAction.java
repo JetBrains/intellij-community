@@ -99,12 +99,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
                                   @NotNull DataContext dataContext,
                                   @NotNull String title,
                                   @NotNull PsiMethod... methods) {
-    CollectionListModel<PsiElement> model = new CollectionListModel<>();
-    final JBList<PsiElement> list = new JBList<>(model);
-    //list.setFixedCellHeight();
-    HintUpdateSupply.installSimpleHintUpdateSupply(list);
-    list.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-
+    final DiscoveredTestsTree tree = new DiscoveredTestsTree(title);
     String initTitle = "Tests for " + title;
     DefaultPsiElementCellRenderer renderer = new DefaultPsiElementCellRenderer();
 
@@ -114,12 +109,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
 
     InplaceButton runButton = new InplaceButton(new IconButton("Run All", AllIcons.Actions.Execute), __ -> {
       Executor executor = DefaultRunExecutor.getRunExecutorInstance();
-      List<Module> containingModules =
-        model.getItems().stream()
-             .map(element -> ModuleUtilCore.findModuleForPsiElement(element))
-             .filter(module -> module != null)
-             .collect(Collectors.toList());
-      Module targetModule = TestDiscoveryConfigurationProducer.detectTargetModule(containingModules, project);
+      Module targetModule = TestDiscoveryConfigurationProducer.detectTargetModule(tree.getContainingModules(), project);
       //first producer with results will be picked
       StreamEx.of(getProducers(project)).cross(methods)
               .mapKeyValue((producer, method) -> producer.createDelegate(method, targetModule).findOrCreateConfigurationFromContext(context))
@@ -135,8 +125,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
     });
 
     ActionListener pinActionListener = __ -> {
-      PsiElement[] elements = model.getItems().toArray(PsiElement.EMPTY_ARRAY);
-      FindUtil.showInUsageView(null, elements, initTitle, project);
+      FindUtil.showInUsageView(null, tree.getTestMethods(), initTitle, project);
       JBPopup popup = ref.get();
       if (popup != null) {
         popup.cancel();
@@ -152,12 +141,12 @@ public class ShowDiscoveredTestsAction extends AnAction {
     CompositeActiveComponent component = new CompositeActiveComponent(runButton, pinButton);
 
     final PopupChooserBuilder builder =
-      new PopupChooserBuilder(list)
+      new PopupChooserBuilder(tree)
         .setTitle(initTitle)
         .setMovable(true)
         .setResizable(true)
         .setCommandButton(component)
-        .setItemChoosenCallback(() -> PsiNavigateUtil.navigate(list.getSelectedValue()))
+        .setItemChoosenCallback(() -> PsiNavigateUtil.navigate(tree.getSelectedElement()))
         .registerKeyboardAction(findUsageKeyStroke, pinActionListener)
         .setMinSize(new JBDimension(500, 300));
 
@@ -166,24 +155,9 @@ public class ShowDiscoveredTestsAction extends AnAction {
     JBPopup popup = builder.createPopup();
     ref.set(popup);
 
-    list.setEmptyText("No tests captured for " + title);
-    list.setPaintBusy(true);
-
     popup.showInBestPositionFor(dataContext);
 
     GlobalSearchScope scope = GlobalSearchScope.projectScope(project);
-    //noinspection unchecked
-    list.setCellRenderer(renderer);
-
-    ListBackgroundUpdaterTask loadTestsTask = new ListBackgroundUpdaterTask(project, "Load tests", renderer.getComparator()) {
-      @Override
-      public String getCaption(int size) {
-        return "Found " + size + " Tests for " + title;
-      }
-    };
-
-    loadTestsTask.init((AbstractPopup)popup, list, new Ref<>());
-
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       for (PsiMethod method : methods) {
         Couple<String> methodFqnName = ReadAction.compute(() -> getMethodQualifiedName(method));
@@ -200,7 +174,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
               return cc == null ? null : ArrayUtil.getFirstElement(cc.findMethodsByName(testMethod, false));
             });
             if (psiMethod != null) {
-              loadTestsTask.updateComponent(psiMethod);
+              tree.addTest(ReadAction.compute(() -> psiMethod.getContainingClass()), psiMethod);
             }
           });
         }
@@ -208,7 +182,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
 
       EdtInvocationManager.getInstance().invokeLater(() -> {
         popup.pack(true, true);
-        list.setPaintBusy(false);
+        tree.setPaintBusy(false);
       });
     });
   }
