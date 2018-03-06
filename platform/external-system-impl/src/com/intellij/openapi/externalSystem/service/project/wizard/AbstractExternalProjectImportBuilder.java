@@ -254,10 +254,6 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
         }
         ServiceManager.getService(ProjectDataManager.class).importData(externalProject, project, false);
       }
-
-      @Override
-      public void onFailure(@NotNull String errorMessage, @Nullable String errorDetails) {
-      }
     };
   }
 
