@@ -28,8 +28,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 
-import java.io.IOException;
-
 import static org.easymock.EasyMock.*;
 
 public class SelectionHistoryDialogTest extends LocalHistoryUITestCase {
@@ -118,7 +116,7 @@ public class SelectionHistoryDialogTest extends LocalHistoryUITestCase {
     assertContent("bcd", dm.getRightDiffContent(new NullRevisionsProgress()));
   }
 
-  public void testRevert() throws IOException {
+  public void testRevert() throws Exception {
     initModelOnSecondLineAndSelectRevisions(0, 0);
     Reverter r = m.createReverter();
     r.revert();

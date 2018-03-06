@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.CodeInsightWorkspaceSettings;
@@ -52,10 +52,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author cdr
@@ -527,6 +524,20 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
+  public List<IntentionAction> createCreateConstructorFromCallExpressionFixes(@NotNull PsiMethodCallExpression call) {
+    if (JvmElementActionFactories.useInterlaguageActions()) {
+      return CreateConstructorFromUsage.generateConstructorActions(call);
+    }
+    else {
+      return Arrays.asList(
+        createCreateConstructorFromSuperFix(call),
+        createCreateConstructorFromThisFix(call)
+      );
+    }
+  }
+
+  @NotNull
+  @Override
   public IntentionAction createCreateGetterSetterPropertyFromUsageFix(@NotNull PsiMethodCallExpression call) {
     return new CreateGetterSetterPropertyFromUsageFix(call);
   }
@@ -559,7 +570,7 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public List<IntentionAction> createCreateConstructorFromUsageFixes(@NotNull PsiConstructorCall call) {
     if (JvmElementActionFactories.useInterlaguageActions()) {
-      return CreateConstructorFromUsage.generateActions(call);
+      return CreateConstructorFromUsage.generateConstructorActions(call);
     }
     else {
       return Collections.singletonList(createCreateConstructorFromCallFix(call));

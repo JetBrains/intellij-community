@@ -386,7 +386,9 @@ public class GitLogUtil {
 
   @NotNull
   private static GitLineHandler createGitHandler(@NotNull Project project, @NotNull VirtualFile root, @NotNull List<String> configParameters) {
-    return new GitLineHandler(project, root, GitCommand.LOG, configParameters, false);
+    GitLineHandler handler = new GitLineHandler(project, root, GitCommand.LOG, configParameters);
+    handler.setWithMediator(false);
+    return handler;
   }
 
   @NotNull

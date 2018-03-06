@@ -17,7 +17,6 @@ package com.intellij.vcs.log.history;
 
 import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
@@ -73,13 +72,12 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   @NotNull private final MyPropertiesChangeListener myPropertiesChangeListener;
 
   public FileHistoryUi(@NotNull VcsLogData logData,
-                       @NotNull Project project,
                        @NotNull VcsLogColorManager manager,
                        @NotNull FileHistoryUiProperties uiProperties,
                        @NotNull VisiblePackRefresher refresher,
                        @NotNull FilePath path,
                        @Nullable Hash revision) {
-    super(logData, project, manager, refresher);
+    super(logData, manager, refresher);
     myUiProperties = uiProperties;
 
     myIndexDataGetter = ObjectUtils.assertNotNull(logData.getIndex().getDataGetter());
@@ -202,7 +200,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   @Override
   protected <T> void handleCommitNotFound(@NotNull T commitId, @NotNull PairFunction<GraphTableModel, T, Integer> rowGetter) {
     String mainText = "Commit " + commitId.toString() + " does not exist in history for " + myPath.getName();
-    if (getFilters().get(VcsLogFilterCollection.BRANCH_FILTER) != null) {
+    if (getFilterUi().getFilters().get(VcsLogFilterCollection.BRANCH_FILTER) != null) {
       showWarningWithLink(mainText + " in current branch.", "Show all branches and search again.", () -> {
         myUiProperties.set(FileHistoryUiProperties.SHOW_ALL_BRANCHES, true);
         invokeOnChange(() -> jumpTo(commitId, rowGetter, SettableFuture.create()));
@@ -247,21 +245,6 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   }
 
   @Override
-  public boolean areGraphActionsEnabled() {
-    return false;
-  }
-
-  @Override
-  public boolean isMultipleRoots() {
-    return false;
-  }
-
-  @Override
-  public boolean isShowRootNames() {
-    return false;
-  }
-
-  @Override
   public boolean isHighlighterEnabled(@NotNull String id) {
     return HIGHLIGHTERS.contains(id);
   }
@@ -281,11 +264,6 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   @Override
   public Component getMainComponent() {
     return myFileHistoryPanel;
-  }
-
-  @Override
-  protected VcsLogFilterCollection getFilters() {
-    return myFilterUi.getFilters();
   }
 
   private void updateFilter() {

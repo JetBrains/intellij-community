@@ -99,12 +99,7 @@ public class EditorStressTest extends AbstractEditorTest {
     public void perform(EditorEx editor, Random random) {
       Document document = editor.getDocument();
       int offset = random.nextInt(document.getTextLength() + 1);
-      new WriteCommandAction.Simple(getProject()) {
-        @Override
-        protected void run() {
-          document.insertString(offset, myText);
-        }
-      }.execute().throwException();
+      WriteCommandAction.writeCommandAction(getProject()).run(() -> document.insertString(offset, myText));
     }
   }
 
@@ -115,12 +110,7 @@ public class EditorStressTest extends AbstractEditorTest {
       int textLength = document.getTextLength();
       if (textLength <= 0) return;
       int offset = random.nextInt(textLength);
-      new WriteCommandAction.Simple(getProject()) {
-        @Override
-        protected void run() {
-          document.deleteString(offset, offset + 1);
-        }
-      }.execute().throwException();
+      WriteCommandAction.writeCommandAction(getProject()).run(() -> document.deleteString(offset, offset + 1));
     }
   }
 
@@ -133,12 +123,7 @@ public class EditorStressTest extends AbstractEditorTest {
       int offset = random.nextInt(textLength);
       int targetOffset = random.nextInt(textLength + 1);
       if (targetOffset < offset || targetOffset > offset + 1) {
-        new WriteCommandAction.Simple(getProject()) {
-          @Override
-          protected void run() {
-            ((DocumentEx)document).moveText(offset, offset + 1, targetOffset);
-          }
-        }.execute().throwException();
+        WriteCommandAction.writeCommandAction(getProject()).run(() -> ((DocumentEx)document).moveText(offset, offset + 1, targetOffset));
       }
     }
   }

@@ -94,7 +94,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   private static final String PY3_BINARY_FILE_TYPE = "typing.BinaryIO";
   private static final String PY3_TEXT_FILE_TYPE = "typing.TextIO";
 
-  public static final Pattern TYPE_COMMENT_PATTERN = Pattern.compile("# *type: *(.*)");
+  public static final Pattern TYPE_COMMENT_PATTERN = Pattern.compile("# *type: *([^#]*?) *(#.*)?");
 
   public static final ImmutableMap<String, String> BUILTIN_COLLECTION_CLASSES = ImmutableMap.<String, String>builder()
     .put(LIST, "list")
@@ -352,17 +352,17 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
 
   @NotNull
   private static PyType createTypingGenericType(@NotNull PsiElement anchor) {
-    return new PyCustomType(GENERIC, null, false, PyBuiltinCache.getInstance(anchor).getObjectType());
+    return new PyCustomType(GENERIC, null, false, true, PyBuiltinCache.getInstance(anchor).getObjectType());
   }
 
   @NotNull
   private static PyType createTypingProtocolType(@NotNull PsiElement anchor) {
-    return new PyCustomType(PROTOCOL, null, false, PyBuiltinCache.getInstance(anchor).getObjectType());
+    return new PyCustomType(PROTOCOL, null, false, true, PyBuiltinCache.getInstance(anchor).getObjectType());
   }
 
   @NotNull
   public static PyType createTypingCallableType(@NotNull PsiElement anchor) {
-    return new PyCustomType(CALLABLE, null, false, PyBuiltinCache.getInstance(anchor).getObjectType());
+    return new PyCustomType(CALLABLE, null, false, true, PyBuiltinCache.getInstance(anchor).getObjectType());
   }
 
   private static boolean omitFirstParamInTypeComment(@NotNull PyFunction func, @NotNull PyFunctionTypeAnnotation annotation) {
@@ -1006,7 +1006,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   @Nullable
   private static Ref<PyType> getVariableTypeCommentType(@NotNull String contents, @NotNull PsiElement anchor, @NotNull Context context) {
     // TODO pass the real anchor as the context element for the fragment to resolve local classes/type aliases
-    final PyExpression expr = PyUtil.createExpressionFromFragment(contents, anchor.getContainingFile());
+    final PyExpression expr = PyPsiUtils.flattenParens(PyUtil.createExpressionFromFragment(contents, anchor.getContainingFile()));
     if (expr != null) {
       // Such syntax is specific to "# type:" comments, unpacking in type hints is not allowed anywhere else
       if (expr instanceof PyTupleExpression) {

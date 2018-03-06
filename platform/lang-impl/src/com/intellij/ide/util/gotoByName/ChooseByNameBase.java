@@ -21,8 +21,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.SettingsImpl;
 import com.intellij.openapi.fileTypes.UnknownFileType;
@@ -42,7 +40,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -205,10 +202,6 @@ public abstract class ChooseByNameBase {
     myInitIsDone = true;
   }
 
-  public void setShowListAfterCompletionKeyStroke(boolean showListAfterCompletionKeyStroke) {
-    myShowListAfterCompletionKeyStroke = showListAfterCompletionKeyStroke;
-  }
-
   public boolean isSearchInAnyPlace() {
     return mySearchInAnyPlace;
   }
@@ -297,9 +290,6 @@ public abstract class ChooseByNameBase {
       }
       else if (PlatformDataKeys.DOMINANT_HINT_AREA_RECTANGLE.is(dataId)) {
         return getBounds();
-      }
-      else if (PlatformDataKeys.SEARCH_INPUT_TEXT.is(dataId)) {
-        return myTextField.getText();
       }
       return null;
     }
@@ -451,10 +441,7 @@ public abstract class ChooseByNameBase {
       .registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_COPY).getShortcutSet(), myTextField);
 
     myTextFieldPanel.add(myTextField);
-    // [tav] todo: UIUtil.getFontWithFallback() doesn't display Japanese on OSX
-    Font editorFont = SystemInfo.isMac ?
-                      EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN) :
-                      EditorUtil.getEditorFont();
+    Font editorFont = EditorUtil.getEditorFont();
     myTextField.setFont(editorFont);
     myTextField.putClientProperty("caretWidth", JBUI.scale(new SettingsImpl().getLineCursorWidth()));
 
@@ -652,9 +639,7 @@ public abstract class ChooseByNameBase {
       }
     });
 
-    myListScrollPane = ScrollPaneFactory.createScrollPane(myList);
-    myListScrollPane.setViewportBorder(JBUI.Borders.empty());
-    myListScrollPane.putClientProperty(UIUtil.KEEP_BORDER_SIDES, SideBorder.ALL);
+    myListScrollPane = ScrollPaneFactory.createScrollPane(myList, true);
 
     myTextFieldPanel.setBorder(JBUI.Borders.empty(5));
 
@@ -844,7 +829,7 @@ public abstract class ChooseByNameBase {
       myTextPopup = null;
       close(false);
       return Boolean.TRUE;
-    }).setFocusable(true).setRequestFocus(true).setModalContext(false);
+    }).setFocusable(true).setRequestFocus(true).setModalContext(false).setCancelOnClickOutside(false);
 
     Point point = new Point(x, y);
     SwingUtilities.convertPointToScreen(point, layeredPane);
@@ -872,14 +857,11 @@ public abstract class ChooseByNameBase {
     JLayeredPane layeredPane;
     final Window window = WindowManager.getInstance().suggestParentWindow(myProject);
 
-    //Component parent = UIUtil.findUltimateParent(window);
-    Component parent= window;
-
-    if (parent instanceof JFrame) {
-      layeredPane = ((JFrame)parent).getLayeredPane();
+    if (window instanceof JFrame) {
+      layeredPane = ((JFrame)window).getLayeredPane();
     }
-    else if (parent instanceof JDialog) {
-      layeredPane = ((JDialog)parent).getLayeredPane();
+    else if (window instanceof JDialog) {
+      layeredPane = ((JDialog)window).getLayeredPane();
     }
     else {
       throw new IllegalStateException("cannot find parent window: project=" + myProject +
@@ -1156,7 +1138,7 @@ public abstract class ChooseByNameBase {
     protected void processKeyEvent(@NotNull KeyEvent e) {
       final KeyStroke keyStroke = KeyStroke.getKeyStrokeForEvent(e);
 
-      if (myCompletionKeyStroke != null && keyStroke.equals(myCompletionKeyStroke)) {
+      if (keyStroke.equals(myCompletionKeyStroke)) {
         completionKeyStrokeHappened = true;
         e.consume();
         final String pattern = getTrimmedText();
@@ -1166,7 +1148,7 @@ public abstract class ChooseByNameBase {
         rebuildList(SelectMostRelevant.INSTANCE, 0, ModalityState.current(), postRunnable);
         return;
       }
-      if (backStroke != null && keyStroke.equals(backStroke)) {
+      if (keyStroke.equals(backStroke)) {
         e.consume();
         if (!myHistory.isEmpty()) {
           final String oldText = getTrimmedText();
@@ -1178,7 +1160,7 @@ public abstract class ChooseByNameBase {
         }
         return;
       }
-      if (forwardStroke != null && keyStroke.equals(forwardStroke)) {
+      if (keyStroke.equals(forwardStroke)) {
         e.consume();
         if (!myFuture.isEmpty()) {
           final String oldText = getTrimmedText();
@@ -1506,7 +1488,7 @@ public abstract class ChooseByNameBase {
   private static class HintLabel extends JLabel {
     private HintLabel(String text) {
       super(text, RIGHT);
-      setForeground(Color.darkGray);
+      setForeground(JBColor.DARK_GRAY);
     }
   }
 
@@ -1553,7 +1535,7 @@ public abstract class ChooseByNameBase {
       PsiElement[] elements = getElements();
       final List<PsiElement> targets = new ArrayList<>();
       final Set<Usage> usages = new LinkedHashSet<>();
-      fillUsages(Arrays.asList(elements), usages, targets, false);
+      fillUsages(Arrays.asList(elements), usages, targets);
       if (myListModel.contains(EXTRA_ELEM)) { //start searching for the rest
         final boolean everywhere = myCheckBox.isSelected();
         final Set<Object> collected = new LinkedHashSet<>();
@@ -1581,7 +1563,7 @@ public abstract class ChooseByNameBase {
               myCalcUsagesThread.addElementsByPattern(text, collected, indicator, everywhere);
 
               indicator.setText("Prepare...");
-              fillUsages(collected, usages, targets, false);
+              fillUsages(collected, usages, targets);
             });
           }
 
@@ -1610,13 +1592,12 @@ public abstract class ChooseByNameBase {
 
     private void fillUsages(Collection<Object> matchElementsArray,
                             Collection<Usage> usages,
-                            List<PsiElement> targets,
-                            final boolean separateGroup) {
+                            List<PsiElement> targets) {
       for (Object o : matchElementsArray) {
         if (o instanceof PsiElement) {
           PsiElement element = (PsiElement)o;
           if (element.getTextRange() != null) {
-            usages.add(new MyUsageInfo2UsageAdapter(element, separateGroup));
+            usages.add(new MyUsageInfo2UsageAdapter(element, false));
           }
           else {
             targets.add(element);

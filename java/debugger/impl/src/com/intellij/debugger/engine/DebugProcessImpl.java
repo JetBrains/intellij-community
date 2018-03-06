@@ -797,7 +797,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     StringBuilder buf = new StringBuilder(message.length());
     int index = 0;
     while (index < message.length()) {
-      buf.append(message.substring(index, Math.min(index + lineLength, message.length()))).append('\n');
+      buf.append(message, index, Math.min(index + lineLength, message.length())).append('\n');
       index += lineLength;
     }
     return buf.toString();

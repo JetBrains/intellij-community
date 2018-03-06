@@ -2673,7 +2673,7 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static String tail(@NotNull String s, final int idx) {
-    return idx >= s.length() ? "" : s.substring(idx, s.length());
+    return idx >= s.length() ? "" : s.substring(idx);
   }
 
   /**
@@ -3242,12 +3242,12 @@ public class StringUtil extends StringUtilRt {
     int lastEnd = 0;
     final StringBuilder sb = new StringBuilder(text.length());
     while (matcher.find()) {
-      sb.append(text.substring(lastEnd, matcher.start()));
+      sb.append(text, lastEnd, matcher.start());
       final char c = (char)Integer.parseInt(matcher.group().substring(2), 16);
       sb.append(c);
       lastEnd = matcher.end();
     }
-    sb.append(text.substring(lastEnd, text.length()));
+    sb.append(text.substring(lastEnd));
     return sb.toString();
   }
 

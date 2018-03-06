@@ -100,12 +100,9 @@ public class DomFileDescriptionTest extends DomHardCoreTestCase {
     assertFalse(getDomManager().isDomFile(file));
     assertNull(getDomManager().getFileElement(file));
 
-    new WriteCommandAction(getProject()) {
-      @Override
-      protected void run(@NotNull Result result) {
-        file.getDocument().getRootTag().getValue().setText("239");
-      }
-    }.execute();
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      file.getDocument().getRootTag().getValue().setText("239");
+    });
     assertTrue(getDomManager().isDomFile(file));
     final DomFileElementImpl<MyElement> root = getDomManager().getFileElement(file);
     assertNotNull(root);
@@ -113,12 +110,9 @@ public class DomFileDescriptionTest extends DomHardCoreTestCase {
     assertTrue(root.isValid());
     assertTrue(child.isValid());
 
-    new WriteCommandAction(getProject()) {
-      @Override
-      protected void run(@NotNull Result result) {
-        file.getDocument().getRootTag().getValue().setText("57121");
-      }
-    }.execute();
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      file.getDocument().getRootTag().getValue().setText("57121");
+    });
     assertFalse(getDomManager().isDomFile(file));
     assertNull(getDomManager().getFileElement(file));
     assertFalse(root.isValid());
@@ -158,7 +152,7 @@ public class DomFileDescriptionTest extends DomHardCoreTestCase {
   }
 
   public void testCheckNamespace() throws Throwable {
-    getDomManager().registerFileDescription(new DomFileDescription<NamespacedElement>(NamespacedElement.class, "xxx", "bar"){
+    getDomManager().registerFileDescription(new DomFileDescription<NamespacedElement>(NamespacedElement.class, "xxx", "bar") {
 
       @Override
       protected void initializeFileDescription() {
@@ -169,18 +163,15 @@ public class DomFileDescriptionTest extends DomHardCoreTestCase {
     final PsiFile file = createFile("xxx.xml", "<xxx/>");
     assertFalse(getDomManager().isDomFile(file));
 
-    new WriteCommandAction(getProject()) {
-      @Override
-      protected void run(@NotNull Result result) {
-        ((XmlFile)file).getDocument().getRootTag().setAttribute("xmlns", "bar");
-      }
-    }.execute();
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      ((XmlFile)file).getDocument().getRootTag().setAttribute("xmlns", "bar");
+    });
 
     assertTrue(getDomManager().isDomFile(file));
   }
 
   public void testCheckDtdPublicId() throws Throwable {
-    getDomManager().registerFileDescription(new DomFileDescription<NamespacedElement>(NamespacedElement.class, "xxx", "bar"){
+    getDomManager().registerFileDescription(new DomFileDescription<NamespacedElement>(NamespacedElement.class, "xxx", "bar") {
 
       @Override
       protected void initializeFileDescription() {
@@ -191,20 +182,17 @@ public class DomFileDescriptionTest extends DomHardCoreTestCase {
     final PsiFile file = createFile("xxx.xml", "<xxx/>");
     assertFalse(getDomManager().isDomFile(file));
 
-    new WriteCommandAction(getProject()) {
-      @Override
-      protected void run(@NotNull Result result) {
-        final Document document = getDocument(file);
-        document.insertString(0, "<!DOCTYPE xxx PUBLIC \"bar\" \"http://java.sun.com/dtd/ejb-jar_2_0.dtd\">\n");
-        commitDocument(document);
-      }
-    }.execute();
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      final Document document = getDocument(file);
+      document.insertString(0, "<!DOCTYPE xxx PUBLIC \"bar\" \"http://java.sun.com/dtd/ejb-jar_2_0.dtd\">\n");
+      commitDocument(document);
+    });
 
     assertTrue(getDomManager().isDomFile(file));
   }
 
   public void testChangeCustomDomness() throws Throwable {
-    getDomManager().registerFileDescription(new DomFileDescription<MyElement>(MyElement.class, "xxx"){
+    getDomManager().registerFileDescription(new DomFileDescription<MyElement>(MyElement.class, "xxx") {
       @Override
       public boolean isMyFile(@NotNull final XmlFile file, @Nullable final Module module) {
         return file.getText().contains("foo");
@@ -212,12 +200,9 @@ public class DomFileDescriptionTest extends DomHardCoreTestCase {
     }, myDisposable);
     final XmlFile file = (XmlFile)createFile("xxx.xml", "<xxx zzz=\"foo\"><boy/><boy/><xxx/>");
     final MyElement boy = getDomManager().getFileElement(file, MyElement.class).getRootElement().getBoys().get(0);
-    new WriteCommandAction(getProject()) {
-      @Override
-      protected void run(@NotNull Result result) {
-        file.getDocument().getRootTag().setAttribute("zzz", "bar");
-      }
-    }.execute();
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      file.getDocument().getRootTag().setAttribute("zzz", "bar");
+    });
     assertFalse(getDomManager().isDomFile(file));
     assertFalse(boy.isValid());
   }

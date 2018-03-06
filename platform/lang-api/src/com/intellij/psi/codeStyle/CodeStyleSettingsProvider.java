@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.codeStyle;
 
+import com.intellij.lang.IdeLanguageCustomization;
 import com.intellij.lang.Language;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -53,7 +54,8 @@ public abstract class CodeStyleSettingsProvider {
   }
 
   public DisplayPriority getPriority() {
-    return DisplayPriority.LANGUAGE_SETTINGS;
+    Language mainIdeLanguage = IdeLanguageCustomization.getInstance().getMainIdeLanguage();
+    return mainIdeLanguage != null && mainIdeLanguage.is(getLanguage()) ? DisplayPriority.KEY_LANGUAGE_SETTINGS : DisplayPriority.LANGUAGE_SETTINGS;
   }
 
   /**

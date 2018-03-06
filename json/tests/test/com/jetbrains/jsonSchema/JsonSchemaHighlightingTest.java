@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema;
 
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
@@ -93,7 +79,7 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
                                  "}");
     doTest(schema, "{\"prop\": [101, 102]}");
     doTest(schema, "{\"prop\": [<warning descr=\"Less than a minimum 18\">16</warning>]}");
-    doTest(schema, "{\"prop\": [<warning descr=\"Type is not allowed\">\"test\"</warning>]}");
+    doTest(schema, "{\"prop\": [<warning descr=\"Type is not allowed. Expected: number.\">\"test\"</warning>]}");
   }
 
   public void testTopLevelArray() throws Exception {
@@ -113,7 +99,7 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
                                  "    \"type\": \"object\", \"properties\": {\"a\": {\"type\": \"number\"}}" +
                                  "  }\n" +
                                  "}";
-    doTest(schema, "[{\"a\": <warning descr=\"Type is not allowed\">true</warning>}]");
+    doTest(schema, "[{\"a\": <warning descr=\"Type is not allowed. Expected: number.\">true</warning>}]");
     doTest(schema, "[{\"a\": 18}]");
   }
 
@@ -124,7 +110,7 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
                                  "    \"type\": \"number\", \"minimum\": 18" +
                                  "  }, {\"type\" : \"string\"}]\n" +
                                  "}");
-    doTest(schema, "{\"prop\": [101, <warning descr=\"Type is not allowed\">102</warning>]}");
+    doTest(schema, "{\"prop\": [101, <warning descr=\"Type is not allowed. Expected: string.\">102</warning>]}");
     doTest(schema, "{\"prop\": [101, \"102\"]}");
     doTest(schema, "{\"prop\": [101, \"102\", \"additional\"]}");
 
@@ -181,8 +167,8 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
                           "\"office\": {\"$ref\": \"#/definitions/address\"}" +
                           "}}";
     doTest(schema, "{\"home\": {\"street\": \"Broadway\", \"house\": 11}}");
-    doTest(schema, "{\"home\": {\"street\": \"Broadway\", \"house\": <warning descr=\"Type is not allowed\">\"unknown\"</warning>}," +
-                   "\"office\": {\"street\": <warning descr=\"Type is not allowed\">5</warning>}}");
+    doTest(schema, "{\"home\": {\"street\": \"Broadway\", \"house\": <warning descr=\"Type is not allowed. Expected: integer.\">\"unknown\"</warning>}," +
+                   "\"office\": {\"street\": <warning descr=\"Type is not allowed. Expected: string.\">5</warning>}}");
   }
 
   public void testAdditionalPropertiesAllowed() throws Exception {
@@ -199,7 +185,7 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
   public void testAdditionalPropertiesSchema() throws Exception {
     final String schema = "{\"type\": \"object\", \"properties\": {\"a\": {}}," +
                           "\"additionalProperties\": {\"type\": \"string\"}}";
-    doTest(schema, "{\"a\" : 18, \"b\": \"wall\", \"c\": <warning descr=\"Type is not allowed\">11</warning>}");
+    doTest(schema, "{\"a\" : 18, \"b\": \"wall\", \"c\": <warning descr=\"Type is not allowed. Expected: string.\">11</warning>}");
   }
 
   public void testMinMaxProperties() throws Exception {
@@ -217,7 +203,7 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
     final String schema = schema("{\"oneOf\": [" + StringUtil.join(subSchemas, ", ") + "]}");
     doTest(schema, "{\"prop\": \"abc\"}");
     doTest(schema, "{\"prop\": true}");
-    doTest(schema, "{\"prop\": <warning descr=\"Type is not allowed\">11</warning>}");
+    doTest(schema, "{\"prop\": <warning descr=\"Type is not allowed. Expected one of: boolean, string.\">11</warning>}");
   }
 
   @SuppressWarnings("Duplicates")
@@ -380,9 +366,9 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
                           "}";
     doTest(schema, "{\n" +
                    "  \"Abezjana\": 2,\n" +
-                   "  \"Auto\": <warning descr=\"Type is not allowed\">\"no\"</warning>,\n" +
-                   "  \"ABe\": <warning descr=\"Type is not allowed\">22</warning>,\n" +
-                   "  \"Boloto\": <warning descr=\"Type is not allowed\">2</warning>,\n" +
+                   "  \"Auto\": <warning descr=\"Type is not allowed. Expected: number.\">\"no\"</warning>,\n" +
+                   "  \"BAe\": <warning descr=\"Type is not allowed. Expected: boolean.\">22</warning>,\n" +
+                   "  \"Boloto\": <warning descr=\"Type is not allowed. Expected: boolean.\">2</warning>,\n" +
                    "  \"Cyan\": <warning descr=\"Value should be one of: [\\\"test\\\", \\\"em\\\"]\">\"me\"</warning>\n" +
                    "}");
   }
@@ -401,7 +387,7 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
                           "  }\n" +
                           "}";
     doTest(schema, "{\n" +
-                   "  \"p1\": <warning descr=\"Type is not allowed\">1</warning>,\n" +
+                   "  \"p1\": <warning descr=\"Type is not allowed. Expected: string.\">1</warning>,\n" +
                    "  \"p2\": \"3\",\n" +
                    "  \"a2\": \"auto!\",\n" +
                    "  \"a1\": <warning descr=\"Value should be one of: [\\\"auto!\\\"]\">\"moto!\"</warning>\n" +
@@ -466,9 +452,9 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
                           "}";
     doTest(schema, "{\n" +
                    "  \"size\": <warning descr=\"Number of properties is greater than 3\">{\n" +
-                   "    \"a\": <warning descr=\"Type is not allowed\">1</warning>," +
+                   "    \"a\": <warning descr=\"Type is not allowed. Expected: boolean.\">1</warning>," +
                    " \"b\":3, \"c\": 4, " +
-                   "\"a\": <warning descr=\"Type is not allowed\">5</warning>\n" +
+                   "\"a\": <warning descr=\"Type is not allowed. Expected: boolean.\">5</warning>\n" +
                    "  }</warning>\n" +
                    "}");
   }

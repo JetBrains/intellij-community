@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.codeInsight.template.impl.Variable;
@@ -162,8 +162,6 @@ class EditVarConstraintsDialog extends DialogWrapper {
     });
     regexprForExprType.getDocument().addDocumentListener(new MyDocumentListener(exprTypeWithinHierarchy, notExprType));
     formalArgType.getDocument().addDocumentListener(new MyDocumentListener(formalArgTypeWithinHierarchy, invertFormalArgType));
-
-    containedInConstraints.setVisible(false);
 
     final List<String> names = ConfigurationManager.getInstance(project).getAllConfigurationNames();
     withinTextField.setAutoCompletionItems(names);
@@ -466,6 +464,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
     expressionConstraints.setVisible(b);
     partOfSearchResults.setVisible(b);
     containedInConstraints.setVisible(b);
+    referenceTargetConstraints.setVisible(b);
   }
 
   private void restoreScriptCode(NamedScriptableDefinition varInfo) {

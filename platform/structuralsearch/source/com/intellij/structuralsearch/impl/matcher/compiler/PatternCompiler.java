@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.codeInsight.template.Template;
@@ -103,7 +103,16 @@ public class PatternCompiler {
           }
           super.visitElement(element);
 
-          if (!(element instanceof LeafElement) || !pattern.isTypedVar(element)) {
+          if (!(element instanceof LeafElement)) {
+            return;
+          }
+          final String text = element.getText();
+          if (!pattern.isTypedVar(text)) {
+            for (String prefix : pattern.getTypedVarPrefixes()) {
+              if (text.contains(prefix)) {
+                throw new MalformedPatternException();
+              }
+            }
             return;
           }
           final MatchingHandler handler = pattern.getHandler(pattern.getTypedVarString(element));
@@ -362,7 +371,7 @@ public class PatternCompiler {
       }
 
       final String compiledName = prefix + name;
-      buf.append(text.substring(prevOffset, offset)).append(compiledName);
+      buf.append(text, prevOffset, offset).append(compiledName);
 
       if (seen.add(compiledName)) {
         // the same variable can occur multiple times in a single template
@@ -457,7 +466,7 @@ public class PatternCompiler {
       addScriptConstraint(project, Configuration.CONTEXT_VAR_NAME, constraint, handler);
     }
 
-    buf.append(text.substring(prevOffset,text.length()));
+    buf.append(text.substring(prevOffset));
 
     PsiElement[] matchStatements;
 

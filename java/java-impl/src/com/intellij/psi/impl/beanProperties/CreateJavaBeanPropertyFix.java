@@ -85,17 +85,14 @@ public class CreateJavaBeanPropertyFix implements LocalQuickFix, IntentionAction
   }
 
   private void applyFix(final Project project) {
-    new WriteCommandAction.Simple(project, getName(), myPsiClass.getContainingFile()) {
-      @Override
-      protected void run() throws Throwable {
-        try {
-          doFix();
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error("Cannot create property", e);
-        }
+    WriteCommandAction.writeCommandAction(project, myPsiClass.getContainingFile()).withName(getName()).run(() -> {
+      try {
+        doFix();
       }
-    }.execute();
+      catch (IncorrectOperationException e) {
+        LOG.error("Cannot create property", e);
+      }
+    });
   }
 
   @Override

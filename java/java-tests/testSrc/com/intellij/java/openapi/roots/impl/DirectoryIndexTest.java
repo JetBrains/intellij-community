@@ -339,15 +339,12 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
   }
 
   public void testAddProjectDir() {
-    new WriteCommandAction.Simple(getProject()) {
-      @Override
-      protected void run() {
-        VirtualFile newDir = createChildDirectory(myModule1Dir.getParent(), "newDir");
-        createChildDirectory(newDir, "subdir");
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> {
+      VirtualFile newDir = createChildDirectory(myModule1Dir.getParent(), "newDir");
+      createChildDirectory(newDir, "subdir");
 
-        PsiTestUtil.addContentRoot(myModule, newDir);
-      }
-    }.execute().throwException();
+      PsiTestUtil.addContentRoot(myModule, newDir);
+    });
   }
 
   public void testChangeIgnoreList() {
@@ -379,16 +376,13 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
   }
 
   public void testAddModule() {
-    new WriteCommandAction.Simple(getProject()) {
-      @Override
-      protected void run() {
-        VirtualFile newModuleContent = createChildDirectory(myRootVFile, "newModule");
-        createChildDirectory(newModuleContent, "subDir");
-        ModuleManager moduleManager = ModuleManager.getInstance(myProject);
-        Module module = moduleManager.newModule(myRootVFile.getPath() + "/newModule.iml", StdModuleTypes.JAVA.getId());
-        PsiTestUtil.addContentRoot(module, newModuleContent);
-      }
-    }.execute().throwException();
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> {
+      VirtualFile newModuleContent = createChildDirectory(myRootVFile, "newModule");
+      createChildDirectory(newModuleContent, "subDir");
+      ModuleManager moduleManager = ModuleManager.getInstance(myProject);
+      Module module = moduleManager.newModule(myRootVFile.getPath() + "/newModule.iml", StdModuleTypes.JAVA.getId());
+      PsiTestUtil.addContentRoot(module, newModuleContent);
+    });
   }
 
   public void testModuleUnderIgnoredDir() {
@@ -401,36 +395,30 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
     assertTrue(myFileIndex.isExcluded(module4));
     assertTrue(myFileIndex.isUnderIgnored(module4));
 
-    new WriteCommandAction.Simple(getProject()) {
-      @Override
-      protected void run() {
-        ModuleManager moduleManager = ModuleManager.getInstance(myProject);
-        Module module = moduleManager.newModule(myRootVFile.getPath() + "/newModule.iml", StdModuleTypes.JAVA.getId());
-        PsiTestUtil.addContentRoot(module, module4);
-        assertNotInProject(ignored);
-        checkInfo(module4, module, false, false, null, null);
-      }
-    }.execute().throwException();
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> {
+      ModuleManager moduleManager = ModuleManager.getInstance(myProject);
+      Module module = moduleManager.newModule(myRootVFile.getPath() + "/newModule.iml", StdModuleTypes.JAVA.getId());
+      PsiTestUtil.addContentRoot(module, module4);
+      assertNotInProject(ignored);
+      checkInfo(module4, module, false, false, null, null);
+    });
   }
 
   public void testModuleInIgnoredDir() {
     final VirtualFile ignored = createChildDirectory(myRootVFile, ".git");
     assertTrue(FileTypeManager.getInstance().isFileIgnored(ignored));
 
-    new WriteCommandAction.Simple(getProject()) {
-      @Override
-      protected void run() {
-        ModuleManager moduleManager = ModuleManager.getInstance(myProject);
-        ModifiableModuleModel model = moduleManager.getModifiableModel();
-        model.disposeModule(myModule);
-        model.disposeModule(myModule2);
-        model.disposeModule(myModule3);
-        model.commit();
-        Module module = moduleManager.newModule(myRootVFile.getPath() + "/newModule.iml", StdModuleTypes.JAVA.getId());
-        PsiTestUtil.addContentRoot(module, ignored);
-        checkInfo(ignored, module, false, false, null, null);
-      }
-    }.execute().throwException();
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> {
+      ModuleManager moduleManager = ModuleManager.getInstance(myProject);
+      ModifiableModuleModel model = moduleManager.getModifiableModel();
+      model.disposeModule(myModule);
+      model.disposeModule(myModule2);
+      model.disposeModule(myModule3);
+      model.commit();
+      Module module = moduleManager.newModule(myRootVFile.getPath() + "/newModule.iml", StdModuleTypes.JAVA.getId());
+      PsiTestUtil.addContentRoot(module, ignored);
+      checkInfo(ignored, module, false, false, null, null);
+    });
   }
 
   public void testExcludedDirsInLibraries() {

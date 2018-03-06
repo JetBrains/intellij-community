@@ -1362,7 +1362,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     }
 
     private String getToolTip() {
-      final StringBuilder myToolTip = new StringBuilder("");
+      final StringBuilder myToolTip = new StringBuilder();
       String scope = myArtifactNode.getOriginalScope();
 
       if (StringUtil.isNotEmpty(scope) && !MavenConstants.SCOPE_COMPILE.equals(scope)) {

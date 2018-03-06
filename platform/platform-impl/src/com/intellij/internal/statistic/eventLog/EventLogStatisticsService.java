@@ -10,6 +10,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -52,29 +53,41 @@ public class EventLogStatisticsService implements StatisticsService {
       final List<File> logs = FeatureUsageLogger.INSTANCE.getLogFiles();
       final List<File> toRemove = new ArrayList<>(logs.size());
       for (File file : logs) {
-        final LogEventContent session = LogEventContent.Companion.create(file);
-        if (session != null) {
+        final List<LogEventContent> contents = LogEventContent.Companion.create(file);
+        final String error = validate(contents, file);
+        if (StringUtil.isNotEmpty(error)) {
+          if (LOG.isTraceEnabled()) {
+            LOG.trace(error);
+          }
+          toRemove.add(file);
+          continue;
+        }
+
+        int succeedBlocks = 0;
+        int wrongFormatBlocks = 0;
+        for (LogEventContent content : contents) {
           final HttpClient httpClient = HttpClientBuilder.create().build();
-          final HttpPost post = createPostRequest(serviceUrl, LogEventSerializer.INSTANCE.toString(session));
+          final HttpPost post = createPostRequest(serviceUrl, LogEventSerializer.INSTANCE.toString(content));
           final HttpResponse response = httpClient.execute(post);
 
           final int code = response.getStatusLine().getStatusCode();
           if (code == HttpStatus.SC_OK) {
-            toRemove.add(file);
-            succeed++;
+            succeedBlocks++;
           }
           else if (code == HttpStatus.SC_BAD_REQUEST) {
-            toRemove.add(file);
+            wrongFormatBlocks++;
           }
 
           if (LOG.isTraceEnabled()) {
             LOG.trace(getResponseMessage(response));
           }
         }
-        else {
-          if (LOG.isTraceEnabled()) {
-            LOG.trace("File is empty or has invalid format: " + file.getName());
-          }
+
+        if (succeedBlocks == contents.size()) {
+          succeed++;
+        }
+
+        if (succeedBlocks > 0 || wrongFormatBlocks > 0) {
           toRemove.add(file);
         }
       }
@@ -94,6 +107,26 @@ public class EventLogStatisticsService implements StatisticsService {
       LOG.info(e);
       throw new StatServiceException("Error during data sending.", e);
     }
+  }
+
+  @Nullable
+  private static String validate(@NotNull List<LogEventContent> contents, @NotNull File file) {
+    if (contents.isEmpty()) {
+      return "File is empty or has invalid format: " + file.getName();
+    }
+
+    for (LogEventContent content : contents) {
+      if (content.getEvents().isEmpty()) {
+        return "Cannot upload event log, event list is empty";
+      }
+      else if (StringUtil.isEmpty(content.getUser())) {
+        return "Cannot upload event log, user ID is empty";
+      }
+      else if (StringUtil.isEmpty(content.getProduct())) {
+        return "Cannot upload event log, product code is empty";
+      }
+    }
+    return null;
   }
 
   public void cleanupSentFiles(@NotNull List<File> toRemove) {

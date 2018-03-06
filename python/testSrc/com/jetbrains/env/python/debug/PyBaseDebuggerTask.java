@@ -19,7 +19,6 @@ import com.google.common.collect.Sets;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -303,12 +302,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
         final XLineBreakpoint lineBreakpoint = (XLineBreakpoint)breakpoint;
 
         if (lineBreakpoint.getLine() == line) {
-          new WriteAction() {
-            @Override
-            protected void run(@NotNull Result result) {
-              lineBreakpoint.setSuspendPolicy(policy);
-            }
-          }.execute();
+          WriteAction.runAndWait(() -> lineBreakpoint.setSuspendPolicy(policy));
         }
       }
     }
@@ -425,11 +419,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     disposeDebugProcess();
 
     if (mySession != null) {
-      new WriteAction() {
-        protected void run(@NotNull Result result) {
-          mySession.stop();
-        }
-      }.execute();
+      WriteAction.runAndWait(() -> mySession.stop());
 
       waitFor(mySession.getDebugProcess().getProcessHandler()); //wait for process termination after session.stop() which is async
 

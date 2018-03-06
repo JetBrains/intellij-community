@@ -18,7 +18,6 @@ package org.jetbrains.idea.devkit.navigation;
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiIdentifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.util.ExtensionCandidate;
 import org.jetbrains.idea.devkit.util.ExtensionLocator;
@@ -26,29 +25,18 @@ import org.jetbrains.idea.devkit.util.ExtensionLocator;
 import java.util.Collection;
 import java.util.List;
 
-public class ExtensionDeclarationRelatedItemLineMarkerProvider extends DevkitRelatedLineMarkerProviderBase {
-
+public class ExtensionDeclarationRelatedItemLineMarkerProvider extends DevkitRelatedClassLineMarkerProviderBase {
   @Override
-  protected void collectNavigationMarkers(@NotNull PsiElement element, @NotNull Collection<? super RelatedItemLineMarkerInfo> result) {
-    if (element instanceof PsiClass) {
-      process((PsiClass)element, result);
-    }
-  }
-
-  private static void process(PsiClass psiClass, Collection<? super RelatedItemLineMarkerInfo> result) {
-    PsiIdentifier identifier = psiClass.getNameIdentifier();
-    if (identifier == null) {
-      return;
-    }
-
+  protected void process(@NotNull PsiElement identifier,
+                         @NotNull PsiClass psiClass,
+                         @NotNull Collection<? super RelatedItemLineMarkerInfo> result) {
     ExtensionLocator locator = ExtensionLocator.byPsiClass(psiClass);
     List<ExtensionCandidate> targets = locator.findCandidates();
     if (targets.isEmpty()) {
       return;
     }
 
-    RelatedItemLineMarkerInfo<PsiElement> info =
-      LineMarkerInfoHelper.createExtensionLineMarkerInfo(targets, identifier);
+    RelatedItemLineMarkerInfo<PsiElement> info = LineMarkerInfoHelper.createExtensionLineMarkerInfo(targets, identifier);
     result.add(info);
   }
 }

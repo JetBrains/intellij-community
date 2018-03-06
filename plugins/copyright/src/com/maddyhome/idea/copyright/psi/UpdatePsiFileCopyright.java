@@ -333,35 +333,32 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
   }
 
   protected void processActions(final boolean allowReplacement) throws IncorrectOperationException {
-    new WriteCommandAction.Simple(file.getProject(), "Update copyright") {
-      @Override
-      protected void run() throws Throwable {
-        Document doc = FileDocumentManager.getInstance().getDocument(getRoot());
-        if (doc != null) {
-          PsiDocumentManager.getInstance(file.getProject()).doPostponedOperationsAndUnblockDocument(doc);
-          for (CommentAction action : actions) {
-            int start = action.getStart();
-            int end = action.getEnd();
-  
-            switch (action.getType()) {
-              case CommentAction.ACTION_INSERT:
-                String comment = getCommentText(action.getPrefix(), action.getSuffix());
-                if (!comment.isEmpty()) {
-                  doc.insertString(start, comment);
-                }
-                break;
-              case CommentAction.ACTION_REPLACE:
-                if (allowReplacement) doc.replaceString(start, end, getCommentText("", ""));
-                break;
-              case CommentAction.ACTION_DELETE:
-                if (allowReplacement) doc.deleteString(start, end);
-                break;
-            }
+    WriteCommandAction.writeCommandAction(file.getProject()).withName("Update copyright").run(() -> {
+      Document doc = FileDocumentManager.getInstance().getDocument(getRoot());
+      if (doc != null) {
+        PsiDocumentManager.getInstance(file.getProject()).doPostponedOperationsAndUnblockDocument(doc);
+        for (CommentAction action : actions) {
+          int start = action.getStart();
+          int end = action.getEnd();
+
+          switch (action.getType()) {
+            case CommentAction.ACTION_INSERT:
+              String comment = getCommentText(action.getPrefix(), action.getSuffix());
+              if (!comment.isEmpty()) {
+                doc.insertString(start, comment);
+              }
+              break;
+            case CommentAction.ACTION_REPLACE:
+              if (allowReplacement) doc.replaceString(start, end, getCommentText("", ""));
+              break;
+            case CommentAction.ACTION_DELETE:
+              if (allowReplacement) doc.deleteString(start, end);
+              break;
           }
-          PsiDocumentManager.getInstance(getProject()).commitDocument(doc);
         }
+        PsiDocumentManager.getInstance(file.getProject()).commitDocument(doc);
       }
-    }.execute();
+    });
   }
 
   public boolean hasUpdates() {

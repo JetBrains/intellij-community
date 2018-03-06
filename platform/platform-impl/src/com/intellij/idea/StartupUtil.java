@@ -27,12 +27,14 @@ import com.intellij.ui.AppUIUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.UIUtil;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.PatternLayout;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.io.BuiltInServer;
 
 import javax.swing.*;
@@ -81,6 +83,8 @@ public class StartupUtil {
   static void prepareAndStart(String[] args, AppStarter appStarter) {
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(Main.isHeadless(args));
     boolean newConfigFolder = false;
+
+    checkHiDPISettings();
 
     if (!Main.isHeadless()) {
       AppUIUtil.updateFrameClass();
@@ -178,6 +182,18 @@ public class StartupUtil {
     }
 
     return true;
+  }
+
+  @TestOnly
+  public static void test_checkHiDPISettings() {
+    checkHiDPISettings();
+  }
+
+  private static void checkHiDPISettings() {
+    if (!SystemProperties.getBooleanProperty("hidpi", true)) {
+      // suppress JRE-HiDPI mode
+      System.setProperty("sun.java2d.uiScale.enabled", "false");
+    }
   }
 
   private static synchronized boolean checkSystemFolders() {

@@ -18,7 +18,6 @@ package com.intellij.util.xml.ui.actions.generate;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.CodeInsightAction;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -59,12 +58,9 @@ public class GenerateDomElementAction extends CodeInsightAction {
         };
         
         if (GenerateDomElementAction.this.startInWriteAction()) {
-          new WriteCommandAction(project, file) {
-            @Override
-            protected void run(@NotNull final Result result) throws Throwable {
-              runnable.run();
-            }
-          }.execute();
+          WriteCommandAction.writeCommandAction(project, file).run(() -> {
+            runnable.run();
+          });
         }
         else {
           runnable.run();

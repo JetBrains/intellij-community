@@ -8,6 +8,9 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.PlatformUtils;
+import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -109,6 +112,15 @@ public interface RunConfiguration extends RunProfile, Cloneable {
   @Deprecated
   default int getUniqueID() {
     return System.identityHashCode(this);
+  }
+
+  @NotNull
+  @Transient
+  default String getPresentableType() {
+    if (PlatformUtils.isPhpStorm()) {
+      return " (" + StringUtil.first(getType().getDisplayName(), 10, true) + ")";
+    }
+    return "";
   }
 
   /**

@@ -905,6 +905,16 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                                       "import static com.intellij.psi.util.PsiUtil.*\n" +
                                       "Symbol instanceof PsiExpression && isAccessedForWriting(Symbol) ||\n" +
                                       "  Symbol instanceof PsiVariable && Symbol.getInitializer() != null\")]"));
+
+    try {
+      findMatchesCount(in, "[script( com.intellij.psi.PsiField field = __context__; true; )]" +
+                           "int i;");
+      fail("Catch RuntimeExceptions from Groovy runtime");
+    } catch (StructuralSearchException ignore) {
+    } catch (Throwable t) {
+      fail("Catch RuntimeExceptions from Groovy runtime");
+    }
+
   }
 
   public void testCheckScriptValidation() {
@@ -2373,6 +2383,11 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     try {
       findMatchesCount(source, "assert '_C;\n" +
                                "System.out.println(");
+      fail("malformed pattern warning expected");
+    } catch (MalformedPatternException ignored) {}
+
+    try {
+      findMatchesCount(source, "get'_property()");
       fail("malformed pattern warning expected");
     } catch (MalformedPatternException ignored) {}
   }

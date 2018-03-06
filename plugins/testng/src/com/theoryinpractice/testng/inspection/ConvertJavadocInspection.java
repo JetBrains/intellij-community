@@ -105,14 +105,14 @@ public class ConvertJavadocInspection extends AbstractBaseJavaLocalInspectionToo
               }
               else {
                 //otherwise, it's foo =bar, so we strip equals
-                value = next.substring(1, next.length()).trim();
+                value = next.substring(1).trim();
               }
             }
             else {
               //check if the value is in the first bit too
               if (equals < text.length() - 1) {
                 //we have stuff after equals, great
-                value = text.substring(equals + 1, text.length()).trim();
+                value = text.substring(equals + 1).trim();
               }
               else {
                 //nothing after equals, so we just get the next element

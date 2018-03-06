@@ -42,12 +42,7 @@ import java.io.IOException;
 public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected void invokeTestRunnable(@NotNull final Runnable runnable) {
-    new WriteCommandAction.Simple(getProject()) {
-      @Override
-      protected void run() {
-        runnable.run();
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> runnable.run());
   }
 
   public void testCopyTextFile() throws Exception{
@@ -283,7 +278,7 @@ public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
     assertEquals(" class A{}", document.getText());
   }
 
-  public void testASTBecomesInvalidOnExternalChange() {
+  public void testASTBecomesInvalidOnExternalChange() throws IOException {
     final String text = "class A{}";
     final PsiJavaFile file = (PsiJavaFile)myFixture.addFileToProject("a.java", text);
     PsiElement leaf = file.findElementAt(5);
@@ -291,12 +286,7 @@ public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
     PlatformTestUtil.tryGcSoftlyReachableObjects();
     assertNull(PsiDocumentManager.getInstance(getProject()).getCachedDocument(file));
 
-    new WriteCommandAction.Simple(getProject()) {
-      @Override
-      protected void run() throws Throwable {
-        VfsUtil.saveText(file.getVirtualFile(), text + "   ");
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> VfsUtil.saveText(file.getVirtualFile(), text + "   "));
 
     assertTrue(file.isValid());
     assertFalse(leaf.isValid());

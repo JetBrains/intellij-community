@@ -24,6 +24,11 @@
     <component>
       <implementation-class>com.intellij.util.xml.impl.JavaDomApplicationComponent</implementation-class>
     </component>
+
+    <component>
+      <implementation-class>com.intellij.openapi.projectRoots.impl.DefaultJdkConfigurator</implementation-class>
+      <headless-implementation-class/>
+    </component>
   </application-components>
 
   <project-components>
@@ -531,6 +536,11 @@
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.OptionalIsPresentInspection"
                      displayName="Replace Optional.isPresent() checks with functional-style expressions"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="OptionalGetWithoutIsPresent"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.java18api.OptionalGetWithoutIsPresentInspection"
+                     displayName="Optional.get() is called without isPresent() check"/>
     <localInspection groupPath="Java" language="JAVA" shortName="RedundantExplicitClose"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
@@ -738,6 +748,10 @@
                      key="inspection.redundant.array.creation.display.name" groupKey="group.names.verbose.or.redundant.code.constructs"
                      enabledByDefault="true" level="WARNING" cleanupTool="true"
                      implementationClass="com.intellij.codeInspection.miscGenerics.RedundantArrayForVarargsCallInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="CharsetObjectCanBeUsed" bundle="messages.InspectionsBundle"
+                     key="inspection.charset.object.can.be.used.display.name" groupKey="group.names.code.style.issues"
+                     enabledByDefault="true" level="WARNING" cleanupTool="true"
+                     implementationClass="com.intellij.codeInspection.CharsetObjectCanBeUsedInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="UnusedAssignment" displayName="Unused assignment" groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle" enabledByDefault="true"
                      level="WARNING" implementationClass="com.intellij.codeInspection.defUse.DefUseInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ConstantConditions" bundle="messages.InspectionsBundle" key="inspection.data.flow.display.name"
@@ -753,6 +767,11 @@
                      enabledByDefault="true" level="WARNING"
                      key="inspection.redundant.comparator.comparing.display.name" bundle="messages.InspectionsBundle"
                      implementationClass="com.intellij.codeInspection.RedundantComparatorComparingInspection"/>
+    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="FoldExpressionIntoStream"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.language.level.specific.issues.and.migration.aids8"
+                     enabledByDefault="true" level="INFORMATION"
+                     key="inspection.fold.expression.into.stream.display.name" bundle="messages.InspectionsBundle"
+                     implementationClass="com.intellij.codeInspection.streamMigration.FoldExpressionIntoStreamInspection"/>
     <globalInspection groupPath="Java" language="JAVA" shortName="EmptyMethod" displayName="Empty method" groupKey="group.names.declaration.redundancy" enabledByDefault="true" groupBundle="messages.InspectionsBundle"
                       level="WARNING" implementationClass="com.intellij.codeInspection.emptyMethod.EmptyMethodInspection"/>
     <globalInspection groupPath="Java" language="JAVA" shortName="UnusedReturnValue" bundle="messages.InspectionsBundle" key="inspection.unused.return.value.display.name"

@@ -7,13 +7,13 @@ package com.intellij.debugger.streams.exec.streamex
 class ConcatenateOperationsTest : StreamExTestCase() {
   override val packageName: String = "concatenate"
 
-  fun testAppendToEmpty() = doStreamExWithResultTest()
-  fun testAppendNone() = doStreamExWithResultTest()
-  fun testAppendOne() = doStreamExWithResultTest()
-  fun testAppendMany() = doStreamExWithResultTest()
+  fun testAppendToEmpty() = doStreamExVoidTest()
+  fun testAppendNone() = doStreamExVoidTest()
+  fun testAppendOne() = doStreamExVoidTest()
+  fun testAppendMany() = doStreamExVoidTest()
 
-  fun testPrependToEmpty() = doStreamExWithResultTest()
-  fun testPrependNone() = doStreamExWithResultTest()
-  fun testPrependOne() = doStreamExWithResultTest()
-  fun testPrependMany() = doStreamExWithResultTest()
+  fun testPrependToEmpty() = doStreamExVoidTest()
+  fun testPrependNone() = doStreamExVoidTest()
+  fun testPrependOne() = doStreamExVoidTest()
+  fun testPrependMany() = doStreamExVoidTest()
 }

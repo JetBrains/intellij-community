@@ -204,7 +204,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     int i;
     for (i = 0; signature.charAt(i) == '['; i++) ;
     if (i == 0) return false;
-    signature = signature.substring(i, signature.length());
+    signature = signature.substring(i);
     return myCharOrIntegers.contains(signature);
   }
 
@@ -544,11 +544,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   public static String methodNameWithArguments(Method m) {
-    return m.name() + "(" + StringUtil.join(m.argumentTypeNames(), DebuggerUtilsEx::getSimpleName, ", ") + ")";
-  }
-
-  public static String getSimpleName(String fqn) {
-    return fqn.substring(fqn.lastIndexOf('.') + 1);
+    return m.name() + "(" + StringUtil.join(m.argumentTypeNames(), StringUtil::getShortName, ", ") + ")";
   }
 
   public static String methodName(final Method m) {

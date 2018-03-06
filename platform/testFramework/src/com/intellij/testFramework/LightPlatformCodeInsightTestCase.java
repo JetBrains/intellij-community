@@ -25,7 +25,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
@@ -86,12 +85,16 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
       });
     }
     else {
-      new WriteCommandAction.Simple(getProject()){
-        @Override
-        protected void run() throws Throwable {
+      Ref<Throwable> e = new Ref<>();
+      CommandProcessor.getInstance().executeCommand(getProject(), () -> {
+        try {
           doRunTest();
         }
-      }.performCommand();
+        catch (Throwable throwable) {
+          e.set(throwable);
+        }
+      }, null, null);
+      if (e.get() != null) throw e.get();
     }
   }
 
@@ -167,48 +170,42 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   protected static Document configureFromFileText(@NonNls @NotNull final String fileName,
                                                   @NonNls @NotNull final String fileText,
                                                   boolean checkCaret) {
-    return new WriteCommandAction<Document>(null) {
-      @Override
-      protected void run(@NotNull Result<Document> result) {
-        final Document fakeDocument = new DocumentImpl(fileText);
+    return WriteCommandAction.writeCommandAction(null).compute(() -> {
+      final Document fakeDocument = new DocumentImpl(fileText);
 
-        EditorTestUtil.CaretAndSelectionState caretsState = EditorTestUtil.extractCaretAndSelectionMarkers(fakeDocument);
-        if(checkCaret) {
-          assertTrue("No caret specified in " + fileName, caretsState.hasExplicitCaret());
-        }
-
-        String newFileText = fakeDocument.getText();
-        Document document;
-        try {
-          document = setupFileEditorAndDocument(fileName, newFileText);
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-        EditorTestUtil.setCaretsAndSelection(myEditor, caretsState);
-        setupEditorForInjectedLanguage();
-        result.setResult(document);
+      EditorTestUtil.CaretAndSelectionState caretsState = EditorTestUtil.extractCaretAndSelectionMarkers(fakeDocument);
+      if (checkCaret) {
+        assertTrue("No caret specified in " + fileName, caretsState.hasExplicitCaret());
       }
-    }.execute().getResultObject();
+
+      String newFileText = fakeDocument.getText();
+      Document document;
+      try {
+        document = setupFileEditorAndDocument(fileName, newFileText);
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+      EditorTestUtil.setCaretsAndSelection(myEditor, caretsState);
+      setupEditorForInjectedLanguage();
+      return document;
+    });
   }
 
   @NotNull
   protected static Editor configureFromFileTextWithoutPSI(@NonNls @NotNull final String fileText) {
-    return new WriteCommandAction<Editor>(getProject()) {
-      @Override
-      protected void run(@NotNull Result<Editor> result) {
-        final Document fakeDocument = EditorFactory.getInstance().createDocument(fileText);
-        EditorTestUtil.CaretAndSelectionState caretsState = EditorTestUtil.extractCaretAndSelectionMarkers(fakeDocument);
+    return WriteCommandAction.writeCommandAction(getProject()).compute(() -> {
+      final Document fakeDocument = EditorFactory.getInstance().createDocument(fileText);
+      EditorTestUtil.CaretAndSelectionState caretsState = EditorTestUtil.extractCaretAndSelectionMarkers(fakeDocument);
 
-        String newFileText = fakeDocument.getText();
-        Document document = EditorFactory.getInstance().createDocument(newFileText);
-        final Editor editor = EditorFactory.getInstance().createEditor(document, getProject());
-        ((EditorImpl)editor).setCaretActive();
+      String newFileText = fakeDocument.getText();
+      Document document = EditorFactory.getInstance().createDocument(newFileText);
+      final Editor editor = EditorFactory.getInstance().createEditor(document, getProject());
+      ((EditorImpl)editor).setCaretActive();
 
-        EditorTestUtil.setCaretsAndSelection(editor, caretsState);
-        result.setResult(editor);
-      }
-    }.execute().getResultObject();
+      EditorTestUtil.setCaretsAndSelection(editor, caretsState);
+      return editor;
+    });
   }
 
   @NotNull

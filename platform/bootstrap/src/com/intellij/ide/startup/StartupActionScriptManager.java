@@ -142,7 +142,7 @@ public class StartupActionScriptManager {
         return newTarget;
       }
       if (path.charAt(oldTargetPath.length()) == File.separatorChar) {
-        return new File(newTarget, path.substring(oldTargetPath.length() + 1, path.length()));
+        return new File(newTarget, path.substring(oldTargetPath.length() + 1));
       }
     }
     return null;

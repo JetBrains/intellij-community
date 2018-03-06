@@ -21,6 +21,7 @@
   <xi:include href="/idea/RichPlatformPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <module value="com.intellij.modules.java"/>
   <module value="com.intellij.modules.all"/>
+  <module value="com.intellij.modules.kotlin.platform.deps"/>
   <xi:include href="/idea/JavaActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/JavaAnalysisPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/JavaIndexingPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
@@ -128,8 +129,6 @@
                     interface="com.intellij.openapi.compiler.util.InspectionValidator"
                     area="IDEA_PROJECT"/>
 
-    <extensionPoint name="projectTaskRunner" interface="com.intellij.task.ProjectTaskRunner"/>
-
     <extensionPoint name="debuggerEditorTextProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" >
       <with attribute="implementationClass" implements="com.intellij.debugger.impl.EditorTextProvider"/>
     </extensionPoint>
@@ -145,6 +144,9 @@
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.openapi.application.IdeUrlTrackingParametersProvider"
                         serviceImplementation="com.intellij.ide.customization.UtmIdeUrlTrackingParametersProvider"
+                        overrides="true"/>
+    <applicationService serviceInterface="com.intellij.lang.IdeLanguageCustomization"
+                        serviceImplementation="com.intellij.ide.java.IntelliJIdeaLanguageCustomization"
                         overrides="true"/>
 
     <!--<expectedTypesProvider implementation="com.intellij.codeInsight.JavaExpectedTypesProvider"/>-->
@@ -396,10 +398,10 @@
       <keyboard-shortcut first-keystroke="control shift SEMICOLON" keymap="$default"/>
     </action>
 
-    <action class="com.intellij.execution.testDiscovery.ShowDiscoveredTestsAction" internal="true" id="ShowDiscoveredTests" text="Show Discovered Tests">
+    <action class="com.intellij.execution.testDiscovery.actions.ShowDiscoveredTestsAction" id="ShowDiscoveredTests" text="Show Discovered Tests">
       <add-to-group group-id="Internal" anchor="last"/>
     </action>
-    <action class="com.intellij.execution.testDiscovery.ShowDiscoveredTestsAction$FromChangeList" internal="true" id="ShowDiscoveredTestsFromChangeList" text="Show Discovered Tests">
+    <action class="com.intellij.execution.testDiscovery.actions.ShowDiscoveredTestsFromChangesAction" id="ShowDiscoveredTestsFromChangeList" text="Show Discovered Tests">
       <add-to-group group-id="ChangesViewPopupMenu" anchor="last"/>
     </action>
 

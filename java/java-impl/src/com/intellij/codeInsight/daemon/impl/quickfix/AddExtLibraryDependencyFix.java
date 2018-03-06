@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -74,17 +73,15 @@ class AddExtLibraryDependencyFix extends OrderEntryFix {
   @Override
   public void invoke(@NotNull Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
     JavaProjectModelModificationService.getInstance(project)
-      .addDependency(myCurrentModule, myLibraryDescriptor, myScope)
-      .done(aVoid -> new WriteAction() {
-        protected void run(@NotNull final Result result) {
-          try {
-            importClass(myCurrentModule, editor, restoreReference(), myQualifiedClassName);
-          }
-          catch (IndexNotReadyException e) {
-            Logger.getInstance(AddExtLibraryDependencyFix.class).info(e);
-          }
-        }
-      }.execute());
+                                       .addDependency(myCurrentModule, myLibraryDescriptor, myScope)
+                                       .done(aVoid -> WriteAction.runAndWait(() -> {
+                                         try {
+                                           importClass(myCurrentModule, editor, restoreReference(), myQualifiedClassName);
+                                         }
+                                         catch (IndexNotReadyException e) {
+                                           Logger.getInstance(AddExtLibraryDependencyFix.class).info(e);
+                                         }
+                                       }));
   }
 
 }

@@ -1084,12 +1084,14 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
   }
 
-  //@Override
-  //public AnAction replaceAction(String actionId, @NotNull AnAction newAction) {
-  //  synchronized (myLock) {
-  //    return replaceAction(actionId, newAction, null);
-  //  }
-  //}
+  public boolean isToolWindowContextMenuVisible() {
+    for (ActionPopupMenuImpl popup : myPopups) {
+      if (popup.isToolWindowContextMenu()) {
+        return true;
+      }
+    }
+    return false;
+  }
 
   @Override
   public boolean isActionPopupStackEmpty() {

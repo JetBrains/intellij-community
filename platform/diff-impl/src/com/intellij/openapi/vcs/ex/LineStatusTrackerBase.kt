@@ -51,7 +51,8 @@ abstract class LineStatusTrackerBase<R : Range> {
   var isReleased: Boolean = false
     private set
 
-  private var isInitialized: Boolean = false
+  protected var isInitialized: Boolean = false
+    private set
 
   protected val blocks: List<Block> get() = documentTracker.blocks
   internal val LOCK: DocumentTracker.Lock get() = documentTracker.LOCK
@@ -93,7 +94,7 @@ abstract class LineStatusTrackerBase<R : Range> {
   }
 
   @CalledInAwt
-  fun setBaseRevision(vcsContent: CharSequence) {
+  open fun setBaseRevision(vcsContent: CharSequence) {
     setBaseRevision(vcsContent, null)
   }
 

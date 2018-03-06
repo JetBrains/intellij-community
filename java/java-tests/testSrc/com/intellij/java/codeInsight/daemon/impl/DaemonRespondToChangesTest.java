@@ -47,7 +47,6 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -122,6 +121,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
@@ -1529,15 +1529,11 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     try {
       Module alienModule = doCreateRealModuleIn("x", alienProject, getModuleType());
       final VirtualFile alienRoot = PsiTestUtil.createTestProjectStructure(alienProject, alienModule, myFilesToDelete);
-      OpenFileDescriptor alienDescriptor = new WriteAction<OpenFileDescriptor>() {
-        @Override
-        protected void run(@NotNull Result<OpenFileDescriptor> result) throws Throwable {
-          VirtualFile alienFile = alienRoot.createChildData(this, "X.java");
-          setFileText(alienFile, "class Alien { }");
-          OpenFileDescriptor alienDescriptor = new OpenFileDescriptor(alienProject, alienFile);
-          result.setResult(alienDescriptor);
-        }
-      }.execute().throwException().getResultObject();
+      OpenFileDescriptor alienDescriptor = WriteAction.compute(() -> {
+        VirtualFile alienFile = alienRoot.createChildData(this, "X.java");
+        setFileText(alienFile, "class Alien { }");
+        return new OpenFileDescriptor(alienProject, alienFile);
+      });
 
       FileEditorManager fe = FileEditorManager.getInstance(alienProject);
       final Editor alienEditor = ObjectUtils.assertNotNull(fe.openTextEditor(alienDescriptor, false));
@@ -2267,6 +2263,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   public void testLightBulbIsHiddenWhenFixRangeIsCollapsed() {
+    //TODO: this test is will break once some intention become available for file after deletion.
     configureByText(StdFileTypes.JAVA, "class S { void foo() { boolean var; if (<selection>va<caret>r</selection>) {}} }");
     ((EditorImpl)myEditor).getScrollPane().getViewport().setSize(1000, 1000);
 
@@ -2292,8 +2289,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     delete(myEditor);
     highlightErrors();
     IntentionHintComponent lastHintAfterDeletion = myDaemonCodeAnalyzer.getLastIntentionHint();
-    assertSame(lastHintBeforeDeletion, lastHintAfterDeletion);
-
+    assertNull(lastHintAfterDeletion);
     assertEmpty(visibleHints);
   }
 
@@ -2310,12 +2306,9 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       waitForDaemon();
       checkFoldingState("[FoldRegion +(25:33), placeholder='{}']");
 
-      new WriteCommandAction<Void>(myProject) {
-        @Override
-        protected void run(@NotNull Result<Void> result) {
-          myEditor.getDocument().insertString(0, "/*");
-        }
-      }.execute();
+      WriteCommandAction.runWriteCommandAction(myProject, () -> {
+        myEditor.getDocument().insertString(0, "/*");
+      });
       waitForDaemon();
       checkFoldingState("[FoldRegion -(0:37), placeholder='/.../', FoldRegion +(27:35), placeholder='{}']");
 

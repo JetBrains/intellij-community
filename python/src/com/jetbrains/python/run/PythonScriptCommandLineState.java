@@ -230,7 +230,7 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
       ParamsGroup moduleParameters = parametersList.getParamsGroup(GROUP_MODULE);
       assert moduleParameters != null;
 
-      moduleParameters.addParameter("-m");
+      moduleParameters.addParameter(MODULE_PARAMETER);
       moduleParameters.addParameters(myConfig.getScriptName());
     }
     else {

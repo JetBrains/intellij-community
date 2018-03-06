@@ -3,9 +3,9 @@ import java.util.*;
 class Test {
   public void foo() {
       List trades = newMethod();
-    
 
-    //probably not assigned !!!
+
+      //probably not assigned !!!
     if (trades.isEmpty()) {
     }
   }

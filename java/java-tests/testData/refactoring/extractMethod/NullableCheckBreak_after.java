@@ -8,8 +8,8 @@ class Test {
   void foo() {
     while(true) {
         Pojo x = newMethod();
-        if (x == null) break; 
-      System.out.println(x.it);
+        if (x == null) break;
+        System.out.println(x.it);
     }
   }
 

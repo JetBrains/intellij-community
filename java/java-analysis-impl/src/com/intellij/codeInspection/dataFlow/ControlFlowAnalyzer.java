@@ -1883,6 +1883,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   static final CallInliner[] INLINERS = {new OptionalChainInliner(), new LambdaInliner(), new CollectionFactoryInliner(),
-    new StreamChainInliner(), new MapUpdateInliner()};
+    new StreamChainInliner(), new MapUpdateInliner(), new AssumeInliner()};
 }
 

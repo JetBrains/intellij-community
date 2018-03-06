@@ -109,16 +109,13 @@ public class JavaDocReferenceInspection extends JavaDocReferenceInspectionBase {
           if (!element.isValid()) return;
           final int index = list.getSelectedIndex();
           if (index < 0) return;
-          new WriteCommandAction(project, element.getContainingFile()) {
-            @Override
-            protected void run(@NotNull final Result result) {
-              final PsiClass psiClass = originalClasses.get(index);
-              if (psiClass.isValid()) {
-                PsiDocumentManager.getInstance(project).commitAllDocuments();
-                element.bindToElement(psiClass);
-              }
+          WriteCommandAction.writeCommandAction(project, element.getContainingFile()).run(() -> {
+            final PsiClass psiClass = originalClasses.get(index);
+            if (psiClass.isValid()) {
+              PsiDocumentManager.getInstance(project).commitAllDocuments();
+              element.bindToElement(psiClass);
             }
-          }.execute();
+          });
         };
         //noinspection CodeBlock2Expr
         DataManager.getInstance()

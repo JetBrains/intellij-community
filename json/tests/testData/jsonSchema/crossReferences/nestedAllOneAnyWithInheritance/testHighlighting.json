@@ -1,5 +1,5 @@
 {
   "definitions": {
-    "findMe": <warning descr="Type is not allowed">true</warning>
+    "findMe": <warning descr="Type is not allowed. Expected: integer.">true</warning>
   }
 }

@@ -388,10 +388,10 @@ public class NotificationsManagerImpl extends NotificationsManager {
 
     String fontStyle = NotificationsUtil.getFontStyle();
     int prefSize = new JLabel(NotificationsUtil.buildHtml(notification, null, true, null, fontStyle)).getPreferredSize().width;
-    String style = prefSize > BalloonLayoutConfiguration.MaxWidth ? BalloonLayoutConfiguration.MaxWidthStyle : null;
+    String style = prefSize > BalloonLayoutConfiguration.MaxWidth() ? BalloonLayoutConfiguration.MaxWidthStyle() : null;
 
     if (layoutData.showFullContent) {
-      style = prefSize > BalloonLayoutConfiguration.MaxFullContentWidth ? BalloonLayoutConfiguration.MaxFullContentWidthStyle : null;
+      style = prefSize > BalloonLayoutConfiguration.MaxFullContentWidth() ? BalloonLayoutConfiguration.MaxFullContentWidthStyle() : null;
     }
 
     String textR = NotificationsUtil.buildHtml(notification, style, true, foregroundR, fontStyle);
@@ -1203,9 +1203,9 @@ public class NotificationsManagerImpl extends NotificationsManager {
 
       int width = Math.max(centerWidth, Math.max(titleWidth, actionWidth));
       if (!myLayoutData.showFullContent) {
-        width = Math.min(width, BalloonLayoutConfiguration.MaxWidth);
+        width = Math.min(width, BalloonLayoutConfiguration.MaxWidth());
       }
-      width = Math.max(width, BalloonLayoutConfiguration.MinWidth);
+      width = Math.max(width, BalloonLayoutConfiguration.MinWidth());
 
       return new Dimension(width, height);
     }

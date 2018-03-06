@@ -105,17 +105,14 @@ public class PsiConcurrencyStressTest extends DaemonAnalyzerTestCase {
 
     for (int i = 0; i < iterations; i++) {
       Thread.sleep(100);
-      new WriteCommandAction(myProject, myFile) {
-        @Override
-        protected void run(@NotNull final Result result) {
-          writeActionInProgress = true;
-          documentManager.commitAllDocuments();
-          writeStep(random);
-          documentManager.commitAllDocuments();
-          assertEquals(document.getText(), myFile.getText());
-          writeActionInProgress = false;
-        }
-      }.execute();
+      WriteCommandAction.writeCommandAction(myProject, myFile).run(() -> {
+        writeActionInProgress = true;
+        documentManager.commitAllDocuments();
+        writeStep(random);
+        documentManager.commitAllDocuments();
+        assertEquals(document.getText(), myFile.getText());
+        writeActionInProgress = false;
+      });
     }
 
     assertTrue("Timed out", reads.await(5, TimeUnit.MINUTES));

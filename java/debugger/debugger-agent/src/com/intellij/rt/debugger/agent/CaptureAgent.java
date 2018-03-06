@@ -10,6 +10,8 @@ import java.io.IOException;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.lang.instrument.UnmodifiableClassException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.security.ProtectionDomain;
 import java.util.*;
 
@@ -70,7 +72,7 @@ public class CaptureAgent {
   private static void readSettings(String path) {
     FileReader reader = null;
     try {
-      reader = new FileReader(path);
+      reader = new FileReader(new URI(path).getPath());
       Properties properties = new Properties();
       properties.load(reader);
 
@@ -102,6 +104,10 @@ public class CaptureAgent {
       }
     }
     catch (IOException e) {
+      System.out.println("Capture agent: unable to read settings");
+      e.printStackTrace();
+    }
+    catch (URISyntaxException e) {
       System.out.println("Capture agent: unable to read settings");
       e.printStackTrace();
     }

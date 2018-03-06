@@ -187,7 +187,7 @@ public class GlobalCompilingVisitor {
       start = matcher.end();
     }
 
-    word = content.substring(start, content.length());
+    word = content.substring(start);
 
     if (!word.isEmpty()) {
       hasLiteralContent = true;

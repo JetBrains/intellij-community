@@ -16,7 +16,6 @@
 package com.intellij.roots.libraries;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.ModuleRootManagerComponent;
@@ -182,23 +181,12 @@ public class LibraryTest extends ModuleRootManagerTestCase {
   }
 
   private static void commit(final ModifiableRootModel model) {
-    new WriteAction() {
-      @Override
-      protected void run(@NotNull final Result result) {
-        model.commit();
-      }
-    }.execute();
+    WriteAction.runAndWait(() -> model.commit());
   }
 
   public void testNativePathSerialization() {
     LibraryTable table = getLibraryTable();
-    Library library = new WriteAction<Library>() {
-      @Override
-      protected void run(@NotNull Result<Library> result) {
-        Library res = table.createLibrary("native");
-        result.setResult(res);
-      }
-    }.execute().throwException().getResultObject();
+    Library library = WriteAction.compute(()-> table.createLibrary("native"));
     Library.ModifiableModel model = library.getModifiableModel();
     model.addRoot("file://native-lib-root", NativeLibraryOrderRootType.getInstance());
     commit(model);

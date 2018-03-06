@@ -5,33 +5,60 @@ import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.PushInstruction;
 import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.ide.PowerSaveMode;
 import com.intellij.psi.*;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class CommonDataflow {
-  static class DataflowResult {
+  /**
+   * Represents the result of dataflow applied to some code fragment (usually a method)
+   */
+  public static class DataflowResult {
     private final Map<PsiExpression, DfaFactMap> myFacts = new HashMap<>();
 
-    void add(PsiExpression expression, DfaMemoryStateImpl memState) {
+    void add(PsiExpression expression, DfaMemoryStateImpl memState, DfaValue value) {
       DfaFactMap existing = myFacts.get(expression);
       if(existing != DfaFactMap.EMPTY) {
-        DfaValue value = memState.peek();
         DfaFactMap newMap = memState.getFactMap(value);
         if (!Boolean.FALSE.equals(newMap.get(DfaFactType.CAN_BE_NULL)) && memState.isNotNull(value)) {
           newMap = newMap.with(DfaFactType.CAN_BE_NULL, false);
         }
         myFacts.put(expression, existing == null ? newMap : existing.union(newMap));
       }
+    }
+
+    /**
+     * Returns true if given expression was visited by dataflow. Note that dataflow usually tracks deparenthesized expressions only,
+     * so you should deparenthesize it in advance if necessary.
+     *
+     * @param expression expression to check
+     * @return true if given expression was visited by dataflow.
+     * If false is returned, it's possible that the expression exists in unreachable branch or this expression is not tracked due to
+     * the dataflow implementation details.
+     */
+    public boolean expressionWasAnalyzed(PsiExpression expression) {
+      return myFacts.containsKey(expression);
+    }
+
+    /**
+     * Returns a fact of specific type which is known for given expression or null if fact is not known
+     *
+     * @param expression expression to get the fact
+     * @param type a fact type
+     * @param <T> resulting type
+     * @return a fact value or null if fact of given type is not known for given expression
+     */
+    @Nullable
+    public <T> T getExpressionFact(PsiExpression expression, DfaFactType<T> type) {
+      DfaFactMap map = this.myFacts.get(expression);
+      return map == null ? null : map.get(type);
     }
   }
 
@@ -49,10 +76,30 @@ public class CommonDataflow {
         PsiExpression place = instruction.getPlace();
         if (place != null && !instruction.isReferenceWrite()) {
           for (DfaInstructionState state : states) {
-            dfr.add(place, (DfaMemoryStateImpl)state.getMemoryState());
+            DfaMemoryState afterState = state.getMemoryState();
+            dfr.add(place, (DfaMemoryStateImpl)afterState, instruction.getValue());
           }
         }
         return states;
+      }
+
+      @NotNull
+      @Override
+      protected DfaCallArguments popCall(MethodCallInstruction instruction,
+                                         DataFlowRunner runner,
+                                         DfaMemoryState memState,
+                                         boolean contractOnly) {
+        DfaCallArguments arguments = super.popCall(instruction, runner, memState, contractOnly);
+        PsiElement context = instruction.getContext();
+        if (instruction.getMethodType() == MethodCallInstruction.MethodType.REGULAR_METHOD_CALL &&
+            context instanceof PsiMethodCallExpression) {
+          PsiExpression qualifier =
+            PsiUtil.skipParenthesizedExprDown(((PsiMethodCallExpression)context).getMethodExpression().getQualifierExpression());
+          if (qualifier != null) {
+            dfr.add(qualifier, (DfaMemoryStateImpl)memState, arguments.myQualifier);
+          }
+        }
+        return arguments;
       }
 
       @Override
@@ -61,11 +108,11 @@ public class CommonDataflow {
                                                    DfaMemoryState memState) {
         DfaInstructionState[] states = super.visitMethodCall(instruction, runner, memState);
         PsiExpression context = ObjectUtils.tryCast(instruction.getContext(), PsiExpression.class);
-        if (context != null) {
+        if (context != null && ExpressionUtils.getCallForQualifier(context) == null) {
           for (DfaInstructionState state : states) {
             DfaValue value = state.getMemoryState().peek();
             if(value != fail) {
-              dfr.add(context, (DfaMemoryStateImpl)state.getMemoryState());
+              dfr.add(context, (DfaMemoryStateImpl)state.getMemoryState(), state.getMemoryState().peek());
             }
           }
         }
@@ -76,9 +123,13 @@ public class CommonDataflow {
     return result == RunnerResult.OK ? dfr : null;
   }
 
-  private static DataflowResult getDataflowResult(PsiElement context) {
-    // Disable common dataflow in powersave mode
-    if(PowerSaveMode.isEnabled()) return null;
+  /**
+   * Returns the dataflow result for code fragment which contains given context
+   * @param context a context to get the dataflow result
+   * @return the dataflow result or null if dataflow cannot be launched for this context (e.g. we are inside too complex method)
+   */
+  @Nullable
+  public static DataflowResult getDataflowResult(PsiExpression context) {
     PsiMember member = PsiTreeUtil.getParentOfType(context, PsiMember.class);
     if(!(member instanceof PsiMethod) && !(member instanceof PsiField) && !(member instanceof PsiClassInitializer)) return null;
     PsiElement body = member instanceof PsiMethod ? ((PsiMethod)member).getBody() : member.getContainingClass();
@@ -100,7 +151,6 @@ public class CommonDataflow {
   public static <T> T getExpressionFact(PsiExpression expression, DfaFactType<T> type) {
     DataflowResult result = getDataflowResult(expression);
     if (result == null) return null;
-    DfaFactMap map = result.myFacts.get(expression);
-    return map == null ? null : map.get(type);
+    return result.getExpressionFact(expression, type);
   }
 }

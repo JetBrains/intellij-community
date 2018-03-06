@@ -20,8 +20,6 @@ import com.intellij.ide.DeleteProvider;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.RunResult;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -35,6 +33,7 @@ import com.intellij.ui.UIBundle;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
@@ -72,15 +71,11 @@ public final class VirtualFileDeleteProvider implements DeleteProvider {
             indicator.setFraction((double)i / files.length);
             i++;
 
-            RunResult result = new WriteAction() {
-              @Override
-              protected void run(@NotNull Result result) throws Throwable {
-                file.delete(this);
-              }
-            }.executeSilently();
-
-            if (result.hasException()) {
-              LOG.info("Error when deleting " + file, result.getThrowable());
+            try {
+              WriteAction.runAndWait(()-> file.delete(this));
+            }
+            catch (IOException e) {
+              LOG.info("Error when deleting " + file, e);
               problems.add(file.getName());
             }
           }

@@ -47,7 +47,7 @@ public class JUnitTestDiscoveryConfigurationProducer extends TestDiscoveryConfig
   }
 
   @Override
-  protected TestDiscoveryConfigurationProducer createDelegate(PsiMethod sourceMethod, Module module) {
+  public TestDiscoveryConfigurationProducer createDelegate(PsiMethod sourceMethod, Module module) {
     return new JUnitTestDiscoveryConfigurationProducer() {
       @Override
       protected boolean setupConfigurationFromContext(JavaTestConfigurationBase configuration,

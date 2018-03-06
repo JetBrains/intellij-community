@@ -122,11 +122,19 @@ public class MavenAnnotationProcessorConfigurer extends MavenModuleConfigurer {
       }
 
       moduleProfile.addModuleName(module.getName());
+      configureAnnotationProcessorPath(moduleProfile, mavenProject);
       cleanAndMergeModuleProfiles(rootProject, compilerConfiguration, moduleProfile, isDefault, module);
     }
     else {
       cleanAndMergeModuleProfiles(rootProject, compilerConfiguration, null, false, module);
     }
+  }
+
+  private static void configureAnnotationProcessorPath(ProcessorConfigProfile profile, MavenProject mavenProject) {
+    if (mavenProject.getAnnotationProcessors().isEmpty()) return;
+
+    profile.setObtainProcessorsFromClasspath(false);
+    profile.setProcessorPath(mavenProject.getAnnotationProcessorPath());
   }
 
   private static void cleanAndMergeModuleProfiles(@NotNull MavenProject rootProject,

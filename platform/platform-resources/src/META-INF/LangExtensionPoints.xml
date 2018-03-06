@@ -434,6 +434,8 @@
     <extensionPoint name="programRunner"
                     interface="com.intellij.execution.runners.ProgramRunner"/>
 
+    <extensionPoint name="projectTaskRunner" interface="com.intellij.task.ProjectTaskRunner"/>
+
     <extensionPoint name="executor"
                     interface="com.intellij.execution.Executor"/>
 

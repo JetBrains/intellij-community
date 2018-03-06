@@ -3,6 +3,7 @@
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.dnd.aware.DnDAwareTree;
+import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeRenderer;
@@ -21,16 +22,17 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Graphics2D;
 
 /**
  * @author Konstantin Bulenkov
  */
-public abstract class ProjectViewTree extends DnDAwareTree {
+public class ProjectViewTree extends DnDAwareTree {
   private static final Logger LOG = Logger.getInstance(ProjectViewTree.class);
 
   protected ProjectViewTree(Project project, TreeModel model) {
@@ -108,11 +110,29 @@ public abstract class ProjectViewTree extends DnDAwareTree {
   @Nullable
   @Override
   public Color getFileColorFor(Object object) {
+    if (object instanceof DefaultMutableTreeNode) {
+      DefaultMutableTreeNode node = (DefaultMutableTreeNode)object;
+      object = node.getUserObject();
+    }
     if (object instanceof AbstractTreeNode) {
       AbstractTreeNode node = (AbstractTreeNode)object;
       Object value = node.getValue();
       if (value instanceof PsiElement) {
         return getColorForElement((PsiElement)value);
+      }
+    }
+    if (object instanceof ProjectViewNode) {
+      ProjectViewNode node = (ProjectViewNode)object;
+      VirtualFile file = node.getVirtualFile();
+      if (file != null) {
+        Project project = node.getProject();
+        if (project != null && !project.isDisposed()) {
+          FileColorManager manager = FileColorManager.getInstance(project);
+          if (manager != null) {
+            Color color = manager.getFileColor(file);
+            if (color != null) return ColorUtil.softer(color);
+          }
+        }
       }
     }
     return null;

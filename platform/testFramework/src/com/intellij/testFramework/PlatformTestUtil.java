@@ -82,6 +82,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.jar.JarFile;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
@@ -164,24 +165,22 @@ public class PlatformTestUtil {
     return print(tree, path,  withSelection, printInfo, null);
   }
 
-  public static String print(JTree tree, boolean withSelection, @Nullable Condition<String> nodePrintCondition) {
+  public static String print(JTree tree, boolean withSelection, @Nullable Predicate<String> nodePrintCondition) {
     return print(tree, new TreePath(tree.getModel().getRoot()), withSelection, null, nodePrintCondition);
   }
 
   private static String print(JTree tree, TreePath path,
                              boolean withSelection,
                              @Nullable Queryable.PrintInfo printInfo,
-                             @Nullable Condition<String> nodePrintCondition) {
-    StringBuilder buffer = new StringBuilder();
-    final Collection<String> strings = printAsList(tree, path, withSelection, printInfo, nodePrintCondition);
-    for (String string : strings) {
-      buffer.append(string).append("\n");
-    }
-    return buffer.toString();
+                             @Nullable Predicate<String> nodePrintCondition) {
+    return StringUtil.join(printAsList(tree, path, withSelection, printInfo, nodePrintCondition), "\n");
   }
 
-  private static Collection<String> printAsList(JTree tree, TreePath path, boolean withSelection, @Nullable Queryable.PrintInfo printInfo,
-                                                Condition<String> nodePrintCondition) {
+  private static Collection<String> printAsList(JTree tree,
+                                                TreePath path,
+                                                boolean withSelection,
+                                                @Nullable Queryable.PrintInfo printInfo,
+                                                @Nullable Predicate<String> nodePrintCondition) {
     Collection<String> strings = new ArrayList<>();
     printImpl(tree, path, strings, 0, withSelection, printInfo, nodePrintCondition);
     return strings;
@@ -193,13 +192,14 @@ public class PlatformTestUtil {
                                 int level,
                                 boolean withSelection,
                                 @Nullable Queryable.PrintInfo printInfo,
-                                @Nullable Condition<String> nodePrintCondition) {
-
+                                @Nullable Predicate<String> nodePrintCondition) {
     Object pathComponent = path.getLastPathComponent();
     Object userObject = TreeUtil.getUserObject(pathComponent);
     String nodeText = toString(userObject, printInfo);
 
-    if (nodePrintCondition != null && !nodePrintCondition.value(nodeText)) return;
+    if (nodePrintCondition != null && !nodePrintCondition.test(nodeText)) {
+      return;
+    }
 
     StringBuilder buff = new StringBuilder();
     StringUtil.repeatSymbol(buff, ' ', level);
@@ -243,7 +243,7 @@ public class PlatformTestUtil {
 
   public static void assertTreeEqual(JTree tree, String expected, boolean checkSelected) {
     String treeStringPresentation = print(tree, checkSelected);
-    assertEquals(expected, treeStringPresentation);
+    assertEquals(expected.trim(), treeStringPresentation.trim());
   }
 
   public static void expand(JTree tree, int... rows) {
@@ -961,7 +961,7 @@ public class PlatformTestUtil {
       }
       catch (AssertionError | Exception e) {
         captureMemorySnapshot();
-        ExceptionUtil.rethrowAllAsUnchecked(e);
+        ExceptionUtil.rethrow(e);
       }
       finally {
         application.setDisposeInProgress(true);
@@ -969,7 +969,6 @@ public class PlatformTestUtil {
         UIUtil.dispatchAllInvocationEvents();
       }
     });
-
   }
 
   public static void captureMemorySnapshot() {

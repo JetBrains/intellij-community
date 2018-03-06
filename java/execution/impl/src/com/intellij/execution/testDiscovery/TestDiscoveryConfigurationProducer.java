@@ -34,7 +34,7 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
 
   protected abstract void setPosition(JavaTestConfigurationBase configuration, PsiLocation<PsiMethod> position);
   protected abstract Pair<String, String> getPosition(JavaTestConfigurationBase configuration);
-  protected abstract TestDiscoveryConfigurationProducer createDelegate(PsiMethod position, Module module);
+  public abstract TestDiscoveryConfigurationProducer createDelegate(PsiMethod position, Module module);
   
   protected void setupDiscoveryConfiguration(JavaTestConfigurationBase configuration, PsiMethod sourceMethod, Module targetModule) {
     setPosition(configuration, new PsiLocation<>(sourceMethod));

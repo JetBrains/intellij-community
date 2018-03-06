@@ -376,7 +376,6 @@
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/instant-run/instant-run-common/android.sdktools.instant-run-common.iml" filepath="$PROJECT_DIR$/android/tools-base/instant-run/instant-run-common/android.sdktools.instant-run-common.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/layoutlib-api/android.sdktools.layoutlib-api.iml" filepath="$PROJECT_DIR$/android/tools-base/layoutlib-api/android.sdktools.layoutlib-api.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/android.sdktools.layoutlib-resources.iml" filepath="$PROJECT_DIR$/android/tools-base/android.sdktools.layoutlib-resources.iml" />
-      <module fileurl="file://$PROJECT_DIR$/android/tools-base/build-system/manifest-merger/android.sdktools.manifest-merger.iml" filepath="$PROJECT_DIR$/android/tools-base/build-system/manifest-merger/android.sdktools.manifest-merger.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/ninepatch/android.sdktools.ninepatch.iml" filepath="$PROJECT_DIR$/android/tools-base/ninepatch/android.sdktools.ninepatch.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/perflib/android.sdktools.perflib.iml" filepath="$PROJECT_DIR$/android/tools-base/perflib/android.sdktools.perflib.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/pixelprobe/android.sdktools.pixelprobe.iml" filepath="$PROJECT_DIR$/android/tools-base/pixelprobe/android.sdktools.pixelprobe.iml" />
@@ -432,6 +431,9 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/eclipse/jps-plugin/intellij.eclipse.jps.iml" filepath="$PROJECT_DIR$/plugins/eclipse/jps-plugin/intellij.eclipse.jps.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/editorconfig/intellij.editorconfig.iml" filepath="$PROJECT_DIR$/plugins/editorconfig/intellij.editorconfig.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/intellij.gradle.iml" filepath="$PROJECT_DIR$/plugins/gradle/intellij.gradle.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/gradle/intellij.gradle.common.iml" filepath="$PROJECT_DIR$/plugins/gradle/intellij.gradle.common.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/gradle/java/intellij.gradle.java.iml" filepath="$PROJECT_DIR$/plugins/gradle/java/intellij.gradle.java.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/gradle/java/intellij.gradle.java.tests.iml" filepath="$PROJECT_DIR$/plugins/gradle/java/intellij.gradle.java.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/jps-plugin/intellij.gradle.jps.iml" filepath="$PROJECT_DIR$/plugins/gradle/jps-plugin/intellij.gradle.jps.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/intellij.gradle.tests.iml" filepath="$PROJECT_DIR$/plugins/gradle/intellij.gradle.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/tooling-extension-api/intellij.gradle.toolingExtension.iml" filepath="$PROJECT_DIR$/plugins/gradle/tooling-extension-api/intellij.gradle.toolingExtension.iml" />

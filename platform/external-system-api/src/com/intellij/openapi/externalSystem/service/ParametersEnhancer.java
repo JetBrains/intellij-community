@@ -58,8 +58,10 @@ public interface ParametersEnhancer {
    *   </li>
    * </ul>
    * </pre>
-   * 
+   *
+   * @deprecated to be removed in 2018.2
+   *
    * @param urls
    */
-  void enhanceLocalProcessing(@NotNull List<URL> urls);
+  default void enhanceLocalProcessing(@NotNull List<URL> urls) {}
 }

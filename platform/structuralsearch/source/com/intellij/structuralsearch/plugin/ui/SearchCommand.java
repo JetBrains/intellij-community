@@ -5,15 +5,12 @@ import com.intellij.find.FindManager;
 import com.intellij.find.FindProgressIndicator;
 import com.intellij.find.FindSettings;
 import com.intellij.find.impl.FindManagerImpl;
-import com.intellij.notification.NotificationGroup;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -21,7 +18,6 @@ import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.plugin.StructuralSearchPlugin;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
-import com.intellij.util.Alarm;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,6 +25,7 @@ public class SearchCommand {
   protected final SearchContext mySearchContext;
   protected final Configuration myConfiguration;
   private MatchingProcess process;
+  private FindUsagesProcessPresentation myProcessPresentation;
 
   public SearchCommand(Configuration configuration, SearchContext searchContext) {
     myConfiguration = configuration;
@@ -46,11 +43,11 @@ public class SearchCommand {
     presentation.setOpenInNewTab(FindSettings.getInstance().isShowResultsInSeparateView());
     context.configure(presentation);
 
-    final FindUsagesProcessPresentation processPresentation = new FindUsagesProcessPresentation(presentation);
-    processPresentation.setShowNotFoundMessage(true);
-    processPresentation.setShowPanelIfOnlyOneUsage(true);
+    myProcessPresentation = new FindUsagesProcessPresentation(presentation);
+    myProcessPresentation.setShowNotFoundMessage(true);
+    myProcessPresentation.setShowPanelIfOnlyOneUsage(true);
 
-    processPresentation.setProgressIndicatorFactory(
+    myProcessPresentation.setProgressIndicatorFactory(
       new Factory<ProgressIndicator>() {
         @Override
         public ProgressIndicator create() {
@@ -78,7 +75,7 @@ public class SearchCommand {
           findUsages(processor);
         }
       },
-      processPresentation,
+      myProcessPresentation,
       presentation,
       new UsageViewManager.UsageViewStateListener() {
         @Override
@@ -88,8 +85,7 @@ public class SearchCommand {
         }
 
         @Override
-        public void findingUsagesFinished(final UsageView usageView) {
-        }
+        public void findingUsagesFinished(final UsageView usageView) {}
       }
     );
   }
@@ -157,9 +153,9 @@ public class SearchCommand {
           info = new UsageInfo(match);
         }
 
-        Usage usage = new UsageInfo2UsageAdapter(info);
-        processor.process(usage);
+        final Usage usage = new UsageInfo2UsageAdapter(info);
         foundUsage(result, usage);
+        processor.process(usage);
         ++count;
       }
     };
@@ -168,12 +164,10 @@ public class SearchCommand {
       new Matcher(mySearchContext.getProject()).findMatches(sink, myConfiguration.getMatchOptions());
     }
     catch (final StructuralSearchException e) {
-      final Alarm alarm = new Alarm();
-      alarm.addRequest(
-        () -> NotificationGroup.toolWindowGroup("Structural Search", ToolWindowId.FIND)
-          .createNotification(SSRBundle.message("problem", e.getMessage()), MessageType.ERROR).notify(mySearchContext.getProject()),
-        100, ModalityState.NON_MODAL
-      );
+      myProcessPresentation.setShowNotFoundMessage(false);
+      UIUtil.SSR_NOTIFICATION_GROUP.createNotification(SSRBundle.message("problem", e.getMessage()), MessageType.ERROR)
+                                   .setImportant(true)
+                                   .notify(mySearchContext.getProject());
     }
   }
 

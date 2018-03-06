@@ -191,7 +191,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
       if (myDisposed.get()) return;
       Document document = ref.get();
       if (document == null) return; // document gced, don't bother
-      ReadAction.run(() -> ((EncodingManagerImpl)getInstance()).handleDocument(document));
+      ((EncodingManagerImpl)getInstance()).handleDocument(document);
     }
   }
 

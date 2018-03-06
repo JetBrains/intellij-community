@@ -7,7 +7,6 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -224,13 +223,10 @@ public final class EditorUtil {
     final int offset = editor.logicalPositionToOffset(new LogicalPosition(lineNumber, columnNumber));
     final String filler = EditorModificationUtil.calcStringToFillVirtualSpace(editor);
     if (!filler.isEmpty()) {
-      new WriteAction(){
-        @Override
-        protected void run(@NotNull Result result) throws Throwable {
-          editor.getDocument().insertString(offset, filler);
-          editor.getCaretModel().moveToOffset(offset + filler.length());
-        }
-      }.execute();
+      WriteAction.run(() -> {
+        editor.getDocument().insertString(offset, filler);
+        editor.getCaretModel().moveToOffset(offset + filler.length());
+      });
     }
   }
 

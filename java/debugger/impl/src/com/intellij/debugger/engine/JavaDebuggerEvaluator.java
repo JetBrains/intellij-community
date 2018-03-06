@@ -4,10 +4,13 @@ package com.intellij.debugger.engine;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
+import com.intellij.debugger.engine.evaluation.expression.UnsupportedExpressionException;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.EditorTextProvider;
+import com.intellij.debugger.impl.PositionUtil;
+import com.intellij.debugger.ui.impl.watch.CompilingEvaluatorImpl;
 import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
 import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor;
 import com.intellij.openapi.application.ReadAction;
@@ -122,13 +125,25 @@ public class JavaDebuggerEvaluator extends XDebuggerEvaluator implements XDebugg
         }
 
         try {
+          Project project = myDebugProcess.getProject();
           ExpressionEvaluator evaluator = ReadAction.compute(() -> {
             CodeFragmentFactory factory = DebuggerUtilsEx.getCodeFragmentFactory(element, null);
-            return factory.getEvaluatorBuilder().build(element, debuggerContext.getSourcePosition());
+            try {
+              return factory.getEvaluatorBuilder().build(element, debuggerContext.getSourcePosition());
+            }
+            catch (UnsupportedExpressionException ex) {
+              PsiElement context = PositionUtil.getContextElement(debuggerContext);
+              ExpressionEvaluator eval = CompilingEvaluatorImpl.create(project, context, e ->
+                factory.createCodeFragment(new TextWithImportsImpl(element), context, project));
+              if (eval != null) {
+                return eval;
+              }
+              throw ex;
+            }
           });
           Value value = evaluator.evaluate(evalContext);
           TextWithImportsImpl text = new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, "");
-          WatchItemDescriptor descriptor = new WatchItemDescriptor(myDebugProcess.getProject(), text, value, evalContext);
+          WatchItemDescriptor descriptor = new WatchItemDescriptor(project, text, value, evalContext);
           callback.evaluated(JavaValue.create(null, descriptor, evalContext, process.getNodeManager(), true));
         }
         catch (EvaluateException e) {

@@ -961,9 +961,13 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
             Disposer.register(hintDisposable, () -> progress.cancel());
           }
           ProgressIndicatorUtils.scheduleWithWriteActionPriority(progress, new ReadTask() {
-            @NotNull
+            @Nullable
             @Override
             public Continuation performInReadAction(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
+              if (!info.myElementAtPointer.isValid() || !info.isValid(myEditor.getDocument())) {
+                updating.set(false);
+                return null;
+              }
               DocInfo newDocInfo = info.getInfo();
               return new Continuation(() -> {
                 updating.set(false);

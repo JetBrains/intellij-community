@@ -102,6 +102,6 @@ public class JsonSchemaPatternComparator {
     final int firstIdx = pattern.indexOf('*');
     final int lastIdx = pattern.lastIndexOf('*');
     if (firstIdx < 0 || lastIdx < 0) return null;
-    return new BeforeAfter<>(pattern.substring(0, firstIdx), pattern.substring(lastIdx + 1, pattern.length()));
+    return new BeforeAfter<>(pattern.substring(0, firstIdx), pattern.substring(lastIdx + 1));
   }
 }
