@@ -360,9 +360,9 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
       assertionEvaluator = new PyTypeAssertionEvaluator();
       if (condition != null) {
         lastCondition = condition;
-        lastBranchingPoints = getPrevInstructions(lastCondition);
         condition.accept(this);
         condition.accept(assertionEvaluator);
+        lastBranchingPoints = getPrevInstructions(lastCondition);
       }
       // Set the head as the last instruction of condition
       getPrevInstructions(lastCondition).forEach(pair -> myBuilder.addPendingEdge(pair.getFirst(), pair.getSecond()));
