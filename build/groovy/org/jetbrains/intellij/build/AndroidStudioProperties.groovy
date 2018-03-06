@@ -220,17 +220,8 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     }
 
     def root = "$buildContext.paths.communityHome/../.."
-    def gradleVersion = getGradleVersionToBundle(buildContext)
 
-    buildContext.messages.block("Bundle Gradle $gradleVersion and the offline Maven repo") {
-      buildContext.ant.unzip(src: "$root/tools/external/gradle/gradle-$gradleVersion-bin.zip", dest: "$targetDirectory/gradle")
-      buildContext.ant.copy(todir: "$targetDirectory/gradle/m2repository") {
-        fileset(dir: System.getenv().STUDIO_CUSTOM_REPO ?: "$root/prebuilts/tools/common/offline-m2") {
-          exclude(name: "BUILD")
-        }
-        fileset(dir: "$root/out/studio/repo")
-      }
-    }
+    bundleGradleAndOfflineRepo(buildContext, root, targetDirectory)
 
     buildContext.ant.touch(file: "$targetDirectory/license/dev01_license.txt", mkdirs: true)
 
@@ -284,6 +275,21 @@ class AndroidStudioProperties extends BaseIdeaProperties {
 
     buildContext.ant.copy(todir: "$targetDirectory/bin/lldb") {
       fileset(dir: "$root/prebuilts/tools/common/lldb")
+    }
+  }
+
+  @CompileDynamic
+  protected void bundleGradleAndOfflineRepo(BuildContext buildContext, String root, String targetDirectory) {
+    def gradleVersion = getGradleVersionToBundle(buildContext)
+
+    buildContext.messages.block("Bundle Gradle $gradleVersion and the offline Maven repo") {
+      buildContext.ant.unzip(src: "$root/tools/external/gradle/gradle-$gradleVersion-bin.zip", dest: "$targetDirectory/gradle")
+      buildContext.ant.copy(todir: "$targetDirectory/gradle/m2repository") {
+        fileset(dir: System.getenv().STUDIO_CUSTOM_REPO ?: "$root/prebuilts/tools/common/offline-m2") {
+          exclude(name: "BUILD")
+        }
+        fileset(dir: "$root/out/studio/repo")
+      }
     }
   }
 

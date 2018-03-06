@@ -57,4 +57,10 @@ class AswbProperties extends AndroidStudioProperties {
 
   @Override
   String getBaseArtifactName(ApplicationInfoProperties applicationInfo, String buildNumber) {"aswb-$buildNumber" }
+
+  @Override
+  @CompileDynamic
+  protected void bundleGradleAndOfflineRepo(BuildContext buildContext, String root, String targetDirectory) {
+    // skip bundling gradle/offline repo in ASWB distribution just to reduce the size of the installer we drop into google3
+  }
 }
