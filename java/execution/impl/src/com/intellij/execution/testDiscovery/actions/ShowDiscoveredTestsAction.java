@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testDiscovery.actions;
 
-import com.intellij.codeInsight.actions.FormatChangedTextUtil;
 import com.intellij.codeInsight.navigation.ListBackgroundUpdaterTask;
 import com.intellij.execution.Executor;
 import com.intellij.execution.JavaTestConfigurationBase;
@@ -47,7 +46,9 @@ import com.intellij.util.ui.JBDimension;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.uast.*;
+import org.jetbrains.uast.UMethod;
+import org.jetbrains.uast.UastContextKt;
+
 import javax.swing.*;
 import java.awt.event.ActionListener;
 import java.util.List;
@@ -167,7 +168,6 @@ public class ShowDiscoveredTestsAction extends AnAction {
 
     popup.showInBestPositionFor(dataContext);
 
-    JavaPsiFacade javaFacade = JavaPsiFacade.getInstance(project);
     GlobalSearchScope scope = GlobalSearchScope.projectScope(project);
     //noinspection unchecked
     list.setCellRenderer(renderer);
