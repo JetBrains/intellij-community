@@ -37,6 +37,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
@@ -59,22 +60,7 @@ public class ShowExpressionTypeHandler implements CodeInsightActionHandler {
     final Set<ExpressionTypeProvider> handlers = getHandlers(project, language, file.getViewProvider().getBaseLanguage());
     if (handlers.isEmpty()) return;
 
-    boolean exactRange = false;
-    TextRange range = EditorUtil.getSelectionInAnyMode(editor);
-    final Map<PsiElement, ExpressionTypeProvider> map = ContainerUtil.newLinkedHashMap();
-    int offset = TargetElementUtil.adjustOffset(file, editor.getDocument(), range.getStartOffset());
-    for (int i = 0; i < 3 && map.isEmpty() && offset > i; i++) {
-      PsiElement elementAt = file.findElementAt(offset - i);
-      if (elementAt == null) continue;
-      for (ExpressionTypeProvider handler : handlers) {
-        for (PsiElement element : ((ExpressionTypeProvider<? extends PsiElement>)handler).getExpressionsAt(elementAt)) {
-          TextRange r = element.getTextRange();
-          if (exactRange && !r.equals(range) || !r.contains(range)) continue;
-          if (!exactRange) exactRange = r.equals(range);
-          map.put(element, handler);
-        }
-      }
-    }
+    Map<PsiElement, ExpressionTypeProvider> map = getExpressions(file, editor, handlers);
     Pass<PsiElement> callback = new Pass<PsiElement>() {
       @Override
       public void pass(@NotNull PsiElement expression) {
@@ -104,6 +90,38 @@ public class ShowExpressionTypeHandler implements CodeInsightActionHandler {
         expression -> expression.getText()
       );
     }
+  }
+
+  @NotNull
+  public Map<PsiElement, ExpressionTypeProvider> getExpressions(@NotNull PsiFile file,
+                                                                @NotNull Editor editor) {
+    Language language = PsiUtilCore.getLanguageAtOffset(file, editor.getCaretModel().getOffset());
+    Set<ExpressionTypeProvider> handlers = getHandlers(file.getProject(), language, file.getViewProvider().getBaseLanguage());
+    return getExpressions(file, editor, handlers);
+  }
+
+  @NotNull
+  private static Map<PsiElement, ExpressionTypeProvider> getExpressions(@NotNull PsiFile file,
+                                                                        @NotNull Editor editor,
+                                                                        @NotNull Set<ExpressionTypeProvider> handlers) {
+    if (handlers.isEmpty()) return Collections.emptyMap();
+    boolean exactRange = false;
+    TextRange range = EditorUtil.getSelectionInAnyMode(editor);
+    final Map<PsiElement, ExpressionTypeProvider> map = ContainerUtil.newLinkedHashMap();
+    int offset = TargetElementUtil.adjustOffset(file, editor.getDocument(), range.getStartOffset());
+    for (int i = 0; i < 3 && map.isEmpty() && offset > i; i++) {
+      PsiElement elementAt = file.findElementAt(offset - i);
+      if (elementAt == null) continue;
+      for (ExpressionTypeProvider handler : handlers) {
+        for (PsiElement element : ((ExpressionTypeProvider<? extends PsiElement>)handler).getExpressionsAt(elementAt)) {
+          TextRange r = element.getTextRange();
+          if (exactRange && !r.equals(range) || !r.contains(range)) continue;
+          if (!exactRange) exactRange = r.equals(range);
+          map.put(element, handler);
+        }
+      }
+    }
+    return map;
   }
 
   @NotNull
