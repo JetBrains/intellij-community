@@ -1,8 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testDiscovery.actions;
 
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -16,6 +20,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.FontUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
@@ -23,7 +28,7 @@ import javax.swing.tree.TreeSelectionModel;
 import java.util.List;
 import java.util.stream.Collectors;
 
-class DiscoveredTestsTree extends Tree {
+class DiscoveredTestsTree extends Tree implements DataProvider {
   private final DiscoveredTestsTreeModel myModel;
 
   public DiscoveredTestsTree(String title) {
@@ -79,5 +84,17 @@ class DiscoveredTestsTree extends Tree {
 
   public int getTestCount() {
     return myModel.getTestCount();
+  }
+
+  @Nullable
+  @Override
+  public Object getData(String dataId) {
+    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+      return getSelectedElement();
+    }
+    else if (LangDataKeys.POSITION_ADJUSTER_POPUP.is(dataId)) {
+      return PopupUtil.getPopupContainerFor(this);
+    }
+    return null;
   }
 }
