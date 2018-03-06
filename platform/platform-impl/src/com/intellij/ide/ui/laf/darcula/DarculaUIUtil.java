@@ -17,6 +17,7 @@ package com.intellij.ide.ui.laf.darcula;
 
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.laf.IntelliJLaf;
+import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaEditorTextFieldBorder;
 import com.intellij.openapi.editor.event.EditorMouseAdapter;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
@@ -33,6 +34,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.plaf.UIResource;
 import javax.swing.text.JTextComponent;
 import javax.swing.text.Position;
 import java.awt.*;
@@ -422,5 +424,16 @@ public class DarculaUIUtil {
 
   public static boolean isEmpty(Dimension d) {
     return d == null || d.width == 0 && d.height == 0;
+  }
+
+  public static Color getButtonTextColor(@NotNull AbstractButton button) {
+    Color fg = button.getForeground();
+    if (fg instanceof UIResource && DarculaButtonUI.isDefaultButton(button)) {
+      Color selectedFg = UIManager.getColor("Button.darcula.selectedButtonForeground");
+      if (selectedFg != null) {
+        return selectedFg;
+      }
+    }
+    return fg;
   }
 }

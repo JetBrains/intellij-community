@@ -351,7 +351,8 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     public Dimension getPreferredSize() {
       Dimension prefSize = super.getPreferredSize();
       int width = prefSize.width + getArrowIcon(isEnabled()).getIconWidth() + JBUI.scale(5);
-      width += UIUtil.isUnderWin10LookAndFeel() ? JBUI.scale(10) : 0;
+      width += UIUtil.isUnderWin10LookAndFeel() ? JBUI.scale(10) :
+               UIUtil.isUnderDefaultMacTheme() ? JBUI.scale(5) : 0;
       return new Dimension(width, isSmallVariant() ? JBUI.scale(24) : prefSize.height);
     }
 

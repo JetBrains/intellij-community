@@ -85,13 +85,14 @@ public class DarculaButtonPainter implements Border, UIResource {
   }
 
   public Color getBorderColor(Component button) {
-    return button.isEnabled() ?
-      button.hasFocus() ?
-        UIManager.getColor(DarculaButtonUI.isDefaultButton((JComponent)button) ?
-         "Button.darcula.defaultFocusedBorderColor" : "Button.darcula.focusedBorderColor") :
-        UIManager.getColor(button.isEnabled() && DarculaButtonUI.isDefaultButton((JComponent)button) ?
-         "Button.darcula.defaultBorderColor" : "Button.darcula.borderColor")
-      : UIManager.getColor("Button.darcula.disabledBorderColor");
+    AbstractButton b = (AbstractButton)button;
+    Color borderColor = (Color)b.getClientProperty("JButton.borderColor");
+    return button.isEnabled() ? borderColor != null ? borderColor :
+     button.hasFocus() ?
+        UIManager.getColor(DarculaButtonUI.isDefaultButton(b) ? "Button.darcula.defaultFocusedBorderColor" : "Button.darcula.focusedBorderColor") :
+        UIManager.getColor(button.isEnabled() && DarculaButtonUI.isDefaultButton(b) ? "Button.darcula.defaultBorderColor" : "Button.darcula.borderColor")
+
+     : UIManager.getColor("Button.darcula.disabledBorderColor");
   }
 
   protected void paintShadow(Graphics2D g2, Rectangle r) {

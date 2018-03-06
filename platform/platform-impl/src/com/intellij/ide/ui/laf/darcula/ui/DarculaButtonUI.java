@@ -26,14 +26,12 @@ import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
 import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.FontUIResource;
-import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.BasicButtonUI;
 import javax.swing.plaf.basic.BasicHTML;
 import javax.swing.text.View;
@@ -101,23 +99,23 @@ public class DarculaButtonUI extends BasicButtonUI {
         float bw = DarculaUIUtil.bw();
 
         if (c.isEnabled()) {
-          if (isSquare(c)) {
-            g2.setPaint(UIUtil.getGradientPaint(r.x, r.y, getButtonColorStart(), r.x + r.width, r.y + r.height, getButtonColorEnd()));
-            g2.fill(new RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc));
-          }
-          else {
-            g2.setPaint(isDefaultButton(c) ?
-                        UIUtil.getGradientPaint(0, 0, getDefaultButtonColorStart(), 0, r.height, getDefaultButtonColorEnd()) :
-                        UIUtil.getGradientPaint(0, 0, getButtonColorStart(), 0, r.height, getButtonColorEnd()));
-
-            g2.fill(new RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc));
-          }
+          g2.setPaint(getBackground(c, r));
+          g2.fill(new RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc));
         }
       } finally {
         g2.dispose();
       }
       return true;
     }
+  }
+
+  private Paint getBackground(JComponent c, Rectangle r) {
+    Color backgroundColor = (Color)c.getClientProperty("JButton.backgroundColor");
+
+    return backgroundColor != null ? backgroundColor :
+      isDefaultButton(c) ?
+        UIUtil.getGradientPaint(0, 0, getDefaultButtonColorStart(), 0, r.height, getDefaultButtonColorEnd()) :
+        UIUtil.getGradientPaint(0, 0, getButtonColorStart(), 0, r.height, getButtonColorEnd());
   }
 
   @Override
@@ -134,7 +132,7 @@ public class DarculaButtonUI extends BasicButtonUI {
     
     AbstractButton button = (AbstractButton)c;
     ButtonModel model = button.getModel();
-    g.setColor(getTextColor(button));
+    g.setColor(getButtonTextColor(button));
 
     FontMetrics metrics = SwingUtilities2.getFontMetrics(c, g);
     int mnemonicIndex = DarculaLaf.isAltPressed() ? button.getDisplayedMnemonicIndex() : -1;
@@ -149,15 +147,9 @@ public class DarculaButtonUI extends BasicButtonUI {
     }
   }
 
-  public static Color getTextColor(@NotNull AbstractButton button) {
-    Color fg = button.getForeground();
-    if (fg instanceof UIResource && isDefaultButton(button)) {
-      final Color selectedFg = UIManager.getColor("Button.darcula.selectedButtonForeground");
-      if (selectedFg != null) {
-        fg = selectedFg;
-      }
-    }
-    return fg;
+  protected Color getButtonTextColor(AbstractButton button) {
+    Color textColor = (Color)button.getClientProperty("JButton.textColor");
+    return textColor != null ? textColor : DarculaUIUtil.getButtonTextColor(button);
   }
 
   public static Color getDisabledTextColor() {
