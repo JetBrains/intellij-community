@@ -66,6 +66,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -1265,6 +1266,8 @@ public class IdeEventQueue extends EventQueue {
   private final ConcurrentLinkedQueue<AWTEvent> focusEventsList =
       new ConcurrentLinkedQueue<>();
 
+  private final AtomicLong ourLastTimePressed = new AtomicLong(0);
+
   // return true if posted, false if consumed immediately
   boolean doPostEvent(@NotNull AWTEvent event) {
     for (PostEventHook listener : myPostEventListeners.getListeners()) {
@@ -1311,26 +1314,37 @@ public class IdeEventQueue extends EventQueue {
       } else if (event.getID() == KeyEvent.KEY_RELEASED && Registry.is("action.aware.typeAhead.searchEverywhere")
                  && KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() instanceof IdeFrame) {
         KeyEvent keyEvent = (KeyEvent)event;
+        // 1. check key code
+        // 2. if key code != SHIFT -> restart
+        // 3. if has other modifiers - > restart
+        // 4. keyEvent.getWhen() - ourLastTimePressed.get() < 100 -> restart
+        // 5. if the second time and (keyEvent.getWhen() - ourLastTimePressed.get() > 500) -> restart state
         if (keyEvent.getKeyCode() == KeyEvent.VK_SHIFT) {
           switch (mySearchEverywhereTypeaheadState) {
             case DEACTIVATED:
               mySearchEverywhereTypeaheadState = SearchEverywhereTypeaheadState.TRIGGERED;
+              ourLastTimePressed.set(keyEvent.getWhen());
               break;
             case TRIGGERED:
-              delayKeyEvents.set(true);
-              lastTypeaheadTimestamp = System.currentTimeMillis();
-              mySearchEverywhereTypeaheadState = SearchEverywhereTypeaheadState.DETECTED;
+              long timeDelta = keyEvent.getWhen() - ourLastTimePressed.get();
+              if (timeDelta >= 100 && timeDelta <= 500) {
+                delayKeyEvents.set(true);
+                lastTypeaheadTimestamp = System.currentTimeMillis();
+                mySearchEverywhereTypeaheadState = SearchEverywhereTypeaheadState.DETECTED;
+              } else {
+                mySearchEverywhereTypeaheadState = SearchEverywhereTypeaheadState.DEACTIVATED;
+                flushDelayedKeyEvents();
+                // no need to reset ourLastTimePressed
+              }
               break;
           }
-        } else if (mySearchEverywhereTypeaheadState == SearchEverywhereTypeaheadState.TRIGGERED) {
-          mySearchEverywhereTypeaheadState = SearchEverywhereTypeaheadState.DEACTIVATED;
         }
       }
 
       if (isTypeaheadTimeoutExceeded(event)) {
         TYPEAHEAD_LOG.debug("Clear delayed events because of IdeFrame deactivation");
         delayKeyEvents.set(false);
-        myDelayedKeyEvents.clear();
+        flushDelayedKeyEvents();
         lastTypeaheadTimestamp = 0;
         if (Registry.is("action.aware.typeAhead.searchEverywhere")) {
           mySearchEverywhereTypeaheadState = SearchEverywhereTypeaheadState.DEACTIVATED;
@@ -1339,6 +1353,18 @@ public class IdeEventQueue extends EventQueue {
     }
 
     super.postEvent(event);
+
+    if (Registry.is("action.aware.typeAhead.searchEverywhere") &&
+        event instanceof KeyEvent &&
+        (mySearchEverywhereTypeaheadState == SearchEverywhereTypeaheadState.TRIGGERED ||
+         mySearchEverywhereTypeaheadState == SearchEverywhereTypeaheadState.DETECTED))
+    {
+      long timeDelta = ((KeyEvent)event).getWhen() - ourLastTimePressed.get();
+      if (timeDelta < 100 || timeDelta > 500) {
+        mySearchEverywhereTypeaheadState = SearchEverywhereTypeaheadState.DEACTIVATED;
+        flushDelayedKeyEvents();
+      }
+    }
 
     if (Registry.is("action.aware.typeAhead")) {
       if (doesFocusGoIntoPopup(event)) {
@@ -1358,6 +1384,16 @@ public class IdeEventQueue extends EventQueue {
     }
 
     return true;
+  }
+
+  private void flushDelayedKeyEvents() {
+    delayKeyEvents.set(false);
+    int size = myDelayedKeyEvents.size();
+    for (int keyEventIndex = 0; keyEventIndex < size; keyEventIndex++) {
+      KeyEvent theEvent = myDelayedKeyEvents.remove();
+      TYPEAHEAD_LOG.debug("Posted after delay: " + theEvent.paramString());
+      super.postEvent(theEvent);
+    }
   }
 
   private SearchEverywhereTypeaheadState mySearchEverywhereTypeaheadState = SearchEverywhereTypeaheadState.DEACTIVATED;
