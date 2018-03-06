@@ -9,9 +9,6 @@ public interface TestDialog {
     }
   };
   TestDialog OK = new TestDialog() {
-    public int show(String message) {
-      return 0;
-    }
   };
   TestDialog NO = new TestDialog() {
     public int show(String message) {
@@ -19,5 +16,7 @@ public interface TestDialog {
     }
   };
 
-  int show(String message);
+  default int show(String message) {
+    return 0;
+  }
 }

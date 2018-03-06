@@ -517,10 +517,8 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       })
       .append(() -> {
         ((JarFileSystemImpl)JarFileSystem.getInstance()).cleanupForNextTest();
-        
-        for (final File fileToDelete : myFilesToDelete) {
-          delete(fileToDelete);
-        }
+
+        getTempDir().deleteAll();
         LocalFileSystem.getInstance().refreshIoFiles(myFilesToDelete);
       })
       .append(() -> {
@@ -601,13 +599,6 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
   private String getFullName() {
     return getClass().getName() + "." + getName();
-  }
-
-  private void delete(File file) {
-    boolean b = FileUtil.delete(file);
-    if (!b && file.exists() && !myAssertionsInTestDetected) {
-      fail("Can't delete " + file.getAbsolutePath() + " in " + getFullName());
-    }
   }
 
   protected void setUpJdk() {

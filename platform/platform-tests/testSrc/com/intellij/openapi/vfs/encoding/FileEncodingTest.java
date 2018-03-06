@@ -85,11 +85,6 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
     }
   }
 
-  @Override
-  public int show(String message) {
-    return 0;
-  }
-
   private static Document getDocument(VirtualFile file) {
     return FileDocumentManager.getInstance().getDocument(file);
   }
@@ -215,7 +210,7 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
     String text = document.getText();
     assertEquals("\u041f\u0440\u0438", text);
 
-    File copy = getTempDir().createTempFile("copy", ".txt");
+    File copy = getTempDir().createTempFile("copy", ".txt", false);
     FileUtil.copy(source, copy);
     VirtualFile fileCopy = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(copy);
     document = getDocument(fileCopy);
@@ -239,7 +234,7 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
   }
 
   private void doHtmlTest(final String metaWithWindowsEncoding, final String metaWithUtf8Encoding) throws IOException {
-    File temp = getTempDir().createTempFile("copy", ".html");
+    File temp = getTempDir().createTempFile("copy", ".html", false);
     setContentOnDisk(temp, NO_BOM,
                      "<html><head>" + metaWithWindowsEncoding + "</head>" +
                      THREE_RUSSIAN_LETTERS +

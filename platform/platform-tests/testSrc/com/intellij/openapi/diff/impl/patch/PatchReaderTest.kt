@@ -5,7 +5,6 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.PlatformTestCase
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.PsiTestUtil
 import com.intellij.vcs.log.impl.VcsUserImpl
 import junit.framework.TestCase
 import java.io.File
@@ -84,7 +83,7 @@ class PatchReaderTest : PlatformTestCase() {
 
   private fun read(): PatchReader {
     val testDataPath = PlatformTestUtil.getPlatformTestDataPath() + "diff/patchReader/" + getTestName(true)
-    PsiTestUtil.createTestProjectStructure(myProject, myModule, testDataPath, myFilesToDelete)
+    createTestProjectStructure(testDataPath)
     val patchPath = "$testDataPath/test.patch"
     val patchFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(patchPath.replace(File.separatorChar, '/'))
 

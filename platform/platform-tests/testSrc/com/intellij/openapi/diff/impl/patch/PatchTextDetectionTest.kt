@@ -5,7 +5,6 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.PlatformTestCase
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.PsiTestUtil
 import java.io.File
 
 class PatchTextDetectionTest : PlatformTestCase() {
@@ -35,7 +34,7 @@ class PatchTextDetectionTest : PlatformTestCase() {
 
   private fun doTest(expected: Boolean) {
     val testDataPath = PlatformTestUtil.getPlatformTestDataPath() + "diff/patchTextDetection/" + getTestName(true)
-    PsiTestUtil.createTestProjectStructure(myProject, myModule, testDataPath, myFilesToDelete)
+    createTestProjectStructure(testDataPath)
     val patchPath = "$testDataPath/test.patch"
     val patchFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(patchPath.replace(File.separatorChar, '/'))
 
