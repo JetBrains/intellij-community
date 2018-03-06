@@ -16,12 +16,22 @@ public class InterfaceNeverImplementedInspectionTest extends LightInspectionTest
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
-    return new InterfaceNeverImplementedInspection();
+    final InterfaceNeverImplementedInspection inspection = new InterfaceNeverImplementedInspection();
+    inspection.ignorableAnnotations.add("com.intellij.test.Ignore");
+    return inspection;
   }
 
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
     return JAVA_8;
+  }
+
+  @Override
+  protected String[] getEnvironmentClasses() {
+    return new String[] {
+      "package com.intellij.test;" +
+      "public @interface Ignore {}"
+    };
   }
 }

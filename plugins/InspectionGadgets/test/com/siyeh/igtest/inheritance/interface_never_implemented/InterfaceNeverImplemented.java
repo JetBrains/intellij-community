@@ -1,5 +1,7 @@
 package com.siyeh.igtest.inheritance.interface_never_implemented;
 
+import com.intellij.test.Ignore;
+
 public interface <warning descr="Interface 'InterfaceNeverImplemented' has no concrete subclass">InterfaceNeverImplemented</warning> {}
 interface InterfaceWithOnlyOneDirectInheritor {}
 class Inheritor implements InterfaceWithOnlyOneDirectInheritor {}
@@ -16,3 +18,5 @@ class LambdaCall {
     SAM sam = () -> {};
   }
 }
+@Ignore
+interface NotImplemented {}
