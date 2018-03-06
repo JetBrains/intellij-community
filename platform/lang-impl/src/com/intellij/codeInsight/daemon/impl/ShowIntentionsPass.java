@@ -67,7 +67,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
   private final int myPassIdToShowIntentionsFor;
   private final IntentionsInfo myIntentionsInfo = new IntentionsInfo();
   private final CachedIntentions myCachedIntentions;
-  private boolean myActionsChanged;
+  private volatile boolean myActionsChanged;
 
   ShowIntentionsPass(@NotNull Project project, @NotNull Editor editor, int passId) {
     super(project, editor.getDocument(), false);
