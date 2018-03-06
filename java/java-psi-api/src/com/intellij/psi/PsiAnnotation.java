@@ -112,7 +112,7 @@ public interface PsiAnnotation extends PsiAnnotationMemberValue, PsiMetaOwner, J
   @Nullable
   PsiAnnotationOwner getOwner();
 
-  @NotNull
+  @Nullable
   @Override
   default PsiElement getSourceElement() {
     return this;
