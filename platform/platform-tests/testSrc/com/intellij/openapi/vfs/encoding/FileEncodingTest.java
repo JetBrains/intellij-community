@@ -46,6 +46,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 
@@ -159,7 +160,7 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
       FileDocumentManager.getInstance().saveAllDocuments();
 
       byte[] savedBytes = FileUtil.loadFileBytes(file);
-      String saved = new String(savedBytes, CharsetToolkit.UTF8).replace("\r\n", "\n");
+      String saved = new String(savedBytes, StandardCharsets.UTF_8).replace("\r\n", "\n");
       String expected = (UTF8_XML_PROLOG + XML_TEST_BODY).replace("\r\n", "\n");
 
       assertEquals(expected, saved);
@@ -238,7 +239,7 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
                "<meta charset =\"utf-8\">");
   }
 
-  private static void doHtmlTest(final String metaWithWindowsEncoding, final String metaWithUtf8Encoding) throws IOException {
+  private void doHtmlTest(final String metaWithWindowsEncoding, final String metaWithUtf8Encoding) throws IOException {
     File temp = FileUtil.createTempFile("copy", ".html");
     setContentOnDisk(temp, NO_BOM,
                      "<html><head>" + metaWithWindowsEncoding + "</head>" +

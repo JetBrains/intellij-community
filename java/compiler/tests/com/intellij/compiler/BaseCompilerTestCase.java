@@ -23,7 +23,10 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
-import com.intellij.testFramework.*;
+import com.intellij.testFramework.ModuleTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.io.TestFileSystemBuilder;
 import com.intellij.util.ui.UIUtil;
@@ -304,7 +307,7 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
     //todo[nik] reuse code from PlatformTestCase
     final VirtualFile baseDir = getOrCreateProjectBaseDir();
     final File moduleFile = new File(baseDir.getPath().replace('/', File.separatorChar), moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
-    PlatformTestCase.myFilesToDelete.add(moduleFile);
+    myFilesToDelete.add(moduleFile);
     return WriteAction.computeAndWait(() -> {
       Module module = ModuleManager.getInstance(myProject)
                                    .newModule(FileUtil.toSystemIndependentName(moduleFile.getAbsolutePath()), getModuleType().getId());

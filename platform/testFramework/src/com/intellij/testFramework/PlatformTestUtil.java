@@ -35,6 +35,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -771,27 +772,33 @@ public class PlatformTestUtil {
   }
 
   public static void assertJarFilesEqual(File file1, File file2) throws IOException {
-    final File tempDirectory1;
-    final File tempDirectory2;
+    final File tempDir = FileUtilRt.createTempDirectory("assert_jar_tmp", null, false);
+    try {
+      final File tempDirectory1 = new File(tempDir, "tmp1");
+      final File tempDirectory2 = new File(tempDir, "tmp2");
+      FileUtilRt.createDirectory(tempDirectory1);
+      FileUtilRt.createDirectory(tempDirectory2);
 
-    try (JarFile jarFile1 = new JarFile(file1)) {
-      try (JarFile jarFile2 = new JarFile(file2)) {
-        tempDirectory1 = PlatformTestCase.createTempDir("tmp1");
-        tempDirectory2 = PlatformTestCase.createTempDir("tmp2");
-        ZipUtil.extract(jarFile1, tempDirectory1, null);
-        ZipUtil.extract(jarFile2, tempDirectory2, null);
+      try (JarFile jarFile1 = new JarFile(file1)) {
+        try (JarFile jarFile2 = new JarFile(file2)) {
+          ZipUtil.extract(jarFile1, tempDirectory1, null);
+          ZipUtil.extract(jarFile2, tempDirectory2, null);
+        }
       }
-    }
 
-    final VirtualFile dirAfter = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory1);
-    Assert.assertNotNull(tempDirectory1.toString(), dirAfter);
-    final VirtualFile dirBefore = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory2);
-    Assert.assertNotNull(tempDirectory2.toString(), dirBefore);
-    getApplication().runWriteAction(() -> {
-      dirAfter.refresh(false, true);
-      dirBefore.refresh(false, true);
-    });
-    assertDirectoriesEqual(dirAfter, dirBefore);
+      final VirtualFile dirAfter = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory1);
+      Assert.assertNotNull(tempDirectory1.toString(), dirAfter);
+      final VirtualFile dirBefore = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory2);
+      Assert.assertNotNull(tempDirectory2.toString(), dirBefore);
+      getApplication().runWriteAction(() -> {
+        dirAfter.refresh(false, true);
+        dirBefore.refresh(false, true);
+      });
+      assertDirectoriesEqual(dirAfter, dirBefore);
+    }
+    finally {
+      FileUtilRt.delete(tempDir);
+    }
   }
 
   /**
