@@ -21,6 +21,7 @@ import com.intellij.build.DefaultBuildDescriptor;
 import com.intellij.build.SyncViewManager;
 import com.intellij.build.events.BuildEvent;
 import com.intellij.build.events.EventResult;
+import com.intellij.build.events.FinishBuildEvent;
 import com.intellij.build.events.impl.*;
 import com.intellij.build.events.impl.FailureImpl;
 import com.intellij.build.events.impl.FailureResultImpl;
@@ -117,6 +118,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import static com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings.SyncType.*;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.doWriteAction;
@@ -455,6 +457,7 @@ public class ExternalSystemUtil {
           Disposer.register(project, processHandler);
         }
 
+        Ref<Supplier<FinishBuildEvent>> finishSyncEventSupplier = Ref.create();
         ExternalSystemTaskNotificationListenerAdapter taskListener = new ExternalSystemTaskNotificationListenerAdapter() {
           @Override
           public void onStart(@NotNull ExternalSystemTaskId id, String workingDir) {
@@ -511,9 +514,8 @@ public class ExternalSystemUtil {
                                                         externalSystemId.getReadableName(), projectName);
             com.intellij.build.events.FailureResult failureResult = createFailureResult(title, e, externalSystemId, project);
             String message = isPreviewMode ? "project preview creation failed" : "sync failed";
-            ServiceManager.getService(project, SyncViewManager.class).onEvent(
-              new FinishBuildEventImpl(id, null, System.currentTimeMillis(), message, failureResult));
-
+            finishSyncEventSupplier.set(
+              () -> new FinishBuildEventImpl(id, null, System.currentTimeMillis(), message, failureResult));
             printFailure(e, failureResult, consoleView, processHandler);
             processHandler.notifyProcessTerminated(1);
           }
@@ -521,8 +523,8 @@ public class ExternalSystemUtil {
           @Override
           public void onSuccess(@NotNull ExternalSystemTaskId id) {
             String message = isPreviewMode ? "project preview created" : "synced successfully";
-            ServiceManager.getService(project, SyncViewManager.class).onEvent(new FinishBuildEventImpl(
-              id, null, System.currentTimeMillis(), message, new SuccessResultImpl()));
+            finishSyncEventSupplier.set(
+              () -> new FinishBuildEventImpl(id, null, System.currentTimeMillis(), message, new SuccessResultImpl()));
             processHandler.notifyProcessTerminated(0);
           }
 
@@ -572,6 +574,11 @@ public class ExternalSystemUtil {
           }
         }
         finally {
+          Supplier<FinishBuildEvent> finishBuildEventSupplier = finishSyncEventSupplier.get();
+          assert finishBuildEventSupplier != null;
+          FinishBuildEvent finishBuildEvent = finishBuildEventSupplier.get();
+          assert finishBuildEvent != null;
+          ServiceManager.getService(project, SyncViewManager.class).onEvent(finishBuildEvent);
           if (!isPreviewMode) {
             project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, null);
             project.putUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT, null);
