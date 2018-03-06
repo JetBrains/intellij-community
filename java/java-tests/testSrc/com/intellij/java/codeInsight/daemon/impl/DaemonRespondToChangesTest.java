@@ -121,6 +121,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
@@ -2262,6 +2263,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   public void testLightBulbIsHiddenWhenFixRangeIsCollapsed() {
+    //TODO: this test is will break once some intention become available for file after deletion.
     configureByText(StdFileTypes.JAVA, "class S { void foo() { boolean var; if (<selection>va<caret>r</selection>) {}} }");
     ((EditorImpl)myEditor).getScrollPane().getViewport().setSize(1000, 1000);
 
@@ -2287,8 +2289,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     delete(myEditor);
     highlightErrors();
     IntentionHintComponent lastHintAfterDeletion = myDaemonCodeAnalyzer.getLastIntentionHint();
-    assertSame(lastHintBeforeDeletion, lastHintAfterDeletion);
-
+    assertNull(lastHintAfterDeletion);
     assertEmpty(visibleHints);
   }
 

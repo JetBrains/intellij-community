@@ -22,35 +22,23 @@ public class IntentionsUIImpl implements IntentionsUI {
 
   @Override
   public void update(@NotNull CachedIntentions cachedIntentions, boolean actionsChanged) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     Editor editor = cachedIntentions.getEditor();
     if (!ApplicationManager.getApplication().isUnitTestMode() && !editor.getContentComponent().hasFocus()) return;
-    if (HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(false)) return;
-    if (!cachedIntentions.showBulb()) return;
+
     Project project = cachedIntentions.getProject();
-    // do not show intentions if caret is outside visible area
     LogicalPosition caretPos = editor.getCaretModel().getLogicalPosition();
     Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
     Point xy = editor.logicalPositionToXY(caretPos);
-    if (!visibleArea.contains(xy)) return;
-    IntentionHintComponent hintComponent = myLastIntentionHint;
-    boolean hasToRecreate = cachedIntentions.showBulb() &&
-                            hintComponent != null &&
-                            hintComponent.isForEditor(editor) &&
-                            hintComponent.getPopupUpdateResult(actionsChanged) == IntentionHintComponent.PopupUpdateResult.CHANGED_INVISIBLE;
 
-    if (!editor.getSettings().isShowIntentionBulb()) {
-      return;
-    }
-    ApplicationManager.getApplication().assertIsDispatchThread();
     hide();
-
-    if (editor.getCaretModel().getCaretCount() > 1) return;
-
-    hintComponent = IntentionHintComponent.showIntentionHint(project, cachedIntentions.getFile(), editor, false, cachedIntentions);
-    if (hasToRecreate) {
-      hintComponent.recreate();
+    if (!HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(false) &&
+        visibleArea.contains(xy) &&
+        editor.getSettings().isShowIntentionBulb() &&
+        editor.getCaretModel().getCaretCount() == 1 &&
+        cachedIntentions.showBulb()) {
+      myLastIntentionHint = IntentionHintComponent.showIntentionHint(project, cachedIntentions.getFile(), editor, false, cachedIntentions);
     }
-    myLastIntentionHint = hintComponent;
   }
 
   @Override
