@@ -16,7 +16,10 @@
 package com.intellij.lang.jvm;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public interface JvmAnnotation extends JvmElement {
 
@@ -28,4 +31,8 @@ public interface JvmAnnotation extends JvmElement {
   @Nullable
   @NonNls
   String getQualifiedName();
+
+  @NotNull
+  List<JvmAnnotationAttribute> getAttributes();
+
 }
