@@ -575,15 +575,35 @@ public class ExternalSystemUtil {
           }
         }
         finally {
-          Supplier<FinishBuildEvent> finishBuildEventSupplier = finishSyncEventSupplier.get();
-          assert finishBuildEventSupplier != null;
-          FinishBuildEvent finishBuildEvent = finishBuildEventSupplier.get();
-          assert finishBuildEvent != null;
-          ServiceManager.getService(project, SyncViewManager.class).onEvent(finishBuildEvent);
           if (!isPreviewMode) {
             project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, null);
             project.putUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT, null);
           }
+          sendSyncFinishEvent(finishSyncEventSupplier);
+        }
+      }
+
+      private void sendSyncFinishEvent(@NotNull Ref<Supplier<FinishBuildEvent>> finishSyncEventSupplier) {
+        Exception exception = null;
+        FinishBuildEvent finishBuildEvent = null;
+        Supplier<FinishBuildEvent> finishBuildEventSupplier = finishSyncEventSupplier.get();
+        if (finishBuildEventSupplier != null) {
+          try {
+            finishBuildEvent = finishBuildEventSupplier.get();
+          }
+          catch (Exception e) {
+            exception = e;
+          }
+        }
+        if (finishBuildEvent != null) {
+          ServiceManager.getService(project, SyncViewManager.class).onEvent(finishBuildEvent);
+        }
+        else {
+          String message = "Sync finish event has not been received";
+          LOG.warn(message, exception);
+          ServiceManager.getService(project, SyncViewManager.class).onEvent(
+            new FinishBuildEventImpl(myTask.getId(), null, System.currentTimeMillis(), "sync failed",
+                                     new FailureResultImpl(new Exception(message, exception))));
         }
       }
 
