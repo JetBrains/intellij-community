@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
 import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.treeStructure.Tree;
@@ -48,6 +49,10 @@ class DiscoveredTestsTree extends Tree {
           PsiMember psi = (PsiMember)value;
           setIcon(psi.getIcon(Iconable.ICON_FLAG_READ_STATUS));
           append(psi.getName());
+          if (psi instanceof PsiClass) {
+            int testMethodCount = myModel.getChildren(psi).size();
+            append(" (" + (testMethodCount == 1 ? (testMethodCount + " tests") : "1 test") + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+          }
         }
       }
     });
