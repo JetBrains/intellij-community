@@ -24,6 +24,20 @@ public class OpenSourceUtil {
   }
 
   /**
+   * @return {@code true} if the specified {@code object} is {@link Navigatable} and supports navigation
+   */
+  public static boolean canNavigate(@Nullable Object object) {
+    return object instanceof Navigatable && ((Navigatable)object).canNavigate();
+  }
+
+  /**
+   * @return {@code true} if the specified {@code object} is {@link Navigatable} and supports navigation to source
+   */
+  public static boolean canNavigateToSource(@Nullable Object object) {
+    return object instanceof Navigatable && ((Navigatable)object).canNavigateToSource();
+  }
+
+  /**
    * Invokes {@link #navigate(boolean, Navigatable...)} that always requests focus.
    */
   public static void navigate(@Nullable Navigatable... navigatables) {
@@ -57,13 +71,11 @@ public class OpenSourceUtil {
     Navigatable nonSourceNavigatable = null;
     boolean alreadyNavigatedToSource = false;
     for (Navigatable navigatable : navigatables) {
-      if (navigatable != null) {
-        if (navigateToSource(requestFocus, tryNotToScroll, navigatable)) {
-          alreadyNavigatedToSource = true;
-        }
-        else if (!alreadyNavigatedToSource && nonSourceNavigatable == null && navigatable.canNavigate()) {
-          nonSourceNavigatable = navigatable;
-        }
+      if (navigateToSource(requestFocus, tryNotToScroll, navigatable)) {
+        alreadyNavigatedToSource = true;
+      }
+      else if (!alreadyNavigatedToSource && nonSourceNavigatable == null && canNavigate(navigatable)) {
+        nonSourceNavigatable = navigatable;
       }
     }
     if (alreadyNavigatedToSource) return true;
@@ -99,7 +111,7 @@ public class OpenSourceUtil {
    * @return {@code true} if navigation is done, {@code false} otherwise
    */
   public static boolean navigateToSource(boolean requestFocus, boolean tryNotToScroll, @Nullable Navigatable navigatable) {
-    if (navigatable == null || !navigatable.canNavigateToSource()) return false;
+    if (!canNavigateToSource(navigatable)) return false;
     if (tryNotToScroll && navigatable instanceof StatePreservingNavigatable) {
       ((StatePreservingNavigatable)navigatable).navigate(requestFocus, true);
     }
