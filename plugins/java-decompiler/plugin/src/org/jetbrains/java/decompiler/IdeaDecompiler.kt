@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler
 
+import com.intellij.application.options.CodeStyle
 import com.intellij.execution.filters.LineNumbersMapping
 import com.intellij.icons.AllIcons
 import com.intellij.ide.highlighter.JavaFileType
@@ -13,7 +14,6 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileTypes.StdFileTypes
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.project.DefaultProjectFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.io.FileUtil
@@ -24,7 +24,6 @@ import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.psi.PsiJavaModule
 import com.intellij.psi.PsiPackage
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.compiled.ClassFileDecompilers
 import com.intellij.psi.impl.compiled.ClsFileImpl
 import com.intellij.ui.Gray
@@ -54,8 +53,7 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
     private const val LEGAL_NOTICE_KEY = "decompiler.legal.notice.accepted"
 
     private fun getOptions(): Map<String, Any> {
-      val project = DefaultProjectFactory.getInstance().defaultProject
-      val options = CodeStyleSettingsManager.getInstance(project).currentSettings.getIndentOptions(JavaFileType.INSTANCE)
+      val options = CodeStyle.getDefaultSettings().getIndentOptions(JavaFileType.INSTANCE)
       val indent = StringUtil.repeat(" ", options.INDENT_SIZE)
       return mapOf(
           IFernflowerPreferences.HIDE_DEFAULT_CONSTRUCTOR to "0",
