@@ -69,7 +69,11 @@ class DiscoveredTestsTreeModel extends BaseTreeModel<Object> {
     treeStructureChanged(null, null, null);
   }
 
-  public PsiMethod[] getTestMethods() {
+  public synchronized PsiMethod[] getTestMethods() {
     return myTests.values().stream().flatMap(vs -> vs.stream()).toArray(PsiMethod[]::new);
+  }
+
+  public synchronized int getTestCount() {
+    return myTests.values().stream().mapToInt(ms -> ms.size()).sum();
   }
 }

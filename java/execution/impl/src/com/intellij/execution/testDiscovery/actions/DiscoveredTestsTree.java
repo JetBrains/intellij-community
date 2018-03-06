@@ -72,4 +72,8 @@ class DiscoveredTestsTree extends Tree {
   public PsiElement getSelectedElement() {
     return (PsiElement)getSelectionModel().getSelectionPath().getLastPathComponent();
   }
+
+  public int getTestCount() {
+    return myModel.getTestCount();
+  }
 }

@@ -44,6 +44,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.PsiNavigateUtil;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.JBDimension;
+import com.intellij.util.ui.tree.TreeModelAdapter;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,6 +52,7 @@ import org.jetbrains.uast.UMethod;
 import org.jetbrains.uast.UastContextKt;
 
 import javax.swing.*;
+import javax.swing.event.TreeModelEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
 import java.util.Objects;
@@ -154,6 +156,12 @@ public class ShowDiscoveredTestsAction extends AnAction {
 
     JBPopup popup = builder.createPopup();
     ref.set(popup);
+    tree.getModel().addTreeModelListener(new TreeModelAdapter() {
+      @Override
+      protected void process(TreeModelEvent event, EventType type) {
+        ((AbstractPopup)popup).setCaption("Found " + tree.getTestCount() + " Tests for " + title);
+      }
+    });
 
     popup.showInBestPositionFor(dataContext);
 
