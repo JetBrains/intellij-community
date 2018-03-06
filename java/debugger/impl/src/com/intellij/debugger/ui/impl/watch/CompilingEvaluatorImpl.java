@@ -27,6 +27,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHandler;
+import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import org.jetbrains.annotations.NotNull;
@@ -144,8 +145,9 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
       return ApplicationManager.getApplication().runReadAction((ThrowableComputable<ExpressionEvaluator, EvaluateException>)() -> {
         try {
           boolean useReflection = !Registry.is("debugger.compiling.evaluator.magic.accessor", true);
-          if (!useReflection) {
-            XSuspendContext suspendContext = XDebuggerManager.getInstance(project).getCurrentSession().getSuspendContext();
+          XDebugSession currentSession = XDebuggerManager.getInstance(project).getCurrentSession();
+          if (!useReflection && currentSession != null) {
+            XSuspendContext suspendContext = currentSession.getSuspendContext();
             if (suspendContext instanceof SuspendContextImpl) {
               JavaSdkVersion version =
                 JavaSdkVersion.fromVersionString(((SuspendContextImpl)suspendContext).getDebugProcess().getVirtualMachineProxy().version());
