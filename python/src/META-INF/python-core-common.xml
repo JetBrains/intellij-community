@@ -171,7 +171,7 @@
     <runConfigurationProducer implementation="com.jetbrains.python.testing.nosetestLegacy.PythonNoseTestConfigurationProducer"/>
     <runConfigurationProducer implementation="com.jetbrains.python.testing.PyTestsConfigurationProducer"/>
     <runLineMarkerContributor language="Python"
-                              implementationClass="com.jetbrains.python.testing.PyTestLineMarkerProvider"/>
+                              implementationClass="com.jetbrains.python.testing.PyTestLineMarkerContributor"/>
 
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.python.codeInsight.PyLineMarkerProvider"/>
     <codeInsight.typeInfo language="Python" implementationClass="com.jetbrains.python.actions.PythonExpressionTypeProvider"/>
