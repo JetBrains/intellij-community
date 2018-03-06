@@ -284,12 +284,17 @@ class AndroidStudioProperties extends BaseIdeaProperties {
 
     buildContext.messages.block("Bundle Gradle $gradleVersion and the offline Maven repo") {
       buildContext.ant.unzip(src: "$root/tools/external/gradle/gradle-$gradleVersion-bin.zip", dest: "$targetDirectory/gradle")
+
       buildContext.ant.copy(todir: "$targetDirectory/gradle/m2repository") {
         fileset(dir: System.getenv().STUDIO_CUSTOM_REPO ?: "$root/prebuilts/tools/common/offline-m2") {
           exclude(name: "BUILD")
         }
         fileset(dir: "$root/out/studio/repo")
       }
+
+      buildContext.ant.unzip(
+        src: "$root/prebuilts/tools/common/kotlin-gradle-plugin/kotlin-m2repository.zip",
+        dest: "$targetDirectory/gradle/m2repository")
     }
   }
 
