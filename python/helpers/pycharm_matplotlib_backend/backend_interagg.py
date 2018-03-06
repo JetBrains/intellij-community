@@ -14,8 +14,6 @@ PORT = PORT if PORT != -1 else None
 index = int(os.getenv("PYCHARM_MATPLOTLIB_INDEX", 0))
 
 rcParams = matplotlib.rcParams
-verbose = matplotlib.verbose
-
 
 class Show(ShowBase):
     def __call__(self, **kwargs):
