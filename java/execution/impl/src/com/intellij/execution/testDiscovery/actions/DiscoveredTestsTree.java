@@ -13,6 +13,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.FontUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,7 +49,7 @@ class DiscoveredTestsTree extends Tree {
           append(psi.getName());
           if (psi instanceof PsiClass) {
             int testMethodCount = myModel.getChildren(psi).size();
-            append(" (" + (testMethodCount == 1 ? (testMethodCount + " tests") : "1 test") + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+            append(FontUtil.spaceAndThinSpace() + (testMethodCount != 1 ? (testMethodCount + " tests") : "1 test"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
           }
         }
       }
