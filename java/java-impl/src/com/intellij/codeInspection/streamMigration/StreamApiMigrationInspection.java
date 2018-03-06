@@ -1094,7 +1094,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
               String streamClass = StreamApiUtil.getStreamClassForType(componentType);
               if (streamClass != null) {
                 return streamClass + "." + (componentType instanceof PsiClassType ? "<" + componentType.getCanonicalText() + ">" : "")
-                       + ".of(" + initializerText + ")";
+                       + "of(" + initializerText + ")";
               }
             }
           }
