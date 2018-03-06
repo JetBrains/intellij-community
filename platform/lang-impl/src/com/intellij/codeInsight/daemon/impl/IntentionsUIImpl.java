@@ -25,6 +25,7 @@ public class IntentionsUIImpl implements IntentionsUI {
     Editor editor = cachedIntentions.getEditor();
     if (!ApplicationManager.getApplication().isUnitTestMode() && !editor.getContentComponent().hasFocus()) return;
     if (HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(false)) return;
+    if (!cachedIntentions.showBulb()) return;
     Project project = cachedIntentions.getProject();
     // do not show intentions if caret is outside visible area
     LogicalPosition caretPos = editor.getCaretModel().getLogicalPosition();
