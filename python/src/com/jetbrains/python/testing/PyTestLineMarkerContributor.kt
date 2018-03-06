@@ -18,7 +18,7 @@ import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyQualifiedNameOwner
 import com.jetbrains.python.psi.types.TypeEvalContext
 
-object PyTestLineMarkerProvider : RunLineMarkerContributor() {
+object PyTestLineMarkerContributor : RunLineMarkerContributor() {
   override fun getInfo(element: PsiElement): Info? {
 
     if ((element !is LeafPsiElement) || element.elementType != PyTokenTypes.IDENTIFIER) {
