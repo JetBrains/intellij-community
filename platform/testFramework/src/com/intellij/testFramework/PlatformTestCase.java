@@ -101,7 +101,10 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   protected ProjectManagerEx myProjectManager;
   protected Project myProject;
   protected Module myModule;
+
   protected final Collection<File> myFilesToDelete = new THashSet<>();
+  private final TempFiles myTempFiles = new TempFiles(myFilesToDelete);
+
   protected boolean myAssertionsInTestDetected;
   public static Thread ourTestThread;
   private static TestCase ourTestCase;
@@ -114,6 +117,20 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   private static Set<VirtualFile> ourEternallyLivingFilesCache;
   private SdkLeakTracker myOldSdks;
   private VirtualFilePointerTracker myVirtualFilePointerTracker;
+
+
+  @NotNull
+  public TempFiles getTempDir() {
+    return myTempFiles;
+  }
+
+  protected final VirtualFile createTestProjectStructure() throws IOException {
+    return PsiTestUtil.createTestProjectStructure(myProject, myModule, myFilesToDelete);
+  }
+
+  protected final VirtualFile createTestProjectStructure(String rootPath) throws Exception {
+    return PsiTestUtil.createTestProjectStructure(myProject, myModule, rootPath, myFilesToDelete);
+  }
 
   /**
    * If a temp directory is reused from some previous test run, there might be cached children in its VFS.
