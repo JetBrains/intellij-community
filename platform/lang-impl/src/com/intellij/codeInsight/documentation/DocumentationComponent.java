@@ -43,10 +43,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
-import com.intellij.openapi.util.DimensionService;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -572,8 +569,13 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     editorKit.getStyleSheet().addRule(".bottom { padding: 3px 9px 0 7px; }");
     editorKit.getStyleSheet().addRule(".bottom-no-content { padding: 5px 9px 0 7px; }");
     editorKit.getStyleSheet().addRule("p { padding: 1px 0 2px 0; }");
-    editorKit.getStyleSheet().addRule("ul { padding: 5px 9px 0 7px; }");
+    // override ul {margin-left-ltr: 50; margin-right-rtl: 50} from javax/swing/text/html/default.css
+    editorKit.getStyleSheet().addRule("ul { padding: 5px 9px 0 7px; margin-left-ltr: 10px; margin-right-rtl: 10px; }");
     editorKit.getStyleSheet().addRule("li { padding: 1px 0 2px 0; }");
+    String liImgUrl = getLiImgUrl();
+    if (liImgUrl != null) {
+      editorKit.getStyleSheet().addRule("ul {list-style-image:url('" + liImgUrl + "');}");
+    }
     editorKit.getStyleSheet().addRule(".grayed { color: #909090; display: inline;}");
     editorKit.getStyleSheet().addRule(".centered { text-align: center}");
 
@@ -582,6 +584,13 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     editorKit.getStyleSheet().addRule("tr { margin: 0 0 0 0; padding: 0 0 0 0; }");
     editorKit.getStyleSheet().addRule("td { margin: 2px 0 3.5px 0; padding: 0 0 0 0; }");
     editorKit.getStyleSheet().addRule(".section { color: #909090; padding-right: 4px}");
+  }
+
+  @Nullable
+  private static String getLiImgUrl() {
+    String liImg = IdeTooltipManager.getInstance().getUlImg(false);
+    URL url = liImg != null ? SystemInfo.class.getResource(liImg) : null;
+    return url != null ? StringUtil.escapeCharCharacters(url.toExternalForm()) : null;
   }
 
   private static Color getLinkColor() {
