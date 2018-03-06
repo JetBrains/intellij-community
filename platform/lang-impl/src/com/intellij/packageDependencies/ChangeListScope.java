@@ -21,4 +21,19 @@ public final class ChangeListScope extends FilteredNamedScope {
   public ChangeListScope(@NotNull ChangeList list) {
     super(list.getName(), AllIcons.Toolwindows.ToolWindowChanges, 0, getAfterRevisionsFiles(list.getChanges().stream()).collect(toList()));
   }
+
+  @Override
+  public int hashCode() {
+    return getName().hashCode();
+  }
+
+  @Override
+  public boolean equals(Object object) {
+    if (object == this) return true;
+    if (object instanceof ChangeListScope) {
+      ChangeListScope scope = (ChangeListScope)object;
+      return getName().equals(scope.getName());
+    }
+    return false;
+  }
 }
