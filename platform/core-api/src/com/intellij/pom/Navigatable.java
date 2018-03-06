@@ -17,6 +17,13 @@ public interface Navigatable {
   void navigate(boolean requestFocus);
 
   /**
+   * Indicates whether this instance supports navigation of any kind.
+   * Usually this method is called to ensure that navigation is possible.
+   * Note that it is not called if navigation to source is supported,
+   * i.e. {@link #canNavigateToSource()} returns {@code true}.
+   * We assume that this method should return {@code true} in such case,
+   * so implement this method respectively.
+   *
    * @return {@code false} if navigation is not possible for any reason.
    */
   boolean canNavigate();
@@ -24,10 +31,10 @@ public interface Navigatable {
   /**
    * Indicates whether this instance supports navigation to source (that means some kind of editor).
    * Note that navigation can be supported even if this method returns {@code false}.
-   * In such cases it is not recommended to do batch navigation
-   * for all navigatables available via {@link CommonDataKeys#NAVIGATABLE_ARRAY},
+   * In such cases it is not recommended to do batch navigation for all navigatables
+   * available via {@link com.intellij.openapi.actionSystem.CommonDataKeys#NAVIGATABLE_ARRAY},
    * because it may lead to opening several modal dialogs.
-   * Use {@link OpenSourceUtil#navigate} to process such arrays correctly.
+   * Use {@link com.intellij.util.OpenSourceUtil#navigate} to process such arrays correctly.
    *
    * @return {@code false} if navigation to source is not possible for any reason.
    */
