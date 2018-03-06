@@ -58,14 +58,14 @@ class DiscoveredTestsTree extends Tree {
     myModel.addTest(testClass, testMethod);
   }
 
-  public synchronized List<Module> getContainingModules() {
+  public List<Module> getContainingModules() {
     return myModel.getTestClasses().stream()
          .map(element -> ModuleUtilCore.findModuleForPsiElement(element))
          .filter(module -> module != null)
          .collect(Collectors.toList());
   }
 
-  public synchronized PsiMethod[] getTestMethods() {
+  public PsiMethod[] getTestMethods() {
     return myModel.getTestMethods();
   }
 
