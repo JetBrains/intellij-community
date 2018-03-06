@@ -866,7 +866,7 @@ public class MavenProject {
   @NotNull
   public String getAnnotationProcessorPath() {
     return getAnnotationProcessors()
-      .stream().map(MavenArtifact::getPath).map(FileUtil::toSystemDependentName).collect(Collectors.joining(";"));
+      .stream().map(MavenArtifact::getPath).map(FileUtil::toSystemDependentName).collect(Collectors.joining(File.pathSeparator));
   }
 
   @NotNull
