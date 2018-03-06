@@ -1847,20 +1847,12 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         else {
           SelectInTarget target = getCurrentSelectInTarget();
           if (target != null) {
-            final VirtualFile file = FileEditorManagerEx.getInstanceEx(myProject).getFile(fileEditor);
-            if (file != null && file.isValid()) {
-              final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
-              if (psiFile != null) {
-                final MySelectInContext selectInContext = new MySelectInContext(psiFile, null) {
-                  @Override
-                  public Object getSelectorInFile() {
-                    return psiFile;
-                  }
-                };
+            PsiFile psiFile = getPsiFile(getVirtualFile(fileEditor));
+            if (psiFile != null) {
+              MySelectInContext selectInContext = new MySelectInContext(psiFile, null);
 
-                if (target.canSelect(selectInContext)) {
-                  target.selectIn(selectInContext, false);
-                }
+              if (selectInContext.getPsiFile() != null && target.canSelect(selectInContext)) {
+                target.selectIn(selectInContext, false);
               }
             }
           }
@@ -1882,14 +1874,21 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
           selectElementAtCaret(editor);
           return;
         }
+        VirtualFile file = getVirtualFile(fileEditor);
+        if (scrollFromFile(file)) return;
       }
       final VirtualFile[] selectedFiles = fileEditorManager.getSelectedFiles();
-      if (selectedFiles.length > 0) {
-        final PsiFile file = PsiManager.getInstance(myProject).findFile(selectedFiles[0]);
-        if (file != null) {
-          scrollFromFile(file, null);
-        }
+      for (VirtualFile file : selectedFiles) {
+        if (scrollFromFile(file)) return;
       }
+    }
+
+    private PsiFile getPsiFile(VirtualFile file) {
+      return file == null || !file.isValid() ? null : PsiManager.getInstance(myProject).findFile(file);
+    }
+
+    private VirtualFile getVirtualFile(FileEditor fileEditor) {
+      return fileEditor == null ? null : FileEditorManagerEx.getInstanceEx(myProject).getFile(fileEditor);
     }
 
     private void selectElementAtCaretNotLosingFocus(@NotNull Editor editor) {
@@ -1906,18 +1905,18 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       scrollFromFile(file, editor);
     }
 
+    private boolean scrollFromFile(@Nullable VirtualFile file) {
+      PsiFile psiFile = getPsiFile(file);
+      if (psiFile == null) return false;
+      scrollFromFile(psiFile, null);
+      return true;
+    }
+
     private void scrollFromFile(@NotNull PsiFile file, @Nullable Editor editor) {
-      SmartPsiElementPointer<PsiFile> pointer = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(file);
+      MySelectInContext selectInContext = new MySelectInContext(file, editor);
       PsiDocumentManager.getInstance(myProject).performLaterWhenAllCommitted(() -> {
         SelectInTarget target = getCurrentSelectInTarget();
-        if (target == null) return;
-
-        PsiFile restoredPsi = pointer.getElement();
-        if (restoredPsi == null) return;
-
-        final MySelectInContext selectInContext = new MySelectInContext(restoredPsi, editor);
-
-        if (target.canSelect(selectInContext)) {
+        if (target != null && selectInContext.getPsiFile() != null && target.canSelect(selectInContext)) {
           target.selectIn(selectInContext, false);
         }
       });
