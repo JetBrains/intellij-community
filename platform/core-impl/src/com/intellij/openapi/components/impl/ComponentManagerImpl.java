@@ -244,7 +244,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   private void throwAlreadyDisposed() {
     ReadAction.run(() -> {
       ProgressManager.checkCanceled();
-      throw new AssertionError("Already disposed: "+toString());
+      throw new AssertionError("Already disposed: " + this);
     });
   }
 
