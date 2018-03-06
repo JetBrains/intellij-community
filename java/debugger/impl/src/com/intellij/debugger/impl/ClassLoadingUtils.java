@@ -28,10 +28,13 @@ public class ClassLoadingUtils {
   public static ClassLoaderReference getClassLoader(EvaluationContext context, DebugProcess process) throws EvaluateException {
     try {
       // TODO [egor]: cache?
+      ArrayType arrayType = (ArrayType)context.getDebugProcess().findClass(context, "java.net.URL[]", context.getClassLoader());
+      ArrayReference emptyUrlArray = arrayType.newInstance(0);
+      DebuggerUtilsEx.keep(emptyUrlArray, context);
       ClassType loaderClass = (ClassType)process.findClass(context, "java.net.URLClassLoader", context.getClassLoader());
       Method ctorMethod = loaderClass.concreteMethodByName(JVMNameUtil.CONSTRUCTOR_NAME, "([Ljava/net/URL;Ljava/lang/ClassLoader;)V");
-      ClassLoaderReference reference = (ClassLoaderReference)process.newInstance(context, loaderClass, ctorMethod, Arrays
-        .asList(createURLArray(context), context.getClassLoader()));
+      ClassLoaderReference reference = (ClassLoaderReference)process.newInstance(context, loaderClass, ctorMethod,
+                                                                                 Arrays.asList(emptyUrlArray, context.getClassLoader()));
       DebuggerUtilsEx.keep(reference, context);
       return reference;
     }
@@ -92,14 +95,6 @@ public class ClassLoadingUtils {
       }
       throw e;
     }
-  }
-
-  private static ArrayReference createURLArray(EvaluationContext context)
-    throws EvaluateException {
-    ArrayType arrayType = (ArrayType)context.getDebugProcess().findClass(context, "java.net.URL[]", context.getClassLoader());
-    ArrayReference arrayRef = arrayType.newInstance(0);
-    DebuggerUtilsEx.keep(arrayRef, context);
-    return arrayRef;
   }
 
   private static ArrayReference mirrorOf(byte[] bytes, EvaluationContext context, DebugProcess process)
