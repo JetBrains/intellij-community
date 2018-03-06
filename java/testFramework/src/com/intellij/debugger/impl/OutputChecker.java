@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl;
 
 import com.intellij.execution.process.ProcessOutputTypes;
@@ -23,7 +21,6 @@ import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.project.IntelliJProjectConfiguration;
 import com.intellij.util.PathUtil;
-import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
@@ -31,10 +28,7 @@ import org.junit.Assert;
 import java.io.File;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -209,6 +203,7 @@ public class OutputChecker {
         result = StringUtil.replace(result, "Process finished with exit code 255", "Process finished with exit code -1");
 
         //          result = result.replaceAll(" +\n", "\n");
+        result = result.replaceAll(" -javaagent:.*props", "");
         result = result.replaceAll("!HOST_NAME!:\\d*", "!HOST_NAME!:!HOST_PORT!");
         result = result.replaceAll("at \\'.*?\\'", "at '!HOST_NAME!:PORT_NAME!'");
         result = result.replaceAll("address: \\'.*?\\'", "address: '!HOST_NAME!:PORT_NAME!'");
@@ -219,7 +214,6 @@ public class OutputChecker {
         // unquote extra params
         result = result.replaceAll("\"(-D.*?)\"", "$1");
 
-        result = result.replaceAll(" -javaagent:.*props", "");
         result = result.replaceAll("-Didea.launcher.port=\\d*", "-Didea.launcher.port=!IDEA_LAUNCHER_PORT!");
         result = result.replaceAll("-Dfile.encoding=[\\w\\d-]*", "-Dfile.encoding=!FILE_ENCODING!");
         result = result.replaceAll("\\((.*)\\:\\d+\\)", "($1:!LINE_NUMBER!)");
