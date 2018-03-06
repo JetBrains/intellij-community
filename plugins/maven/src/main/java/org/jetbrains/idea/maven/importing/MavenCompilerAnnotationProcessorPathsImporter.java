@@ -50,10 +50,8 @@ public class MavenCompilerAnnotationProcessorPathsImporter extends MavenImporter
                       MavenProjectChanges changes,
                       Map<MavenProject, String> mavenProjectToModuleName,
                       List<MavenProjectsProcessorTask> postTasks) {
-    String outputDirPath = mavenProject.getGeneratedSourcesDirectory(false) + "/annotations/";
+    String outputDirPath = mavenProject.getAnnotationProcessorDirectory(false);
     rootModel.addGeneratedJavaSourceFolder(outputDirPath, JavaSourceRootType.SOURCE); //todo "ifNotEmpty" flag should be false like in regular source dir
-    WriteCommandAction.runWriteCommandAction(module.getProject(), () -> {
-    });
   }
 
   @Override
