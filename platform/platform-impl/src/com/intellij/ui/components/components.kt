@@ -1,4 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("FunctionName")
+
 package com.intellij.ui.components
 
 import com.intellij.BundleBase
@@ -88,7 +90,7 @@ fun noteComponent(note: String): JComponent {
 @JvmOverloads
 fun htmlComponent(text: String = "", font: Font = UIUtil.getLabelFont(), background: Color? = null, foreground: Color? = null, lineWrap: Boolean = false): JEditorPane {
   val pane = SwingHelper.createHtmlViewer(lineWrap, font, background, foreground)
-  if (!text.isNullOrEmpty()) {
+  if (!text.isEmpty()) {
     pane.text = "<html><head>${UIUtil.getCssFontDeclaration(font, UIUtil.getLabelForeground(), null, null)}</head><body>$text</body></html>"
   }
   pane.border = null
@@ -161,15 +163,15 @@ fun <T : JComponent> installFileCompletionAndBrowseDialog(project: Project?,
                                                           @Nls(capitalization = Nls.Capitalization.Title) browseDialogTitle: String,
                                                           fileChooserDescriptor: FileChooserDescriptor,
                                                           textComponentAccessor: TextComponentAccessor<T>,
-                                                          fileChoosen: ((chosenFile: VirtualFile) -> String)? = null) {
+                                                          fileChosen: ((chosenFile: VirtualFile) -> String)? = null) {
   component.addActionListener(
       object : BrowseFolderActionListener<T>(browseDialogTitle, null, component, project, fileChooserDescriptor, textComponentAccessor) {
         override fun onFileChosen(chosenFile: VirtualFile) {
-          if (fileChoosen == null) {
+          if (fileChosen == null) {
             super.onFileChosen(chosenFile)
           }
           else {
-            textComponentAccessor.setText(myTextComponent.childComponent, fileChoosen(chosenFile))
+            textComponentAccessor.setText(myTextComponent.childComponent, fileChosen(chosenFile))
           }
         }
       })
@@ -181,7 +183,7 @@ fun textFieldWithHistoryWithBrowseButton(project: Project?,
                                          browseDialogTitle: String,
                                          fileChooserDescriptor: FileChooserDescriptor,
                                          historyProvider: (() -> List<String>)? = null,
-                                         fileChoosen: ((chosenFile: VirtualFile) -> String)? = null): TextFieldWithHistoryWithBrowseButton {
+                                         fileChosen: ((chosenFile: VirtualFile) -> String)? = null): TextFieldWithHistoryWithBrowseButton {
   val component = TextFieldWithHistoryWithBrowseButton()
   val textFieldWithHistory = component.childComponent
   textFieldWithHistory.setHistorySize(-1)
@@ -196,7 +198,7 @@ fun textFieldWithHistoryWithBrowseButton(project: Project?,
       browseDialogTitle,
       fileChooserDescriptor,
       TextComponentAccessor.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT,
-      fileChoosen = fileChoosen
+      fileChosen = fileChosen
   )
   return component
 }
