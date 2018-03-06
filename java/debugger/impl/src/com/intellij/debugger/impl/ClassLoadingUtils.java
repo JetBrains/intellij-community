@@ -9,7 +9,6 @@ import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.openapi.util.io.StreamUtil;
-import com.intellij.rt.debugger.ImageSerializer;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,19 +67,19 @@ public class ClassLoadingUtils {
    * May modify class loader in evaluationContext
    */
   @Nullable
-  public static ClassType getHelperClass(String name, EvaluationContext evaluationContext, DebugProcess process) throws EvaluateException {
-    // TODO [egor]: cache and load in boostrap class loader
+  public static ClassType getHelperClass(Class cls, EvaluationContext evaluationContext) throws EvaluateException {
+    // TODO [egor]: cache and load in bootstrap class loader
+    String name = cls.getName();
+    DebugProcess process = evaluationContext.getDebugProcess();
     try {
-      ClassLoaderReference classLoader = evaluationContext.getClassLoader();
-      return (ClassType)process.findClass(evaluationContext, name, classLoader);
+      return (ClassType)process.findClass(evaluationContext, name, evaluationContext.getClassLoader());
     } catch (EvaluateException e) {
       Throwable cause = e.getCause();
       if (cause instanceof InvocationException) {
         if ("java.lang.ClassNotFoundException".equals(((InvocationException)cause).exception().type().name())) {
           // need to define
           ClassLoaderReference classLoader = getClassLoader(evaluationContext, process);
-          InputStream stream = ImageSerializer.class.getResourceAsStream("/" + name.replaceAll("[.]", "/") + ".class");
-          try {
+          try (InputStream stream = cls.getResourceAsStream("/" + name.replaceAll("[.]", "/") + ".class")) {
             if (stream == null) return null;
             defineClass(name, StreamUtil.loadFromStream(stream), evaluationContext, process, classLoader);
             ((EvaluationContextImpl)evaluationContext).setClassLoader(classLoader);
@@ -88,14 +87,6 @@ public class ClassLoadingUtils {
           }
           catch (IOException ioe) {
             throw new EvaluateException("Unable to read " + name + " class bytes", ioe);
-          }
-          finally {
-            try {
-              if (stream != null) {
-                stream.close();
-              }
-            }
-            catch (IOException ignored) {}
           }
         }
       }
