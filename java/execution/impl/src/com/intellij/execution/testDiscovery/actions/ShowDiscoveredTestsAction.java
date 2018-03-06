@@ -33,6 +33,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.components.JBList;
@@ -88,7 +89,9 @@ public class ShowDiscoveredTestsAction extends AnAction {
     Editor editor = e.getData(EDITOR);
     PsiFile file = e.getData(PSI_FILE);
     if (editor == null || file == null) return null;
-    UMethod uMethod = UastContextKt.findUElementAt(file, editor.getCaretModel().getOffset(), UMethod.class);
+    PsiElement at = file.findElementAt(editor.getCaretModel().getOffset());
+    PsiElement prev = at == null ? null : PsiTreeUtil.prevVisibleLeaf(at);
+    UMethod uMethod = UastContextKt.getUastParentOfType(prev, UMethod.class);
     return uMethod == null ? null : ObjectUtils.tryCast(uMethod.getJavaPsi(), PsiMethod.class);
   }
 
