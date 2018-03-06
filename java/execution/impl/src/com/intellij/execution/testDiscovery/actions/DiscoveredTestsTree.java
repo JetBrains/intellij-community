@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testDiscovery.actions;
 
-import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.Iconable;
@@ -14,14 +13,12 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultTreeCellRenderer;
+import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
-import java.awt.*;
-import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -59,15 +56,15 @@ class DiscoveredTestsTree extends Tree {
   }
 
   public synchronized void addTest(@NotNull PsiClass testClass,
-                      @NotNull PsiMethod testMethod) {
+                                   @NotNull PsiMethod testMethod) {
     myModel.addTest(testClass, testMethod);
   }
 
   public List<Module> getContainingModules() {
     return myModel.getTestClasses().stream()
-         .map(element -> ModuleUtilCore.findModuleForPsiElement(element))
-         .filter(module -> module != null)
-         .collect(Collectors.toList());
+                  .map(element -> ModuleUtilCore.findModuleForPsiElement(element))
+                  .filter(module -> module != null)
+                  .collect(Collectors.toList());
   }
 
   public PsiMethod[] getTestMethods() {
@@ -75,7 +72,8 @@ class DiscoveredTestsTree extends Tree {
   }
 
   public PsiElement getSelectedElement() {
-    return (PsiElement)getSelectionModel().getSelectionPath().getLastPathComponent();
+    TreePath path = getSelectionModel().getSelectionPath();
+    return ObjectUtils.tryCast(path == null ? null : path.getLastPathComponent(), PsiElement.class);
   }
 
   public int getTestCount() {
