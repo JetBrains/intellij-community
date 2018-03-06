@@ -6,6 +6,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
+/**
+ * This class customizes 'run anything' command process handler settings depending on input command
+ */
 public abstract class RunAnythingCommandHandler {
   public static final ExtensionPointName<RunAnythingCommandHandler> EP_NAME =
     ExtensionPointName.create("org.jetbrains.plugins.ruby.runAnythingCommandHandler");
