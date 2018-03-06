@@ -327,10 +327,6 @@ public class ExternalSystemUtil {
         final boolean synchronous = progressExecutionMode == ProgressExecutionMode.MODAL_SYNC;
         ServiceManager.getService(ProjectDataManager.class).importData(externalProject, project, synchronous);
       }
-
-      @Override
-      public void onFailure(@NotNull String errorMessage, @Nullable String errorDetails) {
-      }
     }, isPreviewMode, progressExecutionMode, true);
   }
 
@@ -425,7 +421,7 @@ public class ExternalSystemUtil {
         ExternalSystemProcessingManager processingManager = ServiceManager.getService(ExternalSystemProcessingManager.class);
         if (processingManager.findTask(ExternalSystemTaskType.RESOLVE_PROJECT, externalSystemId, externalProjectPath) != null) {
           if (callback != null) {
-            callback.onFailure(ExternalSystemBundle.message("error.resolve.already.running", externalProjectPath), null);
+            callback.onFailure(myTask.getId(), ExternalSystemBundle.message("error.resolve.already.running", externalProjectPath), null);
           }
           return;
         }
@@ -553,7 +549,7 @@ public class ExternalSystemUtil {
                 if (externalProject != null && importSpec.shouldCreateDirectoriesForEmptyContentRoots()) {
                   externalProject.putUserData(ContentRootDataService.CREATE_EMPTY_DIRECTORIES, Boolean.TRUE);
                 }
-                callback.onSuccess(externalProject);
+                callback.onSuccess(myTask.getId(), externalProject);
               }
             }
             if (!isPreviewMode) {
@@ -573,7 +569,7 @@ public class ExternalSystemUtil {
           }
 
           if (callback != null) {
-            callback.onFailure(message, extractDetails(error));
+            callback.onFailure(myTask.getId(), message, extractDetails(error));
           }
         }
         finally {
@@ -1146,10 +1142,6 @@ public class ExternalSystemUtil {
       }
 
       myProjectDataManager.importData(externalProject, myProject, true);
-    }
-
-    @Override
-    public void onFailure(@NotNull String errorMessage, @Nullable String errorDetails) {
     }
   }
 }

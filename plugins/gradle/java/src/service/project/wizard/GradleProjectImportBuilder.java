@@ -153,10 +153,6 @@ public class GradleProjectImportBuilder extends AbstractExternalProjectImportBui
           importTask.run();
         }
       }
-
-      @Override
-      public void onFailure(@NotNull String errorMessage, @Nullable String errorDetails) {
-      }
     };
   }
 
