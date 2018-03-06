@@ -12,8 +12,8 @@ abstract class StreamExTestCase : LibraryTraceExecutionTestCase("streamex-0.6.5.
   private companion object {
     const val STREAM_EX_REFLECTION_WARNING_MESSAGE =
       "WARNING: An illegal reflective access operation has occurred\n" +
-      "WARNING: Illegal reflective access by one.util.streamex.StreamExInternals (file:/C:/Projects/IDEA/community/plugins/" +
-      "stream-debugger/lib/streamex-0.6.5.jar) to field java.util.stream.AbstractPipeline.sourceSpliterator\n" +
+      "WARNING: Illegal reflective access by one.util.streamex.StreamExInternals (file:!LIBRARY_JAR!) to field " +
+      "java.util.stream.AbstractPipeline.sourceSpliterator\n" +
       "WARNING: Please consider reporting this to the maintainers of one.util.streamex.StreamExInternals\n" +
       "WARNING: Use --illegal-access=warn to enable warnings of further illegal reflective access operations\n" +
       "WARNING: All illegal access operations will be denied in a future release\n"
@@ -26,7 +26,9 @@ abstract class StreamExTestCase : LibraryTraceExecutionTestCase("streamex-0.6.5.
   }
 
   override fun replaceAdditionalInOutput(str: String): String {
-    return super.replaceAdditionalInOutput(str).replace(STREAM_EX_REFLECTION_WARNING_MESSAGE, "")
+    return super.replaceAdditionalInOutput(str)
+      .replace("file:/!LIBRARY_JAR!", "file:!LIBRARY_JAR!")
+      .replace(STREAM_EX_REFLECTION_WARNING_MESSAGE, "")
   }
 
   private val className: String
