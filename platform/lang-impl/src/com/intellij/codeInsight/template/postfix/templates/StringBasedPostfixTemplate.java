@@ -74,19 +74,7 @@ public abstract class StringBasedPostfixTemplate extends PostfixTemplateWithExpr
     return true;
   }
 
-  /**
-   * @deprecated use {@link StringBasedPostfixTemplate#getElementToRemove(PsiElement)} (idea 16 to remove)
-   */
-  protected boolean shouldRemoveParent() {
-    return true;
-  }
-
   protected PsiElement getElementToRemove(PsiElement expr) {
-    if (shouldRemoveParent()) {
-      return expr.getParent();
-    }
-    else {
-      return expr;
-    }
+    return expr.getParent();
   }
 }
