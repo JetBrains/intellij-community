@@ -30,7 +30,7 @@ public class RunAnythingCommandGroup extends RunAnythingGroup {
 
   public RunAnythingAction.SearchResult getItems(@NotNull Project project,
                                                  @Nullable Module module,
-                                                 @NotNull RunAnythingSearchListModel listModel,
+                                                 @NotNull RunAnythingSearchListModel model,
                                                  @NotNull String pattern,
                                                  boolean isMore,
                                                  @NotNull Runnable check) {
@@ -38,7 +38,7 @@ public class RunAnythingCommandGroup extends RunAnythingGroup {
 
     check.run();
     for (String command : ContainerUtil.iterateBackward(RunAnythingCache.getInstance(project).getState().getCommands())) {
-      if (addToList(listModel, result, pattern, new RunAnythingCommandItem(project, module, command), command, isMore)) break;
+      if (addToList(model, result, pattern, new RunAnythingCommandItem(project, module, command), command, isMore)) break;
       check.run();
     }
     return result;

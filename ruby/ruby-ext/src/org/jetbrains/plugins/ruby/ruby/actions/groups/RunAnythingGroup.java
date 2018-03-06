@@ -47,14 +47,14 @@ public abstract class RunAnythingGroup {
   /**
    * Gets current group items to add into the main list.
    *
-   * @param listModel main list model
-   * @param pattern   input search string
-   * @param check     checks 'load more' calculation process to be cancelled
-   * @param isMore    limits group items to get by a constant group specific value
+   * @param model   main list model
+   * @param pattern input search string
+   * @param isMore  if true gets {@link #DEFAULT_MORE_STEP_COUNT} group items, else limits to {@link #getMaxItemsToShow()}
+   * @param check   checks 'load more' calculation process to be cancelled
    */
   protected abstract SearchResult getItems(@NotNull Project project,
                                            @Nullable Module module,
-                                           @NotNull RunAnythingSearchListModel listModel,
+                                           @NotNull RunAnythingSearchListModel model,
                                            @NotNull String pattern,
                                            boolean isMore,
                                            @NotNull Runnable check);
@@ -69,18 +69,18 @@ public abstract class RunAnythingGroup {
   /**
    * Adds current group matched items into the list.
    *
-   * @param listModel  main list model
+   * @param model      main list model
    * @param pattern    input search string
    * @param check      checks 'load more' calculation process to be cancelled
    * @param isCanceled computes if 'load more' calculation process has already cancelled
    */
   public final synchronized void buildToList(@NotNull Project project,
                                              @Nullable Module module,
-                                             @NotNull RunAnythingSearchListModel listModel,
+                                             @NotNull RunAnythingSearchListModel model,
                                              @NotNull String pattern,
                                              @NotNull Runnable check,
                                              @NotNull Computable<Boolean> isCanceled) {
-    SearchResult result = getAllItems(project, module, listModel, pattern, false, check);
+    SearchResult result = getAllItems(project, module, model, pattern, false, check);
 
     check.run();
     if (result.size() > 0) {
@@ -88,11 +88,11 @@ public abstract class RunAnythingGroup {
       SwingUtilities.invokeLater(() -> {
         if (isCanceled.compute()) return;
 
-        titleIndex = listModel.size();
+        titleIndex = model.size();
         for (Object file : result) {
-          listModel.addElement(file);
+          model.addElement(file);
         }
-        moreIndex = result.needMore ? listModel.getSize() - 1 : -1;
+        moreIndex = result.needMore ? model.getSize() - 1 : -1;
       });
     }
   }
@@ -103,7 +103,7 @@ public abstract class RunAnythingGroup {
    * @param listModel   main list model
    * @param pattern     input search string
    * @param result      collection items to be added to
-   * @param isMore      limits group items to get by a constant group specific value
+   * @param isMore      if true gets {@link #DEFAULT_MORE_STEP_COUNT} group items, else limits to {@link #getMaxItemsToShow()}
    * @param textToMatch an item presentation text to be matched with
    *
    * @return true if limit exceeded
@@ -125,7 +125,7 @@ public abstract class RunAnythingGroup {
   }
 
   /**
-   * Gets all current group matched items if its visibility turned on and empty collection otherwise
+   * Gets all current group matched by {@code pattern} items if its visibility turned on and empty collection otherwise
    *
    * @param listModel main list model
    * @param pattern   input search string

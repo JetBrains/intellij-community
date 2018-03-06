@@ -3,8 +3,11 @@ package org.jetbrains.plugins.ruby.ruby.actions.groups;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.module.Module;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.RBundle;
 import org.jetbrains.plugins.ruby.rails.actions.generators.actions.GeneratorsActionGroup;
+
+import java.util.List;
 
 public class RunAnythingGeneratorGroup extends RunAnythingActionGroup<AnAction> {
   private static final int MAX_GENERATORS = 3;
@@ -34,7 +37,7 @@ public class RunAnythingGeneratorGroup extends RunAnythingActionGroup<AnAction> 
 
   @NotNull
   @Override
-  protected AnAction[] getActions(Module module) {
-    return GeneratorsActionGroup.collectGeneratorsActions(module, false).toArray(AnAction.EMPTY_ARRAY);
+  protected List<AnAction> getActions(@Nullable Module module) {
+    return GeneratorsActionGroup.collectGeneratorsActions(module, false);
   }
 }

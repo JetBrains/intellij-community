@@ -5,12 +5,15 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.module.Module;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.RBundle;
 import org.jetbrains.plugins.ruby.gem.bundler.actions.AbstractBundlerAction;
 
+import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class RunAnythingBundlerActionGroup extends RunAnythingActionGroup {
+public class RunAnythingBundlerActionGroup extends RunAnythingActionGroup<AnAction> {
   private static final int MAX_BUNDLER_ACTIONS = 2;
 
   @NotNull
@@ -38,8 +41,8 @@ public class RunAnythingBundlerActionGroup extends RunAnythingActionGroup {
 
   @NotNull
   @Override
-  protected AnAction[] getActions(Module module) {
+  protected List<AnAction> getActions(@Nullable Module module) {
     return Stream.of(((DefaultActionGroup)ActionManager.getInstance().getAction("BUNDLER_ACTIONS")).getChildren(null))
-                 .filter(action -> action instanceof AbstractBundlerAction).toArray(AnAction[]::new);
+                 .filter(action -> action instanceof AbstractBundlerAction).collect(Collectors.toList());
   }
 }

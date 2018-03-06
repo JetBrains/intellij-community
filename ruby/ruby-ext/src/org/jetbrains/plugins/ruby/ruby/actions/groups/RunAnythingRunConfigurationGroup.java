@@ -24,7 +24,7 @@ public abstract class RunAnythingRunConfigurationGroup extends RunAnythingGroup 
   @Override
   public RunAnythingAction.SearchResult getItems(@NotNull Project project,
                                                  @Nullable Module module,
-                                                 @NotNull RunAnythingSearchListModel listModel,
+                                                 @NotNull RunAnythingSearchListModel model,
                                                  @NotNull String pattern,
                                                  boolean isMore, @NotNull Runnable check) {
 
@@ -42,7 +42,7 @@ public abstract class RunAnythingRunConfigurationGroup extends RunAnythingGroup 
       if (!isTemporary(wrapper)) continue;
 
       RunAnythingRunConfigurationItem runConfigurationItem = new RunAnythingRunConfigurationItem(wrapper);
-      if (addToList(listModel, result, pattern, runConfigurationItem, runConfigurationItem.getText(), isMore)) break;
+      if (addToList(model, result, pattern, runConfigurationItem, runConfigurationItem.getText(), isMore)) break;
       check.run();
     }
 

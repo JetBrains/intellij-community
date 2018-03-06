@@ -4,6 +4,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.module.Module;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.RBundle;
@@ -13,6 +14,8 @@ import org.jetbrains.plugins.ruby.tasks.rake.RakeTaskModuleCache;
 import org.jetbrains.plugins.ruby.tasks.rake.task.RakeTask;
 
 import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class RunAnythingRakeGroup extends RunAnythingActionGroup<RakeAction> {
   private static final int MAX_RAKE = 5;
@@ -48,19 +51,19 @@ public class RunAnythingRakeGroup extends RunAnythingActionGroup<RakeAction> {
 
   @NotNull
   @Override
-  protected RakeAction[] getActions(Module module) {
-    if (module == null || !RailsFacetUtil.hasRailsSupport(module)) return new RakeAction[0];
+  protected List<RakeAction> getActions(@Nullable Module module) {
+    if (module == null || !RailsFacetUtil.hasRailsSupport(module)) return ContainerUtil.emptyList();
 
     RakeTask rakeTasks = RakeTaskModuleCache.getInstance(module).getRakeTasks();
     if (rakeTasks != null) {
       DataContext dataContext = SimpleDataContext.getSimpleContext(LangDataKeys.MODULE.getName(), module);
       return Arrays.stream(RakeTaskModuleCache.getInstance(module).getRakeActions())
-                            .filter(RakeAction.class::isInstance)
-                            .map(RakeAction.class::cast)
-                            .peek(rakeAction -> rakeAction.updateAction(dataContext, rakeAction.getTemplatePresentation()))
-                            .toArray(RakeAction[]::new);
+                   .filter(RakeAction.class::isInstance)
+                   .map(RakeAction.class::cast)
+                   .peek(rakeAction -> rakeAction.updateAction(dataContext, rakeAction.getTemplatePresentation()))
+                   .collect(Collectors.toList());
     }
 
-    return new RakeAction[0];
+    return ContainerUtil.emptyList();
   }
 }

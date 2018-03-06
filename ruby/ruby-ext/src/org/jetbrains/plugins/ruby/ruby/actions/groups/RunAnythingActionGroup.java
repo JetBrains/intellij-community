@@ -11,6 +11,8 @@ import org.jetbrains.plugins.ruby.ruby.actions.RunAnythingAction;
 import org.jetbrains.plugins.ruby.ruby.actions.RunAnythingActionItem;
 import org.jetbrains.plugins.ruby.ruby.actions.RunAnythingSearchListModel;
 
+import java.util.List;
+
 public abstract class RunAnythingActionGroup<T extends AnAction> extends RunAnythingGroup {
   @NotNull
   protected abstract String getPrefix();
@@ -21,12 +23,12 @@ public abstract class RunAnythingActionGroup<T extends AnAction> extends RunAnyt
   }
 
   @NotNull
-  protected abstract T[] getActions(Module module);
+  protected abstract List<T> getActions(@Nullable Module module);
 
   @Override
   public RunAnythingAction.SearchResult getItems(@NotNull Project project,
                                                  @Nullable Module module,
-                                                 @NotNull RunAnythingSearchListModel listModel,
+                                                 @NotNull RunAnythingSearchListModel model,
                                                  @NotNull String pattern,
                                                  boolean isMore,
                                                  @NotNull Runnable check) {
@@ -39,7 +41,7 @@ public abstract class RunAnythingActionGroup<T extends AnAction> extends RunAnyt
       RunAnythingActionItem actionItem = new RunAnythingActionItem(action, actionText == null ? ObjectUtils
         .notNull(action.getTemplatePresentation().getText(), RBundle.message("run.anything.acton.group.title")) : actionText);
 
-      if (addToList(listModel, result, pattern, actionItem, getPrefix() + " " + actionItem.getText(), isMore)) break;
+      if (addToList(model, result, pattern, actionItem, getPrefix() + " " + actionItem.getText(), isMore)) break;
       check.run();
     }
 
