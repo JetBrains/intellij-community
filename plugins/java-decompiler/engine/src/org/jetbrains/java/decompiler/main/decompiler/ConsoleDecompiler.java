@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.main.decompiler;
 
 import org.jetbrains.java.decompiler.main.DecompilerContext;
@@ -97,25 +97,30 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
   // *******************************************************************
 
   private final File root;
-  private final Fernflower fernflower;
+  private final Fernflower engine;
   private final Map<String, ZipOutputStream> mapArchiveStreams = new HashMap<>();
   private final Map<String, Set<String>> mapArchiveEntries = new HashMap<>();
 
   protected ConsoleDecompiler(File destination, Map<String, Object> options, IFernflowerLogger logger) {
     root = destination;
-    fernflower = new Fernflower(this, this, options, logger);
+    engine = new Fernflower(this, this, options, logger);
   }
 
   public void addSpace(File file, boolean isOwn) {
-    fernflower.getStructContext().addSpace(file, isOwn);
+    if (isOwn) {
+      engine.addSource(file);
+    }
+    else {
+      engine.addLibrary(file);
+    }
   }
 
   public void decompileContext() {
     try {
-      fernflower.decompileContext();
+      engine.decompileContext();
     }
     finally {
-      fernflower.clearContext();
+      engine.clearContext();
     }
   }
 
