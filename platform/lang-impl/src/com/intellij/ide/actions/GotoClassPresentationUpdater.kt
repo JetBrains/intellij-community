@@ -21,18 +21,21 @@ class GotoClassPresentationUpdater : PreloadingActivity() {
   companion object {
     @JvmStatic
     fun getMainElementKind(): String {
-      val mainIdeLanguage = IdeLanguageCustomization.getInstance().mainIdeLanguage
+      val primaryIdeLanguages = IdeLanguageCustomization.getInstance().primaryIdeLanguages
       val mainContributor = ChooseByNameRegistry.getInstance().classModelContributors
                               .filterIsInstance(GotoClassContributor::class.java)
-                              .firstOrNull { mainIdeLanguage != null && mainIdeLanguage.`is`(it.elementLanguage) }
+                              .firstOrNull { it.elementLanguage in primaryIdeLanguages }
       return mainContributor?.elementKind ?: IdeBundle.message("go.to.class.kind.text")
     }
 
     private fun getElementKinds(): LinkedHashSet<String> {
-      val mainIdeLanguage = IdeLanguageCustomization.getInstance().mainIdeLanguage
+      val primaryIdeLanguages = IdeLanguageCustomization.getInstance().primaryIdeLanguages
       return ChooseByNameRegistry.getInstance().classModelContributors
         .filterIsInstance(GotoClassContributor::class.java)
-        .sortedBy { if (mainIdeLanguage != null && mainIdeLanguage.`is`(it.elementLanguage)) 0 else 1 }
+        .sortedBy { 
+          val index = primaryIdeLanguages.indexOf(it.elementLanguage)
+          if (index == -1) primaryIdeLanguages.size else index
+        }
         .mapTo(LinkedHashSet()) { it.elementKind }
     }
   }
