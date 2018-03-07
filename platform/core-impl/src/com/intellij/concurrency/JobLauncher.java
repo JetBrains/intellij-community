@@ -16,6 +16,7 @@
 package com.intellij.concurrency;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -36,6 +37,25 @@ public abstract class JobLauncher {
     return ServiceManager.getService(JobLauncher.class);
   }
 
+  /**
+   * Schedules concurrent execution of #thingProcessor over each element of #things and waits for completion
+   * With checkCanceled in each thread delegated to our current progress
+   *
+   * @param things                      data to process concurrently
+   * @param progress                    progress indicator
+   * @param thingProcessor              to be invoked concurrently on each element from the collection
+   * @return false if tasks have been canceled,
+   *         or at least one processor returned false,
+   *         or threw an exception,
+   *         or we were unable to start read action in at least one thread
+   * @throws ProcessCanceledException if at least one task has thrown ProcessCanceledException
+   */
+  public <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<T> things,
+                                                     ProgressIndicator progress,
+                                                     @NotNull Processor<? super T> thingProcessor) throws ProcessCanceledException {
+    return invokeConcurrentlyUnderProgress(things, progress, ApplicationManager.getApplication().isReadAccessAllowed(),
+                                           ((ApplicationEx)ApplicationManager.getApplication()).isInImpatientReader(), thingProcessor);
+  }
   /**
    * Schedules concurrent execution of #thingProcessor over each element of #things and waits for completion
    * With checkCanceled in each thread delegated to our current progress

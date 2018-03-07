@@ -219,6 +219,11 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     }
   }
 
+  @Override
+  public boolean isInImpatientReader() {
+    return myLock.isInImpatientReader();
+  }
+
   private boolean disposeSelf(final boolean checkCanCloseProject) {
     final ProjectManagerImpl manager = (ProjectManagerImpl)ProjectManagerEx.getInstanceEx();
     if (manager == null) {

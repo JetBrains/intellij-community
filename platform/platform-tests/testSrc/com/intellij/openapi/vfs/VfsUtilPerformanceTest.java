@@ -110,7 +110,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
     NewVirtualFile root = ManagingFS.getInstance().findRoot(path, fs);
     PlatformTestUtil.startPerformanceTest("finding root", 10_000,
         () -> JobLauncher.getInstance().invokeConcurrentlyUnderProgress(
-        Collections.nCopies(500, null), null, false, false,
+        Collections.nCopies(500, null), null, 
         __ -> {
           for (int i = 0; i < 20_000; i++) {
             NewVirtualFile rootJar = ManagingFS.getInstance().findRoot(path, fs);
@@ -199,7 +199,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
   public void testAsyncRefresh() throws Throwable {
     Ref<Throwable> ex = Ref.create();
     boolean success = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(
-      Arrays.asList(new Object[JobSchedulerImpl.getJobPoolParallelism()]), ProgressManager.getInstance().getProgressIndicator(), false,
+      Arrays.asList(new Object[JobSchedulerImpl.getJobPoolParallelism()]), ProgressManager.getInstance().getProgressIndicator(), 
       o -> {
         try {
           doAsyncRefreshTest();
