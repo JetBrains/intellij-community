@@ -257,7 +257,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
   static {
     Charset cs = null;
     try {
-      cs = SystemInfo.isWindows | SystemInfo.isMac ? CharsetToolkit.UTF8_CHARSET : Charset.forName(System.getProperty("sun.jnu.encoding"));
+      cs = SystemInfo.isWindows || SystemInfo.isMac ? CharsetToolkit.UTF8_CHARSET : Charset.forName(System.getProperty("sun.jnu.encoding"));
     }
     catch (IllegalArgumentException ignored) { }
     CHARSET = cs;
@@ -475,7 +475,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
 
       long t = System.currentTimeMillis();
       while (!processHandler.isProcessTerminated()) {
-        if ((System.currentTimeMillis() - t) > 5000) {
+        if (System.currentTimeMillis() - t > 5000) {
           throw new InterruptedException("Timed out waiting watcher process to terminate");
         }
         TimeoutUtil.sleep(100);

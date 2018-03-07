@@ -16,7 +16,7 @@ public class IntentionsUIImpl implements IntentionsUI {
 
   private volatile IntentionHintComponent myLastIntentionHint;
 
-  public IntentionHintComponent getLastIntentionHint() {
+  IntentionHintComponent getLastIntentionHint() {
     return myLastIntentionHint;
   }
 
