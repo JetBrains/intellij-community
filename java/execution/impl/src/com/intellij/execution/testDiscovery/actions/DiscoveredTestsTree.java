@@ -62,7 +62,9 @@ class DiscoveredTestsTree extends Tree implements DataProvider {
         if (value instanceof PsiMember) {
           PsiMember psi = (PsiMember)value;
           setIcon(psi.getIcon(Iconable.ICON_FLAG_READ_STATUS));
-          append(psi.getName());
+          String name = psi.getName();
+          assert name != null;
+          append(name);
           if (psi instanceof PsiClass) {
             String packageName = PsiUtil.getPackageName((PsiClass)psi);
             if (packageName != null) {
