@@ -1108,11 +1108,11 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
                                 @NotNull Runnable check,
                                 @NotNull Computable<Boolean> isCanceled,
                                 boolean isRecent) {
-      Condition<RunAnythingGroup> recent = isRecent ? ((group) -> group.isRecent()) : Condition.TRUE;
+      Condition<RunAnythingGroup> recent = isRecent ? ((group) -> group.shouldBeShownInitially()) : Condition.TRUE;
       Arrays.stream(RunAnythingGroup.EP_NAME.getExtensions())
             .filter(group -> recent.value(group))
             .forEach(runAnythingGroup -> {
-              runReadAction(() -> runAnythingGroup.buildToList(myProject, myModule, myListModel, pattern, check, isCanceled));
+              runReadAction(() -> runAnythingGroup.collectItems(myProject, myModule, myListModel, pattern, check, isCanceled));
               check.run();
             });
     }

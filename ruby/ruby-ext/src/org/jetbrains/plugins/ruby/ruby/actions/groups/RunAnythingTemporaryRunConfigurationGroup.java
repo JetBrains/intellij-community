@@ -19,7 +19,7 @@ public class RunAnythingTemporaryRunConfigurationGroup extends RunAnythingRunCon
   }
 
   @Override
-  public boolean isRecent() {
+  public boolean shouldBeShownInitially() {
     return true;
   }
 

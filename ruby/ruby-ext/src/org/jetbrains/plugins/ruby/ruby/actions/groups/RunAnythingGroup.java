@@ -25,14 +25,14 @@ public abstract class RunAnythingGroup {
 
   private static final int DEFAULT_MORE_STEP_COUNT = 5;
   /**
-   * {@link #moreIndex} is a group 'load more..' index in the main list.
+   * {@link #myMoreIndex} is a group 'load more..' index in the main list.
    */
-  private volatile int moreIndex = -1;
+  private volatile int myMoreIndex = -1;
 
   /**
-   * {@link #titleIndex} is an index of group title.
+   * {@link #myTitleIndex} is an index of group title.
    */
-  private volatile int titleIndex = -1;
+  private volatile int myTitleIndex = -1;
 
   /**
    * @return Current group title in the main list.
@@ -69,7 +69,7 @@ public abstract class RunAnythingGroup {
   /**
    * @return Defines whether this group should be shown with empty input or not.
    */
-  public boolean isRecent() {
+  public boolean shouldBeShownInitially() {
     return false;
   }
 
@@ -81,12 +81,12 @@ public abstract class RunAnythingGroup {
    * @param check      checks 'load more' calculation process to be cancelled
    * @param isCanceled computes if 'load more' calculation process has already cancelled
    */
-  public final synchronized void buildToList(@NotNull Project project,
-                                             @Nullable Module module,
-                                             @NotNull RunAnythingSearchListModel model,
-                                             @NotNull String pattern,
-                                             @NotNull Runnable check,
-                                             @NotNull Computable<Boolean> isCanceled) {
+  public final synchronized void collectItems(@NotNull Project project,
+                                              @Nullable Module module,
+                                              @NotNull RunAnythingSearchListModel model,
+                                              @NotNull String pattern,
+                                              @NotNull Runnable check,
+                                              @NotNull Computable<Boolean> isCanceled) {
     SearchResult result = getAllItems(project, module, model, pattern, false, check);
 
     check.run();
@@ -95,11 +95,11 @@ public abstract class RunAnythingGroup {
       SwingUtilities.invokeLater(() -> {
         if (isCanceled.compute()) return;
 
-        titleIndex = model.size();
+        myTitleIndex = model.size();
         for (Object file : result) {
           model.addElement(file);
         }
-        moreIndex = result.needMore ? model.getSize() - 1 : -1;
+        myMoreIndex = result.needMore ? model.getSize() - 1 : -1;
       });
     }
   }
@@ -149,86 +149,86 @@ public abstract class RunAnythingGroup {
   }
 
   /**
-   * Resets current group {@link #moreIndex}.
+   * Resets current group {@link #myMoreIndex}.
    */
   public void dropMoreIndex() {
-    moreIndex = -1;
+    myMoreIndex = -1;
   }
 
   /**
-   * Shifts {@link #moreIndex} starting from {@code index} to {@code shift}.
+   * Shifts {@link #myMoreIndex} starting from {@code index} to {@code shift}.
    */
   private static void shiftMoreIndex(int index, int shift) {
-    Arrays.stream(EP_NAME.getExtensions()).filter(runAnythingGroup -> runAnythingGroup.moreIndex >= index)
-          .forEach(runAnythingGroup -> runAnythingGroup.moreIndex += shift);
+    Arrays.stream(EP_NAME.getExtensions()).filter(runAnythingGroup -> runAnythingGroup.myMoreIndex >= index)
+          .forEach(runAnythingGroup -> runAnythingGroup.myMoreIndex += shift);
   }
 
   /**
    * Finds group title by {@code index}.
    *
-   * @return group title if {@code index} is equals to group {@link #titleIndex} and {@code null} if nothing found
+   * @return group title if {@code index} is equals to group {@link #myTitleIndex} and {@code null} if nothing found
    */
   @Nullable
   public static String getTitle(int index) {
-    return Arrays.stream(EP_NAME.getExtensions()).filter(runAnythingGroup -> index == runAnythingGroup.titleIndex).findFirst()
+    return Arrays.stream(EP_NAME.getExtensions()).filter(runAnythingGroup -> index == runAnythingGroup.myTitleIndex).findFirst()
                  .map(RunAnythingGroup::getTitle).orElse(null);
   }
 
   /**
-   * Shifts {@link #titleIndex} starting from {@code index} to {@code shift}.
+   * Shifts {@link #myTitleIndex} starting from {@code index} to {@code shift}.
    */
   private static void shift(int index, int shift) {
     Arrays.stream(EP_NAME.getExtensions())
-          .filter(runAnythingGroup -> runAnythingGroup.titleIndex != -1 && runAnythingGroup.titleIndex > index)
-          .forEach(runAnythingGroup -> runAnythingGroup.titleIndex += shift);
+          .filter(runAnythingGroup -> runAnythingGroup.myTitleIndex != -1 && runAnythingGroup.myTitleIndex > index)
+          .forEach(runAnythingGroup -> runAnythingGroup.myTitleIndex += shift);
   }
 
   /**
-   * Clears {@link #moreIndex} of all groups.
+   * Clears {@link #myMoreIndex} of all groups.
    */
   public static void clearMoreIndex() {
-    Arrays.stream(EP_NAME.getExtensions()).forEach(runAnythingGroup -> runAnythingGroup.moreIndex = -1);
+    Arrays.stream(EP_NAME.getExtensions()).forEach(runAnythingGroup -> runAnythingGroup.myMoreIndex = -1);
   }
 
   /**
-   * Clears {@link #titleIndex} of all groups.
+   * Clears {@link #myTitleIndex} of all groups.
    */
   private static void clearTitleIndex() {
-    Arrays.stream(EP_NAME.getExtensions()).forEach(runAnythingGroup -> runAnythingGroup.titleIndex = -1);
+    Arrays.stream(EP_NAME.getExtensions()).forEach(runAnythingGroup -> runAnythingGroup.myTitleIndex = -1);
   }
 
   /**
-   * Joins {@link #titleIndex} and {@link #moreIndex} of all groups; using for navigating by 'TAB' between groups.
+   * Joins {@link #myTitleIndex} and {@link #myMoreIndex} of all groups; using for navigating by 'TAB' between groups.
    */
   public static int[] getAllIndexes() {
     TIntArrayList list = new TIntArrayList();
     for (RunAnythingGroup runAnythingGroup : EP_NAME.getExtensions()) {
-      list.add(runAnythingGroup.titleIndex);
+      list.add(runAnythingGroup.myTitleIndex);
     }
     for (RunAnythingGroup runAnythingGroup : EP_NAME.getExtensions()) {
-      list.add(runAnythingGroup.moreIndex);
+      list.add(runAnythingGroup.myMoreIndex);
     }
 
     return list.toNativeArray();
   }
 
   /**
-   * Finds matched by {@link #moreIndex} group.
+   * Finds matched by {@link #myMoreIndex} group.
    */
   @Nullable
   public static RunAnythingGroup findRunAnythingGroup(int index) {
-    return Arrays.stream(EP_NAME.getExtensions()).filter(runAnythingGroup -> index == runAnythingGroup.moreIndex).findFirst().orElse(null);
+    return Arrays.stream(EP_NAME.getExtensions()).filter(runAnythingGroup -> index == runAnythingGroup.myMoreIndex).findFirst().orElse(null);
   }
 
   /**
-   * Returns {@code true} if {@code index} is a {@link #moreIndex} of some group, {@code false} otherwise
+   * Returns {@code true} if {@code index} is a {@link #myMoreIndex} of some group, {@code false} otherwise
    */
   public static boolean isMoreIndex(int index) {
-    return Arrays.stream(EP_NAME.getExtensions()).anyMatch(runAnythingGroup -> runAnythingGroup.moreIndex == index);
+    return Arrays.stream(EP_NAME.getExtensions()).anyMatch(runAnythingGroup -> runAnythingGroup.myMoreIndex == index);
   }
 
   /**
-   * Shifts {@link #moreIndex} and {@link #titleIndex} of all groups starting from {@code baseIndex} to {@code shift}.
+   * Shifts {@link #myMoreIndex} and {@link #myTitleIndex} of all groups starting from {@code baseIndex} to {@code shift}.
    */
   public static void shiftIndexes(int baseIndex, int shift) {
     shift(baseIndex, shift);
@@ -236,7 +236,7 @@ public abstract class RunAnythingGroup {
   }
 
   /**
-   * Clears {@link #moreIndex} and {@link #titleIndex} of all groups.
+   * Clears {@link #myMoreIndex} and {@link #myTitleIndex} of all groups.
    */
   public static void clearIndexes() {
     clearTitleIndex();

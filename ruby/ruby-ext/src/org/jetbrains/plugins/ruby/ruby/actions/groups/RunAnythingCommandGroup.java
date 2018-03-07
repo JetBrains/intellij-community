@@ -45,7 +45,7 @@ public class RunAnythingCommandGroup extends RunAnythingGroup {
   }
 
   @Override
-  public boolean isRecent() {
+  public boolean shouldBeShownInitially() {
     return true;
   }
 }
