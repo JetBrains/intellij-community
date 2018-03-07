@@ -20,7 +20,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.junit.After;
 import org.junit.Test;
 import org.picocontainer.defaults.DefaultPicoContainer;
 
@@ -34,13 +33,6 @@ import static org.junit.Assert.*;
  * @author AKireyev
  */
 public class ExtensionPointImplTest {
-  private static final TestLogProvider ourTestLog = new TestLogProvider();
-
-  @After
-  public void tearDown() {
-    ourTestLog.errors();
-  }
-
   @Test
   public void testCreate() {
     ExtensionPoint<Integer> extensionPoint = buildExtensionPoint(Integer.class);
@@ -162,40 +154,47 @@ public class ExtensionPointImplTest {
   public void testIncompatibleExtension() {
     ExtensionPoint extensionPoint = buildExtensionPoint(Integer.class);
 
-    extensionPoint.registerExtension(new Double(0));
-    assertThat(ourTestLog.errors(), hasSize(1));
+    try {
+      extensionPoint.registerExtension(new Double(0));
+      fail("must throw");
+    }
+    catch (AssertionError ignored) {
+    }
 
     assertThat(extensionPoint.getExtensions(), emptyArray());
-    assertThat(ourTestLog.errors(), empty());
 
     extensionPoint.registerExtension(new Integer(0));
     assertThat(extensionPoint.getExtensions(), arrayWithSize(1));
-    assertThat(ourTestLog.errors(), empty());
   }
 
   @Test
   public void testIncompatibleAdapter() {
-    ExtensionPoint<Integer> extensionPoint = buildExtensionPoint(Integer.class);
+    ExtensionPointImpl<Integer> extensionPoint = buildExtensionPoint(Integer.class);
 
-    ((ExtensionPointImpl)extensionPoint).registerExtensionAdapter(buildAdapter());
-    assertThat(ourTestLog.errors(), empty());
+    extensionPoint.registerExtensionAdapter(stringAdapter());
 
-    assertThat(extensionPoint.getExtensions(), emptyArray());
-    assertThat(ourTestLog.errors(), hasSize(1));
+    try {
+      assertThat(extensionPoint.getExtensions(), emptyArray());
+      fail("must throw");
+    }
+    catch (AssertionError ignored) {
+    }
+  }
 
+  @Test
+  public void testCompatibleAdapter() {
+    ExtensionPointImpl<Integer> extensionPoint = buildExtensionPoint(Integer.class);
     extensionPoint.registerExtension(new Integer(0));
     assertThat(extensionPoint.getExtensions(), arrayWithSize(1));
-    assertThat(ourTestLog.errors(), empty());
   }
 
   @Test
   public void testCancelledRegistration() {
     ExtensionPoint<String> extensionPoint = buildExtensionPoint(String.class);
-    MyShootingComponentAdapter adapter = buildAdapter();
+    MyShootingComponentAdapter adapter = stringAdapter();
 
     extensionPoint.registerExtension("first");
     assertThat(extensionPoint.getExtensions(), arrayWithSize(1));
-    assertThat(ourTestLog.errors(), empty());
 
     extensionPoint.registerExtension("second", LoadingOrder.FIRST);  // registers a wrapping adapter
     ((ExtensionPointImpl)extensionPoint).registerExtensionAdapter(adapter);
@@ -205,7 +204,6 @@ public class ExtensionPointImplTest {
       fail("PCE expected");
     }
     catch (ProcessCanceledException ignored) { }
-    assertThat(ourTestLog.errors(), empty());
 
     adapter.setFire(false);
     String[] extensions = extensionPoint.getExtensions();
@@ -213,7 +211,6 @@ public class ExtensionPointImplTest {
     assertThat(extensions[1], isOneOf("", "first"));
     assertThat(extensions[2], isOneOf("", "first"));
     assertNotEquals(extensions[2], extensions[1]);
-    assertThat(ourTestLog.errors(), empty());
   }
 
   @Test
@@ -226,11 +223,10 @@ public class ExtensionPointImplTest {
         extensions.add(extension);
       }
     });
-    MyShootingComponentAdapter adapter = buildAdapter();
+    MyShootingComponentAdapter adapter = stringAdapter();
 
     extensionPoint.registerExtension("first");
     assertThat(extensions, contains("first"));
-    assertThat(ourTestLog.errors(), empty());
 
     extensionPoint.registerExtension("second", LoadingOrder.FIRST);
     ((ExtensionPointImpl)extensionPoint).registerExtensionAdapter(adapter);
@@ -241,12 +237,10 @@ public class ExtensionPointImplTest {
     }
     catch (ProcessCanceledException ignored) { }
     assertThat(extensions, contains("first", "second"));
-    assertThat(ourTestLog.errors(), empty());
 
     adapter.setFire(false);
     extensionPoint.getExtensions();
     assertThat(extensions, contains("first", "second", ""));
-    assertThat(ourTestLog.errors(), empty());
   }
 
   @Test
@@ -263,17 +257,17 @@ public class ExtensionPointImplTest {
     assertEquals(ContainerUtil.newArrayList(4, 2), Arrays.asList(extensionPoint.getExtensions()));
   }
 
-  private static <T> ExtensionPoint<T> buildExtensionPoint(Class<T> aClass) {
+  private static <T> ExtensionPointImpl<T> buildExtensionPoint(Class<T> aClass) {
     return new ExtensionPointImpl<>(
       ExtensionsImplTest.EXTENSION_POINT_NAME_1, aClass.getName(), ExtensionPoint.Kind.INTERFACE,
       buildExtensionArea(), null, new UndefinedPluginDescriptor());
   }
 
   private static ExtensionsAreaImpl buildExtensionArea() {
-    return new ExtensionsAreaImpl(new DefaultPicoContainer(), ourTestLog);
+    return new ExtensionsAreaImpl(new DefaultPicoContainer());
   }
 
-  private static MyShootingComponentAdapter buildAdapter() {
+  private static MyShootingComponentAdapter stringAdapter() {
     return new MyShootingComponentAdapter(String.class.getName());
   }
 

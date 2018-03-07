@@ -137,13 +137,13 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
 
   private void registerExtension(@NotNull T extension, @NotNull ExtensionComponentAdapter adapter, int index, boolean runNotifications) {
     if (getExtensionIndex(extension) != -1) {
-      myOwner.error("Extension was already added: " + extension);
+      LOG.error("Extension was already added: " + extension);
       return;
     }
 
     Class<T> extensionClass = getExtensionClass();
     if (!extensionClass.isInstance(extension)) {
-      myOwner.error("Extension " + extension.getClass() + " does not implement " + extensionClass);
+      LOG.error("Extension " + extension.getClass() + " does not implement " + extensionClass);
       return;
     }
     if (myLoadedAdapters == Collections.<ExtensionComponentAdapter>emptyList()) myLoadedAdapters = new ArrayList<>();
@@ -158,7 +158,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
             ((Extension)extension).extensionAdded(this);
           }
           catch (Throwable e) {
-            myOwner.error(e);
+            LOG.error(e);
           }
         }
 
@@ -174,7 +174,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
         listener.extensionAdded(extension, pluginDescriptor);
       }
       catch (Throwable e) {
-        myOwner.error(e);
+        LOG.error(e);
       }
     }
   }
@@ -253,7 +253,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
           }
           if (!extensionClass.isInstance(extension)) {
             errorHappened = true;
-            myOwner.error("Extension " + (extension == null ? null : extension.getClass()) + " does not implement " + extensionClass + ". It came from " + adapter);
+            LOG.error("Extension " + (extension == null ? null : extension.getClass()) + " does not implement " + extensionClass + ". It came from " + adapter);
             continue;
           }
           result[i] = extension;
@@ -347,7 +347,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
         ((Extension)extension).extensionRemoved(this);
       }
       catch (Throwable e) {
-        myOwner.error(e);
+        LOG.error(e);
       }
     }
   }
@@ -358,7 +358,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
         listener.extensionRemoved(extensionObject, pluginDescriptor);
       }
       catch (Throwable e) {
-        myOwner.error(e);
+        LOG.error(e);
       }
     }
   }
@@ -405,7 +405,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
           listener.extensionAdded(extension, componentAdapter.getPluginDescriptor());
         }
         catch (Throwable e) {
-          myOwner.error(e);
+          LOG.error(e);
         }
       }
     }
@@ -425,7 +425,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
           listener.extensionRemoved(extension, componentAdapter.getPluginDescriptor());
         }
         catch (Throwable e) {
-          myOwner.error(e);
+          LOG.error(e);
         }
       }
     }
