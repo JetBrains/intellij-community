@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,14 +38,14 @@ public class PsiAwareDefaultLineWrapPositionStrategy extends PsiAwareLineWrapPos
   @Override
   protected int doCalculateWrapPosition(@NotNull Document document,
                                         @Nullable Project project,
+                                        @NotNull PsiElement element,
                                         int startOffset,
                                         int endOffset,
                                         int maxPreferredOffset,
-                                        boolean allowToBeyondMaxPreferredOffset,
-                                        boolean virtual)
+                                        boolean isSoftWrap)
   {
     LineWrapPositionStrategy implementation = LanguageLineWrapPositionStrategy.INSTANCE.getDefaultImplementation();
     return implementation.calculateWrapPosition(document, project, startOffset, endOffset, maxPreferredOffset,
-                                                allowToBeyondMaxPreferredOffset, virtual);
+                                                false, isSoftWrap);
   }
 }

@@ -60,6 +60,7 @@ public class VcsVirtualFile extends AbstractVcsVirtualFile {
     setRevision(revision);
   }
 
+  @Override
   @NotNull
   public byte[] contentsToByteArray() throws IOException {
     if (myContentLoadFailed || myProcessingBeforeContentsChange) {

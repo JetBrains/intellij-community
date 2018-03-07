@@ -21,6 +21,7 @@ import com.intellij.build.DefaultBuildDescriptor;
 import com.intellij.build.SyncViewManager;
 import com.intellij.build.events.BuildEvent;
 import com.intellij.build.events.EventResult;
+import com.intellij.build.events.FinishBuildEvent;
 import com.intellij.build.events.impl.*;
 import com.intellij.build.events.impl.FailureImpl;
 import com.intellij.build.events.impl.FailureResultImpl;
@@ -118,6 +119,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import static com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings.SyncType.*;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.doWriteAction;
@@ -327,10 +329,6 @@ public class ExternalSystemUtil {
         final boolean synchronous = progressExecutionMode == ProgressExecutionMode.MODAL_SYNC;
         ServiceManager.getService(ProjectDataManager.class).importData(externalProject, project, synchronous);
       }
-
-      @Override
-      public void onFailure(@NotNull String errorMessage, @Nullable String errorDetails) {
-      }
     }, isPreviewMode, progressExecutionMode, true);
   }
 
@@ -425,7 +423,7 @@ public class ExternalSystemUtil {
         ExternalSystemProcessingManager processingManager = ServiceManager.getService(ExternalSystemProcessingManager.class);
         if (processingManager.findTask(ExternalSystemTaskType.RESOLVE_PROJECT, externalSystemId, externalProjectPath) != null) {
           if (callback != null) {
-            callback.onFailure(ExternalSystemBundle.message("error.resolve.already.running", externalProjectPath), null);
+            callback.onFailure(myTask.getId(), ExternalSystemBundle.message("error.resolve.already.running", externalProjectPath), null);
           }
           return;
         }
@@ -460,6 +458,7 @@ public class ExternalSystemUtil {
           Disposer.register(project, processHandler);
         }
 
+        Ref<Supplier<FinishBuildEvent>> finishSyncEventSupplier = Ref.create();
         ExternalSystemTaskNotificationListenerAdapter taskListener = new ExternalSystemTaskNotificationListenerAdapter() {
           @Override
           public void onStart(@NotNull ExternalSystemTaskId id, String workingDir) {
@@ -516,9 +515,8 @@ public class ExternalSystemUtil {
                                                         externalSystemId.getReadableName(), projectName);
             com.intellij.build.events.FailureResult failureResult = createFailureResult(title, e, externalSystemId, project);
             String message = isPreviewMode ? "project preview creation failed" : "sync failed";
-            ServiceManager.getService(project, SyncViewManager.class).onEvent(
-              new FinishBuildEventImpl(id, null, System.currentTimeMillis(), message, failureResult));
-
+            finishSyncEventSupplier.set(
+              () -> new FinishBuildEventImpl(id, null, System.currentTimeMillis(), message, failureResult));
             printFailure(e, failureResult, consoleView, processHandler);
             processHandler.notifyProcessTerminated(1);
           }
@@ -526,8 +524,8 @@ public class ExternalSystemUtil {
           @Override
           public void onSuccess(@NotNull ExternalSystemTaskId id) {
             String message = isPreviewMode ? "project preview created" : "synced successfully";
-            ServiceManager.getService(project, SyncViewManager.class).onEvent(new FinishBuildEventImpl(
-              id, null, System.currentTimeMillis(), message, new SuccessResultImpl()));
+            finishSyncEventSupplier.set(
+              () -> new FinishBuildEventImpl(id, null, System.currentTimeMillis(), message, new SuccessResultImpl()));
             processHandler.notifyProcessTerminated(0);
           }
 
@@ -553,7 +551,7 @@ public class ExternalSystemUtil {
                 if (externalProject != null && importSpec.shouldCreateDirectoriesForEmptyContentRoots()) {
                   externalProject.putUserData(ContentRootDataService.CREATE_EMPTY_DIRECTORIES, Boolean.TRUE);
                 }
-                callback.onSuccess(externalProject);
+                callback.onSuccess(myTask.getId(), externalProject);
               }
             }
             if (!isPreviewMode) {
@@ -573,7 +571,7 @@ public class ExternalSystemUtil {
           }
 
           if (callback != null) {
-            callback.onFailure(message, extractDetails(error));
+            callback.onFailure(myTask.getId(), message, extractDetails(error));
           }
         }
         finally {
@@ -581,6 +579,31 @@ public class ExternalSystemUtil {
             project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, null);
             project.putUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT, null);
           }
+          sendSyncFinishEvent(finishSyncEventSupplier);
+        }
+      }
+
+      private void sendSyncFinishEvent(@NotNull Ref<Supplier<FinishBuildEvent>> finishSyncEventSupplier) {
+        Exception exception = null;
+        FinishBuildEvent finishBuildEvent = null;
+        Supplier<FinishBuildEvent> finishBuildEventSupplier = finishSyncEventSupplier.get();
+        if (finishBuildEventSupplier != null) {
+          try {
+            finishBuildEvent = finishBuildEventSupplier.get();
+          }
+          catch (Exception e) {
+            exception = e;
+          }
+        }
+        if (finishBuildEvent != null) {
+          ServiceManager.getService(project, SyncViewManager.class).onEvent(finishBuildEvent);
+        }
+        else {
+          String message = "Sync finish event has not been received";
+          LOG.warn(message, exception);
+          ServiceManager.getService(project, SyncViewManager.class).onEvent(
+            new FinishBuildEventImpl(myTask.getId(), null, System.currentTimeMillis(), "sync failed",
+                                     new FailureResultImpl(new Exception(message, exception))));
         }
       }
 
@@ -1145,10 +1168,6 @@ public class ExternalSystemUtil {
       }
 
       myProjectDataManager.importData(externalProject, myProject, true);
-    }
-
-    @Override
-    public void onFailure(@NotNull String errorMessage, @Nullable String errorDetails) {
     }
   }
 }

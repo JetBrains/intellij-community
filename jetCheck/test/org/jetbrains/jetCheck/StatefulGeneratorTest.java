@@ -35,7 +35,7 @@ public class StatefulGeneratorTest extends PropertyCheckerTestCase {
   }
 
   public void testImperativeInsertDeleteCheckCommands() {
-    Scenario minHistory = checkFalsified(ImperativeCommand.scenarios(() -> env -> {
+    Scenario minHistory = checkFalsified(Scenario.scenarios(() -> env -> {
       StringBuilder sb = new StringBuilder();
       env.executeCommands(withRecursion(insertStringCmd(sb), deleteStringCmd(sb), checkDoesNotContain(sb, "A")));
     }), Scenario::ensureSuccessful, 33).getMinimalCounterexample().getExampleValue();
@@ -47,7 +47,7 @@ public class StatefulGeneratorTest extends PropertyCheckerTestCase {
   }
 
   public void testImperativeInsertReplaceDeleteCommands() {
-    Scenario minHistory = checkFalsified(ImperativeCommand.scenarios(() -> env -> {
+    Scenario minHistory = checkFalsified(Scenario.scenarios(() -> env -> {
       StringBuilder sb = new StringBuilder();
       ImperativeCommand replace = env1 -> {
         if (sb.length() == 0) return;
@@ -74,17 +74,18 @@ public class StatefulGeneratorTest extends PropertyCheckerTestCase {
       }
     };
     try {
-      ImperativeCommand.checkScenarios(command);
+      PropertyChecker.customized().silent().checkScenarios(command);
       fail();
     }
     catch (PropertyFalsified e) {
-      assertFalse(e.getMessage(), e.getMessage().contains("rechecking("));
-      assertTrue(e.getMessage(), e.getMessage().contains("checkScenario("));
+      assertFalse(e.getMessage(), e.getMessage().contains("forAll(..."));
+      assertTrue(e.getMessage(), e.getMessage().contains("rechecking("));
+      assertTrue(e.getMessage(), e.getMessage().contains("checkScenarios(..."));
 
       PropertyFailure<?> failure = e.getFailure();
       try {
         //noinspection deprecation
-        ImperativeCommand.checkScenario(failure.getMinimalCounterexample().getSerializedData(), command);
+        PropertyChecker.customized().silent().rechecking(failure.getMinimalCounterexample().getSerializedData()).checkScenarios(command);
         fail();
       }
       catch (PropertyFalsified fromRecheck) {

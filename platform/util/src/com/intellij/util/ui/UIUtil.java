@@ -78,6 +78,7 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
 /**
@@ -387,9 +388,15 @@ public class UIUtil {
     return isJreHiDPIEnabled() && JBUI.isHiDPI(JBUI.sysScale(ctx));
   }
 
-  // accessed from com.intellij.util.ui.paint.AbstractPainter2D via reflect
-  private static Boolean jreHiDPI;
-  private static boolean jreHiDPI_earlierVersion;
+  // accessed from com.intellij.util.ui.TestScaleHelper via reflect
+  private static final AtomicReference<Boolean> jreHiDPI = new AtomicReference<Boolean>();
+  private static volatile boolean jreHiDPI_earlierVersion;
+
+  @TestOnly
+  public static final AtomicReference<Boolean> test_jreHiDPI() {
+    if (jreHiDPI.get() == null) isJreHiDPIEnabled(); // force init
+    return jreHiDPI;
+  }
 
   /**
    * Returns whether the JRE-managed HiDPI mode is enabled.
@@ -398,30 +405,36 @@ public class UIUtil {
    * @see JBUI.ScaleType
    */
   public static boolean isJreHiDPIEnabled() {
-    if (jreHiDPI != null) {
-      return jreHiDPI;
-    }
-    jreHiDPI = false;
-    jreHiDPI_earlierVersion = true;
-    if (SystemInfo.isLinux) {
-      return false; // pending support
-    }
-    if (SystemInfo.isJetBrainsJvm) {
-      try {
-        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-        if (ge instanceof SunGraphicsEnvironment) {
-          Method m = ReflectionUtil.getDeclaredMethod(SunGraphicsEnvironment.class, "isUIScaleOn");
-          jreHiDPI = (Boolean)m.invoke(ge);
-          jreHiDPI_earlierVersion = false;
+    if (jreHiDPI.get() != null) return jreHiDPI.get();
+
+    synchronized (jreHiDPI) {
+      if (jreHiDPI.get() != null) return jreHiDPI.get();
+
+      jreHiDPI.set(false);
+      if (!SystemProperties.getBooleanProperty("hidpi", true)) {
+        return false;
+      }
+      jreHiDPI_earlierVersion = true;
+      if (SystemInfo.isLinux) {
+        return false; // pending support
+      }
+      if (SystemInfo.isJetBrainsJvm) {
+        try {
+          GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+          if (ge instanceof SunGraphicsEnvironment) {
+            Method m = ReflectionUtil.getDeclaredMethod(SunGraphicsEnvironment.class, "isUIScaleOn");
+            jreHiDPI.set(m != null && (Boolean)m.invoke(ge));
+            jreHiDPI_earlierVersion = false;
+          }
+        }
+        catch (Throwable ignore) {
         }
       }
-      catch (Throwable ignore) {
+      if (SystemInfo.isMac) {
+        jreHiDPI.set(true);
       }
+      return jreHiDPI.get();
     }
-    if (SystemInfo.isMac) {
-      jreHiDPI = true;
-    }
-    return jreHiDPI;
   }
 
   /**
@@ -1286,15 +1299,7 @@ public class UIUtil {
   }
 
   public static Color getSeparatorColor() {
-    Color separatorColor = getSeparatorForeground();
-    if (false) {
-      separatorColor = getSeparatorShadow();
-    }
-    //under GTK+ L&F colors set hard
-    if (isUnderGTKLookAndFeel()) {
-      separatorColor = Gray._215;
-    }
-    return separatorColor;
+    return isUnderGTKLookAndFeel() ? Gray._215 : getSeparatorForeground();
   }
 
   public static Border getTableFocusCellHighlightBorder() {
@@ -2728,7 +2733,9 @@ public class UIUtil {
   }
 
   public static FontUIResource getFontWithFallback(@Nullable String familyName, @JdkConstants.FontStyle int style, int size) {
-    Font fontWithFallback = new StyleContext().getFont(familyName, style, size);
+    // On macOS font fallback is implemented in JDK by default
+    // (except for explicitly registered fonts, e.g. the fonts we bundle with IDE, for them we don't have a solution now)
+    Font fontWithFallback = SystemInfo.isMac ? new Font(familyName, style, size) : new StyleContext().getFont(familyName, style, size);
     return fontWithFallback instanceof FontUIResource ? (FontUIResource)fontWithFallback : new FontUIResource(fontWithFallback);
   }
 

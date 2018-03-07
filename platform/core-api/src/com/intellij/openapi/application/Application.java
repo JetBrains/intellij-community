@@ -439,6 +439,12 @@ public interface Application extends ComponentManager {
 
   boolean isEAP();
 
+  /**  Use {@link AppUIExecutor#onUiThread} */
+  @NotNull
+  default AppUIExecutor createUIExecutor(@NotNull ModalityState modalityState) {
+    throw new UnsupportedOperationException("createUIExecutor is not implemented in " + getClass());
+  }
+
   default boolean isNoBackgroundMode() {
     return isUnitTestMode() || (isHeadlessEnvironment() && !isOnAir());
   }

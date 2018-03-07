@@ -391,18 +391,14 @@ class LineStatusTrackerManager(
 
 
   @CalledInAwt
-  private fun installTracker(virtualFile: VirtualFile,
-                             document: Document) {
+  private fun installTracker(virtualFile: VirtualFile, document: Document) {
     if (!canGetBaseRevisionFor(virtualFile)) return
 
-    val changelistId = changeListManager.getChangeList(virtualFile)?.id
-    installTracker(virtualFile, document, changelistId)
+    doInstallTracker(virtualFile, document)
   }
 
   @CalledInAwt
-  private fun installTracker(virtualFile: VirtualFile,
-                             document: Document,
-                             oldChangesChangelistId: String?): LineStatusTracker<*>? {
+  private fun doInstallTracker(virtualFile: VirtualFile, document: Document): LineStatusTracker<*>? {
     synchronized(LOCK) {
       if (isDisposed) return null
       if (trackers[document] != null) return null
@@ -418,7 +414,7 @@ class LineStatusTrackerManager(
       trackers.put(document, data)
 
       registerTrackerInCLM(data)
-      refreshTracker(tracker, changelistId = oldChangesChangelistId)
+      refreshTracker(tracker)
       eventDispatcher.multicaster.onTrackerAdded(tracker)
 
       log("Tracker installed", virtualFile)
@@ -471,10 +467,10 @@ class LineStatusTrackerManager(
   }
 
   @CalledInAwt
-  private fun refreshTracker(tracker: LineStatusTracker<*>, changelistId: String? = null) {
+  private fun refreshTracker(tracker: LineStatusTracker<*>) {
     synchronized(LOCK) {
       if (isDisposed) return
-      loader.scheduleRefresh(RefreshRequest(tracker.document, changelistId))
+      loader.scheduleRefresh(RefreshRequest(tracker.document))
 
       log("Refresh queued", tracker.virtualFile)
     }
@@ -583,20 +579,16 @@ class LineStatusTrackerManager(
             }
 
             val tracker = getLineStatusTracker(document)!!
-            if (tracker is PartialLocalLineStatusTracker) {
-              val changelist = request.changelistId ?: changeListManager.getChangeList(virtualFile)?.id
-              tracker.setBaseRevision(refreshData.text, changelist)
+            tracker.setBaseRevision(refreshData.text)
+            log("Loading finished: success", virtualFile)
 
+            if (tracker is PartialLocalLineStatusTracker) {
               val state = fileStatesAwaitingRefresh.remove(tracker.virtualFile)
               if (state != null) {
                 tracker.restoreState(state)
                 log("Loading finished: state restored", virtualFile)
               }
             }
-            else {
-              tracker.setBaseRevision(refreshData.text)
-            }
-            log("Loading finished: success", virtualFile)
           }
         }
       }
@@ -654,10 +646,18 @@ class LineStatusTrackerManager(
       if (!partialChangeListsEnabled) return
 
       synchronized(LOCK) {
-        for (data in trackers.values) {
-          if (VfsUtil.isAncestor(file, data.tracker.virtualFile, false)) {
-            reregisterTrackerInCLM(data)
+        if (file.isDirectory) {
+          for (data in trackers.values) {
+            if (VfsUtil.isAncestor(file, data.tracker.virtualFile, false)) {
+              reregisterTrackerInCLM(data)
+            }
           }
+        }
+        else {
+          val document = fileDocumentManager.getCachedDocument(file) ?: return
+          val data = trackers[document] ?: return
+
+          reregisterTrackerInCLM(data)
         }
       }
     }
@@ -680,7 +680,7 @@ class LineStatusTrackerManager(
       if (changeList != null && !changeList.isDefault) {
         log("Tracker install from DocumentListener: ", virtualFile)
 
-        val tracker = installTracker(virtualFile, document, changeList.id)
+        val tracker = doInstallTracker(virtualFile, document)
         if (tracker is PartialLocalLineStatusTracker) {
           tracker.replayChangesFromDocumentEvents(listOf(event))
         }
@@ -771,7 +771,7 @@ class LineStatusTrackerManager(
   private class ContentInfo(val revision: VcsRevisionNumber, val charset: Charset)
 
 
-  private class RefreshRequest(val document: Document, val changelistId: String? = null) {
+  private class RefreshRequest(val document: Document) {
     override fun equals(other: Any?): Boolean = other is RefreshRequest && document == other.document
     override fun hashCode(): Int = document.hashCode()
   }

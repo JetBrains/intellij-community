@@ -190,13 +190,7 @@ public interface PopupComponent {
     }
 
     public void hide(boolean dispose) {
-      if (SystemInfo.isJetBrainsJvm) {
-        // I have disabled popup cache for our runtime
-        getWindow().setVisible(false);
-      } else {
-        myPopup.hide();
-      }
-
+      myPopup.hide();
       if (!dispose) return;
 
       Window window = getWindow();

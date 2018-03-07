@@ -146,6 +146,9 @@ public class ImportFromExistingAction implements QuestionAction {
     final PyElementGenerator gen = PyElementGenerator.getInstance(project);
 
     final PsiFileSystemItem filesystemAnchor = ObjectUtils.chooseNotNull(as(item.getImportable(), PsiFileSystemItem.class), item.getFile());
+    if (filesystemAnchor == null) {
+      return;
+    }
     AddImportHelper.ImportPriority priority = AddImportHelper.getImportPriority(myTarget, filesystemAnchor);
     PsiFile file = myTarget.getContainingFile();
     InjectedLanguageManager manager = InjectedLanguageManager.getInstance(project);
@@ -207,12 +210,13 @@ public class ImportFromExistingAction implements QuestionAction {
 
   private void doWriteAction(final ImportCandidateHolder item) {
     PsiElement src = item.getImportable();
-    new WriteCommandAction(src.getProject(), PyBundle.message("ACT.CMD.use.import"), myTarget.getContainingFile()) {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        doIt(item);
-      }
-    }.execute();
+    if (src == null) {
+      return;
+    }
+    WriteCommandAction.writeCommandAction(src.getProject(), myTarget.getContainingFile()).withName(PyBundle.message("ACT.CMD.use.import"))
+                      .run(() -> {
+                        doIt(item);
+                      });
     if (myOnDoneCallback != null) {
       myOnDoneCallback.run();
     }
@@ -252,7 +256,10 @@ public class ImportFromExistingAction implements QuestionAction {
       clear();
 
       ImportCandidateHolder item = (ImportCandidateHolder)value;
-      setIcon(item.getImportable().getIcon(0));
+      PsiElement importable = ((ImportCandidateHolder)value).getImportable();
+      if (importable != null) {
+        setIcon(importable.getIcon(0));
+      }
       String item_name = item.getPresentableText(myName);
       append(item_name, SimpleTextAttributes.REGULAR_ATTRIBUTES);
 

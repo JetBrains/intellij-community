@@ -110,15 +110,12 @@ public class JavaDocReferenceInspection extends JavaDocReferenceInspectionBase {
             setTitle(QuickFixBundle.message("add.qualifier.original.class.chooser.title")).
             setItemChoosenCallback((psiClass) -> {
               if (!element.isValid() || psiClass == null) return;
-              new WriteCommandAction(project, element.getContainingFile()) {
-                @Override
-                protected void run(@NotNull final Result result) throws Throwable {
-                  if (psiClass.isValid()) {
-                    PsiDocumentManager.getInstance(project).commitAllDocuments();
-                    element.bindToElement(psiClass);
-                  }
+              WriteCommandAction.writeCommandAction(project, element.getContainingFile()).run(() -> {
+                if (psiClass.isValid()) {
+                  PsiDocumentManager.getInstance(project).commitAllDocuments();
+                  element.bindToElement(psiClass);
                 }
-              }.execute();
+              });
             })
             .setRenderer(new FQNameCellRenderer())
             .createPopup()

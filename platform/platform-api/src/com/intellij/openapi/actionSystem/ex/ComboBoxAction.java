@@ -43,6 +43,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.geom.Path2D;
+import java.awt.geom.RoundRectangle2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
@@ -157,7 +159,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       setVisible(presentation.isVisible());
       setHorizontalAlignment(LEFT);
       setFocusable(ScreenReader.isActive());
-      putClientProperty("styleCombo", Boolean.TRUE);
+      putClientProperty("styleCombo", ComboBoxAction.this);
       Insets margins = getMargin();
       setMargin(JBUI.insets(margins.top, 2, margins.bottom, 2));
       if (isSmallVariant() && !UIUtil.isUnderGTKLookAndFeel()) {
@@ -347,10 +349,11 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
 
     @Override
     public Dimension getPreferredSize() {
-      boolean isEmpty = getIcon() == null && StringUtil.isEmpty(getText());
-      int width = isEmpty ? JBUI.scale(10) : super.getPreferredSize().width;
-      width += getArrowIcon(isEnabled()).getIconWidth();
-      return new Dimension(width, isSmallVariant() ? JBUI.scale(24) : super.getPreferredSize().height);
+      Dimension prefSize = super.getPreferredSize();
+      int width = prefSize.width + getArrowIcon(isEnabled()).getIconWidth() + JBUI.scale(5);
+      width += UIUtil.isUnderWin10LookAndFeel() ? JBUI.scale(10) :
+               UIUtil.isUnderDefaultMacTheme() ? JBUI.scale(5) : 0;
+      return new Dimension(width, isSmallVariant() ? JBUI.scale(24) : prefSize.height);
     }
 
     @Override
@@ -374,98 +377,89 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
 
       if (UIUtil.isUnderDefaultMacTheme() || UIUtil.isUnderWin10LookAndFeel()) {
         super.paint(g);
-      }
-      else {
-        UISettings.setupAntialiasing(g);
-        GraphicsUtil.setupRoundedBorderAntialiasing(g);
+      } else {
+        Graphics2D g2 = (Graphics2D)g.create();
+        try {
+          UISettings.setupAntialiasing(g2);
+          GraphicsUtil.setupRoundedBorderAntialiasing(g2);
 
-        final Color textColor = isEnabled()
-                                ? UIManager.getColor("Panel.foreground")
-                                : UIUtil.getInactiveTextColor();
+          Color textColor = isEnabled() ? UIManager.getColor("Panel.foreground") : UIUtil.getInactiveTextColor();
 
-        if (myForceTransparent) {
-          final Icon icon = getIcon();
-          int x = 7;
-          if (icon != null) {
-            icon.paintIcon(this, g, x, (size.height - icon.getIconHeight()) / 2);
-            x += icon.getIconWidth() + 3;
-          }
-          if (!StringUtil.isEmpty(getText())) {
-            final Font font = getFont();
-            g.setFont(font);
-            g.setColor(textColor);
-            UIUtil.drawCenteredString((Graphics2D)g, new Rectangle(x, 0, Integer.MAX_VALUE, size.height), getText(), false, true);
-          }
-        } else {
-          if (isSmallVariant()) {
-            final Graphics2D g2 = (Graphics2D)g;
+          if (myForceTransparent) {
+            paintIconAndText(size, g2, textColor);
+          } else if (isSmallVariant()) {
             g2.setColor(UIUtil.getControlColor());
-            final int w = getWidth();
-            final int h = getHeight();
+
+            int w = getWidth();
+            int h = getHeight();
+
             if (getModel().isArmed() && getModel().isPressed()) {
               g2.setPaint(UIUtil.getGradientPaint(0, 0, UIUtil.getControlColor(), 0, h, ColorUtil.shift(UIUtil.getControlColor(), 0.8)));
-            }
-            else {
-              if (UIUtil.isUnderDarcula()) {
-                g2.setPaint(UIUtil.getGradientPaint(0, 0, ColorUtil.shift(UIUtil.getControlColor(), 1.1), 0, h,
-                                                    ColorUtil.shift(UIUtil.getControlColor(), 0.9)));
-              }
-              else {
-                g2.setPaint(UIUtil.getGradientPaint(0, 0, new JBColor(SystemInfo.isMac ? Gray._226 : Gray._245, Gray._131), 0, h,
-                                                    new JBColor(SystemInfo.isMac ? Gray._198 : Gray._208, Gray._128)));
-              }
+            } else if (UIUtil.isUnderDarcula()) {
+              g2.setPaint(UIUtil.getGradientPaint(0, 0, ColorUtil.shift(UIUtil.getControlColor(), 1.1), 0, h,
+                                                  ColorUtil.shift(UIUtil.getControlColor(), 0.9)));
+            } else {
+              g2.setPaint(UIUtil.getGradientPaint(0, 0, new JBColor(SystemInfo.isMac ? Gray._226 : Gray._245, Gray._131), 0, h,
+                                                        new JBColor(SystemInfo.isMac ? Gray._198 : Gray._208, Gray._128)));
             }
 
-            g2.fillRoundRect(2, 0, w - 2, h, 5, 5);
+            Rectangle r = new Rectangle(w, h);
+            JBInsets.removeFrom(r, JBUI.insets(1));
+
+            float arc = JBUI.scale(3.0f);
+            Shape outerShape = new RoundRectangle2D.Float(r.x, r.y, r.width, r.height, arc, arc);
+            g2.fill(outerShape);
 
             Color borderColor = myMouseInside ? new JBColor(Gray._111, Gray._118) : new JBColor(Gray._151, Gray._95);
             g2.setPaint(borderColor);
-            g2.drawRoundRect(2, 0, w - 3, h - 1, 5, 5);
 
-            final Icon icon = getIcon();
-            int x = 7;
-            if (icon != null) {
-              icon.paintIcon(this, g, x, (size.height - icon.getIconHeight()) / 2);
-              x += icon.getIconWidth() + 3;
-            }
-            if (!StringUtil.isEmpty(getText())) {
-              final Font font = getFont();
-              g2.setFont(font);
-              g2.setColor(textColor);
-              UIUtil.drawCenteredString(g2, new Rectangle(x, 0, Integer.MAX_VALUE, size.height), getText(), false, true);
-            }
-          }
-          else {
+            float lw = JBUI.scale(1.0f);
+            Path2D outline = new Path2D.Float(Path2D.WIND_EVEN_ODD);
+            outline.append(outerShape, false);
+            outline.append(new RoundRectangle2D.Float(r.x + lw, r.y + lw, r.width - lw*2, r.height - lw*2, arc - lw, arc - lw), false);
+            g2.fill(outline);
+
+            paintIconAndText(size, g2, textColor);
+          } else {
             super.paint(g);
           }
+        } finally {
+          g2.dispose();
         }
       }
 
       Insets insets = getInsets();
       Icon icon = getArrowIcon(isEnabled());
 
-      int x = size.width - icon.getIconWidth();
+      int x = size.width - icon.getIconWidth() - insets.right;
       if (UIUtil.isUnderWin10LookAndFeel()) {
-        x -= JBUI.scale(6);
-        x -= JBUI.scale(UIUtil.getParentOfType(ActionToolbar.class, this) != null ? 2 : 0);
-      }
-      else {
-        x -= insets.right;
-
-        if (isSmallVariant()) {
-          x += JBUI.scale(1);
-
+        x -= JBUI.scale(5);
+      } else if (isSmallVariant()) {
           if (UIUtil.isUnderDefaultMacTheme()) {
             x -= JBUI.scale(3);
           }
-        }
-        else {
-          x += JBUI.scale(2);
-        }
+      } else {
+        x += JBUI.scale(2);
       }
 
       icon.paintIcon(null, g, x, (size.height - icon.getIconHeight()) / 2);
       g.setPaintMode();
+    }
+
+    private void paintIconAndText(Dimension size, Graphics2D g2, Color textColor) {
+      Icon icon = getIcon();
+      int x = JBUI.scale(7);
+      if (icon != null) {
+        icon.paintIcon(this, g2, x, (size.height - icon.getIconHeight()) / 2);
+        x += icon.getIconWidth() + JBUI.scale(3);
+      }
+
+      if (!StringUtil.isEmpty(getText())) {
+        Font font = getFont();
+        g2.setFont(font);
+        g2.setColor(textColor);
+        UIUtil.drawCenteredString(g2, new Rectangle(x, 0, Integer.MAX_VALUE, size.height), getText(), false, true);
+      }
     }
 
     @Override public void updateUI() {

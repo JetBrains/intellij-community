@@ -533,7 +533,7 @@ class TextPainter extends BasePainter {
   }
 
   private String convertHeaderText(String s) {
-    StringBuilder result = new StringBuilder("");
+    StringBuilder result = new StringBuilder();
     int start = 0;
     boolean isExpression = false;
     for (int i = 0; i < s.length(); i++) {
@@ -562,7 +562,7 @@ class TextPainter extends BasePainter {
       }
     }
     if (!isExpression && start < s.length()) {
-      result.append(s.substring(start, s.length()));
+      result.append(s.substring(start));
     }
     return result.toString();
   }

@@ -66,6 +66,7 @@ public abstract class PsiAwareLineWrapPositionStrategy implements LineWrapPositi
                                    boolean isSoftWrap) {
     if (isSoftWrap && myNonVirtualOnly) {
       LineWrapPositionStrategy implementation = LanguageLineWrapPositionStrategy.INSTANCE.getDefaultImplementation();
+      //noinspection ConstantConditions
       return implementation.calculateWrapPosition(
         document, project, startOffset, endOffset, maxPreferredOffset, allowToBeyondMaxPreferredOffset, isSoftWrap
       );
@@ -96,7 +97,7 @@ public abstract class PsiAwareLineWrapPositionStrategy implements LineWrapPositi
         TextRange textRange = element.getTextRange();
         int start = Math.max(textRange.getStartOffset(), startOffset);
         int end = Math.min(textRange.getEndOffset(), endOffset);
-        int result = doCalculateWrapPosition(document, project, start, end, maxPreferredOffset, false, isSoftWrap);
+        int result = doCalculateWrapPosition(document, project, element, start, end, maxPreferredOffset, isSoftWrap);
         if (result >= 0) {
           return result;
         }
@@ -126,16 +127,18 @@ public abstract class PsiAwareLineWrapPositionStrategy implements LineWrapPositi
    *                                          {@code (startOffset; maxPreferredOffset]} interval. However, it's allowed
    *                                          to return value from {@code (maxPreferredOffset; endOffset]} interval
    *                                          unless {@code 'allowToBeyondMaxPreferredOffset'} if {@code 'false'}
-   * @param allowToBeyondMaxPreferredOffset   indicates if it's allowed to return value from
-   *                                          {@code (maxPreferredOffset; endOffset]} interval in case of inability to
-   *                                          find appropriate offset from {@code (startOffset; maxPreferredOffset]} interval
-   * @param virtual                           identifies if current request is for virtual wrap (soft wrap) position
+   * @param isSoftWrap                        identifies if current request is for virtual wrap (soft wrap) position
    * @return                                  offset from {@code (startOffset; endOffset]} interval where
    *                                          target line should be wrapped OR {@code -1} if no wrapping should be performed
    */
   protected abstract int doCalculateWrapPosition(
-    @NotNull Document document, @Nullable Project project, int startOffset, int endOffset, int maxPreferredOffset,
-    boolean allowToBeyondMaxPreferredOffset, boolean virtual
+    @NotNull Document document,
+    @Nullable Project project,
+    @NotNull PsiElement element,
+    int startOffset,
+    int endOffset,
+    int maxPreferredOffset,
+    boolean isSoftWrap
   );
 
   /**

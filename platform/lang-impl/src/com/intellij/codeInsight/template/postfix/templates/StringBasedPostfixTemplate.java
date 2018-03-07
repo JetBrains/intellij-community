@@ -29,6 +29,14 @@ public abstract class StringBasedPostfixTemplate extends PostfixTemplateWithExpr
     super(null, name, example, selector, provider);
   }
 
+  public StringBasedPostfixTemplate(@NotNull String name,
+                                    @NotNull String key,
+                                    @NotNull String example,
+                                    @NotNull PostfixTemplateExpressionSelector selector,
+                                    @Nullable PostfixTemplateProvider provider) {
+    super(null, name, key, example, selector, provider);
+  }
+
   @Override
   public void expandForChooseExpression(@NotNull PsiElement expr, @NotNull Editor editor) {
     Project project = expr.getProject();
@@ -66,19 +74,7 @@ public abstract class StringBasedPostfixTemplate extends PostfixTemplateWithExpr
     return true;
   }
 
-  /**
-   * @deprecated use {@link StringBasedPostfixTemplate#getElementToRemove(PsiElement)} (idea 16 to remove)
-   */
-  protected boolean shouldRemoveParent() {
-    return true;
-  }
-
   protected PsiElement getElementToRemove(PsiElement expr) {
-    if (shouldRemoveParent()) {
-      return expr.getParent();
-    }
-    else {
-      return expr;
-    }
+    return expr.getParent();
   }
 }

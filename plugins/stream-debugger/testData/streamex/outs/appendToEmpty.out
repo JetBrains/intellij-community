@@ -4,11 +4,11 @@ Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socke
 AppendToEmpty.java:8
 StreamEx.empty()
 .append(1)
-.count()
+.forEach(x -> {})
 append
     before: nothing
     after: 1
-count
+forEach
     before: 1
     after: nothing
 mappings for append
@@ -16,7 +16,7 @@ mappings for append
     empty
   reverse:
     nothing <- 1
-mappings for count
+mappings for forEach
   direct:
     1 -> nothing
   reverse:
@@ -24,4 +24,3 @@ mappings for count
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 
 Process finished with exit code 0
-1

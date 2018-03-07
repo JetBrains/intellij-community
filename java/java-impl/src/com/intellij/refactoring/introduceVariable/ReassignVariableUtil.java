@@ -154,27 +154,26 @@ public class ReassignVariableUtil {
   static void replaceWithAssignment(final PsiDeclarationStatement declaration, final PsiVariable variable, final Editor editor) {
     final PsiVariable var = (PsiVariable)declaration.getDeclaredElements()[0];
     final PsiExpression initializer = var.getInitializer();
-    new WriteCommandAction(declaration.getProject()) {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(variable.getProject());
-        final String chosenVariableName = variable.getName();
-        //would generate red code for final variables
-        PsiElement newDeclaration = elementFactory.createStatementFromText(chosenVariableName + " = " + initializer.getText() + ";", declaration);
-        final Collection<PsiReference> references = ReferencesSearch.search(var).findAll();
-        newDeclaration = declaration.replace(newDeclaration);
-        for (PsiReference reference : references) {
-          final PsiElement element = reference.getElement();
-          if (element instanceof PsiExpression) {
-            element.replace(elementFactory.createExpressionFromText(chosenVariableName, newDeclaration));
-          }
-        }
-        final PsiModifierList modifierList = variable.getModifierList();
-        if (modifierList != null) {
-          modifierList.setModifierProperty(PsiModifier.FINAL, false);
+    WriteCommandAction.writeCommandAction(declaration.getProject()).run(() -> {
+      final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(variable.getProject());
+      final String chosenVariableName = variable.getName();
+      //would generate red code for final variables
+      PsiElement newDeclaration =
+        elementFactory.createStatementFromText(chosenVariableName + " = " + initializer.getText() + ";", declaration);
+      final Collection<PsiReference> references = ReferencesSearch.search(var).findAll();
+      newDeclaration = declaration.replace(newDeclaration);
+      for (PsiReference reference : references) {
+        final PsiElement element = reference.getElement();
+        if (element instanceof PsiExpression) {
+          element.replace(elementFactory.createExpressionFromText(chosenVariableName, newDeclaration));
         }
       }
-    }.execute();
+      final PsiModifierList modifierList = variable.getModifierList();
+      if (modifierList != null) {
+        modifierList.setModifierProperty(PsiModifier.FINAL, false);
+      }
+      ;
+    });
     finishTemplate(editor);
   }
 

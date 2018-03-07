@@ -71,7 +71,7 @@ class ModuleGroupingTreeHelper<M: Any, N: MutableTreeNode> private constructor(
                                               moduleGroupNodeFactory: (ModuleGroup) -> N, moduleNodeFactory: (M) -> N,
                                               nodeComparator: Comparator<in N>): ModuleGroupingTreeHelper<M, N> {
       val helper = ModuleGroupingTreeHelper(groupingEnabled, grouping, moduleGroupNodeFactory, moduleNodeFactory, nodeComparator)
-      TreeUtil.traverse(rootNode) { node ->
+      TreeUtil.treeNodeTraverser(rootNode).forEach { node ->
         @Suppress("UNCHECKED_CAST")
         val group = moduleGroupByNode(node as N)
         val module = moduleByNode(node)
@@ -81,7 +81,6 @@ class ModuleGroupingTreeHelper<M: Any, N: MutableTreeNode> private constructor(
         if (group != null || module != null) {
           helper.nodeData[node] = ModuleTreeNodeData(module, group)
         }
-        true
       }
       return helper
     }

@@ -41,7 +41,9 @@ class CreateEventHandlerRequest(element: XmlAttributeValue) : CreateMethodReques
   private val myPointer = element.createSmartPointer(myProject)
 
   override fun isValid(): Boolean = myPointer.element.let {
-    it != null && it.value != null
+    it != null && it.value.let { value ->
+      value != null && value.length > 2
+    }
   }
 
   private val myElement get() = myPointer.element!!

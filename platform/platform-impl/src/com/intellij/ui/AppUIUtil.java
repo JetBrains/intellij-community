@@ -400,7 +400,7 @@ public class AppUIUtil {
         final JPanel body = new JPanel(new GridBagLayout());
 
         //noinspection UseDPIAwareInsets
-        body.add(new JLabel("Please review your options regarding sharing your data with JetBrains:"),
+        body.add(new JLabel("Please review your options regarding sharing your data with " + ApplicationInfoImpl.getShadowInstance().getShortCompanyName() + ":"),
                  new GridBagConstraints(
                    0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTH, GridBagConstraints.BOTH,
                    new Insets(JBUI.scale(10), getLeftTextMargin(new JCheckBox()), JBUI.scale(10), 0), 0, 0));

@@ -42,8 +42,18 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
   private final DebuggerPositionResolver myPositionResolver = new DebuggerPositionResolverImpl();
 
   @Override
-  protected OutputChecker initOutputChecker() {
-    return new OutputChecker(getTestAppPath(), getAppOutputPath());
+  protected final OutputChecker initOutputChecker() {
+    return new OutputChecker(getTestAppPath(), getAppOutputPath()) {
+      @Override
+      protected String replaceAdditionalInOutput(String str) {
+        return TraceExecutionTestCase.this.replaceAdditionalInOutput(super.replaceAdditionalInOutput(str));
+      }
+    };
+  }
+
+  @NotNull
+  protected String replaceAdditionalInOutput(@NotNull String str) {
+    return str;
   }
 
   protected LibrarySupportProvider getLibrarySupportProvider() {

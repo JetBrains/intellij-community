@@ -162,7 +162,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
       @NotNull
       @Override
       public NotificationInfo getNotificationInfo() {
-        UsageView usageView = usageViewRef.get();
+        UsageViewEx usageView = usageViewRef.get();
         int count = usageView == null ? 0 : usageView.getUsagesCount();
         String notification = StringUtil.capitalizeWords(UsageViewBundle.message("usages.n", count), true);
         LOG.debug(notification +" in "+(System.currentTimeMillis()-start) +"ms.");

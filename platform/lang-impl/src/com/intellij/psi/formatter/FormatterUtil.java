@@ -429,7 +429,7 @@ public class FormatterUtil {
     final StringBuilder result = new StringBuilder();
 
     if (elementRange.getStartOffset() < textRange.getStartOffset()) {
-      result.append(elementText.substring(0, textRange.getStartOffset() - elementRange.getStartOffset()));
+      result.append(elementText, 0, textRange.getStartOffset() - elementRange.getStartOffset());
     }
 
     result.append(whiteSpace);

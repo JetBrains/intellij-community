@@ -35,8 +35,7 @@ public abstract class DevkitRelatedLineMarkerProviderBase extends RelatedItemLin
                                        @NotNull Collection<? super RelatedItemLineMarkerInfo> result,
                                        boolean forNavigation) {
     final PsiElement psiElement = ContainerUtil.getFirstItem(elements);
-    if (psiElement == null ||
-        !PsiUtil.isPluginProject(psiElement.getProject())) {
+    if (psiElement == null || !PsiUtil.isPluginProject(psiElement.getProject())) {
       return;
     }
 

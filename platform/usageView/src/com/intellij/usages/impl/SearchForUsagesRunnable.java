@@ -308,14 +308,14 @@ class SearchForUsagesRunnable implements Runnable {
     if (usageView != null) return usageView;
     int usageCount = myUsageCountWithoutDefinition.get();
     if (usageCount >= 2 || usageCount == 1 && myProcessPresentation.isShowPanelIfOnlyOneUsage()) {
-      usageView =  myUsageViewManager.createEmptyUsageView(mySearchFor, myPresentation, mySearcherFactory);
+      usageView = myUsageViewManager.createEmptyUsageView(mySearchFor, myPresentation, mySearcherFactory);
       usageView.associateProgress(indicator);
       if (myUsageViewRef.compareAndSet(null, usageView)) {
         if (myProcessPresentation.isShowFindOptionsPrompt()) {
           openView(usageView);
         }
         else {
-          UsageView finalView = usageView;
+          UsageViewEx finalView = usageView;
           SwingUtilities.invokeLater(() -> {
             if (myProject.isDisposed()) return;
             if (myListener != null) {
@@ -325,12 +325,12 @@ class SearchForUsagesRunnable implements Runnable {
         }
         final Usage firstUsage = myFirstUsage.get();
         if (firstUsage != null) {
-          final UsageView finalUsageView = usageView;
+          final UsageViewEx finalUsageView = usageView;
           ApplicationManager.getApplication().runReadAction(() -> finalUsageView.appendUsage(firstUsage));
         }
       }
       else {
-        UsageView finalUsageView = usageView;
+        UsageViewEx finalUsageView = usageView;
         // later because dispose does some sort of swing magic e.g. AnAction.unregisterCustomShortcutSet()
         UIUtil.invokeLaterIfNeeded(() -> Disposer.dispose(finalUsageView));
       }

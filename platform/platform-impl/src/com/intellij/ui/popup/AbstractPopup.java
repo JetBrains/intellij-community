@@ -454,9 +454,7 @@ public class AbstractPopup implements JBPopup {
 
   @Override
   public void showUnderneathOf(@NotNull Component aComponent) {
-    show(new RelativePoint(aComponent, UIUtil.isUnderWin10LookAndFeel() ?
-              new Point(JBUI.scale(2), aComponent.getHeight()) :
-              new Point(0, aComponent.getHeight())));
+    show(new RelativePoint(aComponent, new Point(JBUI.scale(2), aComponent.getHeight())));
   }
 
   @Override

@@ -1575,6 +1575,9 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     return isFoldersAlwaysOnTop();
   }
 
+  /**
+   * @deprecated use {@link ProjectView#isFoldersAlwaysOnTop(String)} instead
+   */
   @Deprecated
   @SuppressWarnings("DeprecatedIsStillUsed")
   public boolean isFoldersAlwaysOnTop() {

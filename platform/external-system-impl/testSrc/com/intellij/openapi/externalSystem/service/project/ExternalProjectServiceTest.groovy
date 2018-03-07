@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.externalSystem.service.project
 
-import com.intellij.openapi.application.Result
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.project.ProjectData
@@ -34,7 +33,6 @@ import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.util.ArrayUtil
-import org.jetbrains.annotations.NotNull
 
 import static com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType.*
 import static com.intellij.openapi.externalSystem.test.ExternalSystemTestCase.collectRootsInside
@@ -207,9 +205,7 @@ class ExternalProjectServiceTest extends AbstractExternalSystemTest {
     allowedRoots.addAll(collectRootsInside(myJdkHome))
     VfsRootAccess.allowRootAccess(testRootDisposable, ArrayUtil.toStringArray(allowedRoots))
 
-    new WriteAction() {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
+    WriteAction.run {
         Sdk oldJdk = ProjectJdkTable.getInstance().findJdk(myJdkName)
         if (oldJdk != null) {
           ProjectJdkTable.getInstance().removeJdk(oldJdk)
@@ -219,7 +215,6 @@ class ExternalProjectServiceTest extends AbstractExternalSystemTest {
         assertNotNull("Cannot create JDK for " + myJdkHome, jdk)
         ProjectJdkTable.getInstance().addJdk(jdk, testFixture.project)
       }
-    }.execute()
 
     DataNode<ProjectData> projectNode = buildExternalProjectInfo {
       project {

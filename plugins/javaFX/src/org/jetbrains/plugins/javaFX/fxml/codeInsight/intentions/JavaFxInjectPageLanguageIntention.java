@@ -99,28 +99,26 @@ public class JavaFxInjectPageLanguageIntention extends PsiElementBaseIntentionAc
   }
 
   public void registerPageLanguage(final Project project, final XmlFile containingFile, final String languageName) {
-    new WriteCommandAction.Simple(project, getFamilyName()) {
-      @Override
-      protected void run() {
-        final PsiFileFactory factory = PsiFileFactory.getInstance(project);
-        final XmlFile dummyFile = (XmlFile)factory.createFileFromText("_Dummy_.fxml", StdFileTypes.XML,
-                                                                      "<?language " + languageName + "?>");
-        final XmlDocument document = dummyFile.getDocument();
-        if (document != null) {
-          final XmlProlog prolog = document.getProlog();
-          final Collection<XmlProcessingInstruction> instructions = PsiTreeUtil.findChildrenOfType(prolog, XmlProcessingInstruction.class);
-          LOG.assertTrue(instructions.size() == 1);
-          final XmlDocument xmlDocument = containingFile.getDocument();
-          if (xmlDocument != null) {
-            final XmlProlog xmlProlog = xmlDocument.getProlog();
-            if (xmlProlog != null) {
-              final PsiElement element = xmlProlog.addBefore(instructions.iterator().next(), xmlProlog.getFirstChild());
-              xmlProlog.addAfter(PsiParserFacade.SERVICE.getInstance(project).createWhiteSpaceFromText("\n\n"), element);
-            }
+    WriteCommandAction.writeCommandAction(project).withName(getFamilyName()).run(() -> {
+      final PsiFileFactory factory = PsiFileFactory.getInstance(project);
+      final XmlFile dummyFile = (XmlFile)factory.createFileFromText("_Dummy_.fxml", StdFileTypes.XML,
+                                                                    "<?language " + languageName + "?>");
+      final XmlDocument document = dummyFile.getDocument();
+      if (document != null) {
+        final XmlProlog prolog = document.getProlog();
+        final Collection<XmlProcessingInstruction> instructions = PsiTreeUtil.findChildrenOfType(prolog, XmlProcessingInstruction.class);
+        LOG.assertTrue(instructions.size() == 1);
+        final XmlDocument xmlDocument = containingFile.getDocument();
+        if (xmlDocument != null) {
+          final XmlProlog xmlProlog = xmlDocument.getProlog();
+          if (xmlProlog != null) {
+            final PsiElement element = xmlProlog.addBefore(instructions.iterator().next(), xmlProlog.getFirstChild());
+            xmlProlog.addAfter(PsiParserFacade.SERVICE.getInstance(project).createWhiteSpaceFromText("\n\n"), element);
           }
         }
       }
-    }.execute();
+      ;
+    });
   }
 
   @Override

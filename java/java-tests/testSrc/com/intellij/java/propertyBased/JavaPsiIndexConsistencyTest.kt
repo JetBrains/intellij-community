@@ -51,7 +51,7 @@ class JavaPsiIndexConsistencyTest : LightCodeInsightFixtureTestCase() {
                                           data.generate(Generator.booleans()),
                                           data.generate(Generator.booleans())) }
     )
-    PropertyChecker.forAll(Generator.listsOf(genAction)).withIterationCount(20).shouldHold { actions ->
+    PropertyChecker.customized().withIterationCount(20).forAll(Generator.listsOf(genAction)) { actions ->
       val prevLevel = LanguageLevelModuleExtensionImpl.getInstance(myFixture.module).languageLevel
       try {
         PsiIndexConsistencyTester.runActions(JavaModel(myFixture), *actions.toTypedArray())

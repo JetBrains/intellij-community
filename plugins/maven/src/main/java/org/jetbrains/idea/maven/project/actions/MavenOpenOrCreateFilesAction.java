@@ -73,23 +73,20 @@ public abstract class MavenOpenOrCreateFilesAction extends MavenAction {
     final List<VirtualFile> virtualFiles = collectVirtualFiles(files);
 
     if (files.size() == 1 && virtualFiles.isEmpty()) {
-      new WriteCommandAction(project, e.getPresentation().getText()) {
-        @Override
-        protected void run(@NotNull Result result) throws Throwable {
-          File file = files.get(0);
-          try {
-            final VirtualFile virtualFile = VfsUtil.createDirectoryIfMissing(file.getParent());
-            if(virtualFile != null) {
-              VirtualFile newFile = virtualFile.createChildData(this, file.getName());
-              virtualFiles.add(newFile);
-              MavenUtil.runFileTemplate(project, newFile, getFileTemplate());
-            }
-          }
-          catch (IOException ex) {
-            MavenUtil.showError(project, "Cannot create " + file.getName(), ex);
+      WriteCommandAction.writeCommandAction(project).withName(e.getPresentation().getText()).run(() -> {
+        File file = files.get(0);
+        try {
+          final VirtualFile virtualFile = VfsUtil.createDirectoryIfMissing(file.getParent());
+          if (virtualFile != null) {
+            VirtualFile newFile = virtualFile.createChildData(this, file.getName());
+            virtualFiles.add(newFile);
+            MavenUtil.runFileTemplate(project, newFile, getFileTemplate());
           }
         }
-      }.execute();
+        catch (IOException ex) {
+          MavenUtil.showError(project, "Cannot create " + file.getName(), ex);
+        }
+      });
       return;
     }
 

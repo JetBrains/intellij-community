@@ -27,9 +27,7 @@ import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.lang.PsiStructureViewFactory;
-import com.intellij.navigation.AnonymousElementProvider;
-import com.intellij.navigation.ChooseByNameRegistry;
-import com.intellij.navigation.NavigationItem;
+import com.intellij.navigation.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -40,6 +38,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.playback.commands.ActionCommand;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
@@ -65,7 +64,8 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
       super.actionPerformed(e);
     }
     else {
-      DumbService.getInstance(project).showDumbModeNotification(IdeBundle.message("go.to.class.dumb.mode.message"));
+      String message = IdeBundle.message("go.to.class.dumb.mode.message", StringUtil.capitalize(GotoClassPresentationUpdater.getMainElementKind()));
+      DumbService.getInstance(project).showDumbModeNotification(message);
       AnAction action = ActionManager.getInstance().getAction(GotoFileAction.ID);
       InputEvent event = ActionCommand.getInputEvent(GotoFileAction.ID);
       Component component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
@@ -83,6 +83,7 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     final GotoClassModel2 model = new GotoClassModel2(project);
+    String title = IdeBundle.message("go.to.class.toolwindow.title", StringUtil.capitalize(StringUtil.pluralize(GotoClassPresentationUpdater.getMainElementKind())));
     showNavigationPopup(e, model, new GotoActionCallback<Language>() {
       @Override
       protected ChooseByNameFilter<Language> createFilter(@NotNull ChooseByNamePopup popup) {
@@ -93,7 +94,7 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
       public void elementChosen(ChooseByNamePopup popup, Object element) {
         handleSubMemberNavigation(popup, element);
       }
-    }, IdeBundle.message("go.to.class.toolwindow.title"), true);
+    }, title, true);
   }
 
   static void handleSubMemberNavigation(ChooseByNamePopup popup, Object element) {

@@ -37,7 +37,6 @@ import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -148,12 +147,8 @@ public class CodeInsightTestUtil {
   public static void doSurroundWithTest(@NotNull final CodeInsightTestFixture fixture, @NotNull final Surrounder surrounder,
                                         @NotNull final String before, @NotNull final String after) {
     fixture.configureByFile(before);
-    new WriteCommandAction.Simple(fixture.getProject()) {
-      @Override
-      protected void run() throws Throwable {
-        SurroundWithHandler.invoke(fixture.getProject(), fixture.getEditor(), fixture.getFile(), surrounder);
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(fixture.getProject())
+                      .run(() -> SurroundWithHandler.invoke(fixture.getProject(), fixture.getEditor(), fixture.getFile(), surrounder));
     fixture.checkResultByFile(after, false);
   }
 
@@ -171,27 +166,21 @@ public class CodeInsightTestUtil {
                                       @NotNull final String before, @NotNull final String after) {
     fixture.configureByFile(before);
     final List<SmartEnterProcessor> processors = SmartEnterProcessors.INSTANCE.allForLanguage(fixture.getFile().getLanguage());
-    new WriteCommandAction(fixture.getProject()) {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        final Editor editor = fixture.getEditor();
-        for (SmartEnterProcessor processor : processors) {
-          processor.process(getProject(), editor, fixture.getFile());
-        }
+    WriteCommandAction.writeCommandAction(fixture.getProject()).run(() -> {
+      final Editor editor = fixture.getEditor();
+      for (SmartEnterProcessor processor : processors) {
+        processor.process(fixture.getProject(), editor, fixture.getFile());
       }
-    }.execute();
+    });
     fixture.checkResultByFile(after, false);
   }
 
   public static void doFormattingTest(@NotNull final CodeInsightTestFixture fixture,
                                       @NotNull final String before, @NotNull final String after) {
     fixture.configureByFile(before);
-    new WriteCommandAction(fixture.getProject()) {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        CodeStyleManager.getInstance(fixture.getProject()).reformat(fixture.getFile());
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(fixture.getProject()).run(() -> {
+      CodeStyleManager.getInstance(fixture.getProject()).reformat(fixture.getFile());
+    });
     fixture.checkResultByFile(after, false);
   }
 
@@ -215,12 +204,8 @@ public class CodeInsightTestUtil {
       final TextRange range = state.getCurrentVariableRange();
       assert range != null;
       final Editor finalEditor = editor;
-      new WriteCommandAction.Simple(project) {
-        @Override
-        protected void run() throws Throwable {
-          finalEditor.getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), newName);
-        }
-      }.execute().throwException();
+      WriteCommandAction.writeCommandAction(project)
+                        .run(() -> finalEditor.getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), newName));
 
       state = TemplateManagerImpl.getTemplateState(editor);
       assert state != null;

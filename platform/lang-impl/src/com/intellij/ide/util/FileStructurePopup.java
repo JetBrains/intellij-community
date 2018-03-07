@@ -58,6 +58,7 @@ import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
+import com.intellij.util.text.TextRangeUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
@@ -384,7 +385,6 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
 
   @NotNull
   public Promise<TreePath> select(Object element) {
-    AsyncPromise<TreePath> result = new AsyncPromise<>();
     int[] stage = {1, 0}; // 1 - first pass, 2 - optimization applied, 3 - retry w/o optimization
     TreePath[] deepestPath = {null};
     TreeVisitor visitor = path -> {
@@ -431,6 +431,10 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
         }
         else {
           TreePath adjusted = path == null ? deepestPath[0] : path;
+          if (path == null && adjusted != null && element instanceof PsiElement) {
+            Object minChild = findClosestPsiElement((PsiElement)element, adjusted, myAsyncTreeModel);
+            if (minChild != null) adjusted = adjusted.pathByAddingChild(minChild);
+          }
           return adjusted == null ? Promises.rejectedPromise() : action.fun(adjusted);
         }
       }
@@ -558,6 +562,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     topPanel.add(chkPanel, BorderLayout.WEST);
 
     topPanel.add(createSettingsButton(), BorderLayout.EAST);
+    topPanel.setBorder(JBUI.Borders.emptyLeft(UIUtil.DEFAULT_HGAP));
 
     panel.add(topPanel, BorderLayout.NORTH);
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
@@ -679,6 +684,29 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       }
     }
     return actions;
+  }
+
+  @Nullable
+  private static Object findClosestPsiElement(@NotNull PsiElement element,
+                                              @NotNull TreePath adjusted,
+                                              @NotNull TreeModel treeModel) {
+    TextRange range = element.getTextRange();
+    if (range == null) return null;
+    Object parent = adjusted.getLastPathComponent();
+    int minDistance = 0;
+    Object minChild = null;
+    for (int i = 0, count = treeModel.getChildCount(parent); i < count; i++) {
+      Object child = treeModel.getChild(parent, i);
+      Object value = unwrapValue(child);
+      TextRange r = value instanceof PsiElement ? ((PsiElement)value).getTextRange() : null;
+      if (r == null) continue;
+      int distance = TextRangeUtil.getDistance(range, r);
+      if (minChild == null || distance < minDistance) {
+        minDistance = distance;
+        minChild = child;
+      }
+    }
+    return minChild;
   }
 
   private class MyTreeActionWrapper extends TreeActionWrapper {

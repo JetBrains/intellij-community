@@ -17,8 +17,6 @@ package org.jetbrains.idea.svn.treeConflict;
 
 import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.RunResult;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diff.impl.patch.BinaryFilePatch;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
@@ -33,7 +31,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vcs.*;
-import org.jetbrains.idea.svn.BackgroundTaskGroup;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchDifferentiatedDialog;
@@ -53,10 +50,7 @@ import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
-import org.jetbrains.idea.svn.SvnConfiguration;
-import org.jetbrains.idea.svn.SvnContentRevision;
-import org.jetbrains.idea.svn.SvnRevisionNumber;
-import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
@@ -254,9 +248,8 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
   private void applyBinaryChanges() throws VcsException {
     List<FilePath> dirtyPaths = newArrayList();
     for (Change change : myTheirsBinaryChanges) {
-      RunResult result = new WriteAction() {
-        @Override
-        protected void run(@NotNull Result result) throws Throwable {
+      try {
+        WriteAction.runAndWait(() -> {
           dirtyPaths.add(getFilePath(change));
           try {
             applyBinaryChange(change);
@@ -264,11 +257,10 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
           catch (IOException e) {
             throw new VcsException(e);
           }
-        }
-      }.execute();
-
-      if (result.hasException()) {
-        processBinaryChangeError(result.getThrowable());
+        });
+      }
+      catch (Throwable e) {
+        processBinaryChangeError(e);
       }
     }
     VcsDirtyScopeManager.getInstance(myVcs.getProject()).filePathsDirty(dirtyPaths, null);

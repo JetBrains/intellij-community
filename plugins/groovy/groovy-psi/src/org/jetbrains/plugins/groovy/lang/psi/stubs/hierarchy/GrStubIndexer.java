@@ -151,7 +151,7 @@ public class GrStubIndexer extends StubHierarchyIndexer {
     }
     String[] supers = superList.isEmpty() ? ArrayUtil.EMPTY_STRING_ARRAY : ArrayUtil.toStringArray(superList);
     Decl[] inners = innerList.isEmpty() ? Decl.EMPTY_ARRAY : innerList.toArray(Decl.EMPTY_ARRAY);
-    return new ClassDecl(classStub.id, flags, classStub.getName(), supers, inners);
+    return new ClassDecl(classStub.getStubId(), flags, classStub.getName(), supers, inners);
   }
 
   private static int translateFlags(GrTypeDefinitionStub classStub) {

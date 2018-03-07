@@ -165,7 +165,7 @@ public class PyConvertTripleQuotedStringIntention extends PyBaseIntentionAction 
       if (!firstChunk) {
         result.append(" ");
       }
-      result.append(info.getPrefix()).append(chunkQuote).append(line.substring(chunkStart, k)).append(chunkQuote);
+      result.append(info.getPrefix()).append(chunkQuote).append(line, chunkStart, k).append(chunkQuote);
       firstChunk = false;
       chunkStart = k;
     }

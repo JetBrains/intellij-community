@@ -24,12 +24,10 @@ import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.propertyBased.*;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
-import org.jetbrains.jetCheck.Generator;
-import org.jetbrains.jetCheck.ImperativeCommand;
-import org.jetbrains.jetCheck.PropertyChecker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jetCheck.Scenario;
+import org.jetbrains.jetCheck.Generator;
+import org.jetbrains.jetCheck.PropertyChecker;
 import org.junit.Test;
 
 import java.io.File;
@@ -70,7 +68,7 @@ public class PythonCodeInsightSanityTest extends PyEnvTestCase {
   public void testReparse() {
     runSanityTest(pathAndFixture -> {
       final CodeInsightTestFixture fixture = pathAndFixture.second;
-      ImperativeCommand.checkScenarios(actionsOnPyFiles(MadTestingUtil::randomEditsWithReparseChecks, fixture,
+      PropertyChecker.checkScenarios(actionsOnPyFiles(MadTestingUtil::randomEditsWithReparseChecks, fixture,
                                               new File(fixture.getTestDataPath(), "sanity").getPath()));
     });
   }
@@ -93,12 +91,11 @@ public class PythonCodeInsightSanityTest extends PyEnvTestCase {
                                       new StripTestDataMarkup(file),
                                       new DeleteRange(file));
 
-      //todo use ImperativeCommand.checkScenarios like in other tests
-      PropertyChecker<Scenario> checker = PropertyChecker.forAll(ImperativeCommand.scenarios(actionsOnPyFiles(fileActions, fixture, pathAndFixture.first)));
+      PropertyChecker.Parameters checker = PropertyChecker.customized();
       if (seedToRepeat != null) {
         checker = checker.recheckingIteration(seedToRepeat.first, seedToRepeat.second);
       }
-      checker.shouldHold(Scenario::ensureSuccessful);
+      checker.checkScenarios(actionsOnPyFiles(fileActions, fixture, pathAndFixture.first));
     });
   }
 

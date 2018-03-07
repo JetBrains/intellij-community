@@ -128,6 +128,7 @@ public class StubSerializationHelper {
   }
 
   private final RecentStringInterner myStringInterner;
+  private static final ThreadLocal<ObjectStubSerializer> ourRootStubSerializer = new ThreadLocal<>();
 
   @NotNull
   public Stub deserialize(@NotNull InputStream stream) throws IOException, SerializerNotFoundException {
@@ -190,7 +191,8 @@ public class StubSerializationHelper {
         externalId = myNameStorage.valueOf(id);
       } catch (Throwable ignore) {}
       throw new SerializerNotFoundException(
-        "No serializer registered for stub: ID=" + id + ", externalId:" + externalId +
+        "Broken stub format, most likely version of " + ourRootStubSerializer.get() + " was not updated after serialization changes\n" +
+        "Internal details, no serializer registered for stub: ID=" + id + ", externalId:" + externalId +
         "; parent stub class=" + (parentStub != null? parentStub.getClass().getName() +", parent stub type:" + parentStub.getStubType() : "null"));
     }
 
@@ -198,9 +200,19 @@ public class StubSerializationHelper {
     if (dangling) {
       ((ObjectStubBase) stub).markDangling();
     }
-    int childCount = DataInputOutputUtil.readINT(stream);
-    for (int i = 0; i < childCount; i++) {
-      deserialize(stream, stub);
+    
+    boolean rootStubSerializerWasSet = false;
+    if (parentStub == null && ourRootStubSerializer.get() == null) {
+      ourRootStubSerializer.set(stub instanceof PsiFileStub ? ((PsiFileStub)stub).getType() : null);
+      rootStubSerializerWasSet = true;
+    }
+    try {
+      int childCount = DataInputOutputUtil.readINT(stream);
+      for (int i = 0; i < childCount; i++) {
+        deserialize(stream, stub);
+      }
+    } finally {
+      if (rootStubSerializerWasSet) ourRootStubSerializer.set(null);
     }
     return stub;
   }

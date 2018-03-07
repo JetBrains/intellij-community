@@ -51,6 +51,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
   private final DocumentListener myEditorDocumentListener;
   private final VisibleAreaListener myVisibleAreaListener;
   private final CaretListener myCaretMoveListener;
+  private final SelectionListener mySelectionListener;
 
   private LightweightHint myQuestionHint;
   private QuestionAction myQuestionAction;
@@ -98,6 +99,13 @@ public class HintManagerImpl extends HintManager implements Disposable {
       @Override
       public void caretPositionChanged(CaretEvent e) {
         hideHints(HIDE_BY_ANY_KEY | HIDE_BY_CARET_MOVE, false, false);
+      }
+    };
+
+    mySelectionListener = new SelectionListener() {
+      @Override
+      public void selectionChanged(SelectionEvent e) {
+        hideHints(HIDE_BY_CARET_MOVE, false, false);
       }
     };
 
@@ -848,6 +856,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
         myLastEditor.getDocument().removeDocumentListener(myEditorDocumentListener);
         myLastEditor.getScrollingModel().removeVisibleAreaListener(myVisibleAreaListener);
         myLastEditor.getCaretModel().removeCaretListener(myCaretMoveListener);
+        myLastEditor.getSelectionModel().removeSelectionListener(mySelectionListener);
       }
 
       myLastEditor = editor;
@@ -856,6 +865,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
         myLastEditor.getDocument().addDocumentListener(myEditorDocumentListener);
         myLastEditor.getScrollingModel().addVisibleAreaListener(myVisibleAreaListener);
         myLastEditor.getCaretModel().addCaretListener(myCaretMoveListener);
+        myLastEditor.getSelectionModel().addSelectionListener(mySelectionListener);
       }
     }
   }

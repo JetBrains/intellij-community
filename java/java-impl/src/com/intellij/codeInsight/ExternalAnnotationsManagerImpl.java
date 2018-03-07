@@ -185,28 +185,26 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
       return false;
     }
     String externalName = getExternalName(listOwner, false);
-    new WriteCommandAction(project) {
-      @Override
-      protected void run(@NotNull final Result result) throws Throwable {
-        appendChosenAnnotationsRoot(entry, newRoot);
-        XmlFile xmlFileInRoot = findXmlFileInRoot(findExternalAnnotationsXmlFiles(listOwner), newRoot);
-        if (xmlFileInRoot != null) { //file already exists under appeared content root
-          if (!FileModificationService.getInstance().preparePsiElementForWrite(xmlFileInRoot)) {
-            notifyAfterAnnotationChanging(listOwner, annotationFQName, false);
-            return;
-          }
-          annotateExternally(listOwner, annotationFQName, xmlFileInRoot, fromFile, value, externalName);
+    WriteCommandAction.writeCommandAction(project).run(() -> {
+      appendChosenAnnotationsRoot(entry, newRoot);
+      XmlFile xmlFileInRoot = findXmlFileInRoot(findExternalAnnotationsXmlFiles(listOwner), newRoot);
+      if (xmlFileInRoot != null) { //file already exists under appeared content root
+        if (!FileModificationService.getInstance().preparePsiElementForWrite(xmlFileInRoot)) {
+          notifyAfterAnnotationChanging(listOwner, annotationFQName, false);
+          return;
         }
-        else {
-          final XmlFile annotationsXml = createAnnotationsXml(newRoot, packageName);
-          if (annotationsXml != null) {
-            List<PsiFile> createdFiles = new SmartList<>(annotationsXml);
-            cacheExternalAnnotations(packageName, fromFile, createdFiles);
-          }
-          annotateExternally(listOwner, annotationFQName, annotationsXml, fromFile, value, externalName);
-        }
+        annotateExternally(listOwner, annotationFQName, xmlFileInRoot, fromFile, value, externalName);
       }
-    }.execute();
+      else {
+        final XmlFile annotationsXml = createAnnotationsXml(newRoot, packageName);
+        if (annotationsXml != null) {
+          List<PsiFile> createdFiles = new SmartList<>(annotationsXml);
+          cacheExternalAnnotations(packageName, fromFile, createdFiles);
+        }
+        annotateExternally(listOwner, annotationFQName, annotationsXml, fromFile, value, externalName);
+      }
+      ;
+    });
     return true;
   }
 
@@ -285,40 +283,36 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
 
     Set<PsiFile> annotationFiles = xmlFiles == null ? new THashSet<>() : new THashSet<>(xmlFiles);
     String externalName = getExternalName(listOwner, false);
-    new WriteCommandAction(project) {
-      @Override
-      protected void run(@NotNull final Result result) throws Throwable {
-       
-        if (existingXml != null) {
-          annotateExternally(listOwner, annotationFQName, existingXml, fromFile, value, externalName);
+    WriteCommandAction.writeCommandAction(project).run(() -> {
+      if (existingXml != null) {
+        annotateExternally(listOwner, annotationFQName, existingXml, fromFile, value, externalName);
+      }
+      else {
+        XmlFile newXml = createAnnotationsXml(root, packageName);
+        if (newXml == null) {
+          notifyAfterAnnotationChanging(listOwner, annotationFQName, false);
         }
         else {
-          XmlFile newXml = createAnnotationsXml(root, packageName);
-          if (newXml == null) {
-            notifyAfterAnnotationChanging(listOwner, annotationFQName, false);
-          }
-          else {
-            annotationFiles.add(newXml);
-            cacheExternalAnnotations(packageName, fromFile, new SmartList<>(annotationFiles));
-            annotateExternally(listOwner, annotationFQName, newXml, fromFile, value, externalName);
-          }
+          annotationFiles.add(newXml);
+          cacheExternalAnnotations(packageName, fromFile, new SmartList<>(annotationFiles));
+          annotateExternally(listOwner, annotationFQName, newXml, fromFile, value, externalName);
+        }
+      }
+
+      UndoManager.getInstance(project).undoableActionPerformed(new BasicUndoableAction() {
+        @Override
+        public void undo() {
+          dropCache();
+          notifyChangedExternally();
         }
 
-        UndoManager.getInstance(project).undoableActionPerformed(new BasicUndoableAction() {
-          @Override
-          public void undo() {
-            dropCache();
-            notifyChangedExternally();
-          }
-
-          @Override
-          public void redo() {
-            dropCache();
-            notifyChangedExternally();
-          }
-        });
-      }
-    }.execute();
+        @Override
+        public void redo() {
+          dropCache();
+          notifyChangedExternally();
+        }
+      });
+    });
   }
 
   @Override

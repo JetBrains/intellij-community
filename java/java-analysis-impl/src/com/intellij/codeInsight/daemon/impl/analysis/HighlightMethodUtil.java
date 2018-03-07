@@ -502,6 +502,14 @@ public class HighlightMethodUtil {
     }
   }
 
+  private static void registerThisSuperFixes(@NotNull PsiMethodCallExpression methodCall,
+                                             @Nullable HighlightInfo highlightInfo,
+                                             @NotNull TextRange range) {
+    for (IntentionAction action : QUICK_FIX_FACTORY.createCreateConstructorFromCallExpressionFixes(methodCall)) {
+      QuickFixAction.registerQuickFixAction(highlightInfo, range, action);
+    }
+  }
+
   private static void registerTargetTypeFixesBasedOnApplicabilityInference(@NotNull PsiMethodCallExpression methodCall,
                                                                            MethodCandidateInfo resolveResult,
                                                                            PsiMethod resolved,
@@ -847,8 +855,7 @@ public class HighlightMethodUtil {
     }
 
     registerUsageFixes(methodCall, highlightInfo, fixRange);
-    QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, QUICK_FIX_FACTORY.createCreateConstructorFromSuperFix(methodCall));
-    QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, QUICK_FIX_FACTORY.createCreateConstructorFromThisFix(methodCall));
+    registerThisSuperFixes(methodCall, highlightInfo, fixRange);
     CandidateInfo[] methodCandidates = resolveHelper.getReferencedMethodCandidates(methodCall, false);
     CastMethodArgumentFix.REGISTRAR.registerCastActions(methodCandidates, methodCall, highlightInfo, fixRange);
     PermuteArgumentsFix.registerFix(highlightInfo, methodCall, methodCandidates, fixRange);

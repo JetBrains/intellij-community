@@ -234,8 +234,8 @@ abstract class PyTestExecutionEnvironment<T : PyAbstractTestConfiguration>(confi
 
   override fun getTestSpecs(): MutableList<String> = java.util.ArrayList(configuration.getTestSpec())
 
-  override fun generateCommandLine(patchers: Array<out CommandLinePatcher>?): GeneralCommandLine {
-    val line = super.generateCommandLine(patchers)
+  override fun generateCommandLine(): GeneralCommandLine {
+    val line = super.generateCommandLine()
     line.workDirectory = java.io.File(configuration.workingDirectorySafe)
     return line
   }

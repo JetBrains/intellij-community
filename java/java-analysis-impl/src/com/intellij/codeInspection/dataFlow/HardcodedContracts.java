@@ -276,7 +276,7 @@ public class HardcodedContracts {
       constraints[checkedParam] = NOT_NULL_VALUE;
       return Collections.singletonList(new StandardMethodContract(constraints, THROW_EXCEPTION));
     }
-    if ("assertNotNull".equals(methodName) || "assumeNotNull".equals(methodName)) {
+    if ("assertNotNull".equals(methodName)) {
       return failIfNull(checkedParam, paramCount);
     }
     return Collections.emptyList();

@@ -168,6 +168,8 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift control I",          "ImplementMethods", "QuickImplementations"},
     { "alt F9",                   "ViewBreakpoints", "EditBreakpoint"},
     { "alt MULTIPLY",             "ShowExecutionPoint", "Images.Thumbnails.ToggleRecursive"},
+    { "shift alt U",              "GotoPrevElementUnderCaretUsage", "ToggleCamelSnakeCase"},
+    { "shift alt D",              "GotoNextElementUnderCaretUsage", "hg4idea.QFold"}
     });
     put("Default for XWin", new String[][] {
     { "shift ctrl alt button1",   "EditorAddRectangularSelectionOnMouseDrag", "QuickEvaluateExpression"},

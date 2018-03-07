@@ -40,7 +40,7 @@ class FeatureUsageFileEventLogger : FeatureUsageEventLogger {
       val dir = getEventLogDir()
       fileAppender = FeatureUsageEventFileAppender.create(pattern, dir)
       fileAppender?.let { appender ->
-        appender.setMaxFileSize("200KB")
+        appender.setMaxFileSize("100KB")
         eventLogger.addAppender(appender)
       }
     }

@@ -16,7 +16,7 @@ public abstract class ConsoleFolding {
   /**
    * @param project current project
    * @param line    line to check whether it should be folded or not
-   * @return true is line should be folded, false if not
+   * @return true if line should be folded, false if not
    */
   public boolean shouldFoldLine(@NotNull Project project, @NotNull String line) {
     return shouldFoldLine(line);
@@ -25,7 +25,7 @@ public abstract class ConsoleFolding {
   /**
    * @param project current project
    * @param lines   lines to be folded
-   * @return placeholder for lines
+   * @return placeholder for lines or {@code null} if these lines should not be folded
    */
   @Nullable
   public String getPlaceholderText(@NotNull Project project, @NotNull List<String> lines) {

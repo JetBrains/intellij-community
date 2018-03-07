@@ -32,7 +32,7 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
     ContainerUtil.newHashSet(CommonUiProperties.SHOW_DETAILS,
                              MainVcsLogUiProperties.SHOW_LONG_EDGES,
                              MainVcsLogUiProperties.BEK_SORT_TYPE,
-                             MainVcsLogUiProperties.SHOW_ROOT_NAMES,
+                             CommonUiProperties.SHOW_ROOT_NAMES,
                              MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE,
                              MainVcsLogUiProperties.TEXT_FILTER_REGEX,
                              CommonUiProperties.COLUMN_ORDER);
@@ -75,7 +75,7 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
     else if (SHOW_LONG_EDGES.equals(property)) {
       return (T)Boolean.valueOf(getState().LONG_EDGES_VISIBLE);
     }
-    else if (SHOW_ROOT_NAMES.equals(property)) {
+    else if (CommonUiProperties.SHOW_ROOT_NAMES.equals(property)) {
       return (T)Boolean.valueOf(getState().SHOW_ROOT_NAMES);
     }
     else if (BEK_SORT_TYPE.equals(property)) {
@@ -119,7 +119,7 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
     else if (SHOW_LONG_EDGES.equals(property)) {
       getState().LONG_EDGES_VISIBLE = (Boolean)value;
     }
-    else if (SHOW_ROOT_NAMES.equals(property)) {
+    else if (CommonUiProperties.SHOW_ROOT_NAMES.equals(property)) {
       getState().SHOW_ROOT_NAMES = (Boolean)value;
     }
     else if (BEK_SORT_TYPE.equals(property)) {
@@ -289,7 +289,7 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
       else if (SHOW_LONG_EDGES.equals(property)) {
         onShowLongEdgesChanged();
       }
-      else if (SHOW_ROOT_NAMES.equals(property)) {
+      else if (CommonUiProperties.SHOW_ROOT_NAMES.equals(property)) {
         onShowRootNamesChanged();
       }
       else if (COMPACT_REFERENCES_VIEW.equals(property)) {

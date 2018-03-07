@@ -83,29 +83,26 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
       final XmlElementDescriptor[] descriptors = currentTagDescriptor.getElementsDescriptors(contextTag);
       Arrays.sort(descriptors, Comparator.comparing(PsiMetaData::getName));
       Consumer<XmlElementDescriptor> consumer = (selected) ->
-        new WriteCommandAction.Simple(project, "Generate XML Tag", file) {
-          @Override
-          protected void run() {
-            if (selected == null) return;
-            XmlTag newTag = createTag(contextTag, selected);
+        WriteCommandAction.writeCommandAction(project, file).withName("Generate XML Tag").run(() -> {
+          if (selected == null) return;
+          XmlTag newTag = createTag(contextTag, selected);
 
-            PsiElement anchor = getAnchor(contextTag, editor, selected);
-            if (anchor == null) { // insert it in the cursor position
-              int offset = editor.getCaretModel().getOffset();
-              Document document = editor.getDocument();
-              document.insertString(offset, newTag.getText());
-              PsiDocumentManager.getInstance(project).commitDocument(document);
-              newTag = PsiTreeUtil.getParentOfType(file.findElementAt(offset + 1), XmlTag.class, false);
-            }
-            else {
-              newTag = (XmlTag)contextTag.addAfter(newTag, anchor);
-            }
-            if (newTag != null) {
-              generateTag(newTag, editor);
-            }
+          PsiElement anchor = getAnchor(contextTag, editor, selected);
+          if (anchor == null) { // insert it in the cursor position
+            int offset = editor.getCaretModel().getOffset();
+            Document document = editor.getDocument();
+            document.insertString(offset, newTag.getText());
+            PsiDocumentManager.getInstance(project).commitDocument(document);
+            newTag = PsiTreeUtil.getParentOfType(file.findElementAt(offset + 1), XmlTag.class, false);
           }
-        }.execute();
-
+          else {
+            newTag = (XmlTag)contextTag.addAfter(newTag, anchor);
+          }
+          if (newTag != null) {
+            generateTag(newTag, editor);
+          }
+          ;
+        });
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         XmlElementDescriptor descriptor = ContainerUtil.find(descriptors,
                                                              xmlElementDescriptor -> xmlElementDescriptor.getName().equals(TEST_THREAD_LOCAL.get()));

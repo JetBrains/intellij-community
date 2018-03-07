@@ -74,6 +74,12 @@ public class IntentionHintComponent implements Disposable, ScrollAwareHint {
 
   private static final Border INACTIVE_BORDER = BorderFactory.createEmptyBorder(NORMAL_BORDER_SIZE, NORMAL_BORDER_SIZE, NORMAL_BORDER_SIZE, NORMAL_BORDER_SIZE);
   private static final Border INACTIVE_BORDER_SMALL = BorderFactory.createEmptyBorder(SMALL_BORDER_SIZE, SMALL_BORDER_SIZE, SMALL_BORDER_SIZE, SMALL_BORDER_SIZE);
+
+  @TestOnly
+  public CachedIntentions getCachedIntentions() {
+    return myCachedIntentions;
+  }
+
   private final CachedIntentions myCachedIntentions;
 
   private static Border createActiveBorder() {
@@ -180,20 +186,6 @@ public class IntentionHintComponent implements Disposable, ScrollAwareHint {
     HIDE_AND_RECREATE   // ahh, has to close already shown popup, recreate and re-show again
   }
 
-  //true if actions updated, there is nothing to do
-  //false if has to recreate popup, no need to reshow
-  //null if has to reshow
-  @NotNull
-  public PopupUpdateResult getPopupUpdateResult(boolean actionsChanged) {
-    if (myPopup.isDisposed() || !myFile.isValid()) {
-      return PopupUpdateResult.HIDE_AND_RECREATE;
-    }
-    if (!actionsChanged) {
-      return PopupUpdateResult.NOTHING_CHANGED;
-    }
-    return myPopupShown ? PopupUpdateResult.HIDE_AND_RECREATE : PopupUpdateResult.CHANGED_INVISIBLE;
-  }
-
   @Nullable
   @TestOnly
   public IntentionAction getAction(int index) {
@@ -205,12 +197,6 @@ public class IntentionHintComponent implements Disposable, ScrollAwareHint {
       return null;
     }
     return values.get(index).getAction();
-  }
-
-  public void recreate() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    ListPopupStep step = myPopup.getListStep();
-    recreateMyPopup(step);
   }
 
   private void showIntentionHintImpl(final boolean delay, @NotNull Point position) {

@@ -516,7 +516,7 @@ public class HgHistoryUtil {
     protected void processOutputLine(@NotNull String line) {
       int separatorIndex;
       while ((separatorIndex = line.indexOf(HgChangesetUtil.CHANGESET_SEPARATOR)) >= 0) {
-        myOutput.append(line.substring(0, separatorIndex));
+        myOutput.append(line, 0, separatorIndex);
         myConsumer.consume(myOutput);
         myOutput.setLength(0); // maybe also call myOutput.trimToSize() to free some memory ?
         line = line.substring(separatorIndex + 1);

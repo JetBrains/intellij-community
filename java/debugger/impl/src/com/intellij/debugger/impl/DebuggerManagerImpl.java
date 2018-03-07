@@ -621,7 +621,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
       File file = FileUtil.createTempFile("capture", ".props");
       try (FileOutputStream out = new FileOutputStream(file)) {
         properties.store(out, null);
-        return file.getAbsolutePath();
+        return StringUtil.trimStart(file.toURI().toASCIIString(), "file:");
       }
     }
     catch (IOException e) {

@@ -5,8 +5,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.annotations.SerializedName;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.io.RequestBuilder;
@@ -14,10 +14,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Map;
 
 public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
   private static final String INTELLIJ_TEST_DISCOVERY_HOST = "http://intellij-test-discovery";
@@ -28,6 +27,9 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
                                                      @NotNull String classFQName,
                                                      @NotNull String methodName,
                                                      byte frameworkId) {
+    if (!ApplicationManager.getApplication().isInternal()) {
+      return MultiMap.emptyInstance();
+    }
     String methodFqn = classFQName + "." + methodName;
     RequestBuilder r = HttpRequests.request(INTELLIJ_TEST_DISCOVERY_HOST + "/search/tests/by-method/" + methodFqn);
 
@@ -35,12 +37,7 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
       return r.connect(request -> {
         MultiMap<String, String> map = new MultiMap<>();
         TestsSearchResult result = new ObjectMapper().readValue(request.getInputStream(), TestsSearchResult.class);
-        result.getTests().forEach(s -> {
-          String str = s.length() > 1 && s.charAt(0) == 'j' ? s.substring(1) : s;
-          String classFqn = StringUtil.substringBefore(str, "-");
-          String testMethodName = StringUtil.substringAfter(str, "-");
-          map.putValue(classFqn, testMethodName);
-        });
+        result.getTests().forEach((classFqn, testMethodName) -> map.putValues(classFqn, testMethodName));
         return map;
       });
     }
@@ -71,7 +68,7 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
     private int found;
 
     @NotNull
-    private List<String> tests = new ArrayList<>();
+    private Map<String, List<String>> tests = new HashMap<>();
 
     @Nullable
     private String message;
@@ -101,13 +98,13 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
     }
 
     @NotNull
-    public List<String> getTests() {
+    public Map<String, List<String>> getTests() {
       return tests;
     }
 
-    public TestsSearchResult setTests(List<String> tests) {
+    public TestsSearchResult setTests(@NotNull Map<String, List<String>> tests) {
       this.tests = tests;
-      this.found = tests.size();
+      this.found = tests.values().stream().mapToInt(List::size).sum();
       return this;
     }
 

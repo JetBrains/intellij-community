@@ -321,12 +321,12 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
         @NonNls StringBuffer newText = new StringBuffer();
         newText.append("/** @see ");
         if (name.equals(newName)) { // hasSignature is true here, so we can search for '('
-          newText.append(text.substring(0, text.indexOf('(')));
+          newText.append(text, 0, text.indexOf('('));
         }
         else {
           final int sharpIndex = text.indexOf('#');
           if (sharpIndex >= 0) {
-            newText.append(text.substring(0, sharpIndex + 1));
+            newText.append(text, 0, sharpIndex + 1);
           }
           newText.append(newName);
         }

@@ -21,6 +21,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.CommandEvent
 import com.intellij.openapi.command.CommandListener
@@ -42,7 +43,6 @@ import com.intellij.openapi.vcs.ex.DocumentTracker.Block
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker.LocalRange
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.GuiUtils
 import com.intellij.ui.components.labels.ActionGroupLink
 import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.ContainerUtil
@@ -73,6 +73,8 @@ class PartialLocalLineStatusTracker(project: Project,
   private var defaultMarker: ChangeListMarker
   private var currentMarker: ChangeListMarker? = null
 
+  private var initialChangeListId: String? = null
+  private var lastKnownTrackerChangeListId: String? = null
   private val affectedChangeLists = HashSet<String>()
 
   private val batchChangeTaskCounter: AtomicInteger = AtomicInteger()
@@ -116,13 +118,15 @@ class PartialLocalLineStatusTracker(project: Project,
       newIds.add(block.marker.changelistId)
     }
 
+    if (!isInitialized) initialChangeListId?.let { newIds.add(it) }
+
     if (newIds.isEmpty()) {
-      if (affectedChangeLists.size == 1) {
-        newIds.add(affectedChangeLists.single())
-      }
-      else {
-        newIds.add(defaultMarker.changelistId)
-      }
+      val listId = lastKnownTrackerChangeListId ?: defaultMarker.changelistId
+      newIds.add(listId)
+    }
+
+    if (newIds.size == 1) {
+      lastKnownTrackerChangeListId = newIds.single()
     }
 
     oldIds.addAll(affectedChangeLists)
@@ -143,7 +147,10 @@ class PartialLocalLineStatusTracker(project: Project,
   }
 
   @CalledInAwt
-  fun setBaseRevision(vcsContent: CharSequence, changelistId: String?) {
+  override fun setBaseRevision(vcsContent: CharSequence) {
+    val changelistId = if (!isInitialized) initialChangeListId else null
+    initialChangeListId = null
+
     setBaseRevision(vcsContent) {
       if (changelistId != null) {
         changeListManager.executeUnderDataLock {
@@ -173,12 +180,19 @@ class PartialLocalLineStatusTracker(project: Project,
   }
 
 
-  override fun initChangeTracking(defaultId: String, changelistsIds: List<String>) {
+  override fun initChangeTracking(defaultId: String, changelistsIds: List<String>, fileChangelistId: String?) {
     documentTracker.writeLock {
       defaultMarker = ChangeListMarker(defaultId)
 
+      if (!isInitialized) initialChangeListId = fileChangelistId
+
+      lastKnownTrackerChangeListId = fileChangelistId
+
       val idsSet = changelistsIds.toSet()
       moveMarkers({ !idsSet.contains(it.marker.changelistId) }, defaultMarker)
+
+      // no need to notify CLM, as we're inside it's action
+      updateAffectedChangeLists(false)
     }
   }
 
@@ -192,12 +206,13 @@ class PartialLocalLineStatusTracker(project: Project,
     documentTracker.writeLock {
       if (!affectedChangeLists.contains(listId)) return@writeLock
 
+      if (!isInitialized && initialChangeListId == listId) initialChangeListId = null
+
+      if (lastKnownTrackerChangeListId == listId) lastKnownTrackerChangeListId = null
+
       moveMarkers({ it.marker.changelistId == listId }, defaultMarker)
 
-      if (affectedChangeLists.size == 1 && affectedChangeLists.contains(listId)) {
-        affectedChangeLists.clear()
-        affectedChangeLists.add(defaultMarker.changelistId)
-      }
+      updateAffectedChangeLists(false)
     }
   }
 
@@ -205,18 +220,29 @@ class PartialLocalLineStatusTracker(project: Project,
     documentTracker.writeLock {
       if (!affectedChangeLists.contains(fromListId)) return@writeLock
 
+      if (!isInitialized && initialChangeListId == fromListId) initialChangeListId = toListId
+
+      if (lastKnownTrackerChangeListId == fromListId) lastKnownTrackerChangeListId = toListId
+
       moveMarkers({ it.marker.changelistId == fromListId }, ChangeListMarker(toListId))
+
+      updateAffectedChangeLists(false)
     }
   }
 
   override fun moveChangesTo(toListId: String) {
     documentTracker.writeLock {
+      if (!isInitialized) initialChangeListId = toListId
+
+      lastKnownTrackerChangeListId = toListId
+
       moveMarkers({ true }, ChangeListMarker(toListId))
+
+      updateAffectedChangeLists(false)
     }
   }
 
-  private fun moveMarkers(condition: (Block) -> Boolean, toMarker: ChangeListMarker,
-                          notifyChangeListManager: Boolean = false) {
+  private fun moveMarkers(condition: (Block) -> Boolean, toMarker: ChangeListMarker) {
     val affectedBlocks = mutableListOf<Block>()
 
     for (block in blocks) {
@@ -229,14 +255,12 @@ class PartialLocalLineStatusTracker(project: Project,
 
     if (!affectedBlocks.isEmpty()) {
       dropExistingUndoActions()
-      updateAffectedChangeLists(notifyChangeListManager) // no need to notify CLM, as we're inside it's action
 
-      GuiUtils.invokeLaterIfNeeded(
-        {
-          for (block in affectedBlocks) {
-            updateHighlighter(block)
-          }
-        }, ModalityState.any())
+      runInEdt(ModalityState.any()) {
+        for (block in affectedBlocks) {
+          updateHighlighter(block)
+        }
+      }
     }
   }
 
@@ -458,8 +482,11 @@ class PartialLocalLineStatusTracker(project: Project,
   }
 
   @CalledInAwt
-  fun rollbackChangelistChanges(changelistId: String) {
-    runBulkRollback { it.marker.changelistId == changelistId }
+  fun rollbackChangelistChanges(changelistsIds: List<String>, rollbackRangesExcludedFromCommit: Boolean) {
+    val idsSet = changelistsIds.toSet()
+    runBulkRollback {
+      idsSet.contains(it.marker.changelistId) && (rollbackRangesExcludedFromCommit || !it.excludedFromCommit)
+    }
   }
 
 
@@ -557,7 +584,8 @@ class PartialLocalLineStatusTracker(project: Project,
       val newMarker = ChangeListMarker(changelist)
 
       documentTracker.writeLock {
-        moveMarkers(condition, newMarker, notifyChangeListManager = true)
+        moveMarkers(condition, newMarker)
+        updateAffectedChangeLists()
       }
     }
   }

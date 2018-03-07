@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.actions
 
 import com.intellij.icons.AllIcons
@@ -127,7 +125,7 @@ class MigrateModuleNamesInSourcesAction : AnAction("Find/Update Module Names in 
     val progress = ProgressManager.getInstance().progressIndicator ?: EmptyProgressIndicator()
     progress.text = "Searching for module names..."
     val scope = GlobalSearchScope.projectScope(project)
-    val searchHelper = PsiSearchHelper.SERVICE.getInstance(project)
+    val searchHelper = PsiSearchHelper.getInstance(project)
 
     fun Char.isModuleNamePart() = this.isJavaIdentifierPart() || this == '-'
     fun GlobalSearchScope.filter(filter: (VirtualFile) -> Boolean) = object: DelegatingGlobalSearchScope(this) {

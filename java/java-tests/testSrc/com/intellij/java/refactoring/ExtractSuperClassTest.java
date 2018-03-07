@@ -154,14 +154,9 @@ public class ExtractSuperClassTest extends RefactoringTestCase {
     for (MemberInfo info : infos) {
       info.setChecked(true);
     }
-    new WriteCommandAction.Simple(myProject) {
-      @Override
-      protected void run() {
-        ExtractSuperClassUtil
-          .extractSuperClass(myProject, psiClass.getContainingFile().getContainingDirectory(), "TestSubclass", anonymousClass,
-                             infos.toArray(new MemberInfo[0]), new DocCommentPolicy(DocCommentPolicy.ASIS));
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(myProject).run(() -> ExtractSuperClassUtil
+      .extractSuperClass(myProject, psiClass.getContainingFile().getContainingDirectory(), "TestSubclass", anonymousClass,
+                         infos.toArray(new MemberInfo[0]), new DocCommentPolicy(DocCommentPolicy.ASIS)));
     String rootAfter = getRoot() + "/after";
     VirtualFile rootDir2 = LocalFileSystem.getInstance().findFileByPath(rootAfter.replace(File.separatorChar, '/'));
     myProject.getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();

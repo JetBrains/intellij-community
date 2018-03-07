@@ -56,32 +56,27 @@ public class ImportNSAction implements QuestionAction {
     final RangeMarker marker = myEditor.getDocument().createRangeMarker(offset, offset);
     Consumer<String> consumer = (namespace) -> {
       if (namespace != null) {
-        final Project project = myFile.getProject();
-        new WriteCommandAction.Simple(project, myFile) {
-
-          @Override
-          protected void run() throws Throwable {
-            final XmlNamespaceHelper extension = XmlNamespaceHelper.getHelper(myFile);
-            final String prefix = extension.getNamespacePrefix(myElement);
-            extension.insertNamespaceDeclaration(
-              myFile,
-              myEditor,
-              Collections.singleton(namespace),
-              prefix,
-              new XmlNamespaceHelper.Runner<String, IncorrectOperationException>() {
-                @Override
-                public void run(final String s) throws IncorrectOperationException {
-                  PsiDocumentManager.getInstance(myFile.getProject())
-                    .doPostponedOperationsAndUnblockDocument(myEditor.getDocument());
-                  PsiElement element = myFile.findElementAt(marker.getStartOffset());
-                  if (element != null) {
-                    extension.qualifyWithPrefix(s, element, myEditor.getDocument());
+          final Project project = myFile.getProject();
+           WriteCommandAction.writeCommandAction(project, myFile) . run(() -> {
+              final XmlNamespaceHelper extension = XmlNamespaceHelper.getHelper(myFile);
+              final String prefix = extension.getNamespacePrefix(myElement);
+              extension.insertNamespaceDeclaration(myFile,
+                                                   myEditor,
+                                                   Collections.singleton(namespace),
+                                                   prefix,
+                                                   new XmlNamespaceHelper.Runner<String, IncorrectOperationException>() {
+                  @Override
+                  public void run(final String s) throws IncorrectOperationException {
+                    PsiDocumentManager.getInstance(myFile.getProject()).doPostponedOperationsAndUnblockDocument(myEditor.getDocument());
+                    PsiElement element = myFile.findElementAt(marker.getStartOffset());
+                    if (element != null) {
+                      extension.qualifyWithPrefix(s, element, myEditor.getDocument());
+                    }
                   }
                 }
-              }
-            );
-          }
-        }.execute();
+              );
+            }
+          );
       }
     };
     if (myNamespaces.size() == 1) {

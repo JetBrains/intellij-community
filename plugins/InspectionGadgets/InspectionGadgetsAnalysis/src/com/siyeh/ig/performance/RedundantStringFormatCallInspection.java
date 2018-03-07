@@ -41,7 +41,7 @@ public class RedundantStringFormatCallInspection extends BaseInspection {
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("redundant.string.format.call.problem.descriptor");
+    return InspectionGadgetsBundle.message("redundant.call.problem.descriptor");
   }
 
   @Override
@@ -155,7 +155,7 @@ public class RedundantStringFormatCallInspection extends BaseInspection {
       }
       if (firstType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
         if (arguments.length == 1 && !containsPercentN(firstArgument)) {
-          registerMethodCallError(expression, Boolean.valueOf(printf));
+          registerMethodCallError(expression, printf);
         }
       }
       else if (firstType.equalsToText("java.util.Locale")) {
@@ -170,7 +170,7 @@ public class RedundantStringFormatCallInspection extends BaseInspection {
         if (containsPercentN(secondArgument)) {
           return;
         }
-        registerMethodCallError(expression, Boolean.valueOf(printf));
+        registerMethodCallError(expression, printf);
       }
     }
 

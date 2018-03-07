@@ -276,7 +276,7 @@ public class TestIntegrationUtils {
 
       from = index + "${NAME}".length();
     }
-    template.addTextSegment(templateText.substring(from, templateText.length()));
+    template.addTextSegment(templateText.substring(from));
 
     template.setToIndent(true);
     template.setToReformat(true);

@@ -31,7 +31,8 @@ import org.jetbrains.annotations.Nullable;
 public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.RangeMarkerImpl");
 
-  private final Getter<DocumentEx> myDocument;
+  @NotNull
+  private final Object myDocumentOrFile; // either VirtualFile (if any) or DocumentEx if no file associated
   RangeMarkerTree.RMNode<RangeMarkerEx> myNode;
 
   private final long myId;
@@ -53,7 +54,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
 
     FileDocumentManager manager = FileDocumentManager.getInstance();
     VirtualFile file = manager.getFile(document);
-    myDocument = file != null ? () -> (DocumentEx)manager.getDocument(file) : () -> document;
+    myDocumentOrFile = file == null ? document : file;
     myId = counter.next();
     if (register) {
       registerInTree(start, end, greedyToLeft, greedyToRight, 0);
@@ -110,7 +111,8 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   @Override
   @NotNull
   public final DocumentEx getDocument() {
-    return myDocument.get();
+    Object file = myDocumentOrFile;
+    return file instanceof VirtualFile ? (DocumentEx)FileDocumentManager.getInstance().getDocument((VirtualFile)file) : (DocumentEx)file;
   }
 
   // fake method to simplify setGreedyToLeft/right methods. overridden in RangeHighlighter

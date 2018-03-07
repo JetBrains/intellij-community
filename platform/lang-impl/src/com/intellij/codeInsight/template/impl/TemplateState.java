@@ -686,10 +686,10 @@ public class TemplateState implements Disposable {
     PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myDocument);
   }
 
-  // Hours spent fixing code : 3
+  // Hours spent fixing code : 3.5
   void calcResults(final boolean isQuick) {
     if (mySegments.isInvalid()) {
-      finishTemplateEditing();
+      gotoEnd(true);
     }
     
     if (myProcessor != null && myCurrentVariableNumber >= 0) {
@@ -1022,7 +1022,9 @@ public class TemplateState implements Disposable {
   public void gotoEnd(boolean brokenOff) {
     if (isDisposed()) return;
     LookupManager.getInstance(myProject).hideActiveLookup();
-    calcResults(false);
+    if (!mySegments.isInvalid()) {
+      calcResults(false);
+    }
     if (!brokenOff) {
       doReformat();
     }

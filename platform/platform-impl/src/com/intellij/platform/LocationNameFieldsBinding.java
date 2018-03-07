@@ -92,7 +92,7 @@ public class LocationNameFieldsBinding {
         path = StringUtil.trimEnd(path, File.separator);
         int ind = path.lastIndexOf(File.separator);
         if (ind != -1) {
-          String projectName = path.substring(ind + 1, path.length());
+          String projectName = path.substring(ind + 1);
           if (!nameField.getText().trim().isEmpty()) {
             myBaseDir = path.substring(0, ind);
           }
@@ -134,7 +134,7 @@ public class LocationNameFieldsBinding {
         if (replace) {
           if (sb == null) {
             sb = new StringBuilder(str.length());
-            sb.append(str.substring(0, i));
+            sb.append(str, 0, i);
           }
           sb.append('_');
         }

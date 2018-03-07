@@ -336,12 +336,7 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
     compileModules("project");
     assertCopied("target/classes/file.properties");
 
-    new WriteCommandAction.Simple(myProject) {
-      @Override
-      protected void run() throws Throwable {
-        file.delete(this);
-      }
-    }.execute().throwException();
+    WriteCommandAction.writeCommandAction(myProject).run(() -> file.delete(this));
 
     compileModules("project");
     assertNotCopied("target/classes/file.properties");
@@ -512,12 +507,8 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
                     "</build>");
     importProject();
 
-    new WriteCommandAction.Simple(myProject) {
-      @Override
-      protected void run() throws Throwable {
-        setModulesOutput(myProjectRoot.createChildDirectory(this, "output"), "project", "m1", "m2");
-      }
-    }.execute().throwException();
+    WriteCommandAction.writeCommandAction(myProject)
+                      .run(() -> setModulesOutput(myProjectRoot.createChildDirectory(this, "output"), "project", "m1", "m2"));
 
 
     compileModules("project", "m1", "m2");
@@ -652,15 +643,12 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
     PsiTestUtil.addSourceRoot(module, configDir);
     PsiTestUtil.addSourceRoot(module, excludedDir);
 
-    new WriteCommandAction.Simple(myProject) {
-      @Override
-      protected void run() throws Throwable {
-        CompilerConfiguration.getInstance(myProject).getExcludedEntriesConfiguration()
-          .addExcludeEntryDescription(new ExcludeEntryDescription(excludedDir, true, false, getTestRootDisposable()));
+    WriteCommandAction.writeCommandAction(myProject).run(() -> {
+      CompilerConfiguration.getInstance(myProject).getExcludedEntriesConfiguration()
+                           .addExcludeEntryDescription(new ExcludeEntryDescription(excludedDir, true, false, getTestRootDisposable()));
 
-        setModulesOutput(myProjectRoot.createChildDirectory(this, "output"), "project", "m1", "m2");
-      }
-    }.execute().throwException();
+      setModulesOutput(myProjectRoot.createChildDirectory(this, "output"), "project", "m1", "m2");
+    });
 
     compileModules("project");
 

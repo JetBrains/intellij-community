@@ -1,4 +1,5 @@
 class Foo {
-  private String zoo;
-  public Stri<caret>
+  private SomeClass zoo;
+  public SomeCl<caret>
 }
+class SomeClass {}

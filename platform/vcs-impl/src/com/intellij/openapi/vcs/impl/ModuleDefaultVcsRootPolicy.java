@@ -17,7 +17,6 @@
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -116,8 +115,7 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
   @Override
   @Nullable
   public VirtualFile getVcsRootFor(@NotNull VirtualFile file) {
-    FileIndexFacade indexFacade = ServiceManager.getService(myProject, FileIndexFacade.class);
-    if (myBaseDir != null && indexFacade.isValidAncestor(myBaseDir, file)) {
+    if (myBaseDir != null && ReadAction.compute(() -> FileIndexFacade.getInstance(myProject).isValidAncestor(myBaseDir, file))) {
       LOG.debug("File " + file + " is under project base dir " + myBaseDir);
       return myBaseDir;
     }
