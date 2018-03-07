@@ -208,11 +208,18 @@ public class StubSerializationHelper {
     }
     try {
       int childCount = DataInputOutputUtil.readINT(stream);
+      if (stub instanceof StubBase) {
+        ((StubBase)stub).myStubList.prepareForChildren((StubBase<?>)stub, childCount);
+      }
       for (int i = 0; i < childCount; i++) {
         deserialize(stream, stub);
       }
     } finally {
       if (rootStubSerializerWasSet) ourRootStubSerializer.set(null);
+    }
+
+    if (parentStub == null && stub instanceof StubBase<?>) {
+      assert ((StubBase<?>)stub).myStubList.isChildrenLayoutOptimal();
     }
     return stub;
   }
@@ -232,7 +239,7 @@ public class StubSerializationHelper {
     }
 
     @Override
-    public int enumerate(@Nullable String value) throws IOException {
+    public int enumerate(@Nullable String value) {
       if (value == null) return 0;
       assert myEnumerates != null; // enumerate possible only when writing stub
       int i = myEnumerates.get(value);
@@ -244,7 +251,7 @@ public class StubSerializationHelper {
     }
 
     @Override
-    public String valueOf(int idx) throws IOException {
+    public String valueOf(int idx) {
       if (idx == 0) return null;
       return myStrings.get(idx - 1);
     }

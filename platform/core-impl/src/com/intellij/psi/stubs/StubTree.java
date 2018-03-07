@@ -36,6 +36,11 @@ public class StubTree extends ObjectStubTree<StubElement<?>> {
     super((ObjectStubBase)root, withBackReference);
   }
 
+  @Override
+  protected List<StubElement<?>> enumerateStubs(@NotNull Stub root) {
+    return ((StubBase)root).myStubList.finalizeLoadingStage().toPlainList();
+  }
+
   @NotNull
   @Override
   public List<StubElement<?>> getPlainListFromAllRoots() {
