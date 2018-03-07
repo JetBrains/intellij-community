@@ -68,10 +68,10 @@ class DiscoveredTestsTree extends Tree implements DataProvider {
           if (psi instanceof PsiClass) {
             String packageName = PsiUtil.getPackageName((PsiClass)psi);
             if (packageName != null) {
-              append(FontUtil.thinSpace() + "(" + packageName + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+              append(FontUtil.spaceAndThinSpace() + packageName, SimpleTextAttributes.GRAYED_ATTRIBUTES);
             }
             int testMethodCount = myModel.getChildren(psi).size();
-            append(FontUtil.spaceAndThinSpace() + (testMethodCount != 1 ? (testMethodCount + " tests") : "1 test"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+            append(" / " + (testMethodCount != 1 ? (testMethodCount + " tests") : "1 test"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
           }
           SpeedSearchUtil.applySpeedSearchHighlighting(tree, this, true, false);
         }
