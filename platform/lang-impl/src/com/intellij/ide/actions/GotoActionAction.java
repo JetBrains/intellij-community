@@ -241,7 +241,6 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
           if (aw.isAvailable()) {
             String id = ActionManager.getInstance().getId(aw.getAction());
             KeymapPanel.addKeyboardShortcut(id, ActionShortcutRestrictions.getInstance().getForActionId(id), activeKeymap, component);
-            popup.repaintListImmediate();
           }
         }
       }
