@@ -24,7 +24,14 @@ public abstract class RunAnythingGroup {
     ExtensionPointName.create("org.jetbrains.plugins.ruby.runAnythingGroup");
 
   private static final int DEFAULT_MORE_STEP_COUNT = 5;
+  /**
+   * {@link #moreIndex} is a group 'load more..' index in the main list.
+   */
   private volatile int moreIndex = -1;
+
+  /**
+   * {@link #titleIndex} is an index of group title.
+   */
   private volatile int titleIndex = -1;
 
   /**
@@ -105,7 +112,6 @@ public abstract class RunAnythingGroup {
    * @param result      collection items to be added to
    * @param isMore      if true gets {@link #DEFAULT_MORE_STEP_COUNT} group items, else limits to {@link #getMaxItemsToShow()}
    * @param textToMatch an item presentation text to be matched with
-   *
    * @return true if limit exceeded
    */
   boolean addToList(@NotNull RunAnythingSearchListModel listModel,
@@ -142,34 +148,58 @@ public abstract class RunAnythingGroup {
            ? getItems(project, module, listModel, pattern, isMore, check) : new SearchResult();
   }
 
+  /**
+   * Resets current group {@link #moreIndex}.
+   */
   public void dropMoreIndex() {
     moreIndex = -1;
   }
 
+  /**
+   * Shifts {@link #moreIndex} starting from {@code index} to {@code shift}.
+   */
   private static void shiftMoreIndex(int index, int shift) {
     Arrays.stream(EP_NAME.getExtensions()).filter(runAnythingGroup -> runAnythingGroup.moreIndex >= index)
           .forEach(runAnythingGroup -> runAnythingGroup.moreIndex += shift);
   }
 
+  /**
+   * Finds group title by {@code index}.
+   *
+   * @return group title if {@code index} is equals to group {@link #titleIndex} and {@code null} if nothing found
+   */
+  @Nullable
   public static String getTitle(int index) {
     return Arrays.stream(EP_NAME.getExtensions()).filter(runAnythingGroup -> index == runAnythingGroup.titleIndex).findFirst()
                  .map(RunAnythingGroup::getTitle).orElse(null);
   }
 
+  /**
+   * Shifts {@link #titleIndex} starting from {@code index} to {@code shift}.
+   */
   private static void shift(int index, int shift) {
     Arrays.stream(EP_NAME.getExtensions())
           .filter(runAnythingGroup -> runAnythingGroup.titleIndex != -1 && runAnythingGroup.titleIndex > index)
           .forEach(runAnythingGroup -> runAnythingGroup.titleIndex += shift);
   }
 
+  /**
+   * Clears {@link #moreIndex} of all groups.
+   */
   public static void clearMoreIndex() {
     Arrays.stream(EP_NAME.getExtensions()).forEach(runAnythingGroup -> runAnythingGroup.moreIndex = -1);
   }
 
+  /**
+   * Clears {@link #titleIndex} of all groups.
+   */
   private static void clearTitleIndex() {
     Arrays.stream(EP_NAME.getExtensions()).forEach(runAnythingGroup -> runAnythingGroup.titleIndex = -1);
   }
 
+  /**
+   * Joins {@link #titleIndex} and {@link #moreIndex} of all groups; using for navigating by 'TAB' between groups.
+   */
   public static int[] getAllIndexes() {
     TIntArrayList list = new TIntArrayList();
     for (RunAnythingGroup runAnythingGroup : EP_NAME.getExtensions()) {
@@ -182,20 +212,32 @@ public abstract class RunAnythingGroup {
     return list.toNativeArray();
   }
 
+  /**
+   * Finds matched by {@link #moreIndex} group.
+   */
   @Nullable
   public static RunAnythingGroup findRunAnythingGroup(int index) {
     return Arrays.stream(EP_NAME.getExtensions()).filter(runAnythingGroup -> index == runAnythingGroup.moreIndex).findFirst().orElse(null);
   }
 
+  /**
+   * Returns {@code true} if {@code index} is a {@link #moreIndex} of some group, {@code false} otherwise
+   */
   public static boolean isMoreIndex(int index) {
     return Arrays.stream(EP_NAME.getExtensions()).anyMatch(runAnythingGroup -> runAnythingGroup.moreIndex == index);
   }
 
+  /**
+   * Shifts {@link #moreIndex} and {@link #titleIndex} of all groups starting from {@code baseIndex} to {@code shift}.
+   */
   public static void shiftIndexes(int baseIndex, int shift) {
     shift(baseIndex, shift);
     shiftMoreIndex(baseIndex, shift);
   }
 
+  /**
+   * Clears {@link #moreIndex} and {@link #titleIndex} of all groups.
+   */
   public static void clearIndexes() {
     clearTitleIndex();
     clearMoreIndex();
