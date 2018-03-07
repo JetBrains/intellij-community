@@ -11,7 +11,6 @@ import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.lang.instrument.UnmodifiableClassException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.security.ProtectionDomain;
 import java.util.*;
 
@@ -69,47 +68,19 @@ public class CaptureAgent {
     System.setProperty(modulesKey, property);
   }
 
-  private static void readSettings(String path) {
+  private static void readSettings(String uri) {
+    Properties properties = new Properties();
+    File file;
     FileReader reader = null;
     try {
-      reader = new FileReader(new URI(path).getPath());
-      Properties properties = new Properties();
+      file = new File(new URI(uri));
+      reader = new FileReader(file);
       properties.load(reader);
-
-      DEBUG = Boolean.parseBoolean(properties.getProperty("debug", "false"));
-      if (DEBUG) {
-        CaptureStorage.setDebug(true);
-      }
-
-      if (Boolean.parseBoolean(properties.getProperty("disabled", "false"))) {
-        CaptureStorage.setEnabled(false);
-      }
-
-      boolean deleteSettings = Boolean.parseBoolean(properties.getProperty("deleteSettings", "true"));
-
-      Enumeration<?> propNames = properties.propertyNames();
-      while (propNames.hasMoreElements()) {
-        String propName = (String)propNames.nextElement();
-        if (propName.startsWith("capture")) {
-          addPoint(true, properties.getProperty(propName));
-        }
-        else if (propName.startsWith("insert")) {
-          addPoint(false, properties.getProperty(propName));
-        }
-      }
-
-      // delete settings file only if it was read correctly
-      if (deleteSettings) {
-        new File(path).delete();
-      }
     }
-    catch (IOException e) {
+    catch (Exception e) {
       System.out.println("Capture agent: unable to read settings");
       e.printStackTrace();
-    }
-    catch (URISyntaxException e) {
-      System.out.println("Capture agent: unable to read settings");
-      e.printStackTrace();
+      return;
     }
     finally {
       if (reader != null) {
@@ -120,6 +91,32 @@ public class CaptureAgent {
           e.printStackTrace();
         }
       }
+    }
+
+    DEBUG = Boolean.parseBoolean(properties.getProperty("debug", "false"));
+    if (DEBUG) {
+      CaptureStorage.setDebug(true);
+    }
+
+    if (Boolean.parseBoolean(properties.getProperty("disabled", "false"))) {
+      CaptureStorage.setEnabled(false);
+    }
+
+    Enumeration<?> propNames = properties.propertyNames();
+    while (propNames.hasMoreElements()) {
+      String propName = (String)propNames.nextElement();
+      if (propName.startsWith("capture")) {
+        addPoint(true, properties.getProperty(propName));
+      }
+      else if (propName.startsWith("insert")) {
+        addPoint(false, properties.getProperty(propName));
+      }
+    }
+
+    // delete settings file only if it was read correctly
+    if (Boolean.parseBoolean(properties.getProperty("deleteSettings", "true"))) {
+      //noinspection ResultOfMethodCallIgnored
+      file.delete();
     }
   }
 
