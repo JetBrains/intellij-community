@@ -146,6 +146,7 @@
     </group>
 
     <action id="Gradle.ShowDaemons" class="org.jetbrains.plugins.gradle.internal.daemon.ShowGradleDaemonsAction"/>
+    <action id="Gradle.ShowDataStats" class="org.jetbrains.plugins.gradle.action.ShowExternalDataStats"/>
 
   </actions>
 </idea-plugin>
