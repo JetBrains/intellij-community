@@ -10,6 +10,7 @@ import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.StructuralSearchException;
 import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
+import com.intellij.util.ObjectUtils;
 import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
 import groovy.lang.Script;
@@ -46,11 +47,12 @@ public class ScriptSupport {
   public ScriptSupport(Project project, String text, String name) {
     myScriptLog = new ScriptLog(project);
     myName = name;
-    final File scriptFile = new File(text);
     final GroovyShell shell = new GroovyShell();
     try {
+      final File scriptFile = new File(text);
       script = scriptFile.exists() ? shell.parse(scriptFile) : shell.parse(text, name + UUID + ".groovy");
-    } catch (Exception ex) {
+    }
+    catch (Exception ex) {
       Logger.getInstance(getClass().getName()).error(ex);
       throw new RuntimeException(ex);
     }
@@ -65,11 +67,10 @@ public class ScriptSupport {
         out.put(name, match);
       }
       else if (value instanceof List) {
-        @SuppressWarnings("unchecked")
-        final List<PsiElement> list = (List<PsiElement>)value;
+        @SuppressWarnings("unchecked") final List<PsiElement> list = (List<PsiElement>)value;
         list.add(match);
       }
-      else if (value instanceof PsiElement){
+      else if (value instanceof PsiElement) {
         final List<PsiElement> list = new ArrayList<>();
         list.add((PsiElement)value);
         list.add(match);
@@ -104,9 +105,12 @@ public class ScriptSupport {
 
       final Object o = script.run();
       return String.valueOf(o);
-    } catch (RuntimeException ex) {
-      throw new StructuralSearchException(SSRBundle.message("groovy.script.error", StringUtil.replace(ex.getMessage(), UUID, "")));
-    } finally {
+    }
+    catch (RuntimeException ex) {
+      String message = SSRBundle.message("groovy.script.error", StringUtil.replace(ObjectUtils.notNull(ex.getMessage(), ""), UUID, ""));
+      throw new StructuralSearchException(message);
+    }
+    finally {
       script.setBinding(null);
     }
   }
@@ -117,9 +121,11 @@ public class ScriptSupport {
       final GroovyShell shell = new GroovyShell();
       final Script script = scriptFile.exists() ? shell.parse(scriptFile) : shell.parse(scriptText);
       return null;
-    } catch (IOException e) {
+    }
+    catch (IOException e) {
       return e.getMessage();
-    } catch (MultipleCompilationErrorsException e) {
+    }
+    catch (MultipleCompilationErrorsException e) {
       final ErrorCollector errorCollector = e.getErrorCollector();
       @SuppressWarnings("unchecked") final List<Message> errors = errorCollector.getErrors();
       for (Message error : errors) {
@@ -130,7 +136,8 @@ public class ScriptSupport {
         }
       }
       return e.getMessage();
-    } catch (CompilationFailedException ex) {
+    }
+    catch (CompilationFailedException ex) {
       return ex.getLocalizedMessage();
     }
   }
