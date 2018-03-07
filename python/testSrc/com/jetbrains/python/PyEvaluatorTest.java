@@ -281,6 +281,38 @@ public class PyEvaluatorTest extends PyTestCase {
     assertFalse(PyEvaluator.evaluateAsBoolean(parseExpression("[]")));
   }
 
+  public void testEvaluateAsBooleanNoResolve() {
+    assertTrue(PyEvaluator.evaluateAsBooleanNoResolve(parseExpression("True")));
+    assertFalse(PyEvaluator.evaluateAsBooleanNoResolve(parseExpression("False")));
+
+    assertTrue(PyEvaluator.evaluateAsBooleanNoResolve(parseExpression("\'a\'")));
+    assertFalse(PyEvaluator.evaluateAsBooleanNoResolve(parseExpression("\'\'")));
+
+    assertTrue(PyEvaluator.evaluateAsBooleanNoResolve(parseExpression("1")));
+    assertFalse(PyEvaluator.evaluateAsBooleanNoResolve(parseExpression("0")));
+
+    assertTrue(PyEvaluator.evaluateAsBooleanNoResolve(parseExpression("{1: 0}")));
+    assertFalse(PyEvaluator.evaluateAsBooleanNoResolve(parseExpression("{}")));
+
+    assertTrue(PyEvaluator.evaluateAsBooleanNoResolve(parseExpression("[1]")));
+    assertFalse(PyEvaluator.evaluateAsBooleanNoResolve(parseExpression("[]")));
+
+    assertNull(PyEvaluator.evaluateAsBooleanNoResolve(parseText("a = True\nexpr = a")));
+    assertNull(PyEvaluator.evaluateAsBooleanNoResolve(parseText("a = False\nexpr = a")));
+
+    assertNull(PyEvaluator.evaluateAsBooleanNoResolve(parseText("a = \'a\'\nexpr = a")));
+    assertNull(PyEvaluator.evaluateAsBooleanNoResolve(parseText("a = \'\'\nexpr = a")));
+
+    assertNull(PyEvaluator.evaluateAsBooleanNoResolve(parseText("a = 1\nexpr = a")));
+    assertNull(PyEvaluator.evaluateAsBooleanNoResolve(parseText("a = 0\nexpr = a")));
+
+    assertNull(PyEvaluator.evaluateAsBooleanNoResolve(parseText("a = {1: 0}\nexpr = a")));
+    assertNull(PyEvaluator.evaluateAsBooleanNoResolve(parseText("a = {}\nexpr = a")));
+
+    assertNull(PyEvaluator.evaluateAsBooleanNoResolve(parseText("a = [1]\nexpr = a")));
+    assertNull(PyEvaluator.evaluateAsBooleanNoResolve(parseText("a = []\nexpr = a")));
+  }
+
   @NotNull
   private <T> T byExpression(@NotNull String expression, @NotNull Class<T> cls) {
     final Object value = new PyEvaluator().evaluate(parseExpression(expression));
