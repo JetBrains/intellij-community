@@ -23,11 +23,15 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.FontUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.ui.EdtInvocationManager;
+import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.tree.TreeModelAdapter;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.TreeModelEvent;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.util.List;
@@ -69,6 +73,19 @@ class DiscoveredTestsTree extends Tree implements DataProvider {
             int testMethodCount = myModel.getChildren(psi).size();
             append(FontUtil.spaceAndThinSpace() + (testMethodCount != 1 ? (testMethodCount + " tests") : "1 test"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
           }
+        }
+      }
+    });
+    getModel().addTreeModelListener(new TreeModelAdapter() {
+      //TODO
+      boolean myAlreadyDone;
+      @Override
+      protected void process(TreeModelEvent event, EventType type) {
+        if (!myAlreadyDone && !myModel.getTestClasses().isEmpty()) {
+          myAlreadyDone = true;
+          EdtInvocationManager.getInstance().invokeLater(() -> {
+            TreeUtil.selectFirstNode(DiscoveredTestsTree.this);
+          });
         }
       }
     });
