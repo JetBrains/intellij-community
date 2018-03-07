@@ -69,7 +69,9 @@ public abstract class JobLauncher {
    *         or threw an exception,
    *         or we were unable to start read action in at least one thread
    * @throws ProcessCanceledException if at least one task has thrown ProcessCanceledException
+   * @deprecated use {@link #invokeConcurrentlyUnderProgress(List, ProgressIndicator, Processor)} instead
    */
+  @Deprecated
   public <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<T> things,
                                                      ProgressIndicator progress,
                                                      boolean failFastOnAcquireReadAction,
@@ -84,13 +86,6 @@ public abstract class JobLauncher {
                                                               boolean runInReadAction,
                                                               boolean failFastOnAcquireReadAction,
                                                               @NotNull Processor<? super T> thingProcessor) throws ProcessCanceledException;
-
-  @NotNull
-  @Deprecated // use invokeConcurrentlyUnderProgress() instead
-  public abstract <T> AsyncFuture<Boolean> invokeConcurrentlyUnderProgressAsync(@NotNull List<T> things,
-                                                                                ProgressIndicator progress,
-                                                                                boolean failFastOnAcquireReadAction,
-                                                                                @NotNull Processor<? super T> thingProcessor);
 
   /**
    * NEVER EVER submit runnable which can lock itself for indeterminate amount of time.
