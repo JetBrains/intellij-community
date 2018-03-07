@@ -34,16 +34,26 @@ class CreateAnnotationAction(target: PsiModifierListOwner, override val request:
     WriteCommandAction.writeCommandAction(modifierList.project).run<RuntimeException> {
       val annotation = modifierList.addAnnotation(request.qualifiedName)
 
-      val support = LanguageAnnotationSupport.INSTANCE.forLanguage(annotation.language)
-      val psiLiteral = annotation.setDeclaredAttributeValue("value", support!!
-        .createLiteralValue(request.valueLiteralValue, annotation))
+      val support = LanguageAnnotationSupport.INSTANCE.forLanguage(annotation.language)!!
+
+      attributes@ for ((name, value) in request.attributes) {
+        val memberValue = when (value) {
+          is JvmAnnotationMemberValue.PrimitiveLiteral -> support
+            .createLiteralValue(value.value.toString(), annotation)
+          is JvmAnnotationMemberValue.StringLiteral -> support
+            .createLiteralValue(value.value, annotation)
+          else -> {
+            LOG.error("adding annotation members of ${value.javaClass} type is not implemented"); continue@attributes
+          }
+        }
+        annotation.setDeclaredAttributeValue(name.takeIf { name != "value" || !request.omitAttributeNameIfPossible(name) }, memberValue)
+      }
 
       val formatter = CodeStyleManager.getInstance(project)
       val codeStyleManager = JavaCodeStyleManager.getInstance(project)
       codeStyleManager.shortenClassReferences(formatter.reformat(annotation))
 
     }
-
 
   }
 
