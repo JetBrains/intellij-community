@@ -191,7 +191,10 @@ public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersiste
 
   @Override
   public boolean isAllowed() {
-    return ConsentOptions.getInstance().isSendingUsageStatsAllowed() == ConsentOptions.Permission.YES;
+    boolean allowed = ConsentOptions.getInstance().isSendingUsageStatsAllowed() == ConsentOptions.Permission.YES;
+    // Android Studio: we need to tell our Android Studio specific logging system whether the user opted-in or not.
+    updateAndroidStudioMetrics(allowed);
+    return allowed;
   }
 
   public void setShowNotification(boolean showNotification) {
