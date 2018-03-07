@@ -3,9 +3,11 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
-import com.intellij.codeInsight.intention.*;
+import com.intellij.codeInsight.intention.EmptyIntentionAction;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.IntentionActionDelegate;
+import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
-import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.SuppressIntentionActionFromFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -292,27 +294,26 @@ public class CachedIntentions {
     while (a instanceof IntentionActionDelegate) {
       a = ((IntentionActionDelegate)a).getDelegate();
     }
-    if (a instanceof HighPriorityAction) {
-      return group + 3;
-    }
-    if (a instanceof LowPriorityAction) {
-      return group - 3;
+    if (a instanceof PriorityAction) {
+      return group + getPriorityWeight(((PriorityAction)a).getPriority());
     }
     if (a instanceof SuppressIntentionActionFromFix) {
       if (((SuppressIntentionActionFromFix)a).isShouldBeAppliedToInjectionHost() == ThreeState.NO) {
         return group - 1;
       }
     }
-    if (a instanceof QuickFixWrapper) {
-      final LocalQuickFix quickFix = ((QuickFixWrapper)a).getFix();
-      if (quickFix instanceof HighPriorityAction) {
-        return group + 3;
-      }
-      if (quickFix instanceof LowPriorityAction) {
-        return group - 3;
-      }
-    }
     return group;
+  }
+
+  private static int getPriorityWeight(PriorityAction.Priority priority) {
+    switch (priority) {
+      case HIGH:
+        return 3;
+      case LOW:
+        return -3;
+      default:
+        return 0;
+    }
   }
 
   public IntentionGroup getGroup(IntentionActionWithTextCaching action) {
