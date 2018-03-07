@@ -66,7 +66,6 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashMap;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
@@ -160,7 +159,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       }
 
       @Override
-      protected void action() throws Exception {
+      protected void action() {
         myNodeRenderersMap.clear();
         myRenderers.clear();
         try {
@@ -1460,7 +1459,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
 
     @Override
-    protected void action() throws Exception {
+    protected void action() {
       if (isAttached()) {
         final VirtualMachineProxyImpl virtualMachineProxy = getVirtualMachineProxy();
         if (myIsTerminateTargetVM) {
@@ -1781,7 +1780,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
 
     @Override
-    protected void action() throws Exception {
+    protected void action() {
       SuspendManager suspendManager = getSuspendManager();
       if (!suspendManager.isFrozen(myThread)) {
         suspendManager.freezeThread(myThread);
@@ -1849,7 +1848,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     if (!myIsStopped.get()) {
       getManagerThread().schedule(new DebuggerCommandImpl() {
         @Override
-        protected void action() throws Exception {
+        protected void action() {
           closeProcess(false);
           doReattach();
         }
@@ -2016,7 +2015,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           final VirtualMachine vm1 = vm;
           afterProcessStarted(() -> getManagerThread().schedule(new DebuggerCommandImpl() {
             @Override
-            protected void action() throws Exception {
+            protected void action() {
               try {
                 commitVM(vm1);
               } catch (VMDisconnectedException e) {
