@@ -12,6 +12,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeUIHelper;
@@ -61,6 +62,10 @@ class DiscoveredTestsTree extends Tree implements DataProvider {
           setIcon(psi.getIcon(Iconable.ICON_FLAG_READ_STATUS));
           append(psi.getName());
           if (psi instanceof PsiClass) {
+            String packageName = PsiUtil.getPackageName((PsiClass)psi);
+            if (packageName != null) {
+              append(FontUtil.thinSpace() + "(" + packageName + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+            }
             int testMethodCount = myModel.getChildren(psi).size();
             append(FontUtil.spaceAndThinSpace() + (testMethodCount != 1 ? (testMethodCount + " tests") : "1 test"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
           }
