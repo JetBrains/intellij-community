@@ -723,7 +723,7 @@ public abstract class ChooseByNameBase {
   protected void doClose(final boolean ok) {
     if (checkDisposed()) return;
 
-    if (closeForbidden(ok) || getChosenElements().isEmpty()) return;
+    if (closeForbidden(ok)) return;
 
     cancelListUpdater();
     close(ok);
