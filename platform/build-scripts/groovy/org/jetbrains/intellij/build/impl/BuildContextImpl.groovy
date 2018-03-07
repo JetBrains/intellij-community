@@ -314,9 +314,7 @@ class BuildContextImpl extends BuildContext {
     else {
       jvmArgs = ""
     }
-    if (StringUtil.isNotEmpty(productProperties.additionalIdeJvmArguments)) {
-      jvmArgs += " ${productProperties.additionalIdeJvmArguments.trim()}"
-    }
+    jvmArgs += " $productProperties.additionalIdeJvmArguments".trim()
     if (productProperties.toolsJarRequired) {
       jvmArgs += " -Didea.jre.check=true"
     }
