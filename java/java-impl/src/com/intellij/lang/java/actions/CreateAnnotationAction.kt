@@ -20,7 +20,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager
 class CreateAnnotationAction(target: PsiModifierListOwner, override val request: CreateAnnotationRequest) :
   CreateTargetAction<PsiModifierListOwner>(target, request) {
 
-  override fun getText(): String = "Add @" + StringUtilRt.getShortName(request.annotationName); // TODO: i11n
+  override fun getText(): String = "Add @" + StringUtilRt.getShortName(request.qualifiedName); // TODO: i11n
 
   override fun getFamilyName(): String = "create annotation family " // TODO: i11n
 
@@ -31,7 +31,7 @@ class CreateAnnotationAction(target: PsiModifierListOwner, override val request:
     if (!FileModificationService.getInstance().preparePsiElementForWrite(modifierList)) return
 
     WriteCommandAction.writeCommandAction(modifierList.project).run<RuntimeException> {
-      val annotation = modifierList.addAnnotation(request.annotationName)
+      val annotation = modifierList.addAnnotation(request.qualifiedName)
 
       val support = LanguageAnnotationSupport.INSTANCE.forLanguage(annotation.language)
       val psiLiteral = annotation.setDeclaredAttributeValue("value", support!!
@@ -73,7 +73,12 @@ class CreateAnnotationAction(target: PsiModifierListOwner, override val request:
 
       override fun calculateQuickResult(context: ExpressionContext): Result? = calculateResult(context)
 
-      override fun calculateLookupItems(context: ExpressionContext): Array<LookupElement>? = request.valueExpression.toTypedArray()
+      override fun calculateLookupItems(context: ExpressionContext): Array<LookupElement>? {
+        return psiLiteral.references.filter { !it.isSoft }
+          .flatMap { it.variants.mapNotNull { it as? LookupElement } }
+          .sortedBy { it.lookupString }
+          .toTypedArray()
+      }
     }
   }
 

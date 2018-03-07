@@ -12,6 +12,5 @@
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
     <orderEntry type="module" module-name="intellij.platform.uast" exported="" />
-    <orderEntry type="module" module-name="intellij.platform.lang" />
   </component>
 </module>
