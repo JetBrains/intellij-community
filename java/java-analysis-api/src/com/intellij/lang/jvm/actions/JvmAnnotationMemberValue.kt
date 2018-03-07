@@ -11,3 +11,6 @@ sealed class JvmAnnotationMemberValue {
   data class NestedAnnotation(val annotationRequest: CreateAnnotationRequest) : JvmAnnotationMemberValue()
   data class NestedArray(val members: Array<JvmAnnotationMemberValue>) : JvmAnnotationMemberValue()
 }
+
+fun stringAttribute(name: String, value: String): Pair<String, JvmAnnotationMemberValue> = name to JvmAnnotationMemberValue.StringLiteral(
+  value)
