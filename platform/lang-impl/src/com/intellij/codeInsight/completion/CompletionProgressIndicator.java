@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.completion;
 
@@ -31,7 +17,6 @@ import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -43,7 +28,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -83,14 +67,13 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
 
 /**
  * Please don't use this class directly from plugins
  */
 @SuppressWarnings("deprecation")
 @Deprecated
-public class CompletionProgressIndicator extends ProgressIndicatorBase implements CompletionProcess, Disposable {
+public class CompletionProgressIndicator extends CompletionProgressIndicatorBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CompletionProgressIndicator");
   private final Editor myEditor;
   @NotNull
@@ -99,8 +82,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private final CodeCompletionHandlerBase myHandler;
   private final CompletionLookupArranger myArranger;
   private final CompletionType myCompletionType;
-  private final int myInvocationCount;
-  private OffsetsInFile myHostOffsets;
   private final LookupImpl myLookup;
   private final Alarm mySuppressTimeoutAlarm = new Alarm(this);
   private final MergingUpdateQueue myQueue;
@@ -137,18 +118,16 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private final List<CompletionResult> myDelayedMiddleMatches = ContainerUtil.newArrayList();
   private final int myStartCaret;
   private final CompletionThreadingBase myThreading;
-  private final Object myLock = new String("CompletionProgressIndicator");
 
   CompletionProgressIndicator(Editor editor, @NotNull Caret caret, int invocationCount,
                               CodeCompletionHandlerBase handler, OffsetMap offsetMap, OffsetsInFile hostOffsets,
                               boolean hasModifiers, LookupImpl lookup) {
+    super(invocationCount, hostOffsets);
     myEditor = editor;
     myCaret = caret;
     myHandler = handler;
     myCompletionType = handler.completionType;
-    myInvocationCount = invocationCount;
     myOffsetMap = offsetMap;
-    myHostOffsets = hostOffsets;
     myLookup = lookup;
     myStartCaret = myEditor.getCaretModel().getOffset();
     myThreading = ApplicationManager.getApplication().isWriteAccessAllowed() ? new SyncCompletion() : new AsyncCompletion();
@@ -191,10 +170,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   @SuppressWarnings("WeakerAccess")
   public OffsetMap getOffsetMap() {
     return myOffsetMap;
-  }
-
-  OffsetsInFile getHostOffsets() {
-    return myHostOffsets;
   }
 
   void duringCompletion(CompletionInitializationContext initContext, CompletionParameters parameters) {
@@ -283,10 +258,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         addAdvertisement(downShortcut + " and " + upShortcut + " will move caret down and up in the editor", null);
       }
     }
-  }
-
-  @Override
-  public void dispose() {
   }
 
   private static int findReplacementOffset(int selectionEndOffset, PsiReference reference) {
@@ -513,14 +484,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     }
   }
 
-  void registerChildDisposable(@NotNull Supplier<Disposable> child) {
-    synchronized (myLock) {
-      // avoid registering stuff on an indicator being disposed concurrently
-      checkCanceled();
-      Disposer.register(this, child.get());
-    }
-  }
-
   @TestOnly
   public static void cleanupForNextTest() {
     CompletionProgressIndicator currentCompletion = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
@@ -646,11 +609,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     }
 
     return true;
-  }
-
-  @Override
-  public boolean isAutopopupCompletion() {
-    return myInvocationCount == 0;
   }
 
   @NotNull
