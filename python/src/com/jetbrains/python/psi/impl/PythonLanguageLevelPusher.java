@@ -48,6 +48,7 @@ import com.intellij.util.FileContentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.messages.MessageBus;
+import com.jetbrains.extensions.python.VirtualFileExtKt;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonModuleTypeBase;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
@@ -209,17 +210,13 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
     }
 
     if (!areLanguageLevelsCompatible(oldLanguageLevel, level) || !ProjectFileIndex.getInstance(project).isInContent(fileOrDir)) {
-      PushedFilePropertiesUpdater.getInstance(project).filePropertiesChanged(fileOrDir, PythonLanguageLevelPusher::isPythonFile);
+      PushedFilePropertiesUpdater.getInstance(project).filePropertiesChanged(fileOrDir, VirtualFileExtKt::isPythonFile);
     }
     for (VirtualFile child : fileOrDir.getChildren()) {
-      if (!child.isDirectory() && isPythonFile(child)) {
+      if (!child.isDirectory() && VirtualFileExtKt.isPythonFile(child)) {
         clearSdkPathCache(child);
       }
     }
-  }
-
-  private static boolean isPythonFile(VirtualFile child) {
-    return PythonFileType.INSTANCE.equals(FileTypeRegistry.getInstance().getFileTypeByFileName(child.getName()));
   }
 
   private static void clearSdkPathCache(@NotNull final VirtualFile child) {
