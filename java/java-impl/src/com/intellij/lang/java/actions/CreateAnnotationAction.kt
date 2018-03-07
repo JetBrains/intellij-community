@@ -41,13 +41,6 @@ class CreateAnnotationAction(target: PsiModifierListOwner, override val request:
       val codeStyleManager = JavaCodeStyleManager.getInstance(project)
       codeStyleManager.shortenClassReferences(formatter.reformat(annotation))
 
-      val editor = getEditor(target)
-      PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
-
-      val manager = TemplateManager.getInstance(target.project)
-      val template = createTemplate(psiLiteral)
-      manager.startTemplate(editor, template)
-
     }
 
 
