@@ -14,11 +14,15 @@ import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.TreeUIHelper;
 import com.intellij.ui.popup.HintUpdateSupply;
+import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.FontUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.Convertor;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,6 +39,10 @@ class DiscoveredTestsTree extends Tree implements DataProvider {
     myModel = new DiscoveredTestsTreeModel();
     setModel(new AsyncTreeModel(myModel));
     HintUpdateSupply.installSimpleHintUpdateSupply(this);
+    TreeUIHelper.getInstance().installTreeSpeedSearch(this, o -> {
+      Object component = o.getLastPathComponent();
+      return component instanceof PsiMember ? ((PsiMember)component).getName() : null;
+    }, true);
     getSelectionModel().setSelectionMode(TreeSelectionModel.CONTIGUOUS_TREE_SELECTION);
     getEmptyText().setText("No tests captured for " + title);
     setPaintBusy(true);

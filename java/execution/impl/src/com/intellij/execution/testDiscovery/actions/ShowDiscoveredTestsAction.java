@@ -102,7 +102,6 @@ public class ShowDiscoveredTestsAction extends AnAction {
                                   @NotNull PsiMethod... methods) {
     final DiscoveredTestsTree tree = new DiscoveredTestsTree(title);
     String initTitle = "Tests for " + title;
-    DefaultPsiElementCellRenderer renderer = new DefaultPsiElementCellRenderer();
 
     Ref<JBPopup> ref = new Ref<>();
 
@@ -145,8 +144,6 @@ public class ShowDiscoveredTestsAction extends AnAction {
         .setItemChoosenCallback(() -> PsiNavigateUtil.navigate(tree.getSelectedElement()))
         .registerKeyboardAction(findUsageKeyStroke, pinActionListener)
         .setMinSize(new JBDimension(500, 300));
-
-    renderer.installSpeedSearch(builder, true);
 
     JBPopup popup = builder.createPopup();
     ref.set(popup);
