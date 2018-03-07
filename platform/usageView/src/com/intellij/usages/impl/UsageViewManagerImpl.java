@@ -95,6 +95,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
                               @NotNull UsageViewPresentation presentation,
                               Factory<UsageSearcher> factory) {
     UsageViewEx usageView = createUsageView(searchedFor, foundUsages, presentation, factory);
+    showUsageView(usageView, presentation);
     if (usageView instanceof UsageViewImpl) {
       showToolWindow(true);
       UIUtil.invokeLaterIfNeeded(() -> {
@@ -103,7 +104,6 @@ public class UsageViewManagerImpl extends UsageViewManager {
         }
       });
     }
-    showUsageView(usageView, presentation);
     return usageView;
   }
 
