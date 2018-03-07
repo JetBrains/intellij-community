@@ -156,10 +156,10 @@ public abstract class RunAnythingGroup {
   }
 
   /**
-   * Shifts {@link #myMoreIndex} starting from {@code index} to {@code shift}.
+   * Shifts {@link #myMoreIndex} starting from {@code baseIndex} to {@code shift}.
    */
-  private static void shiftMoreIndex(int index, int shift) {
-    Arrays.stream(EP_NAME.getExtensions()).filter(runAnythingGroup -> runAnythingGroup.myMoreIndex >= index)
+  private static void shiftMoreIndex(int baseIndex, int shift) {
+    Arrays.stream(EP_NAME.getExtensions()).filter(runAnythingGroup -> runAnythingGroup.myMoreIndex >= baseIndex)
           .forEach(runAnythingGroup -> runAnythingGroup.myMoreIndex += shift);
   }
 
@@ -175,11 +175,11 @@ public abstract class RunAnythingGroup {
   }
 
   /**
-   * Shifts {@link #myTitleIndex} starting from {@code index} to {@code shift}.
+   * Shifts {@link #myTitleIndex} starting from {@code baseIndex} to {@code shift}.
    */
-  private static void shift(int index, int shift) {
+  private static void shift(int baseIndex, int shift) {
     Arrays.stream(EP_NAME.getExtensions())
-          .filter(runAnythingGroup -> runAnythingGroup.myTitleIndex != -1 && runAnythingGroup.myTitleIndex > index)
+          .filter(runAnythingGroup -> runAnythingGroup.myTitleIndex != -1 && runAnythingGroup.myTitleIndex > baseIndex)
           .forEach(runAnythingGroup -> runAnythingGroup.myTitleIndex += shift);
   }
 
