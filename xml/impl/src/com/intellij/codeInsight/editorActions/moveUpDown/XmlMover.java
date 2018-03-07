@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.editorActions.moveUpDown;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -22,7 +23,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.source.xml.TagNameVariantCollector;
 import com.intellij.psi.impl.source.xml.XmlDocumentImpl;
@@ -33,14 +33,11 @@ import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 
-class XmlMover extends LineMover {
+public class XmlMover extends LineMover {
   //private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.actions.moveUpDown.XmlMover");
 
   @Override
   public boolean checkAvailable(@NotNull final Editor editor, @NotNull final PsiFile file, @NotNull final MoveInfo info, final boolean down) {
-    if (!(file instanceof XmlFile)) {
-      return false;
-    }
     if (!super.checkAvailable(editor, file, info, down)) return false;
 
     // updated moved range end to cover multiline tag start
@@ -53,19 +50,19 @@ class XmlMover extends LineMover {
     PsiElement movedStartElement = file.findElementAt(movedLineStart);
     if (movedStartElement instanceof PsiWhiteSpace) movedStartElement = PsiTreeUtil.nextLeaf(movedStartElement);
 
-    if (movedEndElement == null || movedStartElement == null) return false;
-    final PsiNamedElement namedParentAtEnd = PsiTreeUtil.getParentOfType(movedEndElement, PsiNamedElement.class);
-    final PsiNamedElement namedParentAtStart = PsiTreeUtil.getParentOfType(movedStartElement, PsiNamedElement.class);
+    final XmlElement xmlElementAtEnd = PsiTreeUtil.getParentOfType(movedEndElement, XmlTag.class, XmlAttribute.class);
+    final XmlElement xmlElementAtStart = PsiTreeUtil.getParentOfType(movedStartElement, XmlTag.class, XmlAttribute.class);
+    if (xmlElementAtStart == null || xmlElementAtEnd == null) return false;
 
     if (checkInjections(movedEndElement, movedStartElement)) return false;
 
-    PsiNamedElement movedParent = null;
+    XmlElement movedParent = null;
 
-    if (namedParentAtEnd == namedParentAtStart) movedParent = namedParentAtEnd;
-    else if (namedParentAtEnd instanceof XmlAttribute && namedParentAtStart instanceof XmlTag && namedParentAtEnd.getParent() == namedParentAtStart) {
-      movedParent = namedParentAtStart;
-    } else if (namedParentAtStart instanceof XmlAttribute && namedParentAtEnd instanceof XmlTag && namedParentAtStart.getParent() == namedParentAtEnd) {
-      movedParent = namedParentAtEnd;
+    if (xmlElementAtEnd == xmlElementAtStart) movedParent = xmlElementAtEnd;
+    else if (xmlElementAtEnd instanceof XmlAttribute && xmlElementAtStart instanceof XmlTag && xmlElementAtEnd.getParent() == xmlElementAtStart) {
+      movedParent = xmlElementAtStart;
+    } else if (xmlElementAtStart instanceof XmlAttribute && xmlElementAtEnd instanceof XmlTag && xmlElementAtStart.getParent() == xmlElementAtEnd) {
+      movedParent = xmlElementAtEnd;
     }
 
     if (movedParent == null) {
@@ -81,7 +78,7 @@ class XmlMover extends LineMover {
         // the only top-level tag
         return info.prohibitMove();
       }
-      final TextRange valueRange = tag.getValue().getTextRange();
+      final TextRange valueRange = getTagContentRange(tag);
       final int valueStart = valueRange.getStartOffset();
 
       if (HtmlUtil.isHtmlTag(tag) && (HtmlUtil.isScriptTag(tag) || HtmlUtil.STYLE_TAG_NAME.equals(tag.getName()))) {
@@ -111,7 +108,7 @@ class XmlMover extends LineMover {
       final XmlTag parent = ((XmlAttribute)movedParent).getParent();
 
       if (parent != null) {
-        final TextRange valueRange = parent.getValue().getTextRange();
+        final TextRange valueRange = getTagContentRange(parent);
 
         // Do not move attributes out of tags
         if ( (down && moveDestinationRange.getEndOffset() >= valueRange.getStartOffset()) ||
@@ -127,14 +124,14 @@ class XmlMover extends LineMover {
       if (updatedElement instanceof PsiWhiteSpace) updatedElement = PsiTreeUtil.prevLeaf(updatedElement);
 
       if (updatedElement != null) {
-        final PsiNamedElement targetParent = PsiTreeUtil.getParentOfType(updatedElement, movedParent.getClass());
+        final XmlElement targetParent = PsiTreeUtil.getParentOfType(updatedElement, movedParent.getClass());
 
         if (targetParent instanceof XmlTag) {
           if (targetParent == movedParent) return false;
           if (moveTags(info, (XmlTag)movedParent, (XmlTag)targetParent, down)) return true;
 
           final XmlTag tag = (XmlTag)targetParent;
-          final int offset = tag.isEmpty() ? tag.getTextRange().getStartOffset() : tag.getValue().getTextRange().getStartOffset();
+          final int offset = tag.isEmpty() ? tag.getTextRange().getStartOffset() : getTagContentRange(tag).getStartOffset();
           updatedMovedIntoEnd(document, info, offset);
           if (tag.isEmpty()) {
             info.toMove2 = new LineRange(targetParent);
@@ -148,11 +145,11 @@ class XmlMover extends LineMover {
       if (updatedElement instanceof PsiWhiteSpace) updatedElement = PsiTreeUtil.nextLeaf(updatedElement);
 
       if (updatedElement != null) {
-        final PsiNamedElement targetParent = PsiTreeUtil.getParentOfType(updatedElement, movedParent.getClass());
+        final XmlElement targetParent = PsiTreeUtil.getParentOfType(updatedElement, movedParent.getClass());
 
         if (targetParent instanceof XmlTag) {
           final XmlTag tag = (XmlTag)targetParent;
-          final TextRange tagValueRange = tag.getValue().getTextRange();
+          final TextRange tagValueRange = getTagContentRange(tag);
 
           // We need to update destination range to jump over tag start
           final XmlTag[] subtags = tag.getSubTags();
@@ -179,6 +176,19 @@ class XmlMover extends LineMover {
       info.toMove = new LineRange(movedParent);
     }
     return true;
+  }
+
+  @NotNull
+  private static TextRange getTagContentRange(@NotNull XmlTag parent) {
+    //JSX has different rules re: whitespace, so getValue().getTextRange() does not include leading / trailing whitespace
+    if (!parent.isEmpty()) {
+      final ASTNode startTagEnd = XmlChildRole.START_TAG_END_FINDER.findChild(parent.getNode());
+      ASTNode endTagStart = XmlChildRole.CLOSING_TAG_START_FINDER.findChild(parent.getNode());
+      if (startTagEnd != null && endTagStart != null) {
+        return new TextRange(startTagEnd.getTextRange().getEndOffset(), endTagStart.getTextRange().getStartOffset());
+      }
+    }
+    return parent.getValue().getTextRange();
   }
 
   private static boolean moveTags(MoveInfo info, XmlTag moved, XmlTag target, boolean down) {
