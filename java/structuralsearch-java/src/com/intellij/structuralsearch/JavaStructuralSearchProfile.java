@@ -802,4 +802,9 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
 
     return offset;
   }
+
+  @Override
+  public boolean typeRelatedVarConstraintsSupported() {
+    return true;
+  }
 }

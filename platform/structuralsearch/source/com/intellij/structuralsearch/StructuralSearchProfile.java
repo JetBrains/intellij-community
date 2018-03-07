@@ -278,4 +278,11 @@ public abstract class StructuralSearchProfile {
   public PsiElement getPresentableElement(PsiElement element) {
     return isIdentifier(element) ? element.getParent() : element;
   }
+
+  /**
+   * @see com.intellij.structuralsearch.plugin.ui.EditVarConstraintsDialog
+   */
+  public boolean typeRelatedVarConstraintsSupported() {
+    return false;
+  }
 }

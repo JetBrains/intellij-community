@@ -19,7 +19,6 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
@@ -115,11 +114,14 @@ class EditVarConstraintsDialog extends DialogWrapper {
 
     setTitle(SSRBundle.message("editvarcontraints.edit.variables"));
 
+    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(fileType);
+    final boolean typesSupported = profile != null && profile.typeRelatedVarConstraintsSupported();
+
     regexp.getDocument().addDocumentListener(new MyDocumentListener(notRegexp, wholeWordsOnly));
     regexp.getDocument().addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(DocumentEvent e) {
-        applyWithinTypeHierarchy.setEnabled(e.getDocument().getTextLength() > 0 && fileType == StdFileTypes.JAVA);
+        applyWithinTypeHierarchy.setEnabled(e.getDocument().getTextLength() > 0 && typesSupported);
       }
     });
     myZeroZeroButton.addActionListener(new ActionListener() {
@@ -180,27 +182,15 @@ class EditVarConstraintsDialog extends DialogWrapper {
       variables.add(new Variable(Configuration.CONTEXT_VAR_NAME, "", "", true));
     }
 
-    if (fileType == StdFileTypes.JAVA) {
-      formalArgTypeWithinHierarchy.setEnabled(true);
-      invertFormalArgType.setEnabled(true);
-      formalArgType.setEnabled(true);
+    formalArgTypeWithinHierarchy.setEnabled(typesSupported);
+    invertFormalArgType.setEnabled(typesSupported);
+    formalArgType.setEnabled(typesSupported);
 
-      exprTypeWithinHierarchy.setEnabled(true);
-      notExprType.setEnabled(true);
-      regexprForExprType.setEnabled(true);
+    exprTypeWithinHierarchy.setEnabled(typesSupported);
+    notExprType.setEnabled(typesSupported);
+    regexprForExprType.setEnabled(typesSupported);
 
-      applyWithinTypeHierarchy.setEnabled(true);
-    } else {
-      formalArgTypeWithinHierarchy.setEnabled(false);
-      invertFormalArgType.setEnabled(false);
-      formalArgType.setEnabled(false);
-
-      exprTypeWithinHierarchy.setEnabled(false);
-      notExprType.setEnabled(false);
-      regexprForExprType.setEnabled(false);
-
-      applyWithinTypeHierarchy.setEnabled(false);
-    }
+    applyWithinTypeHierarchy.setEnabled(typesSupported);
 
     parameterList.setModel(
       new AbstractListModel<Variable>() {
