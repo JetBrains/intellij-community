@@ -120,10 +120,9 @@ class StudioTests(unittest.TestCase):
     studio_sh_contents = tar.extractfile(tar.getmember("android-studio/bin/studio.sh")).read().split(" ")
 
     vmoption = "-Dandroid.adb.path=/usr/bin/adb"
-    first_additiona_ide_jvm_argument = "-Dstudio.projectview=true"
     self.assertEqual(vmoption in studio_sh_contents, aswb)
     if aswb:
-      self.assertEqual(first_additiona_ide_jvm_argument in studio_sh_contents, True)
+      self.assertEqual("-Dstudio.projectview=true" in studio_sh_contents, True)
 
   def test_offline_repo_contains_kotlin(self):
     """Tests that the offline repo we bundle includes the kotlin gradle plugin"""
