@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -111,8 +112,8 @@ public abstract class LanguageCodeStyleSettingsProvider {
   }
 
   public DisplayPriority getDisplayPriority() {
-    Language mainIdeLanguage = IdeLanguageCustomization.getInstance().getMainIdeLanguage();
-    return mainIdeLanguage != null && mainIdeLanguage.is(getLanguage()) ? DisplayPriority.KEY_LANGUAGE_SETTINGS : DisplayPriority.LANGUAGE_SETTINGS;
+    List<Language> primaryIdeLanguages = IdeLanguageCustomization.getInstance().getPrimaryIdeLanguages();
+    return primaryIdeLanguages.contains(getLanguage()) ? DisplayPriority.KEY_LANGUAGE_SETTINGS : DisplayPriority.LANGUAGE_SETTINGS;
   }
 
   @NotNull
