@@ -11,18 +11,18 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 
 
 class CreateAnnotationAction(target: PsiModifierListOwner, override val request: CreateAnnotationRequest) :
-  CreateTargetAction<PsiModifierListOwner>(target,
-                                           request) {
-  override fun getText(): String = request.actionName
+  CreateTargetAction<PsiModifierListOwner>(target, request) {
+
+  override fun getText(): String = "Add @" + StringUtilRt.getShortName(request.annotationName); // TODO: i11n
 
   override fun getFamilyName(): String = "create annotation family " // TODO: i11n
-
 
   override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
 
@@ -35,10 +35,7 @@ class CreateAnnotationAction(target: PsiModifierListOwner, override val request:
 
       val support = LanguageAnnotationSupport.INSTANCE.forLanguage(annotation.language)
       val psiLiteral = annotation.setDeclaredAttributeValue("value", support!!
-        .createLiteralValue(request.valueLiteralValue,
-                            annotation))
-
-      println("created psiLiteral1:" + psiLiteral.text)
+        .createLiteralValue(request.valueLiteralValue, annotation))
 
       val formatter = CodeStyleManager.getInstance(project)
       val codeStyleManager = JavaCodeStyleManager.getInstance(project)
@@ -48,8 +45,7 @@ class CreateAnnotationAction(target: PsiModifierListOwner, override val request:
       PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
 
       val manager = TemplateManager.getInstance(target.project)
-      val template = createQualifierNameTemplate(psiLiteral)
-      println("template1 = $template")
+      val template = createTemplate(psiLiteral)
       manager.startTemplate(editor, template)
 
     }
@@ -57,38 +53,27 @@ class CreateAnnotationAction(target: PsiModifierListOwner, override val request:
 
   }
 
-  private fun createQualifierNameTemplate(psiLiteral: PsiLiteral): Template {
+  private fun createTemplate(psiLiteral: PsiLiteral): Template {
     val builder = TemplateBuilderImpl(psiLiteral.containingFile)
 
     val textRange = psiLiteral.textRange
     val valueText = ElementManipulators.getValueText(psiLiteral)
 
     val from = TextRange.from(textRange.startOffset + 1, valueText.length)
-    println("valueText1 = $valueText textRange = $textRange replace = $from")
-
-    builder.replaceRange(from,
-                         getQualifierNamesSuggestNamesExpression(psiLiteral))
-
+    builder.replaceRange(from, createSuggestExpression(psiLiteral))
     return builder.buildInlineTemplate()
   }
 
-  private fun getQualifierNamesSuggestNamesExpression(psiLiteral: PsiLiteral): Expression {
+  private fun createSuggestExpression(psiLiteral: PsiLiteral): Expression {
     return object : Expression() {
       override fun calculateResult(context: ExpressionContext): Result {
         PsiDocumentManager.getInstance(context.project).commitAllDocuments()
-
-        println("used psiLiteral1:" + psiLiteral.text)
-
-        return TextResult(ElementManipulators.getValueText(psiLiteral)).also {
-          println("TextResult1: ${it.text}")
-        }
+        return TextResult(ElementManipulators.getValueText(psiLiteral))
       }
 
       override fun calculateQuickResult(context: ExpressionContext): Result? = calculateResult(context)
 
-      override fun calculateLookupItems(context: ExpressionContext): Array<LookupElement>? = request.valueExpression.toTypedArray().also {
-        println("lookups: ${it.joinToString()}")
-      }
+      override fun calculateLookupItems(context: ExpressionContext): Array<LookupElement>? = request.valueExpression.toTypedArray()
     }
   }
 

@@ -2,17 +2,10 @@
 package com.intellij.lang.jvm.actions;
 
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.openapi.util.text.StringUtilRt;
 
 import java.util.List;
 
 public interface CreateAnnotationRequest extends ActionRequest {
-
-  default String getActionName() {
-    return "Add " + StringUtilRt.getShortName(getAnnotationName()); // TODO: i11n, and mb drop this method
-  }
-
-  ;
 
   String getAnnotationName();
 
