@@ -1249,11 +1249,12 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   @Override
   @NotNull
   public FileEditor[] getSelectedEditors() {
-    Set<FileEditor> selectedEditors = new HashSet<>();
+    Set<FileEditor> selectedEditors = new LinkedHashSet<>();
+    EditorComposite selected = getLastSelected();
+    if (selected != null) selectedEditors.add(selected.getSelectedEditor());
     for (EditorsSplitters each : getAllSplitters()) {
       ContainerUtil.addAll(selectedEditors, each.getSelectedEditors());
     }
-
     return selectedEditors.toArray(new FileEditor[0]);
   }
 
