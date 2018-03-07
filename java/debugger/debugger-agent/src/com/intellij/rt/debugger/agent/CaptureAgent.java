@@ -71,26 +71,23 @@ public class CaptureAgent {
   private static void readSettings(String uri) {
     Properties properties = new Properties();
     File file;
-    FileReader reader = null;
     try {
-      file = new File(new URI(uri));
-      reader = new FileReader(file);
-      properties.load(reader);
+      FileReader reader = null;
+      try {
+        file = new File(new URI(uri));
+        reader = new FileReader(file);
+        properties.load(reader);
+      }
+      finally {
+        if (reader != null) {
+          reader.close();
+        }
+      }
     }
     catch (Exception e) {
       System.out.println("Capture agent: unable to read settings");
       e.printStackTrace();
       return;
-    }
-    finally {
-      if (reader != null) {
-        try {
-          reader.close();
-        }
-        catch (IOException e) {
-          e.printStackTrace();
-        }
-      }
     }
 
     DEBUG = Boolean.parseBoolean(properties.getProperty("debug", "false"));
