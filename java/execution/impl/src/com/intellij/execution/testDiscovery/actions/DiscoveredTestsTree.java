@@ -17,14 +17,12 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeUIHelper;
 import com.intellij.ui.popup.HintUpdateSupply;
-import com.intellij.ui.speedSearch.SpeedSearch;
+import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.FontUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.EdtInvocationManager;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -73,6 +71,7 @@ class DiscoveredTestsTree extends Tree implements DataProvider {
             int testMethodCount = myModel.getChildren(psi).size();
             append(FontUtil.spaceAndThinSpace() + (testMethodCount != 1 ? (testMethodCount + " tests") : "1 test"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
           }
+          SpeedSearchUtil.applySpeedSearchHighlighting(tree, this, true, false);
         }
       }
     });
@@ -83,9 +82,7 @@ class DiscoveredTestsTree extends Tree implements DataProvider {
       protected void process(TreeModelEvent event, EventType type) {
         if (!myAlreadyDone && !myModel.getTestClasses().isEmpty()) {
           myAlreadyDone = true;
-          EdtInvocationManager.getInstance().invokeLater(() -> {
-            TreeUtil.selectFirstNode(DiscoveredTestsTree.this);
-          });
+          EdtInvocationManager.getInstance().invokeLater(() -> TreeUtil.selectFirstNode(DiscoveredTestsTree.this));
         }
       }
     });
