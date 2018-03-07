@@ -448,7 +448,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     boolean isStaticallyTrue = false;
     if (condition != null) {
       condition.accept(this);
-      isStaticallyTrue = PyEvaluator.evaluateAsBoolean(condition, false);
+      isStaticallyTrue = PyEvaluator.evaluateAsBooleanNoResolve(condition, false);
     }
     final Instruction head = myBuilder.prevInstruction;
     final PyElsePart elsePart = node.getElsePart();
@@ -481,7 +481,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     }
     final Instruction head = myBuilder.prevInstruction;
     final PyElsePart elsePart = node.getElsePart();
-    if (elsePart == null && !PyEvaluator.evaluateAsBoolean(source, false)) {
+    if (elsePart == null && !PyEvaluator.evaluateAsBooleanNoResolve(source, false)) {
       myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
     }
     final PyStatementList list = forPart.getStatementList();
@@ -816,7 +816,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     super.visitPyAssertStatement(node);
     final PyExpression[] args = node.getArguments();
     // assert False
-    if (args.length >= 1 && !PyEvaluator.evaluateAsBoolean(args[0], true)) {
+    if (args.length >= 1 && !PyEvaluator.evaluateAsBooleanNoResolve(args[0], true)) {
       abruptFlow(node);
       return;
     }

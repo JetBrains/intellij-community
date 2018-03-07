@@ -410,8 +410,9 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
   public void tearDown() throws Exception {
     try {
       EdtTestUtil.runInEdtAndWait(() ->finishSession());
-    }finally {
-      PyBaseDebuggerTask.super.tearDown();
+    }
+    finally {
+      super.tearDown();
     }
   }
 

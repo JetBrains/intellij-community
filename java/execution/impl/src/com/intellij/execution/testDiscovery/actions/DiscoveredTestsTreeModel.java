@@ -7,15 +7,18 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.ui.tree.BaseTreeModel;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.tree.TreePath;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 class DiscoveredTestsTreeModel extends BaseTreeModel<Object> {
   private final Object myRoot = ObjectUtils.NULL;
 
-  private final List<PsiClass> myTestClasses = new ArrayList<>();
+  private final List<PsiClass> myTestClasses = new SmartList<>();
   private final Map<PsiClass, List<PsiMethod>> myTests = new HashMap<>();
 
   @Override
@@ -43,7 +46,6 @@ class DiscoveredTestsTreeModel extends BaseTreeModel<Object> {
     return myRoot != object && super.isLeaf(object);
   }
 
-
   public synchronized void addTest(@NotNull PsiClass testClass, @NotNull PsiMethod testMethod) {
     int idx = ReadAction.compute(() -> Collections.binarySearch(myTestClasses,
                                                                 testClass,
@@ -52,7 +54,7 @@ class DiscoveredTestsTreeModel extends BaseTreeModel<Object> {
     if (idx < 0) {
       int insertIdx = -idx - 1;
       myTestClasses.add(insertIdx, testClass);
-      ArrayList<PsiMethod> methods = new ArrayList<>();
+      List<PsiMethod> methods = new SmartList<>();
       methods.add(testMethod);
       myTests.put(testClass, methods);
     }
@@ -69,7 +71,11 @@ class DiscoveredTestsTreeModel extends BaseTreeModel<Object> {
     treeStructureChanged(null, null, null);
   }
 
-  public PsiMethod[] getTestMethods() {
+  public synchronized PsiMethod[] getTestMethods() {
     return myTests.values().stream().flatMap(vs -> vs.stream()).toArray(PsiMethod[]::new);
+  }
+
+  public synchronized int getTestCount() {
+    return myTests.values().stream().mapToInt(ms -> ms.size()).sum();
   }
 }

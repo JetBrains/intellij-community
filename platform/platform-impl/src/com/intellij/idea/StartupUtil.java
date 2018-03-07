@@ -58,6 +58,9 @@ public class StartupUtil {
   private StartupUtil() { }
 
   public static boolean shouldShowSplash(final String[] args) {
+    if ("true".equals(System.getProperty(NO_SPLASH))) {
+      return false;
+    }
     return !Arrays.asList(args).contains(NO_SPLASH);
   }
 

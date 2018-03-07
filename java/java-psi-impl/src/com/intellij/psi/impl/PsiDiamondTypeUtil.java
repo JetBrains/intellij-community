@@ -234,8 +234,15 @@ public class PsiDiamondTypeUtil {
                                                PsiMethodReferenceExpression methodRefCopy) {
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(methodRefCopy.getProject()).getElementFactory();
     PsiTypeElement qualifierType = methodRefCopy.getQualifierType();
-    LOG.assertTrue(qualifierType != null);
-    qualifierType.replace(elementFactory.createTypeElement(((PsiClassType)qualifierType.getType()).rawType()));
+    if (qualifierType != null) {
+      qualifierType.replace(elementFactory.createTypeElement(((PsiClassType)qualifierType.getType()).rawType()));
+    }
+    else {
+      PsiReferenceParameterList parameterList = methodRefCopy.getParameterList();
+      if (parameterList != null) {
+        parameterList.delete();
+      }
+    }
 
     JavaResolveResult result = methodRefCopy.advancedResolve(false);
     if (method != null && result.getElement() != method) return false;

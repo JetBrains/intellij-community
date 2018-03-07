@@ -22,6 +22,8 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * @author peter
  */
@@ -54,8 +56,8 @@ public abstract class CodeStyleSettingsProvider {
   }
 
   public DisplayPriority getPriority() {
-    Language mainIdeLanguage = IdeLanguageCustomization.getInstance().getMainIdeLanguage();
-    return mainIdeLanguage != null && mainIdeLanguage.is(getLanguage()) ? DisplayPriority.KEY_LANGUAGE_SETTINGS : DisplayPriority.LANGUAGE_SETTINGS;
+    List<Language> primaryIdeLanguages = IdeLanguageCustomization.getInstance().getPrimaryIdeLanguages();
+    return primaryIdeLanguages.contains(getLanguage()) ? DisplayPriority.KEY_LANGUAGE_SETTINGS : DisplayPriority.LANGUAGE_SETTINGS;
   }
 
   /**

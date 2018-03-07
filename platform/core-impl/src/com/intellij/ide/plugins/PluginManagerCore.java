@@ -56,7 +56,7 @@ public class PluginManagerCore {
 
   public static final String DISABLED_PLUGINS_FILENAME = "disabled_plugins.txt";
   public static final String CORE_PLUGIN_ID = "com.intellij";
-  public static final String META_INF = "META-INF";
+  private static final String META_INF = "META-INF";
   public static final String PLUGIN_XML = "plugin.xml";
 
   public static final float PLUGINS_PROGRESS_PART = 0.3f;
@@ -261,7 +261,7 @@ public class PluginManagerCore {
     return trySaveDisabledPlugins(disabledPlugins);
   }
 
-  private static boolean trySaveDisabledPlugins(List<String> disabledPlugins) {
+  private static boolean trySaveDisabledPlugins(@NotNull List<String> disabledPlugins) {
     try {
       saveDisabledPlugins(disabledPlugins, false);
       return true;
@@ -281,10 +281,6 @@ public class PluginManagerCore {
     savePluginsList(ids, append, plugins);
     ourDisabledPlugins = null;
     fireEditDisablePlugins();
-  }
-
-  public static Logger getLogger() {
-    return LoggerHolder.ourLogger;
   }
 
   public static int getPluginLoadingOrder(@NotNull PluginId id) {
@@ -330,7 +326,7 @@ public class PluginManagerCore {
     return true;
   }
 
-  public static void addPluginClass(PluginId pluginId) {
+  public static void addPluginClass(@NotNull PluginId pluginId) {
     ourPluginClasses.addPluginClass(pluginId);
   }
 
@@ -350,7 +346,9 @@ public class PluginManagerCore {
   }
 
   private static boolean hasLoadedClass(@NotNull String className, ClassLoader loader) {
-    if (loader instanceof UrlClassLoader) return ((UrlClassLoader)loader).hasLoadedClass(className);
+    if (loader instanceof UrlClassLoader) {
+      return ((UrlClassLoader)loader).hasLoadedClass(className);
+    }
 
     // it can be an UrlClassLoader loaded by another class loader, so instanceof doesn't work
     try {
@@ -411,11 +409,11 @@ public class PluginManagerCore {
 
   // used in upsource
   public static void configureExtensions() {
-    Extensions.setLogProvider(new IdeaLogProvider());
     Extensions.registerAreaClass(ExtensionAreas.IDEA_PROJECT, null);
     Extensions.registerAreaClass(ExtensionAreas.IDEA_MODULE, ExtensionAreas.IDEA_PROJECT);
   }
 
+  @NotNull
   private static Method getAddUrlMethod(@NotNull ClassLoader loader) {
     return ReflectionUtil.getDeclaredMethod(loader instanceof URLClassLoader ? URLClassLoader.class : loader.getClass(), "addURL", URL.class);
   }
@@ -472,7 +470,9 @@ public class PluginManagerCore {
   }
 
   private static void logPlugins() {
-    List<String> bundled = new ArrayList<>(), disabled = new ArrayList<>(), custom = new ArrayList<>();
+    List<String> bundled = new ArrayList<>();
+    List<String> disabled = new ArrayList<>();
+    List<String> custom = new ArrayList<>();
 
     for (IdeaPluginDescriptor descriptor : ourPlugins) {
       String version = descriptor.getVersion();
@@ -861,10 +861,10 @@ public class PluginManagerCore {
     }
   }
 
-  public static void loadDescriptors(@NotNull File pluginsHome,
-                                     @NotNull List<IdeaPluginDescriptorImpl> result,
-                                     @Nullable StartupProgress progress,
-                                     int pluginsCount) {
+  private static void loadDescriptors(@NotNull File pluginsHome,
+                                      @NotNull List<IdeaPluginDescriptorImpl> result,
+                                      @Nullable StartupProgress progress,
+                                      int pluginsCount) {
     File[] files = pluginsHome.listFiles();
     if (files != null) {
       int i = result.size();
@@ -1227,11 +1227,11 @@ public class PluginManagerCore {
     return false;
   }
 
-  public static boolean isIncompatible(@NotNull BuildNumber buildNumber,
-                                       @Nullable String sinceBuild,
-                                       @Nullable String untilBuild,
-                                       @Nullable String descriptorName,
-                                       @Nullable String descriptorDebugString) {
+  static boolean isIncompatible(@NotNull BuildNumber buildNumber,
+                                @Nullable String sinceBuild,
+                                @Nullable String untilBuild,
+                                @Nullable String descriptorName,
+                                @Nullable String descriptorDebugString) {
     JBIterable<String> messages = JBIterable.empty();
     BuildNumber sinceBuildNumber = StringUtil.isEmpty(sinceBuild) ? null : BuildNumber.fromString(sinceBuild, descriptorName, null);
     if (sinceBuildNumber != null && sinceBuildNumber.compareTo(buildNumber) > 0) {
@@ -1467,40 +1467,13 @@ public class PluginManagerCore {
     ClassUtilCore.clearJarURLCache();
   }
 
-  private static class LoggerHolder {
-    private static final Logger ourLogger = Logger.getInstance("#com.intellij.ide.plugins.PluginManager");
+  @NotNull
+  public static Logger getLogger() {
+    return LoggerHolder.ourLogger;
   }
 
-  private static class IdeaLogProvider implements LogProvider {
-    @Override
-    public void error(String message) {
-      getLogger().error(message);
-    }
-
-    @Override
-    public void error(String message, Throwable t) {
-      getLogger().error(message, t);
-    }
-
-    @Override
-    public void error(Throwable t) {
-      getLogger().error(t);
-    }
-
-    @Override
-    public void warn(String message) {
-      getLogger().info(message);
-    }
-
-    @Override
-    public void warn(String message, Throwable t) {
-      getLogger().info(message, t);
-    }
-
-    @Override
-    public void warn(Throwable t) {
-      getLogger().info(t);
-    }
+  private static class LoggerHolder {
+    private static final Logger ourLogger = Logger.getInstance("#com.intellij.ide.plugins.PluginManager");
   }
 
   static class EssentialPluginMissingException extends RuntimeException {
@@ -1508,7 +1481,7 @@ public class PluginManagerCore {
 
     EssentialPluginMissingException(@NotNull Set<String> ids) {
       super("Missing essential plugins: " + StringUtil.join(ids, ", "));
-      this.pluginIds = ids;
+      pluginIds = ids;
     }
   }
 }

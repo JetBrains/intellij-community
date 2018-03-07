@@ -11,7 +11,7 @@ import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import java.io.File;
 import java.io.IOException;
 
-abstract class StructuralReplaceTestCase extends LightQuickFixTestCase {
+public abstract class StructuralReplaceTestCase extends LightQuickFixTestCase {
   protected ReplaceOptions options;
 
   @Override

@@ -1842,51 +1842,35 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
           selectElementAtCaretNotLosingFocus(editor);
         }
         else {
-          SelectInTarget target = getCurrentSelectInTarget();
-          if (target != null) {
-            final VirtualFile file = FileEditorManagerEx.getInstanceEx(myProject).getFile(fileEditor);
-            if (file != null && file.isValid()) {
-              final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
-              if (psiFile != null) {
-                final MySelectInContext selectInContext = new MySelectInContext(psiFile, null) {
-                  @Override
-                  public Object getSelectorInFile() {
-                    return psiFile;
-                  }
-                };
-
-                if (target.canSelect(selectInContext)) {
-                  target.selectIn(selectInContext, false);
-                }
-              }
-            }
+          PsiFile psiFile = getPsiFile(getVirtualFile(fileEditor));
+          if (psiFile != null) {
+            new MySelectInContext(psiFile, null).selectInCurrentTarget();
           }
         }
       }
     }
 
     public void scrollFromSource() {
-      final FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
-      final Editor selectedTextEditor = fileEditorManager.getSelectedTextEditor();
-      if (selectedTextEditor != null) {
-        selectElementAtCaret(selectedTextEditor);
-        return;
-      }
-      final FileEditor[] editors = fileEditorManager.getSelectedEditors();
-      for (FileEditor fileEditor : editors) {
+      for (FileEditor fileEditor : FileEditorManager.getInstance(myProject).getSelectedEditors()) {
         if (fileEditor instanceof TextEditor) {
           Editor editor = ((TextEditor)fileEditor).getEditor();
           selectElementAtCaret(editor);
           return;
         }
-      }
-      final VirtualFile[] selectedFiles = fileEditorManager.getSelectedFiles();
-      if (selectedFiles.length > 0) {
-        final PsiFile file = PsiManager.getInstance(myProject).findFile(selectedFiles[0]);
-        if (file != null) {
-          scrollFromFile(file, null);
+        PsiFile psiFile = getPsiFile(getVirtualFile(fileEditor));
+        if (psiFile != null) {
+          scrollFromFile(psiFile, null);
+          return;
         }
       }
+    }
+
+    private PsiFile getPsiFile(VirtualFile file) {
+      return file == null || !file.isValid() ? null : PsiManager.getInstance(myProject).findFile(file);
+    }
+
+    private VirtualFile getVirtualFile(FileEditor fileEditor) {
+      return fileEditor == null ? null : FileEditorManagerEx.getInstanceEx(myProject).getFile(fileEditor);
     }
 
     private void selectElementAtCaretNotLosingFocus(@NotNull Editor editor) {
@@ -1904,20 +1888,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
 
     private void scrollFromFile(@NotNull PsiFile file, @Nullable Editor editor) {
-      SmartPsiElementPointer<PsiFile> pointer = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(file);
-      PsiDocumentManager.getInstance(myProject).performLaterWhenAllCommitted(() -> {
-        SelectInTarget target = getCurrentSelectInTarget();
-        if (target == null) return;
-
-        PsiFile restoredPsi = pointer.getElement();
-        if (restoredPsi == null) return;
-
-        final MySelectInContext selectInContext = new MySelectInContext(restoredPsi, editor);
-
-        if (target.canSelect(selectInContext)) {
-          target.selectIn(selectInContext, false);
-        }
-      });
+      MySelectInContext selectInContext = new MySelectInContext(file, editor);
+      PsiDocumentManager.getInstance(myProject).performLaterWhenAllCommitted(selectInContext::selectInCurrentTarget);
     }
 
     @Override
@@ -1967,6 +1939,13 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
           if (element != null) return element;
         }
         return file;
+      }
+
+      void selectInCurrentTarget() {
+        SelectInTarget target = getCurrentSelectInTarget();
+        if (target != null && getPsiFile() != null && target.canSelect(this)) {
+          target.selectIn(this, false);
+        }
       }
     }
   }

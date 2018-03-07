@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.CommonClassNames
@@ -75,20 +75,22 @@ class Foo {
     assertEquals(CommonClassNames.JAVA_LANG_OBJECT, type.canonicalText)
   }
 
-void testEnumObjectType() {
+  void testEnumObjectType() {
     final GrReferenceExpression ref = (GrReferenceExpression)configureByText('''
 import groovy.transform.CompileStatic
 
 @CompileStatic
 class Foo {
-    static enum E {
+  static enum E {
     FF, g, h
   } 
-    def foo() { E.F<caret>F }
+  def foo() { 
+    E.<caret>FF 
+  }
 }
 ''').element
     final PsiType type = ref.type
-    assertTrue(type instanceof PsiClassType)
+    assertInstanceOf(type, PsiClassType)
     assertEquals("Foo.E", type.canonicalText)
   }
 

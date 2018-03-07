@@ -83,6 +83,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.intellij.util.containers.Queue;
+
 /**
  * @author max
  */
@@ -1197,17 +1199,16 @@ public class UsageViewImpl implements UsageViewEx {
     UsageNode nodeToSelect = toSelect != null ? myUsageNodes.get(toSelect) : null;
 
     Set<UsageNode> nodes = usagesToNodes(usages.stream()).collect(Collectors.toSet());
-    NotNullLazyValue<Set<UsageInfo>> mergedInfos = new NotNullLazyValue<Set<UsageInfo>>() {
-      @NotNull
-      @Override
-      protected Set<UsageInfo> compute() {
-        return usages.stream().filter(usage -> usage instanceof UsageInfo2UsageAdapter)
-                     .flatMap(usage -> Arrays.stream(((UsageInfo2UsageAdapter)usage).getMergedInfos()))
-                     .collect(Collectors.toSet());
+    usages.forEach(myUsageNodes::remove);
+    if (!myUsageNodes.isEmpty()) {
+      Set<UsageInfo> mergedInfos = usages.stream()
+                                         .filter(usage -> usage instanceof UsageInfo2UsageAdapter && ((UsageInfo2UsageAdapter)usage).getMergedInfos().length > 1)
+                                         .flatMap(usage -> Arrays.stream(((UsageInfo2UsageAdapter)usage).getMergedInfos()))
+                                         .collect(Collectors.toSet());
+      if (!mergedInfos.isEmpty()) {
+        myUsageNodes.keySet().removeIf(usage -> usage instanceof UsageInfo2UsageAdapter && mergedInfos.contains(((UsageInfo2UsageAdapter)usage).getUsageInfo()));
       }
-    };
-    myUsageNodes.keySet().removeIf(usage -> usages.contains(usage) ||
-                                            usage instanceof UsageInfo2UsageAdapter && mergedInfos.getValue().contains(((UsageInfo2UsageAdapter)usage).getUsageInfo()));
+    }
 
     if (!nodes.isEmpty() && !myPresentation.isDetachedMode()) {
       UIUtil.invokeLaterIfNeeded(() -> {

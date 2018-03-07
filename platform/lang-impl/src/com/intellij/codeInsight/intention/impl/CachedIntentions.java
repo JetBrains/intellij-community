@@ -3,9 +3,11 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
-import com.intellij.codeInsight.intention.*;
+import com.intellij.codeInsight.intention.EmptyIntentionAction;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.IntentionActionDelegate;
+import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
-import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.SuppressIntentionActionFromFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -30,52 +32,61 @@ import java.util.*;
 public class CachedIntentions {
   private static final Logger LOG = Logger.getInstance(CachedIntentions.class);
 
-  private final Set<IntentionActionWithTextCaching> myCachedIntentions =
-    ConcurrentCollectionFactory.createConcurrentSet(ACTION_TEXT_AND_CLASS_EQUALS);
-  private final Set<IntentionActionWithTextCaching> myCachedErrorFixes =
-    ConcurrentCollectionFactory.createConcurrentSet(ACTION_TEXT_AND_CLASS_EQUALS);
-  private final Set<IntentionActionWithTextCaching> myCachedInspectionFixes =
-    ConcurrentCollectionFactory.createConcurrentSet(ACTION_TEXT_AND_CLASS_EQUALS);
-  private final Set<IntentionActionWithTextCaching> myCachedGutters =
-    ConcurrentCollectionFactory.createConcurrentSet(ACTION_TEXT_AND_CLASS_EQUALS);
-  private final Set<IntentionActionWithTextCaching> myCachedNotifications =
-    ConcurrentCollectionFactory.createConcurrentSet(ACTION_TEXT_AND_CLASS_EQUALS);
+  private final Set<IntentionActionWithTextCaching> myIntentions = ConcurrentCollectionFactory.createConcurrentSet(ACTION_TEXT_AND_CLASS_EQUALS);
+  private final Set<IntentionActionWithTextCaching> myErrorFixes = ConcurrentCollectionFactory.createConcurrentSet(ACTION_TEXT_AND_CLASS_EQUALS);
+  private final Set<IntentionActionWithTextCaching> myInspectionFixes = ConcurrentCollectionFactory.createConcurrentSet(ACTION_TEXT_AND_CLASS_EQUALS);
+  private final Set<IntentionActionWithTextCaching> myGutters = ConcurrentCollectionFactory.createConcurrentSet(ACTION_TEXT_AND_CLASS_EQUALS);
+  private final Set<IntentionActionWithTextCaching> myNotifications = ConcurrentCollectionFactory.createConcurrentSet(ACTION_TEXT_AND_CLASS_EQUALS);
   private int myOffset;
-
-  public Set<IntentionActionWithTextCaching> getIntentions() {
-    return myCachedIntentions;
-  }
-
-  public Set<IntentionActionWithTextCaching> getErrorFixes() {
-    return myCachedErrorFixes;
-  }
-
-  public Set<IntentionActionWithTextCaching> getInspectionFixes() {
-    return myCachedInspectionFixes;
-  }
-
-  public Set<IntentionActionWithTextCaching> getGutters() {
-    return myCachedGutters;
-  }
-
-  public Set<IntentionActionWithTextCaching> getNotifications() {
-    return myCachedNotifications;
-  }
-
   @Nullable
   private final Editor myEditor;
+  @NotNull
   private final PsiFile myFile;
+  @NotNull
   private final Project myProject;
+
+  public CachedIntentions(@NotNull Project project, @NotNull PsiFile file, @Nullable Editor editor) {
+    myProject = project;
+    myFile = file;
+    myEditor = editor;
+  }
+
+  @NotNull
+  public Set<IntentionActionWithTextCaching> getIntentions() {
+    return myIntentions;
+  }
+
+  @NotNull
+  public Set<IntentionActionWithTextCaching> getErrorFixes() {
+    return myErrorFixes;
+  }
+
+  @NotNull
+  Set<IntentionActionWithTextCaching> getInspectionFixes() {
+    return myInspectionFixes;
+  }
+
+  @NotNull
+  public Set<IntentionActionWithTextCaching> getGutters() {
+    return myGutters;
+  }
+
+  @NotNull
+  public Set<IntentionActionWithTextCaching> getNotifications() {
+    return myNotifications;
+  }
 
   @Nullable
   public Editor getEditor() {
     return myEditor;
   }
 
+  @NotNull
   public PsiFile getFile() {
     return myFile;
   }
 
+  @NotNull
   public Project getProject() {
     return myProject;
   }
@@ -84,22 +95,18 @@ public class CachedIntentions {
     return myOffset;
   }
 
+  @NotNull
   public static CachedIntentions create(@NotNull Project project, @NotNull PsiFile file, @Nullable Editor editor, @NotNull ShowIntentionsPass.IntentionsInfo intentions) {
     CachedIntentions res = new CachedIntentions(project, file, editor);
     res.wrapAndUpdateActions(intentions, false);
     return res;
   }
 
+  @NotNull
   public static CachedIntentions createAndUpdateActions(@NotNull Project project, @NotNull PsiFile file, @Nullable Editor editor, @NotNull ShowIntentionsPass.IntentionsInfo intentions) {
     CachedIntentions res = new CachedIntentions(project, file, editor);
     res.wrapAndUpdateActions(intentions, true);
     return res;
-  }
-
-  public CachedIntentions(@NotNull Project project, @NotNull PsiFile file, @Nullable Editor editor) {
-    myProject = project;
-    myFile = file;
-    myEditor = editor;
   }
 
   private static final TObjectHashingStrategy<IntentionActionWithTextCaching> ACTION_TEXT_AND_CLASS_EQUALS = new TObjectHashingStrategy<IntentionActionWithTextCaching>() {
@@ -122,14 +129,13 @@ public class CachedIntentions {
     }
   };
 
-
   public boolean wrapAndUpdateActions(@NotNull ShowIntentionsPass.IntentionsInfo newInfo, boolean callUpdate) {
     myOffset = newInfo.getOffset();
-    boolean changed = wrapActionsTo(newInfo.errorFixesToShow, myCachedErrorFixes, callUpdate);
-    changed |= wrapActionsTo(newInfo.inspectionFixesToShow, myCachedInspectionFixes, callUpdate);
-    changed |= wrapActionsTo(newInfo.intentionsToShow, myCachedIntentions, callUpdate);
-    changed |= wrapActionsTo(newInfo.guttersToShow, myCachedGutters, callUpdate);
-    changed |= wrapActionsTo(newInfo.notificationActionsToShow, myCachedNotifications, callUpdate);
+    boolean changed = wrapActionsTo(newInfo.errorFixesToShow, myErrorFixes, callUpdate);
+    changed |= wrapActionsTo(newInfo.inspectionFixesToShow, myInspectionFixes, callUpdate);
+    changed |= wrapActionsTo(newInfo.intentionsToShow, myIntentions, callUpdate);
+    changed |= wrapActionsTo(newInfo.guttersToShow, myGutters, callUpdate);
+    changed |= wrapActionsTo(newInfo.notificationActionsToShow, myNotifications, callUpdate);
     return changed;
   }
 
@@ -237,11 +243,11 @@ public class CachedIntentions {
         }
       }
       IntentionActionWithTextCaching textCaching = new IntentionActionWithTextCaching(option);
-      boolean isErrorFix = myCachedErrorFixes.contains(textCaching);
+      boolean isErrorFix = myErrorFixes.contains(textCaching);
       if (isErrorFix) {
         cachedAction.addErrorFix(option);
       }
-      boolean isInspectionFix = myCachedInspectionFixes.contains(textCaching);
+      boolean isInspectionFix = myInspectionFixes.contains(textCaching);
       if (isInspectionFix) {
         cachedAction.addInspectionFix(option);
       }
@@ -261,19 +267,20 @@ public class CachedIntentions {
   private void removeActionFromCached(@NotNull IntentionActionWithTextCaching action) {
     // remove from the action from the list after invocation to make it appear unavailable sooner.
     // (the highlighting will process the whole file and remove the no more available action from the list automatically - but it's may be too long)
-    myCachedErrorFixes.remove(action);
-    myCachedGutters.remove(action);
-    myCachedInspectionFixes.remove(action);
-    myCachedIntentions.remove(action);
-    myCachedNotifications.remove(action);
+    myErrorFixes.remove(action);
+    myGutters.remove(action);
+    myInspectionFixes.remove(action);
+    myIntentions.remove(action);
+    myNotifications.remove(action);
   }
 
+  @NotNull
   public List<IntentionActionWithTextCaching> getAllActions() {
-    List<IntentionActionWithTextCaching> result = new ArrayList<>(myCachedErrorFixes);
-    result.addAll(myCachedInspectionFixes);
-    result.addAll(myCachedIntentions);
-    result.addAll(myCachedGutters);
-    result.addAll(myCachedNotifications);
+    List<IntentionActionWithTextCaching> result = new ArrayList<>(myErrorFixes);
+    result.addAll(myInspectionFixes);
+    result.addAll(myIntentions);
+    result.addAll(myGutters);
+    result.addAll(myNotifications);
     result = DumbService.getInstance(myProject).filterByDumbAwareness(result);
     Collections.sort(result, (o1, o2) -> {
       int weight1 = getWeight(o1);
@@ -286,46 +293,46 @@ public class CachedIntentions {
     return result;
   }
 
-  private int getWeight(IntentionActionWithTextCaching action) {
+  private int getWeight(@NotNull IntentionActionWithTextCaching action) {
     IntentionAction a = action.getAction();
     int group = getGroup(action).getPriority();
     while (a instanceof IntentionActionDelegate) {
       a = ((IntentionActionDelegate)a).getDelegate();
     }
-    if (a instanceof HighPriorityAction) {
-      return group + 3;
-    }
-    if (a instanceof LowPriorityAction) {
-      return group - 3;
+    if (a instanceof PriorityAction) {
+      return group + getPriorityWeight(((PriorityAction)a).getPriority());
     }
     if (a instanceof SuppressIntentionActionFromFix) {
       if (((SuppressIntentionActionFromFix)a).isShouldBeAppliedToInjectionHost() == ThreeState.NO) {
         return group - 1;
       }
     }
-    if (a instanceof QuickFixWrapper) {
-      final LocalQuickFix quickFix = ((QuickFixWrapper)a).getFix();
-      if (quickFix instanceof HighPriorityAction) {
-        return group + 3;
-      }
-      if (quickFix instanceof LowPriorityAction) {
-        return group - 3;
-      }
-    }
     return group;
   }
 
-  public IntentionGroup getGroup(IntentionActionWithTextCaching action) {
-    if (myCachedErrorFixes.contains(action)) {
+  private static int getPriorityWeight(PriorityAction.Priority priority) {
+    switch (priority) {
+      case HIGH:
+        return 3;
+      case LOW:
+        return -3;
+      default:
+        return 0;
+    }
+  }
+
+  @NotNull
+  public IntentionGroup getGroup(@NotNull IntentionActionWithTextCaching action) {
+    if (myErrorFixes.contains(action)) {
       return IntentionGroup.ERROR;
     }
-    if (myCachedInspectionFixes.contains(action)) {
+    if (myInspectionFixes.contains(action)) {
       return IntentionGroup.INSPECTION;
     }
-    if (myCachedNotifications.contains(action)) {
+    if (myNotifications.contains(action)) {
       return IntentionGroup.NOTIFICATION;
     }
-    if (myCachedGutters.contains(action)) {
+    if (myGutters.contains(action)) {
       return IntentionGroup.GUTTER;
     }
     if (action.getAction() instanceof EmptyIntentionAction) {
@@ -334,7 +341,8 @@ public class CachedIntentions {
     return IntentionGroup.OTHER;
   }
 
-  public Icon getIcon(IntentionActionWithTextCaching value) {
+  @NotNull
+  public Icon getIcon(@NotNull IntentionActionWithTextCaching value) {
     if (value.getIcon() != null) {
       return value.getIcon();
     }
@@ -358,12 +366,12 @@ public class CachedIntentions {
     }
 
     if (IntentionManagerSettings.getInstance().isShowLightBulb(action)) {
-      return myCachedErrorFixes.contains(value) ? AllIcons.Actions.QuickfixBulb
-                                                                      : myCachedInspectionFixes.contains(value) ? AllIcons.Actions.IntentionBulb :
-                                                                        AllIcons.Actions.RealIntentionBulb;
+      return myErrorFixes.contains(value) ? AllIcons.Actions.QuickfixBulb
+                                          : myInspectionFixes.contains(value) ? AllIcons.Actions.IntentionBulb :
+                                            AllIcons.Actions.RealIntentionBulb;
     }
     else {
-      return myCachedErrorFixes.contains(value) ? AllIcons.Actions.QuickfixOffBulb : AllIcons.Actions.RealIntentionOffBulb;
+      return myErrorFixes.contains(value) ? AllIcons.Actions.QuickfixOffBulb : AllIcons.Actions.RealIntentionOffBulb;
     }
   }
 
@@ -371,4 +379,14 @@ public class CachedIntentions {
     return ContainerUtil.exists(getAllActions(), info -> IntentionManagerSettings.getInstance().isShowLightBulb(info.getAction()));
   }
 
+  @Override
+  public String toString() {
+    return "CachedIntentions{" +
+           "myIntentions=" + myIntentions +
+           ", myErrorFixes=" + myErrorFixes +
+           ", myInspectionFixes=" + myInspectionFixes +
+           ", myGutters=" + myGutters +
+           ", myNotifications=" + myNotifications +
+           '}';
+  }
 }

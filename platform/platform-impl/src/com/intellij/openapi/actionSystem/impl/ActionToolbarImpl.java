@@ -952,7 +952,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
     @Override
     protected void paintComponent(final Graphics g) {
-      int gap = JBUI.scale(3);
+      int gap = JBUI.scale(2);
       int offset = JBUI.scale(3);
 
       if (getParent() != null) {
@@ -995,6 +995,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       throw new IllegalArgumentException("wrong orientation: " + orientation);
     }
     myOrientation = orientation;
+  }
+
+  int getOrientation() {
+    return myOrientation;
   }
 
   @Override

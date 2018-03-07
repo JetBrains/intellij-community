@@ -378,11 +378,8 @@ public class HighlightMethodUtil {
           PsiElement element = ObjectUtils.notNull(referenceToMethod.getReferenceNameElement(), referenceToMethod);
           highlightInfo = HighlightUtil.checkFeature(element, HighlightUtil.Feature.STATIC_INTERFACE_CALLS, languageLevel, file);
           if (highlightInfo == null) {
-            String message = checkStaticInterfaceMethodCallQualifier(referenceToMethod, resolveResult.getCurrentFileResolveScope(), containingClass);
-            if (message != null) {
-              highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(fixRange).create();
-              QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, QUICK_FIX_FACTORY.createAccessStaticViaInstanceFix(referenceToMethod, resolveResult));
-            }
+            highlightInfo =
+              checkStaticInterfaceCallQualifier(referenceToMethod, resolveResult, fixRange, containingClass);
           }
         }
       }
@@ -540,6 +537,20 @@ public class HighlightMethodUtil {
     }
   }
 
+  static HighlightInfo checkStaticInterfaceCallQualifier(PsiReferenceExpression referenceToMethod,
+                                                         JavaResolveResult resolveResult,
+                                                         TextRange fixRange,
+                                                         PsiClass containingClass) {
+    String message = checkStaticInterfaceMethodCallQualifier(referenceToMethod, resolveResult.getCurrentFileResolveScope(), containingClass);
+    if (message != null) {
+      HighlightInfo highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(fixRange).create();
+      QuickFixAction
+        .registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createAccessStaticViaInstanceFix(referenceToMethod, resolveResult));
+      return highlightInfo;
+    }
+    return null;
+  }
+
   /* see also PsiReferenceExpressionImpl.hasValidQualifier() */
   @Nullable
   private static String checkStaticInterfaceMethodCallQualifier(PsiReferenceExpression ref, PsiElement scope, PsiClass containingClass) {
@@ -687,13 +698,8 @@ public class HighlightMethodUtil {
         if (containingClass != null && containingClass.isInterface()) {
           HighlightInfo info = HighlightUtil.checkFeature(elementToHighlight, HighlightUtil.Feature.STATIC_INTERFACE_CALLS, languageLevel, file);
           if (info != null) return info;
-          description = checkStaticInterfaceMethodCallQualifier(referenceToMethod, resolveResult.getCurrentFileResolveScope(), containingClass);
-          if (description != null) {
-            HighlightInfo highlightInfo = HighlightInfo.newHighlightInfo(highlightInfoType).range(elementToHighlight).description(description)
-              .escapedToolTip(XmlStringUtil.escapeString(description)).create();
-            QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createAccessStaticViaInstanceFix(referenceToMethod, resolveResult));
-            return highlightInfo;
-          }
+          info = checkStaticInterfaceCallQualifier(referenceToMethod, resolveResult, elementToHighlight.getTextRange(), containingClass);
+          if (info != null) return info;
         }
       }
 
