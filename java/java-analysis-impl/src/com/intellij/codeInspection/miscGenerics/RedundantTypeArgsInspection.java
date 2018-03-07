@@ -166,9 +166,11 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
         if (typeParameters.length == 0 ||
             typeParameters.length == typeArguments.length && 
             PsiDiamondTypeUtil.areTypeArgumentsRedundant(typeArguments, expression, false, ((PsiMethod)resolve), typeParameters)) {
+          String key = typeParameters.length == 0 ? "inspection.redundant.type.no.generics.method.reference.problem.descriptor"
+                                                  : "inspection.redundant.type.problem.descriptor";
           final ProblemDescriptor descriptor =
             inspectionManager.createProblemDescriptor(parameterList,
-                                                      InspectionsBundle.message("inspection.redundant.type.problem.descriptor"),
+                                                      InspectionsBundle.message(key),
                                                       new MyQuickFixAction(), ProblemHighlightType.LIKE_UNUSED_SYMBOL, isOnTheFly);
             problems.add(descriptor);
         }
