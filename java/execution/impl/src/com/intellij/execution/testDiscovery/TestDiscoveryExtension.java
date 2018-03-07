@@ -8,6 +8,7 @@ import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.testframework.JavaTestAgentUtil;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerEventsAdapter;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerEventsListener;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
@@ -26,7 +27,6 @@ import com.intellij.rt.coverage.data.SocketTestDiscoveryProtocolDataListener;
 import com.intellij.rt.coverage.data.TestDiscoveryProjectData;
 import com.intellij.rt.coverage.data.api.TestDiscoveryProtocolUtil;
 import com.intellij.util.Alarm;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.messages.MessageBusConnection;
@@ -42,7 +42,6 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
   public static final String TEST_DISCOVERY_REGISTRY_KEY = "testDiscovery.enabled";
 
   private static final boolean USE_SOCKET = SystemProperties.getBooleanProperty("test.discovery.use.socket", true);
-  private static final String DEBUG_AGENT_PATH = System.getProperty("test.discovery.agent.path");
   public static final Key<TestDiscoveryDataSocketListener> SOCKET_LISTENER_KEY = Key.create("test.discovery.socket.data.listener");
 
   private static final Logger LOG = Logger.getInstance(TestDiscoveryExtension.class);
@@ -84,7 +83,8 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
     if (runnerSettings != null || !isApplicableFor(configuration)) {
       return;
     }
-    params.getVMParametersList().add("-javaagent:" + ObjectUtils.notNull(DEBUG_AGENT_PATH, PathUtil.getJarPathForClass(TestDiscoveryProjectData.class)));
+    params.getVMParametersList().add("-javaagent:" + JavaTestAgentUtil
+      .handleSpacesInAgentPath(PathUtil.getJarPathForClass(TestDiscoveryProjectData.class)));
     TestDiscoveryDataSocketListener listener = tryInstallSocketListener(configuration);
     if (listener != null) {
       params.getVMParametersList().addProperty(SocketTestDiscoveryProtocolDataListener.PORT_PROP, Integer.toString(listener.getPort()));
