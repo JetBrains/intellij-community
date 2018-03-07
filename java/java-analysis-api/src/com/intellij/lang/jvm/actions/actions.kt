@@ -32,6 +32,12 @@ fun createConstructorActions(target: JvmClass, request: CreateConstructorRequest
   }
 }
 
+fun createAddAnnotationActions(target: JvmModifiersOwner, request: CreateAnnotationRequest): List<IntentionAction> {
+  return createActions {
+    it.createAddAnnotationActions(target, request)
+  }
+}
+
 fun createModifierActions(target: JvmModifiersOwner, request: MemberRequest.Modifier): List<IntentionAction> {
   return createActions {
     it.createChangeModifierActions(target, request)
