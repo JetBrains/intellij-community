@@ -72,8 +72,8 @@ public class PyImportElementElementType extends PyStubElementType<PyImportElemen
   @NotNull
   public PyImportElementStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     QualifiedName qName = QualifiedName.deserialize(dataStream);
-    StringRef asName = dataStream.readName();
-    return new PyImportElementStubImpl(qName, asName.getString(), parentStub, getStubElementType());
+    String asName = dataStream.readNameString();
+    return new PyImportElementStubImpl(qName, asName, parentStub, getStubElementType());
   }
 
   protected IStubElementType getStubElementType() {

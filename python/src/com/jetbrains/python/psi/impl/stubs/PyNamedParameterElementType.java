@@ -25,7 +25,6 @@ import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
-import com.intellij.util.io.StringRef;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyStubElementType;
@@ -84,17 +83,17 @@ public class PyNamedParameterElementType extends PyStubElementType<PyNamedParame
   @Override
   @NotNull
   public PyNamedParameterStub deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub) throws IOException {
-    String name = StringRef.toString(dataStream.readName());
+    String name = dataStream.readNameString();
     byte flags = dataStream.readByte();
-    final StringRef defaultValueText = dataStream.readName();
-    final StringRef typeComment = dataStream.readName();
-    final StringRef annotation = dataStream.readName();
+    String defaultValueText = dataStream.readNameString();
+    String typeComment = dataStream.readNameString();
+    String annotation = dataStream.readNameString();
     return new PyNamedParameterStubImpl(name,
                                         (flags & POSITIONAL_CONTAINER) != 0,
                                         (flags & KEYWORD_CONTAINER) != 0,
-                                        defaultValueText == null ? null : defaultValueText.getString(),
-                                        typeComment == null ? null : typeComment.getString(),
-                                        annotation == null ? null : annotation.getString(),
+                                        defaultValueText,
+                                        typeComment,
+                                        annotation,
                                         parentStub, getStubElementType());
   }
 

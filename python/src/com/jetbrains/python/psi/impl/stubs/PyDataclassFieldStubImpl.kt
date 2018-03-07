@@ -29,12 +29,12 @@ class PyDataclassFieldStubImpl private constructor(private val calleeName: Quali
 
     @Throws(IOException::class)
     fun deserialize(stream: StubInputStream): PyDataclassFieldStub? {
-      val calleeName = stream.readName() ?: return null
+      val calleeName = stream.readNameString() ?: return null
       val hasDefault = stream.readBoolean()
       val hasDefaultFactory = stream.readBoolean()
       val initValue = stream.readBoolean()
 
-      return PyDataclassFieldStubImpl(QualifiedName.fromDottedString(calleeName.string), hasDefault, hasDefaultFactory, initValue)
+      return PyDataclassFieldStubImpl(QualifiedName.fromDottedString(calleeName), hasDefault, hasDefaultFactory, initValue)
     }
 
     private fun calculateFullyQCalleeName(callee: PyReferenceExpression): QualifiedName? {
