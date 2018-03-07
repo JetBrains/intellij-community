@@ -3,6 +3,7 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -19,6 +20,7 @@ import java.util.*;
 import java.util.stream.Stream;
 
 final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.DataFlowInstructionVisitor");
   private static final Object ANY_VALUE = new Object();
   private final Map<NullabilityProblemKind.NullabilityProblem<?>, StateInfo> myStateInfos = new LinkedHashMap<>();
   private final Set<Instruction> myCCEInstructions = ContainerUtil.newHashSet();
@@ -40,18 +42,24 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
   public DfaInstructionState[] visitAssign(AssignInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     PsiExpression left = instruction.getLExpression();
     if (left != null && !Boolean.FALSE.equals(mySameValueAssigned.get(left))) {
-      DfaValue dest = memState.peek();
-      // Reporting of floating zero is skipped, because this produces false-positives on the code like
-      // if(x == -0.0) x = 0.0;
-      if (dest instanceof DfaVariableValue || (dest instanceof DfaConstValue && !isFloatingZero(((DfaConstValue)dest).getValue()))) {
-        DfaMemoryState copy = memState.createCopy();
-        copy.pop();
-        DfaValue src = copy.peek();
-        boolean sameValue = !copy.applyCondition(runner.getFactory().createCondition(dest, DfaRelationValue.RelationType.NE, src));
-        mySameValueAssigned.merge(left, sameValue, Boolean::logicalAnd);
-      }
-      else {
-        mySameValueAssigned.put(left, Boolean.FALSE);
+      if (!left.isPhysical()) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Non-physical element in assignment instruction: " + left.getParent().getText(), new Throwable());
+        }
+      } else {
+        DfaValue dest = memState.peek();
+        // Reporting of floating zero is skipped, because this produces false-positives on the code like
+        // if(x == -0.0) x = 0.0;
+        if (dest instanceof DfaVariableValue || (dest instanceof DfaConstValue && !isFloatingZero(((DfaConstValue)dest).getValue()))) {
+          DfaMemoryState copy = memState.createCopy();
+          copy.pop();
+          DfaValue src = copy.peek();
+          boolean sameValue = !copy.applyCondition(runner.getFactory().createCondition(dest, DfaRelationValue.RelationType.NE, src));
+          mySameValueAssigned.merge(left, sameValue, Boolean::logicalAnd);
+        }
+        else {
+          mySameValueAssigned.put(left, Boolean.FALSE);
+        }
       }
     }
     return super.visitAssign(instruction, runner, memState);
