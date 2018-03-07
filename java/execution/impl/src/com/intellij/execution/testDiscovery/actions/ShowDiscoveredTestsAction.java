@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testDiscovery.actions;
 
-import com.intellij.codeInsight.navigation.ListBackgroundUpdaterTask;
 import com.intellij.execution.Executor;
 import com.intellij.execution.JavaTestConfigurationBase;
 import com.intellij.execution.actions.ConfigurationContext;
@@ -22,7 +21,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.IconButton;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -34,11 +32,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.InplaceButton;
-import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.AbstractPopup;
-import com.intellij.ui.popup.HintUpdateSupply;
+import com.intellij.usages.UsageView;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PsiNavigateUtil;
@@ -53,6 +49,7 @@ import org.jetbrains.uast.UastContextKt;
 
 import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
+import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
 import java.util.Objects;
@@ -62,6 +59,8 @@ import static com.intellij.openapi.actionSystem.CommonDataKeys.EDITOR;
 import static com.intellij.openapi.actionSystem.CommonDataKeys.PSI_FILE;
 
 public class ShowDiscoveredTestsAction extends AnAction {
+  private static final String RUN_ALL_ACTION_TEXT = "Run All";
+
   @Override
   public void update(AnActionEvent e) {
     e.getPresentation().setEnabledAndVisible(Registry.is(TestDiscoveryExtension.TEST_DISCOVERY_REGISTRY_KEY) && e.getProject() != null && findMethodAtCaret(e) != null);
@@ -109,25 +108,20 @@ public class ShowDiscoveredTestsAction extends AnAction {
 
     ConfigurationContext context = ConfigurationContext.getFromContext(dataContext);
 
-    InplaceButton runButton = new InplaceButton(new IconButton("Run All", AllIcons.Actions.Execute), __ -> {
-      Executor executor = DefaultRunExecutor.getRunExecutorInstance();
-      Module targetModule = TestDiscoveryConfigurationProducer.detectTargetModule(tree.getContainingModules(), project);
-      //first producer with results will be picked
-      StreamEx.of(getProducers(project)).cross(methods)
-              .mapKeyValue((producer, method) -> producer.createDelegate(method, targetModule).findOrCreateConfigurationFromContext(context))
-              .filter(Objects::nonNull)
-              .findFirst()
-              .ifPresent(configuration -> {
-                ExecutionUtil.runConfiguration(configuration.getConfigurationSettings(), executor);
-                JBPopup popup = ref.get();
-                if (popup != null) {
-                  popup.cancel();
-                }
-              });
+    InplaceButton runButton = new InplaceButton(new IconButton(RUN_ALL_ACTION_TEXT, AllIcons.Actions.Execute), __ -> {
+      runAllDiscoveredTests(project, tree, ref, context, methods);
     });
 
     ActionListener pinActionListener = __ -> {
-      FindUtil.showInUsageView(null, tree.getTestMethods(), initTitle, project);
+      UsageView view = FindUtil.showInUsageView(null, tree.getTestMethods(), initTitle, project);
+      if (view != null) {
+        view.addButtonToLowerPane(new AbstractAction(RUN_ALL_ACTION_TEXT, AllIcons.Actions.Execute) {
+          @Override
+          public void actionPerformed(ActionEvent e) {
+            runAllDiscoveredTests(project, tree, ref, context, methods);
+          }
+        });
+      }
       JBPopup popup = ref.get();
       if (popup != null) {
         popup.cancel();
@@ -193,6 +187,26 @@ public class ShowDiscoveredTestsAction extends AnAction {
         tree.setPaintBusy(false);
       });
     });
+  }
+
+  private static void runAllDiscoveredTests(@NotNull Project project,
+                                            DiscoveredTestsTree tree,
+                                            Ref<JBPopup> ref,
+                                            ConfigurationContext context, @NotNull PsiMethod[] methods) {
+    Executor executor = DefaultRunExecutor.getRunExecutorInstance();
+    Module targetModule = TestDiscoveryConfigurationProducer.detectTargetModule(tree.getContainingModules(), project);
+    //first producer with results will be picked
+    StreamEx.of(getProducers(project)).cross(methods)
+            .mapKeyValue((producer, method) -> producer.createDelegate(method, targetModule).findOrCreateConfigurationFromContext(context))
+            .filter(Objects::nonNull)
+            .findFirst()
+            .ifPresent(configuration -> {
+              ExecutionUtil.runConfiguration(configuration.getConfigurationSettings(), executor);
+              JBPopup popup = ref.get();
+              if (popup != null) {
+                popup.cancel();
+              }
+            });
   }
 
   @Nullable
