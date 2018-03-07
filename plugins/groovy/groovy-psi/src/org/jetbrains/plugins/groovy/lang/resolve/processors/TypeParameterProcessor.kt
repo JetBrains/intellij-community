@@ -11,7 +11,7 @@ class TypeParameterProcessor(name: String) : FindFirstProcessor<ElementGroovyRes
 
   init {
     nameHint(name)
-    hint(ElementClassHint.KEY, ElementClassHint { false })
+    hint(ElementClassHint.KEY, ClassHint.EMPTY)
     hint(GroovyResolveKind.HINT_KEY, GroovyResolveKind.Hint { it === GroovyResolveKind.TYPE_PARAMETER })
   }
 
