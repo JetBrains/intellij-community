@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,17 +10,12 @@ import java.util.function.Supplier;
 /**
  * @author yole
  */
-public class CompletionProgressIndicatorBase extends ProgressIndicatorBase implements CompletionProcess, Disposable {
+public class CompletionProcessBase implements CompletionProcessEx, Disposable {
   protected final int myInvocationCount;
   protected final Object myLock = new String("CompletionProgressIndicator");
   protected OffsetsInFile myHostOffsets;
 
-  CompletionProgressIndicatorBase(int invocationCount, OffsetsInFile hostOffsets) {
-    myInvocationCount = invocationCount;
-    myHostOffsets = hostOffsets;
-  }
-
-  public CompletionProgressIndicatorBase(CompletionInitializationContext context) {
+  public CompletionProcessBase(CompletionInitializationContext context) {
     myInvocationCount = context.getInvocationCount();
     myHostOffsets = ((CompletionInitializationContextImpl) context).getHostOffsets();
   }
@@ -31,14 +25,15 @@ public class CompletionProgressIndicatorBase extends ProgressIndicatorBase imple
     return myInvocationCount == 0;
   }
 
-  OffsetsInFile getHostOffsets() {
+  @Override
+  public OffsetsInFile getHostOffsets() {
     return myHostOffsets;
   }
 
-  void registerChildDisposable(@NotNull Supplier<Disposable> child) {
+  @Override
+  public void registerChildDisposable(@NotNull Supplier<Disposable> child) {
     synchronized (myLock) {
       // avoid registering stuff on an indicator being disposed concurrently
-      checkCanceled();
       Disposer.register(this, child.get());
     }
   }

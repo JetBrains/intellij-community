@@ -82,8 +82,8 @@ public class CompletionInitializationUtil {
   }
 
   public static CompletionParameters prepareCompletionParameters(CompletionInitializationContext initContext,
-                                                                 CompletionProcess process) {
-    CompletionProgressIndicatorBase indicator = (CompletionProgressIndicatorBase) process;
+                                                                 CompletionProcessEx process) {
+    CompletionProcessEx indicator = (CompletionProcessEx) process;
     OffsetsInFile hostCopyOffsets = insertDummyIdentifier(initContext, indicator, indicator.getHostOffsets());
     if (hostCopyOffsets == null) {
       return null;
@@ -98,7 +98,7 @@ public class CompletionInitializationUtil {
 
   @NotNull
   private static CompletionParameters createCompletionParameters(CompletionInitializationContext initContext,
-                                                                 CompletionProgressIndicatorBase indicator, OffsetsInFile finalOffsets) {
+                                                                 CompletionProcessEx indicator, OffsetsInFile finalOffsets) {
     int offset = finalOffsets.getOffsets().getOffset(CompletionInitializationContext.START_OFFSET);
     PsiFile fileCopy = finalOffsets.getFile();
     PsiFile originalFile = fileCopy.getOriginalFile();
@@ -110,7 +110,7 @@ public class CompletionInitializationUtil {
 
 
   private static OffsetsInFile insertDummyIdentifier(CompletionInitializationContext initContext,
-                                                     CompletionProgressIndicatorBase indicator,
+                                                     CompletionProcessEx indicator,
                                                      OffsetsInFile topLevelOffsets) {
     CompletionAssertions.checkEditorValid(initContext.getEditor());
 

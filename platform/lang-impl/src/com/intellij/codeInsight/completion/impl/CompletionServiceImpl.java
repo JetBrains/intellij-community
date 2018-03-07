@@ -76,7 +76,7 @@ public final class CompletionServiceImpl extends CompletionService {
                                                          CompletionType completionType) {
     CompletionInitializationContext context = CompletionInitializationUtil.createCompletionInitializationContext(project, editor, caret,
                                                                                                                      invocationCount, completionType);
-    CompletionProgressIndicatorBase progress = new CompletionProgressIndicatorBase(context);
+    CompletionProcessBase progress = new CompletionProcessBase(context);
     return CompletionInitializationUtil.prepareCompletionParameters(context, progress);
   }
 
