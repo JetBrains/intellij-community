@@ -222,8 +222,6 @@ class CommunityLibraryLicenses {
                        url: "https://github.com/EsotericSoftware/kryo",
                        licenseUrl: "https://github.com/EsotericSoftware/kryo/blob/master/license.txt"),
     new LibraryLicense(name: "kXML2", libraryName: "kxml2", version: "2.3.0", license: "BSD", url: "http://sourceforge.net/projects/kxml/"),
-    new LibraryLicense(name: "Lobo evolution", libraryName: "Loboevolution.jar", version: "0.98.6 (with patches by JetBrains)", license: "MIT",
-                       url: "http://sourceforge.net/projects/loboevolution/", licenseUrl: "http://opensource.org/licenses/mit-license.php"),
     new LibraryLicense(name: "Log4j", libraryName: "Log4J", version: "1.2.17", license: "Apache 2.0",
                        url: "http://logging.apache.org/log4j/1.2/index.html", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
     new LibraryLicense(name: "Lombok AST", libraryName: "lombok-ast", version: "0.2.1", license: "MIT", url: "http://projectlombok.org/",
