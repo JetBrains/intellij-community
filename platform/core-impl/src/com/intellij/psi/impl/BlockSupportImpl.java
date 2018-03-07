@@ -14,7 +14,10 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.DummyHolder;
@@ -113,7 +116,7 @@ public class BlockSupportImpl extends BlockSupport {
    *         or {@code null} if can't parse incrementally.
    */
   @Nullable
-  static Couple<ASTNode> findReparseableRoots(@NotNull PsiFileImpl file,
+  public static Couple<ASTNode> findReparseableRoots(@NotNull PsiFileImpl file,
                                                      @NotNull FileASTNode oldFileNode,
                                                      @NotNull TextRange changedPsiRange,
                                                      @NotNull CharSequence newFileText) {
