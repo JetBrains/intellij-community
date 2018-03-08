@@ -61,7 +61,7 @@ public class PyGotoSuperHandler implements CodeInsightActionHandler {
 
   private static void navigateOrChoose(Editor editor, Collection<? extends NavigatablePsiElement> superElements, final String title) {
     if (!superElements.isEmpty()) {
-      NavigatablePsiElement[] superElementArray = superElements.toArray(NavigatablePsiElement.EMPTY_ARRAY);
+      NavigatablePsiElement[] superElementArray = superElements.toArray(NavigatablePsiElement.EMPTY_NAVIGATABLE_ELEMENT_ARRAY);
       if (superElementArray.length == 1) {
         superElementArray[0].navigate(true);
       }
