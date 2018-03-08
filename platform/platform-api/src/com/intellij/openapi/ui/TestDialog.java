@@ -2,7 +2,6 @@
 package com.intellij.openapi.ui;
 
 public interface TestDialog {
-
   TestDialog DEFAULT = new TestDialog() {
     public int show(String message) {
       throw new RuntimeException(message);
