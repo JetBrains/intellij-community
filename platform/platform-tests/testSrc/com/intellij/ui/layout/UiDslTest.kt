@@ -3,6 +3,7 @@ package com.intellij.ui.layout
 
 import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.UsefulTestCase
 import com.intellij.ui.components.CheckBox
 import com.intellij.ui.components.JBPasswordField
 import com.intellij.ui.components.RadioButton
@@ -18,10 +19,8 @@ import org.assertj.swing.assertions.Assertions.assertThat
 import org.assertj.swing.edt.FailOnThreadViolationRepaintManager
 import org.assertj.swing.edt.GuiActionRunner
 import org.assertj.swing.fixture.FrameFixture
-import org.junit.After
-import org.junit.BeforeClass
-import org.junit.Rule
-import org.junit.Test
+import org.junit.*
+import org.junit.Assume.assumeTrue
 import org.junit.rules.TestName
 import java.awt.*
 import java.awt.image.BufferedImage
@@ -54,6 +53,11 @@ class UiDslTest {
   @After
   fun tearDown() {
     window.cleanUp()
+  }
+
+  @Before
+  fun beforeMethod() {
+    assumeTrue(!UsefulTestCase.IS_UNDER_TEAMCITY)
   }
 
   private fun saveImage(file: Path) {
