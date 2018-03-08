@@ -65,15 +65,7 @@ public class GoEnvCompletionProvider extends BaseEnvCompletionProvider implement
         PsiElement candidate = parent.getParent().getParent();
 
         if(candidate instanceof GoCallExpr) {
-            GoCallExpr callExpression = (GoCallExpr) candidate;
-            if(GoPsiHelper.checkEnvMethodCall(callExpression)
-                    && callExpression.getArgumentList().getExpressionList().size() > 0
-                    && callExpression.getArgumentList().getExpressionList().get(0).isEquivalentTo(parent)) {
-
-                return (GoStringLiteral) parent;
-            }
-
-            return null;
+            return GoPsiHelper.getEnvironmentGoLiteral((GoCallExpr) candidate);
         }
 
         return null;

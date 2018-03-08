@@ -23,12 +23,8 @@ class GoEnvironmentCallsVisitor extends PsiRecursiveElementVisitor {
     }
 
     private void visitCall(GoCallExpr expression) {
-        if(GoPsiHelper.checkEnvMethodCall(expression)
-                && expression.getArgumentList().getExpressionList().size() > 0
-                && expression.getArgumentList().getExpressionList().get(0) instanceof GoStringLiteral) {
-
-            GoStringLiteral stringLiteral = (GoStringLiteral) expression.getArgumentList().getExpressionList().get(0);
-
+        GoStringLiteral stringLiteral = GoPsiHelper.getEnvironmentGoLiteral(expression);
+        if(stringLiteral != null) {
             collectedItems.add(new KeyUsagePsiElement(stringLiteral.getDecodedText(), stringLiteral));
         }
     }
