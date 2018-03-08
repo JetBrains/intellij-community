@@ -50,11 +50,8 @@ public class MethodProcessorRunnable implements Runnable {
       DecompilerContext.setCurrentContext(parentContext);
       root = codeToJava(method, methodDescriptor, varProc);
     }
-    catch (ThreadDeath ex) {
-      throw ex;
-    }
-    catch (Throwable ex) {
-      error = ex;
+    catch (Throwable t) {
+      error = t;
     }
     finally {
       DecompilerContext.setCurrentContext(null);
