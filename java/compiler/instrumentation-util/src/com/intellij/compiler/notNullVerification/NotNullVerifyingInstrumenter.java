@@ -188,7 +188,7 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
 
       @Override
       public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String desc, boolean visible) {
-        AnnotationVisitor av = mv.visitTypeAnnotation(typeRef, null, desc, visible);
+        AnnotationVisitor av = mv.visitTypeAnnotation(typeRef, typePath, desc, visible);
         if (typePath != null) return av;
 
         TypeReference ref = new TypeReference(typeRef);
