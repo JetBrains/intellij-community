@@ -21,7 +21,7 @@ inline fun panel(vararg constraints: LCFlags, title: String? = null, init: Layou
   builder.init()
 
   val panel = Panel(title, layout = null)
-  builder.`$`.build(panel, constraints)
+  builder.builder.build(panel, constraints)
   return panel
 }
 

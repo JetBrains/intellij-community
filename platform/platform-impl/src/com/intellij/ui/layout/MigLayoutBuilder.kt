@@ -41,7 +41,10 @@ internal class MigLayoutBuilder : LayoutBuilderImpl {
     val row = MigLayoutRow(componentConstraints, this, label != null, buttonGroup = buttonGroup, indented = indented)
     rows.add(row)
 
-    label?.let { row.apply { label() } }
+    if (label != null) {
+//      componentConstraints.put(label, CC().growPrioX(-1))
+      row.apply { label() }
+    }
 
     return row
   }
@@ -56,7 +59,7 @@ internal class MigLayoutBuilder : LayoutBuilderImpl {
   }
 
   override fun build(container: Container, layoutConstraints: Array<out LCFlags>) {
-    val labeled = rows.firstOrNull({ it.labeled && !it.indented }) != null
+    val isLabeled = rows.firstOrNull({ it.labeled && !it.indented }) != null
     var gapTop = -1
 
     val lc = c()
@@ -71,9 +74,15 @@ internal class MigLayoutBuilder : LayoutBuilderImpl {
     lc.noVisualPadding()
     lc.hideMode = 3
 
-    container.layout = MigLayout(lc)
+    val columnConstraints = if (isLabeled) AC() else null
+    var columnIndex = 0
+    if (isLabeled) {
+      columnConstraints!!.grow(0f, columnIndex++)
+    }
 
-    val noGrid = layoutConstraints.contains(LCFlags.noGrid)
+    container.layout = MigLayout(lc, columnConstraints)
+
+    val isNoGrid = layoutConstraints.contains(LCFlags.noGrid)
 
     for (row in rows) {
       val lastComponent = row.components.lastOrNull()
@@ -100,10 +109,12 @@ internal class MigLayoutBuilder : LayoutBuilderImpl {
 
         addGrowIfNeed(cc, component)
 
-        if (!noGrid) {
+        if (!isNoGrid) {
           if (component === lastComponent) {
             isSplitRequired = false
             cc.wrap()
+
+            columnConstraints?.grow(100f, columnIndex++)
           }
 
           if (row.noGrid) {
@@ -123,7 +134,7 @@ internal class MigLayoutBuilder : LayoutBuilderImpl {
                 cc.horizontal.gapBefore = gapToBoundSize(HORIZONTAL_GAP * 3, true)
               }
 
-              if (labeled) {
+              if (isLabeled) {
                 if (row.labeled) {
                   isSkippableComponent = false
                 }
@@ -272,6 +283,7 @@ private fun createComponentConstraints(constraints: Array<out CCFlags>? = null,
                                        gapBottom: Int = 0,
                                        split: Int = -1,
                                        growPolicy: GrowPolicy?): CC? {
+  @Suppress("LocalVariableName")
   var _cc = constraints?.create()
   fun cc(): CC {
     if (_cc == null) {
