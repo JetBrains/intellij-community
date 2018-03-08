@@ -18,7 +18,6 @@ package com.jetbrains.python.codeInsight.intentions;
 import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -31,11 +30,13 @@ import com.jetbrains.python.codeInsight.intentions.PyTypeHintGenerationUtil.Anno
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import one.util.streamex.EntryStream;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Map;
 
 public class PyConvertTypeCommentToVariableAnnotationIntention extends PyBaseIntentionAction {
@@ -44,7 +45,7 @@ public class PyConvertTypeCommentToVariableAnnotationIntention extends PyBaseInt
     final PsiComment typeComment = findCommentUnderCaret(editor, file);
     if (typeComment != null) {
       final Map<PyTargetExpression, String> map = mapTargetsToAnnotations(typeComment);
-      if (map != null) {
+      if (!map.isEmpty()) {
         if (typeComment.getParent() instanceof PyAssignmentStatement && map.size() == 1) {
           final PyTargetExpression target = ContainerUtil.getFirstItem(map.keySet());
           assert target != null;
@@ -92,10 +93,10 @@ public class PyConvertTypeCommentToVariableAnnotationIntention extends PyBaseInt
 
   private static boolean isSuitableTypeComment(@NotNull PsiComment comment) {
     final String annotation = PyTypingTypeProvider.getTypeCommentValue(comment.getText());
-    return annotation != null && mapTargetsToAnnotations(comment) != null;
+    return annotation != null && !mapTargetsToAnnotations(comment).isEmpty();
   }
 
-  @Nullable
+  @NotNull
   private static Map<PyTargetExpression, String> mapTargetsToAnnotations(@NotNull PsiComment typeComment) {
     final PsiElement parent = typeComment.getParent();
     if (parent instanceof PyAssignmentStatement) {
@@ -121,14 +122,14 @@ public class PyConvertTypeCommentToVariableAnnotationIntention extends PyBaseInt
         }
       }
     }
-    return null;
+    return Collections.emptyMap();
   }
 
-  @Nullable
+  @NotNull
   private static Map<PyTargetExpression, String> mapTargetsToAnnotations(@NotNull PyExpression targetExpr, @NotNull PsiComment typeComment) {
     final PyTargetExpression firstTarget = PsiTreeUtil.findChildOfType(targetExpr, PyTargetExpression.class, false);
     if (firstTarget == null || firstTarget.getTypeComment() != typeComment) {
-      return null;
+      return Collections.emptyMap();
     }
 
     final String annotation = PyTypingTypeProvider.getTypeCommentValue(typeComment.getText());
@@ -140,66 +141,10 @@ public class PyConvertTypeCommentToVariableAnnotationIntention extends PyBaseInt
       final PyElementGenerator generator = PyElementGenerator.getInstance(targetExpr.getProject());
       final PyExpression parsed = generator.createExpressionFromText(LanguageLevel.PYTHON36, annotation);
       if (parsed != null) {
-        return mapTargetsToAnnotations(targetExpr, parsed);
+        final Map<PyTargetExpression, PyExpression> targetToExpr = PyTypingTypeProvider.mapTargetsToAnnotations(targetExpr, parsed);
+        return EntryStream.of(targetToExpr).mapValues(PyExpression::getText).toCustomMap(LinkedHashMap::new);
       }
     }
-    return null;
-  }
-
-  @Nullable
-  private static Map<PyTargetExpression, String> mapTargetsToAnnotations(@NotNull PyExpression targetExpr,
-                                                                         @NotNull PyExpression typeExpr) {
-    final PyExpression targetsNoParen = PyPsiUtils.flattenParens(targetExpr);
-    final PyExpression typesNoParen = PyPsiUtils.flattenParens(typeExpr);
-    if (targetsNoParen == null || typesNoParen == null) {
-      return null;
-    }
-    if (targetsNoParen instanceof PySequenceExpression && typesNoParen instanceof PySequenceExpression) {
-      final Ref<Map<PyTargetExpression, String>> result = new Ref<>(new LinkedHashMap<>());
-      mapTargetsToExpressions((PySequenceExpression)targetsNoParen, (PySequenceExpression)typesNoParen, result);
-      return result.get();
-    }
-    else if (targetsNoParen instanceof PyTargetExpression && !(typesNoParen instanceof PySequenceExpression)) {
-      return ImmutableMap.of((PyTargetExpression)targetsNoParen, typesNoParen.getText());
-    }
-    return null;
-  }
-
-  private static void mapTargetsToExpressions(@NotNull PySequenceExpression targetSequence,
-                                              @NotNull PySequenceExpression valueSequence,
-                                              @NotNull Ref<Map<PyTargetExpression, String>> result) {
-    final PyExpression[] targets = targetSequence.getElements();
-    final PyExpression[] values = valueSequence.getElements();
-
-    if (targets.length != values.length) {
-      result.set(null);
-      return;
-    }
-
-    for (int i = 0; i < targets.length; i++) {
-      final PyExpression target = PyPsiUtils.flattenParens(targets[i]);
-      final PyExpression value = PyPsiUtils.flattenParens(values[i]);
-
-      if (target == null || value == null) {
-        result.set(null);
-        return;
-      }
-
-      if (target instanceof PySequenceExpression && value instanceof PySequenceExpression) {
-        mapTargetsToExpressions((PySequenceExpression)target, (PySequenceExpression)value, result);
-        if (result.isNull()) {
-          return;
-        }
-      }
-      else if (target instanceof PyTargetExpression && !(value instanceof PySequenceExpression)) {
-        final Map<PyTargetExpression, String> map = result.get();
-        assert map != null;
-        map.put((PyTargetExpression)target, value.getText());
-      }
-      else {
-        result.set(null);
-        return;
-      }
-    }
+    return Collections.emptyMap();
   }
 }
