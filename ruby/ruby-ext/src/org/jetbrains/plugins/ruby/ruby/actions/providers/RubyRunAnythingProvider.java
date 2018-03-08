@@ -1,7 +1,5 @@
 package org.jetbrains.plugins.ruby.ruby.actions.providers;
 
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -42,8 +40,7 @@ public class RubyRunAnythingProvider extends RubyRunAnythingProviderBase<RubyRun
         continue;
       }
 
-      VirtualFile file = VfsUtilCore.findRelativeFile(argument, baseDirectory);
-      configuration.setScriptPath(file != null ? file.getCanonicalPath() : "");
+      configuration.setScriptPath(findProgramFile(baseDirectory, argument));
 
       isProgramParameters = true;
     }
