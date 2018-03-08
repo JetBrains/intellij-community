@@ -4,6 +4,7 @@ package com.intellij.lang.java.parser;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.openapi.util.Pair;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
@@ -587,7 +588,9 @@ public class DeclarationParser {
 
   @Nullable
   public PsiBuilder.Marker parseLambdaParameter(PsiBuilder builder, boolean typed) {
-    return parseListElement(builder, typed, ReferenceParser.ELLIPSIS, false);
+    int flags = ReferenceParser.ELLIPSIS;
+    if (getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_X)) flags |= ReferenceParser.VAR_TYPE;
+    return parseListElement(builder, typed, flags, false);
   }
 
   @Nullable
