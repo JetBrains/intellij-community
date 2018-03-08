@@ -103,6 +103,8 @@ public class PerformanceTestInfo {
       System.gc();
     }
 
+    boolean testShouldPass = false;
+
     while (true) {
       attempts--;
       CpuUsageData data;
@@ -117,56 +119,68 @@ public class PerformanceTestInfo {
       catch (Throwable throwable) {
         throw new RuntimeException(throwable);
       }
-      long duration = data.durationMs;
 
       int expectedOnMyMachine = getExpectedTimeOnThisMachine();
+      IterationResult iterationResult = data.durationMs < expectedOnMyMachine ? IterationResult.acceptable :
+                                        // Allow 10% more in case of test machine is busy.
+                                        data.durationMs < expectedOnMyMachine * 1.1 ? IterationResult.borderline :
+                                        IterationResult.slow;
 
-      // Allow 10% more in case of test machine is busy.
-      double acceptableChangeFactor = attempts == 0 ? 1.1 : 1.0;
-      int percentage = (int)(100.0 * (duration - expectedOnMyMachine) / expectedOnMyMachine);
-      String colorCode = duration < expectedOnMyMachine ? "32;1m" : // green
-                         duration < expectedOnMyMachine * acceptableChangeFactor ? "33;1m" : // yellow
-                         "31;1m"; // red
-      String logMessage = String.format(
-        "%s took \u001B[%s%d%% %s time\u001B[0m than expected" +
-        "\n  Expected: %sms (%s)" +
-        "\n  Actual:   %sms (%s)" +
-        "\n  Timings:  %s" +
-        "\n  Threads:  %s" +
-        "\n  GC stats: %s",
-        what, colorCode, Math.abs(percentage), percentage > 0 ? "more" : "less",
-        expectedOnMyMachine, StringUtil.formatDuration(expectedOnMyMachine),
-        duration, StringUtil.formatDuration(duration),
-        Timings.getStatistics(),
-        data.getThreadStats(),
-        data.getGcStats());
+      testShouldPass |= iterationResult != IterationResult.slow;
 
-      if (duration < expectedOnMyMachine) {
+      String logMessage = formatMessage(data, expectedOnMyMachine, iterationResult);
+
+      if (iterationResult == IterationResult.acceptable) {
         TeamCityLogger.info(logMessage);
         System.out.println("\nSUCCESS: " + logMessage);
+        return;
       }
-      else if (duration < expectedOnMyMachine * acceptableChangeFactor) {
+
+      if (iterationResult == IterationResult.borderline) {
         TeamCityLogger.warning(logMessage, null);
         System.out.println("\nWARNING: " + logMessage);
+        continue; // maybe next iteration will be totally acceptable
       }
-      else {
-        // try one more time
-        if (attempts == 0) {
-          throw new AssertionFailedError(logMessage);
-        }
-        System.gc();
-        System.gc();
-        System.gc();
-        String s = logMessage + "\n  " + attempts + " attempts remain";
-        TeamCityLogger.warning(s, null);
-        if (UsefulTestCase.IS_UNDER_TEAMCITY) {
-          System.err.println(s);
-        }
-        continue;
+
+      if (attempts == 0) {
+        if (testShouldPass) return;
+        throw new AssertionFailedError(logMessage);
       }
-      break;
+
+      // try one more time
+      System.gc();
+      System.gc();
+      System.gc();
+      String s = logMessage + "\n  " + attempts + " attempts remain";
+      TeamCityLogger.warning(s, null);
+      if (UsefulTestCase.IS_UNDER_TEAMCITY) {
+        System.err.println(s);
+      }
     }
   }
+
+  private String formatMessage(CpuUsageData data, int expectedOnMyMachine, IterationResult iterationResult) {
+    long duration = data.durationMs;
+    int percentage = (int)(100.0 * (duration - expectedOnMyMachine) / expectedOnMyMachine);
+    String colorCode = iterationResult == IterationResult.acceptable ? "32;1m" : // green
+                       iterationResult == IterationResult.borderline ? "33;1m" : // yellow
+                       "31;1m"; // red
+    return String.format(
+      "%s took \u001B[%s%d%% %s time\u001B[0m than expected" +
+      "\n  Expected: %sms (%s)" +
+      "\n  Actual:   %sms (%s)" +
+      "\n  Timings:  %s" +
+      "\n  Threads:  %s" +
+      "\n  GC stats: %s",
+      what, colorCode, Math.abs(percentage), percentage > 0 ? "more" : "less",
+      expectedOnMyMachine, StringUtil.formatDuration(expectedOnMyMachine),
+      duration, StringUtil.formatDuration(duration),
+      Timings.getStatistics(),
+      data.getThreadStats(),
+      data.getGcStats());
+  }
+
+  private enum IterationResult { acceptable, borderline, slow }
 
   private int getExpectedTimeOnThisMachine() {
     int expectedOnMyMachine = expectedMs;
