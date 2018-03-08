@@ -26,8 +26,13 @@ import java.util.Objects;
 import static org.jetbrains.plugins.ruby.ruby.actions.RunAnythingUtil.getOrCreateWrappedCommands;
 
 public class RunAnythingRunProfileState extends CommandLineState {
-  public RunAnythingRunProfileState(ExecutionEnvironment environment) {
+  public RunAnythingRunProfileState(@NotNull ExecutionEnvironment environment, @NotNull String originalCommand) {
     super(environment);
+
+    RunAnythingCommandHandler handler = RunAnythingCommandHandler.getMatchedHandler(originalCommand);
+    if (handler != null) {
+      setConsoleBuilder(handler.getConsoleBuilder(environment.getProject()));
+    }
   }
 
   @NotNull

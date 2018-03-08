@@ -25,7 +25,7 @@ public class RunAnythingRunProfile implements RunProfile {
   @Nullable
   @Override
   public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) {
-    return new RunAnythingRunProfileState(environment);
+    return new RunAnythingRunProfileState(environment, myOriginalCommand);
   }
 
   @Override
