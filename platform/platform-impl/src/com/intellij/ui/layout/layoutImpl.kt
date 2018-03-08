@@ -14,7 +14,7 @@ internal const val VERTICAL_GAP = 5
 fun createLayoutBuilder() = LayoutBuilder(MigLayoutBuilder())
 
 interface LayoutBuilderImpl {
-  fun newRow(label: JLabel? = null, buttonGroup: ButtonGroup? = null, separated: Boolean = false, indented: Boolean = false): Row
+  fun newRow(label: JLabel? = null, buttonGroup: ButtonGroup? = null, separated: Boolean = false): Row
 
   fun build(container: Container, layoutConstraints: Array<out LCFlags>)
 
