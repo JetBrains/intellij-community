@@ -4,6 +4,7 @@ package com.intellij.testFramework;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableRunnable;
 import junit.framework.AssertionFailedError;
 import org.jetbrains.annotations.Contract;
@@ -104,6 +105,7 @@ public class PerformanceTestInfo {
     }
 
     boolean testShouldPass = false;
+    String logMessage;
 
     while (true) {
       attempts--;
@@ -113,10 +115,8 @@ public class PerformanceTestInfo {
         PlatformTestUtil.waitForAllBackgroundActivityToCalmDown();
         data = CpuUsageData.measureCpuUsage(test);
       }
-      catch (RuntimeException | Error throwable) {
-        throw throwable;
-      }
       catch (Throwable throwable) {
+        ExceptionUtil.rethrowUnchecked(throwable);
         throw new RuntimeException(throwable);
       }
 
@@ -128,34 +128,29 @@ public class PerformanceTestInfo {
 
       testShouldPass |= iterationResult != IterationResult.slow;
 
-      String logMessage = formatMessage(data, expectedOnMyMachine, iterationResult);
+      logMessage = formatMessage(data, expectedOnMyMachine, iterationResult);
 
       if (iterationResult == IterationResult.acceptable) {
         TeamCityLogger.info(logMessage);
         System.out.println("\nSUCCESS: " + logMessage);
-        return;
       }
-
-      if (iterationResult == IterationResult.borderline) {
+      else {
         TeamCityLogger.warning(logMessage, null);
         System.out.println("\nWARNING: " + logMessage);
-        continue; // maybe next iteration will be totally acceptable
       }
 
-      if (attempts == 0) {
+      if (attempts == 0 || iterationResult == IterationResult.acceptable) {
         if (testShouldPass) return;
         throw new AssertionFailedError(logMessage);
       }
 
-      // try one more time
-      System.gc();
-      System.gc();
-      System.gc();
-      String s = logMessage + "\n  " + attempts + " attempts remain";
+      // try again
+      String s = "  " + attempts + " attempts remain";
       TeamCityLogger.warning(s, null);
-      if (UsefulTestCase.IS_UNDER_TEAMCITY) {
-        System.err.println(s);
-      }
+      System.out.println(s);
+      System.gc();
+      System.gc();
+      System.gc();
     }
   }
 
