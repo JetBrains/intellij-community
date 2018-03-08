@@ -64,6 +64,7 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.vcsUtil.VcsUtil
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.CalledInAwt
+import org.jetbrains.annotations.CalledInBackground
 import org.jetbrains.annotations.NonNls
 import java.nio.charset.Charset
 import java.util.*
@@ -527,67 +528,60 @@ class LineStatusTrackerManager(
       return Result.Success(RefreshData(converted, newContentInfo))
     }
 
+    @CalledInAwt
     override fun handleResult(request: RefreshRequest, result: Result<RefreshData>) {
       val document = request.document
       when (result) {
         is Result.Canceled -> {
-          synchronized(LOCK) {
-            val virtualFile = fileDocumentManager.getFile(document)
-            if (virtualFile == null) return
+          val virtualFile = fileDocumentManager.getFile(document) ?: return
 
-            val state = fileStatesAwaitingRefresh.remove(virtualFile)
-            if (state == null) return
+          val state = synchronized(LOCK) {
+            fileStatesAwaitingRefresh.remove(virtualFile) ?: return
+          }
 
-            runInEdt(ModalityState.any()) {
-              val tracker = getLineStatusTracker(document)
-              if (tracker is PartialLocalLineStatusTracker) {
-                tracker.restoreState(state)
-                log("Loading canceled: state restored", virtualFile)
-              }
-            }
+          val tracker = getLineStatusTracker(document)
+          if (tracker is PartialLocalLineStatusTracker) {
+            tracker.restoreState(state)
+            log("Loading canceled: state restored", virtualFile)
           }
         }
         is Result.Error -> {
-          runInEdt(ModalityState.any()) {
-            synchronized(LOCK) {
-              val data = trackers[document] ?: return@runInEdt
+          synchronized(LOCK) {
+            val data = trackers[document] ?: return
 
-              data.tracker.dropBaseRevision()
-              data.contentInfo = null
+            data.tracker.dropBaseRevision()
+            data.contentInfo = null
 
-              checkIfTrackerCanBeReleased(document)
-            }
+            checkIfTrackerCanBeReleased(document)
           }
         }
         is Result.Success -> {
-          runInEdt(ModalityState.any()) {
-            val virtualFile = fileDocumentManager.getFile(document)!!
-            val refreshData = result.data
+          val virtualFile = fileDocumentManager.getFile(document)!!
+          val refreshData = result.data
 
-            synchronized(LOCK) {
-              val data = trackers[document]
-              if (data == null) {
-                log("Loading finished: tracker already released", virtualFile)
-                return@runInEdt
-              }
-              if (!shouldBeUpdated(data.contentInfo, refreshData.info)) {
-                log("Loading finished: no need to update", virtualFile)
-                return@runInEdt
-              }
-
-              data.contentInfo = refreshData.info
+          synchronized(LOCK) {
+            val data = trackers[document]
+            if (data == null) {
+              log("Loading finished: tracker already released", virtualFile)
+              return
+            }
+            if (!shouldBeUpdated(data.contentInfo, refreshData.info)) {
+              log("Loading finished: no need to update", virtualFile)
+              return
             }
 
-            val tracker = getLineStatusTracker(document)!!
-            tracker.setBaseRevision(refreshData.text)
-            log("Loading finished: success", virtualFile)
+            data.contentInfo = refreshData.info
+          }
 
-            if (tracker is PartialLocalLineStatusTracker) {
-              val state = fileStatesAwaitingRefresh.remove(tracker.virtualFile)
-              if (state != null) {
-                tracker.restoreState(state)
-                log("Loading finished: state restored", virtualFile)
-              }
+          val tracker = getLineStatusTracker(document)!!
+          tracker.setBaseRevision(refreshData.text)
+          log("Loading finished: success", virtualFile)
+
+          if (tracker is PartialLocalLineStatusTracker) {
+            val state = fileStatesAwaitingRefresh.remove(tracker.virtualFile)
+            if (state != null) {
+              tracker.restoreState(state)
+              log("Loading finished: state restored", virtualFile)
             }
           }
         }
@@ -985,7 +979,10 @@ private abstract class SingleThreadLoader<Request, T>(private val project: Proje
   private var isScheduled: Boolean = false
 
 
+  @CalledInBackground
   protected abstract fun loadRequest(request: Request): Result<T>
+
+  @CalledInAwt
   protected abstract fun handleResult(request: Request, result: Result<T>)
 
 
@@ -1091,8 +1088,12 @@ private abstract class SingleThreadLoader<Request, T>(private val project: Proje
     }
 
     runInEdt(ModalityState.any()) {
-      handleResult(request, result)
-      notifyTrackerRefreshed(request)
+      try {
+        handleResult(request, result)
+      }
+      finally {
+        notifyTrackerRefreshed(request)
+      }
     }
   }
 
