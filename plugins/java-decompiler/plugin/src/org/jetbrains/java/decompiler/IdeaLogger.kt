@@ -24,13 +24,14 @@ class IdeaLogger : IFernflowerLogger() {
   }
 
   override fun writeMessage(message: String, severity: IFernflowerLogger.Severity, t: Throwable) {
+    when (t) {
+      is InternalException -> throw t
+      is ProcessCanceledException -> throw t
+      is InterruptedException -> throw ProcessCanceledException(t)
+    }
+
     if (severity == ERROR) {
-      when (t) {
-        is InternalException -> throw t
-        is ProcessCanceledException -> throw t
-        is InterruptedException -> throw ProcessCanceledException(t)
-        else -> throw InternalException(extendMessage(message), t)
-      }
+      throw InternalException(extendMessage(message), t)
     }
     else {
       val text = extendMessage(message)
