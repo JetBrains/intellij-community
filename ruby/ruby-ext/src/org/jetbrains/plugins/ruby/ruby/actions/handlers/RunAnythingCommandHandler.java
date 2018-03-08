@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.ruby.ruby.actions.handlers;
 
+import com.intellij.execution.process.KillableProcessHandler;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,6 +16,9 @@ public abstract class RunAnythingCommandHandler {
 
   public abstract boolean isMatched(@NotNull String commandLine);
 
+  /**
+   * See {@link KillableProcessHandler#shouldKillProcessSoftly()} for details.
+   */
   public boolean shouldKillProcessSoftly() {
     return true;
   }
