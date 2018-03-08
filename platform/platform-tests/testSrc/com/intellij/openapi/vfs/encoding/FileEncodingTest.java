@@ -65,6 +65,11 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
   private static final String THREE_RUSSIAN_LETTERS = "\u0416\u041e\u041f";
   private TestDialog myOldTestDialogValue;
 
+  @Override
+  public int show(String message) {
+    return 0;
+  }
+
   private static String prolog(Charset charset) {
     return "<?xml version=\"1.0\" encoding=\"" + charset.name() + "\"?>\n";
   }
@@ -88,7 +93,7 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
   private static Document getDocument(VirtualFile file) {
     return FileDocumentManager.getInstance().getDocument(file);
   }
-  
+
   public void testWin1251() {
     VirtualFile vTestRoot = getTestRoot();
     VirtualFile xml = vTestRoot.findChild("xWin1251.xml");
@@ -696,7 +701,7 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
     VirtualFile file = createTempFile("txt", CharsetToolkit.UTF8_BOM, text, CharsetToolkit.UTF8_CHARSET);
     file.contentsToByteArray();
     Document document = ObjectUtils.assertNotNull(FileDocumentManager.getInstance().getDocument(file));
-    
+
     assertEquals(text, document.getText());
     assertEquals(CharsetToolkit.UTF8_CHARSET, file.getCharset());
     assertArrayEquals(CharsetToolkit.UTF8_BOM, file.getBOM());

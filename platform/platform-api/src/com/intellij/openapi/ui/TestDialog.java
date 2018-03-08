@@ -8,6 +8,10 @@ public interface TestDialog {
     }
   };
   TestDialog OK = new TestDialog() {
+    @Override
+    public int show(String message) {
+      return 0;
+    }
   };
   TestDialog NO = new TestDialog() {
     public int show(String message) {
@@ -15,7 +19,5 @@ public interface TestDialog {
     }
   };
 
-  default int show(String message) {
-    return 0;
-  }
+  int show(String message);
 }
