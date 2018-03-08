@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.completion;
 
@@ -90,7 +76,7 @@ import java.util.function.Supplier;
  */
 @SuppressWarnings("deprecation")
 @Deprecated
-public class CompletionProgressIndicator extends ProgressIndicatorBase implements CompletionProcess, Disposable {
+public class CompletionProgressIndicator extends ProgressIndicatorBase implements CompletionProcessEx, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CompletionProgressIndicator");
   private final Editor myEditor;
   @NotNull
@@ -193,7 +179,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     return myOffsetMap;
   }
 
-  OffsetsInFile getHostOffsets() {
+  @Override
+  public OffsetsInFile getHostOffsets() {
     return myHostOffsets;
   }
 
@@ -215,9 +202,9 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         if (reference != null) {
           final int replacementOffset = findReplacementOffset(selectionEndOffset, reference);
           if (replacementOffset > document.getTextLength()) {
-            LOG.error("Invalid replacementOffset: " + replacementOffset + " returned by reference " + reference + " of " + reference.getClass() + 
-                      "; doc=" + document + 
-                      "; doc actual=" + (document == initContext.getFile().getViewProvider().getDocument()) + 
+            LOG.error("Invalid replacementOffset: " + replacementOffset + " returned by reference " + reference + " of " + reference.getClass() +
+                      "; doc=" + document +
+                      "; doc actual=" + (document == initContext.getFile().getViewProvider().getDocument()) +
                       "; doc committed=" + PsiDocumentManager.getInstance(getProject()).isCommitted(document));
           } else {
             initContext.setReplacementOffset(replacementOffset);
@@ -236,14 +223,14 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       myHostOffsets = new OffsetsInFile(initContext.getFile(), initContext.getOffsetMap()).toTopLevelFile();
     }
   }
-  
+
 
   private void addDefaultAdvertisements(CompletionParameters parameters) {
     if (DumbService.isDumb(getProject())) {
       addAdvertisement("The results might be incomplete while indexing is in progress", MessageType.WARNING.getPopupBackground());
       return;
     }
-    
+
     advertiseTabReplacement(parameters);
     if (isAutopopupCompletion()) {
       if (shouldPreselectFirstSuggestion(parameters) && !CodeInsightSettings.getInstance().SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS) {
@@ -513,7 +500,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     }
   }
 
-  void registerChildDisposable(@NotNull Supplier<Disposable> child) {
+  @Override
+  public void registerChildDisposable(@NotNull Supplier<Disposable> child) {
     synchronized (myLock) {
       // avoid registering stuff on an indicator being disposed concurrently
       checkCanceled();

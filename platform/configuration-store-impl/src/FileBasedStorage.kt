@@ -79,13 +79,6 @@ open class FileBasedStorage(file: Path,
         storage.lineSeparator = lineSeparator
       }
 
-      // only app level components do not use xml prolog
-      if (storage.roamingType == RoamingType.DISABLED && storage.isUseXmlProlog) {
-        if (element == null) {
-
-        }
-      }
-
       val isUseVfs = storage.isUseVfsForWrite
       val virtualFile = if (isUseVfs) storage.virtualFile else null
       if (element == null) {

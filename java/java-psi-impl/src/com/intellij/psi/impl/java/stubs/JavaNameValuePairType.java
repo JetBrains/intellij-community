@@ -30,7 +30,6 @@ import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
-import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -92,7 +91,7 @@ public class JavaNameValuePairType extends JavaStubElementType<PsiNameValuePairS
   @NotNull
   @Override
   public PsiNameValuePairStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
-    String name = StringRef.toString(dataStream.readName());
+    String name = dataStream.readNameString();
     boolean hasValue = dataStream.readBoolean();
     return new PsiNameValuePairStubImpl(parentStub, name, hasValue ? dataStream.readUTFFast() : null);
   }

@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -97,7 +98,7 @@ class LineMarkersUtil {
           markerEx.setLineSeparatorColor(info.separatorColor);
           markerEx.setLineSeparatorPlacement(info.separatorPlacement);
 
-          markerEx.putUserData(LineMarkerInfo.LINE_MARKER_INFO, info);
+          markerEx.putUserData(LINE_MARKER_INFO, info);
         });
 
       MarkupEditorFilter editorFilter = info.getEditorFilter();
@@ -107,7 +108,7 @@ class LineMarkersUtil {
     }
 
     if (!newHighlighter) {
-      highlighter.putUserData(LineMarkerInfo.LINE_MARKER_INFO, info);
+      highlighter.putUserData(LINE_MARKER_INFO, info);
 
       LineMarkerInfo.LineMarkerGutterIconRenderer oldRenderer = highlighter.getGutterIconRenderer() instanceof LineMarkerInfo.LineMarkerGutterIconRenderer ? (LineMarkerInfo.LineMarkerGutterIconRenderer)highlighter.getGutterIconRenderer() : null;
       boolean rendererChanged = oldRenderer == null || newRenderer == null || !newRenderer.equals(oldRenderer);
@@ -150,6 +151,8 @@ class LineMarkersUtil {
   }
 
   private static LineMarkerInfo getLineMarkerInfo(@NotNull RangeHighlighter highlighter) {
-    return highlighter.getUserData(LineMarkerInfo.LINE_MARKER_INFO);
+    return highlighter.getUserData(LINE_MARKER_INFO);
   }
+
+  private static final Key<LineMarkerInfo> LINE_MARKER_INFO = Key.create("LINE_MARKER_INFO");
 }

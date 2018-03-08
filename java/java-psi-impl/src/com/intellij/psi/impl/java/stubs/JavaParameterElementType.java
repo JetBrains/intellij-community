@@ -78,11 +78,11 @@ public class JavaParameterElementType extends JavaStubElementType<PsiParameterSt
   @NotNull
   @Override
   public PsiParameterStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
-    StringRef name = dataStream.readName();
+    String name = dataStream.readNameString();
     if (name == null) throw new IOException("corrupted indices");
     TypeInfo type = TypeInfo.readTYPE(dataStream);
     byte flags = dataStream.readByte();
-    return new PsiParameterStubImpl(parentStub, name.toString(), type, flags);
+    return new PsiParameterStubImpl(parentStub, name, type, flags);
   }
 
   @Override

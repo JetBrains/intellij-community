@@ -6,7 +6,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.ElementClassHint.DeclarationKind;
@@ -63,8 +62,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.*;
 
 import java.util.*;
 
-import static com.intellij.util.containers.ContainerUtil.count;
-import static com.intellij.util.containers.ContainerUtil.filter;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtilKt.hasAnnotation;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiTreeUtilKt.treeWalkUpAndGetSingleElement;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.getDefaultConstructor;
@@ -1080,19 +1077,6 @@ public class ResolveUtil {
     return true;
   }
 
-  public static boolean isMethodCallRef(@NotNull GrReferenceExpression ref) {
-    final PsiElement element = PsiTreeUtil.skipParentsOfType(ref, GrReferenceExpression.class);
-    return element instanceof GrMethodCall;
-  }
-
-  public static boolean isPartOfFQN(@NotNull GrReferenceExpression ref) {
-    if (ref.hasAt()) return false;
-    final String name = ref.getReferenceName();
-    if (StringUtil.isEmpty(name)) return false;
-    return Character.isUpperCase(name.charAt(0)) && !isMethodCallRef(ref) ||
-           ref.getParent() instanceof GrReferenceExpression && isPartOfFQN((GrReferenceExpression)ref.getParent());
-  }
-
   public static boolean canResolveToMethod(@NotNull GrReferenceExpression ref) {
     return ref.hasMemberPointer() || ref.getParent() instanceof GrMethodCall;
   }
@@ -1105,25 +1089,6 @@ public class ResolveUtil {
       if (!scope.processDeclarations(each, state, lastParent, place)) return false;
     }
     return true;
-  }
-
-  @NotNull
-  public static List<GroovyResolveResult> filterAccessorMethods(@NotNull List<GroovyResolveResult> candidates) {
-    return filter(candidates, it -> !(it.getElement() instanceof GrAccessorMethod));
-  }
-
-  @NotNull
-  public static List<GroovyResolveResult> collapseReflectedMethodsSimple(@NotNull List<GroovyResolveResult> candidates) {
-    if (count(candidates, it -> it.getElement() instanceof GrReflectedMethod) < 2) return candidates;
-    final Set<GrMethod> visited = ContainerUtil.newHashSet();
-    return ContainerUtil.mapNotNull(candidates, result -> {
-      final PsiElement element = result.getElement();
-      if (!(element instanceof GrReflectedMethod)) return result;
-
-      final GrMethod baseMethod = ((GrReflectedMethod)element).getBaseMethod();
-      if (!visited.add(baseMethod)) return null;
-      return new ElementGroovyResult<>(baseMethod);
-    });
   }
 
   @NotNull

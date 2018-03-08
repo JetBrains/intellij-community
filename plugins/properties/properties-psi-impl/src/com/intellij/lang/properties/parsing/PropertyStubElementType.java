@@ -30,7 +30,6 @@ import com.intellij.lang.properties.psi.impl.PropertyStubImpl;
 import com.intellij.psi.impl.source.tree.LightTreeUtil;
 import com.intellij.psi.stubs.*;
 import com.intellij.util.CharTable;
-import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -60,8 +59,7 @@ public class PropertyStubElementType extends ILightStubElementType<PropertyStub,
 
   @NotNull
   public PropertyStub deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub) throws IOException {
-    final StringRef ref = dataStream.readName();
-    return new PropertyStubImpl(parentStub, ref.getString());
+    return new PropertyStubImpl(parentStub, dataStream.readNameString());
   }
 
   public void indexStub(@NotNull final PropertyStub stub, @NotNull final IndexSink sink) {
