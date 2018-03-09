@@ -888,6 +888,7 @@ public class PluginManagerCore {
         if (descriptor == null) continue;
         if (descriptor.getName() == null) {
           getLogger().warn("Skipped plugin without name: " + descriptor);
+          continue;
         }
         if (progress != null) {
           progress.showProgress(descriptor.getName(), PLUGINS_PROGRESS_PART * ((float)++i / pluginsCount));
