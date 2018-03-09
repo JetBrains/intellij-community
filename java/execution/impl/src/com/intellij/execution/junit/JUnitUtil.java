@@ -238,6 +238,8 @@ public class JUnitUtil {
   public static boolean isJUnit5TestClass(@NotNull final PsiClass psiClass, boolean checkAbstract) {
     final PsiModifierList modifierList = psiClass.getModifierList();
     if (modifierList == null || JavaExecutionUtil.findModule(psiClass) == null) return false;
+    
+    if (psiClass.isAnnotationType()) return false;
 
     if (psiClass.getContainingClass() != null && AnnotationUtil.isAnnotated(psiClass, JUNIT5_NESTED, 0)) {
       return true;
