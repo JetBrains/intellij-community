@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.AbstractBundle;
@@ -41,7 +27,6 @@ import gnu.trove.THashMap;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -92,8 +77,6 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   @Nullable private MultiMap<String, Pair<String, Element>> myExtensions; // extension point name -> list of (extension default NS, extension element)
   @Nullable private MultiMap<String, Element> myExtensionsPoints;
   private String myDescriptionChildText;
-  private String myDownloadCounter;
-  private long myDate;
   private boolean myUseIdeaClassLoader;
   private boolean myUseCoreClassLoader;
   private boolean myAllowBundledUpdate;
@@ -220,7 +203,6 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     }
 
     myCategory = pluginBean.category;
-
 
     if (pluginBean.vendor != null) {
       myVendor = pluginBean.vendor.name;
@@ -364,11 +346,6 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return myVendor;
   }
 
-  public void setVendor( final String val )
-  {
-    myVendor = val;
-  }
-
   @Override
   public String getVersion() {
     return myVersion;
@@ -475,19 +452,9 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return myVendorEmail;
   }
 
-  public void setVendorEmail( final String val )
-  {
-    myVendorEmail = val;
-  }
-
   @Override
   public String getVendorUrl() {
     return myVendorUrl;
-  }
-
-  public void setVendorUrl( final String val )
-  {
-    myVendorUrl = val;
   }
 
   @Override
@@ -500,7 +467,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     url = val;
   }
 
-  @NonNls
+  @Override
   public String toString() {
     return "PluginDescriptor[name='" + myName + "', classpath='" + myPath + "']";
   }
@@ -517,6 +484,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     myLoader = loader;
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof IdeaPluginDescriptorImpl)) return false;
@@ -526,6 +494,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return myName == null ? pluginDescriptor.myName == null : myName.equals(pluginDescriptor.myName);
   }
 
+  @Override
   public int hashCode() {
     return myName != null ? myName.hashCode() : 0;
   }
@@ -541,31 +510,14 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return myId;
   }
 
-  /*
-     This setter was explicitly defined to be able to set downloads count for a
-     descriptor outside its loading from the xml file since this information
-     is available only from the site.
-  */
-  public void setDownloadsCount(String downloadsCount) {
-    myDownloadCounter = downloadsCount;
+  /** @deprecated doesn't make sense for installed plugins; use PluginNode#getDownloads (to be removed in IDEA 2019) */
+  public String getDownloads() {
+    return null;
   }
 
-  @Override
-  public String getDownloads(){
-    return myDownloadCounter;
-  }
-
-  public long getDate(){
-    return myDate;
-  }
-
-  /*
-     This setter was explicitly defined to be able to set date for a
-     descriptor outside its loading from the xml file since this information
-     is available only from the site.
-  */
-  public void setDate( long date ){
-    myDate = date;
+  /** @deprecated doesn't make sense for installed plugins; use PluginNode#getDate (to be removed in IDEA 2019) */
+  public long getDate() {
+    return 0;
   }
 
   @Override
@@ -576,10 +528,6 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   @Override
   public String getVendorLogoPath() {
     return myVendorLogoPath;
-  }
-
-  public void setVendorLogoPath(final String vendorLogoPath) {
-    myVendorLogoPath = vendorLogoPath;
   }
 
   @Override

@@ -604,7 +604,7 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
 
   @Nullable
   private static String getDownloads(@NotNull IdeaPluginDescriptor plugin) {
-    String downloads = plugin.getDownloads();
+    String downloads = ((PluginNode)plugin).getDownloads();
     if (!StringUtil.isEmptyOrSpaces(downloads)) {
       try {
         Long value = Long.valueOf(downloads);

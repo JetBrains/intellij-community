@@ -57,11 +57,11 @@ public class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, St
     }
     else if (columnIdx == COLUMN_DOWNLOADS) {
       //  Base class IdeaPluginDescriptor does not declare this field.
-      return base.getDownloads();
+      return base instanceof PluginNode ? ((PluginNode)base).getDownloads() : null;
     }
     if (columnIdx == COLUMN_DATE) {
       //  Base class IdeaPluginDescriptor does not declare this field.
-      long date = (base instanceof PluginNode) ? ((PluginNode)base).getDate() : ((IdeaPluginDescriptorImpl)base).getDate();
+      long date = (base instanceof PluginNode) ? ((PluginNode)base).getDate() : 0;
       if (date != 0) {
         return DateFormatUtil.formatDate(date);
       }
@@ -161,8 +161,8 @@ public class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, St
       }
 
       if (isSortByDate()) {
-        long date1 = (o1 instanceof PluginNode) ? ((PluginNode)o1).getDate() : ((IdeaPluginDescriptorImpl)o1).getDate();
-        long date2 = (o2 instanceof PluginNode) ? ((PluginNode)o2).getDate() : ((IdeaPluginDescriptorImpl)o2).getDate();
+        long date1 = (o1 instanceof PluginNode) ? ((PluginNode)o1).getDate() : 0;
+        long date2 = (o2 instanceof PluginNode) ? ((PluginNode)o2).getDate() : 0;
         date1 /= 60 * 1000;
         date2 /= 60 * 1000;
         if (date2 != date1) {
@@ -171,8 +171,8 @@ public class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, St
       }
 
       if (isSortByDownloads()) {
-        String d1 = o1.getDownloads();
-        String d2 = o2.getDownloads();
+        String d1 = o1 instanceof PluginNode ? ((PluginNode)o1).getDownloads() : null;
+        String d2 = o2 instanceof PluginNode ? ((PluginNode)o2).getDownloads() : null;
         Long count1 = d1 == null ? 0 : Long.valueOf(d1);
         Long count2 = d2 == null ? 0 : Long.valueOf(d2);
         int result = count2.compareTo(count1);

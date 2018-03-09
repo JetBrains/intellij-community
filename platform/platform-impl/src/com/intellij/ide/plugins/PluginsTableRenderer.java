@@ -64,7 +64,7 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
 
     myStatus.setText("");
 
-    if (myPluginsView || pluginDescriptor.getDownloads() == null || !(pluginDescriptor instanceof PluginNode)) {
+    if (myPluginsView || !(pluginDescriptor instanceof PluginNode) || ((PluginNode)pluginDescriptor).getDownloads() == null) {
       myPanel.remove(myRightPanel);
     }
     if (myPluginsView) {
@@ -135,8 +135,8 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
         myStatus.setIcon(AllIcons.Nodes.PluginJB);
       }
 
-      String downloads = myPluginDescriptor.getDownloads();
-      if (downloads != null && myPluginDescriptor instanceof PluginNode) {
+      String downloads;
+      if (myPluginDescriptor instanceof PluginNode && (downloads = ((PluginNode)myPluginDescriptor).getDownloads()) != null) {
         if (downloads.length() > 3) {
           downloads = new DecimalFormat("#,###").format(Integer.parseInt(downloads));
         }
