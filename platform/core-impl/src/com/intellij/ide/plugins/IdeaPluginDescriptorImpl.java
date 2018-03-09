@@ -6,7 +6,6 @@ import com.intellij.CommonBundle;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionsArea;
@@ -43,14 +42,18 @@ import java.util.regex.Pattern;
  */
 public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   public static final IdeaPluginDescriptorImpl[] EMPTY_ARRAY = new IdeaPluginDescriptorImpl[0];
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.plugins.PluginDescriptor");
+
+  private File myPath;
+  private final boolean myBundled;
+
   private final NullableLazyValue<String> myDescription = new NullableLazyValue<String>() {
     @Override
     protected String compute() {
       return computeDescription();
     }
   };
-
   private String myName;
   private PluginId myId;
   private String myResourceBundleBaseName;
@@ -62,7 +65,6 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   private String myVendorLogoPath;
   private String myCategory;
   private String url;
-  private File myPath;
   private PluginId[] myDependencies = PluginId.EMPTY_ARRAY;
   private PluginId[] myOptionalDependencies = PluginId.EMPTY_ARRAY;
   private Map<PluginId, List<String>> myOptionalConfigs;
@@ -86,8 +88,9 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   private Boolean mySkipped;
   private List<String> myModules;
 
-  public IdeaPluginDescriptorImpl(@NotNull File pluginPath) {
+  public IdeaPluginDescriptorImpl(@NotNull File pluginPath, boolean bundled) {
     myPath = pluginPath;
+    myBundled = bundled;
   }
 
   @Nullable
@@ -637,28 +640,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   @Override
   public boolean isBundled() {
-    if (PluginManagerCore.CORE_PLUGIN_ID.equals(myId.getIdString())) {
-      return true;
-    }
-
-    String path;
-    try {
-      //to avoid paths like this /home/kb/IDEA/bin/../config/plugins/APlugin
-      path = getPath().getCanonicalPath();
-    } catch (IOException e) {
-      path = getPath().getAbsolutePath();
-    }
-    Application app = ApplicationManager.getApplication();
-    if (app != null && app.isInternal()) {
-      if (path.startsWith(PathManager.getHomePath() + File.separator + "out" + File.separator + "classes")) {
-        return true;
-      }
-      if (app.isUnitTestMode() && !path.startsWith(PathManager.getPluginsPath() + File.separatorChar)) {
-        return true;
-      }
-    }
-
-    return path.startsWith(PathManager.getPreInstalledPluginsPath());
+    return myBundled;
   }
 
   @Override
