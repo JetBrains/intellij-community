@@ -45,7 +45,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.plugins.PluginDescriptor");
 
-  private File myPath;
+  private final File myPath;
   private final boolean myBundled;
 
   private final NullableLazyValue<String> myDescription = new NullableLazyValue<String>() {
@@ -105,6 +105,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     }
     return result;
   }
+
   @Nullable
   private static List<Pair<String, Element>> copyChildrenAndNs(@Nullable Element[] elements) {
     if (elements == null || elements.length == 0) {
@@ -139,9 +140,8 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return myPath;
   }
 
-  public void setPath(@NotNull File path) {
-    myPath = path;
-  }
+  /** @deprecated changing a plugin path after loading is not expected (to be removed in IDEA 2019) */
+  public void setPath(@SuppressWarnings("unused") File path) { }
 
   public void readExternal(@NotNull Document document, @NotNull URL url, @NotNull JDOMXIncluder.PathResolver pathResolver) throws InvalidDataException {
     Application application = ApplicationManager.getApplication();
