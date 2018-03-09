@@ -1,4 +1,5 @@
-# IntelliJ IDEA Community Edition [![official JetBrains project](http://jb.gg/badges/official.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
+# IntelliJ IDEA Community Edition [![official JetBrains project](http://jb.gg/badges/official.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub) [![Open Source Helpers](https://www.codetriage.com/jetbrains/intellij-community/badges/users.svg)](https://www.codetriage.com/jetbrains/intellij-community)
+
 ### Building and Running from the IDE
 To develop IntelliJ IDEA, you can use either IntelliJ IDEA Community Edition or IntelliJ IDEA Ultimate not older than 2017.2.5. To build and run the code:
 * Run **getPlugins.sh** / **getPlugins.bat** from the project root directory to check out additional modules.
@@ -17,9 +18,9 @@ To run the IDE from the built code
 * use the provided shared run configuration "**IDEA**".
 
 To run tests apply these setting to the **default** JUnit run configuration type:
-* Working dir: 
+* Working dir:
   `<IDEA_HOME>\bin`
-* VM parameters: 
+* VM parameters:
   `-ea -Xmx128M -Djava.system.class.loader=com.intellij.util.lang.UrlClassLoader -Didea.config.path=../test-config -Didea.system.path=../test-system`
 
 You can find other useful information at [http://www.jetbrains.org](http://www.jetbrains.org). [Contribute section](http://www.jetbrains.org/display/IJOS/Contribute) of that site describes how you can contribute to IntelliJ IDEA.
