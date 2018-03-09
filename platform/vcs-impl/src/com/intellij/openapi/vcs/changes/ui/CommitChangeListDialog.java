@@ -312,8 +312,9 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
       if (initialSelection != null) browser.setSelectedChangeList(initialSelection);
       myCommitMessageArea.setChangeList(browser.getSelectedChangeList());
-
       browser.getViewer().setIncludedChanges(included);
+      browser.getViewer().rebuildTree();
+      browser.getViewer().setKeepTreeState(true);
 
       DiffCommitMessageEditor commitMessageEditor = new DiffCommitMessageEditor(myProject, myCommitMessageArea);
       browser.setBottomDiffComponent(commitMessageEditor);
@@ -329,7 +330,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       });
 
       browser.getViewer().addSelectionListener(() -> SwingUtilities.invokeLater(() -> changeDetails()));
-      browser.getViewer().setKeepTreeState(true);
     }
 
     myChangesInfoCalculator = new ChangeInfoCalculator();

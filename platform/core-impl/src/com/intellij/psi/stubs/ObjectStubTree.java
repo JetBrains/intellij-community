@@ -31,14 +31,13 @@ import java.util.Map;
  */
 public class ObjectStubTree<T extends Stub> {
   protected static final Key<ObjectStubTree> STUB_TO_TREE_REFERENCE = Key.create("stub to tree reference");
-  public static final Key<Integer> LAST_STUB_TREE_HASH = Key.create("LAST_STUB_TREE_HASH");
   protected final ObjectStubBase myRoot;
   private String myDebugInfo;
-  protected final List<T> myPlainList = new ArrayList<>();
+  protected final List<T> myPlainList;
 
   public ObjectStubTree(@NotNull final ObjectStubBase root, final boolean withBackReference) {
     myRoot = root;
-    enumerateStubs(root, (List<Stub>)myPlainList);
+    myPlainList = enumerateStubs(root);
     if (withBackReference) {
       myRoot.putUserData(STUB_TO_TREE_REFERENCE, this); // This will prevent soft references to stub tree to be collected before all of the stubs are collected.
     }
@@ -72,14 +71,21 @@ public class ObjectStubTree<T extends Stub> {
     return sink.getResult();
   }
 
-  private static void enumerateStubs(@NotNull Stub root, @NotNull List<Stub> result) {
+  protected List<T> enumerateStubs(@NotNull Stub root) {
+    List<T> result = new ArrayList<>();
+    //noinspection unchecked
+    enumerateStubsInto(root, (List)result);
+    return result;
+  }
+
+  private static void enumerateStubsInto(@NotNull Stub root, List<Stub> result) {
     ((ObjectStubBase)root).id = result.size();
     result.add(root);
     List<? extends Stub> childrenStubs = root.getChildrenStubs();
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < childrenStubs.size(); i++) {
       Stub child = childrenStubs.get(i);
-      enumerateStubs(child, result);
+      enumerateStubsInto(child, result);
     }
   }
 

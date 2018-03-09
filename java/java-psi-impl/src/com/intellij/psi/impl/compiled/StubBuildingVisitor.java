@@ -120,7 +120,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
     PsiTypeParameterListStub typeParameterList = new PsiTypeParameterListStubImpl(myResult);
     for (Pair<String, String[]> parameter : info.typeParameters) {
-      PsiTypeParameterStub parameterStub = new PsiTypeParameterStubImpl(typeParameterList, StringRef.fromString(parameter.first));
+      PsiTypeParameterStub parameterStub = new PsiTypeParameterStubImpl(typeParameterList, parameter.first);
       newReferenceList(JavaStubElementTypes.EXTENDS_BOUND_LIST, parameterStub, parameter.second);
     }
 
@@ -355,7 +355,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
     PsiTypeParameterListStub list = new PsiTypeParameterListStubImpl(stub);
     for (Pair<String, String[]> parameter : info.typeParameters) {
-      PsiTypeParameterStub parameterStub = new PsiTypeParameterStubImpl(list, StringRef.fromString(parameter.first));
+      PsiTypeParameterStub parameterStub = new PsiTypeParameterStubImpl(list, parameter.first);
       newReferenceList(JavaStubElementTypes.EXTENDS_BOUND_LIST, parameterStub, parameter.second);
     }
 

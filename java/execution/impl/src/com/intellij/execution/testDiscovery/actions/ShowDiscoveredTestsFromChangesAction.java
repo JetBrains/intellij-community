@@ -18,6 +18,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.uast.UastMetaLanguage;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.uast.UFile;
 import org.jetbrains.uast.UMethod;
@@ -69,7 +70,8 @@ public class ShowDiscoveredTestsFromChangesAction extends AnAction {
 
     PsiMethod[] asJavaMethods = methods
       .stream()
-      .map(m -> (PsiMethod)Objects.requireNonNull(UastContextKt.toUElement(m)).getJavaPsi())
+      .map(m -> ObjectUtils.tryCast(Objects.requireNonNull(UastContextKt.toUElement(m)).getJavaPsi(), PsiMethod.class))
+      .filter(Objects::nonNull)
       .toArray(PsiMethod.ARRAY_FACTORY::create);
     ShowDiscoveredTestsAction.showDiscoveredTests(project, e.getDataContext(), "Selected Changes", asJavaMethods);
   }

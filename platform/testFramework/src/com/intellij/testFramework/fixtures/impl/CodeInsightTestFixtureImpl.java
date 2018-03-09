@@ -15,6 +15,7 @@ import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.codeInsight.highlighting.actions.HighlightUsagesAction;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.impl.CachedIntentions;
 import com.intellij.codeInsight.intention.impl.IntentionListStep;
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
 import com.intellij.codeInsight.lookup.Lookup;
@@ -54,7 +55,6 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -252,7 +252,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     ShowIntentionsPass.IntentionsInfo intentions = ShowIntentionsPass.getActionsToShow(editor, file);
 
     List<IntentionAction> result = new ArrayList<>();
-    IntentionListStep intentionListStep = new IntentionListStep(null, intentions, editor, file, file.getProject());
+    IntentionListStep intentionListStep = new IntentionListStep(null, editor, file, file.getProject(),
+                                                                CachedIntentions.create(file.getProject(), file, editor, intentions));
     for (Map.Entry<IntentionAction, List<IntentionAction>> entry : intentionListStep.getActionsWithSubActions().entrySet()) {
       result.add(entry.getKey());
       result.addAll(entry.getValue());
@@ -993,26 +994,26 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   protected PsiFile addFileToProject(@NotNull final String rootPath, @NotNull final String relativePath, @NotNull final String fileText) {
-    VirtualFile file = new WriteCommandAction<VirtualFile>(getProject()) {
-      @Override
-      protected void run(@NotNull Result<VirtualFile> result) {
+    try {
+      VirtualFile file = WriteCommandAction.runWriteCommandAction(getProject(), (ThrowableComputable<VirtualFile, IOException>)() -> {
         try {
           if (myTempDirFixture instanceof LightTempDirTestFixtureImpl) {
-            result.setResult(myTempDirFixture.createFile(relativePath, fileText));
+            return myTempDirFixture.createFile(relativePath, fileText);
           }
           else {
-            result.setResult(((HeavyIdeaTestFixture)myProjectFixture).addFileToProject(rootPath, relativePath, fileText).getViewProvider().getVirtualFile());
+            return ((HeavyIdeaTestFixture)myProjectFixture).addFileToProject(rootPath, relativePath, fileText).getViewProvider()
+                                                           .getVirtualFile();
           }
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
         }
         finally {
           PsiManager.getInstance(getProject()).dropPsiCaches();
         }
-      }
-    }.execute().getResultObject();
-    return ReadAction.compute(() -> PsiManager.getInstance(getProject()).findFile(file));
+      });
+      return ReadAction.compute(() -> PsiManager.getInstance(getProject()).findFile(file));
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public <T> void registerExtension(final ExtensionsArea area, final ExtensionPointName<T> epName, final T extension) {
@@ -1125,26 +1126,20 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public void checkResult(@NotNull String text, boolean stripTrailingSpaces) {
-    new WriteCommandAction(getProject()) {
-      @Override
-      protected void run(@NotNull Result result) {
-        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-        EditorUtil.fillVirtualSpaceUntilCaret(getHostEditor());
-        checkResult("TEXT", stripTrailingSpaces, SelectionAndCaretMarkupLoader.fromText(text), getHostFile().getText());
-      }
-    }.execute();
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+      EditorUtil.fillVirtualSpaceUntilCaret(getHostEditor());
+      checkResult("TEXT", stripTrailingSpaces, SelectionAndCaretMarkupLoader.fromText(text), getHostFile().getText());
+    });
   }
 
   @Override
   public void checkResult(@NotNull String filePath, @NotNull String text, boolean stripTrailingSpaces) {
-    new WriteCommandAction(getProject()) {
-      @Override
-      protected void run(@NotNull Result result) {
-        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-        PsiFile psiFile = getFileToCheck(filePath);
-        checkResult("TEXT", stripTrailingSpaces, SelectionAndCaretMarkupLoader.fromText(text), psiFile.getText());
-      }
-    }.execute();
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+      PsiFile psiFile = getFileToCheck(filePath);
+      checkResult("TEXT", stripTrailingSpaces, SelectionAndCaretMarkupLoader.fromText(text), psiFile.getText());
+    });
   }
 
   @Override
@@ -1278,12 +1273,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     final String extension = fileType.getDefaultExtension();
     final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     if (fileTypeManager.getFileTypeByExtension(extension) != fileType) {
-      new WriteCommandAction(getProject()) {
-        @Override
-        protected void run(@NotNull Result result) {
-          fileTypeManager.associateExtension(fileType, extension);
-        }
-      }.execute();
+      WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+        fileTypeManager.associateExtension(fileType, extension);
+      });
     }
     final String fileName = "aaa." + extension;
     return configureByText(fileName, text);

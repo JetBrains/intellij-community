@@ -53,30 +53,41 @@ public class EventLogStatisticsService implements StatisticsService {
       final List<File> logs = FeatureUsageLogger.INSTANCE.getLogFiles();
       final List<File> toRemove = new ArrayList<>(logs.size());
       for (File file : logs) {
-        final LogEventContent session = LogEventContent.Companion.create(file);
-        final String error = validate(session, file);
-        if (session != null && StringUtil.isEmpty(error)) {
+        final List<LogEventContent> contents = LogEventContent.Companion.create(file);
+        final String error = validate(contents, file);
+        if (StringUtil.isNotEmpty(error)) {
+          if (LOG.isTraceEnabled()) {
+            LOG.trace(error);
+          }
+          toRemove.add(file);
+          continue;
+        }
+
+        int succeedBlocks = 0;
+        int wrongFormatBlocks = 0;
+        for (LogEventContent content : contents) {
           final HttpClient httpClient = HttpClientBuilder.create().build();
-          final HttpPost post = createPostRequest(serviceUrl, LogEventSerializer.INSTANCE.toString(session));
+          final HttpPost post = createPostRequest(serviceUrl, LogEventSerializer.INSTANCE.toString(content));
           final HttpResponse response = httpClient.execute(post);
 
           final int code = response.getStatusLine().getStatusCode();
           if (code == HttpStatus.SC_OK) {
-            toRemove.add(file);
-            succeed++;
+            succeedBlocks++;
           }
           else if (code == HttpStatus.SC_BAD_REQUEST) {
-            toRemove.add(file);
+            wrongFormatBlocks++;
           }
 
           if (LOG.isTraceEnabled()) {
             LOG.trace(getResponseMessage(response));
           }
         }
-        else {
-          if (LOG.isTraceEnabled() && StringUtil.isNotEmpty(error)) {
-            LOG.trace(error);
-          }
+
+        if (succeedBlocks == contents.size()) {
+          succeed++;
+        }
+
+        if (succeedBlocks > 0 || wrongFormatBlocks > 0) {
           toRemove.add(file);
         }
       }
@@ -99,15 +110,21 @@ public class EventLogStatisticsService implements StatisticsService {
   }
 
   @Nullable
-  private static String validate(@Nullable LogEventContent content, @NotNull File file) {
-    if (content == null) {
+  private static String validate(@NotNull List<LogEventContent> contents, @NotNull File file) {
+    if (contents.isEmpty()) {
       return "File is empty or has invalid format: " + file.getName();
     }
-    else if (StringUtil.isEmpty(content.getUser())) {
-      return "Cannot upload event log, user ID is empty";
-    }
-    else if (StringUtil.isEmpty(content.getProduct())) {
-      return "Cannot upload event log, product code is empty";
+
+    for (LogEventContent content : contents) {
+      if (content.getEvents().isEmpty()) {
+        return "Cannot upload event log, event list is empty";
+      }
+      else if (StringUtil.isEmpty(content.getUser())) {
+        return "Cannot upload event log, user ID is empty";
+      }
+      else if (StringUtil.isEmpty(content.getProduct())) {
+        return "Cannot upload event log, product code is empty";
+      }
     }
     return null;
   }

@@ -208,11 +208,11 @@
     <stacktrace.fold substring="at com.intellij.testFramework.EditorActionTestCase"/>
     <stacktrace.fold substring="at com.intellij.testFramework.ExpectedHighlightingData"/>
 
-    <codeInsight.lineMarkerProvider language="JAVA"
+    <codeInsight.lineMarkerProvider language="UAST"
                                     implementationClass="org.jetbrains.idea.devkit.navigation.DescriptionTypeRelatedItemLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider language="JAVA"
                                     implementationClass="org.jetbrains.idea.devkit.navigation.ExtensionPointDeclarationRelatedItemLineMarkerProvider"/>
-    <codeInsight.lineMarkerProvider language="JAVA"
+    <codeInsight.lineMarkerProvider language="UAST"
                                     implementationClass="org.jetbrains.idea.devkit.navigation.ExtensionDeclarationRelatedItemLineMarkerProvider"/>
     <codeInsight.implicitSubclassProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitImplicitSubclassProvider"/>
 

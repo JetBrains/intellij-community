@@ -47,7 +47,6 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -2282,15 +2281,21 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     });
 
     highlightErrors();
+    UIUtil.dispatchAllInvocationEvents();
     IntentionHintComponent lastHintBeforeDeletion = myDaemonCodeAnalyzer.getLastIntentionHint();
     assertNotNull(lastHintBeforeDeletion);
+    assertTrue(lastHintBeforeDeletion.getCachedIntentions().toString(), lastHintBeforeDeletion.getCachedIntentions().getErrorFixes().stream().anyMatch(e -> e.getText().equals("Initialize variable 'var'")));
 
     delete(myEditor);
     highlightErrors();
+    UIUtil.dispatchAllInvocationEvents();
     IntentionHintComponent lastHintAfterDeletion = myDaemonCodeAnalyzer.getLastIntentionHint();
-    assertSame(lastHintBeforeDeletion, lastHintAfterDeletion);
-
-    assertEmpty(visibleHints);
+    // it must be either hidden or not have that error anymore
+    if (lastHintAfterDeletion != null) {
+      assertFalse(lastHintBeforeDeletion.getCachedIntentions().toString(), lastHintBeforeDeletion.getCachedIntentions().getErrorFixes().stream().anyMatch(e -> e.getText().equals("Initialize variable 'var'")));
+    } else {
+      assertEmpty(visibleHints);
+    }
   }
 
   public void testCodeFoldingPassRestartsOnRegionUnfolding() {
@@ -2306,12 +2311,9 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       waitForDaemon();
       checkFoldingState("[FoldRegion +(25:33), placeholder='{}']");
 
-      new WriteCommandAction<Void>(myProject) {
-        @Override
-        protected void run(@NotNull Result<Void> result) {
-          myEditor.getDocument().insertString(0, "/*");
-        }
-      }.execute();
+      WriteCommandAction.runWriteCommandAction(myProject, () -> {
+        myEditor.getDocument().insertString(0, "/*");
+      });
       waitForDaemon();
       checkFoldingState("[FoldRegion -(0:37), placeholder='/.../', FoldRegion +(27:35), placeholder='{}']");
 

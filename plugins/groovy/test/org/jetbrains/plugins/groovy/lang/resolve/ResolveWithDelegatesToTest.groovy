@@ -1,8 +1,7 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
 import com.intellij.testFramework.LightProjectDescriptor
 import groovy.transform.CompileStatic
@@ -727,6 +726,22 @@ def m(String s1) {
 }
 ''', GrVariable).with {
       assert !(it instanceof GrField) && !(it instanceof GrParameter)
+    }
+  }
+
+  void 'test delegate only classes'() {
+    fixture.addFileToProject 'Methods.groovy', '''\
+class Methods {
+  static m1(@DelegatesTo(value = String, strategy = Closure.DELEGATE_ONLY) Closure c) {}
+}
+'''
+
+    resolveByText('''\
+Methods.m1 {
+  <caret>String
+}
+''').with {
+      assert it instanceof PsiClass
     }
   }
 

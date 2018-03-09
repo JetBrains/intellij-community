@@ -38,12 +38,13 @@ public class CommonDataflow {
      * Returns true if given expression was visited by dataflow. Note that dataflow usually tracks deparenthesized expressions only,
      * so you should deparenthesize it in advance if necessary.
      *
-     * @param expression expression to check
+     * @param expression expression to check, not parenthesized
      * @return true if given expression was visited by dataflow.
      * If false is returned, it's possible that the expression exists in unreachable branch or this expression is not tracked due to
      * the dataflow implementation details.
      */
     public boolean expressionWasAnalyzed(PsiExpression expression) {
+      assert !(expression instanceof PsiParenthesizedExpression);
       return myFacts.containsKey(expression);
     }
 
@@ -151,6 +152,6 @@ public class CommonDataflow {
   public static <T> T getExpressionFact(PsiExpression expression, DfaFactType<T> type) {
     DataflowResult result = getDataflowResult(expression);
     if (result == null) return null;
-    return result.getExpressionFact(expression, type);
+    return result.getExpressionFact(PsiUtil.skipParenthesizedExprDown(expression), type);
   }
 }

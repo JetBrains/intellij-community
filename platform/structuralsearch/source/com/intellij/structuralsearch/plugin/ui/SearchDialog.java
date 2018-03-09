@@ -401,11 +401,9 @@ public class SearchDialog extends DialogWrapper {
     final PsiFile file = documentManager.getPsiFile(document);
     if (file == null) return;
 
-    new WriteCommandAction(project, file) {
-      @Override protected void run(@NotNull Result result) {
-        CodeStyleManager.getInstance(project).adjustLineIndent(file, new TextRange(0, document.getTextLength()));
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(project, file).run(() -> {
+      CodeStyleManager.getInstance(project).adjustLineIndent(file, new TextRange(0, document.getTextLength()));
+    });
   }
 
   protected void startSearching() {

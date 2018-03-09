@@ -84,17 +84,14 @@ public class ExpandStaticImportAction extends PsiElementBaseIntentionAction {
           new BaseListPopupStep<String>("Multiple Usages of the Static Import Found", REPLACE_THIS_OCCURRENCE, REPLACE_ALL_AND_DELETE_IMPORT) {
             @Override
             public PopupStep onChosen(final String selectedValue, boolean finalChoice) {
-              new WriteCommandAction(project, ExpandStaticImportAction.this.getText()) {
-                @Override
-                protected void run(@NotNull Result result) throws Throwable {
-                  if (selectedValue == REPLACE_THIS_OCCURRENCE) {
-                    expand(refExpr, staticImport);
-                  }
-                  else {
-                    replaceAllAndDeleteImport(expressionToExpand, refExpr, staticImport);
-                  }
+              WriteCommandAction.writeCommandAction(project).withName(ExpandStaticImportAction.this.getText()).run(() -> {
+                if (selectedValue == REPLACE_THIS_OCCURRENCE) {
+                  expand(refExpr, staticImport);
                 }
-              }.execute();
+                else {
+                  replaceAllAndDeleteImport(expressionToExpand, refExpr, staticImport);
+                }
+              });
               return FINAL_CHOICE;
             }
           };

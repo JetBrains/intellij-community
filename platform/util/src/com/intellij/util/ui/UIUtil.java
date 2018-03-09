@@ -49,6 +49,7 @@ import javax.swing.text.*;
 import javax.swing.text.html.CSS;
 import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.html.ParagraphView;
 import javax.swing.text.html.StyleSheet;
 import javax.swing.undo.UndoManager;
 import java.awt.*;
@@ -392,6 +393,12 @@ public class UIUtil {
   private static final AtomicReference<Boolean> jreHiDPI = new AtomicReference<Boolean>();
   private static volatile boolean jreHiDPI_earlierVersion;
 
+  @TestOnly
+  public static final AtomicReference<Boolean> test_jreHiDPI() {
+    if (jreHiDPI.get() == null) isJreHiDPIEnabled(); // force init
+    return jreHiDPI;
+  }
+
   /**
    * Returns whether the JRE-managed HiDPI mode is enabled.
    * (True for macOS JDK >= 7.10 versions)
@@ -405,7 +412,7 @@ public class UIUtil {
       if (jreHiDPI.get() != null) return jreHiDPI.get();
 
       jreHiDPI.set(false);
-      if (SystemProperties.has("hidpi") && !SystemProperties.is("hidpi")) {
+      if (!SystemProperties.getBooleanProperty("hidpi", true)) {
         return false;
       }
       jreHiDPI_earlierVersion = true;
@@ -1293,15 +1300,7 @@ public class UIUtil {
   }
 
   public static Color getSeparatorColor() {
-    Color separatorColor = getSeparatorForeground();
-    if (false) {
-      separatorColor = getSeparatorShadow();
-    }
-    //under GTK+ L&F colors set hard
-    if (isUnderGTKLookAndFeel()) {
-      separatorColor = Gray._215;
-    }
-    return separatorColor;
+    return isUnderGTKLookAndFeel() ? Gray._215 : getSeparatorForeground();
   }
 
   public static Border getTableFocusCellHighlightBorder() {
@@ -2727,6 +2726,35 @@ public class UIUtil {
     public void deinstall(JEditorPane c) {
       c.removeHyperlinkListener(myHyperlinkListener);
       super.deinstall(c);
+    }
+  }
+
+  public static class JBWordWrapHtmlEditorKit extends JBHtmlEditorKit {
+    private final HTMLFactory myFactory = new HTMLFactory() {
+      public View create(Element e) {
+        View view = super.create(e);
+        if (view instanceof javax.swing.text.html.ParagraphView) {
+          // wrap too long words, for example: ATEST_TABLE_SIGNLE_ROW_UPDATE_AUTOCOMMIT_A_FIK
+          return new ParagraphView(e) {
+            protected SizeRequirements calculateMinorAxisRequirements(int axis, SizeRequirements r) {
+              if (r == null) {
+                r = new SizeRequirements();
+              }
+              r.minimum = (int)layoutPool.getMinimumSpan(axis);
+              r.preferred = Math.max(r.minimum, (int)layoutPool.getPreferredSpan(axis));
+              r.maximum = Integer.MAX_VALUE;
+              r.alignment = 0.5f;
+              return r;
+            }
+          };
+        }
+        return view;
+      }
+    };
+
+    @Override
+    public ViewFactory getViewFactory() {
+      return myFactory;
     }
   }
 

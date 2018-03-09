@@ -160,12 +160,13 @@ public class ChangeListWorker {
 
     myPartialChangeTrackers.put(filePath, tracker);
 
-    tracker.initChangeTracking(myDefault.id, ContainerUtil.map(myLists, list -> list.id));
-
+    ListData oldList = null;
     Change change = getChangeForAfterPath(filePath);
     if (change != null) {
-      removeChangeMapping(change);
+      oldList = removeChangeMapping(change);
     }
+
+    tracker.initChangeTracking(myDefault.id, ContainerUtil.map(myLists, list -> list.id), oldList != null ? oldList.id : null);
 
     if (LOG.isDebugEnabled()) {
       LOG.debug(String.format("[registerChangeTracker] path: %s", filePath));
@@ -769,7 +770,7 @@ public class ChangeListWorker {
       ListData partialList = getDataById(listId);
       if (myMainWorker && partialList == null) {
         LOG.error(String.format("Unknown changelist %s", listId));
-        tracker.initChangeTracking(myDefault.id, ContainerUtil.map(myLists, list -> list.id));
+        tracker.initChangeTracking(myDefault.id, ContainerUtil.map(myLists, list -> list.id), null);
       }
       data.add(partialList != null ? partialList : myDefault);
     }
@@ -1187,7 +1188,7 @@ public class ChangeListWorker {
     }
 
     @Override
-    public void initChangeTracking(@NotNull String defaultId, @NotNull List<String> changelistsIds) {
+    public void initChangeTracking(@NotNull String defaultId, @NotNull List<String> changelistsId, @Nullable String fileChangelistIds) {
       throw new UnsupportedOperationException();
     }
 
@@ -1220,7 +1221,7 @@ public class ChangeListWorker {
     @NotNull
     List<String> getAffectedChangeListsIds();
 
-    void initChangeTracking(@NotNull String defaultId, @NotNull List<String> changelistsIds);
+    void initChangeTracking(@NotNull String defaultId, @NotNull List<String> changelistsIds, @Nullable String fileChangelistId);
 
     void defaultListChanged(@NotNull String oldListId, @NotNull String newListId);
 

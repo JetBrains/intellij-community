@@ -903,7 +903,7 @@ public class FSRecords {
           int id = DataInputOutputUtil.readINT(input) + prevId;
           prevId = id;
           int nameId = doGetNameId(id);
-          result[i] = new NameId(id, nameId, FileNameCache.getVFileName(nameId, ()->doGetNameByNameId(nameId)));
+          result[i] = new NameId(id, nameId, FileNameCache.getVFileName(nameId, FSRecords::doGetNameByNameId));
         }
         return result;
       }
@@ -1080,7 +1080,7 @@ public class FSRecords {
   @NotNull
   private static CharSequence doGetNameSequence(int id) throws IOException {
     final int nameId = getRecordInt(id, NAME_OFFSET);
-    return nameId == 0 ? "" : FileNameCache.getVFileName(nameId, ()->doGetNameByNameId(nameId));
+    return nameId == 0 ? "" : FileNameCache.getVFileName(nameId, FSRecords::doGetNameByNameId);
   }
 
   public static String getNameByNameId(int nameId) {

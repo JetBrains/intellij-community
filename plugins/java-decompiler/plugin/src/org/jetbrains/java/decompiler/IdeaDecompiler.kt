@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler
 
+import com.intellij.application.options.CodeStyle
 import com.intellij.execution.filters.LineNumbersMapping
 import com.intellij.icons.AllIcons
 import com.intellij.ide.highlighter.JavaFileType
@@ -27,7 +14,6 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileTypes.StdFileTypes
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.project.DefaultProjectFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.io.FileUtil
@@ -38,7 +24,6 @@ import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.psi.PsiJavaModule
 import com.intellij.psi.PsiPackage
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.compiled.ClassFileDecompilers
 import com.intellij.psi.impl.compiled.ClsFileImpl
 import com.intellij.ui.Gray
@@ -65,11 +50,10 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
   companion object {
     const val BANNER = "//\n// Source code recreated from a .class file by IntelliJ IDEA\n// (powered by Fernflower decompiler)\n//\n\n"
 
-    private val LEGAL_NOTICE_KEY = "decompiler.legal.notice.accepted"
+    private const val LEGAL_NOTICE_KEY = "decompiler.legal.notice.accepted"
 
     private fun getOptions(): Map<String, Any> {
-      val project = DefaultProjectFactory.getInstance().defaultProject
-      val options = CodeStyleSettingsManager.getInstance(project).currentSettings.getIndentOptions(JavaFileType.INSTANCE)
+      val options = CodeStyle.getDefaultSettings().getIndentOptions(JavaFileType.INSTANCE)
       val indent = StringUtil.repeat(" ", options.INDENT_SIZE)
       return mapOf(
           IFernflowerPreferences.HIDE_DEFAULT_CONSTRUCTOR to "0",
@@ -103,7 +87,7 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
     connection.subscribe(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER, object : FileEditorManagerListener.Before.Adapter() {
       override fun beforeFileOpened(source: FileEditorManager, file: VirtualFile) {
         if (!myLegalNoticeAccepted && file.fileType === StdFileTypes.CLASS && ClassFileDecompilers.find(file) === this@IdeaDecompiler) {
-          myFutures.put(file, app.executeOnPooledThread(Callable<CharSequence> { decompile(file) }))
+          myFutures[file] = app.executeOnPooledThread(Callable<CharSequence> { decompile(file) })
 
           val dialog = LegalNoticeDialog(source.project, file)
           dialog.show()
@@ -158,16 +142,16 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
 
       val options = HashMap(myOptions.value)
       if (Registry.`is`("decompiler.use.line.mapping")) {
-        options.put(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING, "1")
+        options[IFernflowerPreferences.BYTECODE_SOURCE_MAPPING] = "1"
       }
       if (Registry.`is`("decompiler.dump.original.lines")) {
-        options.put(IFernflowerPreferences.DUMP_ORIGINAL_LINES, "1")
+        options[IFernflowerPreferences.DUMP_ORIGINAL_LINES] = "1"
       }
 
       val provider = MyBytecodeProvider(files)
       val saver = MyResultSaver()
       val decompiler = BaseDecompiler(provider, saver, options, myLogger.value)
-      files.keys.forEach { path -> decompiler.addSpace(File(path), true) }
+      files.keys.forEach { path -> decompiler.addSource(File(path)) }
       decompiler.decompileContext()
 
       val mapping = saver.myMapping
@@ -248,8 +232,8 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
 
   private class LegalNoticeDialog(project: Project, file: VirtualFile) : DialogWrapper(project) {
     companion object {
-      val POSTPONE_EXIT_CODE = DialogWrapper.CANCEL_EXIT_CODE
-      val DECLINE_EXIT_CODE = DialogWrapper.NEXT_USER_EXIT_CODE
+      const val POSTPONE_EXIT_CODE = DialogWrapper.CANCEL_EXIT_CODE
+      const val DECLINE_EXIT_CODE = DialogWrapper.NEXT_USER_EXIT_CODE
     }
 
     private var myMessage: JEditorPane? = null
@@ -281,7 +265,7 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
     }
 
     override fun createActions() =
-        arrayOf(okAction, DialogWrapperExitAction(IdeaDecompilerBundle.message("legal.notice.action.reject"), DECLINE_EXIT_CODE), cancelAction)
+      arrayOf(okAction, DialogWrapperExitAction(IdeaDecompilerBundle.message("legal.notice.action.reject"), DECLINE_EXIT_CODE), cancelAction)
 
     override fun getPreferredFocusedComponent() = myMessage
   }

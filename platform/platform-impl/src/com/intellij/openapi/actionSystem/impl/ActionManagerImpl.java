@@ -1231,17 +1231,17 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   public void preloadActions(ProgressIndicator indicator) {
-    final Application application = ApplicationManager.getApplication();
+    Application application = ApplicationManager.getApplication();
 
     for (String id : getActionIds()) {
       indicator.checkCanceled();
-      if (application.isDisposed()) return;
+      if (application.isDisposeInProgress() || application.isDisposed()) return;
 
-      final AnAction action = getAction(id);
+      AnAction action = getAction(id);
       if (action instanceof PreloadableAction) {
         ((PreloadableAction)action).preload();
       }
-      // don't preload ActionGroup.getChildren() because that would unstub child actions
+      // don't preload ActionGroup.getChildren() because that would un-stub child actions
       // and make it impossible to replace the corresponding actions later
       // (via unregisterAction+registerAction, as some app components do)
     }

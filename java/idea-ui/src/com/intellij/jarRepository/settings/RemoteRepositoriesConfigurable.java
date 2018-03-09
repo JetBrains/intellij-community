@@ -85,7 +85,7 @@ public class RemoteRepositoriesConfigurable extends BaseConfigurable implements 
   private void configControls() {
     setupListControls(
       myServiceList, myServicesModel, myAddServiceButton, myEditServiceButton, myRemoveServiceButton,
-      "Artifactory or Nexus Service URL", "Service URL", "No services", DataAdapter.STRING_ADAPTER
+      "Artifactory, Nexus or Bintray Service URLs", "Service URL", "No services", DataAdapter.STRING_ADAPTER
     );
     setupListControls(
       myJarRepositoryList, myReposModel, myAddRepoButton, myEditRepoButton, myRemoveRepoButton,

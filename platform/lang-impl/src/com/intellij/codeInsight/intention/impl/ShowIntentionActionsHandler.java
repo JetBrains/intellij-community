@@ -5,8 +5,7 @@ package com.intellij.codeInsight.intention.impl;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
-import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
+import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
@@ -64,15 +63,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     letAutoImportComplete(editor, file, codeAnalyzer);
 
     ShowIntentionsPass.IntentionsInfo intentions = ShowIntentionsPass.getActionsToShow(editor, file);
-    IntentionHintComponent hintComponent = codeAnalyzer.getLastIntentionHint();
-    if (hintComponent != null) {
-      IntentionHintComponent.PopupUpdateResult result = hintComponent.isForEditor(editor)
-                                                        ? hintComponent.updateActions(intentions)
-                                                        : IntentionHintComponent.PopupUpdateResult.HIDE_AND_RECREATE;
-      if (result == IntentionHintComponent.PopupUpdateResult.HIDE_AND_RECREATE) {
-        hintComponent.hide();
-      }
-    }
+    IntentionsUI.getInstance(project).hide();
 
     if (HintManagerImpl.getInstanceImpl().performCurrentQuestionAction()) return;
 
@@ -90,7 +81,8 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
   @SuppressWarnings("WeakerAccess")
   protected void showIntentionHint(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file, @NotNull ShowIntentionsPass.IntentionsInfo intentions) {
     if (!intentions.isEmpty()) {
-      IntentionHintComponent.showIntentionHint(project, file, editor, intentions, true);
+      CachedIntentions cachedIntentions = CachedIntentions.createAndUpdateActions(project, file, editor, intentions);
+      IntentionHintComponent.showIntentionHint(project, file, editor, true, cachedIntentions);
     }
   }
 

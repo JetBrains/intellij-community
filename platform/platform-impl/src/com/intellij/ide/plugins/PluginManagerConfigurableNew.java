@@ -8,12 +8,14 @@ import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
@@ -28,10 +30,8 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.AbstractLayoutManager;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.StatusText;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.net.HttpConfigurable;
+import com.intellij.util.ui.*;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +39,9 @@ import org.jetbrains.annotations.Nullable;
 import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.text.BadLocationException;
+import javax.swing.text.View;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
@@ -49,12 +51,9 @@ import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
+import java.util.regex.Pattern;
 
-import static com.intellij.ide.plugins.InstalledPluginsState.getInstance;
-import static com.intellij.util.ui.UIUtil.findComponentsOfType;
-import static com.intellij.util.ui.UIUtil.uiChildren;
 import static java.lang.System.out;
-import static javax.swing.SwingUtilities.isLeftMouseButton;
 
 /**
  * @author Alexander Lobas
@@ -70,6 +69,9 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
   private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("MMM dd, yyyy");
   private static final DecimalFormat K_FORMAT = new DecimalFormat("###.#K");
   private static final DecimalFormat M_FORMAT = new DecimalFormat("###.#M");
+
+  private static final String LONG_LONG_DESCRIPTION =
+    "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.";
 
   private final TagBuilder myTagBuilder;
 
@@ -141,6 +143,8 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
   @Nullable
   @Override
   public JComponent createComponent() {
+    JPanel panel = new JPanel(new BorderLayout());
+
     DefaultActionGroup actions = new DefaultActionGroup();
     actions.add(new DumbAwareAction("Manage Plugin Repositories...") {
       @Override
@@ -157,11 +161,11 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
     actions.add(new DumbAwareAction(IdeBundle.message("button.http.proxy.settings")) {
       @Override
       public void actionPerformed(AnActionEvent e) {
-        // TODO: Auto-generated method stub
+        if (HttpConfigurable.editConfigurable(panel)) {
+          // TODO: Auto-generated method stub
+        }
       }
     });
-
-    JPanel panel = new JPanel(new BorderLayout());
 
     JBTextField editor = mySearchTextField.getTextEditor();
     editor.getEmptyText().appendText("Search plugins");
@@ -292,28 +296,34 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
 
   @NotNull
   private JComponent createInstalledPanel(@NotNull LinkListener<Pair<IdeaPluginDescriptor, Integer>> listener) {
-    PluginsGroupComponent panel = new PluginsGroupComponent(new PluginsListLayout(false), (aSource, aLinkData) -> listener
+    PluginsGroupComponent panel = new PluginsGroupComponent(new PluginsListLayout(), (aSource, aLinkData) -> listener
       .linkSelected(aSource, new Pair<>(aLinkData, 1)), descriptor -> new ListPluginComponent(descriptor, false));
 
     PluginsGroup downloaded = new PluginsGroup();
     PluginsGroup bundled = new PluginsGroup();
 
-    downloaded.descriptors.addAll(getInstance().getInstalledPlugins());
+    downloaded.descriptors.addAll(InstalledPluginsState.getInstance().getInstalledPlugins());
+
+    ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
 
     for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
-      if (descriptor.isBundled()) {
-        bundled.descriptors.add(descriptor);
-      }
-      else {
-        downloaded.descriptors.add(descriptor);
+      if (!appInfo.isEssentialPlugin(descriptor.getPluginId().getIdString())) {
+        if (descriptor.isBundled()) {
+          bundled.descriptors.add(descriptor);
+        }
+        else {
+          downloaded.descriptors.add(descriptor);
+        }
       }
     }
 
     if (!downloaded.descriptors.isEmpty()) {
+      downloaded.sortByName();
       downloaded.titleWithCount("Downloaded");
       panel.addGroup(downloaded);
     }
 
+    bundled.sortByName();
     bundled.titleWithCount("Bundled");
     panel.addGroup(bundled);
 
@@ -322,7 +332,7 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
 
   @NotNull
   private JComponent createUpdatesPanel(@NotNull LinkListener<Pair<IdeaPluginDescriptor, Integer>> listener) {
-    PluginsGroupComponent panel = new PluginsGroupComponent(new PluginsListLayout(true), (aSource, aLinkData) -> listener
+    PluginsGroupComponent panel = new PluginsGroupComponent(new PluginsListLayout(), (aSource, aLinkData) -> listener
       .linkSelected(aSource, new Pair<>(aLinkData, 2)), descriptor -> new ListPluginComponent(descriptor, true));
     panel.getEmptyText().setText("No updates available.");
 
@@ -344,6 +354,7 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
         }
 
         if (!group.descriptors.isEmpty()) {
+          group.sortByName();
           group.titleWithCount("Available Updates");
           panel.addGroup(group);
         }
@@ -358,11 +369,10 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
 
   @NotNull
   private JComponent createDetailsPanel(@NotNull IdeaPluginDescriptor plugin, boolean update) {
-    int offset = JBUI.scale(5);
-    JPanel panel = new OpaquePanel(new BorderLayout(0, offset), mySearchTextField.getTextEditor().getBackground());
+    JPanel panel = new OpaquePanel(new BorderLayout(0, offset5()), mySearchTextField.getTextEditor().getBackground());
     panel.setBorder(JBUI.Borders.empty(15, 20));
 
-    JPanel header = new NonOpaquePanel(new BorderLayout(offset, 0));
+    JPanel header = new NonOpaquePanel(new BorderLayout(offset5(), 0));
 
     JLabel myIconLabel = new JLabel(AllIcons.Plugins.PluginLogo_80);
     myIconLabel.setDisabledIcon(AllIcons.Plugins.PluginLogoDisabled_80);
@@ -371,17 +381,17 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
     myIconLabel.setEnabled(plugin.isEnabled());
     header.add(myIconLabel, BorderLayout.WEST);
 
-    JPanel centerPanel = new NonOpaquePanel(new VerticalLayout(offset));
+    JPanel centerPanel = new NonOpaquePanel(new VerticalLayout(offset5()));
     header.add(centerPanel);
 
     boolean bundled = plugin.isBundled();
 
-    JPanel buttons = new NonOpaquePanel(new HorizontalLayout(JBUI.scale(5)));
+    JPanel buttons = new NonOpaquePanel(new HorizontalLayout(offset5()));
     if (update) {
-      buttons.add(new JButton("Update"));
+      buttons.add(new UpdateButton());
     }
     if (plugin instanceof PluginNode) {
-      buttons.add(new JButton("Install"));
+      buttons.add(new InstallButton(true));
     }
     else if (bundled) {
       buttons.add(new JButton(plugin.isEnabled() ? "Disable" : "Enable"));
@@ -400,15 +410,15 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
           // TODO: Auto-generated method stub
         }
       };
-      buttons.add(new MyOptionButton(enableDisableAction, new Action[]{uninstallAction}));
+      buttons.add(new MyOptionButton(enableDisableAction, uninstallAction));
     }
 
     Color background = UIUtil.getListBackground();
-    for (Component component : uiChildren(buttons)) {
+    for (Component component : UIUtil.uiChildren(buttons)) {
       component.setBackground(background);
     }
 
-    JPanel nameButtons = new NonOpaquePanel(new BorderLayout(offset, 0));
+    JPanel nameButtons = new NonOpaquePanel(new BorderLayout(offset5(), 0));
     JLabel nameComponent = new JLabel(plugin.getName());
     Font font = nameComponent.getFont();
     if (font != null) {
@@ -419,7 +429,7 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
     }
     nameButtons.add(nameComponent, BorderLayout.WEST);
     nameButtons.add(buttons, BorderLayout.EAST);
-    centerPanel.add(nameButtons, "fill");
+    centerPanel.add(nameButtons, VerticalLayout.FILL_HORIZONTAL);
 
     Color grayedFg = new JBColor(Gray._130, Gray._120);
 
@@ -440,7 +450,7 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
 
     List<String> tags = getTags(plugin);
     if (!tags.isEmpty()) {
-      NonOpaquePanel tagPanel = new NonOpaquePanel(new HorizontalLayout(JBUI.scale(offset)));
+      NonOpaquePanel tagPanel = new NonOpaquePanel(new HorizontalLayout(JBUI.scale(offset5())));
       centerPanel.add(tagPanel);
 
       for (String tag : tags) {
@@ -487,7 +497,7 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
     String size = plugin instanceof PluginNode ? ((PluginNode)plugin).getSize() : null;
 
     if (!StringUtil.isEmptyOrSpaces(description) || !StringUtil.isEmptyOrSpaces(vendor) || !StringUtil.isEmptyOrSpaces(size)) {
-      JPanel bottomPanel = new OpaquePanel(new VerticalLayout(offset), background);
+      JPanel bottomPanel = new OpaquePanel(new VerticalLayout(offset5()), background);
       JBScrollPane scrollPane = new JBScrollPane(bottomPanel);
       scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
       scrollPane.setBorder(null);
@@ -500,7 +510,7 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
         descriptionComponent.setOpaque(false);
         descriptionComponent.setBorder(null);
         descriptionComponent.setText(XmlStringUtil.wrapInHtml(description));
-        bottomPanel.add(descriptionComponent, "fill");
+        bottomPanel.add(descriptionComponent, VerticalLayout.FILL_HORIZONTAL);
 
         if (descriptionComponent.getCaret() != null) {
           descriptionComponent.setCaretPosition(0);
@@ -620,15 +630,19 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
   @Nullable
   private static String getRating(@NotNull IdeaPluginDescriptor plugin) {
     String rating = ((PluginNode)plugin).getRating();
-    Double ratingValue = 0D;
     if (rating != null) {
       try {
-        ratingValue = Double.valueOf(rating);
+        if (Double.valueOf(rating) > 0) {
+          if (rating.endsWith(".0")) {
+            return rating.substring(0, rating.length() - 2);
+          }
+          return rating;
+        }
       }
       catch (NumberFormatException ignore) {
       }
     }
-    return ratingValue > 0 ? rating : null;
+    return null;
   }
 
   private interface TabHeaderListener {
@@ -663,10 +677,6 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
   }
 
   private static class TabHeaderComponent extends JComponent {
-    private static final Color BG_COLOR = new JBColor(0xECECEC, 0x3C3F41);
-    private static final Color BG_SELECTION = new JBColor(0xD9D9D9, 0x505356);
-    private static final Color BG_HOVER = new JBColor(0xD0D4D8, 0x4A525F);
-
     private final List<Computable<String>> myTabs = new ArrayList<>();
     private final JComponent myToolbarComponent;
     private final TabHeaderListener myListener;
@@ -677,13 +687,13 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
     public TabHeaderComponent(@NotNull DefaultActionGroup actions, @NotNull TabHeaderListener listener) {
       myListener = listener;
       add(myToolbarComponent = createToolbar(actions));
-      setBackground(BG_COLOR);
+      setBackground(JBUI.CurrentTheme.ToolWindow.headerActiveBackground());
       setOpaque(true);
 
       MouseAdapter mouseHandler = new MouseAdapter() {
         @Override
         public void mouseClicked(MouseEvent event) {
-          if (isLeftMouseButton(event)) {
+          if (SwingUtilities.isLeftMouseButton(event)) {
             int tab = findTab(event);
             if (tab != -1 && tab != mySelectionTab) {
               mySelectionTab = tab;
@@ -773,7 +783,9 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
       for (int i = 0, size = myTabs.size(); i < size; i++) {
         if (mySelectionTab == i || myHoverTab == i) {
           Rectangle bounds = mySizeInfo.tabs[i];
-          g.setColor(mySelectionTab == i ? BG_SELECTION : BG_HOVER);
+          g.setColor(mySelectionTab == i
+                     ? JBUI.CurrentTheme.ToolWindow.tabSelectedActiveBackground()
+                     : JBUI.CurrentTheme.ToolWindow.tabHoveredActiveBackground());
           g.fillRect(x + bounds.x, 0, bounds.width, height);
           g.setColor(getForeground());
         }
@@ -858,7 +870,7 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
       myMouseHandler = new MouseAdapter() {
         @Override
         public void mouseClicked(MouseEvent event) {
-          if (isLeftMouseButton(event)) {
+          if (SwingUtilities.isLeftMouseButton(event)) {
             CellPluginComponent component = CellPluginComponent.get(event);
             if (component != mySelectionComponent) {
               if (mySelectionComponent != null) {
@@ -930,27 +942,18 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
   }
 
   private static class PluginsListLayout extends AbstractLayoutManager {
-    private final int LINE_HEIGHT;
-
-    public PluginsListLayout(boolean update) {
-      PluginNode pluginNode = new PluginNode(null, "Language Language Lang", null);
-      if (update) {
-        pluginNode.setChangeNotes("Content<br>\nContent<br>\nContent");
-      }
-      else {
-        pluginNode.setDescription("Content");
-      }
-      LINE_HEIGHT = new ListPluginComponent(pluginNode, update).getPreferredSize().height;
-    }
+    private int myLineHeight;
 
     @Override
     public Dimension preferredLayoutSize(Container parent) {
+      calculateLineHeight(parent);
+
       List<UIPluginGroup> groups = ((PluginsGroupComponent)parent).myGroups;
       int height = 0;
 
       for (UIPluginGroup group : groups) {
         height += group.panel.getPreferredSize().height;
-        height += group.plugins.size() * LINE_HEIGHT;
+        height += group.plugins.size() * myLineHeight;
       }
 
       return new Dimension(0, height);
@@ -958,6 +961,8 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
 
     @Override
     public void layoutContainer(Container parent) {
+      calculateLineHeight(parent);
+
       List<UIPluginGroup> groups = ((PluginsGroupComponent)parent).myGroups;
       int width = parent.getWidth();
       int y = 0;
@@ -969,41 +974,59 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
         y += height;
 
         for (CellPluginComponent plugin : group.plugins) {
-          plugin.setBounds(0, y, width, LINE_HEIGHT);
-          y += LINE_HEIGHT;
+          plugin.setBounds(0, y, width, myLineHeight);
+          y += myLineHeight;
+        }
+      }
+    }
+
+    private void calculateLineHeight(@NotNull Container parent) {
+      List<UIPluginGroup> groups = ((PluginsGroupComponent)parent).myGroups;
+      int width = getParentWidth(parent) - parent.getInsets().right;
+
+      myLineHeight = 0;
+
+      for (UIPluginGroup group : groups) {
+        for (CellPluginComponent plugin : group.plugins) {
+          JEditorPane description = plugin.myDescription;
+          if (description == null) {
+            continue;
+          }
+
+          plugin.doLayout();
+          int parentWidth = width - SwingUtilities.convertPoint(description.getParent(), description.getLocation(), plugin).x;
+          description.putClientProperty("parent.width", new Integer(parentWidth));
+
+          plugin.doLayout();
+          myLineHeight = Math.max(myLineHeight, plugin.getPreferredSize().height);
         }
       }
     }
   }
 
   private static class PluginsGridLayout extends AbstractLayoutManager {
-    private final Dimension CELL_SIZE;
+    private final Dimension myCellSize;
 
+    @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
     public PluginsGridLayout(@NotNull TagBuilder tagBuilder) {
       PluginNode pluginNode = new PluginNode(null, "Language Language Lang", null);
-      pluginNode.setDescription("Content<br>\nContent<br>\nContent");
+      pluginNode.setDescription(
+        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.");
       pluginNode.setCategory("languages");
       pluginNode.setDate(String.valueOf(System.currentTimeMillis()));
       pluginNode.setDownloads("123456");
       pluginNode.setRating("5.5");
-      CELL_SIZE = new GridCellPluginComponent(pluginNode, tagBuilder).getPreferredSize();
-      CELL_SIZE.height += JBUI.scale(5);
+      GridCellPluginComponent component = new GridCellPluginComponent(pluginNode, tagBuilder);
+      component.doLayout();
+
+      myCellSize = component.getPreferredSize();
+      myCellSize.height += offset5();
     }
 
     @Override
     public Dimension preferredLayoutSize(Container parent) {
-      int width = parent.getWidth();
-
-      if (width > 0) {
-        Container container = parent.getParent();
-        int parentWidth = container.getWidth();
-
-        if (container instanceof JViewport && parentWidth < width) {
-          width = parentWidth;
-        }
-      }
-
-      int cellWidth = CELL_SIZE.width;
+      int width = getParentWidth(parent);
+      int cellWidth = myCellSize.width;
       int columns = width / cellWidth;
 
       if (columns < 2) {
@@ -1012,7 +1035,7 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
       width = columns * cellWidth;
 
       int height = 0;
-      int cellHeight = CELL_SIZE.height;
+      int cellHeight = myCellSize.height;
       List<UIPluginGroup> groups = ((PluginsGroupComponent)parent).myGroups;
 
       for (UIPluginGroup group : groups) {
@@ -1042,7 +1065,7 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
       List<UIPluginGroup> groups = ((PluginsGroupComponent)parent).myGroups;
       int width = parent.getWidth();
       int y = 0;
-      int columns = Math.max(1, width / CELL_SIZE.width);
+      int columns = Math.max(1, width / myCellSize.width);
 
       for (UIPluginGroup group : groups) {
         Component component = group.panel;
@@ -1056,8 +1079,8 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
     private int layoutPlugins(List<CellPluginComponent> plugins, int startY, int columns) {
       int x = 0;
       int y = 0;
-      int width = CELL_SIZE.width;
-      int height = CELL_SIZE.height;
+      int width = myCellSize.width;
+      int height = myCellSize.height;
       int column = 0;
 
       for (int i = 0, size = plugins.size(); i < size; i++) {
@@ -1075,6 +1098,21 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
     }
   }
 
+  private static int getParentWidth(@NotNull Container parent) {
+    int width = parent.getWidth();
+
+    if (width > 0) {
+      Container container = parent.getParent();
+      int parentWidth = container.getWidth();
+
+      if (container instanceof JViewport && parentWidth < width) {
+        width = parentWidth;
+      }
+    }
+
+    return width;
+  }
+
   private static class UIPluginGroup {
     public Component panel;
     public List<CellPluginComponent> plugins = new ArrayList<>();
@@ -1088,6 +1126,15 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
     public void titleWithCount(@NotNull String text) {
       title = text + " (" + descriptors.size() + ")";
     }
+
+    public void sortByName() {
+      ContainerUtil.sort(descriptors, Comparator.comparing(IdeaPluginDescriptor::getName));
+    }
+  }
+
+  @NotNull
+  private static <T extends Component> T installTiny(@NotNull T component) {
+    return SystemInfo.isMac ? RelativeFont.TINY.install(component) : component;
   }
 
   private static abstract class CellPluginComponent extends JPanel {
@@ -1097,7 +1144,6 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
     protected LinkLabel myName;
     protected JEditorPane myDescription;
 
-    protected boolean myUpdateDescriptionHeight;
     protected SelectionType mySelection = SelectionType.NONE;
 
     protected CellPluginComponent(@NotNull IdeaPluginDescriptor plugin) {
@@ -1106,19 +1152,22 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
 
     @NotNull
     protected JPanel createPanel() {
-      int offset = JBUI.scale(5);
-      setLayout(new BorderLayout(offset, 0));
+      return createPanel(this, this, 0);
+    }
+
+    @NotNull
+    protected JPanel createPanel(@NotNull JPanel parent, @NotNull JPanel root, int width) {
+      parent.setLayout(new BorderLayout(offset5(), 0));
 
       myIconLabel = new JLabel(AllIcons.Plugins.PluginLogo_40);
       myIconLabel.setVerticalAlignment(SwingConstants.TOP);
       myIconLabel.setOpaque(false);
-      add(myIconLabel, BorderLayout.WEST);
+      parent.add(myIconLabel, BorderLayout.WEST);
 
-      JPanel centerPanel = new NonOpaquePanel(new VerticalLayout(offset));
-      add(centerPanel);
+      JPanel centerPanel = new NonOpaquePanel(new VerticalLayout(offset5(), width));
+      parent.add(centerPanel);
 
-      setOpaque(true);
-      setBorder(JBUI.Borders.empty(10, 10, 20, 10));
+      root.setOpaque(true);
 
       return centerPanel;
     }
@@ -1129,55 +1178,34 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
       parent.add(RelativeFont.BOLD.install(myName), constraints);
     }
 
-    protected void addDescriptionComponent(@NotNull JPanel parent) {
-      addDescriptionComponent(parent, myPlugin.getDescription());
-    }
-
-    protected void addDescriptionComponent(@NotNull JPanel parent, @Nullable String description) {
+    protected void addDescriptionComponent(@NotNull JPanel parent,
+                                           @Nullable String description,
+                                           @Nullable Function<JEditorPane, Integer> heightFunction) {
       if (StringUtil.isEmptyOrSpaces(description)) {
         return;
       }
 
-      myDescription = new JEditorPane();
+      myDescription = new JEditorPane() {
+        @Override
+        public Dimension getPreferredSize() {
+          Integer property = (Integer)getClientProperty("parent.width");
+          int width = property == null ? JBUI.scale(180) : property;
+          View view = getUI().getRootView(this);
+          view.setSize(width, Integer.MAX_VALUE);
+          int height = heightFunction == null ? (int)(view.getPreferredSpan(View.Y_AXIS) + JBUI.scale(2f)) : heightFunction.fun(this);
+          return new Dimension(width, height);
+        }
+      };
       myDescription.setEditorKit(UIUtil.getHTMLEditorKit());
+      myDescription.setEditorKit(new UIUtil.JBWordWrapHtmlEditorKit());
       myDescription.setEditable(false);
       myDescription.setOpaque(false);
       myDescription.setBorder(null);
       myDescription.setText(XmlStringUtil.wrapInHtml(description));
-      parent.add(RelativeFont.TINY.install(myDescription));
+      parent.add(installTiny(myDescription));
 
       if (myDescription.getCaret() != null) {
         myDescription.setCaretPosition(0);
-      }
-
-      myUpdateDescriptionHeight = true;
-    }
-
-    protected void finalDescriptionHeight(int lines) {
-      if (!myUpdateDescriptionHeight || myDescription.getBounds().isEmpty()) {
-        return;
-      }
-
-      myUpdateDescriptionHeight = false;
-
-      try {
-        int line = 0;
-        int startLineY = -1;
-        int length = myDescription.getDocument().getLength();
-
-        for (int i = 0; i < length; i++) {
-          Rectangle r = myDescription.modelToView(i);
-          if (r != null && r.height > 0 && startLineY < r.y) {
-            startLineY = r.y;
-            if (++line == lines) {
-              myDescription.setPreferredSize(new Dimension(myDescription.getPreferredSize().width, r.y));
-              myDescription.setSize(myDescription.getWidth(), r.y);
-              return;
-            }
-          }
-        }
-      }
-      catch (BadLocationException ignored) {
       }
     }
 
@@ -1186,27 +1214,18 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
       return mySelection;
     }
 
+    private static final Color HOVER_COLOR = new JBColor(0xE9EEF5, 0xE9EEF5);
+    private static final Color GRAY_COLOR = new JBColor(Gray._130, Gray._120);
+
     public void setSelection(@NotNull SelectionType type) {
       mySelection = type;
 
-      Color background = UIUtil.getListBackground();
-      if (type != SelectionType.NONE) {
-        background = UIUtil.getListSelectionBackground();
-        if (type == SelectionType.HOVER) {
-          background = ColorUtil.brighter(background, 3);
-        }
-      }
-
-      Color foreground = type == SelectionType.NONE ? UIUtil.getListForeground() : UIUtil.getListSelectionForeground();
-      Color grayedFg = type == SelectionType.NONE ? new JBColor(Gray._130, Gray._120) : foreground;
-
-      updateColors(foreground, grayedFg, background);
+      updateColors(GRAY_COLOR, type == SelectionType.NONE ? UIUtil.getListBackground() : HOVER_COLOR);
       repaint();
     }
 
-    protected void updateColors(@NotNull Color foreground, @NotNull Color grayedFg, @NotNull Color background) {
+    protected void updateColors(@NotNull Color grayedFg, @NotNull Color background) {
       setBackground(background);
-      myName.setForeground(foreground);
 
       if (myDescription != null) {
         myDescription.setForeground(grayedFg);
@@ -1243,18 +1262,18 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
   }
 
   private static class ListPluginComponent extends CellPluginComponent {
-    private final boolean myUpdate;
+    private JLabel myVersion;
+    private JLabel myLastUpdated;
     private JButton myUpdateButton;
     private JButton myEnableDisableButton;
     private JBOptionButton myEnableDisableUninstallButton;
 
     public ListPluginComponent(@NotNull IdeaPluginDescriptor plugin, boolean update) {
       super(plugin);
-      myUpdate = update;
 
-      JPanel buttons = new NonOpaquePanel(new HorizontalLayout(JBUI.scale(5)));
+      JPanel buttons = new NonOpaquePanel(new HorizontalLayout(offset5()));
       if (update) {
-        myUpdateButton = new JButton("Update");
+        myUpdateButton = new UpdateButton();
         buttons.add(myUpdateButton);
       }
       if (plugin.isBundled()) {
@@ -1265,7 +1284,6 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
         AbstractAction enableDisableAction = new AbstractAction(plugin.isEnabled() ? "Disable" : "Enable") {
           @Override
           public void actionPerformed(ActionEvent e) {
-            out.println("d");
             // TODO: Auto-generated method stub
           }
         };
@@ -1275,20 +1293,72 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
             // TODO: Auto-generated method stub
           }
         };
-        myEnableDisableUninstallButton = new MyOptionButton(enableDisableAction, new Action[]{uninstallAction});
+        myEnableDisableUninstallButton = new MyOptionButton(enableDisableAction, uninstallAction);
         buttons.add(myEnableDisableUninstallButton);
       }
 
       JPanel centerPanel = createPanel();
+      setBorder(JBUI.Borders.empty(10));
 
       JPanel nameButtons = new NonOpaquePanel(new BorderLayout());
       nameButtons.add(buttons, BorderLayout.EAST);
-      centerPanel.add(nameButtons, "fill");
+      centerPanel.add(nameButtons, VerticalLayout.FILL_HORIZONTAL);
 
       myIconLabel.setDisabledIcon(AllIcons.Plugins.PluginLogoDisabled_40);
 
       addNameComponent(nameButtons, BorderLayout.WEST);
-      addDescriptionComponent(centerPanel, update ? getChangeNotes(plugin) : plugin.getDescription());
+
+      if (update) {
+        addDescriptionComponent(centerPanel, getChangeNotes(plugin), pane -> {
+          try {
+            int line = 0;
+            int startLineY = -1;
+            int length = myDescription.getDocument().getLength();
+
+            for (int i = 0; i < length; i++) {
+              Rectangle r = myDescription.modelToView(i);
+              if (r != null && r.height > 0 && startLineY < r.y) {
+                startLineY = r.y;
+                if (++line == 4) {
+                  return r.y;
+                }
+              }
+            }
+          }
+          catch (BadLocationException ignored) {
+          }
+
+          return (int)(pane.getUI().getRootView(pane).getPreferredSpan(View.Y_AXIS) + JBUI.scale(2f));
+        });
+      }
+      else {
+
+        addDescriptionComponent(centerPanel, getShortDescription(plugin), null);
+      }
+
+      if (update && plugin instanceof PluginNode) {
+        String version = StringUtil.defaultIfEmpty(myPlugin.getVersion(), null);
+        String date = getLastUpdatedDate(myPlugin);
+
+        if (version != null || date != null) {
+          int offset = JBUI.scale(8);
+          JPanel panel = new NonOpaquePanel(new HorizontalLayout(offset));
+          panel.setBorder(JBUI.Borders.emptyLeft(offset));
+          nameButtons.add(panel, BorderLayout.CENTER);
+
+          if (version != null) {
+            myVersion = new JLabel("Version " + version);
+            myVersion.setOpaque(false);
+            panel.add(installTiny(myVersion));
+          }
+
+          if (date != null) {
+            myLastUpdated = new JLabel(date, AllIcons.Plugins.Updated, SwingConstants.CENTER);
+            myLastUpdated.setOpaque(false);
+            panel.add(installTiny(myLastUpdated));
+          }
+        }
+      }
 
       setSelection(SelectionType.NONE);
     }
@@ -1300,15 +1370,16 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
     }
 
     @Override
-    public void setBounds(int x, int y, int width, int height) {
-      super.setBounds(x, y, width, height);
-      finalDescriptionHeight(myUpdate ? 4 : 2);
-    }
-
-    @Override
-    protected void updateColors(@NotNull Color foreground, @NotNull Color grayedFg, @NotNull Color background) {
-      super.updateColors(foreground, grayedFg, background);
+    protected void updateColors(@NotNull Color grayedFg, @NotNull Color background) {
+      super.updateColors(grayedFg, background);
       myIconLabel.setEnabled(mySelection != SelectionType.NONE || myPlugin.isEnabled());
+
+      if (myVersion != null) {
+        myVersion.setForeground(grayedFg);
+      }
+      if (myLastUpdated != null) {
+        myLastUpdated.setForeground(grayedFg);
+      }
 
       if (mySelection == SelectionType.NONE && !myPlugin.isEnabled()) {
         Color disabledColor = DarculaButtonUI.getDisabledTextColor();
@@ -1318,9 +1389,6 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
         }
       }
 
-      if (myUpdateButton != null) {
-        myUpdateButton.setBackground(background);
-      }
       if (myEnableDisableButton != null) {
         myEnableDisableButton.setBackground(background);
       }
@@ -1341,7 +1409,7 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
         myEnableDisableButton.addMouseMotionListener(listener);
       }
       if (myEnableDisableUninstallButton != null) {
-        for (JButton button : findComponentsOfType(myEnableDisableUninstallButton, JButton.class)) {
+        for (JButton button : UIUtil.findComponentsOfType(myEnableDisableUninstallButton, JButton.class)) {
           button.addMouseListener(listener);
           button.addMouseMotionListener(listener);
         }
@@ -1360,7 +1428,7 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
         myEnableDisableButton.removeMouseMotionListener(listener);
       }
       if (myEnableDisableUninstallButton != null) {
-        for (JButton button : findComponentsOfType(myEnableDisableUninstallButton, JButton.class)) {
+        for (JButton button : UIUtil.findComponentsOfType(myEnableDisableUninstallButton, JButton.class)) {
           button.removeMouseListener(listener);
           button.removeMouseMotionListener(listener);
         }
@@ -1379,10 +1447,13 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
     public GridCellPluginComponent(@NotNull IdeaPluginDescriptor plugin, @NotNull TagBuilder tagBuilder) {
       super(plugin);
 
-      JPanel centerPanel = createPanel();
+      JPanel container = new NonOpaquePanel();
+      JPanel centerPanel = createPanel(container, this, JBUI.scale(180));
+      setBorder(JBUI.Borders.empty(10, 10, 20, 10));
+
       addNameComponent(centerPanel, null);
       addTags(centerPanel, tagBuilder);
-      addDescriptionComponent(centerPanel);
+      addDescriptionComponent(centerPanel, getShortDescription(myPlugin), null);
 
       if (plugin instanceof PluginNode) {
         String downloads = getDownloads(myPlugin);
@@ -1390,34 +1461,57 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
         String rating = getRating(myPlugin);
 
         if (downloads != null || date != null || rating != null) {
-          JPanel panel = new NonOpaquePanel(new HorizontalLayout(JBUI.scale(5)));
+          JPanel panel = new NonOpaquePanel(new HorizontalLayout(offset5()));
           centerPanel.add(panel);
 
           if (date != null) {
             myLastUpdated = new JLabel(date, AllIcons.Plugins.Updated, SwingConstants.CENTER);
             myLastUpdated.setOpaque(false);
-            panel.add(RelativeFont.SMALL.install(myLastUpdated));
+            panel.add(installTiny(myLastUpdated));
           }
 
           if (downloads != null) {
             myDownloads = new JLabel(downloads, AllIcons.Plugins.Downloads, SwingConstants.CENTER);
             myDownloads.setOpaque(false);
-            panel.add(RelativeFont.SMALL.install(myDownloads));
+            panel.add(installTiny(myDownloads));
           }
 
           if (rating != null) {
             myRating = new JLabel(rating, AllIcons.Plugins.Rating, SwingConstants.CENTER);
             myRating.setOpaque(false);
-            panel.add(RelativeFont.SMALL.install(myRating));
+            panel.add(installTiny(myRating));
           }
         }
       }
 
-      myInstallButton = new JButton("Install");
-      myInstallButton.setForeground(new JBColor(0x5D9B47, 0x4D803A));
-      Dimension size = myInstallButton.getPreferredSize();
-      myInstallButton.setPreferredSize(new Dimension(size.width + JBUI.scale(20), size.height));
-      centerPanel.add(myInstallButton);
+      myInstallButton = new InstallButton(false);
+      add(container);
+      add(myInstallButton);
+
+      setLayout(new AbstractLayoutManager() {
+        @Override
+        public Dimension preferredLayoutSize(Container parent) {
+          Dimension size = container.getPreferredSize();
+          size.height += myInstallButton.getPreferredSize().height;
+          JBInsets.addTo(size, parent.getInsets());
+          return size;
+        }
+
+        @Override
+        public void layoutContainer(Container parent) {
+          Insets insets = parent.getInsets();
+          Dimension size = container.getPreferredSize();
+          Rectangle bounds = new Rectangle(insets.left, insets.top, size.width, size.height);
+          container.setBounds(bounds);
+          container.doLayout();
+
+          Point location = centerPanel.getLocation();
+          Dimension buttonSize = myInstallButton.getPreferredSize();
+          Border border = myInstallButton.getBorder();
+          int borderOffset = border == null ? 0 : border.getBorderInsets(myInstallButton).left;
+          myInstallButton.setBounds(bounds.x + location.x - borderOffset, bounds.y + bounds.height, buttonSize.width, buttonSize.height);
+        }
+      });
 
       setSelection(SelectionType.NONE);
     }
@@ -1428,33 +1522,21 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
         return;
       }
 
-      NonOpaquePanel panel = new NonOpaquePanel(new HorizontalLayout(JBUI.scale(5)));
+      NonOpaquePanel panel = new NonOpaquePanel(new HorizontalLayout(offset5()));
       parent.add(panel);
 
       myTagComponents = new ArrayList<>();
 
       for (String tag : tags) {
         TagComponent component = tagBuilder.createTagComponent(tag);
-        myTagComponents.add(component);
+        myTagComponents.add(installTiny(component));
         panel.add(component);
       }
     }
 
     @Override
-    public void setBounds(int x, int y, int width, int height) {
-      super.setBounds(x, y, width, height);
-      finalDescriptionHeight(4);
-    }
-
-    @Override
-    protected void updateColors(@NotNull Color foreground, @NotNull Color grayedFg, @NotNull Color background) {
-      super.updateColors(foreground, grayedFg, background);
-
-      myInstallButton.setBackground(background);
-
-      for (TagComponent component : myTagComponents) {
-        component.setForeground(foreground);
-      }
+    protected void updateColors(@NotNull Color grayedFg, @NotNull Color background) {
+      super.updateColors(grayedFg, background);
 
       if (myLastUpdated != null) {
         myLastUpdated.setForeground(grayedFg);
@@ -1488,6 +1570,10 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
       myInstallButton.removeMouseListener(listener);
       myInstallButton.removeMouseMotionListener(listener);
     }
+  }
+
+  private static int offset5() {
+    return JBUI.scale(5);
   }
 
   private enum SelectionType {
@@ -1524,8 +1610,8 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
   }
 
   private static class MyOptionButton extends JBOptionButton {
-    public MyOptionButton(Action action, Action[] options) {
-      super(action, options);
+    public MyOptionButton(Action action, Action option) {
+      super(action, new Action[]{option});
     }
 
     @Override
@@ -1563,9 +1649,11 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
 
       for (int i = 0; i < count; i++) {
         Dimension size = parent.getComponent(i).getPreferredSize();
-        width += size.width + myOffset;
+        width += size.width;
         height = Math.max(height, size.height);
       }
+
+      width += (count - 1) * myOffset;
 
       Insets insets = parent.getInsets();
       return new Dimension(width, height + insets.top + insets.bottom);
@@ -1588,16 +1676,24 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
   }
 
   private static class VerticalLayout extends AbstractLayoutManager {
+    public static final String FILL_HORIZONTAL = "fill_h";
+
     private final int myOffset;
+    private final int myWidth;
     private final Set<Component> myFillComponents = new HashSet<>();
 
     public VerticalLayout(int offset) {
+      this(offset, 0);
+    }
+
+    public VerticalLayout(int offset, int width) {
       myOffset = offset;
+      myWidth = width;
     }
 
     @Override
     public void addLayoutComponent(Component component, Object constraints) {
-      if ("fill".equals(constraints)) {
+      if (FILL_HORIZONTAL.equals(constraints)) {
         myFillComponents.add(component);
       }
     }
@@ -1616,10 +1712,12 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
       for (int i = 0; i < count; i++) {
         Dimension size = parent.getComponent(i).getPreferredSize();
         width = Math.max(width, size.width);
-        height += size.height + myOffset;
+        height += size.height;
       }
 
-      return new Dimension(width, height);
+      height += (count - 1) * myOffset;
+
+      return new Dimension(myWidth > 0 ? myWidth : width, height);
     }
 
     @Override
@@ -1635,6 +1733,162 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
         component.setBounds(insets.left, y, myFillComponents.contains(component) ? width : Math.min(width, size.width), size.height);
         y += size.height + myOffset;
       }
+    }
+  }
+
+  @SuppressWarnings("UseJBColor")
+  private static final Color WhiteForeground = new JBColor(Color.white, new Color(0xBBBBBB));
+  @SuppressWarnings("UseJBColor")
+  private static final Color WhiteBackground = new JBColor(Color.white, new Color(0x3C3F41));
+  private static final Color BlueColor = new JBColor(0x1D73BF, 0x134D80);
+  private static final Color GreenColor = new JBColor(0x5D9B47, 0x457335);
+  @SuppressWarnings("UseJBColor")
+  private static final Color GreenFocusedBackground = new Color(0xE1F6DA);
+
+  private static class UpdateButton extends ColorButton {
+    public UpdateButton() {
+      setTextColor(WhiteForeground);
+      setBgColor(BlueColor);
+      setBorderColor(BlueColor);
+
+      setText("Update");
+      addWidth(10);
+    }
+  }
+
+  private static class RestartButton extends InstallButton {
+    public RestartButton() {
+      super(true);
+    }
+
+    @Override
+    protected void setTextAndSize() {
+      setText("Restart IDE");
+    }
+  }
+
+  private static class InstallButton extends ColorButton {
+    public InstallButton(boolean fill) {
+      if (fill) {
+        setTextColor(WhiteForeground);
+        setBgColor(GreenColor);
+      }
+      else {
+        setTextColor(GreenColor);
+        setFocusedTextColor(GreenColor);
+        setBgColor(WhiteBackground);
+      }
+
+      setFocusedBgColor(GreenFocusedBackground);
+      setBorderColor(GreenColor);
+      setFocusedBorderColor(GreenColor);
+
+      setTextAndSize();
+    }
+
+    protected void setTextAndSize() {
+      setText("Install");
+      addWidth(20);
+    }
+  }
+
+  private static class ColorButton extends JButton {
+    public ColorButton() {
+      setOpaque(false);
+    }
+
+    protected final void setTextColor(@NotNull Color color) {
+      putClientProperty("JButton.textColor", color);
+    }
+
+    protected final void setFocusedTextColor(@NotNull Color color) {
+      putClientProperty("JButton.focusedTextColor", color);
+    }
+
+    protected final void setBgColor(@NotNull Color color) {
+      putClientProperty("JButton.backgroundColor", color);
+    }
+
+    protected final void setFocusedBgColor(@NotNull Color color) {
+      putClientProperty("JButton.focusedBackgroundColor", color);
+    }
+
+    protected final void setBorderColor(@NotNull Color color) {
+      putClientProperty("JButton.borderColor", color);
+    }
+
+    protected final void setFocusedBorderColor(@NotNull Color color) {
+      putClientProperty("JButton.focusedBorderColor", color);
+    }
+
+    protected final void addWidth(int width) {
+      Dimension size = getPreferredSize();
+      setPreferredSize(new Dimension(size.width + JBUI.scale(width), size.height));
+    }
+  }
+
+  @Nullable
+  private static String getShortDescription(@NotNull IdeaPluginDescriptor plugin) {
+    return PluginSiteUtils.preparePluginDescription(plugin.getDescription());
+  }
+
+  public static class PluginSiteUtils {
+    private static final Pattern TAG_PATTERN =
+      Pattern.compile("</?\\w+((\\s+\\w+(\\s*=\\s*(?:\".*?\"|'.*?'|[\\^'\">\\s]+))?)+\\s*|\\s*)/?>");
+    private static final int SHORT_DESC_SIZE = 170;
+    private static final Pattern BR_PATTERN = Pattern.compile("<br\\s*/?>");
+
+    @Nullable
+    public static String preparePluginDescription(@Nullable String s) {
+      if (s == null || s.isEmpty()) {
+        return null;
+      }
+      String description = prepareDescription(s);
+      return description.isEmpty() || description.endsWith(".") ? description : description + ".";
+    }
+
+    @NotNull
+    private static String prepareDescription(@NotNull String s) {
+      String[] split = BR_PATTERN.split(s);
+
+      if (split.length > 1) {
+        String sanitize = stripTags(split[0]);
+        if (sanitize.length() <= SHORT_DESC_SIZE) return sanitize;
+      }
+
+      String stripped = stripTags(s);
+
+      for (String sep : new String[]{". ", ".\n", ": ", ":\n"}) {
+        String by = substringBy(stripped, sep);
+        if (by != null) return by;
+      }
+
+      if (stripped.length() > SHORT_DESC_SIZE) {
+        stripped = stripped.substring(0, SHORT_DESC_SIZE);
+
+        int index = stripped.lastIndexOf(' ');
+        if (index == -1) {
+          index = stripped.length();
+        }
+
+        stripped = stripped.substring(0, index) + "...";
+      }
+
+      return stripped;
+    }
+
+    @Nullable
+    private static String substringBy(@NotNull String str, @NotNull String separator) {
+      int end = str.indexOf(separator);
+      if (end > 0 && end <= SHORT_DESC_SIZE) {
+        return str.substring(0, end + (separator.contains(":") ? 0 : separator.length())).trim();
+      }
+      return null;
+    }
+
+    @NotNull
+    private static String stripTags(@NotNull String s) {
+      return TAG_PATTERN.matcher(s).replaceAll("").trim();
     }
   }
 }

@@ -24,8 +24,8 @@ import com.intellij.psi.impl.FreeThreadedFileViewProvider;
 import org.jetbrains.annotations.NotNull;
 
 class SmartPsiFileRangePointerImpl extends SmartPsiElementPointerImpl<PsiFile> implements SmartPsiFileRange {
-  SmartPsiFileRangePointerImpl(@NotNull PsiFile containingFile, @NotNull ProperTextRange range, boolean forInjected) {
-    super(containingFile, createElementInfo(containingFile, range, forInjected));
+  SmartPsiFileRangePointerImpl(@NotNull SmartPointerManagerImpl manager, @NotNull PsiFile containingFile, @NotNull ProperTextRange range, boolean forInjected) {
+    super(manager, containingFile, createElementInfo(containingFile, range, forInjected));
   }
 
   @NotNull
@@ -39,12 +39,12 @@ class SmartPsiFileRangePointerImpl extends SmartPsiElementPointerImpl<PsiFile> i
       }
     }
     if (!forInjected && range.equals(containingFile.getTextRange())) return new FileElementInfo(containingFile);
-    return new SelfElementInfo(project, range, Identikit.fromTypes(PsiElement.class, null, Language.ANY), containingFile, forInjected);
+    return new SelfElementInfo(range, Identikit.fromTypes(PsiElement.class, null, Language.ANY), containingFile, forInjected);
   }
 
   @Override
   public PsiFile getContainingFile() {
-    return getElementInfo().restoreFile();
+    return getElementInfo().restoreFile(myManager);
   }
 
   @Override

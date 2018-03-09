@@ -46,17 +46,21 @@ public class DescriptionTypeRelatedItemLineMarkerProviderTest extends JavaCodeIn
   }
 
   public void testInspectionDescription() {
-    myFixture.copyDirectoryToProject("inspectionDescriptions", "inspectionDescriptions");
-
-    final GutterMark gutter = myFixture.findGutter("MyWithDescriptionInspection.java");
-    DevKitGutterTargetsChecker.checkGutterTargets(gutter, "Description", AllIcons.FileTypes.Html, "MyWithDescription.html");
+    doTestInspectionDescription("MyWithDescriptionInspection.java", "MyWithDescription.html");
   }
 
   public void testInspectionDescriptionFromFieldReference() {
-    myFixture.copyDirectoryToProject("inspectionDescriptions", "inspectionDescriptions");
+    doTestInspectionDescription("MyWithDescriptionFromFieldReferenceInspection.java", "MyWithDescriptionFromFieldReferenceInspection.html");
+  }
 
-    final GutterMark gutter = myFixture.findGutter("MyWithDescriptionFromFieldReferenceInspection.java");
-    DevKitGutterTargetsChecker.checkGutterTargets(gutter, "Description", AllIcons.FileTypes.Html, "MyWithDescriptionFromFieldReferenceInspection.html");
+  public void testKtInspectionDescription() {
+    doTestInspectionDescription("MyKtWithDescriptionInspection.kt", "MyKtWithDescription.html");
+  }
+
+  private void doTestInspectionDescription(String inspectionFile, String descriptionFile) {
+    myFixture.copyDirectoryToProject("inspectionDescriptions", "inspectionDescriptions");
+    GutterMark gutter = myFixture.findGutter(inspectionFile);
+    DevKitGutterTargetsChecker.checkGutterTargets(gutter, "Description", AllIcons.FileTypes.Html, descriptionFile);
   }
 
   public void testIntentionDescription() {

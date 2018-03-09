@@ -106,7 +106,7 @@ public class VcsLogManager implements Disposable {
   @NotNull
   public <U extends AbstractVcsLogUi> U createLogUi(@Nullable String contentTabName,
                                                     @NotNull VcsLogUiFactory<U> factory) {
-    U ui = factory.createLogUi(myProject, myLogData, myColorManager);
+    U ui = factory.createLogUi(myProject, myLogData);
 
     Disposable disposable;
     if (contentTabName != null) {
@@ -216,8 +216,7 @@ public class VcsLogManager implements Disposable {
 
   @FunctionalInterface
   public interface VcsLogUiFactory<T extends AbstractVcsLogUi> {
-    T createLogUi(@NotNull Project project, @NotNull VcsLogData logData,
-                  @NotNull VcsLogColorManager colorManager);
+    T createLogUi(@NotNull Project project, @NotNull VcsLogData logData);
   }
 
   private class MainVcsLogUiFactory implements VcsLogUiFactory<VcsLogUiImpl> {
@@ -229,15 +228,14 @@ public class VcsLogManager implements Disposable {
 
     @Override
     public VcsLogUiImpl createLogUi(@NotNull Project project,
-                                    @NotNull VcsLogData logData,
-                                    @NotNull VcsLogColorManager manager) {
+                                    @NotNull VcsLogData logData) {
       MainVcsLogUiProperties properties = myUiProperties.createProperties(myLogId);
       VisiblePackRefresherImpl refresher =
         new VisiblePackRefresherImpl(project, logData, properties.get(MainVcsLogUiProperties.BEK_SORT_TYPE),
                                      new VcsLogFilterer(logData.getLogProviders(), logData.getStorage(),
                                                         logData.getTopCommitsCache(),
                                                         logData.getCommitDetailsGetter(), logData.getIndex()));
-      return new VcsLogUiImpl(logData, project, manager, properties, refresher);
+      return new VcsLogUiImpl(logData, myColorManager, properties, refresher);
     }
   }
 }

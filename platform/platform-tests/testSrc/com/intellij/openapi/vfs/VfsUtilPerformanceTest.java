@@ -73,7 +73,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
     assertNotNull(vDir);
     assertTrue(vDir.isDirectory());
 
-    WriteAction.runAndWait(() -> {
+    WriteCommandAction.writeCommandAction(null).run(() -> {
       for (int i = 0; i < 10_000; i++) {
         String name = i + ".txt";
         vDir.createChildData(vDir, name);
@@ -92,7 +92,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
       }
     }).assertTiming();
 
-    WriteAction.runAndWait(() -> {
+    WriteCommandAction.writeCommandAction(null).run(() -> {
       for (VirtualFile file : vDir.getChildren()) {
         file.delete(this);
       }
@@ -128,46 +128,43 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
     assertNotNull(vDir);
     assertTrue(vDir.isDirectory());
     int depth = 10;
-    new WriteCommandAction.Simple(null) {
-      @Override
-      protected void run() throws Throwable {
-        VirtualFile dir = vDir;
-        for (int i = 0; i < depth; i++) {
-          dir = dir.createChildDirectory(this, "foo");
-        }
-        VirtualFile leafDir = dir;
-        ThrowableRunnable checkPerformance = new ThrowableRunnable() {
-          private VirtualFile findRoot(VirtualFile file) {
-            while (true) {
-              VirtualFile parent = file.getParent();
-              if (parent == null) {
-                return file;
-              }
-              file = parent;
-            }
-          }
-
-          @Override
-          public void run() {
-            for (int i = 0; i < 5_000_000; i++) {
-              checkRootsEqual();
-            }
-          }
-
-          private void checkRootsEqual() {
-            assertEquals(findRoot(vDir), findRoot(leafDir));
-          }
-        };
-        int time = 1200;
-        PlatformTestUtil.startPerformanceTest("getParent before movement", time, checkPerformance).assertTiming();
-        VirtualFile dir1 = vDir.createChildDirectory(this, "dir1");
-        VirtualFile dir2 = vDir.createChildDirectory(this, "dir2");
-        for (int i = 0; i < 13; i++) {  /*13 is max length with THashMap capacity of 17, we get plenty collisions then*/
-          dir1.createChildData(this, "a" + i + ".txt").move(this, dir2);
-        }
-        PlatformTestUtil.startPerformanceTest("getParent after movement", time, checkPerformance).assertTiming();
+    WriteCommandAction.writeCommandAction(null).run(() -> {
+      VirtualFile dir = vDir;
+      for (int i = 0; i < depth; i++) {
+        dir = dir.createChildDirectory(this, "foo");
       }
-    }.execute();
+      VirtualFile leafDir = dir;
+      ThrowableRunnable checkPerformance = new ThrowableRunnable() {
+        private VirtualFile findRoot(VirtualFile file) {
+          while (true) {
+            VirtualFile parent = file.getParent();
+            if (parent == null) {
+              return file;
+            }
+            file = parent;
+          }
+        }
+
+        @Override
+        public void run() {
+          for (int i = 0; i < 5_000_000; i++) {
+            checkRootsEqual();
+          }
+        }
+
+        private void checkRootsEqual() {
+          assertEquals(findRoot(vDir), findRoot(leafDir));
+        }
+      };
+      int time = 1200;
+      PlatformTestUtil.startPerformanceTest("getParent before movement", time, checkPerformance).assertTiming();
+      VirtualFile dir1 = vDir.createChildDirectory(this, "dir1");
+      VirtualFile dir2 = vDir.createChildDirectory(this, "dir2");
+      for (int i = 0; i < 13; i++) {  /*13 is max length with THashMap capacity of 17, we get plenty collisions then*/
+        dir1.createChildData(this, "a" + i + ".txt").move(this, dir2);
+      }
+      PlatformTestUtil.startPerformanceTest("getParent after movement", time, checkPerformance).assertTiming();
+    });
   }
 
   @Test

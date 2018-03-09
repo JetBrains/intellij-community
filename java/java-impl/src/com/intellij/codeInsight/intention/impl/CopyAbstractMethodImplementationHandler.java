@@ -22,7 +22,6 @@ import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.ide.util.MethodCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -40,7 +39,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.*;
@@ -143,42 +141,39 @@ public class CopyAbstractMethodImplementationHandler {
   private void copyImplementation(final PsiMethod sourceMethod) {
     if (!FileModificationService.getInstance().preparePsiElementForWrite(sourceMethod)) return;
     final List<PsiMethod> generatedMethods = new ArrayList<>();
-    new WriteCommandAction(myProject, getTargetFiles()) {
-      @Override
-      protected void run(@NotNull final Result result) throws Throwable {
-        for (PsiEnumConstant enumConstant : myTargetEnumConstants) {
-          PsiClass initializingClass = enumConstant.getOrCreateInitializingClass();
-          myTargetClasses.add(initializingClass);
-        }
-        for(PsiClass psiClass: myTargetClasses) {
-          final Collection<PsiMethod> methods = OverrideImplementUtil.overrideOrImplementMethod(psiClass, myMethod, true);
-          final Iterator<PsiMethod> iterator = methods.iterator();
-          if (!iterator.hasNext()) continue;
-          PsiMethod overriddenMethod = iterator.next();
-          final PsiCodeBlock body = overriddenMethod.getBody();
-          final PsiCodeBlock sourceBody = sourceMethod.getBody();
-          assert body != null && sourceBody != null;
-          ChangeContextUtil.encodeContextInfo(sourceBody, true);
-          final PsiElement newBody = body.replace(sourceBody.copy());
-          ChangeContextUtil.decodeContextInfo(newBody, psiClass, null);
+    WriteCommandAction.writeCommandAction(myProject, getTargetFiles()).run(() -> {
+      for (PsiEnumConstant enumConstant : myTargetEnumConstants) {
+        PsiClass initializingClass = enumConstant.getOrCreateInitializingClass();
+        myTargetClasses.add(initializingClass);
+      }
+      for (PsiClass psiClass : myTargetClasses) {
+        final Collection<PsiMethod> methods = OverrideImplementUtil.overrideOrImplementMethod(psiClass, myMethod, true);
+        final Iterator<PsiMethod> iterator = methods.iterator();
+        if (!iterator.hasNext()) continue;
+        PsiMethod overriddenMethod = iterator.next();
+        final PsiCodeBlock body = overriddenMethod.getBody();
+        final PsiCodeBlock sourceBody = sourceMethod.getBody();
+        assert body != null && sourceBody != null;
+        ChangeContextUtil.encodeContextInfo(sourceBody, true);
+        final PsiElement newBody = body.replace(sourceBody.copy());
+        ChangeContextUtil.decodeContextInfo(newBody, psiClass, null);
 
-          PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(mySourceClass, psiClass, PsiSubstitutor.EMPTY);
-          PsiElement anchor = OverrideImplementUtil.getDefaultAnchorToOverrideOrImplement(psiClass, sourceMethod, substitutor);
-          try {
-            if (anchor != null) {
-              overriddenMethod = (PsiMethod) anchor.getParent().addBefore(overriddenMethod, anchor);
-            }
-            else {
-              overriddenMethod = (PsiMethod) psiClass.addBefore(overriddenMethod, psiClass.getRBrace());
-            }
-            generatedMethods.add(overriddenMethod);
+        PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(mySourceClass, psiClass, PsiSubstitutor.EMPTY);
+        PsiElement anchor = OverrideImplementUtil.getDefaultAnchorToOverrideOrImplement(psiClass, sourceMethod, substitutor);
+        try {
+          if (anchor != null) {
+            overriddenMethod = (PsiMethod)anchor.getParent().addBefore(overriddenMethod, anchor);
           }
-          catch (IncorrectOperationException e) {
-            LOG.error(e);
+          else {
+            overriddenMethod = (PsiMethod)psiClass.addBefore(overriddenMethod, psiClass.getRBrace());
           }
+          generatedMethods.add(overriddenMethod);
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
         }
       }
-    }.execute();
+    });
     if (!generatedMethods.isEmpty()) {
       PsiMethod target = generatedMethods.get(0);
       PsiFile psiFile = target.getContainingFile();

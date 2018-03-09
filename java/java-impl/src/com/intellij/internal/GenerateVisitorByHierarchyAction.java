@@ -26,7 +26,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentListener;
@@ -216,26 +215,25 @@ public class GenerateVisitorByHierarchyAction extends AnAction {
       psiFiles.add(visitorClass.getContainingFile());
     }
     final int finalDetectedPrefix = detectClassPrefix(classes.keySet()).length();
-    new WriteCommandAction(project, PsiUtilCore.toPsiFileArray(psiFiles)) {
-      @Override
-      protected void run(@NotNull final Result result) throws Throwable {
-        if (visitorClass == null) {
-          final String shortClassName = PsiNameHelper.getShortClassName(visitorName);
-          if (directory != null) {
-            final PsiClass visitorClass = JavaDirectoryService.getInstance().createClass(directory, shortClassName);
-            generateVisitorClass(visitorClass, classes, pathMap, finalDetectedPrefix);
-          }
-        }
-        else {
-          generateVisitorClass(visitorClass, classes, pathMap, finalDetectedPrefix);
-        }
-      }
-
-      @Override
-      protected boolean isGlobalUndoAction() {
-        return true;
-      }
-    }.execute();
+    try {
+      WriteCommandAction.writeCommandAction(project, PsiUtilCore.toPsiFileArray(psiFiles))
+                        .withGlobalUndo()
+                        .run(() -> {
+                          if (visitorClass == null) {
+                            final String shortClassName = PsiNameHelper.getShortClassName(visitorName);
+                            if (directory != null) {
+                              final PsiClass vc = JavaDirectoryService.getInstance().createClass(directory, shortClassName);
+                              generateVisitorClass(vc, classes, pathMap, finalDetectedPrefix);
+                            }
+                          }
+                          else {
+                            generateVisitorClass(visitorClass, classes, pathMap, finalDetectedPrefix);
+                          }
+                        });
+    }
+    catch (Throwable throwable) {
+      throw new RuntimeException(throwable);
+    }
   }
 
   @NotNull

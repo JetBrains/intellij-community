@@ -22,7 +22,6 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.ColorUtil;
-import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
@@ -946,48 +945,23 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   private final class MySeparator extends JComponent {
-    private final JBDimension mySize;
-
-    public MySeparator() {
-      if (myOrientation == SwingConstants.HORIZONTAL) {
-        mySize = JBUI.size(6, 24);
-      }
-      else {
-        mySize = JBUI.size(24, 6);
-      }
-    }
-
     @Override
     public Dimension getPreferredSize() {
-      return mySize.size();
+      return (myOrientation == SwingConstants.HORIZONTAL) ? JBUI.size(6, 24) : JBUI.size(24, 6);
     }
 
     @Override
     protected void paintComponent(final Graphics g) {
-      final Insets i = getInsets();
       int gap = JBUI.scale(2);
       int offset = JBUI.scale(3);
 
-      if (UIUtil.isUnderAquaBasedLookAndFeel() || UIUtil.isUnderDarcula()) {
-        if (getParent() != null) {
-          final JBColor col = new JBColor(Gray._128, Gray._111);
-          final Graphics2D g2 = (Graphics2D)g;
-          if (myOrientation == SwingConstants.HORIZONTAL) {
-            UIUtil.drawDoubleSpaceDottedLine(g2, i.top + gap, getParent().getSize().height - gap - i.top - i.bottom, offset, col, false);
-          } else {
-            UIUtil.drawDoubleSpaceDottedLine(g2, i.left + gap, getParent().getSize().width - gap - i.left - i.right, offset, col, true);
-          }
-        }
-      }
-      else {
+      if (getParent() != null) {
         g.setColor(UIUtil.getSeparatorColor());
-        if (getParent() != null) {
-          if (myOrientation == SwingConstants.HORIZONTAL) {
-            LinePainter2D.paint((Graphics2D)g, offset, gap, offset, getParent().getSize().height - gap);
-          }
-          else {
-            LinePainter2D.paint((Graphics2D)g, gap, offset, getParent().getSize().width - gap, offset);
-          }
+        if (myOrientation == SwingConstants.HORIZONTAL) {
+          LinePainter2D.paint((Graphics2D)g, offset, gap, offset, getParent().getSize().height - gap * 2);
+        }
+        else {
+          LinePainter2D.paint((Graphics2D)g, gap, offset, getParent().getSize().width - gap * 2, offset);
         }
       }
     }
@@ -1021,6 +995,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       throw new IllegalArgumentException("wrong orientation: " + orientation);
     }
     myOrientation = orientation;
+  }
+
+  int getOrientation() {
+    return myOrientation;
   }
 
   @Override
@@ -1363,13 +1341,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       setBorder(JBUI.Borders.empty());
       setOpaque(false);
     } else {
-      if (UIUtil.isUnderWin10LookAndFeel()) {
-        setBorder(JBUI.Borders.empty(0));
-        setMinimumButtonSize(myDecorateButtons ? JBUI.size(30, 22) : JBUI.size(25, 22));
-      } else {
-        setBorder(JBUI.Borders.empty(3));
-        setMinimumButtonSize(myDecorateButtons ? JBUI.size(30, 20) : DEFAULT_MINIMUM_BUTTON_SIZE);
-      }
+      setBorder(JBUI.Borders.empty(2));
+      setMinimumButtonSize(myDecorateButtons ? JBUI.size(30, 20) : DEFAULT_MINIMUM_BUTTON_SIZE);
       setOpaque(true);
       setLayoutPolicy(AUTO_LAYOUT_POLICY);
     }

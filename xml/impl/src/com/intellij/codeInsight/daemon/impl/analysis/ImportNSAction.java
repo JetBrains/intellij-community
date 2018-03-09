@@ -63,30 +63,27 @@ public class ImportNSAction implements QuestionAction {
     final Runnable runnable = () -> {
       final String namespace = (String)list.getSelectedValue();
       if (namespace != null) {
-          final Project project = myFile.getProject();
-          new WriteCommandAction.Simple(project, myFile) {
-
-            @Override
-            protected void run() throws Throwable {
-              final XmlNamespaceHelper extension = XmlNamespaceHelper.getHelper(myFile);
-              final String prefix = extension.getNamespacePrefix(myElement);
-              extension.insertNamespaceDeclaration(myFile,
-                                                   myEditor,
-                                                   Collections.singleton(namespace),
-                                                   prefix,
-                                                   new XmlNamespaceHelper.Runner<String, IncorrectOperationException>() {
-                  @Override
-                  public void run(final String s) throws IncorrectOperationException {
-                    PsiDocumentManager.getInstance(myFile.getProject()).doPostponedOperationsAndUnblockDocument(myEditor.getDocument());
-                    PsiElement element = myFile.findElementAt(marker.getStartOffset());
-                    if (element != null) {
-                      extension.qualifyWithPrefix(s, element, myEditor.getDocument());
-                    }
-                  }
-                }
-              );
-            }
-          }.execute();
+        final Project project = myFile.getProject();
+        WriteCommandAction.writeCommandAction(project, myFile).run(() -> {
+          final XmlNamespaceHelper extension = XmlNamespaceHelper.getHelper(myFile);
+          final String prefix = extension.getNamespacePrefix(myElement);
+          extension.insertNamespaceDeclaration(myFile,
+                                               myEditor,
+                                               Collections.singleton(namespace),
+                                               prefix,
+                                               new XmlNamespaceHelper.Runner<String, IncorrectOperationException>() {
+                                                 @Override
+                                                 public void run(final String s) throws IncorrectOperationException {
+                                                   PsiDocumentManager.getInstance(myFile.getProject())
+                                                                     .doPostponedOperationsAndUnblockDocument(myEditor.getDocument());
+                                                   PsiElement element = myFile.findElementAt(marker.getStartOffset());
+                                                   if (element != null) {
+                                                     extension.qualifyWithPrefix(s, element, myEditor.getDocument());
+                                                   }
+                                                 }
+                                               }
+          );
+        });
       }
     };
     if (list.getModel().getSize() == 1) {

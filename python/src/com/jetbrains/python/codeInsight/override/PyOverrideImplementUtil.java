@@ -142,12 +142,9 @@ public class PyOverrideImplementUtil {
     if (membersToOverride == null) {
       return;
     }
-    new WriteCommandAction(pyClass.getProject(), pyClass.getContainingFile()) {
-      @Override
-      protected void run(@NotNull final Result result) throws Throwable {
-        write(pyClass, membersToOverride, editor, implement);
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(pyClass.getProject(), pyClass.getContainingFile()).run(() -> {
+      write(pyClass, membersToOverride, editor, implement);
+    });
   }
 
   private static void write(@NotNull PyClass pyClass, @NotNull List<PyMethodMember> newMembers, @NotNull Editor editor, boolean implement) {

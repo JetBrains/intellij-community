@@ -224,7 +224,8 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   @Override public Insets getInsets() {
-    return myLook.getInsets();
+    ActionToolbarImpl owner = UIUtil.getParentOfType(ActionToolbarImpl.class, this);
+    return owner != null && owner.getOrientation() == SwingConstants.VERTICAL ? JBUI.insets(2, 1) : JBUI.insets(1, 2);
   }
 
   @Override public void updateUI() {

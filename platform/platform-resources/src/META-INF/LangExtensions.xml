@@ -229,7 +229,7 @@
     <projectService serviceInterface="com.intellij.psi.PsiFileFactory"
                     serviceImplementation="com.intellij.psi.impl.PsiFileFactoryImpl"/>
     <projectService serviceInterface="com.intellij.psi.text.BlockSupport"
-                    serviceImplementation="com.intellij.psi.impl.source.text.BlockSupportImpl"/>
+                    serviceImplementation="com.intellij.psi.impl.BlockSupportImpl"/>
     <projectService serviceInterface="com.intellij.psi.SmartPointerManager"
                     serviceImplementation="com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl"/>
     <projectService serviceInterface="com.intellij.psi.codeStyle.CodeStyleManager"
@@ -314,6 +314,7 @@
                     serviceImplementation="com.intellij.ide.util.gotoByName.GotoFileConfiguration"/>
     <projectService serviceInterface="com.intellij.ide.util.gotoByName.GotoClassSymbolConfiguration"
                     serviceImplementation="com.intellij.ide.util.gotoByName.GotoClassSymbolConfiguration"/>
+    <preloadingActivity implementation="com.intellij.ide.actions.GotoClassPresentationUpdater"/>
 
     <projectService serviceInterface="com.intellij.ide.hierarchy.HierarchyBrowserManager"
                     serviceImplementation="com.intellij.ide.hierarchy.HierarchyBrowserManager"/>
@@ -1015,6 +1016,8 @@
     <runDashboardGroupingRule implementation="com.intellij.execution.dashboard.tree.StatusDashboardGroupingRule"/>
     <runDashboardGroupingRule implementation="com.intellij.execution.dashboard.tree.FolderDashboardGroupingRule"/>
     <runDashboardGroupingRule implementation="com.intellij.execution.dashboard.tree.RunConfigurationDashboardGroupingRule"/>
+    <projectService serviceInterface="com.intellij.execution.ui.RunContentManager"
+                    serviceImplementation="com.intellij.execution.ui.RunContentManagerImpl"/>
 
     <previewPanelProvider implementation="com.intellij.openapi.fileEditor.impl.FilePreviewPanelProvider"/>
     <previewPanelProvider implementation="com.intellij.codeInsight.documentation.DocumentationPreviewPanelProvider"/>

@@ -344,6 +344,12 @@ public class PyTypingTest extends PyTestCase {
            "        pass\n");
   }
 
+  // PY-21191
+  public void testTypeCommentWithParenthesizedTuple() {
+    doTest("int",
+           "expr, x = undefined()  # type: (int, str) ");
+  }
+
   // PY-16585
   public void testCommentAfterComprehensionInAssignment() {
     doTest("int",
@@ -393,6 +399,18 @@ public class PyTypingTest extends PyTestCase {
   public void testVariableTypeCommentInjectionTuple() {
     doTestInjectedText("x, y = undefined()  # type: int,<caret> int", 
                        "int, int");
+  }
+
+  // PY-21195
+  public void testVariableTypeCommentWithSubsequentComment() {
+    doTestInjectedText("x, y = undefined()  # type: int,<caret> str # comment",
+                       "int, str");
+  }
+
+  // PY-21195
+  public void testVariableTypeCommentWithSubsequentCommentWithoutSpacesInBetween() {
+    doTestInjectedText("x, y = undefined()  # type: int,<caret> str# comment",
+                       "int, str");
   }
 
   // PY-22620

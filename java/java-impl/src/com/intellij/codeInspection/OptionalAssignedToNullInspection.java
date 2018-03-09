@@ -1,21 +1,32 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.MethodCallUtils;
-import com.siyeh.ig.psiutils.TypeUtils;
+import com.intellij.util.ObjectUtils;
+import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 /**
  * @author Tagir Valeev
  */
 public class OptionalAssignedToNullInspection extends AbstractBaseJavaLocalInspectionTool {
+  public boolean WARN_ON_COMPARISON = true;
+
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel("Report comparison of Optional with null", this, "WARN_ON_COMPARISON");
+  }
+
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
@@ -67,6 +78,18 @@ public class OptionalAssignedToNullInspection extends AbstractBaseJavaLocalInspe
                    InspectionsBundle.message("inspection.null.value.for.optional.context.declaration"));
       }
 
+      @Override
+      public void visitBinaryExpression(PsiBinaryExpression binOp) {
+        if (!WARN_ON_COMPARISON) return;
+        PsiExpression value = ExpressionUtils.getValueComparedWithNull(binOp);
+        if (value != null && TypeUtils.isOptional(value.getType())) {
+          holder.registerProblem(binOp, "Optional value is compared with null",
+                                 new ReplaceWithIsPresentFix(),
+                                 new SetInspectionOptionFix(OptionalAssignedToNullInspection.this, "WARN_ON_COMPARISON",
+                                                            "Do not warn when comparing Optional with null", false));
+        }
+      }
+
       private void checkNulls(PsiType type, PsiExpression expression, String declaration) {
         if (expression != null && TypeUtils.isOptional(type)) {
           ExpressionUtils.nonStructuralChildren(expression).filter(ExpressionUtils::isNullLiteral)
@@ -115,8 +138,28 @@ public class OptionalAssignedToNullInspection extends AbstractBaseJavaLocalInspe
       PsiElement element = descriptor.getStartElement();
       if (!(element instanceof PsiExpression)) return;
       String emptyCall = myTypeName + "." + myTypeParameter + myMethodName + "()";
-      PsiElement result = element.replace(JavaPsiFacade.getElementFactory(project).createExpressionFromText(emptyCall, element));
+      PsiElement result = new CommentTracker().replaceAndRestoreComments(element, emptyCall);
       PsiDiamondTypeUtil.removeRedundantTypeArguments(result);
+    }
+  }
+
+  private static class ReplaceWithIsPresentFix implements LocalQuickFix {
+    @Nls
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Replace with 'isPresent()' call";
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      PsiBinaryExpression binOp = ObjectUtils.tryCast(descriptor.getStartElement(), PsiBinaryExpression.class);
+      if (binOp == null) return;
+      PsiExpression value = ExpressionUtils.getValueComparedWithNull(binOp);
+      if (value == null || !TypeUtils.isOptional(value.getType())) return;
+      CommentTracker ct = new CommentTracker();
+      String negation = binOp.getOperationTokenType().equals(JavaTokenType.NE) ? "" : "!";
+      ct.replaceAndRestoreComments(binOp, negation + ct.text(value, ParenthesesUtils.METHOD_CALL_PRECEDENCE) + ".isPresent()");
     }
   }
 }

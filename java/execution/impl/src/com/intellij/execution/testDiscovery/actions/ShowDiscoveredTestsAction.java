@@ -1,8 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testDiscovery.actions;
 
-import com.intellij.codeInsight.actions.FormatChangedTextUtil;
-import com.intellij.codeInsight.navigation.ListBackgroundUpdaterTask;
 import com.intellij.execution.Executor;
 import com.intellij.execution.JavaTestConfigurationBase;
 import com.intellij.execution.actions.ConfigurationContext;
@@ -23,7 +21,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.IconButton;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -34,21 +31,25 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
-import com.intellij.ui.CollectionListModel;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.InplaceButton;
-import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.AbstractPopup;
-import com.intellij.ui.popup.HintUpdateSupply;
+import com.intellij.usages.UsageView;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PsiNavigateUtil;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.JBDimension;
+import com.intellij.util.ui.tree.TreeModelAdapter;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.uast.*;
+import org.jetbrains.uast.UMethod;
+import org.jetbrains.uast.UastContextKt;
+
 import javax.swing.*;
+import javax.swing.event.TreeModelEvent;
+import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
 import java.util.Objects;
@@ -58,6 +59,8 @@ import static com.intellij.openapi.actionSystem.CommonDataKeys.EDITOR;
 import static com.intellij.openapi.actionSystem.CommonDataKeys.PSI_FILE;
 
 public class ShowDiscoveredTestsAction extends AnAction {
+  private static final String RUN_ALL_ACTION_TEXT = "Run All";
+
   @Override
   public void update(AnActionEvent e) {
     e.getPresentation().setEnabledAndVisible(Registry.is(TestDiscoveryExtension.TEST_DISCOVERY_REGISTRY_KEY) && e.getProject() != null && findMethodAtCaret(e) != null);
@@ -87,7 +90,9 @@ public class ShowDiscoveredTestsAction extends AnAction {
     Editor editor = e.getData(EDITOR);
     PsiFile file = e.getData(PSI_FILE);
     if (editor == null || file == null) return null;
-    UMethod uMethod = UastContextKt.findUElementAt(file, editor.getCaretModel().getOffset(), UMethod.class);
+    PsiElement at = file.findElementAt(editor.getCaretModel().getOffset());
+    PsiElement prev = at == null ? null : PsiTreeUtil.prevVisibleLeaf(at);
+    UMethod uMethod = UastContextKt.getUastParentOfType(prev, UMethod.class);
     return uMethod == null ? null : ObjectUtils.tryCast(uMethod.getJavaPsi(), PsiMethod.class);
   }
 
@@ -95,44 +100,27 @@ public class ShowDiscoveredTestsAction extends AnAction {
                                   @NotNull DataContext dataContext,
                                   @NotNull String title,
                                   @NotNull PsiMethod... methods) {
-    CollectionListModel<PsiElement> model = new CollectionListModel<>();
-    final JBList<PsiElement> list = new JBList<>(model);
-    //list.setFixedCellHeight();
-    HintUpdateSupply.installSimpleHintUpdateSupply(list);
-    list.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-
+    final DiscoveredTestsTree tree = new DiscoveredTestsTree(title);
     String initTitle = "Tests for " + title;
-    DefaultPsiElementCellRenderer renderer = new DefaultPsiElementCellRenderer();
 
     Ref<JBPopup> ref = new Ref<>();
 
     ConfigurationContext context = ConfigurationContext.getFromContext(dataContext);
 
-    InplaceButton runButton = new InplaceButton(new IconButton("Run All", AllIcons.Actions.Execute), __ -> {
-      Executor executor = DefaultRunExecutor.getRunExecutorInstance();
-      List<Module> containingModules =
-        model.getItems().stream()
-             .map(element -> ModuleUtilCore.findModuleForPsiElement(element))
-             .filter(module -> module != null)
-             .collect(Collectors.toList());
-      Module targetModule = TestDiscoveryConfigurationProducer.detectTargetModule(containingModules, project);
-      //first producer with results will be picked
-      StreamEx.of(getProducers(project)).cross(methods)
-              .mapKeyValue((producer, method) -> producer.createDelegate(method, targetModule).findOrCreateConfigurationFromContext(context))
-              .filter(Objects::nonNull)
-              .findFirst()
-              .ifPresent(configuration -> {
-                ExecutionUtil.runConfiguration(configuration.getConfigurationSettings(), executor);
-                JBPopup popup = ref.get();
-                if (popup != null) {
-                  popup.cancel();
-                }
-              });
+    InplaceButton runButton = new InplaceButton(new IconButton(RUN_ALL_ACTION_TEXT, AllIcons.Actions.Execute), __ -> {
+      runAllDiscoveredTests(project, tree, ref, context, methods);
     });
 
     ActionListener pinActionListener = __ -> {
-      PsiElement[] elements = model.getItems().toArray(PsiElement.EMPTY_ARRAY);
-      FindUtil.showInUsageView(null, elements, initTitle, project);
+      UsageView view = FindUtil.showInUsageView(null, tree.getTestMethods(), initTitle, project);
+      if (view != null) {
+        view.addButtonToLowerPane(new AbstractAction(RUN_ALL_ACTION_TEXT, AllIcons.Actions.Execute) {
+          @Override
+          public void actionPerformed(ActionEvent e) {
+            runAllDiscoveredTests(project, tree, ref, context, methods);
+          }
+        });
+      }
       JBPopup popup = ref.get();
       if (popup != null) {
         popup.cancel();
@@ -148,39 +136,27 @@ public class ShowDiscoveredTestsAction extends AnAction {
     CompositeActiveComponent component = new CompositeActiveComponent(runButton, pinButton);
 
     final PopupChooserBuilder builder =
-      new PopupChooserBuilder(list)
+      new PopupChooserBuilder(tree)
         .setTitle(initTitle)
         .setMovable(true)
         .setResizable(true)
         .setCommandButton(component)
-        .setItemChoosenCallback(() -> PsiNavigateUtil.navigate(list.getSelectedValue()))
+        .setItemChoosenCallback(() -> PsiNavigateUtil.navigate(tree.getSelectedElement()))
         .registerKeyboardAction(findUsageKeyStroke, pinActionListener)
         .setMinSize(new JBDimension(500, 300));
 
-    renderer.installSpeedSearch(builder, true);
-
     JBPopup popup = builder.createPopup();
     ref.set(popup);
-
-    list.setEmptyText("No tests captured for " + title);
-    list.setPaintBusy(true);
+    tree.getModel().addTreeModelListener(new TreeModelAdapter() {
+      @Override
+      protected void process(TreeModelEvent event, EventType type) {
+        ((AbstractPopup)popup).setCaption("Found " + tree.getTestCount() + " Tests for " + title);
+      }
+    });
 
     popup.showInBestPositionFor(dataContext);
 
-    JavaPsiFacade javaFacade = JavaPsiFacade.getInstance(project);
     GlobalSearchScope scope = GlobalSearchScope.projectScope(project);
-    //noinspection unchecked
-    list.setCellRenderer(renderer);
-
-    ListBackgroundUpdaterTask loadTestsTask = new ListBackgroundUpdaterTask(project, "Load tests", renderer.getComparator()) {
-      @Override
-      public String getCaption(int size) {
-        return "Found " + size + " Tests for " + title;
-      }
-    };
-
-    loadTestsTask.init((AbstractPopup)popup, list, new Ref<>());
-
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       for (PsiMethod method : methods) {
         Couple<String> methodFqnName = ReadAction.compute(() -> getMethodQualifiedName(method));
@@ -197,7 +173,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
               return cc == null ? null : ArrayUtil.getFirstElement(cc.findMethodsByName(testMethod, false));
             });
             if (psiMethod != null) {
-              loadTestsTask.updateComponent(psiMethod);
+              tree.addTest(ReadAction.compute(() -> psiMethod.getContainingClass()), psiMethod);
             }
           });
         }
@@ -205,9 +181,29 @@ public class ShowDiscoveredTestsAction extends AnAction {
 
       EdtInvocationManager.getInstance().invokeLater(() -> {
         popup.pack(true, true);
-        list.setPaintBusy(false);
+        tree.setPaintBusy(false);
       });
     });
+  }
+
+  private static void runAllDiscoveredTests(@NotNull Project project,
+                                            DiscoveredTestsTree tree,
+                                            Ref<JBPopup> ref,
+                                            ConfigurationContext context, @NotNull PsiMethod[] methods) {
+    Executor executor = DefaultRunExecutor.getRunExecutorInstance();
+    Module targetModule = TestDiscoveryConfigurationProducer.detectTargetModule(tree.getContainingModules(), project);
+    //first producer with results will be picked
+    StreamEx.of(getProducers(project)).cross(methods)
+            .mapKeyValue((producer, method) -> producer.createDelegate(method, targetModule).findOrCreateConfigurationFromContext(context))
+            .filter(Objects::nonNull)
+            .findFirst()
+            .ifPresent(configuration -> {
+              ExecutionUtil.runConfiguration(configuration.getConfigurationSettings(), executor);
+              JBPopup popup = ref.get();
+              if (popup != null) {
+                popup.cancel();
+              }
+            });
   }
 
   @Nullable

@@ -228,40 +228,37 @@ public class ConsoleHistoryController {
     if (regularMode && myMultiline && StringUtil.isEmptyOrSpaces(command.getText())) return;
     final Editor editor = myConsole.getCurrentEditor();
     final Document document = editor.getDocument();
-    new WriteCommandAction.Simple(myConsole.getProject()) {
-      @Override
-      public void run() {
-        if (storeUserText) {
-          String text = document.getText();
-          if (Comparing.equal(command.getText(), text) && myHelper.getContent() != null) return;
-          myHelper.setContent(text);
-          myHelper.getModel().setContent(text);
-        }
-        String text = StringUtil.notNullize(command.getText());
-        int offset;
-        if (regularMode) {
-          if (myMultiline) {
-            offset = insertTextMultiline(text, editor, document);
-          }
-          else {
-            document.setText(text);
-            offset = command.getOffset() == -1 ? document.getTextLength() : command.getOffset();
-          }
+    WriteCommandAction.writeCommandAction(myConsole.getProject()).run(() -> {
+      if (storeUserText) {
+        String text = document.getText();
+        if (Comparing.equal(command.getText(), text) && myHelper.getContent() != null) return;
+        myHelper.setContent(text);
+        myHelper.getModel().setContent(text);
+      }
+      String text = StringUtil.notNullize(command.getText());
+      int offset;
+      if (regularMode) {
+        if (myMultiline) {
+          offset = insertTextMultiline(text, editor, document);
         }
         else {
-          offset = 0;
-          try {
-            document.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
-            document.setText(text);
-          }
-          finally {
-            document.putUserData(UndoConstants.DONT_RECORD_UNDO, null);
-          }
+          document.setText(text);
+          offset = command.getOffset() == -1 ? document.getTextLength() : command.getOffset();
         }
-        editor.getCaretModel().moveToOffset(offset);
-        editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       }
-    }.execute();
+      else {
+        offset = 0;
+        try {
+          document.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
+          document.setText(text);
+        }
+        finally {
+          document.putUserData(UndoConstants.DONT_RECORD_UNDO, null);
+        }
+      }
+      editor.getCaretModel().moveToOffset(offset);
+      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    });
   }
 
   protected int insertTextMultiline(String text, Editor editor, Document document) {

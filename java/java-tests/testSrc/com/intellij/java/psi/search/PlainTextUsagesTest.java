@@ -27,7 +27,7 @@ public class PlainTextUsagesTest extends PsiTestCase {
 
     String root = JavaTestUtil.getJavaTestDataPath() + "/psi/search/plainTextUsages/" + getTestName(true);
     PsiTestUtil.removeAllRoots(myModule, IdeaTestUtil.getMockJdk17());
-    PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete);
+    createTestProjectStructure( root);
   }
 
   public void testSimple() {

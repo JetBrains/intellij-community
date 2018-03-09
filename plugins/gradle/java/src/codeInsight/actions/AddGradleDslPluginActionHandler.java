@@ -68,28 +68,28 @@ class AddGradleDslPluginActionHandler implements CodeInsightActionHandler {
     list.setCellRenderer(new MyListCellRenderer());
     Runnable runnable = () -> {
       final Pair selected = (Pair)list.getSelectedValue();
-      new WriteCommandAction.Simple(project, GradleBundle.message("gradle.codeInsight.action.apply_plugin.text"), file) {
-        @Override
-        protected void run() {
-          if (selected == null) return;
-          GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
-          GrStatement grStatement = factory.createStatementFromText(String.format("apply plugin: '%s'", selected.first), null);
+      WriteCommandAction.writeCommandAction(project, file).withName(GradleBundle.message("gradle.codeInsight.action.apply_plugin.text"))
+                        .run(() -> {
+                          if (selected == null) return;
+                          GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
+                          GrStatement grStatement =
+                            factory.createStatementFromText(String.format("apply plugin: '%s'", selected.first), null);
 
-          PsiElement anchor = file.findElementAt(editor.getCaretModel().getOffset());
-          PsiElement currentElement = PsiTreeUtil.getParentOfType(anchor, GrClosableBlock.class, GroovyFile.class);
-          if (currentElement != null) {
-            currentElement.addAfter(grStatement, anchor);
-          }
-          else {
-            file.addAfter(grStatement, file.findElementAt(editor.getCaretModel().getOffset() - 1));
-          }
-          PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-          Document document = documentManager.getDocument(file);
-          if (document != null) {
-            documentManager.commitDocument(document);
-          }
-        }
-      }.execute();
+                          PsiElement anchor = file.findElementAt(editor.getCaretModel().getOffset());
+                          PsiElement currentElement = PsiTreeUtil.getParentOfType(anchor, GrClosableBlock.class, GroovyFile.class);
+                          if (currentElement != null) {
+                            currentElement.addAfter(grStatement, anchor);
+                          }
+                          else {
+                            file.addAfter(grStatement, file.findElementAt(editor.getCaretModel().getOffset() - 1));
+                          }
+                          PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+                          Document document = documentManager.getDocument(file);
+                          if (document != null) {
+                            documentManager.commitDocument(document);
+                          }
+                          ;
+                        });
     };
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {

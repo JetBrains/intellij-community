@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.JavaTestUtil;
@@ -68,7 +66,7 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
 
     String root = JavaTestUtil.getJavaTestDataPath() + "/codeEditor/smartPsiElementPointers";
     PsiTestUtil.removeAllRoots(myModule, IdeaTestUtil.getMockJdk17());
-    myRoot = PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete);
+    myRoot = createTestProjectStructure( root);
   }
 
   public void testChangeInDocument() {
