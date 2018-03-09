@@ -114,7 +114,7 @@ class FeatureEventLogSerializationTest {
     secondBatch.add(LogEvent("session-id", "-1", "recorder-id-1", "1", "fifth"))
     secondBatch.add(LogEvent("session-id", "-1", "recorder-id-2", "1", "sixth"))
 
-    testDeserialization(firstBatch, secondBatch)//events, expected)
+    testDeserialization(firstBatch, secondBatch)
   }
 
   @Test
@@ -145,7 +145,7 @@ class FeatureEventLogSerializationTest {
         out.append(LogEventSerializer.toString(event)).append("\n")
       }
       FileUtil.writeToFile(log, out.toString())
-      val actual = LogEventRecordRequest.create(log, "IU", "user-id", 3)
+      val actual = LogEventRecordRequest.create(log, "IU", "user-id", 500)
       assertEquals(expected, actual)
     }
     finally {
