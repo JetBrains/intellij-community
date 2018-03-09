@@ -119,10 +119,20 @@ public class DefaultExternalSourceDirectorySet implements ExternalSourceDirector
     return myPatterns.getExcludes();
   }
 
+  public void setExcludes(Set<String> excludes) {
+    myPatterns.getExcludes().clear();
+    myPatterns.getExcludes().addAll(excludes);
+  }
+
   @NotNull
   @Override
   public Set<String> getIncludes() {
     return myPatterns.getIncludes();
+  }
+
+  public void setIncludes(Set<String> includes) {
+    myPatterns.getIncludes().clear();
+    myPatterns.getIncludes().addAll(includes);
   }
 
   @NotNull
