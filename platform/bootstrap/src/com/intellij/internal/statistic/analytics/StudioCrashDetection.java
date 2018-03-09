@@ -120,15 +120,17 @@ public class StudioCrashDetection {
           return pathname.getName().startsWith(PLATFORM_PREFIX) && !pathname.getAbsolutePath().equals(recordFile);
         }
       });
-    ArrayList<String> descriptions = new ArrayList<String>();
+    ArrayList<String> descriptions = new ArrayList<>();
     if (previousRecords != null) {
       for (File record : previousRecords) {
+        String description = "<unknown>";
         try {
-          descriptions.add(FileUtil.loadFile(record));
-        } catch (IOException ex) {
-          descriptions.add("<unknown>");
+          description = FileUtil.loadFile(record);
+        } catch (IOException ignored) {
         }
-        FileUtil.delete(record);
+        if (FileUtil.delete(record)) {
+          descriptions.add(description);
+        }
       }
     }
     return descriptions;
