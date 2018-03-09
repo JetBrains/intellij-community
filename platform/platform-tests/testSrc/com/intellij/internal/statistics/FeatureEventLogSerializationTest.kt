@@ -4,7 +4,8 @@ package com.intellij.internal.statistics
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.intellij.internal.statistic.eventLog.LogEvent
-import com.intellij.internal.statistic.eventLog.LogEventContent
+import com.intellij.internal.statistic.eventLog.LogEventRecord
+import com.intellij.internal.statistic.eventLog.LogEventRecordRequest
 import com.intellij.internal.statistic.eventLog.LogEventSerializer
 import com.intellij.openapi.util.io.FileUtil
 import org.junit.Test
@@ -54,12 +55,28 @@ class FeatureEventLogSerializationTest {
   }
 
   @Test
-  fun testEventContent() {
+  fun testEventRequestWithSingleRecord() {
     val events = ArrayList<LogEvent>()
     events.add(LogEvent("session-id", "-1", "recorder-id", "1", "first-type"))
     events.add(LogEvent("session-id", "-1", "recorder-id-2", "1", "second-type"))
 
-    val json = JsonParser().parse(LogEventSerializer.toString(eventBatch(events))).asJsonObject
+    val json = JsonParser().parse(LogEventSerializer.toString(requestByEvents(events))).asJsonObject
+    assertLogEventContentIsValid(json)
+  }
+
+  @Test
+  fun testEventRequestWithMultipleRecords() {
+    val first = ArrayList<LogEvent>()
+    first.add(LogEvent("session-id", "-1", "recorder-id", "1", "first-type"))
+    first.add(LogEvent("session-id", "-1", "recorder-id-2", "1", "second-type"))
+    val second = ArrayList<LogEvent>()
+    second.add(LogEvent("session-id", "-1", "recorder-id", "1", "third-type"))
+    second.add(LogEvent("session-id", "-1", "recorder-id-2", "1", "forth-type"))
+    val records = ArrayList<LogEventRecord>()
+    records.add(LogEventRecord(first))
+    records.add(LogEventRecord(second))
+
+    val json = JsonParser().parse(LogEventSerializer.toString(requestByRecords(records))).asJsonObject
     assertLogEventContentIsValid(json)
   }
 
@@ -114,11 +131,12 @@ class FeatureEventLogSerializationTest {
 
   private fun testDeserialization(vararg batches: List<LogEvent>) {
     val events = ArrayList<LogEvent>()
-    val expected = ArrayList<LogEventContent>()
+    val records = ArrayList<LogEventRecord>()
     for (batch in batches) {
       events.addAll(batch)
-      expected.add(eventBatch(batch))
+      records.add(LogEventRecord(batch))
     }
+    val expected = requestByRecords(records)
 
     val log = FileUtil.createTempFile("feature-event-log", ".log")
     try {
@@ -127,11 +145,8 @@ class FeatureEventLogSerializationTest {
         out.append(LogEventSerializer.toString(event)).append("\n")
       }
       FileUtil.writeToFile(log, out.toString())
-      val actual = LogEventContent.create(log, "IU", "user-id", 3)
-      assertEquals(expected.size, actual.size)
-      for ((index, content) in actual.withIndex()) {
-        assertEquals(expected.get(index).events, content.events)
-      }
+      val actual = LogEventRecordRequest.create(log, "IU", "user-id", 3)
+      assertEquals(expected, actual)
     }
     finally {
       FileUtil.delete(log)
@@ -150,11 +165,16 @@ class FeatureEventLogSerializationTest {
     assert(json.get("user").isJsonPrimitive)
     assert(json.get("product").isJsonPrimitive)
 
-    assert(json.get("events").isJsonArray)
-    val events = json.get("events").asJsonArray
-    for (event in events) {
-      assert(event.isJsonObject)
-      assertLogEventIsValid(event.asJsonObject)
+    assert(json.get("records").isJsonArray)
+    val records = json.get("records").asJsonArray
+    for (record in records) {
+      assert(record.isJsonObject)
+      assert(record.asJsonObject.get("events").isJsonArray)
+      val events = record.asJsonObject.get("events").asJsonArray
+      for (event in events) {
+        assert(event.isJsonObject)
+        assertLogEventIsValid(event.asJsonObject)
+      }
     }
   }
 
@@ -190,7 +210,13 @@ class FeatureEventLogSerializationTest {
     return str.indexOf(" ") == -1 && str.indexOf("\t") == -1 && str.indexOf("\"") == -1
   }
 
-  private fun eventBatch(events: List<LogEvent>) : LogEventContent {
-    return LogEventContent("IU", "user-id", events)
+  private fun requestByEvents(events: List<LogEvent>) : LogEventRecordRequest {
+    val records = ArrayList<LogEventRecord>()
+    records.add(LogEventRecord(events))
+    return LogEventRecordRequest("IU", "user-id", records)
+  }
+
+  private fun requestByRecords(records: List<LogEventRecord>) : LogEventRecordRequest {
+    return LogEventRecordRequest("IU", "user-id", records)
   }
 }
