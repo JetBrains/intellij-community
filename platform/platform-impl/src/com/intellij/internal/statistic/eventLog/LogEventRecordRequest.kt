@@ -1,5 +1,4 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog
 
 import com.google.gson.JsonSyntaxException
@@ -15,21 +14,24 @@ import java.util.*
 class LogEventRecordRequest(val product : String, val user: String, val records: List<LogEventRecord>) {
 
   companion object {
-    private const val BATCH_SIZE = 500
+    private const val RECORD_SIZE = 1000 * 1000 // 1000KB
     private val LOG = Logger.getInstance(LogEventRecordRequest::class.java)
 
     fun create(file: File): LogEventRecordRequest? {
-      return create(file, ApplicationInfo.getInstance().build.productCode, PermanentInstallationID.get(), BATCH_SIZE)
+      return create(file, ApplicationInfo.getInstance().build.productCode, PermanentInstallationID.get(), RECORD_SIZE)
     }
 
-    fun create(file: File, product: String, user: String, batchSize: Int): LogEventRecordRequest? {
+    fun create(file: File, product: String, user: String, maxRecordSize: Int): LogEventRecordRequest? {
       try {
         val records = ArrayList<LogEventRecord>()
         BufferedReader(FileReader(file.path)).use { reader ->
-          var events = readNextBatch(reader, batchSize)
+          val sizeEstimator = LogEventRecordSizeEstimator(product, user)
+          var events = ArrayList<LogEvent>()
+          var line = fillNextBatch(reader, reader.readLine(), events, sizeEstimator, maxRecordSize)
           while (!events.isEmpty()) {
             records.add(LogEventRecord(events))
-            events = readNextBatch(reader, batchSize)
+            events = ArrayList()
+            line = fillNextBatch(reader, line, events, sizeEstimator, maxRecordSize)
           }
         }
         return LogEventRecordRequest(product, user, records)
@@ -43,14 +45,19 @@ class LogEventRecordRequest(val product : String, val user: String, val records:
       return null
     }
 
-    private fun readNextBatch(reader : BufferedReader, batchSize: Int) : List<LogEvent> {
-      val events = ArrayList<LogEvent>()
-      var line = reader.readLine()
-      while (line != null) {
+    private fun fillNextBatch(reader: BufferedReader,
+                              firstLine: String?,
+                              events: MutableList<LogEvent>,
+                              estimator: LogEventRecordSizeEstimator,
+                              maxRecordSize: Int) : String? {
+      var recordSize = 0
+      var line = firstLine
+      while (line != null && recordSize + estimator.estimate(line) < maxRecordSize) {
+        recordSize += estimator.estimate(line)
         events.add(LogEventSerializer.fromString(line))
-        line = if (events.size < batchSize) reader.readLine() else null
+        line = reader.readLine()
       }
-      return events
+      return line
     }
   }
 
@@ -89,5 +96,13 @@ class LogEventRecord(val events: List<LogEvent>) {
 
   override fun hashCode(): Int {
     return events.hashCode()
+  }
+}
+
+class LogEventRecordSizeEstimator(product : String, user: String) {
+  private val formatAdditionalSize = product.length + user.length + 2
+
+  fun estimate(line: String) : Int {
+    return line.length + formatAdditionalSize
   }
 }
