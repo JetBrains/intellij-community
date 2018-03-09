@@ -3,13 +3,10 @@ package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInspection.AnonymousCanBeLambdaInspection;
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
-
-import java.util.Calendar;
 
 public class LightAdvLVTIHighlightingTest extends LightDaemonAnalyzerTestCase {
   private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/advLVTI";
@@ -36,7 +33,6 @@ public class LightAdvLVTIHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testStandaloneInVarContext() { doTest(); }
   public void testUpwardProjection() { doTest(); }
 
-  @Bombed(user = "anna", day = 12, month = Calendar.MARCH)
   public void testVarInLambdaParameters() {
     setLanguageLevel(LanguageLevel.JDK_X);
     doTest();
