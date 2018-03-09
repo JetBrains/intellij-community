@@ -59,7 +59,7 @@ public class EventLogStatisticsService implements StatisticsService {
         final String error = validate(request, file);
         if (StringUtil.isNotEmpty(error) || request == null) {
           if (LOG.isTraceEnabled()) {
-            LOG.trace(error);
+            LOG.trace(file.getName() + "-> " + error);
           }
           toRemove.add(file);
           continue;
@@ -79,7 +79,7 @@ public class EventLogStatisticsService implements StatisticsService {
         }
 
         if (LOG.isTraceEnabled()) {
-          LOG.trace(getResponseMessage(response));
+          LOG.trace(file.getName() + " -> " + getResponseMessage(response));
         }
       }
 
