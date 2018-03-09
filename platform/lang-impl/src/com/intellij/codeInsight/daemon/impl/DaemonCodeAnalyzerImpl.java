@@ -350,7 +350,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
 
     myUpdateRunnableFuture.cancel(false);
 
-    final DaemonProgressIndicator progress = createUpdateProgress();
+    final DaemonProgressIndicator progress = createUpdateProgress(map.keySet());
     myPassExecutorService.submitPasses(map, progress);
     try {
       long start = System.currentTimeMillis();
@@ -802,7 +802,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
       // cancel all after calling createPasses() since there are perverts {@link com.intellij.util.xml.ui.DomUIFactoryImpl} who are changing PSI there
       cancelUpdateProgress(true, "Cancel by alarm");
       myUpdateRunnableFuture.cancel(false);
-      DaemonProgressIndicator progress = createUpdateProgress();
+      DaemonProgressIndicator progress = createUpdateProgress(passes.keySet());
       myPassExecutorService.submitPasses(passes, progress);
     }
   };
@@ -849,7 +849,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
   }
 
   @NotNull
-  private synchronized DaemonProgressIndicator createUpdateProgress() {
+  private synchronized DaemonProgressIndicator createUpdateProgress(Collection<FileEditor> fileEditors) {
     DaemonProgressIndicator old = myUpdateProgress;
     if (!old.isCanceled()) {
       old.cancel();
@@ -858,12 +858,13 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
       @Override
       public void stopIfRunning() {
         super.stopIfRunning();
-        myProject.getMessageBus().syncPublisher(DAEMON_EVENT_TOPIC).daemonFinished();
+        myProject.getMessageBus().syncPublisher(DAEMON_EVENT_TOPIC).daemonFinished(fileEditors);
         HighlightingSessionImpl.clearProgressIndicator(this);
       }
     };
     progress.setModalityProgress(null);
     progress.start();
+    myProject.getMessageBus().syncPublisher(DAEMON_EVENT_TOPIC).daemonStarting(fileEditors);
     myUpdateProgress = progress;
     return progress;
   }
