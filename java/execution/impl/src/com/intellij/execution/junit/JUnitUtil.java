@@ -209,7 +209,7 @@ public class JUnitUtil {
 
   public static boolean isJUnit4TestClass(final PsiClass psiClass, boolean checkAbstract) {
     final PsiModifierList modifierList = psiClass.getModifierList();
-    if (modifierList == null) return false;
+    if (modifierList == null || JavaExecutionUtil.findModule(psiClass) == null) return false;
     final PsiClass topLevelClass = PsiTreeUtil.getTopmostParentOfType(modifierList, PsiClass.class);
     if (topLevelClass != null) {
       if (AnnotationUtil.isAnnotated(topLevelClass, RUN_WITH, CHECK_HIERARCHY)) {
@@ -237,7 +237,7 @@ public class JUnitUtil {
 
   public static boolean isJUnit5TestClass(@NotNull final PsiClass psiClass, boolean checkAbstract) {
     final PsiModifierList modifierList = psiClass.getModifierList();
-    if (modifierList == null) return false;
+    if (modifierList == null || JavaExecutionUtil.findModule(psiClass) == null) return false;
 
     if (psiClass.getContainingClass() != null && AnnotationUtil.isAnnotated(psiClass, JUNIT5_NESTED, 0)) {
       return true;
