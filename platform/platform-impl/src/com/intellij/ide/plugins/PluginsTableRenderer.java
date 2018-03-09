@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.icons.AllIcons;
@@ -22,7 +8,6 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.codeStyle.NameUtil;
@@ -38,7 +23,6 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableModel;
 import java.awt.*;
@@ -71,18 +55,14 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
     myPluginDescriptor = pluginDescriptor;
     myPluginsView = !showFullInfo;
 
-    final Font smallFont;
-    if (SystemInfo.isMac) {
-      smallFont = UIUtil.getLabelFont(UIUtil.FontSize.MINI);
-    } else {
-      smallFont = UIUtil.getLabelFont().deriveFont(Math.max(UISettings.getInstance().getFontSize() - JBUI.scale(3), JBUI.scaleFontSize(10)));
-    }
-    myName.setFont(UIUtil.getLabelFont().deriveFont(UISettings.getInstance().getFontSize()));
+    Font smallFont = UIUtil.getLabelFont(UIUtil.FontSize.MINI);
+    myName.setFont(UIUtil.getLabelFont().deriveFont((float)UISettings.getInstance().getFontSize()));
     myStatus.setFont(smallFont);
     myCategory.setFont(smallFont);
     myDownloads.setFont(smallFont);
-    myStatus.setText("");
     myLastUpdated.setFont(smallFont);
+
+    myStatus.setText("");
 
     if (myPluginsView || pluginDescriptor.getDownloads() == null || !(pluginDescriptor instanceof PluginNode)) {
       myPanel.remove(myRightPanel);
@@ -91,7 +71,7 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
       myInfoPanel.remove(myBottomPanel);
     }
 
-    myPanel.setBorder(UIUtil.isJreHiDPI(myPanel) ? new EmptyBorder(4, 3, 4, 3) : new EmptyBorder(2, 3, 2, 3));
+    myPanel.setBorder(UIUtil.isJreHiDPI(myPanel) ? JBUI.Borders.empty(4, 3) : JBUI.Borders.empty(2, 3));
   }
 
   private void createUIComponents() {
