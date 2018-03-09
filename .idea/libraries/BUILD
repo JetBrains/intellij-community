@@ -1030,8 +1030,8 @@ java_library(
     name = "gradle-api",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools/external/gradle:gradle-api-3.4.1"],
-    runtime_deps = ["//tools/external/gradle:gradle-api-3.4.1"],
+    exports = ["//tools/base/build-system:gradle-api_neverlink"],
+    runtime_deps = ["//tools/base/build-system:gradle-api_neverlink"],
 )
 
 java_library(
