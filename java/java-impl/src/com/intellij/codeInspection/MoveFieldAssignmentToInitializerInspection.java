@@ -254,7 +254,7 @@ public class MoveFieldAssignmentToInitializerInspection extends AbstractBaseJava
       if (owner instanceof PsiClassInitializer) {
         PsiCodeBlock body = ((PsiClassInitializer)owner).getBody();
         if(body.isEmpty() && Arrays.stream(body.getChildren()).noneMatch(PsiComment.class::isInstance)) {
-          owner.delete();
+          new CommentTracker().deleteAndRestoreComments(owner);
         }
       }
     }
