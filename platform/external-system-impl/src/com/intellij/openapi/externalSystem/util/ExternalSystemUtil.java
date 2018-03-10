@@ -537,6 +537,9 @@ public class ExternalSystemUtil {
             }
           }
         };
+        if (callback != null) {
+          callback.onStart(myTask.getId());
+        }
         myTask.execute(indicator, ArrayUtil.prepend(taskListener, ExternalSystemTaskNotificationListener.EP_NAME.getExtensions()));
         if (project.isDisposed()) return;
 

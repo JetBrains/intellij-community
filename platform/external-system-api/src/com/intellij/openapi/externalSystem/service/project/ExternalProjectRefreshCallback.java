@@ -29,6 +29,13 @@ import org.jetbrains.annotations.Nullable;
 */
 public interface ExternalProjectRefreshCallback {
 
+  default void onStart(@NotNull ExternalSystemTaskId externalTaskId) {
+    onStart();
+  }
+
+  default void onStart() {
+  }
+
   /**
    * Is expected to be called when
    * {@link ExternalSystemProjectResolver#resolveProjectInfo(ExternalSystemTaskId, String, boolean, ExternalSystemExecutionSettings, ExternalSystemTaskNotificationListener)}
