@@ -128,7 +128,14 @@ public class CucumberJvm2SMFormatter implements Formatter {
 
   private static void handleTestStepFinished(TestStepFinished event) {
     if (event.testStep.isHook()) {
-      return;
+      if (event.result.getStatus() == FAILED) {
+        outCommand(String.format(TEMPLATE_TEST_STARTED, getCurrentTime(), "", getStepName(event.testStep)));
+
+        outCommand(String.format(TEMPLATE_TEST_FAILED, getCurrentTime(), "",
+                                 escape(event.result.getErrorMessage()), getStepName(event.testStep), ""));
+      } else {
+        return;
+      }
     }
     if (event.result.getStatus() == PASSED) {
       // write nothing
@@ -174,7 +181,13 @@ public class CucumberJvm2SMFormatter implements Formatter {
   }
 
   private static String getStepName(TestStep step) {
-    return escape(step.getStepText());
+    String stepName;
+    if (step.isHook()) {
+      stepName = "Hook: " + step.getHookType().toString();
+    } else {
+      stepName = step.getStepText();
+    }
+    return escape(stepName);
   }
 
   private static void outCommand(String s) {
