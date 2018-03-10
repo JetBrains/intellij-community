@@ -275,6 +275,11 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
   }
 
   private void onSelectionChanged() {
+    AbstractTreeUi treeUi = myBuilder.getUi();
+    if (treeUi == null || treeUi.hasPendingWork()) {
+      // Do not change update details part and its content manger until all pending tree update requests are not finished.
+      return;
+    }
     Set<AbstractTreeNode> nodes = myBuilder.getSelectedElements(AbstractTreeNode.class);
     if (nodes.size() != 1) {
       showMessagePanel(ExecutionBundle.message("run.dashboard.empty.selection.message"));
