@@ -1831,6 +1831,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
   private final class ChangedFilesCollector extends IndexedFilesListener {
     private final IntObjectMap<VirtualFile> myFilesToUpdate = ContainerUtil.createConcurrentIntObjectMap();
     private final VfsEventsMerger myVfsEventsMerger = new VfsEventsMerger();
+    private final AtomicInteger myProcessedEventIndex = new AtomicInteger();
     private final Phaser myWorkersFinishedSync = new Phaser() {
       @Override
       protected boolean onAdvance(int phase, int registeredParties) {
@@ -1987,7 +1988,14 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     }
 
     private void processFilesInReadAction() {
-      assert ApplicationManager.getApplication().isReadAccessAllowed();
+      assert ApplicationManager.getApplication().isReadAccessAllowed(); // no vfs events -> event processing code can finish
+      
+      int publishedEventIndex = myVfsEventsMerger.getPublishedEventIndex();
+      int processedEventIndex = myProcessedEventIndex.get();
+      if (processedEventIndex == publishedEventIndex) {
+        return;
+      }
+      
       myWorkersFinishedSync.register();
       int phase = myWorkersFinishedSync.getPhase();
       try {
@@ -2012,7 +2020,12 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
       } finally {
         myWorkersFinishedSync.arriveAndDeregister();
       }
+      
       myWorkersFinishedSync.awaitAdvance(phase);
+      
+      if (myVfsEventsMerger.getPublishedEventIndex() == publishedEventIndex) {
+        myProcessedEventIndex.compareAndSet(processedEventIndex, publishedEventIndex);
+      }
     }
 
     private void processFilesInReadActionWithYieldingToWriteAction() {
