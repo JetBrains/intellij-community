@@ -52,7 +52,7 @@ class GroovyResolverProcessorImpl extends GroovyResolverProcessor implements GrM
       return candidates;
     }
 
-    candidates = getCandidates(GroovyResolveKind.PACKAGE, GroovyResolveKind.CLASS);
+    candidates = getCandidates(GroovyResolveKind.CLASS);
     if (!candidates.isEmpty()) {
       return candidates;
     }
