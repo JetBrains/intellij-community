@@ -76,7 +76,7 @@ public class GitPushTarget implements PushTarget {
     return myIsNewBranchCreated;
   }
 
-  boolean isSpecialRef() {
+  public boolean isSpecialRef() {
     return myPushingToSpecialRef;
   }
 
