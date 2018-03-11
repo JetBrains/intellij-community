@@ -31,7 +31,6 @@ public class BuilderInspectionTest extends LombokInspectionTest {
   }
 
   public void testBuilderDefaultsWarnings() throws Exception {
-    //TODO implement test after adding support for Builder.Default
     doTest();
   }
 
