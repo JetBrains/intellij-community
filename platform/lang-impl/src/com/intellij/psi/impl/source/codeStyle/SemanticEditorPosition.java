@@ -157,9 +157,9 @@ public class SemanticEditorPosition {
   
   public void moveToLeftParenthesisBackwardsSkippingNested(@NotNull SyntaxElement leftParenthesis,
                                                            @NotNull SyntaxElement rightParenthesis,
-                                                           @NotNull Condition<SyntaxElement> terminationCondition) {
+                                                           @NotNull Condition<SemanticEditorPosition> terminationCondition) {
     while (!myIterator.atEnd()) {
-      if (terminationCondition.value(map(myIterator.getTokenType()))) {
+      if (terminationCondition.value(this)) {
         break;
       }
       if (rightParenthesis.equals(map(myIterator.getTokenType()))) {
@@ -174,7 +174,7 @@ public class SemanticEditorPosition {
 
   public SemanticEditorPosition findLeftParenthesisBackwardsSkippingNested(@NotNull SyntaxElement leftParenthesis,
                                                                            @NotNull SyntaxElement rightParenthesis,
-                                                                           @NotNull Condition<SyntaxElement> terminationCondition) {
+                                                                           @NotNull Condition<SemanticEditorPosition> terminationCondition) {
     return copyAnd(
       position -> position.moveToLeftParenthesisBackwardsSkippingNested(leftParenthesis, rightParenthesis, terminationCondition));
   }
