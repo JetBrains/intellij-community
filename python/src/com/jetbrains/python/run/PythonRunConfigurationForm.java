@@ -38,7 +38,7 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBComboBoxLabel;
 import com.intellij.ui.components.JBLabel;
 import com.jetbrains.PySymbolFieldWithBrowseButton;
-import com.jetbrains.extensions.PsiFileSystemItemExtKt;
+import com.jetbrains.PySymbolFieldWithBrowseButtonKt;
 import com.jetbrains.extensions.python.FileChooserDescriptorExtKt;
 import com.jetbrains.extenstions.ContextAnchor;
 import com.jetbrains.extenstions.ModuleBasedContextAnchor;
@@ -85,7 +85,8 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
     myProject = configuration.getProject();
 
     final FileChooserDescriptor chooserDescriptor =
-      FileChooserDescriptorExtKt.withPythonFiles(FileChooserDescriptorFactory.createSingleFileDescriptor().withTitle("Select Script"), true);
+      FileChooserDescriptorExtKt
+        .withPythonFiles(FileChooserDescriptorFactory.createSingleFileDescriptor().withTitle("Select Script"), true);
 
     final PyBrowseActionListener listener = new PyBrowseActionListener(configuration, chooserDescriptor) {
 
@@ -119,7 +120,7 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
       (module != null ? new ModuleBasedContextAnchor(module) : new ProjectSdkContextAnchor(myProject, sdk));
     myModuleField = new PySymbolFieldWithBrowseButton(contentAnchor,
                                                       element -> element instanceof PsiFileSystemItem
-                                                                 && PsiFileSystemItemExtKt.isPythonModule((PsiFileSystemItem)element), () -> {
+                                                                 && PySymbolFieldWithBrowseButtonKt.isPythonModule(element), () -> {
       final String workingDirectory = myCommonOptionsForm.getWorkingDirectory();
       if (StringUtil.isEmpty(workingDirectory)) {
         return null;

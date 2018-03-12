@@ -15,11 +15,8 @@
  */
 package com.jetbrains.extensions
 
-import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.util.QualifiedName
-import com.jetbrains.python.PyNames
-import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyPsiFacade
 
 /**
@@ -30,8 +27,3 @@ fun PsiFileSystemItem.getQName():QualifiedName?  {
   val name = PyPsiFacade.getInstance(this.project).findShortestImportableName(this.virtualFile, this) ?: return null
   return QualifiedName.fromDottedString(name)
 }
-
-/**
- * @return pyfile or package
- */
-fun PsiFileSystemItem.isPythonModule() = this is PyFile || (this is PsiDirectory && this.findFile(PyNames.INIT_DOT_PY) != null)

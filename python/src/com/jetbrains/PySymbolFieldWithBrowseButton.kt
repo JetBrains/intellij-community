@@ -20,7 +20,7 @@ import com.intellij.util.ProcessingContext
 import com.intellij.util.TextFieldCompletionProvider
 import com.intellij.util.textCompletion.TextFieldWithCompletion
 import com.jetbrains.extensions.getQName
-import com.jetbrains.extensions.python.toPythonPsi
+import com.jetbrains.extensions.python.toPsi
 import com.jetbrains.extenstions.ContextAnchor
 import com.jetbrains.extenstions.QNameResolveContext
 import com.jetbrains.extenstions.resolveToElement
@@ -37,6 +37,16 @@ import com.jetbrains.python.psi.types.PyModuleType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.TypeEvalContext
 
+
+/**
+ * Python module is file or package with init.py.
+ * Only source based packages are supported.
+ * [PySymbolFieldWithBrowseButton] use this function to get list of root names
+ */
+fun isPythonModule(element: PsiElement) = element is PyFile || (element as? PsiDirectory)?.let {
+  it.findFile(PyNames.INIT_DOT_PY) != null
+} ?: false
+
 /**
  * Text field to enter python symbols and browse button (from [PyGotoSymbolContributor]).
  * Supports auto-completion for symbol fully qualified names inside of textbox
@@ -47,7 +57,8 @@ import com.jetbrains.python.psi.types.TypeEvalContext
 class PySymbolFieldWithBrowseButton(contextAnchor: ContextAnchor,
                                     filter: ((PsiElement) -> Boolean)? = null,
                                     startFromDirectory: (() -> VirtualFile)? = null) : TextAccessor, ComponentWithBrowseButton<TextFieldWithCompletion>(
-  TextFieldWithCompletion(contextAnchor.project, PyNameCompletionProvider(contextAnchor, filter, startFromDirectory), "", true, true, true), null) {
+  TextFieldWithCompletion(contextAnchor.project, PyNameCompletionProvider(contextAnchor, filter, startFromDirectory), "", true, true, true),
+  null) {
   init {
     addActionListener {
       val dialog = PySymbolChooserDialog(contextAnchor.project, contextAnchor.scope, filter)
@@ -81,11 +92,12 @@ private class PyNameCompletionProvider(private val contextAnchor: ContextAnchor,
     var name: QualifiedName? = null
     if ('.' !in text) {
       lookups = contextAnchor.getRoots()
-        .map { rootFolder -> rootFolder.children.map { it.toPythonPsi(contextAnchor.project) } }
+        .map { rootFolder -> rootFolder.children.map { it.toPsi(contextAnchor.project) } }
         .flatten()
         .filterNotNull()
-        .toSet() // Unique
-        .map {LookupElementBuilder.create(it, it.virtualFile.nameWithoutExtension)}
+        .filter { isPythonModule(it) }
+        .map { LookupElementBuilder.create(it, it.virtualFile.nameWithoutExtension) }
+        .distinctBy { it.lookupString }
         .toTypedArray()
     }
     else {
