@@ -89,7 +89,7 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
     final Boolean declaredBooleanAnnotationValue = PsiAnnotationUtil.getDeclaredBooleanAnnotationValue(psiAnnotation, "callSuper");
     if (null == declaredBooleanAnnotationValue) {
       final String configProperty = ConfigDiscovery.getInstance().getStringLombokConfigProperty(ConfigKey.EQUALSANDHASHCODE_CALL_SUPER, psiClass);
-      if (!"SKIP".equalsIgnoreCase(configProperty) && PsiClassUtil.hasSuperClass(psiClass) && !hasOneOfMethodsDefined(psiClass)) {
+      if (!"CALL".equalsIgnoreCase(configProperty) && !"SKIP".equalsIgnoreCase(configProperty) && PsiClassUtil.hasSuperClass(psiClass) && !hasOneOfMethodsDefined(psiClass)) {
         builder.addWarning("Generating equals/hashCode implementation but without a call to superclass, " +
             "even though this class does not extend java.lang.Object. If this is intentional, add '(callSuper=false)' to your type.",
           quickFixes);
