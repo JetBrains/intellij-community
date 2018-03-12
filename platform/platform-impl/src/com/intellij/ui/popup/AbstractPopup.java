@@ -1592,20 +1592,18 @@ public class AbstractPopup implements JBPopup {
   private void setSize(Dimension size, boolean adjustByContent) {
     if (isBusy()) return;
 
-    Dimension toSet = size;
+    Dimension toSet = new Dimension(size);
+    if (adjustByContent) toSet.height += getAdComponentHeight();
     if (myPopup == null) {
       myForcedSize = toSet;
     }
     else {
-      if (adjustByContent) {
-        toSet.height += getAdComponentHeight();
-      }
       updateMaskAndAlpha(setSize(myContent, toSet));
     }
   }
 
   private int getAdComponentHeight() {
-    return myAdComponent != null && myAdComponent.isShowing() ? myAdComponent.getPreferredSize().height + JBUI.scale(1) : 0;
+    return myAdComponent != null ? myAdComponent.getPreferredSize().height + JBUI.scale(1) : 0;
   }
 
   @Override
