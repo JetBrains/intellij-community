@@ -20,6 +20,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
@@ -55,11 +56,16 @@ public class PyImportStatementImpl extends PyBaseElementImpl<PyImportStatementSt
 
   @NotNull
   public PyImportElement[] getImportElements() {
+    return getImportElements(PyElementTypes.IMPORT_ELEMENT);
+  }
+
+  @NotNull
+  protected final PyImportElement[] getImportElements(@NotNull IElementType importElementType) {
     final PyImportStatementStub stub = getStub();
     if (stub != null) {
-      return stub.getChildrenByType(PyElementTypes.IMPORT_ELEMENT, count -> new PyImportElement[count]);
+      return stub.getChildrenByType(importElementType, count -> new PyImportElement[count]);
     }
-    return childrenToPsi(TokenSet.create(PyElementTypes.IMPORT_ELEMENT), new PyImportElement[0]);
+    return childrenToPsi(TokenSet.create(importElementType), new PyImportElement[0]);
   }
 
   @Override
