@@ -25,11 +25,13 @@ import java.util.Date;
 @RestModel
 @SuppressWarnings("UnusedDeclaration")
 public class GithubUser {
+  @NotNull public static GithubUser UNKNOWN = createUnknownUser();
+
   @Mandatory private String login;
   private Long id;
 
   private String url;
-  @Mandatory private String htmlUrl;
+  private String htmlUrl;
 
   private Integer followers;
   private Integer following;
@@ -45,7 +47,7 @@ public class GithubUser {
     return login;
   }
 
-  @NotNull
+  @Nullable
   public String getHtmlUrl() {
     return htmlUrl;
   }
@@ -53,5 +55,13 @@ public class GithubUser {
   @Nullable
   public String getAvatarUrl() {
     return avatarUrl;
+  }
+
+
+  @NotNull
+  private static GithubUser createUnknownUser() {
+    GithubUser user = new GithubUser();
+    user.login = "ghost";
+    return user;
   }
 }

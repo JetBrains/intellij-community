@@ -43,16 +43,23 @@ import git4idea.config.GitExecutableManager;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
+import org.apache.http.client.utils.URIBuilder;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
 import org.jetbrains.plugins.github.api.GithubConnection;
+import org.jetbrains.plugins.github.api.GithubFullPath;
+import org.jetbrains.plugins.github.api.data.GithubUser;
 import org.jetbrains.plugins.github.api.data.GithubUserDetailed;
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException;
 import org.jetbrains.plugins.github.exceptions.GithubOperationCanceledException;
 import org.jetbrains.plugins.github.exceptions.GithubTwoFactorAuthenticationException;
+import org.jetbrains.plugins.github.pullrequests.util.GithubWebImageLoader;
 import org.jetbrains.plugins.github.ui.GithubLoginDialog;
 
+import javax.swing.*;
+import java.awt.*;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -409,6 +416,19 @@ public class GithubUtil {
     return manager.getRepositoryForFileQuick(project.getBaseDir());
   }
 
+  @Nullable
+  public static Pair<GitRepository, GithubFullPath> findGitRepository(@NotNull Project project) {
+    List<GitRepository> repositories = GitUtil.getRepositoryManager(project).getRepositories();
+    for (GitRepository gitRepository : repositories) {
+      String remoteUrl = GithubUtil.findGithubRemoteUrl(gitRepository);
+      if (remoteUrl == null) continue;
+      GithubFullPath fullPath = GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(remoteUrl);
+      if (fullPath == null) continue;
+      return Pair.create(gitRepository, fullPath);
+    }
+    return null;
+  }
+
   public static boolean addGithubRemote(@NotNull Project project,
                                         @NotNull GitRepository repository,
                                         @NotNull String remote,
@@ -464,5 +484,23 @@ public class GithubUtil {
     }
 
     return Couple.of(subject, description);
+  }
+
+  @NotNull
+  @CalledInAwt
+  public static Icon createAvatarIcon(@Nullable GithubUser user, int size) {
+    Dimension dimension = new Dimension(size, size);
+    Icon defaultAvatarIcon = GithubWebImageLoader.getInstance().createDefaultAvatarIcon(dimension);
+
+    String avatarUrl = user != null ? user.getAvatarUrl() : null;
+    if (avatarUrl == null) return defaultAvatarIcon;
+
+    try {
+      avatarUrl = new URIBuilder(avatarUrl).addParameter("s", String.valueOf(size)).toString();
+    }
+    catch (URISyntaxException ignore) {
+    }
+
+    return GithubWebImageLoader.getInstance().createIcon(avatarUrl, dimension, defaultAvatarIcon);
   }
 }

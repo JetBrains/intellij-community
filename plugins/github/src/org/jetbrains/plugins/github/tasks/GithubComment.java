@@ -27,13 +27,13 @@ import java.util.Date;
  */
 public class GithubComment extends SimpleComment {
   @Nullable private final String myAvatarUrl;
-  @NotNull private final String myUserHtmlUrl;
+  @Nullable private final String myUserHtmlUrl;
 
   public GithubComment(@Nullable Date date,
                        @Nullable String author,
                        @NotNull String text,
                        @Nullable String avatarUrl,
-                       @NotNull String userHtmlUrl) {
+                       @Nullable String userHtmlUrl) {
     super(date, author, text);
     myAvatarUrl = avatarUrl;
     myUserHtmlUrl = userHtmlUrl;
@@ -48,7 +48,14 @@ public class GithubComment extends SimpleComment {
     }
     builder.append("</td><td>");
     if (getAuthor() != null) {
-      builder.append("<b>Author:</b> <a href=\"").append(myUserHtmlUrl).append("\">").append(getAuthor()).append("</a><br>");
+      builder.append("<b>Author:</b>");
+      if (myUserHtmlUrl != null) {
+        builder.append("<a href=\"").append(myUserHtmlUrl).append("\">").append(getAuthor()).append("</a>");
+      }
+      else {
+        builder.append(getAuthor());
+      }
+      builder.append("<br>");
     }
     if (getDate() != null) {
       builder.append("<b>Date:</b> ").append(DateFormatUtil.formatDateTime(getDate())).append("<br>");

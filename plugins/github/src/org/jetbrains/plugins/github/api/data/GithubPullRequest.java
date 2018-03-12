@@ -16,12 +16,14 @@
 package org.jetbrains.plugins.github.api.data;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.mandatory.Mandatory;
 import org.jetbrains.io.mandatory.RestModel;
 
 import java.util.Date;
+import java.util.List;
 
 @RestModel
 @SuppressWarnings("UnusedDeclaration")
@@ -32,65 +34,13 @@ public class GithubPullRequest {
   private String body;
   private String bodyHtml;
 
-  private String url;
-  @Mandatory private String htmlUrl;
-  @Mandatory private String diffUrl;
-  @Mandatory private String patchUrl;
-  @Mandatory private String issueUrl;
-
-  private Boolean merged;
-  private Boolean mergeable;
-
-  private Integer comments;
-  private Integer commits;
-  private Integer additions;
-  private Integer deletions;
-  private Integer changedFiles;
-
   @Mandatory private Date createdAt;
   @Mandatory private Date updatedAt;
   private Date closedAt;
   private Date mergedAt;
 
-  @Mandatory private GithubUser user;
-
-  @Mandatory private Link head;
-  @Mandatory private Link base;
-
-  @RestModel
-  public static class Link {
-    @Mandatory private String label;
-    @Mandatory private String ref;
-    @Mandatory private String sha;
-
-    private GithubRepo repo;
-    @Mandatory private GithubUser user;
-
-    @NotNull
-    public String getLabel() {
-      return label;
-    }
-
-    @NotNull
-    public String getRef() {
-      return ref;
-    }
-
-    @NotNull
-    public String getSha() {
-      return sha;
-    }
-
-    @Nullable
-    public GithubRepo getRepo() {
-      return repo;
-    }
-
-    @NotNull
-    public GithubUser getUser() {
-      return user;
-    }
-  }
+  private GithubUser user;
+  @Mandatory private List<GithubUser> assignees;
 
   public long getNumber() {
     return number;
@@ -109,26 +59,6 @@ public class GithubPullRequest {
   @NotNull
   public String getBodyHtml() {
     return StringUtil.notNullize(bodyHtml);
-  }
-
-  @NotNull
-  public String getHtmlUrl() {
-    return htmlUrl;
-  }
-
-  @NotNull
-  public String getDiffUrl() {
-    return diffUrl;
-  }
-
-  @NotNull
-  public String getPatchUrl() {
-    return patchUrl;
-  }
-
-  @NotNull
-  public String getIssueUrl() {
-    return issueUrl;
   }
 
   @NotNull
@@ -153,16 +83,15 @@ public class GithubPullRequest {
 
   @NotNull
   public GithubUser getUser() {
-    return user;
+    return ObjectUtils.notNull(user, GithubUser.UNKNOWN);
   }
 
   @NotNull
-  public Link getHead() {
-    return head;
+  public List<GithubUser> getAssignees() {
+    return assignees;
   }
 
-  @NotNull
-  public Link getBase() {
-    return base;
+  public boolean isClosed() {
+    return "closed".equals(state);
   }
 }

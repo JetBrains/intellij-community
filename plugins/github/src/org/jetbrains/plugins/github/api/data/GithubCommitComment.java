@@ -15,7 +15,9 @@
  */
 package org.jetbrains.plugins.github.api.data;
 
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.mandatory.Mandatory;
 import org.jetbrains.io.mandatory.RestModel;
 
@@ -27,15 +29,18 @@ public class GithubCommitComment {
   @Mandatory private String htmlUrl;
   private String url;
 
-  @Mandatory private Long id;
+  private Long position;
   @Mandatory private String commitId;
+  @Mandatory private Long originalPosition;
+  @Mandatory private String originalCommitId;
+
+  @Mandatory private Long id;
   @Mandatory private String path;
-  @Mandatory private Long position;
   private Long line;
   private String body;
   @Mandatory private String bodyHtml;
 
-  @Mandatory private GithubUser user;
+  private GithubUser user;
 
   @Mandatory private Date createdAt;
   @Mandatory private Date updatedAt;
@@ -50,16 +55,26 @@ public class GithubCommitComment {
   }
 
   @NotNull
-  public String getSha() {
-    return commitId;
-  }
-
-  @NotNull
   public String getPath() {
     return path;
   }
 
-  public long getPosition() {
+  @NotNull
+  public String getCommit() {
+    return commitId;
+  }
+
+  @Nullable
+  public Long getPosition() {
+    return position;
+  }
+
+  @NotNull
+  public String getOriginalCommit() {
+    return commitId;
+  }
+
+  public long getOriginalPosition() {
     return position;
   }
 
@@ -70,7 +85,7 @@ public class GithubCommitComment {
 
   @NotNull
   public GithubUser getUser() {
-    return user;
+    return ObjectUtils.notNull(user, GithubUser.UNKNOWN);
   }
 
   @NotNull

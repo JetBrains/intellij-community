@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.mandatory.NullCheckingFactory;
 import org.jetbrains.plugins.github.api.GithubConnection.ArrayPagedRequest;
 import org.jetbrains.plugins.github.api.GithubConnection.PagedRequest;
+import org.jetbrains.plugins.github.api.GithubConnection.SingleValuePagedRequest;
 import org.jetbrains.plugins.github.api.data.*;
 import org.jetbrains.plugins.github.api.requests.*;
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException;
@@ -37,6 +38,7 @@ import org.jetbrains.plugins.github.exceptions.GithubStatusCodeException;
 import org.jetbrains.plugins.github.util.GithubUtil;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.*;
 
@@ -282,7 +284,8 @@ public class GithubApiUtil {
       try {
         repos.addAll(getWatchedRepos(connection));
       }
-      catch (GithubAuthenticationException | GithubStatusCodeException ignore) {
+      catch (GithubAuthenticationException | GithubStatusCodeException e) {
+        LOG.info(e.getMessage());
       }
 
       return repos;
@@ -371,17 +374,17 @@ public class GithubApiUtil {
   }
 
   @NotNull
-  public static GithubPullRequest createPullRequest(@NotNull GithubConnection connection,
-                                                    @NotNull String user,
-                                                    @NotNull String repo,
-                                                    @NotNull String title,
-                                                    @NotNull String description,
-                                                    @NotNull String head,
-                                                    @NotNull String base) throws IOException {
+  public static GithubPullRequestDetailed createPullRequest(@NotNull GithubConnection connection,
+                                                            @NotNull String user,
+                                                            @NotNull String repo,
+                                                            @NotNull String title,
+                                                            @NotNull String description,
+                                                            @NotNull String head,
+                                                            @NotNull String base) throws IOException {
     try {
       String path = "/repos/" + user + "/" + repo + "/pulls";
       GithubPullRequestRequest request = new GithubPullRequestRequest(title, description, head, base);
-      return post(connection, path, request, GithubPullRequest.class, ACCEPT_V3_JSON);
+      return post(connection, path, request, GithubPullRequestDetailed.class, ACCEPT_V3_JSON);
     }
     catch (GithubConfusingException e) {
       e.setDetails("Can't create pull request");
@@ -560,11 +563,13 @@ public class GithubApiUtil {
   }
 
   @NotNull
-  public static GithubPullRequest getPullRequest(@NotNull GithubConnection connection, @NotNull String user, @NotNull String repo, int id)
-    throws IOException {
+  public static GithubPullRequestDetailed getPullRequest(@NotNull GithubConnection connection,
+                                                         @NotNull String user,
+                                                         @NotNull String repo,
+                                                         long id) throws IOException {
     try {
       String path = "/repos/" + user + "/" + repo + "/pulls/" + id;
-      return load(connection, path, GithubPullRequest.class, ACCEPT_V3_JSON_HTML_MARKUP);
+      return load(connection, path, GithubPullRequestDetailed.class, ACCEPT_V3_JSON_HTML_MARKUP);
     }
     catch (GithubConfusingException e) {
       e.setDetails("Can't get pull request info: " + user + "/" + repo + " - " + id);
@@ -573,22 +578,43 @@ public class GithubApiUtil {
   }
 
   @NotNull
-  public static List<GithubPullRequest> getPullRequests(@NotNull GithubConnection connection, @NotNull String user, @NotNull String repo)
-    throws IOException {
-    try {
-      String path = "/repos/" + user + "/" + repo + "/pulls?" + PER_PAGE;
-      return loadAll(connection, path, GithubPullRequest[].class, ACCEPT_V3_JSON_HTML_MARKUP);
-    }
-    catch (GithubConfusingException e) {
-      e.setDetails("Can't get pull requests" + user + "/" + repo);
-      throw e;
-    }
-  }
-
-  @NotNull
   public static PagedRequest<GithubPullRequest> getPullRequests(@NotNull String user, @NotNull String repo) {
     String path = "/repos/" + user + "/" + repo + "/pulls?state=all&" + PER_PAGE;
     return new ArrayPagedRequest<>(path, GithubPullRequest[].class, ACCEPT_V3_JSON_HTML_MARKUP);
+  }
+
+  @NotNull
+  public static PagedRequest<GithubPullRequest> getPullRequestsQueried(@NotNull String user,
+                                                                       @NotNull String repo,
+                                                                       @NotNull String query) {
+    try {
+      query = URLEncoder.encode("type:pr repo:" + user + "/" + repo + " " + query, CharsetToolkit.UTF8);
+    }
+    catch (UnsupportedEncodingException ignore) {
+    }
+
+    String path = "/search/issues?q=" + query;
+    PagedRequest<GithubPullRequestsSearchResult> searchRequest =
+      new SingleValuePagedRequest<>(path, GithubPullRequestsSearchResult.class, ACCEPT_V3_JSON);
+
+    return new PagedRequest<GithubPullRequest>() {
+      @NotNull
+      @Override
+      public List<GithubPullRequest> next(@NotNull GithubConnection connection) throws IOException {
+        List<GithubPullRequestsSearchResult> searchResults = searchRequest.next(connection);
+
+        List<GithubPullRequest> pullRequests = new ArrayList<>();
+        for (GithubPullRequestsSearchResult result : searchResults) {
+          pullRequests.addAll(result.getPullRequests());
+        }
+        return pullRequests;
+      }
+
+      @Override
+      public boolean hasNext() {
+        return searchRequest.hasNext();
+      }
+    };
   }
 
   @NotNull

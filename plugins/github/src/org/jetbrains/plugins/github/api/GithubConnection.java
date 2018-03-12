@@ -20,7 +20,9 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.util.ThrowableConvertor;
 import org.apache.http.*;
 import org.apache.http.client.methods.*;
 import org.apache.http.entity.ContentType;
@@ -104,6 +106,11 @@ public class GithubConnection {
     return request(path, null, Arrays.asList(headers), HttpVerb.HEAD).getHeaders();
   }
 
+  @Nullable
+  public byte[] loadContentByURL(@NotNull String url, @NotNull Header... headers) throws IOException {
+    return doRequestRaw(url, null, Arrays.asList(headers), HttpVerb.GET);
+  }
+
   @NotNull
   String getApiURL() {
     return myApiURL;
@@ -134,6 +141,41 @@ public class GithubConnection {
                                  @Nullable String requestBody,
                                  @NotNull Collection<Header> headers,
                                  @NotNull HttpVerb verb) throws IOException {
+    return doRequest(uri, requestBody, headers, verb, (response -> {
+      HttpEntity entity = response.getEntity();
+      if (entity == null) {
+        return createResponse(response);
+      }
+
+      JsonElement ret = parseResponse(entity.getContent());
+      if (ret.isJsonNull()) {
+        return createResponse(response);
+      }
+
+      String nextPage = getNextPageLink(response);
+
+      return createResponse(ret, nextPage, response);
+    }));
+  }
+
+  @Nullable
+  private byte[] doRequestRaw(@NotNull String uri,
+                              @Nullable String requestBody,
+                              @NotNull Collection<Header> headers,
+                              @NotNull HttpVerb verb) throws IOException {
+    return doRequest(uri, requestBody, headers, verb, (response -> {
+      HttpEntity entity = response.getEntity();
+      if (entity == null) return null;
+      return StreamUtil.loadFromStream(entity.getContent());
+    }));
+  }
+
+  @NotNull
+  private <T> T doRequest(@NotNull String uri,
+                          @Nullable String requestBody,
+                          @NotNull Collection<Header> headers,
+                          @NotNull HttpVerb verb,
+                          @NotNull ThrowableConvertor<CloseableHttpResponse, T, IOException> resultHandler) throws IOException {
     if (myAborted) throw new GithubOperationCanceledException();
 
     if (EventQueue.isDispatchThread() && !ApplicationManager.getApplication().isUnitTestMode()) {
@@ -148,37 +190,7 @@ public class GithubConnection {
 
       checkStatusCode(response, requestBody);
 
-      HttpEntity entity = response.getEntity();
-      if (entity == null) {
-        return createResponse(response);
-      }
-
-      JsonElement ret = parseResponse(entity.getContent());
-      if (ret.isJsonNull()) {
-        return createResponse(response);
-      }
-
-      String nextPage = null;
-      Header pageHeader = response.getFirstHeader("Link");
-      if (pageHeader != null) {
-        for (HeaderElement element : pageHeader.getElements()) {
-          NameValuePair rel = element.getParameterByName("rel");
-          if (rel != null && "next".equals(rel.getValue())) {
-            String urlString = element.toString();
-            int begin = urlString.indexOf('<');
-            int end = urlString.lastIndexOf('>');
-            if (begin == -1 || end == -1) {
-              LOG.error("Invalid 'Link' header", "{" + pageHeader.toString() + "}");
-              break;
-            }
-
-            nextPage = urlString.substring(begin + 1, end);
-            break;
-          }
-        }
-      }
-
-      return createResponse(ret, nextPage, response);
+      return resultHandler.convert(response);
     }
     catch (SSLHandshakeException e) { // User canceled operation from CertificateManager
       if (e.getCause() instanceof CertificateException) {
@@ -310,6 +322,30 @@ public class GithubConnection {
     finally {
       reader.close();
     }
+  }
+
+  @Nullable
+  private static String getNextPageLink(@NotNull CloseableHttpResponse response) {
+    String nextPage = null;
+    Header pageHeader = response.getFirstHeader("Link");
+    if (pageHeader != null) {
+      for (HeaderElement element : pageHeader.getElements()) {
+        NameValuePair rel = element.getParameterByName("rel");
+        if (rel != null && "next".equals(rel.getValue())) {
+          String urlString = element.toString();
+          int begin = urlString.indexOf('<');
+          int end = urlString.lastIndexOf('>');
+          if (begin == -1 || end == -1) {
+            LOG.error("Invalid 'Link' header", "{" + pageHeader.toString() + "}");
+            break;
+          }
+
+          nextPage = urlString.substring(begin + 1, end);
+          break;
+        }
+      }
+    }
+    return nextPage;
   }
 
   public static abstract class PagedRequestBase<T> implements PagedRequest<T> {

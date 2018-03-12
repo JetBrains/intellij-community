@@ -16,52 +16,18 @@
 package org.jetbrains.plugins.github.api.data;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.mandatory.Mandatory;
 import org.jetbrains.io.mandatory.RestModel;
 
+import java.util.List;
+
 @RestModel
 @SuppressWarnings("UnusedDeclaration")
-public class GithubFile {
-  @Mandatory private String filename;
-
-  @Mandatory private Integer additions;
-  @Mandatory private Integer deletions;
-  @Mandatory private Integer changes;
-  @Mandatory private String status;
-  @Mandatory private String rawUrl;
-  private String blobUrl;
-  private String patch;
+public class GithubPullRequestsSearchResult {
+  @Mandatory private List<GithubPullRequest> items;
 
   @NotNull
-  public String getFilename() {
-    return filename;
-  }
-
-  public int getAdditions() {
-    return additions;
-  }
-
-  public int getDeletions() {
-    return deletions;
-  }
-
-  public int getChanges() {
-    return changes;
-  }
-
-  @NotNull
-  public String getStatus() {
-    return status;
-  }
-
-  @NotNull
-  public String getRawUrl() {
-    return rawUrl;
-  }
-
-  @Nullable
-  public String getPatch() {
-    return patch;
+  public List<GithubPullRequest> getPullRequests() {
+    return items;
   }
 }

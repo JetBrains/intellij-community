@@ -25,7 +25,15 @@
                     serviceImplementation="org.jetbrains.plugins.github.util.GithubProjectSettings"/>
     <vcsAnnotationGutterActionProvider implementation="org.jetbrains.plugins.github.extensions.GithubAnnotationGutterActionProvider"/>
     <vcsConfigurableProvider implementation="org.jetbrains.plugins.github.ui.GithubSettingsConfigurable"/>
+
+    <applicationService serviceImplementation="org.jetbrains.plugins.github.pullrequests.util.GithubWebImageLoader"/>
   </extensions>
+
+  <project-components>
+    <component>
+      <implementation-class>org.jetbrains.plugins.github.pullrequests.GithubPullRequestProjectComponent</implementation-class>
+    </component>
+  </project-components>
 
   <extensions defaultExtensionNs="Git4Idea">
     <GitHttpAuthDataProvider implementation="org.jetbrains.plugins.github.extensions.GithubHttpAuthDataProvider"/>

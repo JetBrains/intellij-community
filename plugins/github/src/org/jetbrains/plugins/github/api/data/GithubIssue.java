@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.github.api.data;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.mandatory.Mandatory;
@@ -33,7 +34,7 @@ public class GithubIssue {
   @Mandatory private String title;
   private String body;
 
-  @Mandatory private GithubUser user;
+  private GithubUser user;
   private GithubUser assignee;
 
   private Date closedAt;
@@ -66,7 +67,7 @@ public class GithubIssue {
 
   @NotNull
   public GithubUser getUser() {
-    return user;
+    return ObjectUtils.notNull(user, GithubUser.UNKNOWN);
   }
 
   @Nullable

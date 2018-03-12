@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.github.api.data;
 
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.io.mandatory.Mandatory;
 import org.jetbrains.io.mandatory.RestModel;
@@ -34,7 +35,7 @@ public class GithubIssueComment {
   @Mandatory private Date createdAt;
   @Mandatory private Date updatedAt;
 
-  @Mandatory private GithubUser user;
+  private GithubUser user;
 
   public long getId() {
     return id;
@@ -62,6 +63,6 @@ public class GithubIssueComment {
 
   @NotNull
   public GithubUser getUser() {
-    return user;
+    return ObjectUtils.notNull(user, GithubUser.UNKNOWN);
   }
 }
