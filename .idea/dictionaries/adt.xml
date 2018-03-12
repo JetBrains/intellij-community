@@ -15,6 +15,7 @@
       <w>aidl</w>
       <w>aload</w>
       <w>androiddebugkey</w>
+      <w>androidx</w>
       <w>anim</w>
       <w>aosp</w>
       <w>apkbuilder</w>
@@ -130,6 +131,7 @@
       <w>inflater</w>
       <w>inflaters</w>
       <w>infos</w>
+      <w>initializers</w>
       <w>inlined</w>
       <w>innerclass</w>
       <w>inputfile</w>
