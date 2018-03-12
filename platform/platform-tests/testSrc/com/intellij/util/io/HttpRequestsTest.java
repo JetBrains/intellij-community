@@ -97,6 +97,22 @@ public class HttpRequestsTest {
       .tryConnect());
   }
 
+  @Test(expected = AssertionError.class)
+  public void testPutNotAllowed() throws IOException {
+    HttpRequests.request(myUrl)
+                .tuner((c) -> ((HttpURLConnection)c).setRequestMethod("PUT"))
+                .tryConnect();
+    fail();
+  }
+
+  @Test(expected = AssertionError.class)
+  public void testPostNotAllowed() throws IOException {
+    HttpRequests.request(myUrl)
+                .tuner((c) -> ((HttpURLConnection)c).setRequestMethod("POST"))
+                .tryConnect();
+    fail();
+  }
+
   @Test(timeout = 5000)
   public void testNotModified() throws IOException {
     myServer.createContext("/", ex -> {

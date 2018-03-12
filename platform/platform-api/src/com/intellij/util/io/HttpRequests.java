@@ -31,8 +31,7 @@ import javax.net.ssl.SSLSocketFactory;
 import java.io.*;
 import java.net.*;
 import java.nio.charset.Charset;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -52,6 +51,14 @@ public final class HttpRequests {
 
   private static final int BLOCK_SIZE = 16 * 1024;
   private static final Pattern CHARSET_PATTERN = Pattern.compile("charset=([^;]+)");
+  private static final Set<Integer> REDIRECT_CODES = new HashSet<>(Arrays.asList(HttpResponseStatus.MOVED_PERMANENTLY.code(),
+                                                                                 HttpResponseStatus.FOUND.code(),
+                                                                                 HttpResponseStatus.SEE_OTHER.code(),
+                                                                                 HttpResponseStatus.TEMPORARY_REDIRECT.code(),
+                                                                                 HttpResponseStatus.PERMANENT_REDIRECT.code()));
+  private static final Set<Integer> PERMANENT_REDIRECT_CODES = new HashSet<>(Arrays.asList(HttpResponseStatus.MOVED_PERMANENTLY.code(),
+                                                                                           HttpResponseStatus.SEE_OTHER.code(),
+                                                                                           HttpResponseStatus.PERMANENT_REDIRECT.code()));
 
   private HttpRequests() { }
 
@@ -504,11 +511,12 @@ public final class HttpRequests {
         if (responseCode < 200 || responseCode >= 300 && responseCode != HttpResponseStatus.NOT_MODIFIED.code()) {
           httpURLConnection.disconnect();
 
-          if ( responseCode == HttpResponseStatus.MOVED_PERMANENTLY.code()
-              || responseCode == HttpResponseStatus.FOUND.code()
-              || responseCode == HttpResponseStatus.SEE_OTHER.code()
-              || responseCode == HttpResponseStatus.TEMPORARY_REDIRECT.code()) {
-            request.myUrl = url = connection.getHeaderField("Location");
+          if (REDIRECT_CODES.contains(responseCode)) {
+            url = connection.getHeaderField("Location");
+            if (PERMANENT_REDIRECT_CODES.contains(responseCode)) {
+              LOG.error(String.format("HTTP code '%d' for url '%s'. Should be updated to '%s'.", responseCode, request.myUrl, url));
+            }
+            request.myUrl = url;
             if (url != null) {
               continue;
             }
