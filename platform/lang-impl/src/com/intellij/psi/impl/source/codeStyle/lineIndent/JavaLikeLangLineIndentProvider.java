@@ -96,8 +96,8 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
         if (position.hasEmptyLineAfter(offset) &&
             !position.after().matchesRule(
               p->p.isAtAnyOf(ArrayClosingBracket, BlockOpeningBrace, BlockClosingBrace, RightParenthesis) || p.isAtEnd()) &&
-            position.findLeftParenthesisBackwardsSkippingNested(LeftParenthesis, RightParenthesis,
-                                                                self -> self.isAtAnyOf(BlockClosingBrace, BlockOpeningBrace, Semicolon))
+            position.findLeftParenthesisBackwardsSkippingNestedEx(LeftParenthesis, RightParenthesis,
+                                                                  self -> self.isAtAnyOf(BlockClosingBrace, BlockOpeningBrace, Semicolon))
               .isAt(LeftParenthesis)) {
           return myFactory.createIndentCalculator(NONE, IndentCalculator.LINE_AFTER);
         }
