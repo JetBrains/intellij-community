@@ -58,7 +58,7 @@ public class EncodingUtil {
   }
 
   // the result of wild guess
-  enum Magic8 {
+  public enum Magic8 {
     ABSOLUTELY,
     WELL_IF_YOU_INSIST,
     NO_WAY
