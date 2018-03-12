@@ -79,7 +79,7 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
        return null;
      }
     }
-    catch (ClassCastException e) {
+    catch (Exception e) {
       LOG.error(myConfigurationFactory + " produced wrong type", e);
       return null;
     }
