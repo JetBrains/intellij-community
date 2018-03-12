@@ -426,11 +426,8 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
         one = ScopeUtil.getScopeOwner(one);
       }
       while (one instanceof PyFunction);
-      if (one instanceof PyClass) {
-        PyArgumentList superClassExpressionList = ((PyClass)one).getSuperClassExpressionList();
-        if (superClassExpressionList == null || !PsiTreeUtil.isAncestor(superClassExpressionList, myElement, false)) {
-          return one;
-        }
+      if (one instanceof PyClass && !PsiTreeUtil.isAncestor(((PyClass)one).getSuperClassExpressionList(), myElement, false)) {
+        return one;
       }
     }
 
@@ -780,13 +777,8 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   // our very own caching resolver
 
   private static class CachingResolver implements ResolveCache.PolyVariantResolver<PyReferenceImpl> {
-    public static CachingResolver INSTANCE = new CachingResolver();
-    private final ThreadLocal<AtomicInteger> myNesting = new ThreadLocal<AtomicInteger>() {
-      @Override
-      protected AtomicInteger initialValue() {
-        return new AtomicInteger();
-      }
-    };
+    public static final CachingResolver INSTANCE = new CachingResolver();
+    private final ThreadLocal<AtomicInteger> myNesting = ThreadLocal.withInitial(() -> new AtomicInteger());
 
     private static final int MAX_NESTING_LEVEL = 30;
 
