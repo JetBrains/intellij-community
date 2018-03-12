@@ -77,6 +77,15 @@ public class ExtractedParameter {
     return parameter;
   }
 
+  @NotNull
+  public String getLocalVariableTypeText() {
+    PsiType type = myType;
+    if (myType instanceof PsiEllipsisType) {
+      type = ((PsiEllipsisType)myType).toArrayType();
+    }
+    return type.getCanonicalText();
+  }
+
   private void addUsages(ExtractableExpressionPart patternPart) {
     myPatternUsages.add(patternPart.getUsage());
   }
