@@ -854,20 +854,32 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
     if (!old.isCanceled()) {
       old.cancel();
     }
-    DaemonProgressIndicator progress = new DaemonProgressIndicator() {
-      @Override
-      public void stopIfRunning() {
-        super.stopIfRunning();
-        myProject.getMessageBus().syncPublisher(DAEMON_EVENT_TOPIC).daemonFinished(fileEditors);
-        HighlightingSessionImpl.clearProgressIndicator(this);
-      }
-    };
+    DaemonProgressIndicator progress = new MyDaemonProgressIndicator(myProject, fileEditors);
     progress.setModalityProgress(null);
     progress.start();
     myProject.getMessageBus().syncPublisher(DAEMON_EVENT_TOPIC).daemonStarting(fileEditors);
     myUpdateProgress = progress;
     return progress;
   }
+
+  private static class MyDaemonProgressIndicator extends DaemonProgressIndicator {
+    private final Project myProject;
+    private Collection<FileEditor> myFileEditors;
+
+    public MyDaemonProgressIndicator(Project project, Collection<FileEditor> fileEditors) {
+      myFileEditors = fileEditors;
+      myProject = project;
+    }
+
+    @Override
+    public void stopIfRunning() {
+      super.stopIfRunning();
+      myProject.getMessageBus().syncPublisher(DAEMON_EVENT_TOPIC).daemonFinished(myFileEditors);
+      myFileEditors = null;
+      HighlightingSessionImpl.clearProgressIndicator(this);
+    }
+  }
+
 
   @Override
   public void autoImportReferenceAtCursor(@NotNull Editor editor, @NotNull PsiFile file) {
