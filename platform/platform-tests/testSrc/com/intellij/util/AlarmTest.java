@@ -15,6 +15,7 @@
  */
 package com.intellij.util;
 
+ import com.intellij.diagnostic.PerformanceWatcher;
  import com.intellij.openapi.application.ApplicationManager;
  import com.intellij.openapi.application.ModalityState;
  import com.intellij.openapi.application.impl.LaterInvocator;
@@ -97,15 +98,17 @@ package com.intellij.util;
     });
   }
 
-  private static void checkNotTooManyThreadsCreatedIn(Runnable runnable) {
+  private static void checkNotTooManyThreadsCreatedIn(@NotNull Runnable runnable) {
     Map<Thread, StackTraceElement[]> before = Thread.getAllStackTraces();
     runnable.run();
     Map<Thread, StackTraceElement[]> after = Thread.getAllStackTraces();
     Map<Thread, List<StackTraceElement>> diff = new HashMap<>();
     after.forEach((key, value) -> diff.put(key, Arrays.asList(value)));
     diff.keySet().removeAll(before.keySet());
-    if (!(after.size() - before.size() < 10)) {
-      fail("before: "+before.size()+"; after: "+after.size()+"; Diff:\n"+diff);
+    if (after.size() - before.size() >= 10) {
+      fail("before: "+before.size()+"; after: "+after.size()+"; Diff:\n"+
+      diff.entrySet().stream().map(e-> PerformanceWatcher.printStacktrace("", e.getKey(), e.getValue().toArray(new StackTraceElement[0]))).collect(Collectors.joining())
+      );
     }
   }
 
