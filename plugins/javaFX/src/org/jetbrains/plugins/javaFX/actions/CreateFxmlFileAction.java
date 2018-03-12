@@ -16,10 +16,11 @@
 package org.jetbrains.plugins.javaFX.actions;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeView;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.actions.CreateFromTemplateActionBase;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -32,16 +33,25 @@ import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 
-import java.util.Collections;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author pdolgov
  */
 public class CreateFxmlFileAction extends CreateFromTemplateActionBase {
   private static final String INTERNAL_TEMPLATE_NAME = "FxmlFile.fxml";
+  private static final Set<JpsModuleSourceRootType<?>> JAVA_ROOT_TYPES;
+
+  static {
+    Set<JpsModuleSourceRootType<?>> types = new HashSet<>();
+    types.addAll(JavaModuleSourceRootTypes.SOURCES);
+    types.addAll(JavaModuleSourceRootTypes.RESOURCES);
+    JAVA_ROOT_TYPES = Collections.unmodifiableSet(types);
+  }
 
   public CreateFxmlFileAction() {
     super("FXML File", "Create New FXML File", AllIcons.FileTypes.Xml);
@@ -103,5 +113,33 @@ public class CreateFxmlFileAction extends CreateFromTemplateActionBase {
       }
     }
     return className.toString();
+  }
+
+  @Override
+  public void update(final AnActionEvent e) {
+    final DataContext dataContext = e.getDataContext();
+    final Presentation presentation = e.getPresentation();
+
+    final boolean enabled = isAvailable(dataContext);
+
+    presentation.setVisible(enabled);
+    presentation.setEnabled(enabled);
+  }
+
+  public static boolean isAvailable(DataContext dataContext) {
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    final IdeView view = LangDataKeys.IDE_VIEW.getData(dataContext);
+    if (project == null || view == null) {
+      return false;
+    }
+    final PsiDirectory[] directories = view.getDirectories();
+    if (directories.length == 0) {
+      return false;
+    }
+
+    final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
+    return Arrays.stream(directories)
+                 .map(PsiDirectory::getVirtualFile)
+                 .anyMatch(virtualFile -> index.isUnderSourceRootOfType(virtualFile, JAVA_ROOT_TYPES));
   }
 }
