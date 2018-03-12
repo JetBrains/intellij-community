@@ -8,7 +8,6 @@ import com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.FileColorManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,6 +65,14 @@ public class VfsPresentationUtil {
 
   @Nullable
   public static Color getFileBackgroundColor(@NotNull Project project, @NotNull VirtualFile file) {
-    return FileColorManager.getInstance(project).getFileColor(file);
+    List<EditorTabColorProvider> providers = DumbService.getInstance(project).filterByDumbAwareness(
+      Extensions.getExtensions(EditorTabColorProvider.EP_NAME));
+    for (EditorTabColorProvider provider : providers) {
+      Color result = provider.getProjectViewColor(project, file);
+      if (result != null) {
+        return result;
+      }
+    }
+    return null;
   }
 }
