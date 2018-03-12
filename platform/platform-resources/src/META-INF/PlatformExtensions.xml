@@ -201,7 +201,10 @@
                         serviceImplementation="com.intellij.openapi.roots.ui.FileAppearanceServiceImpl"/>
 
     <applicationService serviceImplementation="com.intellij.internal.statistic.UsageTrigger"/>
-    <projectService serviceImplementation="com.intellij.internal.statistic.service.fus.collectors.FUSUsageTrigger"/>
+
+    <projectService serviceImplementation="com.intellij.internal.statistic.service.fus.collectors.FUSProjectUsageTrigger"/>
+    <applicationService serviceImplementation="com.intellij.internal.statistic.service.fus.collectors.FUSApplicationUsageTrigger"/>
+
     <applicationService serviceImplementation="com.intellij.internal.statistic.collectors.fus.ui.persistence.ToolbarClicksCollector"/>
     <applicationService serviceImplementation="com.intellij.internal.statistic.collectors.fus.ui.persistence.ShortcutsCollector"/>
     <applicationService serviceInterface="com.intellij.ide.actions.ActionsCollector"
