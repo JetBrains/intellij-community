@@ -465,13 +465,9 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
         rate = RatedResolveResult.RATE_NORMAL;
       }
     }
-    else if (elt instanceof PyImportedNameDefiner || elt instanceof PyReferenceExpression) {
-      rate = RatedResolveResult.RATE_LOW;
-    }
-    else if (elt instanceof PyFile) {
-      rate = RatedResolveResult.RATE_HIGH;
-    }
-    else if (elt != null && !PyiUtil.isInsideStub(elt) && PyiUtil.isOverload(elt, context)) {
+    else if (elt instanceof PyImportedNameDefiner ||
+             elt instanceof PyReferenceExpression ||
+             elt != null && !PyiUtil.isInsideStub(elt) && PyiUtil.isOverload(elt, context)) {
       rate = RatedResolveResult.RATE_LOW;
     }
     else {
