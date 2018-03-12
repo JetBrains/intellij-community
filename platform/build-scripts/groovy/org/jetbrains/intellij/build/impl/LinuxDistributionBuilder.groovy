@@ -66,11 +66,11 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
 
   @Override
   void buildArtifacts(String osSpecificDistPath) {
-    buildContext.executeStep("Build Linux .tar.gz", BuildOptions.LINUX_ARTIFACTS_STEP) {
+    buildContext.executeStep("Build Linux .zip", BuildOptions.LINUX_ARTIFACTS_STEP) {
       if (customizer.buildTarGzWithoutBundledJre) {
         buildTarGz(null, osSpecificDistPath)
       }
-      buildTarGz(buildContext.bundledJreManager.findLinuxJdk(), osSpecificDistPath)  // Android Studio: added by Change Idc07b110 / commit f20681e
+      buildZip(buildContext.bundledJreManager.findLinuxJdk(), osSpecificDistPath)  // Android Studio: added by Change Idc07b110 / commit f20681e
       /* Android Studio: no need to download JRE
       def jreDirectoryPath = buildContext.bundledJreManager.extractLinuxJre()
       if (jreDirectoryPath != null) {
@@ -141,10 +141,11 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     buildContext.ant.fixcrlf(file: "$unixDistPath/bin/Install-Linux-tar.txt", eol: "unix")
   }
 
-  private void buildTarGz(String jreDirectoryPath, String unixDistPath) {
-    def tarRoot = customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
+  // Android Studio: build a ZIP file, yes, even for Linux
+  private void buildZip(String jreDirectoryPath, String unixDistPath) {
+    def zipRoot = customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
     def suffix = jreDirectoryPath != null ? "" : "-no-jdk"
-    def tarPath = "$buildContext.paths.artifacts/${buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}${suffix}.tar"
+    def zipPath = "$buildContext.paths.artifacts/${buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}${suffix}.linux.zip"
     def extraBins = customizer.extraExecutables
     def paths = [buildContext.paths.distAll, unixDistPath]
     /* Android Studio: our JDK layout in prebuilts doesn't match the expected layout, so we copy it manually below.
@@ -153,11 +154,11 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       extraBins += "jre64/bin/*"
     } */
     def description = "archive${jreDirectoryPath != null ? "" : " (without JRE)"}"
-    buildContext.messages.block("Build Linux tar.gz $description") {
-      buildContext.messages.progress("Building Linux tar $description")
-      buildContext.ant.tar(tarfile: tarPath, longfile: "gnu") {
+    buildContext.messages.block("Build Linux zip $description") {
+      buildContext.messages.progress("Building Linux zip $description")
+      buildContext.ant.zip(zipfile: zipPath) {
         paths.each {
-          tarfileset(dir: it, prefix: tarRoot) {
+          zipfileset(dir: it, prefix: zipRoot) {
             exclude(name: "bin/*.sh")
             exclude(name: "bin/*.py")
             exclude(name: "bin/fsnotifier*")
@@ -169,7 +170,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         }
 
         paths.each {
-          tarfileset(dir: it, prefix: tarRoot, filemode: "755") {
+          zipfileset(dir: it, prefix: zipRoot, filemode: "755") {
             include(name: "bin/*.sh")
             include(name: "bin/*.py")
             include(name: "bin/fsnotifier*")
@@ -182,14 +183,14 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
 
         // Android Studio: bundle the JDK
         def binaries = ["bin/*", "jre/bin/*", "jre/lib/jexec"]
-        tarfileset(dir: jreDirectoryPath, prefix: "$tarRoot/jre") {
+        zipfileset(dir: jreDirectoryPath, prefix: "$zipRoot/jre") {
           binaries.each {
             exclude(name: it)
           }
           exclude(name: "src.zip")
           type(type: "file")
         }
-        tarfileset(dir: jreDirectoryPath, filemode: "755", prefix: "$tarRoot/jre") {
+        zipfileset(dir: jreDirectoryPath, filemode: "755", prefix: "$zipRoot/jre") {
           binaries.each {
             include(name: it)
           }
@@ -197,11 +198,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         }
       }
 
-      String gzPath = "${tarPath}.gz"
-      buildContext.messages.progress("Building Linux tar.gz $description")
-      buildContext.ant.gzip(src: tarPath, zipfile: gzPath)
-      buildContext.ant.delete(file: tarPath)
-      buildContext.notifyArtifactBuilt(gzPath)
+      buildContext.notifyArtifactBuilt(zipPath)
     }
   }
 

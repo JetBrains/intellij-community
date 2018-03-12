@@ -14,8 +14,8 @@ java_test(
     name = "AndroidStudioBundleTest",
     srcs = ["src/test/java/com/android/tools/AndroidStudioBundleTest.java"],
     data = [
+        "//tools/idea:android-studio.linux.zip",
         "//tools/idea:android-studio.mac.zip",
-        "//tools/idea:android-studio.tar.gz",
         "//tools/idea:android-studio.win.zip",
         "//tools/idea:android-studio.win32.zip",
     ],
@@ -39,7 +39,7 @@ java_test(
     data = [
         "kotlin_known_problems.txt",
         "//prebuilts/tools/common/intellij-plugin-verifier:verifier-all.jar",
-        "//tools/idea:android-studio.tar.gz",
+        "//tools/idea:android-studio.linux.zip",
     ],
     tags = ["no_test_mac"],  # TODO: we run out of file handles on Mac, double-check whether 'sysctl kern.maxfiles' is sane
     deps = [
