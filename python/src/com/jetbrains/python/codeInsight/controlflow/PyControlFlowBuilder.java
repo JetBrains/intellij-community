@@ -23,6 +23,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
@@ -325,6 +326,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     myBuilder.startNode(node);
     final PyIfPart ifPart = node.getIfPart();
     PyExpression condition = ifPart.getCondition();
+    final List<Boolean> conditionResults = new SmartList<>(PyEvaluator.evaluateAsBooleanNoResolve(condition));
     PyTypeAssertionEvaluator assertionEvaluator = new PyTypeAssertionEvaluator();
     if (condition != null) {
       condition.accept(this);
@@ -334,7 +336,9 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     PyElement lastCondition = condition;
 
     List<Pair<PsiElement, Instruction>> lastBranchingPoints = getPrevInstructions(condition);
-    lastBranchingPoints.forEach(pair -> myBuilder.addPendingEdge(pair.getFirst(), pair.getSecond()));
+    if (ContainerUtil.getLastItem(conditionResults) != Boolean.FALSE) {
+      lastBranchingPoints.forEach(pair -> myBuilder.addPendingEdge(pair.getFirst(), pair.getSecond()));
+    }
     myBuilder.prevInstruction = null;
 
     final PyStatementList thenStatements = ifPart.getStatementList();
@@ -352,11 +356,14 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
     for (final PyIfPart part : node.getElifParts()) {
       // Set the head as the false branch
-      lastBranchingPoints.forEach(pair -> myBuilder.addPendingEdge(pair.getFirst(), pair.getSecond()));
+      if (!ContainerUtil.exists(conditionResults, Boolean.TRUE::equals)) {
+        lastBranchingPoints.forEach(pair -> myBuilder.addPendingEdge(pair.getFirst(), pair.getSecond()));
+      }
       myBuilder.prevInstruction = null;
 
       myBuilder.startConditionalNode(part, lastCondition, false);
       condition = part.getCondition();
+      conditionResults.add(PyEvaluator.evaluateAsBooleanNoResolve(condition));
       assertionEvaluator = new PyTypeAssertionEvaluator();
       if (condition != null) {
         lastCondition = condition;
@@ -365,11 +372,13 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
         lastBranchingPoints = getPrevInstructions(lastCondition);
       }
       // Set the head as the last instruction of condition
-      getPrevInstructions(lastCondition).forEach(pair -> myBuilder.addPendingEdge(pair.getFirst(), pair.getSecond()));
+      if (ContainerUtil.getLastItem(conditionResults) != Boolean.FALSE) {
+        getPrevInstructions(lastCondition).forEach(pair -> myBuilder.addPendingEdge(pair.getFirst(), pair.getSecond()));
+      }
       myBuilder.prevInstruction = null;
 
-      myBuilder.startConditionalNode(part, lastCondition, true);
       final PyStatementList statementList = part.getStatementList();
+      myBuilder.startConditionalNode(statementList, lastCondition, true);
       InstructionBuilder.addAssertInstructions(myBuilder, assertionEvaluator);
       statementList.accept(this);
       myBuilder.processPending((pendingScope, instruction) -> {
@@ -391,15 +400,18 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     final PyElsePart elseBranch = node.getElsePart();
     if (elseBranch != null) {
       // Set the head as the false branch
-      lastBranchingPoints.forEach(pair -> myBuilder.addPendingEdge(pair.getFirst(), pair.getSecond()));
+      if (!ContainerUtil.exists(conditionResults, Boolean.TRUE::equals)) {
+        lastBranchingPoints.forEach(pair -> myBuilder.addPendingEdge(pair.getFirst(), pair.getSecond()));
+      }
       myBuilder.prevInstruction = null;
 
-      myBuilder.startConditionalNode(elseBranch, lastCondition, false);
+      final PyStatementList statementList = elseBranch.getStatementList();
+      myBuilder.startConditionalNode(statementList, lastCondition, false);
       InstructionBuilder.addAssertInstructions(myBuilder, negativeAssertionEvaluator);
-      elseBranch.accept(this);
+      statementList.accept(this);
       myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
     }
-    else {
+    else if (ContainerUtil.getLastItem(conditionResults) != Boolean.TRUE) {
       myBuilder.prevInstruction = null;
       final Instruction instruction =
         ContainerUtil.getFirstItem(InstructionBuilder.addAssertInstructions(myBuilder, negativeAssertionEvaluator));
