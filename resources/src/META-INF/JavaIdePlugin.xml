@@ -49,6 +49,13 @@
     <xi:fallback/>
   </xi:include>
 
+  <application-components>
+    <component>
+      <implementation-class>com.intellij.openapi.projectRoots.impl.DefaultJdkConfigurator</implementation-class>
+      <headless-implementation-class/>
+    </component>
+  </application-components>
+
   <project-components>
 
     <component>
