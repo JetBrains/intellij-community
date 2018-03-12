@@ -33,4 +33,4 @@ def run_as_django_behave(formatter_name, feature_names, scenario_n_options):
             ManagementUtility().execute()
             return True
     except ImportError:
-        pass
+        return False
