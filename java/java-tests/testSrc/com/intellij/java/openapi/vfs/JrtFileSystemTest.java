@@ -17,6 +17,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
@@ -39,16 +40,26 @@ public class JrtFileSystemTest extends BareTestFixtureTestCase {
   @Before
   public void setUp() throws IOException {
     myTestData = Paths.get(JavaTestUtil.getJavaTestDataPath(), "jrt");
-    myTempPath = myTempDir.newFolder("jrt").toPath();
-    Files.write(myTempPath.resolve("release"), "JAVA_VERSION=9\n".getBytes(CharsetToolkit.UTF8_CHARSET));
-    Path lib = Files.createDirectory(myTempPath.resolve("lib"));
-    Files.copy(myTestData.resolve("jrt-fs.jar"), lib.resolve("jrt-fs.jar"));
-    Files.copy(myTestData.resolve("image1"), lib.resolve("modules"));
-    LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myTempDir.getRoot());
+    File jrtDir = myTempDir.newFolder("jrt");
+    myTempPath = jrtDir.toPath();
+    myRoot = setupJrtFileSystem(jrtDir);
+  }
 
-    myRoot = findRoot(myTempPath.toString());
-    assertThat(myRoot).isNotNull();
-    assertThat(JrtFileSystem.isRoot(myRoot)).isTrue();
+  public static VirtualFile setupJrtFileSystem(File jrtDir) throws IOException {
+    Path jrtPath = jrtDir.toPath();
+
+    Files.write(jrtPath.resolve("release"), "JAVA_VERSION=9\n".getBytes(CharsetToolkit.UTF8_CHARSET));
+    Path lib = Files.createDirectory(jrtPath.resolve("lib"));
+
+    Path testData = Paths.get(JavaTestUtil.getJavaTestDataPath(), "jrt");
+    Files.copy(testData.resolve("jrt-fs.jar"), lib.resolve("jrt-fs.jar"));
+    Files.copy(testData.resolve("image1"), lib.resolve("modules"));
+    LocalFileSystem.getInstance().refreshAndFindFileByIoFile(jrtDir.getParentFile());
+
+    VirtualFile root = findRoot(jrtPath.toString());
+    assertThat(root).isNotNull();
+    assertThat(JrtFileSystem.isRoot(root)).isTrue();
+    return root;
   }
 
   @Test
