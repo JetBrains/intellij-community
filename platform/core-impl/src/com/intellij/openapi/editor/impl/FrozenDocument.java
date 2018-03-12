@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.EditReadOnlyListener;
 import com.intellij.openapi.editor.ex.LineIterator;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.util.Key;
@@ -242,6 +243,11 @@ public class FrozenDocument implements DocumentEx {
 
   @Override
   public void setStripTrailingSpacesEnabled(boolean isEnabled) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void removeEditReadOnlyListener(@NotNull EditReadOnlyListener listener) {
     throw new UnsupportedOperationException();
   }
 }
