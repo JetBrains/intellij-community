@@ -86,8 +86,8 @@ public @interface Contract {
    *   <tr><td>"this,arg1"</td><td>Method mutates the receiver and first argument and doesn't mutate any other arguments</td></tr>
    * </table>
    *
+   * <strong>Warning: This annotation parameter is experimental and may be changed or removed without further notice!</strong>
    * @return a mutation specifier string
-   * Warning: This annotation parameter is experimental and may be changed or removed without further notice!
    */
   String mutates() default "";
 }
