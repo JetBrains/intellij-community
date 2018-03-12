@@ -16,55 +16,42 @@
 
 package com.intellij.internal.statistic.persistence;
 
-import com.intellij.internal.statistic.beans.GroupDescriptor;
-import com.intellij.internal.statistic.beans.UsageDescriptor;
-import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.Map;
-import java.util.Set;
 
 public class BasicSentUsagesPersistenceComponent extends SentUsagesPersistence {
 
-    public BasicSentUsagesPersistenceComponent() {
-    }
+  public BasicSentUsagesPersistenceComponent() {
+  }
 
-    protected Map<GroupDescriptor, Set<UsageDescriptor>> mySentDescriptors = new HashMap<>();
-    @NonNls
-    private long mySentTime = 0;
-    @NonNls
-    private long myEventLogSentTime = 0;
+  @NonNls
+  private long mySentTime = 0;
+  @NonNls
+  private long myEventLogSentTime = 0;
 
-    @Override
-    public boolean isAllowed() {
-        return true;
-    }
+  @Override
+  public boolean isAllowed() {
+    return true;
+  }
 
-    @Override
-    public boolean isShowNotification() {
-        return false;
-    }
+  @Override
+  public boolean isShowNotification() {
+    return false;
+  }
 
-    @Override
-    public long getLastTimeSent() {
-        return mySentTime;
-    }
+  @Override
+  public long getLastTimeSent() {
+    return mySentTime;
+  }
 
-    public void setSentTime(long time) {
-        mySentTime = time;
-    }
+  public void setSentTime(long time) {
+    mySentTime = time;
+  }
 
-    public long getEventLogLastTimeSent() {
-        return myEventLogSentTime;
-    }
+  public long getEventLogLastTimeSent() {
+    return myEventLogSentTime;
+  }
 
-    public void setEventLogSentTime(long time) {
-        myEventLogSentTime = time;
-    }
-
-    @NotNull
-    public Map<GroupDescriptor, Set<UsageDescriptor>> getSentUsages () {
-        return mySentDescriptors;
-    }
+  public void setEventLogSentTime(long time) {
+    myEventLogSentTime = time;
+  }
 }

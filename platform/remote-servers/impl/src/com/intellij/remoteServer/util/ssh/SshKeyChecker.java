@@ -16,7 +16,6 @@
 package com.intellij.remoteServer.util.ssh;
 
 import com.intellij.execution.filters.HyperlinkInfo;
-import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.options.ConfigurationException;
@@ -246,7 +245,6 @@ public class SshKeyChecker {
 
     @Override
     protected void uploadKey(final File sskKey) {
-      UsageTrigger.trigger(CloudsTriggerKeys.UPLOAD_SSH_KEY);
       try {
         myServerConfigurable.apply();
       }

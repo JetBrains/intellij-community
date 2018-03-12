@@ -18,7 +18,6 @@ package com.intellij.openapi.diff.impl;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.EditSourceAction;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
@@ -152,7 +151,6 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
                        boolean horizontal,
                        int diffDividerPolygonsOffset,
                        DiffTool parentTool) {
-    UsageTrigger.trigger("diff.DiffPanelImpl");
 
     myProject = project;
     myIsHorizontal = horizontal;

@@ -18,7 +18,6 @@ package com.intellij.ide.util.projectWizard;
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.util.projectWizard.actions.ProjectSpecificAction;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -202,7 +201,6 @@ public class AbstractNewProjectStep<T> extends DefaultActionGroup implements Dum
     }
 
     String generatorName = generator == null ? "empty" : ConvertUsagesUtil.ensureProperKey(generator.getName());
-    UsageTrigger.trigger("AbstractNewProjectStep." + generatorName);
 
     RecentProjectsManager.getInstance().setLastProjectCreationLocation(PathUtil.toSystemIndependentName(location.getParent()));
 

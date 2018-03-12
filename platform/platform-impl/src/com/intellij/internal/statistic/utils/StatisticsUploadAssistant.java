@@ -22,7 +22,6 @@ import com.intellij.internal.statistic.eventLog.EventLogStatisticsService;
 import com.intellij.internal.statistic.persistence.SentUsagesPersistence;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.internal.statistic.service.fus.FUStatisticsService;
-import com.intellij.internal.statistic.service.old.OldConfigurableStatisticsService;
 import com.intellij.util.Time;
 
 public class StatisticsUploadAssistant {
@@ -64,11 +63,6 @@ public class StatisticsUploadAssistant {
 
   public static void updateSentTime() {
     UsageStatisticsPersistenceComponent.getInstance().setSentTime(System.currentTimeMillis());
-  }
-
-  @Deprecated  // to be removed in 2018.1x
-  public static StatisticsService getOldStatisticsService() {
-    return new OldConfigurableStatisticsService();
   }
 
   public static StatisticsService getApprovedGroupsStatisticsService() {

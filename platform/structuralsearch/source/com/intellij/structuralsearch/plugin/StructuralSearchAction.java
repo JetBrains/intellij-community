@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin;
 
-import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
@@ -21,7 +20,6 @@ public class StructuralSearchAction extends AnAction {
   }
 
   public static void triggerAction(Configuration config, SearchContext searchContext) {
-    UsageTrigger.trigger("structural.search");
     final Project project = searchContext.getProject();
     if (project == null) {
       return;

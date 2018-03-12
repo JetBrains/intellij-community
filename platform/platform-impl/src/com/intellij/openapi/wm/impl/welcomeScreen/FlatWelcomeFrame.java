@@ -6,7 +6,6 @@ import com.intellij.diagnostic.MessagePool;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.RecentProjectsManager;
-import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.impl.IdeNotificationArea;
 import com.intellij.openapi.Disposable;
@@ -368,7 +367,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
             .createActionGroupPopup(null, new IconsFreeActionGroup(configureGroup), e.getDataContext(), JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false,
                                     ActionPlaces.WELCOME_SCREEN);
           popup.showUnderneathOfLabel(ref.get());
-          UsageTrigger.trigger("welcome.screen." + groupId);
         }
       };
       JComponent panel = createActionLink(text, icon, ref, action);
@@ -707,7 +705,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
             child.actionPerformed(e);
-            UsageTrigger.trigger("welcome.screen." + e.getActionManager().getId(child));
           }
 
           @Override
@@ -730,7 +727,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
   }
 
   private static Runnable createUsageTracker(final AnAction action) {
-    return () -> UsageTrigger.trigger("welcome.screen." + ActionManager.getInstance().getId(action));
+    return () -> {
+    };
   }
 
   private static JLabel createArrow(final ActionLink link) {

@@ -7,7 +7,6 @@ import com.intellij.ide.actions.ToggleToolbarAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
@@ -17,7 +16,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
@@ -199,9 +197,6 @@ public class TerminalView {
   }
 
   public static void recordUsage(@NotNull TtyConnector ttyConnector) {
-    UsageTrigger.trigger(TERMINAL_FEATURE + "." +
-                         (ttyConnector.toString().contains("Jsch") ? "ssh" :
-                          SystemInfo.isWindows ? "win" : SystemInfo.isMac ? "mac" : "linux"));
   }
 
   private static ActionToolbar createToolbar(@Nullable final AbstractTerminalRunner terminalRunner,

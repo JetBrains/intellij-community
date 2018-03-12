@@ -2,7 +2,6 @@
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.CommonBundle;
-import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.internal.statistic.eventLog.FeatureUsageUiEvents;
 import com.intellij.openapi.Disposable;
@@ -317,7 +316,6 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
         configurable.apply();
         final String key = getConfigurableEventId(configurable);
         FeatureUsageUiEvents.INSTANCE.logApplyConfigurable(key);
-        UsageTrigger.trigger(key);
       }
       catch (ConfigurationException exception) {
         return exception;
