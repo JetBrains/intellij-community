@@ -241,11 +241,12 @@ public class MoveFieldAssignmentToInitializerInspection extends AbstractBaseJava
             parent instanceof PsiWhileStatement ||
             parent instanceof PsiForStatement ||
             parent instanceof PsiForeachStatement) {
-          ct.replaceAndRestoreComments(statement, ";");
+          ct.replace(statement, ";");
         }
         else {
-          ct.deleteAndRestoreComments(statement);
+          ct.delete(statement);
         }
+        ct.insertCommentsBefore(field);
         // if we replace/delete several assignments we want to restore comments at each place separately
         ct = new CommentTracker();
       }
