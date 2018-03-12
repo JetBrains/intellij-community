@@ -10,24 +10,23 @@ import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDirectoryContainer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.ColorUtil;
-import com.intellij.ui.FileColorManager;
 import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.tabs.FileColorManagerImpl;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JTree;
+import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
-import java.awt.Color;
-import java.awt.Graphics2D;
+import java.awt.*;
 
 /**
  * @author Konstantin Bulenkov
@@ -127,11 +126,8 @@ public class ProjectViewTree extends DnDAwareTree {
       if (file != null) {
         Project project = node.getProject();
         if (project != null && !project.isDisposed()) {
-          FileColorManager manager = FileColorManager.getInstance(project);
-          if (manager != null) {
-            Color color = manager.getFileColor(file);
-            if (color != null) return ColorUtil.softer(color);
-          }
+          Color color = VfsPresentationUtil.getFileBackgroundColor(project, file);
+          if (color != null) return ColorUtil.softer(color);
         }
       }
     }
@@ -148,15 +144,15 @@ public class ProjectViewTree extends DnDAwareTree {
       final VirtualFile file = PsiUtilCore.getVirtualFile(psi);
 
       if (file != null) {
-        color = FileColorManager.getInstance(project).getFileColor(file);
+        color = VfsPresentationUtil.getFileBackgroundColor(project, file);
       }
       else if (psi instanceof PsiDirectory) {
-        color = FileColorManager.getInstance(project).getFileColor(((PsiDirectory)psi).getVirtualFile());
+        color = VfsPresentationUtil.getFileBackgroundColor(project, ((PsiDirectory)psi).getVirtualFile());
       }
       else if (psi instanceof PsiDirectoryContainer) {
         final PsiDirectory[] dirs = ((PsiDirectoryContainer)psi).getDirectories();
         for (PsiDirectory dir : dirs) {
-          Color c = FileColorManager.getInstance(project).getFileColor(dir.getVirtualFile());
+          Color c = VfsPresentationUtil.getFileBackgroundColor(project, dir.getVirtualFile());
           if (c != null && color == null) {
             color = c;
           }

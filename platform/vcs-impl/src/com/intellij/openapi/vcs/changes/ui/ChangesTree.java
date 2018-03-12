@@ -19,7 +19,11 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.*;
+import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil;
+import com.intellij.ui.DoubleClickListener;
+import com.intellij.ui.PopupHandler;
+import com.intellij.ui.SmartExpander;
+import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
@@ -615,7 +619,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     }
 
     if (file != null) {
-      return FileColorManager.getInstance(myProject).getFileColor(file);
+      return VfsPresentationUtil.getFileBackgroundColor(myProject, file);
     }
     return super.getFileColorFor(object);
   }
