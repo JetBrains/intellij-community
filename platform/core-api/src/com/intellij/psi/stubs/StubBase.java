@@ -29,7 +29,7 @@ public abstract class StubBase<T extends PsiElement> extends ObjectStubBase<Stub
 
   protected StubBase(StubElement parent, IStubElementType elementType) {
     super(parent);
-    StubList stubList = parent == null ? new StubList() : ((StubBase)parent).myStubList;
+    StubList stubList = parent == null ? new StubList(10) : ((StubBase)parent).myStubList;
     stubList.addStub(this, (StubBase<?>)parent, elementType);
   }
 

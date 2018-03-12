@@ -222,7 +222,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
         "Errors: " + errorFixesToShow + "; " +
         "Inspection fixes: " + inspectionFixesToShow + "; " +
         "Intentions: " + intentionsToShow + "; " +
-        "Gutters: " + guttersToShow +
+        "Gutters: " + guttersToShow + "; "+
         "Notifications: " + notificationActionsToShow;
     }
   }
@@ -240,7 +240,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
   public void doApplyInformationToEditor() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     TemplateState state = TemplateManagerImpl.getTemplateState(myEditor);
-    if ((state == null || state.isFinished())) {
+    if (state == null || state.isFinished()) {
       IntentionsUI.getInstance(myProject).update(myCachedIntentions, myActionsChanged);
     }
   }
@@ -366,7 +366,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
       if (!psiElement.isPhysical()) {
         VirtualFile virtualFile = hostFile.getVirtualFile();
         String text = hostFile.getText();
-        LOG.error("not physical: '" + psiElement.getText() + "' @" + offset + psiElement.getTextRange() +
+        LOG.error("not physical: '" + psiElement.getText() + "' @" + offset + " " +psiElement.getTextRange() +
                   " elem:" + psiElement + " (" + psiElement.getClass().getName() + ")" +
                   " in:" + psiElement.getContainingFile() + " host:" + hostFile + "(" + hostFile.getClass().getName() + ")",
                   new Attachment(virtualFile != null ? virtualFile.getPresentableUrl() : "null", text != null ? text : "null"));
@@ -434,7 +434,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
         };
         // indicator can be null when run from EDT
         ProgressIndicator progress = ObjectUtils.notNull(ProgressIndicatorProvider.getGlobalProgressIndicator(), new DaemonProgressIndicator());
-        JobLauncher.getInstance().invokeConcurrentlyUnderProgress(intentionTools, progress, false, processor);
+        JobLauncher.getInstance().invokeConcurrentlyUnderProgress(intentionTools, progress, processor);
       }
     }
   }

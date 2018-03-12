@@ -9,3 +9,13 @@ class A implements I {
         System.out.println(r);
     }
 }
+
+class B {
+    static void foo() {}
+}
+
+class C extends B {
+    {
+        Runnable r = C::foo;
+    }
+}

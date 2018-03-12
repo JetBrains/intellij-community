@@ -1249,7 +1249,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   @Override
   @NotNull
   public FileEditor[] getSelectedEditors() {
-    Set<FileEditor> selectedEditors = new HashSet<>();
+    Set<FileEditor> selectedEditors = new LinkedHashSet<>();
     for (EditorsSplitters each : getAllSplitters()) {
       ContainerUtil.addAll(selectedEditors, each.getSelectedEditors());
     }
@@ -1263,6 +1263,17 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     EditorsSplitters active = null;
     if (ApplicationManager.getApplication().isDispatchThread()) active = getActiveSplittersSync();
     return active == null ? getMainSplitters() : active;
+  }
+
+  @Nullable
+  @Override
+  public FileEditor getSelectedEditor() {
+    EditorWindow window = getSplitters().getCurrentWindow();
+    if (window != null) {
+      EditorComposite selected = window.getSelectedEditor();
+      if (selected != null) return selected.getSelectedEditor();
+    }
+    return super.getSelectedEditor();
   }
 
   @Override

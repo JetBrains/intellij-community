@@ -145,7 +145,7 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
 
     keePassMasterPassword.setPasswordIsStored(true)
 
-    val panel = panel {
+    return panel {
       row { label("Save passwords:") }
 
       buttonGroup({ updateEnabledState() }) {
@@ -165,46 +165,46 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
                                                       fileChooserDescriptor = fileChooserDescriptor,
                                                       fileChosen = ::normalizeSelectedFile)
             gearButton(
-                object : AnAction("Clear") {
-                  override fun actionPerformed(event: AnActionEvent) {
-                    if (MessageDialogBuilder.yesNo("Clear Passwords", "Are you sure want to remove all passwords?").yesText("Remove Passwords").isYes) {
-                      passwordSafe.clearPasswords()
-                    }
+              object : AnAction("Clear") {
+                override fun actionPerformed(event: AnActionEvent) {
+                  if (MessageDialogBuilder.yesNo("Clear Passwords", "Are you sure want to remove all passwords?").yesText("Remove Passwords").isYes) {
+                    passwordSafe.clearPasswords()
                   }
-                },
-                object : AnAction("Import") {
-                  override fun actionPerformed(event: AnActionEvent) {
-                    chooseFile(fileChooserDescriptor, event) {
-                      val wantedDbFile = Paths.get(normalizeSelectedFile(it))
-                      val dbFile = getCurrentDbFile()
-                      if (dbFile != wantedDbFile) {
-                        val contextComponent = event.getData(PlatformDataKeys.CONTEXT_COMPONENT) as Component
-                        Messages.showInputDialog(
-                            contextComponent, "Master Password:", "Specify Master Password", null)?.trim().nullize()?.let { masterPassword ->
-                          try {
-                            Files.copy(wantedDbFile, dbFile, StandardCopyOption.REPLACE_EXISTING)
-                            passwordSafe.currentProvider = KeePassCredentialStore(existingMasterPassword = masterPassword.toByteArray(),
-                                dbFile = getCurrentDbFile())
-                          }
-                          catch (e: Exception) {
-                            LOG.error(e)
-                            if (e.message == "Inconsistent stream bytes") {
-                              Messages.showMessageDialog(contextComponent, if (e.message == "Inconsistent stream bytes") "Password is not correct" else "Internal error", "Cannot Import", Messages.getErrorIcon())
-                            }
-                          }
-                          keePassMasterPassword.text = ""
+                }
+              },
+              object : AnAction("Import") {
+                override fun actionPerformed(event: AnActionEvent) {
+                  chooseFile(fileChooserDescriptor, event) {
+                    val wantedDbFile = Paths.get(normalizeSelectedFile(it))
+                    val dbFile = getCurrentDbFile()
+                    if (dbFile != wantedDbFile) {
+                      val contextComponent = event.getData(PlatformDataKeys.CONTEXT_COMPONENT) as Component
+                      Messages.showInputDialog(
+                        contextComponent, "Master Password:", "Specify Master Password", null)?.trim().nullize()?.let { masterPassword ->
+                        try {
+                          Files.copy(wantedDbFile, dbFile, StandardCopyOption.REPLACE_EXISTING)
+                          passwordSafe.currentProvider = KeePassCredentialStore(existingMasterPassword = masterPassword.toByteArray(),
+                                                                                dbFile = getCurrentDbFile())
                         }
+                        catch (e: Exception) {
+                          LOG.error(e)
+                          if (e.message == "Inconsistent stream bytes") {
+                            Messages.showMessageDialog(contextComponent, if (e.message == "Inconsistent stream bytes") "Password is not correct" else "Internal error", "Cannot Import", Messages.getErrorIcon())
+                          }
+                        }
+                        keePassMasterPassword.text = ""
                       }
                     }
                   }
                 }
+              }
             )
           }
           row("Master Password:") {
             keePassMasterPassword(growPolicy = GrowPolicy.SHORT_TEXT)
           }
           if (!SystemInfo.isWindows) {
-            row { hint("Stored using weak encryption. It is recommended to store password database on encrypted volume for additional security.") }
+            row { hint("Stored using weak encryption. It is recommended to store on encrypted volume for additional security.") }
           }
         }
 
@@ -218,8 +218,6 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
         }
       }
     }
-
-    return panel
   }
 
   private fun getProviderType(): ProviderType {

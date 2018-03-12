@@ -63,6 +63,7 @@ import com.intellij.util.indexing.*
 import com.intellij.util.indexing.impl.MapIndexStorage
 import com.intellij.util.indexing.impl.MapReduceIndex
 import com.intellij.util.io.*
+import com.intellij.util.ref.GCUtil
 import com.siyeh.ig.JavaOverridingMethodUtil
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
@@ -513,6 +514,48 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     document.setText("class Foo2 { }")
     PsiDocumentManager.getInstance(project).commitAllDocuments()
     assertTrue(stamp != ((StubIndexImpl)StubIndex.instance).getIndexModificationStamp(JavaStubIndexKeys.CLASS_SHORT_NAMES, project))
+  }
+
+  void "test internalErrorOfStubProcessingInvalidatesIndex"() throws IOException {
+    final VirtualFile vFile = myFixture.addClass("class Foo {}").getContainingFile().getVirtualFile()
+    
+    assertTrue(findClass("Foo") != null)
+
+    runFindClassStubIndexQueryThatProducesInvalidResult("Foo")
+
+    GCUtil.tryGcSoftlyReachableObjects() // invalidates cache in findClass
+    assertNull(findClass("Foo"))
+
+    // check invalidation of transient indices state
+    def document = FileDocumentManager.instance.getDocument(vFile)
+    document.setText("class Foo2 {}")
+    PsiDocumentManager.getInstance(project).commitDocument(document)
+
+    assertTrue(findClass("Foo2") != null)
+
+    runFindClassStubIndexQueryThatProducesInvalidResult("Foo2")
+    GCUtil.tryGcSoftlyReachableObjects() // invalidates cache in findClass
+    assertNull(findClass("Foo2"))
+  }
+
+  private void runFindClassStubIndexQueryThatProducesInvalidResult(String qName) {
+    try {
+      def foundFile = [null]
+
+      StubIndex.instance.
+        processElements(JavaStubIndexKeys.CLASS_FQN, qName.hashCode(), project, GlobalSearchScope.allScope(project), PsiFile.class, new Processor<PsiFile>() {
+          @Override
+          boolean process(PsiFile file) {
+            foundFile[0] = file
+            return false
+          }
+        })
+
+      fail("Unexpected")
+    }
+    catch (AssertionError ignored) {
+      // stub mismatch
+    }
   }
 
   void "test do not collect stub tree while holding stub elements"() throws IOException {

@@ -589,7 +589,7 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
     if (StringUtil.isEmptyOrSpaces(category)) {
       return Collections.emptyList();
     }
-    ArrayList<String> tags = ContainerUtil.newArrayList(category.toLowerCase());
+    List<String> tags = ContainerUtil.newArrayList(category.toLowerCase(Locale.US));
     if (plugin.getName().length() < 10) {
       tags.add("languages");
     }
@@ -604,21 +604,18 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
 
   @Nullable
   private static String getDownloads(@NotNull IdeaPluginDescriptor plugin) {
-    String downloads = plugin.getDownloads();
-    if (StringUtil.isEmptyOrSpaces(downloads)) {
-      return null;
-    }
-
-    try {
-      Long value = Long.valueOf(downloads);
-      if (value > 1000) {
-        return value < 1000000 ? K_FORMAT.format(value / 1000D) : M_FORMAT.format(value / 1000000D);
+    String downloads = ((PluginNode)plugin).getDownloads();
+    if (!StringUtil.isEmptyOrSpaces(downloads)) {
+      try {
+        Long value = Long.valueOf(downloads);
+        if (value > 1000) {
+          return value < 1000000 ? K_FORMAT.format(value / 1000D) : M_FORMAT.format(value / 1000000D);
+        }
       }
-    }
-    catch (NumberFormatException ignore) {
+      catch (NumberFormatException ignore) { }
     }
 
-    return downloads;
+    return null;
   }
 
   @Nullable
@@ -633,15 +630,12 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
     if (rating != null) {
       try {
         if (Double.valueOf(rating) > 0) {
-          if (rating.endsWith(".0")) {
-            return rating.substring(0, rating.length() - 2);
-          }
-          return rating;
+          return StringUtil.trimEnd(rating, ".0");
         }
       }
-      catch (NumberFormatException ignore) {
-      }
+      catch (NumberFormatException ignore) { }
     }
+
     return null;
   }
 

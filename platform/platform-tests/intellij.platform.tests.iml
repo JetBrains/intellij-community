@@ -33,5 +33,9 @@
     <orderEntry type="module" module-name="intellij.platform.configurationStore.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testExtensions" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.bootstrap" />
+    <orderEntry type="library" scope="TEST" name="fest-swing" level="project" />
+    <orderEntry type="library" scope="TEST" name="assertj-swing" level="project" />
+    <orderEntry type="library" scope="TEST" name="jackson" level="project" />
+    <orderEntry type="library" scope="TEST" name="snakeyaml" level="project" />
   </component>
 </module>

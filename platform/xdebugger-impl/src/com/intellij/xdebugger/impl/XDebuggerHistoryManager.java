@@ -97,7 +97,7 @@ public class XDebuggerHistoryManager implements PersistentStateComponent<Element
     @Tag("expression-string") String myExpression;
     @Tag("language-id") String myLanguageId;
     @Tag("custom-info") String myCustomInfo;
-    @Tag("evaluation-mode") EvaluationMode myEvaluationMode;
+    @Tag("evaluation-mode") EvaluationMode myEvaluationMode = EvaluationMode.EXPRESSION;
 
     @SuppressWarnings("unused")
     ExpressionState() {

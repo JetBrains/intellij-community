@@ -86,8 +86,8 @@ abstract class GitImplBase implements Git {
    * Run handler with retry on authentication failure
    */
   @NotNull
-  private static GitCommandResult run(@NotNull Computable<GitLineHandler> handlerConstructor,
-                                      @NotNull Computable<OutputCollector> outputCollectorConstructor) {
+  private GitCommandResult run(@NotNull Computable<GitLineHandler> handlerConstructor,
+                               @NotNull Computable<OutputCollector> outputCollectorConstructor) {
     @NotNull GitCommandResult result;
 
     int authAttempt = 0;
@@ -105,10 +105,10 @@ abstract class GitImplBase implements Git {
    * Run handler with per-project locking, logging and authentication
    */
   @NotNull
-  private static GitCommandResult run(@NotNull GitLineHandler handler, @NotNull OutputCollector outputCollector) {
+  private GitCommandResult run(@NotNull GitLineHandler handler, @NotNull OutputCollector outputCollector) {
     Project project = handler.project();
     if (project != null && handler.isRemote()) {
-      try (GitHandlerAuthenticationManager authenticationManager = GitHandlerAuthenticationManager.prepare(project, handler)) {
+      try (GitHandlerAuthenticationManager authenticationManager = prepareAuthentication(project, handler)) {
         return GitCommandResult.withAuthentication(doRun(handler, outputCollector), authenticationManager.isHttpAuthFailed());
       }
       catch (IOException e) {
@@ -117,6 +117,12 @@ abstract class GitImplBase implements Git {
     }
 
     return doRun(handler, outputCollector);
+  }
+
+  @NotNull
+  protected GitHandlerAuthenticationManager prepareAuthentication(@NotNull Project project, @NotNull GitLineHandler handler)
+    throws IOException {
+    return GitHandlerAuthenticationManager.prepare(project, handler);
   }
 
   /**

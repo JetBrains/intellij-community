@@ -12,11 +12,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import org.apache.http.Consts;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.jetbrains.annotations.NotNull;
@@ -24,12 +26,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class EventLogStatisticsService implements StatisticsService {
   private static final Logger LOG = Logger.getInstance("com.intellij.internal.statistic.eventLog.EventLogStatisticsService");
+  private static final ContentType APPLICATION_JSON = ContentType.create("application/json", Consts.UTF_8);
 
   private static final EventLogStatisticsSettingsService mySettingsService = EventLogStatisticsSettingsService.getInstance();
 
@@ -53,42 +55,31 @@ public class EventLogStatisticsService implements StatisticsService {
       final List<File> logs = FeatureUsageLogger.INSTANCE.getLogFiles();
       final List<File> toRemove = new ArrayList<>(logs.size());
       for (File file : logs) {
-        final List<LogEventContent> contents = LogEventContent.Companion.create(file);
-        final String error = validate(contents, file);
-        if (StringUtil.isNotEmpty(error)) {
+        final LogEventRecordRequest request = LogEventRecordRequest.Companion.create(file);
+        final String error = validate(request, file);
+        if (StringUtil.isNotEmpty(error) || request == null) {
           if (LOG.isTraceEnabled()) {
-            LOG.trace(error);
+            LOG.trace(file.getName() + "-> " + error);
           }
           toRemove.add(file);
           continue;
         }
 
-        int succeedBlocks = 0;
-        int wrongFormatBlocks = 0;
-        for (LogEventContent content : contents) {
-          final HttpClient httpClient = HttpClientBuilder.create().build();
-          final HttpPost post = createPostRequest(serviceUrl, LogEventSerializer.INSTANCE.toString(content));
-          final HttpResponse response = httpClient.execute(post);
+        final HttpClient httpClient = HttpClientBuilder.create().build();
+        final HttpPost post = createPostRequest(serviceUrl, LogEventSerializer.INSTANCE.toString(request));
+        final HttpResponse response = httpClient.execute(post);
 
-          final int code = response.getStatusLine().getStatusCode();
-          if (code == HttpStatus.SC_OK) {
-            succeedBlocks++;
-          }
-          else if (code == HttpStatus.SC_BAD_REQUEST) {
-            wrongFormatBlocks++;
-          }
-
-          if (LOG.isTraceEnabled()) {
-            LOG.trace(getResponseMessage(response));
-          }
-        }
-
-        if (succeedBlocks == contents.size()) {
+        final int code = response.getStatusLine().getStatusCode();
+        if (code == HttpStatus.SC_OK) {
           succeed++;
+          toRemove.add(file);
+        }
+        else if (code == HttpStatus.SC_BAD_REQUEST) {
+          toRemove.add(file);
         }
 
-        if (succeedBlocks > 0 || wrongFormatBlocks > 0) {
-          toRemove.add(file);
+        if (LOG.isTraceEnabled()) {
+          LOG.trace(file.getName() + " -> " + getResponseMessage(response));
         }
       }
 
@@ -110,20 +101,24 @@ public class EventLogStatisticsService implements StatisticsService {
   }
 
   @Nullable
-  private static String validate(@NotNull List<LogEventContent> contents, @NotNull File file) {
-    if (contents.isEmpty()) {
+  private static String validate(@Nullable LogEventRecordRequest request, @NotNull File file) {
+    if (request == null) {
       return "File is empty or has invalid format: " + file.getName();
     }
 
-    for (LogEventContent content : contents) {
+    if (StringUtil.isEmpty(request.getUser())) {
+      return "Cannot upload event log, user ID is empty";
+    }
+    else if (StringUtil.isEmpty(request.getProduct())) {
+      return "Cannot upload event log, product code is empty";
+    }
+    else if (request.getRecords().isEmpty()) {
+      return "Cannot upload event log, record list is empty";
+    }
+
+    for (LogEventRecord content : request.getRecords()) {
       if (content.getEvents().isEmpty()) {
         return "Cannot upload event log, event list is empty";
-      }
-      else if (StringUtil.isEmpty(content.getUser())) {
-        return "Cannot upload event log, user ID is empty";
-      }
-      else if (StringUtil.isEmpty(content.getProduct())) {
-        return "Cannot upload event log, product code is empty";
       }
     }
     return null;
@@ -142,11 +137,10 @@ public class EventLogStatisticsService implements StatisticsService {
   }
 
   @NotNull
-  public static HttpPost createPostRequest(@NotNull String serviceUrl, @NotNull String content) throws UnsupportedEncodingException {
+  public static HttpPost createPostRequest(@NotNull String serviceUrl, @NotNull String content) {
     final HttpPost post = new HttpPost(serviceUrl);
-    final StringEntity postingString = new StringEntity(content);
+    final StringEntity postingString = new StringEntity(content, APPLICATION_JSON);
     post.setEntity(postingString);
-    post.setHeader("Content-type", "application/json");
     return post;
   }
 

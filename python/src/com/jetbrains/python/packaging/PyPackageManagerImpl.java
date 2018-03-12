@@ -201,9 +201,8 @@ public class PyPackageManagerImpl extends PyPackageManager {
       args.addAll(req.getInstallOptions());
     }
 
-    final boolean useSudo = !useUserSite && !Files.isWritable(Paths.get(getWriteAccessAnchorPath()));
     try {
-      getHelperResult(PACKAGING_TOOL, args, useSudo, true, null);
+      getHelperResult(PACKAGING_TOOL, args, !useUserSite, true, null);
     }
     catch (PyExecutionException e) {
       final List<String> simplifiedArgs = new ArrayList<>();
@@ -491,7 +490,8 @@ public class PyPackageManagerImpl extends PyPackageManager {
         flavor.commandLinePatcher().patchCommandLine(commandLine);
       }
       final Process process;
-      if (askForSudo) {
+      final boolean useSudo = askForSudo && !Files.isWritable(Paths.get(getWriteAccessAnchorPath()));
+      if (useSudo) {
         process = ExecUtil.sudo(commandLine, "Please enter your password to make changes in system packages: ");
       }
       else {

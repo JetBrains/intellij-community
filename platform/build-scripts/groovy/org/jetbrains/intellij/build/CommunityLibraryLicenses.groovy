@@ -18,6 +18,7 @@ class CommunityLibraryLicenses {
                        licenseUrl: "http://www.eclipse.org/org/documents/epl-v10.html"),
     new LibraryLicense(name: "aether-api", version: "1.13.1", libraryName: "aether-api-1.13.1.jar", license: "Apache 2.0",
                        url: "http://maven.apache.org/", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
+    new LibraryLicense(name: "Android Annotations", libraryName: "com.android.tools:annotations:26.0.0", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Builder Model", libraryName: "builder-model", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Builder", libraryName: "android-builder", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Gradle model", libraryName: "android-gradle-model", version: "0.4-SNAPSHOT", license: "Apache 2.0",

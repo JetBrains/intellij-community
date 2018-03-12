@@ -52,7 +52,7 @@ public interface Promise<T> {
    * {@code
    *
    * somePromise
-   *  .then { transformOrProcessValue(it) }
+   *  .then(it -> transformOrProcessValue(it))
    * }
    * </pre>
    */
@@ -66,8 +66,8 @@ public interface Promise<T> {
    * {@code
    *
    * somePromise
-   *  .then { transformOrProcessValue(it) }
-   *  .thenAsync { processValueAsync(it) }
+   *  .then(it -> transformOrProcessValue(it))
+   *  .thenAsync(it -> processValueAsync(it))
    * }
    * </pre>
    */

@@ -314,7 +314,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
       }
       return true;
     };
-    if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Arrays.asList(names), indicator, false, true, processor)) {
+    if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Arrays.asList(names), indicator, processor)) {
       throw new ProcessCanceledException();
     }
   }

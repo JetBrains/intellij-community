@@ -17,4 +17,25 @@ public class Test {
     }
   }
 
+  void test3 (Optional<String> opt) {
+    // this case is ignored
+    if(opt == null || !opt.isPresent()) {
+      System.out.println("null or absent");
+    }
+  }
+
+  void test4 (Optional<String> opt) {
+    // this case is ignored as well
+    if(opt != null && opt.isPresent()) {
+      System.out.println("present");
+    }
+  }
+
+  void test5 (Optional<String> opt, Optional<String> opt2) {
+    // warn: different optionals used
+    if(opt.isPresent() && opt2.isPresent()) {
+      System.out.println("present");
+    }
+  }
+
 }

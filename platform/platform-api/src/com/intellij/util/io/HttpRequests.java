@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
 import com.intellij.Patches;
@@ -34,7 +20,7 @@ import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.net.ssl.CertificateManager;
 import com.intellij.util.net.ssl.UntrustedCertificateStrategy;
-import org.apache.http.HttpStatus;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -509,19 +495,19 @@ public final class HttpRequests {
 
       if (connection instanceof HttpURLConnection) {
         HttpURLConnection httpURLConnection = (HttpURLConnection)connection;
-        assert httpURLConnection.getRequestMethod().equals("GET") : "Please use this class for GET requests only";
+        LOG.assertTrue(httpURLConnection.getRequestMethod().equals("GET") || httpURLConnection.getRequestMethod().equals("HEAD"), "Please use this class for GET/HEAD requests only");
 
         if (LOG.isDebugEnabled()) LOG.debug("connecting to " + url);
         int responseCode = httpURLConnection.getResponseCode();
         if (LOG.isDebugEnabled()) LOG.debug("response: " + responseCode);
 
-        if (responseCode < 200 || responseCode >= 300 && responseCode != HttpStatus.SC_NOT_MODIFIED) {
+        if (responseCode < 200 || responseCode >= 300 && responseCode != HttpResponseStatus.NOT_MODIFIED.code()) {
           httpURLConnection.disconnect();
 
-          if (responseCode == HttpStatus.SC_MOVED_PERMANENTLY
-              || responseCode == HttpStatus.SC_MOVED_TEMPORARILY
-              || responseCode == HttpStatus.SC_SEE_OTHER
-              || responseCode == HttpStatus.SC_TEMPORARY_REDIRECT) {
+          if ( responseCode == HttpResponseStatus.MOVED_PERMANENTLY.code()
+              || responseCode == HttpResponseStatus.FOUND.code()
+              || responseCode == HttpResponseStatus.SEE_OTHER.code()
+              || responseCode == HttpResponseStatus.TEMPORARY_REDIRECT.code()) {
             request.myUrl = url = connection.getHeaderField("Location");
             if (url != null) {
               continue;

@@ -26,6 +26,8 @@ public interface ApplicationEx extends Application {
 
   boolean isLoaded();
 
+  boolean isInImpatientReader();
+
   @NotNull
   String getName();
 

@@ -907,17 +907,6 @@ public class ResolveUtil {
     }
   }
 
-  public static boolean canBePackage(final GrReferenceExpression ref) {
-    final GrExpression qualifier = ref.getQualifier();
-    if (qualifier instanceof GrReferenceExpression) {
-      final PsiElement resolvedQualifier = ((GrReferenceExpression)qualifier).resolve();
-      return resolvedQualifier instanceof PsiPackage;
-    }
-    else {
-      return qualifier == null && ref.getParent() instanceof GrReferenceExpression;
-    }
-  }
-
   public static boolean canBeClass(final GrReferenceExpression ref) {
     GrExpression qualifier = ref.getQualifier();
     if (qualifier instanceof GrReferenceExpression) {

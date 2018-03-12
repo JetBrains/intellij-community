@@ -225,6 +225,15 @@ public abstract class SdkType implements SdkTypeId {
     throw new IllegalArgumentException("Unknown SDk type: " + sdkTypeClass);
   }
 
+  /**
+   * @return for sdk build over another sdk, returns type of the nested sdk, 
+   *         e.g. plugins or android sdks are build over java sdk and for them the method returns {@link JavaSdkType},
+   *         null otherwise
+   */
+  protected SdkType getDependencyType() {
+    return null;
+  }
+
   public boolean isRootTypeApplicable(@NotNull OrderRootType type) {
     return true;
   }

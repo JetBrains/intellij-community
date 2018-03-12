@@ -8,44 +8,22 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-/**
- * ```xml
- * <option value="$value" />
- * ... n item elements
- * ```
- *
- * Where `option` it is item element (use `elementName` to customize element name) and
- * `value` it is value attribute (use `valueAttributeName` to customize attribute name).
- */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.FIELD, ElementType.METHOD})
 public @interface XCollection {
   /**
-   * The property element name. Defaults to property name if `style = v2`.
-   * If not specified and `style` is not specified — property serialized using option tag.
+   * The property element name. Defaults to property name if {@link #style} is set to {@link Style#v2}.
+   * If not specified and {@link #style} is not specified — property serialized using option tag.
    */
   String propertyElementName() default "";
 
   /**
-   * Value of primitive type wrapped into element named `option`. This option allows you to customize element name.
-   * For example, for `elementName = "module"`:
-   *
-   * <module value="$value" />
+   * Value of primitive type wrapped into element named {@code option}. This option allows you to customize element name.
    */
   String elementName() default Constants.OPTION;
 
   /**
    * Value of primitive type wrapped into element named `option`. This option allows you to customize name of value attribute.
-   * For example, for `valueAttributeName = "name"`:
-   *
-   * <option name="$value" />
-   *
-   * Empty name is allowed — in this case value will be serialized as element text.
-   * For example, for `valueAttributeName = ""`:
-   *
-   * <option>
-   *   $value
-   * </option>
    */
   String valueAttributeName() default Constants.VALUE;
 

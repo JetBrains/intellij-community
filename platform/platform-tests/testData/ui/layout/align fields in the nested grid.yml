@@ -1,0 +1,26 @@
+rowConstraints: ''
+columnConstraints:
+  count: 2.0
+  constraints:
+  - {}
+  - {grow: 100.0}
+componentConstrains:
+  'JRadioButton #0': {spanX: 2097051.0, wrap: true}
+  'JLabel #1':
+    horizontal:
+      gapBefore:
+        min: {value: 30.0}
+        preferred: {value: 30.0}
+  'JTextField #2': {split: 2097051.0}
+  'JLabel #3': {wrap: true}
+  'JLabel #4':
+    horizontal:
+      gapBefore:
+        min: {value: 30.0}
+        preferred: {value: 30.0}
+  'JBPasswordField #5':
+    wrap: true
+    horizontal:
+      size:
+        max: {value: 210.0}
+  'JBLabel #6': {skip: 1.0, spanX: 2097051.0, wrap: true}

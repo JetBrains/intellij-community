@@ -183,7 +183,7 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass imp
         outInjected.add(injectedPsi);
       }
     };
-    if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<>(hosts), progress, true,
+    if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<>(hosts), progress, 
                                                                    element -> {
                                                                      ApplicationManager.getApplication().assertReadAccessAllowed();
                                                                      ProgressManager.checkCanceled();
@@ -207,7 +207,7 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass imp
     final TextAttributes injectedAttributes = myGlobalScheme.getAttributes(EditorColors.INJECTED_LANGUAGE_FRAGMENT);
 
     return JobLauncher.getInstance()
-      .invokeConcurrentlyUnderProgress(new ArrayList<>(injectedFiles), progress, isFailFastOnAcquireReadAction(),
+      .invokeConcurrentlyUnderProgress(new ArrayList<>(injectedFiles), progress,
                                        injectedPsi -> addInjectedPsiHighlights(injectedPsi, injectedAttributes, outInfos, progress, injectedLanguageManager));
   }
 

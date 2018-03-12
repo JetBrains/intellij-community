@@ -16,6 +16,7 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -550,6 +551,15 @@ public class CharsetToolkit {
   @NotNull
   public static Charset getDefaultSystemCharset() {
     return Charset.defaultCharset();
+  }
+
+  /**
+   * Retrieve the platform charset of the system (determined by "sun.jnu.encoding" property)
+   */
+  @NotNull
+  public static Charset getPlatformCharset() {
+    String name = System.getProperty("sun.jnu.encoding");
+    return ObjectUtils.notNull(forName(name), getDefaultSystemCharset());
   }
 
   /**

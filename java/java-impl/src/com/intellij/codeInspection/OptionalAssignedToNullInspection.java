@@ -1,14 +1,19 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
+import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.*;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -82,12 +87,40 @@ public class OptionalAssignedToNullInspection extends AbstractBaseJavaLocalInspe
       public void visitBinaryExpression(PsiBinaryExpression binOp) {
         if (!WARN_ON_COMPARISON) return;
         PsiExpression value = ExpressionUtils.getValueComparedWithNull(binOp);
-        if (value != null && TypeUtils.isOptional(value.getType())) {
+        if (value != null &&
+            TypeUtils.isOptional(value.getType()) &&
+            !hasSubsequentIsPresentCall(value, binOp, JavaTokenType.EQEQ.equals(binOp.getOperationTokenType()))) {
           holder.registerProblem(binOp, "Optional value is compared with null",
                                  new ReplaceWithIsPresentFix(),
                                  new SetInspectionOptionFix(OptionalAssignedToNullInspection.this, "WARN_ON_COMPARISON",
                                                             "Do not warn when comparing Optional with null", false));
         }
+      }
+
+      private boolean hasSubsequentIsPresentCall(@NotNull PsiExpression optionalExpression,
+                                                 @NotNull PsiExpression previousExpression,
+                                                 boolean negated) {
+        PsiPolyadicExpression parent =
+          ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprUp(previousExpression.getParent()), PsiPolyadicExpression.class);
+        if (parent == null) return false;
+        IElementType expectedToken = negated ? JavaTokenType.OROR : JavaTokenType.ANDAND;
+        if (!parent.getOperationTokenType().equals(expectedToken)) return false;
+        PsiExpression nextExpression =
+          StreamEx.of(parent.getOperands()).dropWhile(op -> !PsiTreeUtil.isAncestor(op, previousExpression, false))
+                  .skip(1)
+                  .findFirst()
+                  .orElse(null);
+        nextExpression = PsiUtil.skipParenthesizedExprDown(nextExpression);
+        if (nextExpression == null) return false;
+        if (negated) {
+          if (!BoolUtils.isNegation(nextExpression)) return false;
+          nextExpression = BoolUtils.getNegated(nextExpression);
+        }
+        if (!(nextExpression instanceof PsiMethodCallExpression)) return false;
+        PsiMethodCallExpression call = (PsiMethodCallExpression)nextExpression;
+        if (!"isPresent".equals(call.getMethodExpression().getReferenceName()) || !call.getArgumentList().isEmpty()) return false;
+        PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
+        return qualifier != null && PsiEquivalenceUtil.areElementsEquivalent(qualifier, optionalExpression);
       }
 
       private void checkNulls(PsiType type, PsiExpression expression, String declaration) {

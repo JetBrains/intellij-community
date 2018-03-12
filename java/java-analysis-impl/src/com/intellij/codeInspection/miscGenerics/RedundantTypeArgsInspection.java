@@ -21,7 +21,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -150,7 +149,7 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
             final PsiReferenceParameterList parameterList = referenceElement.getParameterList();
             LOG.assertTrue(parameterList != null);
             final ProblemDescriptor descriptor = inspectionManager.createProblemDescriptor(parameterList, InspectionsBundle
-              .message("inspection.redundant.type.problem.descriptor"), new MyMethodReferenceFixAction(), ProblemHighlightType.LIKE_UNUSED_SYMBOL, isOnTheFly);
+              .message("inspection.redundant.type.problem.descriptor"), ourQuickFixAction, ProblemHighlightType.LIKE_UNUSED_SYMBOL, isOnTheFly);
             problems.add(descriptor);
           }
         }
@@ -197,33 +196,6 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
-      }
-    }
-  }
-
-  //separate quickfix is needed to invalidate initial method reference
-  //otherwise it would provide inconsistent substitutors to the next chained calls
-  private static class MyMethodReferenceFixAction implements LocalQuickFix {
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return InspectionsBundle.message("inspection.redundant.type.remove.methodref.quickfix");
-    }
-
-    @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiTypeElement typeElement = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiTypeElement.class);
-      final PsiMethodReferenceExpression expression = PsiTreeUtil.getParentOfType(typeElement, PsiMethodReferenceExpression.class);
-      if (expression != null) {
-        final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(expression.getProject());
-        final PsiClass aClass = ((PsiClassType)typeElement.getType()).resolve();
-        if (aClass != null) {
-          final PsiMethodReferenceExpression copy = (PsiMethodReferenceExpression)expression.copy();
-          final PsiTypeElement qualifier = copy.getQualifierType();
-          assert qualifier != null;
-          qualifier.replace(elementFactory.createReferenceExpression(aClass));
-          expression.replace(copy);
-        }
       }
     }
   }

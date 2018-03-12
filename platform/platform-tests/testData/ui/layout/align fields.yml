@@ -1,0 +1,11 @@
+rowConstraints: ''
+columnConstraints:
+  count: 2.0
+  constraints:
+  - {}
+  - {grow: 100.0}
+componentConstrains:
+  'JLabel #0': {}
+  'JCheckBox #1': {wrap: true}
+  'JLabel #2': {}
+  'JTextField #3': {wrap: true}
