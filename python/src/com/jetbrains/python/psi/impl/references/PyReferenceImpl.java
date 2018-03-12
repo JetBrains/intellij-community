@@ -259,7 +259,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     return getResultsFromProcessor(referencedName, processor, realContext, roof);
   }
 
-  protected final List<RatedResolveResult> getResultsFromProcessor(@NotNull String referencedName,
+  protected List<RatedResolveResult> getResultsFromProcessor(@NotNull String referencedName,
                                                              @NotNull PyResolveProcessor processor,
                                                              @Nullable PsiElement realContext,
                                                              @Nullable PsiElement resolveRoof) {

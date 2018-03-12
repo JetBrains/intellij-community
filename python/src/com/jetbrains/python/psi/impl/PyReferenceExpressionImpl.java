@@ -306,7 +306,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   }
 
   @Nullable
-  private PyType getTypeFromTargets(@NotNull TypeEvalContext context) {
+  protected PyType getTypeFromTargets(@NotNull TypeEvalContext context) {
     final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
     final List<PyType> members = new ArrayList<>();
 
@@ -407,9 +407,9 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   }
 
   @Nullable
-  private static PyType getTypeFromTarget(@NotNull PsiElement target,
-                                          @NotNull TypeEvalContext context,
-                                          @NotNull PyReferenceExpression anchor) {
+  protected static PyType getTypeFromTarget(@NotNull PsiElement target,
+                                            @NotNull TypeEvalContext context,
+                                            @NotNull PyReferenceExpression anchor) {
     final PyType type = dropSelfForQualifiedMethod(getGenericTypeFromTarget(target, context, anchor), context, anchor);
 
     if (context.maySwitchToAST(anchor)) {
