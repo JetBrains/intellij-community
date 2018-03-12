@@ -1070,3 +1070,15 @@ class T74 {
   }
   int y = x = 3;
 }
+// IDEA-187493
+class T75 {
+  void foo() {
+    new Inner().innerField = 1;
+  }
+
+  private static class Inner {
+    private int innerField;
+
+    private Inner() {innerField = 0;}
+  }
+}
