@@ -65,4 +65,19 @@ public abstract class RequestBuilder {
   public String readString(@Nullable ProgressIndicator indicator) throws IOException {
     return connect(request -> request.readString(indicator));
   }
+
+  @NotNull
+  public String readString() throws IOException {
+    return readString(null);
+  }
+
+  @NotNull
+  public CharSequence readChars(@Nullable ProgressIndicator indicator) throws IOException {
+    return connect(request -> request.readChars(indicator));
+  }
+
+  @NotNull
+  public CharSequence readChars() throws IOException {
+    return readChars(null);
+  }
 }

@@ -13,9 +13,9 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.Url;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.net.ssl.CertificateManager;
@@ -30,7 +30,9 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import java.io.*;
 import java.net.*;
+import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -92,6 +94,9 @@ public final class HttpRequests {
 
     @NotNull
     String readString(@Nullable ProgressIndicator indicator) throws IOException;
+
+    @NotNull
+    CharSequence readChars(@Nullable ProgressIndicator indicator) throws IOException;
   }
 
   public interface RequestProcessor<T> {
@@ -132,6 +137,10 @@ public final class HttpRequests {
     }
   }
 
+  @NotNull
+  public static RequestBuilder request(@NotNull Url url) {
+    return request(url.toExternalForm());
+  }
 
   @NotNull
   public static RequestBuilder request(@NotNull String url) {
@@ -335,18 +344,39 @@ public final class HttpRequests {
     @Override
     @NotNull
     public byte[] readBytes(@Nullable ProgressIndicator indicator) throws IOException {
+      return doReadBytes(indicator).toByteArray();
+    }
+
+    @NotNull
+    private BufferExposingByteArrayOutputStream doReadBytes(@Nullable ProgressIndicator indicator) throws IOException {
       int contentLength = getConnection().getContentLength();
       BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream(contentLength > 0 ? contentLength : BLOCK_SIZE);
       NetUtils.copyStreamContent(indicator, getInputStream(), out, contentLength);
-      return ArrayUtil.realloc(out.getInternalBuffer(), out.size());
+      return out;
     }
 
     @NotNull
     @Override
     public String readString(@Nullable ProgressIndicator indicator) throws IOException {
-      Charset cs = getCharset(this);
-      byte[] bytes = readBytes(indicator);
-      return new String(bytes, cs);
+      BufferExposingByteArrayOutputStream byteStream = doReadBytes(indicator);
+      if (byteStream.size() == 0) {
+        return "";
+      }
+      else {
+        return new String(byteStream.getInternalBuffer(), 0, byteStream.size(), getCharset(this));
+      }
+    }
+
+    @NotNull
+    @Override
+    public CharSequence readChars(@Nullable ProgressIndicator indicator) throws IOException {
+      BufferExposingByteArrayOutputStream byteStream = doReadBytes(indicator);
+      if (byteStream.size() == 0) {
+        return ArrayUtil.EMPTY_CHAR_SEQUENCE;
+      }
+      else {
+        return getCharset(this).decode(ByteBuffer.wrap(byteStream.getInternalBuffer(), 0, byteStream.size()));
+      }
     }
 
     @Override
@@ -420,7 +450,8 @@ public final class HttpRequests {
     }
   }
 
-  private static Charset getCharset(Request request) throws IOException {
+  @NotNull
+  private static Charset getCharset(@NotNull Request request) throws IOException {
     String contentType = request.getConnection().getContentType();
     if (!StringUtil.isEmptyOrSpaces(contentType)) {
       Matcher m = CHARSET_PATTERN.matcher(contentType);
@@ -434,7 +465,7 @@ public final class HttpRequests {
       }
     }
 
-    return CharsetToolkit.UTF8_CHARSET;
+    return StandardCharsets.UTF_8;
   }
 
   private static URLConnection openConnection(RequestBuilderImpl builder, RequestImpl request) throws IOException {
@@ -543,7 +574,7 @@ public final class HttpRequests {
    * This method checks if any headers contain NUL byte in value and removes those headers from request.
    * @param httpURLConnection connection to check
    */
-  private static void checkRequestHeadersForNulBytes(URLConnection httpURLConnection) {
+  private static void checkRequestHeadersForNulBytes(@NotNull URLConnection httpURLConnection) {
     for (Map.Entry<String, List<String>> header : httpURLConnection.getRequestProperties().entrySet()) {
       boolean shouldBeIgnored = false;
       for (String headerValue : header.getValue()) {
