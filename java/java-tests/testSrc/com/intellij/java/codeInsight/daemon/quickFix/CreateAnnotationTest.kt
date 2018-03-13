@@ -2,8 +2,9 @@
 package com.intellij.java.codeInsight.daemon.quickFix
 
 import com.intellij.lang.java.actions.CreateAnnotationAction
-import com.intellij.lang.jvm.actions.JvmAnnotationMemberValue
 import com.intellij.lang.jvm.actions.createAnnotationRequest
+import com.intellij.lang.jvm.actions.intAttribute
+import com.intellij.lang.jvm.actions.stringAttribute
 import com.intellij.psi.PsiModifierListOwner
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
@@ -20,8 +21,8 @@ class CreateAnnotationTest : LightCodeInsightFixtureTestCase() {
     val modifierListOwner = myFixture.findElementByText("bar", PsiModifierListOwner::class.java)
 
     myFixture.launchAction(CreateAnnotationAction(modifierListOwner,
-                                                  createAnnotationRequest("java.lang.SuppressWarnings", "value" to
-                                                    JvmAnnotationMemberValue.StringLiteral("someText"))))
+                                                  createAnnotationRequest("java.lang.SuppressWarnings",
+                                                                          stringAttribute("value", "someText"))))
 
     myFixture.checkResult("""
       class A {
@@ -51,8 +52,8 @@ class CreateAnnotationTest : LightCodeInsightFixtureTestCase() {
     myFixture.launchAction(CreateAnnotationAction(modifierListOwner,
                                                   createAnnotationRequest(
                                                     "java.lang.SuppressWarnings",
-                                                    "num" to JvmAnnotationMemberValue.PrimitiveLiteral(12),
-                                                    "text" to JvmAnnotationMemberValue.StringLiteral("anotherText")
+                                                    intAttribute("num", 12),
+                                                    stringAttribute("text", "anotherText")
                                                   )
     )
     )

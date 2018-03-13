@@ -15,17 +15,6 @@
  */
 package com.intellij.lang.jvm;
 
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
+public interface JvmAnnotation extends JvmAnnotationInfo, JvmElement {
 
-public interface JvmAnnotation extends JvmElement {
-
-  /**
-   * Returns the fully qualified name of the annotation class.
-   *
-   * @return the class name, or null if the annotation is unresolved.
-   */
-  @Nullable
-  @NonNls
-  String getQualifiedName();
 }

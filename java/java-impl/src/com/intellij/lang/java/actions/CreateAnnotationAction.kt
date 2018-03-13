@@ -2,8 +2,9 @@
 package com.intellij.lang.java.actions
 
 import com.intellij.codeInsight.FileModificationService
+import com.intellij.lang.jvm.JvmPrimitiveLiteral
+import com.intellij.lang.jvm.JvmStringLiteral
 import com.intellij.lang.jvm.actions.CreateAnnotationRequest
-import com.intellij.lang.jvm.actions.JvmAnnotationMemberValue
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
@@ -36,17 +37,20 @@ class CreateAnnotationAction(target: PsiModifierListOwner, override val request:
 
       val support = LanguageAnnotationSupport.INSTANCE.forLanguage(annotation.language)!!
 
-      attributes@ for ((name, value) in request.attributes) {
+      attributes@ for (attribute in request.attributes) {
+        val name = attribute.name
+        val value = attribute.value
         val memberValue = when (value) {
-          is JvmAnnotationMemberValue.PrimitiveLiteral -> support
+          is JvmPrimitiveLiteral -> support
             .createLiteralValue(value.value.toString(), annotation)
-          is JvmAnnotationMemberValue.StringLiteral -> support
+          is JvmStringLiteral -> support
             .createLiteralValue(value.value, annotation)
           else -> {
             LOG.error("adding annotation members of ${value.javaClass} type is not implemented"); continue@attributes
           }
         }
-        annotation.setDeclaredAttributeValue(name.takeIf { name != "value" || !request.omitAttributeNameIfPossible(name) }, memberValue)
+        annotation.setDeclaredAttributeValue(name.takeIf { name != "value" || !request.omitAttributeNameIfPossible(attribute) },
+                                             memberValue)
       }
 
       val formatter = CodeStyleManager.getInstance(project)
