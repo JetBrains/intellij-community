@@ -167,30 +167,17 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
       if (LOG.isDebugEnabled()) {
         LOG.debug(String.format("Importing content root '%s' for module '%s'", contentRoot.getRootPath(), module.getName()));
       }
-      for (SourceRoot path : contentRoot.getPaths(ExternalSystemSourceType.SOURCE)) {
-        createSourceRootIfAbsent(
-          contentEntry, path, module.getName(), JavaSourceRootType.SOURCE, false, createEmptyContentRootDirectories);
+
+      for (ExternalSystemSourceType externalSrcType : ExternalSystemSourceType.values()) {
+        final JpsModuleSourceRootType<?> type = getJavaSourceRootType(externalSrcType);
+        if (type != null) {
+          for (SourceRoot path : contentRoot.getPaths(externalSrcType)) {
+            createSourceRootIfAbsent(
+              contentEntry, path, module.getName(), type, externalSrcType.isGenerated(), createEmptyContentRootDirectories);
+          }
+        }
       }
-      for (SourceRoot path : contentRoot.getPaths(ExternalSystemSourceType.TEST)) {
-        createSourceRootIfAbsent(
-          contentEntry, path, module.getName(), JavaSourceRootType.TEST_SOURCE, false, createEmptyContentRootDirectories);
-      }
-      for (SourceRoot path : contentRoot.getPaths(ExternalSystemSourceType.SOURCE_GENERATED)) {
-        createSourceRootIfAbsent(
-          contentEntry, path, module.getName(), JavaSourceRootType.SOURCE, true, createEmptyContentRootDirectories);
-      }
-      for (SourceRoot path : contentRoot.getPaths(ExternalSystemSourceType.TEST_GENERATED)) {
-        createSourceRootIfAbsent(
-          contentEntry, path, module.getName(), JavaSourceRootType.TEST_SOURCE, true, createEmptyContentRootDirectories);
-      }
-      for (SourceRoot path : contentRoot.getPaths(ExternalSystemSourceType.RESOURCE)) {
-        createSourceRootIfAbsent(
-          contentEntry, path, module.getName(), JavaResourceRootType.RESOURCE, false, createEmptyContentRootDirectories);
-      }
-      for (SourceRoot path : contentRoot.getPaths(ExternalSystemSourceType.TEST_RESOURCE)) {
-        createSourceRootIfAbsent(
-          contentEntry, path, module.getName(), JavaResourceRootType.TEST_RESOURCE, false, createEmptyContentRootDirectories);
-      }
+
       for (SourceRoot path : contentRoot.getPaths(ExternalSystemSourceType.EXCLUDED)) {
         createExcludedRootIfAbsent(contentEntry, path, module.getName(), module.getProject());
       }
@@ -199,6 +186,27 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
     for (ContentEntry contentEntry : contentEntriesMap.values()) {
       modifiableRootModel.removeContentEntry(contentEntry);
     }
+  }
+
+  @Nullable
+  private static JpsModuleSourceRootType<?> getJavaSourceRootType(ExternalSystemSourceType type) {
+    switch (type) {
+      case SOURCE:
+        return JavaSourceRootType.SOURCE;
+      case TEST:
+        return JavaSourceRootType.TEST_SOURCE;
+      case EXCLUDED:
+        return null;
+      case SOURCE_GENERATED:
+        return JavaSourceRootType.SOURCE;
+      case TEST_GENERATED:
+        return JavaSourceRootType.TEST_SOURCE;
+      case RESOURCE:
+        return JavaResourceRootType.RESOURCE;
+      case TEST_RESOURCE:
+        return JavaResourceRootType.TEST_RESOURCE;
+    }
+    return null;
   }
 
   @NotNull
