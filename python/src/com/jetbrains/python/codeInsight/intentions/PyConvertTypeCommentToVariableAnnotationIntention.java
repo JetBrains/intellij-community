@@ -139,11 +139,15 @@ public class PyConvertTypeCommentToVariableAnnotationIntention extends PyBaseInt
       }
 
       final PyElementGenerator generator = PyElementGenerator.getInstance(targetExpr.getProject());
-      final PyExpression parsed = generator.createExpressionFromText(LanguageLevel.PYTHON36, annotation);
-      if (parsed != null) {
-        final Map<PyTargetExpression, PyExpression> targetToExpr = PyTypingTypeProvider.mapTargetsToAnnotations(targetExpr, parsed);
-        return EntryStream.of(targetToExpr).mapValues(PyExpression::getText).toCustomMap(LinkedHashMap::new);
+      final PyExpression parsed;
+      try {
+        parsed = generator.createExpressionFromText(LanguageLevel.PYTHON36, annotation);
       }
+      catch (IncorrectOperationException e) {
+        return Collections.emptyMap();
+      }
+      final Map<PyTargetExpression, PyExpression> targetToExpr = PyTypingTypeProvider.mapTargetsToAnnotations(targetExpr, parsed);
+      return EntryStream.of(targetToExpr).mapValues(PyExpression::getText).toCustomMap(LinkedHashMap::new);
     }
     return Collections.emptyMap();
   }
