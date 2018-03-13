@@ -135,7 +135,7 @@ class BazelAntLauncher {
             Files.move(Paths.get(tmp, "artifacts", "android-studio-SNAPSHOT.mac.zip"), Paths.get(mac));
         }
         if (linux != null) {
-            Files.move(Paths.get(tmp, "artifacts", "android-studio-SNAPSHOT.linux.zip"), Paths.get(linux));
+            Files.move(Paths.get(tmp, "artifacts", "android-studio-SNAPSHOT.tar.gz"), Paths.get(linux));
         }
     } else {
         try (Stream<String> stream = Files.lines(output.toPath())) {

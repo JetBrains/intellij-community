@@ -3,6 +3,7 @@ import glob
 import os
 import re
 import sys
+import tarfile
 import unittest
 import zipfile
 
@@ -20,7 +21,7 @@ class StudioTests(unittest.TestCase):
 
   def test_artifacts_are_present(self):
     name = self.artifact_prefix() + build
-    for suffix in [ ".linux.zip", ".mac.zip", ".win.zip", ".win32.zip"]:
+    for suffix in [ ".mac.zip", ".tar.gz", ".win.zip", ".win32.zip"]:
       file = os.path.join(dist_dir, name + suffix)
       self.assertTrue(os.path.exists(file), "Artifact " + file + " not found.")
 
@@ -114,9 +115,9 @@ class StudioTests(unittest.TestCase):
   def test_custom_vmoptions_linux(self):
     """Tests that vmoptions specific to ASWB on Linux are only present in the ASWB Linux build"""
 
-    linux_artifact = os.path.join(dist_dir, self.artifact_prefix() + build + ".linux.zip")
-    linux_zip = zipfile.ZipFile(linux_artifact)
-    studio_sh_contents = linux_zip.read("android-studio/bin/studio.sh").split(" ")
+    linux_artifact = os.path.join(dist_dir, self.artifact_prefix() + build + ".tar.gz")
+    tar = tarfile.open(linux_artifact, "r:gz")
+    studio_sh_contents = tar.extractfile(tar.getmember("android-studio/bin/studio.sh")).read().split(" ")
 
     vmoption = "-Dandroid.adb.path=/usr/bin/adb"
     self.assertEqual(vmoption in studio_sh_contents, aswb)
@@ -128,10 +129,10 @@ class StudioTests(unittest.TestCase):
     if aswb:
       return # aswb does not include offline repo
 
-    linux_artifact = os.path.join(dist_dir, self.artifact_prefix() + build + ".linux.zip")
-    linux_zip = zipfile.ZipFile(linux_artifact)
+    linux_artifact = os.path.join(dist_dir, self.artifact_prefix() + build + ".tar.gz")
+    tar = tarfile.open(linux_artifact, "r:gz")
 
-    self.assertTrue(any("m2repository/org/jetbrains/kotlin/kotlin-gradle-plugin" in name for name in linux_zip.namelist()))
+    self.assertTrue(any(m for m in tar.getmembers() if "m2repository/org/jetbrains/kotlin/kotlin-gradle-plugin" in m.name))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
