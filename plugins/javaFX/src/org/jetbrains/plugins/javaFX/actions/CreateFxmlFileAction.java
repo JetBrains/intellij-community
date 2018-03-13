@@ -34,7 +34,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
-import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 
 import java.util.*;
@@ -44,14 +43,6 @@ import java.util.*;
  */
 public class CreateFxmlFileAction extends CreateFromTemplateActionBase {
   private static final String INTERNAL_TEMPLATE_NAME = "FxmlFile.fxml";
-  private static final Set<JpsModuleSourceRootType<?>> JAVA_ROOT_TYPES;
-
-  static {
-    Set<JpsModuleSourceRootType<?>> types = new HashSet<>();
-    types.addAll(JavaModuleSourceRootTypes.SOURCES);
-    types.addAll(JavaModuleSourceRootTypes.RESOURCES);
-    JAVA_ROOT_TYPES = Collections.unmodifiableSet(types);
-  }
 
   public CreateFxmlFileAction() {
     super("FXML File", "Create New FXML File", AllIcons.FileTypes.Xml);
@@ -120,13 +111,10 @@ public class CreateFxmlFileAction extends CreateFromTemplateActionBase {
     final DataContext dataContext = e.getDataContext();
     final Presentation presentation = e.getPresentation();
 
-    final boolean enabled = isAvailable(dataContext);
-
-    presentation.setVisible(enabled);
-    presentation.setEnabled(enabled);
+    presentation.setEnabledAndVisible(isAvailable(dataContext));
   }
 
-  public static boolean isAvailable(DataContext dataContext) {
+  private static boolean isAvailable(DataContext dataContext) {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final IdeView view = LangDataKeys.IDE_VIEW.getData(dataContext);
     if (project == null || view == null) {
@@ -140,6 +128,6 @@ public class CreateFxmlFileAction extends CreateFromTemplateActionBase {
     final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
     return Arrays.stream(directories)
                  .map(PsiDirectory::getVirtualFile)
-                 .anyMatch(virtualFile -> index.isUnderSourceRootOfType(virtualFile, JAVA_ROOT_TYPES));
+                 .anyMatch(virtualFile -> index.isUnderSourceRootOfType(virtualFile, JavaModuleSourceRootTypes.PRODUCTION));
   }
 }
