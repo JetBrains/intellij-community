@@ -172,7 +172,7 @@ public final class HttpRequests {
     private String myUserAgent;
     private String myAccept;
     private ConnectionTuner myTuner;
-    private UntrustedCertificateStrategy myUntrustedCertificateStrategy = UntrustedCertificateStrategy.ASK_USER;
+    private UntrustedCertificateStrategy myUntrustedCertificateStrategy = null;
 
     private RequestBuilderImpl(@NotNull String url) {
       myUrl = url;
@@ -251,6 +251,7 @@ public final class HttpRequests {
       return this;
     }
 
+    @NotNull
     @Override
     public RequestBuilder untrustedCertificateStrategy(@NotNull UntrustedCertificateStrategy strategy) {
       myUntrustedCertificateStrategy = strategy;
@@ -408,7 +409,7 @@ public final class HttpRequests {
   }
 
   private static <T> T doProcess(RequestBuilderImpl builder, RequestProcessor<T> processor) throws IOException {
-    CertificateManager manager = ApplicationManager.getApplication() != null ? CertificateManager.getInstance() : null;
+    CertificateManager manager = builder.myUntrustedCertificateStrategy == null || ApplicationManager.getApplication() == null ? null : CertificateManager.getInstance();
     try (RequestImpl request = new RequestImpl(builder)) {
       if (manager != null) {
         return manager.runWithUntrustedCertificateStrategy(() -> processor.process(request), builder.myUntrustedCertificateStrategy);
