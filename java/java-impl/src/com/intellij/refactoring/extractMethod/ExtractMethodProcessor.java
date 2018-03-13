@@ -16,7 +16,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -27,7 +26,10 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Pass;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
@@ -574,16 +576,11 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   public boolean showDialog(final boolean direct) {
-    Ref<Boolean> result = Ref.create(Boolean.FALSE);
-    TransactionGuard.getInstance().submitTransactionAndWait(() -> {
-      AbstractExtractDialog dialog = createExtractMethodDialog(direct);
-      dialog.show();
-      if (dialog.isOK()) {
-        apply(dialog);
-        result.set(Boolean.TRUE);
-      }
-    });
-    return result.get();
+    AbstractExtractDialog dialog = createExtractMethodDialog(direct);
+    dialog.show();
+    if (!dialog.isOK()) return false;
+    apply(dialog);
+    return true;
   }
 
   protected void apply(final AbstractExtractDialog dialog) {
