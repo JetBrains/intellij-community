@@ -288,6 +288,7 @@
     <group id="Vcs.CommitExecutor.Actions"/>
 
     <group id="VcsToobarActions">
+      <action class="com.intellij.openapi.vcs.actions.VcsToolbarLabelAction" id="VcsToolbarLabelAction"/>
       <reference ref="Vcs.UpdateProject"/>
       <reference ref="CheckinProject"/>
       <reference ref="Compare.SameVersion"/>
@@ -298,6 +299,7 @@
     </group>
 
     <group id="VcsNavBarToobarActions">
+      <action class="com.intellij.openapi.vcs.actions.VcsToolbarLabelAction" id="VcsNavbarLabelAction"/>
       <reference ref="Vcs.UpdateProject"/>
       <reference ref="CheckinProject"/>
       <reference ref="Vcs.ShowTabbedFileHistory"/>

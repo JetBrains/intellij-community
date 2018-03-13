@@ -370,9 +370,7 @@ public class MultipleFileMergeDialog extends DialogWrapper {
         checkMarkModifiedProject(file);
 
         if (result != MergeResult.CANCEL) {
-          ApplicationManager.getApplication().runWriteAction(() -> {
-            markFileProcessed(file, getSessionResolution(result));
-          });
+          markFileProcessed(file, getSessionResolution(result));
         }
       };
 

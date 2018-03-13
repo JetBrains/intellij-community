@@ -18,9 +18,7 @@ package com.jetbrains.python.codeInsight.intentions;
 import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -29,7 +27,6 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.intentions.PyTypeHintGenerationUtil.AnnotationInfo;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
 import one.util.streamex.EntryStream;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -44,6 +41,8 @@ public class PyConvertTypeCommentToVariableAnnotationIntention extends PyBaseInt
   public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final PsiComment typeComment = findCommentUnderCaret(editor, file);
     if (typeComment != null) {
+      final SmartPointerManager manager = SmartPointerManager.getInstance(project);
+      final SmartPsiElementPointer<PsiComment> commentPointer = manager.createSmartPsiElementPointer(typeComment);
       final Map<PyTargetExpression, String> map = mapTargetsToAnnotations(typeComment);
       if (!map.isEmpty()) {
         if (typeComment.getParent() instanceof PyAssignmentStatement && map.size() == 1) {
@@ -57,8 +56,10 @@ public class PyConvertTypeCommentToVariableAnnotationIntention extends PyBaseInt
           }
         }
 
-        PyPsiUtils.assertValid(typeComment);
-        typeComment.delete();
+        final PsiComment staleComment = commentPointer.getElement();
+        if (staleComment != null) {
+          staleComment.delete();
+        }
       }
     }
   }
@@ -139,11 +140,15 @@ public class PyConvertTypeCommentToVariableAnnotationIntention extends PyBaseInt
       }
 
       final PyElementGenerator generator = PyElementGenerator.getInstance(targetExpr.getProject());
-      final PyExpression parsed = generator.createExpressionFromText(LanguageLevel.PYTHON36, annotation);
-      if (parsed != null) {
-        final Map<PyTargetExpression, PyExpression> targetToExpr = PyTypingTypeProvider.mapTargetsToAnnotations(targetExpr, parsed);
-        return EntryStream.of(targetToExpr).mapValues(PyExpression::getText).toCustomMap(LinkedHashMap::new);
+      final PyExpression parsed;
+      try {
+        parsed = generator.createExpressionFromText(LanguageLevel.PYTHON36, annotation);
       }
+      catch (IncorrectOperationException e) {
+        return Collections.emptyMap();
+      }
+      final Map<PyTargetExpression, PyExpression> targetToExpr = PyTypingTypeProvider.mapTargetsToAnnotations(targetExpr, parsed);
+      return EntryStream.of(targetToExpr).mapValues(PyExpression::getText).toCustomMap(LinkedHashMap::new);
     }
     return Collections.emptyMap();
   }
