@@ -1694,7 +1694,7 @@ public class AbstractPopup implements JBPopup {
   }
 
   public Window getPopupWindow() {
-    return myPopup.getWindow();
+    return myPopup != null ? myPopup.getWindow() : null;
   }
 
   public void setUserData(List<Object> userData) {
