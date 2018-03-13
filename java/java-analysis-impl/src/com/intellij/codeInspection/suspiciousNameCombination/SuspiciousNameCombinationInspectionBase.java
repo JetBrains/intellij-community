@@ -61,7 +61,7 @@ public class SuspiciousNameCombinationInspectionBase extends AbstractBaseJavaLoc
     myWordToGroupMap.clear();
   }
 
-  protected void addNameGroup(@NonNls final String group) {
+  public void addNameGroup(@NonNls final String group) {
     myNameGroups.add(group);
     List<String> words = StringUtil.split(group, ",");
     for(String word: words) {
@@ -197,15 +197,19 @@ public class SuspiciousNameCombinationInspectionBase extends AbstractBaseJavaLoc
       }
       String[] words = NameUtil.splitNameIntoWords(name);
       String result = null;
-      for(String word: words) {
-        String group = myWordToGroupMap.get(canonicalize(word));
-        if (group != null) {
-          if (result == null) {
-            result = group;
-          }
-          else if (!result.equals(group)) {
-            result = null;
-            break;
+      for (int i = 0; i < words.length; i++) {
+        String word = "";
+        for (int j = i; j < words.length; j++) {
+          word += words[j];
+          String group = myWordToGroupMap.get(canonicalize(word));
+          if (group != null) {
+            if (result == null) {
+              result = group;
+            }
+            else if (!result.equals(group)) {
+              result = null;
+              break;
+            }
           }
         }
       }
