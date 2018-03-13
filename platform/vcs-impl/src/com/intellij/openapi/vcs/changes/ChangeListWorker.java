@@ -177,6 +177,7 @@ public class ChangeListWorker {
     PartialChangeTracker oldTracker = myPartialChangeTrackers.remove(filePath);
     if (!Comparing.equal(oldTracker, tracker)) {
       LOG.error(String.format("Wrong tracker removed: %s; expected: %s; passed: %s", filePath, oldTracker, tracker));
+      return;
     }
 
     Change change = getChangeForAfterPath(filePath);
@@ -190,8 +191,7 @@ public class ChangeListWorker {
   }
 
   @NotNull
-  private ListData getMainList(@Nullable PartialChangeTracker oldTracker) {
-    if (oldTracker == null) return myDefault;
+  private ListData getMainList(@NotNull PartialChangeTracker oldTracker) {
     List<String> changelistIds = oldTracker.getAffectedChangeListsIds();
     if (changelistIds.size() == 1) {
       ListData list = getDataByIdVerify(changelistIds.get(0));
