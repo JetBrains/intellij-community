@@ -587,7 +587,9 @@ public abstract class ChooseByNameBase {
     myTextField.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(@NotNull ActionEvent actionEvent) {
-        doClose(true);
+        if (!getChosenElements().isEmpty()) {
+          doClose(true);
+        }
       }
     });
 
@@ -1058,9 +1060,10 @@ public abstract class ChooseByNameBase {
   @Nullable
   public Object getChosenElement() {
     final List<Object> elements = getChosenElements();
-    return elements != null && elements.size() == 1 ? elements.get(0) : null;
+    return elements.size() == 1 ? elements.get(0) : null;
   }
 
+  @NotNull
   protected List<Object> getChosenElements() {
     return ContainerUtil.filter(myList.getSelectedValuesList(), o -> o != null && !isSpecialElement(o));
   }
