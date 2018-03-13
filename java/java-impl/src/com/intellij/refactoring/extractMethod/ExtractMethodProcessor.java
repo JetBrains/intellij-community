@@ -15,7 +15,6 @@ import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.PsiClassListCellRenderer;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -1782,30 +1781,35 @@ public class ExtractMethodProcessor implements MatchProvider {
     if (!shouldAcceptCurrentTarget(extractPass, myTargetClass)) {
 
       final LinkedHashMap<PsiClass, List<PsiVariable>> classes = new LinkedHashMap<>();
-      final PsiElementProcessor<PsiClass> processor = selectedClass -> {
-        AnonymousTargetClassPreselectionUtil.rememberSelection(selectedClass, myTargetClass);
-        final List<PsiVariable> array = classes.get(selectedClass);
-        myNeedChangeContext = myTargetClass != selectedClass;
-        myTargetClass = selectedClass;
-        if (array != null) {
-          for (PsiVariable variable : array) {
-            if (!inputVariables.contains(variable)) {
-              inputVariables.addAll(array);
+      final PsiElementProcessor<PsiClass> processor = new PsiElementProcessor<PsiClass>() {
+        @Override
+        public boolean execute(@NotNull PsiClass selectedClass) {
+          AnonymousTargetClassPreselectionUtil.rememberSelection(selectedClass, myTargetClass);
+          final List<PsiVariable> array = classes.get(selectedClass);
+          myNeedChangeContext = myTargetClass != selectedClass;
+          myTargetClass = selectedClass;
+          if (array != null) {
+            for (PsiVariable variable : array) {
+              if (!inputVariables.contains(variable)) {
+                inputVariables.addAll(array);
+              }
             }
           }
+          Ref<Boolean> result = Ref.create(Boolean.FALSE);
+          TransactionGuard.getInstance().submitTransactionAndWait(() -> {
+            try {
+              result.set(applyChosenClassAndExtract(inputVariables, extractPass));
+            }
+            catch (PrepareFailedException e) {
+              if (myShowErrorDialogs) {
+                CommonRefactoringUtil
+                  .showErrorHint(myProject, myEditor, e.getMessage(), ExtractMethodHandler.REFACTORING_NAME, HelpID.EXTRACT_METHOD);
+                ExtractMethodHandler.highlightPrepareError(e, e.getFile(), myEditor, myProject);
+              }
+            }
+          });
+          return result.get();
         }
-        final Application app = ApplicationManager.getApplication();
-        if (!app.isDispatchThread() && app.isReadAccessAllowed()) {
-          LOG.assertTrue(!myShowErrorDialogs, "in background");
-          return applyChosenClassAndExtractImpl(inputVariables, extractPass);
-        }
-        final Ref<Boolean> result = Ref.create(Boolean.FALSE);
-        TransactionGuard.getInstance().submitTransactionAndWait(() -> {
-          if (applyChosenClassAndExtractImpl(inputVariables, extractPass)) {
-            result.set(Boolean.TRUE);
-          }
-        });
-        return result.get();
       };
 
       classes.put(myTargetClass, null);
@@ -1842,20 +1846,6 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
 
     return applyChosenClassAndExtract(inputVariables, extractPass);
-  }
-
-  private boolean applyChosenClassAndExtractImpl(List<PsiVariable> inputVariables, Pass<ExtractMethodProcessor> extractPass) {
-    try {
-      return applyChosenClassAndExtract(inputVariables, extractPass);
-    }
-    catch (PrepareFailedException e) {
-      if (myShowErrorDialogs) {
-        CommonRefactoringUtil.showErrorHint(myProject, myEditor, e.getMessage(),
-                                            ExtractMethodHandler.REFACTORING_NAME, HelpID.EXTRACT_METHOD);
-        ExtractMethodHandler.highlightPrepareError(e, e.getFile(), myEditor, myProject);
-      }
-      return false;
-    }
   }
 
   @NotNull
