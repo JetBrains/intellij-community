@@ -172,30 +172,28 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
         if (element instanceof PyTargetExpression) {
           final PyTargetExpression target = (PyTargetExpression)element;
 
-          final PsiElement assignedFrom;
-          if (context.maySwitchToAST(target)) {
-            assignedFrom = target.findAssignedValue();
-          }
-          else {
-            assignedFrom = target.resolveAssignedValue(resolveContext);
-          }
+          final List<PsiElement> assignedFromElements = context.maySwitchToAST(target)
+                                                        ? Collections.singletonList(target.findAssignedValue())
+                                                        : target.multiResolveAssignedValue(resolveContext);
 
-          if (assignedFrom instanceof PyReferenceExpression) {
-            final PyReferenceExpression assignedReference = (PyReferenceExpression)assignedFrom;
+          for (PsiElement assignedFrom : assignedFromElements) {
+            if (assignedFrom instanceof PyReferenceExpression) {
+              final PyReferenceExpression assignedReference = (PyReferenceExpression)assignedFrom;
 
-            if (!visited.add(assignedReference)) continue;
+              if (!visited.add(assignedReference)) continue;
 
-            queue.add(MultiFollowQueueNode.create(node, assignedReference));
-          }
-          else if (assignedFrom != null) {
-            result.add(
-              new QualifiedRatedResolveResult(
-                assignedFrom,
-                node.myQualifiers,
-                resolveResult instanceof RatedResolveResult ? ((RatedResolveResult)resolveResult).getRate() : 0,
-                resolveResult instanceof ImplicitResolveResult
-              )
-            );
+              queue.add(MultiFollowQueueNode.create(node, assignedReference));
+            }
+            else if (assignedFrom != null) {
+              result.add(
+                new QualifiedRatedResolveResult(
+                  assignedFrom,
+                  node.myQualifiers,
+                  resolveResult instanceof RatedResolveResult ? ((RatedResolveResult)resolveResult).getRate() : 0,
+                  resolveResult instanceof ImplicitResolveResult
+                )
+              );
+            }
           }
         }
         else if (element instanceof PyElement && resolveResult.isValidResult()) {

@@ -5,7 +5,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.EnumSet;
 
@@ -63,9 +62,9 @@ public final class GroovyResolverProcessorBuilder {
     if (ref.hasMemberPointer()) return EnumSet.of(METHOD);
 
     final EnumSet<GroovyResolveKind> result = EnumSet.allOf(GroovyResolveKind.class);
+    result.remove(CLASS);
     result.remove(PACKAGE);
 
-    if (!ResolveUtil.canBeClass(ref)) result.remove(CLASS);
     if (ref.isQualified()) result.remove(BINDING);
     if (!(ref.getParent() instanceof GrMethodCall)) result.remove(METHOD);
 

@@ -87,8 +87,8 @@ public class StubSerializationHelper {
     StubOutputStream stubOutputStream = new StubOutputStream(out, storage);
     boolean doDefaultSerialization = true;
 
-    if (rootStub instanceof PsiFileStub) {
-      final PsiFileStub[] roots = ((PsiFileStub)rootStub).getStubRoots();
+    if (rootStub instanceof PsiFileStubImpl) {
+      final PsiFileStub[] roots = ((PsiFileStubImpl<?>)rootStub).getStubRoots();
       if (roots.length == 0) {
         Logger.getInstance(getClass()).error("Incorrect stub files count during serialization:" + rootStub + "," + rootStub.getStubType());
       } else {

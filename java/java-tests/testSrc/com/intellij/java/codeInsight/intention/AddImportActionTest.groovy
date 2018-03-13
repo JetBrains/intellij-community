@@ -508,6 +508,19 @@ package com.rocket.test;
     assert myFixture.filterAvailableIntentions('Replace qualified name').isEmpty()
   }
 
+  void "test do not allow to add import on inaccessible class"() {
+    myFixture.addClass("package foo; class Foo {}")
+    myFixture.configureByText 'A.java', '''
+package a;
+/**
+ * {@link foo.Fo<caret>o}
+ */
+class A {}
+'''
+    myFixture.enableInspections(new UnnecessaryFullyQualifiedNameInspection())
+    assert myFixture.filterAvailableIntentions('Replace qualified name').isEmpty()
+  }
+
 
   void "test keep methods formatting on add import"() {
     settings.getCommonSettings(JavaLanguage.INSTANCE).ALIGN_GROUP_FIELD_DECLARATIONS = true

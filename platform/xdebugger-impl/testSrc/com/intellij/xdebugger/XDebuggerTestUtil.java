@@ -85,6 +85,19 @@ public class XDebuggerTestUtil {
     WriteAction.runAndWait(() -> XDebuggerManager.getInstance(project).getBreakpointManager().removeBreakpoint(breakpoint));
   }
 
+  public static void removeBreakpoint(@NotNull final Project project,
+                                      @NotNull final VirtualFile file,
+                                      final int line) {
+    final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
+    XLineBreakpoint breakpoint = ReadAction.compute(() -> {
+      final XLineBreakpointType<?> breakpointType =
+        ((XDebuggerUtilImpl)XDebuggerUtil.getInstance()).getBreakpointTypeByPosition(project, file, line);
+      return breakpointManager.findBreakpointAtLine(breakpointType, file, line);
+    });
+    assertNotNull(breakpoint);
+    removeBreakpoint(project, breakpoint);
+  }
+
   public static void assertPosition(XSourcePosition pos, VirtualFile file, int line) throws IOException {
     assertNotNull("No current position", pos);
     assertEquals(new File(file.getPath()).getCanonicalPath(), new File(pos.getFile().getPath()).getCanonicalPath());

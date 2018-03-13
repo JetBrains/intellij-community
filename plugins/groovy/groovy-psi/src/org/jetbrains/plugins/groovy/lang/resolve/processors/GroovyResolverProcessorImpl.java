@@ -52,11 +52,6 @@ class GroovyResolverProcessorImpl extends GroovyResolverProcessor implements GrM
       return candidates;
     }
 
-    candidates = getCandidates(GroovyResolveKind.CLASS);
-    if (!candidates.isEmpty()) {
-      return candidates;
-    }
-
     candidates = getCandidates(GroovyResolveKind.PROPERTY);
     if (!candidates.isEmpty()) {
       return candidates;

@@ -42,7 +42,7 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
   private final DebuggerPositionResolver myPositionResolver = new DebuggerPositionResolverImpl();
 
   @Override
-  protected final OutputChecker initOutputChecker() {
+  protected OutputChecker initOutputChecker() {
     return new OutputChecker(getTestAppPath(), getAppOutputPath()) {
       @Override
       protected String replaceAdditionalInOutput(String str) {

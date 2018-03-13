@@ -200,7 +200,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
           .select(PsiMethodCallExpression.class)
           .mapToEntry(CALL_TO_FIX_MAPPER::mapFirst)
           .nonNullValues()
-          .toMap();
+          .toCustomMap(LinkedHashMap::new);
       for (Map.Entry<PsiMethodCallExpression, CallChainSimplification> entry : callToSimplification.entrySet()) {
         if(entry.getKey().isValid()) {
           PsiElement replacement = entry.getValue().simplify(entry.getKey());

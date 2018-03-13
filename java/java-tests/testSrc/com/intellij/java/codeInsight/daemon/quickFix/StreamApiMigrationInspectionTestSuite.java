@@ -26,29 +26,29 @@ import org.junit.runners.Suite;
 
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-  StreamApiMigrationInspectionTest.AddAllTest.class,
-  StreamApiMigrationInspectionTest.AfterAllActionsTest.class,
-  StreamApiMigrationInspectionTest.AllMatchTest.class,
-  StreamApiMigrationInspectionTest.AnyMatchTest.class,
-  StreamApiMigrationInspectionTest.BufferedReaderTest.class,
-  StreamApiMigrationInspectionTest.CollectTest.class,
-  StreamApiMigrationInspectionTest.ContinueTest.class,
-  StreamApiMigrationInspectionTest.CountTest.class,
-  StreamApiMigrationInspectionTest.FilterTest.class,
-  StreamApiMigrationInspectionTest.FindFirstTest.class,
-  StreamApiMigrationInspectionTest.FlatMapFirstTest.class,
-  StreamApiMigrationInspectionTest.ForEachTest.class,
-  StreamApiMigrationInspectionTest.JoiningTest.class,
-  StreamApiMigrationInspectionTest.LimitTest.class,
-  StreamApiMigrationInspectionTest.MinMaxTest.class,
-  StreamApiMigrationInspectionTest.NoneMatchTest.class,
-  StreamApiMigrationInspectionTest.OtherTest.class,
-  StreamApiMigrationInspectionTest.ReductionTest.class,
-  StreamApiMigrationInspectionTest.SummingTest.class,
-  StreamApiMigrationInspectionTest.TakeWhileTest.class,
-  StreamApiMigrationInspectionTest.Java9Test.class,
+  StreamApiMigrationInspectionTestSuite.AddAllTest.class,
+  StreamApiMigrationInspectionTestSuite.AfterAllActionsTest.class,
+  StreamApiMigrationInspectionTestSuite.AllMatchTest.class,
+  StreamApiMigrationInspectionTestSuite.AnyMatchTest.class,
+  StreamApiMigrationInspectionTestSuite.BufferedReaderTest.class,
+  StreamApiMigrationInspectionTestSuite.CollectTest.class,
+  StreamApiMigrationInspectionTestSuite.ContinueTest.class,
+  StreamApiMigrationInspectionTestSuite.CountTest.class,
+  StreamApiMigrationInspectionTestSuite.FilterTest.class,
+  StreamApiMigrationInspectionTestSuite.FindFirstTest.class,
+  StreamApiMigrationInspectionTestSuite.FlatMapFirstTest.class,
+  StreamApiMigrationInspectionTestSuite.ForEachTest.class,
+  StreamApiMigrationInspectionTestSuite.JoiningTest.class,
+  StreamApiMigrationInspectionTestSuite.LimitTest.class,
+  StreamApiMigrationInspectionTestSuite.MinMaxTest.class,
+  StreamApiMigrationInspectionTestSuite.NoneMatchTest.class,
+  StreamApiMigrationInspectionTestSuite.OtherTest.class,
+  StreamApiMigrationInspectionTestSuite.ReductionTest.class,
+  StreamApiMigrationInspectionTestSuite.SummingTest.class,
+  StreamApiMigrationInspectionTestSuite.Java9Test.class,
+  StreamApiMigrationInspectionTestSuite.Java10Test.class,
 })
-public class StreamApiMigrationInspectionTest {
+public class StreamApiMigrationInspectionTestSuite {
   public static abstract class StreamApiMigrationInspectionBaseTest extends LightQuickFixParameterizedTestCase {
     @NotNull
     @Override
@@ -209,22 +209,17 @@ public class StreamApiMigrationInspectionTest {
     }
   }
 
-  public static class TakeWhileTest extends StreamApiMigrationInspectionBaseTest {
-    @Override
-    String getFolder() {
-      return "takeWhile";
-    }
-  }
-
   public static class Java9Test extends StreamApiMigrationInspectionBaseTest {
     @Override
     String getFolder() {
       return "java9";
     }
+  }
 
+  public static class Java10Test extends StreamApiMigrationInspectionBaseTest {
     @Override
-    protected LanguageLevel getDefaultLanguageLevel() {
-      return LanguageLevel.JDK_1_9;
+    String getFolder() {
+      return "java10";
     }
   }
 }

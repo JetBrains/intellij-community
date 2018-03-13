@@ -10,10 +10,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 class DiscoveredTestsTreeModel extends BaseTreeModel<Object> {
   private final Object myRoot = ObjectUtils.NULL;
@@ -48,9 +45,8 @@ class DiscoveredTestsTreeModel extends BaseTreeModel<Object> {
 
   public synchronized void addTest(@NotNull PsiClass testClass, @NotNull PsiMethod testMethod) {
     int idx = ReadAction.compute(() -> Collections.binarySearch(myTestClasses,
-                                                                testClass,
-                                                                (o1, o2) -> Comparing
-                                                                  .compare(o1.getQualifiedName(), o2.getQualifiedName())));
+                                                              testClass,
+                                                              Comparator.comparing((PsiClass c) -> c.getName()).thenComparing(c -> c.getQualifiedName())));
     if (idx < 0) {
       int insertIdx = -idx - 1;
       myTestClasses.add(insertIdx, testClass);

@@ -47,7 +47,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
@@ -64,6 +63,7 @@ import java.util.*;
 
 import static org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtilKt.hasAnnotation;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiTreeUtilKt.treeWalkUpAndGetSingleElement;
+import static org.jetbrains.plugins.groovy.lang.resolve.ReceiverKt.processReceiverType;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.getDefaultConstructor;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.initialState;
 
@@ -231,25 +231,7 @@ public class ResolveUtil {
                                                @NotNull PsiScopeProcessor processor,
                                                @NotNull ResolveState state,
                                                @NotNull PsiElement place) {
-    type = TypesUtil.boxPrimitiveType(type, place.getManager(), place.getResolveScope());
-    if (type instanceof PsiClassType) {
-      final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)type).resolveGenerics();
-      final PsiClass psiClass = resolveResult.getElement();
-      final PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
-      state = state.put(PsiSubstitutor.KEY, substitutor.putAll(resolveResult.getSubstitutor()));
-      if (psiClass != null) {
-        if (!processClassDeclarations(psiClass, processor, state, null, place)) return false;
-      }
-    }
-    else if (type instanceof PsiArrayType) {
-      GrTypeDefinition arrayClass = GroovyPsiManager.getInstance(place.getProject()).getArrayClass(((PsiArrayType)type).getComponentType());
-      if (arrayClass!= null && !processClassDeclarations(arrayClass, processor, state, null, place)) return false;
-    }
-    if (ResolveUtilKt.processNonCodeMembers(state)) {
-      if (!processCategoryMembers(place, processor, state)) return false;
-      if (!processNonCodeMembers(type, processor, place, state)) return false;
-    }
-    return true;
+    return processReceiverType(type, processor, state, place);
   }
 
   public static boolean processNonCodeMembers(@NotNull PsiType type,
@@ -904,17 +886,6 @@ public class ResolveUtil {
       else {
         return duplicate;
       }
-    }
-  }
-
-  public static boolean canBeClass(final GrReferenceExpression ref) {
-    GrExpression qualifier = ref.getQualifier();
-    if (qualifier instanceof GrReferenceExpression) {
-      final PsiElement resolvedQualifier = ((GrReferenceExpression)qualifier).resolve();
-      return resolvedQualifier instanceof PsiClass || resolvedQualifier instanceof PsiPackage;
-    }
-    else {
-      return qualifier == null;
     }
   }
 

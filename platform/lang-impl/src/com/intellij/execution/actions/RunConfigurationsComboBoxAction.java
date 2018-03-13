@@ -120,7 +120,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     };
     NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
     Border border = UIUtil.isUnderDefaultMacTheme() ?
-                    JBUI.Borders.empty(0, 3, 0, 2) : JBUI.Borders.empty(0, 5, 0, 4);
+                    JBUI.Borders.emptyLeft(1) : JBUI.Borders.empty(0, 5, 0, 4);
 
     panel.setBorder(border);
     panel.add(button);

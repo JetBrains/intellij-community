@@ -1,0 +1,21 @@
+0(1) element: null
+1(2) element: PyIfStatement
+2(3,5) READ ACCESS: c
+3(4) element: PyStatementList. Condition: c:true
+4(9) ASSERTTYPE ACCESS: c
+5(6) element: PyIfPartElif. Condition: c:false
+6(7) READ ACCESS: True
+7(8) element: PyStatementList. Condition: True:true
+8(9) ASSERTTYPE ACCESS: True
+9(10) element: PyIfStatement
+10(11,13) READ ACCESS: d
+11(12) element: PyStatementList. Condition: d:true
+12(20) ASSERTTYPE ACCESS: d
+13(14) element: PyIfPartElif. Condition: d:false
+14(15) READ ACCESS: True
+15(16) element: PyStatementList. Condition: True:true
+16(20) ASSERTTYPE ACCESS: True
+17(18) element: PyStatementList. Condition: True:false
+18(19) element: PyAssignmentStatement
+19(20) WRITE ACCESS: e
+20() element: null
