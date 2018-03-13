@@ -58,7 +58,7 @@ class CreateAnnotationTest : LightCodeInsightFixtureTestCase() {
     )
     )
     myFixture.checkResult("""
-      @SuppressWarnings(num = "12", text = "anotherText")
+      @SuppressWarnings(num = 12, text = "anotherText")
       class A {}
     """.trimIndent())
   }

@@ -1,16 +1,15 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.java.actions
 
-import com.intellij.codeInsight.FileModificationService
 import com.intellij.lang.jvm.JvmPrimitiveLiteral
 import com.intellij.lang.jvm.JvmStringLiteral
 import com.intellij.lang.jvm.actions.CreateAnnotationRequest
-import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.StringUtilRt
-import com.intellij.psi.LanguageAnnotationSupport
+import com.intellij.psi.PsiElementFactory
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.codeStyle.CodeStyleManager
@@ -27,37 +26,29 @@ class CreateAnnotationAction(target: PsiModifierListOwner, override val request:
   override fun getFamilyName(): String = "create annotation family " // TODO: i11n
 
   override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
-
     val modifierList = target.modifierList ?: return
+    val annotation = modifierList.addAnnotation(request.qualifiedName)
 
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(modifierList)) return
+    val psiElementFactory = PsiElementFactory.SERVICE.getInstance(project)
 
-    WriteCommandAction.writeCommandAction(modifierList.project).run<RuntimeException> {
-      val annotation = modifierList.addAnnotation(request.qualifiedName)
-
-      val support = LanguageAnnotationSupport.INSTANCE.forLanguage(annotation.language)!!
-
-      attributes@ for (attribute in request.attributes) {
-        val name = attribute.name
-        val value = attribute.value
-        val memberValue = when (value) {
-          is JvmPrimitiveLiteral -> support
-            .createLiteralValue(value.value.toString(), annotation)
-          is JvmStringLiteral -> support
-            .createLiteralValue(value.value, annotation)
-          else -> {
-            LOG.error("adding annotation members of ${value.javaClass} type is not implemented"); continue@attributes
-          }
+    attributes@ for (attribute in request.attributes) {
+      val name = attribute.name
+      val value = attribute.value
+      val memberValue = when (value) {
+        is JvmPrimitiveLiteral -> psiElementFactory
+          .createExpressionFromText(value.value.toString(), null)
+        is JvmStringLiteral -> psiElementFactory
+          .createExpressionFromText("\"" + StringUtil.escapeStringCharacters(value.value) + "\"", null)
+        else -> {
+          LOG.error("adding annotation members of ${value.javaClass} type is not implemented"); continue@attributes
         }
-        annotation.setDeclaredAttributeValue(name.takeIf { name != "value" || !request.omitAttributeNameIfPossible(attribute) },
-                                             memberValue)
       }
-
-      val formatter = CodeStyleManager.getInstance(project)
-      val codeStyleManager = JavaCodeStyleManager.getInstance(project)
-      codeStyleManager.shortenClassReferences(formatter.reformat(annotation))
-
+      annotation.setDeclaredAttributeValue(name.takeIf { name != "value" || !request.omitAttributeNameIfPossible(attribute) }, memberValue)
     }
+
+    val formatter = CodeStyleManager.getInstance(project)
+    val codeStyleManager = JavaCodeStyleManager.getInstance(project)
+    codeStyleManager.shortenClassReferences(formatter.reformat(annotation))
 
   }
 
