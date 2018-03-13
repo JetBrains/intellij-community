@@ -23,7 +23,10 @@ class Test {
 
   private static void testOr(boolean a, boolean b, boolean c) {
     if(b) {
-      assert a || b || c;
+      // c is never checked: probably not intended; report
+      assert a || <warning descr="Condition 'b' is always 'true'">b</warning> || c;
+
+      assert a || c || b;
     }
   }
 

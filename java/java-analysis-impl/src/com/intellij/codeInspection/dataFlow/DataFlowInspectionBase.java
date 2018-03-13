@@ -780,8 +780,14 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
           // Note that in `assert unknownExpression && trueExpression;` the trueExpression should not be reported
           // because this assert is essentially the shortened `assert unknownExpression; assert trueExpression;`
           // which is not reported.
-          anchor = parent;
-          continue;
+          boolean causesShortCircuit = (tokenType.equals(JavaTokenType.OROR) == evaluatesToTrue) &&
+                                       ArrayUtil.getLastElement(((PsiPolyadicExpression)parent).getOperands()) != anchor;
+          if (!causesShortCircuit) {
+            // We still report `assert trueExpression || unknownExpression`, because here `unknownExpression` is never checked
+            // which is probably not intended.
+            anchor = parent;
+            continue;
+          }
         }
       }
       break;
