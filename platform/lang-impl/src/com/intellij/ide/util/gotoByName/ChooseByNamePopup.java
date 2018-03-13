@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.statistics.StatisticsInfo;
@@ -127,6 +128,9 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   protected void showList() {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
 
+    ListModel<Object> model = myList.getModel();
+    if (model == null || model.getSize() == 0) return;
+
     final JLayeredPane layeredPane = myTextField.getRootPane().getLayeredPane();
 
     Point location = layeredPane.getLocationOnScreen();
@@ -147,7 +151,16 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     screen.width -= location.x - screen.x;
     screen.height -= location.y - screen.y;
 
-    if (preferredScrollPaneSize.width > screen.width) preferredScrollPaneSize.width = screen.width;
+    if (preferredScrollPaneSize.width > screen.width) {
+      preferredScrollPaneSize.width = screen.width;
+      if (model.getSize() <= myList.getVisibleRowCount()) {
+        JScrollBar hsb = myListScrollPane.getHorizontalScrollBar();
+        if (hsb != null && (!SystemInfo.isMac || hsb.isOpaque())) {
+          Dimension size = hsb.getPreferredSize();
+          if (size != null) preferredScrollPaneSize.height += size.height;
+        }
+      }
+    }
     if (preferredScrollPaneSize.height > screen.height) preferredScrollPaneSize.height = screen.height;
 
     String adText = getAdText();
@@ -164,6 +177,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
         .setMayBeParent(true);
       builder.setCancelCallback(() -> Boolean.TRUE);
       myDropdownPopup = builder.createPopup();
+      myDropdownPopup.setSize(preferredScrollPaneSize);
       myDropdownPopup.showInScreenCoordinates(layeredPane, location);
     }
     else {
