@@ -227,4 +227,11 @@ public class StreamApiMigrationInspectionTest {
       return LanguageLevel.JDK_1_9;
     }
   }
+
+  public static class Java10Test extends StreamApiMigrationInspectionBaseTest {
+    @Override
+    String getFolder() {
+      return "java10";
+    }
+  }
 }
