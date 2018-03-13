@@ -2,14 +2,13 @@
 package com.intellij.execution.testDiscovery.actions;
 
 import com.intellij.codeInsight.actions.FormatChangedTextUtil;
-import com.intellij.execution.testDiscovery.TestDiscoveryExtension;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.psi.PsiDocumentManager;
@@ -28,12 +27,11 @@ import org.jetbrains.uast.visitor.AbstractUastVisitor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 public class ShowDiscoveredTestsFromChangesAction extends AnAction {
   @Override
   public void update(AnActionEvent e) {
-    e.getPresentation().setEnabledAndVisible(Registry.is(TestDiscoveryExtension.TEST_DISCOVERY_REGISTRY_KEY) && e.getProject() != null && e.getData(VcsDataKeys.CHANGES) != null);
+    e.getPresentation().setEnabledAndVisible(ApplicationManager.getApplication().isInternal() && e.getProject() != null && e.getData(VcsDataKeys.CHANGES) != null);
   }
 
   @Override
