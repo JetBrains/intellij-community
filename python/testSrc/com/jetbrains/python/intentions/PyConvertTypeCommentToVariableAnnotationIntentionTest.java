@@ -83,6 +83,16 @@ public class PyConvertTypeCommentToVariableAnnotationIntentionTest extends PyInt
     doNegativeTest();
   }
 
+  // EA-116787
+  public void testIllegalTypeHint() {
+    doPositiveTest();
+  }
+
+  // PY-21195 EA-116787
+  public void testTypeHintFollowedByComment() {
+    doPositiveTest();
+  }
+
   // EA-117868
   public void testIllegalTypeHintInAssignmentWithUnpacking() {
     doNegativeTest();
