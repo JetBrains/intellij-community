@@ -990,10 +990,14 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     final PsiElement element = getElement();
     if (element == null) return null;
 
-    String title = myManager.getTitle(element);
     final DocumentationProvider provider = DocumentationManager.getProviderFromElement(element);
+    final PsiElement originalElement = DocumentationManager.getOriginalElement(element);
+    if (!shouldShowExternalDocumentationLink(provider, element, originalElement)) {
+      return null;
+    }
+
+    final String title = myManager.getTitle(element);
     if (myEffectiveExternalUrl == null) {
-      final PsiElement originalElement = DocumentationManager.getOriginalElement(element);
       List<String> urls = provider.getUrlFor(element, originalElement);
       if (urls != null) {
         boolean hasBadUrl = false;
@@ -1034,6 +1038,21 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     result.append(title.substring(4)).append(" on ").append(hostname);
     result.append("</a>");
     return result.toString();
+  }
+
+  private static boolean shouldShowExternalDocumentationLink(DocumentationProvider provider,
+                                                             PsiElement element,
+                                                             PsiElement originalElement) {
+    if (provider instanceof CompositeDocumentationProvider) {
+      for (DocumentationProvider documentationProvider : ((CompositeDocumentationProvider)provider).getProviders()) {
+        if (documentationProvider instanceof ExternalDocumentationHandler) {
+          return ((ExternalDocumentationHandler)documentationProvider).canHandleExternal(element, originalElement);
+        }
+      }
+    } else if (provider instanceof ExternalDocumentationHandler) {
+      return ((ExternalDocumentationHandler)provider).canHandleExternal(element, originalElement);
+    }
+    return true;
   }
 
   private static String getHostname(String url) {
