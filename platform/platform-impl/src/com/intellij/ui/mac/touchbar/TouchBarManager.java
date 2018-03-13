@@ -78,6 +78,14 @@ public class TouchBarManager {
       }
       return myTB;
     }
+
+    void release() {
+      if (myTB == null)
+        return;
+
+      myTB.release();
+      myTB = null;
+    }
   }
 
 

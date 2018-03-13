@@ -104,12 +104,12 @@ static void _registerItem(ItemDesc * idesc) {
 }
 
 void registerButtonText(char* uid, char* text, callback action) {
-    ButtonDesc * bdesc = [[ButtonTextDesc alloc] init:[NSString stringWithUTF8String:uid] type:@"button.text" text:[NSString stringWithUTF8String:text] act:action];
+    ButtonDesc * bdesc = [[[ButtonTextDesc alloc] init:[NSString stringWithUTF8String:uid] type:@"button.text" text:[NSString stringWithUTF8String:text] act:action] autorelease];
     _registerItem(bdesc);
 }
 
 void registerButtonImg(char* uid, char* bytes, int bytesCount, callback action) {
-    ButtonDesc * bdesc = [[ButtonImgDesc alloc] init:[NSString stringWithUTF8String:uid] type:@"button.img" img:bytes bytes:bytesCount act:action];
+    ButtonDesc * bdesc = [[[ButtonImgDesc alloc] init:[NSString stringWithUTF8String:uid] type:@"button.img" img:bytes bytes:bytesCount act:action] autorelease];
     _registerItem(bdesc);
 }
 

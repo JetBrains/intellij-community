@@ -18,10 +18,15 @@ public class TouchBar {
     myTbName = touchbarName;
     myTb = Foundation.invoke(Foundation.invoke("NSTouchBar", "alloc"), "init");
     myDelegate = Foundation.invoke(Foundation.invoke("NSTDelegate", "alloc"), "init");
-    Foundation.invoke(myTb, "setDelegate:", myDelegate);
+    Foundation.invoke(myTb, "setDelegate:", myDelegate); // NOTE: delegate-property is weak, this java-wrapper holds both objects
   }
 
   ID getTbID() { return myTb; }
+
+  void release() {
+    Foundation.invoke(myTb, "release");
+    Foundation.invoke(myDelegate, "release");
+  }
 
   // NOTE: must call 'flushItems' after filling
   void addItem(@NotNull TBItem tbi) {
