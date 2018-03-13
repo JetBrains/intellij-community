@@ -40,28 +40,29 @@ import java.util.function.Function;
 // todo: consider batching compilations in order not to start a separate process for every class that needs to be compiled
 public class CompilingEvaluatorImpl extends CompilingEvaluator {
   private Collection<ClassObject> myCompiledClasses;
+  private final Module myModule;
 
   public CompilingEvaluatorImpl(@NotNull Project project,
                                 @NotNull PsiElement context,
                                 @NotNull ExtractLightMethodObjectHandler.ExtractedData data) {
     super(project, context, data);
+    myModule = ModuleUtilCore.findModuleForPsiElement(context);
   }
 
   @Override
   @NotNull
   protected Collection<ClassObject> compile(@Nullable JavaSdkVersion debuggeeVersion) throws EvaluateException {
     if (myCompiledClasses == null) {
-      Module module = ReadAction.compute(() -> ModuleUtilCore.findModuleForPsiElement(myPsiContext));
       List<String> options = new ArrayList<>();
       options.add("-encoding");
       options.add("UTF-8");
       List<File> platformClasspath = new ArrayList<>();
       List<File> classpath = new ArrayList<>();
       AnnotationProcessingConfiguration profile = null;
-      if (module != null) {
-        assert myProject.equals(module.getProject()) : module + " is from another project";
-        profile = CompilerConfiguration.getInstance(myProject).getAnnotationProcessingConfiguration(module);
-        ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
+      if (myModule != null) {
+        assert myProject.equals(myModule.getProject()) : myModule + " is from another project";
+        profile = CompilerConfiguration.getInstance(myProject).getAnnotationProcessingConfiguration(myModule);
+        ModuleRootManager rootManager = ModuleRootManager.getInstance(myModule);
         for (String s : rootManager.orderEntries().compileOnly().recursively().exportedOnly().withoutSdk().getPathsList().getPathList()) {
           classpath.add(new File(s));
         }
