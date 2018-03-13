@@ -16,6 +16,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.ClassObject;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHandler;
 import com.sun.jdi.ClassLoaderReference;
@@ -91,7 +92,8 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
                              EvaluationContext context,
                              DebugProcess process,
                              ClassLoaderReference classLoader) throws EvaluateException {
-    boolean useMagicAccessorImpl = version != null && !version.isAtLeast(JavaSdkVersion.JDK_1_9);
+    boolean useMagicAccessorImpl = version != null && !version.isAtLeast(JavaSdkVersion.JDK_1_9) &&
+                                   Registry.is("debugger.compiling.evaluator.magic.accessor");
 
     for (ClassObject cls : classes) {
       if (cls.getPath().contains(GEN_CLASS_NAME)) {
