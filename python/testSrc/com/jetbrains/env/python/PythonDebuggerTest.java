@@ -352,7 +352,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @Override
       public void testing() throws Exception {
         waitForPause();
-        toggleBreakpoint(getFilePath(getScriptName()), 18);
+        removeBreakpoint(getFilePath(getScriptName()), 18);
         smartStepInto("foo");
         waitForPause();
         eval("a.z").hasValue("1");
@@ -1260,14 +1260,14 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         waitForPause();
         eval("i").hasValue("0");
         // remove break on line 2
-        toggleBreakpoint(getScriptName(), 2);
+        removeBreakpoint(getScriptName(), 2);
         resume();
         // add break on line 2
         toggleBreakpoint(getScriptName(), 2);
         // check if break on line 2 works
         waitForPause();
         // remove break on line 2 again
-        toggleBreakpoint(getScriptName(), 2);
+        removeBreakpoint(getScriptName(), 2);
         // add break on line 3
         toggleBreakpoint(getScriptName(), 3);
         resume();
