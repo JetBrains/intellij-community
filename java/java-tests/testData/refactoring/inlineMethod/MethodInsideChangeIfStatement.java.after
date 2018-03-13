@@ -13,6 +13,7 @@ class Test {
         start = i;
       } else if (i != 24 && start != -1)
       {
+          //c1
           result.add("".substring(start));
       }
     }
