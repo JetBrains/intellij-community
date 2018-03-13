@@ -45,7 +45,7 @@ public class RunAnythingCache implements PersistentStateComponent<RunAnythingCac
    * @return true is group is visible; false if it's hidden
    */
   public boolean isGroupVisible(@NotNull String key) {
-    return mySettings.keys.get(key);
+    return mySettings.myKeys.get(key);
   }
 
   /**
@@ -54,7 +54,7 @@ public class RunAnythingCache implements PersistentStateComponent<RunAnythingCac
    * @param visible true if group should be shown
    */
   public void saveGroupVisibilityKey(@NotNull String key, boolean visible) {
-    mySettings.keys.put(key, visible);
+    mySettings.myKeys.put(key, visible);
   }
 
   @NotNull
@@ -90,15 +90,15 @@ public class RunAnythingCache implements PersistentStateComponent<RunAnythingCac
 
   public static class State {
     @XMap(entryTagName = "visibility", keyAttributeName = "group", valueAttributeName = "flag")
-    @NotNull private final Map<String, Boolean> keys =
+    @NotNull private final Map<String, Boolean> myKeys =
       Arrays.stream(RunAnythingGroup.EP_NAME.getExtensions()).collect(Collectors.toMap(group -> group.getVisibilityKey(), group -> true));
 
     @XCollection(elementName = "command")
-    @NotNull private final List<String> commands = ContainerUtil.newArrayList();
+    @NotNull private final List<String> myCommands = ContainerUtil.newArrayList();
 
     @NotNull
     public List<String> getCommands() {
-      return commands;
+      return myCommands;
     }
   }
 }
