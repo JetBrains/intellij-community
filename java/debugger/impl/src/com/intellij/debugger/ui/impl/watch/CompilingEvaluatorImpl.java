@@ -144,7 +144,7 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
     if (Registry.is("debugger.compiling.evaluator") && psiContext != null) {
       return ApplicationManager.getApplication().runReadAction((ThrowableComputable<ExpressionEvaluator, EvaluateException>)() -> {
         try {
-          boolean useReflection = !Registry.is("debugger.compiling.evaluator.magic.accessor", true);
+          boolean useReflection = Registry.is("debugger.compiling.evaluator.reflection.access.with.java8");
           XDebugSession currentSession = XDebuggerManager.getInstance(project).getCurrentSession();
           if (!useReflection && currentSession != null) {
             XSuspendContext suspendContext = currentSession.getSuspendContext();
