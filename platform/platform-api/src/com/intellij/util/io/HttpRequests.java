@@ -31,7 +31,8 @@ import javax.net.ssl.SSLSocketFactory;
 import java.io.*;
 import java.net.*;
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -51,14 +52,15 @@ public final class HttpRequests {
 
   private static final int BLOCK_SIZE = 16 * 1024;
   private static final Pattern CHARSET_PATTERN = Pattern.compile("charset=([^;]+)");
-  private static final Set<Integer> REDIRECT_CODES = new HashSet<>(Arrays.asList(HttpResponseStatus.MOVED_PERMANENTLY.code(),
-                                                                                 HttpResponseStatus.FOUND.code(),
-                                                                                 HttpResponseStatus.SEE_OTHER.code(),
-                                                                                 HttpResponseStatus.TEMPORARY_REDIRECT.code(),
-                                                                                 HttpResponseStatus.PERMANENT_REDIRECT.code()));
-  private static final Set<Integer> PERMANENT_REDIRECT_CODES = new HashSet<>(Arrays.asList(HttpResponseStatus.MOVED_PERMANENTLY.code(),
-                                                                                           HttpResponseStatus.SEE_OTHER.code(),
-                                                                                           HttpResponseStatus.PERMANENT_REDIRECT.code()));
+
+  private static final int[] REDIRECTS = {
+    // temporary redirects
+    HttpResponseStatus.FOUND.code(), HttpResponseStatus.TEMPORARY_REDIRECT.code(),
+    // permanent redirects
+    HttpResponseStatus.MOVED_PERMANENTLY.code(), HttpResponseStatus.SEE_OTHER.code(), HttpResponseStatus.PERMANENT_REDIRECT.code()
+  };
+
+  private static final int PERMANENT_IDX = ArrayUtil.indexOf(REDIRECTS, HttpResponseStatus.MOVED_PERMANENTLY.code());
 
   private HttpRequests() { }
 
@@ -502,7 +504,8 @@ public final class HttpRequests {
 
       if (connection instanceof HttpURLConnection) {
         HttpURLConnection httpURLConnection = (HttpURLConnection)connection;
-        LOG.assertTrue(httpURLConnection.getRequestMethod().equals("GET") || httpURLConnection.getRequestMethod().equals("HEAD"), "Please use this class for GET/HEAD requests only");
+        String method = httpURLConnection.getRequestMethod();
+        LOG.assertTrue(method.equals("GET") || method.equals("HEAD"), "'" + method + "' not supported; please use GET or HEAD");
 
         if (LOG.isDebugEnabled()) LOG.debug("connecting to " + url);
         int responseCode = httpURLConnection.getResponseCode();
@@ -511,13 +514,14 @@ public final class HttpRequests {
         if (responseCode < 200 || responseCode >= 300 && responseCode != HttpResponseStatus.NOT_MODIFIED.code()) {
           httpURLConnection.disconnect();
 
-          if (REDIRECT_CODES.contains(responseCode)) {
+          int idx = ArrayUtil.indexOf(REDIRECTS, responseCode);
+          if (idx >= 0) {
             url = connection.getHeaderField("Location");
-            if (PERMANENT_REDIRECT_CODES.contains(responseCode)) {
-              LOG.error(String.format("HTTP code '%d' for url '%s'. Should be updated to '%s'.", responseCode, request.myUrl, url));
-            }
-            request.myUrl = url;
             if (url != null) {
+              if (idx >= PERMANENT_IDX) {
+                LOG.error("HTTP response " + responseCode + " for '" + request.myUrl + "'; should be updated to '" + url + "'");
+              }
+              request.myUrl = url;
               continue;
             }
           }
