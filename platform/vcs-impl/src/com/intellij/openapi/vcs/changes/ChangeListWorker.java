@@ -169,7 +169,7 @@ public class ChangeListWorker {
     tracker.initChangeTracking(myDefault.id, ContainerUtil.map(myLists, list -> list.id), oldList != null ? oldList.id : null);
 
     if (LOG.isDebugEnabled()) {
-      LOG.debug(String.format("[registerChangeTracker] path: %s", filePath));
+      LOG.debug(String.format("[registerChangeTracker] path: %s, old list: %s", filePath, oldList != null ? oldList.id : "null"));
     }
   }
 
@@ -180,13 +180,16 @@ public class ChangeListWorker {
       return;
     }
 
+    ListData newList = null;
     Change change = getChangeForAfterPath(filePath);
     if (change != null) {
-      putChangeMapping(change, getMainList(oldTracker));
+      newList = getMainList(oldTracker);
+      putChangeMapping(change, newList);
     }
 
     if (LOG.isDebugEnabled()) {
-      LOG.debug(String.format("[unregisterChangeTracker] path: %s", filePath));
+      LOG.debug(String.format("[unregisterChangeTracker] path: %s, new list: %s, tracker lists: %s",
+                              filePath, newList != null ? newList.id : "null", oldTracker.getAffectedChangeListsIds()));
     }
   }
 
@@ -846,7 +849,7 @@ public class ChangeListWorker {
       return String.format("list: %s (%s) changes: %s", list.name, list.id, StringUtil.join(getChangesIn(list), ", "));
     }, "\n");
     String trackers = StringUtil.join(myPartialChangeTrackers.keySet(), ",");
-    return String.format("ChangeListWorker{ lists = {\n%s }\ntrackers = %s\n}", lists, trackers);
+    return String.format("ChangeListWorker{ default = %s, lists = {\n%s }\ntrackers = %s\n}", myDefault.id, lists, trackers);
   }
 
 
