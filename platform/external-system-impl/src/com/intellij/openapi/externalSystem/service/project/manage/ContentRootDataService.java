@@ -39,6 +39,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.SourceFolder;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -248,6 +249,19 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
     if (LOG.isDebugEnabled()) {
       LOG.debug(String.format("Importing %s for content root '%s' of module '%s'", root, entry.getUrl(), moduleName));
     }
+
+    if (!createEmptyContentRootDirectories) {
+      final Ref<VirtualFile> ref = Ref.create();
+      ExternalSystemApiUtil.doWriteAction(() -> ref.set(LocalFileSystem.getInstance().refreshAndFindFileByPath(root.getPath())));
+      final VirtualFile sourceFolderFile = ref.get();
+      if (sourceFolderFile == null || !sourceFolderFile.isValid()) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Source folder [" + root.getPath() + "] does not exist and will not be created, will skip");
+        }
+        return;
+      }
+    }
+
     SourceFolder sourceFolder = entry.addSourceFolder(toVfsUrl(root.getPath()), sourceRootType);
     if (!StringUtil.isEmpty(root.getPackagePrefix())) {
       sourceFolder.setPackagePrefix(root.getPackagePrefix());
