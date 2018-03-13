@@ -8,14 +8,14 @@ import org.jetbrains.plugins.groovy.lang.resolve.ClassResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.imports.importedNameKey
 
 internal open class ClassProcessor(
-  name: String,
+  private val name: String,
   private val place: PsiElement?,
   private val typeArguments: Array<out PsiType> = PsiType.EMPTY_ARRAY,
   annotationResolve: Boolean = false
-) : FindFirstProcessor<ClassResolveResult>(name) {
+) : FindFirstProcessor<ClassResolveResult>() {
 
   init {
-    hint(ElementClassHint.KEY, ClassHint.CLASSES)
+    elementClassHint(ElementClassHint.DeclarationKind.CLASS)
     if (annotationResolve) {
       hint(AnnotationHint.HINT_KEY, AnnotationHint.ANNOTATION_RESOLVE)
     }

@@ -10,9 +10,10 @@ import org.jetbrains.plugins.groovy.lang.resolve.BaseGroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.CompilationPhaseHint
 import org.jetbrains.plugins.groovy.lang.resolve.ElementGroovyResult
 
-class CodeFieldProcessor(name: String, private val place: PsiElement) : FindFirstProcessor<ElementGroovyResult<GrField>>(name) {
+class CodeFieldProcessor(name: String, private val place: PsiElement) : FindFirstProcessor<ElementGroovyResult<GrField>>() {
 
   init {
+    nameHint(name)
     hint(ElementClassHint.KEY, ElementClassHint { false })
     hint(GroovyResolveKind.HINT_KEY, GroovyResolveKind.Hint { it == GroovyResolveKind.FIELD })
     hint(CompilationPhaseHint.HINT_KEY, CompilationPhaseHint.BEFORE_TRANSFORMATION)

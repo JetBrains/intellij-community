@@ -7,9 +7,10 @@ import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.ElementClassHint
 import org.jetbrains.plugins.groovy.lang.resolve.ElementGroovyResult
 
-class TypeParameterProcessor(name: String) : FindFirstProcessor<ElementGroovyResult<PsiTypeParameter>>(name) {
+class TypeParameterProcessor(name: String) : FindFirstProcessor<ElementGroovyResult<PsiTypeParameter>>() {
 
   init {
+    nameHint(name)
     hint(ElementClassHint.KEY, ElementClassHint { false })
     hint(GroovyResolveKind.HINT_KEY, GroovyResolveKind.Hint { it === GroovyResolveKind.TYPE_PARAMETER })
   }
