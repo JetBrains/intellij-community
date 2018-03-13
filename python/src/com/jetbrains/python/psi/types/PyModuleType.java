@@ -228,8 +228,8 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
     }
   }
 
-  private static @Nullable
-  String findFirstComponentAfterPrefix(@NotNull QualifiedName qualifiedName, @NotNull QualifiedName prefix) {
+  @Nullable
+  private static String findFirstComponentAfterPrefix(@NotNull QualifiedName qualifiedName, @NotNull QualifiedName prefix) {
     if (qualifiedName.matchesPrefix(prefix) && qualifiedName.getComponentCount() > prefix.getComponentCount()) {
       return qualifiedName.removeHead(prefix.getComponentCount()).getFirstComponent();
     }
@@ -238,8 +238,8 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
     }
   }
 
-  private static @NotNull
-  List<? extends RatedResolveResult> convertDirsToInit(@NotNull List<? extends RatedResolveResult> ratedResolveList) {
+  @NotNull
+  private static List<? extends RatedResolveResult> convertDirsToInit(@NotNull List<? extends RatedResolveResult> ratedResolveList) {
     return ContainerUtil.map(ratedResolveList, result -> {
       final PsiElement element = result.getElement();
       if (element instanceof PsiDirectory) {
