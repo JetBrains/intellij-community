@@ -201,24 +201,18 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
 
     myModel.saveInitialCheckBoxState(myCheckBox.isSelected());
     if (isOk) {
-
       final List<Object> chosenElements = getChosenElements();
-      if (chosenElements != null) {
-        if (myActionListener instanceof MultiElementsCallback) {
-          ((MultiElementsCallback)myActionListener).elementsChosen(chosenElements);
-        }
-        else {
-          for (Object element : chosenElements) {
-            myActionListener.elementChosen(element);
-            String text = myModel.getFullName(element);
-            if (text != null) {
-              StatisticsManager.getInstance().incUseCount(new StatisticsInfo(statisticsContext(), text));
-            }
-          }
-        }
+      if (myActionListener instanceof MultiElementsCallback) {
+        ((MultiElementsCallback)myActionListener).elementsChosen(chosenElements);
       }
       else {
-        return;
+        for (Object element : chosenElements) {
+          myActionListener.elementChosen(element);
+          String text = myModel.getFullName(element);
+          if (text != null) {
+            StatisticsManager.getInstance().incUseCount(new StatisticsInfo(statisticsContext(), text));
+          }
+        }
       }
 
       if (!chosenElements.isEmpty()) {
@@ -237,9 +231,6 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
             }
           }
         }
-      }
-      else {
-        return;
       }
     }
     Disposer.dispose(this);
