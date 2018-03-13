@@ -153,7 +153,7 @@ class LineStatusTrackerManager(
       }
       trackers.clear()
 
-      loader.clear()
+      loader.dispose()
     }
   }
 
@@ -477,7 +477,7 @@ class LineStatusTrackerManager(
     }
   }
 
-  private inner class MyBaseRevisionLoader() : SingleThreadLoader<RefreshRequest, RefreshData>(project) {
+  private inner class MyBaseRevisionLoader : SingleThreadLoader<RefreshRequest, RefreshData>() {
     override fun loadRequest(request: RefreshRequest): Result<RefreshData> {
       if (isDisposed) return Result.Canceled()
       val document = request.document
@@ -965,7 +965,7 @@ class LineStatusTrackerManager(
  * - Allows to check whether request is scheduled or is waiting for completion.
  * - Notifies callbacks when queue is exhausted.
  */
-private abstract class SingleThreadLoader<Request, T>(private val project: Project) {
+private abstract class SingleThreadLoader<Request, T> {
   private val LOG = Logger.getInstance(SingleThreadLoader::class.java)
   private val LOCK: Any = Any()
 
@@ -977,6 +977,7 @@ private abstract class SingleThreadLoader<Request, T>(private val project: Proje
   private val callbacksWaitingUpdateCompletion = ArrayList<Runnable>()
 
   private var isScheduled: Boolean = false
+  private var isDisposed: Boolean = false
 
 
   @CalledInBackground
@@ -988,7 +989,7 @@ private abstract class SingleThreadLoader<Request, T>(private val project: Proje
 
   @CalledInAwt
   fun scheduleRefresh(request: Request) {
-    if (isDisposed()) return
+    if (isDisposed) return
 
     synchronized(LOCK) {
       if (taskQueue.contains(request)) return
@@ -999,9 +1000,10 @@ private abstract class SingleThreadLoader<Request, T>(private val project: Proje
   }
 
   @CalledInAwt
-  fun clear() {
+  fun dispose() {
     val callbacks = mutableListOf<Runnable>()
     synchronized(LOCK) {
+      isDisposed = true
       taskQueue.clear()
       waitingForRefresh.clear()
 
@@ -1047,7 +1049,7 @@ private abstract class SingleThreadLoader<Request, T>(private val project: Proje
 
 
   private fun schedule() {
-    if (isDisposed()) return
+    if (isDisposed) return
 
     synchronized(LOCK) {
       if (isScheduled) return
@@ -1065,7 +1067,7 @@ private abstract class SingleThreadLoader<Request, T>(private val project: Proje
       val request = synchronized(LOCK) {
         val request = taskQueue.poll()
 
-        if (isDisposed() || request == null) {
+        if (isDisposed || request == null) {
           isScheduled = false
           return
         }
@@ -1099,7 +1101,7 @@ private abstract class SingleThreadLoader<Request, T>(private val project: Proje
 
   @CalledInAwt
   private fun notifyTrackerRefreshed(request: Request) {
-    if (isDisposed()) return
+    if (isDisposed) return
 
     val callbacks = mutableListOf<Runnable>()
     synchronized(LOCK) {
@@ -1125,8 +1127,6 @@ private abstract class SingleThreadLoader<Request, T>(private val project: Proje
       }
     }
   }
-
-  private fun isDisposed() = project.isDisposed
 }
 
 private sealed class Result<T> {
