@@ -503,8 +503,8 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
     }
 
     // rename constructors
-    for (PsiMethod method : getConstructors()) {
-      if (method.getName().equals(oldName)) {
+    for (PsiMethod method : getMethods()) {
+      if (method.isConstructor() && method.getName().equals(oldName)) {
         method.setName(newName);
       }
     }
