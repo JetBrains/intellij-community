@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.branchConfig;
 
+import com.google.common.collect.Lists;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -68,7 +69,7 @@ public class SvnBranchConfigurationNew {
   public static String ensureEndSlash(String name) {
     return name.trim().endsWith("/") ? name : name + "/";
   }
-  
+
   private static String cutEndSlash(String name) {
     return name.endsWith("/") && name.length() > 0 ? name.substring(0, name.length() - 1) : name;
   }
@@ -112,7 +113,10 @@ public class SvnBranchConfigurationNew {
         return cutEndSlash(myTrunkUrl);
       }
     }
-    for(String branchUrl: myBranchMap.keySet()) {
+    //find the longest possible match to correctly handle cases when one branch location is a subdirectory of another
+    List<String> strings = Lists.newArrayList(myBranchMap.keySet());
+    Collections.sort(strings, Comparator.comparingInt(String::length).reversed());
+    for (String branchUrl : strings) {
       if (Url.isAncestor(branchUrl, url)) {
         String relativePath = Url.getRelative(branchUrl, url);
         int secondSlash = relativePath.indexOf("/");
@@ -166,7 +170,7 @@ public class SvnBranchConfigurationNew {
 
   // to retrieve mappings between existing in the project working copies and their URLs
   @Nullable
-  public Map<String,String> getUrl2FileMappings(final Project project, final VirtualFile root) {
+  public Map<String, String> getUrl2FileMappings(final Project project, final VirtualFile root) {
     try {
       final BranchRootSearcher searcher = new BranchRootSearcher(SvnVcs.getInstance(project), root);
       iterateUrls(searcher);
