@@ -33,10 +33,7 @@ public class DefaultExternalSourceDirectorySet implements ExternalSourceDirector
   private Set<File> mySrcDirs;
   private File myOutputDir;
   private final List<File> myGradleOutputDirs;
-  @NotNull
-  private Set<String> myExcludes;
-  @NotNull
-  private Set<String> myIncludes;
+  private final FilePatternSet myPatterns;
   @NotNull
   private List<ExternalFilter> myFilters;
 
@@ -44,10 +41,9 @@ public class DefaultExternalSourceDirectorySet implements ExternalSourceDirector
 
   public DefaultExternalSourceDirectorySet() {
     mySrcDirs = new HashSet<File>();
-    myExcludes = new HashSet<String>();
-    myIncludes = new HashSet<String>();
     myFilters = new ArrayList<ExternalFilter>();
     myGradleOutputDirs = new ArrayList<File>();
+    myPatterns = new FilePatternSetImpl(new LinkedHashSet<String>(), new LinkedHashSet<String>());
   }
 
   public DefaultExternalSourceDirectorySet(ExternalSourceDirectorySet sourceDirectorySet) {
@@ -57,8 +53,8 @@ public class DefaultExternalSourceDirectorySet implements ExternalSourceDirector
     myOutputDir = sourceDirectorySet.getOutputDir();
     myGradleOutputDirs.addAll(sourceDirectorySet.getGradleOutputDirs());
 
-    myExcludes = new HashSet<String>(sourceDirectorySet.getExcludes());
-    myIncludes = new HashSet<String>(sourceDirectorySet.getIncludes());
+    myPatterns.getIncludes().addAll(sourceDirectorySet.getPatterns().getIncludes());
+    myPatterns.getExcludes().addAll(sourceDirectorySet.getPatterns().getExcludes());
     for (ExternalFilter filter : sourceDirectorySet.getFilters()) {
       myFilters.add(new DefaultExternalFilter(filter));
     }
@@ -117,28 +113,36 @@ public class DefaultExternalSourceDirectorySet implements ExternalSourceDirector
     return myInheritedCompilerOutput;
   }
 
-  public void setInheritedCompilerOutput(boolean inheritedCompilerOutput) {
-    myInheritedCompilerOutput = inheritedCompilerOutput;
+  @NotNull
+  @Override
+  public Set<String> getExcludes() {
+    return myPatterns.getExcludes();
+  }
+
+  public void setExcludes(Set<String> excludes) {
+    myPatterns.getExcludes().clear();
+    myPatterns.getExcludes().addAll(excludes);
   }
 
   @NotNull
   @Override
   public Set<String> getIncludes() {
-    return myIncludes;
+    return myPatterns.getIncludes();
   }
 
-  public void setIncludes(@NotNull Set<String> includes) {
-    myIncludes = includes;
+  public void setIncludes(Set<String> includes) {
+    myPatterns.getIncludes().clear();
+    myPatterns.getIncludes().addAll(includes);
   }
 
   @NotNull
   @Override
-  public Set<String> getExcludes() {
-    return myExcludes;
+  public FilePatternSet getPatterns() {
+    return myPatterns;
   }
 
-  public void setExcludes(@NotNull Set<String> excludes) {
-    myExcludes = excludes;
+  public void setInheritedCompilerOutput(boolean inheritedCompilerOutput) {
+    myInheritedCompilerOutput = inheritedCompilerOutput;
   }
 
   @NotNull
