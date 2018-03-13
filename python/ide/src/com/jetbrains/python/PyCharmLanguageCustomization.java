@@ -3,10 +3,15 @@ package com.jetbrains.python;
 
 import com.intellij.lang.IdeLanguageCustomization;
 import com.intellij.lang.Language;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Collections;
+import java.util.List;
 
 public class PyCharmLanguageCustomization extends IdeLanguageCustomization {
+  @NotNull
   @Override
-  public Language getMainIdeLanguage() {
-    return PythonLanguage.getInstance();
+  public List<Language> getPrimaryIdeLanguages() {
+    return Collections.singletonList(PythonLanguage.getInstance());
   }
 }
