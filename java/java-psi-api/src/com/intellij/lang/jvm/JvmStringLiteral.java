@@ -4,7 +4,7 @@ package com.intellij.lang.jvm;
 import org.jetbrains.annotations.NotNull;
 
 
-public interface JvmStringLiteral extends JvmAnnotationMemberValue {
+public interface JvmStringLiteral extends JvmAnnotationAttributeValue {
 
   @NotNull
   String getValue();

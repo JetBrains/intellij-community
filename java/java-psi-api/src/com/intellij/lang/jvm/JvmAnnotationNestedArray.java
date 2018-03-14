@@ -5,8 +5,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public interface JvmAnnotationNestedArray extends JvmAnnotationMemberValue {
+public interface JvmAnnotationNestedArray extends JvmAnnotationAttributeValue {
 
   @NotNull
-  List<JvmAnnotationMemberValue> getValue();
+  List<JvmAnnotationAttributeValue> getValues();
 }

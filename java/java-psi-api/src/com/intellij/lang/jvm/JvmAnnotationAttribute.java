@@ -3,8 +3,11 @@ package com.intellij.lang.jvm;
 
 import org.jetbrains.annotations.NotNull;
 
-public interface JvmClassLiteral extends JvmAnnotationMemberValue {
+public interface JvmAnnotationAttribute {
 
   @NotNull
-  JvmClass getValue();
+  String getName();
+
+  @NotNull
+  JvmAnnotationAttributeValue getValue();
 }

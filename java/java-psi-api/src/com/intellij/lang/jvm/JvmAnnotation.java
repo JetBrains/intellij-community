@@ -15,6 +15,27 @@
  */
 package com.intellij.lang.jvm;
 
-public interface JvmAnnotation extends JvmAnnotationInfo, JvmElement {
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Collections;
+import java.util.List;
+
+public interface JvmAnnotation extends JvmElement {
+
+  /**
+   * Returns the fully qualified name of the annotation class.
+   *
+   * @return the class name, or null if the annotation is unresolved.
+   */
+  @Nullable
+  @NonNls
+  String getQualifiedName();
+
+  @NotNull
+  default List<JvmAnnotationAttribute> getAttributes() {
+    return Collections.emptyList();
+  }
 
 }
