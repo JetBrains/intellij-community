@@ -878,6 +878,7 @@ public class ExternalSystemApiUtil {
    * @return check if the current IDE is compatible with the 'java' IntelliJ subsystem
    */
   @ApiStatus.Experimental
+  @Deprecated
   public static boolean isJavaCompatibleIde() {
     return isIdeaUltimate() || isIdeaCommunity() || "AndroidStudio".equals(getPlatformPrefix());
   }
