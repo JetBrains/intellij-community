@@ -134,6 +134,25 @@ class GrAssignAutoTest extends GrHighlightingTestBase {
             'BigInteger -> int[]', 'BigInteger -> double[]', 'BigInteger -> short', 'int[] -> double[]', 'int[] -> Integer[]']
   }
 
+  void testReturnAssignValue() {
+    doTest '''
+        @CompileStatic
+        %2$s method%3$s() {
+          return %1$s
+        }
+        ''',
+           vectorProduct(values, types),
+           [],
+           ['true -> int', 'true -> double', 'true -> short', 'true -> byte', 'false -> int', 'false -> double', 'false -> short',
+            'false -> byte', '(Void)null -> int', '(Void)null -> double', '(Void)null -> BigDecimal', '(Void)null -> BigInteger',
+            '(Void)null -> List', '(Void)null -> Thread', '(Void)null -> List<BigDecimal>', '(Void)null -> List<BigInteger>',
+            '(Void)null -> List<Integer>', '(Void)null -> List<String>', '(Void)null -> List<Object>', '(Void)null -> List<Thread>',
+            '(Void)null -> boolean[]', '(Void)null -> int[]', '(Void)null -> double[]', '(Void)null -> String[]',
+            '(Void)null -> Integer[]', '(Void)null -> List[]', '(Void)null -> Object[]', '(Void)null -> Thread[]',
+            '(Void)null -> short', '(Void)null -> byte', '(Void)null -> Set', '(Void)null -> Set<String>',
+            '(Void)null -> Set<Integer>', '(Void)null -> Set<Object>', '(Void)null -> Set<Thread>']
+  }
+
   void testLocalAssignValue() {
     doTest '''
         @CompileStatic
