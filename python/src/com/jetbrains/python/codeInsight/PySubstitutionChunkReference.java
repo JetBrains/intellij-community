@@ -370,7 +370,7 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
     if (expr == null) {
       return Ref.create(starArgument);
     }
-    final int position = (myChunk.getPosition() != null ? myChunk.getPosition() : myPosition) - argumentPosition;
+    final int position = (myChunk.getManualPosition() != null ? myChunk.getManualPosition() : myPosition) - argumentPosition;
     return getElementByIndex(expr, position);
   }
 

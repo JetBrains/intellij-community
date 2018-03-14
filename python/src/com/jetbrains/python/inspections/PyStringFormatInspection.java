@@ -510,7 +510,7 @@ public class PyStringFormatInspection extends PyInspection {
         final HashSet<String> supportedTypes = new HashSet<>();
         boolean hasTypeOptions = false;
 
-        final String mappingKey = chunk.getMappingKey() != null ? chunk.getMappingKey() : String.valueOf(chunk.getPositionalArgumentIndex());
+        final String mappingKey = chunk.getMappingKey() != null ? chunk.getMappingKey() : String.valueOf(chunk.getPosition());
 
         // inspect options available only for numeric types
         if (chunk.hasSignOption() || chunk.useAlternateForm() || chunk.hasZeroPadding() || chunk.hasThousandsSeparator()) {
@@ -547,7 +547,7 @@ public class PyStringFormatInspection extends PyInspection {
       }
 
       private void inspectArguments(@NotNull PyStringFormatParser.NewStyleSubstitutionChunk chunk, @NotNull String mappingKey) {
-        final PsiElement target = new PySubstitutionChunkReference(myFormatExpression, chunk, chunk.getPositionalArgumentIndex()).resolve();
+        final PsiElement target = new PySubstitutionChunkReference(myFormatExpression, chunk, chunk.getPosition()).resolve();
         boolean hasElementIndex = chunk.getMappingKeyElementIndex() != null;
         if (target == null) {
           final String chunkMapping = chunk.getMappingKey();

@@ -18,6 +18,7 @@ package com.jetbrains.python.inspections;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
@@ -71,7 +72,7 @@ public class PyStringFormatParser {
     @Nullable private String myMappingKey;
     @Nullable private String myWidth;
     @Nullable private String myPrecision;
-    @Nullable private Integer myPosition;
+    @Nullable private Integer myManualPosition;
     @Nullable private Integer myAutoPosition;
 
     private char myConversionType;
@@ -85,12 +86,12 @@ public class PyStringFormatParser {
     }
 
     @Nullable
-    public Integer getPosition() {
-      return myPosition;
+    public Integer getManualPosition() {
+      return myManualPosition;
     }
 
-    protected void setPosition(@Nullable Integer position) {
-      myPosition = position;
+    protected void setManualPosition(@Nullable Integer position) {
+      myManualPosition = position;
     }
 
     /**
@@ -145,8 +146,17 @@ public class PyStringFormatParser {
       myMappingKey = mappingKey;
     }
 
-    public int getPositionalArgumentIndex() {
-      return myPosition == null ? myAutoPosition == null ? 0 : myAutoPosition : myPosition;
+    /**
+     * Returns either manually specified position or the one automatically assigned unless mapping key was specified instead.
+     * In the latter key this method returns {@code null}.
+     *
+     * @see #getManualPosition()
+     * @see #getAutoPosition()
+     * @see #getMappingKey()
+     */
+    @Nullable
+    public Integer getPosition() {
+      return ObjectUtils.chooseNotNull(myManualPosition, myAutoPosition);
     }
   }
 
@@ -386,7 +396,7 @@ public class PyStringFormatParser {
       final String name = myLiteral.substring(myPos, nameEnd);
       try {
         final int number = Integer.parseInt(name);
-        chunk.setPosition(number);
+        chunk.setManualPosition(number);
         myAutoNumber.checkState(AutoNumberState.MANUAL);
       }
       catch (NumberFormatException e) {
