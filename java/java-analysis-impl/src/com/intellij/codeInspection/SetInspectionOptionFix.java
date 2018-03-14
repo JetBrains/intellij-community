@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -51,24 +52,25 @@ public class SetInspectionOptionFix implements LocalQuickFix, LowPriorityAction,
 
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PsiFile file = descriptor.getPsiElement().getContainingFile();
-    setOption(file, myValue);
-    final VirtualFile vFile = file.getVirtualFile();
+    VirtualFile vFile = descriptor.getPsiElement().getContainingFile().getVirtualFile();
+    setOption(project, vFile, myValue);
     UndoManager.getInstance(project).undoableActionPerformed(new BasicUndoableAction(vFile) {
       @Override
       public void undo() {
-        setOption(file, !myValue);
+        setOption(project, vFile, !myValue);
       }
 
       @Override
       public void redo() {
-        setOption(file, myValue);
+        setOption(project, vFile, myValue);
       }
     });
   }
 
-  private void setOption(@NotNull PsiFile file, boolean value) {
-    InspectionProfileModifiableModelKt.modifyAndCommitProjectProfile(file.getProject(), model -> {
+  private void setOption(@NotNull Project project, @NotNull VirtualFile vFile, boolean value) {
+    PsiFile file = PsiManager.getInstance(project).findFile(vFile);
+    if (file == null) return;
+    InspectionProfileModifiableModelKt.modifyAndCommitProjectProfile(project, model -> {
       InspectionToolWrapper tool = model.getToolById(myID, file);
       if(tool == null) return;
       InspectionProfileEntry inspection = tool.getTool();
