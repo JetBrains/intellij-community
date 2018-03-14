@@ -26,6 +26,7 @@ import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.ruby.RBundle;
 import org.jetbrains.plugins.ruby.ruby.RModuleUtil;
 import org.jetbrains.plugins.ruby.ruby.RubyUtil;
 import org.jetbrains.plugins.ruby.ruby.debugger.RubyDebugMode;
@@ -91,6 +92,10 @@ public class RunAnythingDebugRunner extends GenericProgramRunner {
     }
 
     final DebugGemHelper debugGemHelper = RubyAbstractCommandLineState.selectDebugGemHelper(sdk, module, RubyDebugMode.NORMAL_MODE);
+
+    if (!debugGemHelper.isUsable()) {
+      throw new ExecutionException(RBundle.message("ruby.debugger.cannot.start.debug", debugGemHelper.getErrorMsg()));
+    }
 
     if (debugGemHelper.needsDebugPreLoader()) {
       applyDebugStarterToEnv(((RunAnythingRunProfile)environment.getRunProfile()).getCommandLine(),
