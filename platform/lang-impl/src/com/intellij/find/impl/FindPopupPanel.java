@@ -225,10 +225,18 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       myBalloon.setSize(prev != null ? prev : panelSize);
 
       IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
-      if (showPoint != null && showPoint.getComponent() != null) {
-        myBalloon.show(showPoint);
-      } else {
-        myBalloon.showCenteredInCurrentWindow(myProject);
+      boolean oldFlagState = Registry.is("allow.dialog.based.popups");
+      try {
+        Registry.get("allow.dialog.based.popups").setValue(true);
+        if (showPoint != null && showPoint.getComponent() != null) {
+          myBalloon.show(showPoint);
+        }
+        else {
+          myBalloon.showCenteredInCurrentWindow(myProject);
+        }
+      }
+      finally {
+        Registry.get("allow.dialog.based.popups").setValue(oldFlagState);
       }
       JRootPane rootPane = getRootPane();
       if (rootPane != null && myHelper.isReplaceState()) {
