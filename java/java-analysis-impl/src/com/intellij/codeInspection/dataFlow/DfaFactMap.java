@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Objects;
 
 /**
  * An immutable collection of facts which are known for some value. Each fact is identified by {@link DfaFactType} and fact value.
@@ -169,9 +168,16 @@ public final class DfaFactMap {
   @SuppressWarnings("unchecked")
   @Override
   public String toString() {
-    return StreamEx.of(myMap.getKeys())
-      .map(key -> ((DfaFactType<Object>)key).toString(Objects.requireNonNull(myMap.get(key))))
-      .joining(", ");
+    return facts(DfaFactType::toString).joining(", ");
+  }
+
+  @SuppressWarnings("unchecked")
+  public <R> StreamEx<R> facts(FactMapper<R> mapper) {
+    return StreamEx.of(myMap.getKeys()).map(f -> {
+      DfaFactType<Object> key = (DfaFactType<Object>)f;
+      Object value = myMap.get(f);
+      return mapper.apply(key, value);
+    });
   }
 
   /**
@@ -187,5 +193,10 @@ public final class DfaFactMap {
 
   private static <T> DfaFactMap updateMap(DfaFactMap map, DfaFactType<T> factType, DfaVariableValue value) {
     return map.with(factType, factType.calcFromVariable(value));
+  }
+
+  @FunctionalInterface
+  public interface FactMapper<R> {
+    <T> R apply(DfaFactType<T> factType, T factValue);
   }
 }
