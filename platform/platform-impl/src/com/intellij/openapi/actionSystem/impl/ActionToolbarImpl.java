@@ -958,10 +958,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       if (getParent() != null) {
         g.setColor(UIUtil.getSeparatorColor());
         if (myOrientation == SwingConstants.HORIZONTAL) {
-          LinePainter2D.paint((Graphics2D)g, offset, gap, offset, getParent().getSize().height - gap * 2 - JBUI.scale(2));
+          LinePainter2D.paint((Graphics2D)g, offset, gap, offset, getParent().getSize().height - gap * 2 - offset);
         }
         else {
-          LinePainter2D.paint((Graphics2D)g, gap, offset, getParent().getSize().width - gap * 2 - JBUI.scale(2), offset);
+          LinePainter2D.paint((Graphics2D)g, gap, offset, getParent().getSize().width - gap * 2 - offset, offset);
         }
       }
     }
