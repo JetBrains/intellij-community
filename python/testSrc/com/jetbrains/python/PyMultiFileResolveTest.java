@@ -502,21 +502,6 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
     });
   }
 
-  private void withSourceRoots(@NotNull List<VirtualFile> sourceRoots, @NotNull Runnable f) {
-    final Module module = myFixture.getModule();
-    for (VirtualFile root : sourceRoots) {
-      PsiTestUtil.addSourceRoot(module, root);
-    }
-    try {
-      f.run();
-    }
-    finally {
-      for (VirtualFile root : sourceRoots) {
-        PsiTestUtil.removeSourceRoot(module, root);
-      }
-    }
-  }
-
   // PY-19989
   public void testAmbiguousImplicitRelativeImport() {
     prepareTestDirectory();

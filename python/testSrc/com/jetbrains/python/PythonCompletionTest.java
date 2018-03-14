@@ -10,7 +10,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
-import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.fixtures.PyMultiFileResolveTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Set;
 
 @TestDataPath("$CONTENT_ROOT/../testData/completion")
-public class PythonCompletionTest extends PyTestCase {
+public class PythonCompletionTest extends PyMultiFileResolveTestCase {
 
   private void doTest() {
     CamelHumpMatcher.forceStartMatching(myFixture.getTestRootDisposable());
@@ -1276,8 +1276,53 @@ public class PythonCompletionTest extends PyTestCase {
     assertSameElements(suggested, variants);
   }
 
+  // PY-17810
+  public void testLocalClasses() {
+    assertNoVariantsInExtendedCompletion();
+  }
+
+  // PY-17810
+  public void testEntriesWithNoImportablePath() {
+    assertNoVariantsInExtendedCompletion();
+  }
+
+  // PY-17810
+  public void testDuplicatedEntriesFromMultipleSourceRoots() {
+    assertSingleVariantInExtendedCompletion();
+  }
+
+  // PY-17810
+  public void testModuleWithNoImportablePath() {
+    assertNoVariantsInExtendedCompletion();
+  }
+
+  // PY-17810
+  public void testModuleFromMultipleSourceRoots() {
+    assertSingleVariantInExtendedCompletion();
+  }
+
+  private void assertNoVariantsInExtendedCompletion() {
+    myFixture.copyDirectoryToProject(getTestName(true), "");
+    myFixture.configureByFile("a.py");
+    myFixture.complete(CompletionType.BASIC, 2);
+    assertNotNull(myFixture.getLookupElements());
+    assertEmpty(myFixture.getLookupElements());
+  }
+
+  private void assertSingleVariantInExtendedCompletion() {
+    myFixture.copyDirectoryToProject(getTestName(true), "");
+    withSourceRoots(Lists.newArrayList(
+      myFixture.findFileInTempDir("root1"),
+      myFixture.findFileInTempDir("root2")),
+                    () -> {
+                      myFixture.configureByFile("a.py");
+                      myFixture.complete(CompletionType.BASIC, 2);
+                      assertNull(myFixture.getLookupElements());
+                    });
+  }
+
   @Override
   protected String getTestDataPath() {
-    return super.getTestDataPath() + "/completion";
+    return PythonTestUtil.getTestDataPath() + "/completion";
   }
 }
