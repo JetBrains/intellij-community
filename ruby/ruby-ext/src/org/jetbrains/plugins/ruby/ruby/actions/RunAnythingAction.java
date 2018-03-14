@@ -18,7 +18,7 @@ import com.intellij.ide.ui.laf.intellij.WinIntelliJTextBorder;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.internal.statistic.customUsageCollectors.ui.ToolbarClicksCollector;
+import com.intellij.internal.statistic.collectors.fus.ui.persistence.ToolbarClicksCollector;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
