@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 public class PyDataclassInspectionTest extends PyInspectionTestCase {
 
   // PY-27398
-  public void testAssignmentsToFrozen() {
+  public void testMutatingFrozen() {
     doTest();
   }
 
