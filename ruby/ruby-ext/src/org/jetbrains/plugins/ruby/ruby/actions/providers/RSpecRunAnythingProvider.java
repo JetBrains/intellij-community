@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.ruby.ruby.actions.providers;
 
 import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -48,7 +49,8 @@ public class RSpecRunAnythingProvider extends RubyRunAnythingProviderBase<RSpecR
         continue;
       }
 
-      configuration.setTestScriptPath(Objects.requireNonNull(findProgramFile(baseDirectory, argument)));
+      VirtualFile file = VfsUtilCore.findRelativeFile(argument, baseDirectory);
+      configuration.setTestScriptPath(Objects.requireNonNull(file != null ? file.getCanonicalPath() : ""));
     }
 
     appendParameters(parameter -> configuration.setRunnerOptions(parameter), () -> configuration.getRunnerOptions(), options);
