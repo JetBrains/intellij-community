@@ -240,7 +240,12 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
       if(!resolverCtx.isPreviewMode()){
         // register classes of extra gradle project models required for extensions (e.g. com.android.builder.model.AndroidProject)
-        projectImportAction.addExtraProjectModelClasses(resolverExtension.getExtraProjectModelClasses());
+        try {
+          projectImportAction.addExtraProjectModelClasses(resolverExtension.getExtraProjectModelClasses());
+        }
+        catch (Throwable t) {
+          LOG.warn(t);
+        }
       }
 
       if (importCustomizer == null || importCustomizer.useExtraJvmArgs()) {
@@ -254,7 +259,12 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       // collect extra command-line arguments
       executionSettings.withArguments(resolverExtension.getExtraCommandLineArgs());
       // collect tooling extensions classes
-      toolingExtensionClasses.addAll(resolverExtension.getToolingExtensionsClasses());
+      try {
+        toolingExtensionClasses.addAll(resolverExtension.getToolingExtensionsClasses());
+      }
+      catch (Throwable t) {
+        LOG.warn(t);
+      }
     }
 
     BuildActionExecuter<ProjectImportAction.AllModels> buildActionExecutor = resolverCtx.getConnection().action(projectImportAction);

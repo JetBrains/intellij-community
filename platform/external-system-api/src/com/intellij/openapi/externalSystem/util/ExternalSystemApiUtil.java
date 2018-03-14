@@ -56,6 +56,7 @@ import com.intellij.util.containers.*;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -70,6 +71,8 @@ import java.util.*;
 import java.util.Queue;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.intellij.util.PlatformUtils.*;
 
 /**
  * @author Denis Zhdanov
@@ -866,5 +869,16 @@ public class ExternalSystemApiUtil {
                                @NotNull ExternalSystemSettingsListener listener) {
     //noinspection unchecked
     getSettings(project, systemId).subscribe(listener);
+  }
+
+  /**
+   * DO NOT USE THIS METHOD.
+   * The method should be removed when the 'java' subsystem features will be extracted from External System API [IDEA-187832]
+   *
+   * @return check if the current IDE is compatible with the 'java' IntelliJ subsystem
+   */
+  @ApiStatus.Experimental
+  public static boolean isJavaCompatibleIde() {
+    return isIdeaUltimate() || isIdeaCommunity() || "AndroidStudio".equals(getPlatformPrefix());
   }
 }

@@ -453,7 +453,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
     @Nullable
     private String getJvmAgentSetup() throws ExecutionException {
       // todo [Vlad, IDEA-187832]: extract to `external-system-java` module
-      if(!PlatformUtils.isIntelliJ()) return null;
+      if(!ExternalSystemApiUtil.isJavaCompatibleIde()) return null;
 
       final JavaParameters extensionsJP = new JavaParameters();
       final RunConfigurationExtension[] extensions = Extensions.getExtensions(RunConfigurationExtension.EP_NAME);
