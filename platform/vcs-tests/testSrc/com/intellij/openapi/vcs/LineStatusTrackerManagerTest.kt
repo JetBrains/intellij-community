@@ -230,7 +230,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
     }
   }
 
-  fun `test tracker changes moves - before initialisation`() {
+  fun `test tracker before initialisation - no changed lines in vcs, local changes reverted`() {
     createChangelist("Test")
 
     val file = addLocalFile(FILE_1, "a_b_c_d_e")
@@ -258,7 +258,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
     }
   }
 
-  fun `test tracker changes moves - before initialisation 2`() {
+  fun `test tracker before initialisation - typing`() {
     createChangelist("Test")
 
     val file = addLocalFile(FILE_1, "a_b_c_d_e")
@@ -280,6 +280,56 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
       lstm.waitUntilBaseContentsLoaded()
       assertEquals(2, tracker.getRanges()!!.size)
       tracker.assertAffectedChangeLists("Default", "Test")
+    }
+  }
+
+  fun `test tracker before initialisation - no changed lines in vcs`() {
+    createChangelist("Test")
+
+    val file = addLocalFile(FILE_1, "a_b_c_d_e")
+    setBaseVersion(FILE_1, "a_b_c_d_e")
+    refreshCLM()
+    file.moveAllChangesTo("Test")
+
+    file.withOpenedEditor {
+      val tracker = file.tracker as PartialLocalLineStatusTracker
+
+      tracker.assertAffectedChangeLists("Test")
+
+      runCommand { tracker.document.replaceString(0, 1, "a2") }
+      tracker.assertAffectedChangeLists("Default", "Test")
+
+      assertFalse(tracker.isOperational())
+      assertNull(tracker.getRanges())
+
+      lstm.waitUntilBaseContentsLoaded()
+      assertEquals(1, tracker.getRanges()!!.size)
+      tracker.assertAffectedChangeLists("Default")
+    }
+  }
+
+  fun `test tracker before initialisation - old local changes reverted`() {
+    createChangelist("Test")
+
+    val file = addLocalFile(FILE_1, "a2_b_c_d_e")
+    setBaseVersion(FILE_1, "a_b_c_d_e")
+    refreshCLM()
+    file.moveAllChangesTo("Test")
+
+    file.withOpenedEditor {
+      val tracker = file.tracker as PartialLocalLineStatusTracker
+
+      tracker.assertAffectedChangeLists("Test")
+
+      runCommand { tracker.document.replaceString(0, 2, "a") }
+      tracker.assertAffectedChangeLists("Default", "Test")
+
+      assertFalse(tracker.isOperational())
+      assertNull(tracker.getRanges())
+
+      lstm.waitUntilBaseContentsLoaded()
+      assertEquals(0, tracker.getRanges()!!.size)
+      tracker.assertAffectedChangeLists("Default")
     }
   }
 }
