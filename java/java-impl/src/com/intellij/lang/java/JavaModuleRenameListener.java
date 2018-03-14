@@ -3,13 +3,12 @@ package com.intellij.lang.java;
 
 import com.intellij.ProjectTopics;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -58,9 +57,11 @@ public class JavaModuleRenameListener implements ProjectComponent, ModuleListene
     }
 
     if (!suggestions.isEmpty()) {
-      ApplicationManager.getApplication().invokeLater(
-        () -> DumbService.getInstance(project).runWhenSmart(() -> renameModules(project, suggestions)),  // wait for "roots changed" to end
-        ModalityState.NON_MODAL, project.getDisposed());
+      AppUIExecutor.onUiThread(ModalityState.NON_MODAL)
+          .later()
+          .inSmartMode(project)
+          .inTransaction(project)
+          .execute(() -> renameModules(project, suggestions));
     }
   }
 
@@ -68,13 +69,14 @@ public class JavaModuleRenameListener implements ProjectComponent, ModuleListene
     MyAutomaticRenamer renamer = new MyAutomaticRenamer();
     for (Pair<SmartPsiElementPointer<PsiJavaModule>, String> rename : suggestions) {
       PsiJavaModule javaModule = rename.first.getElement();
-      if (javaModule != null && javaModule.isValid()) {
+      if (javaModule != null) {
         renamer.addElement(javaModule, rename.second);
       }
     }
 
     if (!renamer.getElements().isEmpty()) {
-      AutomaticRenamingDialog dialog = new AutomaticRenamingDialog(project, renamer, true);
+      AutomaticRenamingDialog dialog = new AutomaticRenamingDialog(project, renamer);
+      dialog.showOptionsPanel();
 
       if (dialog.showAndGet()) {
         RenameProcessor processor = null;
@@ -83,7 +85,7 @@ public class JavaModuleRenameListener implements ProjectComponent, ModuleListene
           String newName = entry.getValue();
           if (newName != null) {
             if (processor == null) {
-              processor = new RenameProcessor(project, entry.getKey(), newName, dialog.searchInComments(), dialog.searchTextOccurrences());
+              processor = new RenameProcessor(project, entry.getKey(), newName, dialog.isSearchInComments(), dialog.isSearchTextOccurrences());
             }
             else {
               processor.addElement(entry.getKey(), newName);

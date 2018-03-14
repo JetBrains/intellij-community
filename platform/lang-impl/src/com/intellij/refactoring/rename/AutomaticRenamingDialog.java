@@ -47,7 +47,6 @@ public class AutomaticRenamingDialog extends DialogWrapper {
 
   private final Project myProject;
   private final AutomaticRenamer myRenamer;
-  private final boolean myShowOptions;
   private final boolean[] myShouldRename;
   private final String[] myNewNames;
   private final PsiNamedElement[] myRenames;
@@ -67,14 +66,9 @@ public class AutomaticRenamingDialog extends DialogWrapper {
   private ListSelectionListener myListSelectionListener;
 
   public AutomaticRenamingDialog(@NotNull Project project, @NotNull AutomaticRenamer renamer) {
-    this(project, renamer, false);
-  }
-
-  public AutomaticRenamingDialog(@NotNull Project project, @NotNull AutomaticRenamer renamer, boolean showOptions) {
     super(project, true);
     myProject = project;
     myRenamer = renamer;
-    myShowOptions = showOptions;
 
     Map<PsiNamedElement, String> renames = renamer.getRenames();
 
@@ -215,7 +209,7 @@ public class AutomaticRenamingDialog extends DialogWrapper {
       myTable.getSelectionModel().addSelectionInterval(0, 0);
     }
 
-    myOptionsPanel.setVisible(myShowOptions);
+    myOptionsPanel.setVisible(false);
 
     return myPanel;
   }
@@ -277,11 +271,15 @@ public class AutomaticRenamingDialog extends DialogWrapper {
     }
   }
 
-  public boolean searchInComments() {
+  public void showOptionsPanel() {
+    myOptionsPanel.setVisible(true);
+  }
+
+  public boolean isSearchInComments() {
     return mySearchInComments.isSelected();
   }
 
-  public boolean searchTextOccurrences() {
+  public boolean isSearchTextOccurrences() {
     return mySearchTextOccurrences.isSelected();
   }
 
