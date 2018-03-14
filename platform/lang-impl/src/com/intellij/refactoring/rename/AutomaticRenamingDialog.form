@@ -20,14 +20,6 @@
         </properties>
         <border type="empty"/>
         <children>
-          <grid id="30730" binding="myPanelForPreview" layout-manager="BorderLayout" hgap="0" vgap="0">
-            <constraints>
-              <splitpane position="right"/>
-            </constraints>
-            <properties/>
-            <border type="none"/>
-            <children/>
-          </grid>
           <grid id="177e3" layout-manager="GridBagLayout">
             <constraints>
               <splitpane position="left"/>
@@ -37,7 +29,7 @@
             <children>
               <scrollpane id="86224" class="com.intellij.ui.components.JBScrollPane">
                 <constraints>
-                  <grid row="0" column="0" row-span="1" col-span="6" vsize-policy="3" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
                   <gridbag weightx="1.0" weighty="1.0"/>
                 </constraints>
                 <properties/>
@@ -51,21 +43,12 @@
               </scrollpane>
               <grid id="6e08e" layout-manager="GridBagLayout">
                 <constraints>
-                  <grid row="1" column="0" row-span="1" col-span="6" vsize-policy="3" hsize-policy="3" anchor="4" fill="2" indent="0" use-parent-layout="false"/>
+                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="4" fill="2" indent="0" use-parent-layout="false"/>
                   <gridbag weightx="0.0" weighty="0.0"/>
                 </constraints>
                 <properties/>
                 <border type="none"/>
                 <children>
-                  <component id="1217e" class="javax.swing.JButton" binding="myUnselectAllButton" default-binding="true">
-                    <constraints>
-                      <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
-                      <gridbag top="0" left="5" bottom="0" right="0" weightx="0.0" weighty="0.0"/>
-                    </constraints>
-                    <properties>
-                      <text resource-bundle="messages/RefactoringBundle" key="unselect.all.button"/>
-                    </properties>
-                  </component>
                   <component id="c4746" class="javax.swing.JButton" binding="mySelectAllButton" default-binding="true">
                     <constraints>
                       <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
@@ -75,9 +58,26 @@
                       <text resource-bundle="messages/RefactoringBundle" key="select.all.button"/>
                     </properties>
                   </component>
+                  <component id="1217e" class="javax.swing.JButton" binding="myUnselectAllButton" default-binding="true">
+                    <constraints>
+                      <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
+                      <gridbag top="0" left="5" bottom="0" right="0" weightx="0.0" weighty="0.0"/>
+                    </constraints>
+                    <properties>
+                      <text resource-bundle="messages/RefactoringBundle" key="unselect.all.button"/>
+                    </properties>
+                  </component>
                 </children>
               </grid>
             </children>
+          </grid>
+          <grid id="30730" binding="myPanelForPreview" layout-manager="BorderLayout" hgap="0" vgap="0">
+            <constraints>
+              <splitpane position="right"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children/>
           </grid>
         </children>
       </splitpane>
