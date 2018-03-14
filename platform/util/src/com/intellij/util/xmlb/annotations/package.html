@@ -5,17 +5,17 @@
 <ul>
 <li>
 <p><code>v1</code>:</p>
-<pre><span style="color: #000000;">&lt;</span><span style="color: #000080; font-weight: bold;">option </span><span style="color: #0000ff; font-weight: bold;">name</span><span style="color: #008000; font-weight: bold;">=&quot;propertyName&quot;</span><span style="color: #000000;">&gt;</span>
-  &lt;<span style="color: #000080; font-weight: bold;">option </span><span style="color: #0000ff; font-weight: bold;">value</span><span style="color: #008000; font-weight: bold;">=&quot;value1&quot; </span><span style="color: #000000;">/&gt;</span>
-  &lt;<span style="color: #000080; font-weight: bold;">option </span><span style="color: #0000ff; font-weight: bold;">value</span><span style="color: #008000; font-weight: bold;">=&quot;valueN&quot; </span><span style="color: #000000;">/&gt;</span>
-&lt;/<span style="color: #000080; font-weight: bold;">option</span><span style="color: #000000;">&gt;</span>
+<pre>&lt;<span style="color: #000080; font-weight: bold;">option </span><span style="color: #0000ff; font-weight: bold;">name</span><span style="color: #008000; font-weight: bold;">=&quot;propertyName&quot;</span>&gt;
+  &lt;<span style="color: #000080; font-weight: bold;">option </span><span style="color: #0000ff; font-weight: bold;">value</span><span style="color: #008000; font-weight: bold;">=&quot;value1&quot; </span>/&gt;
+  &lt;<span style="color: #000080; font-weight: bold;">option </span><span style="color: #0000ff; font-weight: bold;">value</span><span style="color: #008000; font-weight: bold;">=&quot;valueN&quot; </span>/&gt;
+&lt;/<span style="color: #000080; font-weight: bold;">option</span>&gt;
 </pre>
 </li>
 <li>
 <p><code>v2</code>:</p>
-<pre><span style="color: #000000;">&lt;</span><span style="color: #000080; font-weight: bold;">propertyName</span><span style="color: #000000;">&gt;</span>
-  &lt;<span style="color: #000080; font-weight: bold;">option </span><span style="color: #0000ff; font-weight: bold;">value</span><span style="color: #008000; font-weight: bold;">=&quot;$value&quot; </span><span style="color: #000000;">/&gt;</span>
-&lt;/<span style="color: #000080; font-weight: bold;">propertyName</span><span style="color: #000000;">&gt;</span>
+<pre>&lt;<span style="color: #000080; font-weight: bold;">propertyName</span>&gt;
+  &lt;<span style="color: #000080; font-weight: bold;">option </span><span style="color: #0000ff; font-weight: bold;">value</span><span style="color: #008000; font-weight: bold;">=&quot;$value&quot; </span>/&gt;
+&lt;/<span style="color: #000080; font-weight: bold;">propertyName</span>&gt;
 </pre>
 </li>
 </ul>
@@ -27,17 +27,17 @@
 <p>Empty name is allowed — in this case value will be serialized as element text.</p>
 <ul>
 <li><code>valueAttributeName = &quot;name&quot;</code>
-<pre><span style="color: #000000;">&lt;</span><span style="color: #000080; font-weight: bold;">propertyName</span><span style="color: #000000;">&gt;</span>
-  &lt;<span style="color: #000080; font-weight: bold;">option </span><span style="color: #0000ff; font-weight: bold;">name</span><span style="color: #008000; font-weight: bold;">=&quot;$value1&quot; </span><span style="color: #000000;">/&gt;</span>
-  &lt;<span style="color: #000080; font-weight: bold;">option </span><span style="color: #0000ff; font-weight: bold;">name</span><span style="color: #008000; font-weight: bold;">=&quot;$valueN&quot; </span><span style="color: #000000;">/&gt; </span>
-&lt;/<span style="color: #000080; font-weight: bold;">propertyName</span><span style="color: #000000;">&gt;</span>
+<pre>&lt;<span style="color: #000080; font-weight: bold;">propertyName</span>&gt;
+  &lt;<span style="color: #000080; font-weight: bold;">option </span><span style="color: #0000ff; font-weight: bold;">name</span><span style="color: #008000; font-weight: bold;">=&quot;$value1&quot; </span>/&gt;
+  &lt;<span style="color: #000080; font-weight: bold;">option </span><span style="color: #0000ff; font-weight: bold;">name</span><span style="color: #008000; font-weight: bold;">=&quot;$valueN&quot; </span>/&gt; 
+&lt;/<span style="color: #000080; font-weight: bold;">propertyName</span>&gt;
 </pre>
 </li>
 <li><code>valueAttributeName = &quot;&quot;</code>
-<pre><span style="color: #000000;">&lt;</span><span style="color: #000080; font-weight: bold;">propertyName</span><span style="color: #000000;">&gt;</span>
-  &lt;<span style="color: #000080; font-weight: bold;">option</span><span style="color: #000000;">&gt;</span><span style="color: #000000;">$value1</span><span style="color: #000000;">&lt;/</span><span style="color: #000080; font-weight: bold;">option</span><span style="color: #000000;">&gt;</span>
-  &lt;<span style="color: #000080; font-weight: bold;">option</span><span style="color: #000000;">&gt;</span><span style="color: #000000;">$valueN</span><span style="color: #000000;">&lt;/</span><span style="color: #000080; font-weight: bold;">option</span><span style="color: #000000;">&gt;</span>
-&lt;/<span style="color: #000080; font-weight: bold;">propertyName</span><span style="color: #000000;">&gt;</span>
+<pre>&lt;<span style="color: #000080; font-weight: bold;">propertyName</span>&gt;
+  &lt;<span style="color: #000080; font-weight: bold;">option</span>&gt;$value1&lt;/<span style="color: #000080; font-weight: bold;">option</span>&gt;
+  &lt;<span style="color: #000080; font-weight: bold;">option</span>&gt;$valueN&lt;/<span style="color: #000080; font-weight: bold;">option</span>&gt;
+&lt;/<span style="color: #000080; font-weight: bold;">propertyName</span>&gt;
 </pre>
 </li>
 </ul>
@@ -46,20 +46,20 @@
 <ul>
 <li>
 <p>With <code>XMap</code> annotation:</p>
-<pre><span style="color: #000000;">&lt;</span><span style="color: #000080; font-weight: bold;">propertyName</span><span style="color: #000000;">&gt;</span>
-  &lt;<span style="color: #000080; font-weight: bold;">entry </span><span style="color: #0000ff; font-weight: bold;">key</span><span style="color: #008000; font-weight: bold;">=&quot;key1&quot; </span><span style="color: #0000ff; font-weight: bold;">value</span><span style="color: #008000; font-weight: bold;">=&quot;value1&quot; </span><span style="color: #000000;">/&gt;</span>
-  &lt;<span style="color: #000080; font-weight: bold;">entry </span><span style="color: #0000ff; font-weight: bold;">key</span><span style="color: #008000; font-weight: bold;">=&quot;keyN&quot; </span><span style="color: #0000ff; font-weight: bold;">value</span><span style="color: #008000; font-weight: bold;">=&quot;valueN&quot; </span><span style="color: #000000;">/&gt;</span>
-&lt;/<span style="color: #000080; font-weight: bold;">propertyName</span><span style="color: #000000;">&gt;</span>
+<pre>&lt;<span style="color: #000080; font-weight: bold;">propertyName</span>&gt;
+  &lt;<span style="color: #000080; font-weight: bold;">entry </span><span style="color: #0000ff; font-weight: bold;">key</span><span style="color: #008000; font-weight: bold;">=&quot;key1&quot; </span><span style="color: #0000ff; font-weight: bold;">value</span><span style="color: #008000; font-weight: bold;">=&quot;value1&quot; </span>/&gt;
+  &lt;<span style="color: #000080; font-weight: bold;">entry </span><span style="color: #0000ff; font-weight: bold;">key</span><span style="color: #008000; font-weight: bold;">=&quot;keyN&quot; </span><span style="color: #0000ff; font-weight: bold;">value</span><span style="color: #008000; font-weight: bold;">=&quot;valueN&quot; </span>/&gt;
+&lt;/<span style="color: #000080; font-weight: bold;">propertyName</span>&gt;
 </pre>
 </li>
 <li>
 <p>Without <code>XMap</code> annotation:</p>
-<pre><span style="color: #000000;">&lt;</span><span style="color: #000080; font-weight: bold;">option </span><span style="color: #0000ff; font-weight: bold;">name</span><span style="color: #008000; font-weight: bold;">=&quot;propertyName&quot;</span><span style="color: #000000;">&gt;</span>
-  &lt;<span style="color: #000080; font-weight: bold;">map</span><span style="color: #000000;">&gt;</span>
-    &lt;<span style="color: #000080; font-weight: bold;">entry </span><span style="color: #0000ff; font-weight: bold;">key</span><span style="color: #008000; font-weight: bold;">=&quot;key1&quot; </span><span style="color: #0000ff; font-weight: bold;">value</span><span style="color: #008000; font-weight: bold;">=&quot;value1&quot; </span><span style="color: #000000;">/&gt;</span>
-    &lt;<span style="color: #000080; font-weight: bold;">entry </span><span style="color: #0000ff; font-weight: bold;">key</span><span style="color: #008000; font-weight: bold;">=&quot;keyN&quot; </span><span style="color: #0000ff; font-weight: bold;">value</span><span style="color: #008000; font-weight: bold;">=&quot;valueN&quot; </span><span style="color: #000000;">/&gt;</span>
-  &lt;/<span style="color: #000080; font-weight: bold;">map</span><span style="color: #000000;">&gt;</span>
-&lt;/<span style="color: #000080; font-weight: bold;">option</span><span style="color: #000000;">&gt;</span>
+<pre>&lt;<span style="color: #000080; font-weight: bold;">option </span><span style="color: #0000ff; font-weight: bold;">name</span><span style="color: #008000; font-weight: bold;">=&quot;propertyName&quot;</span>&gt;
+  &lt;<span style="color: #000080; font-weight: bold;">map</span>&gt;
+    &lt;<span style="color: #000080; font-weight: bold;">entry </span><span style="color: #0000ff; font-weight: bold;">key</span><span style="color: #008000; font-weight: bold;">=&quot;key1&quot; </span><span style="color: #0000ff; font-weight: bold;">value</span><span style="color: #008000; font-weight: bold;">=&quot;value1&quot; </span>/&gt;
+    &lt;<span style="color: #000080; font-weight: bold;">entry </span><span style="color: #0000ff; font-weight: bold;">key</span><span style="color: #008000; font-weight: bold;">=&quot;keyN&quot; </span><span style="color: #0000ff; font-weight: bold;">value</span><span style="color: #008000; font-weight: bold;">=&quot;valueN&quot; </span>/&gt;
+  &lt;/<span style="color: #000080; font-weight: bold;">map</span>&gt;
+&lt;/<span style="color: #000080; font-weight: bold;">option</span>&gt;
 </pre>
 </li>
 </ul>

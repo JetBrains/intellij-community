@@ -40,14 +40,12 @@ import java.util.regex.Pattern;
 
 /**
  * Handy class for reading data from HTTP connections with built-in support for HTTP redirects and gzipped content and automatic cleanup.
+ *
  * Usage: <pre>{@code
- * int firstByte = HttpRequests.request(url).connect(new HttpRequests.RequestProcessor<Integer>() {
- *   public Integer process(@NotNull Request request) throws IOException {
- *     return request.getInputStream().read();
- *   }
- * });
+ * int firstByte = HttpRequests.request(url).connect(request -> request.getInputStream().read());
  * }</pre>
  * @see URLUtil
+ * @see <a href="https://github.com/JetBrains/intellij-community/tree/master/platform/platform-api/src/com/intellij/util/io#httprequests">docs</a>
  */
 public final class HttpRequests {
   private static final Logger LOG = Logger.getInstance(HttpRequests.class);

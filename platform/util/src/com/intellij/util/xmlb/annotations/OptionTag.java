@@ -13,7 +13,7 @@ import java.lang.annotation.Target;
  * <p>Store value in tag like {@code <option name="optionName" value="optionValue"/>}</p>
  * <p>nameAttribute can be empty, in which case it is skipped: {@code <option value="optionValue" />}</p>
  *
- * @author nik
+ * @see <a href="https://github.com/JetBrains/intellij-community/tree/master/platform/util/src/com/intellij/util/xmlb/annotations#readme">docs</a>
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.FIELD, ElementType.METHOD})

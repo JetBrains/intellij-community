@@ -72,11 +72,11 @@ class HtmlStyleManager(val isInline: Boolean) {
     writer.write("</style>\n")
   }
 
-  fun writeTextStyle(writer: Writer, attributes: TextAttributes) {
-    if ((attributes.foregroundColor ?: scheme.defaultForeground).equals(Color.BLACK) && attributes.fontType == 0) {
-      return
-    }
+  fun isDefaultAttributes(attributes: TextAttributes): Boolean {
+    return (attributes.foregroundColor ?: scheme.defaultForeground).equals(Color.BLACK) && attributes.fontType == 0
+  }
 
+  fun writeTextStyle(writer: Writer, attributes: TextAttributes) {
     writer.write("<span ")
     if (isInline) {
       writer.write("style=\"")

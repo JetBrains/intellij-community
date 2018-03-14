@@ -149,12 +149,19 @@ public class HTMLTextPainter {
       }
 
       TextAttributes textAttributes = hIterator.getTextAttributes();
+      if (htmlStyleManager.isDefaultAttributes(textAttributes)) {
+        textAttributes = null;
+      }
+
       if (!equals(prevAttributes, textAttributes) && referenceEnd < 0) {
         if (closeTag != null) {
           writer.write(closeTag);
+          closeTag = null;
         }
-        htmlStyleManager.writeTextStyle(writer, textAttributes);
-        closeTag = "</span>";
+        if (textAttributes != null) {
+          htmlStyleManager.writeTextStyle(writer, textAttributes);
+          closeTag = "</span>";
+        }
         prevAttributes = textAttributes;
       }
 
