@@ -3,15 +3,42 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.intention.impl.CachedIntentions;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public interface IntentionsUI {
-  static IntentionsUI getInstance(Project project) {
+public abstract class IntentionsUI {
+  private final Project myProject;
+  public static IntentionsUI getInstance(Project project) {
     return ServiceManager.getService(project, IntentionsUI.class);
   }
 
-  void update(@NotNull CachedIntentions cachedIntentions, boolean actionsChanged);
+  public IntentionsUI(Project project) {
+    myProject = project;
+  }
 
-  void hide();
+  private volatile CachedIntentions myCachedIntentions = null;
+
+  @NotNull
+  public CachedIntentions getCachedIntentions(@Nullable Editor editor, @NotNull PsiFile file) {
+    CachedIntentions cachedIntentions = myCachedIntentions;
+    if (cachedIntentions != null && editor == myCachedIntentions.getEditor() && file == myCachedIntentions.getFile()) {
+      return cachedIntentions;
+    } else {
+      CachedIntentions intentions = new CachedIntentions(myProject, file, editor);
+      myCachedIntentions = intentions;
+      return intentions;
+    }
+  }
+
+  public void hide() {
+    myCachedIntentions = null;
+    doHide();
+  }
+
+  public abstract void update(@NotNull CachedIntentions cachedIntentions, boolean actionsChanged);
+
+  protected abstract void doHide();
 }
