@@ -36,6 +36,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
@@ -228,19 +229,13 @@ public class ReplaceInProjectManager {
       });
   }
 
-  public boolean showReplaceAllConfirmDialog(@NotNull JComponent component, @NotNull String usagesCount, @NotNull String stringToFind, @NotNull String filesCount, @NotNull String stringToReplace) {
-    String message = FindBundle.message("find.replace.all.confirmation",
-                                        usagesCount,
-                                        StringUtil.escapeXml(stringToFind),
-                                        filesCount,
-                                        StringUtil.escapeXml(stringToReplace));
-
-    return Messages.YES == Messages.showDialog(component,
-                                               message,
-                                               FindBundle.message("find.replace.all.confirmation.title"),
-                                               new String[]{FindBundle.message("find.replace.command"), Messages.CANCEL_BUTTON},
-                                               0,
-                                               Messages.getQuestionIcon());
+  public boolean showReplaceAllConfirmDialog(@NotNull String usagesCount, @NotNull String stringToFind, @NotNull String filesCount, @NotNull String stringToReplace) {
+    return Messages.YES == MessageDialogBuilder.yesNo(
+      FindBundle.message("find.replace.all.confirmation.title"),
+      FindBundle.message("find.replace.all.confirmation", usagesCount, StringUtil.escapeXml(stringToFind), filesCount,
+                         StringUtil.escapeXml(stringToReplace)))
+      .yesText(FindBundle.message("find.replace.command"))
+      .noText(Messages.CANCEL_BUTTON).show();
   }
 
   private static Set<VirtualFile> getFiles(@NotNull ReplaceContext replaceContext, boolean selectedOnly) {
@@ -284,7 +279,6 @@ public class ReplaceInProjectManager {
         if (usages.isEmpty()) return;
         Set<VirtualFile> files = getFiles(replaceContext, false);
         if (files.size() < 2 || showReplaceAllConfirmDialog(
-          replaceContext.usageView.getComponent(),
           String.valueOf(usages.size()),
           replaceContext.getFindModel().getStringToFind(),
           String.valueOf(files.size()),

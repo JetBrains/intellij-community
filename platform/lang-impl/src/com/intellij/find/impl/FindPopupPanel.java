@@ -225,18 +225,10 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       myBalloon.setSize(prev != null ? prev : panelSize);
 
       IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
-      boolean oldFlagState = Registry.is("allow.dialog.based.popups");
-      try {
-        Registry.get("allow.dialog.based.popups").setValue(true);
-        if (showPoint != null && showPoint.getComponent() != null) {
-          myBalloon.show(showPoint);
-        }
-        else {
-          myBalloon.showCenteredInCurrentWindow(myProject);
-        }
-      }
-      finally {
-        Registry.get("allow.dialog.based.popups").setValue(oldFlagState);
+      if (showPoint != null && showPoint.getComponent() != null) {
+        myBalloon.show(showPoint);
+      } else {
+        myBalloon.showCenteredInCurrentWindow(myProject);
       }
       JRootPane rootPane = getRootPane();
       if (rootPane != null && myHelper.isReplaceState()) {
@@ -498,17 +490,20 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     myReplaceAllButton.addActionListener(e -> {
       boolean okToReplaceAll = myResultsPreviewTable.getRowCount() < 2;
       if (!okToReplaceAll) {
-        boolean oldPinnedValue = myIsPinned.get();
+        Window window = UIUtil.getWindow(this);
         try {
-          myIsPinned.set(true);
+          if (window != null) {
+            window.setVisible(false);
+          }
           okToReplaceAll = ReplaceInProjectManager.getInstance(myProject).showReplaceAllConfirmDialog(
-            this,
             myUsagesCount,
             getStringToFind(),
             myFilesCount,
             getStringToReplace());
         } finally {
-          myIsPinned.set(oldPinnedValue);
+          if (window != null) {
+            window.setVisible(true);
+          }
         }
       }
       if (okToReplaceAll) {
