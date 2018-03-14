@@ -224,17 +224,18 @@ class PyDataclassInspection : PyInspection() {
     }
 
     private fun processDefaultFieldValue(field: PyTargetExpression) {
+      if (field.annotationValue == null) return
+
       val value = field.findAssignedValue()
       val valueClass = getInstancePyClass(value)
 
       if (valueClass != null) {
         val builtinCache = PyBuiltinCache.getInstance(field)
+        val disallowed = setOf(builtinCache.listType?.pyClass, builtinCache.setType?.pyClass, builtinCache.dictType?.pyClass)
 
-        if (valueClass == builtinCache.listType?.pyClass ||
-            valueClass == builtinCache.setType?.pyClass ||
-            valueClass == builtinCache.tupleType?.pyClass) {
+        if (valueClass in disallowed || valueClass.getAncestorClasses(myTypeEvalContext).find(disallowed::contains) != null) {
           registerProblem(value,
-                          "Mutable default '${valueClass.name}' is not allowed",
+                          "Mutable default '${valueClass.name}' is not allowed. Use 'default_factory'",
                           ProblemHighlightType.GENERIC_ERROR)
         }
       }
