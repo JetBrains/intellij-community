@@ -547,7 +547,7 @@ public class PyStringFormatInspection extends PyInspection {
       }
 
       private void inspectArguments(@NotNull PyStringFormatParser.NewStyleSubstitutionChunk chunk, @NotNull String mappingKey) {
-        final PsiElement target = new PySubstitutionChunkReference(myFormatExpression, chunk, chunk.getPosition()).resolve();
+        final PsiElement target = new PySubstitutionChunkReference(myFormatExpression, chunk).resolve();
         boolean hasElementIndex = chunk.getMappingKeyElementIndex() != null;
         if (target == null) {
           final String chunkMapping = chunk.getMappingKey();
