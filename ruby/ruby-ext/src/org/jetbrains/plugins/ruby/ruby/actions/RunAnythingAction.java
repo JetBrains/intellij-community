@@ -31,7 +31,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actions.TextComponentEditorAction;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler;
 import com.intellij.openapi.module.Module;
@@ -134,7 +133,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   private Component myFocusOwner;
   private Editor myEditor;
   @Nullable
-  private FileEditor myFileEditor;
+  private VirtualFile myVirtualFile;
   private RunAnythingHistoryItem myHistoryItem;
   private JLabel myAdComponent;
   private DataContext myDataContext;
@@ -476,15 +475,15 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     if (module == null) return null;
 
     VirtualFile workDirectory = RModuleUtil.getInstance().getFirstContentRoot(module);
-    if (myFileEditor == null) return workDirectory;
-
-    VirtualFile file = myFileEditor.getFile();
-    if (file == null) return workDirectory;
+    if (myVirtualFile == null) {
+      return workDirectory;
+    }
 
     if (ourAltIsPressed.get()) {
-      workDirectory = file.getParent();
+      return myVirtualFile.getParent();
     }
-    return workDirectory;
+
+    return null;
   }
 
   private void updateOption(BooleanOptionDescription value) {
@@ -546,7 +545,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     myCurrentWorker = ActionCallback.DONE;
     if (e != null) {
       myEditor = e.getData(CommonDataKeys.EDITOR);
-      myFileEditor = e.getData(PlatformDataKeys.FILE_EDITOR);
+      myVirtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
     }
     if (e == null && myFocusOwner != null) {
       e = AnActionEvent.createFromAnAction(this, me, ActionPlaces.UNKNOWN, DataManager.getInstance().getDataContext(myFocusOwner));
@@ -1318,7 +1317,6 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
           myCurrentWorker = ActionCallback.DONE;
           myCalcThread = null;
           myEditor = null;
-          myFileEditor = null;
         }
       }
     });
