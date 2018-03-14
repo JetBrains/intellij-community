@@ -144,8 +144,8 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
     }
   };
 
-  private static int getMaxHeight(double height) {
-    return height > 7 && Registry.is("ide.text.effect.new.scale") ? (int)height >> 1 : 3;
+  private static double getMaxHeight(double height) {
+    return height > 7 && Registry.is("ide.text.effect.new.scale") ? height / 2 : 3;
   }
 
   private static void paintUnderline(Graphics2D g, double x, double y, double width, double height, Font font, double thickness, EffectPainter2D painter) {
@@ -163,7 +163,7 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
       }
       else {
         if (height > 3) {
-          int max = getMaxHeight((int)height);
+          double max = getMaxHeight(height);
           y += height - max;
           height = max;
           if (thickness > 1 && height > 3) {
@@ -176,9 +176,9 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
   }
 
   private static void drawLineCentered(Graphics2D g, double x, double y, double width, double height, double thickness, EffectPainter2D painter) {
-    int offset = (int)(height - thickness);
+    double offset = height - thickness;
     if (offset > 0) {
-      y += offset - (offset >> 1);
+      y += offset - (offset / 2);
       height = thickness;
     }
     drawLine(g, x, y, width, height, painter);
