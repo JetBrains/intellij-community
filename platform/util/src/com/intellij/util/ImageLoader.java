@@ -135,7 +135,7 @@ public class ImageLoader implements Serializable {
       }
       if (stream == null) {
         if (useCache) {
-          cacheKey = path + (type == Type.SVG ? "_@" + scale + "x" : "");
+          cacheKey = path + (type != Type.SVG ? "_@" + scale + "x" : "");
           Image image = ourCache.get(cacheKey);
           if (image != null) return image;
         }
