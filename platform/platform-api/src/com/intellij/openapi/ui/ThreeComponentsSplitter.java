@@ -72,75 +72,7 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
 
   private boolean myShowDividerControls;
   private int myDividerZone;
-
-  private class MyFocusTraversalPolicy extends FocusTraversalPolicy {
-
-    @Override
-    public Component getComponentAfter(Container aContainer, Component aComponent) {
-      if (aComponent == myFirstComponent) {
-        return findChildToFocus(myInnerComponent);
-      }
-      if (aComponent == myInnerComponent) {
-        return findChildToFocus(myLastComponent);
-      }
-      return findChildToFocus(myFirstComponent);
-    }
-
-    @Override
-    public Component getComponentBefore(Container aContainer, Component aComponent) {
-      if (aComponent == myInnerComponent) {
-        return findChildToFocus(myFirstComponent);
-      }
-      if (aComponent == myLastComponent) {
-        return findChildToFocus(myInnerComponent);
-      }
-      return findChildToFocus(myFirstComponent);
-    }
-
-    @Override
-    public Component getFirstComponent(Container aContainer) {
-      return findChildToFocus(myFirstComponent);
-    }
-
-    @Override
-    public Component getLastComponent(Container aContainer) {
-      return findChildToFocus(myLastComponent);
-    }
-
-    @Override
-    public Component getDefaultComponent(Container aContainer) {
-      return findChildToFocus(myInnerComponent);
-    }
-
-    Component findChildToFocus (Component component) {
-      final Window ancestor = SwingUtilities.getWindowAncestor(ThreeComponentsSplitter.this);
-      if (ancestor != null) {
-        final Component mostRecentFocusOwner = ancestor.getMostRecentFocusOwner();
-        if (mostRecentFocusOwner != null && mostRecentFocusOwner.isShowing()) {
-          return mostRecentFocusOwner;
-        }
-      }
-      if (component instanceof JPanel) {
-        JPanel container = (JPanel)component;
-        final FocusTraversalPolicy policy = container.getFocusTraversalPolicy();
-
-        if (policy == null) {
-          return container;
-        }
-
-        final Component defaultComponent = policy.getDefaultComponent(container);
-        if (defaultComponent == null) {
-          return container;
-        }
-        return policy.getDefaultComponent(container);
-      }
-
-      return component;
-
-    }
-
-  }
-
+  
   /**
    * Creates horizontal split with proportion equals to .5f
    */
@@ -166,8 +98,8 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
       myFirstDivider.setBackground(bg);
       myLastDivider.setBackground(bg);
     }
-    setFocusCycleRoot(true);
-    setFocusTraversalPolicy(new MyFocusTraversalPolicy());
+    setFocusTraversalPolicyProvider(true);
+    setFocusTraversalPolicy(new LayoutFocusTraversalPolicy());
     setOpaque(false);
     add(myFirstDivider);
     add(myLastDivider);
