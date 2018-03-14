@@ -16,7 +16,7 @@ import java.awt.Font
 import java.io.IOException
 import java.io.Writer
 
-class HtmlStyleManager(private val useInline: Boolean) {
+class HtmlStyleManager(val isInline: Boolean) {
   private val styleMap = THashMap<TextAttributes, String>()
   private val separatorStyleMap = THashMap<Color, String>()
 
@@ -48,14 +48,14 @@ class HtmlStyleManager(private val useInline: Boolean) {
     }
   }
 
-  private fun writeTextAttributes(buffer: Appendable, textAttributes: TextAttributes) {
-    val foreColor = textAttributes.foregroundColor ?: scheme.defaultForeground
-    buffer.append("color: ${colorToHtml(foreColor)}; ")
-    if (BitUtil.isSet(textAttributes.fontType, Font.BOLD)) {
-      buffer.append("font-weight: bold; ")
+  private fun writeTextAttributes(buffer: Appendable, attributes: TextAttributes) {
+    val foreColor = attributes.foregroundColor ?: scheme.defaultForeground
+    buffer.append("color: ${colorToHtml(foreColor)};")
+    if (BitUtil.isSet(attributes.fontType, Font.BOLD)) {
+      buffer.append(" font-weight: bold;")
     }
-    if (BitUtil.isSet(textAttributes.fontType, Font.ITALIC)) {
-      buffer.append("font-style: italic; ")
+    if (BitUtil.isSet(attributes.fontType, Font.ITALIC)) {
+      buffer.append(" font-style: italic;")
     }
   }
 
@@ -73,8 +73,12 @@ class HtmlStyleManager(private val useInline: Boolean) {
   }
 
   fun writeTextStyle(writer: Writer, attributes: TextAttributes) {
+    if ((attributes.foregroundColor ?: scheme.defaultForeground).equals(Color.BLACK) && attributes.fontType == 0) {
+      return
+    }
+
     writer.write("<span ")
-    if (useInline) {
+    if (isInline) {
       writer.write("style=\"")
       writeTextAttributes(writer, attributes)
       writer.write("\">")

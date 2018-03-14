@@ -47,10 +47,10 @@ public class HTMLTextPainter {
   private final HtmlStyleManager htmlStyleManager;
 
   public HTMLTextPainter(@NotNull PsiFile psiFile, @NotNull Project project, boolean printLineNumbers) {
-    this(psiFile, project, new HtmlStyleManager(false), printLineNumbers);
+    this(psiFile, project, new HtmlStyleManager(false), printLineNumbers, true);
   }
 
-  public HTMLTextPainter(@NotNull PsiFile psiFile, @NotNull Project project, @NotNull HtmlStyleManager htmlStyleManager, boolean printLineNumbers) {
+  public HTMLTextPainter(@NotNull PsiFile psiFile, @NotNull Project project, @NotNull HtmlStyleManager htmlStyleManager, boolean printLineNumbers, boolean useMethodSeparators) {
     myProject = project;
     myPsiFile = psiFile;
     this.htmlStyleManager = htmlStyleManager;
@@ -64,7 +64,7 @@ public class HTMLTextPainter {
 
     myDocument = PsiDocumentManager.getInstance(project).getDocument(psiFile);
 
-    if (myDocument != null) {
+    if (useMethodSeparators && myDocument != null) {
       myMethodSeparators.addAll(FileSeparatorProvider.getFileSeparators(psiFile, myDocument));
     }
     myCurrentMethodSeparator = 0;
