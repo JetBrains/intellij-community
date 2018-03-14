@@ -11,7 +11,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.ruby.actions.RunAnythingProvider;
 import org.jetbrains.plugins.ruby.ruby.run.configuration.AbstractRubyRunConfiguration;
 
@@ -19,7 +18,7 @@ import java.util.List;
 
 public abstract class RubyRunAnythingProviderBase<T extends AbstractRubyRunConfiguration> extends RunAnythingProvider {
   @Override
-  public boolean isMatched(@NotNull Project project, @NotNull String commandLine, @Nullable VirtualFile workDirectory) {
+  public boolean isMatched(@NotNull Project project, @NotNull String commandLine, @NotNull VirtualFile workDirectory) {
     if (!commandLine.startsWith(getExecCommand())) return false;
 
     RunnerAndConfigurationSettings configuration = createConfiguration(project, commandLine, workDirectory);
@@ -50,17 +49,16 @@ public abstract class RubyRunAnythingProviderBase<T extends AbstractRubyRunConfi
   @Override
   public RunnerAndConfigurationSettings createConfiguration(@NotNull Project project,
                                                             @NotNull String commandLine,
-                                                            @Nullable VirtualFile workingDirectory) {
+                                                            @NotNull VirtualFile workingDirectory) {
     final RunnerAndConfigurationSettings settings =
       RunManager.getInstance(project).createRunConfiguration(commandLine, getConfigurationFactory());
 
     final AbstractRubyRunConfiguration templateConfiguration = (AbstractRubyRunConfiguration)settings.getConfiguration();
 
-    templateConfiguration.setWorkingDirectory(workingDirectory == null ? null : workingDirectory.getPath());
+    templateConfiguration.setWorkingDirectory(workingDirectory.getPath());
 
-    VirtualFile baseDir = workingDirectory == null ? project.getBaseDir() : workingDirectory;
     //noinspection unchecked
-    extendConfiguration((T)templateConfiguration, baseDir, commandLine);
+    extendConfiguration((T)templateConfiguration, workingDirectory, commandLine);
 
     return settings;
   }

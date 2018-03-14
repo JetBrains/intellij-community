@@ -58,10 +58,11 @@ public class RunAnythingCommandItem extends RunAnythingItem<String> {
                        @Nullable Component component,
                        @NotNull Project project,
                        @Nullable AnActionEvent event) {
+    LOG.assertTrue(workDirectory != null);
     runCommand(workDirectory, project, myCommandLine, myModule, executor);
   }
 
-  public static void runCommand(@Nullable VirtualFile workDirectory,
+  public static void runCommand(@NotNull VirtualFile workDirectory,
                                 @NotNull Project project,
                                 @NotNull String commandString,
                                 @Nullable Module module,
@@ -98,7 +99,7 @@ public class RunAnythingCommandItem extends RunAnythingItem<String> {
 
     commandLine = new GeneralCommandLine(shellCommand)
       .withEnvironment(env)
-      .withWorkDirectory(RunAnythingItem.getActualWorkDirectory(project, workDirectory));
+      .withWorkDirectory(workDirectory.getPath());
 
     HashMap<String, Object> dataMap = new HashMap<>();
     dataMap.put(LangDataKeys.MODULE.getName(), module);

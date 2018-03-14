@@ -470,20 +470,28 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     return RModuleUtil.getInstance().getModule(myDataContext);
   }
 
-  @Nullable
+  @NotNull
   private VirtualFile getWorkDirectory(@Nullable Module module) {
-    if (module == null) return null;
-
-    VirtualFile workDirectory = RModuleUtil.getInstance().getFirstContentRoot(module);
-    if (myVirtualFile == null) {
-      return workDirectory;
-    }
-
     if (ourAltIsPressed.get()) {
-      return myVirtualFile.getParent();
+      return myVirtualFile != null ? myVirtualFile.getParent() : getBaseDirectory(module);
     }
 
-    return null;
+    return getBaseDirectory(module);
+  }
+
+  @NotNull
+  private VirtualFile getBaseDirectory(@Nullable Module module) {
+    VirtualFile projectBaseDir = getProject().getBaseDir();
+    if (module == null) {
+      return projectBaseDir;
+    }
+
+    VirtualFile firstContentRoot = RModuleUtil.getInstance().getFirstContentRoot(module);
+    if (firstContentRoot == null) {
+      return projectBaseDir;
+    }
+
+    return firstContentRoot;
   }
 
   private void updateOption(BooleanOptionDescription value) {
@@ -1317,6 +1325,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
           myCurrentWorker = ActionCallback.DONE;
           myCalcThread = null;
           myEditor = null;
+          myVirtualFile = null;
         }
       }
     });

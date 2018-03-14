@@ -12,12 +12,12 @@ public abstract class RunAnythingProvider {
   public static final ExtensionPointName<RunAnythingProvider> EP_NAME =
     ExtensionPointName.create("org.jetbrains.plugins.ruby.runAnythingConfigurationProvider");
 
-  public abstract boolean isMatched(Project project, @NotNull String commandLine, @Nullable VirtualFile workDirectory);
+  public abstract boolean isMatched(Project project, @NotNull String commandLine, @NotNull VirtualFile workDirectory);
 
   @NotNull
   public abstract RunnerAndConfigurationSettings createConfiguration(@NotNull Project project,
                                                                      @NotNull String commandLine,
-                                                                     @Nullable VirtualFile workingDirectory);
+                                                                     @NotNull VirtualFile workingDirectory);
 
   @NotNull
   public abstract ConfigurationFactory getConfigurationFactory();
@@ -25,7 +25,7 @@ public abstract class RunAnythingProvider {
   @Nullable
   public static RunAnythingProvider findMatchedProvider(@NotNull Project project,
                                                         @NotNull String pattern,
-                                                        @Nullable VirtualFile workDirectory) {
+                                                        @NotNull VirtualFile workDirectory) {
     for (RunAnythingProvider provider : EP_NAME.getExtensions()) {
       if (provider.isMatched(project, pattern, workDirectory)) {
         return provider;

@@ -39,10 +39,4 @@ public abstract class RunAnythingItem<T> {
     triggerUsage();
     runInner(executor, workDirectory, component, project, event);
   }
-
-  @NotNull
-  public static String getActualWorkDirectory(@NotNull Project project, @Nullable VirtualFile workDirectory) {
-    //noinspection ConstantConditions
-    return workDirectory == null ? project.getBasePath() : workDirectory.getPath();
-  }
 }

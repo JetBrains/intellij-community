@@ -339,7 +339,7 @@ public class RunAnythingUtil {
   static void runOrCreateRunConfiguration(@NotNull Project project,
                                           @NotNull String pattern,
                                           @Nullable Module module,
-                                          @Nullable VirtualFile workDirectory) {
+                                          @NotNull VirtualFile workDirectory) {
     if (pattern.isEmpty()) return;
 
     triggerDebuggerStatistics();
@@ -356,7 +356,7 @@ public class RunAnythingUtil {
 
 
   private static void runMatchedConfiguration(@NotNull Executor executor,
-                                              @Nullable VirtualFile workDirectory,
+                                              @NotNull VirtualFile workDirectory,
                                               @NotNull Project project,
                                               @NotNull RunnerAndConfigurationSettings settings) {
     RunManagerEx.getInstanceEx(project).setTemporaryConfiguration(settings);
@@ -364,8 +364,7 @@ public class RunAnythingUtil {
     RunConfiguration configuration = settings.getConfiguration();
 
     if (configuration instanceof AbstractRubyRunConfiguration) {
-      ((AbstractRubyRunConfiguration)configuration)
-        .setWorkingDirectory(RunAnythingItem.getActualWorkDirectory(project, workDirectory));
+      ((AbstractRubyRunConfiguration)configuration).setWorkingDirectory(workDirectory.getPath());
     }
 
     ExecutionUtil.runConfiguration(settings, executor);
