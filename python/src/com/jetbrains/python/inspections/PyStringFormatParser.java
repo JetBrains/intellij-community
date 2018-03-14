@@ -268,43 +268,10 @@ public class PyStringFormatParser {
     }
   }
 
-  private enum AutoNumberState {INIT, AUTO, MANUAL}
-  public enum AutoNumberStateError {NONE, MANUAL_TO_AUTO, AUTO_TO_MANUAL}
-  private static class AutoNumber {
-    private AutoNumberState myState = AutoNumberState.INIT;
-    private AutoNumberStateError myStateError = AutoNumberStateError.NONE;
-
-    private void checkState(AutoNumberState nextState) {
-      if (myStateError != AutoNumberStateError.NONE) {
-        return;
-      }
-      switch (myState) {
-        case INIT:
-          myState = nextState;
-          break;
-        case AUTO:
-          if (nextState == AutoNumberState.MANUAL) {
-            myStateError = AutoNumberStateError.AUTO_TO_MANUAL;
-          }
-          break;
-        case MANUAL:
-          if (nextState == AutoNumberState.AUTO) {
-            myStateError = AutoNumberStateError.MANUAL_TO_AUTO;
-          }
-          break;
-      }
-    }
-  }
-
-  public AutoNumberStateError getAutoNumberStateError() {
-    return myAutoNumber.myStateError;
-  }
-
   @NotNull private final String myLiteral;
   @NotNull private final List<FormatStringChunk> myResult = new ArrayList<>();
   private int myPos;
   private int mySubstitutionsCount = 0;
-  @NotNull private AutoNumber myAutoNumber = new AutoNumber();
 
   // % strings
   private static final String CONVERSION_FLAGS = "#0- +";
@@ -397,7 +364,6 @@ public class PyStringFormatParser {
       try {
         final int number = Integer.parseInt(name);
         chunk.setManualPosition(number);
-        myAutoNumber.checkState(AutoNumberState.MANUAL);
       }
       catch (NumberFormatException e) {
         chunk.setMappingKey(name);
@@ -407,7 +373,6 @@ public class PyStringFormatParser {
     else {
       chunk.setAutoPosition(autoPositionedFieldsCount);
       autoPositionedFieldsCount++;
-      myAutoNumber.checkState(AutoNumberState.AUTO);
     }
 
     // parse field name attribute name
