@@ -8,6 +8,7 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.util.containers.ContainerUtil
+import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.stdlib.DATACLASSES_INITVAR_TYPE
 import com.jetbrains.python.codeInsight.stdlib.DUNDER_POST_INIT
 import com.jetbrains.python.codeInsight.stdlib.DataclassParameters
@@ -49,7 +50,7 @@ class PyDataclassInspection : PyInspection() {
         val dataclassParameters = parseDataclassParameters(node, myTypeEvalContext)
 
         if (dataclassParameters != null) {
-          processDataclassParameters(dataclassParameters)
+          processDataclassParameters(node, dataclassParameters)
 
           val postInit = node.findMethodByName(DUNDER_POST_INIT, false, myTypeEvalContext)
           val initVars = mutableListOf<PyTargetExpression>()
@@ -162,12 +163,63 @@ class PyDataclassInspection : PyInspection() {
       return if (type != null && !type.isDefinition) type.pyClass else null
     }
 
-    private fun processDataclassParameters(dataclassParameters: DataclassParameters) {
+    private fun processDataclassParameters(cls: PyClass, dataclassParameters: DataclassParameters) {
       if (!dataclassParameters.eq && dataclassParameters.order) {
-        val eqArgument = dataclassParameters.eqArgument
-        if (eqArgument != null) {
-          registerProblem(eqArgument, "'eq' must be true if 'order' is true", ProblemHighlightType.GENERIC_ERROR)
-        }
+        registerProblem(dataclassParameters.eqArgument, "'eq' must be true if 'order' is true", ProblemHighlightType.GENERIC_ERROR)
+      }
+
+      var reprMethodExists = false
+      var eqMethodExists = false
+      var orderMethodsExist = false
+      var mutatingMethodsExist = false
+      var hashMethodExists = false
+
+      cls.visitMethods(
+        {
+          when (it.name) {
+            "__repr__" -> reprMethodExists = true
+            "__eq__" -> eqMethodExists = true
+            in ORDER_OPERATORS -> orderMethodsExist = true
+            "__setattr__", "__delattr__" -> mutatingMethodsExist = true
+            PyNames.HASH -> hashMethodExists = true
+          }
+
+          true
+        },
+        false,
+        myTypeEvalContext
+      )
+
+      hashMethodExists = hashMethodExists || cls.findClassAttribute(PyNames.HASH, false, myTypeEvalContext) != null
+
+      if (dataclassParameters.repr && reprMethodExists) {
+        registerProblem(dataclassParameters.reprArgument,
+                        "'repr' is ignored if the class already defines corresponding method",
+                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
+      }
+
+      if (dataclassParameters.eq && eqMethodExists) {
+        registerProblem(dataclassParameters.eqArgument,
+                        "'eq' is ignored if the class already defines corresponding method",
+                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
+      }
+
+      if (dataclassParameters.order && orderMethodsExist) {
+        registerProblem(dataclassParameters.orderArgument,
+                        "'order' should be false if the class defines one of order methods",
+                        ProblemHighlightType.GENERIC_ERROR)
+      }
+
+      if (dataclassParameters.frozen && mutatingMethodsExist) {
+        registerProblem(dataclassParameters.frozenArgument,
+                        "'frozen' should be false if the class defines '__setattr__' or '__delattr__'",
+                        ProblemHighlightType.GENERIC_ERROR)
+      }
+
+      if (dataclassParameters.unsafeHash && hashMethodExists) {
+        registerProblem(dataclassParameters.unsafeHashArgument,
+                        "'unsafe_hash' should be false if the class defines '${PyNames.HASH}'",
+                        ProblemHighlightType.GENERIC_ERROR)
       }
     }
 
@@ -194,7 +246,7 @@ class PyDataclassInspection : PyInspection() {
       if (type is PyClassType && type.classQName == DATACLASSES_INITVAR_TYPE) {
         if (postInit == null) {
           registerProblem(field,
-                          "Attribute '${field.name}' is useless until '${DUNDER_POST_INIT}' is declared",
+                          "Attribute '${field.name}' is useless until '$DUNDER_POST_INIT' is declared",
                           ProblemHighlightType.LIKE_UNUSED_SYMBOL)
         }
 
@@ -218,12 +270,12 @@ class PyDataclassInspection : PyInspection() {
                                           initVars: List<PyTargetExpression>) {
       if (!dataclassParameters.init) {
         registerProblem(postInit.nameIdentifier,
-                        "'${DUNDER_POST_INIT}' would not be called until 'init' parameter is set to True",
+                        "'$DUNDER_POST_INIT' would not be called until 'init' parameter is set to True",
                         ProblemHighlightType.LIKE_UNUSED_SYMBOL)
       }
 
       val parameters = ContainerUtil.subList(postInit.getParameters(myTypeEvalContext), 1)
-      val message = "'${DUNDER_POST_INIT}' should take all init-only variables in the same order as they are defined"
+      val message = "'$DUNDER_POST_INIT' should take all init-only variables in the same order as they are defined"
 
       if (parameters.size != initVars.size) {
         registerProblem(postInit.parameterList, message, ProblemHighlightType.GENERIC_ERROR)

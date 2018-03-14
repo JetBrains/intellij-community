@@ -76,6 +76,26 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-27398
+  public void testUselessReprEq() {
+    doTest();
+  }
+
+  // PY-27398
+  public void testUselessOrder() {
+    doTest();
+  }
+
+  // PY-27398
+  public void testUselessFrozen() {
+    doTest();
+  }
+
+  // PY-27398
+  public void testUselessUnsafeHash() {
+    doTest();
+  }
+
   @Override
   protected void doTest() {
     runWithLanguageLevel(
