@@ -44,7 +44,7 @@ public interface AppUIExecutor extends Executor {
   AppUIExecutor later();
 
   /**
-   * @return an executor that invokes runnables only when all documents are committed.
+   * @return an executor that invokes runnables only when all documents are committed. Automatically expires when the project is disposed.
    * @see PsiDocumentManager#hasUncommitedDocuments() 
    */
   @NotNull
@@ -52,7 +52,7 @@ public interface AppUIExecutor extends Executor {
   AppUIExecutor withDocumentsCommitted(@NotNull Project project);
 
   /**
-   * @return an executor that invokes runnables only when indices have been built and are available to use
+   * @return an executor that invokes runnables only when indices have been built and are available to use. Automatically expires when the project is disposed.
    * @see com.intellij.openapi.project.DumbService#isDumb(Project) 
    */
   @NotNull
@@ -60,7 +60,7 @@ public interface AppUIExecutor extends Executor {
   AppUIExecutor inSmartMode(@NotNull Project project);
 
   /**
-   * @return an executor that invokes runnables only in transaction
+   * @return an executor that invokes runnables only in transaction. Automatically expires when {@code parentDisposable} is disposed.
    * @see TransactionGuard#submitTransaction(Disposable, Runnable) 
    */
   @NotNull
