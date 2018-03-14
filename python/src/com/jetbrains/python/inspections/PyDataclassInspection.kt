@@ -37,9 +37,18 @@ class PyDataclassInspection : PyInspection() {
     override fun visitPyTargetExpression(node: PyTargetExpression?) {
       super.visitPyTargetExpression(node)
 
-      val cls = getInstancePyClass(node?.qualifier) ?: return
-      if (parseDataclassParameters(cls, myTypeEvalContext)?.frozen == true) {
-        registerProblem(node, "'${cls.name}' object attribute '${node!!.name}' is read-only", ProblemHighlightType.GENERIC_ERROR)
+      if (node != null) checkMutatingFrozenAttribute(node)
+    }
+
+    override fun visitPyDelStatement(node: PyDelStatement?) {
+      super.visitPyDelStatement(node)
+
+      if (node != null) {
+        node
+          .targets
+          .asSequence()
+          .filterIsInstance<PyReferenceExpression>()
+          .forEach { checkMutatingFrozenAttribute(it) }
       }
     }
 
@@ -155,6 +164,13 @@ class PyDataclassInspection : PyInspection() {
             true
           }
         }
+      }
+    }
+
+    private fun checkMutatingFrozenAttribute(expression: PyQualifiedExpression) {
+      val cls = getInstancePyClass(expression.qualifier) ?: return
+      if (parseDataclassParameters(cls, myTypeEvalContext)?.frozen == true) {
+        registerProblem(expression, "'${cls.name}' object attribute '${expression.name}' is read-only", ProblemHighlightType.GENERIC_ERROR)
       }
     }
 
