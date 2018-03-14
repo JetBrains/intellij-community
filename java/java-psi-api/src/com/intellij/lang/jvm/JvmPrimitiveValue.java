@@ -3,10 +3,9 @@ package com.intellij.lang.jvm;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-
-public interface JvmAnnotationNestedArray extends JvmAnnotationAttributeValue {
+public interface JvmPrimitiveValue extends JvmAnnotationAttributeValue {
 
   @NotNull
-  List<JvmAnnotationAttributeValue> getValues();
+  Object getValue();
+
 }

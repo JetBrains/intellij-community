@@ -3,9 +3,10 @@ package com.intellij.lang.jvm;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 
-public interface JvmStringLiteral extends JvmAnnotationAttributeValue {
+public interface JvmAnnotationArrayValue extends JvmAnnotationAttributeValue {
 
   @NotNull
-  String getValue();
+  List<JvmAnnotationAttributeValue> getValues();
 }

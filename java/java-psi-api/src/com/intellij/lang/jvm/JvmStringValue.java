@@ -3,9 +3,9 @@ package com.intellij.lang.jvm;
 
 import org.jetbrains.annotations.NotNull;
 
-public interface JvmPrimitiveLiteral extends JvmAnnotationAttributeValue {
+
+public interface JvmStringValue extends JvmAnnotationAttributeValue {
 
   @NotNull
-  Object getValue();
-
+  String getValue();
 }

@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.java.actions
 
-import com.intellij.lang.jvm.actions.AnnotationAttributeRequest
+import com.intellij.lang.jvm.actions.AnnotationAttributeValueRequest
 import com.intellij.lang.jvm.actions.CreateAnnotationRequest
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
@@ -34,9 +34,9 @@ class CreateAnnotationAction(target: PsiModifierListOwner, override val request:
       val name = attribute.name
       val value = attribute.value
       val memberValue = when (value) {
-        is AnnotationAttributeRequest.PrimitiveLiteral -> psiElementFactory
+        is AnnotationAttributeValueRequest.PrimitiveValue -> psiElementFactory
           .createExpressionFromText(value.value.toString(), null)
-        is AnnotationAttributeRequest.StringLiteral -> psiElementFactory
+        is AnnotationAttributeValueRequest.StringValue -> psiElementFactory
           .createExpressionFromText("\"" + StringUtil.escapeStringCharacters(value.value) + "\"", null)
         else -> {
           LOG.error("adding annotation members of ${value.javaClass} type is not implemented"); continue@attributes
