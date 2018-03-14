@@ -490,16 +490,20 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     myReplaceAllButton.addActionListener(e -> {
       boolean okToReplaceAll = myResultsPreviewTable.getRowCount() < 2;
       if (!okToReplaceAll) {
-        boolean oldPinnedValue = myIsPinned.get();
+        Window window = UIUtil.getWindow(this);
         try {
-          myIsPinned.set(true);
+          if (window != null) {
+            window.setVisible(false);
+          }
           okToReplaceAll = ReplaceInProjectManager.getInstance(myProject).showReplaceAllConfirmDialog(
             myUsagesCount,
             getStringToFind(),
             myFilesCount,
             getStringToReplace());
         } finally {
-          myIsPinned.set(oldPinnedValue);
+          if (window != null) {
+            window.setVisible(true);
+          }
         }
       }
       if (okToReplaceAll) {
