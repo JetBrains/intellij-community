@@ -223,6 +223,43 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
     assertTestResources("project", "src/test/resources");
   }
 
+  @Test
+  public void testRootsAreAddedWhenAFolderCreated() throws Exception {
+    createProjectSubFile("src/main/java/A.java");
+    importProjectUsingSingeModulePerGradleProject("apply plugin: 'java'");
+
+    assertModules("project");
+    assertSources("project", "src/main/java");
+    assertTestSources("project");
+
+    createProjectSubFile("src/test/java/ATest.java");
+    assertTestSources("project", "src/test/java");
+
+    createProjectSubFile("src/main/resources/res.txt");
+    assertResources("project", "src/main/resources");
+  }
+
+  @Test
+  public void testRootsListenersAreUpdatedWithProjectModel() throws Exception {
+    createProjectSubFile("src/main/java/A.java");
+    importProjectUsingSingeModulePerGradleProject("apply plugin: 'java'");
+
+    assertModules("project");
+
+    importProjectUsingSingeModulePerGradleProject(
+      "apply plugin: 'java'\n" +
+      "sourceSets {\n" +
+      " test {\n" +
+      "    java.srcDirs = [file('test-src/java')]" +
+      "  }\n" +
+      "}");
+
+    createProjectSubFile("src/test/java/ATest.java");
+    createProjectSubFile("test-src/java/BTest.java");
+
+    assertTestSources("project", "test-src/java");
+  }
+
 
   protected void assertDefaultGradleJavaProjectFolders(@NotNull String mainModuleName) {
     assertExcludes(mainModuleName, ".gradle", "build", "out");
