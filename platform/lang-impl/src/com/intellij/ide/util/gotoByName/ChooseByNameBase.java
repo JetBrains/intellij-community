@@ -22,7 +22,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.editor.impl.SettingsImpl;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -442,7 +441,7 @@ public abstract class ChooseByNameBase {
     myTextFieldPanel.add(myTextField);
     Font editorFont = EditorUtil.getEditorFont();
     myTextField.setFont(editorFont);
-    myTextField.putClientProperty("caretWidth", JBUI.scale(new SettingsImpl().getLineCursorWidth()));
+    myTextField.putClientProperty("caretWidth", JBUI.scale(EditorUtil.getDefaultCaretWidth()));
 
     if (checkBoxName != null) {
       if (myCheckBoxShortcut != null) {
