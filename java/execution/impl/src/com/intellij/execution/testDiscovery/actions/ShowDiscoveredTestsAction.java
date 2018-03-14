@@ -148,7 +148,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
     tree.getModel().addTreeModelListener(new TreeModelAdapter() {
       @Override
       protected void process(TreeModelEvent event, EventType type) {
-        ((AbstractPopup)popup).setCaption("Found " + tree.getTestCount() + " Tests for " + title);
+        popup.setCaption("Found " + tree.getTestCount() + " Tests for " + title);
       }
     });
 
