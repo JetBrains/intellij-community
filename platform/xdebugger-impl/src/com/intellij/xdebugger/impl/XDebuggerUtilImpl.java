@@ -535,7 +535,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
 
   @NotNull
   @Override
-  public XExpression createExpression(@NotNull String text, Language language, String custom, EvaluationMode mode) {
+  public XExpression createExpression(@NotNull String text, Language language, String custom, @NotNull EvaluationMode mode) {
     return new XExpressionImpl(text, language, custom, mode);
   }
 
