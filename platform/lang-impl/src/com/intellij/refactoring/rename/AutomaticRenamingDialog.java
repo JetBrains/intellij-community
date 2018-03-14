@@ -21,6 +21,7 @@ import com.intellij.ui.BooleanTableCellRenderer;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.TableUtil;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.table.JBTable;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.UsageViewPresentation;
@@ -46,6 +47,7 @@ public class AutomaticRenamingDialog extends DialogWrapper {
 
   private final Project myProject;
   private final AutomaticRenamer myRenamer;
+  private final boolean myShowOptions;
   private final boolean[] myShouldRename;
   private final String[] myNewNames;
   private final PsiNamedElement[] myRenames;
@@ -54,6 +56,9 @@ public class AutomaticRenamingDialog extends DialogWrapper {
   private JPanel myPanel;
   private JSplitPane mySplitPane;
   private JBTable myTable;
+  private JPanel myOptionsPanel;
+  private JBCheckBox mySearchInComments;
+  private JBCheckBox mySearchTextOccurrences;
   private JButton mySelectAllButton;
   private JButton myUnselectAllButton;
   private JPanel myPanelForPreview;
@@ -62,9 +67,14 @@ public class AutomaticRenamingDialog extends DialogWrapper {
   private ListSelectionListener myListSelectionListener;
 
   public AutomaticRenamingDialog(@NotNull Project project, @NotNull AutomaticRenamer renamer) {
+    this(project, renamer, false);
+  }
+
+  public AutomaticRenamingDialog(@NotNull Project project, @NotNull AutomaticRenamer renamer, boolean showOptions) {
     super(project, true);
     myProject = project;
     myRenamer = renamer;
+    myShowOptions = showOptions;
 
     Map<PsiNamedElement, String> renames = renamer.getRenames();
 
@@ -204,6 +214,9 @@ public class AutomaticRenamingDialog extends DialogWrapper {
     if (myTableModel.getRowCount() != 0) {
       myTable.getSelectionModel().addSelectionInterval(0, 0);
     }
+
+    myOptionsPanel.setVisible(myShowOptions);
+
     return myPanel;
   }
 
@@ -262,6 +275,14 @@ public class AutomaticRenamingDialog extends DialogWrapper {
         myRenamer.doNotRename(element);
       }
     }
+  }
+
+  public boolean searchInComments() {
+    return mySearchInComments.isSelected();
+  }
+
+  public boolean searchTextOccurrences() {
+    return mySearchTextOccurrences.isSelected();
   }
 
   private class MyTableModel extends AbstractTableModel {
