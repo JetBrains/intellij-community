@@ -2,7 +2,7 @@
 package com.intellij.java.codeInsight.daemon.quickFix
 
 import com.intellij.lang.java.actions.CreateAnnotationAction
-import com.intellij.lang.jvm.actions.createAnnotationRequest
+import com.intellij.lang.jvm.actions.annotationRequest
 import com.intellij.lang.jvm.actions.intAttribute
 import com.intellij.lang.jvm.actions.stringAttribute
 import com.intellij.psi.PsiModifierListOwner
@@ -21,8 +21,8 @@ class CreateAnnotationTest : LightCodeInsightFixtureTestCase() {
     val modifierListOwner = myFixture.findElementByText("bar", PsiModifierListOwner::class.java)
 
     myFixture.launchAction(CreateAnnotationAction(modifierListOwner,
-                                                  createAnnotationRequest("java.lang.SuppressWarnings",
-                                                                          stringAttribute("value", "someText"))))
+                                                  annotationRequest("java.lang.SuppressWarnings",
+                                                                    stringAttribute("value", "someText"))))
 
     myFixture.checkResult("""
       class A {
@@ -50,7 +50,7 @@ class CreateAnnotationTest : LightCodeInsightFixtureTestCase() {
     val modifierListOwner = myFixture.findElementByText("A", PsiModifierListOwner::class.java)
 
     myFixture.launchAction(CreateAnnotationAction(modifierListOwner,
-                                                  createAnnotationRequest(
+                                                  annotationRequest(
                                                     "java.lang.SuppressWarnings",
                                                     intAttribute("num", 12),
                                                     stringAttribute("text", "anotherText")

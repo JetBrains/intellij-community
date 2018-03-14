@@ -2,7 +2,7 @@
 package com.intellij.lang.java.actions
 
 import com.intellij.lang.jvm.actions.AnnotationAttributeValueRequest
-import com.intellij.lang.jvm.actions.CreateAnnotationRequest
+import com.intellij.lang.jvm.actions.AnnotationRequest
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -17,7 +17,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager
 
 private val LOG = logger<CreateAnnotationAction>()
 
-class CreateAnnotationAction(target: PsiModifierListOwner, override val request: CreateAnnotationRequest) :
+class CreateAnnotationAction(target: PsiModifierListOwner, override val request: AnnotationRequest) :
   CreateTargetAction<PsiModifierListOwner>(target, request) {
 
   override fun getText(): String = "Add @" + StringUtilRt.getShortName(request.qualifiedName); // TODO: i11n
@@ -42,7 +42,7 @@ class CreateAnnotationAction(target: PsiModifierListOwner, override val request:
           LOG.error("adding annotation members of ${value.javaClass} type is not implemented"); continue@attributes
         }
       }
-      annotation.setDeclaredAttributeValue(name.takeIf { name != "value" || !request.omitAttributeNameIfPossible(attribute) }, memberValue)
+      annotation.setDeclaredAttributeValue(name.takeIf { name != "value" }, memberValue)
     }
 
     val formatter = CodeStyleManager.getInstance(project)

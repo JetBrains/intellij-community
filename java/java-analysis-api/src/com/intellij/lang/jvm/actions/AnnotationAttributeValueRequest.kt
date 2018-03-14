@@ -13,7 +13,7 @@ sealed class AnnotationAttributeValueRequest {
   data class ArrayValue(val members: List<AnnotationAttributeValueRequest>) : AnnotationAttributeValueRequest()
 }
 
-class AnnotationNamedAttributeRequest(val name: String, val value: AnnotationAttributeValueRequest)
+class AnnotationAttributeRequest(val name: String, val value: AnnotationAttributeValueRequest)
 
-fun stringAttribute(name: String, value: String) = AnnotationNamedAttributeRequest(name, AnnotationAttributeValueRequest.StringValue(value))
-fun intAttribute(name: String, value: Int) = AnnotationNamedAttributeRequest(name, AnnotationAttributeValueRequest.PrimitiveValue(value))
+fun stringAttribute(name: String, value: String) = AnnotationAttributeRequest(name, AnnotationAttributeValueRequest.StringValue(value))
+fun intAttribute(name: String, value: Int) = AnnotationAttributeRequest(name, AnnotationAttributeValueRequest.PrimitiveValue(value))

@@ -26,7 +26,7 @@ class JavaElementActionsFactory(private val renderer: JavaElementRenderer) : Jvm
     listOf(ModifierFix(declaration.modifierList, renderer.render(modifier), shouldPresent, false))
   }
 
-  override fun createAddAnnotationActions(target: JvmModifiersOwner, request: CreateAnnotationRequest): List<IntentionAction> {
+  override fun createAddAnnotationActions(target: JvmModifiersOwner, request: AnnotationRequest): List<IntentionAction> {
     val declaration = target as? PsiModifierListOwner ?: return emptyList()
     if (declaration.language != JavaLanguage.INSTANCE) return emptyList()
     return listOf(CreateAnnotationAction(declaration, request))

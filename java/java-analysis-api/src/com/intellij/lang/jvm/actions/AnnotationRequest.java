@@ -6,17 +6,14 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.List;
 
-public interface AnnotationRequest {
+public interface AnnotationRequest extends ActionRequest {
 
   @NotNull
   String getQualifiedName();
 
   @NotNull
-  default List<AnnotationNamedAttributeRequest> getAttributes() {
+  default List<AnnotationAttributeRequest> getAttributes() {
     return Collections.emptyList();
   }
 
-  default boolean omitAttributeNameIfPossible(@NotNull AnnotationNamedAttributeRequest namedAttribute) {
-    return true;
-  }
 }

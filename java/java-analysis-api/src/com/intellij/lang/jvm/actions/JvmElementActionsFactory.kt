@@ -19,7 +19,7 @@ abstract class JvmElementActionsFactory {
 
   open fun createChangeModifierActions(target: JvmModifiersOwner, request: MemberRequest.Modifier): List<IntentionAction> = emptyList()
 
-  open fun createAddAnnotationActions(target: JvmModifiersOwner, request: CreateAnnotationRequest): List<IntentionAction> = emptyList()
+  open fun createAddAnnotationActions(target: JvmModifiersOwner, request: AnnotationRequest): List<IntentionAction> = emptyList()
 
   open fun createAddPropertyActions(targetClass: JvmClass, request: MemberRequest.Property): List<IntentionAction> = emptyList()
 
