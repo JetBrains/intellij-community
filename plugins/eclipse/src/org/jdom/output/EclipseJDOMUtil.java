@@ -22,6 +22,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 
 public class EclipseJDOMUtil {
   private EclipseJDOMUtil() {
@@ -40,12 +41,8 @@ public class EclipseJDOMUtil {
   }
 
   public static void output(@NotNull Element element, @NotNull File file, @NotNull Project project) throws IOException {
-    Writer writer = new OutputStreamWriter(new FileOutputStream(file), CharsetToolkit.UTF8);
-    try {
+    try (Writer writer = new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8)) {
       output(element, writer, project);
-    }
-    finally {
-      writer.close();
     }
   }
 

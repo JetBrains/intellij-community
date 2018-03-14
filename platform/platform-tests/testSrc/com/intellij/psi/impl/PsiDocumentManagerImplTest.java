@@ -76,6 +76,7 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
@@ -783,7 +784,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
 
     WriteCommandAction.runWriteCommandAction(null, () -> {
       try {
-        virtualFile.setBinaryContent("\n txt txt txt".getBytes("UTF-8"));
+        virtualFile.setBinaryContent("\n txt txt txt".getBytes(StandardCharsets.UTF_8));
         virtualFile.rename(this, "X.txt");
       }
       catch (IOException e) {
