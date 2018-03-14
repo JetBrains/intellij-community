@@ -95,6 +95,16 @@ public class LightAdvHighlightingFixtureTest extends LightCodeInsightFixtureTest
     myFixture.checkHighlighting();
   }
 
+  public void testReferenceThroughInheritance1() {
+    myFixture.addClass("package me;\n" +
+                       "import me.Serializer.Format;\n" +
+                       "public interface Serializer<F extends Format> {\n" +
+                       "    public static interface Format {}\n" +
+                       "}\n");
+    myFixture.configureByFile(getTestName(false) + ".java");
+    myFixture.checkHighlighting();
+  }
+
   public void testUsageOfProtectedAnnotationOutsideAPackage() {
     myFixture.addClass("package a;\n" +
                        "import java.lang.annotation.ElementType;\n" +
