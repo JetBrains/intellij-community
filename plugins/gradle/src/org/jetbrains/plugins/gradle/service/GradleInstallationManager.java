@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.service;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkException;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
@@ -50,6 +51,7 @@ import org.jetbrains.plugins.gradle.util.GradleUtil;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 
 import java.io.File;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -559,5 +561,47 @@ public class GradleInstallationManager {
       f -> f.isDirectory() && StringUtil.startsWith(f.getName(), "gradle-"));
 
     return distFiles == null || distFiles.length == 0 ? null : distFiles[0];
+  }
+
+  @Nullable
+  public static GradleVersion getGradleVersion(@NotNull GradleProjectSettings settings) {
+    GradleVersion version = null;
+    DistributionType distributionType = settings.getDistributionType();
+    if (distributionType == null) return null;
+
+    if (distributionType == DistributionType.LOCAL) {
+      String gradleVersion = getGradleVersion(settings.getGradleHome());
+      if (gradleVersion != null) {
+        version = GradleVersion.version(gradleVersion);
+      }
+    }
+    else if (distributionType == DistributionType.BUNDLED) {
+      return GradleVersion.current();
+    }
+    else if (distributionType == DistributionType.DEFAULT_WRAPPED) {
+      WrapperConfiguration wrapperConfiguration = GradleUtil.getWrapperConfiguration(settings.getExternalProjectPath());
+      GradleInstallationManager installationManager = ServiceManager.getService(GradleInstallationManager.class);
+      File gradleHome = installationManager.getWrappedGradleHome(settings.getExternalProjectPath(), wrapperConfiguration);
+      if (gradleHome != null) {
+        String gradleVersion = getGradleVersion(settings.getGradleHome());
+        if (gradleVersion != null) {
+          version = GradleVersion.version(gradleVersion);
+        }
+      }
+      if (version == null && wrapperConfiguration != null) {
+        URI uri = wrapperConfiguration.getDistribution();
+        if (uri != null && uri.getRawPath() != null) {
+          String s = StringUtil.substringAfterLast(uri.getRawPath(), "/gradle-");
+          if (s != null) {
+            int i = s.lastIndexOf('-');
+            if (i > 0) {
+              String gradleVersion = s.substring(0, i);
+              version = GradleVersion.version(gradleVersion);
+            }
+          }
+        }
+      }
+    }
+    return version;
   }
 }
