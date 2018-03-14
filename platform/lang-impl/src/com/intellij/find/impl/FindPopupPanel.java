@@ -494,6 +494,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
         try {
           myIsPinned.set(true);
           okToReplaceAll = ReplaceInProjectManager.getInstance(myProject).showReplaceAllConfirmDialog(
+            this,
             myUsagesCount,
             getStringToFind(),
             myFilesCount,
