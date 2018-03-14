@@ -198,8 +198,8 @@ public abstract class DiffRequestProcessor implements Disposable {
     FrameDiffTool tool = tools.isEmpty() ? ErrorDiffTool.INSTANCE : tools.get(0);
 
     if (applySubstitutor) {
-      DiffTool substitutor = DiffUtil.findToolSubstitutor(tool, myContext, myActiveRequest);
-      if (substitutor instanceof FrameDiffTool) return (FrameDiffTool)substitutor;
+      FrameDiffTool substitutor = findToolSubstitutor(tool);
+      if (substitutor != null) return substitutor;
     }
 
     return tool;
@@ -220,8 +220,8 @@ public abstract class DiffRequestProcessor implements Disposable {
             result.add((FrameDiffTool)tool);
           }
           else {
-            DiffTool substitutor = DiffUtil.findToolSubstitutor(tool, myContext, myActiveRequest);
-            if (substitutor instanceof FrameDiffTool) {
+            FrameDiffTool substitutor = findToolSubstitutor(tool);
+            if (substitutor != null) {
               result.add((FrameDiffTool)tool);
             }
           }
@@ -233,6 +233,11 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
 
     return DiffUtil.filterSuppressedTools(result);
+  }
+
+  private FrameDiffTool findToolSubstitutor(@NotNull DiffTool tool) {
+    DiffTool substitutor = DiffUtil.findToolSubstitutor(tool, myContext, myActiveRequest);
+    return substitutor instanceof FrameDiffTool ? (FrameDiffTool)substitutor : null;
   }
 
   private void moveToolOnTop(@NotNull DiffTool tool) {
@@ -449,7 +454,8 @@ public abstract class DiffRequestProcessor implements Disposable {
 
     List<AnAction> selectToolActions = new ArrayList<>();
     for (DiffTool tool : getAvailableFittedTools()) {
-      if (tool == myState.getActiveTool()) continue;
+      FrameDiffTool substitutor = findToolSubstitutor(tool);
+      if (tool == myState.getActiveTool() || substitutor == myState.getActiveTool()) continue;
       selectToolActions.add(new DiffToolToggleAction(tool));
     }
     DiffUtil.addActionBlock(myPopupActionGroup, selectToolActions);
