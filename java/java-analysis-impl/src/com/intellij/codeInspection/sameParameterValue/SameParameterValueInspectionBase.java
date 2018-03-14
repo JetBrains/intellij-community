@@ -246,7 +246,9 @@ public class SameParameterValueInspectionBase extends GlobalJavaBatchInspectionT
                                             Object value,
                                             boolean usedForWriting) {
     final String name = parameter.getName();
-    String stringPresentation = value instanceof PsiType ? ((PsiType)value).getPresentableText() + ".class" : String.valueOf(value);
+    String stringPresentation = value instanceof PsiType ? ((PsiType)value).getPresentableText() + ".class" 
+                                                         : value instanceof String ? "\"" + value + "\"" 
+                                                                                   : String.valueOf(value);
     return manager.createProblemDescriptor(ObjectUtils.notNull(parameter.getNameIdentifier(), parameter),
                                            InspectionsBundle.message("inspection.same.parameter.problem.descriptor",
                                                                      name,

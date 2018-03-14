@@ -165,6 +165,8 @@ class PartialLocalLineStatusTracker(project: Project,
       }
     }
 
+    updateAffectedChangeLists()
+
     dropExistingUndoActions()
     if (isValid()) eventDispatcher.multicaster.onBecomingValid(this)
   }

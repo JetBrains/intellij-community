@@ -22,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -110,8 +111,7 @@ public class SSHConfig {
       // no config file = empty config file
       return rc;
     }
-    BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(configFile), "ISO-8859-1"));
-    try {
+    try (BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(configFile), StandardCharsets.ISO_8859_1))) {
       Host host = null;
       String line;
       while ((line = in.readLine()) != null) {
@@ -171,9 +171,6 @@ public class SSHConfig {
           host.myUser = argument;
         }
       }
-    }
-    finally {
-      in.close();
     }
     return rc;
   }

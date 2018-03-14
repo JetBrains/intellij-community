@@ -525,4 +525,9 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testGenericWithTypeVarBounds() {
     runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
   }
+
+  // PY-27788
+  public void testOverloadedFunctionAssignedToTargetInStub() {
+    doMultiFileTest();
+  }
 }

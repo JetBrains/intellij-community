@@ -8,13 +8,11 @@ import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.testDiscovery.TestDiscoveryConfigurationProducer;
-import com.intellij.execution.testDiscovery.TestDiscoveryExtension;
 import com.intellij.execution.testDiscovery.TestDiscoveryProducer;
 import com.intellij.find.FindUtil;
 import com.intellij.find.actions.CompositeActiveComponent;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -27,7 +25,6 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
@@ -63,7 +60,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
 
   @Override
   public void update(AnActionEvent e) {
-    e.getPresentation().setEnabledAndVisible(Registry.is(TestDiscoveryExtension.TEST_DISCOVERY_REGISTRY_KEY) && e.getProject() != null && findMethodAtCaret(e) != null);
+    e.getPresentation().setEnabledAndVisible(ApplicationManager.getApplication().isInternal() && e.getProject() != null && findMethodAtCaret(e) != null);
   }
 
   @Override
@@ -107,9 +104,8 @@ public class ShowDiscoveredTestsAction extends AnAction {
 
     ConfigurationContext context = ConfigurationContext.getFromContext(dataContext);
 
-    InplaceButton runButton = new InplaceButton(new IconButton(RUN_ALL_ACTION_TEXT, AllIcons.Actions.Execute), __ -> {
-      runAllDiscoveredTests(project, tree, ref, context, methods);
-    });
+    InplaceButton runButton = new InplaceButton(new IconButton(RUN_ALL_ACTION_TEXT, AllIcons.Actions.Execute), __ ->
+      runAllDiscoveredTests(project, tree, ref, context, methods));
 
     ActionListener pinActionListener = __ -> {
       UsageView view = FindUtil.showInUsageView(null, tree.getTestMethods(), initTitle, project);
@@ -120,6 +116,10 @@ public class ShowDiscoveredTestsAction extends AnAction {
             runAllDiscoveredTests(project, tree, ref, context, methods);
           }
         });
+        view.getPresentation().setUsagesWord("test");
+        view.getPresentation().setMergeDupLinesAvailable(false);
+        view.getPresentation().setUsageTypeFilteringAvailable(false);
+        view.getPresentation().setExcludeAvailable(false);
       }
       JBPopup popup = ref.get();
       if (popup != null) {

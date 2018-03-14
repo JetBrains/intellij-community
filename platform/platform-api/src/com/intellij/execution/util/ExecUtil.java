@@ -25,13 +25,13 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.PathExecLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -53,7 +53,7 @@ public class ExecUtil {
       throw new IOException("Template '" + templateName + "' not found by " + loader);
     }
 
-    String template = FileUtil.loadTextAndClose(new InputStreamReader(stream, CharsetToolkit.UTF8));
+    String template = FileUtil.loadTextAndClose(new InputStreamReader(stream, StandardCharsets.UTF_8));
     if (variables == null || variables.size() == 0) {
       return template;
     }
@@ -73,7 +73,7 @@ public class ExecUtil {
   public static File createTempExecutableScript(@NotNull String prefix, @NotNull String suffix, @NotNull String content) throws IOException, ExecutionException {
     File tempDir = new File(PathManager.getTempPath());
     File tempFile = FileUtil.createTempFile(tempDir, prefix, suffix, true, true);
-    FileUtil.writeToFile(tempFile, content.getBytes(CharsetToolkit.UTF8));
+    FileUtil.writeToFile(tempFile, content.getBytes(StandardCharsets.UTF_8));
     if (!tempFile.setExecutable(true, true)) {
       throw new ExecutionException("Failed to make temp file executable: " + tempFile);
     }

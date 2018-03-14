@@ -203,7 +203,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         return processor.toString();
       }
     };
-    return JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Arrays.asList(scopeElements), progress, true, true, localProcessor);
+    return JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Arrays.asList(scopeElements), progress, localProcessor);
   }
 
   @NotNull
@@ -360,7 +360,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       }
       else {
         // try to run parallel read actions but fail as soon as possible
-        completed = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(files, progress, false, true, processor);
+        completed = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(files, progress, processor);
       }
       if (!completed) {
         return false;

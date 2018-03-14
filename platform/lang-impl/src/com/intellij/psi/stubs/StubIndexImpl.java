@@ -44,6 +44,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import static com.intellij.util.indexing.FileBasedIndex.getFileId;
+
 @State(name = "FileBasedIndex", storages = @Storage(value = "stubIndex.xml", roamingType = RoamingType.DISABLED))
 public class StubIndexImpl extends StubIndex implements PersistentStateComponent<StubIndexState>, ApplicationComponent {
   private static final AtomicReference<Boolean> ourForcedClean = new AtomicReference<>(null);
@@ -345,6 +347,8 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
         myAccessValidator.stoppedProcessingActivityForIndex(stubUpdatingIndexId);
         stubUpdatingIndex.getReadLock().unlock();
         FileBasedIndexImpl.enableUpToDateCheckForCurrentThread();
+
+        wipeProblematicFileIdsForParticularKeyAndStubIndex(indexKey, key, stubUpdatingIndex);
       }
     }
     catch (StorageException e) {
@@ -361,6 +365,32 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
     }
 
     return true;
+  }
+
+  // Self repair for IDEA-181227, caused by (yet) unknown file event processing problem in indices
+  // FileBasedIndex.requestReindex doesn't handle the situation properly because update requires old data that was lost  
+  private <Key> void wipeProblematicFileIdsForParticularKeyAndStubIndex(@NotNull StubIndexKey<Key, ?> indexKey,
+                                                                        @NotNull Key key,
+                                                                        UpdatableIndex<Integer, SerializedStubTree, FileContent> stubUpdatingIndex) {
+    Set<VirtualFile> filesWithProblems = myStubProcessingHelper.takeAccumulatedFilesWithIndexProblems();
+    
+    if (filesWithProblems != null) {
+      stubUpdatingIndex.getWriteLock().lock();
+      try {
+        Map<Key, StubIdList> artificialOldValues = new THashMap<>();
+        artificialOldValues.put(key, new StubIdList());
+        
+        for(VirtualFile file:filesWithProblems) {
+          updateIndex(indexKey, getFileId(file), artificialOldValues, Collections.emptyMap());
+          ((FileBasedIndexImpl)FileBasedIndex.getInstance()).runUpdateForInMemoryIndices(() -> {
+            updateIndex(indexKey, getFileId(file), artificialOldValues, Collections.emptyMap());
+            return true;
+          });
+        }
+      } finally {
+        stubUpdatingIndex.getWriteLock().unlock();
+      }
+    }
   }
 
   @Override

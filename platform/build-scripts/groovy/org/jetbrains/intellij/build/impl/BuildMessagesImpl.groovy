@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.util.containers.Stack
@@ -27,7 +25,7 @@ class BuildMessagesImpl implements BuildMessages {
   private final List<BuildMessagesImpl> forkedInstances = []
   private final List<LogMessage> delayedMessages = []
   private final UniqueNameGenerator taskNameGenerator = new UniqueNameGenerator()
-  private final Stack<String> blockNames = new Stack<>();
+  private final Stack<String> blockNames = new Stack<>()
 
   static BuildMessagesImpl create(Project antProject) {
     String key = "IntelliJBuildMessages"
@@ -118,7 +116,7 @@ class BuildMessagesImpl implements BuildMessages {
       return body()
     }
     catch (IntelliJBuildException e) {
-      throw e;
+      throw e
     }
     catch (BuildException e) {
       throw new IntelliJBuildException(blockNames.join(" > "), e.message, e.cause)

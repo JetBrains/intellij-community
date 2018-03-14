@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.completion;
 
@@ -77,10 +63,8 @@ import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.Queue;
-import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
@@ -90,14 +74,14 @@ import java.util.function.Supplier;
  */
 @SuppressWarnings("deprecation")
 @Deprecated
-public class CompletionProgressIndicator extends ProgressIndicatorBase implements CompletionProcess, Disposable {
+public class CompletionProgressIndicator extends ProgressIndicatorBase implements CompletionProcessEx, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CompletionProgressIndicator");
   private final Editor myEditor;
   @NotNull
   private final Caret myCaret;
   @Nullable private CompletionParameters myParameters;
   private final CodeCompletionHandlerBase myHandler;
-  private final CompletionLookupArranger myArranger;
+  private final CompletionLookupArrangerImpl myArranger;
   private final CompletionType myCompletionType;
   private final int myInvocationCount;
   private OffsetsInFile myHostOffsets;
@@ -155,7 +139,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
     myAdvertiserChanges.offer(() -> myLookup.getAdvertiser().clearAdvertisements());
 
-    myArranger = new CompletionLookupArranger(this);
+    myArranger = new CompletionLookupArrangerImpl(this);
     myLookup.setArranger(myArranger);
 
     myLookup.addLookupListener(myLookupListener);
@@ -178,7 +162,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     }
   }
 
-  void itemSelected(@Nullable LookupElement lookupItem, char completionChar) {
+  @Override
+  public void itemSelected(@Nullable LookupElement lookupItem, char completionChar) {
     boolean dispose = lookupItem == null;
     finishCompletionProcess(dispose);
     if (dispose) return;
@@ -193,7 +178,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     return myOffsetMap;
   }
 
-  OffsetsInFile getHostOffsets() {
+  @Override
+  public OffsetsInFile getHostOffsets() {
     return myHostOffsets;
   }
 
@@ -215,9 +201,9 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         if (reference != null) {
           final int replacementOffset = findReplacementOffset(selectionEndOffset, reference);
           if (replacementOffset > document.getTextLength()) {
-            LOG.error("Invalid replacementOffset: " + replacementOffset + " returned by reference " + reference + " of " + reference.getClass() + 
-                      "; doc=" + document + 
-                      "; doc actual=" + (document == initContext.getFile().getViewProvider().getDocument()) + 
+            LOG.error("Invalid replacementOffset: " + replacementOffset + " returned by reference " + reference + " of " + reference.getClass() +
+                      "; doc=" + document +
+                      "; doc actual=" + (document == initContext.getFile().getViewProvider().getDocument()) +
                       "; doc committed=" + PsiDocumentManager.getInstance(getProject()).isCommitted(document));
           } else {
             initContext.setReplacementOffset(replacementOffset);
@@ -236,14 +222,14 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       myHostOffsets = new OffsetsInFile(initContext.getFile(), initContext.getOffsetMap()).toTopLevelFile();
     }
   }
-  
+
 
   private void addDefaultAdvertisements(CompletionParameters parameters) {
     if (DumbService.isDumb(getProject())) {
       addAdvertisement("The results might be incomplete while indexing is in progress", MessageType.WARNING.getPopupBackground());
       return;
     }
-    
+
     advertiseTabReplacement(parameters);
     if (isAutopopupCompletion()) {
       if (shouldPreselectFirstSuggestion(parameters) && !CodeInsightSettings.getInstance().SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS) {
@@ -339,9 +325,15 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   // non-null when running generators and adding elements to lookup
+  @Override
   @Nullable
   public CompletionParameters getParameters() {
     return myParameters;
+  }
+
+  @Override
+  public void setParameters(CompletionParameters parameters) {
+    myParameters = parameters;
   }
 
   public LookupImpl getLookup() {
@@ -428,7 +420,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       myHasPsiElements = true;
     }
 
-    boolean allowMiddleMatches = myCount > CompletionLookupArranger.MAX_PREFERRED_COUNT * 2;
+    boolean allowMiddleMatches = myCount > CompletionLookupArrangerImpl.MAX_PREFERRED_COUNT * 2;
     if (allowMiddleMatches) {
       addDelayedMiddleMatches();
     }
@@ -513,7 +505,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     }
   }
 
-  void registerChildDisposable(@NotNull Supplier<Disposable> child) {
+  @Override
+  public void registerChildDisposable(@NotNull Supplier<Disposable> child) {
     synchronized (myLock) {
       // avoid registering stuff on an indicator being disposed concurrently
       checkCanceled();
@@ -658,6 +651,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     return ObjectUtils.assertNotNull(myEditor.getProject());
   }
 
+  @Override
   public void addWatchedPrefix(int startOffset, ElementPattern<String> restartCondition) {
     myRestartingPrefixConditions.add(Pair.create(startOffset, restartCondition));
   }
@@ -788,9 +782,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     return true;
   }
 
-  void runContributors(CompletionInitializationContext initContext, CompletionParameters parameters) {
-    myParameters = parameters;
-
+  void runContributors(CompletionInitializationContext initContext) {
+    CompletionParameters parameters = Objects.requireNonNull(myParameters);
     myThreading.startThread(ProgressWrapper.wrap(this), ()-> AsyncCompletion.tryReadOrCancel(this, () -> scheduleAdvertising(parameters)));
     WeighingDelegate weigher = myThreading.delegateWeighing(this);
 
@@ -822,6 +815,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     return myThreading;
   }
 
+  @Override
   public void addAdvertisement(@NotNull final String text, @Nullable final Color bgColor) {
     myAdvertiserChanges.offer(() -> myLookup.addAdvertisement(text, bgColor));
 

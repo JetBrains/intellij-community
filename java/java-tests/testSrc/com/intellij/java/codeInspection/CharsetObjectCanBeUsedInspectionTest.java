@@ -4,6 +4,8 @@ package com.intellij.java.codeInspection;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.CharsetObjectCanBeUsedInspection;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -14,6 +16,11 @@ public class CharsetObjectCanBeUsedInspectionTest extends LightQuickFixParameter
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{new CharsetObjectCanBeUsedInspection()};
+  }
+
+  @Override
+  protected Sdk getProjectJDK() {
+    return IdeaTestUtil.getMockJdk9();
   }
 
   public void test() {

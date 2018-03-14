@@ -1841,8 +1841,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       if (myProject.isDisposed() || !myViewContentPanel.isShowing()) return;
       if (isAutoscrollFromSource(getCurrentViewId())) {
         if (fileEditor instanceof TextEditor) {
-          Editor editor = ((TextEditor)fileEditor).getEditor();
-          selectElementAtCaretNotLosingFocus(editor);
+          TextEditor textEditor = (TextEditor)fileEditor;
+          selectElementAtCaretNotLosingFocus(textEditor.getEditor());
         }
         else {
           PsiFile psiFile = getPsiFile(getVirtualFile(fileEditor));
@@ -1854,18 +1854,23 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
 
     public void scrollFromSource() {
-      for (FileEditor fileEditor : FileEditorManager.getInstance(myProject).getSelectedEditors()) {
-        if (fileEditor instanceof TextEditor) {
-          Editor editor = ((TextEditor)fileEditor).getEditor();
-          selectElementAtCaret(editor);
-          return;
-        }
-        PsiFile psiFile = getPsiFile(getVirtualFile(fileEditor));
-        if (psiFile != null) {
-          scrollFromFile(psiFile, null);
-          return;
-        }
+      FileEditorManager manager = FileEditorManager.getInstance(myProject);
+      if (scrollFromSource(manager.getSelectedEditor())) return;
+      for (FileEditor fileEditor : manager.getSelectedEditors()) {
+        if (scrollFromSource(fileEditor)) return;
       }
+    }
+
+    private boolean scrollFromSource(FileEditor fileEditor) {
+      if (fileEditor instanceof TextEditor) {
+        TextEditor textEditor = (TextEditor)fileEditor;
+        selectElementAtCaret(textEditor.getEditor());
+        return true;
+      }
+      PsiFile psiFile = getPsiFile(getVirtualFile(fileEditor));
+      if (psiFile == null) return false;
+      scrollFromFile(psiFile, null);
+      return true;
     }
 
     private PsiFile getPsiFile(VirtualFile file) {

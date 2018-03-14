@@ -101,7 +101,10 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   protected ProjectManagerEx myProjectManager;
   protected Project myProject;
   protected Module myModule;
-  protected static final Collection<File> myFilesToDelete = new THashSet<>();
+
+  protected final Collection<File> myFilesToDelete = new THashSet<>();
+  private final TempFiles myTempFiles = new TempFiles(myFilesToDelete);
+
   protected boolean myAssertionsInTestDetected;
   public static Thread ourTestThread;
   private static TestCase ourTestCase;
@@ -114,6 +117,20 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   private static Set<VirtualFile> ourEternallyLivingFilesCache;
   private SdkLeakTracker myOldSdks;
   private VirtualFilePointerTracker myVirtualFilePointerTracker;
+
+
+  @NotNull
+  public TempFiles getTempDir() {
+    return myTempFiles;
+  }
+
+  protected final VirtualFile createTestProjectStructure() throws IOException {
+    return PsiTestUtil.createTestProjectStructure(myProject, myModule, myFilesToDelete);
+  }
+
+  protected final VirtualFile createTestProjectStructure(String rootPath) throws Exception {
+    return PsiTestUtil.createTestProjectStructure(myProject, myModule, rootPath, myFilesToDelete);
+  }
 
   /**
    * If a temp directory is reused from some previous test run, there might be cached children in its VFS.
@@ -500,10 +517,8 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       })
       .append(() -> {
         ((JarFileSystemImpl)JarFileSystem.getInstance()).cleanupForNextTest();
-        
-        for (final File fileToDelete : myFilesToDelete) {
-          delete(fileToDelete);
-        }
+
+        getTempDir().deleteAll();
         LocalFileSystem.getInstance().refreshIoFiles(myFilesToDelete);
       })
       .append(() -> {
@@ -584,13 +599,6 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
   private String getFullName() {
     return getClass().getName() + "." + getName();
-  }
-
-  private void delete(File file) {
-    boolean b = FileUtil.delete(file);
-    if (!b && file.exists() && !myAssertionsInTestDetected) {
-      fail("Can't delete " + file.getAbsolutePath() + " in " + getFullName());
-    }
   }
 
   protected void setUpJdk() {
@@ -745,12 +753,12 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   @NotNull
-  public static File createTempDir(@NonNls final String prefix) throws IOException {
+  public File createTempDir(@NonNls @NotNull String prefix) throws IOException {
     return createTempDir(prefix, true);
   }
 
   @NotNull
-  public static File createTempDir(@NonNls final String prefix, final boolean refresh) throws IOException {
+  public File createTempDir(@NonNls @NotNull String prefix, final boolean refresh) throws IOException {
     final File tempDirectory = FileUtilRt.createTempDirectory("idea_test_" + prefix, null, false);
     myFilesToDelete.add(tempDirectory);
     if (refresh) {
@@ -797,7 +805,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   @NotNull
-  public static VirtualFile createTempFile(@NonNls @NotNull String ext, @Nullable byte[] bom, @NonNls @NotNull String content, @NotNull Charset charset) throws IOException {
+  public VirtualFile createTempFile(@NonNls @NotNull String ext, @Nullable byte[] bom, @NonNls @NotNull String content, @NotNull Charset charset) throws IOException {
     File temp = FileUtil.createTempFile("copy", "." + ext);
     setContentOnDisk(temp, bom, content, charset);
 

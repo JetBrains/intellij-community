@@ -5,7 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.impl.DataManagerImpl;
-import com.intellij.internal.statistic.customUsageCollectors.ui.ToolbarClicksCollector;
+import com.intellij.internal.statistic.collectors.fus.ui.persistence.ToolbarClicksCollector;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
@@ -958,10 +958,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       if (getParent() != null) {
         g.setColor(UIUtil.getSeparatorColor());
         if (myOrientation == SwingConstants.HORIZONTAL) {
-          LinePainter2D.paint((Graphics2D)g, offset, gap, offset, getParent().getSize().height - gap * 2);
+          LinePainter2D.paint((Graphics2D)g, offset, gap, offset, getParent().getSize().height - gap * 2 - offset);
         }
         else {
-          LinePainter2D.paint((Graphics2D)g, gap, offset, getParent().getSize().width - gap * 2, offset);
+          LinePainter2D.paint((Graphics2D)g, gap, offset, getParent().getSize().width - gap * 2 - offset, offset);
         }
       }
     }

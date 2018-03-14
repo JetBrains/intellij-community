@@ -12,8 +12,8 @@ public class StaticFieldReferenceOnSubclassTest extends IGQuickFixesTestCase {
     myFixture.enableInspections(new StaticFieldReferenceOnSubclassInspection());
   }
 
-  public void testPreserveTypeArgs() {
-    doTest("preserveComments", InspectionGadgetsBundle.message("static.field.via.subclass.rationalize.quickfix"));
+  public void testPreserveComments() {
+    doTest(getTestName(true), InspectionGadgetsBundle.message("static.field.via.subclass.rationalize.quickfix"));
   }
 
   @Override

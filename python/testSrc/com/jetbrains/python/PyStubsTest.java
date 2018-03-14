@@ -2,7 +2,6 @@
 package com.jetbrains.python;
 
 import com.intellij.lang.FileASTNode;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbServiceImpl;
@@ -982,5 +981,14 @@ public class PyStubsTest extends PyTestCase {
         assertNotParsed(file);
       }
     );
+  }
+
+  // PY-28879
+  public void testVariableTypeCommentWithTupleType() {
+    final PyFile file = getTestFile();
+    final PyTargetExpression target = file.findTopLevelAttribute("var");
+    final TypeEvalContext context = TypeEvalContext.codeInsightFallback(target.getProject());
+    context.getType(target);
+    assertNotParsed(file);
   }
 }

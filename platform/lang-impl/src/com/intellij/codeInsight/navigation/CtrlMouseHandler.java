@@ -964,7 +964,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
             @Nullable
             @Override
             public Continuation performInReadAction(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
-              if (!info.myElementAtPointer.isValid() || !info.isValid(myEditor.getDocument())) {
+              if (!info.isValid(myEditor.getDocument())) {
                 updating.set(false);
                 return null;
               }

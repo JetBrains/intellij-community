@@ -822,4 +822,35 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
       "}"
     );
   }
+
+  public void testIdea110902() {
+    getSettings().WRAP_LONG_LINES = true;
+    getSettings().WRAP_COMMENTS = true;
+    getSettings().RIGHT_MARGIN = 50;
+
+    doTextTest(
+      "public class Main {\n" +
+      "\n" +
+      "    /**\n" +
+      "     * {@link #authenticationCompleted(android.app.Activity, int, int, android.content.Intent)}\n" +
+      "     *\n" +
+      "     * @param args\n" +
+      "     */\n" +
+      "    public static void main(String[] args) {\n" +
+      "    }\n" +
+      "}",
+
+      "public class Main {\n" +
+      "\n" +
+      "    /**\n" +
+      "     * {@link #authenticationCompleted(android.app.Activity,\n" +
+      "     * int, int, android.content.Intent)}\n" +
+      "     *\n" +
+      "     * @param args\n" +
+      "     */\n" +
+      "    public static void main(String[] args) {\n" +
+      "    }\n" +
+      "}"
+    );
+  }
 }

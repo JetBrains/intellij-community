@@ -1,5 +1,6 @@
 // "Replace with 'StandardCharsets.UTF_16'" "true"
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 
 class Test {
   static final String UTF16 = "UTF-16";
@@ -8,7 +9,7 @@ class Test {
     String string = null;
     String string2 = null;
     try {
-      string = new String(bytes, java.nio.charset.StandardCharsets.UTF_16);
+      string = new String(bytes, StandardCharsets.UTF_16);
       string2 = new String(bytes, "UTF-8");
     }
     // catch is still necessary after the single replacement

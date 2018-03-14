@@ -258,10 +258,6 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     }
   }
 
-  boolean isFailFastOnAcquireReadAction() {
-    return true;
-  }
-
   private boolean isWholeFileHighlighting() {
     return myUpdateAll && myRestrictRange.equalsToRange(0, getDocument().getTextLength());
   }

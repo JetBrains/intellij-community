@@ -26,7 +26,7 @@ import java.util.UUID;
  * Manager for Git remotes authentication.
  * Provides necessary handlers and watcher for http auth failure.
  */
-class GitHandlerAuthenticationManager implements AutoCloseable {
+public class GitHandlerAuthenticationManager implements AutoCloseable {
   private static final Logger LOG = Logger.getInstance(GitHandlerAuthenticationManager.class);
 
   @NotNull private final GitLineHandler myHandler;

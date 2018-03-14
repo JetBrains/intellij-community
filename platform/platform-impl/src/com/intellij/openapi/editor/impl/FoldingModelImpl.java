@@ -271,6 +271,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
 
     ((FoldRegionImpl)region).setExpanded(true, false);
     notifyListenersOnFoldRegionStateChange(region);
+    notifyListenersOnFoldRegionRemove(region);
 
     myFoldRegionsProcessed = true;
     region.dispose();
@@ -304,6 +305,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
     FoldRegion[] regions = getAllFoldRegions();
     for (FoldRegion region : regions) {
       if (!region.isExpanded()) notifyListenersOnFoldRegionStateChange(region);
+      notifyListenersOnFoldRegionRemove(region);
       region.dispose();
     }
     doClearFoldRegions();
@@ -588,6 +590,12 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
   private void notifyListenersOnFoldRegionStateChange(@NotNull FoldRegion foldRegion) {
     for (FoldingListener listener : myListeners) {
       listener.onFoldRegionStateChange(foldRegion);
+    }
+  }
+
+  private void notifyListenersOnFoldRegionRemove(@NotNull FoldRegion foldRegion) {
+    for (FoldingListener listener : myListeners) {
+      listener.beforeFoldRegionRemoved(foldRegion);
     }
   }
 

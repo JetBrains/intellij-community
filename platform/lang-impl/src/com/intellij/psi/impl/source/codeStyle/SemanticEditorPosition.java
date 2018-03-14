@@ -147,19 +147,27 @@ public class SemanticEditorPosition {
 
   public void moveToLeftParenthesisBackwardsSkippingNested(@NotNull SyntaxElement leftParenthesis,
                                                            @NotNull SyntaxElement rightParenthesis) {
-    moveToLeftParenthesisBackwardsSkippingNested(leftParenthesis, rightParenthesis, Conditions.alwaysFalse());
+    moveToLeftParenthesisBackwardsSkippingNestedEx(leftParenthesis, rightParenthesis, Conditions.alwaysFalse());
   }
 
   public SemanticEditorPosition findLeftParenthesisBackwardsSkippingNested(@NotNull SyntaxElement leftParenthesis,
                                                                            @NotNull SyntaxElement rightParenthesis) {
     return copyAnd(position -> position.moveToLeftParenthesisBackwardsSkippingNested(leftParenthesis, rightParenthesis));
   }
-  
+
   public void moveToLeftParenthesisBackwardsSkippingNested(@NotNull SyntaxElement leftParenthesis,
                                                            @NotNull SyntaxElement rightParenthesis,
                                                            @NotNull Condition<SyntaxElement> terminationCondition) {
+    moveToLeftParenthesisBackwardsSkippingNestedEx(leftParenthesis,
+                                                   rightParenthesis,
+                                                   self -> terminationCondition.value(self.getCurrElement()));
+  }
+  
+  public void moveToLeftParenthesisBackwardsSkippingNestedEx(@NotNull SyntaxElement leftParenthesis,
+                                                             @NotNull SyntaxElement rightParenthesis,
+                                                             @NotNull Condition<SemanticEditorPosition> terminationCondition) {
     while (!myIterator.atEnd()) {
-      if (terminationCondition.value(map(myIterator.getTokenType()))) {
+      if (terminationCondition.value(this)) {
         break;
       }
       if (rightParenthesis.equals(map(myIterator.getTokenType()))) {
@@ -175,8 +183,15 @@ public class SemanticEditorPosition {
   public SemanticEditorPosition findLeftParenthesisBackwardsSkippingNested(@NotNull SyntaxElement leftParenthesis,
                                                                            @NotNull SyntaxElement rightParenthesis,
                                                                            @NotNull Condition<SyntaxElement> terminationCondition) {
+    return findLeftParenthesisBackwardsSkippingNestedEx(leftParenthesis, rightParenthesis,
+                                                        self -> terminationCondition.value(self.getCurrElement()));
+  }
+  
+  public SemanticEditorPosition findLeftParenthesisBackwardsSkippingNestedEx(@NotNull SyntaxElement leftParenthesis,
+                                                                             @NotNull SyntaxElement rightParenthesis,
+                                                                             @NotNull Condition<SemanticEditorPosition> terminationCondition) {
     return copyAnd(
-      position -> position.moveToLeftParenthesisBackwardsSkippingNested(leftParenthesis, rightParenthesis, terminationCondition));
+      position -> position.moveToLeftParenthesisBackwardsSkippingNestedEx(leftParenthesis, rightParenthesis, terminationCondition));
   }
 
   public boolean isAfterOnSameLine(@NotNull SyntaxElement... syntaxElements) {

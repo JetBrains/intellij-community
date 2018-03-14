@@ -46,11 +46,8 @@ import javax.swing.plaf.basic.BasicRadioButtonUI;
 import javax.swing.plaf.basic.BasicTextUI;
 import javax.swing.plaf.basic.ComboPopup;
 import javax.swing.text.*;
-import javax.swing.text.html.CSS;
-import javax.swing.text.html.HTML;
-import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.html.*;
 import javax.swing.text.html.ParagraphView;
-import javax.swing.text.html.StyleSheet;
 import javax.swing.undo.UndoManager;
 import java.awt.*;
 import java.awt.event.*;
@@ -76,6 +73,7 @@ import java.net.URL;
 import java.text.NumberFormat;
 import java.util.*;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -1538,6 +1536,11 @@ public class UIUtil {
       }
     }
     return null;
+  }
+
+  @NotNull
+  public static Font getToolbarFont() {
+    return SystemInfo.isMac ? getLabelFont(UIUtil.FontSize.SMALL) : getLabelFont();
   }
 
   @SuppressWarnings("HardCodedStringLiteral")

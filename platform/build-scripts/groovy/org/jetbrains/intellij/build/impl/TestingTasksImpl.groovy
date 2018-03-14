@@ -188,12 +188,15 @@ class TestingTasksImpl extends TestingTasks {
             'teamcity-build-type-id'           : System.getProperty('teamcity.buildType.id'),
             'teamcity-build-configuration-name': System.getenv('TEAMCITY_BUILDCONF_NAME'),
             'teamcity-build-project-name'      : System.getenv('TEAMCITY_PROJECT_NAME'),
+            'branch'                           : System.getProperty('intellij.platform.vcs.branch') ?: 'master',
+            'project'                          : 'intellij',
           ])
         }
         catch (Exception e) {
           context.messages.error(e.message, e)
         }
       }
+      context.messages.buildStatus("Runned with Test Discovery, {build.status.text}")
     }
   }
 

@@ -21,7 +21,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.lineIndent.LineIndentProvider;
@@ -97,9 +96,8 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
         if (position.hasEmptyLineAfter(offset) &&
             !position.after().matchesRule(
               p->p.isAtAnyOf(ArrayClosingBracket, BlockOpeningBrace, BlockClosingBrace, RightParenthesis) || p.isAtEnd()) &&
-            position.findLeftParenthesisBackwardsSkippingNested(LeftParenthesis, RightParenthesis,
-                                                                element -> element == BlockClosingBrace || element == BlockOpeningBrace ||
-                                                                           element == Semicolon)
+            position.findLeftParenthesisBackwardsSkippingNestedEx(LeftParenthesis, RightParenthesis,
+                                                                  self -> self.isAtAnyOf(BlockClosingBrace, BlockOpeningBrace, Semicolon))
               .isAt(LeftParenthesis)) {
           return myFactory.createIndentCalculator(NONE, IndentCalculator.LINE_AFTER);
         }
@@ -231,7 +229,7 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
     }
   }
 
-  private int getDeepBlockStatementStartOffset(@NotNull SemanticEditorPosition position) {
+  protected int getDeepBlockStatementStartOffset(@NotNull SemanticEditorPosition position) {
     while (!(position.isAt(BlockOpeningBrace) || position.isAtEnd())) {
       position.moveBefore();
     }
@@ -311,7 +309,7 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
     return true;
   }
 
-  protected SemanticEditorPosition getPosition(@NotNull Editor editor, int offset) {
+  public SemanticEditorPosition getPosition(@NotNull Editor editor, int offset) {
     return SemanticEditorPosition.createEditorPosition((EditorEx)editor, offset,
                                                        (_editor, _offset) -> getIteratorAtPosition(_editor, _offset),
                                                        tokenType -> mapType(tokenType));

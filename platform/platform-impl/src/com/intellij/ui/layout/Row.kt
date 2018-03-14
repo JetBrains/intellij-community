@@ -28,6 +28,8 @@ import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JLabel
 
+internal const val COMPONENT_TAG_HINT = "kotlin.dsl.hint.component"
+
 abstract class Row {
   abstract var enabled: Boolean
 
@@ -41,8 +43,10 @@ abstract class Row {
 
   protected abstract val builder: LayoutBuilderImpl
 
-  fun label(text: String, gapLeft: Int = 0, style: ComponentStyle? = null, fontColor: FontColor? = null, bold: Boolean = false) {
-    Label(text, style, fontColor, bold)(gapLeft = gapLeft)
+  fun label(text: String, gapLeft: Int = 0, style: ComponentStyle? = null, fontColor: FontColor? = null, bold: Boolean = false): JLabel {
+    val label = Label(text, style, fontColor, bold)
+    label(gapLeft = gapLeft)
+    return label
   }
 
   fun link(text: String, style: ComponentStyle? = null, action: () -> Unit) {
@@ -91,7 +95,8 @@ abstract class Row {
   }
 
   fun hint(text: String) {
-    label(text, style = ComponentStyle.SMALL, fontColor = FontColor.BRIGHTER, gapLeft = 3 * HORIZONTAL_GAP)
+    val component = label(text, style = ComponentStyle.SMALL, fontColor = FontColor.BRIGHTER)
+    component.putClientProperty(COMPONENT_TAG_HINT, true)
   }
 
   fun panel(title: String, wrappedComponent: Component, vararg constraints: CCFlags) {
@@ -115,7 +120,6 @@ abstract class Row {
     row.init()
     return row
   }
-
 
   inline fun row(init: Row.() -> Unit): Row {
     val row = createRow(null)

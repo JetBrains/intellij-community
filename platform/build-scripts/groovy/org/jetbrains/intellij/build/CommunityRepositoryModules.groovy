@@ -260,7 +260,6 @@ class CommunityRepositoryModules {
       withModule("android.sdktools.repository")
       withModule("intellij.android.sherpaUi", "constraint-layout.jar")
       withModule("android.sdktools.sdklib", "sdklib.jar")
-      withModule("android.sdktools.sdk-common", "sdk-common.jar")
       withModule("android.sdktools.layoutlib-api", "layoutlib-api.jar")
       withModule("intellij.android.layoutlib", "layoutlib-loader.jar")
       withModule("android.sdktools.chunkio", "pixelprobe.jar")
@@ -277,7 +276,6 @@ class CommunityRepositoryModules {
       withModule("android.sdktools.perflib", "sdk-tools.jar")
       withModule("android.sdktools.builder-model", "sdk-tools.jar")
       withModule("android.sdktools.builder-test-api", "sdk-tools.jar")
-      withModule("android.sdktools.android-annotations", "sdk-tools.jar")
       withModule("intellij.android.layoutInspector", "sdk-tools.jar")
 
       withModule("intellij.android.jps", "jps/android-jps-plugin.jar")
@@ -313,6 +311,9 @@ class CommunityRepositoryModules {
       withProjectLibrary("archive-patcher")
       withProjectLibrary("com.android.tools.analytics-library:shared:26.0.0")
       withProjectLibrary("com.android.tools.analytics-library:tracker:26.0.0")
+      withProjectLibrary("com.android.tools:annotations:26.0.0")
+      withProjectLibrary("com.android.tools:sdk-common:26.0.0")
+      withProjectLibrary("com.android.tools.build:manifest-merger:26.0.0")
       withProjectLibrary("analytics-protos")
 
       additionalModulesToJars.entrySet().each {

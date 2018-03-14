@@ -1,9 +1,8 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.api
 
 import com.google.common.net.UrlEscapers
 import com.intellij.util.io.URLUtil
-import org.apache.http.client.utils.URIBuilder
 import org.jetbrains.idea.svn.SvnUtil
 import org.jetbrains.idea.svn.commandLine.SvnBindException
 import java.net.URI
@@ -24,9 +23,8 @@ class Url private constructor(innerUri: URI) {
     if (protocol != url.protocol || host != url.host || port != url.port || userInfo != url.userInfo) return null
 
     val commonPath = SvnUtil.ensureStartSlash(getCommonAncestor(path, url.path))
-
     return try {
-      wrap { URIBuilder(uri).setPath(commonPath).build() }
+      wrap { URI(uri.scheme, uri.userInfo, uri.host, uri.port, commonPath, uri.query, uri.fragment) }
     }
     catch (e: SvnBindException) {
       null
@@ -38,7 +36,7 @@ class Url private constructor(innerUri: URI) {
     if (path.isEmpty() || path == "/") this else wrap { uri.resolve(URI(prepareUri(path.removePrefix("/"), encoded))) }
 
   @Throws(SvnBindException::class)
-  fun setUserInfo(userInfo: String?) = wrap { URIBuilder(uri).setUserInfo(userInfo).build() }
+  fun setUserInfo(userInfo: String?) = wrap { URI(uri.scheme, userInfo, uri.host, uri.port, uri.path, uri.query, uri.fragment) }
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -53,8 +51,10 @@ class Url private constructor(innerUri: URI) {
   fun toDecodedString() = URLUtil.unescapePercentSequences(toString())
 
   companion object {
-    @JvmField val EMPTY = Url(URI(""))
-    @JvmField val DEFAULT_PORTS = mapOf("http" to 80, "https" to 443, "svn" to 3690, "svn+ssh" to 22)
+    @JvmField
+    val EMPTY = Url(URI(""))
+    @JvmField
+    val DEFAULT_PORTS = mapOf("http" to 80, "https" to 443, "svn" to 3690, "svn+ssh" to 22)
 
     @JvmStatic
     @Throws(SvnBindException::class)
@@ -101,10 +101,10 @@ class Url private constructor(innerUri: URI) {
       .joinToString("/") { it.first }
 
     private fun hasDefaultPort(uri: URI) = uri.port < 0 || uri.port == DEFAULT_PORTS[uri.scheme]
-    private fun fixDefaultPort(uri: URI) = if (uri.port >= 0 && hasDefaultPort(uri)) URIBuilder(uri).setPort(-1).build() else uri
+    private fun fixDefaultPort(uri: URI) = if (uri.port >= 0 && hasDefaultPort(uri)) URI(uri.scheme, uri.userInfo, uri.host, -1, uri.path, uri.query, uri.fragment) else uri
     private fun prepareUri(uri: String, encoded: Boolean) = encode(ensureEndSlash(uri), encoded)
     private fun encode(value: String, encoded: Boolean) = if (encoded) value else UrlEscapers.urlFragmentEscaper().escape(value)
-    private fun ensureEndSlash(value: String) = if (value.lastOrNull() == '/') value else value + '/'
+    private fun ensureEndSlash(value: String) = if (value.lastOrNull() == '/') value else "$value/"
     private fun wrap(block: () -> URI): Url {
       try {
         return Url(block())

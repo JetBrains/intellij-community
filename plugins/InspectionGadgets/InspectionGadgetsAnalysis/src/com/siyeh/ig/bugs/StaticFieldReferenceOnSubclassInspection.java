@@ -24,7 +24,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.PsiReplacementUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class StaticFieldReferenceOnSubclassInspection extends BaseInspection implements CleanupLocalInspectionTool {
@@ -75,7 +74,7 @@ public class StaticFieldReferenceOnSubclassInspection extends BaseInspection imp
       if (expression == null) return;
       final PsiField field = ObjectUtils.tryCast(expression.resolve(), PsiField.class);
       if (field == null) return;
-      PsiReplacementUtil.replaceExpressionWithReferenceTo(expression, field);
+      expression.bindToElement(field);
     }
   }
 

@@ -664,12 +664,12 @@ class LineStatusTrackerModifyDocumentTest : BaseLineStatusTrackerTestCase() {
       tracker.doFrozen(Runnable {
         assertNull(tracker.getRanges())
 
-        runCommand {
+        runCommandVerify {
           document.setText("")
           document.setText("Y")
         }
 
-        runCommand {
+        runCommandVerify {
           document.setText("X\nX\nX\nX")
         }
 
@@ -687,12 +687,12 @@ class LineStatusTrackerModifyDocumentTest : BaseLineStatusTrackerTestCase() {
       tracker.doFrozen(Runnable {
         assertNull(tracker.getRanges())
 
-        runCommand {
+        runCommandVerify {
           document.setText("")
           document.setText("Y")
         }
 
-        runCommand {
+        runCommandVerify {
           document.setText(parseInput("Y_X_X_X_X"))
         }
 
@@ -711,7 +711,7 @@ class LineStatusTrackerModifyDocumentTest : BaseLineStatusTrackerTestCase() {
         assertNull(tracker.getRanges())
 
         tracker.doFrozen(Runnable {
-          runCommand {
+          runCommandVerify {
             document.setText("")
             document.setText("Y")
           }
@@ -720,7 +720,7 @@ class LineStatusTrackerModifyDocumentTest : BaseLineStatusTrackerTestCase() {
         })
         assertNull(tracker.getRanges())
 
-        runCommand {
+        runCommandVerify {
           document.setText("X\nX\nX\nX")
         }
 
@@ -740,7 +740,7 @@ class LineStatusTrackerModifyDocumentTest : BaseLineStatusTrackerTestCase() {
 
         tracker.setBaseRevision(parseInput("X_X_X_Z_Z"))
 
-        runCommand {
+        runCommandVerify {
           document.setText(parseInput("Y_X_X_X_X_Z_Z"))
         }
 

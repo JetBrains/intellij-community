@@ -390,7 +390,32 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     if (StringUtil.isNotEmpty(componentName)) {
       name += " \"" + componentName + "\"";
     }
+    String fieldName = getFieldName(component);
+    if (fieldName != null) {
+      name += "(" + fieldName+")";
+    }
     return name;
+  }
+
+  private static String getFieldName(Component component) {
+    Container parent = component.getParent();
+    int deepness = 1;
+    while(parent != null && deepness <= 3) {
+      Class<? extends Container> aClass = parent.getClass();
+      Field[] fields = aClass.getDeclaredFields();
+      for (Field field : fields) {
+        try {
+          field.setAccessible(true);
+          if (field.get(parent) == component) return field.getName();
+        }
+        catch (IllegalAccessException e) {
+          //skip
+        }
+      }
+      parent = parent.getParent();
+      deepness++;
+    }
+    return null;
   }
 
   private static TreeModel buildModel(Component c) {

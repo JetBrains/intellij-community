@@ -50,11 +50,8 @@ public class MethodProcessorRunnable implements Runnable {
       DecompilerContext.setCurrentContext(parentContext);
       root = codeToJava(method, methodDescriptor, varProc);
     }
-    catch (ThreadDeath ex) {
-      throw ex;
-    }
-    catch (Throwable ex) {
-      error = ex;
+    catch (Throwable t) {
+      error = t;
     }
     finally {
       DecompilerContext.setCurrentContext(null);
@@ -129,39 +126,26 @@ public class MethodProcessorRunnable implements Runnable {
 
     SequenceHelper.condenseSequences(root);
 
-    while (true) {
-      StackVarsProcessor stackProc = new StackVarsProcessor();
+    StackVarsProcessor stackProc = new StackVarsProcessor();
+
+    do {
       stackProc.simplifyStackVars(root, mt, cl);
-
       varProc.setVarVersions(root);
-
-      if (!new PPandMMHelper().findPPandMM(root)) {
-        break;
-      }
     }
+    while (new PPandMMHelper().findPPandMM(root));
 
     while (true) {
       LabelHelper.cleanUpEdges(root);
 
-      while (true) {
+      do {
         MergeHelper.enhanceLoops(root);
-
-        if (LoopExtractHelper.extractLoops(root)) {
-          continue;
-        }
-
-        if (!IfHelper.mergeAllIfs(root)) {
-          break;
-        }
       }
+      while (LoopExtractHelper.extractLoops(root) || IfHelper.mergeAllIfs(root));
 
       if (DecompilerContext.getOption(IFernflowerPreferences.IDEA_NOT_NULL_ANNOTATION)) {
         if (IdeaNotNullHelper.removeHardcodedChecks(root, mt)) {
           SequenceHelper.condenseSequences(root);
-
-          StackVarsProcessor stackProc = new StackVarsProcessor();
           stackProc.simplifyStackVars(root, mt, cl);
-
           varProc.setVarVersions(root);
         }
       }
@@ -178,9 +162,9 @@ public class MethodProcessorRunnable implements Runnable {
       }
 
       // FIXME: !!
-      //			if(!EliminateLoopsHelper.eliminateLoops(root)) {
-      //				break;
-      //			}
+      //if(!EliminateLoopsHelper.eliminateLoops(root)) {
+      //  break;
+      //}
     }
 
     ExitHelper.removeRedundantReturns(root);

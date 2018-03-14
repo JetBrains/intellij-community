@@ -23,13 +23,20 @@ public class LightAdvLVTIHighlightingTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testSimpleAvailability() { doTest(); }
+
   public void testDisabledInspections() {
     enableInspectionTool(new AnonymousCanBeLambdaInspection());
     doTest(BASE_PATH + "/" + getTestName(false) + ".java", true, false);
   }
+
   public void testVarClassNameConflicts() { doTest(); }
   public void testStandaloneInVarContext() { doTest(); }
   public void testUpwardProjection() { doTest(); }
+
+  public void testVarInLambdaParameters() {
+    setLanguageLevel(LanguageLevel.JDK_X);
+    doTest();
+  }
 
   @Override
   protected Sdk getProjectJDK() {

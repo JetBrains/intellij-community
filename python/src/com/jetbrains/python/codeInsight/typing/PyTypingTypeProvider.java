@@ -7,6 +7,8 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.ResolveResult;
@@ -94,7 +96,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   private static final String PY3_BINARY_FILE_TYPE = "typing.BinaryIO";
   private static final String PY3_TEXT_FILE_TYPE = "typing.TextIO";
 
-  public static final Pattern TYPE_COMMENT_PATTERN = Pattern.compile("# *type: *([^#]*?) *(#.*)?");
+  private static final Pattern TYPE_COMMENT_PATTERN = Pattern.compile("# *type: *([^#]+) *(#.*)?");
 
   public static final ImmutableMap<String, String> BUILTIN_COLLECTION_CLASSES = ImmutableMap.<String, String>builder()
     .put(LIST, "list")
@@ -641,30 +643,44 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     }
     final String comment = target.getTypeCommentAnnotation();
     if (comment != null) {
-      final Ref<PyType> fromTypeComment = getVariableTypeCommentType(comment, target, new Context(context));
-      if (fromTypeComment != null) {
-        final PyType type = Ref.deref(fromTypeComment);
-        if (type instanceof PyTupleType) {
-          final PyTupleExpression tupleExpr = PsiTreeUtil.getParentOfType(target, PyTupleExpression.class);
-          if (tupleExpr != null) {
-            return Ref.create(PyTypeChecker.getTargetTypeFromTupleAssignment(target, tupleExpr, (PyTupleType)type));
-          }
-        }
-        return fromTypeComment;
-      }
+      return getVariableTypeCommentType(comment, target, new Context(context));
     }
     return null;
   }
 
   /**
-   * Checks that text of a comment starts with the "type:" prefix and returns trimmed part afterwards. This trailing part is supposed to
-   * contain type annotation in PEP 484 compatible format.
+   * Checks that text of a comment starts with "# type:" prefix and returns trimmed type hint after it.
+   * The trailing part is supposed to contain type annotation in PEP 484 compatible format and an optional
+   * plain text comment separated from it with another "#".
+   * <p>
+   * For instance, for {@code # type: List[int]  # comment} it returns {@code List[int]}.
+   * <p>
+   * This method cannot return an empty string.
+   *
+   * @see #getTypeCommentValueRange(String)
    */
   @Nullable
   public static String getTypeCommentValue(@NotNull String text) {
     final Matcher m = TYPE_COMMENT_PATTERN.matcher(text);
     if (m.matches()) {
-      return m.group(1);
+      return StringUtil.nullize(m.group(1).trim());
+    }
+    return null;
+  }
+
+  /**
+   * Returns the corresponding text range for a type hint as returned by {@link #getTypeCommentValue(String)}.
+   *
+   * @see #getTypeCommentValue(String)
+   */
+  @Nullable
+  public static TextRange getTypeCommentValueRange(@NotNull String text) {
+    final Matcher m = TYPE_COMMENT_PATTERN.matcher(text);
+    if (m.matches()) {
+      final String hint = getTypeCommentValue(text);
+      if (hint != null) {
+        return TextRange.from(m.start(1), hint.length());
+      }
     }
     return null;
   }
@@ -1004,19 +1020,106 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   }
 
   @Nullable
-  private static Ref<PyType> getVariableTypeCommentType(@NotNull String contents, @NotNull PsiElement anchor, @NotNull Context context) {
+  private static Ref<PyType> getVariableTypeCommentType(@NotNull String contents,
+                                                        @NotNull PyTargetExpression target,
+                                                        @NotNull Context context) {
     // TODO pass the real anchor as the context element for the fragment to resolve local classes/type aliases
-    final PyExpression expr = PyPsiUtils.flattenParens(PyUtil.createExpressionFromFragment(contents, anchor.getContainingFile()));
+    final PyExpression expr = PyPsiUtils.flattenParens(PyUtil.createExpressionFromFragment(contents, target.getContainingFile()));
     if (expr != null) {
       // Such syntax is specific to "# type:" comments, unpacking in type hints is not allowed anywhere else
       if (expr instanceof PyTupleExpression) {
-        final PyTupleExpression tupleExpr = (PyTupleExpression)expr;
-        final List<PyType> elementTypes = ContainerUtil.map(tupleExpr.getElements(), elementExpr -> Ref.deref(getType(elementExpr, context)));
-        return Ref.create(PyTupleType.create(anchor, elementTypes));
+        // XXX: Switches stub to AST
+        final PyExpression topmostTarget = findTopmostTarget(target);
+        if (topmostTarget != null) {
+          final Map<PyTargetExpression, PyExpression> targetToExpr = mapTargetsToAnnotations(topmostTarget, expr);
+          final PyExpression typeExpr = targetToExpr.get(target);
+          if (typeExpr != null) {
+            return getType(typeExpr, context);
+          }
+        }
       }
-      return getType(expr, context);
+      else {
+        return getType(expr, context);
+      }
     }
     return null;
+  }
+
+  @Nullable
+  private static PyExpression findTopmostTarget(@NotNull PyTargetExpression target) {
+    final PyElement validTargetParent = PsiTreeUtil.getParentOfType(target, PyForPart.class, PyWithItem.class, PyAssignmentStatement.class);
+    if (validTargetParent == null) {
+      return null;
+    }
+    final PyExpression topmostTarget = as(PsiTreeUtil.findPrevParent(validTargetParent, target), PyExpression.class);
+    if (validTargetParent instanceof PyForPart && topmostTarget != ((PyForPart)validTargetParent).getTarget()) {
+      return null;
+    }
+    if (validTargetParent instanceof PyWithItem && topmostTarget != ((PyWithItem)validTargetParent).getTarget()) {
+      return null;
+    }
+    if (validTargetParent instanceof PyAssignmentStatement &&
+        ArrayUtil.indexOf(((PyAssignmentStatement)validTargetParent).getRawTargets(), topmostTarget) < 0) {
+      return null;
+    }
+    return topmostTarget;
+  }
+
+  @NotNull
+  public static Map<PyTargetExpression, PyExpression> mapTargetsToAnnotations(@NotNull PyExpression targetExpr,
+                                                                              @NotNull PyExpression typeExpr) {
+    final PyExpression targetsNoParen = PyPsiUtils.flattenParens(targetExpr);
+    final PyExpression typesNoParen = PyPsiUtils.flattenParens(typeExpr);
+    if (targetsNoParen == null || typesNoParen == null) {
+      return Collections.emptyMap();
+    }
+    if (targetsNoParen instanceof PySequenceExpression && typesNoParen instanceof PySequenceExpression) {
+      final Ref<Map<PyTargetExpression, PyExpression>> result = new Ref<>(new LinkedHashMap<>());
+      mapTargetsToExpressions((PySequenceExpression)targetsNoParen, (PySequenceExpression)typesNoParen, result);
+      return result.isNull() ? Collections.emptyMap() : Collections.unmodifiableMap(result.get());
+    }
+    else if (targetsNoParen instanceof PyTargetExpression && !(typesNoParen instanceof PySequenceExpression)) {
+      return ImmutableMap.of((PyTargetExpression)targetsNoParen, typesNoParen);
+    }
+    return Collections.emptyMap();
+  }
+
+  private static void mapTargetsToExpressions(@NotNull PySequenceExpression targetSequence,
+                                              @NotNull PySequenceExpression valueSequence,
+                                              @NotNull Ref<Map<PyTargetExpression, PyExpression>> result) {
+    final PyExpression[] targets = targetSequence.getElements();
+    final PyExpression[] values = valueSequence.getElements();
+
+    if (targets.length != values.length) {
+      result.set(null);
+      return;
+    }
+
+    for (int i = 0; i < targets.length; i++) {
+      final PyExpression target = PyPsiUtils.flattenParens(targets[i]);
+      final PyExpression value = PyPsiUtils.flattenParens(values[i]);
+
+      if (target == null || value == null) {
+        result.set(null);
+        return;
+      }
+
+      if (target instanceof PySequenceExpression && value instanceof PySequenceExpression) {
+        mapTargetsToExpressions((PySequenceExpression)target, (PySequenceExpression)value, result);
+        if (result.isNull()) {
+          return;
+        }
+      }
+      else if (target instanceof PyTargetExpression && !(value instanceof PySequenceExpression)) {
+        final Map<PyTargetExpression, PyExpression> map = result.get();
+        assert map != null;
+        map.put((PyTargetExpression)target, value);
+      }
+      else {
+        result.set(null);
+        return;
+      }
+    }
   }
 
   @Nullable

@@ -104,6 +104,26 @@ public class Main {
       return seen ? best : supplier.getAsInt();
   }
 
+  public static int testMinMaxValue(List<String> strings) {
+      int best = Integer.MAX_VALUE;
+      for (String string : strings) {
+          int length = string.length();
+          if (length < best)
+              best = length;
+      }
+      return best;
+  }
+
+  public static long testMaxMinValue(List<String> strings) {
+      long max = Long.MIN_VALUE;
+      for (String string : strings) {
+          long length = string.length();
+          if (length > max)
+              max = length;
+      }
+      return max;
+  }
+
   public static void main(String[] args) {
     System.out.println(testMaxComparator(Arrays.asList()));
     System.out.println(testMaxComparator(Arrays.asList("a", "bbb", "cc", "d", "eee")));

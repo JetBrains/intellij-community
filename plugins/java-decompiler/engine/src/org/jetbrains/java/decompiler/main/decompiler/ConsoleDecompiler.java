@@ -9,6 +9,7 @@ import org.jetbrains.java.decompiler.main.extern.IResultSaver;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
@@ -238,7 +239,7 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
       ZipOutputStream out = mapArchiveStreams.get(file);
       out.putNextEntry(new ZipEntry(entryName));
       if (content != null) {
-        out.write(content.getBytes("UTF-8"));
+        out.write(content.getBytes(StandardCharsets.UTF_8));
       }
     }
     catch (IOException ex) {

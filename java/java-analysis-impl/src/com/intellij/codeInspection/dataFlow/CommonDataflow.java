@@ -61,6 +61,18 @@ public class CommonDataflow {
       DfaFactMap map = this.myFacts.get(expression);
       return map == null ? null : map.get(type);
     }
+
+    /**
+     * Returns the fact map which represents all the facts known for given expression
+     *
+     * @param expression an expression to check
+     * @return the fact map which represents all the facts known for given expression; empty map if the expression was
+     * analyzed, but no particular facts were inferred; null if the expression was not analyzed.
+     */
+    @Nullable
+    public DfaFactMap getAllFacts(PsiExpression expression) {
+      return this.myFacts.get(expression);
+    }
   }
 
   @Contract("null -> null")

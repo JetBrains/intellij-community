@@ -350,7 +350,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
 
     myUpdateRunnableFuture.cancel(false);
 
-    final DaemonProgressIndicator progress = createUpdateProgress();
+    final DaemonProgressIndicator progress = createUpdateProgress(map.keySet());
     myPassExecutorService.submitPasses(map, progress);
     try {
       long start = System.currentTimeMillis();
@@ -802,7 +802,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
       // cancel all after calling createPasses() since there are perverts {@link com.intellij.util.xml.ui.DomUIFactoryImpl} who are changing PSI there
       cancelUpdateProgress(true, "Cancel by alarm");
       myUpdateRunnableFuture.cancel(false);
-      DaemonProgressIndicator progress = createUpdateProgress();
+      DaemonProgressIndicator progress = createUpdateProgress(passes.keySet());
       myPassExecutorService.submitPasses(passes, progress);
     }
   };
@@ -849,24 +849,37 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
   }
 
   @NotNull
-  private synchronized DaemonProgressIndicator createUpdateProgress() {
+  private synchronized DaemonProgressIndicator createUpdateProgress(@NotNull Collection<FileEditor> fileEditors) {
     DaemonProgressIndicator old = myUpdateProgress;
     if (!old.isCanceled()) {
       old.cancel();
     }
-    DaemonProgressIndicator progress = new DaemonProgressIndicator() {
-      @Override
-      public void stopIfRunning() {
-        super.stopIfRunning();
-        myProject.getMessageBus().syncPublisher(DAEMON_EVENT_TOPIC).daemonFinished();
-        HighlightingSessionImpl.clearProgressIndicator(this);
-      }
-    };
+    DaemonProgressIndicator progress = new MyDaemonProgressIndicator(myProject, fileEditors);
     progress.setModalityProgress(null);
     progress.start();
+    myProject.getMessageBus().syncPublisher(DAEMON_EVENT_TOPIC).daemonStarting(fileEditors);
     myUpdateProgress = progress;
     return progress;
   }
+
+  private static class MyDaemonProgressIndicator extends DaemonProgressIndicator {
+    private final Project myProject;
+    private Collection<FileEditor> myFileEditors;
+
+    public MyDaemonProgressIndicator(Project project, Collection<FileEditor> fileEditors) {
+      myFileEditors = fileEditors;
+      myProject = project;
+    }
+
+    @Override
+    public void stopIfRunning() {
+      super.stopIfRunning();
+      myProject.getMessageBus().syncPublisher(DAEMON_EVENT_TOPIC).daemonFinished(myFileEditors);
+      myFileEditors = null;
+      HighlightingSessionImpl.clearProgressIndicator(this);
+    }
+  }
+
 
   @Override
   public void autoImportReferenceAtCursor(@NotNull Editor editor, @NotNull PsiFile file) {
