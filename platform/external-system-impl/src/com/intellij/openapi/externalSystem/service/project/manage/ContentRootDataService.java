@@ -64,6 +64,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import static com.intellij.openapi.vfs.VfsUtilCore.pathToUrl;
+
 /**
  * @author Denis Zhdanov
  * @since 2/7/12 3:20 PM
@@ -249,7 +251,7 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
         return entry;
       }
     }
-    return model.addContentEntry(toVfsUrl(path));
+    return model.addContentEntry(pathToUrl(path));
   }
 
   private static void createSourceRootIfAbsent(
@@ -291,7 +293,7 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
       }
     }
 
-    SourceFolder sourceFolder = entry.addSourceFolder(toVfsUrl(root.getPath()), sourceRootType);
+    SourceFolder sourceFolder = entry.addSourceFolder(pathToUrl(root.getPath()), sourceRootType);
     if (!StringUtil.isEmpty(root.getPackagePrefix())) {
       sourceFolder.setPackagePrefix(root.getPackagePrefix());
     }
@@ -323,14 +325,9 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
     if (LOG.isDebugEnabled()) {
       LOG.debug(String.format("Importing excluded root '%s' for content root '%s' of module '%s'", root, entry.getUrl(), moduleName));
     }
-    entry.addExcludeFolder(toVfsUrl(rootPath));
+    entry.addExcludeFolder(pathToUrl(rootPath));
     if (!Registry.is("ide.hide.excluded.files")) {
       ChangeListManager.getInstance(project).addDirectoryToIgnoreImplicitly(rootPath);
     }
-  }
-
-
-  private static String toVfsUrl(@NotNull String path) {
-    return LocalFileSystem.PROTOCOL_PREFIX + path;
   }
 }
