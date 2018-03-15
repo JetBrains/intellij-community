@@ -214,6 +214,7 @@ public class OutputChecker {
         result = result.replaceAll("\\((.*):\\d+\\)", "($1:!LINE_NUMBER!)");
 
         result = fixSlashes(result, JDK_HOME_STR);
+        result = result.replaceAll("!JDK_HOME!\\\\bin\\\\java.exe", "!JDK_HOME!\\\\bin\\\\java");
 
         result = stripQuotesAroundClasspath(result);
 
