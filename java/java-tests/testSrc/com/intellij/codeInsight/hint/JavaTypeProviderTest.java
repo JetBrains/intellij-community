@@ -1,8 +1,13 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hint;
 
+import com.intellij.codeInsight.EditorInfo;
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.psi.*;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import org.intellij.lang.annotations.Language;
 
@@ -10,7 +15,7 @@ public class JavaTypeProviderTest extends LightCodeInsightTestCase {
   public void testRangeHint() {
     doTest("  void test(int x) {\n" +
            "    x = Math.abs(x);\n" +
-           "    /*expression*/x\n" +
+           "    <selection>x</selection>\n" +
            "  }", "int",
            "<table>" +
            "<tr><td align='right' valign='top'><strong>Type:</strong></td>" +
@@ -23,7 +28,7 @@ public class JavaTypeProviderTest extends LightCodeInsightTestCase {
   public void testOptionalHint() {
     doTest("  void test(java.util.Optional<String> t) {\n" +
            "    if(t.isPresent()) {\n" +
-           "      /*expression*/t\n" +
+           "      <selection>t</selection>\n" +
            "    }\n" +
            "  }", "Optional&lt;String&gt;",
            "<table>" +
@@ -41,7 +46,7 @@ public class JavaTypeProviderTest extends LightCodeInsightTestCase {
            "    if(a instanceof String || a instanceof Number) {\n" +
            "      \n" +
            "    } else if(a instanceof CharSequence){\n" +
-           "      /*expression*/a\n" +
+           "      <selection>a</selection>\n" +
            "    } else {\n" +
            "      a\n" +
            "    }\n" +
@@ -63,7 +68,7 @@ public class JavaTypeProviderTest extends LightCodeInsightTestCase {
            "    } else if(a instanceof CharSequence){\n" +
            "      \n" +
            "    } else {\n" +
-           "      /*expression*/a\n" +
+           "      <selection>a</selection>\n" +
            "    }\n" +
            "  }\n", "Object",
            "<table>" +
@@ -76,19 +81,14 @@ public class JavaTypeProviderTest extends LightCodeInsightTestCase {
   private static void doTest(@Language(value = "JAVA", prefix = "@SuppressWarnings(\"all\")class X{", suffix = "}") String method,
                              @Language("HTML") String expectedHint,
                              @Language("HTML") String expectedAdvancedHint) {
-    PsiFile file =
-      PsiFileFactory.getInstance(getProject()).createFileFromText("X.java", JavaFileType.INSTANCE, "class X{" + method + "}");
-    PsiComment comment = SyntaxTraverser.psiTraverser(file).filter(PsiComment.class)
-                                        .filter(c -> c.textMatches("/*expression*/"))
-                                        .first();
-    assertNotNull("/*expression*/ comment not found", comment);
-    PsiElement sibling = comment.getNextSibling();
-    assertNotNull(sibling);
-    while (!(sibling instanceof PsiExpression) && sibling.getFirstChild() != null) {
-      sibling = sibling.getFirstChild();
-    }
-    assertTrue("Expression not found at: " + sibling.getText(), sibling instanceof PsiExpression);
-    PsiExpression expression = (PsiExpression)sibling;
+    EditorInfo info = new EditorInfo("class X{" + method + "}");
+    PsiFile file = PsiFileFactory.getInstance(getProject()).createFileFromText("X.java", JavaFileType.INSTANCE, info.getNewFileText());
+    assertEquals("Single selection must be specified", 1, info.caretState.carets.size());
+    TextRange selection = info.caretState.carets.get(0).selection;
+    assertNotNull("No <selection>..</selection> in test data", selection);
+    PsiExpression expression =
+      PsiTreeUtil.findElementOfClassAtRange(file, selection.getStartOffset(), selection.getEndOffset(), PsiExpression.class);
+    assertNotNull("Expression not found", expression);
     JavaTypeProvider provider = new JavaTypeProvider();
     assertEquals(expectedHint, provider.getInformationHint(expression));
     assertTrue(provider.hasAdvancedInformation());
