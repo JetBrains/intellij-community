@@ -152,38 +152,19 @@ if [ -n "$@@product_uc@@_PROPERTIES" ]; then
   IDE_PROPERTIES_PROPERTY="-Didea.properties.file=$@@product_uc@@_PROPERTIES"
 fi
 
-VM_OPTIONS_FILE=""
-if [ -n "$@@product_uc@@_VM_OPTIONS" -a -r "$@@product_uc@@_VM_OPTIONS" ]; then
-  # explicit
-  VM_OPTIONS_FILE="$@@product_uc@@_VM_OPTIONS"
-elif [ -r "$IDE_HOME.vmoptions" ]; then
-  # Toolbox
-  VM_OPTIONS_FILE="$IDE_HOME.vmoptions"
-elif [ -r "$HOME/.@@system_selector@@/config/@@vm_options@@$BITS.vmoptions" ]; then
-  # user-overridden
-  VM_OPTIONS_FILE="$HOME/.@@system_selector@@/config/@@vm_options@@$BITS.vmoptions"
-elif [ -r "$IDE_BIN_HOME/@@vm_options@@$BITS.vmoptions" ]; then
-  # default, standard installation
-  VM_OPTIONS_FILE="$IDE_BIN_HOME/@@vm_options@@$BITS.vmoptions"
-else
-  # default, universal package
-  test "$OS_TYPE" = "Darwin" && OS_SPECIFIC="mac" || OS_SPECIFIC="linux"
-  VM_OPTIONS_FILE="$IDE_BIN_HOME/$OS_SPECIFIC/@@vm_options@@$BITS.vmoptions"
-fi
-
+# Android Studio: we allow multiple vmoptions files to be included when determining JVM flags.
 VM_OPTIONS=""
-if [ -r "$VM_OPTIONS_FILE" ]; then
-  VM_OPTIONS=`"$CAT" "$VM_OPTIONS_FILE" | "$GREP" -v "^#.*"`
-  if { echo "$VM_OPTIONS" | "$GREP" -q "agentlib:yjpagent" - ; } then
-    if [ "$OS_TYPE" = "Linux" ]; then
-      VM_OPTIONS=`echo "$VM_OPTIONS" | "$SED" -e "s|-agentlib:yjpagent\(-linux\)\?\([^=]*\)|-agentpath:$IDE_BIN_HOME/libyjpagent-linux\2.so|"`
-    else
-      VM_OPTIONS=`echo "$VM_OPTIONS" | "$SED" -e "s|-agentlib:yjpagent[^ ]\+||"`
-    fi
+for VM_OPTIONS_FILE in \
+    $IDE_BIN_HOME/@@vm_options@@$BITS.vmoptions \
+    $HOME/.@@system_selector@@/config/@@vm_options@@$BITS.vmoptions \
+    $IDE_HOME.vmoptions \
+    $@@product_uc@@_VM_OPTIONS; do
+  if [ -r "$VM_OPTIONS_FILE" ]; then
+    VM_OPTIONS_TO_ADD=`"$CAT" "$VM_OPTIONS_FILE" | "$GREP" -v "^#.*"`
+    VM_OPTIONS="${VM_OPTIONS:-}${VM_OPTIONS:+	}${VM_OPTIONS_TO_ADD}"  # tab-delimited; see IFS below
+    VM_OPTIONS_FILES="${VM_OPTIONS_FILES:-}${VM_OPTIONS_FILES:+,}${VM_OPTIONS_FILE}"
   fi
-else
-  message "Cannot find VM options file"
-fi
+done
 
 @@class_path@@
 if [ -n "$@@product_uc@@_CLASSPATH" ]; then
@@ -200,7 +181,7 @@ IFS="$(printf '\n\t')"
   "-XX:ErrorFile=$HOME/java_error_in_@@product_uc@@_%p.log" \
   "-XX:HeapDumpPath=$HOME/java_error_in_@@product_uc@@.hprof" \
   -Didea.paths.selector=@@system_selector@@ \
-  "-Djb.vmOptionsFile=$VM_OPTIONS_FILE" \
+  "-Djb.vmOptionsFile=$VM_OPTIONS_FILES" \
   ${IDE_PROPERTIES_PROPERTY} \
   @@ide_jvm_args@@ \
   com.intellij.idea.Main \
