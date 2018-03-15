@@ -150,12 +150,6 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
       }
       // there's a chance to add a breakpoint when the class is prepared
     }
-    catch (InvalidLineNumberException ex) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("InvalidLineNumberException: " + ex.getMessage());
-      }
-      debugProcess.getRequestsManager().setInvalid(this, DebuggerBundle.message("error.invalid.breakpoint.bad.line.number"));
-    }
     catch(Exception ex) {
       LOG.info(ex);
     }
