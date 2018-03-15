@@ -14,13 +14,13 @@ import com.intellij.find.actions.CompositeActiveComponent;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.IconButton;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Couple;
@@ -29,7 +29,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.ui.InplaceButton;
+import com.intellij.ui.ActiveComponent;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.usages.UsageView;
 import com.intellij.util.ArrayUtil;
@@ -47,7 +47,6 @@ import org.jetbrains.uast.UastContextKt;
 import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -104,10 +103,9 @@ public class ShowDiscoveredTestsAction extends AnAction {
 
     ConfigurationContext context = ConfigurationContext.getFromContext(dataContext);
 
-    InplaceButton runButton = new InplaceButton(new IconButton(RUN_ALL_ACTION_TEXT, AllIcons.Actions.Execute), __ ->
-      runAllDiscoveredTests(project, tree, ref, context, methods));
+    ActiveComponent runButton = createButton(RUN_ALL_ACTION_TEXT, AllIcons.Actions.Execute, () -> runAllDiscoveredTests(project, tree, ref, context, methods));
 
-    ActionListener pinActionListener = __ -> {
+    Runnable pinActionListener = () -> {
       UsageView view = FindUtil.showInUsageView(null, tree.getTestMethods(), initTitle, project);
       if (view != null) {
         view.addButtonToLowerPane(new AbstractAction(RUN_ALL_ACTION_TEXT, AllIcons.Actions.Execute) {
@@ -129,9 +127,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
 
     KeyStroke findUsageKeyStroke = findUsagesKeyStroke();
     String pinTooltip = "Open Find Usages Toolwindow" + (findUsageKeyStroke == null ? "" : " " + KeymapUtil.getKeystrokeText(findUsageKeyStroke));
-    InplaceButton pinButton = new InplaceButton(
-      new IconButton(pinTooltip, AllIcons.General.AutohideOff, AllIcons.General.AutohideOffPressed, AllIcons.General.AutohideOffInactive),
-      pinActionListener);
+    ActiveComponent pinButton = createButton(pinTooltip, AllIcons.General.AutohideOff, pinActionListener);
 
     CompositeActiveComponent component = new CompositeActiveComponent(runButton, pinButton);
 
@@ -142,7 +138,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
         .setResizable(true)
         .setCommandButton(component)
         .setItemChoosenCallback(() -> PsiNavigateUtil.navigate(tree.getSelectedElement()))
-        .registerKeyboardAction(findUsageKeyStroke, pinActionListener)
+        .registerKeyboardAction(findUsageKeyStroke, __ -> pinActionListener.run())
         .setMinSize(new JBDimension(500, 300));
 
     JBPopup popup = builder.createPopup();
@@ -186,6 +182,23 @@ public class ShowDiscoveredTestsAction extends AnAction {
     });
   }
 
+  private static ActiveComponent createButton(String text, Icon icon, Runnable listener) {
+     return new ActiveComponent.Adapter() {
+      @Override
+      public JComponent getComponent() {
+        Presentation presentation = new Presentation();
+        presentation.setText(text);
+        presentation.setDescription(text);
+        presentation.setIcon(icon);
+        return new ActionButton(new AnAction() {
+          @Override
+          public void actionPerformed(AnActionEvent e) {
+            listener.run();
+          }
+        }, presentation, "ShowDiscoveredTestsToolbar", ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
+      }
+    };
+  }
   private static void runAllDiscoveredTests(@NotNull Project project,
                                             DiscoveredTestsTree tree,
                                             Ref<JBPopup> ref,
