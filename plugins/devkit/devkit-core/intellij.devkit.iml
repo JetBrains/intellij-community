@@ -43,10 +43,5 @@
     <orderEntry type="module" module-name="intellij.platform.uast" />
     <orderEntry type="module" module-name="intellij.gradle.java" />
     <orderEntry type="module" module-name="intellij.java.ui" />
-    <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
-    <orderEntry type="module" module-name="intellij.xml.dom.tests" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="TestNG" level="project" />
-    <orderEntry type="module" module-name="intellij.java.compiler.tests" scope="TEST" />
   </component>
 </module>
