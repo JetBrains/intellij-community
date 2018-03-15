@@ -64,9 +64,9 @@
   </extensions>
 
   <actions>
-    <group id="Gradle.GenerateGroup">
+    <group>
       <action id="AddGradleDslPluginAction" class="org.jetbrains.plugins.gradle.codeInsight.actions.AddGradleDslPluginAction"/>
-      <add-to-group group-id="GenerateGroup" anchor="first"/>
+      <add-to-group group-id="Gradle.GenerateGroup" anchor="first"/>
     </group>
   </actions>
 </idea-plugin>
