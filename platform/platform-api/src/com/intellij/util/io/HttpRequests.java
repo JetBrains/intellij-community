@@ -142,7 +142,12 @@ public final class HttpRequests {
 
   @NotNull
   public static RequestBuilder request(@NotNull String url) {
-    return new RequestBuilderImpl(url);
+    return new RequestBuilderImpl(url, null);
+  }
+
+  @NotNull
+  public static RequestBuilder head(@NotNull String url) {
+    return new RequestBuilderImpl(url, "HEAD");
   }
 
   @NotNull
@@ -169,6 +174,7 @@ public final class HttpRequests {
 
   private static class RequestBuilderImpl extends RequestBuilder {
     private final String myUrl;
+    private final String myMethod;
     private int myConnectTimeout = HttpConfigurable.CONNECTION_TIMEOUT;
     private int myTimeout = HttpConfigurable.READ_TIMEOUT;
     private int myRedirectLimit = HttpConfigurable.REDIRECT_LIMIT;
@@ -181,8 +187,9 @@ public final class HttpRequests {
     private ConnectionTuner myTuner;
     private UntrustedCertificateStrategy myUntrustedCertificateStrategy = null;
 
-    private RequestBuilderImpl(@NotNull String url) {
+    private RequestBuilderImpl(@NotNull String url, @Nullable String method) {
       myUrl = url;
+      myMethod = method;
     }
 
     @Override
@@ -525,6 +532,10 @@ public final class HttpRequests {
       }
 
       connection.setUseCaches(false);
+
+      if (builder.myMethod != null) {
+        ((HttpURLConnection)connection).setRequestMethod(builder.myMethod);
+      }
 
       if (builder.myTuner != null) {
         builder.myTuner.tune(connection);
