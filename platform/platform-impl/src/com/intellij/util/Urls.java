@@ -13,247 +13,250 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util;
+package com.intellij.util
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.StandardFileSystems;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.io.URLUtil;
-import gnu.trove.TObjectHashingStrategy;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.StandardFileSystems
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.io.URLUtil
+import gnu.trove.TObjectHashingStrategy
+import java.net.URI
+import java.net.URISyntaxException
+import java.util.regex.Pattern
 
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.Collection;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+private val LOG = Logger.getInstance(Urls::class.java)
 
-public final class Urls {
-  private static final Logger LOG = Logger.getInstance(Urls.class);
+// about ";" see WEB-100359
+private val URI_PATTERN = Pattern.compile("^([^:/?#]+):(//)?([^/?#]*)([^?#;]*)(.*)")
 
-  // about ";" see WEB-100359
-  private static final Pattern URI_PATTERN = Pattern.compile("^([^:/?#]+):(//)?([^/?#]*)([^?#;]*)(.*)");
+object Urls {
+  val caseInsensitiveUrlHashingStrategy: TObjectHashingStrategy<Url> by lazy { CaseInsensitiveUrlHashingStrategy() }
 
-  @NotNull
-  public static Url newUri(@NotNull String scheme, @NotNull String path) {
-    return new UrlImpl(scheme, null, path);
+  @JvmStatic
+  fun newUri(scheme: String?, path: String) = UrlImpl(scheme, null, path)
+
+  @JvmStatic
+  fun newUrl(scheme: String, authority: String, path: String, rawParameters: String?): UrlImpl {
+    return UrlImpl(scheme, authority, path, rawParameters)
   }
 
-  @NotNull
-  public static Url newLocalFileUrl(@NotNull String path) {
-    return new LocalFileUrl(FileUtilRt.toSystemIndependentName(path));
+  @JvmStatic
+  fun newUrl(scheme: String, authority: String, path: String, parameters: Map<String, String?>): UrlImpl {
+    var parametersString: String? = null
+    if (parameters.isNotEmpty()) {
+      val result = StringBuilder()
+      result.append("?")
+      encodeParameters(parameters, result)
+      parametersString = result.toString()
+    }
+    return UrlImpl(scheme, authority, path, parametersString)
   }
 
-  @NotNull
-  public static Url newLocalFileUrl(@NotNull VirtualFile file) {
-    return new LocalFileUrl(file.getPath());
+  @JvmStatic
+  fun encodeParameters(parameters: Map<String, String?>, result: StringBuilder) {
+    val initialSize = result.length
+    for ((name, value) in parameters) {
+      if (result.length != initialSize) {
+        result.append('&')
+      }
+      // https://stackoverflow.com/questions/5330104/encoding-url-query-parameters-in-java
+      result.append(URLUtil.encodeURIComponent(name))
+      if (value != null && value.isNotEmpty()) {
+        result.append('=')
+        result.append(URLUtil.encodeURIComponent(value))
+      }
+    }
   }
 
-  @NotNull
-  public static Url newFromEncoded(@NotNull String url) {
-    Url result = parseEncoded(url);
-    LOG.assertTrue(result != null, url);
-    return result;
+  @JvmStatic
+  fun newLocalFileUrl(path: String) = LocalFileUrl(FileUtilRt.toSystemIndependentName(path))
+
+  @JvmStatic
+  fun newLocalFileUrl(file: VirtualFile) = LocalFileUrl(file.path)
+
+  @JvmStatic
+  fun newFromEncoded(url: String): Url {
+    val result = parseEncoded(url)
+    LOG.assertTrue(result != null, url)
+    return result!!
   }
 
-  @Nullable
-  public static Url parseEncoded(@NotNull String url) {
-    return parse(url, false);
+  @JvmStatic
+  fun parseEncoded(url: String) = parse(url, false)
+
+  fun newHttpUrl(authority: String, path: String?): Url {
+    return newUrl("http", authority, path)
   }
 
-  @NotNull
-  public static Url newHttpUrl(@NotNull String authority, @Nullable String path) {
-    return newUrl("http", authority, path);
+  fun newHttpUrl(authority: String, path: String?, parameters: String?): Url {
+    return UrlImpl("http", authority, path, parameters)
   }
 
-  @NotNull
-  public static Url newHttpUrl(@NotNull String authority, @Nullable String path, @Nullable String parameters) {
-    return new UrlImpl("http", authority, path, parameters);
-  }
-
-  @NotNull
-  public static Url newUrl(@NotNull String scheme, @NotNull String authority, @Nullable String path) {
-    return new UrlImpl(scheme, authority, path);
+  fun newUrl(scheme: String, authority: String, path: String?): Url {
+    return UrlImpl(scheme, authority, path)
   }
 
   /**
-   * Url will not be normalized (see {@link VfsUtilCore#toIdeaUrl(String)}), parsed as is
+   * Url will not be normalized (see [VfsUtilCore.toIdeaUrl]), parsed as is
    */
-  @NotNull
-  public static Url newFromIdea(@NotNull CharSequence url) {
-    Url result = parseFromIdea(url);
-    LOG.assertTrue(result != null, url);
-    return result;
+  @JvmStatic
+  fun newFromIdea(url: CharSequence): Url {
+    val result = parseFromIdea(url)
+    LOG.assertTrue(result != null, url)
+    return result!!
   }
 
   // java.net.URI.create cannot parse "file:///Test Stuff" - but you don't need to worry about it - this method is aware
-  @Nullable
-  public static Url parseFromIdea(@NotNull CharSequence url) {
-    for (int i = 0, n = url.length(); i < n; i++) {
-      char c = url.charAt(i);
+  fun parseFromIdea(url: CharSequence): Url? {
+    var i = 0
+    val n = url.length
+    while (i < n) {
+      val c = url[i]
       if (c == ':') {
         // file:// or dart:core/foo
-        return parseUrl(url);
+        return parseUrl(url)
       }
       else if (c == '/' || c == '\\') {
-        return newLocalFileUrl(url.toString());
+        return newLocalFileUrl(url.toString())
       }
+      i++
     }
-    return newLocalFileUrl(url.toString());
+    return newLocalFileUrl(url.toString())
   }
 
-  @Nullable
-  public static Url parse(@NotNull String url, boolean asLocalIfNoScheme) {
+  fun parse(url: String, asLocalIfNoScheme: Boolean): Url? {
     if (url.isEmpty()) {
-      return null;
+      return null
     }
 
-    if (asLocalIfNoScheme && !URLUtil.containsScheme(url)) {
+    return if (asLocalIfNoScheme && !URLUtil.containsScheme(url)) {
       // nodejs debug - files only in local filesystem
-      return newLocalFileUrl(url);
+      newLocalFileUrl(url)
     }
-    return parseUrl(VfsUtilCore.toIdeaUrl(url));
+    else parseUrl(VfsUtilCore.toIdeaUrl(url))
   }
 
-  @Nullable
-  public static URI parseAsJavaUriWithoutParameters(@NotNull String url) {
-    Url asUrl = parseUrl(url);
-    if (asUrl == null) {
-      return null;
-    }
+  fun parseAsJavaUriWithoutParameters(url: String): URI? {
+    val asUrl = parseUrl(url) ?: return null
 
     try {
-      return toUriWithoutParameters(asUrl);
+      return toUriWithoutParameters(asUrl)
     }
-    catch (Exception e) {
-      LOG.info("Cannot parse url " + url, e);
-      return null;
+    catch (e: Exception) {
+      LOG.info("Cannot parse url $url", e)
+      return null
     }
+
   }
 
-  @Nullable
-  private static Url parseUrl(@NotNull CharSequence url) {
-    CharSequence urlToParse;
+  private fun parseUrl(url: CharSequence): Url? {
+    val urlToParse: CharSequence
     if (StringUtil.startsWith(url, "jar:file://")) {
-      urlToParse = url.subSequence("jar:".length(), url.length());
+      urlToParse = url.subSequence("jar:".length, url.length)
     }
     else {
-      urlToParse = url;
+      urlToParse = url
     }
 
-    Matcher matcher = URI_PATTERN.matcher(urlToParse);
+    val matcher = URI_PATTERN.matcher(urlToParse)
     if (!matcher.matches()) {
-      return null;
+      return null
     }
-    String scheme = matcher.group(1);
-    if (urlToParse != url) {
-      scheme = "jar:" + scheme;
+    var scheme = matcher.group(1)
+    if (urlToParse !== url) {
+      scheme = "jar:$scheme"
     }
 
-    String authority = StringUtil.nullize(matcher.group(3));
-    String path = StringUtil.nullize(matcher.group(4));
-    boolean hasUrlSeparator = !StringUtil.isEmpty(matcher.group(2));
+    var authority = StringUtil.nullize(matcher.group(3))
+    var path = StringUtil.nullize(matcher.group(4))
+    val hasUrlSeparator = !StringUtil.isEmpty(matcher.group(2))
     if (authority == null) {
       if (hasUrlSeparator) {
-        authority = "";
+        authority = ""
       }
     }
-    else if (StandardFileSystems.FILE_PROTOCOL.equals(scheme) || !hasUrlSeparator) {
-      path = path == null ? authority : (authority + path);
-      authority = hasUrlSeparator ? "" : null;
+    else if (StandardFileSystems.FILE_PROTOCOL == scheme || !hasUrlSeparator) {
+      path = if (path == null) authority else authority + path
+      authority = if (hasUrlSeparator) "" else null
     }
 
     // canonicalize only if authority is not empty or file url - we should not canonicalize URL with unknown scheme (webpack:///./modules/flux-orion-plugin/fluxPlugin.ts)
-    if (path != null && (!StringUtil.isEmpty(authority) || StandardFileSystems.FILE_PROTOCOL.equals(scheme))) {
-      path = FileUtil.toCanonicalUriPath(path);
+    if (path != null && (!StringUtil.isEmpty(authority) || StandardFileSystems.FILE_PROTOCOL == scheme)) {
+      path = FileUtil.toCanonicalUriPath(path)
     }
-    return new UrlImpl(scheme, authority, path, matcher.group(5));
+    return UrlImpl(scheme, authority, path, matcher.group(5))
   }
 
-  @NotNull
-  public static Url newFromVirtualFile(@NotNull VirtualFile file) {
-    if (file.isInLocalFileSystem()) {
-      return newUri(file.getFileSystem().getProtocol(), file.getPath());
+  @JvmStatic
+  fun newFromVirtualFile(file: VirtualFile): Url {
+    if (file.isInLocalFileSystem) {
+      return newUri(file.fileSystem.protocol, file.path)
     }
     else {
-      Url url = parseUrl(file.getUrl());
-      return url == null ? new UrlImpl(file.getPath()) : url;
+      val url = parseUrl(file.url)
+      return url ?: UrlImpl(file.path)
     }
   }
 
-  public static boolean equalsIgnoreParameters(@NotNull Url url, @NotNull Collection<Url> urls) {
-    return equalsIgnoreParameters(url, urls, true);
-  }
-
-  public static boolean equalsIgnoreParameters(@NotNull Url url, @NotNull Collection<Url> urls, boolean caseSensitive) {
-    for (Url otherUrl : urls) {
+  @JvmOverloads
+  fun equalsIgnoreParameters(url: Url, urls: Collection<Url>, caseSensitive: Boolean = true): Boolean {
+    for (otherUrl in urls) {
       if (equals(url, otherUrl, caseSensitive, true)) {
-        return true;
+        return true
       }
     }
-    return false;
+    return false
   }
 
-  public static boolean equalsIgnoreParameters(@NotNull Url url, @NotNull VirtualFile file) {
-    if (file.isInLocalFileSystem()) {
-      return url.isInLocalFileSystem() && (SystemInfoRt.isFileSystemCaseSensitive
-                                           ? url.getPath().equals(file.getPath()) :
-                                           url.getPath().equalsIgnoreCase(file.getPath()));
+  fun equalsIgnoreParameters(url: Url, file: VirtualFile): Boolean {
+    if (file.isInLocalFileSystem) {
+      return url.isInLocalFileSystem && if (SystemInfoRt.isFileSystemCaseSensitive)
+        url.path == file.path
+      else
+        url.path.equals(file.path, ignoreCase = true)
     }
-    else if (url.isInLocalFileSystem()) {
-      return false;
+    else if (url.isInLocalFileSystem) {
+      return false
     }
 
-    Url fileUrl = parseUrl(file.getUrl());
-    return fileUrl != null && fileUrl.equalsIgnoreParameters(url);
+    val fileUrl = parseUrl(file.url)
+    return fileUrl != null && fileUrl.equalsIgnoreParameters(url)
   }
 
-  public static boolean equals(@Nullable Url url1, @Nullable Url url2, boolean caseSensitive, boolean ignoreParameters) {
-    if (url1 == null || url2 == null){
-      return url1 == url2;
+  fun equals(url1: Url?, url2: Url?, caseSensitive: Boolean, ignoreParameters: Boolean): Boolean {
+    if (url1 == null || url2 == null) {
+      return url1 === url2
     }
 
-    Url o1 = ignoreParameters ? url1.trimParameters() : url1;
-    Url o2 = ignoreParameters ? url2.trimParameters() : url2;
-    return caseSensitive ? o1.equals(o2) : o1.equalsIgnoreCase(o2);
+    val o1 = if (ignoreParameters) url1.trimParameters() else url1
+    val o2 = if (ignoreParameters) url2.trimParameters() else url2
+    return if (caseSensitive) o1 == o2 else o1.equalsIgnoreCase(o2)
   }
 
-  @NotNull
-  public static URI toUriWithoutParameters(@NotNull Url url) {
+  @JvmStatic
+  fun toUriWithoutParameters(url: Url): URI {
     try {
-      String externalPath = url.getPath();
-      boolean inLocalFileSystem = url.isInLocalFileSystem();
-      if (inLocalFileSystem && SystemInfoRt.isWindows && externalPath.charAt(0) != '/') {
-        externalPath = '/' + externalPath;
+      var externalPath = url.path
+      val inLocalFileSystem = url.isInLocalFileSystem
+      if (inLocalFileSystem && SystemInfoRt.isWindows && externalPath[0] != '/') {
+        externalPath = "/$externalPath"
       }
-      return new URI(inLocalFileSystem ? "file" : url.getScheme(), inLocalFileSystem ? "" : url.getAuthority(), externalPath, null, null);
+      return URI(if (inLocalFileSystem) "file" else url.scheme, if (inLocalFileSystem) "" else url.authority, externalPath, null, null)
     }
-    catch (URISyntaxException e) {
-      throw new RuntimeException(e);
+    catch (e: URISyntaxException) {
+      throw RuntimeException(e)
     }
+
   }
+}
 
-  public static TObjectHashingStrategy<Url> getCaseInsensitiveUrlHashingStrategy() {
-    return CaseInsensitiveUrlHashingStrategy.INSTANCE;
-  }
+private class CaseInsensitiveUrlHashingStrategy : TObjectHashingStrategy<Url> {
+  override fun computeHashCode(url: Url?) = url?.hashCodeCaseInsensitive() ?: 0
 
-  private static final class CaseInsensitiveUrlHashingStrategy implements TObjectHashingStrategy<Url> {
-    private static final TObjectHashingStrategy<Url> INSTANCE = new CaseInsensitiveUrlHashingStrategy();
-
-    @Override
-    public int computeHashCode(Url url) {
-      return url == null ? 0 : url.hashCodeCaseInsensitive();
-    }
-
-    @Override
-    public boolean equals(Url url1, Url url2) {
-      return Urls.equals(url1, url2, false, false);
-    }
-  }
+  override fun equals(url1: Url, url2: Url) = Urls.equals(url1, url2, false, false)
 }
