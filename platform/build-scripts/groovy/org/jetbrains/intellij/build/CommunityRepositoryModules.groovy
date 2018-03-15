@@ -257,7 +257,6 @@ class CommunityRepositoryModules {
       withModule("intellij.android.profilers.ui", "android-profilers.jar")
       withModule("intellij.android.adt.ui", "adt-ui.jar")
       withModule("intellij.android.adt.ui.model", "adt-ui.jar")
-      withModule("android.sdktools.repository")
       withModule("intellij.android.sherpaUi", "constraint-layout.jar")
       withModule("android.sdktools.sdklib", "sdklib.jar")
       withModule("android.sdktools.layoutlib-api", "layoutlib-api.jar")
