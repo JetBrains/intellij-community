@@ -53,10 +53,6 @@ public class DescriptionTypeRelatedItemLineMarkerProviderTest extends JavaCodeIn
     doTestInspectionDescription("MyWithDescriptionFromFieldReferenceInspection.java", "MyWithDescriptionFromFieldReferenceInspection.html");
   }
 
-  public void testKtInspectionDescription() {
-    doTestInspectionDescription("MyKtWithDescriptionInspection.kt", "MyKtWithDescription.html");
-  }
-
   private void doTestInspectionDescription(String inspectionFile, String descriptionFile) {
     myFixture.copyDirectoryToProject("inspectionDescriptions", "inspectionDescriptions");
     GutterMark gutter = myFixture.findGutter(inspectionFile);
