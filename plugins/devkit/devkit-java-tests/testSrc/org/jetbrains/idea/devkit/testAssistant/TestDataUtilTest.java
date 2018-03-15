@@ -3,14 +3,14 @@
 // found in the LICENSE file.
 package org.jetbrains.idea.devkit.testAssistant;
 
-import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
 @TestDataPath("$CONTENT_ROOT/testData/testDataUtil")
 public class TestDataUtilTest extends TestDataPathTestCase {
   @Override
   protected String getBasePath() {
-    return PluginPathManager.getPluginHomePathRelative("devkit") + "/testData/testDataUtil";
+    return DevkitJavaTestsUtil.TESTDATA_PATH + "testDataUtil";
   }
 
   public void testGetTestDataGroup() {

@@ -4,12 +4,12 @@ package org.jetbrains.idea.devkit.kotlin.navigation;
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInspection.LocalInspectionEP;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.PathUtil;
+import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil;
 import org.jetbrains.idea.devkit.navigation.DevKitGutterTargetsChecker;
 
 //TODO fix copy-paste
@@ -18,7 +18,7 @@ public class KtDescriptionTypeRelatedItemLineMarkerProviderTest extends JavaCode
 
   @Override
   protected String getBasePath() {
-    return PluginPathManager.getPluginHomePathRelative("devkit") + "/testData/navigation/descriptionType";
+    return DevkitKtTestsUtil.TESTDATA_PATH + "navigation/descriptionType";
   }
 
   @Override

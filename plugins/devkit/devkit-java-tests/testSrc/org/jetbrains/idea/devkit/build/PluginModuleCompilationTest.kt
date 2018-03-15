@@ -105,7 +105,7 @@ class PluginModuleCompilationTest : BaseCompilerTestCase() {
     assertThat(errorMessages).`as`("Building plugin zip finished with errors: $errorMessages").isEmpty()
   }
 
-  private fun setupSimplePluginProject() = copyAndCreateModule("plugins/devkit/testData/build/simple")
+  private fun setupSimplePluginProject() = copyAndCreateModule("plugins/devkit/devkit-java-tests/testData/build/simple")
 
   private fun copyAndCreateModule(relativePath: String): Module {
     copyToProject(relativePath)
@@ -115,7 +115,7 @@ class PluginModuleCompilationTest : BaseCompilerTestCase() {
   }
 
   private fun setupPluginProjectWithJpsModule(): Module {
-    val module = copyAndCreateModule("plugins/devkit/testData/build/withJpsModule")
+    val module = copyAndCreateModule("plugins/devkit/devkit-java-tests/testData/build/withJpsModule")
     val jpsModule = loadModule("$projectBasePath/jps-plugin/jps-plugin.iml")
     ModuleRootModificationUtil.setModuleSdk(jpsModule, testProjectJdk)
     return module

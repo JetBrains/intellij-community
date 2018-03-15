@@ -15,15 +15,15 @@
  */
 package org.jetbrains.idea.devkit.inspections;
 
-import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
 @TestDataPath("$CONTENT_ROOT/testData/inspections/registrationProblems/code")
 public class RegistrationProblemsInspectionCodeTest extends PluginModuleTestCase {
 
   @Override
   protected String getBasePath() {
-    return PluginPathManager.getPluginHomePathRelative("devkit") + "/testData/inspections/registrationProblems/code";
+    return DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/registrationProblems/code";
   }
 
   @Override

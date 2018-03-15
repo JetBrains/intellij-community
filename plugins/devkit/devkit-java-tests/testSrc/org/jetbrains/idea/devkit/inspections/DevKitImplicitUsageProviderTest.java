@@ -16,17 +16,17 @@
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
-import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.siyeh.ig.inheritance.AbstractClassNeverImplementedInspection;
+import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
 @TestDataPath("$CONTENT_ROOT/testData/inspections/implicitUsage")
 public class DevKitImplicitUsageProviderTest extends LightCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {
-    return PluginPathManager.getPluginHomePathRelative("devkit") + "/testData/inspections/implicitUsage";
+    return DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/implicitUsage";
   }
 
   @Override

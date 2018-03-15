@@ -5,7 +5,6 @@ package org.jetbrains.idea.devkit.refactoring;
 
 import com.intellij.codeInspection.LocalInspectionEP;
 import com.intellij.lang.LanguageExtensionPoint;
-import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -20,6 +19,7 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.PathUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
+import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
 import java.nio.file.Paths;
 
@@ -27,7 +27,7 @@ import java.nio.file.Paths;
 public class InspectionRenameTest extends JavaCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
-    return PluginPathManager.getPluginHomePathRelative("devkit") + "/testData/refactoring/renameInspection";
+    return DevkitJavaTestsUtil.TESTDATA_PATH + "refactoring/renameInspection";
   }
 
   @Override

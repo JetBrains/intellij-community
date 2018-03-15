@@ -16,11 +16,11 @@
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 import org.jetbrains.idea.devkit.dom.Anchor;
 import org.jetbrains.idea.devkit.inspections.quickfix.RegisterActionFix;
 import org.jetbrains.idea.devkit.util.ActionData;
@@ -31,7 +31,7 @@ public class ComponentNotRegisteredInspectionTest extends PluginModuleTestCase {
 
   @Override
   protected String getBasePath() {
-    return PluginPathManager.getPluginHomePathRelative("devkit") + "/testData/inspections/componentNotRegistered";
+    return DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/componentNotRegistered";
   }
 
   @Override

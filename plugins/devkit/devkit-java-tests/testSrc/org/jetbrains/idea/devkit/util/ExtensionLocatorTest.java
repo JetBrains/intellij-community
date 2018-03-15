@@ -3,7 +3,6 @@
  */
 package org.jetbrains.idea.devkit.util;
 
-import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
@@ -20,6 +19,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
 import com.intellij.util.xmlb.annotations.Attribute;
+import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import org.jetbrains.idea.devkit.dom.ExtensionPoints;
@@ -32,7 +32,7 @@ import java.util.List;
 public class ExtensionLocatorTest extends JavaCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
-    return PluginPathManager.getPluginHomePathRelative("devkit") + "/testData/util/extensionLocator";
+    return DevkitJavaTestsUtil.TESTDATA_PATH + "util/extensionLocator";
   }
 
   @Override

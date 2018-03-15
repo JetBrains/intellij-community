@@ -18,12 +18,12 @@ package org.jetbrains.idea.devkit.inspections;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalInspectionEP;
 import com.intellij.lang.LanguageExtensionPoint;
-import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.PathUtil;
+import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
 import java.nio.file.Paths;
 
@@ -32,7 +32,7 @@ public class InspectionDescriptionNotFoundInspectionTest extends JavaCodeInsight
 
   @Override
   protected String getBasePath() {
-    return PluginPathManager.getPluginHomePathRelative("devkit") + "/testData/inspections/inspectionDescription";
+    return DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/inspectionDescription";
   }
 
   @Override

@@ -2,15 +2,15 @@ package org.jetbrains.idea.devkit.references.extensions;
 
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.lang.documentation.DocumentationProvider;
-import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
 public class ExtensionPointDocumentationProviderTest extends LightCodeInsightFixtureTestCase {
 
   @Override
   public String getBasePath() {
-    return PluginPathManager.getPluginHomePathRelative("devkit") + "/testData/references/extensions";
+    return DevkitJavaTestsUtil.TESTDATA_PATH + "references/extensions";
   }
 
   public void testExtensionPointDocumentation() {

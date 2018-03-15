@@ -16,7 +16,6 @@
 package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -26,6 +25,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
+import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 
 import java.io.IOException;
@@ -50,7 +50,7 @@ public class TestDataGuessByExistingFilesUtilTest extends TestDataPathTestCase {
 
   @Override
   protected String getBasePath() {
-    return PluginPathManager.getPluginHomePathRelative("devkit") + "/testData/guessByExistingFiles";
+    return DevkitJavaTestsUtil.TESTDATA_PATH + "guessByExistingFiles";
   }
 
   @Override

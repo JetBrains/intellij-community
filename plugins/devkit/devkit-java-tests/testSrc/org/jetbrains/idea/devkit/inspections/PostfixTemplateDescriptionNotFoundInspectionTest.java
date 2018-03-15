@@ -16,17 +16,17 @@
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
 @TestDataPath("$CONTENT_ROOT/testData/inspections/postfixTemplates")
 public class PostfixTemplateDescriptionNotFoundInspectionTest extends LightCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {
-    return PluginPathManager.getPluginHomePathRelative("devkit") + "/testData/inspections/postfixTemplates";
+    return DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/postfixTemplates";
   }
 
   @Override

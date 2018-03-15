@@ -6,7 +6,6 @@ package org.jetbrains.idea.devkit.navigation.structure;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.ide.util.treeView.smartTree.TreeElementWrapper;
-import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
@@ -15,6 +14,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
+import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
 import java.util.stream.Stream;
 
@@ -24,7 +24,7 @@ import static org.junit.Assert.assertArrayEquals;
 public class PluginDescriptorStructureTest extends JavaCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
-    return PluginPathManager.getPluginHomePathRelative("devkit") + "/testData/navigation/structure";
+    return DevkitJavaTestsUtil.TESTDATA_PATH + "navigation/structure";
   }
 
   @Override

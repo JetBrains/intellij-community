@@ -15,9 +15,9 @@
  */
 package org.jetbrains.idea.devkit.codeInsight;
 
-import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.util.xml.stubs.DomStubTest;
+import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
 @TestDataPath("$CONTENT_ROOT/testData/pluginXmlDomStubs")
 public class PluginXmlDomStubsTest extends DomStubTest {
@@ -70,6 +70,6 @@ public class PluginXmlDomStubsTest extends DomStubTest {
 
   @Override
   protected String getBasePath() {
-    return PluginPathManager.getPluginHomePathRelative("devkit") + "/testData/pluginXmlDomStubs";
+    return DevkitJavaTestsUtil.TESTDATA_PATH + "pluginXmlDomStubs";
   }
 }

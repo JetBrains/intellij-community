@@ -15,8 +15,8 @@
  */
 package org.jetbrains.idea.devkit.inspections;
 
-import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
 /**
  * @author Konstantin Bulenkov
@@ -26,7 +26,7 @@ public class UniqueToolbarIdInspectionTest extends PluginModuleTestCase {
 
   @Override
   protected String getBasePath() {
-    return PluginPathManager.getPluginHomePathRelative("devkit") + "/testData/inspections/uniqueToolbarId";
+    return DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/uniqueToolbarId";
   }
 
   @Override

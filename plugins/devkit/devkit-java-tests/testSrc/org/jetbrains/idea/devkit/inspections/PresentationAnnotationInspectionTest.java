@@ -17,7 +17,6 @@ package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.presentation.Presentation;
-import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiReference;
@@ -25,12 +24,13 @@ import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.PathUtil;
+import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
 @TestDataPath("$CONTENT_ROOT/testData/inspections/presentation")
 public class PresentationAnnotationInspectionTest extends JavaCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
-    return PluginPathManager.getPluginHomePathRelative("devkit") + "/testData/inspections/presentation";
+    return DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/presentation";
   }
 
   @Override

@@ -15,16 +15,16 @@
  */
 package org.jetbrains.idea.devkit.inspections;
 
-import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
 @TestDataPath("$CONTENT_ROOT/testData/inspections/registrationProblems/xml")
 public class RegistrationProblemsInspectionXmlTest extends LightCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {
-    return PluginPathManager.getPluginHomePathRelative("devkit") + "/testData/inspections/registrationProblems/xml";
+    return DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/registrationProblems/xml";
   }
 
   @Override

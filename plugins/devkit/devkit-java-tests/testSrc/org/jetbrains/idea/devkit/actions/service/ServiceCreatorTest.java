@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.devkit.actions.service;
 
-import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
@@ -27,6 +26,7 @@ import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
+import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 import org.jetbrains.idea.devkit.dom.Extensions;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
@@ -37,7 +37,7 @@ import java.util.List;
 public class ServiceCreatorTest extends JavaCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
-    return PluginPathManager.getPluginHomePathRelative("devkit") + "/testData/actions/newService";
+    return DevkitJavaTestsUtil.TESTDATA_PATH + "actions/newService";
   }
 
 

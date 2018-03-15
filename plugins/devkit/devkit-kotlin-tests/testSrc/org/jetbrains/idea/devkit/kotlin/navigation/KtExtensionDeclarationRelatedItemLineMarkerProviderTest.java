@@ -3,7 +3,6 @@ package org.jetbrains.idea.devkit.kotlin.navigation;
 
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -15,6 +14,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil;
 import org.jetbrains.idea.devkit.navigation.DevKitGutterTargetsChecker;
 
 //TODO fix copy-paste
@@ -23,7 +23,7 @@ public class KtExtensionDeclarationRelatedItemLineMarkerProviderTest extends Jav
 
   @Override
   protected String getBasePath() {
-    return PluginPathManager.getPluginHomePathRelative("devkit") + "/testData/navigation/extensionDeclaration";
+    return DevkitKtTestsUtil.TESTDATA_PATH + "navigation/extensionDeclaration";
   }
 
   @Override

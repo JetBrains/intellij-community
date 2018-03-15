@@ -17,7 +17,6 @@ package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -29,13 +28,14 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
 @TestDataPath("$CONTENT_ROOT/testData/navigation/extensionDeclaration")
 public class ExtensionDeclarationRelatedItemLineMarkerProviderTest extends JavaCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {
-    return PluginPathManager.getPluginHomePathRelative("devkit") + "/testData/navigation/extensionDeclaration";
+    return DevkitJavaTestsUtil.TESTDATA_PATH + "navigation/extensionDeclaration";
   }
 
   @Override

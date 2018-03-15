@@ -28,6 +28,7 @@ import com.intellij.usageView.UsageViewTypeLocation
 import com.intellij.util.PathUtil
 import com.intellij.util.xmlb.annotations.XCollection
 import org.intellij.lang.annotations.Language
+import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
 import org.jetbrains.idea.devkit.inspections.PluginXmlDomInspection
 import org.jetbrains.idea.devkit.util.PsiUtil
 
@@ -45,7 +46,7 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {
-    return PluginPathManager.getPluginHomePathRelative("devkit") + "/testData/codeInsight"
+    return DevkitJavaTestsUtil.TESTDATA_PATH + "codeInsight"
   }
 
   @Override

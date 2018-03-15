@@ -18,7 +18,6 @@ package org.jetbrains.idea.devkit.codeInsight;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
@@ -30,6 +29,7 @@ import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.JavaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
+import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 import org.jetbrains.idea.devkit.inspections.RegistrationProblemsInspection;
 import org.junit.After;
 import org.junit.Before;
@@ -60,7 +60,7 @@ public class CreateClassFixTest extends UsefulTestCase {
           final TestFixtureBuilder<IdeaProjectTestFixture> testFixtureBuilder =
             JavaTestFixtureFactory.createFixtureBuilder(getClass().getSimpleName());
           myFixture = fixtureFactory.createCodeInsightFixture(testFixtureBuilder.getFixture());
-          myFixture.setTestDataPath(PluginPathManager.getPluginHomePath("devkit") + "/testData");
+          myFixture.setTestDataPath(DevkitJavaTestsUtil.TESTDATA_ABSOLUTE_PATH);
 
           testFixtureBuilder.addModule(JavaModuleFixtureBuilder.class)
             .addContentRoot(myFixture.getTempDirPath()).addSourceRoot(getSourceRoot());

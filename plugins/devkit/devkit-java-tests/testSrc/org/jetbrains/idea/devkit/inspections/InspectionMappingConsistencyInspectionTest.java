@@ -16,11 +16,11 @@
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.LocalInspectionEP;
-import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.PathUtil;
+import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
 /**
  * @author Dmitry Avdeev
@@ -50,6 +50,6 @@ public class InspectionMappingConsistencyInspectionTest extends JavaCodeInsightF
 
   @Override
   protected String getBasePath() {
-    return PluginPathManager.getPluginHomePathRelative("devkit") + "/testData/inspections/inspectionMappingConsistency";
+    return DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/inspectionMappingConsistency";
   }
 }

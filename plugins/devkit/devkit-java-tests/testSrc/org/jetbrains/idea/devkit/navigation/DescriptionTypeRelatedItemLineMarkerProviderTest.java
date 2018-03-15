@@ -18,12 +18,12 @@ package org.jetbrains.idea.devkit.navigation;
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInspection.LocalInspectionEP;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.PathUtil;
+import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
 import java.util.Collections;
 import java.util.Comparator;
@@ -34,7 +34,7 @@ public class DescriptionTypeRelatedItemLineMarkerProviderTest extends JavaCodeIn
 
   @Override
   protected String getBasePath() {
-    return PluginPathManager.getPluginHomePathRelative("devkit") + "/testData/navigation/descriptionType";
+    return DevkitJavaTestsUtil.TESTDATA_PATH + "navigation/descriptionType";
   }
 
   @Override

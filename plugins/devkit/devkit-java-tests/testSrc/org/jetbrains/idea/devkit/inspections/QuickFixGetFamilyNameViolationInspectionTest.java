@@ -15,9 +15,9 @@
  */
 package org.jetbrains.idea.devkit.inspections;
 
-import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
 /**
  * @author Dmitry Batkovich
@@ -27,7 +27,7 @@ public class QuickFixGetFamilyNameViolationInspectionTest extends JavaCodeInsigh
 
   @Override
   protected String getBasePath() {
-    return PluginPathManager.getPluginHomePathRelative("devkit") + "/testData/inspections/getFamilyNameViolation";
+    return DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/getFamilyNameViolation";
   }
 
   @Override

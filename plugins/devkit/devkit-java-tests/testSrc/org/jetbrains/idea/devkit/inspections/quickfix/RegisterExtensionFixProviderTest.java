@@ -17,9 +17,9 @@ package org.jetbrains.idea.devkit.inspections.quickfix;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
-import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
 /**
  * @author Dmitry Avdeev
@@ -113,6 +113,6 @@ public class RegisterExtensionFixProviderTest extends LightCodeInsightFixtureTes
 
   @Override
   protected String getBasePath() {
-    return PluginPathManager.getPluginHomePathRelative("devkit") + "/testData/inspections/registerExtensionFix";
+    return DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/registerExtensionFix";
   }
 }

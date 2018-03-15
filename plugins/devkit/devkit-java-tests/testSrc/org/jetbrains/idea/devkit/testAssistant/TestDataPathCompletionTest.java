@@ -15,8 +15,8 @@
  */
 package org.jetbrains.idea.devkit.testAssistant;
 
-import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
 @TestDataPath("$CONTENT_ROOT/testData/completionTestDataPath")
 public class TestDataPathCompletionTest extends TestDataPathTestCase {
@@ -44,6 +44,6 @@ public class TestDataPathCompletionTest extends TestDataPathTestCase {
 
   @Override
   protected String getBasePath() {
-    return PluginPathManager.getPluginHomePathRelative("devkit") + "/testData/completeTestDataPath";
+    return DevkitJavaTestsUtil.TESTDATA_PATH + "completeTestDataPath";
   }
 }

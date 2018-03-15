@@ -15,12 +15,12 @@
  */
 package org.jetbrains.idea.devkit.testAssistant;
 
-import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
 @TestDataPath("$CONTENT_ROOT/testData/resolveTestDataPath/")
 public class TestDataPathResolvingTest extends TestDataPathTestCase {
@@ -49,6 +49,6 @@ public class TestDataPathResolvingTest extends TestDataPathTestCase {
 
   @Override
   protected String getBasePath() {
-    return PluginPathManager.getPluginHomePathRelative("devkit") + "/testData/resolveTestDataPath";
+    return DevkitJavaTestsUtil.TESTDATA_PATH + "resolveTestDataPath";
   }
 }

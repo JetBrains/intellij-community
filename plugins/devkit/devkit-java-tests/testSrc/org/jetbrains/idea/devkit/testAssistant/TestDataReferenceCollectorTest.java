@@ -15,12 +15,12 @@
  */
 package org.jetbrains.idea.devkit.testAssistant;
 
-import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
 import java.util.List;
 
@@ -74,6 +74,6 @@ public class TestDataReferenceCollectorTest extends LightCodeInsightFixtureTestC
 
   @Override
   protected String getBasePath() {
-    return PluginPathManager.getPluginHomePathRelative("devkit") + "/testData/";
+    return DevkitJavaTestsUtil.TESTDATA_PATH;
   }
 }

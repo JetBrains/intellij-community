@@ -17,8 +17,8 @@ package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.openapi.application.PluginPathManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -54,7 +54,7 @@ public class PsiElementConcatenationInspectionTest extends LightQuickFixParamete
   @NotNull
   @Override
   protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("devkit") + "/testData";
+    return DevkitJavaTestsUtil.TESTDATA_PATH;
   }
 
   public void test() {
