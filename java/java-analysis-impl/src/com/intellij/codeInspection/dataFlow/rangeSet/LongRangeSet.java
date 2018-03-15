@@ -289,7 +289,7 @@ public abstract class LongRangeSet {
    */
   private static ThreeState[] bits(long from, long to) {
     ThreeState[] bits = new ThreeState[Long.SIZE];
-    Arrays.setAll(bits, idx -> ThreeState.NO);
+    Arrays.fill(bits, ThreeState.NO);
     while (true) {
       int fromBit = Long.numberOfLeadingZeros(from);
       int toBit = Long.numberOfLeadingZeros(to);
@@ -308,6 +308,15 @@ public abstract class LongRangeSet {
     return bits;
   }
 
+  private static String formatNumber(long value) {
+    if (value == Long.MAX_VALUE) return "Long.MAX_VALUE";
+    if (value == Long.MAX_VALUE - 1) return "Long.MAX_VALUE-1";
+    if (value == Long.MIN_VALUE) return "Long.MIN_VALUE";
+    if (value == Integer.MAX_VALUE) return "Integer.MAX_VALUE";
+    if (value == Integer.MAX_VALUE - 1) return "Integer.MAX_VALUE-1";
+    if (value == Integer.MIN_VALUE) return "Integer.MIN_VALUE";
+    return String.valueOf(value);
+  }
   /**
    * Returns a stream of all values from this range. Be careful: could be huge
    *
@@ -384,7 +393,7 @@ public abstract class LongRangeSet {
   abstract long[] asRanges();
 
   static String toString(long from, long to) {
-    return from == to ? String.valueOf(from) : from + (to - from == 1 ? ", " : "..") + to;
+    return formatNumber(from) + (from == to ? "" : (to - from == 1 ? ", " : "..") + formatNumber(to));
   }
 
   static long minValue(boolean isLong) {
@@ -673,7 +682,7 @@ public abstract class LongRangeSet {
 
     @Override
     public String toString() {
-      return "{" + myValue + "}";
+      return "{" + formatNumber(myValue) + "}";
     }
   }
 

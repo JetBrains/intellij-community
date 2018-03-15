@@ -24,7 +24,6 @@ import javax.swing.*;
 import java.awt.*;
 
 public class ComboBoxWithWidePopup<E> extends JComboBox<E> {
-  private boolean myLayingOut;
   private int myMinLength = 20;
 
   public ComboBoxWithWidePopup() {
@@ -69,38 +68,6 @@ public class ComboBoxWithWidePopup<E> extends JComboBox<E> {
     return myMinLength;
   }
 
-  @Override
-  public void doLayout() {
-    try {
-      myLayingOut = true;
-      super.doLayout();
-    }
-    finally {
-      myLayingOut = false;
-    }
-  }
-
-  @Override
-  public Dimension getSize() {
-    Dimension size = super.getSize();
-    if (!myLayingOut) {
-      size.width = Math.max(size.width, getOriginalPreferredSize().width);
-    }
-    return size;
-  }
-
-  private Dimension _getSuperSize() {
-    return super.getSize();
-  }
-
-  /**
-   * @return preferred size of JComboBox. To show wide popup, default preferred size of JComboBox is what's needed:
-   *         it's calculated as max of all pref sizes of its items (javax.swing.plaf.basic.BasicComboBoxUI#getDisplaySize()).
-   */
-  private Dimension getOriginalPreferredSize() {
-    return super.getPreferredSize();
-  }
-
   private class AdjustingListCellRenderer implements ListCellRenderer<E> {
     private final ListCellRenderer<? super E> myOldRenderer;
     private final ComboBoxWithWidePopup myComboBox;
@@ -115,7 +82,7 @@ public class ComboBoxWithWidePopup<E> extends JComboBox<E> {
       if (index == -1 && value instanceof String && !myComboBox.isValid()) {
         int minLength = getMinLength();
 
-        Dimension size = myComboBox._getSuperSize();
+        Dimension size = myComboBox.getSize();
         String stringValue = (String)value;
 
         if (size.width == 0) {

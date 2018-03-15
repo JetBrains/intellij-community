@@ -574,15 +574,21 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   public boolean showDialog(final boolean direct) {
+    AbstractExtractDialog dialog = createExtractMethodDialog(direct);
     Ref<Boolean> result = Ref.create(Boolean.FALSE);
-    TransactionGuard.getInstance().submitTransactionAndWait(() -> {
-      AbstractExtractDialog dialog = createExtractMethodDialog(direct);
+    Runnable showAndApply = () -> {
       dialog.show();
       if (dialog.isOK()) {
         apply(dialog);
         result.set(Boolean.TRUE);
       }
-    });
+    };
+    if (dialog.showInTransaction()) {
+      TransactionGuard.getInstance().submitTransactionAndWait(showAndApply);
+    }
+    else {
+      showAndApply.run();
+    }
     return result.get();
   }
 

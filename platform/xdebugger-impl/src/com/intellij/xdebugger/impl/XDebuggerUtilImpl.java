@@ -7,7 +7,10 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -90,18 +93,26 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     toggleAndReturnLineBreakpoint(project, file, line, temporary);
   }
 
-  @NotNull
-  public Promise<XLineBreakpoint> toggleAndReturnLineBreakpoint(@NotNull final Project project,
-                                                                @NotNull final VirtualFile file,
-                                                                final int line,
-                                                                boolean temporary) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
+  @Nullable
+  public XLineBreakpointType<?> getBreakpointTypeByPosition(@NotNull final Project project,
+                                                            @NotNull final VirtualFile file,
+                                                            final int line) {
     XLineBreakpointType<?> typeWinner = null;
     for (XLineBreakpointType<?> type : getLineBreakpointTypes()) {
       if (type.canPutAt(file, line, project) && (typeWinner == null || type.getPriority() > typeWinner.getPriority())) {
         typeWinner = type;
       }
     }
+    return typeWinner;
+  }
+
+  @NotNull
+  public Promise<XLineBreakpoint> toggleAndReturnLineBreakpoint(@NotNull final Project project,
+                                                                @NotNull final VirtualFile file,
+                                                                final int line,
+                                                                boolean temporary) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+    final XLineBreakpointType<?> typeWinner = getBreakpointTypeByPosition(project, file, line);
     if (typeWinner != null) {
       return toggleAndReturnLineBreakpoint(project, typeWinner, file, line, temporary);
     }
@@ -524,7 +535,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
 
   @NotNull
   @Override
-  public XExpression createExpression(@NotNull String text, Language language, String custom, EvaluationMode mode) {
+  public XExpression createExpression(@NotNull String text, Language language, String custom, @NotNull EvaluationMode mode) {
     return new XExpressionImpl(text, language, custom, mode);
   }
 

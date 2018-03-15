@@ -7,6 +7,8 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.ResolveResult;
@@ -94,7 +96,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   private static final String PY3_BINARY_FILE_TYPE = "typing.BinaryIO";
   private static final String PY3_TEXT_FILE_TYPE = "typing.TextIO";
 
-  public static final Pattern TYPE_COMMENT_PATTERN = Pattern.compile("# *type: *([^#]*?) *(#.*)?");
+  private static final Pattern TYPE_COMMENT_PATTERN = Pattern.compile("# *type: *([^#]+) *(#.*)?");
 
   public static final ImmutableMap<String, String> BUILTIN_COLLECTION_CLASSES = ImmutableMap.<String, String>builder()
     .put(LIST, "list")
@@ -647,14 +649,38 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   }
 
   /**
-   * Checks that text of a comment starts with the "type:" prefix and returns trimmed part afterwards. This trailing part is supposed to
-   * contain type annotation in PEP 484 compatible format.
+   * Checks that text of a comment starts with "# type:" prefix and returns trimmed type hint after it.
+   * The trailing part is supposed to contain type annotation in PEP 484 compatible format and an optional
+   * plain text comment separated from it with another "#".
+   * <p>
+   * For instance, for {@code # type: List[int]  # comment} it returns {@code List[int]}.
+   * <p>
+   * This method cannot return an empty string.
+   *
+   * @see #getTypeCommentValueRange(String)
    */
   @Nullable
   public static String getTypeCommentValue(@NotNull String text) {
     final Matcher m = TYPE_COMMENT_PATTERN.matcher(text);
     if (m.matches()) {
-      return m.group(1);
+      return StringUtil.nullize(m.group(1).trim());
+    }
+    return null;
+  }
+
+  /**
+   * Returns the corresponding text range for a type hint as returned by {@link #getTypeCommentValue(String)}.
+   *
+   * @see #getTypeCommentValue(String)
+   */
+  @Nullable
+  public static TextRange getTypeCommentValueRange(@NotNull String text) {
+    final Matcher m = TYPE_COMMENT_PATTERN.matcher(text);
+    if (m.matches()) {
+      final String hint = getTypeCommentValue(text);
+      if (hint != null) {
+        return TextRange.from(m.start(1), hint.length());
+      }
     }
     return null;
   }

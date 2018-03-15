@@ -9,10 +9,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable
 import org.jetbrains.plugins.groovy.lang.resolve.ElementGroovyResult
 
-class LocalVariableProcessor(name: String) : FindFirstProcessor<ElementGroovyResult<GrVariable>>(name) {
+class LocalVariableProcessor(name: String) : FindFirstProcessor<ElementGroovyResult<GrVariable>>() {
 
   init {
-    hint(ElementClassHint.KEY, ElementClassHint { false })
+    nameHint(name)
+    hint(ElementClassHint.KEY, ClassHint.EMPTY)
     hint(GroovyResolveKind.HINT_KEY, GroovyResolveKind.Hint { it == GroovyResolveKind.VARIABLE })
   }
 

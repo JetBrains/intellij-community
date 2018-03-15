@@ -186,6 +186,23 @@ public class IntentionHintComponent implements Disposable, ScrollAwareHint {
     HIDE_AND_RECREATE   // ahh, has to close already shown popup, recreate and re-show again
   }
 
+  @NotNull
+  public PopupUpdateResult getPopupUpdateResult(boolean actionsChanged) {
+    if (myPopup.isDisposed() || !myFile.isValid()) {
+      return PopupUpdateResult.HIDE_AND_RECREATE;
+    }
+    if (!actionsChanged) {
+      return PopupUpdateResult.NOTHING_CHANGED;
+    }
+    return myPopupShown ? PopupUpdateResult.HIDE_AND_RECREATE : PopupUpdateResult.CHANGED_INVISIBLE;
+  }
+
+  public void recreate() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    ListPopupStep step = myPopup.getListStep();
+    recreateMyPopup(step);
+  }
+
   @Nullable
   @TestOnly
   public IntentionAction getAction(int index) {

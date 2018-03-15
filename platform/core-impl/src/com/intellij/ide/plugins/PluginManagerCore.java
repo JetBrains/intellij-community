@@ -424,17 +424,13 @@ public class PluginManagerCore {
   private static ClassLoader createPluginClassLoader(@NotNull File[] classPath,
                                                      @NotNull ClassLoader[] parentLoaders,
                                                      @NotNull IdeaPluginDescriptor pluginDescriptor) {
-
     if (pluginDescriptor.getUseIdeaClassLoader()) {
       try {
-        final ClassLoader loader = PluginManagerCore.class.getClassLoader();
-        final Method addUrlMethod = getAddUrlMethod(loader);
-
-        for (File aClassPath : classPath) {
-          final File file = aClassPath.getCanonicalFile();
-          addUrlMethod.invoke(loader, file.toURI().toURL());
+        ClassLoader loader = PluginManagerCore.class.getClassLoader();
+        Method addUrlMethod = getAddUrlMethod(loader);
+        for (File pathElement : classPath) {
+          addUrlMethod.invoke(loader, pathElement.toPath().normalize().toUri().toURL());
         }
-
         return loader;
       }
       catch (IOException | IllegalAccessException | InvocationTargetException e) {
@@ -448,10 +444,9 @@ public class PluginManagerCore {
     if (isUnitTestMode()) return null;
 
     try {
-      final List<URL> urls = new ArrayList<>(classPath.length);
-      for (File aClassPath : classPath) {
-        final File file = aClassPath.getCanonicalFile(); // it is critical not to have "." and ".." in classpath elements
-        urls.add(file.toURI().toURL());
+      List<URL> urls = new ArrayList<>(classPath.length);
+      for (File pathElement : classPath) {
+        urls.add(pathElement.toPath().normalize().toUri().toURL());  // it is critical not to have "." and ".." in classpath elements
       }
       return new PluginClassLoader(urls, parentLoaders, pluginId, pluginDescriptor.getVersion(), pluginRoot);
     }

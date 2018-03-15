@@ -282,6 +282,11 @@ public final class CompletionServiceImpl extends CompletionService {
     return new CompletionSorterImpl(new ArrayList<>());
   }
 
+  @SuppressWarnings("unused")
+  public CompletionLookupArranger createLookupArranger(CompletionParameters parameters) {
+    return new CompletionLookupArrangerImpl(parameters);
+  }
+
   public static boolean isStartMatch(LookupElement element, WeighingContext context) {
     return getItemMatcher(element, context).isStartMatch(element);
   }

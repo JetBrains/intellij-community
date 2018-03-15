@@ -490,16 +490,20 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     myReplaceAllButton.addActionListener(e -> {
       boolean okToReplaceAll = myResultsPreviewTable.getRowCount() < 2;
       if (!okToReplaceAll) {
-        boolean oldPinnedValue = myIsPinned.get();
+        Window window = UIUtil.getWindow(this);
         try {
-          myIsPinned.set(true);
+          if (window != null) {
+            window.setVisible(false);
+          }
           okToReplaceAll = ReplaceInProjectManager.getInstance(myProject).showReplaceAllConfirmDialog(
             myUsagesCount,
             getStringToFind(),
             myFilesCount,
             getStringToReplace());
         } finally {
-          myIsPinned.set(oldPinnedValue);
+          if (window != null) {
+            window.setVisible(true);
+          }
         }
       }
       if (okToReplaceAll) {
@@ -1085,7 +1089,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
         ThreadLocal<VirtualFile> lastUsageFileRef = new ThreadLocal<>();
         ThreadLocal<Usage> recentUsageRef = new ThreadLocal<>();
 
-        FindInProjectUtil.findUsages(findModel, myProject, info -> {
+        FindInProjectUtil.findUsages(findModel, myProject, processPresentation, filesToScanInitially, info -> {
           if(isCancelled()) {
             onStop(hash);
             return false;
@@ -1156,7 +1160,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
             onStop(hash);
           }
           return continueSearch;
-        }, processPresentation, filesToScanInitially);
+        });
 
         return new Continuation(() -> {
           if (!isCancelled()) {

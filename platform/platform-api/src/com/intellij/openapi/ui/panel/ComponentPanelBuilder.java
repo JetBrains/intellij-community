@@ -22,7 +22,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
 
   private String myLabelText;
   private boolean myLabelOnTop;
-  private String myComment;
+  private String myCommentText;
   private boolean myCommentBelow = true;
   private String myHTDescription;
   private String myHTLinkText;
@@ -57,7 +57,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
    * @return <code>this</code>
    */
   public ComponentPanelBuilder withComment(@NotNull String comment) {
-    myComment = comment;
+    myCommentText = comment;
     valid = StringUtil.isNotEmpty(comment) && StringUtil.isEmpty(myHTDescription);
     return this;
   }
@@ -80,7 +80,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
    */
   public ComponentPanelBuilder withTooltip(@NotNull String description) {
     myHTDescription = description;
-    valid = StringUtil.isNotEmpty(description) && StringUtil.isEmpty(myComment);
+    valid = StringUtil.isNotEmpty(description) && StringUtil.isEmpty(myCommentText);
     return this;
   }
 
@@ -127,7 +127,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
   }
 
   private Border getCommentBorder() {
-    if (StringUtil.isNotEmpty(myComment)) {
+    if (StringUtil.isNotEmpty(myCommentText)) {
       boolean isMacDefault = UIUtil.isUnderDefaultMacTheme();
       boolean isWin10 = UIUtil.isUnderWin10LookAndFeel();
 
@@ -136,7 +136,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
 
         if (myComponent instanceof JRadioButton || myComponent instanceof JCheckBox) {
           top = 0;
-          left = isMacDefault ? 27 : isWin10 ? 17 : 24;
+          left = isMacDefault ? 27 : isWin10 ? 17 : 23;
           bottom = isWin10 ? 10 : isMacDefault ? 8 : 9;
         }
         else if (myComponent instanceof JTextField || myComponent instanceof TextComponent ||
@@ -182,8 +182,10 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
         label = new JLabel("");
       }
 
-      comment = new JLabel(StringUtil.isNotEmpty(myComment) ? myComment : "");
+      comment = new JLabel("");
       comment.setForeground(Gray.x78);
+      comment.setBorder(getCommentBorder());
+      setCommentTextImpl(myCommentText);
 
       if (SystemInfo.isMac) {
         Font font = comment.getFont();
@@ -195,17 +197,26 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
 
     @Override
     public String getCommentText() {
-      return myComment;
+      return myCommentText;
     }
 
     @Override
     public void setCommentText(String commentText) {
-      myComment = commentText;
+      if (!StringUtil.equals(myCommentText, commentText)) {
+        myCommentText = commentText;
+        setCommentTextImpl(commentText);
+      }
+    }
 
-      Insets i = myComponent.getInsets();
-      int maxWidth = myComponent.getWidth() - (i.left + i.right);
-      comment.setText(String.format("<html><div width=%d>%s</div></html>", maxWidth, commentText));
-      comment.setBorder(getCommentBorder());
+    private void setCommentTextImpl(String commentText) {
+      if (commentText != null) {
+        if (commentText.length() > 70 && myCommentBelow) {
+          int width = comment.getFontMetrics(comment.getFont()).stringWidth(commentText.substring(0, 70));
+          comment.setText(String.format("<html><div width=%d>%s</div></html>", width, commentText));
+        } else {
+          comment.setText(String.format("<html><div>%s</div></html>", commentText));
+        }
+      }
     }
 
     private void addToPanel(JPanel panel, GridBagConstraints gc) {

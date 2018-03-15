@@ -136,12 +136,6 @@ class GroovyResolverProcessorImpl extends GroovyResolverProcessor implements GrM
     return myTypeArguments;
   }
 
-  @Nullable
-  @Override
-  public PsiType getThisType() {
-    return myThisType;
-  }
-
   @NotNull
   @Override
   public PsiElement getPlace() {

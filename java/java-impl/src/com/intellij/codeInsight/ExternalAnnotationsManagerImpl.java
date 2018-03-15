@@ -457,8 +457,8 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
   @Override
   @NotNull
   public AnnotationPlace chooseAnnotationsPlace(@NotNull final PsiElement element) {
+    if (!element.isPhysical()) return AnnotationPlace.IN_CODE; //element just created and can be modified in any thread
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (!element.isPhysical()) return AnnotationPlace.IN_CODE; //element just created
     if (!element.getManager().isInProject(element)) return AnnotationPlace.EXTERNAL;
     final Project project = myPsiManager.getProject();
 

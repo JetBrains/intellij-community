@@ -30,16 +30,15 @@ import com.intellij.xdebugger.impl.frame.XStackFrameContainerEx;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import static org.junit.Assert.*;
 
@@ -65,11 +64,12 @@ public class XDebuggerTestUtil {
 
   @Nullable
   public static XLineBreakpoint toggleBreakpoint(Project project, VirtualFile file, int line) {
+    final Promise<XLineBreakpoint> breakpointPromise = WriteAction.computeAndWait(() -> ((XDebuggerUtilImpl)XDebuggerUtil.getInstance())
+      .toggleAndReturnLineBreakpoint(project, file, line, false));
     try {
-      return WriteAction.computeAndWait(() -> ((XDebuggerUtilImpl)XDebuggerUtil.getInstance())
-        .toggleAndReturnLineBreakpoint(project, file, line, false)).blockingGet(TIMEOUT_MS);
+      return breakpointPromise.blockingGet(TIMEOUT_MS);
     }
-    catch (TimeoutException | ExecutionException e) {
+    catch (Throwable e) {  // Rejected promise throws RuntimeException on blockingGet()
       return null;
     }
   }
@@ -83,6 +83,19 @@ public class XDebuggerTestUtil {
 
   public static void removeBreakpoint(final Project project, final XBreakpoint<?> breakpoint) {
     WriteAction.runAndWait(() -> XDebuggerManager.getInstance(project).getBreakpointManager().removeBreakpoint(breakpoint));
+  }
+
+  public static void removeBreakpoint(@NotNull final Project project,
+                                      @NotNull final VirtualFile file,
+                                      final int line) {
+    final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
+    XLineBreakpoint breakpoint = ReadAction.compute(() -> {
+      final XLineBreakpointType<?> breakpointType =
+        ((XDebuggerUtilImpl)XDebuggerUtil.getInstance()).getBreakpointTypeByPosition(project, file, line);
+      return breakpointManager.findBreakpointAtLine(breakpointType, file, line);
+    });
+    assertNotNull(breakpoint);
+    removeBreakpoint(project, breakpoint);
   }
 
   public static void assertPosition(XSourcePosition pos, VirtualFile file, int line) throws IOException {

@@ -1189,7 +1189,7 @@ public class JavaDocInfoGenerator {
   protected void generatePrologue(StringBuilder buffer) {
     URL baseUrl = getBaseUrl();
     if (baseUrl != null) {
-      buffer.append("<html><head><base href=\"").append(baseUrl).append("\"></head><body>");
+      buffer.append("<html><head><base href=\"").append(baseUrl).append("\"></head><body>"); // used to resolve URLs of local images
     }
   }
 

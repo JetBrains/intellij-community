@@ -83,11 +83,7 @@ public abstract class CompletionService {
       CompletionContributor contributor = contributors.get(i);
 
       CompletionResultSet result = createResultSet(parameters, consumer, contributor);
-      try {
-        contributor.fillCompletionVariants(parameters, result);
-      }
-      catch (CompletionWithoutEditorException ignore) {
-      }
+      contributor.fillCompletionVariants(parameters, result);
       if (result.isStopped()) {
         return;
       }
@@ -126,5 +122,4 @@ public abstract class CompletionService {
   public abstract CompletionSorter defaultSorter(CompletionParameters parameters, PrefixMatcher matcher);
 
   public abstract CompletionSorter emptySorter();
-
 }

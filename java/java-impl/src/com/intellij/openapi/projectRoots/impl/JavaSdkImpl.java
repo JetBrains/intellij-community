@@ -47,7 +47,7 @@ public class JavaSdkImpl extends JavaSdk {
 
   public static final DataKey<Boolean> KEY = DataKey.create("JavaSdk");
 
-  private static final String VM_EXE_NAME = "java";   // do not use JavaW.exe for Windows because of issues with encoding
+  private static final String VM_EXE_NAME = SystemInfo.isWindows ? "java.exe" : "java";  // do not use JavaW.exe because of issues with encoding
 
   private final Map<String, String> myCachedSdkHomeToVersionString = new ConcurrentHashMap<>();
   private final Map<String, JavaVersion> myCachedVersionStringToJdkVersion = new ConcurrentHashMap<>();

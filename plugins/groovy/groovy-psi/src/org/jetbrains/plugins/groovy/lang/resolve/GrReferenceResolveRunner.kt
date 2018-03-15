@@ -15,7 +15,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.isThisExpression
@@ -99,8 +98,6 @@ fun GrReferenceExpression.getCallVariants(upToArgument: GrExpression?): Array<ou
 }
 
 fun GrReferenceExpression.resolveReferenceExpression(forceRValue: Boolean, incomplete: Boolean): Collection<GroovyResolveResult> {
-  resolvePackageOrClass()?.let { return listOf(it) }
-
   val staticResults = resolveStatic()
   if (staticResults.isNotEmpty()) return staticResults
 
@@ -113,8 +110,9 @@ fun GrReferenceExpression.resolveReferenceExpression(forceRValue: Boolean, incom
   return processor.candidates
 }
 
-private fun GrReferenceExpression.resolvePackageOrClass(): GroovyResolveResult? {
-  return doResolvePackageOrClass()?.let { GroovyResolveResultImpl(it, true) }
+private fun GrReferenceExpression.resolvePackageOrClass(): Collection<GroovyResolveResult> {
+  val packageOrClass = doResolvePackageOrClass() ?: return emptyList()
+  return listOf(ElementGroovyResult(packageOrClass))
 }
 
 private fun GrReferenceExpression.doResolvePackageOrClass(): PsiElement? {
@@ -150,6 +148,9 @@ private fun GrReferenceExpression.doResolvePackageOrClass(): PsiElement? {
  */
 private fun GrReferenceExpression.resolveStatic(): Collection<GroovyResolveResult> {
   val name = referenceName ?: return emptyList()
+
+  val fqnResults = resolvePackageOrClass()
+  if (fqnResults.isNotEmpty()) return fqnResults
 
   val qualifier = qualifier
 

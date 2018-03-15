@@ -36,7 +36,6 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.xdebugger.XDebuggerManager;
@@ -378,29 +377,24 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
   }
 
   public String getDisplayName() {
-    final StringBuilder buffer = StringBuilderSpinAllocator.alloc();
-    try {
-      if(isValid()) {
-        final String className = getClassName();
-        final boolean classNameExists = className != null && className.length() > 0;
+    final StringBuilder buffer = new StringBuilder();
+    if(isValid()) {
+      final String className = getClassName();
+      final boolean classNameExists = className != null && className.length() > 0;
+      if (classNameExists) {
+        buffer.append(className);
+      }
+      if(getMethodName() != null) {
         if (classNameExists) {
-          buffer.append(className);
+          buffer.append(".");
         }
-        if(getMethodName() != null) {
-          if (classNameExists) {
-            buffer.append(".");
-          }
-          buffer.append(getMethodName());
-        }
+        buffer.append(getMethodName());
       }
-      else {
-        buffer.append(DebuggerBundle.message("status.breakpoint.invalid"));
-      }
-      return buffer.toString();
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(buffer);
+    else {
+      buffer.append(DebuggerBundle.message("status.breakpoint.invalid"));
     }
+    return buffer.toString();
   }
 
   public boolean evaluateCondition(@NotNull EvaluationContextImpl context, @NotNull LocatableEvent event) throws EvaluateException {

@@ -4,9 +4,7 @@
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/org/assertj/assertj-swing/3.8.0/assertj-swing-3.8.0.jar!/" />
     </CLASSES>
-    <JAVADOC>
-      <root url="jar://$MAVEN_REPOSITORY$/org/assertj/assertj-swing/3.8.0/assertj-swing-3.8.0-javadoc.jar!/" />
-    </JAVADOC>
+    <JAVADOC />
     <SOURCES>
       <root url="jar://$MAVEN_REPOSITORY$/org/assertj/assertj-swing/3.8.0/assertj-swing-3.8.0-sources.jar!/" />
     </SOURCES>

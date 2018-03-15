@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.openapi.util.Comparing;
@@ -27,6 +25,7 @@ import java.util.List;
 public class GrClosureType extends GrLiteralClassType {
   private final GrSignature mySignature;
   private volatile PsiType[] myTypeArgs;
+  private GrClosableBlock myClosure;
 
   private GrClosureType(LanguageLevel languageLevel,
                         @NotNull GlobalSearchScope scope,
@@ -47,6 +46,15 @@ public class GrClosureType extends GrLiteralClassType {
 
     mySignature = signature;
     myTypeArgs = typeArgs;
+  }
+
+  @Nullable
+  public GrClosableBlock getClosure() {
+    return myClosure;
+  }
+
+  private void setClosure(@NotNull GrClosableBlock closure) {
+    myClosure = closure;
   }
 
   @Override
@@ -145,7 +153,9 @@ public class GrClosureType extends GrLiteralClassType {
     final GrClosureSignature signature = GrClosureSignatureUtil.createSignature(closure);
     final GlobalSearchScope resolveScope = closure.getResolveScope();
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(closure.getProject());
-    return create(signature, resolveScope, facade,LanguageLevel.JDK_1_5, shouldInferTypeParameters);
+    GrClosureType type = create(signature, resolveScope, facade, LanguageLevel.JDK_1_5, shouldInferTypeParameters);
+    type.setClosure(closure);
+    return type;
   }
 
   public static GrClosureType create(@NotNull GrSignature signature,

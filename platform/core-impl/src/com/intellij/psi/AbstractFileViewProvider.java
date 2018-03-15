@@ -196,6 +196,7 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
   public FileViewProvider clone() {
     VirtualFile origFile = getVirtualFile();
     LightVirtualFile copy = new LightVirtualFile(origFile.getName(), myFileType, getContents(), origFile.getCharset(), getModificationStamp());
+    origFile.copyCopyableDataTo(copy);
     copy.setOriginalFile(origFile);
     copy.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
     copy.setCharset(origFile.getCharset());

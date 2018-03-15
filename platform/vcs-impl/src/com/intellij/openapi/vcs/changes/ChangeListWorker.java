@@ -169,30 +169,45 @@ public class ChangeListWorker {
     tracker.initChangeTracking(myDefault.id, ContainerUtil.map(myLists, list -> list.id), oldList != null ? oldList.id : null);
 
     if (LOG.isDebugEnabled()) {
-      LOG.debug(String.format("[registerChangeTracker] path: %s", filePath));
+      LOG.debug(String.format("[registerChangeTracker] path: %s, old list: %s", filePath, oldList != null ? oldList.id : "null"));
     }
   }
 
   public void unregisterChangeTracker(@NotNull FilePath filePath, @NotNull PartialChangeTracker tracker) {
-    PartialChangeTracker oldTracker = myPartialChangeTrackers.remove(filePath);
-    if (!Comparing.equal(oldTracker, tracker)) {
-      LOG.error(String.format("Wrong tracker removed: %s; expected: %s; passed: %s", filePath, oldTracker, tracker));
-    }
+    boolean trackerRemoved = myPartialChangeTrackers.remove(filePath, tracker);
+    if (trackerRemoved) {
+      ListData newList = null;
+      Change change = getChangeForAfterPath(filePath);
+      if (change != null) {
+        newList = getMainList(tracker);
+        putChangeMapping(change, newList);
+      }
 
-    Change change = getChangeForAfterPath(filePath);
-    if (change != null) {
-      putChangeMapping(change, getMainList(oldTracker));
+      if (LOG.isDebugEnabled()) {
+        LOG.debug(String.format("[unregisterChangeTracker] path: %s, new list: %s, tracker lists: %s",
+                                filePath, newList != null ? newList.id : "null", tracker.getAffectedChangeListsIds()));
+      }
     }
+    else {
+      Map.Entry<FilePath, PartialChangeTracker> entry = ContainerUtil.find(myPartialChangeTrackers.entrySet(), it -> {
+        return Comparing.equal(it.getValue(), tracker);
+      });
 
-    if (LOG.isDebugEnabled()) {
-      LOG.debug(String.format("[unregisterChangeTracker] path: %s", filePath));
+      if (entry != null) {
+        LOG.error(String.format("Unregistered tracker with wrong path: tracker: %s", tracker));
+
+        FilePath actualFilePath = entry.getKey();
+        unregisterChangeTracker(actualFilePath, tracker);
+      }
+      else {
+        LOG.error(String.format("Tracker is not registered: tracker: %s", tracker));
+      }
     }
   }
 
   @NotNull
-  private ListData getMainList(@Nullable PartialChangeTracker oldTracker) {
-    if (oldTracker == null) return myDefault;
-    List<String> changelistIds = oldTracker.getAffectedChangeListsIds();
+  private ListData getMainList(@NotNull PartialChangeTracker tracker) {
+    List<String> changelistIds = tracker.getAffectedChangeListsIds();
     if (changelistIds.size() == 1) {
       ListData list = getDataByIdVerify(changelistIds.get(0));
       if (list != null) return list;
@@ -846,7 +861,7 @@ public class ChangeListWorker {
       return String.format("list: %s (%s) changes: %s", list.name, list.id, StringUtil.join(getChangesIn(list), ", "));
     }, "\n");
     String trackers = StringUtil.join(myPartialChangeTrackers.keySet(), ",");
-    return String.format("ChangeListWorker{ lists = {\n%s }\ntrackers = %s\n}", lists, trackers);
+    return String.format("ChangeListWorker{ default = %s, lists = {\n%s }\ntrackers = %s\n}", myDefault.id, lists, trackers);
   }
 
 
