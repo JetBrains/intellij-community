@@ -65,9 +65,12 @@ class PyDataclassInspection : PyInspection() {
           val initVars = mutableListOf<PyTargetExpression>()
 
           node.processClassLevelDeclarations { element, _ ->
-            if (element is PyTargetExpression && !PyTypingTypeProvider.isClassVar(element, myTypeEvalContext)) {
-              processDefaultFieldValue(element)
-              processAsInitVar(element, postInit)?.let { initVars.add(it) }
+            if (element is PyTargetExpression) {
+              if (!PyTypingTypeProvider.isClassVar(element, myTypeEvalContext)) {
+                processDefaultFieldValue(element)
+                processAsInitVar(element, postInit)?.let { initVars.add(it) }
+              }
+
               processFieldFunctionCall(element)
             }
 
@@ -149,16 +152,12 @@ class PyDataclassInspection : PyInspection() {
 
         if (parseDataclassParameters(cls, myTypeEvalContext) != null) {
           cls.processClassLevelDeclarations { element, _ ->
-            if (element is PyTargetExpression && element.name == node.name) {
-              val type = myTypeEvalContext.getType(element)
+            if (element is PyTargetExpression && element.name == node.name && isInitVar(element)) {
+              registerProblem(node.lastChild,
+                              "'${cls.name}' object could have no attribute '${element.name}' because it is declared as init-only",
+                              ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
 
-              if (type is PyClassType && type.classQName == DATACLASSES_INITVAR_TYPE) {
-                registerProblem(node.lastChild,
-                                "'${cls.name}' object could have no attribute '${element.name}' because it is declared as init-only",
-                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
-
-                return@processClassLevelDeclarations false
-              }
+              return@processClassLevelDeclarations false
             }
 
             true
@@ -258,9 +257,7 @@ class PyDataclassInspection : PyInspection() {
     }
 
     private fun processAsInitVar(field: PyTargetExpression, postInit: PyFunction?): PyTargetExpression? {
-      val type = myTypeEvalContext.getType(field)
-
-      if (type is PyClassType && type.classQName == DATACLASSES_INITVAR_TYPE) {
+      if (isInitVar(field)) {
         if (postInit == null) {
           registerProblem(field,
                           "Attribute '${field.name}' is useless until '$DUNDER_POST_INIT' is declared",
@@ -274,10 +271,17 @@ class PyDataclassInspection : PyInspection() {
     }
 
     private fun processFieldFunctionCall(field: PyTargetExpression) {
-      val fieldStub = PyDataclassFieldStubImpl.create(field)
-      if (fieldStub != null && fieldStub.hasDefault() && fieldStub.hasDefaultFactory()) {
-        val call = field.findAssignedValue() as? PyCallExpression ?: return
+      val fieldStub = PyDataclassFieldStubImpl.create(field) ?: return
+      val call = field.findAssignedValue() as? PyCallExpression ?: return
 
+      if (PyTypingTypeProvider.isClassVar(field, myTypeEvalContext) || isInitVar(field)) {
+        if (fieldStub.hasDefaultFactory()) {
+          registerProblem(call.getKeywordArgument("default_factory"),
+                          "Field cannot have a default factory",
+                          ProblemHighlightType.GENERIC_ERROR)
+        }
+      }
+      else if (fieldStub.hasDefault() && fieldStub.hasDefaultFactory()) {
         registerProblem(call.argumentList, "Cannot specify both 'default' and 'default_factory'", ProblemHighlightType.GENERIC_ERROR)
       }
     }
@@ -316,6 +320,10 @@ class PyDataclassInspection : PyInspection() {
 
         registerProblem(argument, message)
       }
+    }
+
+    private fun isInitVar(field: PyTargetExpression): Boolean {
+      return (myTypeEvalContext.getType(field) as? PyClassType)?.classQName == DATACLASSES_INITVAR_TYPE
     }
 
     private fun isNotDataclass(type: PyType?, allowDefinition: Boolean): Boolean {
