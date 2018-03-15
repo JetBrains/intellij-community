@@ -197,8 +197,8 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
         PsiElement lastElement = codeBlock.getLastBodyElement();
         if (firstElement != null && lastElement != null) {
           ifStatement.getParent().addRangeAfter(firstElement, lastElement, ifStatement);
+          ct.markRangeUnchanged(firstElement, lastElement);
         }
-        ct.markUnchanged(thenBranch);
       } else {
         if (!(thenBranch instanceof PsiReturnStatement)) {
           ifStatement = addAfterWithinCodeBlock(ifStatement, thenBranch);
@@ -302,7 +302,7 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
         }
         return;
       }
-      else if (thenBranch instanceof PsiBlockStatement) {
+      if (thenBranch instanceof PsiBlockStatement) {
         PsiStatement[] statements = ((PsiBlockStatement) thenBranch).getCodeBlock().getStatements();
         if (statements.length > 0 && statements[statements.length - 1] instanceof PsiContinueStatement) {
           new CommentTracker().deleteAndRestoreComments(statements[statements.length - 1]);

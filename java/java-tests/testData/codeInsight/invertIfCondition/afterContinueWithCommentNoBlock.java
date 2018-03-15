@@ -2,8 +2,8 @@
 class A {
     void f(){
         while (true) {
-            if (false) //comment
-            {
+            //comment
+            if (false) {
                 System.out.println();
             }
         }
