@@ -17,9 +17,13 @@ package com.intellij.execution.configurations;
 
 import com.intellij.execution.ExecutionBundle;
 
-public class RuntimeConfigurationError extends RuntimeConfigurationException{
+public class RuntimeConfigurationError extends RuntimeConfigurationException {
   public RuntimeConfigurationError(final String message) {
-    super(message, ExecutionBundle.message("error.common.title"));
+    this(message, ExecutionBundle.message("error.common.title"), null);
+  }
+
+  public RuntimeConfigurationError(String message, String title, String focusedEditorName) {
+    super(message, title, focusedEditorName);
   }
 
   public RuntimeConfigurationError(final String message, final Runnable quickFix) {

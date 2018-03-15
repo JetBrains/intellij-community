@@ -112,9 +112,6 @@
     <extensionPoint name="debugger.sourcePositionProvider"
                     interface="com.intellij.debugger.engine.SourcePositionProvider"/>
 
-    <extensionPoint name="debugger.simpleGetterProvider"
-                    interface="com.intellij.debugger.engine.SimpleGetterProvider"/>
-
     <extensionPoint name="debugger.simplePropertyGetterProvider"
                     interface="com.intellij.debugger.engine.SimplePropertyGetterProvider"/>
 
