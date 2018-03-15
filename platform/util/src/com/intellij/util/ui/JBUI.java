@@ -615,6 +615,11 @@ public class JBUI {
     public static JBFont create(String fontFamily, int size) {
       return JBFont.create(new Font(fontFamily, Font.PLAIN, size));
     }
+
+    @NotNull
+    public static JBFont toolbarFont() {
+      return SystemInfo.isMac ? smallFont() : label();
+    }
   }
 
   @SuppressWarnings("UseDPIAwareBorders")
