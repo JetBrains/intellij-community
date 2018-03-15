@@ -1069,19 +1069,15 @@ public class ExtractMethodProcessor implements MatchProvider {
     if (myNullness != null &&
         PsiUtil.resolveClassInType(newMethod.getReturnType()) != null &&
         PropertiesComponent.getInstance(myProject).getBoolean(ExtractMethodDialog.EXTRACT_METHOD_GENERATE_ANNOTATIONS, true)) {
-      AddAnnotationPsiFix annotationFix;
+      NullableNotNullManager nullManager = NullableNotNullManager.getInstance(myProject);
       switch (myNullness) {
         case NOT_NULL:
-          annotationFix = AddAnnotationPsiFix.createAddNotNullFix(newMethod);
+          updateAnnotations(newMethod, nullManager.getNullables(), nullManager.getDefaultNotNull(), nullManager.getNotNulls());
           break;
         case NULLABLE:
-          annotationFix = AddAnnotationPsiFix.createAddNullableFix(newMethod);
+          updateAnnotations(newMethod, nullManager.getNotNulls(), nullManager.getDefaultNullable(), nullManager.getNullables());
           break;
         default:
-          annotationFix = null;
-      }
-      if (annotationFix != null) {
-        annotationFix.invoke(myProject, myTargetClass.getContainingFile(), newMethod, newMethod);
       }
     }
 
@@ -1621,16 +1617,19 @@ public class ExtractMethodProcessor implements MatchProvider {
       final Boolean isNotNull = isNotNullAt(variable, myElements[0]);
       if (isNotNull != null) {
         final List<String> toKeep = isNotNull ? notNullAnnotations : nullableAnnotations;
-        final String[] toRemove = (!isNotNull ? notNullAnnotations : nullableAnnotations).toArray(ArrayUtil.EMPTY_STRING_ARRAY);
-
-        AddAnnotationPsiFix.removePhysicalAnnotations(parm, toRemove);
-        if (!AnnotationUtil.isAnnotated(parm, toKeep, CHECK_TYPE)) {
-          final String toAdd = isNotNull ? nullabilityManager.getDefaultNotNull() : nullabilityManager.getDefaultNullable();
-          final PsiAnnotation added =
-            AddAnnotationPsiFix.addPhysicalAnnotation(toAdd, PsiNameValuePair.EMPTY_ARRAY, parm.getModifierList());
-          JavaCodeStyleManager.getInstance(myProject).shortenClassReferences(added);
-        }
+        final List<String> toRemove = isNotNull ? nullableAnnotations : notNullAnnotations;
+        final String toAdd = isNotNull ? nullabilityManager.getDefaultNotNull() : nullabilityManager.getDefaultNullable();
+        updateAnnotations(parm, toRemove, toAdd, toKeep);
       }
+    }
+  }
+
+  private void updateAnnotations(PsiModifierListOwner owner, List<String> toRemove, String toAdd, List<String> toKeep) {
+    AddAnnotationPsiFix.removePhysicalAnnotations(owner, toRemove.toArray(ArrayUtil.EMPTY_STRING_ARRAY));
+    PsiModifierList modifierList = owner.getModifierList();
+    if (modifierList != null && !AnnotationUtil.isAnnotated(owner, toKeep, CHECK_TYPE)) {
+      PsiAnnotation annotation = AddAnnotationPsiFix.addPhysicalAnnotation(toAdd, PsiNameValuePair.EMPTY_ARRAY, modifierList);
+      JavaCodeStyleManager.getInstance(myProject).shortenClassReferences(annotation);
     }
   }
 
