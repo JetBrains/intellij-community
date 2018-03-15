@@ -366,6 +366,11 @@ public class MockChangeListManager extends ChangeListManagerEx {
   }
 
   @Override
+  public void setDefaultChangeList(@NotNull LocalChangeList list, boolean automatic) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public void removeChangeList(@NotNull String name) {
     throw new UnsupportedOperationException();
   }

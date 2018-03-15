@@ -118,20 +118,20 @@ public class PartialChangesUtil {
   public static <T> T computeUnderChangeList(@NotNull Project project,
                                              @Nullable LocalChangeList targetChangeList,
                                              @NotNull Computable<T> task) {
-    ChangeListManager clm = ChangeListManager.getInstance(project);
+    ChangeListManagerEx clm = (ChangeListManagerEx)ChangeListManager.getInstance(project);
     LocalChangeList oldDefaultList = clm.getDefaultChangeList();
 
     if (targetChangeList == null || targetChangeList.equals(oldDefaultList)) {
       return task.compute();
     }
 
-    clm.setDefaultChangeList(targetChangeList);
+    clm.setDefaultChangeList(targetChangeList, true);
     try {
       return task.compute();
     }
     finally {
       if (Comparing.equal(clm.getDefaultChangeList().getId(), targetChangeList.getId())) {
-        clm.setDefaultChangeList(oldDefaultList);
+        clm.setDefaultChangeList(oldDefaultList, true);
       }
       else {
         LOG.warn(new Throwable("Active changelist was changed during the operation"));

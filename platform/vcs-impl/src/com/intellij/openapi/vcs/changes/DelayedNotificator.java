@@ -78,8 +78,8 @@ public class DelayedNotificator implements ChangeListListener {
     myScheduler.submit(() -> myDispatcher.getMulticaster().changesMoved(changes, fromList, toList));
   }
 
-  public void defaultListChanged(final ChangeList oldDefaultList, final ChangeList newDefaultList) {
-    myScheduler.submit(() -> myDispatcher.getMulticaster().defaultListChanged(oldDefaultList, newDefaultList));
+  public void defaultListChanged(final ChangeList oldDefaultList, final ChangeList newDefaultList, boolean automatic) {
+    myScheduler.submit(() -> myDispatcher.getMulticaster().defaultListChanged(oldDefaultList, newDefaultList, automatic));
   }
 
 
