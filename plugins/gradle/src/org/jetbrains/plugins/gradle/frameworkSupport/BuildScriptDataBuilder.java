@@ -57,6 +57,11 @@ public class BuildScriptDataBuilder {
     return myBuildScriptFile;
   }
 
+  @NotNull
+  public GradleVersion getGradleVersion() {
+    return myGradleVersion;
+  }
+
   /**
    * @deprecated use {@link #buildMainPart()} and {@link #buildConfigurationPart()} instead
    */
