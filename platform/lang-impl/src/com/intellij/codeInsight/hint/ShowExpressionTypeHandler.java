@@ -32,13 +32,15 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.IntroduceTargetChooser;
+import com.intellij.ui.LightweightHint;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
+import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.event.HierarchyEvent;
+import java.awt.*;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
@@ -179,12 +181,13 @@ public class ShowExpressionTypeHandler implements CodeInsightActionHandler {
     void showHint(String informationHint) {
       JComponent label = HintUtil.createInformationLabel(informationHint);
       setInstance(this);
-      label.addHierarchyListener(e -> {
-        if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0 && !label.isShowing()) {
-          setInstance(null);
-        }
-      });
-      HintManager.getInstance().showInformationHint(myEditor, label);
+      AccessibleContextUtil.setName(label, "Expression type hint");
+      HintManagerImpl hintManager = (HintManagerImpl)HintManager.getInstance();
+      LightweightHint hint = new LightweightHint(label);
+      hint.addHintListener(e -> ApplicationManager.getApplication().invokeLater(() -> setInstance(null)));
+      Point p = hintManager.getHintPosition(hint, myEditor, HintManager.ABOVE);
+      int flags = HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING;
+      hintManager.showEditorHint(hint, myEditor, p, flags, 0, false);
     }
 
     private static void setInstance(DisplayedTypeInfo typeInfo) {
