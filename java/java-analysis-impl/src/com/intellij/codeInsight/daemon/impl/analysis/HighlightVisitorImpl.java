@@ -1196,6 +1196,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkPackageAndClassConflict(ref, myFile));
     if (!myHolder.hasErrorResults() && resolved instanceof PsiClass) myHolder.add(HighlightUtil.checkLegalVarReference(ref, (PsiClass)resolved));
+    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkMemberReferencedBeforeConstructorCalled(ref, resolved, myFile));
+
 
     return result;
   }

@@ -108,7 +108,7 @@ class FindInProjectTask {
     TooManyUsagesStatus.createFor(myProgress);
   }
 
-  public void findUsages(@NotNull Processor<UsageInfo> consumer, @NotNull FindUsagesProcessPresentation processPresentation) {
+  public void findUsages(@NotNull FindUsagesProcessPresentation processPresentation, @NotNull Processor<UsageInfo> consumer) {
     try {
       myProgress.setIndeterminate(true);
       myProgress.setText("Scanning indexed files...");

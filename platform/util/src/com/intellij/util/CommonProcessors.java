@@ -114,12 +114,17 @@ public class CommonProcessors {
 
     @Override
     public boolean process(T t) {
+      // in case of exception do not mark the element as processed, we couldn't recover otherwise
       synchronized (processed) {
-        if (!processed.add(t)) {
+        if (processed.contains(t)) {
           return true;
         }
       }
-      return myDelegate.process(t);
+      boolean result = myDelegate.process(t);
+      synchronized (processed) {
+        processed.add(t);
+      }
+      return result;
     }
   }
 

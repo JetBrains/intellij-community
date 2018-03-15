@@ -838,7 +838,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
           Document document = ReadAction.compute(() -> virtualFile.isValid() ? FileDocumentManager.getInstance().getDocument(virtualFile) : null);
           final boolean isCurrentInTab = Boolean.valueOf(file.getAttributeValue(CURRENT_IN_TAB)).booleanValue();
           Boolean pin = Boolean.valueOf(file.getAttributeValue(PINNED));
-          fileEditorManager.openFileImpl4(window, virtualFile, entry, false, false, pin, i);
+          fileEditorManager.openFileImpl4(window, virtualFile, entry, false, false, pin, i, false);
           if (isCurrentInTab) {
             focusedFile = virtualFile;
           }

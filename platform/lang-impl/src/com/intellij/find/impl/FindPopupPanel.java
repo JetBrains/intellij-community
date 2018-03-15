@@ -1089,7 +1089,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
         ThreadLocal<VirtualFile> lastUsageFileRef = new ThreadLocal<>();
         ThreadLocal<Usage> recentUsageRef = new ThreadLocal<>();
 
-        FindInProjectUtil.findUsages(findModel, myProject, info -> {
+        FindInProjectUtil.findUsages(findModel, myProject, processPresentation, filesToScanInitially, info -> {
           if(isCancelled()) {
             onStop(hash);
             return false;
@@ -1160,7 +1160,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
             onStop(hash);
           }
           return continueSearch;
-        }, processPresentation, filesToScanInitially);
+        });
 
         return new Continuation(() -> {
           if (!isCancelled()) {
