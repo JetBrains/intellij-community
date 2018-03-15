@@ -9,7 +9,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.Key;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,11 +17,29 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Objects;
 
-public class CompoundTreeStructureProvider implements TreeStructureProvider {
+/**
+ * This class is intended to combine all providers for batch usages.
+ *
+ * @author Sergey Malenkov
+ */
+public final class CompoundTreeStructureProvider implements TreeStructureProvider {
+  private static final Key<TreeStructureProvider> KEY = Key.create("TreeStructureProvider");
   private static final Logger LOG = Logger.getInstance(CompoundTreeStructureProvider.class);
   private final Project project;
 
-  public CompoundTreeStructureProvider(@NotNull Project project) {
+  /**
+   * @return a shared instance for the specified project
+   */
+  @NotNull
+  public static TreeStructureProvider get(@NotNull Project project) {
+    TreeStructureProvider provider = project.getUserData(KEY);
+    if (provider != null) return provider;
+    provider = new CompoundTreeStructureProvider(project);
+    project.putUserData(KEY, provider);
+    return provider;
+  }
+
+  private CompoundTreeStructureProvider(@NotNull Project project) {
     this.project = project;
   }
 
@@ -38,7 +56,7 @@ public class CompoundTreeStructureProvider implements TreeStructureProvider {
             children = provider.modify(parent, children, settings);
             if (children.stream().anyMatch(Objects::isNull)) {
               LOG.warn("null child provided by " + provider);
-              children = StreamEx.of(children).filter(Objects::nonNull).toImmutableList();
+              children = StreamEx.of(children).nonNull().toImmutableList();
             }
           }
           catch (IndexNotReadyException exception) {
