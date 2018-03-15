@@ -176,6 +176,11 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   @NotNull public String getPresentableSubIdName(@NotNull final String subId) {
     throw new IllegalStateException("should not call");
   }
+
+  public Icon getPresentableSubIdIcon(@NotNull String subId) {
+    return getIcon();
+  }
+
   public abstract JComponent createComponent();
   public JComponent getComponentToFocus() {
     return myTree;
