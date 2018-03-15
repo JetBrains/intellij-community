@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInspection.dataFlow.instructions.BinopInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.PushInstruction;
 import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
@@ -96,6 +97,19 @@ public class CommonDataflow {
         return states;
       }
 
+      @Override
+      public DfaInstructionState[] visitBinop(BinopInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+        DfaInstructionState[] states = super.visitBinop(instruction, runner, memState);
+        PsiElement anchor = instruction.getPsiAnchor();
+        if(anchor instanceof PsiExpression) {
+          for (DfaInstructionState state : states) {
+            DfaMemoryState afterState = state.getMemoryState();
+            dfr.add((PsiExpression)anchor, (DfaMemoryStateImpl)afterState, afterState.peek());
+          }
+        }
+        return states;
+      }
+
       @NotNull
       @Override
       protected DfaCallArguments popCall(MethodCallInstruction instruction,
@@ -125,7 +139,7 @@ public class CommonDataflow {
           for (DfaInstructionState state : states) {
             DfaValue value = state.getMemoryState().peek();
             if(value != fail) {
-              dfr.add(context, (DfaMemoryStateImpl)state.getMemoryState(), state.getMemoryState().peek());
+              dfr.add(context, (DfaMemoryStateImpl)state.getMemoryState(), value);
             }
           }
         }
