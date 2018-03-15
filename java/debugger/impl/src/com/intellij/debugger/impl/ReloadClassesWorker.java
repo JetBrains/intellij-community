@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.DebuggerBundle;
@@ -20,7 +18,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.unscramble.ThreadState;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.MessageCategory;
 import com.intellij.xdebugger.XDebugSession;
@@ -235,14 +232,7 @@ class ReloadClassesWorker {
     if (reason == null || reason.length() == 0) {
       reason = DebuggerBundle.message("error.io.error");
     }
-    final StringBuilder buf = StringBuilderSpinAllocator.alloc();
-    try {
-      buf.append(qualifiedName).append(" : ").append(reason);
-      myProgress.addMessage(myDebuggerSession, MessageCategory.ERROR, buf.toString());
-    }
-    finally {
-      StringBuilderSpinAllocator.dispose(buf);
-    }
+    myProgress.addMessage(myDebuggerSession, MessageCategory.ERROR, qualifiedName + " : " + reason);
   }
 
   private static class RedefineProcessor {
