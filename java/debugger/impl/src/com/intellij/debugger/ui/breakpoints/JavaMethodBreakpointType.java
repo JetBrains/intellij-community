@@ -87,7 +87,7 @@ public class JavaMethodBreakpointType extends JavaLineBreakpointTypeBase<JavaMet
 
   @Nullable
   @Override
-  public XBreakpointCustomPropertiesPanel createCustomPropertiesPanel() {
+  public XBreakpointCustomPropertiesPanel createCustomPropertiesPanel(@NotNull Project project) {
     return new MethodBreakpointPropertiesPanel();
   }
 
