@@ -113,6 +113,9 @@
   </extensions>
 
   <actions>
+    <group id="Gradle.GenerateGroup">
+      <add-to-group group-id="GenerateGroup" anchor="first"/>
+    </group>
 
     <action id="Gradle.ExecuteTask" class="org.jetbrains.plugins.gradle.action.GradleExecuteTaskAction" text="Execute Gradle Task"
             icon="GradleIcons.Gradle">
