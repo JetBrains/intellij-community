@@ -109,7 +109,7 @@ class GitApplyChangesProcess(private val project: Project,
       val previousDefaultChangelist = changeListManager.defaultChangeList
 
       try {
-        changeListManager.defaultChangeList = changeList
+        changeListManager.setDefaultChangeList(changeList, true)
 
         val result = command(repository, commit.id, autoCommit,
                              listOf(conflictDetector, localChangesOverwrittenDetector, untrackedFilesDetector))
@@ -165,7 +165,7 @@ class GitApplyChangesProcess(private val project: Project,
         }
       }
       finally {
-        changeListManager.defaultChangeList = previousDefaultChangelist
+        changeListManager.setDefaultChangeList(previousDefaultChangelist, true)
         removeChangeListIfEmpty(changeList)
       }
     }

@@ -132,9 +132,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
     myListeners.addListener(new ChangeListAdapter() {
       @Override
-      public void defaultListChanged(final ChangeList oldDefaultList, ChangeList newDefaultList) {
+      public void defaultListChanged(ChangeList oldDefaultList, ChangeList newDefaultList, boolean automatic) {
         final LocalChangeList oldList = (LocalChangeList)oldDefaultList;
-        if (oldDefaultList == null || oldList.hasDefaultName() || oldDefaultList.equals(newDefaultList)) return;
+        if (automatic || oldDefaultList == null || oldList.hasDefaultName() || oldDefaultList.equals(newDefaultList)) return;
 
         scheduleAutomaticEmptyChangeListDeletion(oldList);
       }
@@ -976,19 +976,28 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     removeChangeList(list.getName());
   }
 
-  @Override
-  public void setDefaultChangeList(@NotNull String name) {
+  public void setDefaultChangeList(@NotNull String name, boolean automatic) {
     ApplicationManager.getApplication().runReadAction(() -> {
       synchronized (myDataLock) {
-        myModifier.setDefault(name);
+        myModifier.setDefault(name, automatic);
       }
     });
     myChangesViewManager.scheduleRefresh();
   }
 
   @Override
+  public void setDefaultChangeList(@NotNull String name) {
+    setDefaultChangeList(name, false);
+  }
+
+  @Override
   public void setDefaultChangeList(@NotNull final LocalChangeList list) {
-    setDefaultChangeList(list.getName());
+    setDefaultChangeList(list, false);
+  }
+
+  @Override
+  public void setDefaultChangeList(@NotNull final LocalChangeList list, boolean automatic) {
+    setDefaultChangeList(list.getName(), automatic);
   }
 
   @Override

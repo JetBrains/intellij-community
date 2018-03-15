@@ -45,8 +45,8 @@ public class Modifier {
     return command.getNewListCopy();
   }
 
-  public void setDefault(@NotNull String name) {
-    SetDefault command = new SetDefault(name);
+  public void setDefault(@NotNull String name, boolean automatic) {
+    SetDefault command = new SetDefault(name, automatic);
     impl(command);
   }
 
