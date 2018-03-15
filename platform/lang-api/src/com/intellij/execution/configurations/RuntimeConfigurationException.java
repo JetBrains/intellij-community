@@ -15,15 +15,32 @@
  */
 package com.intellij.execution.configurations;
 
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.openapi.options.ConfigurationException;
+import org.jetbrains.annotations.Nullable;
 
 public class RuntimeConfigurationException extends ConfigurationException {
-  public RuntimeConfigurationException(final String message, final String title) {
+  // Editor name in run configuration settings which contains error
+  // and should be focused.
+  @Nullable private final String myFocusedEditorName;
+
+  public RuntimeConfigurationException(@Nullable final String message,
+                                       @Nullable final String title,
+                                       @Nullable final String focusedEditorName) {
     super(message, title);
+    myFocusedEditorName = focusedEditorName;
   }
 
-  public RuntimeConfigurationException(final String message) {
-    super(message, ExecutionBundle.message("run.configuration.error.dialog.title"));
+  public RuntimeConfigurationException(@Nullable final String message, @Nullable final String title) {
+    this(message, title, null);
+  }
+
+  public RuntimeConfigurationException(@Nullable final String message) {
+    this(message, ExecutionBundle.message("run.configuration.error.dialog.title"), null);
+  }
+
+  @Nullable
+  public String getFocusedEditorName() {
+    return myFocusedEditorName;
   }
 }

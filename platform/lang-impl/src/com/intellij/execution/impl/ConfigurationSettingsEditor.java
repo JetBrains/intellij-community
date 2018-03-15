@@ -76,6 +76,7 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
         for (Pair<String, SettingsEditor<RunConfiguration>> pair : editors) {
           myCompound.addEditor(pair.getFirst(), new ConfigToSettingsWrapper(pair.getSecond()));
         }
+        myCompound.setFocusedEditorName(((SettingsEditorGroup)myConfigurationEditor).getFocusedEditorName());
       }
       else {
         myCompound.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"),
