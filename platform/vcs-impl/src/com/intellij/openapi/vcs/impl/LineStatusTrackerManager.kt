@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.impl
 
 import com.google.common.collect.HashMultiset
@@ -249,6 +235,8 @@ class LineStatusTrackerManager(
 
   @CalledInAwt
   private fun onEverythingChanged() {
+    val states = ArrayList<Pair<LineStatusTracker<*>, LineStatusTracker.State>>()
+
     synchronized(LOCK) {
       if (isDisposed) return
       log("onEverythingChanged", null)
@@ -264,17 +252,37 @@ class LineStatusTrackerManager(
       }
 
       for (file in files) {
-        onFileChanged(file)
+        val pair = refreshTracker(file)
+        if (pair != null) states.add(pair)
+      }
+    }
+
+    if (states.isNotEmpty()) {
+      runWriteAction {
+        for ((tracker, state) in states) {
+          tracker.restoreTrackerState(state)
+        }
       }
     }
   }
 
   @CalledInAwt
   private fun onFileChanged(virtualFile: VirtualFile) {
-    val document = fileDocumentManager.getCachedDocument(virtualFile) ?: return
+    val pair = refreshTracker(virtualFile)
+    if (pair != null) {
+      runWriteAction {
+        val (tracker, state) = pair
+        tracker.restoreTrackerState(state)
+      }
+    }
+  }
+
+  @CalledInAwt
+  private fun refreshTracker(virtualFile: VirtualFile): Pair<LineStatusTracker<*>, LineStatusTracker.State>? {
+    val document = fileDocumentManager.getCachedDocument(virtualFile) ?: return null
 
     synchronized(LOCK) {
-      if (isDisposed) return
+      if (isDisposed) return null
       log("onFileChanged", virtualFile)
       val tracker = trackers[document]?.tracker
 
@@ -291,11 +299,19 @@ class LineStatusTrackerManager(
           refreshTracker(tracker)
         }
         else {
+          val state = tracker.getTrackerState()
+
           releaseTracker(document)
-          installTracker(virtualFile, document)
+          val newTracker = installTracker(virtualFile, document)
+
+          if (newTracker != null && state != null) {
+            return Pair(newTracker, state)
+          }
         }
       }
     }
+
+    return null
   }
 
   private fun registerTrackerInCLM(data: TrackerData) {
@@ -391,14 +407,9 @@ class LineStatusTrackerManager(
 
 
   @CalledInAwt
-  private fun installTracker(virtualFile: VirtualFile, document: Document) {
-    if (!canGetBaseRevisionFor(virtualFile)) return
+  private fun installTracker(virtualFile: VirtualFile, document: Document): LineStatusTracker<*>? {
+    if (!canGetBaseRevisionFor(virtualFile)) return null
 
-    doInstallTracker(virtualFile, document)
-  }
-
-  @CalledInAwt
-  private fun doInstallTracker(virtualFile: VirtualFile, document: Document): LineStatusTracker<*>? {
     synchronized(LOCK) {
       if (isDisposed) return null
       if (trackers[document] != null) return null
@@ -437,6 +448,8 @@ class LineStatusTrackerManager(
   }
 
   private fun updateTrackingModes() {
+    val states = ArrayList<Pair<LineStatusTracker<*>, LineStatusTracker.State>>()
+
     synchronized(LOCK) {
       if (isDisposed) return
       val mode = getTrackingMode()
@@ -452,8 +465,21 @@ class LineStatusTrackerManager(
           tracker.mode = mode
         }
         else {
+          val state = tracker.getTrackerState()
+
           releaseTracker(document)
-          installTracker(virtualFile, document)
+          val newTracker = installTracker(virtualFile, document)
+          if (newTracker != null && state != null) {
+            states.add(Pair(newTracker, state))
+          }
+        }
+      }
+    }
+
+    if (states.isNotEmpty()) {
+      runWriteAction {
+        for ((tracker, state) in states) {
+          tracker.restoreTrackerState(state)
         }
       }
     }
@@ -673,7 +699,7 @@ class LineStatusTrackerManager(
       if (changeList != null && !changeList.isDefault) {
         log("Tracker install from DocumentListener: ", virtualFile)
 
-        val tracker = doInstallTracker(virtualFile, document)
+        val tracker = installTracker(virtualFile, document)
         if (tracker is PartialLocalLineStatusTracker) {
           tracker.replayChangesFromDocumentEvents(listOf(event))
         }

@@ -15,6 +15,7 @@ import com.intellij.openapi.vcs.ex.LineStatusTracker
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
 import com.intellij.openapi.vcs.ex.Range
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
+import com.intellij.openapi.vcs.impl.LineStatusTrackerSettingListener
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
 import com.intellij.openapi.vcs.impl.projectlevelman.AllVcses
 import com.intellij.openapi.vfs.VfsUtil
@@ -31,6 +32,7 @@ abstract class BaseLineStatusTrackerManagerTest : LightPlatformTestCase() {
   protected lateinit var clm: ChangeListManagerImpl
   protected lateinit var lstm: LineStatusTrackerManager
   protected lateinit var dirtyScopeManager: VcsDirtyScopeManagerImpl
+  protected lateinit var fileStatusManager : FileStatusManager
 
   protected lateinit var testRoot: VirtualFile
 
@@ -58,6 +60,8 @@ abstract class BaseLineStatusTrackerManagerTest : LightPlatformTestCase() {
     vcsManager.directoryMappings = listOf(VcsDirectoryMapping(testRoot.path, vcs.name))
     vcsManager.waitForInitialized()
     assertTrue(vcsManager.hasActiveVcss())
+
+    fileStatusManager = FileStatusManager.getInstance(ourProject)
 
     try {
       resetTestState()
@@ -98,6 +102,8 @@ abstract class BaseLineStatusTrackerManagerTest : LightPlatformTestCase() {
     VcsApplicationSettings.getInstance().SHOW_LST_GUTTER_MARKERS = true
     VcsApplicationSettings.getInstance().SHOW_WHITESPACES_IN_LST = true
     arePartialChangelistsSupported = true
+
+    ApplicationManager.getApplication().messageBus.syncPublisher(LineStatusTrackerSettingListener.TOPIC).settingsUpdated()
   }
 
   private fun resetChanges() {

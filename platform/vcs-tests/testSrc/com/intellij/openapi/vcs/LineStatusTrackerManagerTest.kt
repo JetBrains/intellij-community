@@ -1,9 +1,13 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs
 
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.vcs.BaseLineStatusTrackerTestCase.Companion.assertEqualRanges
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
+import com.intellij.openapi.vcs.ex.Range
 import com.intellij.openapi.vcs.ex.SimpleLocalLineStatusTracker
+import com.intellij.openapi.vcs.impl.LineStatusTrackerSettingListener
 
 class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
   private val FILE_1 = "file1.txt"
@@ -78,6 +82,28 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
 
       lstm.waitUntilBaseContentsLoaded()
       assertNotNull(file.tracker)
+    }
+    assertNull(file.tracker)
+  }
+
+  fun `test partial tracker lifecycle - editor for modified file 2`() {
+    createChangelist("Test")
+    val file = addLocalFile(FILE_1, "a_b_c_d_e")
+    assertNull(file.tracker)
+
+    file.withOpenedEditor {
+      val simpleTracker = file.tracker as SimpleLocalLineStatusTracker
+
+      setBaseVersion(FILE_1, "a_b_c_d_e")
+      refreshCLM()
+      fileStatusManager.fileStatusesChanged()
+
+      val partialTracker = file.tracker
+      assertTrue(simpleTracker.isReleased)
+      assertNotNull(partialTracker)
+      assertTrue(partialTracker is PartialLocalLineStatusTracker)
+
+      lstm.waitUntilBaseContentsLoaded()
     }
     assertNull(file.tracker)
   }
@@ -331,5 +357,65 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
       assertEquals(0, tracker.getRanges()!!.size)
       tracker.assertAffectedChangeLists("Default")
     }
+  }
+
+  fun `test partial tracker lifecycle - simple tracker passes ranges to partial one`() {
+    createChangelist("Test")
+    val file = addLocalFile(FILE_1, "a_a_a")
+    assertNull(file.tracker)
+
+    file.withOpenedEditor {
+      val simpleTracker = file.tracker as SimpleLocalLineStatusTracker
+      runCommand { simpleTracker.document.insertString(0, "a\n") }
+
+      setBaseVersion(FILE_1, "a_a_a")
+      refreshCLM()
+      lstm.waitUntilBaseContentsLoaded()
+
+      val partialTracker = file.tracker as PartialLocalLineStatusTracker
+      assertEqualRanges(partialTracker.getRanges()!!, listOf(Range(0, 1, 0, 0)))
+    }
+    assertNull(file.tracker)
+  }
+
+  fun `test partial tracker lifecycle - simple tracker passes ranges to partial one 2`() {
+    createChangelist("Test")
+    val file = addLocalFile(FILE_1, "a_a_a")
+    assertNull(file.tracker)
+
+    file.withOpenedEditor {
+      val simpleTracker = file.tracker as SimpleLocalLineStatusTracker
+      runCommand { simpleTracker.document.insertString(2, "a\n") }
+
+      setBaseVersion(FILE_1, "a_a_a")
+      refreshCLM()
+      lstm.waitUntilBaseContentsLoaded()
+
+      val partialTracker = file.tracker as PartialLocalLineStatusTracker
+      assertEqualRanges(partialTracker.getRanges()!!, listOf(Range(1, 2, 1, 1)))
+    }
+    assertNull(file.tracker)
+  }
+
+  fun `test partial tracker lifecycle - simple partial passes ranges to simple one`() {
+    val file = addLocalFile(FILE_1, "a_a_a")
+    setBaseVersion(FILE_1, "a_a_a")
+    refreshCLM()
+    assertNull(file.tracker)
+
+    file.withOpenedEditor {
+      val partialTracker = file.tracker as PartialLocalLineStatusTracker
+      lstm.waitUntilBaseContentsLoaded()
+
+      runCommand { partialTracker.document.insertString(2, "a\n") }
+
+      VcsApplicationSettings.getInstance().ENABLE_PARTIAL_CHANGELISTS = false
+      ApplicationManager.getApplication().messageBus.syncPublisher(LineStatusTrackerSettingListener.TOPIC).settingsUpdated()
+
+      val simpleTracker = file.tracker as SimpleLocalLineStatusTracker
+      lstm.waitUntilBaseContentsLoaded()
+      assertEqualRanges(simpleTracker.getRanges()!!, listOf(Range(1, 2, 1, 1)))
+    }
+    assertNull(file.tracker)
   }
 }
