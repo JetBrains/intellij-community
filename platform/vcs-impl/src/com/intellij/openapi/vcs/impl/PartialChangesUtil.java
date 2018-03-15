@@ -1,13 +1,13 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListChange;
-import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.changes.CurrentContentRevision;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.ex.LineStatusTracker;
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -23,7 +23,11 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import static com.intellij.openapi.diagnostic.Logger.getInstance;
+
 public class PartialChangesUtil {
+  private static final Logger LOG = getInstance(PartialChangesUtil.class);
+
   @Nullable
   public static PartialLocalLineStatusTracker getPartialTracker(@NotNull Project project, @NotNull Change change) {
     VirtualFile file = getVirtualFile(change);
@@ -100,5 +104,38 @@ public class PartialChangesUtil {
     }
 
     return otherChanges;
+  }
+
+  public static void runUnderChangeList(@NotNull Project project,
+                                        @Nullable LocalChangeList targetChangeList,
+                                        @NotNull Runnable task) {
+    computeUnderChangeList(project, targetChangeList, () -> {
+      task.run();
+      return null;
+    });
+  }
+
+  public static <T> T computeUnderChangeList(@NotNull Project project,
+                                             @Nullable LocalChangeList targetChangeList,
+                                             @NotNull Computable<T> task) {
+    ChangeListManager clm = ChangeListManager.getInstance(project);
+    LocalChangeList oldDefaultList = clm.getDefaultChangeList();
+
+    if (targetChangeList == null || targetChangeList.equals(oldDefaultList)) {
+      return task.compute();
+    }
+
+    clm.setDefaultChangeList(targetChangeList);
+    try {
+      return task.compute();
+    }
+    finally {
+      if (Comparing.equal(clm.getDefaultChangeList().getId(), targetChangeList.getId())) {
+        clm.setDefaultChangeList(oldDefaultList);
+      }
+      else {
+        LOG.warn(new Throwable("Active changelist was changed during the operation"));
+      }
+    }
   }
 }

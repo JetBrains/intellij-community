@@ -30,6 +30,7 @@ import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool
 import com.intellij.openapi.vcs.checkin.*;
 import com.intellij.openapi.vcs.impl.CheckinHandlersManager;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
+import com.intellij.openapi.vcs.impl.PartialChangesUtil;
 import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
@@ -788,7 +789,13 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     };
 
     Runnable runnable = wrapIntoCheckinMetaHandlers(proceedRunnable);
-    runnable.run();
+
+    if (myIsAlien) {
+      runnable.run();
+    }
+    else {
+      PartialChangesUtil.runUnderChangeList(myProject, myBrowser.getSelectedChangeList(), runnable);
+    }
 
     return compoundResultRef.get();
   }
