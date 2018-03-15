@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.impl
 import com.google.common.collect.HashMultiset
 import com.google.common.collect.Multiset
 import com.intellij.icons.AllIcons
+import com.intellij.ide.file.BatchFileChangeListener
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
@@ -89,6 +90,7 @@ class LineStatusTrackerManager(
 
   private var partialChangeListsEnabled = VcsApplicationSettings.getInstance().ENABLE_PARTIAL_CHANGELISTS && Registry.`is`("vcs.enable.partial.changelists")
   private val documentsInDefaultChangeList = HashSet<Document>()
+  private var batchChangeTaskCounter: Int = 0
 
   private val filesWithDamagedInactiveRanges = HashSet<VirtualFile>()
   private val fileStatesAwaitingRefresh = HashMap<VirtualFile, PartialLocalLineStatusTracker.State>()
@@ -115,8 +117,11 @@ class LineStatusTrackerManager(
 
       application.addApplicationListener(MyApplicationListener(), disposable)
 
-      val busConnection = project.messageBus.connect(disposable)
-      busConnection.subscribe(LineStatusTrackerSettingListener.TOPIC, MyLineStatusTrackerSettingListener())
+      val projectConnection = project.messageBus.connect(disposable)
+      projectConnection.subscribe(LineStatusTrackerSettingListener.TOPIC, MyLineStatusTrackerSettingListener())
+
+      val appConnection = application.messageBus.connect(disposable)
+      appConnection.subscribe(BatchFileChangeListener.TOPIC, MyBatchFileChangeListener())
 
       val fsManager = FileStatusManager.getInstance(project)
       fsManager.addFileStatusListener(MyFileStatusListener(), disposable)
@@ -416,6 +421,10 @@ class LineStatusTrackerManager(
       registerTrackerInCLM(data)
       refreshTracker(tracker)
       eventDispatcher.multicaster.onTrackerAdded(tracker)
+
+      if (batchChangeTaskCounter > 0) {
+        tracker.freeze()
+      }
 
       log("Tracker installed", virtualFile)
       return tracker
@@ -742,6 +751,46 @@ class LineStatusTrackerManager(
         override fun checkinFailed(exception: MutableList<VcsException>?) {
           runInEdt {
             getInstanceImpl(panel.project).resetExcludedFromCommitMarkers()
+          }
+        }
+      }
+    }
+  }
+
+  private inner class MyBatchFileChangeListener : BatchFileChangeListener {
+    override fun batchChangeStarted(eventProject: Project, activityName: String?) {
+      if (eventProject != project) return
+      runReadAction {
+        synchronized(LOCK) {
+          if (batchChangeTaskCounter == 0) {
+            for (data in trackers.values) {
+              try {
+                data.tracker.freeze()
+              }
+              catch (e: Throwable) {
+                LOG.error(e)
+              }
+            }
+          }
+          batchChangeTaskCounter++
+        }
+      }
+    }
+
+    override fun batchChangeCompleted(eventProject: Project) {
+      if (eventProject != project) return
+      runInEdt(ModalityState.any()) {
+        synchronized(LOCK) {
+          batchChangeTaskCounter--
+          if (batchChangeTaskCounter == 0) {
+            for (data in trackers.values) {
+              try {
+                data.tracker.unfreeze()
+              }
+              catch (e: Throwable) {
+                LOG.error(e)
+              }
+            }
           }
         }
       }

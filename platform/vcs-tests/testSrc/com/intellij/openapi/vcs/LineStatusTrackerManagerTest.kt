@@ -332,4 +332,76 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
       tracker.assertAffectedChangeLists("Default")
     }
   }
+
+  fun `test bulk refresh freezes tracker - inner operation`() {
+    val file = addLocalFile(FILE_1, "a_b_c_d_e2")
+    setBaseVersion(FILE_1, "a_b_c_d_e")
+    refreshCLM()
+
+    file.withOpenedEditor {
+      val tracker = file.tracker as PartialLocalLineStatusTracker
+      lstm.waitUntilBaseContentsLoaded()
+      assertTrue(tracker.isValid())
+
+      runBatchFileChangeOperation {
+        assertFalse(tracker.isValid())
+      }
+      assertTrue(tracker.isValid())
+    }
+    assertNull(file.tracker)
+  }
+
+  fun `test bulk refresh freezes tracker - outer operation`() {
+    val file = addLocalFile(FILE_1, "a_b_c_d_e2")
+    setBaseVersion(FILE_1, "a_b_c_d_e")
+    refreshCLM()
+
+    runBatchFileChangeOperation {
+      file.withOpenedEditor {
+        val tracker = file.tracker as PartialLocalLineStatusTracker
+        lstm.waitUntilBaseContentsLoaded()
+        assertFalse(tracker.isValid())
+      }
+    }
+    assertNull(file.tracker)
+  }
+
+  fun `test bulk refresh freezes tracker - interleaving operation`() {
+    val file = addLocalFile(FILE_1, "a_b_c_d_e2")
+    setBaseVersion(FILE_1, "a_b_c_d_e")
+    refreshCLM()
+
+    runBatchFileChangeOperation {
+      lstm.requestTrackerFor(file.document, this)
+      lstm.waitUntilBaseContentsLoaded()
+
+      val tracker = file.tracker as PartialLocalLineStatusTracker
+      assertFalse(tracker.isValid())
+    }
+    val tracker = file.tracker as PartialLocalLineStatusTracker
+    assertTrue(tracker.isValid())
+    lstm.releaseTrackerFor(file.document, this)
+    assertNull(file.tracker)
+  }
+
+  fun `test bulk refresh freezes tracker - multiple operations`() {
+    val file = addLocalFile(FILE_1, "a_b_c_d_e2")
+    setBaseVersion(FILE_1, "a_b_c_d_e")
+    refreshCLM()
+
+    file.withOpenedEditor {
+      val tracker = file.tracker as PartialLocalLineStatusTracker
+      lstm.waitUntilBaseContentsLoaded()
+      assertTrue(tracker.isValid())
+
+      runBatchFileChangeOperation {
+        runBatchFileChangeOperation {
+          assertFalse(tracker.isValid())
+        }
+        assertFalse(tracker.isValid())
+      }
+      assertTrue(tracker.isValid())
+    }
+    assertNull(file.tracker)
+  }
 }
