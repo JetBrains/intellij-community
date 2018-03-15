@@ -24,7 +24,7 @@ public abstract class IntentionsUI {
   @NotNull
   public CachedIntentions getCachedIntentions(@Nullable Editor editor, @NotNull PsiFile file) {
     CachedIntentions cachedIntentions = myCachedIntentions;
-    if (cachedIntentions != null && editor == myCachedIntentions.getEditor() && file == myCachedIntentions.getFile()) {
+    if (cachedIntentions != null && editor == cachedIntentions.getEditor() && file == cachedIntentions.getFile()) {
       return cachedIntentions;
     } else {
       CachedIntentions intentions = new CachedIntentions(myProject, file, editor);
