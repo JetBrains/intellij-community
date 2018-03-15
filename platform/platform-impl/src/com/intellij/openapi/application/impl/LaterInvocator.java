@@ -481,4 +481,16 @@ public class LaterInvocator {
       }
     }
   }
+
+  @TestOnly
+  public static void dispatchPendingFlushes() {
+    if (!isDispatchThread()) throw new IllegalStateException("Must call from EDT");
+
+    Semaphore semaphore = new Semaphore();
+    semaphore.down();
+    invokeLaterWithCallback(semaphore::up, ModalityState.any(), Conditions.FALSE, null);
+    while (!semaphore.isUp()) {
+      UIUtil.dispatchAllInvocationEvents();
+    }
+  }
 }

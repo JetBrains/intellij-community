@@ -75,6 +75,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.SerializationManagerEx;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectMap;
 import com.intellij.util.gist.GistManager;
@@ -86,6 +87,7 @@ import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TIntArrayList;
@@ -2454,5 +2456,25 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
       //noinspection IOResourceOpenedButNotSafelyClosed
       new FileOutputStream(corruptionMarker).close();
     } catch (Throwable ignore) {}
+  }
+
+  @TestOnly
+  public void waitForVfsEventsExecuted(long timeout, @NotNull TimeUnit unit) throws Exception {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    // wait in the other thread to be able to handle invokeLater() which myChangedFilesCollector.myVfsEventsExecutor issues
+    Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() ->
+      {
+        try {
+          ((BoundedTaskExecutor)myChangedFilesCollector.myVfsEventsExecutor)
+            .waitAllTasksExecuted(timeout, unit);
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      });
+    while (!future.isDone()) {
+      UIUtil.dispatchAllInvocationEvents();
+    }
+    future.get();
   }
 }

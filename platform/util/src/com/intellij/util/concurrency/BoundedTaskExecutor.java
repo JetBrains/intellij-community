@@ -91,7 +91,7 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
     if (task instanceof Callable && task.getClass().getName().equals("java.util.concurrent.Executors$RunnableAdapter")) {
       task = ObjectUtils.chooseNotNull(ReflectionUtil.getField(task.getClass(), task, Runnable.class, "task"), task);
     }
-    return extra == null ? task : task == null ? extra : task.getClass() + extra;
+    return extra == null ? task : task.getClass() + extra;
   }
 
   @Override
@@ -204,24 +204,35 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
       myBackendExecutor.execute(new Runnable() {
         @Override
         public void run() {
-          // we are back inside backend executor, no need to call .execute() - just run synchronously
-          Runnable task = currentTask.get();
-          do {
-            currentTask.set(task);
-            try {
-              task.run();
-            }
-            catch (Throwable e) {
-              // do not lose queued tasks because of this exception
-              try {
-                LOG.error(e);
-              }
-              catch (Throwable ignored) {
-              }
-            }
-            task = pollOrGiveUp(status);
+          String oldName = Thread.currentThread().getName();
+          boolean sameName = myName.equals(oldName);
+          if (!sameName) {
+            Thread.currentThread().setName(myName);
           }
-          while (task != null);
+          try {
+            Runnable task = currentTask.get();
+            do {
+              currentTask.set(task);
+              try {
+                task.run();
+              }
+              catch (Throwable e) {
+                // do not lose queued tasks because of this exception
+                try {
+                  LOG.error(e);
+                }
+                catch (Throwable ignored) {
+                }
+              }
+              task = pollOrGiveUp(status);
+            }
+            while (task != null);
+          }
+          finally {
+            if (!sameName) {
+              Thread.currentThread().setName(oldName);
+            }
+          }
         }
 
         @Override
