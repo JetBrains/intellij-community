@@ -143,7 +143,7 @@ public class RefParameterImpl extends RefJavaElementImpl implements RefParameter
       return null;
     }
     Object constValue = JavaConstantExpressionEvaluator.computeConstantExpression(expression, false);
-    return constValue == null ? VALUE_IS_NOT_CONST : constValue;
+    return constValue == null ? VALUE_IS_NOT_CONST : constValue instanceof String ? "\"" + constValue + "\"" : constValue;
   }
 
   @Nullable
