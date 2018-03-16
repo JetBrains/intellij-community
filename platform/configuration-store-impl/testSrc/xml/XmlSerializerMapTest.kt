@@ -177,7 +177,7 @@ internal class XmlSerializerMapTest {
           </entry>
         </map>
       </option>
-  </BeanWithMapWithBeanValue>""", bean)
+    </BeanWithMapWithBeanValue>""", bean)
   }
 
   @Test fun setKeysInMap() {
