@@ -185,8 +185,7 @@ public final class HttpRequests {
         builder.append("\n, response: ").append(httpConnection.getResponseCode()).append(' ').append(httpConnection.getResponseMessage());
       }
     }
-    catch (Throwable ignored) {
-    }
+    catch (Throwable ignored) { }
 
     return builder.toString();
   }
@@ -207,7 +206,7 @@ public final class HttpRequests {
     private final ConnectionTuner myInternalTuner;
     private UntrustedCertificateStrategy myUntrustedCertificateStrategy = null;
 
-    RequestBuilderImpl(@NotNull String url, @Nullable ConnectionTuner internalTuner) {
+    private RequestBuilderImpl(@NotNull String url, @Nullable ConnectionTuner internalTuner) {
       myUrl = url;
       myInternalTuner = internalTuner;
     }
