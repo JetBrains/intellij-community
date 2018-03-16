@@ -46,6 +46,8 @@ public class JBUI {
 
   private static final float DISCRETE_SCALE_RESOLUTION = 0.25f;
 
+  public static final boolean SCALE_VERBOSE = Boolean.getBoolean("ide.ui.scale.verbose");
+
   /**
    * The IDE supports two different HiDPI modes:
    *
