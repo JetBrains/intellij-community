@@ -232,7 +232,7 @@ class GitConfigTest : GitPlatformTest() {
   private fun getRemote(remoteString: String): GitRemote {
     val remoteInfo = remoteString.split(" ")
     return GitRemote(remoteInfo[0], getSingletonOrEmpty(remoteInfo, 1), getSingletonOrEmpty(remoteInfo, 2),
-                     getSingletonOrEmpty(remoteInfo, 3), getSingletonOrEmpty(remoteInfo, 4))
+                     getSingletonOrEmpty(remoteInfo, 3), getSingletonOrEmpty(remoteInfo, 4), false)
   }
 
   private fun readRemoteResults(resultFile: File): Set<GitRemote> {
@@ -248,7 +248,7 @@ class GitConfigTest : GitPlatformTest() {
       val pushUrls = info[2].split(" ")
       val fetchSpec = info[3].split(" ")
       val pushSpec = info[4].split(" ")
-      remotes.add(GitRemote(name, urls, pushUrls, fetchSpec, pushSpec))
+      remotes.add(GitRemote(name, urls, pushUrls, fetchSpec, pushSpec, false))
     }
     return remotes
   }

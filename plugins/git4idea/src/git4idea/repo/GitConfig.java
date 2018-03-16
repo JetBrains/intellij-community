@@ -53,7 +53,7 @@ public class GitConfig {
 
   private static final Logger LOG = Logger.getInstance(GitConfig.class);
 
-  private static final Pattern REMOTE_SECTION = Pattern.compile("(?:svn-)?remote \"(.*)\"", Pattern.CASE_INSENSITIVE);
+  private static final Pattern REMOTE_SECTION = Pattern.compile("(svn-)?remote \"(.*)\"", Pattern.CASE_INSENSITIVE);
   private static final Pattern URL_SECTION = Pattern.compile("url \"(.*)\"", Pattern.CASE_INSENSITIVE);
   private static final Pattern BRANCH_INFO_SECTION = Pattern.compile("branch \"(.*)\"", Pattern.CASE_INSENSITIVE);
   private static final Pattern BRANCH_COMMON_PARAMS_SECTION = Pattern.compile("branch", Pattern.CASE_INSENSITIVE);
@@ -89,7 +89,7 @@ public class GitConfig {
   private static GitRemote convertRemoteToGitRemote(@NotNull Collection<Url> urls, @NotNull Remote remote) {
     UrlsAndPushUrls substitutedUrls = substituteUrls(urls, remote);
     return new GitRemote(remote.myName, substitutedUrls.getUrls(), substitutedUrls.getPushUrls(),
-                         remote.getFetchSpecs(), remote.getPushSpec());
+                         remote.getFetchSpecs(), remote.getPushSpec(), remote.isSvnBridge());
   }
 
   /**
@@ -344,8 +344,8 @@ public class GitConfig {
                                            @NotNull Profile.Section section,
                                            @Nullable ClassLoader classLoader) {
     Matcher matcher = REMOTE_SECTION.matcher(sectionName);
-    if (matcher.matches() && matcher.groupCount() == 1) {
-      return new Remote(matcher.group(1), section.as(RemoteBean.class, classLoader));
+    if (matcher.matches() && matcher.groupCount() == 2) {
+      return new Remote(matcher.group(2), section.as(RemoteBean.class, classLoader), !matcher.group(1).isEmpty());
     }
     return null;
   }
@@ -362,13 +362,19 @@ public class GitConfig {
   private static class Remote {
 
     private final String myName;
+    private boolean myIsSvnBridge;
     private final RemoteBean myRemoteBean;
 
-    private Remote(@NotNull String name, @NotNull RemoteBean remoteBean) {
+    private Remote(@NotNull String name, @NotNull RemoteBean remoteBean, @NotNull boolean isSvnBridge) {
       myRemoteBean = remoteBean;
       myName = name;
+      myIsSvnBridge = isSvnBridge;
     }
-    
+
+    public boolean isSvnBridge() {
+      return myIsSvnBridge;
+    }
+
     @NotNull
     private Collection<String> getUrls() {
       return nonNullCollection(myRemoteBean.getUrl());
@@ -397,6 +403,8 @@ public class GitConfig {
     @Nullable String[] getPush();
     @Nullable String[] getUrl();
     @Nullable String[] getPushurl();
+    @Nullable String[] getBranches();
+    @Nullable String[] getTags();
   }
 
   private static class Url {
