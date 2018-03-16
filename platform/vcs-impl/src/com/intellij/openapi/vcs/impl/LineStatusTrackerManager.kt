@@ -552,6 +552,8 @@ class LineStatusTrackerManager(
             tracker.restoreState(state)
             log("Loading canceled: state restored", virtualFile)
           }
+
+          checkIfTrackerCanBeReleased(document)
         }
         is Result.Error -> {
           synchronized(LOCK) {
@@ -592,6 +594,8 @@ class LineStatusTrackerManager(
               log("Loading finished: state restored", virtualFile)
             }
           }
+
+          checkIfTrackerCanBeReleased(document)
         }
       }
     }
