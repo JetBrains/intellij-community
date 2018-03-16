@@ -45,6 +45,7 @@ import org.jetbrains.plugins.groovy.lang.typing.GrTypeCalculator;
 
 import java.util.*;
 
+import static org.jetbrains.plugins.groovy.lang.resolve.GrReferenceResolveRunnerKt.resolveMethodReference;
 import static org.jetbrains.plugins.groovy.lang.resolve.GrReferenceResolveRunnerKt.resolveReferenceExpression;
 
 /**
@@ -422,6 +423,10 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     final PsiElement nameElement = getReferenceNameElement();
     final String name = getReferenceName();
     if (name == null || nameElement == null) return GroovyResolveResult.EMPTY_ARRAY;
+
+    if (hasMemberPointer()) {
+      return resolveMethodReference(this).toArray(GroovyResolveResult.EMPTY_ARRAY);
+    }
 
     try {
       ResolveProfiler.start();
