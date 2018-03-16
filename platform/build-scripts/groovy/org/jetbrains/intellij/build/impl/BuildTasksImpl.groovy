@@ -83,7 +83,8 @@ class BuildTasksImpl extends BuildTasks {
    */
   void buildProvidedModulesList(String targetFilePath, List<String> modules) {
     buildContext.executeStep("Build provided modules list", BuildOptions.PROVIDED_MODULES_LIST_STEP, {
-      buildContext.messages.progress("Building provided modules list for modules $modules")
+      buildContext.messages.progress("Building provided modules list for ${modules.size()} modules")
+      buildContext.messages.debug("Building provided modules list for the following modules: $modules")
       FileUtil.delete(new File(targetFilePath))
       // Start the product in headless mode using com.intellij.ide.plugins.BundledPluginsLister.
       runApplicationStarter("$buildContext.paths.temp/builtinModules", modules, ['listBundledPlugins', targetFilePath])
