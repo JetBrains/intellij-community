@@ -807,8 +807,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     if (path == null) {
       return null;
     }
-    DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
-    Object userObject = node.getUserObject();
+    Object userObject = TreeUtil.getUserObject(path.getLastPathComponent());
     if (userObject instanceof ProjectViewNode) {
       ProjectViewNode descriptor = (ProjectViewNode)userObject;
       Object element = descriptor.getValue();
@@ -1028,11 +1027,11 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       if (currentProjectViewPane == null) { // can happen if not initialized yet
         return null;
       }
-      DefaultMutableTreeNode node = currentProjectViewPane.getSelectedNode();
-      if (node == null) {
+      TreePath path = currentProjectViewPane.getSelectedPath();
+      if (path == null) {
         return null;
       }
-      Object userObject = node.getUserObject();
+      Object userObject = TreeUtil.getUserObject(path.getLastPathComponent());
       if (userObject instanceof AbstractTreeNode) {
         return ((AbstractTreeNode)userObject).getValue();
       }
@@ -1167,13 +1166,14 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     @Nullable
     private LibraryOrderEntry getSelectedLibrary() {
       final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
-      DefaultMutableTreeNode node = viewPane != null ? viewPane.getSelectedNode() : null;
-      if (node == null) return null;
-      DefaultMutableTreeNode parent = (DefaultMutableTreeNode)node.getParent();
+      if (viewPane == null) return null;
+      TreePath path = viewPane.getSelectedPath();
+      if (path == null) return null;
+      TreePath parent = path.getParentPath();
       if (parent == null) return null;
-      Object userObject = parent.getUserObject();
+      Object userObject = TreeUtil.getUserObject(parent.getLastPathComponent());
       if (userObject instanceof LibraryGroupNode) {
-        userObject = node.getUserObject();
+        userObject = TreeUtil.getUserObject(path.getLastPathComponent());
         if (userObject instanceof NamedLibraryElementNode) {
           NamedLibraryElement element = ((NamedLibraryElementNode)userObject).getValue();
           OrderEntry orderEntry = element.getOrderEntry();
@@ -1181,7 +1181,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         }
         PsiDirectory directory = ((PsiDirectoryNode)userObject).getValue();
         VirtualFile virtualFile = directory.getVirtualFile();
-        Module module = (Module)((AbstractTreeNode)((DefaultMutableTreeNode)parent.getParent()).getUserObject()).getValue();
+        Module module = (Module)((AbstractTreeNode)TreeUtil.getUserObject(parent.getParentPath().getLastPathComponent())).getValue();
 
         if (module == null) return null;
         ModuleFileIndex index = ModuleRootManager.getInstance(module).getFileIndex();
@@ -1819,8 +1819,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         if (selectionPaths != null) {
           selectedElements = new ArrayList<>();
           for (TreePath path : selectionPaths) {
-            final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
-            final Object userObject = node.getUserObject();
+            final Object userObject = TreeUtil.getUserObject(path.getLastPathComponent());
             if (userObject instanceof NodeDescriptor) {
               selectedElements.add(((NodeDescriptor)userObject).getElement());
             }
