@@ -38,7 +38,7 @@ public class ChangeListsScopesProvider extends CustomScopesProviderEx {
     final List<NamedScope> result = new ArrayList<>();
     result.add(new ChangeListScope(changeListManager));
     for (ChangeList list : changeListManager.getChangeListsCopy()) {
-      result.add(new ChangeListScope(list));
+      result.add(new ChangeListScope(changeListManager, list.getName()));
     }
     return result;
   }
@@ -52,7 +52,7 @@ public class ChangeListsScopesProvider extends CustomScopesProviderEx {
     }
     final LocalChangeList changeList = changeListManager.findChangeList(name);
     if (changeList != null) {
-      return new ChangeListScope(changeList);
+      return new ChangeListScope(changeListManager, changeList.getName());
     }
     return null;
   }
