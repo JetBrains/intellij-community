@@ -29,18 +29,19 @@ import java.util.EventListener;
  */
 public interface ChangeListListener extends EventListener {
   default void changeListAdded(ChangeList list) {}
-  default void changesRemoved(Collection<Change> changes, ChangeList fromList) {}
-  default void changesAdded(Collection<Change> changes, ChangeList toList) {}
   default void changeListRemoved(ChangeList list) {}
   default void changeListChanged(ChangeList list) {}
   default void changeListRenamed(ChangeList list, String oldName) {}
   default void changeListCommentChanged(ChangeList list, String oldComment) {}
-  default void changesMoved(Collection<Change> changes, ChangeList fromList, ChangeList toList) {}
   default void defaultListChanged(ChangeList oldDefaultList, ChangeList newDefaultList) {}
   @ApiStatus.Experimental
   default void defaultListChanged(ChangeList oldDefaultList, ChangeList newDefaultList, boolean automatic) {
     defaultListChanged(oldDefaultList, newDefaultList);
   }
+
+  default void changesAdded(Collection<Change> changes, ChangeList toList) {}
+  default void changesRemoved(Collection<Change> changes, ChangeList fromList) {}
+  default void changesMoved(Collection<Change> changes, ChangeList fromList, ChangeList toList) {}
 
   default void unchangedFileStatusChanged() {}
   default void changeListUpdateDone() {}
