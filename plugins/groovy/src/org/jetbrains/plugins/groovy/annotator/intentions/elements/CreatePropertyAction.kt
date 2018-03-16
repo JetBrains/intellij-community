@@ -26,6 +26,8 @@ internal class CreatePropertyAction(
   private val project = target.project
   private val propertyInfo get() = requireNotNull(getNameAndKind(request.methodName))
 
+  override fun getRenderData() = JvmActionGroup.RenderData { propertyInfo.second }
+
   override fun getFamilyName(): String = message("create.property.from.usage.family")
 
   override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean {
