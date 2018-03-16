@@ -34,6 +34,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * @author nik
@@ -148,6 +150,17 @@ public class XVariablesView extends XVariablesViewBase implements DataProvider {
       Set<Entry> entries = myData.get(Pair.create(file, line));
       if (entries == null) return null;
       return ContainerUtil.map(entries, entry -> entry.myNode);
+    }
+
+    public synchronized Set<Pair<Integer, Set<XValueNodeImpl>>> getEntries(VirtualFile file) {
+      return myData.entrySet()
+                   .stream()
+                   .filter((mapEntry) -> Objects.equals(mapEntry.getKey().first, file))
+                   .map((mapEntry) -> Pair.create(mapEntry.getKey().second, mapEntry.getValue()
+                                                                                    .stream()
+                                                                                    .map((entry) -> entry.myNode)
+                                                                                    .collect(Collectors.toSet())))
+                   .collect(Collectors.toSet());
     }
 
     public synchronized void put(@NotNull VirtualFile file, @NotNull XSourcePosition position, @NotNull XValueNodeImpl node, long timestamp) {
