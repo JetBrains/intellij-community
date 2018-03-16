@@ -35,8 +35,6 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Handy class for reading data from HTTP connections with built-in support for HTTP redirects and gzipped content and automatic cleanup.
@@ -49,9 +47,6 @@ import java.util.regex.Pattern;
  */
 public final class HttpRequests {
   private static final Logger LOG = Logger.getInstance(HttpRequests.class);
-
-  private static final int BLOCK_SIZE = 16 * 1024;
-  private static final Pattern CHARSET_PATTERN = Pattern.compile("charset=([^;]+)");
 
   private static final int[] REDIRECTS = {
     // temporary redirects
@@ -142,11 +137,6 @@ public final class HttpRequests {
     }
 
     @Override
-    public String getMessage() {
-      return "Status: " + myStatusCode;
-    }
-
-    @Override
     public String toString() {
       return super.toString() + ". Status=" + myStatusCode + ", Url=" + myUrl;
     }
@@ -201,7 +191,7 @@ public final class HttpRequests {
     return builder.toString();
   }
 
-  public static class RequestBuilderImpl extends RequestBuilder {
+  private static class RequestBuilderImpl extends RequestBuilder {
     private final String myUrl;
     private int myConnectTimeout = HttpConfigurable.CONNECTION_TIMEOUT;
     private int myTimeout = HttpConfigurable.READ_TIMEOUT;
@@ -209,6 +199,7 @@ public final class HttpRequests {
     private boolean myGzip = true;
     private boolean myForceHttps;
     private boolean myUseProxy = true;
+    private boolean myIsReadResponseOnError;
     private HostnameVerifier myHostnameVerifier;
     private String myUserAgent;
     private String myAccept;
@@ -254,6 +245,12 @@ public final class HttpRequests {
     @Override
     public RequestBuilder useProxy(boolean useProxy) {
       myUseProxy = useProxy;
+      return this;
+    }
+
+    @Override
+    public RequestBuilder isReadResponseOnError(boolean isReadResponseOnError) {
+      myIsReadResponseOnError = isReadResponseOnError;
       return this;
     }
 
@@ -365,9 +362,14 @@ public final class HttpRequests {
             inputStream = new ProgressMonitorInputStream(indicator, inputStream, contentLength);
           }
         }
-        myReader = new BufferedReader(new InputStreamReader(inputStream, getCharset(this)));
+        myReader = new BufferedReader(new InputStreamReader(inputStream, getCharset()));
       }
       return myReader;
+    }
+
+    @NotNull
+    private Charset getCharset() throws IOException {
+      return HttpUrlConnectionUtil.getCharset(getConnection());
     }
 
     @Override
@@ -384,22 +386,13 @@ public final class HttpRequests {
 
     @NotNull
     private BufferExposingByteArrayOutputStream doReadBytes(@Nullable ProgressIndicator indicator) throws IOException {
-      int contentLength = getConnection().getContentLength();
-      BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream(contentLength > 0 ? contentLength : BLOCK_SIZE);
-      NetUtils.copyStreamContent(indicator, getInputStream(), out, contentLength);
-      return out;
+      return HttpUrlConnectionUtil.readBytes(getConnection(), indicator);
     }
 
     @NotNull
     @Override
     public String readString(@Nullable ProgressIndicator indicator) throws IOException {
-      BufferExposingByteArrayOutputStream byteStream = doReadBytes(indicator);
-      if (byteStream.size() == 0) {
-        return "";
-      }
-      else {
-        return new String(byteStream.getInternalBuffer(), 0, byteStream.size(), getCharset(this));
-      }
+      return HttpUrlConnectionUtil.readString(getConnection(), indicator);
     }
 
     @NotNull
@@ -410,7 +403,7 @@ public final class HttpRequests {
         return ArrayUtil.EMPTY_CHAR_SEQUENCE;
       }
       else {
-        return getCharset(this).decode(ByteBuffer.wrap(byteStream.getInternalBuffer(), 0, byteStream.size()));
+        return getCharset().decode(ByteBuffer.wrap(byteStream.getInternalBuffer(), 0, byteStream.size()));
       }
     }
 
@@ -492,29 +485,11 @@ public final class HttpRequests {
         HttpURLConnection urlConnection = (HttpURLConnection)connection;
         int responseCode = urlConnection.getResponseCode();
         if (responseCode >= 400) {
-          throwHttpStatusError(request, responseCode);
+          throwHttpStatusError(request, builder, responseCode);
         }
       }
       return result;
     }
-  }
-
-  @NotNull
-  private static Charset getCharset(@NotNull Request request) throws IOException {
-    String contentType = request.getConnection().getContentType();
-    if (!StringUtil.isEmptyOrSpaces(contentType)) {
-      Matcher m = CHARSET_PATTERN.matcher(contentType);
-      if (m.find()) {
-        try {
-          return Charset.forName(StringUtil.unquoteString(m.group(1)));
-        }
-        catch (IllegalArgumentException e) {
-          throw new IOException("unknown charset (" + contentType + ")", e);
-        }
-      }
-    }
-
-    return StandardCharsets.UTF_8;
   }
 
   private static URLConnection openConnection(RequestBuilderImpl builder, RequestImpl request) throws IOException {
@@ -587,10 +562,9 @@ public final class HttpRequests {
       if (LOG.isDebugEnabled()) LOG.debug("response: " + responseCode);
 
       if (responseCode < 200 || responseCode >= 300 && responseCode != HttpURLConnection.HTTP_NOT_MODIFIED) {
-        httpURLConnection.disconnect();
-
         int idx = ArrayUtil.indexOf(REDIRECTS, responseCode);
         if (idx >= 0) {
+          httpURLConnection.disconnect();
           url = connection.getHeaderField("Location");
           if (url != null) {
             if (idx >= PERMANENT_IDX) {
@@ -601,7 +575,7 @@ public final class HttpRequests {
           }
         }
 
-        return throwHttpStatusError(request, responseCode);
+        return throwHttpStatusError(request, builder, responseCode);
       }
 
       return connection;
@@ -610,8 +584,17 @@ public final class HttpRequests {
     throw new IOException(IdeBundle.message("error.connection.failed.redirects"));
   }
 
-  private static URLConnection throwHttpStatusError(@NotNull RequestImpl request, int responseCode) throws IOException {
-    String message = IdeBundle.message("error.connection.failed.with.http.code.N", responseCode);
+  private static URLConnection throwHttpStatusError(@NotNull RequestImpl request, @NotNull RequestBuilderImpl builder, int responseCode) throws IOException {
+    HttpURLConnection connection = (HttpURLConnection)request.getConnection();
+    String message = null;
+    if (builder.myIsReadResponseOnError) {
+      message = HttpUrlConnectionUtil.readString(connection, null, true);
+    }
+
+    if (StringUtil.isEmpty(message)) {
+      message = "Request failed with status code "  + responseCode;
+    }
+    connection.disconnect();
     throw new HttpStatusException(message, responseCode, StringUtil.notNullize(request.myUrl, "Empty URL"));
   }
 
