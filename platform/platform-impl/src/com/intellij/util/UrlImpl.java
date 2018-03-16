@@ -57,6 +57,7 @@ public final class UrlImpl implements Url {
     }
     else {
       builder.append(this.parameters);
+      builder.append('&');
     }
     Urls.encodeParameters(parameters, builder);
     return new UrlImpl(scheme, authority, path, builder.toString());
