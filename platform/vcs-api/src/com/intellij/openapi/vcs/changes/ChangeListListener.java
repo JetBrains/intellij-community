@@ -38,5 +38,9 @@ public interface ChangeListListener extends EventListener {
 
   default void unchangedFileStatusChanged() {}
   default void changeListUpdateDone() {}
+
+  /**
+   * @deprecated use {@link ChangeListAdapter#changeListsChanged}
+   */
   default void changeListsChanged() {}
 }

@@ -306,12 +306,6 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("no smart detection of search target", 3,
                  findMatchesCount(in, "'instance?.processInheritors('_param1{1,6});"));
 
-    String arrays = "class X {{" +
-                    "int[] a = new int[20];\n" +
-                    "byte[] b = new byte[30]" +
-                    "}}";
-    assertEquals("Improper array search", 1, findMatchesCount(arrays, "new int['_a]"));
-
     String someCode = "class X {{ a *= 2; a+=2; }}";
     assertEquals("Improper *= 2 search", 1, findMatchesCount(someCode, "a *= 2;"));
 
@@ -380,6 +374,34 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     String s13 = "class X {{ try { } catch(Exception e) { e.printStackTrace(); }}}";
     assertEquals("Find statement in catch", 1, findMatchesCount(s13, "'_Instance.'_MethodCall('_Parameter*)"));
 
+    String s10 = "class X {{" +
+                 "int time = 99;\n" +
+                 "String str = time < 0 ? \"\" : \"\";" +
+                 "String str2 = time < time ? \"\" : \"\";" +
+                 "}}";
+
+    assertEquals("Find expressions mistaken for declarations by parser in block mode", 1,
+                 findMatchesCount(s10, "time < time"));
+
+    assertEquals("Find expressions mistaken for declarations by parser in block mode 2", 1,
+                 findMatchesCount(s10, "time < 0"));
+
+    assertEquals("Find expressions mistaken for declarations by parser in block mode 3", 1,
+                 findMatchesCount(s10, "time < 0 ? '_a : '_b"));
+
+    assertEquals("Find expressions mistaken for declarations by parser in block mode 4", 2,
+                 findMatchesCount(s10, "'_a < '_b"));
+
+    String s11 = "import java.io.*;" +
+                 "class X {" +
+                 "  void m() throws IOException {" +
+                 "    try (InputStream in = null) {}" +
+                 "  }" +
+                 "}";
+    assertEquals("Find expression inside try-with-resources", 1, findMatchesCount(s11, "null"));
+  }
+
+  public void testNewArrayExpressions() {
     String s9 = "class X {{" +
                 "int a[] = new int[] { 1,2,3,4};\n" +
                 "int b[] = { 2,3,4,5 };\n" +
@@ -415,31 +437,19 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("Try to find String array initializer expressions", 0,
                  findMatchesCount(s9, "new '_{0,0}:String [] { '_* }"));
 
-    String s10 = "class X {{" +
-                 "int time = 99;\n" +
-                 "String str = time < 0 ? \"\" : \"\";" +
-                 "String str2 = time < time ? \"\" : \"\";" +
-                 "}}";
+    String arrays = "class X {{" +
+                    "int[] a = new int[20];\n" +
+                    "byte[] b = new byte[30]" +
+                    "}}";
+    assertEquals("Improper array search", 1, findMatchesCount(arrays, "new int['_a]"));
 
-    assertEquals("Find expressions mistaken for declarations by parser in block mode", 1,
-                 findMatchesCount(s10, "time < time"));
-
-    assertEquals("Find expressions mistaken for declarations by parser in block mode 2", 1,
-                 findMatchesCount(s10, "time < 0"));
-
-    assertEquals("Find expressions mistaken for declarations by parser in block mode 3", 1,
-                 findMatchesCount(s10, "time < 0 ? '_a : '_b"));
-
-    assertEquals("Find expressions mistaken for declarations by parser in block mode 4", 2,
-                 findMatchesCount(s10, "'_a < '_b"));
-
-    String s11 = "import java.io.*;" +
-                 "class X {" +
-                 "  void m() throws IOException {" +
-                 "    try (InputStream in = null) {}" +
-                 "  }" +
-                 "}";
-    assertEquals("Find expression inside try-with-resources", 1, findMatchesCount(s11, "null"));
+    String multiDimensional = "class X {{" +
+                              "  String[] s1 = {};\n" +
+                              "  String[] s2 = new String[]{};\n" +
+                              "  String[][] s3 = new String[][]{};" +
+                              "}";
+    assertEquals("Find 2 dimensional array", 1, findMatchesCount(multiDimensional, "new String[][]{}"));
+    assertEquals("Find 1 dimensional arrays", 2, findMatchesCount(multiDimensional, "new String[]{}"));
   }
 
   public void testLiteral() {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.openapi.Disposable;
@@ -48,7 +34,7 @@ import com.intellij.util.containers.ContainerUtil;
 import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Color;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -58,9 +44,8 @@ import java.util.Map;
  */
 public class FileStatusManagerImpl extends FileStatusManager implements ProjectComponent, Disposable {
   private static final Logger LOG = Logger.getInstance(FileStatusManagerImpl.class);
-  private final Map<VirtualFile, FileStatus> myCachedStatuses = Collections.synchronizedMap(new HashMap<VirtualFile, FileStatus>());
-  private final Map<VirtualFile, Boolean> myWhetherExactlyParentToChanged =
-    Collections.synchronizedMap(new HashMap<VirtualFile, Boolean>());
+  private final Map<VirtualFile, FileStatus> myCachedStatuses = Collections.synchronizedMap(new HashMap<>());
+  private final Map<VirtualFile, Boolean> myWhetherExactlyParentToChanged = Collections.synchronizedMap(new HashMap<>());
   private final Project myProject;
   private final List<FileStatusListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private FileStatusProvider myFileStatusProvider;
@@ -278,15 +263,18 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
   }
 
   @Override
-  public Color getNotChangedDirectoryColor(@NotNull VirtualFile vf) {
-    final Color notChangedColor = FileStatus.NOT_CHANGED.getColor();
-    if (!vf.isDirectory()) {
-      return notChangedColor;
-    }
-    final Boolean exactMatch = myWhetherExactlyParentToChanged.get(vf);
-    return exactMatch == null
-           ? notChangedColor
-           : exactMatch ? FileStatus.NOT_CHANGED_IMMEDIATE.getColor() : FileStatus.NOT_CHANGED_RECURSIVE.getColor();
+  public Color getNotChangedDirectoryColor(@NotNull VirtualFile file) {
+    return getRecursiveStatus(file).getColor();
+  }
+
+  @NotNull
+  @Override
+  public FileStatus getRecursiveStatus(@NotNull VirtualFile file) {
+    FileStatus status = super.getRecursiveStatus(file);
+    if (status != FileStatus.NOT_CHANGED || !file.isValid() || !file.isDirectory()) return status;
+    Boolean immediate = myWhetherExactlyParentToChanged.get(file);
+    if (immediate == null) return status;
+    return immediate ? FileStatus.NOT_CHANGED_IMMEDIATE : FileStatus.NOT_CHANGED_RECURSIVE;
   }
 
   public void refreshFileStatusFromDocument(final VirtualFile file, final Document doc) {

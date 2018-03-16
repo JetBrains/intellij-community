@@ -20,4 +20,8 @@ package com.intellij.openapi.vcs.changes;
  * @author yole
  */
 public class ChangeListAdapter implements ChangeListListener {
+  @Override
+  @SuppressWarnings("deprecation")
+  public void changeListsChanged() {
+  }
 }

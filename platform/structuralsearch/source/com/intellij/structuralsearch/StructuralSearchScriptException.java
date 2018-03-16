@@ -4,14 +4,9 @@ package com.intellij.structuralsearch;
 /**
  * @author Bas Leijdekkers
  */
-public class StructuralSearchException extends RuntimeException {
-  public StructuralSearchException() {}
+public class StructuralSearchScriptException extends StructuralSearchException {
 
-  public StructuralSearchException(String message) {
-    super(message);
-  }
-
-  public StructuralSearchException(Throwable cause) {
+  public StructuralSearchScriptException(Throwable cause) {
     super(cause);
   }
 }

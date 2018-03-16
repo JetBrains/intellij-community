@@ -6,9 +6,10 @@ import com.intellij.psi.ResolveState
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.GrResolverProcessor
 
-abstract class FindFirstProcessor<out T : GroovyResolveResult> : ProcessorWithCommonHints(), GrResolverProcessor<T> {
+abstract class FindFirstProcessor<T : GroovyResolveResult> : ProcessorWithCommonHints(), GrResolverProcessor<T> {
 
-  private var result: T? = null
+  var result: T? = null
+    private set
 
   final override val results: List<T> get() = result?.let { listOf(it) } ?: emptyList()
 
