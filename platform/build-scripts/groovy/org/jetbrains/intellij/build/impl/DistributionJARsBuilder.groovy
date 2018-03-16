@@ -70,14 +70,19 @@ class DistributionJARsBuilder {
 
     def productLayout = buildContext.productProperties.productLayout
     def enabledPluginModules = getEnabledPluginModules()
+    buildContext.messages.debug("Collecting project libraries used by plugins: ")
     List<JpsLibrary> projectLibrariesUsedByPlugins = getPluginsByModules(buildContext, enabledPluginModules).collectMany { plugin ->
       plugin.getActualModules(enabledPluginModules).values().collectMany {
         def module = buildContext.findRequiredModule(it)
-        JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).libraries.findAll { library ->
+        def libraries = JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).libraries.findAll { library ->
           !(library.createReference().parentReference instanceof JpsModuleReference) && !plugin.includedProjectLibraries.any {
             it.libraryName == library.name && it.relativeOutputPath == ""
           }
         }
+        if (!libraries.isEmpty()) {
+          buildContext.messages.debug(" plugin '$plugin.mainModule', module '$it': ${libraries.collect {"'$it.name'"}.join(",")}")
+        }
+        libraries
       }
     }
 
