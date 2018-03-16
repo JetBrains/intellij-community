@@ -3,7 +3,6 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import org.apache.tools.ant.BuildException
 import org.jetbrains.intellij.build.*
 import org.jetbrains.jps.model.artifact.JpsArtifactService
 import org.jetbrains.jps.model.java.JavaResourceRootType
@@ -558,7 +557,6 @@ idea.fatal.error.notification=disabled
     def libraryFiles = JpsJavaExtensionService.dependencies(buildContext.findRequiredModule(updaterModule)).productionOnly().runtimeOnly().libraries.collectMany {
       it.getFiles(JpsOrderRootType.COMPILED)
     }
-    buildContext.messages.info("Files: $libraryFiles")
     new LayoutBuilder(buildContext, false).layout(buildContext.paths.artifacts) {
       jar("updater-full.jar") {
         module(updaterModule)
