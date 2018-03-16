@@ -202,10 +202,8 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
         .setResizable(false)
         .setRequestFocus(true)
         .setItemChoosenCallback((value) -> {
-          if (value != null) {
-            //noinspection ConstantConditions
-            performAction(environmentBuilder.runner(availableRunners.get(value)).executor(value));
-          }
+          //noinspection ConstantConditions
+          performAction(environmentBuilder.runner(availableRunners.get(value)).executor(value));
         }).createPopup().showUnderneathOf(event.getComponent());
     }
   }

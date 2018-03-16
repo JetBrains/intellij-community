@@ -285,10 +285,8 @@ public class ExecutionHelper {
         })
         .setTitle(selectDialogTitle)
         .setItemChoosenCallback((descriptor) -> {
-          if (descriptor != null) {
-            descriptorConsumer.consume(descriptor);
-            descriptorToFront(project, descriptor);
-          }
+          descriptorConsumer.consume(descriptor);
+          descriptorToFront(project, descriptor);
         })
         .createPopup()
         .showInBestPositionFor(dataContext);

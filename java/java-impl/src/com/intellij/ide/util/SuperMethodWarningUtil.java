@@ -186,19 +186,17 @@ public class SuperMethodWarningUtil {
       .setResizable(false)
       .setRequestFocus(true)
       .setItemChoosenCallback((value) -> {
-        if (value != null) {
-          if (value.equals(renameBase)) {
-            try {
-              methods[0].putUserData(SIBLINGS, superMethods);
-              processor.execute(methods[0]);
-            }
-            finally {
-              methods[0].putUserData(SIBLINGS, null);
-            }
+        if (value.equals(renameBase)) {
+          try {
+            methods[0].putUserData(SIBLINGS, superMethods);
+            processor.execute(methods[0]);
           }
-          else {
-            processor.execute(methods[1]);
+          finally {
+            methods[0].putUserData(SIBLINGS, null);
           }
+        }
+        else {
+          processor.execute(methods[1]);
         }
       })
       .createPopup().showInBestPositionFor(editor);

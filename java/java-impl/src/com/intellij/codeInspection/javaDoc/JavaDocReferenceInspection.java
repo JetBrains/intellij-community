@@ -12,7 +12,6 @@ import com.intellij.codeInspection.ProblemDescriptorBase;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.FQNameCellRenderer;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -109,7 +108,7 @@ public class JavaDocReferenceInspection extends JavaDocReferenceInspectionBase {
             .createPopupChooserBuilder(originalClasses).
             setTitle(QuickFixBundle.message("add.qualifier.original.class.chooser.title")).
             setItemChoosenCallback((psiClass) -> {
-              if (!element.isValid() || psiClass == null) return;
+              if (!element.isValid()) return;
               WriteCommandAction.writeCommandAction(project, element.getContainingFile()).run(() -> {
                 if (psiClass.isValid()) {
                   PsiDocumentManager.getInstance(project).commitAllDocuments();

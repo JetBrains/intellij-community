@@ -177,7 +177,7 @@ public class JBComboBoxTableCellEditorComponent extends JBLabel {
     Point point = new Point(rect.x, rect.y);
     final boolean surrendersFocusOnKeystrokeOldValue = myTable instanceof JBTable ? ((JBTable)myTable).surrendersFocusOnKeyStroke() : myTable.getSurrendersFocusOnKeystroke();
     final JBPopup popup = JBPopupFactory.getInstance()
-      .createPopupChooserBuilder(myList)
+      .createListPopupBuilder(myList)
       .setItemChoosenCallback(() -> {
         myValue = myList.getSelectedValue();
         final ActionEvent event = new ActionEvent(myList, ActionEvent.ACTION_PERFORMED, "elementChosen");

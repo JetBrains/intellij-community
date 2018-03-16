@@ -5,12 +5,10 @@ import com.intellij.CommonBundle;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.IdeTooltipManager;
-import com.intellij.ide.ui.laf.intellij.MacIntelliJIconCache;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
-import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
@@ -40,11 +38,6 @@ import com.intellij.ui.popup.mock.MockConfirmation;
 import com.intellij.ui.popup.tree.TreePopupImpl;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
-import com.intellij.util.containers.WeakHashMap;
-import com.intellij.util.ui.StatusText;
-import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,11 +55,10 @@ import java.beans.PropertyChangeListener;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import static com.intellij.openapi.actionSystem.Presentation.PROP_TEXT;
-import static com.intellij.openapi.actionSystem.Presentation.restoreTextWithMnemonic;
 
 public class PopupFactoryImpl extends JBPopupFactory {
 
@@ -81,6 +73,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
   private final Map<Disposable, List<Balloon>> myStorage = ContainerUtil.createWeakMap();
 
+  @NotNull
   @Override
   public <T> IPopupChooserBuilder<T> createPopupChooserBuilder(List<T> list) {
     return new PopupChooserBuilder<>(new JBList<>(new CollectionListModel<>(list)));

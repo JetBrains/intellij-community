@@ -80,11 +80,7 @@ public class CopyAbstractMethodImplementationHandler {
       JBPopupFactory.getInstance()
         .createPopupChooserBuilder(mySourceMethods)
         .setRenderer(new MethodCellRenderer(true))
-        .setItemChoosenCallback((element) -> {
-          if(element != null) {
-            copyImplementation(element);
-          }
-        })
+        .setItemChoosenCallback((element) -> copyImplementation(element))
         .setTitle(CodeInsightBundle.message("copy.abstract.method.popup.title"))
         .createPopup()
         .showInBestPositionFor(myEditor);

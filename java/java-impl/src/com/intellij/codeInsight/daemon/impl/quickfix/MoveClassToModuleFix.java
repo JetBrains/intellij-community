@@ -136,11 +136,7 @@ public class MoveClassToModuleFix implements IntentionAction {
         .setMovable(false)
         .setResizable(false)
         .setRequestFocus(true)
-        .setItemChoosenCallback((value) -> {
-          if (value != null) {
-            TransactionGuard.getInstance().submitTransactionAndWait(() -> moveClass(project, editor, file, value));
-          }
-        })
+        .setItemChoosenCallback((value) -> TransactionGuard.getInstance().submitTransactionAndWait(() -> moveClass(project, editor, file, value)))
         .createPopup()
         .showInBestPositionFor(editor);
     }

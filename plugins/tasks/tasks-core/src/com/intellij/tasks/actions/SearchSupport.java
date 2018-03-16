@@ -221,7 +221,7 @@ public abstract class SearchSupport<T extends Task> {
 
     hideCurrentPopup();
 
-    final IPopupChooserBuilder builder = JBPopupFactory.getInstance().createPopupChooserBuilder(myList);
+    final PopupChooserBuilder builder = JBPopupFactory.getInstance().createListPopupBuilder(myList);
     builder.addListener(new JBPopupListener() {
       public void beforeShown(LightweightWindowEvent event) {
         myTextField

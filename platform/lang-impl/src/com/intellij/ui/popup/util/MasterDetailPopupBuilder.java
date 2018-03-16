@@ -229,7 +229,7 @@ public class MasterDetailPopupBuilder implements MasterController {
       toolBar.setOpaque(false);
     }
 
-    IPopupChooserBuilder builder = createInnerBuilder().
+    PopupChooserBuilder builder = createInnerBuilder().
       setMovable(true).
       setResizable(true).
       setAutoselectOnMouseMove(false).
@@ -299,7 +299,7 @@ public class MasterDetailPopupBuilder implements MasterController {
     return myPopup;
   }
 
-  private IPopupChooserBuilder createInnerBuilder() {
+  private PopupChooserBuilder createInnerBuilder() {
     if (myChooserComponent instanceof JList) {
       return new MyPopupChooserBuilder((JList)myChooserComponent);
     }

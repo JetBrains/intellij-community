@@ -20,7 +20,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -121,10 +120,8 @@ public class ImportFromExistingAction implements QuestionAction {
       .setRenderer(new CellRenderer(myName))
       .setTitle(myUseQualifiedImport? PyBundle.message("ACT.qualify.with.module") : PyBundle.message("ACT.from.some.module.import"))
       .setItemChoosenCallback((item) -> {
-        if (item != null) {
-          PsiDocumentManager.getInstance(myTarget.getProject()).commitAllDocuments();
-          doWriteAction(item);
-        }
+        PsiDocumentManager.getInstance(myTarget.getProject()).commitAllDocuments();
+        doWriteAction(item);
       })
       .setFilteringEnabled(o -> ((ImportCandidateHolder) o).getPresentableText(myName))
       .createPopup()

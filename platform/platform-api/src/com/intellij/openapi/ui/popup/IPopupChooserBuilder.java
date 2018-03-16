@@ -3,7 +3,6 @@ package com.intellij.openapi.ui.popup;
 
 import com.intellij.openapi.ui.ListComponentUpdater;
 import com.intellij.openapi.util.Computable;
-import com.intellij.ui.ActiveComponent;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
@@ -28,9 +27,6 @@ public interface IPopupChooserBuilder<T> {
   @NotNull
   IPopupChooserBuilder<T> setItemsChoosenCallback(@NotNull Consumer<Set<T>> callback);
 
-  @NotNull
-  IPopupChooserBuilder<T> setItemChoosenCallback(@NotNull Runnable runnable);
-
   IPopupChooserBuilder<T> setCancelOnClickOutside(boolean cancelOnClickOutside);
 
   JScrollPane getScrollPane();
@@ -39,16 +35,7 @@ public interface IPopupChooserBuilder<T> {
   IPopupChooserBuilder<T> setTitle(@NotNull @Nls String title);
 
   @NotNull
-  IPopupChooserBuilder<T> addAdditionalChooseKeystroke(@Nullable KeyStroke keyStroke);
-
-  @NotNull
-  IPopupChooserBuilder<T> setSouthComponent(@NotNull JComponent cmp);
-
-  @NotNull
   IPopupChooserBuilder<T> setCouldPin(@Nullable Processor<JBPopup> callback);
-
-  @NotNull
-  IPopupChooserBuilder<T> setEastComponent(@NotNull JComponent cmp);
 
   IPopupChooserBuilder<T> setRequestFocus(boolean requestFocus);
 
@@ -61,8 +48,6 @@ public interface IPopupChooserBuilder<T> {
   IPopupChooserBuilder<T> setUseDimensionServiceForXYLocation(boolean use);
 
   IPopupChooserBuilder<T> setCancelCallback(Computable<Boolean> callback);
-
-  IPopupChooserBuilder<T> setCommandButton(@NotNull ActiveComponent commandButton);
 
   IPopupChooserBuilder<T> setAlpha(float alpha);
 
@@ -90,9 +75,6 @@ public interface IPopupChooserBuilder<T> {
   IPopupChooserBuilder<T> setMayBeParent(boolean mayBeParent);
 
   IPopupChooserBuilder<T> setCloseOnEnter(boolean closeOnEnter);
-
-  @NotNull
-  IPopupChooserBuilder<T> setFocusOwners(@NotNull Component[] focusOwners);
 
   @NotNull
   IPopupChooserBuilder<T> setAdText(String ad);

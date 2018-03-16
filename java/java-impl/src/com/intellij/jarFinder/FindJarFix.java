@@ -119,11 +119,7 @@ public abstract class FindJarFix<T extends PsiElement> implements IntentionActio
       JBPopupFactory.getInstance()
         .createPopupChooserBuilder(fqns)
         .setTitle("Select Qualified Name")
-        .setItemChoosenCallback((value) -> {
-          if (value != null) {
-            findJarsForFqn(value, editor);
-          }
-        })
+        .setItemChoosenCallback((value) -> findJarsForFqn(value, editor))
         .createPopup()
         .showInBestPositionFor(editor);
     }
@@ -186,7 +182,7 @@ public abstract class FindJarFix<T extends PsiElement> implements IntentionActio
             initiateDownload(url, jarName);
           } else {
             JBPopupFactory.getInstance()
-            .createPopupChooserBuilder(libNames)
+            .createListPopupBuilder(libNames)
             .setTitle("Select a JAR file")
             .setItemChoosenCallback(() -> {
               String jarName = libNames.getSelectedValue();

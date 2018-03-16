@@ -4,8 +4,8 @@ package com.intellij.openapi.ui.popup;
 
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.ui.ListComponentUpdater;
 import com.intellij.openapi.ui.JBListUpdater;
+import com.intellij.openapi.ui.ListComponentUpdater;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -45,7 +45,7 @@ import java.util.Set;
  */
 public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
 
-  private JComponent myChooserComponent;
+  private final JComponent myChooserComponent;
   private String myTitle;
   private final ArrayList<KeyStroke> myAdditionalKeystrokes = new ArrayList<>();
   private Runnable myItemChosenRunnable;
@@ -117,7 +117,6 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
     return this;
   }
 
-  @Override
   @NotNull
   public PopupChooserBuilder<T> addAdditionalChooseKeystroke(@Nullable KeyStroke keyStroke) {
     if (keyStroke != null) {
@@ -162,14 +161,12 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
     return this;
   }
 
-  @Override
   @NotNull
   public PopupChooserBuilder<T> setItemChoosenCallback(@NotNull Runnable runnable) {
     myItemChosenRunnable = runnable;
     return this;
   }
 
-  @Override
   @NotNull
   public PopupChooserBuilder<T> setSouthComponent(@NotNull JComponent cmp) {
     mySouthComponent = cmp;
@@ -183,7 +180,6 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
     return this;
   }
   
-  @Override
   @NotNull
   public PopupChooserBuilder<T> setEastComponent(@NotNull JComponent cmp) {
     myEastComponent = cmp;
@@ -228,7 +224,6 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
     return this;
   }
 
-  @Override
   public PopupChooserBuilder<T> setCommandButton(@NotNull ActiveComponent commandButton) {
     myCommandButton = commandButton;
     return this;
@@ -603,7 +598,6 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
     }
   }
 
-  @Override
   @NotNull
   public PopupChooserBuilder<T> setFocusOwners(@NotNull Component[] focusOwners) {
     myFocusOwners = focusOwners;

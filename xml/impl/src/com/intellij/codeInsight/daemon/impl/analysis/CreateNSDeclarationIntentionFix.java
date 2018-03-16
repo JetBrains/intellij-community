@@ -313,7 +313,6 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
         .setRenderer(XmlNSRenderer.INSTANCE)
         .setTitle(title)
         .setItemChoosenCallback((selectedValue) -> {
-          if (selectedValue == null) return;
           PsiDocumentManager.getInstance(project).commitAllDocuments();
           CommandProcessor.getInstance().executeCommand(
             project,

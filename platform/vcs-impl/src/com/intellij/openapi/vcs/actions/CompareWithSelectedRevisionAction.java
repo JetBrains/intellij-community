@@ -17,7 +17,6 @@ package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -273,7 +272,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
     };
 
     table.setMinimumSize(new JBDimension(300, 50));
-    final IPopupChooserBuilder builder = new PopupChooserBuilder(table);
+    final PopupChooserBuilder builder = new PopupChooserBuilder(table);
 
     if (showComments) {
       builder.setSouthComponent(createCommentsPanel(table));

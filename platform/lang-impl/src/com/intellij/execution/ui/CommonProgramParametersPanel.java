@@ -125,11 +125,7 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
         }
         JBPopupFactory.getInstance()
           .createPopupChooserBuilder(macros)
-          .setItemChoosenCallback((value) -> {
-            if (value != null) {
-              textAccessor.setText(value);
-            }
-          })
+          .setItemChoosenCallback((value) -> textAccessor.setText(value))
           .setMovable(false)
           .setResizable(false)
           .createPopup()

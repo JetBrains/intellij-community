@@ -43,12 +43,10 @@ public class CustomFoldingRegionsPopup {
       .setResizable(false)
       .setMovable(false)
       .setItemChoosenCallback((selection) -> {
-        if (selection != null) {
-          PsiElement navigationElement = selection.getDescriptor().getElement().getPsi();
-          if (navigationElement != null) {
-            navigateTo(editor, navigationElement);
-            IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation();
-          }
+        PsiElement navigationElement = selection.getDescriptor().getElement().getPsi();
+        if (navigationElement != null) {
+          navigateTo(editor, navigationElement);
+          IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation();
         }
       })
       .createPopup()

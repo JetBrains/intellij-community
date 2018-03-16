@@ -21,9 +21,9 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -166,15 +166,13 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
         }
 
         list.setSelectedIndex(list.getItemsCount() - 1);
-        IPopupChooserBuilder<ToolWindow> builder = JBPopupFactory.getInstance().createPopupChooserBuilder(list);
+        PopupChooserBuilder<ToolWindow> builder = JBPopupFactory.getInstance().createListPopupBuilder(list);
         popup = builder
           .setAutoselectOnMouseMove(true)
           .setRequestFocus(false)
           .setItemChoosenCallback((selectedValue) -> {
             if (popup != null) popup.closeOk(null);
-            if (selectedValue != null) {
-              selectedValue.activate(null, true, true);
-            }
+            selectedValue.activate(null, true, true);
           })
           .createPopup();
 

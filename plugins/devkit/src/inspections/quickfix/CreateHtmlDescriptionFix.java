@@ -30,15 +30,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.LayeredIcon;
-import com.intellij.ui.components.JBList;
-import com.intellij.util.ArrayUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -105,28 +103,30 @@ public class CreateHtmlDescriptionFix implements LocalQuickFix, Iconable {
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiDirectory[] dirs = getDirectories();
-    final List<VirtualFile> virtualFiles = getPotentialRoots(myModule, dirs);
-    final VirtualFile[] roots = prepare(VfsUtilCore.toVirtualFileArray(virtualFiles));
-    if (roots.length == 1) {
-      ApplicationManager.getApplication().runWriteAction(() -> createDescription(roots[0]));
+    final List<VirtualFile> roots = getPotentialRoots(myModule, dirs);
+    if (roots.size() == 1) {
+      ApplicationManager.getApplication().runWriteAction(() -> createDescription(roots.get(0)));
     }
     else {
       final Editor editor = FileEditorManager.getInstance(myModule.getProject()).getSelectedTextEditor();
       if (editor == null) return;
-      List<String> options = StreamEx.of(roots).map(this::getPath).toList();
-      final JBList files = new JBList(ArrayUtil.toStringArray(options));
-      files.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       JBPopupFactory.getInstance()
-        .createPopupChooserBuilder(options)
-        .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
-        .setTitle(DevKitBundle.message("select.target.location.of.description", myFilename))
-        .setItemChoosenCallback(() -> {
-          final int index = files.getSelectedIndex();
-          if (0 <= index && index < roots.length) {
-            ApplicationManager.getApplication().runWriteAction(() -> createDescription(roots[index]));
-          }
-        }).createPopup()
-        .showInBestPositionFor(editor);
+                    .createPopupChooserBuilder(roots)
+                    .setRenderer(new ColoredListCellRenderer<VirtualFile>() {
+                      @Override
+                      protected void customizeCellRenderer(@NotNull JList list,
+                                                           VirtualFile value,
+                                                           int index,
+                                                           boolean selected,
+                                                           boolean hasFocus) {
+                        append(value.getPath());
+                      }
+                    })
+                    .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
+                    .setTitle(DevKitBundle.message("select.target.location.of.description", myFilename))
+                    .setItemChoosenCallback((root) -> ApplicationManager.getApplication().runWriteAction(() -> createDescription(root)))
+                    .createPopup()
+                    .showInBestPositionFor(editor);
     }
   }
 

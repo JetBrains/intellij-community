@@ -50,7 +50,7 @@ public abstract class SchemesToImportPopup<T> {
   }
 
   private void showList(JList list, Runnable selectAction) {
-    JBPopupFactory.getInstance().createPopupChooserBuilder(list).
+    JBPopupFactory.getInstance().createListPopupBuilder(list).
       setTitle("Import Scheme").
       setItemChoosenCallback(selectAction).
       createPopup().

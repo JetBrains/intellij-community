@@ -70,7 +70,7 @@ public abstract class DvcsCompareWithBranchAction<T extends Repository> extends 
 
     JBList list = new JBList(branchNames);
     JBPopupFactory.getInstance()
-      .createPopupChooserBuilder(list)
+      .createListPopupBuilder(list)
       .setTitle("Select branch to compare")
       .setItemChoosenCallback(new OnBranchChooseRunnable(project, file, presentableRevisionName, list))
       .setAutoselectOnMouseMove(true)

@@ -875,9 +875,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         }
       })
       .setTitle(IdeBundle.message("title.popup.views"))
-      .setItemChoosenCallback(pane -> {
-        if (pane != null) changeView(pane.getId());
-      });
+      .setItemChoosenCallback(pane -> changeView(pane.getId()));
     if (!views.isEmpty()) {
       builder = builder.setSelectedValue(views.get(0), true);
     }

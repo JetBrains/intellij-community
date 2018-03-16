@@ -359,7 +359,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
       }
     });
     myList.getSelectionModel().clearSelection();
-    final IPopupChooserBuilder builder = JBPopupFactory.getInstance().createPopupChooserBuilder(myList);
+    final PopupChooserBuilder builder = JBPopupFactory.getInstance().createListPopupBuilder(myList);
     builder.addListener(new JBPopupListener() {
       public void beforeShown(LightweightWindowEvent event) {
         myPathTextField
