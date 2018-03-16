@@ -512,8 +512,11 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
     @Override
     public void show(Component invoker, int x, int y) {
-      Dimension popupSize = comboBox.getPreferredSize();
+      Dimension popupSize = comboBox.getSize();
+      Dimension prefSize = comboBox.getPreferredSize();
       Insets insets = getInsets();
+
+      popupSize.width = Math.max(popupSize.width, prefSize.width);
       popupSize.setSize(popupSize.width - (insets.right + insets.left), getPopupHeightForRowCount(comboBox.getMaximumRowCount()));
 
       scroller.setMaximumSize(popupSize);
