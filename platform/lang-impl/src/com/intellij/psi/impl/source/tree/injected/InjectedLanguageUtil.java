@@ -586,7 +586,7 @@ public class InjectedLanguageUtil {
   }
 
   /**
-   * @deprecated Use !{@link InjectedLanguageManager#getInjectedPsiFiles(PsiElement)}.isEmpty() instead
+   * @deprecated Use {@link InjectedLanguageManager#getInjectedPsiFiles(PsiElement)} != null instead
    */
   public static boolean hasInjections(@NotNull PsiLanguageInjectionHost host) {
     if (!host.isPhysical()) return false;
