@@ -599,7 +599,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
               @Override
               public void succeeded() {
                 synchronized (myLocalLock) {
-                  if (tryChangeToTerminalState(DeploymentStatus.NOT_DEPLOYED)) {
+                  if (tryChangeToTerminalState(DeploymentStatus.NOT_DEPLOYED, true)) {
                     myLocalDeployments.remove(getDeployment().getName());
                     myCachedAllDeployments = null;
                   }
@@ -609,7 +609,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
               @Override
               public void failed() {
                 synchronized (myLocalLock) {
-                  tryChangeToTerminalState(DeploymentStatus.DEPLOYED);
+                  tryChangeToTerminalState(DeploymentStatus.DEPLOYED, false);
                 }
               }
             };
@@ -620,7 +620,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
               @Override
               public void succeeded() {
                 synchronized (myRemoteLock) {
-                  if (tryChangeToTerminalState(DeploymentStatus.NOT_DEPLOYED)) {
+                  if (tryChangeToTerminalState(DeploymentStatus.NOT_DEPLOYED, true)) {
                     myRemoteDeployments.remove(getDeployment().getName());
                     myCachedAllDeployments = null;
                   }
@@ -630,7 +630,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
               @Override
               public void failed() {
                 synchronized (myRemoteLock) {
-                  tryChangeToTerminalState(DeploymentStatus.DEPLOYED);
+                  tryChangeToTerminalState(DeploymentStatus.DEPLOYED, false);
                 }
               }
             };
@@ -646,15 +646,16 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
 
     public UndeployTransition(@NotNull DeploymentImpl deployment) {
       myDeployment = deployment;
-      myDeployment.changeState(DeploymentStatus.DEPLOYED, DeploymentStatus.DEPLOYING, null, null);
+      myDeployment.changeState(DeploymentStatus.DEPLOYED, DeploymentStatus.DEPLOYING, null, deployment.getRuntime());
     }
 
     public abstract void succeeded();
 
     public abstract void failed();
 
-    protected boolean tryChangeToTerminalState(DeploymentStatus terminalState) {
-      return myDeployment.changeState(DeploymentStatus.DEPLOYING, terminalState, null, null);
+    protected boolean tryChangeToTerminalState(DeploymentStatus terminalState, boolean forgetRuntime) {
+      DeploymentRuntime targetRuntime = forgetRuntime ? null : myDeployment.getRuntime();
+      return myDeployment.changeState(DeploymentStatus.DEPLOYING, terminalState, null, targetRuntime);
     }
 
     protected DeploymentImpl getDeployment() {
