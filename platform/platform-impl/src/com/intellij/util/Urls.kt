@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util
 
 import com.intellij.openapi.diagnostic.Logger
@@ -89,6 +75,7 @@ object Urls {
   @JvmStatic
   fun parseEncoded(url: String) = parse(url, false)
 
+  @JvmStatic
   fun newHttpUrl(authority: String, path: String?): Url {
     return newUrl("http", authority, path)
   }
@@ -112,6 +99,7 @@ object Urls {
   }
 
   // java.net.URI.create cannot parse "file:///Test Stuff" - but you don't need to worry about it - this method is aware
+  @JvmStatic
   fun parseFromIdea(url: CharSequence): Url? {
     var i = 0
     val n = url.length
@@ -129,18 +117,22 @@ object Urls {
     return newLocalFileUrl(url.toString())
   }
 
+  @JvmStatic
   fun parse(url: String, asLocalIfNoScheme: Boolean): Url? {
     if (url.isEmpty()) {
       return null
     }
 
-    return if (asLocalIfNoScheme && !URLUtil.containsScheme(url)) {
+    if (asLocalIfNoScheme && !URLUtil.containsScheme(url)) {
       // nodejs debug - files only in local filesystem
-      newLocalFileUrl(url)
+      return newLocalFileUrl(url)
     }
-    else parseUrl(VfsUtilCore.toIdeaUrl(url))
+    else {
+      return parseUrl(VfsUtilCore.toIdeaUrl(url))
+    }
   }
 
+  @JvmStatic
   fun parseAsJavaUriWithoutParameters(url: String): URI? {
     val asUrl = parseUrl(url) ?: return null
 
@@ -199,11 +191,15 @@ object Urls {
     }
     else {
       val url = parseUrl(file.url)
-      return url ?: UrlImpl(file.path)
+      return url ?: Urls.newUnparsable(file.path)
     }
   }
 
+  @JvmStatic
+  fun newUnparsable(string: String) = UrlImpl(null, null, string, null)
+
   @JvmOverloads
+  @JvmStatic
   fun equalsIgnoreParameters(url: Url, urls: Collection<Url>, caseSensitive: Boolean = true): Boolean {
     for (otherUrl in urls) {
       if (equals(url, otherUrl, caseSensitive, true)) {
