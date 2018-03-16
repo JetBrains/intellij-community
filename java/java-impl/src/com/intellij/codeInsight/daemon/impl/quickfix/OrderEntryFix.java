@@ -146,23 +146,9 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
       return result;
     }
     if (reference instanceof PsiJavaCodeReferenceElement) {
-      String qualifiedName = null;
-      if (((PsiJavaCodeReferenceElement)reference).isQualified()) {
-        qualifiedName = ((PsiJavaCodeReferenceElement)reference).getQualifiedName();
-      }
-      else if (containingFile instanceof PsiJavaFile) {
-        PsiImportList list = ((PsiJavaFile)containingFile).getImportList();
-        if (list != null) {
-          PsiImportStatementBase statement = list.findSingleImportStatement(shortReferenceName);
-          if (statement != null) {
-            //noinspection ConstantConditions
-            qualifiedName = statement.getImportReference().getQualifiedName();
-          }
-        }
-      }
+      String qualifiedName = getQualifiedName((PsiJavaCodeReferenceElement)reference, shortReferenceName, containingFile);
       if (qualifiedName != null) {
-        String finalQualifiedName = qualifiedName;
-        allowedDependencies.removeIf(aClass -> !finalQualifiedName.equals(aClass.getQualifiedName()));
+        allowedDependencies.removeIf(aClass -> !qualifiedName.equals(aClass.getQualifiedName()));
       }
     }
 
@@ -204,6 +190,27 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     }
 
     return result;
+  }
+
+  @Nullable
+  private static String getQualifiedName(@NotNull PsiJavaCodeReferenceElement reference,
+                                         String shortReferenceName,
+                                         PsiFile containingFile) {
+    String qualifiedName = null;
+    if (reference.isQualified()) {
+      qualifiedName = reference.getQualifiedName();
+    }
+    else if (containingFile instanceof PsiJavaFile) {
+      PsiImportList list = ((PsiJavaFile)containingFile).getImportList();
+      if (list != null) {
+        PsiImportStatementBase statement = list.findSingleImportStatement(shortReferenceName);
+        if (statement != null) {
+          //noinspection ConstantConditions
+          qualifiedName = statement.getImportReference().getQualifiedName();
+        }
+      }
+    }
+    return qualifiedName;
   }
 
   private static void createModuleFixes(PsiJavaModuleReference reference,
