@@ -80,4 +80,18 @@ public abstract class RequestBuilder {
   public CharSequence readChars() throws IOException {
     return readChars(null);
   }
+
+  public void write(@NotNull String data) throws IOException {
+    connect(request -> {
+      request.write(data);
+      return null;
+    });
+  }
+
+  public void write(@NotNull byte[] data) throws IOException {
+    connect(request -> {
+      request.write(data);
+      return null;
+    });
+  }
 }
