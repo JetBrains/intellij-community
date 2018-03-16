@@ -139,9 +139,11 @@ public class BuildManager implements Disposable {
   private final Map<String, RequestFuture> myBuildsInProgress = Collections.synchronizedMap(new HashMap<>());
   private final Map<String, Future<Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler>>> myPreloadedBuilds = Collections.synchronizedMap(new HashMap<>());
   private final BuildProcessClasspathManager myClasspathManager = new BuildProcessClasspathManager();
-  private final ExecutorService myRequestsProcessor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("BuildManager requestProcessor pool");
+  private final ExecutorService myRequestsProcessor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(
+    "BuildManager RequestProcessor Pool");
   private final List<VFileEvent> myUnprocessedEvents = new ArrayList<>();
-  private final ExecutorService myAutomakeTrigger = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("BuildManager auto-make trigger");
+  private final ExecutorService myAutomakeTrigger = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(
+    "BuildManager Auto-Make Trigger");
   private final Map<String, ProjectData> myProjectDataMap = Collections.synchronizedMap(new HashMap<String, ProjectData>());
   private volatile int myFileChangeCounter;
 
@@ -909,7 +911,7 @@ public class BuildManager implements Disposable {
   private ProjectData getProjectData(String projectPath) {
     synchronized (myProjectDataMap) {
       return myProjectDataMap.computeIfAbsent(projectPath, k -> new ProjectData(
-        SequentialTaskExecutor.createSequentialApplicationPoolExecutor("BuildManager pool")));
+        SequentialTaskExecutor.createSequentialApplicationPoolExecutor("BuildManager Pool")));
     }
   }
 

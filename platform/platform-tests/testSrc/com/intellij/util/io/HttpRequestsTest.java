@@ -2,6 +2,8 @@
 package com.intellij.util.io;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.util.TimeoutUtil;
 import com.sun.net.httpserver.HttpServer;
 import org.junit.After;
@@ -12,9 +14,11 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.SocketTimeoutException;
+import java.nio.charset.StandardCharsets;
 
 import static java.net.HttpURLConnection.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
@@ -101,13 +105,51 @@ public class HttpRequestsTest {
     fail();
   }
 
-  @Test(expected = AssertionError.class)
-  public void testPostNotAllowed() throws IOException {
-    HttpRequests.request(myUrl)
-                .tuner((c) -> ((HttpURLConnection)c).setRequestMethod("POST"))
-                .tryConnect();
-    fail();
+  @Test
+  public void post() throws IOException {
+    Ref<String> receivedData = Ref.create();
+    myServer.createContext("/", ex -> {
+      receivedData.set(StreamUtil.readText(ex.getRequestBody(), StandardCharsets.UTF_8));
+      ex.sendResponseHeaders(HTTP_OK, -1);
+      ex.close();
+    });
+
+    HttpRequests.post(myUrl, null).write("hello");
+    assertThat(receivedData.get()).isEqualTo("hello");
   }
+
+  @Test
+  public void postNotFound() {
+    myServer.createContext("/", ex -> {
+      ex.sendResponseHeaders(HTTP_NOT_FOUND, -1);
+      ex.close();
+    });
+
+    assertThat(catchThrowable(() -> HttpRequests.post(myUrl, null).write("hello")))
+      .isInstanceOf(HttpRequests.HttpStatusException.class);
+  }
+
+  //@Test
+  //public void postNotFoundWithResponse() throws IOException {
+  //  String serverErrorText = "use another url";
+  //  myServer.createContext("/", ex -> {
+  //    ex.sendResponseHeaders(503, -1);
+  //    ex.getResponseBody().write(serverErrorText.getBytes(StandardCharsets.UTF_8));
+  //    ex.close();
+  //  });
+  //
+  //  try {
+  //    HttpRequests
+  //      .post(myUrl, null)
+  //      .isReadResponseOnError(true)
+  //      .write("hello");
+  //  }
+  //  catch (HttpRequests.HttpStatusException e) {
+  //    assertThat(e.getMessage()).isEqualTo(serverErrorText);
+  //  }
+  //
+  //  fail();
+  //}
 
   @Test(timeout = 5000)
   public void testNotModified() throws IOException {

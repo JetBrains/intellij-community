@@ -49,8 +49,8 @@ class LibraryLicensesListGenerator {
   }
 
   void generateLicensesTable(String filePath, Set<String> usedModulesNames) {
-    messages.info("Generating licenses table")
-    messages.info("Used modules: $usedModulesNames")
+    messages.debug("Generating licenses table")
+    messages.debug("Used modules: $usedModulesNames")
     Set<JpsModule> usedModules = project.modules.findAll { usedModulesNames.contains(it.name) } as Set<JpsModule>
     Map<String, String> usedLibraries = [:]
     usedModules.each { JpsModule module ->
@@ -74,7 +74,7 @@ class LibraryLicensesListGenerator {
       }
     }
 
-    messages.info("Used libraries:")
+    messages.debug("Used libraries:")
     List<String> lines = []
     licenses.entrySet().each {
       LibraryLicense lib = it.key
@@ -85,7 +85,7 @@ class LibraryLicensesListGenerator {
       String name = lib.url != null ? "<a id=\"${libKey}_lib_url\" href=\"$lib.url\">$lib.name</a>" : lib.name
       String license = lib.libraryLicenseUrl != null ? "<a id=\"${libKey}_license_url\" href=\"$lib.libraryLicenseUrl\">$lib.license</a>" : lib.license
 
-      messages.info(" $lib.name (in module $moduleName)")
+      messages.debug(" $lib.name (in module $moduleName)")
       lines << "<tr><td>$name</td><td>${lib.version ?: ""}</td><td>$license</td></tr>".toString()
     }
     //projectBuilder.info("Unused libraries:")

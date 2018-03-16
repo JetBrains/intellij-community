@@ -94,7 +94,24 @@ public final class HttpRequests {
     String readString(@Nullable ProgressIndicator indicator) throws IOException;
 
     @NotNull
+    default String readString() throws IOException {
+      return readString(null);
+    }
+
+    @NotNull
     CharSequence readChars(@Nullable ProgressIndicator indicator) throws IOException;
+
+    default void write(@NotNull String data) throws IOException {
+      write(data.getBytes(StandardCharsets.UTF_8));
+    }
+
+    default void write(@NotNull byte[] data) throws IOException {
+      HttpURLConnection connection = (HttpURLConnection)getConnection();
+      connection.setFixedLengthStreamingMode(data.length);
+      try (OutputStream stream = connection.getOutputStream()) {
+        stream.write(data);
+      }
+    }
   }
 
   public interface RequestProcessor<T> {
@@ -142,7 +159,24 @@ public final class HttpRequests {
 
   @NotNull
   public static RequestBuilder request(@NotNull String url) {
-    return new RequestBuilderImpl(url);
+    return new RequestBuilderImpl(url, null);
+  }
+
+  @NotNull
+  public static RequestBuilder head(@NotNull String url) {
+    return new RequestBuilderImpl(url, connection -> ((HttpURLConnection)connection).setRequestMethod("HEAD"));
+  }
+
+  @NotNull
+  public static RequestBuilder post(@NotNull String url, @Nullable String contentType) {
+    return new RequestBuilderImpl(url, rawConnection -> {
+      HttpURLConnection connection = (HttpURLConnection)rawConnection;
+      connection.setRequestMethod("POST");
+      connection.setDoOutput(true);
+      if (contentType != null) {
+        connection.setRequestProperty("Content-Type", contentType);
+      }
+    });
   }
 
   @NotNull
@@ -161,13 +195,13 @@ public final class HttpRequests {
         builder.append("\n, response: ").append(httpConnection.getResponseCode()).append(' ').append(httpConnection.getResponseMessage());
       }
     }
-    catch (Throwable ignored) { }
+    catch (Throwable ignored) {
+    }
 
     return builder.toString();
   }
 
-
-  private static class RequestBuilderImpl extends RequestBuilder {
+  public static class RequestBuilderImpl extends RequestBuilder {
     private final String myUrl;
     private int myConnectTimeout = HttpConfigurable.CONNECTION_TIMEOUT;
     private int myTimeout = HttpConfigurable.READ_TIMEOUT;
@@ -179,10 +213,12 @@ public final class HttpRequests {
     private String myUserAgent;
     private String myAccept;
     private ConnectionTuner myTuner;
+    private final ConnectionTuner myInternalTuner;
     private UntrustedCertificateStrategy myUntrustedCertificateStrategy = null;
 
-    private RequestBuilderImpl(@NotNull String url) {
+    RequestBuilderImpl(@NotNull String url, @Nullable ConnectionTuner internalTuner) {
       myUrl = url;
+      myInternalTuner = internalTuner;
     }
 
     @Override
@@ -273,6 +309,7 @@ public final class HttpRequests {
 
   private static class RequestImpl implements Request, AutoCloseable {
     private final RequestBuilderImpl myBuilder;
+    @SuppressWarnings("FieldMayBeFinal")
     private String myUrl;
     private URLConnection myConnection;
     private InputStream myInputStream;
@@ -439,12 +476,26 @@ public final class HttpRequests {
   private static <T> T doProcess(RequestBuilderImpl builder, RequestProcessor<T> processor) throws IOException {
     CertificateManager manager = builder.myUntrustedCertificateStrategy == null || ApplicationManager.getApplication() == null ? null : CertificateManager.getInstance();
     try (RequestImpl request = new RequestImpl(builder)) {
+      T result;
       if (manager != null) {
-        return manager.runWithUntrustedCertificateStrategy(() -> processor.process(request), builder.myUntrustedCertificateStrategy);
+        result = manager.runWithUntrustedCertificateStrategy(() -> processor.process(request), builder.myUntrustedCertificateStrategy);
       }
       else {
-        return processor.process(request);
+        result = processor.process(request);
       }
+
+      URLConnection connection = request.myConnection;
+      if (connection instanceof HttpURLConnection && ((HttpURLConnection)connection).getRequestMethod().equals("POST")) {
+        // getResponseCode is not checked on connect for POST, because write must be performed before read
+        // https://stackoverflow.com/questions/613307/read-error-response-body-in-java
+        // the problem is that if you read the HttpUrlConnection.getErrorStream() code, you'll see that it ALWAYS returns nul
+        HttpURLConnection urlConnection = (HttpURLConnection)connection;
+        int responseCode = urlConnection.getResponseCode();
+        if (responseCode >= 400) {
+          throwHttpStatusError(request, responseCode);
+        }
+      }
+      return result;
     }
   }
 
@@ -467,9 +518,8 @@ public final class HttpRequests {
   }
 
   private static URLConnection openConnection(RequestBuilderImpl builder, RequestImpl request) throws IOException {
-    String url = request.myUrl;
-
     for (int i = 0; i < builder.myRedirectLimit; i++) {
+      String url = request.myUrl;
       if (builder.myForceHttps && StringUtil.startsWith(url, "http:")) {
         request.myUrl = url = "https:" + url.substring(5);
       }
@@ -486,25 +536,9 @@ public final class HttpRequests {
       }
 
       if (connection instanceof HttpsURLConnection) {
-        if (ApplicationManager.getApplication() != null) {
-          try {
-            final SSLContext context = CertificateManager.getInstance().getSslContext();
-            final SSLSocketFactory factory = context.getSocketFactory();
-            if (factory != null) {
-              ((HttpsURLConnection)connection).setSSLSocketFactory(factory);
-            }
-            else {
-              LOG.info("SSLSocketFactory is not defined by IDE CertificateManager; Using default SSL configuration to connect to " + url);
-            }
-          }
-          catch (Throwable e) {
-            LOG.info("Problems configuring SSL connection to " + url , e);
-          }
-        }
-        else {
-          LOG.info("Application is not initialized yet; Using default SSL configuration to connect to " + url);
-        }
+        configureSslConnection(url, (HttpsURLConnection)connection);
       }
+
       connection.setConnectTimeout(builder.myConnectTimeout);
       connection.setReadTimeout(builder.myTimeout);
 
@@ -526,45 +560,80 @@ public final class HttpRequests {
 
       connection.setUseCaches(false);
 
+      if (builder.myInternalTuner != null) {
+        builder.myInternalTuner.tune(connection);
+      }
+
       if (builder.myTuner != null) {
         builder.myTuner.tune(connection);
       }
 
       checkRequestHeadersForNulBytes(connection);
 
-      if (connection instanceof HttpURLConnection) {
-        HttpURLConnection httpURLConnection = (HttpURLConnection)connection;
-        String method = httpURLConnection.getRequestMethod();
-        LOG.assertTrue(method.equals("GET") || method.equals("HEAD"), "'" + method + "' not supported; please use GET or HEAD");
+      if (!(connection instanceof HttpURLConnection)) {
+        return connection;
+      }
 
-        if (LOG.isDebugEnabled()) LOG.debug("connecting to " + url);
-        int responseCode = httpURLConnection.getResponseCode();
-        if (LOG.isDebugEnabled()) LOG.debug("response: " + responseCode);
+      HttpURLConnection httpURLConnection = (HttpURLConnection)connection;
+      String method = httpURLConnection.getRequestMethod();
+      if (method.equals("POST")) {
+        return connection;
+      }
 
-        if (responseCode < 200 || responseCode >= 300 && responseCode != HttpResponseStatus.NOT_MODIFIED.code()) {
-          httpURLConnection.disconnect();
+      LOG.assertTrue(method.equals("GET") || method.equals("HEAD"), "'" + method + "' not supported; please use GET, HEAD or POST");
 
-          int idx = ArrayUtil.indexOf(REDIRECTS, responseCode);
-          if (idx >= 0) {
-            url = connection.getHeaderField("Location");
-            if (url != null) {
-              if (idx >= PERMANENT_IDX) {
-                LOG.error("HTTP response " + responseCode + " for '" + request.myUrl + "'; should be updated to '" + url + "'");
-              }
-              request.myUrl = url;
-              continue;
+      if (LOG.isDebugEnabled()) LOG.debug("connecting to " + url);
+      int responseCode = httpURLConnection.getResponseCode();
+      if (LOG.isDebugEnabled()) LOG.debug("response: " + responseCode);
+
+      if (responseCode < 200 || responseCode >= 300 && responseCode != HttpURLConnection.HTTP_NOT_MODIFIED) {
+        httpURLConnection.disconnect();
+
+        int idx = ArrayUtil.indexOf(REDIRECTS, responseCode);
+        if (idx >= 0) {
+          url = connection.getHeaderField("Location");
+          if (url != null) {
+            if (idx >= PERMANENT_IDX) {
+              LOG.error("HTTP response " + responseCode + " for '" + request.myUrl + "'; should be updated to '" + url + "'");
             }
+            request.myUrl = url;
+            continue;
           }
-
-          String message = IdeBundle.message("error.connection.failed.with.http.code.N", responseCode);
-          throw new HttpStatusException(message, responseCode, StringUtil.notNullize(url, "Empty URL"));
         }
+
+        return throwHttpStatusError(request, responseCode);
       }
 
       return connection;
     }
 
     throw new IOException(IdeBundle.message("error.connection.failed.redirects"));
+  }
+
+  private static URLConnection throwHttpStatusError(@NotNull RequestImpl request, int responseCode) throws IOException {
+    String message = IdeBundle.message("error.connection.failed.with.http.code.N", responseCode);
+    throw new HttpStatusException(message, responseCode, StringUtil.notNullize(request.myUrl, "Empty URL"));
+  }
+
+  private static void configureSslConnection(@NotNull String url, @NotNull HttpsURLConnection connection) {
+    if (ApplicationManager.getApplication() == null) {
+      LOG.info("Application is not initialized yet; Using default SSL configuration to connect to " + url);
+      return;
+    }
+
+    try {
+      final SSLContext context = CertificateManager.getInstance().getSslContext();
+      final SSLSocketFactory factory = context.getSocketFactory();
+      if (factory == null) {
+        LOG.info("SSLSocketFactory is not defined by IDE CertificateManager; Using default SSL configuration to connect to " + url);
+      }
+      else {
+        connection.setSSLSocketFactory(factory);
+      }
+    }
+    catch (Throwable e) {
+      LOG.info("Problems configuring SSL connection to " + url, e);
+    }
   }
 
   /**

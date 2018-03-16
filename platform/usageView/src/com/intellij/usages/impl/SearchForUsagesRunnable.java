@@ -56,7 +56,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-class SearchForUsagesRunnable implements Runnable {
+public class SearchForUsagesRunnable implements Runnable {
   @NonNls private static final String FIND_OPTIONS_HREF_TARGET = "FindOptions";
   @NonNls private static final String SEARCH_IN_PROJECT_HREF_TARGET = "SearchInProject";
   @NonNls private static final String LARGE_FILES_HREF_TARGET = "LargeFiles";
@@ -294,20 +294,23 @@ class SearchForUsagesRunnable implements Runnable {
     if (usageView != null) return usageView;
     int usageCount = myUsageCountWithoutDefinition.get();
     if (usageCount >= 2 || usageCount == 1 && myProcessPresentation.isShowPanelIfOnlyOneUsage()) {
-      usageView = myUsageViewManager.createEmptyUsageView(mySearchFor, myPresentation, mySearcherFactory);
+      usageView = myUsageViewManager.createUsageView(mySearchFor, Usage.EMPTY_ARRAY, myPresentation, mySearcherFactory);
       usageView.associateProgress(indicator);
       if (myUsageViewRef.compareAndSet(null, usageView)) {
         if (myProcessPresentation.isShowFindOptionsPrompt()) {
           openView(usageView);
         }
         else {
-          UsageViewEx finalView = usageView;
-          SwingUtilities.invokeLater(() -> {
-            if (myProject.isDisposed()) return;
-            if (myListener != null) {
-              myListener.usageViewCreated(finalView);
-            }
-          });
+          if (myListener != null) {
+            SwingUtilities.invokeLater(() -> {
+              if (!myProject.isDisposed()) {
+                UsageViewEx uv = myUsageViewRef.get();
+                if (uv != null) {
+                  myListener.usageViewCreated(uv);
+                }
+              }
+            });
+          }
         }
         final Usage firstUsage = myFirstUsage.get();
         if (firstUsage != null) {

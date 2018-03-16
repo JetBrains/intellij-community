@@ -5,13 +5,10 @@ import com.google.common.net.HttpHeaders
 import com.google.gson.Gson
 import com.intellij.openapi.application.PermanentInstallationID
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.util.io.HttpRequests
 import org.apache.commons.codec.binary.Base64OutputStream
-import org.apache.http.client.fluent.Request
-import org.apache.http.entity.ContentType
-import org.apache.http.message.BasicHeader
 import java.io.ByteArrayOutputStream
 import java.util.zip.GZIPOutputStream
-
 
 private class StatsServerInfo(@JvmField var status: String,
                               @JvmField var url: String,
@@ -19,9 +16,7 @@ private class StatsServerInfo(@JvmField var status: String,
   fun isServiceAlive() = "ok" == status
 }
 
-private object Utils {
-  val gson = Gson()
-}
+private val gson by lazy { Gson() }
 
 object StatsSender {
   private const val infoUrl = "https://www.jetbrains.com/config/features-service-status.json"
@@ -29,8 +24,7 @@ object StatsSender {
 
   private fun requestServerUrl(): StatsServerInfo? {
     try {
-      val response = Request.Get(infoUrl).execute().returnContent().asString()
-      val info = Utils.gson.fromJson(response, StatsServerInfo::class.java)
+      val info = gson.fromJson(HttpRequests.request(infoUrl).readString(), StatsServerInfo::class.java)
       if (info.isServiceAlive()) return info
     }
     catch (e: Exception) {
@@ -43,11 +37,8 @@ object StatsSender {
   fun send(text: String, compress: Boolean = true): Boolean {
     val info = requestServerUrl() ?: return false
     try {
-      val response = createRequest(info, text, compress).execute()
-      val code = response.handleResponse { it.statusLine.statusCode }
-      if (code in 200..299) {
-        return true
-      }
+      executeRequest(info, text, compress)
+      return true
     }
     catch (e: Exception) {
       LOG.debug(e)
@@ -55,15 +46,17 @@ object StatsSender {
     return false
   }
 
-  private fun createRequest(info: StatsServerInfo, text: String, compress: Boolean): Request {
+  private fun executeRequest(info: StatsServerInfo, text: String, compress: Boolean) {
     if (compress) {
       val data = Base64GzipCompressor.compress(text)
-      val request = Request.Post(info.urlForZipBase64Content).bodyByteArray(data)
-      request.addHeader(BasicHeader(HttpHeaders.CONTENT_ENCODING, "gzip"))
-      return request
+      HttpRequests
+        .post(info.urlForZipBase64Content, null)
+        .tuner { it.setRequestProperty(HttpHeaders.CONTENT_ENCODING, "gzip") }
+        .write(data)
+      return
     }
 
-    return Request.Post(info.url).bodyString(text, ContentType.TEXT_HTML)
+    HttpRequests.post(info.url, "text/html").write(text)
   }
 }
 
@@ -78,7 +71,7 @@ private object Base64GzipCompressor {
 }
 
 fun <T> createReportLine(recorderId: String, sessionId: String, data: T): String {
-  val json = Utils.gson.toJson(data)
+  val json = gson.toJson(data)
   val userUid = PermanentInstallationID.get()
   val stamp = System.currentTimeMillis()
   return "$stamp\t$recorderId\t$userUid\t$sessionId\t$json"

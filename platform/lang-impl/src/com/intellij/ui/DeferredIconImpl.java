@@ -30,7 +30,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.tabs.impl.TabLabel;
 import com.intellij.util.Alarm;
 import com.intellij.util.Function;
-import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.TransferToEDTQueue;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
@@ -64,7 +64,8 @@ public class DeferredIconImpl<T> extends CachingScalableJBIcon<DeferredIconImpl<
   private long myLastCalcTime;
   private long myLastTimeSpent;
 
-  private static final Executor ourIconsCalculatingExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("ourIconsCalculating pool",1);
+  private static final Executor ourIconsCalculatingExecutor = SequentialTaskExecutor
+    .createSequentialApplicationPoolExecutor("OurIconsCalculating Pool");
 
   private final IconListener<T> myEvalListener;
   private static final TransferToEDTQueue<Runnable> ourLaterInvocator = TransferToEDTQueue.createRunnableMerger("Deferred icon later invocator");

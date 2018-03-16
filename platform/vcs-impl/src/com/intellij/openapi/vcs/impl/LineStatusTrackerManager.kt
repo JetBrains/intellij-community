@@ -1058,7 +1058,7 @@ private abstract class SingleThreadLoader<Request, T> {
   private val LOG = Logger.getInstance(SingleThreadLoader::class.java)
   private val LOCK: Any = Any()
 
-  private val executor = AppExecutorUtil.createBoundedScheduledExecutorService("LineStatusTrackerManager pool", 1)
+  private val executor = AppExecutorUtil.createBoundedScheduledExecutorService("LineStatusTrackerManager Pool", 1)
 
   private val taskQueue = ArrayDeque<Request>()
   private val waitingForRefresh = HashSet<Request>()
