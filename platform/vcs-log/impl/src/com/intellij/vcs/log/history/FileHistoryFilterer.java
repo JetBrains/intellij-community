@@ -31,9 +31,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.vcs.history.VcsHistoryProviderEx;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.CompressedRefs;
-import com.intellij.vcs.log.data.DataPack;
-import com.intellij.vcs.log.data.VcsLogData;
+import com.intellij.vcs.log.data.*;
 import com.intellij.vcs.log.data.index.IndexDataGetter;
 import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.GraphCommitImpl;
@@ -50,12 +48,13 @@ import com.intellij.vcs.log.graph.utils.DfsUtil;
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags;
 import com.intellij.vcs.log.impl.HashImpl;
+import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl;
+import com.intellij.vcs.log.impl.VcsLogRevisionFilterImpl;
 import com.intellij.vcs.log.util.StopWatch;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.CommitCountStage;
 import com.intellij.vcs.log.visible.VcsLogFilterer;
 import com.intellij.vcs.log.visible.VisiblePack;
-import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,14 +72,14 @@ class FileHistoryFilterer extends VcsLogFilterer {
   @NotNull private final VirtualFile myRoot;
   @NotNull private final VcsHistoryCache myVcsHistoryCache;
 
-  public FileHistoryFilterer(@NotNull VcsLogData logData, @NotNull FilePath filePath, @Nullable Hash hash) {
+  public FileHistoryFilterer(@NotNull VcsLogData logData, @NotNull FilePath filePath, @Nullable Hash hash, @NotNull VirtualFile root) {
     super(logData.getLogProviders(), logData.getStorage(), logData.getTopCommitsCache(), logData.getCommitDetailsGetter(),
           logData.getIndex());
     myProject = logData.getProject();
     myFilePath = filePath;
     myHash = hash;
+    myRoot = root;
     myIndexDataGetter = ObjectUtils.assertNotNull(myIndex.getDataGetter());
-    myRoot = ObjectUtils.assertNotNull(VcsUtil.getVcsRootFor(myProject, myFilePath));
     myVcsHistoryCache = ProjectLevelVcsManager.getInstance(myProject).getVcsHistoryCache();
   }
 
@@ -139,6 +138,11 @@ class FileHistoryFilterer extends VcsLogFilterer {
     }
   }
 
+  @Override
+  public boolean canBuildFromEmpty() {
+    return !myFilePath.isDirectory();
+  }
+
   @NotNull
   private VisiblePack filterWithProvider(@NotNull AbstractVcs vcs, @NotNull VcsHistoryProvider provider,
                                          @NotNull DataPack dataPack,
@@ -165,6 +169,8 @@ class FileHistoryFilterer extends VcsLogFilterer {
     }
 
     List<VcsFileRevision> revisions = session.getRevisionList();
+    if (revisions.isEmpty()) return VisiblePack.EMPTY;
+
     Map<Integer, FilePath> pathsMap = ContainerUtil.newHashMap();
     VisibleGraph<Integer> visibleGraph;
 
@@ -183,12 +189,26 @@ class FileHistoryFilterer extends VcsLogFilterer {
         commits.add(GraphCommitImpl.createCommit(index, Collections.emptyList(), revision.getRevisionDate().getTime()));
       }
 
-      dataPack = DataPack.build(commits, dataPack.getRefsModel().getAllRefsByRoot(), dataPack.getLogProviders(), myStorage, false);
+      Map<VirtualFile, CompressedRefs> refs = getFilteredRefs(dataPack);
+      Map<VirtualFile, VcsLogProvider> providers = ContainerUtil.newHashMap(Pair.create(myRoot, myLogProviders.get(myRoot)));
+
+      dataPack = DataPack.build(commits, refs, providers, myStorage, false);
       visibleGraph = createVisibleGraph(dataPack, sortType, null,
                                         null/*no need to filter here, since we do not have any extra commits in this pack*/);
     }
 
     return new FileHistoryVisiblePack(dataPack, visibleGraph, false, filters, pathsMap);
+  }
+
+  @NotNull
+  private Map<VirtualFile, CompressedRefs> getFilteredRefs(@NotNull DataPack dataPack) {
+    Map<VirtualFile, CompressedRefs> refs = ContainerUtil.newHashMap();
+    CompressedRefs compressedRefs = dataPack.getRefsModel().getAllRefsByRoot().get(myRoot);
+    if (compressedRefs == null) {
+      compressedRefs = new CompressedRefs(ContainerUtil.newHashSet(), myStorage);
+    }
+    refs.put(myRoot, compressedRefs);
+    return refs;
   }
 
   private int getIndex(@NotNull VcsFileRevision revision) {
@@ -248,6 +268,27 @@ class FileHistoryFilterer extends VcsLogFilterer {
     VcsLogDetailsFilter filter = notNull(ContainerUtil.getFirstItem(detailsFilters));
     LOG.assertTrue(filter instanceof VcsLogStructureFilter);
     LOG.assertTrue(((VcsLogStructureFilter)filter).getFiles().equals(Collections.singleton(myFilePath)));
+  }
+
+  @NotNull
+  public static VcsLogFilterCollection createFilters(@NotNull FilePath path,
+                                                     @Nullable Hash revision,
+                                                     @NotNull VirtualFile root,
+                                                     boolean showAllBranches) {
+    VcsLogStructureFilterImpl fileFilter = new VcsLogStructureFilterImpl(Collections.singleton(path));
+
+    if (revision != null) {
+      VcsLogRevisionFilterImpl revisionFilter = VcsLogRevisionFilterImpl.fromCommit(new CommitId(revision, root));
+      return new VcsLogFilterCollectionImpl.VcsLogFilterCollectionBuilder(fileFilter, revisionFilter).build();
+    }
+
+    VcsLogBranchFilterImpl branchFilter = showAllBranches ? null : VcsLogBranchFilterImpl.fromBranch("HEAD");
+    return new VcsLogFilterCollectionImpl.VcsLogFilterCollectionBuilder(fileFilter, branchFilter).build();
+  }
+
+  @NotNull
+  public VcsLogFilterCollection createFilters(boolean showAllBranches) {
+    return createFilters(myFilePath, myHash, myRoot, showAllBranches);
   }
 
   private int getCurrentRow(@NotNull DataPack pack,

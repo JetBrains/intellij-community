@@ -10,6 +10,9 @@ class MockBuildMessages : BuildMessages {
   override fun info(message: String?) {
   }
 
+  override fun debug(message: String?) {
+  }
+
   override fun warning(message: String?) {
   }
 

@@ -32,9 +32,7 @@ internal class CreateAnnotationAction(target: PsiModifierListOwner, override val
 
     val psiElementFactory = PsiElementFactory.SERVICE.getInstance(project)
 
-    attributes@ for (attribute in request.attributes) {
-      val name = attribute.name
-      val value = attribute.value
+    attributes@ for ((name, value) in request.attributes) {
       val memberValue = when (value) {
         is AnnotationAttributeValueRequest.PrimitiveValue -> psiElementFactory
           .createExpressionFromText(value.value.toString(), null)

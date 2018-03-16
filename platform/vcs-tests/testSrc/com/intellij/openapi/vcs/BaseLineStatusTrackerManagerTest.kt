@@ -1,12 +1,14 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs
 
+import com.intellij.ide.file.BatchFileChangeListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.BaseLineStatusTrackerTestCase.Companion.parseInput
 import com.intellij.openapi.vcs.changes.*
@@ -196,6 +198,17 @@ abstract class BaseLineStatusTrackerManagerTest : LightPlatformTestCase() {
   protected fun Range.assertChangeList(listName: String) {
     val localRange = this as PartialLocalLineStatusTracker.LocalRange
     assertEquals(localRange.changelistId, listName.asListNameToId())
+  }
+
+
+  fun runBatchFileChangeOperation(task: () -> Unit) {
+    BackgroundTaskUtil.syncPublisher(BatchFileChangeListener.TOPIC).batchChangeStarted(ourProject, "Update")
+    try {
+      task()
+    }
+    finally {
+      BackgroundTaskUtil.syncPublisher(BatchFileChangeListener.TOPIC).batchChangeCompleted(ourProject)
+    }
   }
 
 

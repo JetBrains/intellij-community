@@ -1,13 +1,12 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
-package org.jetbrains.intellij.build.impl
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.jetbrains.intellij.build.impl.logging
 
 import groovy.transform.CompileStatic
 import org.apache.tools.ant.Project
 import org.jetbrains.intellij.build.BuildMessageLogger
 import org.jetbrains.intellij.build.CompilationErrorsLogMessage
 import org.jetbrains.intellij.build.LogMessage
+import org.jetbrains.intellij.build.impl.BuildUtils
 
 import java.util.function.BiFunction
 /**
@@ -77,6 +76,9 @@ class TeamCityBuildMessageLogger extends BuildMessageLogger {
           printTeamCityMessage("message", false, "text='$messageText' status='ERROR']");
         }
         printTeamCityMessage("compilationFinished", false, "compiler='$compiler']");
+        break
+      case LogMessage.Kind.DEBUG:
+        //debug messages are printed to a separate file available in the build artifacts
         break
     }
   }

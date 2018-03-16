@@ -18,7 +18,7 @@ sealed class AnnotationAttributeValueRequest {
 
 }
 
-class AnnotationAttributeRequest(val name: String, val value: AnnotationAttributeValueRequest)
+data class AnnotationAttributeRequest(val name: String, val value: AnnotationAttributeValueRequest)
 
 fun stringAttribute(name: String, value: String) = AnnotationAttributeRequest(name, AnnotationAttributeValueRequest.StringValue(value))
 fun intAttribute(name: String, value: Int) = AnnotationAttributeRequest(name, AnnotationAttributeValueRequest.PrimitiveValue(value))

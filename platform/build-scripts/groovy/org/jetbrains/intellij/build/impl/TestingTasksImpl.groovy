@@ -36,6 +36,11 @@ class TestingTasksImpl extends TestingTasks {
 
   @Override
   void runTests(List<String> additionalJvmOptions, String defaultMainModule, Predicate<File> rootExcludeCondition) {
+    if (options.testDiscoveryEnabled && isPerformanceRun()) {
+      context.messages.buildStatus("Skipping performance testing with Test Discovery, {build.status.text}")
+      return
+    }
+
     checkOptions()
 
     def compilationTasks = CompilationTasks.create(context)
@@ -71,6 +76,10 @@ class TestingTasksImpl extends TestingTasks {
       }
       publishTestDiscovery()
     }
+  }
+
+  private static boolean isPerformanceRun() {
+    System.getProperty("idea.performance.tests") == "true"
   }
 
   private void checkOptions() {
@@ -287,7 +296,7 @@ class TestingTasksImpl extends TestingTasks {
     }
 
     boolean suspendDebugProcess = options.suspendDebugProcess
-    if (systemProperties["idea.performance.tests"] == "true") {
+    if (isPerformanceRun()) {
       context.messages.info("Debugging disabled for performance tests")
       suspendDebugProcess = false
     }

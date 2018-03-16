@@ -1255,14 +1255,25 @@ public class PythonCompletionTest extends PyTestCase {
     assertContainsElements(suggested, "__init__(self)");
   }
 
-  //PY-28461
+  // PY-28461
   public void testImplicitImportsInsidePackage() {
+    runWithLanguageLevel(LanguageLevel.PYTHON37,
+                         () -> doMultiFileAssertSameElements("m1", "pkg2", "pkg3", "bar", "foo", "foo2"));
+  }
+
+  // PY-28461
+  public void testImplicitImportsInsidePackagePy2() {
+    runWithLanguageLevel(LanguageLevel.PYTHON27,
+                         () -> doMultiFileAssertSameElements("m1", "pkg2", "pkg3", "bar", "foo", "foo2"));
+  }
+
+  private void doMultiFileAssertSameElements(String... variants) {
     myFixture.copyDirectoryToProject(getTestName(true), "");
     myFixture.configureByFile("a.py");
     myFixture.completeBasic();
     final List<String> suggested = myFixture.getLookupElementStrings();
     assertNotNull(suggested);
-    assertSameElements(suggested, "m1", "pkg2", "pkg3", "bar", "foo", "foo2");
+    assertSameElements(suggested, variants);
   }
 
   @Override

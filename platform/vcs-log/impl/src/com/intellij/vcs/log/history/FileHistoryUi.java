@@ -76,18 +76,16 @@ public class FileHistoryUi extends AbstractVcsLogUi {
                        @NotNull FileHistoryUiProperties uiProperties,
                        @NotNull VisiblePackRefresher refresher,
                        @NotNull FilePath path,
-                       @Nullable Hash revision) {
+                       @Nullable Hash revision,
+                       @NotNull VirtualFile root) {
     super(logData, manager, refresher);
     myUiProperties = uiProperties;
 
     myIndexDataGetter = ObjectUtils.assertNotNull(logData.getIndex().getDataGetter());
     myRevision = revision;
-    CommitId commitId = revision == null ? null : new CommitId(revision, ObjectUtils.assertNotNull(VcsUtil.getVcsRootFor(myProject, path)));
-    myFilterUi = new FileHistoryFilterUi(path, commitId, uiProperties);
+    myFilterUi = new FileHistoryFilterUi(path, revision, root, uiProperties);
     myPath = path;
     myFileHistoryPanel = new FileHistoryPanel(this, logData, myVisiblePack, path);
-
-    updateFilter();
 
     for (VcsLogHighlighterFactory factory : ContainerUtil.filter(Extensions.getExtensions(LOG_HIGHLIGHTER_FACTORY_EP, myProject),
                                                                  f -> HIGHLIGHTERS.contains(f.getId()))) {

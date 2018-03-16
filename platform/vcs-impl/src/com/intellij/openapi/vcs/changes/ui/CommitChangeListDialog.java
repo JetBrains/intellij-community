@@ -301,6 +301,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
       myBrowser = new AlienChangeListBrowser(project, changeList, changes);
       myBrowser.getViewer().setIncludedChanges(included);
+      myBrowser.getViewer().rebuildTree();
 
       myCommitMessageArea.setChangeList(changeList);
     }

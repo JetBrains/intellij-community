@@ -2158,7 +2158,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   //  if (isAttached()) {
   //    getManagerThread().schedule(new DebuggerCommandImpl() {
   //      @Override
-  //      protected void action() throws Exception {
+  //      protected void action() {
   //        // set the flag before enabling/disabling cause it affects if breakpoints will create requests
   //        if (myBreakpointsMuted.getAndSet(muted) != muted) {
   //          final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager();
