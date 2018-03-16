@@ -117,7 +117,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     if (typeWinner != null) {
       return toggleAndReturnLineBreakpoint(project, typeWinner, file, line, temporary);
     }
-    return rejectedPromise();
+    return rejectedPromise(new RuntimeException("Cannot find appropriate breakpoint type"));
   }
 
   @Override
