@@ -10,7 +10,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
-import com.jetbrains.python.fixtures.PyMultiFileResolveTestCase;
+import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Set;
 
 @TestDataPath("$CONTENT_ROOT/../testData/completion")
-public class PythonCompletionTest extends PyMultiFileResolveTestCase {
+public class PythonCompletionTest extends PyTestCase {
 
   private void doTest() {
     CamelHumpMatcher.forceStartMatching(myFixture.getTestRootDisposable());
@@ -32,9 +32,13 @@ public class PythonCompletionTest extends PyMultiFileResolveTestCase {
   }
 
   private void doMultiFileTest() {
+    doMultiFileTest(CompletionType.BASIC, 1);
+  }
+
+  private void doMultiFileTest(CompletionType completionType, int invocationCount) {
     myFixture.copyDirectoryToProject(getTestName(true), "");
     myFixture.configureByFile("a.py");
-    myFixture.completeBasic();
+    myFixture.complete(completionType, invocationCount);
     myFixture.checkResultByFile(getTestName(true) + "/a.after.py");
   }
 
@@ -1288,7 +1292,7 @@ public class PythonCompletionTest extends PyMultiFileResolveTestCase {
 
   // PY-17810
   public void testDuplicatedEntriesFromMultipleSourceRoots() {
-    assertSingleVariantInExtendedCompletion();
+    assertSingleVariantInExtendedCompletionWithSourceRoots();
   }
 
   // PY-17810
@@ -1298,7 +1302,27 @@ public class PythonCompletionTest extends PyMultiFileResolveTestCase {
 
   // PY-17810
   public void testModuleFromMultipleSourceRoots() {
-    assertSingleVariantInExtendedCompletion();
+    assertSingleVariantInExtendedCompletionWithSourceRoots();
+  }
+
+  // PY-17810
+  public void testPackageFromMultipleSourceRoots() {
+    assertSingleVariantInExtendedCompletionWithSourceRoots();
+  }
+
+  // PY-17810
+  public void testFromPackageImport() {
+    myFixture.copyDirectoryToProject(getTestName(true), "");
+    myFixture.configureByFile("a.py");
+    myFixture.complete(CompletionType.BASIC, 2);
+    final List<String> suggested = myFixture.getLookupElementStrings();
+    assertNotNull(suggested);
+    assertSameElements(suggested, "m1", "m2");
+  }
+
+  // PY-28989
+  public void testModuleFromNamespacePackage() {
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::assertSingleVariantInExtendedCompletion);
   }
 
   private void assertNoVariantsInExtendedCompletion() {
@@ -1310,15 +1334,20 @@ public class PythonCompletionTest extends PyMultiFileResolveTestCase {
   }
 
   private void assertSingleVariantInExtendedCompletion() {
+    doMultiFileTest(CompletionType.BASIC, 2);
+    assertNull(myFixture.getLookupElements());
+  }
+
+  private void assertSingleVariantInExtendedCompletionWithSourceRoots() {
     myFixture.copyDirectoryToProject(getTestName(true), "");
-    withSourceRoots(Lists.newArrayList(
+    runWithSourceRoots(Lists.newArrayList(
       myFixture.findFileInTempDir("root1"),
       myFixture.findFileInTempDir("root2")),
-                    () -> {
-                      myFixture.configureByFile("a.py");
-                      myFixture.complete(CompletionType.BASIC, 2);
-                      assertNull(myFixture.getLookupElements());
-                    });
+                       () -> {
+                         myFixture.configureByFile("a.py");
+                         assertNull(myFixture.complete(CompletionType.BASIC, 2));
+                         myFixture.checkResultByFile(getTestName(true) + "/a.after.py");
+                       });
   }
 
   @Override

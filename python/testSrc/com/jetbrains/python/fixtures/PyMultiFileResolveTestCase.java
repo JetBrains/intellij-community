@@ -16,12 +16,10 @@
 package com.jetbrains.python.fixtures;
 
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonTestUtil;
@@ -100,13 +98,4 @@ public abstract class PyMultiFileResolveTestCase extends PyResolveTestCase {
     return Collections.singletonList(ref.resolve());
   }
 
-  protected void withSourceRoots(@NotNull List<VirtualFile> sourceRoots, @NotNull Runnable f) {
-    final Module module = myFixture.getModule();
-    sourceRoots.forEach(root -> PsiTestUtil.addSourceRoot(module, root));
-    try {
-      f.run();
-    } finally {
-      sourceRoots.forEach(root -> PsiTestUtil.removeSourceRoot(module, root));
-    }
-  }
 }
