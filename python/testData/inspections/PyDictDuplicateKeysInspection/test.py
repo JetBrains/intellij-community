@@ -28,3 +28,9 @@ d = dict([(<warning descr="Dictionary contains duplicate keys 'True'">True</warn
 
 d = {<warning descr="Dictionary contains duplicate keys 'None'">None</warning>: 1, <warning descr="Dictionary contains duplicate keys 'None'">None</warning>: 2}
 d = dict([(<warning descr="Dictionary contains duplicate keys 'None'">None</warning>, 1), (<warning descr="Dictionary contains duplicate keys 'None'">None</warning>, 2)])
+
+d = {<warning descr="Dictionary contains duplicate keys '11'">11</warning>: 1, <warning descr="Dictionary contains duplicate keys '11'">1_1</warning>: 1}
+d = {<warning descr="Dictionary contains duplicate keys '11.1'">11.1</warning>: 1, <warning descr="Dictionary contains duplicate keys '11.1'">1_1.1</warning>: 1}
+d = {<warning descr="Dictionary contains duplicate keys '11j'">11j</warning>: 1, <warning descr="Dictionary contains duplicate keys '11j'">1_1j</warning>: 1}
+d = {11j: 1, 11: 1}
+d = {<warning descr="Dictionary contains duplicate keys '0'">0j</warning>: 1, <warning descr="Dictionary contains duplicate keys '0'">0</warning>: 2}

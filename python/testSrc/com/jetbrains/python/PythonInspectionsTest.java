@@ -210,7 +210,7 @@ public class PythonInspectionsTest extends PyTestCase {
   }
 
   public void testPyDictDuplicateKeysInspection() {
-    doHighlightingTest(PyDictDuplicateKeysInspection.class);
+    doHighlightingTest(PyDictDuplicateKeysInspection.class, LanguageLevel.PYTHON37);
   }
 
   public void testPyListCreationInspection() {         //PY-2823
