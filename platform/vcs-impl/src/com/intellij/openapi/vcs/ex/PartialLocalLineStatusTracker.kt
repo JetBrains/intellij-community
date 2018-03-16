@@ -48,6 +48,7 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.WeakList
 import com.intellij.util.ui.JBUI
+import com.intellij.vcsUtil.VcsUtil
 import org.jetbrains.annotations.CalledInAwt
 import java.awt.BorderLayout
 import java.awt.Graphics
@@ -137,7 +138,7 @@ class PartialLocalLineStatusTracker(project: Project,
     if (oldIds != newIds) {
       if (notifyChangeListManager) {
         // It's OK to call this under documentTracker.writeLock, as this method will not grab CLM lock.
-        changeListManager.notifyChangelistsChanged()
+        changeListManager.notifyChangelistsChanged(VcsUtil.getFilePath(virtualFile), oldIds.toList(), newIds.toList())
       }
 
       eventDispatcher.multicaster.onChangeListsChange(this)
