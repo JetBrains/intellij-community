@@ -21,6 +21,7 @@ import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.components.JBOptionButton;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -164,6 +165,8 @@ public class DarculaButtonUI extends BasicButtonUI {
   }
 
   protected void paintContents(Graphics g, AbstractButton b) {
+    if (b instanceof JBOptionButton) return;
+
     FontMetrics fm = SwingUtilities2.getFontMetrics(b, g);
     boolean isDotButton = isSquare(b) && b.getIcon() == AllIcons.General.Ellipsis;
     String text = isDotButton ? "..." : b.getText();
