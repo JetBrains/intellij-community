@@ -28,8 +28,8 @@ public class IntentionsUIImpl extends IntentionsUI {
   public void update(@NotNull CachedIntentions cachedIntentions, boolean actionsChanged) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     Editor editor = cachedIntentions.getEditor();
+    if (editor == null) return;
     if (!ApplicationManager.getApplication().isUnitTestMode() && !editor.getContentComponent().hasFocus()) return;
-
     if (!actionsChanged) return;
 
     //IntentionHintComponent hint = myLastIntentionHint;
@@ -54,7 +54,7 @@ public class IntentionsUIImpl extends IntentionsUI {
   }
 
   @Override
-  public void doHide() {
+  public void hide() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     IntentionHintComponent hint = myLastIntentionHint;
     if (hint != null && hint.isVisible()) {
