@@ -1845,6 +1845,9 @@ public class ExtractMethodProcessor implements MatchProvider {
 
       if (classes.size() > 1) {
         final PsiClass[] psiClasses = classes.keySet().toArray(PsiClass.EMPTY_ARRAY);
+        if (myEditor == null) {
+          return processor.execute(psiClasses[0]);
+        }
         final PsiClass preselection = AnonymousTargetClassPreselectionUtil.getPreselection(classes.keySet(), psiClasses[0]);
         NavigationUtil.getPsiElementPopup(psiClasses, new PsiClassListCellRenderer(), "Choose Destination Class", processor, preselection)
           .showInBestPositionFor(myEditor);
