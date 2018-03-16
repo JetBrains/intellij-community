@@ -50,7 +50,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.ide.PooledThreadExecutor;
 
 import javax.swing.*;
 import java.awt.*;
@@ -81,7 +80,7 @@ public class JShellHandler {
   private final OSProcessHandler myProcess;
   private final MessageReader<Response> myMessageReader;
   private final MessageWriter<Request> myMessageWriter;
-  private final ExecutorService myTaskQueue = new SequentialTaskExecutor("JShell Command Queue", PooledThreadExecutor.INSTANCE);
+  private final ExecutorService myTaskQueue = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("JShell Command Queue");
   private final AtomicReference<Collection<String>> myEvalClasspathRef = new AtomicReference<>(null);
 
   private JShellHandler(@NotNull Project project,

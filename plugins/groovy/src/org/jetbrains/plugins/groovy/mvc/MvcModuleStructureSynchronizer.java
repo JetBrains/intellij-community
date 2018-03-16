@@ -34,7 +34,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.GuiUtils;
-import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
@@ -49,7 +49,7 @@ import java.util.concurrent.ExecutorService;
  * @author peter
  */
 public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
-  private static final ExecutorService ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("MvcModuleStructureSynchronizer pool",1);
+  private static final ExecutorService ourExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("MvcModuleStructureSynchronizer Pool");
   private final Set<Pair<Object, SyncAction>> myOrders = new LinkedHashSet<>();
 
   private Set<VirtualFile> myPluginRoots = Collections.emptySet();

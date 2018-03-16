@@ -74,8 +74,8 @@ import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.SerializationManagerEx;
 import com.intellij.util.*;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
+import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectMap;
 import com.intellij.util.gist.GistManager;
@@ -1848,7 +1848,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
       }
     };
 
-    private final ExecutorService myVfsEventsExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("vfs event processor", 1);
+    private final ExecutorService myVfsEventsExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("FileBasedIndex Vfs Event Processor");
     private final AtomicInteger myScheduledVfsEventsWorkers = new AtomicInteger();
 
     @Override

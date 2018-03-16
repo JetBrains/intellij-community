@@ -32,7 +32,7 @@ public class ServerTaskExecutorImpl implements ServerTaskExecutor {
   private final ExecutorService myTaskExecutor;
 
   public ServerTaskExecutorImpl() {
-    myTaskExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("ServerTaskExecutorImpl pool");
+    myTaskExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("ServerTaskExecutorImpl Pool");
   }
 
   @Override
