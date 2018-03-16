@@ -128,7 +128,7 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
                                           settingsProvider,
                                           setupFragment);
       runner.setEnableAfterConnection(false);
-      runner.runSync();
+      runner.runSync(true);
       // runner.getProcessHandler() would be null if execution error occurred
       if (runner.getProcessHandler() == null) {
         return null;
