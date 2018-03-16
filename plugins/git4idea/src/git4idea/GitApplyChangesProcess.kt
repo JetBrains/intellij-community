@@ -166,7 +166,7 @@ class GitApplyChangesProcess(private val project: Project,
       }
       finally {
         changeListManager.defaultChangeList = previousDefaultChangelist
-        removeChangeListIfEmpty(changeList)
+        changeListManager.scheduleAutomaticEmptyChangeListDeletion(changeList, true)
       }
     }
     return true
@@ -242,16 +242,6 @@ class GitApplyChangesProcess(private val project: Project,
   private fun refreshVfsAndMarkDirty(changes: Collection<Change>) {
     RefreshVFsSynchronously.updateChanges(changes)
     VcsDirtyScopeManager.getInstance(project).filePathsDirty(ChangesUtil.getPaths(changes), null)
-  }
-
-  private fun removeChangeListIfEmpty(changeList: LocalChangeList) {
-    val actualList = changeListManager.getChangeList(changeList.id)
-    if (actualList != null && actualList.changes.isEmpty() &&
-        !actualList.isReadOnly && !actualList.isDefault) {
-      LOG.debug("Changelist $actualList is empty, removing. " +
-                "All changes in the CLM: ${getAllChangesInLogFriendlyPresentation(changeListManager)}")
-      changeListManager.removeChangeList(actualList)
-    }
   }
 
   private fun showCommitDialogAndWaitForCommit(repository: GitRepository,
