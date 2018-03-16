@@ -45,6 +45,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
@@ -678,6 +679,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
 
     if (foundInfoList.isEmpty()) return null;
     if (foundInfoList.size() == 1) return foundInfoList.get(0);
+    // put infos with tooltip first, to derive composite's offsets from an info with tooltip, if present
+    foundInfoList.sort((o1, o2) -> -Comparing.compare(o1.getToolTip(), o2.getToolTip()));
     return new HighlightInfoComposite(foundInfoList);
   }
 
