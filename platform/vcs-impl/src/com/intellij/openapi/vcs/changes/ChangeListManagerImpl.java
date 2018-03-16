@@ -124,7 +124,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
     myComposite = new FileHolderComposite(project);
     myDeltaForwarder = new MyChangesDeltaForwarder(myProject, myScheduler);
-    myDelayedNotificator = new DelayedNotificator(myListeners, myScheduler);
+    myDelayedNotificator = new DelayedNotificator(this, myListeners, myScheduler);
     myWorker = new ChangeListWorker(myProject, myDelayedNotificator);
 
     myUpdater = new UpdateRequestsQueue(myProject, myScheduler, () -> updateImmediately());
@@ -1062,8 +1062,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
   }
 
-  public void notifyChangelistsChanged() {
-    myWorker.notifyChangelistsChanged();
+  public void notifyChangelistsChanged(@NotNull FilePath path,
+                                       @NotNull List<String> beforeChangeListsIds,
+                                       @NotNull List<String> afterChangeListsIds) {
+    myWorker.notifyChangelistsChanged(path, beforeChangeListsIds, afterChangeListsIds);
   }
 
   @Override
