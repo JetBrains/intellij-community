@@ -21,6 +21,7 @@ class BuildMessagesImpl implements BuildMessages {
   private final BuildMessageLogger logger
   private final BiFunction<String, AntTaskLogger, BuildMessageLogger> loggerFactory
   private final AntTaskLogger antTaskLogger
+  private final DebugLogger debugLogger
   private final BuildMessagesImpl parentInstance
   private final List<BuildMessagesImpl> forkedInstances = []
   private final List<LogMessage> delayedMessages = []
@@ -34,9 +35,13 @@ class BuildMessagesImpl implements BuildMessages {
 
     boolean underTeamCity = System.getProperty("teamcity.buildType.id") != null
     disableAntLogging(antProject)
-    BiFunction<String, AntTaskLogger, BuildMessageLogger> loggerFactory = underTeamCity ? TeamCityBuildMessageLogger.FACTORY : ConsoleBuildMessageLogger.FACTORY
+    BiFunction<String, AntTaskLogger, BuildMessageLogger> mainLoggerFactory = underTeamCity ? TeamCityBuildMessageLogger.FACTORY : ConsoleBuildMessageLogger.FACTORY
+    def debugLogger = new DebugLogger()
+    BiFunction<String, AntTaskLogger, BuildMessageLogger> loggerFactory = { String taskName, AntTaskLogger logger ->
+      new CompositeBuildMessageLogger([mainLoggerFactory.apply(taskName, logger), debugLogger.createLogger(taskName)])
+    } as BiFunction<String, AntTaskLogger, BuildMessageLogger>
     def antTaskLogger = new AntTaskLogger(antProject)
-    def messages = new BuildMessagesImpl(loggerFactory.apply(null, antTaskLogger), loggerFactory, antTaskLogger, null)
+    def messages = new BuildMessagesImpl(loggerFactory.apply(null, antTaskLogger), loggerFactory, antTaskLogger, debugLogger, null)
     antTaskLogger.defaultHandler = messages
     antProject.addBuildListener(antTaskLogger)
     antProject.addReference(key, messages)
@@ -55,10 +60,11 @@ class BuildMessagesImpl implements BuildMessages {
   }
 
   private BuildMessagesImpl(BuildMessageLogger logger, BiFunction<String, AntTaskLogger, BuildMessageLogger> loggerFactory, AntTaskLogger antTaskLogger,
-                            BuildMessagesImpl parentInstance) {
+                            DebugLogger debugLogger, BuildMessagesImpl parentInstance) {
     this.logger = logger
     this.loggerFactory = loggerFactory
     this.antTaskLogger = antTaskLogger
+    this.debugLogger = debugLogger
     this.parentInstance = parentInstance
   }
 
@@ -70,6 +76,15 @@ class BuildMessagesImpl implements BuildMessages {
   @Override
   void warning(String message) {
     processMessage(new LogMessage(LogMessage.Kind.WARNING, message))
+  }
+
+  @Override
+  void debug(String message) {
+    processMessage(new LogMessage(LogMessage.Kind.DEBUG, message))
+  }
+
+  void setDebugLogPath(String path) {
+    debugLogger.setOutputFile(new File(path))
   }
 
   @Override
@@ -151,7 +166,7 @@ class BuildMessagesImpl implements BuildMessages {
   @Override
   BuildMessages forkForParallelTask(String suggestedTaskName) {
     String taskName = taskNameGenerator.generateUniqueName(suggestedTaskName)
-    def forked = new BuildMessagesImpl(loggerFactory.apply(taskName, antTaskLogger), loggerFactory, antTaskLogger, this)
+    def forked = new BuildMessagesImpl(loggerFactory.apply(taskName, antTaskLogger), loggerFactory, antTaskLogger, debugLogger, this)
     forkedInstances << forked
     return forked
   }
@@ -162,6 +177,7 @@ class BuildMessagesImpl implements BuildMessages {
       forked.delayedMessages.each {
         forked.logger.processMessage(it)
       }
+      forked.logger.dispose()
     }
     forkedInstances.clear()
   }

@@ -3,7 +3,6 @@ package org.jetbrains.intellij.build.impl.logging
 
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.BuildMessageLogger
-import org.jetbrains.intellij.build.CompilationErrorsLogMessage
 import org.jetbrains.intellij.build.LogMessage
 import org.jetbrains.intellij.build.impl.BuildUtils
 
@@ -12,45 +11,23 @@ import java.util.function.BiFunction
  * @author nik
  */
 @CompileStatic
-class ConsoleBuildMessageLogger extends BuildMessageLogger {
+class ConsoleBuildMessageLogger extends BuildMessageLoggerBase {
   public static final BiFunction<String, AntTaskLogger, BuildMessageLogger> FACTORY = { String taskName, AntTaskLogger logger ->
     new ConsoleBuildMessageLogger(taskName)
   } as BiFunction<String, AntTaskLogger, BuildMessageLogger>
-  private final String parallelTaskId
-  private int indent
   private static final PrintStream out = BuildUtils.realSystemOut
 
   ConsoleBuildMessageLogger(String parallelTaskId) {
-    this.parallelTaskId = parallelTaskId
+    super(parallelTaskId)
   }
 
   @Override
-  void processMessage(LogMessage message) {
-    switch (message.kind) {
-      case LogMessage.Kind.BLOCK_STARTED:
-        printMessage(message.text)
-        indent++
-        break
-      case LogMessage.Kind.BLOCK_FINISHED:
-        indent--
-        break
-      case LogMessage.Kind.ARTIFACT_BUILT:
-        printMessage("Artifact built: $message.text")
-        break
-      case LogMessage.Kind.COMPILATION_ERRORS:
-        String errorsString = (message as CompilationErrorsLogMessage).errorMessages.join("\n")
-        printMessage("Compilation errors (${(message as CompilationErrorsLogMessage).compilerName}):\n$errorsString")
-        break
-      default:
-        printMessage(message.text)
-        break
-    }
+  protected boolean shouldBePrinted(LogMessage.Kind kind) {
+    return kind != LogMessage.Kind.DEBUG
   }
 
-  private printMessage(String message) {
-    String taskPrefix = parallelTaskId == null ? "" : "[$parallelTaskId] "
-    message.eachLine {
-      out.println(" " * indent + taskPrefix + it)
-    }
+  @Override
+  protected void printLine(String line) {
+    out.println(line)
   }
 }

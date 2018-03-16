@@ -77,6 +77,9 @@ class TeamCityBuildMessageLogger extends BuildMessageLogger {
         }
         printTeamCityMessage("compilationFinished", false, "compiler='$compiler']");
         break
+      case LogMessage.Kind.DEBUG:
+        //debug messages are printed to a separate file available in the build artifacts
+        break
     }
   }
 
