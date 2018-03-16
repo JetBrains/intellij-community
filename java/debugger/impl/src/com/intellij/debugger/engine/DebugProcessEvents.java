@@ -478,7 +478,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
     //this is especially necessary if a method is breakpoint condition
     getManagerThread().schedule(new SuspendContextCommandImpl(suspendContext) {
       @Override
-      public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
+      public void contextAction(@NotNull SuspendContextImpl suspendContext) {
         final SuspendManager suspendManager = getSuspendManager();
         SuspendContextImpl evaluatingContext = SuspendManagerUtil.getEvaluatingContext(suspendManager, suspendContext.getThread());
 
