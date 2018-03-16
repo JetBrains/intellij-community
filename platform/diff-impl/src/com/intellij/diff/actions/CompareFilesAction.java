@@ -117,7 +117,7 @@ public class CompareFilesAction extends BaseShowDiffAction {
       file2 = data[1];
     }
 
-    if (!file1.isValid() || !file2.isValid()) return null; // getOtherFile() shows dialog that can invalidate this file
+    if (!file1.isValid() || !file2.isValid()) return null; // getOtherFile() shows dialog that can invalidate files
 
     Type type1 = getType(file1);
     Type type2 = getType(file2);
