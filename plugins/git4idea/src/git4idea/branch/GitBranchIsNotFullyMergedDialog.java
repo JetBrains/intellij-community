@@ -42,12 +42,12 @@ import java.util.Map;
  */
 public class GitBranchIsNotFullyMergedDialog extends DialogWrapper {
 
-  private final Map<GitRepository, List<GitCommit>> myCommits;
-  private final GitCommitListWithDiffPanel myCommitListWithDiffPanel;
-  private final Collection<GitRepository> myRepositories;
+  @NotNull private final Map<GitRepository, List<GitCommit>> myCommits;
+  @NotNull private final GitCommitListWithDiffPanel myCommitListWithDiffPanel;
+  @NotNull private final Collection<GitRepository> myRepositories;
   @NotNull private final String myRemovedBranch;
   @NotNull private final Map<GitRepository, String> myBaseBranches;
-  private final GitRepository myInitialRepository;
+  @NotNull private final GitRepository myInitialRepository;
 
   /**
    * Show the dialog and get user's answer, whether he wants to force delete the branch.
