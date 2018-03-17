@@ -6,6 +6,9 @@ import com.intellij.psi.PsiPolyVariantReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+import java.util.Collection;
+
 /**
  * Same as {@link PsiPolyVariantReference} but returns {@link GroovyResolveResult}.
  */
@@ -25,7 +28,24 @@ public interface GroovyReference extends PsiPolyVariantReference {
     return results.length == 1 ? results[0] : EmptyGroovyResolveResult.INSTANCE;
   }
 
+  /**
+   * Either this or {@link #resolve(boolean)} must be implemented.
+   */
   @NotNull
   @Override
-  GroovyResolveResult[] multiResolve(boolean incompleteCode);
+  default GroovyResolveResult[] multiResolve(boolean incompleteCode) {
+    return resolve(incompleteCode).toArray(GroovyResolveResult.EMPTY_ARRAY);
+  }
+
+  /**
+   * Either this or {@link #multiResolve(boolean)} must be implemented.
+   *
+   * @param incomplete if true, the code in the context of which the reference is being resolved is considered incomplete,
+   *                   and the method may return additional invalid results.
+   * @return read-only collection of results
+   */
+  @NotNull
+  default Collection<GroovyResolveResult> resolve(boolean incomplete) {
+    return Arrays.asList(multiResolve(incomplete));
+  }
 }
