@@ -6,7 +6,7 @@ import com.intellij.psi.*
 import com.intellij.psi.util.PropertyUtil
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyPolyVariantReference
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyReference
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression
@@ -2168,7 +2168,7 @@ class X {
     print this.&f<caret>oo
   }
 }
-''', GroovyPolyVariantReference
+''', GroovyReference
     def results = ref.multiResolve(false)
     assert results.length == 2
     for (result in results) {

@@ -9,9 +9,9 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Same as {@link PsiPolyVariantReference} but returns {@link GroovyResolveResult}.
  */
-public interface GroovyPolyVariantReference extends PsiPolyVariantReference {
+public interface GroovyReference extends PsiPolyVariantReference {
 
-  GroovyPolyVariantReference[] EMPTY_ARRAY = new GroovyPolyVariantReference[0];
+  GroovyReference[] EMPTY_ARRAY = new GroovyReference[0];
 
   @Nullable
   @Override
