@@ -22,7 +22,6 @@ import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -330,9 +329,8 @@ public class PsiImplUtil {
   }
 
   @NotNull
-  public static GroovyResolveResult extractUniqueResult(@NotNull Collection<GroovyResolveResult> results) {
-    if (results.size() > 1) return EmptyGroovyResolveResult.INSTANCE;
-    return ContainerUtil.getFirstItem(results, EmptyGroovyResolveResult.INSTANCE);
+  public static GroovyResolveResult extractUniqueResult(@NotNull Collection<? extends GroovyResolveResult> results) {
+    return results.size() == 1 ? results.iterator().next() : EmptyGroovyResolveResult.INSTANCE;
   }
 
   @NotNull

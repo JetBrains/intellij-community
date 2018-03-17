@@ -186,7 +186,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
 
   @NotNull
   @Override
-  public Collection<GroovyResolveResult> resolve(boolean incomplete) {
+  public Collection<? extends GroovyResolveResult> resolve(boolean incomplete) {
     return TypeInferenceHelper.getCurrentContext().resolve(this, incomplete, GrCodeReferenceResolver.INSTANCE);
   }
 

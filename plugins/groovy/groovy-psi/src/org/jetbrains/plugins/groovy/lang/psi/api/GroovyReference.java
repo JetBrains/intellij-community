@@ -45,7 +45,7 @@ public interface GroovyReference extends PsiPolyVariantReference {
    * @return read-only collection of results
    */
   @NotNull
-  default Collection<GroovyResolveResult> resolve(boolean incomplete) {
+  default Collection<? extends GroovyResolveResult> resolve(boolean incomplete) {
     return Arrays.asList(multiResolve(incomplete));
   }
 }

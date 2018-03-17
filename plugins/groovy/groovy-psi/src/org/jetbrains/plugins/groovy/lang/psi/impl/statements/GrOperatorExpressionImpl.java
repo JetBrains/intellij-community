@@ -27,7 +27,7 @@ abstract public class GrOperatorExpressionImpl extends GrExpressionImpl implemen
 
   @NotNull
   @Override
-  public Collection<GroovyResolveResult> resolve(boolean incomplete) {
+  public Collection<? extends GroovyResolveResult> resolve(boolean incomplete) {
     return TypeInferenceHelper.getCurrentContext().resolve(this, incomplete, GrOperatorResolver.INSTANCE);
   }
 

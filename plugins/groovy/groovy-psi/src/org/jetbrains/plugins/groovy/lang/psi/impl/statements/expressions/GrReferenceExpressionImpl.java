@@ -343,7 +343,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
   @Nullable
   private static PsiType calculateType(@NotNull GrReferenceExpressionImpl refExpr) {
-    final Collection<GroovyResolveResult> results = refExpr.multiResolve(false, true);
+    final Collection<? extends GroovyResolveResult> results = refExpr.multiResolve(false, true);
     final GroovyResolveResult result = PsiImplUtil.extractUniqueResult(results);
     final PsiElement resolved = result.getElement();
 
@@ -593,27 +593,27 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     @NotNull
     @Override
     public Collection<GroovyResolveResult> doResolve(@NotNull GrReferenceExpressionImpl ref, boolean incomplete) {
-      Collection<GroovyResolveResult> regularResults = ref.multiResolve(incomplete, false);
+      Collection<? extends GroovyResolveResult> regularResults = ref.multiResolve(incomplete, false);
       if (PsiUtil.isLValueOfOperatorAssignment(ref)) {
         Set<GroovyResolveResult> result = ContainerUtil.newLinkedHashSet();
-        ContainerUtil.addAll(result, ref.multiResolve(incomplete, true));
-        ContainerUtil.addAll(result, regularResults);
+        result.addAll(ref.multiResolve(incomplete, true));
+        result.addAll(regularResults);
         return result;
       }
       else {
-        return regularResults;
+        return new SmartList<>(regularResults);
       }
     }
   };
 
   @NotNull
   @Override
-  public Collection<GroovyResolveResult> resolve(boolean incomplete) {
+  public Collection<? extends GroovyResolveResult> resolve(boolean incomplete) {
     return TypeInferenceHelper.getCurrentContext().resolve(this, incomplete, RESOLVER);
   }
 
   @NotNull
-  public Collection<GroovyResolveResult> multiResolve(boolean incomplete, boolean forceRValue) {
+  public Collection<? extends GroovyResolveResult> multiResolve(boolean incomplete, boolean forceRValue) {
     return (forceRValue ? myFakeGetterReference : myFakeReference).getValue().resolve(incomplete);
   }
 

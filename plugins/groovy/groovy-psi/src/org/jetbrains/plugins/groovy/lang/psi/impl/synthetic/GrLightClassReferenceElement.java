@@ -55,7 +55,7 @@ public class GrLightClassReferenceElement extends LightElement implements GrCode
 
   @NotNull
   @Override
-  public Collection<GroovyResolveResult> resolve(boolean incomplete) {
+  public Collection<? extends GroovyResolveResult> resolve(boolean incomplete) {
     PsiClass clazz = JavaPsiFacade.getInstance(getProject()).findClass(myClassName, myContext.getResolveScope());
     return clazz == null ? Collections.emptyList() : Collections.singletonList(new ElementGroovyResult<>(clazz));
   }

@@ -77,8 +77,8 @@ public interface InferenceContext {
 
   @NotNull
   default <T extends GroovyReference>
-  Collection<GroovyResolveResult> resolve(@NotNull T ref, boolean incomplete, @NotNull GroovyResolver<T> resolver) {
-    Collection<GroovyResolveResult> results = resolveWithCaching(ref, resolver, incomplete);
+  Collection<? extends GroovyResolveResult> resolve(@NotNull T ref, boolean incomplete, @NotNull GroovyResolver<T> resolver) {
+    Collection<? extends GroovyResolveResult> results = resolveWithCaching(ref, resolver, incomplete);
     return results == null ? Collections.emptyList() : results;
   }
 
