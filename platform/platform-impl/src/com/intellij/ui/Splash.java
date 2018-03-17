@@ -128,7 +128,7 @@ public class Splash extends JDialog implements StartupProgress {
       mySplashIsVisible = true;
     }
 
-    int totalWidth = myImage.getIconWidth() - getProgressX();
+    int totalWidth = myImage.getIconWidth() - 2 * getProgressX();
     if (Registry.is("ide.new.about")) {
       totalWidth +=3;
     }
