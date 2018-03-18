@@ -81,6 +81,7 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
     myContextElement = contextElement;
     myHostPsiFile = PsiUtilCore.getTemplateLanguageFile(hostPsiFile);
     FileViewProvider viewProvider = myHostPsiFile.getViewProvider();
+    if (viewProvider instanceof InjectedFileViewProvider) throw new IllegalArgumentException(viewProvider +" must not be injected");
     myHostVirtualFile = viewProvider.getVirtualFile();
     myHostDocument = (DocumentEx)viewProvider.getDocument();
   }
