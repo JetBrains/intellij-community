@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -68,7 +69,9 @@ public class EventLogStatisticsService implements StatisticsService {
           toRemove.add(file);
         }
         catch (HttpRequests.HttpStatusException e) {
-          toRemove.add(file);
+          if (e.getStatusCode() == HttpURLConnection.HTTP_BAD_REQUEST) {
+            toRemove.add(file);
+          }
 
           if (LOG.isTraceEnabled()) {
             LOG.trace(file.getName() + " -> " + e.getMessage());
