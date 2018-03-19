@@ -131,6 +131,7 @@ iml_project(
         "//tools/adt/idea/whats-new-assistant:whats-new-assistant-test",
         "//tools/adt/idea/wizard",
         "//tools/adt/idea/wizard-model",
+        "//tools/analytics-library/crash:analytics-crash",
         "//tools/analytics-library/inspector:analytics-inspector",
         "//tools/analytics-library/protos:analytics-protos",
         "//tools/analytics-library/publisher:analytics-publisher",
