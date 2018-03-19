@@ -141,7 +141,7 @@ public class RootsAsVirtualFilePointers implements RootProvider {
    */
   private void read(@NotNull Element roots, @NotNull PersistentOrderRootType type)  {
     String sdkRootName = type.getSdkRootName();
-    Element child = sdkRootName != null ? roots.getChild(sdkRootName) : null;
+    Element child = sdkRootName == null ? null : roots.getChild(sdkRootName);
     if (child == null) {
       return;
     }
@@ -151,8 +151,10 @@ public class RootsAsVirtualFilePointers implements RootProvider {
       LOG.error(composites);
     }
     Element composite = composites.get(0);
-    
-    myRoots.get(type).readExternal(composite, "root", false);
+
+    VirtualFilePointerContainer container = myRoots.get(type);
+    assert container != null : "unknown root type: " + type;
+    container.readExternal(composite, "root", false);
   }
 
   /**
