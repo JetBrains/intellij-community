@@ -4,5 +4,8 @@
       <interface-class>com.intellij.openapi.projectRoots.JavaSdk</interface-class>
       <implementation-class>com.intellij.openapi.projectRoots.impl.JavaSdkImpl</implementation-class>
     </component>
+    <component>
+      <implementation-class>com.intellij.openapi.projectRoots.SimpleJavaSdkType</implementation-class>
+    </component>
   </application-components>
 </idea-plugin>
