@@ -579,7 +579,6 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
       }
     }
 
-    @SuppressWarnings("Duplicates")
     @Nullable
     public UndeployTransition startUndeploy(@NotNull String deploymentName) {
       DeploymentImpl deployment;
