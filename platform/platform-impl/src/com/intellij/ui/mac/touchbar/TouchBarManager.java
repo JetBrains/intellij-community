@@ -5,6 +5,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -13,11 +14,18 @@ import com.intellij.ui.mac.foundation.ID;
 import com.intellij.util.lang.UrlClassLoader;
 import com.sun.jna.Native;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
 public class TouchBarManager {
   private static final Logger ourLog = Logger.getInstance(TouchBar.class);
+
+  private static final String ourTBServerProcessName = "TouchBarServer";
+  private static final String ourDefaultsDomain = "com.apple.touchbar.agent";
+  private static final String ourDefaultsNode = "PresentationModePerApp";
+  private static final String ourDefaultsValue = "functionKeys";
+  private static final String ourApplicationId;
   private static final NSTLibrary ourNSTLibrary;
   private static TouchBar ourTouchbar;
 
@@ -41,6 +49,9 @@ public class TouchBarManager {
       }
     }
     ourNSTLibrary = lib;
+
+    // TODO: obtain "OS X Application identifier' via platform api
+    ourApplicationId = ApplicationInfoImpl.getInstanceEx().isEAP() ? "com.jetbrains.intellij-EAP" : "com.jetbrains.intellij";
   }
 
   public enum TOUCHBARS {
@@ -111,10 +122,10 @@ public class TouchBarManager {
 
   static NSTLibrary getNSTLibrary() { return ourNSTLibrary; }
 
-  private static boolean isTouchBarAvailable() { return ourNSTLibrary != null; }
+  public static boolean isTouchBarAvailable() { return ourNSTLibrary != null; }
 
   private static boolean isTouchBarServerRunning() {
-    final GeneralCommandLine cmdLine = new GeneralCommandLine("pgrep", "TouchBarServer");
+    final GeneralCommandLine cmdLine = new GeneralCommandLine("pgrep", ourTBServerProcessName);
     try {
       final ProcessOutput out = ExecUtil.execAndGetOutput(cmdLine);
       return !out.getStdout().isEmpty();
@@ -122,5 +133,42 @@ public class TouchBarManager {
       ourLog.error(e);
     }
     return false;
+  }
+
+  public static boolean isShowFnKeysEnabled() {
+    final ID defaults = Foundation.invoke("NSUserDefaults", "standardUserDefaults");
+    final ID domain = Foundation.invoke(defaults, "persistentDomainForName:", Foundation.nsString(ourDefaultsDomain));
+    final ID node = Foundation.invoke(domain, "objectForKey:", Foundation.nsString(ourDefaultsNode));
+    final ID val = Foundation.invoke(node, "objectForKey:", Foundation.nsString(ourApplicationId));
+    final String sval = Foundation.toStringViaUTF8(val);
+    return sval != null && sval.equals(ourDefaultsValue);
+  }
+
+  public static void setShowFnKeysEnabled(boolean val) {
+    final ID defaults = Foundation.invoke("NSUserDefaults", "standardUserDefaults");
+    final ID domain = Foundation.invoke(defaults, "persistentDomainForName:", Foundation.nsString(ourDefaultsDomain));
+    final ID node = Foundation.invoke(domain, "objectForKey:", Foundation.nsString(ourDefaultsNode));
+    final ID nsVal = Foundation.invoke(node, "objectForKey:", Foundation.nsString(ourApplicationId));
+    final String sval = Foundation.toStringViaUTF8(nsVal);
+    final boolean settingEnabled = sval != null && sval.equals(ourDefaultsValue);
+    if (val == settingEnabled)
+      return;
+
+    final ID mdomain = Foundation.invoke(domain, "mutableCopy");
+    final ID mnode = Foundation.invoke(node, "mutableCopy");
+    if (val)
+      Foundation.invoke(mnode, "setObject:forKey:", Foundation.nsString(ourDefaultsValue), Foundation.nsString(ourApplicationId));
+    else
+      Foundation.invoke(mnode, "removeObjectForKey:", Foundation.nsString(ourApplicationId));
+    Foundation.invoke(mdomain, "setObject:forKey:", mnode, Foundation.nsString(ourDefaultsNode));
+    Foundation.invoke(defaults, "setPersistentDomain:forName:", mdomain, Foundation.nsString(ourDefaultsDomain));
+
+    try {
+      ExecUtil.sudo(new GeneralCommandLine("pkill", ourTBServerProcessName), "");
+    } catch (ExecutionException e) {
+      ourLog.error(e);
+    } catch (IOException e) {
+      ourLog.error(e);
+    }
   }
 }
