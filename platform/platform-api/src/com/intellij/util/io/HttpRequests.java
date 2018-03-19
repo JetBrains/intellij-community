@@ -479,12 +479,10 @@ public final class HttpRequests {
       URLConnection connection = request.myConnection;
       if (connection instanceof HttpURLConnection && ((HttpURLConnection)connection).getRequestMethod().equals("POST")) {
         // getResponseCode is not checked on connect for POST, because write must be performed before read
-        // https://stackoverflow.com/questions/613307/read-error-response-body-in-java
-        // the problem is that if you read the HttpUrlConnection.getErrorStream() code, you'll see that it ALWAYS returns nul
         HttpURLConnection urlConnection = (HttpURLConnection)connection;
         int responseCode = urlConnection.getResponseCode();
         if (responseCode >= 400) {
-          throwHttpStatusError(request, builder, responseCode);
+          throwHttpStatusError(urlConnection, request, builder, responseCode);
         }
       }
       return result;
@@ -574,7 +572,7 @@ public final class HttpRequests {
           }
         }
 
-        return throwHttpStatusError(request, builder, responseCode);
+        return throwHttpStatusError(httpURLConnection, request, builder, responseCode);
       }
 
       return connection;
@@ -583,15 +581,14 @@ public final class HttpRequests {
     throw new IOException(IdeBundle.message("error.connection.failed.redirects"));
   }
 
-  private static URLConnection throwHttpStatusError(@NotNull RequestImpl request, @NotNull RequestBuilderImpl builder, int responseCode) throws IOException {
-    HttpURLConnection connection = (HttpURLConnection)request.getConnection();
+  private static URLConnection throwHttpStatusError(@NotNull HttpURLConnection connection, @NotNull RequestImpl request, @NotNull RequestBuilderImpl builder, int responseCode) throws IOException {
     String message = null;
     if (builder.myIsReadResponseOnError) {
       message = HttpUrlConnectionUtil.readString(connection, null, true);
     }
 
     if (StringUtil.isEmpty(message)) {
-      message = "Request failed with status code "  + responseCode;
+      message = "Request failed with status code " + responseCode;
     }
     connection.disconnect();
     throw new HttpStatusException(message, responseCode, StringUtil.notNullize(request.myUrl, "Empty URL"));
