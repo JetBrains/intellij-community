@@ -88,9 +88,6 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
 
   private boolean myCancelOnClickOutside = true;
 
-
-
-  @Override
   public JScrollPane getScrollPane() {
     return myScrollPane;
   }
