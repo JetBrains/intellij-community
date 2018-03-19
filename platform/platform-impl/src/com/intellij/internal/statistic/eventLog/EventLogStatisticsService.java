@@ -9,29 +9,17 @@ import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceCom
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
-import org.apache.http.Consts;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.HttpClientBuilder;
+import com.intellij.util.io.HttpRequests;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class EventLogStatisticsService implements StatisticsService {
   private static final Logger LOG = Logger.getInstance("com.intellij.internal.statistic.eventLog.EventLogStatisticsService");
-  private static final ContentType APPLICATION_JSON = ContentType.create("application/json", Consts.UTF_8);
 
   private static final EventLogStatisticsSettingsService mySettingsService = EventLogStatisticsSettingsService.getInstance();
 
@@ -65,21 +53,26 @@ public class EventLogStatisticsService implements StatisticsService {
           continue;
         }
 
-        final HttpClient httpClient = HttpClientBuilder.create().build();
-        final HttpPost post = createPostRequest(serviceUrl, LogEventSerializer.INSTANCE.toString(request));
-        final HttpResponse response = httpClient.execute(post);
-
-        final int code = response.getStatusLine().getStatusCode();
-        if (code == HttpStatus.SC_OK) {
+        try {
+          HttpRequests
+            .post(serviceUrl, "application/json")
+            .isReadResponseOnError(true)
+            .connect(request1 -> {
+              request1.write(LogEventSerializer.INSTANCE.toString(request));
+              if (LOG.isTraceEnabled()) {
+                LOG.trace(file.getName() + " -> " + request1.readString());
+              }
+              return null;
+            });
           succeed++;
           toRemove.add(file);
         }
-        else if (code == HttpStatus.SC_BAD_REQUEST) {
+        catch (HttpRequests.HttpStatusException e) {
           toRemove.add(file);
-        }
 
-        if (LOG.isTraceEnabled()) {
-          LOG.trace(file.getName() + " -> " + getResponseMessage(response));
+          if (LOG.isTraceEnabled()) {
+            LOG.trace(file.getName() + " -> " + e.getMessage());
+          }
         }
       }
 
@@ -136,25 +129,8 @@ public class EventLogStatisticsService implements StatisticsService {
     }
   }
 
-  @NotNull
-  public static HttpPost createPostRequest(@NotNull String serviceUrl, @NotNull String content) {
-    final HttpPost post = new HttpPost(serviceUrl);
-    final StringEntity postingString = new StringEntity(content, APPLICATION_JSON);
-    post.setEntity(postingString);
-    return post;
-  }
-
   @Override
   public Notification createNotification(@NotNull String groupDisplayId, @Nullable NotificationListener listener) {
     return null;
-  }
-
-  @NotNull
-  private static String getResponseMessage(HttpResponse response) throws IOException {
-    HttpEntity entity = response.getEntity();
-    if (entity != null) {
-      return StreamUtil.readText(entity.getContent(), CharsetToolkit.UTF8);
-    }
-    return Integer.toString(response.getStatusLine().getStatusCode());
   }
 }
