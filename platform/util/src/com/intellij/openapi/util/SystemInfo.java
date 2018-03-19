@@ -22,7 +22,7 @@ public class SystemInfo extends SystemInfoRt {
   public static final String ARCH_DATA_MODEL = System.getProperty("sun.arch.data.model");
   public static final String SUN_DESKTOP = System.getProperty("sun.desktop", "");
 
-  private static String getRtVersion(String fallback) {
+  private static String getRtVersion(@SuppressWarnings("SameParameterValue") String fallback) {
     String rtVersion = System.getProperty("java.runtime.version");
     return Character.isDigit(rtVersion.charAt(0)) ? rtVersion : fallback;
   }
