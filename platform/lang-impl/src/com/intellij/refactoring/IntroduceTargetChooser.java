@@ -94,12 +94,15 @@ public class IntroduceTargetChooser {
                                                                             int selection) {
     AtomicReference<ScopeHighlighter> highlighter = new AtomicReference<>(new ScopeHighlighter(editor));
 
-    JBPopup popup = JBPopupFactory.getInstance()
-                                  .createPopupChooserBuilder(expressions)
-                                  .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
-                                  .setSelectedValue(expressions.get(selection > -1 ? selection : null), true)
-                                  .setAccessibleName(title)
-                                  .setItemSelectedCallback((expr) -> {
+    JBPopup popup = JBPopupFactory.getInstance().createPopupChooserBuilder(expressions)
+      .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
+      .setSelectedValue(expressions.get(selection > -1 ? selection : null), true)
+      .setAccessibleName(title)
+      .setTitle(title)
+      .setMovable(false)
+      .setResizable(false)
+      .setRequestFocus(true)
+      .setItemSelectedCallback((expr) -> {
         ScopeHighlighter h = highlighter.get();
         if (h == null) return;
         h.dropHighlight();
@@ -108,34 +111,32 @@ public class IntroduceTargetChooser {
           h.highlight(Pair.create(range, Collections.singletonList(range)));
         }
       })
-                                  .setTitle(title)
-                                  .setMovable(false)
-                                  .setResizable(false)
-                                  .setRequestFocus(true)
-                                  .setItemChosenCallback((expr) -> {
+      .setItemChosenCallback((expr) -> {
         if (expr.isValid()) {
           callback.pass(expr);
         }
       })
-                                  .addListener(new JBPopupAdapter() {
+      .addListener(new JBPopupAdapter() {
         @Override
         public void onClosed(LightweightWindowEvent event) {
           highlighter.getAndSet(null).dropHighlight();
         }
       })
-                                  .setRenderer(new DefaultListCellRenderer() {
+      .setRenderer(new DefaultListCellRenderer() {
         @Override
         public Component getListCellRendererComponent(JList list,
                                                       Object value,
                                                       int index,
                                                       boolean isSelected,
                                                       boolean cellHasFocus) {
-          Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+          Component rendererComponent =
+            super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
           IntroduceTarget expr = (T)value;
           if (expr.isValid()) {
             String text = expr.render();
             int firstNewLinePos = text.indexOf('\n');
-            String trimmedText = text.substring(0, firstNewLinePos != -1 ? firstNewLinePos : Math.min(100, text.length()));
+            String trimmedText =
+              text.substring(0, firstNewLinePos != -1 ? firstNewLinePos : Math.min(100, text.length()));
             if (trimmedText.length() != text.length()) trimmedText += " ...";
             setText(trimmedText);
           }
