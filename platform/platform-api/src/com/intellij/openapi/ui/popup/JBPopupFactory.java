@@ -53,10 +53,13 @@ public abstract class JBPopupFactory {
   public abstract <T> IPopupChooserBuilder<T> createPopupChooserBuilder(List<T> list);
 
   @NotNull
-  public PopupChooserBuilder createPopupChooserBuilder(@NotNull JTable list) {
-    return new PopupChooserBuilder(list);
+  public PopupChooserBuilder createPopupChooserBuilder(@NotNull JTable table) {
+    return new PopupChooserBuilder(table);
   }
 
+  /**
+   * @deprecated Please use {@link #createPopupChooserBuilder(List)}} instead
+  */
   @Deprecated
   @NotNull
   public PopupChooserBuilder createListPopupBuilder(@NotNull JList list) {
