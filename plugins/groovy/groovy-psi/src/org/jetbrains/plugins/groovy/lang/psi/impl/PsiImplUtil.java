@@ -118,7 +118,7 @@ public class PsiImplUtil {
     PsiElement oldParent = oldExpr.getParent();
     if (oldParent == null) throw new PsiInvalidElementAccessException(oldExpr);
 
-    if (!(oldExpr instanceof GrApplicationStatement)) {
+    if (convertToMethodCall(oldExpr)) {
       newExpr = ApplicationStatementUtil.convertToMethodCallExpression(newExpr);
     }
 
@@ -231,6 +231,13 @@ public class PsiImplUtil {
       }
     }
     return newExpr;
+  }
+
+  private static boolean convertToMethodCall(GrExpression position) {
+    if (position instanceof GrApplicationStatement) return false;
+    final PsiElement parent = position.getParent();
+    if (parent instanceof GrVariable && ((GrVariable)parent).getInitializerGroovy() == position) return false;
+    return true;
   }
 
   private static boolean isFirstChild(PsiElement element) {
