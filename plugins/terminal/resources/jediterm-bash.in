@@ -31,7 +31,7 @@ function load_interactive_configs {
   fi
 }
 
-if [ -n $LOGIN_SHELL ]; then
+if [ -n "$LOGIN_SHELL" ]; then
   load_login_configs
   unset LOGIN_SHELL
 fi
