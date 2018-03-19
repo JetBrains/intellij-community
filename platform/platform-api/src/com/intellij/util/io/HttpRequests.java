@@ -20,7 +20,6 @@ import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.net.ssl.CertificateManager;
 import com.intellij.util.net.ssl.UntrustedCertificateStrategy;
-import io.netty.handler.codec.http.HttpResponseStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,12 +51,12 @@ public final class HttpRequests {
 
   private static final int[] REDIRECTS = {
     // temporary redirects
-    HttpResponseStatus.FOUND.code(), HttpResponseStatus.TEMPORARY_REDIRECT.code(),
+    HttpURLConnection.HTTP_MOVED_TEMP, 307 /* temporary redirect */,
     // permanent redirects
-    HttpResponseStatus.MOVED_PERMANENTLY.code(), HttpResponseStatus.SEE_OTHER.code(), HttpResponseStatus.PERMANENT_REDIRECT.code()
+    HttpURLConnection.HTTP_MOVED_PERM, HttpURLConnection.HTTP_SEE_OTHER, 308 /* permanent redirect */
   };
 
-  private static final int PERMANENT_IDX = ArrayUtil.indexOf(REDIRECTS, HttpResponseStatus.MOVED_PERMANENTLY.code());
+  private static final int PERMANENT_IDX = ArrayUtil.indexOf(REDIRECTS, HttpURLConnection.HTTP_MOVED_PERM);
 
   private HttpRequests() { }
 
