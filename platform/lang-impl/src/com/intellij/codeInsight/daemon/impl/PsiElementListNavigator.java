@@ -192,9 +192,11 @@ public class PsiElementListNavigator {
       });
       listR[0] = list;
     }
-
-    builder.getScrollPane().setBorder(null);
-    builder.getScrollPane().setViewportBorder(null);
+    if (builder instanceof PopupChooserBuilder) {
+      JScrollPane pane = ((PopupChooserBuilder)builder).getScrollPane();
+      pane.setBorder(null);
+      pane.setViewportBorder(null);
+    }
 
     if (listUpdaterTask != null) {
       listUpdaterTask.init(popup, builder.getBackgroundUpdater(), usageView);

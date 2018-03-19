@@ -29,8 +29,6 @@ public interface IPopupChooserBuilder<T> {
 
   IPopupChooserBuilder<T> setCancelOnClickOutside(boolean cancelOnClickOutside);
 
-  JScrollPane getScrollPane();
-
   @NotNull
   IPopupChooserBuilder<T> setTitle(@NotNull @Nls String title);
 

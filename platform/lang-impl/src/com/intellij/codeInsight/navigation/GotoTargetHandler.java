@@ -192,7 +192,8 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       listR.set(list);
     }
 
-    JScrollPane pane = builder.getScrollPane();
+
+    JScrollPane pane = builder instanceof PopupChooserBuilder ? ((PopupChooserBuilder)builder).getScrollPane() : null;
     if (pane != null) {
         pane.setBorder(null);
         pane.setViewportBorder(null);
