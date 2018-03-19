@@ -15,15 +15,18 @@
  */
 package git4idea.test
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeListManager
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PlatformTestCase
 import com.intellij.testFramework.PlatformTestCase.assertOrderedEquals
 import com.intellij.testFramework.vcs.MockChangeListManager
+import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcsUtil.VcsUtil.getFilePath
 import git4idea.changes.GitChangeUtils
@@ -113,6 +116,13 @@ fun ChangeListManager.assertOnlyDefaultChangelist() {
   val DEFAULT = MockChangeListManager.DEFAULT_CHANGE_LIST_NAME
   PlatformTestCase.assertEquals("Only default changelist is expected among: ${dumpChangeLists()}", 1, changeListsNumber)
   PlatformTestCase.assertEquals("Default changelist is not active", DEFAULT, defaultChangeList.name)
+}
+
+fun ChangeListManager.waitScheduledChangelistDeletions() {
+  (this as ChangeListManagerImpl).waitEverythingDoneInTestMode()
+  ApplicationManager.getApplication().invokeAndWait {
+    UIUtil.dispatchAllInvocationEvents()
+  }
 }
 
 fun ChangeListManager.assertChangeListExists(comment: String): LocalChangeList {
