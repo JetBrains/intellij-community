@@ -40,6 +40,7 @@ import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory;
 import com.intellij.xdebugger.impl.breakpoints.ui.XLightBreakpointPropertiesPanel;
+import com.intellij.xdebugger.impl.frame.XWatchesView;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
@@ -378,6 +379,14 @@ public class DebuggerUIUtil {
       return ((Getter)promise).get() != null;
     }
     return true;
+  }
+
+  public static void addToWatches(@NotNull XWatchesView watchesView, @NotNull XValueNodeImpl node) {
+    node.getValueContainer().calculateEvaluationExpression().done(expression -> {
+      if (expression != null) {
+        invokeLater(() -> watchesView.addWatchExpression(expression, -1, false));
+      }
+    });
   }
 
   public static void registerActionOnComponent(String name, JComponent component, Disposable parentDisposable) {
