@@ -14,6 +14,7 @@ import com.intellij.find.FindUtil;
 import com.intellij.find.actions.CompositeActiveComponent;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
@@ -25,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -47,6 +49,7 @@ import org.jetbrains.uast.UastContextKt;
 
 import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
+import javax.swing.tree.TreeModel;
 import java.awt.event.ActionEvent;
 import java.util.List;
 import java.util.Objects;
@@ -145,7 +148,13 @@ public class ShowDiscoveredTestsAction extends AnAction {
 
     JBPopup popup = builder.createPopup();
     ref.set(popup);
-    tree.getModel().addTreeModelListener(new TreeModelAdapter() {
+
+    TreeModel model = tree.getModel();
+    if (model instanceof Disposable) {
+      Disposer.register(popup, (Disposable)model);
+    }
+
+    model.addTreeModelListener(new TreeModelAdapter() {
       @Override
       protected void process(TreeModelEvent event, EventType type) {
         ((AbstractPopup)popup).setCaption("Found " + tree.getTestCount() + " Tests for " + title);
