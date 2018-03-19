@@ -162,15 +162,10 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
     DfaValue result = instruction.getValue();
     LongRangeSet rangeSet = memState.getValueFact(index, DfaFactType.RANGE);
-    if (rangeSet != null && !rangeSet.isEmpty() && rangeSet.min() == rangeSet.max()) {
-      long longIdx = rangeSet.min();
-      if(longIdx >= 0 && longIdx <= Integer.MAX_VALUE) {
-        int intIdx = (int)longIdx;
-        DfaValue arrayElementValue = runner.getFactory().getExpressionFactory().getArrayElementValue(array, intIdx);
-        if (arrayElementValue != null) {
-          result = arrayElementValue;
-        }
-      }
+    DfaValue arrayElementValue =
+      runner.getFactory().getExpressionFactory().getArrayElementValue(array, rangeSet == null ? LongRangeSet.all() : rangeSet);
+    if (arrayElementValue != DfaUnknownValue.getInstance()) {
+      result = arrayElementValue;
     }
     memState.push(result);
     return nextInstruction(instruction, runner, memState);

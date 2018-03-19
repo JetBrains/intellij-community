@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.util.keyFMap.KeyFMap;
 import one.util.streamex.StreamEx;
@@ -193,6 +194,21 @@ public final class DfaFactMap {
 
   private static <T> DfaFactMap updateMap(DfaFactMap map, DfaFactType<T> factType, DfaVariableValue value) {
     return map.with(factType, factType.calcFromVariable(value));
+  }
+
+  /**
+   * Derives facts which might be known from given DfaValue without knowing the particular memory state
+   *
+   * @param value a value to derive facts from
+   * @return map of facts derived from the value
+   */
+  @NotNull
+  public static DfaFactMap fromDfaValue(DfaValue value) {
+    return StreamEx.of(DfaFactType.getTypes()).foldLeft(EMPTY, (map, type) -> updateMap(map, type, value));
+  }
+
+  private static <T> DfaFactMap updateMap(DfaFactMap map, DfaFactType<T> factType, DfaValue value) {
+    return map.with(factType, factType.fromDfaValue(value));
   }
 
   @FunctionalInterface
