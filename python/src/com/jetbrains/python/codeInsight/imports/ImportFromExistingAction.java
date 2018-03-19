@@ -123,7 +123,7 @@ public class ImportFromExistingAction implements QuestionAction {
         PsiDocumentManager.getInstance(myTarget.getProject()).commitAllDocuments();
         doWriteAction(item);
       })
-      .setFilteringEnabled(o -> ((ImportCandidateHolder) o).getPresentableText(myName))
+      .setNamerForFiltering(o -> ((ImportCandidateHolder) o).getPresentableText(myName))
       .createPopup()
       .showInBestPositionFor(dataContext));
   }

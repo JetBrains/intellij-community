@@ -98,7 +98,7 @@ public class HighlightImportedElementsHandler extends HighlightUsagesHandlerBase
       .createPopupChooserBuilder(model)
       .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
       .setRenderer(renderer)
-      .setFilteringEnabled(o -> {
+      .setNamerForFiltering(o -> {
         if (o instanceof PsiMember) {
           final PsiMember member = (PsiMember)o;
           return member.getName();

@@ -130,7 +130,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     final Ref<JBList<Object>> listR = new Ref<>();
     final IPopupChooserBuilder<Object> builder = JBPopupFactory.getInstance().createPopupChooserBuilder(allElements);
     final Ref<UsageView> usageView = new Ref<>();
-    final JBPopup popup = builder.setFilteringEnabled(o -> {
+    final JBPopup popup = builder.setNamerForFiltering(o -> {
       if (o instanceof AdditionalAction) {
         return ((AdditionalAction)o).getText();
       }

@@ -114,7 +114,7 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
           .setRenderer(new MyListCellRenderer())
           .setTitle("Choose Tag Name")
           .setItemChosenCallback(consumer)
-          .setFilteringEnabled(o -> ((XmlElementDescriptor)o).getName())
+          .setNamerForFiltering(o -> ((XmlElementDescriptor)o).getName())
           .createPopup()
           .showInBestPositionFor(editor);
       }

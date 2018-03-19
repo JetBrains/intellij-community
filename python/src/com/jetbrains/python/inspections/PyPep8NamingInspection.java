@@ -294,7 +294,7 @@ public class PyPep8NamingInspection extends PyInspection {
             (PyPep8NamingInspection)it.getUnwrappedTool(PyPep8NamingInspection.class.getSimpleName(), descriptor.getPsiElement());
           addIfNotNull(inspection.ignoredBaseClasses, selectedValue);
         }))
-        .setFilteringEnabled(o -> (String)o)
+        .setNamerForFiltering(o -> (String)o)
         .createPopup()
         .showInBestPositionFor(dataContext));
     }

@@ -161,7 +161,7 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
         }))
         .setMovable(true)
         .setTitle(items.size() == 1 ? "Confirm process stop" : "Stop process")
-        .setFilteringEnabled(o -> ((HandlerItem)o).displayName)
+        .setNamerForFiltering(o -> ((HandlerItem)o).displayName)
         .setItemsChosenCallback((valuesList) -> {
           for (HandlerItem item : valuesList) {
             item.stop();

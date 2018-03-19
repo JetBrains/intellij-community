@@ -199,7 +199,7 @@ public class SelectBranchPopup {
             myCallback.branchSelected(myProject, myConfiguration, item.getUrl(), item.getRevision());
           }
         })
-        .setFilteringEnabled(item -> item instanceof SvnBranchItem ? getBranchName((SvnBranchItem)item) : null)
+        .setNamerForFiltering(item -> item instanceof SvnBranchItem ? getBranchName((SvnBranchItem)item) : null)
         .createPopup();
       showPopupAt(popup);
     }

@@ -154,7 +154,7 @@ public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
     JBPopupFactory.getInstance()
       .createPopupChooserBuilder(frameworks)
       .setRenderer(cellRenderer)
-      .setFilteringEnabled(o -> ((TestFramework)o).getName())
+      .setNamerForFiltering(o -> ((TestFramework)o).getName())
       .setTitle("Choose Framework")
       .setItemChosenCallback((selectedValue) -> consumer.consume(selectedValue))
       .setMovable(true)

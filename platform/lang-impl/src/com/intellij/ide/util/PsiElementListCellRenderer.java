@@ -317,7 +317,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
   }
 
   public void installSpeedSearch(IPopupChooserBuilder builder, final boolean includeContainerText) {
-    builder.setFilteringEnabled(o -> {
+    builder.setNamerForFiltering(o -> {
       if (o instanceof PsiElement) {
         final String elementText = getElementText((T)o);
         if (includeContainerText) {

@@ -260,8 +260,14 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
     return myAutoselectOnMouseMove;
   }
 
-  @Override
   public PopupChooserBuilder<T> setFilteringEnabled(Function<Object, String> namer) {
+    myItemsNamer = namer;
+    return this;
+  }
+
+
+  @Override
+  public PopupChooserBuilder<T> setNamerForFiltering(Function<Object, String> namer) {
     myItemsNamer = namer;
     return this;
   }
