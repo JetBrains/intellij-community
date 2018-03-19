@@ -387,6 +387,11 @@ public class JavaSdkImpl extends JavaSdk {
     }
   }
 
+  /**
+   * Tries to load the list of modules in the JDK from the 'release' file. Returns null if the 'release' file is not there
+   * or doesn't contain the expected information.
+   */
+  @Nullable
   private static List<String> readModulesFromReleaseFile(File jrtBaseDir) {
     File releaseFile = new File(jrtBaseDir, "release");
     if (releaseFile.isFile()) {
