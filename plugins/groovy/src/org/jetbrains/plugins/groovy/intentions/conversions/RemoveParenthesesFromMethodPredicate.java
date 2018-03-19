@@ -26,7 +26,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCommandArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 class RemoveParenthesesFromMethodPredicate implements PsiElementPredicate {
@@ -38,7 +37,7 @@ class RemoveParenthesesFromMethodPredicate implements PsiElementPredicate {
 
     final GrMethodCallExpression expression = (GrMethodCallExpression)element;
 
-    if (PsiImplUtil.hasClosureArguments(expression)) return false;
+    if (expression.hasClosureArguments()) return false;
 
     final StringBuilder newStatementText = new StringBuilder();
     newStatementText.append(expression.getInvokedExpression().getText()).append(' ');

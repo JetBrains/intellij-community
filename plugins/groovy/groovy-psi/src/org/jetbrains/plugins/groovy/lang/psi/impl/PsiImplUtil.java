@@ -696,17 +696,8 @@ public class PsiImplUtil {
     return false;
   }
 
-  public static boolean hasClosureArguments(@Nullable GrCall call) {
-    if (call == null) return false;
-
-    for (PsiElement child = call.getFirstChild(); child != null; child = child.getNextSibling()) {
-      if (child instanceof GrClosableBlock) return true;
-    }
-    return false;
-  }
-
   public static boolean hasArguments(@NotNull GrCall call) {
-    if (hasClosureArguments(call)) return true;
+    if (call.hasClosureArguments()) return true;
     GrArgumentList list = call.getArgumentList();
     return hasExpressionArguments(list) || hasNamedArguments(list);
   }
