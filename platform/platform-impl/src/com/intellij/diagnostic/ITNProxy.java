@@ -1,9 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.errorreport.itn;
+package com.intellij.diagnostic;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
-import com.intellij.diagnostic.DiagnosticBundle;
 import com.intellij.errorreport.bean.ErrorBean;
 import com.intellij.errorreport.error.InternalEAPException;
 import com.intellij.errorreport.error.NoSuchEAPUserException;
@@ -26,16 +25,21 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.security.CompositeX509TrustManager;
 import com.intellij.util.Consumer;
+import com.intellij.util.io.HttpRequests;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.net.ssl.CertificateUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.net.ssl.*;
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.MessageDigest;
@@ -44,38 +48,62 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
-import java.util.Calendar;
-import java.util.Map;
+import java.util.*;
 import java.util.function.IntConsumer;
 
 /**
  * @author stathik
  * @since Aug 4, 2003
  */
-public class ITNProxy {
-  private static final String NEW_THREAD_VIEW_URL = "https://ea.jetbrains.com/browser/ea_reports/";
+class ITNProxy {
+  private static final String DEFAULT_USER = "idea_anonymous";
+  private static final String DEFAULT_PASS = "guest";
+  private static final String DEVELOPERS_LIST_URL = "https://ea-engine.labs.intellij.net/data?category=developers";
   private static final String NEW_THREAD_POST_URL = "https://ea-report.jetbrains.com/trackerRpc/idea/createScr";
+  private static final String NEW_THREAD_VIEW_URL = "https://ea.jetbrains.com/browser/ea_reports/";
 
-  private static final String ENCODING = "UTF8";
+  static @NotNull Collection<Developer> fetchDevelopers(@NotNull ProgressIndicator indicator) throws IOException {
+    return HttpRequests.request(DEVELOPERS_LIST_URL).connect((HttpRequests.RequestProcessor<Collection<Developer>>)request -> {
+      List<Developer> developers = new ArrayList<>();
+      developers.add(Developer.NULL);
 
-  public static void sendError(@Nullable Project project,
-                               final String login,
-                               final String password,
-                               @NotNull final ErrorBean error,
-                               @NotNull final IntConsumer callback,
-                               @NotNull final Consumer<Exception> errorCallback) {
-    if (StringUtil.isEmpty(login)) {
-      return;
+      String line;
+      while ((line = request.getReader().readLine()) != null) {
+        int i = line.indexOf('\t');
+        if (i == -1) throw new IOException("Protocol error");
+        int id = Integer.parseInt(line.substring(0, i));
+        String name = line.substring(i + 1);
+        developers.add(new Developer(id, name));
+        indicator.checkCanceled();
+      }
+
+      return developers;
+    });
+  }
+
+  static void sendError(@Nullable Project project,
+                        @Nullable String login,
+                        @Nullable String password,
+                        @NotNull ErrorBean error,
+                        @NotNull IntConsumer onSuccess,
+                        @NotNull Consumer<Exception> onError) {
+    if (StringUtil.isEmptyOrSpaces(login)) {
+      login = DEFAULT_USER;
+      password = DEFAULT_PASS;
+    }
+    else if (password == null) {
+      password = "";
     }
 
+    String _login = login, _password = password;
     Task.Backgroundable task = new Task.Backgroundable(project, DiagnosticBundle.message("title.submitting.error.report")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
-          callback.accept(postNewThread(login, password, error));
+          onSuccess.accept(postNewThread(_login, _password, error));
         }
         catch (Exception ex) {
-          errorCallback.consume(ex);
+          onError.consume(ex);
         }
       }
     };
@@ -88,14 +116,13 @@ public class ITNProxy {
     }
   }
 
-  @NotNull
-  public static String getBrowseUrl(int threadId) {
+  static @NotNull String getBrowseUrl(int threadId) {
     return NEW_THREAD_VIEW_URL + threadId;
   }
 
   private static SSLContext ourSslContext;
 
-  private static int postNewThread(String login, String password, @NotNull ErrorBean error) throws Exception {
+  private static int postNewThread(String login, String password, ErrorBean error) throws Exception {
     if (ourSslContext == null) {
       ourSslContext = initContext();
     }
@@ -107,14 +134,7 @@ public class ITNProxy {
       throw new InternalEAPException(DiagnosticBundle.message("error.http.result.code", responseCode));
     }
 
-    String response;
-    InputStream is = connection.getInputStream();
-    try {
-      response = FileUtil.loadTextAndClose(is);
-    }
-    finally {
-      is.close();
-    }
+    String response = FileUtil.loadTextAndClose(connection.getInputStream());
 
     if ("unauthorized".equals(response)) {
       throw new NoSuchEAPUserException(login);
@@ -134,8 +154,7 @@ public class ITNProxy {
     }
   }
 
-  @NotNull
-  private static Multimap<String, String> createParameters(String login, String password, @NotNull ErrorBean error) {
+  private static Multimap<String, String> createParameters(String login, String password, ErrorBean error) {
     Multimap<String, String> params = ArrayListMultimap.create(40, 1);
 
     params.put("protocol.version", "1");
@@ -194,29 +213,27 @@ public class ITNProxy {
     return params;
   }
 
-  @Nullable
-  private static String format(@Nullable Calendar calendar) {
+  private static @Nullable String format(@Nullable Calendar calendar) {
     return calendar == null ?  null : Long.toString(calendar.getTime().getTime());
   }
 
-  private static byte[] join(@NotNull Multimap<String, String> params) throws UnsupportedEncodingException {
+  private static byte[] join(Multimap<String, String> params) throws UnsupportedEncodingException {
     StringBuilder builder = new StringBuilder();
     for (Map.Entry<String, String> param : params.entries()) {
       if (StringUtil.isEmpty(param.getKey())) {
         throw new IllegalArgumentException(param.toString());
       }
-      if (builder.length() > 0) {
-        builder.append('&');
-      }
       if (StringUtil.isNotEmpty(param.getValue())) {
-        builder.append(param.getKey()).append('=').append(URLEncoder.encode(param.getValue(), ENCODING));
+        if (builder.length() > 0) {
+          builder.append('&');
+        }
+        builder.append(param.getKey()).append('=').append(URLEncoder.encode(param.getValue(), StandardCharsets.UTF_8.name()));
       }
     }
-    return builder.toString().getBytes(ENCODING);
+    return builder.toString().getBytes(StandardCharsets.UTF_8);
   }
 
-  @NotNull
-  private static HttpURLConnection post(@NotNull URL url, @NotNull byte[] bytes) throws IOException {
+  private static HttpURLConnection post(URL url, byte[] bytes) throws IOException {
     HttpsURLConnection connection = (HttpsURLConnection)url.openConnection();
 
     connection.setSSLSocketFactory(ourSslContext.getSocketFactory());
@@ -227,15 +244,11 @@ public class ITNProxy {
     connection.setRequestMethod("POST");
     connection.setDoInput(true);
     connection.setDoOutput(true);
-    connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded; charset=" + ENCODING);
+    connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded; charset=" + StandardCharsets.UTF_8.name());
     connection.setRequestProperty("Content-Length", Integer.toString(bytes.length));
 
-    OutputStream out = connection.getOutputStream();
-    try {
+    try (OutputStream out = connection.getOutputStream()) {
       out.write(bytes);
-    }
-    finally {
-      out.close();
     }
 
     return connection;
@@ -243,7 +256,7 @@ public class ITNProxy {
 
   private synchronized static SSLContext initContext() throws GeneralSecurityException, IOException {
     CertificateFactory cf = CertificateFactory.getInstance(CertificateUtil.X509);
-    Certificate ca = cf.generateCertificate(new ByteArrayInputStream(JB_CA_CERT.getBytes(ENCODING)));
+    Certificate ca = cf.generateCertificate(new ByteArrayInputStream(JB_CA_CERT.getBytes(StandardCharsets.US_ASCII)));
     KeyStore ks = KeyStore.getInstance(CertificateUtil.JKS);
     ks.load(null, null);
     ks.setCertificateEntry("JetBrains CA", ca);

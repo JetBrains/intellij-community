@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.CommonBundle;
@@ -41,7 +27,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -142,29 +127,20 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   }
 
   private void loadDevelopersAsynchronously() {
-    Task.Backgroundable task = new Task.Backgroundable(null, "Loading Developers List", true) {
-      private Collection<Developer> myDevelopers = Collections.emptyList();
-
+    new Task.Backgroundable(null, "Loading Developers List", true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
-          myDevelopers = DevelopersLoader.fetchDevelopers(indicator);
+          Collection<Developer> developers = ITNProxy.fetchDevelopers(indicator);
+          myDetailsTabForm.setDevelopers(developers);
+          //noinspection AssignmentToStaticFieldFromInstanceMethod
+          ourDevelopersList = developers;
         }
         catch (IOException e) {
-          //Notifications.Bus.register("Error reporter", NotificationDisplayType.BALLOON);
-          //Notifications.Bus.notify(new Notification("Error reporter", "Communication error",
-          //                                          "Unable to load developers list from server.", NotificationType.WARNING));
+          LOG.warn(e);
         }
       }
-
-      @Override
-      public void onSuccess() {
-        myDetailsTabForm.setDevelopers(myDevelopers);
-        //noinspection AssignmentToStaticFieldFromInstanceMethod
-        ourDevelopersList = myDevelopers;
-      }
-    };
-    ProgressManager.getInstance().run(task);
+    }.queue();
   }
 
   private boolean moveSelectionToMessage(LogMessage defaultMessage) {
@@ -794,10 +770,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     String msg = "Detected plugin " + id + " by class " + className;
     IdeaPluginDescriptor descriptor = PluginManager.getPlugin(id);
     if (descriptor != null) {
-      msg += "; ideaLoader=" + descriptor.getUseIdeaClassLoader();
-
       ClassLoader loader = descriptor.getPluginClassLoader();
-      msg += "; loader=" + loader;
+      msg += "; loader=" + loader + '/' + loader.getClass();
       if (loader instanceof PluginClassLoader) {
         msg += "; loaded class: " + ((PluginClassLoader)loader).hasLoadedClass(className);
       }
