@@ -3,6 +3,7 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.google.common.collect.Comparators;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -36,7 +37,8 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
 
   private static final Sortable<?>[] OUR_SORTABLES = new Sortable[]{
     new ArrayInitializerSortable(),
-    new VarargSortable()
+    new VarargSortable(),
+    new EnumConstantDeclarationSortable()
   };
 
 
@@ -147,6 +149,19 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
     }
   }
 
+  private static class EnumConstantDeclarationSortingStrategy implements SortingStrategy {
+    @Override
+    public boolean isSuitableEntryElement(@NotNull PsiElement element) {
+      return element instanceof PsiEnumConstant;
+    }
+
+    @NotNull
+    @Override
+    public Comparator<PsiElement> getComparator() {
+      return Comparator.comparing(el -> ((PsiEnumConstant)el).getName());
+    }
+  }
+
   private static class SortableEntry {
     private final @NotNull PsiElement myElement;
     private final @NotNull List<PsiComment> myBeforeSeparator;
@@ -200,6 +215,12 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
         sb.append('\n');
       }
     }
+
+    SortableEntry copy() {
+      List<PsiComment> afterSeparator = myAfterSeparator.stream().map(el -> (PsiComment)el.copy()).collect(Collectors.toList());
+      List<PsiComment> beforeSeparator = myBeforeSeparator.stream().map(el -> (PsiComment)el.copy()).collect(Collectors.toList());
+      return new SortableEntry(myElement.copy(), beforeSeparator, afterSeparator);
+    }
   }
 
   private static class SortableList {
@@ -229,6 +250,15 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
       Comparator<PsiElement> comparator = mySortingStrategy.getComparator();
       myEntries.sort(Comparator.comparing(sortableEntry -> sortableEntry.myElement, comparator));
     }
+
+    PsiElement getLastElement() {
+      SortableEntry last = myEntries.get(myEntries.size() - 1);
+      List<PsiComment> beforeSeparator = last.myBeforeSeparator;
+      if (beforeSeparator.isEmpty()) {
+        return last.myElement;
+      }
+      return beforeSeparator.get(beforeSeparator.size() - 1);
+    }
   }
 
   /**
@@ -242,6 +272,10 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
     @NotNull
     abstract SortingStrategy[] sortStrategies();
 
+    /**
+     * Extract context to use in consequent calls
+     * @param origin element at which intention was invoked
+     */
     @Nullable
     abstract C getContext(@NotNull PsiElement origin);
 
@@ -418,7 +452,7 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
         myBeforeSeparator = new SmartList<>();
         myAfterSeparator = new SmartList<>();
         myEntryElement = null;
-      }
+        }
 
       private void addIntermediateEntryElement(@NotNull PsiElement element, List<PsiComment> target) {
         if (element instanceof PsiWhiteSpace) {
@@ -678,6 +712,94 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
       sb.append(")");
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(origin.getProject());
       call.replace(factory.createExpressionFromText(sb.toString(), call));
+    }
+  }
+
+  private static class EnumConstantDeclarationSortable extends Sortable<EnumConstantDeclarationSortable.EnumContext> {
+    static class EnumContext {
+      private final @NotNull List<PsiEnumConstant> myEnumConstants;
+
+      EnumContext(@NotNull List<PsiEnumConstant> enumConstants) {myEnumConstants = enumConstants;}
+    }
+
+    @Override
+    boolean isEnd(@NotNull PsiElement element) {
+      if (element instanceof PsiJavaToken) {
+        IElementType tokenType = ((PsiJavaToken)element).getTokenType();
+        if (tokenType == JavaTokenType.SEMICOLON || tokenType == JavaTokenType.RBRACE) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    @NotNull
+    @Override
+    SortingStrategy[] sortStrategies() {
+      return new SortingStrategy[] {
+        new EnumConstantDeclarationSortingStrategy()
+      };
+    }
+
+    @Nullable
+    @Override
+    EnumContext getContext(@NotNull PsiElement origin) {
+      PsiClass aClass = PsiTreeUtil.getParentOfType(origin, PsiClass.class);
+      if (aClass == null) return null;
+      if (!aClass.isEnum()) return null;
+      PsiEnumConstant[] constants = PsiTreeUtil.getChildrenOfType(aClass, PsiEnumConstant.class);
+      if (constants == null || constants.length < MIN_ELEMENTS_COUNT) return null;
+      return new EnumContext(Arrays.asList(constants));
+    }
+
+    @NotNull
+    @Override
+    List<PsiElement> getElements(@NotNull EnumContext context) {
+      return new ArrayList<>(context.myEnumConstants);
+    }
+
+    @Override
+    PsiElement getFirst(EnumContext context) {
+      return context.myEnumConstants.get(0);
+    }
+
+    @Override
+    void replaceWithSorted(PsiElement origin) {
+      EnumContext context = getContext(origin);
+      if (context == null) return;
+      SortableList sortableList = readEntries(context);
+      if (sortableList == null) return;
+      PsiElement lastElement = sortableList.getLastElement();
+      sortableList.sort();
+      PsiClass aClass = PsiTreeUtil.getParentOfType(origin, PsiClass.class);
+      if (aClass == null) return;
+      String name = aClass.getName();
+      if (name == null) return;
+      PsiElement lBrace = aClass.getLBrace();
+      PsiElement rBrace = aClass.getRBrace();
+      if (lBrace == null || rBrace == null) return;
+      StringBuilder sb = new StringBuilder();
+      sortableList.generate(sb);
+      PsiElement elementToPreserve = lastElement.getNextSibling();
+      while (elementToPreserve != null && elementToPreserve != rBrace) {
+        sb.append(elementToPreserve.getText());
+        elementToPreserve = elementToPreserve.getNextSibling();
+      }
+      PsiClass newEnum = createEnum(aClass, sb.toString());
+      if (newEnum == null) return;
+      PsiElement newClassLBrace = newEnum.getLBrace();
+      PsiElement newClassRBrace = newEnum.getRBrace();
+      if (newClassLBrace == null || newClassRBrace == null) return;
+      aClass.deleteChildRange(lBrace.getNextSibling(), rBrace.getPrevSibling());
+      aClass.addRangeAfter(newClassLBrace.getNextSibling(), newClassRBrace.getPrevSibling(), lBrace);
+    }
+
+    private static PsiClass createEnum(PsiClass aClass, String text) {
+      PsiJavaFile file = (PsiJavaFile)PsiFileFactory.getInstance(aClass.getProject())
+                                                .createFileFromText("_DUMMY_", JavaFileType.INSTANCE, "enum __DUMMY__ {" + text + "}");
+      PsiClass[] classes = file.getClasses();
+      if (classes.length != 1) return null;
+      return classes[0];
     }
   }
 }
