@@ -149,7 +149,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
           return renderer.getListCellRendererComponent(list, (PsiElement)value, index, isSelected, cellHasFocus);
         }
       }).
-                                   setItemsChosenCallback(selectedElements -> {
+      setItemsChosenCallback(selectedElements -> {
         for (Object element : selectedElements) {
           if (element instanceof AdditionalAction) {
             ((AdditionalAction)element).execute();

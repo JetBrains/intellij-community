@@ -286,17 +286,15 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
     }
     final JBPopup popup = JBPopupFactory.getInstance()
       .createPopupChooserBuilder(wrappers)
-      .setRenderer(new ColoredListCellRenderer() {
+      .setRenderer(new ColoredListCellRenderer<ChooseRunConfigurationPopup.ItemWrapper>() {
         @Override
-        protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
-          if (value instanceof ChooseRunConfigurationPopup.ItemWrapper) {
-            setIcon(((ChooseRunConfigurationPopup.ItemWrapper)value).getIcon());
-            append(((ChooseRunConfigurationPopup.ItemWrapper)value).getText());
-          }
+        protected void customizeCellRenderer(@NotNull JList<? extends ChooseRunConfigurationPopup.ItemWrapper> list,
+                                             ChooseRunConfigurationPopup.ItemWrapper value, int index, boolean selected, boolean hasFocus) {
+          setIcon(value.getIcon());
+          append(value.getText());
         }
       })
       .setItemChosenCallback((at) -> {
-        if (at == null) return;
         if (at.getValue() instanceof RunnerAndConfigurationSettings) {
           final RunnerAndConfigurationSettings added = (RunnerAndConfigurationSettings)at.getValue();
           addConfiguration(added);
