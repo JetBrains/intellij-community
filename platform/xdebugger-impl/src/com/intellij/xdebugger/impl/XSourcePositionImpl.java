@@ -19,6 +19,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.DocumentUtil;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -129,16 +130,20 @@ public abstract class XSourcePositionImpl implements XSourcePosition {
   /**
    * do not call this method from plugins, use {@link XDebuggerUtil#createPosition(VirtualFile, int)} instead
    */
-  @NotNull
-  public static XSourcePositionImpl create(@NotNull VirtualFile file, int line) {
-    return create(file, line, 0);
+  @Contract("null , _ -> null; !null, _ -> !null")
+  public static XSourcePositionImpl create(@Nullable VirtualFile file, int line) {
+    return file == null ? null : create(file, line, 0);
   }
 
   /**
    * do not call this method from plugins, use {@link XDebuggerUtil#createPosition(VirtualFile, int, int)} instead
    */
-  @NotNull
-  public static XSourcePositionImpl create(@NotNull VirtualFile file, final int line, final int column) {
+  @Contract("null , _, _ -> null; !null, _, _ -> !null")
+  public static XSourcePositionImpl create(@Nullable VirtualFile file, final int line, final int column) {
+    if (file == null) {
+      return null;
+    }
+
     return new XSourcePositionImpl(file) {
       private final AtomicNotNullLazyValue<Integer> myOffset = new AtomicNotNullLazyValue<Integer>() {
         @NotNull
