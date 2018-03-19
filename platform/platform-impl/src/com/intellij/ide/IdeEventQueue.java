@@ -207,6 +207,8 @@ public class IdeEventQueue extends EventQueue {
     addDispatcher(new EditingCanceller(), null);
 
     abracadabraDaberBoreh();
+
+    IdeKeyEventDispatcher.addDumbModeWarningListener(() -> flushDelayedKeyEvents());
   }
 
   private void abracadabraDaberBoreh() {
@@ -1271,6 +1273,16 @@ public class IdeEventQueue extends EventQueue {
     }
 
     return true;
+  }
+
+  public void flushDelayedKeyEvents() {
+    delayKeyEvents.set(false);
+    int size = myDelayedKeyEvents.size();
+    for (int keyEventIndex = 0; keyEventIndex < size; keyEventIndex++) {
+      KeyEvent theEvent = myDelayedKeyEvents.remove();
+      TYPEAHEAD_LOG.debug("Posted after delay: " + theEvent.paramString());
+      super.postEvent(theEvent);
+    }
   }
 
   private SearchEverywhereTypeaheadState mySearchEverywhereTypeaheadState = SearchEverywhereTypeaheadState.DEACTIVATED;
