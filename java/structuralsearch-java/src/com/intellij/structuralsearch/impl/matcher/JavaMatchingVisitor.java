@@ -28,6 +28,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 
 /**
  * @author Eugene.Kudelevsky
@@ -932,17 +933,21 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     }
   }
 
-  private void matchArrayDims(final PsiNewExpression new1, final PsiNewExpression new2) {
-    final PsiExpression[] arrayDims = new1.getArrayDimensions();
-    final PsiExpression[] arrayDims2 = new2.getArrayDimensions();
+  private void matchArrayOrArguments(final PsiNewExpression new1, final PsiNewExpression new2) {
+    final PsiExpression[] dimensions1 = new1.getArrayDimensions();
+    final PsiExpression[] dimensions2 = new2.getArrayDimensions();
 
-    if (arrayDims.length == arrayDims2.length && arrayDims.length != 0) {
-      for (int i = 0; i < arrayDims.length; ++i) {
-        if (!myMatchingVisitor.setResult(myMatchingVisitor.match(arrayDims[i], arrayDims2[i]))) return;
+    if (!myMatchingVisitor.setResult(myMatchingVisitor.matchSons(new1.getArrayInitializer(), new2.getArrayInitializer()))) return;
+    if (!myMatchingVisitor.setResult(dimensions1.length == dimensions2.length)) return;
+    if (dimensions1.length != 0) {
+      for (int i = 0; i < dimensions1.length; ++i) {
+        if (!myMatchingVisitor.setResult(myMatchingVisitor.match(dimensions1[i], dimensions2[i]))) return;
       }
     }
     else {
-      myMatchingVisitor.setResult((arrayDims == arrayDims2) && myMatchingVisitor.matchSons(new1.getArgumentList(), new2.getArgumentList()));
+      final long count1 = Stream.of(new1.getChildren()).filter(e -> PsiUtil.isJavaToken(e, JavaTokenType.LBRACKET)).count();
+      final long count2 = Stream.of(new2.getChildren()).filter(e -> PsiUtil.isJavaToken(e, JavaTokenType.LBRACKET)).count();
+      myMatchingVisitor.setResult(count1 == count2 && myMatchingVisitor.matchSons(new1.getArgumentList(), new2.getArgumentList()));
     }
   }
 
@@ -1411,10 +1416,8 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
     if (classReference != null) {
       if (new2.getClassReference() != null) {
-        if (myMatchingVisitor.setResult(myMatchingVisitor.match(classReference, new2.getClassReference()) &&
-                                        myMatchingVisitor.matchSons(new1.getArrayInitializer(), new2.getArrayInitializer()))) {
-          // matching dims
-          matchArrayDims(new1, new2);
+        if (myMatchingVisitor.setResult(myMatchingVisitor.match(classReference, new2.getClassReference()))) {
+          matchArrayOrArguments(new1, new2);
         }
         return;
       }
@@ -1424,10 +1427,8 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
         final PsiElement element = PsiTreeUtil.getNextSiblingOfType(newKeyword, PsiWhiteSpace.class);
 
         if (element != null && element.getNextSibling() instanceof PsiKeyword) {
-          if (myMatchingVisitor.setResult(myMatchingVisitor.match(classReference, element.getNextSibling()) &&
-                                          myMatchingVisitor.matchSons(new1.getArrayInitializer(), new2.getArrayInitializer()))) {
-            // matching dims
-            matchArrayDims(new1, new2);
+          if (myMatchingVisitor.setResult(myMatchingVisitor.match(classReference, element.getNextSibling()))) {
+            matchArrayOrArguments(new1, new2);
           }
 
           return;

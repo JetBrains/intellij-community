@@ -1200,7 +1200,9 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       else if (layout instanceof MigLayout) {
         MigLayout migLayout = (MigLayout)layout;
 
-        myProperties.add(new PropertyBean("MigLayout constraints", migLayout.getColumnConstraints()));
+        myProperties.add(new PropertyBean("MigLayout layout constraints", migLayout.getLayoutConstraints()));
+        myProperties.add(new PropertyBean("MigLayout column constraints", migLayout.getColumnConstraints()));
+        myProperties.add(new PropertyBean("MigLayout row constraints", migLayout.getRowConstraints()));
 
         for (Component child : component.getComponents()) {
           myProperties.add(new PropertyBean(prefix + getComponentName(child), migLayout.getComponentConstraints(child)));

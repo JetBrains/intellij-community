@@ -78,7 +78,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
   @Override
   protected ComboPopup createPopup() {
-    return (comboBox instanceof ComboBoxWithWidePopup) ? new WidePopup(comboBox) : super.createPopup();
+    return new CustomComboPopup(comboBox);
   }
 
   protected PropertyChangeListener createPropertyListener() {
@@ -505,23 +505,27 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
   }
 
   // Wide popup that uses preferred size
-  private static class WidePopup extends BasicComboPopup {
-    public WidePopup(JComboBox combo) {
+  protected static class CustomComboPopup extends BasicComboPopup {
+    public CustomComboPopup(JComboBox combo) {
       super(combo);
     }
 
     @Override
     public void show(Component invoker, int x, int y) {
-      Dimension popupSize = comboBox.getPreferredSize();
-      Insets insets = getInsets();
-      popupSize.setSize(popupSize.width - (insets.right + insets.left), getPopupHeightForRowCount(comboBox.getMaximumRowCount()));
+      if (comboBox instanceof ComboBoxWithWidePopup) {
+        Dimension popupSize = comboBox.getSize();
+        Dimension prefSize = comboBox.getPreferredSize();
+        Insets insets = getInsets();
 
-      scroller.setMaximumSize(popupSize);
-      scroller.setPreferredSize(popupSize);
-      scroller.setMinimumSize(popupSize);
+        popupSize.width = Math.max(popupSize.width, prefSize.width);
+        popupSize.setSize(popupSize.width - (insets.right + insets.left), getPopupHeightForRowCount(comboBox.getMaximumRowCount()));
 
-      list.revalidate();
+        scroller.setMaximumSize(popupSize);
+        scroller.setPreferredSize(popupSize);
+        scroller.setMinimumSize(popupSize);
 
+        list.revalidate();
+      }
       super.show(invoker, x, y);
     }
   }

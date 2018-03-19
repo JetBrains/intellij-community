@@ -51,6 +51,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
@@ -242,7 +243,7 @@ class FindInProjectTask {
       return true;
     };
     List<VirtualFile> sorted = ContainerUtil.sorted(virtualFiles, SEARCH_RESULT_FILE_COMPARATOR);
-    PsiSearchHelperImpl.processFilesConcurrentlyDespiteWriteActions(myProject, sorted, myProgress, processor);
+    PsiSearchHelperImpl.processFilesConcurrentlyDespiteWriteActions(myProject, sorted, myProgress, new AtomicBoolean(), processor);
   }
 
   // must return non-binary files

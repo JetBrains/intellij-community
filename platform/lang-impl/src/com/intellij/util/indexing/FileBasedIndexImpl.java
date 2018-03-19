@@ -74,8 +74,8 @@ import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.SerializationManagerEx;
 import com.intellij.util.*;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
+import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectMap;
 import com.intellij.util.gist.GistManager;
@@ -145,8 +145,8 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
 
   private final boolean myIsUnitTestMode;
   @Nullable private ScheduledFuture<?> myFlushingFuture;
-  private volatile int myLocalModCount;
-  private volatile int myFilesModCount;
+  private final AtomicInteger myLocalModCount = new AtomicInteger();
+  private final AtomicInteger myFilesModCount = new AtomicInteger();
   private final AtomicInteger myUpdatingFiles = new AtomicInteger();
   private final Set<Project> myProjectsBeingUpdated = ContainerUtil.newConcurrentSet();
   private final IndexAccessValidator myAccessValidator = new IndexAccessValidator();
@@ -590,7 +590,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     IndexingStamp.flushCaches();
     IndexConfiguration state = getState();
     for (ID<?, ?> indexId : new ArrayList<>(state.getIndexIDs())) {
-      if (HeavyProcessLatch.INSTANCE.isRunning() || modCount != myLocalModCount) {
+      if (HeavyProcessLatch.INSTANCE.isRunning() || modCount != myLocalModCount.get()) {
         return; // do not interfere with 'main' jobs
       }
       try {
@@ -1045,12 +1045,12 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
   void filesUpdateStarted(Project project) {
     myChangedFilesCollector.ensureUpToDate();
     myProjectsBeingUpdated.add(project);
-    ++myFilesModCount;
+    myFilesModCount.incrementAndGet();
   }
 
   void filesUpdateFinished(@NotNull Project project) {
     myProjectsBeingUpdated.remove(project);
-    ++myFilesModCount;
+    myFilesModCount.incrementAndGet();
   }
 
   private final Lock myCalcIndexableFilesLock = new ReentrantLock();
@@ -1062,13 +1062,14 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
 
     SoftReference<ProjectIndexableFilesFilter> reference = project.getUserData(ourProjectFilesSetKey);
     ProjectIndexableFilesFilter data = com.intellij.reference.SoftReference.dereference(reference);
-    if (data != null && data.myModificationCount == myFilesModCount) return data;
+    int currentFileModCount = myFilesModCount.get();
+    if (data != null && data.myModificationCount == currentFileModCount) return data;
 
     if (myCalcIndexableFilesLock.tryLock()) { // make best effort for calculating filter
       try {
         reference = project.getUserData(ourProjectFilesSetKey);
         data = com.intellij.reference.SoftReference.dereference(reference);
-        if (data != null && data.myModificationCount == myFilesModCount) {
+        if (data != null && data.myModificationCount == currentFileModCount) {
           return data;
         }
 
@@ -1082,7 +1083,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
           }
           return true;
         }, project, SilentProgressIndicator.create());
-        ProjectIndexableFilesFilter filter = new ProjectIndexableFilesFilter(filesSet, myFilesModCount);
+        ProjectIndexableFilesFilter filter = new ProjectIndexableFilesFilter(filesSet, currentFileModCount);
         project.putUserData(ourProjectFilesSetKey, new SoftReference<>(filter));
 
         long finish = System.currentTimeMillis();
@@ -1640,7 +1641,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     if (!RebuildStatus.isOk(indexId) && !myIsUnitTestMode) {
       return; // the index is scheduled for rebuild, no need to update
     }
-    myLocalModCount++;
+    myLocalModCount.incrementAndGet();
 
     final UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
     assert index != null;
@@ -1847,7 +1848,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
       }
     };
 
-    private final ExecutorService myVfsEventsExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("vfs event processor", 1);
+    private final ExecutorService myVfsEventsExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("FileBasedIndex Vfs Event Processor");
     private final AtomicInteger myScheduledVfsEventsWorkers = new AtomicInteger();
 
     @Override
@@ -1861,7 +1862,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
 
       if (!contentChange) {
         if (myUpdatingFiles.decrementAndGet() == 0) {
-          ++myFilesModCount;
+          myFilesModCount.incrementAndGet();
         }
       }
     }
@@ -2430,10 +2431,11 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
           public void run() {
             mySerializationManagerEx.flushNameStorage();
 
-            if (lastModCount == myLocalModCount) {
+            int currentModCount = myLocalModCount.get();
+            if (lastModCount == currentModCount) {
               flushAllIndices(lastModCount);
             }
-            lastModCount = myLocalModCount;
+            lastModCount = currentModCount;
           }
         });
         myAllIndicesInitializedFuture = IndexInfrastructure.submitGenesisTask(() -> {

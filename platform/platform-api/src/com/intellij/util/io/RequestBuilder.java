@@ -26,6 +26,12 @@ public abstract class RequestBuilder {
   public abstract RequestBuilder accept(@Nullable String mimeType);
   public abstract RequestBuilder tuner(@Nullable HttpRequests.ConnectionTuner tuner);
 
+  /**
+   * Whether to read server response on error. Error message available as {@link HttpRequests.HttpStatusException#getMessage()}.
+   * Defaults to false.
+   */
+  public abstract RequestBuilder isReadResponseOnError(boolean isReadResponseOnError);
+
   // Used in Rider
   @SuppressWarnings("unused")
   @NotNull

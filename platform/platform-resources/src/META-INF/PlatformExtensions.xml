@@ -208,6 +208,7 @@
         serviceImplementation="com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl"/>
     <applicationService serviceImplementation="com.intellij.internal.statistic.collectors.fus.actions.persistence.MainMenuCollector"/>
     <applicationService serviceImplementation="com.intellij.internal.statistic.collectors.fus.actions.persistence.IntentionsCollector"/>
+    <applicationService serviceImplementation="com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.util.DimensionService"/>
     <applicationService serviceInterface="com.intellij.openapi.util.WindowStateService"
@@ -394,6 +395,7 @@
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.ui.ToolbarClicksUsagesCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.ui.EditorColorSchemesUsagesCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.actions.ActionUsagesCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.actions.ToolWindowUsagesCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.actions.IntentionUsagesCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.actions.MainMenuUsagesCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.jdk.JdkInfoUsageCollector"/>
@@ -413,6 +415,7 @@
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.collectors.legacy.ui.LegacyToolbarClicksUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.collectors.legacy.ui.LegacyEditorColorSchemesUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.collectors.legacy.actions.LegacyActionUsagesCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.collectors.legacy.actions.LegacyToolWindowUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.collectors.legacy.actions.LegacyIntentionUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.collectors.legacy.actions.LegacyMainMenuUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.collectors.legacy.jdk.LegacyJdkInfoUsageCollector"/>

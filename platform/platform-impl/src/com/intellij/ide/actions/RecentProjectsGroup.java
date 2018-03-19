@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -25,12 +26,14 @@ public class RecentProjectsGroup extends ActionGroup implements DumbAware {
   @Override
   @NotNull
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
-    AnAction[] actions = RecentProjectsManager.getInstance().getRecentProjectsActions(true);
-    if (e != null && e.getProject() != null) {
+    return removeCurrentProject(e == null ? null : e.getProject(), RecentProjectsManager.getInstance().getRecentProjectsActions(true));
+  }
+
+  public static AnAction[] removeCurrentProject(Project project, AnAction[] actions) {
+    if (project != null) {
       return Arrays.stream(actions)
                    .filter(action -> !(action instanceof ReopenProjectAction)
-                                     ||
-                                     !StringUtil.equals(((ReopenProjectAction)action).getProjectPath(), e.getProject().getBasePath()))
+                                     || !StringUtil.equals(((ReopenProjectAction)action).getProjectPath(), project.getBasePath()))
                    .toArray(AnAction[]::new);
     }
     return actions;

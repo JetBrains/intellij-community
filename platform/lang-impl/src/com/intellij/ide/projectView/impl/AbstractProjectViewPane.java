@@ -338,6 +338,11 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     return userObject instanceof NodeDescriptor ? (NodeDescriptor)userObject : null;
   }
 
+  /**
+   * @see TreeUtil#getUserObject(Object)
+   * @deprecated AbstractProjectViewPane#getSelectedPath
+   */
+  @Deprecated
   public final DefaultMutableTreeNode getSelectedNode() {
     TreePath path = getSelectedPath();
     return path == null ? null : ObjectUtils.tryCast(path.getLastPathComponent(), DefaultMutableTreeNode.class);
@@ -577,17 +582,28 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       }
     }
     else {
-      final DefaultMutableTreeNode selectedNode = getSelectedNode();
-      if (selectedNode != null) {
-        return getSelectedDirectoriesInAmbiguousCase(selectedNode);
+      TreePath path = getSelectedPath();
+      if (path != null) {
+        Object component = path.getLastPathComponent();
+        if (component instanceof DefaultMutableTreeNode) {
+          //noinspection deprecation
+          return getSelectedDirectoriesInAmbiguousCase((DefaultMutableTreeNode)component);
+        }
+        return getSelectedDirectoriesInAmbiguousCase(component);
       }
     }
     return PsiDirectory.EMPTY_ARRAY;
   }
 
   @NotNull
+  @Deprecated
+  @SuppressWarnings("DeprecatedIsStillUsed")
   protected PsiDirectory[] getSelectedDirectoriesInAmbiguousCase(@NotNull final DefaultMutableTreeNode node) {
-    final Object userObject = node.getUserObject();
+    return getSelectedDirectoriesInAmbiguousCase(node.getUserObject());
+  }
+
+  @NotNull
+  protected PsiDirectory[] getSelectedDirectoriesInAmbiguousCase(Object userObject) {
     if (userObject instanceof AbstractModuleNode) {
       final Module module = ((AbstractModuleNode)userObject).getValue();
       if (module != null) {

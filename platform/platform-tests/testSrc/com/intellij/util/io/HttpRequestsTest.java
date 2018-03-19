@@ -18,7 +18,6 @@ import java.nio.charset.StandardCharsets;
 
 import static java.net.HttpURLConnection.*;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
@@ -119,37 +118,48 @@ public class HttpRequestsTest {
   }
 
   @Test
-  public void postNotFound() {
+  public void postNotFound() throws IOException {
     myServer.createContext("/", ex -> {
       ex.sendResponseHeaders(HTTP_NOT_FOUND, -1);
       ex.close();
     });
 
-    assertThat(catchThrowable(() -> HttpRequests.post(myUrl, null).write("hello")))
-      .isInstanceOf(HttpRequests.HttpStatusException.class);
+    try {
+      HttpRequests
+        .post(myUrl, null)
+        .write("hello");
+    }
+    catch (HttpRequests.HttpStatusException e) {
+      assertThat(e.getMessage()).isEqualTo("Request failed with status code 404");
+      return;
+    }
+
+    fail();
   }
 
-  //@Test
-  //public void postNotFoundWithResponse() throws IOException {
-  //  String serverErrorText = "use another url";
-  //  myServer.createContext("/", ex -> {
-  //    ex.sendResponseHeaders(503, -1);
-  //    ex.getResponseBody().write(serverErrorText.getBytes(StandardCharsets.UTF_8));
-  //    ex.close();
-  //  });
-  //
-  //  try {
-  //    HttpRequests
-  //      .post(myUrl, null)
-  //      .isReadResponseOnError(true)
-  //      .write("hello");
-  //  }
-  //  catch (HttpRequests.HttpStatusException e) {
-  //    assertThat(e.getMessage()).isEqualTo(serverErrorText);
-  //  }
-  //
-  //  fail();
-  //}
+  @Test
+  public void postNotFoundWithResponse() throws IOException {
+    String serverErrorText = "use another url";
+    myServer.createContext("/", ex -> {
+      byte[] bytes = serverErrorText.getBytes(StandardCharsets.UTF_8);
+      ex.sendResponseHeaders(503, bytes.length);
+      ex.getResponseBody().write(bytes);
+      ex.close();
+    });
+
+    try {
+      HttpRequests
+        .post(myUrl, null)
+        .isReadResponseOnError(true)
+        .write("hello");
+    }
+    catch (HttpRequests.HttpStatusException e) {
+      assertThat(e.getMessage()).isEqualTo(serverErrorText);
+      return;
+    }
+
+    fail();
+  }
 
   @Test(timeout = 5000)
   public void testNotModified() throws IOException {

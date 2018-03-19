@@ -13,7 +13,7 @@ import org.picocontainer.defaults.DefaultPicoContainer;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.intellij.testFramework.assertions.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 /**

@@ -34,7 +34,6 @@ import javax.swing.event.PopupMenuEvent;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicArrowButton;
 import javax.swing.plaf.basic.BasicComboBoxEditor;
-import javax.swing.plaf.basic.BasicComboPopup;
 import javax.swing.plaf.basic.ComboPopup;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
@@ -517,8 +516,9 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
   }
 
 
-  @Override protected ComboPopup createPopup() {
-    return new BasicComboPopup(comboBox) {
+  @Override
+  protected ComboPopup createPopup() {
+    return new CustomComboPopup(comboBox) {
       @Override
       protected void configurePopup() {
         super.configurePopup();

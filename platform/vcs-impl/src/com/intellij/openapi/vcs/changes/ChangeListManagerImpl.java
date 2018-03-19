@@ -1677,7 +1677,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   static class Scheduler {
     private final AtomicReference<Future> myLastTask = new AtomicReference<>(); // @TestOnly
     private final ScheduledExecutorService myExecutor =
-      AppExecutorUtil.createBoundedScheduledExecutorService("ChangeListManagerImpl pool", 1);
+      AppExecutorUtil.createBoundedScheduledExecutorService("ChangeListManagerImpl Pool", 1);
 
     public void schedule(@NotNull Runnable command, long delay, @NotNull TimeUnit unit) {
       myLastTask.set(myExecutor.schedule(command, delay, unit));

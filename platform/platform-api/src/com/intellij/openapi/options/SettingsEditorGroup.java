@@ -18,7 +18,6 @@ package com.intellij.openapi.options;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -26,7 +25,6 @@ import java.util.List;
 
 public class SettingsEditorGroup<T> extends SettingsEditor<T> {
   private final List<Pair<String, SettingsEditor<T>>> myEditors = new ArrayList<>();
-  @Nullable private String myFocusedEditorName = null;
 
   public void addEditor(String name, SettingsEditor<T> editor) {
     Disposer.register(this, editor);
@@ -42,15 +40,6 @@ public class SettingsEditorGroup<T> extends SettingsEditor<T> {
 
   public List<Pair<String, SettingsEditor<T>>> getEditors() {
     return myEditors;
-  }
-
-  public void setFocusedEditorName(@Nullable String focusedEditorName) {
-    myFocusedEditorName = focusedEditorName;
-  }
-
-  @Nullable
-  public String getFocusedEditorName() {
-    return myFocusedEditorName;
   }
 
   public void resetEditorFrom(@NotNull T t) {}

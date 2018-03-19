@@ -121,9 +121,4 @@ public class MockApplicationEx extends MockApplication implements ApplicationEx 
   @Override
   public void setSaveAllowed(boolean value) {
   }
-
-  @Override
-  public boolean isInImpatientReader() {
-    return false;
-  }
 }

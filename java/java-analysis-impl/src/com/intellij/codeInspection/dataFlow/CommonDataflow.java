@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInspection.dataFlow.instructions.ArrayAccessInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.BinopInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.PushInstruction;
@@ -93,6 +94,17 @@ public class CommonDataflow {
             DfaMemoryState afterState = state.getMemoryState();
             dfr.add(place, (DfaMemoryStateImpl)afterState, instruction.getValue());
           }
+        }
+        return states;
+      }
+
+      @Override
+      public DfaInstructionState[] visitArrayAccess(ArrayAccessInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+        DfaInstructionState[] states = super.visitArrayAccess(instruction, runner, memState);
+        PsiArrayAccessExpression anchor = instruction.getExpression();
+        for (DfaInstructionState state : states) {
+          DfaMemoryState afterState = state.getMemoryState();
+          dfr.add(anchor, (DfaMemoryStateImpl)afterState, afterState.peek());
         }
         return states;
       }

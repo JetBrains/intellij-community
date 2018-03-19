@@ -8,24 +8,14 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssign
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPolyVariantReferenceBase
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyReferenceBase
 import org.jetbrains.plugins.groovy.lang.psi.util.getArgumentListType
 import org.jetbrains.plugins.groovy.lang.psi.util.isClassLiteral
 import org.jetbrains.plugins.groovy.lang.psi.util.isSimpleArrayAccess
+import org.jetbrains.plugins.groovy.lang.resolve.GroovyResolver
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil
 
-class GrIndexPropertyReference(
-  element: GrIndexPropertyImpl,
-  val rhs: Boolean
-) : GroovyPolyVariantReferenceBase<GrIndexPropertyImpl>(element) {
-
-  override fun getVariants() = emptyArray<Any>()
-
-  override fun multiResolve(incompleteCode: Boolean): Array<GroovyResolveResult> {
-    return TypeInferenceHelper.getCurrentContext().multiResolve(this, incompleteCode) { ref, incomplete ->
-      ref.element?.doMultiResolve(rhs, incomplete) ?: GroovyResolveResult.EMPTY_ARRAY
-    }
-  }
+class GrIndexPropertyReference(element: GrIndexProperty, val rhs: Boolean) : GroovyReferenceBase<GrIndexProperty>(element) {
 
   /**
    * Consider expression `foo[a, b, c]`.
@@ -39,9 +29,19 @@ class GrIndexPropertyReference(
     val rangeStart = if (rhs) startOffsetInParent else startOffsetInParent + argumentList.textLength - 1
     return TextRange.from(rangeStart, 1)
   }
+
+  override fun resolve(incomplete: Boolean): Collection<GroovyResolveResult> {
+    return TypeInferenceHelper.getCurrentContext().resolve(this, incomplete, Resolver)
+  }
+
+  private object Resolver : GroovyResolver<GrIndexPropertyReference> {
+    override fun resolve(ref: GrIndexPropertyReference, incomplete: Boolean): Collection<GroovyResolveResult> {
+      return ref.element?.doMultiResolve(ref.rhs, incomplete) ?: emptyList()
+    }
+  }
 }
 
-private fun GrIndexProperty.doMultiResolve(rhs: Boolean, incomplete: Boolean): Array<GroovyResolveResult>? {
+private fun GrIndexProperty.doMultiResolve(rhs: Boolean, incomplete: Boolean): Collection<GroovyResolveResult>? {
   if (isClassLiteral()) return null
   if (isSimpleArrayAccess()) return null
 
@@ -55,8 +55,8 @@ private fun GrIndexProperty.doMultiResolve(rhs: Boolean, incomplete: Boolean): A
 
   val argTypes = if (rType == null) arrayOf(argumentListType) else arrayOf(argumentListType, rType)
   val candidates = ResolveUtil.getMethodCandidates(thisType, name, this, incomplete, *argTypes)
-  if (argumentListType !is GrTupleType || candidates.any { it.isValidResult }) return candidates
+  if (argumentListType !is GrTupleType || candidates.any { it.isValidResult }) return candidates.toList()
 
   val unwrappedArgTypes = if (rType == null) argumentListType.componentTypes else argumentListType.componentTypes + rType
-  return ResolveUtil.getMethodCandidates(thisType, name, this, incomplete, *unwrappedArgTypes)
+  return ResolveUtil.getMethodCandidates(thisType, name, this, incomplete, *unwrappedArgTypes).toList()
 }

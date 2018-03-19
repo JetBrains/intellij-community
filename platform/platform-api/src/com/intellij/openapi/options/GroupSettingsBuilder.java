@@ -18,7 +18,6 @@ package com.intellij.openapi.options;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBTabbedPane;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -46,7 +45,6 @@ public class GroupSettingsBuilder<T> implements CompositeSettingsBuilder<T> {
   public JComponent createCompoundEditor() {
     if (myComponent == null) {
       myComponent = doCreateComponent();
-      selectEditor(myGroup.getFocusedEditorName());
     }
     return myComponent;
   }
@@ -67,9 +65,9 @@ public class GroupSettingsBuilder<T> implements CompositeSettingsBuilder<T> {
     return tabs;
   }
 
-  public void selectEditor(@Nullable String tabName) {
+  public void selectEditor(String tabName) {
     List<Pair<String,SettingsEditor<T>>> editors = myGroup.getEditors();
-    if (tabName != null && myComponent != null && editors.size() > 1) {
+    if (myComponent != null && editors.size() > 1) {
       for (int i = 0; i < editors.size(); i++) {
         Pair<String, SettingsEditor<T>> pair = editors.get(i);
         if (StringUtil.equals(tabName, pair.getFirst())) {
