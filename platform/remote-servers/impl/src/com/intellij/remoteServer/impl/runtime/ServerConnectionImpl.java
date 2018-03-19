@@ -148,8 +148,8 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
         myAllDeployments.addLocal(deployment);
 
         DeploymentLogManagerImpl logManager = myPerProjectLogManagers.computeIfAbsent(task.getProject(), LogManagersForProject::new)
-          .findOrCreateManager(deployment)
-          .withMainHandlerVisible(true);
+                                                                     .findOrCreateManager(deployment)
+                                                                     .withMainHandlerVisible(true);
 
         LoggingHandlerImpl handler = logManager.getMainLoggingHandler();
         handler.printlnSystemMessage("Deploying '" + deploymentName + "'...");
@@ -243,15 +243,15 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
   @Override
   public void undeploy(@NotNull Deployment deployment, @NotNull final DeploymentRuntime runtime) {
     String deploymentName = deployment.getName();
-    final UndeployTransition undeployInProgress = myAllDeployments.startUndeploy(deploymentName);
+    final MyDeployments.UndeployTransition undeployInProgress = myAllDeployments.startUndeploy(deploymentName);
 
     myEventDispatcher.queueDeploymentsChanged(this);
 
     final List<LoggingHandlerImpl> handlers = myPerProjectLogManagers.values().stream()
-      .map(fnp -> fnp.findManager(deployment))
-      .filter(Objects::nonNull)
-      .map(DeploymentLogManagerImpl::getMainLoggingHandler)
-      .collect(Collectors.toList());
+                                                                     .map(fnp -> fnp.findManager(deployment))
+                                                                     .filter(Objects::nonNull)
+                                                                     .map(DeploymentLogManagerImpl::getMainLoggingHandler)
+                                                                     .collect(Collectors.toList());
 
     final Consumer<String> logConsumer = message -> {
       if (handlers.isEmpty()) {
@@ -358,7 +358,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
 
   private void onProjectClosed(@NotNull Project project) {
     myPerProjectLogManagers.remove(project);
-    boolean hasChanged = myAllDeployments.removedAllLocalForProject(project);
+    boolean hasChanged = myAllDeployments.removeAllLocalForProject(project);
     if (hasChanged) {
       myEventDispatcher.queueDeploymentsChanged(this);
     }
@@ -456,9 +456,8 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
     @Override
     public void errorOccurred(@NotNull String errorMessage) {
       myLoggingHandler.printlnSystemMessage("Failed to deploy '" + myDeploymentName + "': " + errorMessage);
-      synchronized (myAllDeployments.myLocalLock) {
-        myDeployment.changeState(DeploymentStatus.DEPLOYING, DeploymentStatus.NOT_DEPLOYED, errorMessage, null);
-      }
+      myAllDeployments.updateAnyState(myDeployment, null,
+                                      DeploymentStatus.DEPLOYING, DeploymentStatus.NOT_DEPLOYED, errorMessage);
       myEventDispatcher.queueDeploymentsChanged(ServerConnectionImpl.this);
     }
   }
@@ -472,8 +471,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
   }
 
   private static class MyDeployments {
-    private final Object myLocalLock = new Object();
-    private final Object myRemoteLock = new Object();
+    private final Object myLock = new Object();
 
     private final Map<String, DeploymentImpl> myRemoteDeployments = new HashMap<>();
     private final Map<String, LocalDeploymentImpl> myLocalDeployments = new HashMap<>();
@@ -485,14 +483,14 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
     }
 
     public void addLocal(@NotNull LocalDeploymentImpl<?> deployment) {
-      synchronized (myLocalLock) {
+      synchronized (myLock) {
         myLocalDeployments.put(deployment.getName(), deployment);
         myCachedAllDeployments = null;
       }
     }
 
     public void replaceRemotesWith(@NotNull Collection<DeploymentImpl> newDeployments) {
-      synchronized (myRemoteLock) {
+      synchronized (myLock) {
         myRemoteDeployments.clear();
         myCachedAllDeployments = null;
         for (DeploymentImpl deployment : newDeployments) {
@@ -507,7 +505,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
                                             @NotNull DeploymentStatus deploymentStatus,
                                             @Nullable String deploymentStatusText) {
 
-      synchronized (myRemoteLock) {
+      synchronized (myLock) {
         DeploymentImpl result = myRemoteDeployments.get(deploymentName);
         if (result != null && !result.getStatus().isTransition()) {
           result.changeState(result.getStatus(), deploymentStatus, deploymentStatusText, deploymentRuntime);
@@ -522,29 +520,24 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
                                   @NotNull DeploymentStatus newStatus,
                                   @Nullable String statusText) {
 
-      synchronized (myLocalLock) {
-        synchronized (myRemoteLock) {
-          return deployment.changeState(oldStatus, newStatus, statusText, deploymentRuntime);
-        }
+      synchronized (myLock) {
+        return deployment.changeState(oldStatus, newStatus, statusText, deploymentRuntime);
       }
     }
 
     @NotNull
     public Collection<Deployment> listDeployments() {
-      synchronized (myLocalLock) {
-        synchronized (myRemoteLock) {
-          if (myCachedAllDeployments == null) {
-            Collection<Deployment> result = doListDeployments();
-            myCachedAllDeployments = Collections.unmodifiableList(new ArrayList<>(result));
-          }
-
-          return myCachedAllDeployments;
+      synchronized (myLock) {
+        if (myCachedAllDeployments == null) {
+          Collection<Deployment> result = doListDeployments();
+          myCachedAllDeployments = Collections.unmodifiableList(new ArrayList<>(result));
         }
+        return myCachedAllDeployments;
       }
     }
 
     private Collection<Deployment> doListDeployments() {
-      //assumed both myLocalLock and myRemoteLock
+      //assumed myLock
       Map<Deployment, DeploymentImpl> orderedDeployments = new TreeMap<>(myDeploymentComparator);
 
       for (LocalDeploymentImpl localDeployment : myLocalDeployments.values()) {
@@ -569,8 +562,8 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
       return result;
     }
 
-    public boolean removedAllLocalForProject(@NotNull Project project) {
-      synchronized (myLocalLock) {
+    public boolean removeAllLocalForProject(@NotNull Project project) {
+      synchronized (myLock) {
         boolean hasChanged = false;
         for (Iterator<LocalDeploymentImpl> it = myLocalDeployments.values().iterator(); it.hasNext(); ) {
           LocalDeploymentImpl nextLocal = it.next();
@@ -589,77 +582,46 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
     @SuppressWarnings("Duplicates")
     @Nullable
     public UndeployTransition startUndeploy(@NotNull String deploymentName) {
-
-      synchronized (myLocalLock) {
-        synchronized (myRemoteLock) {
-
-          DeploymentImpl local = myLocalDeployments.get(deploymentName);
-          if (local != null) {
-            return new UndeployTransition(local) {
-              @Override
-              public void succeeded() {
-                synchronized (myLocalLock) {
-                  if (tryChangeToTerminalState(DeploymentStatus.NOT_DEPLOYED, true)) {
-                    myLocalDeployments.remove(getDeployment().getName());
-                    myCachedAllDeployments = null;
-                  }
-                }
-              }
-
-              @Override
-              public void failed() {
-                synchronized (myLocalLock) {
-                  tryChangeToTerminalState(DeploymentStatus.DEPLOYED, false);
-                }
-              }
-            };
-          }
-          DeploymentImpl remote = myRemoteDeployments.get(deploymentName);
-          if (remote != null) {
-            return new UndeployTransition(remote) {
-              @Override
-              public void succeeded() {
-                synchronized (myRemoteLock) {
-                  if (tryChangeToTerminalState(DeploymentStatus.NOT_DEPLOYED, true)) {
-                    myRemoteDeployments.remove(getDeployment().getName());
-                    myCachedAllDeployments = null;
-                  }
-                }
-              }
-
-              @Override
-              public void failed() {
-                synchronized (myRemoteLock) {
-                  tryChangeToTerminalState(DeploymentStatus.DEPLOYED, false);
-                }
-              }
-            };
-          }
-          return null;
+      DeploymentImpl deployment;
+      synchronized (myLock) {
+        deployment = myLocalDeployments.get(deploymentName);
+        if (deployment == null) {
+          deployment = myRemoteDeployments.get(deploymentName);
         }
       }
-    }
-  }
-
-  private static abstract class UndeployTransition {
-    private final DeploymentImpl myDeployment;
-
-    public UndeployTransition(@NotNull DeploymentImpl deployment) {
-      myDeployment = deployment;
-      myDeployment.changeState(DeploymentStatus.DEPLOYED, DeploymentStatus.DEPLOYING, null, deployment.getRuntime());
+      return deployment == null ? null : new UndeployTransition(deployment);
     }
 
-    public abstract void succeeded();
+    private class UndeployTransition {
+      private final DeploymentImpl myDeployment;
 
-    public abstract void failed();
+      public UndeployTransition(@NotNull DeploymentImpl deployment) {
+        myDeployment = deployment;
+        myDeployment.changeState(DeploymentStatus.DEPLOYED, DeploymentStatus.DEPLOYING, null, deployment.getRuntime());
+      }
 
-    protected boolean tryChangeToTerminalState(DeploymentStatus terminalState, boolean forgetRuntime) {
-      DeploymentRuntime targetRuntime = forgetRuntime ? null : myDeployment.getRuntime();
-      return myDeployment.changeState(DeploymentStatus.DEPLOYING, terminalState, null, targetRuntime);
-    }
+      public void succeeded() {
+        synchronized (myLock) {
+          if (tryChangeToTerminalState(DeploymentStatus.NOT_DEPLOYED, true)) {
+            String deploymentName = myDeployment.getName();
+            myLocalDeployments.remove(deploymentName);
+            myRemoteDeployments.remove(deploymentName);
+            myCachedAllDeployments = null;
+          }
+        }
+      }
 
-    protected DeploymentImpl getDeployment() {
-      return myDeployment;
+      public void failed() {
+        synchronized (myLock) {
+          tryChangeToTerminalState(DeploymentStatus.DEPLOYED, false);
+        }
+      }
+
+      private boolean tryChangeToTerminalState(DeploymentStatus terminalState, boolean forgetRuntime) {
+        //assumed myLock
+        DeploymentRuntime targetRuntime = forgetRuntime ? null : myDeployment.getRuntime();
+        return myDeployment.changeState(DeploymentStatus.DEPLOYING, terminalState, null, targetRuntime);
+      }
     }
   }
 }
