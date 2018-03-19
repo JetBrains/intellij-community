@@ -51,7 +51,7 @@ public interface IPopupChooserBuilder<T> {
 
   IPopupChooserBuilder<T> setAutoselectOnMouseMove(boolean doAutoSelect);
 
-  IPopupChooserBuilder<T> setNamerForFiltering(Function<Object, String> namer);
+  IPopupChooserBuilder<T> setNamerForFiltering(Function<T, String> namer);
 
   IPopupChooserBuilder<T> setModalContext(boolean modalContext);
 

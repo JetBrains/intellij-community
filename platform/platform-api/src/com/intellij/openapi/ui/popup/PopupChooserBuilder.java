@@ -267,8 +267,8 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
 
 
   @Override
-  public PopupChooserBuilder<T> setNamerForFiltering(Function<Object, String> namer) {
-    myItemsNamer = namer;
+  public PopupChooserBuilder<T> setNamerForFiltering(Function<T, String> namer) {
+    myItemsNamer = (Function<Object, String>)namer;
     return this;
   }
 
