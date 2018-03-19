@@ -70,13 +70,7 @@ public class ArrayUtil extends ArrayUtilRt {
     }
 
     final int oldSize = array.length;
-    if (oldSize == newSize) {
-      return array;
-    }
-
-    boolean[] result = new boolean[newSize];
-    System.arraycopy(array, 0, result, 0, Math.min(oldSize, newSize));
-    return result;
+    return oldSize == newSize ? array : Arrays.copyOf(array, newSize);
   }
 
   @NotNull
@@ -87,14 +81,9 @@ public class ArrayUtil extends ArrayUtilRt {
     }
 
     final int oldSize = array.length;
-    if (oldSize == newSize) {
-      return array;
-    }
-
-    long[] result = new long[newSize];
-    System.arraycopy(array, 0, result, 0, Math.min(oldSize, newSize));
-    return result;
+    return oldSize == newSize ? array : Arrays.copyOf(array, newSize);
   }
+
   @NotNull
   @Contract(pure=true)
   public static int[] realloc(@NotNull int[] array, final int newSize) {
@@ -103,14 +92,9 @@ public class ArrayUtil extends ArrayUtilRt {
     }
 
     final int oldSize = array.length;
-    if (oldSize == newSize) {
-      return array;
-    }
-
-    final int[] result = new int[newSize];
-    System.arraycopy(array, 0, result, 0, Math.min(oldSize, newSize));
-    return result;
+    return oldSize == newSize ? array : Arrays.copyOf(array, newSize);
   }
+
   @NotNull
   @Contract(pure=true)
   public static <T> T[] realloc(@NotNull T[] array, final int newSize, @NotNull ArrayFactory<T> factory) {
@@ -186,13 +170,7 @@ public class ArrayUtil extends ArrayUtilRt {
     }
 
     final int oldSize = array.length;
-    if (oldSize == newSize) {
-      return array;
-    }
-
-    final char[] result = new char[newSize];
-    System.arraycopy(array, 0, result, 0, Math.min(oldSize, newSize));
-    return result;
+    return oldSize == newSize ? array : Arrays.copyOf(array, newSize);
   }
 
   @NotNull
@@ -920,14 +898,14 @@ public class ArrayUtil extends ArrayUtilRt {
   @Contract("null -> null; !null -> !null")
   public static boolean[] copyOf(@Nullable boolean[] original) {
     if (original == null) return null;
-    return Arrays.copyOf(original, original.length);
+    return original.length == 0 ? EMPTY_BOOLEAN_ARRAY : Arrays.copyOf(original, original.length);
   }
 
   @Nullable
   @Contract("null -> null; !null -> !null")
   public static int[] copyOf(@Nullable int[] original) {
     if (original == null) return null;
-    return Arrays.copyOf(original, original.length);
+    return original.length == 0 ? EMPTY_INT_ARRAY : Arrays.copyOf(original, original.length);
   }
 
   @NotNull
