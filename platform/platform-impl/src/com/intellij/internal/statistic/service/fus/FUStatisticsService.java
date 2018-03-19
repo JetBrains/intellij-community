@@ -44,7 +44,7 @@ public class FUStatisticsService extends ConfigurableStatisticsService<FUStatist
         throw new StatServiceException("There are no data from collectors to send");
       }
 
-      HttpRequests.post(serviceUrl, "application/json")
+      HttpRequests.post(serviceUrl, HttpRequests.JSON_CONTENT_TYPE)
                   .isReadResponseOnError(true)
                   .connect(request -> {
                     request.write(dataToSend);

@@ -48,6 +48,8 @@ import java.util.Map;
 public final class HttpRequests {
   private static final Logger LOG = Logger.getInstance(HttpRequests.class);
 
+  public static final String JSON_CONTENT_TYPE = "application/json; charset=utf-8";
+
   private static final int[] REDIRECTS = {
     // temporary redirects
     HttpResponseStatus.FOUND.code(), HttpResponseStatus.TEMPORARY_REDIRECT.code(),

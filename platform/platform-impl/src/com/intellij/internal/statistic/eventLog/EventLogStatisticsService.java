@@ -55,7 +55,7 @@ public class EventLogStatisticsService implements StatisticsService {
 
         try {
           HttpRequests
-            .post(serviceUrl, "application/json")
+            .post(serviceUrl, HttpRequests.JSON_CONTENT_TYPE)
             .isReadResponseOnError(true)
             .connect(request1 -> {
               request1.write(LogEventSerializer.INSTANCE.toString(request));
