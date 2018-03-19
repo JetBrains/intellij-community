@@ -30,7 +30,7 @@ public class FieldReflectionAccessor extends ReferenceReflectionAccessorBase<Fie
     if (resolved instanceof PsiField) {
       final PsiField field = (PsiField)resolved;
       String name = field.getName();
-      if (name != null && !Objects.equals(field.getContainingClass(), getOuterClass()) && needReplace(field)) {
+      if (name != null && !Objects.equals(field.getContainingClass(), getOuterClass()) && needReplace(field, expression)) {
         return new FieldDescriptor(field, expression);
       }
     }
@@ -117,8 +117,9 @@ public class FieldReflectionAccessor extends ReferenceReflectionAccessorBase<Fie
     return methodBuilder.build(getElementFactory(), outerClass);
   }
 
-  protected boolean needReplace(@NotNull PsiField field) {
-    return !PsiReflectionAccessUtil.isAccessibleMember(field);
+  private static boolean needReplace(@NotNull PsiField field, @NotNull PsiReferenceExpression expression) {
+    return !PsiReflectionAccessUtil.isAccessibleMember(field) ||
+           !PsiReflectionAccessUtil.isQualifierAccessible(expression.getQualifierExpression());
   }
 
   @Nullable

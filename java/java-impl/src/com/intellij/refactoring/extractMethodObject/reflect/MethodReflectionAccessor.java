@@ -35,7 +35,8 @@ public class MethodReflectionAccessor extends ReflectionAccessorBase<MethodRefle
       public void visitMethodCallExpression(PsiMethodCallExpression expression) {
         super.visitMethodCallExpression(expression);
         PsiMethod method = expression.resolveMethod();
-        if (method != null && !Objects.equals(method.getContainingClass(), getOuterClass()) && needReplace(method)) {
+        if (method != null && !Objects.equals(method.getContainingClass(), getOuterClass()) &&
+            needReplace(method, expression.getMethodExpression())) {
           result.add(new MethodCallDescriptor(expression, method));
         }
       }
@@ -81,8 +82,9 @@ public class MethodReflectionAccessor extends ReflectionAccessorBase<MethodRefle
     descriptor.callExpression.replace(getElementFactory().createExpressionFromText(newMethodCallExpression, descriptor.callExpression));
   }
 
-  private static boolean needReplace(@NotNull PsiMethod method) {
-    return !PsiReflectionAccessUtil.isAccessibleMember(method);
+  private static boolean needReplace(@NotNull PsiMethod method, @NotNull PsiReferenceExpression referenceExpression) {
+    return !PsiReflectionAccessUtil.isAccessibleMember(method) ||
+           !PsiReflectionAccessUtil.isQualifierAccessible(referenceExpression.getQualifierExpression());
   }
 
   @Nullable

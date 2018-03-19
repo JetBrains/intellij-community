@@ -38,6 +38,14 @@ public class PsiReflectionAccessUtil {
     return expressionType == null ? null : qualifierExpression.getText();
   }
 
+  @Contract(value = "null -> true")
+  public static boolean isQualifierAccessible(@Nullable PsiExpression qualifierExpression) {
+    if (qualifierExpression == null) return true;
+    PsiType type = qualifierExpression.getType();
+    PsiClass psiClass = PsiUtil.resolveClassInType(type);
+    return psiClass == null || isAccessible(psiClass);
+  }
+
   @Contract("null -> null")
   @Nullable
   public static PsiClass nearestAccessedClass(@Nullable PsiClass psiClass) {
