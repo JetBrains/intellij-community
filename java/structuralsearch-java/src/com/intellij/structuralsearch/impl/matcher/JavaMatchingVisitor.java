@@ -18,6 +18,7 @@ import com.intellij.structuralsearch.impl.matcher.iterators.HierarchyNodeIterato
 import com.intellij.structuralsearch.impl.matcher.predicates.MatchPredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.NotPredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
@@ -28,7 +29,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Stream;
 
 /**
  * @author Eugene.Kudelevsky
@@ -55,10 +55,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
     if (!(myMatchingVisitor.getElement() instanceof PsiComment)) {
       if (myMatchingVisitor.getElement() instanceof PsiMember) {
-        final PsiElement[] children = myMatchingVisitor.getElement().getChildren();
-        if (children[0] instanceof PsiComment) {
-          comment2 = (PsiComment)children[0];
-        }
+        comment2 = ObjectUtils.tryCast(myMatchingVisitor.getElement().getFirstChild(), PsiComment.class);
       }
     }
     else {
@@ -945,9 +942,10 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       }
     }
     else {
-      final long count1 = Stream.of(new1.getChildren()).filter(e -> PsiUtil.isJavaToken(e, JavaTokenType.LBRACKET)).count();
-      final long count2 = Stream.of(new2.getChildren()).filter(e -> PsiUtil.isJavaToken(e, JavaTokenType.LBRACKET)).count();
-      myMatchingVisitor.setResult(count1 == count2 && myMatchingVisitor.matchSons(new1.getArgumentList(), new2.getArgumentList()));
+      final PsiType type1 = new1.getType();
+      final PsiType type2 = new2.getType();
+      myMatchingVisitor.setResult(type1 != null && type2 != null && type1.getArrayDimensions() == type2.getArrayDimensions() &&
+                                  myMatchingVisitor.matchSons(new1.getArgumentList(), new2.getArgumentList()));
     }
   }
 
