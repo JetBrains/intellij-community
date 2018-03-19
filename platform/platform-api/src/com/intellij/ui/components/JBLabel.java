@@ -33,6 +33,7 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
   private JEditorPane myEditorPane;
   private JLabel myIconLabel;
   private boolean myMultiline;
+  private boolean myAllowAutoWrapping = false;
 
   public JBLabel() {
   }
@@ -159,6 +160,14 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
       myIconLabel.setIcon(icon);
       updateLayout();
       updateTextAlignment();
+    }
+  }
+
+  @Override
+  public void setFocusable(boolean focusable) {
+    super.setFocusable(focusable);
+    if (myEditorPane != null) {
+      myEditorPane.setFocusable(focusable);
     }
   }
 
@@ -304,8 +313,17 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
                   "color:#" + ColorUtil.toHex(getForeground()) + ";" +
                   "font-family:" + getFont().getFamily() + ";" +
                   "font-size:" + getFont().getSize() + "pt;" +
-                  "white-space:nowrap;}");
+                  "white-space:" + (myAllowAutoWrapping ? "normal": "nowrap") +";}");
     }
+  }
+
+  /**
+   * In 'copyable' mode auto-wrapping is disabled by default.
+   * (In this case you have to markup your HTML with P or BR tags explicitly)
+   */
+  public JBLabel setAllowAutoWrapping(boolean allowAutoWrapping) {
+    myAllowAutoWrapping = allowAutoWrapping;
+    return this;
   }
 
   private void updateTextAlignment() {

@@ -8,6 +8,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ContextHelpLabel;
 import com.intellij.ui.Gray;
 import com.intellij.ui.TextComponent;
+import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -102,7 +104,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
   @Override
   @NotNull
   public JPanel createPanel() {
-    JPanel panel = new JPanel(new GridBagLayout());
+    JPanel panel = new NonOpaquePanel(new GridBagLayout());
     GridBagConstraints gc = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, GridBagConstraints.HORIZONTAL,
                                                    null, 0, 0);
     addToPanel(panel, gc);
@@ -171,7 +173,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
 
   private class ComponentPanelImpl extends ComponentPanel {
     private final JLabel label;
-    private final JLabel comment;
+    private final JBLabel comment;
 
     private ComponentPanelImpl() {
       if ((StringUtil.isNotEmpty(myLabelText))) {
@@ -182,7 +184,9 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
         label = new JLabel("");
       }
 
-      comment = new JLabel("");
+      comment = new JBLabel("").setCopyable(true).setAllowAutoWrapping(true);
+      comment.setVerticalTextPosition(SwingConstants.TOP);
+      comment.setFocusable(false);
       comment.setForeground(Gray.x78);
       comment.setBorder(getCommentBorder());
       setCommentTextImpl(myCommentText);
@@ -241,7 +245,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
       gc.weightx = 1.0;
       gc.insets = JBUI.emptyInsets();
 
-      JPanel componentPanel = new JPanel();
+      JPanel componentPanel = new NonOpaquePanel();
       componentPanel.setLayout(new BoxLayout(componentPanel, BoxLayout.X_AXIS));
       componentPanel.add(myComponent);
 

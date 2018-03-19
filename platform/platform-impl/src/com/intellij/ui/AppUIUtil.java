@@ -418,8 +418,6 @@ public class AppUIUtil {
     dialog.setModal(true);
     dialog.setTitle("Analytics");
     dialog.pack();
-    dialog.setSize(JBUI.scale(600), dialog.getWindow().getHeight() * 4 / 3);
-    //dialog.setSize(JBUI.scale(600), JBUI.scale(400));
     dialog.show();
 
     int exitCode = dialog.getExitCode();
