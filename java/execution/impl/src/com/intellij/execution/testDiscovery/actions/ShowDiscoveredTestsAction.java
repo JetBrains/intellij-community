@@ -9,6 +9,7 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.testDiscovery.TestDiscoveryConfigurationProducer;
 import com.intellij.execution.testDiscovery.TestDiscoveryProducer;
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.find.FindUtil;
 import com.intellij.find.actions.CompositeActiveComponent;
 import com.intellij.icons.AllIcons;
@@ -78,6 +79,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
     String methodPresentationName = c.getName() + "." + methodName;
 
     DataContext dataContext = DataManager.getInstance().getDataContext(e.getRequiredData(EDITOR).getContentComponent());
+    FeatureUsageTracker.getInstance().triggerFeatureUsed("test.discovery");
     showDiscoveredTests(project, dataContext, methodPresentationName, method);
   }
 
