@@ -44,7 +44,7 @@ import java.util.List;
  */
 public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
 
-  private final JComponent myChooserComponent;
+  private final PopupComponentAdapter<T> myChooserComponent;
   private String myTitle;
   private final ArrayList<KeyStroke> myAdditionalKeystrokes = new ArrayList<>();
   private Runnable myItemChosenRunnable;
@@ -80,6 +80,263 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
   private boolean myUseForXYLocation;
   @Nullable private Processor<JBPopup> myCouldPin;
 
+  private interface PopupComponentAdapter<T> {
+    JComponent getComponent();
+
+    default void setRenderer(ListCellRenderer renderer) {}
+
+    void setItemChosenCallback(Consumer<T> callback);
+
+    void setItemsChosenCallback(Consumer<Set<T>> callback);
+
+    JScrollPane createScrollPane();
+
+    default void addMouseListener(MouseListener listener) {
+      getComponent().addMouseListener(listener);
+    }
+
+    default void autoSelect() {}
+    default void setSelectionMode(int selection) {}
+
+    default ListComponentUpdater getBackgroundUpdater() {
+      return null;
+    }
+
+    default void setSelectedValue(T preselection, boolean shouldScroll) {
+      throw new UnsupportedOperationException("Not supported for this popup type");
+    }
+
+    default void setItemSelectedCallback(Consumer<T> c) {
+      throw new UnsupportedOperationException("Not supported for this popup type");
+    }
+
+    default boolean checkResetFilter() {
+      return false;
+    }
+  }
+
+  private class ListComponentAdapter<T> implements PopupComponentAdapter<T> {
+    private ListWithFilter myListWithFilter;
+
+    public ListComponentAdapter(JList list) {
+      myListWithFilter = (ListWithFilter)ListWithFilter.wrap(list, new MyListWrapper(list), myItemsNamer);
+    }
+
+    @Override
+    public JComponent getComponent() {
+      return myListWithFilter;
+    }
+
+    @Override
+    public void setRenderer(ListCellRenderer renderer) {
+      myListWithFilter.getList().setCellRenderer(renderer);
+    }
+
+    @Override
+    public void setItemChosenCallback(Consumer<T> callback) {
+      setItemChoosenCallback(() -> {
+        Object selectedValue = myListWithFilter.getList().getSelectedValue();
+        if (selectedValue != null) {
+          callback.consume((T)selectedValue);
+        }
+      });
+    }
+
+    @Override
+    public void setItemsChosenCallback(Consumer<Set<T>> callback) {
+      setItemChoosenCallback(() -> {
+        List list = myListWithFilter.getList().getSelectedValuesList();
+        callback.consume(list != null ? ContainerUtil.newHashSet(list) : Collections.emptySet());
+      });
+    }
+
+    @Override
+    public JScrollPane createScrollPane() {
+      return myListWithFilter.getScrollPane();
+    }
+
+    @Override
+    public void addMouseListener(MouseListener listener) {
+      myListWithFilter.getList().addMouseListener(listener);
+    }
+
+    @Override
+    public void autoSelect() {
+      JList list = myListWithFilter.getList();
+      if (list.getSelectedIndex() == -1 && myAutoselect) {
+        list.setSelectedIndex(0);
+      }
+    }
+
+    @Override
+    public ListComponentUpdater getBackgroundUpdater() {
+      return new JBListUpdater((JBList)(myListWithFilter.getList()));
+    }
+
+    @Override
+    public void setSelectedValue(T preselection, boolean shouldScroll) {
+      myListWithFilter.getList().setSelectedValue(preselection, shouldScroll);
+    }
+
+    @Override
+    public void setItemSelectedCallback(Consumer<T> c) {
+      myListWithFilter.getList().addListSelectionListener(e -> {
+        Object selectedValue = myListWithFilter.getList().getSelectedValue();
+        c.consume((T)selectedValue);
+      });
+    }
+
+    @Override
+    public void setSelectionMode(int selection) {
+      myListWithFilter.getList().setSelectionMode(selection);
+    }
+
+    @Override
+    public boolean checkResetFilter() {
+      return myListWithFilter.resetFilter();
+    }
+  }
+
+  private class TableComponentAdapter<T> implements PopupComponentAdapter<T> {
+    private final JTable myTable;
+
+    public TableComponentAdapter(JTable table) {
+      myTable = table;
+    }
+
+    @Override
+    public JComponent getComponent() {
+      return myTable;
+    }
+
+    @Override
+    public void setItemChosenCallback(Consumer<T> callback) {
+      throw new UnsupportedOperationException("setItemChosenCallback with element callback is not implemented for tables yet");
+    }
+
+    @Override
+    public void setItemsChosenCallback(Consumer<Set<T>> callback) {
+      throw new UnsupportedOperationException("setItemsChosenCallback with element callback is not implemented for tables yet");
+    }
+
+    @Override
+    public JScrollPane createScrollPane() {
+      if (myTable instanceof TreeTable) {
+        TreeUtil.expandAll(((TreeTable)myTable).getTree());
+      }
+
+      JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable);
+
+      scrollPane.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+
+      if (myTable.getSelectedRow() == -1) {
+        myTable.getSelectionModel().setSelectionInterval(0, 0);
+      }
+
+      if (myTable.getRowCount() >= 20) {
+        scrollPane.getViewport().setPreferredSize(new Dimension(myTable.getPreferredScrollableViewportSize().width, 300));
+      }
+      else {
+        scrollPane.getViewport().setPreferredSize(myTable.getPreferredSize());
+      }
+
+      if (myAutoselectOnMouseMove) {
+        myTable.addMouseMotionListener(new MouseMotionAdapter() {
+          boolean myIsEngaged = false;
+          public void mouseMoved(MouseEvent e) {
+            if (myIsEngaged) {
+              int index = myTable.rowAtPoint(e.getPoint());
+              myTable.getSelectionModel().setSelectionInterval(index, index);
+            }
+            else {
+              myIsEngaged = true;
+            }
+          }
+        });
+      }
+
+      return scrollPane;
+    }
+  }
+
+  private class TreeComponentAdapter<T> implements PopupComponentAdapter<T> {
+    private final JTree myTree;
+
+    public TreeComponentAdapter(JTree tree) {
+      myTree = tree;
+    }
+
+    @Override
+    public JComponent getComponent() {
+      return myTree;
+    }
+
+    @Override
+    public void setItemChosenCallback(Consumer<T> callback) {
+      setItemChoosenCallback(() -> {
+        TreePath path = myTree.getSelectionModel().getLeadSelectionPath();
+        T component = (T)path.getLastPathComponent();
+        if (component != null) {
+          callback.consume(component);
+        }
+      });
+    }
+
+    @Override
+    public void setItemsChosenCallback(Consumer<Set<T>> callback) {
+      setItemChoosenCallback(() -> {
+        final Set<T> selection = new HashSet<>();
+        for (TreePath path : myTree.getSelectionModel().getSelectionPaths()) {
+          Object component = path.getLastPathComponent();
+          if (component != null) {
+            selection.add((T)component);
+          }
+        }
+        if (!selection.isEmpty()) {
+          callback.consume(selection);
+        }
+      });
+    }
+
+    @Override
+    public JScrollPane createScrollPane() {
+      TreeUtil.expandAll(myTree);
+
+      JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
+
+      scrollPane.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+
+      if (myTree.getSelectionCount() == 0) {
+        myTree.setSelectionRow(0);
+      }
+
+      if (myTree.getRowCount() >= 20) {
+        scrollPane.getViewport().setPreferredSize(new Dimension(myTree.getPreferredScrollableViewportSize().width, 300));
+      }
+      else {
+        scrollPane.getViewport().setPreferredSize(myTree.getPreferredSize());
+      }
+
+      if (myAutoselectOnMouseMove) {
+        myTree.addMouseMotionListener(new MouseMotionAdapter() {
+          boolean myIsEngaged = false;
+          public void mouseMoved(MouseEvent e) {
+            if (myIsEngaged) {
+              final Point p = e.getPoint();
+              int index = myTree.getRowForLocation(p.x, p.y);
+              myTree.setSelectionRow(index);
+            }
+            else {
+              myIsEngaged = true;
+            }
+          }
+        });
+      }
+
+      return scrollPane;
+    }
+  }
+
   @Override
   public PopupChooserBuilder setCancelOnClickOutside(boolean cancelOnClickOutside) {
     myCancelOnClickOutside = cancelOnClickOutside;
@@ -95,15 +352,15 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
   private JScrollPane myScrollPane;
 
   public PopupChooserBuilder(@NotNull JList list) {
-    myChooserComponent = ListWithFilter.wrap(list, new MyListWrapper(list), myItemsNamer);
+    myChooserComponent = new ListComponentAdapter<T>(list);
   }
 
   public PopupChooserBuilder(@NotNull JTable table) {
-    myChooserComponent = table;
+    myChooserComponent = new TableComponentAdapter(table);
   }
 
   public PopupChooserBuilder(@NotNull JTree tree) {
-    myChooserComponent = tree;
+    myChooserComponent = new TreeComponentAdapter(tree);
   }
 
   @Override
@@ -123,63 +380,25 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
 
   @Override
   public IPopupChooserBuilder<T> setRenderer(ListCellRenderer renderer) {
-    if (myChooserComponent instanceof ListWithFilter) {
-      ((ListWithFilter)myChooserComponent).getList().setCellRenderer(renderer);
-    }
+    myChooserComponent.setRenderer(renderer);
     return this;
   }
 
   public JComponent getChooserComponent() {
-    return myChooserComponent;
+    return myChooserComponent.getComponent();
   }
 
   @NotNull
   @Override
   public IPopupChooserBuilder<T> setItemChosenCallback(@NotNull Consumer<T> callback) {
-    if (myChooserComponent instanceof JTable) {
-      throw new UnsupportedOperationException("setItemChosenCallback with element callback is not implemented for tables yet");
-    }
-    setItemChoosenCallback(() -> {
-      if (myChooserComponent instanceof ListWithFilter) {
-        Object selectedValue = ((ListWithFilter)myChooserComponent).getList().getSelectedValue();
-        if (selectedValue != null) {
-          callback.consume((T)selectedValue);
-        }
-      }
-      else if (myChooserComponent instanceof JTree) {
-        TreePath path = ((JTree)myChooserComponent).getSelectionModel().getLeadSelectionPath();
-        T component = (T)path.getLastPathComponent();
-        if (component != null) {
-          callback.consume(component);
-        }
-      }
-    });
+    myChooserComponent.setItemChosenCallback(callback);
     return this;
   }
 
   @NotNull
   @Override
   public IPopupChooserBuilder<T> setItemsChosenCallback(@NotNull Consumer<Set<T>> callback) {
-    if (myChooserComponent instanceof JTable) {
-      throw new UnsupportedOperationException("setItemChosenCallback with element callback is not implemented for tables yet");
-    }
-    setItemChoosenCallback(() -> {
-      if (myChooserComponent instanceof ListWithFilter) {
-        List list = ((ListWithFilter)myChooserComponent).getList().getSelectedValuesList();
-        callback.consume(list != null ? ContainerUtil.newHashSet(list) : Collections.emptySet());
-      } else if (myChooserComponent instanceof JTree) {
-        final Set<T> selection = new HashSet<>();
-        for (TreePath path : ((JTree)myChooserComponent).getSelectionModel().getSelectionPaths()) {
-          Object component = path.getLastPathComponent();
-          if (component != null) {
-            selection.add((T)component);
-          }
-        }
-        if (!selection.isEmpty()) {
-          callback.consume(selection);
-        }
-      }
-    });
+    myChooserComponent.setItemsChosenCallback(callback);
     return this;
   }
 
@@ -278,14 +497,9 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
   @Override
   @NotNull
   public JBPopup createPopup() {
-    final JList list;
     BooleanFunction<KeyEvent> keyEventHandler = null;
-    if (myChooserComponent instanceof ListWithFilter) {
-      list = ((ListWithFilter)myChooserComponent).getList();
+    if (myChooserComponent instanceof ListComponentAdapter) {
       keyEventHandler = keyEvent -> keyEvent.isConsumed();
-    }
-    else {
-      list = null;
     }
 
     JPanel contentPane = new JPanel(new BorderLayout());
@@ -296,14 +510,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
       contentPane.add(label, BorderLayout.NORTH);
     }
 
-    if (list != null) {
-      if (list.getSelectedIndex() == -1 && myAutoselect) {
-        list.setSelectedIndex(0);
-      }
-    }
-
-
-    (list != null ? list : myChooserComponent).addMouseListener(new MouseAdapter() {
+    myChooserComponent.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseReleased(MouseEvent e) {
         if (UIUtil.isActionClick(e, MouseEvent.MOUSE_RELEASED) && !UIUtil.isSelectionButtonDown(e) && !e.isConsumed()) {
@@ -333,25 +540,14 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
       registerClosePopupKeyboardAction(keystroke, true);
     }
 
-    if (myChooserComponent instanceof ListWithFilter) {
-      myScrollPane = ((ListWithFilter)myChooserComponent).getScrollPane();
-    }
-    else if (myChooserComponent instanceof JTable) {
-      myScrollPane = createScrollPane((JTable)myChooserComponent);
-    }
-    else if (myChooserComponent instanceof JTree) {
-      myScrollPane = createScrollPane((JTree)myChooserComponent);
-    }
-    else {
-      throw new IllegalStateException("PopupChooserBuilder is intended to be constructed with one of JTable, JTree, JList components");
-    }
+    myScrollPane = myChooserComponent.createScrollPane();
 
     myScrollPane.getViewport().setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     Insets viewportPadding = UIUtil.getListViewportPadding();
     ((JComponent)myScrollPane.getViewport().getView()).setBorder(BorderFactory.createEmptyBorder(viewportPadding.top, viewportPadding.left, viewportPadding.bottom, viewportPadding.right));
 
-    if (myChooserComponent instanceof ListWithFilter) {
-      addCenterComponentToContentPane(contentPane, myChooserComponent);
+    if (myChooserComponent instanceof ListComponentAdapter) {
+      addCenterComponentToContentPane(contentPane, myChooserComponent.getComponent());
     }
     else {
       addCenterComponentToContentPane(contentPane, myScrollPane);
@@ -365,7 +561,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
       addEastComponentToContentPane(contentPane, myEastComponent);
     }
 
-    ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(contentPane, myChooserComponent);
+    ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(contentPane, myChooserComponent.getComponent());
     for (JBPopupListener each : myListeners) {
       builder.addListener(each);
     }
@@ -435,16 +631,14 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
   private void registerClosePopupKeyboardAction(final KeyStroke keyStroke, final boolean shouldPerformAction) {
     registerPopupKeyboardAction(keyStroke, new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
-        if (!shouldPerformAction && myChooserComponent instanceof ListWithFilter) {
-          if (((ListWithFilter)myChooserComponent).resetFilter()) return;
-        }
+        if (!shouldPerformAction && myChooserComponent.checkResetFilter()) return;
         closePopup(shouldPerformAction, null, shouldPerformAction);
       }
     });
   }
 
   private void registerPopupKeyboardAction(final KeyStroke keyStroke, AbstractAction action) {
-    myChooserComponent.registerKeyboardAction(action, keyStroke, JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+    myChooserComponent.getComponent().registerKeyboardAction(action, keyStroke, JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
   }
 
   private void closePopup(boolean shouldPerformAction, MouseEvent e, boolean isOk) {
@@ -457,83 +651,6 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
     } else {
       myPopup.cancel(e);
     }
-  }
-
-  @NotNull
-  private JScrollPane createScrollPane(final JTable table) {
-    if (table instanceof TreeTable) {
-      TreeUtil.expandAll(((TreeTable)table).getTree());
-    }
-
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(table);
-
-    scrollPane.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
-
-    if (table.getSelectedRow() == -1) {
-      table.getSelectionModel().setSelectionInterval(0, 0);
-    }
-
-    if (table.getRowCount() >= 20) {
-      scrollPane.getViewport().setPreferredSize(new Dimension(table.getPreferredScrollableViewportSize().width, 300));
-    }
-    else {
-      scrollPane.getViewport().setPreferredSize(table.getPreferredSize());
-    }
-
-    if (myAutoselectOnMouseMove) {
-      table.addMouseMotionListener(new MouseMotionAdapter() {
-        boolean myIsEngaged = false;
-        public void mouseMoved(MouseEvent e) {
-          if (myIsEngaged) {
-            int index = table.rowAtPoint(e.getPoint());
-            table.getSelectionModel().setSelectionInterval(index, index);
-          }
-          else {
-            myIsEngaged = true;
-          }
-        }
-      });
-    }
-
-    return scrollPane;
-  }
-
-  @NotNull
-  private JScrollPane createScrollPane(final JTree tree) {
-    TreeUtil.expandAll(tree);
-
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(tree);
-
-    scrollPane.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
-
-    if (tree.getSelectionCount() == 0) {
-      tree.setSelectionRow(0);
-    }
-
-    if (tree.getRowCount() >= 20) {
-      scrollPane.getViewport().setPreferredSize(new Dimension(tree.getPreferredScrollableViewportSize().width, 300));
-    }
-    else {
-      scrollPane.getViewport().setPreferredSize(tree.getPreferredSize());
-    }
-
-    if (myAutoselectOnMouseMove) {
-      tree.addMouseMotionListener(new MouseMotionAdapter() {
-        boolean myIsEngaged = false;
-        public void mouseMoved(MouseEvent e) {
-          if (myIsEngaged) {
-            final Point p = e.getPoint();
-            int index = tree.getRowForLocation(p.x, p.y);
-            tree.setSelectionRow(index);
-          }
-          else {
-            myIsEngaged = true;
-          }
-        }
-      });
-    }
-
-    return scrollPane;
   }
 
   @Override
@@ -648,54 +765,42 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
 
   @Override
   public IPopupChooserBuilder<T> setSelectionMode(int selection) {
-    if (myChooserComponent instanceof ListWithFilter) {
-      ((ListWithFilter)myChooserComponent).getList().setSelectionMode(selection);
-    }
+    myChooserComponent.setSelectionMode(selection);
     return this;
   }
 
   @Override
   public IPopupChooserBuilder<T> setSelectedValue(T preselection, boolean shouldScroll) {
-    if (myChooserComponent instanceof ListWithFilter) {
-      ((ListWithFilter)myChooserComponent).getList().setSelectedValue(preselection, shouldScroll);
-    }
+    myChooserComponent.setSelectedValue(preselection, shouldScroll);
     return this;
   }
 
   @Override
   public IPopupChooserBuilder<T> setAccessibleName(String title) {
-    AccessibleContextUtil.setName(myChooserComponent, title);
+    AccessibleContextUtil.setName(myChooserComponent.getComponent(), title);
     return this;
   }
 
   @Override
   public IPopupChooserBuilder<T> setItemSelectedCallback(Consumer<T> c) {
-    if (myChooserComponent instanceof ListWithFilter) {
-      ((ListWithFilter)myChooserComponent).getList().addListSelectionListener(e -> {
-        Object selectedValue = ((ListWithFilter)myChooserComponent).getList().getSelectedValue();
-        c.consume((T)selectedValue);
-      });
-    }
+    myChooserComponent.setItemSelectedCallback(c);
     return this;
   }
 
   @Override
   public IPopupChooserBuilder<T> withHintUpdateSupply() {
-    HintUpdateSupply.installSimpleHintUpdateSupply(myChooserComponent);
+    HintUpdateSupply.installSimpleHintUpdateSupply(myChooserComponent.getComponent());
     return this;
   }
 
   @Override
   public IPopupChooserBuilder<T> setFont(Font f) {
-    myChooserComponent.setFont(f);
+    myChooserComponent.getComponent().setFont(f);
     return this;
   }
 
   @Override
   public ListComponentUpdater getBackgroundUpdater() {
-    if (myChooserComponent instanceof ListWithFilter) {
-      return new JBListUpdater((JBList)((ListWithFilter)myChooserComponent).getList());
-    }
-    return null;
+    return myChooserComponent.getBackgroundUpdater();
   }
 }
