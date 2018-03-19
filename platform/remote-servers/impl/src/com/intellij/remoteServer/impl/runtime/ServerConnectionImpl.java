@@ -248,7 +248,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
     myEventDispatcher.queueDeploymentsChanged(this);
 
     final List<LoggingHandlerImpl> handlers = myPerProjectLogManagers.values().stream()
-                                                                     .map(fnp -> fnp.findManager(deployment))
+                                                                     .map(nextForProject -> nextForProject.findManager(deployment))
                                                                      .filter(Objects::nonNull)
                                                                      .map(DeploymentLogManagerImpl::getMainLoggingHandler)
                                                                      .collect(Collectors.toList());
@@ -268,11 +268,15 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
       public void succeeded() {
         logConsumer.consume("'" + deploymentName + "' has been undeployed successfully.");
 
+        Set<String> namesToDispose = new LinkedHashSet<>();
+        namesToDispose.add(deploymentName);
+
         if (undeployInProgress != null) {
           undeployInProgress.succeeded();
+          undeployInProgress.getSubDeployments().forEach(deployment -> namesToDispose.add(deployment.getName()));
         }
 
-        myPerProjectLogManagers.values().forEach(nextForProject -> nextForProject.disposeManager(deploymentName));
+        myPerProjectLogManagers.values().forEach(nextForProject -> namesToDispose.forEach(name -> nextForProject.disposeManager(name)));
 
         myEventDispatcher.queueDeploymentsChanged(ServerConnectionImpl.this);
         computeDeployments(myRuntimeInstance, EmptyRunnable.INSTANCE);
@@ -581,30 +585,51 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
 
     @Nullable
     public UndeployTransition startUndeploy(@NotNull String deploymentName) {
-      DeploymentImpl deployment;
       synchronized (myLock) {
-        deployment = myLocalDeployments.get(deploymentName);
+        DeploymentImpl deployment = myLocalDeployments.get(deploymentName);
         if (deployment == null) {
           deployment = myRemoteDeployments.get(deploymentName);
         }
+        return deployment == null ? null : new UndeployTransition(deployment, collectDeepChildren(deployment));
       }
-      return deployment == null ? null : new UndeployTransition(deployment);
+    }
+
+    @NotNull
+    private List<Deployment> collectDeepChildren(@NotNull Deployment root) {
+      DeepChildrenCollector collector = new DeepChildrenCollector(root.getRuntime());
+      synchronized (myLock) {
+        for (LocalDeploymentImpl nextLocal : myLocalDeployments.values()) {
+          collector.visitDeployment(nextLocal);
+        }
+        for (DeploymentImpl nextRemote : myRemoteDeployments.values()) {
+          collector.visitDeployment(nextRemote);
+        }
+      }
+      return collector.getChildDeployments();
     }
 
     private class UndeployTransition {
       private final DeploymentImpl myDeployment;
+      private final List<Deployment> mySubDeployments;
 
-      public UndeployTransition(@NotNull DeploymentImpl deployment) {
+      public UndeployTransition(@NotNull DeploymentImpl deployment, @NotNull List<Deployment> subDeployments) {
         myDeployment = deployment;
+        mySubDeployments = new ArrayList<>(subDeployments);
+
         myDeployment.changeState(DeploymentStatus.DEPLOYED, DeploymentStatus.DEPLOYING, null, deployment.getRuntime());
       }
 
       public void succeeded() {
         synchronized (myLock) {
           if (tryChangeToTerminalState(DeploymentStatus.NOT_DEPLOYED, true)) {
-            String deploymentName = myDeployment.getName();
-            myLocalDeployments.remove(deploymentName);
-            myRemoteDeployments.remove(deploymentName);
+            forgetDeployment(myDeployment);
+
+            for (Deployment nextImplicitlyUndeployed : mySubDeployments) {
+              if (nextImplicitlyUndeployed != myDeployment) {
+                forgetDeployment(nextImplicitlyUndeployed);
+              }
+            }
+
             myCachedAllDeployments = null;
           }
         }
@@ -616,10 +641,55 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
         }
       }
 
+      @NotNull
+      public Iterable<Deployment> getSubDeployments() {
+        return mySubDeployments;
+      }
+
       private boolean tryChangeToTerminalState(DeploymentStatus terminalState, boolean forgetRuntime) {
         //assumed myLock
         DeploymentRuntime targetRuntime = forgetRuntime ? null : myDeployment.getRuntime();
         return myDeployment.changeState(DeploymentStatus.DEPLOYING, terminalState, null, targetRuntime);
+      }
+
+      private void forgetDeployment(@NotNull Deployment deployment) {
+        synchronized (myLock) {
+          String deploymentName = deployment.getName();
+          myLocalDeployments.remove(deploymentName);
+          myRemoteDeployments.remove(deploymentName);
+        }
+      }
+    }
+
+    private static class DeepChildrenCollector {
+      private final Map<DeploymentRuntime, Boolean> mySettledStatuses = new IdentityHashMap<>();
+      private final List<Deployment> myCollectedChildren = new LinkedList<>();
+      private final DeploymentRuntime myRootRuntime;
+
+      public DeepChildrenCollector(DeploymentRuntime rootRuntime) {
+        myRootRuntime = rootRuntime;
+      }
+
+      public boolean visitDeployment(@NotNull Deployment deployment) {
+        boolean isDeepChild = visitRuntime(deployment.getRuntime());
+        if (isDeepChild) {
+          myCollectedChildren.add(deployment);
+        }
+        return isDeepChild;
+      }
+
+      private boolean visitRuntime(@Nullable DeploymentRuntime runtime) {
+        if (runtime == null) {
+          return false;
+        }
+        if (runtime == myRootRuntime) {
+          return true;
+        }
+        return mySettledStatuses.computeIfAbsent(runtime, rt -> this.visitRuntime(rt.getParent()));
+      }
+
+      public List<Deployment> getChildDeployments() {
+        return Collections.unmodifiableList(myCollectedChildren);
       }
     }
   }
