@@ -162,9 +162,8 @@ public class ShowDiscoveredTestsAction extends AnAction {
         String fqn = methodFqnName.first;
         String methodName = methodFqnName.second;
 
-        for (TestDiscoveryConfigurationProducer producer : getProducers(project)) {
-          byte frameworkId =
-            ((JavaTestConfigurationBase)producer.getConfigurationFactory().createTemplateConfiguration(project)).getTestFrameworkId();
+        for (TestDiscoveryConfigurationProducer producer : getRunConfigurationProducers(project)) {
+          byte frameworkId = ((JavaTestConfigurationBase)producer.getConfigurationFactory().createTemplateConfiguration(project)).getTestFrameworkId();
           TestDiscoveryProducer.consumeDiscoveredTests(project, fqn, methodName, frameworkId, (testClass, testMethod) -> {
             PsiMethod psiMethod = ReadAction.compute(() -> {
               PsiClass cc = testClass == null ? null : ClassUtil.findPsiClass(PsiManager.getInstance(project), testClass, null, true, scope);
@@ -208,7 +207,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
     Executor executor = DefaultRunExecutor.getRunExecutorInstance();
     Module targetModule = TestDiscoveryConfigurationProducer.detectTargetModule(tree.getContainingModules(), project);
     //first producer with results will be picked
-    StreamEx.of(getProducers(project)).cross(methods)
+    StreamEx.of(getRunConfigurationProducers(project)).cross(methods)
             .mapKeyValue((producer, method) -> producer.createDelegate(method, targetModule).findOrCreateConfigurationFromContext(context))
             .filter(Objects::nonNull)
             .findFirst()
@@ -235,7 +234,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
     return shortcutSet == null ? null : KeymapUtil.getKeyStroke(shortcutSet);
   }
 
-  private static List<TestDiscoveryConfigurationProducer> getProducers(Project project) {
+  private static List<TestDiscoveryConfigurationProducer> getRunConfigurationProducers(Project project) {
     return RunConfigurationProducer.getProducers(project)
                                    .stream()
                                    .filter(producer -> producer instanceof TestDiscoveryConfigurationProducer)
