@@ -18,13 +18,14 @@ package com.jetbrains.python.codeInsight.intentions;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Stack;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
@@ -33,7 +34,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.function.BiPredicate;
 
 /**
  * User: catherine
@@ -80,10 +80,13 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
 
       final boolean caretInParameterList = PsiTreeUtil.isAncestor(function.getParameterList(), element, true);
 
-      final Set<PyReferenceExpression> references = new HashSet<>(findKeywordContainerUsages(function));
+      final Trinity<List<PyReferenceExpression>, List<PyCallExpression>, List<PySubscriptionExpression>> usages =
+        findKeywordContainerUsages(function);
+
+      final Set<PyReferenceExpression> references = new HashSet<>(usages.getFirst());
       boolean available = false;
 
-      for (PyCallExpression call : findKeywordContainerCalls(function)) {
+      for (PyCallExpression call : usages.getSecond()) {
         if ((caretInParameterList || PsiTreeUtil.isAncestor(call, element, true)) && getIndexValueToReplace(call) != null) {
           available = true;
         }
@@ -91,7 +94,7 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
         references.remove(call.getReceiver(null));
       }
 
-      for (PySubscriptionExpression subscription : findKeywordContainerSubscriptions(function)) {
+      for (PySubscriptionExpression subscription : usages.getThird()) {
         if ((caretInParameterList || PsiTreeUtil.isAncestor(subscription, element, true)) && getIndexValueToReplace(subscription) != null) {
           available = true;
         }
@@ -126,16 +129,31 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
   }
 
   @NotNull
-  private static List<PyReferenceExpression> findKeywordContainerUsages(@NotNull PyFunction function) {
-    final BiPredicate<PsiElement, PyParameter> referenceToKeywordContainer =
-      (e, container) -> e instanceof PyReferenceExpression && ((PyReferenceExpression)e).getReference().isReferenceTo(container);
+  private static Trinity<List<PyReferenceExpression>, List<PyCallExpression>, List<PySubscriptionExpression>> findKeywordContainerUsages(@NotNull PyFunction function) {
+    final PyParameter keywordContainer = getKeywordContainer(function.getParameterList());
+    if (keywordContainer == null) return new Trinity<>(Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
 
-    return findKeywordContainerUsages(function, referenceToKeywordContainer);
-  }
+    final List<PyReferenceExpression> all = new ArrayList<>();
+    final List<PyCallExpression> calls = new ArrayList<>();
+    final List<PySubscriptionExpression> subscriptions = new ArrayList<>();
 
-  @NotNull
-  private static List<PySubscriptionExpression> findKeywordContainerSubscriptions(@NotNull PyFunction function) {
-    return findKeywordContainerUsages(function, ConvertVariadicParamIntention::isKeywordContainerSubscription);
+    SyntaxTraverser
+      .psiTraverser(function.getStatementList())
+      .forEach(
+        e -> {
+          if (e instanceof PyReferenceExpression && ((PyReferenceExpression)e).getReference().isReferenceTo(keywordContainer)) {
+            all.add((PyReferenceExpression)e);
+          }
+          else if (isKeywordContainerCall(e, keywordContainer)) {
+            calls.add((PyCallExpression)e);
+          }
+          else if (isKeywordContainerSubscription(e, keywordContainer)) {
+            subscriptions.add((PySubscriptionExpression)e);
+          }
+        }
+      );
+
+    return new Trinity<>(all, calls, subscriptions);
   }
 
   @Nullable
@@ -146,11 +164,6 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
       .map(PyStringLiteralExpression::getStringValue)
       .filter(PyNames::isIdentifier)
       .orElse(null);
-  }
-
-  @NotNull
-  private static List<PyCallExpression> findKeywordContainerCalls(@NotNull PyFunction function) {
-    return findKeywordContainerUsages(function, ConvertVariadicParamIntention::isKeywordContainerCall);
   }
 
   @Nullable
@@ -165,67 +178,52 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
   }
 
   private static void replaceKeywordContainerSubscriptions(@NotNull PyFunction function, @NotNull Project project) {
+    final PyParameter keywordContainer = getKeywordContainer(function.getParameterList());
+    if (keywordContainer == null) return;
+
     final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
 
-    for (PySubscriptionExpression subscription : findKeywordContainerSubscriptions(function)) {
-      final String indexValue = getIndexValueToReplace(subscription);
-      if (indexValue != null) {
-        final PyExpression parameter = elementGenerator.createExpressionFromText(LanguageLevel.forElement(function), indexValue);
+    SyntaxTraverser
+      .psiTraverser(function.getStatementList())
+      .filter(e -> isKeywordContainerSubscription(e, keywordContainer))
+      .filter(PySubscriptionExpression.class)
+      .forEach(
+        subscription -> {
+          final String indexValue = getIndexValueToReplace(subscription);
+          if (indexValue != null) {
+            final PyExpression parameter = elementGenerator.createExpressionFromText(LanguageLevel.forElement(function), indexValue);
 
-        insertParameter(function.getParameterList(), parameter, false, elementGenerator);
-        subscription.replace(parameter);
-      }
-    }
+            insertParameter(function.getParameterList(), parameter, false, elementGenerator);
+            subscription.replace(parameter);
+          }
+        }
+      );
   }
 
   private static void replaceKeywordContainerCalls(@NotNull PyFunction function, @NotNull Project project) {
+    final PyParameter keywordContainer = getKeywordContainer(function.getParameterList());
+    if (keywordContainer == null) return;
+
     final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
 
-    for (PyCallExpression call : findKeywordContainerCalls(function)) {
-      final String indexValue = getIndexValueToReplace(call);
-      if (indexValue != null) {
-        final PyNamedParameter parameter = createParameter(elementGenerator, call, indexValue);
-        if (parameter != null) {
-          final PyExpression parameterUsage = elementGenerator.createExpressionFromText(LanguageLevel.forElement(function), indexValue);
+    SyntaxTraverser
+      .psiTraverser(function.getStatementList())
+      .filter(e -> isKeywordContainerCall(e, keywordContainer))
+      .filter(PyCallExpression.class)
+      .forEach(
+        call -> {
+          final String indexValue = getIndexValueToReplace(call);
+          if (indexValue != null) {
+            final PyNamedParameter parameter = createParameter(elementGenerator, call, indexValue);
+            if (parameter != null) {
+              final PyExpression parameterUsage = elementGenerator.createExpressionFromText(LanguageLevel.forElement(function), indexValue);
 
-          insertParameter(function.getParameterList(), parameter, parameter.hasDefaultValue(), elementGenerator);
-          call.replace(parameterUsage);
-        }
-      }
-    }
-  }
-
-  @NotNull
-  private static <T> List<T> findKeywordContainerUsages(@NotNull PyFunction function,
-                                                        @NotNull BiPredicate<PsiElement, PyParameter> usagePredicate) {
-    final PyParameter keywordContainer = getKeywordContainer(function.getParameterList());
-
-    if (keywordContainer != null) {
-      final List<T> result = new ArrayList<>();
-      final Stack<PsiElement> stack = new Stack<>();
-
-      for (PyStatement statement : function.getStatementList().getStatements()) {
-        stack.push(statement);
-
-        while (!stack.isEmpty()) {
-          final PsiElement element = stack.pop();
-
-          if (usagePredicate.test(element, keywordContainer)) {
-            //noinspection unchecked
-            result.add((T)element);
-          }
-          else {
-            for (PsiElement child : element.getChildren()) {
-              stack.push(child);
+              insertParameter(function.getParameterList(), parameter, parameter.hasDefaultValue(), elementGenerator);
+              call.replace(parameterUsage);
             }
           }
         }
-      }
-
-      return result;
-    }
-
-    return Collections.emptyList();
+      );
   }
 
   private static boolean isKeywordContainerSubscription(@Nullable PsiElement element, @NotNull PyParameter keywordContainer) {
