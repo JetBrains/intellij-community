@@ -33,12 +33,11 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author max
@@ -140,22 +139,48 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
   @NotNull
   @Override
   public IPopupChooserBuilder<T> setItemChosenCallback(@NotNull Consumer<T> callback) {
-    if (myChooserComponent instanceof ListWithFilter) {
-      setItemChoosenCallback(() -> {
-        Object selectedValue = ((ListWithFilter)myChooserComponent).getList().getSelectedValue();
-        callback.consume((T)selectedValue);
-      });
+    if (myChooserComponent instanceof JTable) {
+      throw new UnsupportedOperationException("setItemChosenCallback with element callback is not implemented for tables yet");
     }
+    setItemChoosenCallback(() -> {
+      if (myChooserComponent instanceof ListWithFilter) {
+        Object selectedValue = ((ListWithFilter)myChooserComponent).getList().getSelectedValue();
+        if (selectedValue != null) {
+          callback.consume((T)selectedValue);
+        }
+      }
+      else if (myChooserComponent instanceof JTree) {
+        TreePath path = ((JTree)myChooserComponent).getSelectionModel().getLeadSelectionPath();
+        T component = (T)path.getLastPathComponent();
+        if (component != null) {
+          callback.consume(component);
+        }
+      }
+    });
     return this;
   }
 
   @NotNull
   @Override
   public IPopupChooserBuilder<T> setItemsChosenCallback(@NotNull Consumer<Set<T>> callback) {
+    if (myChooserComponent instanceof JTable) {
+      throw new UnsupportedOperationException("setItemChosenCallback with element callback is not implemented for tables yet");
+    }
     setItemChoosenCallback(() -> {
       if (myChooserComponent instanceof ListWithFilter) {
         List list = ((ListWithFilter)myChooserComponent).getList().getSelectedValuesList();
         callback.consume(list != null ? ContainerUtil.newHashSet(list) : Collections.emptySet());
+      } else if (myChooserComponent instanceof JTree) {
+        final Set<T> selection = new HashSet<>();
+        for (TreePath path : ((JTree)myChooserComponent).getSelectionModel().getSelectionPaths()) {
+          Object component = path.getLastPathComponent();
+          if (component != null) {
+            selection.add((T)component);
+          }
+        }
+        if (!selection.isEmpty()) {
+          callback.consume(selection);
+        }
       }
     });
     return this;
