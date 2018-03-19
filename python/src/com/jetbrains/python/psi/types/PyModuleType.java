@@ -22,6 +22,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCustomMember;
+import com.jetbrains.python.codeInsight.completion.PyCompletionUtilsKt;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
@@ -501,7 +502,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
     return ContainerUtil.mapNotNull(elements,
                                     element -> {
                                       if (element instanceof PsiFileSystemItem) {
-                                        return buildFileLookupElement((PsiFileSystemItem)element, existingNames);
+                                        return buildFileLookupElement(location.getContainingFile(), (PsiFileSystemItem)element, existingNames);
                                       }
                                       else if (element instanceof PsiNamedElement) {
                                         return LookupElementBuilder.createWithIcon((PsiNamedElement)element);
@@ -518,7 +519,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
     final List<LookupElement> result = new ArrayList<>();
     for (PsiFileSystemItem item : getSubmodulesList(directory, location)) {
       if (item != location.getContainingFile().getOriginalFile()) {
-        final LookupElement lookupElement = buildFileLookupElement(item, namesAlready);
+        final LookupElement lookupElement = buildFileLookupElement(location.getContainingFile(), item, namesAlready);
         if (lookupElement != null) {
           result.add(lookupElement);
         }
@@ -528,7 +529,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
   }
 
   @Nullable
-  public static LookupElementBuilder buildFileLookupElement(PsiFileSystemItem item, @Nullable Set<String> existingNames) {
+  public static LookupElementBuilder buildFileLookupElement(PsiFile file, PsiFileSystemItem item, @Nullable Set<String> existingNames) {
     final String s = FileUtil.getNameWithoutExtension(item.getName());
     if (!PyNames.isIdentifier(s)) return null;
     if (existingNames != null) {
@@ -539,21 +540,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
         existingNames.add(s);
       }
     }
-    return LookupElementBuilder.create(item, s)
-                               .withTypeText(getPresentablePath((PsiDirectory)item.getParent()))
-                               .withPresentableText(s)
-                               .withIcon(item.getIcon(0));
-  }
-
-  private static String getPresentablePath(PsiDirectory directory) {
-    if (directory == null) {
-      return "";
-    }
-    final String path = directory.getVirtualFile().getPath();
-    if (path.contains(PythonSdkType.SKELETON_DIR_NAME)) {
-      return "<built-in>";
-    }
-    return FileUtil.toSystemDependentName(path);
+    return PyCompletionUtilsKt.createLookupElementBuilder(file, item);
   }
 
   @Override
