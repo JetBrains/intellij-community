@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl;
 
 import com.intellij.openapi.application.ReadAction;
@@ -131,20 +129,16 @@ public abstract class XSourcePositionImpl implements XSourcePosition {
   /**
    * do not call this method from plugins, use {@link XDebuggerUtil#createPosition(VirtualFile, int)} instead
    */
-  @Nullable
-  public static XSourcePositionImpl create(@Nullable VirtualFile file, int line) {
+  @NotNull
+  public static XSourcePositionImpl create(@NotNull VirtualFile file, int line) {
     return create(file, line, 0);
   }
 
   /**
    * do not call this method from plugins, use {@link XDebuggerUtil#createPosition(VirtualFile, int, int)} instead
    */
-  @Nullable
-  public static XSourcePositionImpl create(@Nullable VirtualFile file, final int line, final int column) {
-    if (file == null) {
-      return null;
-    }
-
+  @NotNull
+  public static XSourcePositionImpl create(@NotNull VirtualFile file, final int line, final int column) {
     return new XSourcePositionImpl(file) {
       private final AtomicNotNullLazyValue<Integer> myOffset = new AtomicNotNullLazyValue<Integer>() {
         @NotNull

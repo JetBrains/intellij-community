@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.codeInsight.folding.impl.FoldingUtil;
@@ -124,11 +110,11 @@ public class XBreakpointUtil {
    */
   @NotNull
   public static Promise<XLineBreakpoint> toggleLineBreakpoint(@NotNull Project project,
-                                             @NotNull XSourcePosition position,
-                                             @Nullable Editor editor,
-                                             boolean temporary,
-                                             boolean moveCaret,
-                                             boolean canRemove) {
+                                                              @NotNull XSourcePosition position,
+                                                              @Nullable Editor editor,
+                                                              boolean temporary,
+                                                              boolean moveCaret,
+                                                              boolean canRemove) {
     int lineStart = position.getLine();
     VirtualFile file = position.getFile();
     // for folded text check each line and find out type with the biggest priority
@@ -161,23 +147,21 @@ public class XBreakpointUtil {
       }
     }
 
-    if (typeWinner != null) {
-      XSourcePosition winPosition = (lineStart == lineWinner) ? position : XSourcePositionImpl.create(file, lineWinner);
-      if (winPosition != null) {
-        Promise<XLineBreakpoint> res =
-          XDebuggerUtilImpl.toggleAndReturnLineBreakpoint(project, typeWinner, winPosition, temporary, editor, canRemove);
-
-        if (editor != null && lineStart != lineWinner) {
-          int offset = editor.getDocument().getLineStartOffset(lineWinner);
-          ExpandRegionAction.expandRegionAtOffset(project, editor, offset);
-          if (moveCaret) {
-            editor.getCaretModel().moveToOffset(offset);
-          }
-        }
-        return res;
-      }
+    if (typeWinner == null) {
+      return rejectedPromise(new RuntimeException("Cannot find appropriate type"));
     }
 
-    return rejectedPromise();
+    XSourcePosition winPosition = (lineStart == lineWinner) ? position : XSourcePositionImpl.create(file, lineWinner);
+    Promise<XLineBreakpoint> res =
+      XDebuggerUtilImpl.toggleAndReturnLineBreakpoint(project, typeWinner, winPosition, temporary, editor, canRemove);
+
+    if (editor != null && lineStart != lineWinner) {
+      int offset = editor.getDocument().getLineStartOffset(lineWinner);
+      ExpandRegionAction.expandRegionAtOffset(project, editor, offset);
+      if (moveCaret) {
+        editor.getCaretModel().moveToOffset(offset);
+      }
+    }
+    return res;
   }
 }

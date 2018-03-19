@@ -141,10 +141,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
                                                                                                   final int line,
                                                                                                   final boolean temporary) {
     XSourcePositionImpl position = XSourcePositionImpl.create(file, line);
-    if (position != null) {
-      return toggleAndReturnLineBreakpoint(project, type, position, temporary, null, true);
-    }
-    return rejectedPromise();
+    return toggleAndReturnLineBreakpoint(project, type, position, temporary, null, true);
   }
 
   @NotNull
@@ -337,8 +334,8 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
 
   @Override
   @Nullable
-  public XSourcePosition createPosition(final VirtualFile file, final int line, final int column) {
-    return XSourcePositionImpl.create(file, line, column);
+  public XSourcePosition createPosition(@Nullable VirtualFile file, final int line, final int column) {
+    return file == null ? null : XSourcePositionImpl.create(file, line, column);
   }
 
   @Override
