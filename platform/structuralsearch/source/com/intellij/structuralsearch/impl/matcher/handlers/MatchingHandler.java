@@ -3,6 +3,7 @@ package com.intellij.structuralsearch.impl.matcher.handlers;
 
 import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.dupLocator.util.NodeFilter;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.structuralsearch.MatchResult;
@@ -35,55 +36,40 @@ public abstract class MatchingHandler {
    * @return true if matching was successful and false otherwise
    */
   public boolean match(PsiElement patternNode, PsiElement matchedNode, MatchContext context) {
-    if (patternNode == null) {
-      return matchedNode == null;
-    }
-
-    return canMatch(patternNode, matchedNode, context);
+    return (patternNode == null) ? matchedNode == null : canMatch(patternNode, matchedNode, context);
   }
 
   public boolean canMatch(final PsiElement patternNode, final PsiElement matchedNode, MatchContext context) {
-    if (filter!=null) {
-      return filter.accepts(matchedNode);
-    } else {
-      return DefaultFilter.accepts(patternNode, matchedNode);
-    }
+    return (filter != null) ? filter.accepts(matchedNode) : DefaultFilter.accepts(patternNode, matchedNode);
   }
 
   public boolean matchSequentially(NodeIterator patternNodes, NodeIterator matchNodes, MatchContext context) {
     final MatchingStrategy strategy = context.getPattern().getStrategy();
+    final PsiElement currentPatternNode = patternNodes.current();
 
-    skipIfNecessary(patternNodes, matchNodes, strategy);
-    skipIfNecessary(matchNodes, patternNodes, strategy);
+    skipIfNecessary(matchNodes, currentPatternNode, strategy);
+    skipComments(matchNodes, currentPatternNode);
+    skipIfNecessary(patternNodes, matchNodes.current(), strategy);
+
+    if (!patternNodes.hasNext()) {
+      return !matchNodes.hasNext();
+    }
 
     final PsiElement patternElement = patternNodes.current();
     final MatchingHandler handler = context.getPattern().getHandler(patternElement);
     if (matchNodes.hasNext() && handler.match(patternElement, matchNodes.current(), context)) {
 
       patternNodes.advance();
-
-      final boolean shouldRewindOnMatchFailure;
+      skipIfNecessary(patternNodes, matchNodes.current(), strategy);
       if (shouldAdvanceTheMatchFor(patternElement, matchNodes.current())) {
         matchNodes.advance();
-        skipIfNecessary(patternNodes, matchNodes, strategy);
-        shouldRewindOnMatchFailure = true;
+        skipIfNecessary(matchNodes, patternNodes.current(), strategy);
+        if (patternNodes.hasNext()) skipComments(matchNodes, patternNodes.current());
       }
-      else {
-        shouldRewindOnMatchFailure = false;
-      }
-      skipIfNecessary(matchNodes, patternNodes, strategy);
 
       if (patternNodes.hasNext()) {
         final MatchingHandler nextHandler = context.getPattern().getHandler(patternNodes.current());
-
-        if (nextHandler.matchSequentially(patternNodes, matchNodes, context)) {
-          // match was found!
-          return true;
-        } else {
-          // rewind, we was not able to match descendants
-          patternNodes.rewind();
-          if (shouldRewindOnMatchFailure) matchNodes.rewind();
-        }
+        return nextHandler.matchSequentially(patternNodes, matchNodes, context);
       } else {
         // match was found
         return handler.isMatchSequentiallySucceeded(matchNodes);
@@ -92,13 +78,19 @@ public abstract class MatchingHandler {
     return false;
   }
 
-  private static void skipIfNecessary(NodeIterator nodes, NodeIterator nodes2, MatchingStrategy strategy) {
-    while (strategy.shouldSkip(nodes2.current(), nodes.current())) {
-      nodes2.advance();
+  private static void skipComments(NodeIterator matchNodes, PsiElement patternNode) {
+    final boolean skipComment = !(patternNode instanceof PsiComment);
+    while (skipComment && matchNodes.current() instanceof PsiComment) matchNodes.advance();
+  }
+
+  private static void skipIfNecessary(NodeIterator nodes, PsiElement elementToMatchWith, MatchingStrategy strategy) {
+    while (strategy.shouldSkip(nodes.current(), elementToMatchWith)) {
+      nodes.advance();
     }
   }
 
   protected boolean isMatchSequentiallySucceeded(final NodeIterator matchNodes) {
+    skipComments(matchNodes, null);
     return !matchNodes.hasNext();
   }
 

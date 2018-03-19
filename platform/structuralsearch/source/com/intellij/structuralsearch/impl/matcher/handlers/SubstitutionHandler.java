@@ -4,6 +4,7 @@ package com.intellij.structuralsearch.impl.matcher.handlers;
 import com.intellij.dupLocator.iterators.FilteringNodeIterator;
 import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.dupLocator.util.NodeFilter;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.StructuralSearchProfile;
@@ -406,8 +407,7 @@ public class SubstitutionHandler extends MatchingHandler {
 
   protected boolean doMatchSequentially(NodeIterator patternNodes, NodeIterator matchNodes, MatchContext context) {
     final int previousMatchedOccurs = matchedOccurs;
-
-    FilteringNodeIterator fNodes2 = new FilteringNodeIterator(matchNodes, VARS_DELIM_FILTER);
+    FilteringNodeIterator fNodes = new FilteringNodeIterator(matchNodes, VARS_DELIM_FILTER);
 
     try {
       MatchingHandler handler = context.getPattern().getHandler(patternNodes.current());
@@ -415,39 +415,38 @@ public class SubstitutionHandler extends MatchingHandler {
 
       boolean flag = false;
 
-      while(fNodes2.hasNext() && matchedOccurs < minOccurs) {
+      while(fNodes.hasNext() && matchedOccurs < minOccurs) {
         if (handler.match(patternNodes.current(), matchNodes.current(), context)) {
           ++matchedOccurs;
-        } else {
+        } else if (patternNodes.current() instanceof PsiComment || !(matchNodes.current() instanceof PsiComment)) {
           break;
         }
-        fNodes2.advance();
-        flag = true;
+        fNodes.advance();
+        flag = true;;
       }
 
-      if (matchedOccurs!=minOccurs) {
+      if (matchedOccurs != minOccurs) {
         // failed even for min occurs
         removeLastResults(matchedOccurs, context);
-        fNodes2.rewind(matchedOccurs);
+        fNodes.rewind(matchedOccurs);
         return false;
       }
 
       if (greedy)  {
         // go greedily to maxOccurs
 
-        while(fNodes2.hasNext() && matchedOccurs < maxOccurs) {
+        while(fNodes.hasNext() && matchedOccurs < maxOccurs) {
           if (handler.match(patternNodes.current(), matchNodes.current(), context)) {
             ++matchedOccurs;
-          } else {
-            // no more matches could take!
+          } else if (patternNodes.current() instanceof PsiComment || !(matchNodes.current() instanceof PsiComment)) {
             break;
           }
-          fNodes2.advance();
+          fNodes.advance();
           flag = true;
         }
 
         if (flag) {
-          fNodes2.rewind();
+          fNodes.rewind();
           matchNodes.advance();
         }
 
@@ -487,7 +486,7 @@ public class SubstitutionHandler extends MatchingHandler {
         patternNodes.advance();
 
         if (flag) {
-          fNodes2.rewind();
+          fNodes.rewind();
           matchNodes.advance();
         }
 
@@ -503,7 +502,7 @@ public class SubstitutionHandler extends MatchingHandler {
 
             if (flag) {
               matchNodes.rewind();
-              fNodes2.advance();
+              fNodes.advance();
             }
 
             if (handler.match(patternNodes.current(), matchNodes.current(), context)) {

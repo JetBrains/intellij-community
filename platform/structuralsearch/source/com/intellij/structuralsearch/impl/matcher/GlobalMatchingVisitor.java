@@ -165,10 +165,6 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
    */
   @Override
   public boolean matchSequentially(NodeIterator patternNodes, NodeIterator matchNodes) {
-    if (!patternNodes.hasNext()) {
-      return !matchNodes.hasNext();
-    }
-
     return matchContext.getPattern().getHandler(patternNodes.current()).matchSequentially(patternNodes, matchNodes, matchContext);
   }
 

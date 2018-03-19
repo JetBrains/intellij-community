@@ -2818,4 +2818,48 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("find calls to non-deprecated methods", 2,
                  findMatchesCount(source, "'_instance?.'_call:[ref( \"@'_Anno{0,0} void '_x();\" )] ()"));
   }
+
+  public void testSearchIgnoreComments() {
+    String source = "class ExampleTest {\n" +
+                    "  void m(String example) {\n" +
+                    "    synchronized (ExampleTest.class) { // comment\n" +
+                    "      if (example == null) { \n" +
+                    "      }\n" +
+                    "    }\n" +
+                    "  }\n" +
+                    "}";
+    assertEquals("find code ignoring comments", 1,
+                 findMatchesCount(source, "synchronized ('_a.class) { if ('_b == null) {}}"));
+
+    String source2 = "class X {" +
+                     "  int[] is = new int/*1*/[10];" +
+                     "  int[] js = new int[1];" +
+                     "}";
+    assertEquals("find code ignoring comments 2", 2,
+                 findMatchesCount(source2, "new int['_a]"));
+    assertEquals("find code ignoring comments 2a", 1,
+                 findMatchesCount(source2, "new int/*1*/['_a]"));
+
+    String source3 = "class X {{" +
+                     "  new java.util.ArrayList(/**/1);" +
+                     "}}";
+    assertEquals("find code ignoring comments 3", 1,
+                 findMatchesCount(source3, "new ArrayList(1)"));
+
+    String source4 = "class X {" +
+                     "  void m(int i, /**/String s) {}" +
+                     "}";
+    assertEquals("find code ignoring comments 4", 1,
+                 findMatchesCount(source4, "void m(int i, String s);"));
+    assertEquals("find code ignoring comments 4a", 1,
+                 findMatchesCount(source4, "void m('_T '_p*);"));
+
+    String source5 = "class X {{" +
+                     "  new String(/*nothing*/);" +
+                     "}}";
+    assertEquals("find code ignoring comments 5", 1,
+                 findMatchesCount(source5, "new String()"));
+    assertEquals("find code ignored comments 5a", 1,
+                 findMatchesCount(source5, "new String('_a{0,0})"));
+  }
 }
