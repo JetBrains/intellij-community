@@ -34,3 +34,9 @@ d = {<warning descr="Dictionary contains duplicate keys '11.1'">11.1</warning>: 
 d = {<warning descr="Dictionary contains duplicate keys '11j'">11j</warning>: 1, <warning descr="Dictionary contains duplicate keys '11j'">1_1j</warning>: 1}
 d = {11j: 1, 11: 1}
 d = {<warning descr="Dictionary contains duplicate keys '0'">0j</warning>: 1, <warning descr="Dictionary contains duplicate keys '0'">0</warning>: 2}
+
+{
+    <warning descr="Dictionary contains duplicate keys 'a'">'a'</warning>: 1,
+    <warning descr="Dictionary contains duplicate keys 'a'">'a'</warning>: 2,
+    <warning descr="Dictionary contains duplicate keys 'a'">'a'</warning>: 3,
+}

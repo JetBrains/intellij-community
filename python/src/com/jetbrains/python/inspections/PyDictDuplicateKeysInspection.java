@@ -22,6 +22,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.inspections.quickfix.PyRemoveDictKeyQuickFix;
 import com.jetbrains.python.psi.*;
@@ -32,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.math.BigDecimal;
-import java.util.HashMap;
+import java.util.Collection;
 import java.util.Map;
 
 /**
@@ -66,29 +67,42 @@ public class PyDictDuplicateKeysInspection extends PyInspection {
     public void visitPyDictLiteralExpression(@NotNull PyDictLiteralExpression node) {
       if (node.isEmpty()) return;
 
-      final Map<String, PsiElement> map = new HashMap<>();
+      final MultiMap<String, PsiElement> keyValueAndKeys = new MultiMap<>();
       for (PyKeyValueExpression element : node.getElements()) {
-        checkKey(map, getDictLiteralKey(element), new PyRemoveDictKeyQuickFix());
+        final Pair<PsiElement, String> keyAndValue = getDictLiteralKey(element);
+        if (keyAndValue != null) {
+          keyValueAndKeys.putValue(keyAndValue.second, keyAndValue.first);
+        }
       }
+
+      registerProblems(keyValueAndKeys, new PyRemoveDictKeyQuickFix());
     }
 
     @Override
     public void visitPyCallExpression(@NotNull PyCallExpression node) {
       if (!isDict(node)) return;
 
-      final Map<String, PsiElement> map = new HashMap<>();
+      final MultiMap<String, PsiElement> keyValueAndKeys = new MultiMap<>();
       for (PyExpression argument : node.getArguments()) {
         argument = PyPsiUtils.flattenParens(argument);
 
         if (argument instanceof PySequenceExpression) {
           for (PyExpression element : ((PySequenceExpression)argument).getElements()) {
-            checkKey(map, getDictCallKey(element));
+            final Pair<PsiElement, String> keyAndValue = getDictCallKey(element);
+            if (keyAndValue != null) {
+              keyValueAndKeys.putValue(keyAndValue.second, keyAndValue.first);
+            }
           }
         }
         else if (argument instanceof PyKeywordArgument) {
-          checkKey(map, getDictCallKey(argument));
+          final Pair<PsiElement, String> keyAndValue = getDictCallKey(argument);
+          if (keyAndValue != null) {
+            keyValueAndKeys.putValue(keyAndValue.second, keyAndValue.first);
+          }
         }
       }
+
+      registerProblems(keyValueAndKeys);
     }
 
     @Nullable
@@ -118,19 +132,17 @@ public class PyDictDuplicateKeysInspection extends PyInspection {
       return node instanceof PyLiteralExpression || node instanceof PyReferenceExpression ? node.getText() : null;
     }
 
-    private void checkKey(@NotNull Map<String, PsiElement> map,
-                          @Nullable Pair<PsiElement, String> keyAndValue,
-                          @NotNull LocalQuickFix... quickFixes) {
-      if (keyAndValue == null) return;
+    private void registerProblems(@NotNull MultiMap<String, PsiElement> keyValueAndKeys, @NotNull LocalQuickFix... quickFixes) {
+      for (Map.Entry<String, Collection<PsiElement>> entry : keyValueAndKeys.entrySet()) {
+        final String keyValue = entry.getKey();
+        final Collection<PsiElement> keys = entry.getValue();
 
-      final PsiElement key = keyAndValue.first;
-      final String keyValue = keyAndValue.second;
-
-      if (map.containsKey(keyValue)) {
-        registerProblem(key, "Dictionary contains duplicate keys '" + keyValue + "'", quickFixes);
-        registerProblem(map.get(keyValue), "Dictionary contains duplicate keys '" + keyValue + "'", quickFixes);
+        if (keys.size() > 1) {
+          for (PsiElement key : keys) {
+            registerProblem(key, "Dictionary contains duplicate keys '" + keyValue + "'", quickFixes);
+          }
+        }
       }
-      map.put(keyValue, key);
     }
 
     @Nullable
