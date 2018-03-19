@@ -37,6 +37,8 @@ public class JBListUpdater implements ListComponentUpdater {
       ((NameFilteringListModel)model).replaceAll(data);
     } else if (model instanceof CollectionListModel){
       ((CollectionListModel)model).replaceAll(data);
+    } else {
+      throw new UnsupportedOperationException("JList model of class " + model.getClass() + " is not supported by JBListUpdater");
     }
 
     if (index == 0) {
