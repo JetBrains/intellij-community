@@ -119,7 +119,7 @@ public abstract class FindJarFix<T extends PsiElement> implements IntentionActio
       JBPopupFactory.getInstance()
         .createPopupChooserBuilder(fqns)
         .setTitle("Select Qualified Name")
-        .setItemChoosenCallback((value) -> findJarsForFqn(value, editor))
+        .setItemChosenCallback((value) -> findJarsForFqn(value, editor))
         .createPopup()
         .showInBestPositionFor(editor);
     }

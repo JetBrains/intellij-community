@@ -180,7 +180,7 @@ public class GroovyStaticImportMethodFix extends Intention {
       .setRenderer(new MethodCellRenderer(true))
       .setTitle(QuickFixBundle.message("static.import.method.choose.method.to.import"))
       .setMovable(true)
-      .setItemChoosenCallback((selectedValue) -> {
+      .setItemChosenCallback((selectedValue) -> {
         LOG.assertTrue(selectedValue.isValid());
         doImport(selectedValue);
       })

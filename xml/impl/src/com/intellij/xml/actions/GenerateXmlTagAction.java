@@ -113,7 +113,7 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
           .createPopupChooserBuilder(ContainerUtil.newArrayList(descriptors))
           .setRenderer(new MyListCellRenderer())
           .setTitle("Choose Tag Name")
-          .setItemChoosenCallback(consumer)
+          .setItemChosenCallback(consumer)
           .setFilteringEnabled(o -> ((XmlElementDescriptor)o).getName())
           .createPopup()
           .showInBestPositionFor(editor);

@@ -99,8 +99,8 @@ public abstract class GrCreateFromUsageBaseFix extends Intention {
       .createPopupChooserBuilder(classes)
       .setRenderer(renderer)
       .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
-      .setItemChoosenCallback((aClass) -> CommandProcessor.getInstance()
-                                                        .executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> invokeImpl(project, aClass)), getText(),
+      .setItemChosenCallback((aClass) -> CommandProcessor.getInstance()
+                                                         .executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> invokeImpl(project, aClass)), getText(),
                         null))
       .setTitle(QuickFixBundle.message("target.class.chooser.title"));
     renderer.installSpeedSearch(builder);

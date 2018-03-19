@@ -95,7 +95,7 @@ public class YourkitFilter implements Filter{
           .createPopupChooserBuilder(ContainerUtil.newArrayList(myPsiFiles))
           .setRenderer(renderer)
           .setTitle("Choose file")
-          .setItemsChoosenCallback((selectedElements) -> {
+          .setItemsChosenCallback((selectedElements) -> {
             for (PsiFile element : selectedElements) {
               Navigatable descriptor = EditSourceUtil.getDescriptor(element);
               if (descriptor != null && descriptor.canNavigate()) {

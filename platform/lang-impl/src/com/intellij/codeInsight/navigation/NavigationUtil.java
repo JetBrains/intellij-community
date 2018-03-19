@@ -126,7 +126,7 @@ public final class NavigationUtil {
     }
     renderer.installSpeedSearch(builder, true);
 
-    JBPopup popup = builder.setItemsChoosenCallback((selectedValues) -> {
+    JBPopup popup = builder.setItemsChosenCallback((selectedValues) -> {
       for (T element : selectedValues) {
         if (element != null) {
           processor.execute(element);

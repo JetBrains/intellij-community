@@ -81,7 +81,7 @@ class JumpFromRemoteFileToLocalAction extends AnAction {
         })
        .setTitle("Select Target File")
        .setMovable(true)
-       .setItemsChoosenCallback((selectedValues) -> {
+       .setItemsChosenCallback((selectedValues) -> {
          //noinspection deprecation
          for (VirtualFile value : selectedValues) {
            navigateToFile(myProject, value);

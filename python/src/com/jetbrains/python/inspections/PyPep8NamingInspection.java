@@ -289,7 +289,7 @@ public class PyPep8NamingInspection extends PyInspection {
       DataManager.getInstance().getDataContextFromFocus().doWhenDone((Consumer<DataContext>)dataContext ->
         JBPopupFactory.getInstance().createPopupChooserBuilder(getBaseClassNames())
         .setTitle("Ignore base class")
-        .setItemChoosenCallback((selectedValue) -> InspectionProfileModifiableModelKt.modifyAndCommitProjectProfile(project, it -> {
+        .setItemChosenCallback((selectedValue) -> InspectionProfileModifiableModelKt.modifyAndCommitProjectProfile(project, it -> {
           PyPep8NamingInspection inspection =
             (PyPep8NamingInspection)it.getUnwrappedTool(PyPep8NamingInspection.class.getSimpleName(), descriptor.getPsiElement());
           addIfNotNull(inspection.ignoredBaseClasses, selectedValue);

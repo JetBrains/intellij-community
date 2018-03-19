@@ -27,7 +27,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -163,7 +162,7 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
         .setMovable(true)
         .setTitle(items.size() == 1 ? "Confirm process stop" : "Stop process")
         .setFilteringEnabled(o -> ((HandlerItem)o).displayName)
-        .setItemsChoosenCallback((valuesList) -> {
+        .setItemsChosenCallback((valuesList) -> {
           for (HandlerItem item : valuesList) {
             item.stop();
           }

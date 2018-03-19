@@ -25,7 +25,7 @@ import static com.intellij.openapi.actionSystem.Presentation.restoreTextWithMnem
 public class ActionStepBuilder extends PresentationFactory {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.popup.PopupFactoryImpl");
 
-  private final List<PopupFactoryImpl.ActionItem> myListModel;
+  private final List<ActionPopupStep.ActionItem> myListModel;
   private final DataContext myDataContext;
   private final boolean                         myShowNumbers;
   private final boolean                         myUseAlphaAsNumbers;
@@ -62,7 +62,7 @@ public class ActionStepBuilder extends PresentationFactory {
   }
 
   @NotNull
-  public List<PopupFactoryImpl.ActionItem> getItems() {
+  public List<ActionPopupStep.ActionItem> getItems() {
     return myListModel;
   }
 
@@ -73,7 +73,7 @@ public class ActionStepBuilder extends PresentationFactory {
     appendActionsFromGroup(actionGroup);
 
     if (myListModel.isEmpty()) {
-      myListModel.add(new PopupFactoryImpl.ActionItem(Utils.EMPTY_MENU_FILLER, Utils.NOTHING_HERE, null, false, null, null, false, null));
+      myListModel.add(new ActionPopupStep.ActionItem(Utils.EMPTY_MENU_FILLER, Utils.NOTHING_HERE, null, false, null, null, false, null));
     }
   }
 
@@ -183,8 +183,8 @@ public class ActionStepBuilder extends PresentationFactory {
       boolean prependSeparator = (!myListModel.isEmpty() || mySeparatorText != null) && myPrependWithSeparator;
       assert text != null : action + " has no presentation";
       myListModel.add(
-        new PopupFactoryImpl.ActionItem(action, text, (String)presentation.getClientProperty(JComponent.TOOL_TIP_TEXT_KEY),
-                                        enabled, icon, selectedIcon, prependSeparator, mySeparatorText));
+        new ActionPopupStep.ActionItem(action, text, (String)presentation.getClientProperty(JComponent.TOOL_TIP_TEXT_KEY),
+                                       enabled, icon, selectedIcon, prependSeparator, mySeparatorText));
       myPrependWithSeparator = false;
       mySeparatorText = null;
     }

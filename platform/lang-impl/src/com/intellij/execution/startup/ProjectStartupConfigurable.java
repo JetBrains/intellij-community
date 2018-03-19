@@ -295,7 +295,7 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
           }
         }
       })
-      .setItemChoosenCallback((at) -> {
+      .setItemChosenCallback((at) -> {
         if (at == null) return;
         if (at.getValue() instanceof RunnerAndConfigurationSettings) {
           final RunnerAndConfigurationSettings added = (RunnerAndConfigurationSettings)at.getValue();

@@ -189,7 +189,7 @@ public class SelectBranchPopup {
         .setTitle(Url.tail(selectedValue))
         .setRenderer(new BranchRenderer())
         .setResizable(true)
-        .setItemChoosenCallback((v) -> {
+        .setItemChosenCallback((v) -> {
           if (REFRESH_MESSAGE.equals(v)) {
             loadBranches(selectedValue, () -> showBranchPopup(selectedValue));
             return;

@@ -124,7 +124,7 @@ public class CreateHtmlDescriptionFix implements LocalQuickFix, Iconable {
                     })
                     .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
                     .setTitle(DevKitBundle.message("select.target.location.of.description", myFilename))
-                    .setItemChoosenCallback((root) -> ApplicationManager.getApplication().runWriteAction(() -> createDescription(root)))
+                    .setItemChosenCallback((root) -> ApplicationManager.getApplication().runWriteAction(() -> createDescription(root)))
                     .createPopup()
                     .showInBestPositionFor(editor);
     }

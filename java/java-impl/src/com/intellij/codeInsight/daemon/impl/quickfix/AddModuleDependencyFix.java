@@ -115,7 +115,7 @@ class AddModuleDependencyFix extends OrderEntryFix {
         .setMovable(false)
         .setResizable(false)
         .setRequestFocus(true)
-        .setItemChoosenCallback((selectedValue) -> addDependencyOnModule(project, editor, selectedValue))
+        .setItemChosenCallback((selectedValue) -> addDependencyOnModule(project, editor, selectedValue))
         .createPopup();
       if (editor != null) {
         popup.showInBestPositionFor(editor);

@@ -22,10 +22,10 @@ public interface IPopupChooserBuilder<T> {
   IPopupChooserBuilder<T> setRenderer(ListCellRenderer renderer);
 
   @NotNull
-  IPopupChooserBuilder<T> setItemChoosenCallback(@NotNull Consumer<T> callback);
+  IPopupChooserBuilder<T> setItemChosenCallback(@NotNull Consumer<T> callback);
 
   @NotNull
-  IPopupChooserBuilder<T> setItemsChoosenCallback(@NotNull Consumer<Set<T>> callback);
+  IPopupChooserBuilder<T> setItemsChosenCallback(@NotNull Consumer<Set<T>> callback);
 
   IPopupChooserBuilder<T> setCancelOnClickOutside(boolean cancelOnClickOutside);
 

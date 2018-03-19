@@ -110,7 +110,7 @@ public class ImplementAbstractMethodHandler {
       .setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION)
       .setRenderer(elementListCellRenderer)
       .setTitle(CodeInsightBundle.message("intention.implement.abstract.method.class.chooser.title")).
-        setItemsChoosenCallback((selectedValues) -> {
+                                                                     setItemsChosenCallback((selectedValues) -> {
           if (!selectedValues.isEmpty()) {
             implementInClass(ArrayUtil.toObjectArray(selectedValues));
           }

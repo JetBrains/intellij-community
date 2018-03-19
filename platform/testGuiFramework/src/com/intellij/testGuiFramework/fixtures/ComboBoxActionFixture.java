@@ -18,7 +18,7 @@ package com.intellij.testGuiFramework.fixtures;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.testGuiFramework.framework.GuiTestUtil;
 import com.intellij.ui.JBListWithHintProvider;
-import com.intellij.ui.popup.PopupFactoryImpl;
+import com.intellij.ui.popup.ActionPopupStep;
 import com.intellij.ui.popup.list.ListPopupModel;
 import org.fest.swing.core.GenericTypeMatcher;
 import org.fest.swing.core.Robot;
@@ -119,7 +119,7 @@ public class ComboBoxActionFixture {
       public boolean test() {
         ListPopupModel popupModel = (ListPopupModel)list.getModel();
         for (int i = 0; i < popupModel.getSize(); ++i) {
-          PopupFactoryImpl.ActionItem actionItem = (PopupFactoryImpl.ActionItem)popupModel.get(i);
+          ActionPopupStep.ActionItem actionItem = (ActionPopupStep.ActionItem)popupModel.get(i);
           assertNotNull(actionItem);
           if (text.equals(actionItem.getText())) {
             return true;
@@ -134,7 +134,7 @@ public class ComboBoxActionFixture {
       protected Integer executeInEDT() throws Throwable {
         ListPopupModel popupModel = (ListPopupModel)list.getModel();
         for (int i = 0; i < popupModel.getSize(); ++i) {
-          PopupFactoryImpl.ActionItem actionItem = (PopupFactoryImpl.ActionItem)popupModel.get(i);
+          ActionPopupStep.ActionItem actionItem = (ActionPopupStep.ActionItem)popupModel.get(i);
           assertNotNull(actionItem);
           if (text.equals(actionItem.getText())) {
             return i;
@@ -152,6 +152,6 @@ public class ComboBoxActionFixture {
         list.setSelectedIndex(appIndex);
       }
     });
-    assertEquals(text, ((PopupFactoryImpl.ActionItem)list.getSelectedValue()).getText());
+    assertEquals(text, ((ActionPopupStep.ActionItem)list.getSelectedValue()).getText());
   }
 }

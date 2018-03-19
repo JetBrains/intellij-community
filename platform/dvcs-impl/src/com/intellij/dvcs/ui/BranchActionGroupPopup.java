@@ -21,8 +21,8 @@ import com.intellij.openapi.vcs.ui.FlatSpeedSearchPopup;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.OpaquePanel;
+import com.intellij.ui.popup.ActionPopupStep;
 import com.intellij.ui.popup.KeepingPopupOpenAction;
-import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.popup.list.IconListPopupRenderer;
 import com.intellij.ui.popup.list.ListPopupImpl;
@@ -322,8 +322,8 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
   }
 
   private static <T> T getSpecificAction(Object value, @NotNull Class<T> clazz) {
-    if (value instanceof PopupFactoryImpl.ActionItem) {
-      AnAction action = ((PopupFactoryImpl.ActionItem)value).getAction();
+    if (value instanceof ActionPopupStep.ActionItem) {
+      AnAction action = ((ActionPopupStep.ActionItem)value).getAction();
       if (clazz.isInstance(action)) {
         return clazz.cast(action);
       }

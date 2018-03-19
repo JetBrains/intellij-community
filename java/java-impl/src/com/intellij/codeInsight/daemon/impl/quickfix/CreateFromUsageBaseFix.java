@@ -131,7 +131,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
       .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
       .setSelectedValue(preselection, true)
       .setRenderer(renderer)
-      .setItemChoosenCallback((aClass) -> {
+      .setItemChosenCallback((aClass) -> {
         AnonymousTargetClassPreselectionUtil.rememberSelection(aClass, firstClass);
         CommandProcessor.getInstance().executeCommand(project, () -> doInvoke(project, aClass), getText(), null);
       })

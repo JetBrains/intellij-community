@@ -162,7 +162,7 @@ public class JumpToColorsAndFontsAction extends DumbAwareAction {
         .setMovable(false)
         .setResizable(false)
         .setRequestFocus(true)
-        .setItemChoosenCallback((p) -> {
+        .setItemChosenCallback((p) -> {
           if (!openSettingsAndSelectKey(project, p.first, p.second)) {
             HintManager.getInstance().showErrorHint(editor, "No appropriate settings page found");
           }

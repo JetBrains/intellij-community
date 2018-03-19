@@ -108,7 +108,7 @@ public class HighlightImportedElementsHandler extends HighlightUsagesHandlerBase
       .setTitle(myImportStatic ?
                 CodeInsightBundle.message("highlight.imported.members.chooser.title") :
                 CodeInsightBundle.message("highlight.imported.classes.chooser.title"))
-      .setItemChoosenCallback((selectedValue) -> {
+      .setItemChosenCallback((selectedValue) -> {
         if (selectedValue.equals(allListed)) {
           selectionConsumer.consume(targets);
         }

@@ -132,7 +132,7 @@ public class InheritorChooser {
         .setMovable(false)
         .setResizable(false)
         .setRequestFocus(true)
-        .setItemsChoosenCallback((values) -> {
+        .setItemsChosenCallback((values) -> {
           if (values.isEmpty()) return;
           chooseAndPerform(values.toArray(), psiMethod, context, performRunnable, classes);
         })

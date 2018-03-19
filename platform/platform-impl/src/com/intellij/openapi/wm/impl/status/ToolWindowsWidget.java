@@ -170,7 +170,7 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
         popup = builder
           .setAutoselectOnMouseMove(true)
           .setRequestFocus(false)
-          .setItemChoosenCallback((selectedValue) -> {
+          .setItemChosenCallback((selectedValue) -> {
             if (popup != null) popup.closeOk(null);
             selectedValue.activate(null, true, true);
           })

@@ -134,7 +134,7 @@ fun <T> chooseDebuggee(targets: Collection<T>, selectedIndex: Int, renderer: (T,
         })
       .setTitle("Choose Page to Debug")
       .setCancelOnWindowDeactivation(false)
-      .setItemChoosenCallback { value ->
+      .setItemChosenCallback { value ->
         if (value == null) {
           result.setError("No target to inspect")
         }

@@ -716,7 +716,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
                 }
               })
               .setTitle("Choose file to open ")
-              .setItemChoosenCallback((value) -> {
+              .setItemChosenCallback((value) -> {
                 final Navigatable navigatable = getNavigatable(value);
                 if (navigatable != null) navigatable.navigate(requestFocus);
               }).createPopup().showInFocusCenter();

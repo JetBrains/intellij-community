@@ -284,7 +284,7 @@ public class ExecutionHelper {
           }
         })
         .setTitle(selectDialogTitle)
-        .setItemChoosenCallback((descriptor) -> {
+        .setItemChosenCallback((descriptor) -> {
           descriptorConsumer.consume(descriptor);
           descriptorToFront(project, descriptor);
         })

@@ -42,7 +42,6 @@ import com.intellij.psi.injection.Injectable;
 import com.intellij.psi.injection.ReferenceInjector;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.ColoredListCellRendererWrapper;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -222,7 +221,7 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
     IPopupChooserBuilder<Injectable> builder = JBPopupFactory.getInstance()
       .createPopupChooserBuilder(injectables)
       .setRenderer(renderer)
-      .setItemChoosenCallback(injectable -> {
+      .setItemChosenCallback(injectable -> {
         onChosen.process(injectable);
         PropertiesComponent.getInstance().setValue(LAST_INJECTED_LANGUAGE, injectable.getId());
       })

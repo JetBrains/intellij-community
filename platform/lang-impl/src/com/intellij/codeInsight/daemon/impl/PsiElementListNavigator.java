@@ -148,7 +148,7 @@ public class PsiElementListNavigator {
       setFont(EditorUtil.getEditorFont()).
       setRenderer(listRenderer).
       setResizable(true).
-      setItemsChoosenCallback(selectedValues -> {
+                                                                               setItemsChosenCallback(selectedValues -> {
         consumer.consume(ArrayUtil.toObjectArray(selectedValues));
       }).
       setCancelCallback(() -> {

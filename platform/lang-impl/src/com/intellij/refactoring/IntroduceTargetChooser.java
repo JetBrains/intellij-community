@@ -112,7 +112,7 @@ public class IntroduceTargetChooser {
                                   .setMovable(false)
                                   .setResizable(false)
                                   .setRequestFocus(true)
-                                  .setItemChoosenCallback((expr) -> {
+                                  .setItemChosenCallback((expr) -> {
         if (expr.isValid()) {
           callback.pass(expr);
         }

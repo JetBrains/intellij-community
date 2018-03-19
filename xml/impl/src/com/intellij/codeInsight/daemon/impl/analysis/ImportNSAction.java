@@ -86,7 +86,7 @@ public class ImportNSAction implements QuestionAction {
         .createPopupChooserBuilder(myNamespaces)
         .setRenderer(XmlNSRenderer.INSTANCE)
         .setTitle(myTitle)
-        .setItemChoosenCallback(consumer)
+        .setItemChosenCallback(consumer)
         .createPopup()
         .showInBestPositionFor(myEditor);
     }

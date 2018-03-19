@@ -31,7 +31,9 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.ui.popup.JBPopupAdapter;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -120,7 +122,7 @@ public class UnwrapHandler implements CodeInsightActionHandler {
       .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
       .setResizable(false)
       .setRequestFocus(true)
-      .setItemChoosenCallback((selectedValue) -> optionByName.apply(selectedValue).actionPerformed(null))
+      .setItemChosenCallback((selectedValue) -> optionByName.apply(selectedValue).actionPerformed(null))
       .setItemSelectedCallback(s -> {
         if (s != null) {
           MyUnwrapAction a = optionByName.apply(s);

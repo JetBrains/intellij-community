@@ -84,7 +84,7 @@ class MultipleFilesHyperlinkInfo extends HyperlinkInfoBase implements FileHyperl
         .createPopupChooserBuilder(currentFiles)
         .setRenderer(new GotoFileCellRenderer(width))
         .setTitle("Choose Target File")
-        .setItemChoosenCallback((selectedValue) -> {
+        .setItemChosenCallback((selectedValue) -> {
           VirtualFile file = selectedValue.getVirtualFile();
           new OpenFileHyperlinkInfo(myProject, file, myLineNumber).navigate(project);
         })

@@ -91,7 +91,7 @@ public class AnnotationProcessorsPanel extends JPanel {
               final JBPopup popup = JBPopupFactory.getInstance()
                 .createPopupChooserBuilder(profiles)
                 .setTitle("Move to")
-                .setItemChoosenCallback((chosenProfile) -> {
+                .setItemChosenCallback((chosenProfile) -> {
                   final Module toSelect = (Module)node.getUserObject();
                   if (selectedNodes != null) {
                     for (TreePath selectedNode : selectedNodes) {

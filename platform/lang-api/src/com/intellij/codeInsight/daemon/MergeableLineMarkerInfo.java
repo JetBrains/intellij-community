@@ -166,7 +166,7 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
             label.setBorder(JBUI.Borders.empty(2));
             return label;
           }));
-          builder.setItemChoosenCallback((value) -> {
+          builder.setItemChosenCallback((value) -> {
             final GutterIconNavigationHandler handler = value.getNavigationHandler();
             if (handler != null) {
               //noinspection unchecked

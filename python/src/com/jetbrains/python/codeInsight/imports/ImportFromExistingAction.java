@@ -119,7 +119,7 @@ public class ImportFromExistingAction implements QuestionAction {
       .createPopupChooserBuilder(mySources)
       .setRenderer(new CellRenderer(myName))
       .setTitle(myUseQualifiedImport? PyBundle.message("ACT.qualify.with.module") : PyBundle.message("ACT.from.some.module.import"))
-      .setItemChoosenCallback((item) -> {
+      .setItemChosenCallback((item) -> {
         PsiDocumentManager.getInstance(myTarget.getProject()).commitAllDocuments();
         doWriteAction(item);
       })

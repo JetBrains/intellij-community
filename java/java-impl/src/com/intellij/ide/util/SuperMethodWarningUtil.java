@@ -185,7 +185,7 @@ public class SuperMethodWarningUtil {
       .setMovable(false)
       .setResizable(false)
       .setRequestFocus(true)
-      .setItemChoosenCallback((value) -> {
+      .setItemChosenCallback((value) -> {
         if (value.equals(renameBase)) {
           try {
             methods[0].putUserData(SIBLINGS, superMethods);

@@ -20,7 +20,6 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
@@ -38,7 +37,6 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.awt.RelativePoint;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -101,7 +99,7 @@ public class ReassignVariableUtil {
               }
             }
           })
-          .setItemChoosenCallback((selectedValue) -> replaceWithAssignment(declaration, selectedValue, editor))
+          .setItemChosenCallback((selectedValue) -> replaceWithAssignment(declaration, selectedValue, editor))
           .createPopup();
         if (ApplicationManager.getApplication().isOnAir()) {
           popup.showInBestPositionFor(editor);

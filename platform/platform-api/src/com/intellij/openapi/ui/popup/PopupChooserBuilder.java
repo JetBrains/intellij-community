@@ -139,7 +139,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
 
   @NotNull
   @Override
-  public IPopupChooserBuilder<T> setItemChoosenCallback(@NotNull Consumer<T> callback) {
+  public IPopupChooserBuilder<T> setItemChosenCallback(@NotNull Consumer<T> callback) {
     if (myChooserComponent instanceof ListWithFilter) {
       setItemChoosenCallback(() -> {
         Object selectedValue = ((ListWithFilter)myChooserComponent).getList().getSelectedValue();
@@ -151,7 +151,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
 
   @NotNull
   @Override
-  public IPopupChooserBuilder<T> setItemsChoosenCallback(@NotNull Consumer<Set<T>> callback) {
+  public IPopupChooserBuilder<T> setItemsChosenCallback(@NotNull Consumer<Set<T>> callback) {
     setItemChoosenCallback(() -> {
       if (myChooserComponent instanceof ListWithFilter) {
         List list = ((ListWithFilter)myChooserComponent).getList().getSelectedValuesList();

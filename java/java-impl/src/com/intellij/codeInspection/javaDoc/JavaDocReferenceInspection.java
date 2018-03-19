@@ -107,7 +107,7 @@ public class JavaDocReferenceInspection extends JavaDocReferenceInspectionBase {
           JBPopupFactory.getInstance()
             .createPopupChooserBuilder(originalClasses).
             setTitle(QuickFixBundle.message("add.qualifier.original.class.chooser.title")).
-            setItemChoosenCallback((psiClass) -> {
+                          setItemChosenCallback((psiClass) -> {
               if (!element.isValid()) return;
               WriteCommandAction.writeCommandAction(project, element.getContainingFile()).run(() -> {
                 if (psiClass.isValid()) {

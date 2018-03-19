@@ -92,7 +92,7 @@ public class JavaFxInjectPageLanguageIntention extends PsiElementBaseIntentionAc
     } else {
       JBPopupFactory.getInstance()
         .createPopupChooserBuilder(list)
-        .setItemChoosenCallback(
+        .setItemChosenCallback(
           (selectedValue) -> registerPageLanguage(project, containingFile, selectedValue))
         .createPopup().showInBestPositionFor(editor);
     }

@@ -68,7 +68,7 @@ public abstract class ChooseOneOrAllRunnable<T extends PsiElement> implements Ru
         .setRenderer((list, value, index, isSelected, cellHasFocus) ->
           ((ListCellRenderer<Object>)renderer).getListCellRendererComponent(list, value, index, isSelected, cellHasFocus))
         .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
-        .setItemChoosenCallback((selectedValue) -> {
+        .setItemChosenCallback((selectedValue) -> {
           if (selectedValue.equals(selectAll)) {
             selected((T[])ArrayUtil.toObjectArray(selectedValue.getClass(), selectedValue));
           }

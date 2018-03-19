@@ -178,7 +178,7 @@ private fun chooseUrl(urls: Collection<Url>): Promise<Url> {
       }
     })
     .setTitle("Choose Url")
-    .setItemChoosenCallback { value ->
+    .setItemChosenCallback { value ->
       if (value == null) {
         result.setError("selected value is null")
       }

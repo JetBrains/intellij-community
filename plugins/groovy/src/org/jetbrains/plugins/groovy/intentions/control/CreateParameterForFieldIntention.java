@@ -98,7 +98,7 @@ public class CreateParameterForFieldIntention extends Intention {
       .setRenderer(new MethodCellRenderer(true))
       .setTitle(GroovyIntentionsBundle.message("create.parameter.for.field.intention.name")).
       setMovable(true).
-      setItemsChoosenCallback((values) -> {
+                    setItemsChosenCallback((values) -> {
         ArrayList<GrMethod> selectedValues = Lists.newArrayList(values);
         selectedValues.sort((o1, o2) -> ((GrMethod)o2).getParameterList().getParametersCount() - ((GrMethod)o1).getParameterList().getParametersCount());
         CommandProcessor.getInstance().executeCommand(project, () -> {
@@ -125,7 +125,7 @@ public class CreateParameterForFieldIntention extends Intention {
       .setRenderer(new DefaultPsiElementCellRenderer())
       .setTitle(GroovyIntentionsBundle.message("create.parameter.for.field.intention.name")).
       setMovable(true).
-      setItemsChoosenCallback((selectedValues) -> {
+                    setItemsChosenCallback((selectedValues) -> {
         CommandProcessor.getInstance().executeCommand(project, () -> {
           for (GrField selectedValue : selectedValues) {
             LOG.assertTrue(((GrField)selectedValue).isValid());

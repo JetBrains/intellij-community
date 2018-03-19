@@ -43,7 +43,7 @@ public class RecentChangesPopup {
       .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
       .setRenderer(new RecentChangesListCellRenderer())
       .setTitle(title)
-      .setItemChoosenCallback(change -> new RecentChangeDialog(project, gw, change).show())
+      .setItemChosenCallback(change -> new RecentChangeDialog(project, gw, change).show())
       .createPopup()
       .showCenteredInCurrentWindow(project);
   }

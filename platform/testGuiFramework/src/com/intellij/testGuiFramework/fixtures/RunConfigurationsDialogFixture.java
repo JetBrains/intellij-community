@@ -20,7 +20,7 @@ import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.testGuiFramework.framework.GuiTestUtil;
 import com.intellij.testGuiFramework.matcher.ClassNameMatcher;
 import com.intellij.ui.components.JBList;
-import com.intellij.ui.popup.PopupFactoryImpl.ActionItem;
+import com.intellij.ui.popup.ActionPopupStep.ActionItem;
 import com.intellij.ui.treeStructure.Tree;
 import org.fest.swing.cell.JTreeCellReader;
 import org.fest.swing.core.GenericTypeMatcher;
