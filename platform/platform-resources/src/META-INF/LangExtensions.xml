@@ -924,7 +924,7 @@
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.tools.AbstractToolsUsagesCollector$EnabledListedToolsUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.tools.AbstractToolsUsagesCollector$DisabledBundledToolsUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.tools.AbstractToolsUsagesCollector$DisabledListedToolsUsagesCollector"/>
-    <statistics.usagesCollector implementation="com.intellij.execution.dashboard.RunDashboardUsagesCollector"/>
+    <statistics.projectUsagesCollector implementation="com.intellij.execution.dashboard.RunDashboardUsagesCollector"/>
 
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenamePsiFileProcessor" order="last"/>
     <renameInputValidator implementation="com.intellij.refactoring.rename.RenameToIgnoredDirectoryFileInputValidator" order="last"/>
