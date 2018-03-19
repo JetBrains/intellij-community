@@ -140,6 +140,7 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
         return myTable.convertRowIndexToModel(viewIndex);
       }
 
+      @NotNull
       @Override
       public Object[] getAllElements() {
         final int count = myTableModel.getRowCount();
