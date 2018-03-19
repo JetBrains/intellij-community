@@ -292,11 +292,11 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
                                                                                              unResolvedHashes));
       setPresentations(ids, presentations);
 
-      TIntHashSet newCommitDetails = TroveUtil.map2IntSet(detailsList, c -> myLogData.getStorage().getCommitIndex(c.getId(), c.getRoot()));
-      if (!TroveUtil.intersects(myCommitIds, newCommitDetails)) {
+      TIntHashSet newCommitIds = TroveUtil.map2IntSet(detailsList, c -> myLogData.getStorage().getCommitIndex(c.getId(), c.getRoot()));
+      if (!TroveUtil.intersects(myCommitIds, newCommitIds)) {
         myScrollPane.getVerticalScrollBar().setValue(0);
       }
-      myCommitIds = newCommitDetails;
+      myCommitIds = newCommitIds;
 
       List<Integer> currentSelection = mySelection;
       resolveHashes(ids, presentations, unResolvedHashes, o -> currentSelection != mySelection);
