@@ -38,7 +38,8 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
   private static final Sortable<?>[] OUR_SORTABLES = new Sortable[]{
     new ArrayInitializerSortable(),
     new VarargSortable(),
-    new EnumConstantDeclarationSortable()
+    new EnumConstantDeclarationSortable(),
+    new AnnotationArraySortable()
   };
 
 
@@ -527,6 +528,9 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
       }
     }
 
+    /**
+     * Generates replacement for elementToSort
+     */
     abstract String generateReplacementText(@NotNull SortableList list, T elementToSort);
 
     @Override
@@ -548,8 +552,14 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
       return getElements(context.myElement);
     }
 
+    /**
+     * Returns only elements to sort. It may be simpler than iterating over all and creating {@link SortableList}.
+     */
     abstract List<PsiElement> getElements(@NotNull T elementToSort);
 
+    /**
+     * Return element, which children will be sorted. This element will be replaced with new one.
+     */
     @Nullable
     abstract T getElementToSort(@NotNull PsiElement origin);
 
@@ -596,6 +606,39 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
 
     @Override
     List<PsiElement> getElements(@NotNull PsiArrayInitializerExpression elementToSort) {
+      return Arrays.asList(elementToSort.getInitializers());
+    }
+  }
+
+  private static class AnnotationArraySortable extends ElementBasedSortable<PsiArrayInitializerMemberValue> {
+    @Override
+    boolean isEnd(@NotNull PsiElement element) {
+      return element instanceof PsiJavaToken && ((PsiJavaToken)element).getTokenType() == JavaTokenType.RBRACE;
+    }
+
+    @NotNull
+    @Override
+    SortingStrategy[] sortStrategies() {
+      return EXPRESSION_SORTING_STRATEGIES;
+    }
+
+
+    @Override
+    String generateReplacementText(@NotNull SortableList list, @NotNull PsiArrayInitializerMemberValue elementToSort) {
+      StringBuilder sb = new StringBuilder();
+      list.generate(sb);
+      sb.append("}");
+      return sb.toString();
+    }
+
+    @Nullable
+    @Override
+    PsiArrayInitializerMemberValue getElementToSort(@NotNull PsiElement origin) {
+      return PsiTreeUtil.getParentOfType(origin, PsiArrayInitializerMemberValue.class);
+    }
+
+    @Override
+    List<PsiElement> getElements(@NotNull PsiArrayInitializerMemberValue elementToSort) {
       return Arrays.asList(elementToSort.getInitializers());
     }
   }
