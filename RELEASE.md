@@ -22,7 +22,17 @@ betas.)
                                                                           ~~~~~~~~~~~
     ```
 
- 3. *If necessary*, update the "selector name"; this is the name used
+ 3. Make sure the major/minor version is correctly encoded in the build number
+    listed in build.txt file. It is the second number from the end. If major
+    version is X and minor version is Y, the number is simply XY. For example,
+    31, 32, 33 for 3.1, 3.2, 3.3 respectively.
+
+    ```
+    181.2784.17.32.SNAPSHOT
+                ~~
+    ```
+
+ 4. *If necessary*, update the "selector name"; this is the name used
     in settings directories (such as ~/.AndroidStudioPreview1.6 on
     Linux, or ~/Library/Preferences/AndroidStudioPreview1.6 on OSX,
     etc.
@@ -38,16 +48,16 @@ betas.)
     and for release builds:
         `AndroidStudioX.Y`.
 
- 4. Update the settings importer.
+ 5. Update the settings importer.
 
-    4.1 Edit
+    5.1 Edit
     `platform/platform-impl/src/com/intellij/openapi/application/ConfigImportHelper.java`
     such that it imports from the previous few versions (e.g. previous stable
     versions, as well as most recent preview.)
 
     Example CL: https://android-review.googlesource.com/#/c/161783/
 
-    4.2 Edit the settings importer to remove the section which skips importing
+    5.2 Edit the settings importer to remove the section which skips importing
     the preferred update channel. In stable builds we should respect whatever
     update channel (canary/dev/beta/stable) the user has chosen, but in canary
     or other preview builds we deliberately don't import these settings since
@@ -60,7 +70,7 @@ betas.)
     +private static final boolean SKIP_UPDATE_CHANNEL_IMPORT = false;
 
 
- 5. Make sure assertions are turned off and `-OmitStackTraceInFastThrow` is removed.
+ 6. Make sure assertions are turned off and `-OmitStackTraceInFastThrow` is removed.
 
     This is controlled by `platform/build-scripts/groovy/org/jetbrains/intellij/build/impl/VmOptionsGenerator.groovy`:
 
@@ -76,7 +86,7 @@ betas.)
     This should be set to -da in production builds. (You normally do not have
     to touch anything since this is already controlled by an EAP flag.)
 
- 6. Turn off null checking.
+ 7. Turn off null checking.
 
     Edit .idea/compiler.xml and make sure null assertions are disabled by
     adding the following line:
@@ -111,7 +121,7 @@ betas.)
         <option name="languageVersion" value="1.1"/>
     ```
 
- 7. Turn off CLASS retention in
+ 8. Turn off CLASS retention in
     `platform/annotations/java8/src/org/jetbrains/annotations`
     (Sadly, we can't also do this in
       `platform/annotations/java5/src/org/jetbrains/annotations`
@@ -132,7 +142,7 @@ betas.)
        /**
     ```
 
- 8. Use data-binding prebuilt jar instead of depending on modules.
+ 9. Use data-binding prebuilt jar instead of depending on modules.
 
     Build Android Studio and copy the data-binding jar from the production build into the
     plugin library prebuilts folder:
@@ -186,7 +196,7 @@ betas.)
 --------------------------------------------------------------------------------
 For final build (post RC) :
 
- 9. Ensure that the default Update channel (for new users downloading this build)
+ 1. Ensure that the default Update channel (for new users downloading this build)
     is set to stable, not something else.
 
     Edit UpdateSettings.State.UPDATE_CHANNEL_TYPE in
