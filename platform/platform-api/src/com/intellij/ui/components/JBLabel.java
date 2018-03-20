@@ -303,7 +303,6 @@ public class JBLabel extends JLabel implements AnchorableComponent {
         ((DefaultCaret)myEditorPane.getCaret()).setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
         myEditorPane.setText(getText());
         checkMultiline();
-        myEditorPane.setCaretPosition(0);
         updateLayout();
         updateTextAlignment();
       }
