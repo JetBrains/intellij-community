@@ -2,6 +2,7 @@
 package com.intellij.structuralsearch.impl.matcher.predicates;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.MatchResult;
@@ -103,7 +104,7 @@ public class ScriptSupport {
       final Object o = script.run();
       return String.valueOf(o);
     }
-    catch (ThreadDeath t) {
+    catch (ThreadDeath | ProcessCanceledException t) {
       throw t;
     }
     catch (Throwable t) {
