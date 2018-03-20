@@ -60,7 +60,7 @@ public class NullityInference {
 
     return CachedValuesManager.getCachedValue(method, () -> {
       MethodData data = ContractInferenceIndexKt.getIndexedData(method);
-      NullityInferenceResult result = data == null ? null : data.getNullity();
+      MethodReturnInferenceResult result = data == null ? null : data.getMethodReturn();
       Nullness nullness = result == null ? null : RecursionManager.doPreventingRecursion(method, true, () -> result.getNullness(method, data.methodBody(method)));
       if (nullness == null) nullness = Nullness.UNKNOWN;
       return CachedValueProvider.Result.create(nullness, method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
@@ -90,7 +90,7 @@ public class NullityInference {
     });
   }
 
-  static class NullityInferenceVisitor {
+  static class MethodReturnInferenceVisitor {
     private final LighterAST tree;
     private final LighterASTNode body;
     private boolean hasErrors;
@@ -101,7 +101,7 @@ public class NullityInference {
     Set<String> assignments = ContainerUtil.newHashSet();
     Set<String> returnedCheckedVars = ContainerUtil.newHashSet();
 
-    NullityInferenceVisitor(LighterAST tree, LighterASTNode body) {
+    MethodReturnInferenceVisitor(LighterAST tree, LighterASTNode body) {
       this.tree = tree;
       this.body = body;
     }
@@ -193,15 +193,15 @@ public class NullityInference {
     private boolean isNonNullCondition(@Nullable LighterASTNode expr, LighterASTNode var) {
       expr = skipParenthesesCastsDown(tree, expr);
       if (expr == null) return false;
-      
+
       IElementType type = expr.getTokenType();
       if (type == BINARY_EXPRESSION || type == POLYADIC_EXPRESSION) {
         List<LighterASTNode> operands = getExpressionChildren(tree, expr);
         if (firstChildOfType(tree, expr, JavaTokenType.NE) != null) {
           return operands.size() == 2 && isNullLiteral(operands.get(1)) && isReferenceTo(operands.get(0), var);
         }
-        
-        return firstChildOfType(tree, expr, JavaTokenType.ANDAND) != null && ContainerUtil.exists(operands, e -> isNonNullCondition(e, var)); 
+
+        return firstChildOfType(tree, expr, JavaTokenType.ANDAND) != null && ContainerUtil.exists(operands, e -> isNonNullCondition(e, var));
       }
 
       return type == INSTANCE_OF_EXPRESSION && isReferenceTo(expr, var);
@@ -209,8 +209,8 @@ public class NullityInference {
 
     private boolean isReferenceTo(@NotNull LighterASTNode expr, @NotNull LighterASTNode var) {
       LighterASTNode operand = skipParenthesesCastsDown(tree, findExpressionChild(tree, expr));
-      if (operand == null || 
-          operand.getTokenType() != REFERENCE_EXPRESSION || 
+      if (operand == null ||
+          operand.getTokenType() != REFERENCE_EXPRESSION ||
           !Objects.equals(getNameIdentifierText(tree, operand), getNameIdentifierText(tree, operand))) {
         return false;
       }
@@ -222,7 +222,7 @@ public class NullityInference {
     }
 
     @Nullable
-    NullityInferenceResult getResult() {
+    MethodReturnInferenceResult getResult() {
       if (!returnedCheckedVars.isEmpty()) {
         if (ContainerUtil.exists(returnedCheckedVars, name -> !assignments.contains(name))) {
           hasNotNulls = true;
@@ -230,19 +230,25 @@ public class NullityInference {
           hasUnknowns = true;
         }
       }
-      
+
+      List<ExpressionRange> delegateCalls = null;
+      if (delegates.size() == 1) {
+        delegateCalls = ContainerUtil.newArrayList(delegates.get(delegates.keySet().iterator().next()));
+      }
       if (hasNulls) {
-        return new NullityInferenceResult.Predefined(Nullness.NULLABLE);
+        return delegateCalls == null || hasNotNulls || hasErrors || hasUnknowns
+               ? new MethodReturnInferenceResult.Predefined(Nullness.NULLABLE)
+               : new MethodReturnInferenceResult.FromDelegate(Nullness.NULLABLE, delegateCalls);
       }
       if (hasErrors || hasUnknowns || delegates.size() > 1) {
         return null;
       }
-      if (delegates.size() == 1) {
-        return new NullityInferenceResult.FromDelegate(ContainerUtil.newArrayList(delegates.get(delegates.keySet().iterator().next())));
+      if (delegateCalls != null) {
+        return new MethodReturnInferenceResult.FromDelegate(hasNotNulls ? Nullness.NOT_NULL : Nullness.UNKNOWN, delegateCalls);
       }
 
       if (hasNotNulls) {
-        return new NullityInferenceResult.Predefined(Nullness.NOT_NULL);
+        return new MethodReturnInferenceResult.Predefined(Nullness.NOT_NULL);
       }
       return null;
     }

@@ -21,7 +21,8 @@ import static com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer.ORG_JETBR
 
 public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
   private static final Set<String> INFERRED_ANNOTATIONS =
-    ContainerUtil.set(NOT_NULL, NULLABLE, ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
+    ContainerUtil.set(NOT_NULL, NULLABLE, ORG_JETBRAINS_ANNOTATIONS_CONTRACT, Mutability.UNMODIFIABLE_ANNOTATION,
+                      Mutability.UNMODIFIABLE_VIEW_ANNOTATION);
   private final Project myProject;
 
   public InferredAnnotationsManagerImpl(Project project) {
@@ -64,6 +65,10 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
       return anno == null ? null : annotationFQN.equals(anno.getQualifiedName()) ? anno : null;
     }
 
+    if (Mutability.UNMODIFIABLE_ANNOTATION.equals(annotationFQN) || Mutability.UNMODIFIABLE_VIEW_ANNOTATION.equals(annotationFQN)) {
+      return getInferredMutabilityAnnotation(listOwner);
+    }
+
     if (listOwner instanceof PsiMethodImpl && ORG_JETBRAINS_ANNOTATIONS_CONTRACT.equals(annotationFQN)) {
       return getInferredContractAnnotation((PsiMethodImpl)listOwner);
     }
@@ -95,6 +100,17 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
       }
     }
     return false;
+  }
+
+  @Nullable
+  private PsiAnnotation getInferredMutabilityAnnotation(@NotNull PsiModifierListOwner owner) {
+    if (!(owner instanceof PsiMethod)) return null;
+    PsiModifierList modifiers = ((PsiMethod)owner).getModifierList();
+    if (modifiers.findAnnotation(Mutability.UNMODIFIABLE_ANNOTATION) != null ||
+        modifiers.findAnnotation(Mutability.UNMODIFIABLE_VIEW_ANNOTATION) != null) {
+      return null;
+    }
+    return Mutability.inferMutability(owner).asAnnotation(myProject);
   }
 
   @Nullable
@@ -213,6 +229,8 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
     if (listOwner instanceof PsiParameter && !ignoreInference(listOwner, NOT_NULL)) {
       ContainerUtil.addIfNotNull(result, getInferredNullityAnnotation((PsiParameter)listOwner));
     }
+
+    ContainerUtil.addIfNotNull(result, getInferredMutabilityAnnotation(listOwner));
 
     return result.toArray(PsiAnnotation.EMPTY_ARRAY);
   }

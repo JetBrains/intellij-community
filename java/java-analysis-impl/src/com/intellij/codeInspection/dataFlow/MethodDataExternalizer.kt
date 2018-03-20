@@ -33,7 +33,7 @@ internal object MethodDataExternalizer : DataExternalizer<Map<Int, MethodData>> 
   override fun read(input: DataInput) = readSeq(input) { readINT(input) to readMethod(input) }.toMap()
 
   private fun writeMethod(out: DataOutput, data: MethodData) {
-    writeNullable(out, data.nullity) { writeNullity(out, it) }
+    writeNullable(out, data.methodReturn) { writeNullity(out, it) }
     writeNullable(out, data.purity) { writePurity(out, it) }
     writeSeq(out, data.contracts) { writeContract(out, it) }
     writeBitSet(out, data.notNullParameters)
@@ -65,14 +65,16 @@ internal object MethodDataExternalizer : DataExternalizer<Map<Int, MethodData>> 
     return BitSet.valueOf(bytes)
   }
 
-  private fun writeNullity(out: DataOutput, nullity: NullityInferenceResult) = when (nullity) {
-    is NullityInferenceResult.Predefined -> { out.writeByte(0); out.writeByte(nullity.value.ordinal) }
-    is NullityInferenceResult.FromDelegate -> { out.writeByte(1); writeRanges(out, nullity.delegateCalls) }
-    else -> throw IllegalArgumentException(nullity.toString())
+  private fun writeNullity(out: DataOutput, methodReturn: MethodReturnInferenceResult) = when (methodReturn) {
+    is MethodReturnInferenceResult.Predefined -> { out.writeByte(0); out.writeByte(methodReturn.value.ordinal) }
+    is MethodReturnInferenceResult.FromDelegate -> {
+      out.writeByte(1); out.writeByte(methodReturn.value.ordinal); writeRanges(out, methodReturn.delegateCalls)
+    }
+    else -> throw IllegalArgumentException(methodReturn.toString())
   }
-  private fun readNullity(input: DataInput): NullityInferenceResult = when (input.readByte().toInt()) {
-    0 -> NullityInferenceResult.Predefined(Nullness.values()[input.readByte().toInt()])
-    else -> NullityInferenceResult.FromDelegate(readRanges(input))
+  private fun readNullity(input: DataInput): MethodReturnInferenceResult = when (input.readByte().toInt()) {
+    0 -> MethodReturnInferenceResult.Predefined(Nullness.values()[input.readByte().toInt()])
+    else -> MethodReturnInferenceResult.FromDelegate(Nullness.values()[input.readByte().toInt()], readRanges(input))
   }
 
   private fun writeRanges(out: DataOutput, ranges: List<ExpressionRange>) = writeSeq(out, ranges) { writeRange(out, it) }

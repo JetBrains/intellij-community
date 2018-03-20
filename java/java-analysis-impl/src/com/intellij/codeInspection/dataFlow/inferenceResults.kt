@@ -25,6 +25,7 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
+import com.siyeh.ig.psiutils.ClassUtils
 import java.util.*
 
 /**
@@ -89,11 +90,12 @@ data class PurityInferenceResult(internal val mutatedRefs: List<ExpressionRange>
 }
 
 
-interface NullityInferenceResult {
+interface MethodReturnInferenceResult {
   fun getNullness(method: PsiMethod, body: () -> PsiCodeBlock): Nullness
+  fun getMutability(method: PsiMethod, body: () -> PsiCodeBlock): Mutability = Mutability.UNKNOWN
 
   @Suppress("EqualsOrHashCode")
-  data class Predefined(internal val value: Nullness) : NullityInferenceResult {
+  data class Predefined(internal val value: Nullness) : MethodReturnInferenceResult {
     override fun hashCode() = value.ordinal
     override fun getNullness(method: PsiMethod, body: () -> PsiCodeBlock) = when {
       value == Nullness.NULLABLE && InferenceFromSourceUtil.suppressNullable(method) -> Nullness.UNKNOWN
@@ -101,10 +103,33 @@ interface NullityInferenceResult {
     }
   }
 
-  data class FromDelegate(internal val delegateCalls: List<ExpressionRange>) : NullityInferenceResult {
-    override fun getNullness(method: PsiMethod, body: () -> PsiCodeBlock) = when {
-      delegateCalls.all { range -> isNotNullCall(range, body()) } -> Nullness.NOT_NULL
-      else -> Nullness.UNKNOWN
+  data class FromDelegate(internal val value: Nullness, internal val delegateCalls: List<ExpressionRange>) : MethodReturnInferenceResult {
+    override fun getNullness(method: PsiMethod, body: () -> PsiCodeBlock): Nullness {
+      if (value == Nullness.NULLABLE) {
+        return if (InferenceFromSourceUtil.suppressNullable(method)) Nullness.UNKNOWN else Nullness.NULLABLE
+      }
+      return when {
+        delegateCalls.all { range -> isNotNullCall(range, body()) } -> Nullness.NOT_NULL
+        else -> Nullness.UNKNOWN
+      }
+    }
+
+    override fun getMutability(method: PsiMethod, body: () -> PsiCodeBlock): Mutability {
+      if (value == Nullness.NOT_NULL) {
+        return Mutability.UNKNOWN
+      }
+      return delegateCalls.stream().map { range -> getDelegateMutability(range, body()) }.reduce(Mutability::union).orElse(
+        Mutability.UNKNOWN)
+    }
+
+    private fun getDelegateMutability(delegate: ExpressionRange, body: PsiCodeBlock): Mutability {
+      val call = delegate.restoreExpression(body) as PsiMethodCallExpression
+      val target = call.resolveMethod()
+      return when {
+        target == null -> Mutability.UNKNOWN
+        ClassUtils.isImmutable(target.returnType) -> Mutability.UNMODIFIABLE
+        else -> Mutability.getMutability(target)
+      }
     }
 
     private fun isNotNullCall(delegate: ExpressionRange, body: PsiCodeBlock): Boolean {
@@ -118,7 +143,7 @@ interface NullityInferenceResult {
 }
 
 data class MethodData(
-    val nullity: NullityInferenceResult?,
+    val methodReturn: MethodReturnInferenceResult?,
     val purity: PurityInferenceResult?,
     val contracts: List<PreContract>,
     val notNullParameters: BitSet,
