@@ -73,6 +73,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
         return new RMNode<FoldRegionImpl>(this, key, start, end, greedyToLeft, greedyToRight, stickingToRight) {
           @Override
           protected Getter<FoldRegionImpl> createGetter(@NotNull FoldRegionImpl region) {
+            // Fold region shouldn't disappear even if no one holds a reference to it, so folding tree needs a strong reference to a region
             return region;
           }
         };
