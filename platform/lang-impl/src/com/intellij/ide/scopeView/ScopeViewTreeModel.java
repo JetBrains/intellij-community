@@ -45,9 +45,12 @@ import com.intellij.psi.search.scope.ProblemsScope;
 import com.intellij.psi.search.scope.ProjectFilesScope;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.stripe.ErrorStripe;
+import com.intellij.ui.tree.AbstractTreeWalker;
 import com.intellij.ui.tree.BaseTreeModel;
 import com.intellij.ui.tree.ProjectFileTreeModel;
 import com.intellij.ui.tree.TreePathUtil;
+import com.intellij.ui.tree.TreeVisitor;
+import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
@@ -70,7 +73,9 @@ import java.util.stream.Collectors;
 import static com.intellij.ide.projectView.impl.ProjectRootsUtil.findSourceFolder;
 import static com.intellij.openapi.roots.ui.configuration.SourceRootPresentation.getSourceRootIcon;
 import static com.intellij.openapi.util.io.FileUtil.getLocationRelativeToUserHome;
-import static com.intellij.openapi.vfs.VfsUtilCore.*;
+import static com.intellij.openapi.vfs.VfsUtilCore.getRelativePath;
+import static com.intellij.openapi.vfs.VfsUtilCore.isAncestor;
+import static com.intellij.openapi.vfs.VfsUtilCore.VFS_SEPARATOR_CHAR;
 import static java.util.Collections.emptyList;
 
 public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> implements InvokerSupplier {
@@ -215,27 +220,61 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
   }
 
   private void notifyStructureChanged(@NotNull VirtualFile file) {
-    model.onValidThread(() -> {
-      AbstractTreeNode found = root.find(null, file);
+    find(file, null, found -> {
       if (found instanceof Node) {
         Node node = (Node)found;
         if (node.childrenValid) {
           node.childrenValid = false;
-          update(found, true);
+          update(node, true);
         }
       }
-      else if (found != null) {
-        update(found, true);
+      else if (found instanceof AbstractTreeNode) {
+        update((AbstractTreeNode)found, true);
       }
     });
   }
 
   private void notifyPresentationChanged(@NotNull VirtualFile file) {
-    model.onValidThread(() -> {
-      List<Node> list = new SmartList<>();
-      AbstractTreeNode found = root.find(list, file);
+    List<Node> list = new SmartList<>();
+    find(file, list, found -> {
       list.forEach(node -> update(node, false));
-      if (found != null) update(found, false);
+      if (found instanceof AbstractTreeNode) {
+        update((AbstractTreeNode)found, false);
+      }
+    });
+  }
+
+  private void find(@NotNull VirtualFile file, @Nullable List<Node> list, @NotNull Consumer<Object> consumer) {
+    model.onValidThread(() -> {
+      Module module = getModule(file, root.getProject());
+      if (module != null) {
+        TreeVisitor visitor = new TreeVisitor.ByComponent<VirtualFile, AbstractTreeNode>(file, AbstractTreeNode.class) {
+          @Override
+          protected boolean matches(@NotNull AbstractTreeNode pathComponent, @NotNull VirtualFile thisComponent) {
+            if (pathComponent.canRepresent(thisComponent)) return true;
+            if (pathComponent instanceof Node) return false;
+            ProjectViewNode node = pathComponent instanceof ProjectViewNode ? (ProjectViewNode)pathComponent : null;
+            return node != null && node.contains(thisComponent);
+          }
+
+          @Override
+          protected boolean contains(@NotNull AbstractTreeNode pathComponent, @NotNull VirtualFile thisComponent) {
+            Node node = pathComponent instanceof Node ? (Node)pathComponent : null;
+            if (node == null || !node.contains(thisComponent, module)) return false;
+            if (list != null) list.add(node);
+            return true;
+          }
+        };
+        AbstractTreeWalker<AbstractTreeNode> walker = new AbstractTreeWalker<AbstractTreeNode>(visitor) {
+          @Override
+          protected Collection<AbstractTreeNode> getChildren(@NotNull AbstractTreeNode pathComponent) {
+            Node node = pathComponent instanceof Node ? (Node)pathComponent : null;
+            return node != null && node.childrenValid ? node.children : emptyList();
+          }
+        };
+        walker.start(root);
+        walker.promise().processed(path -> consumer.consume(path == null ? null : path.getLastPathComponent()));
+      }
     });
   }
 
@@ -479,7 +518,7 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
     @Override
     boolean contains(@NotNull VirtualFile file, @NotNull Module module) {
       // may be called from unexpected thread
-      return roots.values().stream().anyMatch(root -> root.contains(file, module));
+      return roots.values().stream().anyMatch(root -> root.canRepresentOrContain(file, module));
     }
 
     @Override
@@ -492,34 +531,6 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
     public String toString() {
       Project project = getProject();
       return project == null || project.isDisposed() ? "DISPOSED PROJECT" : project.getName();
-    }
-
-    @Nullable
-    AbstractTreeNode find(@Nullable List<Node> list, @Nullable VirtualFile file) {
-      if (file == null) return null;
-      Module module = getModule(file, getProject());
-      if (module == null) return null;
-      Collection<AbstractTreeNode> collection = new SmartList<>(this);
-      while (collection != null) {
-        Collection<AbstractTreeNode> children = null;
-        for (AbstractTreeNode current : collection) {
-          if (current.canRepresent(file)) return current;
-          if (current instanceof Node) {
-            Node node = (Node)current;
-            if (node.contains(file, module)) {
-              if (list != null) list.add(node);
-              children = node.childrenValid ? node.children : null;
-              break; // TODO: rewrite visit
-            }
-          }
-          else if (current instanceof ProjectViewNode) {
-            ProjectViewNode<?> node = (ProjectViewNode)current;
-            if (node.contains(file)) return current;
-          }
-        }
-        collection = children;
-      }
-      return null;
     }
   }
 
@@ -593,6 +604,11 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
   private static final class RootNode extends FileNode implements NavigatableWithText {
     RootNode(@NotNull Node parent, @NotNull ProjectFileTreeModel.Child child) {
       super(parent, child);
+    }
+
+    boolean canRepresentOrContain(@NotNull VirtualFile file, @NotNull Module module) {
+      // may be called from unexpected thread
+      return this.module == module && isAncestor(this.file, file, false);
     }
 
     @NotNull
@@ -857,7 +873,7 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
 
     boolean contains(@NotNull VirtualFile file, @NotNull Module module) {
       // may be called from unexpected thread
-      return roots.stream().anyMatch(root -> root.contains(file, module)) ||
+      return roots.stream().anyMatch(root -> root.canRepresentOrContain(file, module)) ||
              groups.values().stream().anyMatch(group -> group.contains(file, module));
     }
   }
