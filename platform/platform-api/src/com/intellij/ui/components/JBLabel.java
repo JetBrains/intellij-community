@@ -315,7 +315,7 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
                   "color:#" + ColorUtil.toHex(getForeground()) + ";" +
                   "font-family:" + getFont().getFamily() + ";" +
                   "font-size:" + getFont().getSize() + "pt;" +
-                  "white-space:" + (myAllowAutoWrapping ? "normal": "nowrap") +";}");
+                  "white-space:" + (myAllowAutoWrapping ? "normal" : "nowrap") + ";}");
     }
   }
 
