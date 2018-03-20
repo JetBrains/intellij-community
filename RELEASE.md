@@ -15,11 +15,11 @@ betas.)
                      ~~~       ~~~       ~~~       ~~~      ~~~~~~~~~~~~~~
     ```
 
- 2. Also make sure that the eap= flag in the same file is correct.
+ 2. Also make sure that the `eap=` flag in the same file is correct.
 
     ```
-     <version major="1" minor="4" micro="0" patch="7" full="{0}.{1} RC 1" eap="false" />
-                                                                          ~~~~~~~~~~~
+      <version major="1" minor="4" micro="0" patch="7" full="{0}.{1} RC 1" eap="false" />
+                                                                           ~~~~~~~~~~~
     ```
 
  3. Make sure the major/minor version is correctly encoded in the build number
@@ -32,7 +32,15 @@ betas.)
                 ~~
     ```
 
- 4. *If necessary*, update the "selector name"; this is the name used
+ 4. Make sure the version number is correct in
+    ../adt/idea/native/installer/win/setup_android_studio.nsi
+
+    ```
+    !define VERSION_MAJOR 3
+    !define VERSION_MINOR 2
+    ```
+
+ 5. *If necessary*, update the "selector name"; this is the name used
     in settings directories (such as ~/.AndroidStudioPreview1.6 on
     Linux, or ~/Library/Preferences/AndroidStudioPreview1.6 on OSX,
     etc.
@@ -48,7 +56,7 @@ betas.)
     and for release builds:
         `AndroidStudioX.Y`.
 
- 5. Make sure assertions are turned off and `-OmitStackTraceInFastThrow` is removed.
+ 6. Make sure assertions are turned off and `-OmitStackTraceInFastThrow` is removed.
 
     This is controlled by `platform/build-scripts/groovy/org/jetbrains/intellij/build/impl/VmOptionsGenerator.groovy`:
 
@@ -64,7 +72,7 @@ betas.)
     This should be set to -da in production builds. (You normally do not have
     to touch anything since this is already controlled by an EAP flag.)
 
- 6. Turn off null checking.
+ 7. Turn off null checking.
 
     Edit .idea/compiler.xml and make sure null assertions are disabled by
     adding the following line:
@@ -99,7 +107,7 @@ betas.)
          <option name="languageVersion" value="1.1"/>
     ```
 
- 7. Turn off CLASS retention in
+ 8. Turn off CLASS retention in
     `platform/annotations/java8/src/org/jetbrains/annotations`
     (Sadly, we can't also do this in
       `platform/annotations/java5/src/org/jetbrains/annotations`
