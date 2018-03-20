@@ -87,7 +87,7 @@ import java.util.List;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
-public abstract class ChooseByNameBase {
+public abstract class ChooseByNameBase implements ChooseByNameView {
   public static final String TEMPORARILY_FOCUSABLE_COMPONENT_KEY = "ChooseByNameBase.TemporarilyFocusableComponent";
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.gotoByName.ChooseByNameBase");
@@ -200,6 +200,12 @@ public abstract class ChooseByNameBase {
     myInitIsDone = true;
   }
 
+  @Override
+  public Project getProject() {
+    return myProject;
+  }
+
+  @Override
   public boolean isSearchInAnyPlace() {
     return mySearchInAnyPlace;
   }
@@ -239,6 +245,7 @@ public abstract class ChooseByNameBase {
   }
 
   @NotNull
+  @Override
   public ChooseByNameModel getModel() {
     return myModel;
   }
@@ -717,6 +724,7 @@ public abstract class ChooseByNameBase {
     }
   }
 
+  @Override
   public String transformPattern(String pattern) {
     return pattern;
   }
@@ -774,6 +782,7 @@ public abstract class ChooseByNameBase {
     return result;
   }
 
+  @Override
   @NotNull
   public String[] getNames(boolean checkboxState) {
     if (ourLoadNamesEachTime) {
@@ -1468,6 +1477,7 @@ public abstract class ChooseByNameBase {
   }
 
 
+  @Override
   public boolean canShowListForEmptyPattern() {
     return isShowListForEmptyPattern() || isShowListAfterCompletionKeyStroke() && lastKeyStrokeIsCompletion();
   }
@@ -1487,6 +1497,7 @@ public abstract class ChooseByNameBase {
     }
   }
 
+  @Override
   public int getMaximumListSizeLimit() {
     return myMaximumListSizeLimit;
   }
