@@ -245,6 +245,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable
         text = getTemplatePresentation().getTextWithMnemonic();
       }
 
+      presentation.setVisible(myExecutor.isApplicable(project));
       presentation.setEnabled(enabled);
       presentation.setText(text);
     }
