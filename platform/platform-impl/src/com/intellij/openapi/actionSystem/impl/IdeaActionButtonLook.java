@@ -43,7 +43,7 @@ public class IdeaActionButtonLook extends ActionButtonLook {
       paintBackground(g, component.getSize(), state);
     }
     if (component.hasFocus()) {
-      DarculaUIUtil.paintFocusOval(g, 3, 3, component.getWidth() - 4, component.getHeight() - 4);
+      DarculaUIUtil.paintFocusOval((Graphics2D)g, 3, 3, component.getWidth() - 4, component.getHeight() - 4);
     }
   }
 
