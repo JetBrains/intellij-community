@@ -46,6 +46,7 @@ public abstract class MatchingHandler {
   public boolean matchSequentially(NodeIterator patternNodes, NodeIterator matchNodes, MatchContext context) {
     final MatchingStrategy strategy = context.getPattern().getStrategy();
     final PsiElement currentPatternNode = patternNodes.current();
+    final PsiElement currentMatchNode = matchNodes.current();
 
     skipIfNecessary(matchNodes, currentPatternNode, strategy);
     skipComments(matchNodes, currentPatternNode);
@@ -69,7 +70,12 @@ public abstract class MatchingHandler {
 
       if (patternNodes.hasNext()) {
         final MatchingHandler nextHandler = context.getPattern().getHandler(patternNodes.current());
-        return nextHandler.matchSequentially(patternNodes, matchNodes, context);
+        if (nextHandler.matchSequentially(patternNodes, matchNodes, context)) {
+          return true;
+        } else {
+          patternNodes.rewindTo(currentPatternNode);
+          matchNodes.rewindTo(currentMatchNode);
+        }
       } else {
         // match was found
         return handler.isMatchSequentiallySucceeded(matchNodes);
