@@ -17,7 +17,12 @@ public abstract class RequestBuilder {
   public abstract RequestBuilder connectTimeout(int value);
   public abstract RequestBuilder readTimeout(int value);
   public abstract RequestBuilder redirectLimit(int redirectLimit);
+
+  /**
+   * Whether gzip encoding supported. Defaults to {@code true}.
+   */
   public abstract RequestBuilder gzip(boolean value);
+
   public abstract RequestBuilder forceHttps(boolean forceHttps);
   public abstract RequestBuilder useProxy(boolean useProxy);
   public abstract RequestBuilder hostNameVerifier(@Nullable HostnameVerifier hostnameVerifier);

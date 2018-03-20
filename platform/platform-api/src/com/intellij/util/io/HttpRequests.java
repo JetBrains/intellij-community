@@ -386,13 +386,13 @@ public final class HttpRequests {
 
     @NotNull
     private BufferExposingByteArrayOutputStream doReadBytes(@Nullable ProgressIndicator indicator) throws IOException {
-      return HttpUrlConnectionUtil.readBytes(getConnection(), indicator);
+      return HttpUrlConnectionUtil.readBytes(getInputStream(), getConnection(), indicator);
     }
 
     @NotNull
     @Override
     public String readString(@Nullable ProgressIndicator indicator) throws IOException {
-      return HttpUrlConnectionUtil.readString(getConnection(), indicator);
+      return HttpUrlConnectionUtil.readString(getInputStream(), getConnection(), indicator);
     }
 
     @NotNull
@@ -585,7 +585,7 @@ public final class HttpRequests {
   private static URLConnection throwHttpStatusError(@NotNull HttpURLConnection connection, @NotNull RequestImpl request, @NotNull RequestBuilderImpl builder, int responseCode) throws IOException {
     String message = null;
     if (builder.myIsReadResponseOnError) {
-      message = HttpUrlConnectionUtil.readString(connection, null, true);
+      message = HttpUrlConnectionUtil.readString(connection.getErrorStream(), connection);
     }
 
     if (StringUtil.isEmpty(message)) {

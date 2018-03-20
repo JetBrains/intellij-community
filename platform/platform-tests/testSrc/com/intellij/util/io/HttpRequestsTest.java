@@ -15,6 +15,7 @@ import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
+import java.util.zip.GZIPOutputStream;
 
 import static java.net.HttpURLConnection.*;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -67,6 +68,31 @@ public class HttpRequestsTest {
   public void testReadString() throws IOException {
     createServerForDataReadTest();
     assertThat(HttpRequests.request(myUrl).readString()).isEqualTo("hello кодировочки");
+  }
+
+  @Test(timeout = 5000)
+  public void readGzippedString() throws IOException {
+    createServerForGzippedRead();
+    assertThat(HttpRequests.request(myUrl).readString()).isEqualTo("hello кодировочки");
+  }
+
+  private void createServerForGzippedRead() {
+    myServer.createContext("/", ex -> {
+      ex.getResponseHeaders().add("Content-Type", "text/plain; charset=koi8-r");
+      ex.getResponseHeaders().add("Content-Encoding", "gzip");
+      ex.sendResponseHeaders(200, 0);
+
+      try (GZIPOutputStream gzipOutputStream = new GZIPOutputStream(ex.getResponseBody())) {
+        gzipOutputStream.write("hello кодировочки".getBytes("koi8-r"));
+      }
+      ex.close();
+    });
+  }
+
+  @Test(timeout = 5000)
+  public void gzippedStringIfSupportDisbled() throws IOException {
+    createServerForGzippedRead();
+    assertThat(HttpRequests.request(myUrl).gzip(false).readString()).isNotEqualTo("hello кодировочки");
   }
 
   private void createServerForDataReadTest() {
