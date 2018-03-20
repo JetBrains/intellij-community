@@ -1,0 +1,13 @@
+class A extends Exception {}
+class B extends A {}
+class C extends A {}
+
+class Test {
+  public static void main(String[] args) {
+    try {
+      throw new A();
+    } catch (B e) {
+    } catch (C e) {
+    }
+  }
+}
