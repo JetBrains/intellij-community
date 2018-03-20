@@ -47,8 +47,13 @@ public class OpenFileDescriptor implements Navigatable, Comparable<OpenFileDescr
   private final int myOffset;
   private final RangeMarker myRangeMarker;
 
+  private boolean myForceNewEditor = false;
   private boolean myUseCurrentWindow = false;
   private ScrollType myScrollType = ScrollType.CENTER;
+
+  public OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file) {
+    this(project, file, -1, -1, -1, false);
+  }
 
   public OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file, int offset) {
     this(project, file, -1, -1, offset, false);
@@ -60,10 +65,6 @@ public class OpenFileDescriptor implements Navigatable, Comparable<OpenFileDescr
 
   public OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file, int logicalLine, int logicalColumn, boolean persistent) {
     this(project, file, logicalLine, logicalColumn, -1, persistent);
-  }
-
-  public OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file) {
-    this(project, file, -1, -1, -1, false);
   }
 
   private OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file, int logicalLine, int logicalColumn, int offset, boolean persistent) {
@@ -192,6 +193,14 @@ public class OpenFileDescriptor implements Navigatable, Comparable<OpenFileDescr
         unfoldCurrentLine(e);
       });
     }
+  }
+
+  public boolean isForceNewEditor() {
+    return myForceNewEditor;
+  }
+
+  public void setForceNewEditor(boolean forceNewEditor) {
+    myForceNewEditor = forceNewEditor;
   }
 
   protected static void unfoldCurrentLine(@NotNull final Editor editor) {
