@@ -181,9 +181,7 @@ public class ReflectionAccessMethodBuilder {
 
     @Override
     public String getClassLookupExpression() {
-      String classForName = PsiReflectionAccessUtil.classForName(myClassName);
-      // emulate applySideEffectAndReturnNull().staticField expression
-      return "object == null ? " + classForName + " : object.getClass()";
+      return PsiReflectionAccessUtil.classForName(myClassName);
     }
 
     @Override
@@ -227,9 +225,8 @@ public class ReflectionAccessMethodBuilder {
 
     @Override
     public String getClassLookupExpression() {
-      String classForName = PsiReflectionAccessUtil.classForName(myClassName);
       // emulate applySideEffectAndReturnNull().staticMethod() expression
-      return "object == null ? " + classForName + " : object.getClass()";
+      return PsiReflectionAccessUtil.classForName(myClassName);
     }
 
     @Override
