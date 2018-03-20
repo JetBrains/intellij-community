@@ -23,6 +23,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.SmartSerializer;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
@@ -33,6 +34,8 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+
+import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * User: catherine
@@ -100,9 +103,14 @@ public class PyRedundantParenthesesInspection extends PyInspection {
         registerProblem(node, PyBundle.message("QFIX.redundant.parentheses"), new RedundantParenthesesQuickFix());
       }
       else if (node.getParent() instanceof PyIfPart ||
-               node.getParent() instanceof PyWhilePart ||
-               node.getParent() instanceof PyReturnStatement) {
+               node.getParent() instanceof PyWhilePart) {
         registerProblem(node, PyBundle.message("QFIX.redundant.parentheses"), new RedundantParenthesesQuickFix());
+      }
+      else if (node.getParent() instanceof PyReturnStatement) {
+        final PyTupleExpression tuple = as(expression, PyTupleExpression.class);
+        if (!(tuple != null && ContainerUtil.or(tuple.getElements(), PyStarExpression.class::isInstance))) {
+          registerProblem(node, PyBundle.message("QFIX.redundant.parentheses"), new RedundantParenthesesQuickFix());
+        }
       }
       else if (expression instanceof PyBinaryExpression) {
         final PyBinaryExpression binaryExpression = (PyBinaryExpression)expression;
