@@ -265,7 +265,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     if (myPresentation.getDisabledIcon() != null) { // set disabled icon if it is specified
       myDisabledIcon = myPresentation.getDisabledIcon();
     }
-    else if (IconLoader.isGoodSize(myIcon)) {
+    else if (myIcon == null || IconLoader.isGoodSize(myIcon)) {
       myDisabledIcon = IconLoader.getDisabledIcon(myIcon);
     }
     else {
