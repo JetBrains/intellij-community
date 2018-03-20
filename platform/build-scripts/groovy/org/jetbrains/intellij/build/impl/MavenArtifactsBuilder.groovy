@@ -91,14 +91,12 @@ class MavenArtifactsBuilder {
     <groupId>${artifactData.coordinates.groupId}</groupId>
     <artifactId>${artifactData.coordinates.artifactId}</artifactId>
     <version>${artifactData.coordinates.version}</version>
-    <packaging>jar</packaging>
     <dependencies>
 ${artifactData.dependencies.collect {"""
         <dependency>
              <groupId>$it.coordinates.groupId</groupId>
              <artifactId>$it.coordinates.artifactId</artifactId>
              <version>$it.coordinates.version</version>
-             <type>jar</type>
 ${it.includeTransitiveDeps ? "" : """
                   <exclusions>
                       <exclusion>
