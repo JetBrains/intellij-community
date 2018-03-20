@@ -2,8 +2,8 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 
 iml_module(
     name = "platform-build-scripts",
+    srcs = ["groovy"],
     iml_files = ["platform-build-scripts.iml"],
-    resources = ["groovy"],
     tags = [
         "managed",
         "manual",
@@ -73,6 +73,7 @@ iml_module(
     iml_files = ["icons/images-build-scripts.iml"],
     tags = ["managed"],
     test_srcs = ["icons/tests"],
+    test_tags = ["manual"],  # fails after IDEA 181.2784.17 merge
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     deps = [

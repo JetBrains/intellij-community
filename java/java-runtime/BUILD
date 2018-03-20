@@ -9,7 +9,6 @@ iml_module(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     deps = [
-        "//tools/idea/.idea/libraries:JUnit3",
         "//tools/idea/.idea/libraries:JUnit4",
         "//tools/idea/.idea/libraries:Ant",
     ],

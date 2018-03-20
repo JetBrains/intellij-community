@@ -36,5 +36,6 @@ iml_module(
         "//tools/idea/images[module]",
         "//tools/idea/community-resources[module]",
         "//tools/idea/platform/util[module]",
+        "//tools/idea/platform/platform-resources-en[module]",
     ],
 )

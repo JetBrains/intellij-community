@@ -2,8 +2,8 @@ java_library(
     name = "protobuf",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/com/google/protobuf/protobuf-java/2.5.0:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/google/protobuf/protobuf-java/2.5.0:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/com/google/protobuf/protobuf-java/3.0.0:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/google/protobuf/protobuf-java/3.0.0:jar"],
 )
 
 java_library(
@@ -730,8 +730,8 @@ java_library(
     name = "Eclipse",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/lib:ecj-4.7.2"],
-    runtime_deps = ["//tools/idea/lib:ecj-4.7.2"],
+    exports = ["//tools/idea/lib:ecj-4.6.2"],
+    runtime_deps = ["//tools/idea/lib:ecj-4.6.2"],
 )
 
 java_library(
@@ -850,32 +850,6 @@ java_library(
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/lib:purejavacomm"],
     runtime_deps = ["//tools/idea/lib:purejavacomm"],
-)
-
-java_library(
-    name = "jsch-agent-proxy",
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-    # do not sort: must match IML order
-    exports = [
-        "//tools/idea/lib:jsch.agentproxy.connector-factory",
-        "//tools/idea/lib:jsch.agentproxy.core",
-        "//tools/idea/lib:jsch.agentproxy.jsch",
-        "//tools/idea/lib:jsch.agentproxy.pageant",
-        "//tools/idea/lib:jsch.agentproxy.sshagent",
-        "//tools/idea/lib:jsch.agentproxy.usocket-jna",
-        "//tools/idea/lib:jsch.agentproxy.usocket-nc",
-    ],
-    # do not sort: must match IML order
-    runtime_deps = [
-        "//tools/idea/lib:jsch.agentproxy.connector-factory",
-        "//tools/idea/lib:jsch.agentproxy.core",
-        "//tools/idea/lib:jsch.agentproxy.jsch",
-        "//tools/idea/lib:jsch.agentproxy.pageant",
-        "//tools/idea/lib:jsch.agentproxy.sshagent",
-        "//tools/idea/lib:jsch.agentproxy.usocket-jna",
-        "//tools/idea/lib:jsch.agentproxy.usocket-nc",
-    ],
 )
 
 java_library(
@@ -998,15 +972,17 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//tools/idea/plugins/gradle/lib:gradle-api-4.4",
-        "//tools/idea/plugins/gradle/lib:gradle-launcher-4.4",
-        "//tools/idea/plugins/gradle/lib:gradle-wrapper-4.4",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/gradle-api-impldep/4.4:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/gradle-api/4.4:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/gradle-launcher/4.4:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/gradle-wrapper/4.4:jar",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/idea/plugins/gradle/lib:gradle-api-4.4",
-        "//tools/idea/plugins/gradle/lib:gradle-launcher-4.4",
-        "//tools/idea/plugins/gradle/lib:gradle-wrapper-4.4",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/gradle-api-impldep/4.4:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/gradle-api/4.4:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/gradle-launcher/4.4:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/gradle-wrapper/4.4:jar",
     ],
 )
 
@@ -1081,7 +1057,7 @@ java_library(
 )
 
 java_library(
-    name = "io.cucumber_cucumber-core_2.0.1",
+    name = "cucumber-core_2.0.1",
     tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
@@ -1234,4 +1210,32 @@ java_library(
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/it/unimi/dsi/fastutil/7.2.1:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/it/unimi/dsi/fastutil/7.2.1:jar"],
+)
+
+java_library(
+    name = "lz4-java",
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    exports = ["//tools/idea/lib:lz4-java-1.3"],
+    runtime_deps = ["//tools/idea/lib:lz4-java-1.3"],
+)
+
+java_library(
+    name = "de.ruedigermoeller_fst",
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    # do not sort: must match IML order
+    exports = [
+        "//prebuilts/tools/common/m2/repository/com/fasterxml/jackson/core/jackson-core/2.8.8:jar",
+        "//prebuilts/tools/common/m2/repository/de/ruedigermoeller/fst/2.56:jar",
+        "//prebuilts/tools/common/m2/repository/org/javassist/javassist/3.21.0-GA:jar",
+        "//prebuilts/tools/common/m2/repository/org/objenesis/objenesis/2.5.1:jar",
+    ],
+    # do not sort: must match IML order
+    runtime_deps = [
+        "//prebuilts/tools/common/m2/repository/com/fasterxml/jackson/core/jackson-core/2.8.8:jar",
+        "//prebuilts/tools/common/m2/repository/de/ruedigermoeller/fst/2.56:jar",
+        "//prebuilts/tools/common/m2/repository/org/javassist/javassist/3.21.0-GA:jar",
+        "//prebuilts/tools/common/m2/repository/org/objenesis/objenesis/2.5.1:jar",
+    ],
 )

@@ -42,5 +42,6 @@ iml_module(
         "//tools/idea/java/compiler/openapi:compiler-openapi[module]",
         "//tools/idea/platform/external-system-rt[module]",
         "//tools/idea/.idea/libraries:KotlinJavaRuntime",
+        "//tools/idea/.idea/libraries:de.ruedigermoeller_fst",
     ],
 )

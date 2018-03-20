@@ -272,48 +272,6 @@ java_import(
 )
 
 java_import(
-    name = "jsch.agentproxy.usocket-nc",
-    jars = ["jsch.agentproxy.usocket-nc.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
-    name = "jsch.agentproxy.usocket-jna",
-    jars = ["jsch.agentproxy.usocket-jna.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
-    name = "jsch.agentproxy.sshagent",
-    jars = ["jsch.agentproxy.sshagent.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
-    name = "jsch.agentproxy.pageant",
-    jars = ["jsch.agentproxy.pageant.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
-    name = "jsch.agentproxy.core",
-    jars = ["jsch.agentproxy.core.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
-    name = "jsch.agentproxy.connector-factory",
-    jars = ["jsch.agentproxy.connector-factory.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
     name = "minlog-1.2",
     jars = ["minlog-1.2.jar"],
     tags = ["managed"],
@@ -342,8 +300,8 @@ java_import(
 )
 
 java_import(
-    name = "ecj-4.7.2",
-    jars = ["ecj-4.7.2.jar"],
+    name = "ecj-4.6.2",
+    jars = ["ecj-4.6.2.jar"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )
@@ -402,13 +360,6 @@ java_import(
 )
 
 java_import(
-    name = "jsch.agentproxy.jsch",
-    jars = ["jsch.agentproxy.jsch.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
     name = "aether-1.1.0-all",
     jars = ["aether-1.1.0-all.jar"],
     tags = ["managed"],
@@ -446,6 +397,13 @@ java_import(
 java_import(
     name = "jaxb-impl",
     jars = ["jaxb-impl.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "lz4-java-1.3",
+    jars = ["lz4-java-1.3.jar"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )

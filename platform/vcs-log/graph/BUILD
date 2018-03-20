@@ -29,7 +29,7 @@ iml_module(
         "//tools/idea/platform/vcs-log/graph-api:vcs-log-graph-api[module]",
         "//tools/idea/platform/testFramework[module, test]",
         "//tools/idea/.idea/libraries:JUnit4[test]",
-        "//tools/idea/.idea/libraries:KotlinJavaRuntime[test]",
+        "//tools/idea/.idea/libraries:KotlinJavaRuntime",
         "//tools/idea/.idea/libraries:Guava",
         "//tools/idea/.idea/libraries:KotlinTest[test]",
     ],

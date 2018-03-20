@@ -67,5 +67,6 @@ iml_module(
         "//tools/idea/.idea/libraries:ini4j",
         "//tools/idea/platform/tasks-platform-impl[module]",
         "//tools/idea/platform/tasks-platform-api[module, test]",
+        "//tools/idea/.idea/libraries:assertJ[test]",
     ],
 )

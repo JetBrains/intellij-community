@@ -36,6 +36,7 @@ iml_module(
         "//tools/idea/platform/vcs-api/vcs-api-core[module]",
         "//tools/idea/platform/vcs-api[module]",
         "//tools/idea/platform/lang-api[module]",
+        "//tools/idea/.idea/libraries:Guava",
     ],
 )
 

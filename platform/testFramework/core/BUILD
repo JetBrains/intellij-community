@@ -1,14 +1,14 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
 iml_module(
-    name = "cucumber-jvm-formatter",
+    name = "testFramework.core",
     srcs = ["src"],
-    iml_files = ["cucumber-jvm-formatter.iml"],
+    iml_files = ["testFramework.core.iml"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     deps = [
-        "//tools/idea/.idea/libraries:cucumber-core",
-        "//tools/idea/.idea/libraries:cucumber-core_2.0.1",
+        "//tools/idea/platform/util[module]",
+        "//tools/idea/.idea/libraries:JUnit4",
     ],
 )

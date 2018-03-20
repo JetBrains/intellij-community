@@ -23,6 +23,7 @@ iml_module(
         "//tools/idea/java/java-runtime",
         "//tools/idea/.idea/libraries:Groovy",
         "//tools/idea/jetCheck",
+        "//tools/idea/platform/testFramework/core:testFramework.core",
     ],
     # do not sort: must match IML order
     runtime_deps = [
@@ -55,5 +56,6 @@ iml_module(
         "//tools/idea/.idea/libraries:KotlinJavaRuntime",
         "//tools/idea/platform/boot[module]",
         "//tools/idea/jetCheck[module, test]",
+        "//tools/idea/platform/testFramework/core:testFramework.core[module]",
     ],
 )

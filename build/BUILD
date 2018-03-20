@@ -3,7 +3,10 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 iml_module(
     name = "build",
     # do not sort: must match IML order
-    srcs = ["scripts"],
+    srcs = [
+        "scripts",
+        "groovy",
+    ],
     bundle_data = glob([
         "gant.xml",
         "scripts/*",
@@ -12,7 +15,6 @@ iml_module(
         "*.txt",
     ]),
     iml_files = ["build.iml"],
-    resources = ["groovy"],
     tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = [

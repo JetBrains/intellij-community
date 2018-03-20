@@ -6,9 +6,11 @@ iml_module(
     iml_files = ["external-system-impl.iml"],
     resources = ["resources"],
     tags = ["managed"],
+    test_resources = ["testResources"],
     test_srcs = ["testSrc"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],
+    exports = ["//tools/idea/platform/smRunner"],
     # do not sort: must match IML order
     runtime_deps = [
         "//tools/idea/platform/lvcs-impl",

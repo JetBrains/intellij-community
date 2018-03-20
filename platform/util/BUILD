@@ -30,6 +30,7 @@ iml_module(
         "//tools/idea/.idea/libraries:imgscalr",
         "//tools/idea/.idea/libraries:xmlgraphics-commons",
         "//tools/idea/.idea/libraries:batik",
+        "//tools/idea/.idea/libraries:lz4-java",
         "//tools/idea/.idea/libraries:xml-apis-ext",
         "//tools/idea/.idea/libraries:commons-compress",
     ],
@@ -73,5 +74,6 @@ iml_module(
         "//tools/idea/.idea/libraries:commons-compress",
         "//tools/idea/.idea/libraries:Guava",
         "//tools/idea/platform/testFramework[module, test]",
+        "//tools/idea/platform/testFramework/extensions:testExtensions[module, test]",
     ],
 )

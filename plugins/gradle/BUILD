@@ -15,7 +15,6 @@ iml_module(
         "//tools/idea/plugins/gradle/tooling-extension-api:gradle-tooling-extension-api",
         "//tools/idea/.idea/libraries:Slf4j",
         "//tools/idea/.idea/libraries:Gradle",
-        "//tools/idea/plugins/gradle/lib:commons-io-2.2",
     ],
     # do not sort: must match IML order
     runtime_deps = [
@@ -45,8 +44,6 @@ iml_module(
         "//tools/idea/.idea/libraries:swingx",
         "//tools/idea/.idea/libraries:Slf4j",
         "//tools/idea/.idea/libraries:Gradle",
-        "//tools/idea/plugins/gradle/lib:commons-io-2.2",
-        "//tools/idea/plugins/gradle/lib:commons-lang-2.6",
         "//tools/idea/platform/smRunner[module]",
         "//tools/idea/.idea/libraries:Kryo",
         "//tools/idea/.idea/libraries:Ant",
