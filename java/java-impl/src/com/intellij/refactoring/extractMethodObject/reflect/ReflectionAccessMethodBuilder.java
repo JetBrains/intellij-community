@@ -5,6 +5,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.extractMethodObject.PsiReflectionAccessUtil;
 import com.intellij.util.SmartList;
 import one.util.streamex.StreamEx;
@@ -115,7 +116,7 @@ public class ReflectionAccessMethodBuilder {
     for (int i = 0; i < parameters.length; i++) {
       PsiParameter parameter = parameters[i];
       String name = parameter.getName();
-      PsiType type = parameter.getType();
+      PsiType type = TypeConversionUtil.erasure(parameter.getType());
       myParameters.add(new ParameterInfo(type.getCanonicalText(), name == null ? "arg" + i : name, extractJvmType(type)));
     }
 

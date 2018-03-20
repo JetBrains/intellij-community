@@ -48,7 +48,7 @@ public class MethodReflectionAccessor extends ReflectionAccessorBase<MethodRefle
   @Override
   protected void grantAccess(@NotNull MethodCallDescriptor descriptor) {
     PsiClass outerClass = getOuterClass();
-    String returnType = PsiReflectionAccessUtil.getAccessibleReturnType(descriptor.method.getReturnType());
+    String returnType = PsiReflectionAccessUtil.getAccessibleReturnType(resolveMethodReturnType(descriptor));
     PsiClass containingClass = descriptor.method.getContainingClass();
     String containingClassName = containingClass == null ? null : ClassUtil.getJVMClassName(containingClass);
     String name = descriptor.method.getName();
@@ -85,6 +85,12 @@ public class MethodReflectionAccessor extends ReflectionAccessorBase<MethodRefle
   private static boolean needReplace(@NotNull PsiMethod method, @NotNull PsiReferenceExpression referenceExpression) {
     return !PsiReflectionAccessUtil.isAccessibleMember(method) ||
            !PsiReflectionAccessUtil.isQualifierAccessible(referenceExpression.getQualifierExpression());
+  }
+
+  @Nullable
+  private static PsiType resolveMethodReturnType(@NotNull MethodCallDescriptor descriptor) {
+    PsiSubstitutor substitutor = descriptor.callExpression.resolveMethodGenerics().getSubstitutor();
+    return substitutor.substitute(descriptor.method.getReturnType());
   }
 
   @Nullable
