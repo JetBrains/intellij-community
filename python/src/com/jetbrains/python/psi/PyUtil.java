@@ -1883,6 +1883,28 @@ public class PyUtil {
     return false;
   }
 
+  public static void addDecorator(@NotNull PyFunction function, @NotNull String decorator) {
+    final PyDecoratorList currentDecorators = function.getDecoratorList();
+
+    final List<String> decoTexts = new ArrayList<>();
+    decoTexts.add(decorator);
+    if (currentDecorators != null) {
+      for (PyDecorator deco : currentDecorators.getDecorators()) {
+        decoTexts.add(deco.getText());
+      }
+    }
+
+    final PyElementGenerator generator = PyElementGenerator.getInstance(function.getProject());
+    final PyDecoratorList newDecorators = generator.createDecoratorList(decoTexts.toArray(ArrayUtil.EMPTY_STRING_ARRAY));
+
+    if (currentDecorators != null) {
+      currentDecorators.replace(newDecorators);
+    }
+    else {
+      function.addBefore(newDecorators, function.getFirstChild());
+    }
+  }
+
   /**
    * This helper class allows to collect various information about AST nodes composing {@link PyStringLiteralExpression}.
    */
