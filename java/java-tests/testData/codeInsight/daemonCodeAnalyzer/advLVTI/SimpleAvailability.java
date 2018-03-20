@@ -33,6 +33,8 @@ class Main {
         var runnable = true ? <error descr="Lambda expression not expected here">() -> {}</error> : <error descr="Lambda expression not expected here">() -> {}</error>;
 
         Function<String, String> f1 = (<error descr="Cannot resolve symbol 'var'">var</error> var) -> var;
+
+        <error descr="Cannot infer type: variable initializer is 'void'">var</error> h = localVariableDeclaration();
     }
 
     private void forEachType(String[] strs, Iterable<String> it, Iterable raw) {

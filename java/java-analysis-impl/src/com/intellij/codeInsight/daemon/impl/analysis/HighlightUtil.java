@@ -462,6 +462,12 @@ public class HighlightUtil extends HighlightUtilBase {
             .descriptionAndTooltip("Cannot infer type: variable initializer is 'null'")
             .range(typeElement).create();
         }
+
+        if (PsiType.VOID.equals(lType)) {
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+            .descriptionAndTooltip("Cannot infer type: variable initializer is 'void'")
+            .range(typeElement).create();
+        }
       }
     }
     return null;
