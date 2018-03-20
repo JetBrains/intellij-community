@@ -249,7 +249,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable
         presentation.setEnabledAndVisible(enabled);
       }
       else {
-        presentation.setVisible(true);
+        presentation.setVisible(myExecutor.isApplicable(project));
         presentation.setEnabled(enabled);
       }
       presentation.setText(text);
