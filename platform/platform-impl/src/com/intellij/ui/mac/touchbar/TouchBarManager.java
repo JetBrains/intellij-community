@@ -5,6 +5,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
@@ -66,18 +67,35 @@ public class TouchBarManager {
         final ID pool = Foundation.invoke("NSAutoreleasePool", "new");
         try {
           if (this == main) {
-            myTB = new TouchBar("main");
+            myTB = new TouchBar(name());
             myTB.addItem(new TBItemButtonText("Debug", new TBItemAction("Debug")));
             myTB.addItem(new TBItemButtonText("Run", new TBItemAction("Run")));
           }
           else if (this == debug) {
-            myTB = new TouchBar("debug");
+            myTB = new TouchBar(name());
             myTB.addItem(new TBItemButtonText("Step", new TBItemAction("Step Over")));
           }
           else if (this == test) {
-            myTB = new TouchBar("test");
+            myTB = new TouchBar(name());
             myTB.addItem(new TBItemButtonText("test1", TBItemCallback.createPrintTextCallback("pressed test1 button")));
             myTB.addItem(new TBItemButtonText("test2", TBItemCallback.createPrintTextCallback("pressed test2 button")));
+            myTB.addItem(new TBItemButtonImg(AllIcons.Toolwindows.ToolWindowRun, TBItemCallback.createPrintTextCallback("pressed image button")));
+
+            TBItemPopover popover = new TBItemPopover(AllIcons.Toolwindows.ToolWindowBuild, "test-popover");
+            myTB.addItem(popover);
+
+            TouchBar expandTB = new TouchBar("main_popover_expand");
+            expandTB.addItem(new TBItemButtonText("ptest", TBItemCallback.createPrintTextCallback("pressed ptest button")));
+            expandTB.addItem(new TBItemButtonImg(AllIcons.Toolwindows.ToolWindowDebugger, TBItemCallback.createPrintTextCallback("pressed pimage button")));
+            expandTB.selectAllItemsToShow();
+
+            popover.setExpandTB(expandTB);
+
+            TouchBar tapHoldTB = new TouchBar("main_popover_tap_and_hold");
+            tapHoldTB.addItem(new TBItemButtonImg(AllIcons.Toolwindows.ToolWindowPalette, TBItemCallback.createPrintTextCallback("pressed pimage button")));
+            tapHoldTB.selectAllItemsToShow();
+
+            popover.setTapAndHoldTB(tapHoldTB);
           }
         }
         finally {
@@ -85,7 +103,7 @@ public class TouchBarManager {
         }
 
         if (myTB != null)
-          myTB.flushItems();
+          myTB.selectAllItemsToShow();
       }
       return myTB;
     }
@@ -116,8 +134,7 @@ public class TouchBarManager {
     if (ourTouchbar == null)
       return;
 
-    final ID app = Foundation.invoke("NSApplication", "sharedApplication");
-    Foundation.invoke(app, "setTouchBar:", ourTouchbar.getTbID());
+    ourNSTLibrary.setTouchBar(ourTouchbar.getNativePeer());
   }
 
   static NSTLibrary getNSTLibrary() { return ourNSTLibrary; }
