@@ -561,6 +561,8 @@
         serviceInterface="com.intellij.psi.availability.PsiAvailabilityService"
         serviceImplementation="com.intellij.psi.availability.PsiAvailabilityServiceImpl"/>
 
+    <sdkType implementation="com.intellij.openapi.projectRoots.SimpleJavaSdkType"/>
+
     <!--context providers-->
     <tasks.contextProvider implementation="com.intellij.tasks.context.OpenEditorsContextProvider"/>
     <tasks.contextProvider implementation="com.intellij.tasks.context.ProjectViewContextProvider"/>
