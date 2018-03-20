@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.ComponentWithBrowseButton.BrowseFolderActionListe
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.DialogWrapper.IdeModalityType
 import com.intellij.openapi.ui.TextComponentAccessor
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.ex.MultiLineLabel
 import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase
 import com.intellij.openapi.vfs.VirtualFile
@@ -129,7 +130,7 @@ fun dialog(title: String,
            parent: Component? = null,
            errorText: String? = null,
            modality: IdeModalityType = IdeModalityType.IDE,
-           ok: (() -> Boolean)? = null): DialogWrapper {
+           ok: (() -> List<ValidationInfo>?)? = null): DialogWrapper {
   return object: DialogWrapper(project, parent, true, modality) {
     init {
       setTitle(title)
@@ -149,8 +150,16 @@ fun dialog(title: String,
     override fun getPreferredFocusedComponent() = focusedComponent
 
     override fun doOKAction() {
-      if (okAction.isEnabled && (ok == null || ok())) {
+      if (!okAction.isEnabled) {
+        return
+      }
+
+      val validationInfoList = ok?.invoke()
+      if (validationInfoList == null || validationInfoList.isEmpty()) {
         super.doOKAction()
+      }
+      else {
+        setErrorInfoAll(validationInfoList)
       }
     }
   }
