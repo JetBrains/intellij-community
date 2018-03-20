@@ -13,7 +13,6 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsRepositoryLibraryType
 import org.jetbrains.jps.model.module.JpsModule
-
 /**
  * Generates Maven artifacts for IDE and plugin modules. Artifacts aren't generated for modules which depends on non-repository libraries.
  * @see org.jetbrains.intellij.build.ProductProperties#mavenArtifacts
@@ -153,6 +152,11 @@ ${it.includeTransitiveDeps ? "" : """
     }
     if (!module.name.startsWith("intellij.")) {
       buildContext.messages.debug("  module '$module.name' doesn't belong to IntelliJ project so it cannot be published")
+      return null
+    }
+    def scrambleTool = buildContext.proprietaryBuildTools.scrambleTool
+    if (scrambleTool != null && scrambleTool.namesOfModulesRequiredToBeScrambled.contains(module.name)) {
+      buildContext.messages.debug("  module '$module.name' must be scrambled so it cannot be published")
       return null
     }
 
