@@ -25,7 +25,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightField;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.util.LightCacheKey;
 
@@ -38,7 +40,7 @@ import java.util.Map;
  */
 public class GebUtil {
 
-  private static final LightCacheKey<Map<String, PsiField>> KEY = LightCacheKey.createByFileModificationCount();
+  private static final LightCacheKey<Map<String, PsiMember>> KEY = LightCacheKey.createByFileModificationCount();
 
   public static boolean contributeMembersInsideTest(PsiScopeProcessor processor,
                                                     PsiElement place,
@@ -59,8 +61,8 @@ public class GebUtil {
     return true;
   }
 
-  public static Map<String, PsiField> getContentElements(@NotNull PsiClass pageOrModuleClass) {
-    Map<String, PsiField> res = KEY.getCachedValue(pageOrModuleClass);
+  public static Map<String, PsiMember> getContentElements(@NotNull PsiClass pageOrModuleClass) {
+    Map<String, PsiMember> res = KEY.getCachedValue(pageOrModuleClass);
     if (res == null) {
       res = calculateContentElements(pageOrModuleClass);
       res = KEY.putCachedValue(pageOrModuleClass, res);
@@ -69,7 +71,7 @@ public class GebUtil {
     return res;
   }
 
-  private static Map<String, PsiField> calculateContentElements(@NotNull PsiClass pageOrModuleClass) {
+  private static Map<String, PsiMember> calculateContentElements(@NotNull PsiClass pageOrModuleClass) {
     PsiField contentField = pageOrModuleClass.findFieldByName("content", false);
 
     if (!(contentField instanceof GrField)) return Collections.emptyMap();
@@ -77,7 +79,7 @@ public class GebUtil {
     GrExpression initializer = ((GrField)contentField).getInitializerGroovy();
     if (!(initializer instanceof GrClosableBlock)) return Collections.emptyMap();
 
-    Map<String, PsiField> res = new HashMap<>();
+    Map<String, PsiMember> res = new HashMap<>();
     PsiType objectType = PsiType.getJavaLangObject(pageOrModuleClass.getManager(), pageOrModuleClass.getResolveScope());
 
     for (PsiElement e = initializer.getFirstChild(); e != null; e = e.getNextSibling()) {
@@ -102,24 +104,56 @@ public class GebUtil {
           continue;
         }
 
-        GrLightField field = new GrLightField(pageOrModuleClass, ((GrReferenceExpression)invokedExpression).getReferenceName(), objectType, invokedExpression) {
-          @Override
-          public PsiType getTypeGroovy() {
-            return block.getReturnType();
-          }
+        String name = ((GrReferenceExpression)invokedExpression).getReferenceName();
 
-          @Override
-          public PsiType getDeclaredType() {
-            return null;
-          }
-        };
-
-        field.getModifierList().addModifier(GrModifierFlags.STATIC_MASK);
-
-        res.put(field.getName(), field);
+        PsiMember target;
+        if (block.hasParametersSection()) {
+          target = extractMethodForContent(pageOrModuleClass, name, invokedExpression, block);
+        }
+        else {
+          target = extractFieldForContent(pageOrModuleClass, objectType, name, invokedExpression, block);
+        }
+        res.put(name, target);
       }
     }
 
     return res;
+  }
+
+  @NotNull
+  private static PsiField extractFieldForContent(@NotNull PsiClass pageOrModuleClass, PsiType objectType, String name,
+                                                     GrExpression invokedExpression, GrClosableBlock block) {
+    GrLightField field = new GrLightField(pageOrModuleClass, name, objectType, invokedExpression) {
+
+      @Override
+      public PsiType getTypeGroovy() {
+        return block.getReturnType();
+      }
+
+      @Override
+      public PsiType getDeclaredType() {
+        return null;
+      }
+    };
+    field.getModifierList().addModifier(GrModifierFlags.STATIC_MASK);
+    return field;
+  }
+
+  @NotNull
+  private static PsiMethod extractMethodForContent(@NotNull PsiClass pageOrModuleClass, String name,
+                                                              GrExpression invokedExpression, GrClosableBlock block) {
+    GrLightMethodBuilder method = new GrLightMethodBuilder(pageOrModuleClass.getManager(), name) {
+      @Override
+      public PsiType getReturnType() {
+        return block.getReturnType();
+      }
+    };
+    method.setContainingClass(pageOrModuleClass);
+    method.addModifier(GrModifierFlags.STATIC_MASK);
+    method.setNavigationElement(invokedExpression);
+    for (GrParameter parameter : block.getAllParameters()) {
+      method.addParameter(parameter);
+    }
+    return method;
   }
 }

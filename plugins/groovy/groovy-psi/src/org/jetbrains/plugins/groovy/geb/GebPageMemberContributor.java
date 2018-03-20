@@ -54,10 +54,10 @@ public class GebPageMemberContributor extends NonCodeMembersContributor {
         if (contentField instanceof GrField) {
           GrField f = (GrField)contentField;
           if ("content".equals(f.getName()) && f.hasModifierProperty(PsiModifier.STATIC) && f.getContainingClass() == aClass) {
-            Map<String, PsiField> elements = GebUtil.getContentElements(aClass);
-            for (PsiField field : elements.values()) {
-              if (field.getNavigationElement() == place) {
-                return; // Don't resolve variable definition.
+            Map<String, PsiMember> elements = GebUtil.getContentElements(aClass);
+            for (PsiMember element : elements.values()) {
+              if (element.getNavigationElement() == place) {
+                return; // Don't resolve definition.
               }
             }
           }
@@ -65,27 +65,27 @@ public class GebPageMemberContributor extends NonCodeMembersContributor {
       }
     }
 
-    processPageFields(processor, aClass, state);
+    processPageElements(processor, aClass, state);
   }
 
-  public static boolean processPageFields(PsiScopeProcessor processor,
-                                          @NotNull PsiClass pageClass,
-                                          ResolveState state) {
+  public static boolean processPageElements(PsiScopeProcessor processor,
+                                            @NotNull PsiClass pageClass,
+                                            ResolveState state) {
     Map<String, PsiClass> supers = ClassUtil.getSuperClassesWithCache(pageClass);
     String nameHint = ResolveUtil.getNameHint(processor);
 
     for (PsiClass psiClass : supers.values()) {
-      Map<String, PsiField> contentFields = GebUtil.getContentElements(psiClass);
+      Map<String, PsiMember> contentElements = GebUtil.getContentElements(psiClass);
 
       if (nameHint == null) {
-        for (Map.Entry<String, PsiField> entry : contentFields.entrySet()) {
+        for (Map.Entry<String, PsiMember> entry : contentElements.entrySet()) {
           if (!processor.execute(entry.getValue(), state)) return false;
         }
       }
       else {
-        PsiField field = contentFields.get(nameHint);
-        if (field != null) {
-          return processor.execute(field, state);
+        PsiMember element = contentElements.get(nameHint);
+        if (element != null) {
+          return processor.execute(element, state);
         }
       }
     }

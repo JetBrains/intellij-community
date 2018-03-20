@@ -92,6 +92,39 @@ class ParentClass extends geb.Page {
     TestUtils.checkCompletionContains(myFixture, "allElements()", "add()", "firstElement()")
   }
 
+  void testResolveContentFieldsAndMethods() {
+    myFixture.configureByText("PageWithContent.groovy", """
+class PageWithContent extends geb.Page {
+  static content = {
+    button { \$('button') }
+    formField { String name -> \$('input', name: name) }
+  }
+  
+  def someMethod() {
+    <caret>
+  }
+}
+""")
+
+    TestUtils.checkCompletionContains(myFixture, "button", "formField()")
+  }
+
+  void testContentMethodReturnType() {
+    myFixture.configureByText("PageWithContent.groovy", """
+class PageWithContent extends geb.Page {
+  static content = {
+    formField { String name -> \$('input', name: name) }
+  }
+  
+  def someMethod() {
+    formField('username').<caret>
+  }
+}
+""")
+
+    TestUtils.checkCompletionContains(myFixture, "allElements()", "add()", "firstElement()")
+  }
+
   void testCheckHighlighting() {
     myFixture.enableInspections(GroovyAssignabilityCheckInspection)
 
