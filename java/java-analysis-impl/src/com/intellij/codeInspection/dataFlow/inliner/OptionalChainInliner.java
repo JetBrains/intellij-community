@@ -27,6 +27,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -71,6 +72,8 @@ public class OptionalChainInliner implements CallInliner {
     new CallMapper<BiConsumer<CFGBuilder, PsiMethodCallExpression>>()
       .register(OPTIONAL_OR_ELSE, (builder, call) -> {
         PsiExpression argument = call.getArgumentList().getExpressions()[0];
+        // orElse(null) is a no-op
+        if (ExpressionUtils.isNullLiteral(argument)) return;
         builder.pushExpression(argument) // stack: .. optValue, elseValue
           .boxUnbox(argument, call.getType())
           .splice(2, 0, 1, 1) // stack: .. elseValue, optValue, optValue
