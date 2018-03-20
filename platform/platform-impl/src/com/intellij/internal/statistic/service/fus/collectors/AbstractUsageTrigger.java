@@ -1,10 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.service.fus.collectors;
 
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.*;
 import org.jetbrains.annotations.NonNls;
@@ -16,13 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@State(name = "FUSUsageTrigger")
-public class FUSUsageTrigger implements UsagesCollectorConsumer, PersistentStateComponent<FUSUsageTrigger.State> {
-  private final Project myProject;
-
-  public FUSUsageTrigger(Project project) {
-    myProject = project;
-  }
+public abstract class AbstractUsageTrigger<T extends FeatureUsagesCollector> implements UsagesCollectorConsumer {
 
   final static class State {
     @Property(surroundWithTag = false)
@@ -32,16 +22,18 @@ public class FUSUsageTrigger implements UsagesCollectorConsumer, PersistentState
 
   private State myState = new State();
 
-  public void trigger(@NotNull Class<? extends FUSUsageTriggerCollector> fusClass,
+  public void trigger(@NotNull Class<? extends T> fusClass,
                       @NotNull @NonNls String feature) {
-    ProjectUsagesCollector collector = getUsageCollector(fusClass);
+    FeatureUsagesCollector collector = findCollector(fusClass);
     if (collector != null) {
       doTrigger(collector.getGroupId(), feature);
     }
   }
 
-  private void doTrigger(@NotNull String usageCollectorId,
-                         @NotNull String feature) {
+  protected abstract FeatureUsagesCollector findCollector(@NotNull Class<? extends T> fusClass);
+
+  protected void doTrigger(@NotNull String usageCollectorId,
+                           @NotNull String feature) {
     SessionInfo sessionInfo = getOrCreateSessionInfo();
     UsagesCollectorInfo collectorInfo = sessionInfo.getUsageCollectorInfo(usageCollectorId);
 
@@ -52,19 +44,6 @@ public class FUSUsageTrigger implements UsagesCollectorConsumer, PersistentState
     else {
       collectorInfo.counts.put(feature, count + 1);
     }
-  }
-
-  public ProjectUsagesCollector getUsageCollector(@NotNull Class<? extends FUSUsageTriggerCollector> fusClass) {
-    for (ProjectUsagesCollector collector : ProjectUsagesCollector.getExtensions(this)) {
-      if (fusClass.equals(collector.getClass())) {
-        return collector;
-      }
-    }
-    return null;
-  }
-
-  public static FUSUsageTrigger getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, FUSUsageTrigger.class);
   }
 
   @NotNull
@@ -80,14 +59,16 @@ public class FUSUsageTrigger implements UsagesCollectorConsumer, PersistentState
   private SessionInfo getOrCreateSessionInfo() {
     SessionInfo info = geExistingSessionInfo();
     if (info != null) return info;
-    SessionInfo sessionInfo = SessionInfo.create(FUSession.create(getProject()).getId());
+    SessionInfo sessionInfo = SessionInfo.create(getFUSession().getId());
     myState.sessions.add(sessionInfo);
     return sessionInfo;
   }
 
+  protected abstract FUSession getFUSession();
+
   @Nullable
   private SessionInfo geExistingSessionInfo() {
-    FUSession session = FUSession.create(getProject());
+    FUSession session = getFUSession();
     for (SessionInfo info : myState.sessions) {
       if (info.id == session.getId()) {
         return info;
@@ -102,10 +83,6 @@ public class FUSUsageTrigger implements UsagesCollectorConsumer, PersistentState
 
   public void loadState(@NotNull final State state) {
     myState = state;
-  }
-
-  public Project getProject() {
-    return myProject;
   }
 
   @Tag("session")

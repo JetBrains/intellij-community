@@ -151,6 +151,11 @@ abstract class ProductProperties {
   boolean enableYourkitAgentInEAP = false
 
   /**
+   * Specifies how Maven artifacts for IDE modules should be generated, by default no artifacts are generated.
+   */
+  MavenArtifactsProperties mavenArtifacts = new MavenArtifactsProperties()
+
+  /**
    * Specified additional modules (not included into the product layout) which need to be compiled when product is built.
    * todo[nik] get rid of this
    */

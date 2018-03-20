@@ -97,10 +97,10 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
   private LabeledComponent<ShortenCommandLineModeCombo> myShortenClasspathModeCombo;
   private JComboBox myForkCb;
   private JBLabel myTestLabel;
-  private JComboBox myTypeChooser;
+  private JComboBox<Integer> myTypeChooser;
   private JBLabel mySearchForTestsLabel;
   private JPanel myScopesPanel;
-  private JComboBox myRepeatCb;
+  private JComboBox<String> myRepeatCb;
   private JTextField myRepeatCountField;
   private LabeledComponent<JComboBox<String>> myChangeListLabeledComponent;
   private LabeledComponent<RawCommandLineEditor> myUniqueIdField;
@@ -118,6 +118,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     myModule.getComponent().addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         myCommonJavaParameters.setModuleContext(myModuleSelector.getModule());
+        reloadTestKindModel();
       }
     });
     myBrowsers = new BrowseModuleValueActionListener[]{
@@ -153,21 +154,8 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
       new CategoryBrowser(project),
       null
     };
-    // Garbage support
-    final DefaultComboBoxModel aModel = new DefaultComboBoxModel();
-    aModel.addElement(JUnitConfigurationModel.ALL_IN_PACKAGE);
-    aModel.addElement(JUnitConfigurationModel.DIR);
-    aModel.addElement(JUnitConfigurationModel.PATTERN);
-    aModel.addElement(JUnitConfigurationModel.CLASS);
-    aModel.addElement(JUnitConfigurationModel.METHOD);
-    aModel.addElement(JUnitConfigurationModel.CATEGORY);
-    aModel.addElement(JUnitConfigurationModel.UNIQUE_ID);
-    aModel.addElement(JUnitConfigurationModel.TAGS);
-    if (Registry.is(TestDiscoveryExtension.TEST_DISCOVERY_REGISTRY_KEY)) {
-      aModel.addElement(JUnitConfigurationModel.BY_SOURCE_POSITION);
-      aModel.addElement(JUnitConfigurationModel.BY_SOURCE_CHANGES);
-    }
-    myTypeChooser.setModel(aModel);
+
+    reloadTestKindModel();
     myTypeChooser.setRenderer(new ListCellRendererWrapper<Integer>() {
       @Override
       public void customize(JList list, Integer value, int index, boolean selected, boolean hasFocus) {
@@ -194,7 +182,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
             setText("UniqueId");
             break;
           case JUnitConfigurationModel.TAGS:
-            setText("Tags (JUnit 5)");
+            setText("Tags");
             break;
           case JUnitConfigurationModel.BY_SOURCE_POSITION:
             setText("Through source location");
@@ -212,7 +200,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     myTestLocations[JUnitConfigurationModel.DIR] = myDir;
     myTestLocations[JUnitConfigurationModel.CATEGORY] = myCategory;
 
-    myRepeatCb.setModel(new DefaultComboBoxModel(RepeatCount.REPEAT_TYPES));
+    myRepeatCb.setModel(new DefaultComboBoxModel<>(RepeatCount.REPEAT_TYPES));
     myRepeatCb.setSelectedItem(RepeatCount.ONCE);
     myRepeatCb.addActionListener(new ActionListener() {
       @Override
@@ -282,6 +270,34 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     }
 
     myShortenClasspathModeCombo.setComponent(new ShortenCommandLineModeCombo(myProject, myJrePathEditor, myModule.getComponent()));
+  }
+
+  private void reloadTestKindModel() {
+    final DefaultComboBoxModel<Integer> aModel = new DefaultComboBoxModel<>();
+    aModel.addElement(JUnitConfigurationModel.ALL_IN_PACKAGE);
+    aModel.addElement(JUnitConfigurationModel.DIR);
+    aModel.addElement(JUnitConfigurationModel.PATTERN);
+    aModel.addElement(JUnitConfigurationModel.CLASS);
+    aModel.addElement(JUnitConfigurationModel.METHOD);
+
+    Module module = getModuleSelector().getModule();
+    GlobalSearchScope searchScope = module != null ? GlobalSearchScope.moduleRuntimeScope(module, true) 
+                                                   : GlobalSearchScope.allScope(myProject);
+
+    if (JavaPsiFacade.getInstance(myProject).findPackage("org.junit") != null) {
+      aModel.addElement(JUnitConfigurationModel.CATEGORY);
+    }
+
+    if (JUnitUtil.isJUnit5(searchScope, myProject)) {
+      aModel.addElement(JUnitConfigurationModel.UNIQUE_ID);
+      aModel.addElement(JUnitConfigurationModel.TAGS);
+    }
+
+    if (Registry.is(TestDiscoveryExtension.TEST_DISCOVERY_REGISTRY_KEY)) {
+      aModel.addElement(JUnitConfigurationModel.BY_SOURCE_POSITION);
+      aModel.addElement(JUnitConfigurationModel.BY_SOURCE_CHANGES);
+    }
+    myTypeChooser.setModel(aModel);
   }
 
   private static void addRadioButtonsListeners(final JRadioButton[] radioButtons, ChangeListener listener) {

@@ -30,7 +30,6 @@ import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.util.*;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.containers.IntObjectMap;
@@ -1537,7 +1536,7 @@ public class FSRecords {
     }
     else {
       int newRecord = getContentStorage().acquireNewRecord();
-      assert page == newRecord :"Unexpected content storage modification";
+      assert page == newRecord : "Unexpected content storage modification: page="+page+"; newRecord="+newRecord;
       
       return -page;
     }

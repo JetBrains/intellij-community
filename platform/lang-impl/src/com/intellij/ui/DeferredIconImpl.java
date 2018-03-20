@@ -388,7 +388,7 @@ public class DeferredIconImpl<T> extends CachingScalableJBIcon<DeferredIconImpl<
 
   @FunctionalInterface
   interface IconListener<T> {
-    void evalDone(DeferredIconImpl<T> source, T key, @NotNull Icon result);
+    void evalDone(@NotNull DeferredIconImpl<T> source, T key, @NotNull Icon result);
   }
 
   static boolean equalIcons(Icon icon1, Icon icon2) {

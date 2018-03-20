@@ -3,7 +3,10 @@
  */
 package com.jetbrains.python.codeInsight.stdlib
 
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyKnownDecoratorUtil
+import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.TypeEvalContext
@@ -42,13 +45,13 @@ data class DataclassParameters(val init: Boolean,
                                val repr: Boolean,
                                val eq: Boolean,
                                val order: Boolean,
-                               val hash: Boolean?,
+                               val unsafeHash: Boolean,
                                val frozen: Boolean,
                                val initArgument: PyExpression?,
                                val reprArgument: PyExpression?,
                                val eqArgument: PyExpression?,
                                val orderArgument: PyExpression?,
-                               val hashArgument: PyExpression?,
+                               val unsafeHashArgument: PyExpression?,
                                val frozenArgument: PyExpression?)
 
 private class DataclassParametersBuilder {
@@ -58,7 +61,7 @@ private class DataclassParametersBuilder {
     private val DEFAULT_REPR: Boolean = true
     private val DEFAULT_EQ: Boolean = true
     private val DEFAULT_ORDER: Boolean = false
-    private val DEFAULT_HASH: Boolean? = null // `null` means `None`
+    private val DEFAULT_UNSAFE_HASH: Boolean = false
     private val DEFAULT_FROZEN: Boolean = false
   }
 
@@ -66,14 +69,14 @@ private class DataclassParametersBuilder {
   private var repr = DEFAULT_REPR
   private var eq = DEFAULT_EQ
   private var order = DEFAULT_ORDER
-  private var hash = DEFAULT_HASH
+  private var unsafeHash = DEFAULT_UNSAFE_HASH
   private var frozen = DEFAULT_FROZEN
 
   private var initArgument: PyExpression? = null
   private var reprArgument: PyExpression? = null
   private var eqArgument: PyExpression? = null
   private var orderArgument: PyExpression? = null
-  private var hashArgument: PyExpression? = null
+  private var unsafeHashArgument: PyExpression? = null
   private var frozenArgument: PyExpression? = null
 
   fun update(name: String?, argument: PyExpression?) {
@@ -81,39 +84,32 @@ private class DataclassParametersBuilder {
 
     when (name) {
       "init" -> {
-        init = evaluateBoolean(value, DEFAULT_INIT)
+        init = PyEvaluator.evaluateAsBoolean(value, DEFAULT_INIT)
         initArgument = argument
       }
       "repr" -> {
-        repr = evaluateBoolean(value, DEFAULT_REPR)
+        repr = PyEvaluator.evaluateAsBoolean(value, DEFAULT_REPR)
         reprArgument = argument
       }
       "eq" -> {
-        eq = evaluateBoolean(value, DEFAULT_EQ)
+        eq = PyEvaluator.evaluateAsBoolean(value, DEFAULT_EQ)
         eqArgument = argument
       }
       "order" -> {
-        order = evaluateBoolean(value, DEFAULT_ORDER)
+        order = PyEvaluator.evaluateAsBoolean(value, DEFAULT_ORDER)
         orderArgument = argument
       }
-      "hash" -> {
-        hash = evaluateBoolean(value, DEFAULT_HASH)
-        hashArgument = argument
+      "unsafe_hash" -> {
+        unsafeHash = PyEvaluator.evaluateAsBoolean(value, DEFAULT_UNSAFE_HASH)
+        unsafeHashArgument = argument
       }
       "frozen" -> {
-        frozen = evaluateBoolean(value, DEFAULT_FROZEN)
+        frozen = PyEvaluator.evaluateAsBoolean(value, DEFAULT_FROZEN)
         frozenArgument = argument
       }
     }
   }
 
-  fun build() = DataclassParameters(init, repr, eq, order, hash, frozen,
-                                    initArgument, reprArgument, eqArgument, orderArgument, hashArgument, frozenArgument)
-
-
-  private inline fun <reified T: Boolean?> evaluateBoolean(expression: PyExpression?, default: T): T {
-    val result = PyEvaluator().evaluate(expression)
-    if (result is Boolean) return result as T
-    return default
-  }
+  fun build() = DataclassParameters(init, repr, eq, order, unsafeHash, frozen,
+                                    initArgument, reprArgument, eqArgument, orderArgument, unsafeHashArgument, frozenArgument)
 }

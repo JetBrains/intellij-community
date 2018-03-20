@@ -54,6 +54,8 @@ class BuildOptions {
   static final SOURCES_ARCHIVE_STEP = "sources_archive"
   static final SCRAMBLING_STEP = "scramble"
   static final NON_BUNDLED_PLUGINS_STEP = "non_bundled_plugins"
+  /** Build Maven artifacts for IDE modules. */
+  static final MAVEN_ARTIFACTS_STEP = "maven_artifacts"
   /** Build macOS artifacts. */
   static final MAC_ARTIFACTS_STEP = "mac_artifacts"
   /** Build .dmg file for macOS. If skipped, only .sit archive will be produced. */
