@@ -2,6 +2,7 @@ package circlet.components
 
 import circlet.client.*
 import circlet.client.api.*
+import circlet.platform.client.*
 import circlet.settings.*
 import circlet.utils.*
 import com.intellij.concurrency.*

@@ -2,6 +2,7 @@ package circlet.actions
 
 import circlet.client.*
 import circlet.components.*
+import circlet.platform.client.*
 import circlet.utils.*
 import com.intellij.notification.*
 import com.intellij.openapi.actionSystem.*
