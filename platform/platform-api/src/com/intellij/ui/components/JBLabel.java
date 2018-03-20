@@ -18,6 +18,7 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.text.BadLocationException;
+import javax.swing.text.DefaultCaret;
 import javax.swing.text.EditorKit;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
@@ -288,6 +289,7 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
         myEditorPane.setEditorKit(UIUtil.getHTMLEditorKit());
         updateStyle(myEditorPane);
 
+        ((DefaultCaret)myEditorPane.getCaret()).setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
         myEditorPane.setText(getText());
         checkMultiline();
         myEditorPane.setCaretPosition(0);
