@@ -472,8 +472,8 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
 
   @NotNull
   private VirtualFile getWorkDirectory(@Nullable Module module) {
-    if (ourAltIsPressed.get()) {
-      return myVirtualFile != null ? myVirtualFile.getParent() : getBaseDirectory(module);
+    if (ourAltIsPressed.get() && myVirtualFile != null) {
+      return myVirtualFile.isDirectory() ? myVirtualFile : myVirtualFile.getParent();
     }
 
     return getBaseDirectory(module);
