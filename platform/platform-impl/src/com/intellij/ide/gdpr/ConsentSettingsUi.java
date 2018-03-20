@@ -61,7 +61,8 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
       final Consent consent = it.next();
       final JComponent comp = createConsentElement(consent, addCheckBox);
       body.add(comp, new GridBagConstraints(
-        0, GridBagConstraints.RELATIVE, 1, 1, 1.0, !it.hasNext() && myPreferencesMode ? 1.0 : 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, JBUI.insets(10, 0, 0, 0), 0, 0)
+        0, GridBagConstraints.RELATIVE, 1, 1, 1.0, !it.hasNext() && myPreferencesMode ? 1.0 : 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
+        it.hasNext() ? JBUI.insets(0, 0, 10, 0) : JBUI.emptyInsets(), 0, 0)
       );
     }
     if (!myPreferencesMode) {
@@ -75,7 +76,9 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
         new Insets(JBUI.scale(16), 0, JBUI.scale(10), 0), 0, 0)
       );
     }
-    body.setBorder(JBUI.Borders.empty(10));
+    if (!myPreferencesMode) {
+      body.setBorder(JBUI.Borders.empty(10));
+    }
     removeAll();
     JBScrollPane scrollPane = new JBScrollPane(body, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_AS_NEEDED);
     scrollPane.setBorder(JBUI.Borders.empty());
@@ -103,7 +106,7 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
         }
       }
     });
-    viewer.setText("<html>" + StringUtil.replace(consent.getText(), "\n", "<br>") + "</html>");
+    viewer.setText("<html><body><div width=\"600\">" + StringUtil.replace(consent.getText(), "\n", "<br>") + "</div></body></html>");
     StyleSheet styleSheet = ((HTMLDocument)viewer.getDocument()).getStyleSheet();
     //styleSheet.addRule("body {font-family: \"Segoe UI\", Tahoma, sans-serif;}");
     styleSheet.addRule("body {margin-top:0;padding-top:0;}");
