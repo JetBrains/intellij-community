@@ -62,7 +62,7 @@ public class PyNoneFunctionAssignmentInspection extends PyInspection {
 
         if (type instanceof PyNoneType && callee != null) {
           final Condition<PyCallable> ignoredCallable = callable -> {
-            if (PySdkUtil.isElementInSkeletons(callable)) {
+            if (myTypeEvalContext.getReturnType(callable) != PyNoneType.INSTANCE || PySdkUtil.isElementInSkeletons(callable)) {
               return true;
             }
             if (callable instanceof PyFunction) {
