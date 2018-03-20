@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.PrioritizedInternalDocumentListener;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.util.DocumentUtil;
@@ -59,7 +60,24 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
     myIsFoldingEnabled = true;
     myIsBatchFoldingProcessing = false;
     myDoNotCollapseCaret = false;
-    myRegionTree = new RangeMarkerTree<>(editor.getDocument());
+    myRegionTree = new RangeMarkerTree<FoldRegionImpl>(editor.getDocument()) {
+      @NotNull
+      @Override
+      protected RMNode<FoldRegionImpl> createNewNode(@NotNull FoldRegionImpl key,
+                                                     int start,
+                                                     int end,
+                                                     boolean greedyToLeft,
+                                                     boolean greedyToRight,
+                                                     boolean stickingToRight,
+                                                     int layer) {
+        return new RMNode<FoldRegionImpl>(this, key, start, end, greedyToLeft, greedyToRight, stickingToRight) {
+          @Override
+          protected Getter<FoldRegionImpl> createGetter(@NotNull FoldRegionImpl region) {
+            return region;
+          }
+        };
+      }
+    };
     myFoldTree = new FoldRegionsTree(myRegionTree) {
       @Override
       protected boolean isFoldingEnabled() {
