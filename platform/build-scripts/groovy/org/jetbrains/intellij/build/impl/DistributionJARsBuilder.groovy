@@ -273,6 +273,15 @@ class DistributionJARsBuilder {
       if (!forbiddenJars.empty) {
         buildContext.messages.error( "The following JARs cannot be included into the product 'lib' directory, they need to be scrambled with the main jar: ${forbiddenJars}")
       }
+      def modulesToBeScrambled = buildContext.proprietaryBuildTools.scrambleTool.namesOfModulesRequiredToBeScrambled
+      platform.moduleJars.keySet().each { jarName ->
+        if (jarName != productLayout.mainJarName) {
+          def notScrambled = platform.moduleJars.get(jarName).intersect(modulesToBeScrambled)
+          if (!notScrambled.isEmpty()) {
+            buildContext.messages.error("Module '${notScrambled.first()}' is included into $jarName which is not scrambled.")
+          }
+        }
+      }
     }
 
     usedModules.addAll(layoutBuilder.usedModules)
