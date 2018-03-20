@@ -372,7 +372,7 @@ public abstract class DialogWrapper {
         if (myDisposed) return;
         setErrorInfoAll(info);
         myPeer.getRootPane().getGlassPane().repaint();
-        getOKAction().setEnabled(info.isEmpty());
+        getOKAction().setEnabled(info.isEmpty() || info.stream().noneMatch(info1 -> info1.disableOk));
       });
     }
   }
@@ -1867,7 +1867,7 @@ public abstract class DialogWrapper {
         }
 
         startTrackingValidation();
-        return;
+        if(infoList.stream().anyMatch(info1 -> info1.disableOk)) return;
       }
       doOKAction();
     }
