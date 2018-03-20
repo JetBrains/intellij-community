@@ -120,7 +120,16 @@ public class RunAnythingCommandItem extends RunAnythingItem<String> {
     if (SystemInfoRt.isWindows) return ContainerUtil.immutableList(ExecUtil.getWindowsShellName(), "/c");
 
     String shell = System.getenv("SHELL");
-    return shell == null || !new File(shell).canExecute() ? ContainerUtil.emptyList() : ContainerUtil.immutableList(shell, "-c");
+    if (shell == null || !new File(shell).canExecute()) {
+      return ContainerUtil.emptyList();
+    }
+
+    List<String> commands = ContainerUtil.newArrayList(shell);
+    if (!shell.endsWith("/tcsh") && !shell.endsWith("/csh")) {
+      commands.add("--login");
+    }
+    commands.add("-c");
+    return commands;
   }
 
   private static String getRubyAwareCommand(@NotNull Sdk sdk, @NotNull Map<String, String> env, @NotNull String commandLine) {
