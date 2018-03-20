@@ -56,6 +56,7 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <metaLanguage implementation="com.intellij.lang.jvm.JvmMetaLanguage"/>
     <java.elementFinder implementation="com.intellij.psi.impl.PsiElementFinderImpl" id="java" order="first"/>
     <treeGenerator implementation="com.intellij.psi.impl.source.tree.JavaTreeGenerator"/>
     <itemPresentationProvider forClass="com.intellij.psi.PsiJavaModule"
