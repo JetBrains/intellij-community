@@ -16,13 +16,16 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.inspections.quickfix.PyRemoveDictKeyQuickFix;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,59 +55,49 @@ public class PyDictDuplicateKeysInspection extends PyInspection {
   }
 
   private static class Visitor extends PyInspectionVisitor {
+
     public Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
       super(holder, session);
     }
 
     @Override
-    public void visitPyDictLiteralExpression(PyDictLiteralExpression node) {
-      final PyKeyValueExpression[] elements = node.getElements();
-      if (elements.length != 0){
-        final Map<String, PyElement> map = new HashMap<>();
-        for (PyExpression exp : elements) {
-          final PyExpression key = ((PyKeyValueExpression)exp).getKey();
-          final String keyValue = getKeyValue(key);
-          if (keyValue != null) {
-            if (map.keySet().contains(keyValue)) {
-              registerProblem(key, "Dictionary contains duplicate keys " + keyValue, new PyRemoveDictKeyQuickFix());
-              registerProblem(map.get(keyValue), "Dictionary contains duplicate keys " + keyValue, new PyRemoveDictKeyQuickFix());
-            }
-            map.put(keyValue, key);
-          }
-        }
+    public void visitPyDictLiteralExpression(@NotNull PyDictLiteralExpression node) {
+      if (node.isEmpty()) return;
+
+      final Map<String, PsiElement> map = new HashMap<>();
+      for (PyKeyValueExpression element : node.getElements()) {
+        checkKey(map, getDictLiteralKey(element), new PyRemoveDictKeyQuickFix());
       }
     }
 
     @Override
-    public void visitPyCallExpression(final PyCallExpression node) {
-      if (isDict(node)) {
-        final Map<String, PsiElement> map = new HashMap<>();
-        final PyArgumentList pyArgumentList = node.getArgumentList();
-        if (pyArgumentList == null) return;
-        final PyExpression[] arguments = pyArgumentList.getArguments();
-        for (PyExpression argument : arguments) {
-          if (argument instanceof PyParenthesizedExpression)
-            argument = ((PyParenthesizedExpression)argument).getContainedExpression();
-          if (argument instanceof PySequenceExpression) {
-            for (PyElement el : ((PySequenceExpression)argument).getElements()) {
-              final PsiElement key = getKey(el);
-              checkKey(map, key);
-            }
+    public void visitPyCallExpression(@NotNull PyCallExpression node) {
+      if (!isDict(node)) return;
+
+      final Map<String, PsiElement> map = new HashMap<>();
+      for (PyExpression argument : node.getArguments()) {
+        argument = PyPsiUtils.flattenParens(argument);
+
+        if (argument instanceof PySequenceExpression) {
+          for (PyExpression element : ((PySequenceExpression)argument).getElements()) {
+            checkKey(map, getDictCallKey(element));
           }
-          else {
-            final PsiElement key = getKey(argument);
-            checkKey(map, key);
-          }
+        }
+        else if (argument instanceof PyKeywordArgument) {
+          checkKey(map, getDictCallKey(argument));
         }
       }
     }
 
     @Nullable
+    private static Pair<PsiElement, String> getDictLiteralKey(@NotNull PyKeyValueExpression argument) {
+      final PyExpression key = argument.getKey();
+      final String keyValue = getKeyValue(key);
+      return keyValue != null ? Pair.createNonNull(key, keyValue) : null;
+    }
+
+    @Nullable
     private static String getKeyValue(@NotNull PsiElement node) {
-      final PsiElement parent = node.getParent();
-      if (parent instanceof PyKeywordArgument && ((PyKeywordArgument)parent).getKeywordNode() == node) {
-        return ((PyKeywordArgument)parent).getKeyword();
-      }
       return node instanceof PyStringLiteralExpression
              ? ((PyStringLiteralExpression)node).getStringValue()
              : node instanceof PyLiteralExpression || node instanceof PyReferenceExpression
@@ -112,40 +105,48 @@ public class PyDictDuplicateKeysInspection extends PyInspection {
                : null;
     }
 
-    private void checkKey(final Map<String, PsiElement> map, final PsiElement node) {
-      if (node == null) return;
-      String key = getKeyValue(node);
-      if (map.keySet().contains(key)) {
-        registerProblem(node, "Dictionary contains duplicate keys " + key);
-        registerProblem(map.get(key), "Dictionary contains duplicate keys " + key);
+    private void checkKey(@NotNull Map<String, PsiElement> map,
+                          @Nullable Pair<PsiElement, String> keyAndValue,
+                          @NotNull LocalQuickFix... quickFixes) {
+      if (keyAndValue == null) return;
+
+      final PsiElement key = keyAndValue.first;
+      final String keyValue = keyAndValue.second;
+
+      if (map.containsKey(keyValue)) {
+        registerProblem(key, "Dictionary contains duplicate keys '" + keyValue + "'", quickFixes);
+        registerProblem(map.get(keyValue), "Dictionary contains duplicate keys '" + keyValue + "'", quickFixes);
       }
-      map.put(key, node);
+      map.put(keyValue, key);
     }
 
     @Nullable
-    private static PsiElement getKey(final PyElement argument) {
+    private static Pair<PsiElement, String> getDictCallKey(@Nullable PyExpression argument) {
       if (argument instanceof PyParenthesizedExpression) {
-        final PyExpression expr = ((PyParenthesizedExpression)argument).getContainedExpression();
-        if (expr instanceof PyTupleExpression) {
-          return ((PyTupleExpression)expr).getElements()[0];
+        final PyExpression expression = PyPsiUtils.flattenParens(argument);
+        if (expression instanceof PyTupleExpression) {
+          final PyExpression key = ((PyTupleExpression)expression).getElements()[0];
+          final String keyValue = getKeyValue(key);
+          if (keyValue != null) {
+            return Pair.createNonNull(key, keyValue);
+          }
         }
       }
+
       if (argument instanceof PyKeywordArgument) {
-        ASTNode keyWord = ((PyKeywordArgument)argument).getKeywordNode();
-        if (keyWord != null) return keyWord.getPsi();
+        final ASTNode node = ((PyKeywordArgument)argument).getKeywordNode();
+        final String keyValue = ((PyKeywordArgument)argument).getKeyword();
+        if (node != null && keyValue != null) {
+          return Pair.createNonNull(node.getPsi(), keyValue);
+        }
       }
+
       return null;
     }
 
-    private static boolean isDict(final PyCallExpression expression) {
+    private static boolean isDict(@NotNull PyCallExpression expression) {
       final PyExpression callee = expression.getCallee();
-      if (callee == null) return false;
-      final String name = callee.getText();
-      if ("dict".equals(name)) {
-        return true;
-      }
-      return false;
+      return callee != null && "dict".equals(callee.getText());
     }
-
   }
 }
