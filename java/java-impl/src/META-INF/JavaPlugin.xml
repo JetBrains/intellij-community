@@ -1150,5 +1150,8 @@
       <className>com.intellij.codeInsight.intention.impl.SplitFilterAction</className>
       <category>Java/Streams</category>
     </intentionAction>
+    <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.AddExceptionToExistingCatchAction</className>
+    </intentionAction>
   </extensions>
 </idea-plugin>
