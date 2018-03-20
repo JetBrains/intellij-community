@@ -438,8 +438,12 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
       model.getChildren(model.getRoot()).forEach(child -> newRoots.put(child, mapper.apply(this, child)));
       roots = newRoots;
       if (newRoots.isEmpty()) return emptyList();
+      ModuleManager manager = getModuleManager(getProject());
+      if (manager == null) return emptyList();
       boolean hidden = !getSettings().isShowModules();
-      boolean flatten = !hidden && getSettings().isFlattenModules();
+      if (!hidden && manager.getModules().length <= 1) hidden = true;
+      boolean flatten = hidden || getSettings().isFlattenModules();
+      if (!flatten && !manager.hasModuleGroups() && !Registry.is("project.qualified.module.names")) flatten = true;
       return new Group(newRoots.values(), hidden, flatten).createChildren(this, old);
     }
 
