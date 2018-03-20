@@ -675,15 +675,6 @@ public class SMTestProxy extends AbstractTestProxy {
       return ((CompoundTestFailedState)myState).getHyperlinks().get(0);
     }
 
-    if (myChildren != null) {
-      for (SMTestProxy child : myChildren) {
-        if (!child.isDefect()) continue;
-        final DiffHyperlink provider = child.getDiffViewerProvider();
-        if (provider != null) {
-          return provider;
-        }
-      }
-    }
     return null;
   }
 

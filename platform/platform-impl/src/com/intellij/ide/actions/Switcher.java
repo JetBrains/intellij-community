@@ -1076,6 +1076,7 @@ public class Switcher extends AnAction implements DumbAware {
                : files.getModel().getSize() + toolWindows.getSelectedIndex();
       }
 
+      @NotNull
       @Override
       protected Object[] getAllElements() {
 

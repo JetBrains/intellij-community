@@ -4,40 +4,83 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInspection.dataFlow.inference.JavaSourceInference;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.impl.source.PsiMethodImpl;
+import com.intellij.psi.util.*;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ObjectUtils;
+import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+
+import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis.INFERRED_ANNOTATION;
 
 public enum Mutability {
   /**
    * Mutability is not known; probably value can be mutated
    */
-  UNKNOWN,
+  UNKNOWN("Unknown", null),
   /**
    * A value is known to be mutable (e.g. elements are sometimes added to the collection)
    */
-  MUTABLE,
+  MUTABLE("Modifiable", null),
   /**
    * A value is known to be immutable. For collection no elements could be added, removed or altered (though if collection
    * contains mutable elements, they still could be mutated).
    */
-  UNMODIFIABLE,
+  UNMODIFIABLE("Unmodifiable", "org.jetbrains.annotations.Unmodifiable"),
   /**
    * A value is known to be an immutable view over a possibly mutable value: it cannot be mutated directly using this
    * reference; however subsequent reads (e.g. {@link java.util.Collection#size}) may return different results if the
    * underlying value is mutated by somebody else.
    */
-  UNMODIFIABLE_VIEW;
+  UNMODIFIABLE_VIEW("Unmodifiable view", "org.jetbrains.annotations.UnmodifiableView");
 
-  public static final String UNMODIFIABLE_ANNOTATION = "org.jetbrains.annotations.Unmodifiable";
-  public static final String UNMODIFIABLE_VIEW_ANNOTATION = "org.jetbrains.annotations.UnmodifiableView";
+  public static final @NotNull String UNMODIFIABLE_ANNOTATION = UNMODIFIABLE.myAnnotation;
+  public static final @NotNull String UNMODIFIABLE_VIEW_ANNOTATION = UNMODIFIABLE_VIEW.myAnnotation;
+  private final String myName;
+  private final String myAnnotation;
+  private final Key<CachedValue<PsiAnnotation>> myKey;
+
+  Mutability(String name, String annotation) {
+    myName = name;
+    myAnnotation = annotation;
+    myKey = annotation == null ? null : Key.create(annotation);
+  }
+
+  @Override
+  public String toString() {
+    return myName;
+  }
 
   public boolean isUnmodifiable() {
     return this == UNMODIFIABLE || this == UNMODIFIABLE_VIEW;
+  }
+
+  @NotNull
+  public Mutability union(Mutability other) {
+    if (this == other) return this;
+    if (this == MUTABLE || other == MUTABLE) return MUTABLE;
+    if (this == UNKNOWN || other == UNKNOWN) return UNKNOWN;
+    if (this == UNMODIFIABLE_VIEW || other == UNMODIFIABLE_VIEW) return UNMODIFIABLE_VIEW;
+    return UNMODIFIABLE;
+  }
+
+  @Nullable
+  public PsiAnnotation asAnnotation(Project project) {
+    if (myAnnotation == null) return null;
+    return CachedValuesManager.getManager(project).getCachedValue(project, myKey, () -> {
+      PsiAnnotation annotation = JavaPsiFacade.getElementFactory(project).createAnnotationFromText("@" + myAnnotation, null);
+      annotation.putUserData(INFERRED_ANNOTATION, Boolean.TRUE);
+      ((LightVirtualFile)annotation.getContainingFile().getViewProvider().getVirtualFile()).setWritable(false);
+      return CachedValueProvider.Result.create(annotation, ModificationTracker.NEVER_CHANGED);
+    }, false);
   }
 
   /**
@@ -84,9 +127,14 @@ public enum Mutability {
       PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(((PsiField)owner).getInitializer());
       if (initializer instanceof PsiMethodCallExpression) {
         PsiMethod method = ((PsiMethodCallExpression)initializer).resolveMethod();
-        return method == null ? UNKNOWN : getMutability(method);
+        if (method == null) {
+          return UNKNOWN;
+        }
+        if (ClassUtils.isImmutable(method.getReturnType())) return UNMODIFIABLE;
+        return getMutability(method);
       }
     }
-    return UNKNOWN;
+    return owner instanceof PsiMethodImpl ? JavaSourceInference.inferMutability((PsiMethodImpl)owner) : UNKNOWN;
   }
+
 }

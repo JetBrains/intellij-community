@@ -164,8 +164,8 @@ public class CompareFilesAction extends BaseShowDiffAction {
   @NotNull
   private static Type getType(@Nullable VirtualFile file) {
     if (file == null) return Type.FILE;
-    if (file.isDirectory()) return Type.DIRECTORY;
     if (file.getFileType() instanceof ArchiveFileType) return Type.ARCHIVE;
+    if (file.isDirectory()) return Type.DIRECTORY;
     return Type.FILE;
   }
 

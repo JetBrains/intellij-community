@@ -274,6 +274,9 @@ class PyAddSdkDialog private constructor(private val project: Project?,
     try {
       selectedPanel?.complete()
     }
+    catch (e: CreateSdkInterrupted) {
+      return
+    }
     catch (e: Exception) {
       Messages.showErrorDialog(e.localizedMessage, "Error")
       return
@@ -316,3 +319,5 @@ class PyAddSdkDialog private constructor(private val project: Project?,
     }
   }
 }
+
+class CreateSdkInterrupted: Exception()

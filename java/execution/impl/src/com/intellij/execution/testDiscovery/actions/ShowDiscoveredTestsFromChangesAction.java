@@ -2,6 +2,7 @@
 package com.intellij.execution.testDiscovery.actions;
 
 import com.intellij.codeInsight.actions.FormatChangedTextUtil;
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -71,6 +72,7 @@ public class ShowDiscoveredTestsFromChangesAction extends AnAction {
       .map(m -> ObjectUtils.tryCast(Objects.requireNonNull(UastContextKt.toUElement(m)).getJavaPsi(), PsiMethod.class))
       .filter(Objects::nonNull)
       .toArray(PsiMethod.ARRAY_FACTORY::create);
+    FeatureUsageTracker.getInstance().triggerFeatureUsed("test.discovery.selected.changes");
     ShowDiscoveredTestsAction.showDiscoveredTests(project, e.getDataContext(), "Selected Changes", asJavaMethods);
   }
 }

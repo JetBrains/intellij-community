@@ -1027,7 +1027,7 @@ public class PyUtil {
    * @param target PSI element to check
    * @return PsiDirectory or target unchanged
    */
-  @Contract("null -> null; !null -> !null")
+  @Contract("null -> null")
   @Nullable
   public static PsiElement turnInitIntoDir(@Nullable PsiElement target) {
     if (target instanceof PyFile && isPackage((PsiFile)target)) {

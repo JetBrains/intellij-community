@@ -1,23 +1,12 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package com.intellij.codeInspection.dataFlow
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.codeInspection.dataFlow.inference
 
 import com.intellij.codeInsight.NullableNotNullManager
-import com.intellij.codeInspection.dataFlow.ContractInferenceInterpreter.withConstraint
+import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer
+import com.intellij.codeInspection.dataFlow.MethodContract
 import com.intellij.codeInspection.dataFlow.MethodContract.ValueConstraint.*
+import com.intellij.codeInspection.dataFlow.StandardMethodContract
+import com.intellij.codeInspection.dataFlow.inference.ContractInferenceInterpreter.withConstraint
 import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction
 import com.intellij.psi.*
 import com.siyeh.ig.psiutils.SideEffectChecker
@@ -27,7 +16,8 @@ import com.siyeh.ig.psiutils.SideEffectChecker
  */
 interface PreContract {
   fun toContracts(method: PsiMethod, body: () -> PsiCodeBlock): List<StandardMethodContract>
-  fun negate(): PreContract? = NegatingContract(this)
+  fun negate(): PreContract? = NegatingContract(
+    this)
 }
 
 internal data class KnownContract(val contract: StandardMethodContract) : PreContract {
@@ -51,7 +41,8 @@ internal data class DelegationContract(internal val expression: ExpressionRange,
       convertDelegatedMethodContract(method, parameters, arguments, varArgCall, dc)
     }
     if (NullableNotNullManager.isNotNull(targetMethod)) {
-      return fromDelegate.map { returnNotNull(it) } + listOf(StandardMethodContract(emptyConstraints(method), NOT_NULL_VALUE))
+      return fromDelegate.map { returnNotNull(it) } + listOf(
+        StandardMethodContract(emptyConstraints(method), NOT_NULL_VALUE))
     }
     return fromDelegate
   }
@@ -88,13 +79,15 @@ internal data class DelegationContract(internal val expression: ExpressionRange,
     return answer?.let { StandardMethodContract(it, returnValue) }
   }
 
-  private fun emptyConstraints(method: PsiMethod) = StandardMethodContract.createConstraintArray(method.parameterList.parametersCount)
+  private fun emptyConstraints(method: PsiMethod) = StandardMethodContract.createConstraintArray(
+    method.parameterList.parametersCount)
 
   private fun returnNotNull(mc: StandardMethodContract) = if (mc.returnValue == THROW_EXCEPTION) mc else StandardMethodContract(
     mc.arguments, NOT_NULL_VALUE)
 
   private fun getLiteralConstraint(argument: PsiExpression) = when (argument) {
-    is PsiLiteralExpression -> ContractInferenceInterpreter.getLiteralConstraint(argument.getFirstChild().node.elementType)
+    is PsiLiteralExpression -> ContractInferenceInterpreter.getLiteralConstraint(
+      argument.getFirstChild().node.elementType)
     else -> null
   }
 
@@ -123,7 +116,9 @@ internal data class NegatingContract(internal val negated: PreContract) : PreCon
 
 private fun negateContract(c: StandardMethodContract): StandardMethodContract? {
   val ret = c.returnValue
-  return if (ret == TRUE_VALUE || ret == FALSE_VALUE) StandardMethodContract(c.arguments, ret.negate()) else null
+  return if (ret == TRUE_VALUE || ret == FALSE_VALUE) StandardMethodContract(c.arguments,
+                                                                                                                  ret.negate())
+  else null
 }
 
 @Suppress("EqualsOrHashCode")

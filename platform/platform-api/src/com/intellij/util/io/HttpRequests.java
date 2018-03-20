@@ -20,7 +20,6 @@ import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.net.ssl.CertificateManager;
 import com.intellij.util.net.ssl.UntrustedCertificateStrategy;
-import io.netty.handler.codec.http.HttpResponseStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,14 +47,16 @@ import java.util.Map;
 public final class HttpRequests {
   private static final Logger LOG = Logger.getInstance(HttpRequests.class);
 
+  public static final String JSON_CONTENT_TYPE = "application/json; charset=utf-8";
+
   private static final int[] REDIRECTS = {
     // temporary redirects
-    HttpResponseStatus.FOUND.code(), HttpResponseStatus.TEMPORARY_REDIRECT.code(),
+    HttpURLConnection.HTTP_MOVED_TEMP, 307 /* temporary redirect */,
     // permanent redirects
-    HttpResponseStatus.MOVED_PERMANENTLY.code(), HttpResponseStatus.SEE_OTHER.code(), HttpResponseStatus.PERMANENT_REDIRECT.code()
+    HttpURLConnection.HTTP_MOVED_PERM, HttpURLConnection.HTTP_SEE_OTHER, 308 /* permanent redirect */
   };
 
-  private static final int PERMANENT_IDX = ArrayUtil.indexOf(REDIRECTS, HttpResponseStatus.MOVED_PERMANENTLY.code());
+  private static final int PERMANENT_IDX = ArrayUtil.indexOf(REDIRECTS, HttpURLConnection.HTTP_MOVED_PERM);
 
   private HttpRequests() { }
 
@@ -479,12 +480,10 @@ public final class HttpRequests {
       URLConnection connection = request.myConnection;
       if (connection instanceof HttpURLConnection && ((HttpURLConnection)connection).getRequestMethod().equals("POST")) {
         // getResponseCode is not checked on connect for POST, because write must be performed before read
-        // https://stackoverflow.com/questions/613307/read-error-response-body-in-java
-        // the problem is that if you read the HttpUrlConnection.getErrorStream() code, you'll see that it ALWAYS returns nul
         HttpURLConnection urlConnection = (HttpURLConnection)connection;
         int responseCode = urlConnection.getResponseCode();
         if (responseCode >= 400) {
-          throwHttpStatusError(request, builder, responseCode);
+          throwHttpStatusError(urlConnection, request, builder, responseCode);
         }
       }
       return result;
@@ -574,7 +573,7 @@ public final class HttpRequests {
           }
         }
 
-        return throwHttpStatusError(request, builder, responseCode);
+        return throwHttpStatusError(httpURLConnection, request, builder, responseCode);
       }
 
       return connection;
@@ -583,15 +582,14 @@ public final class HttpRequests {
     throw new IOException(IdeBundle.message("error.connection.failed.redirects"));
   }
 
-  private static URLConnection throwHttpStatusError(@NotNull RequestImpl request, @NotNull RequestBuilderImpl builder, int responseCode) throws IOException {
-    HttpURLConnection connection = (HttpURLConnection)request.getConnection();
+  private static URLConnection throwHttpStatusError(@NotNull HttpURLConnection connection, @NotNull RequestImpl request, @NotNull RequestBuilderImpl builder, int responseCode) throws IOException {
     String message = null;
     if (builder.myIsReadResponseOnError) {
       message = HttpUrlConnectionUtil.readString(connection, null, true);
     }
 
     if (StringUtil.isEmpty(message)) {
-      message = "Request failed with status code "  + responseCode;
+      message = "Request failed with status code " + responseCode;
     }
     connection.disconnect();
     throw new HttpStatusException(message, responseCode, StringUtil.notNullize(request.myUrl, "Empty URL"));

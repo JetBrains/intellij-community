@@ -38,6 +38,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JavaSdkVersionUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEnumerator;
@@ -211,15 +212,14 @@ public class JShellHandler {
         (module != null? " for module " + module.getName() : " for project " + project.getName())
       );
     }
-    final JavaSdkType javaSdkType = (JavaSdkType)sdk.getSdkType();
-    final String ver = sdk.getVersionString();
-    final JavaSdkVersion sdkVersion = ver == null? null : JavaSdkVersion.fromVersionString(ver);
+    final JavaSdkVersion sdkVersion = JavaSdkVersionUtil.getJavaSdkVersion(sdk);
     if (sdkVersion == null) {
       throw new ExecException("Cannot determine version for JDK " + sdk.getName() + ". Please re-configure the JDK.");
     }
     if (!sdkVersion.isAtLeast(JavaSdkVersion.JDK_1_9)) {
       throw new ExecException("JDK version is " + sdkVersion.getDescription() + ". JDK 9 or higher is needed to run JShell.");
     }
+    final JavaSdkType javaSdkType = (JavaSdkType)sdk.getSdkType();
     final String vmExePath = javaSdkType.getVMExecutablePath(sdk);
     if (vmExePath == null) {
       throw new ExecException("Cannot determine path to VM executable for JDK " + sdk.getName() + ". Please re-configure the JDK.");

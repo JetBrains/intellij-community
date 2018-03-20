@@ -84,10 +84,16 @@ public abstract class DfaFactType<T> extends Key<T> {
     }
   };
 
-  public static final DfaFactType<Mutability> MUTABILITY = new DfaFactType<Mutability>("Mutable") {
+  public static final DfaFactType<Mutability> MUTABILITY = new DfaFactType<Mutability>("Mutability") {
     @Override
     boolean isUnknown(@NotNull Mutability fact) {
       return fact == Mutability.UNKNOWN;
+    }
+
+    @NotNull
+    @Override
+    Mutability unionFacts(@NotNull Mutability left, @NotNull Mutability right) {
+      return left.union(right);
     }
 
     @NotNull

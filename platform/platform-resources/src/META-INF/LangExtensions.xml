@@ -912,8 +912,8 @@
 
     <statistics.usagesCollector implementation="com.intellij.facet.impl.statistics.FrameworkUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.facet.impl.statistics.ModuleTypeUsagesCollector"/>
-    <statistics.usagesCollector implementation="com.intellij.execution.impl.statistics.RunConfigurationTypeUsagesCollector"/>
-    <statistics.usagesCollector implementation="com.intellij.execution.impl.statistics.TemporaryRunConfigurationTypeUsagesCollector"/>
+    <statistics.projectUsagesCollector implementation="com.intellij.execution.impl.statistics.RunConfigurationTypeUsagesCollector"/>
+    <statistics.projectUsagesCollector implementation="com.intellij.execution.impl.statistics.TemporaryRunConfigurationTypeUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.editor.LegacyEditorSettingsStatisticsCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.editor.LegacyEditorSettingsStatisticsCollector$ProjectUsages"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.editor.EditorSettingsStatisticsCollector"/>
@@ -924,7 +924,7 @@
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.tools.AbstractToolsUsagesCollector$EnabledListedToolsUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.tools.AbstractToolsUsagesCollector$DisabledBundledToolsUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.tools.AbstractToolsUsagesCollector$DisabledListedToolsUsagesCollector"/>
-    <statistics.usagesCollector implementation="com.intellij.execution.dashboard.RunDashboardUsagesCollector"/>
+    <statistics.projectUsagesCollector implementation="com.intellij.execution.dashboard.RunDashboardUsagesCollector"/>
 
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenamePsiFileProcessor" order="last"/>
     <renameInputValidator implementation="com.intellij.refactoring.rename.RenameToIgnoredDirectoryFileInputValidator" order="last"/>

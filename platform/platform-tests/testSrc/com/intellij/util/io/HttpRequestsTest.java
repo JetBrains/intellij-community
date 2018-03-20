@@ -170,4 +170,11 @@ public class HttpRequestsTest {
 
     assertEquals(0, HttpRequests.request(myUrl).readBytes(null).length);
   }
+
+  @Test(expected = HttpRequests.HttpStatusException.class)
+  public void permissionDenied() throws IOException {
+    HttpRequests.request("https://httpbin.org/basic-auth/username/passwd")
+                .productNameAsUserAgent()
+                .readString();
+  }
 }

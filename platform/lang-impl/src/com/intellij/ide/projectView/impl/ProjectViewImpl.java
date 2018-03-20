@@ -88,6 +88,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -96,6 +97,9 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
+
+import static java.util.stream.Collectors.toList;
+import static org.jetbrains.concurrency.Promises.collectResults;
 
 @State(name = "ProjectView", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class ProjectViewImpl extends ProjectView implements PersistentStateComponent<Element>, Disposable, QuickActionProvider, BusyObject  {
@@ -1786,28 +1790,39 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       if (viewPane == null) {
         return;
       }
-      AsyncProjectViewSupport support = viewPane.getAsyncSupport();
-      if (support != null) {
-        List<TreeVisitor> visitors = AsyncProjectViewSupport.createVisitors(Arrays.asList(myElements));
-        if (!visitors.isEmpty()) support.accept(visitors, paths -> TreeUtil.selectPaths(viewPane.myTree, paths));
-        return;
-      }
       AbstractTreeBuilder treeBuilder = viewPane.getTreeBuilder();
       JTree tree = viewPane.myTree;
-      DefaultTreeModel treeModel = (DefaultTreeModel)tree.getModel();
-      List<TreePath> paths = new ArrayList<>(myElements.length);
-      for (final Object element : myElements) {
-        DefaultMutableTreeNode node = treeBuilder.getNodeForElement(element);
-        if (node == null) {
-          treeBuilder.buildNodeForElement(element);
-          node = treeBuilder.getNodeForElement(element);
+      if (treeBuilder != null) {
+        DefaultTreeModel treeModel = (DefaultTreeModel)tree.getModel();
+        List<TreePath> paths = new ArrayList<>(myElements.length);
+        for (final Object element : myElements) {
+          DefaultMutableTreeNode node = treeBuilder.getNodeForElement(element);
+          if (node == null) {
+            treeBuilder.buildNodeForElement(element);
+            node = treeBuilder.getNodeForElement(element);
+          }
+          if (node != null) {
+            paths.add(new TreePath(treeModel.getPathToRoot(node)));
+          }
         }
-        if (node != null) {
-          paths.add(new TreePath(treeModel.getPathToRoot(node)));
+        if (!paths.isEmpty()) {
+          tree.setSelectionPaths(paths.toArray(new TreePath[0]));
         }
       }
-      if (!paths.isEmpty()) {
-        tree.setSelectionPaths(paths.toArray(new TreePath[0]));
+      else {
+        List<TreeVisitor> visitors = AsyncProjectViewSupport.createVisitors(Arrays.asList(myElements));
+        if (1 == visitors.size()) {
+          TreeUtil.visit(tree, visitors.get(0), path -> {
+            if (path != null) TreeUtil.selectPath(tree, path);
+          });
+        }
+        else if (!visitors.isEmpty()) {
+          List<Promise<TreePath>> promises = visitors.stream().map(visitor -> TreeUtil.promiseVisit(tree, visitor)).collect(toList());
+          collectResults(promises, true)
+            .onSuccess(list -> {
+              if (list != null && !list.isEmpty()) TreeUtil.selectPaths(tree, list);
+            });
+        }
       }
     }
 

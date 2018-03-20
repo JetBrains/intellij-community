@@ -86,7 +86,7 @@ class EditorWindowImpl extends com.intellij.injected.editor.EditorWindowImpl imp
       window = new EditorWindowImpl(documentRange, editor, injectedFile, documentRange.isOneLine());
       allEditors.add(window);
     }
-    assert window.isValid();
+    window.checkValid();
     return window;
   }
 

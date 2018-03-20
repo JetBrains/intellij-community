@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger;
 
 import com.intellij.execution.impl.ConsoleViewImpl;
@@ -37,8 +35,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static org.junit.Assert.*;
 
@@ -67,10 +67,15 @@ public class XDebuggerTestUtil {
     final Promise<XLineBreakpoint> breakpointPromise = WriteAction.computeAndWait(() -> ((XDebuggerUtilImpl)XDebuggerUtil.getInstance())
       .toggleAndReturnLineBreakpoint(project, file, line, false));
     try {
-      return breakpointPromise.blockingGet(TIMEOUT_MS);
+      try {
+        return breakpointPromise.blockingGet(TIMEOUT_MS);
+      }
+      catch (TimeoutException e) {
+        throw new RuntimeException(e);
+      }
     }
-    catch (Throwable e) {  // Rejected promise throws RuntimeException on blockingGet()
-      return null;
+    catch (ExecutionException e) {
+      throw new RuntimeException(e.getCause());
     }
   }
 
@@ -129,7 +134,7 @@ public class XDebuggerTestUtil {
   public static List<XStackFrame> collectFrames(@Nullable XExecutionStack thread, @NotNull XDebugSession session) {
     return collectFrames(thread == null ? getActiveThread(session) : thread);
   }
-  
+
   public static String getFramePresentation(XStackFrame frame) {
     TextTransferable.ColoredStringBuilder builder = new TextTransferable.ColoredStringBuilder();
     frame.customizePresentation(builder);
@@ -257,7 +262,7 @@ public class XDebuggerTestUtil {
 
   public static void assertVariableValueMatches(@NotNull Collection<XValue> vars,
                                                 @Nullable String name,
-                                                @Nullable @Language("RegExp") String valuePattern) throws InterruptedException {
+                                                @Nullable @Language("RegExp") String valuePattern) {
     assertVariableValueMatches(findVar(vars, name), name, valuePattern);
   }
 
@@ -433,12 +438,10 @@ public class XDebuggerTestUtil {
                                                                       @NotNull final XBreakpointProperties properties) {
     XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
     Ref<XBreakpoint> breakpoint = Ref.create(null);
-    XBreakpointUtil.breakpointTypes().select(exceptionType).findFirst().ifPresent(type ->
-                                                                                    WriteAction.runAndWait(()->
-          breakpoint.set(breakpointManager.addBreakpoint(type, properties))
-                                                                                    )
-      
-    );
+    XBreakpointUtil.breakpointTypes()
+                   .select(exceptionType)
+                   .findFirst()
+                   .ifPresent(type -> WriteAction.runAndWait(() -> breakpoint.set(breakpointManager.addBreakpoint(type, properties))));
     return breakpoint.get();
   }
 
@@ -515,7 +518,7 @@ public class XDebuggerTestUtil {
     assertEquals(expectedExpression, expression);
     return expression;
   }
-  
+
   public static class XTestExecutionStackContainer extends XTestContainer<XExecutionStack> implements XSuspendContext.XExecutionStackContainer {
     @Override
     public void errorOccurred(@NotNull String errorMessage) {
@@ -526,11 +529,11 @@ public class XDebuggerTestUtil {
     public void addExecutionStack(@NotNull List<? extends XExecutionStack> executionStacks, boolean last) {
       addChildren(executionStacks, last);
     }
-  } 
+  }
 
   public static class XTestStackFrameContainer extends XTestContainer<XStackFrame> implements XStackFrameContainerEx {
     public volatile XStackFrame frameToSelect;
-    
+
     public void addStackFrames(@NotNull List<? extends XStackFrame> stackFrames, boolean last) {
       addChildren(stackFrames, last);
     }

@@ -132,6 +132,7 @@ public interface Promise<T> {
   @Nullable
   T blockingGet(int timeout, @NotNull TimeUnit timeUnit) throws TimeoutException, ExecutionException;
 
+  @Nullable
   default T blockingGet(int timeout) throws TimeoutException, ExecutionException {
     return blockingGet(timeout, TimeUnit.MILLISECONDS);
   }

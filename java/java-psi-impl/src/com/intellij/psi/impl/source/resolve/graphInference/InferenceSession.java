@@ -726,8 +726,11 @@ public class InferenceSession {
       InferenceVariable[] variables = initBounds(null, restParamSubstitution, capturedParams.toArray(PsiTypeParameter.EMPTY_ARRAY));
       int idx = 0;
       for (PsiType parameter : parameters) {
-        if (parameter instanceof PsiCapturedWildcardType && isProperType(((PsiCapturedWildcardType)parameter).getWildcard())) {
-          variables[idx++].putUserData(ORIGINAL_CAPTURE, (PsiCapturedWildcardType)parameter);
+        if (parameter instanceof PsiCapturedWildcardType) {
+          InferenceVariable variable = variables[idx++];
+          if (isProperType(((PsiCapturedWildcardType)parameter).getWildcard())) {
+            variable.putUserData(ORIGINAL_CAPTURE, (PsiCapturedWildcardType)parameter);
+          }
         }
       }
       return variables;

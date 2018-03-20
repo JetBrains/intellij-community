@@ -20,34 +20,32 @@ import com.intellij.util.io.HttpRequests;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedList;
 import java.util.List;
 
 class DevelopersLoader {
-  private static final String DEVELOPERS_LIST_URL = "http://ea-engine.labs.intellij.net/data?category=developers";
+  private static final String DEVELOPERS_LIST_URL = "https://ea-engine.labs.intellij.net/data?category=developers";
 
   private DevelopersLoader() { }
 
-  public static Collection<Developer> fetchDevelopers(@NotNull ProgressIndicator indicator) throws IOException {
-    return HttpRequests.request(DEVELOPERS_LIST_URL).connect(new HttpRequests.RequestProcessor<Collection<Developer>>() {
-      @Override
-      public Collection<Developer> process(@NotNull HttpRequests.Request request) throws IOException {
-        List<Developer> developers = new LinkedList<>();
-        developers.add(Developer.NULL);
+  @NotNull
+  static Collection<Developer> fetchDevelopers(@NotNull ProgressIndicator indicator) throws IOException {
+    return HttpRequests.request(DEVELOPERS_LIST_URL).connect((HttpRequests.RequestProcessor<Collection<Developer>>)request -> {
+      List<Developer> developers = new ArrayList<>();
+      developers.add(Developer.NULL);
 
-        String line;
-        while ((line = request.getReader().readLine()) != null) {
-          int i = line.indexOf('\t');
-          if (i == -1) throw new IOException("Protocol error");
-          int id = Integer.parseInt(line.substring(0, i));
-          String name = line.substring(i + 1);
-          developers.add(new Developer(id, name));
-          indicator.checkCanceled();
-        }
-
-        return developers;
+      String line;
+      while ((line = request.getReader().readLine()) != null) {
+        int i = line.indexOf('\t');
+        if (i == -1) throw new IOException("Protocol error");
+        int id = Integer.parseInt(line.substring(0, i));
+        String name = line.substring(i + 1);
+        developers.add(new Developer(id, name));
+        indicator.checkCanceled();
       }
+
+      return developers;
     });
   }
 }

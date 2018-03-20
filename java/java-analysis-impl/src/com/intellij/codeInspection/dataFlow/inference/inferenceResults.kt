@@ -1,21 +1,10 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package com.intellij.codeInspection.dataFlow
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.codeInspection.dataFlow.inference
 
 import com.intellij.codeInsight.NullableNotNullManager
+import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer
+import com.intellij.codeInspection.dataFlow.Mutability
+import com.intellij.codeInspection.dataFlow.Nullness
 import com.intellij.lang.LighterASTNode
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.PsiMethodImpl
@@ -25,6 +14,7 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
+import com.siyeh.ig.psiutils.ClassUtils
 import java.util.*
 
 /**
@@ -34,7 +24,8 @@ data class ExpressionRange internal constructor (internal val startOffset: Int, 
 
   companion object {
     @JvmStatic
-    fun create(expr: LighterASTNode, scopeStart: Int) = ExpressionRange(expr.startOffset - scopeStart, expr.endOffset - scopeStart)
+    fun create(expr: LighterASTNode, scopeStart: Int) = ExpressionRange(
+      expr.startOffset - scopeStart, expr.endOffset - scopeStart)
   }
 
   fun restoreExpression(scope: PsiCodeBlock): PsiExpression? {
@@ -89,22 +80,50 @@ data class PurityInferenceResult(internal val mutatedRefs: List<ExpressionRange>
 }
 
 
-interface NullityInferenceResult {
+interface MethodReturnInferenceResult {
   fun getNullness(method: PsiMethod, body: () -> PsiCodeBlock): Nullness
+  fun getMutability(method: PsiMethod, body: () -> PsiCodeBlock): Mutability = Mutability.UNKNOWN
 
   @Suppress("EqualsOrHashCode")
-  data class Predefined(internal val value: Nullness) : NullityInferenceResult {
+  data class Predefined(internal val value: Nullness) : MethodReturnInferenceResult {
     override fun hashCode() = value.ordinal
     override fun getNullness(method: PsiMethod, body: () -> PsiCodeBlock) = when {
-      value == Nullness.NULLABLE && InferenceFromSourceUtil.suppressNullable(method) -> Nullness.UNKNOWN
+      value == Nullness.NULLABLE && InferenceFromSourceUtil.suppressNullable(
+        method) -> Nullness.UNKNOWN
       else -> value
     }
   }
 
-  data class FromDelegate(internal val delegateCalls: List<ExpressionRange>) : NullityInferenceResult {
-    override fun getNullness(method: PsiMethod, body: () -> PsiCodeBlock) = when {
-      delegateCalls.all { range -> isNotNullCall(range, body()) } -> Nullness.NOT_NULL
-      else -> Nullness.UNKNOWN
+  data class FromDelegate(internal val value: Nullness, internal val delegateCalls: List<ExpressionRange>) : MethodReturnInferenceResult {
+    override fun getNullness(method: PsiMethod, body: () -> PsiCodeBlock): Nullness {
+      if (value == Nullness.NULLABLE) {
+        return if (InferenceFromSourceUtil.suppressNullable(
+            method)) Nullness.UNKNOWN
+        else Nullness.NULLABLE
+      }
+      return when {
+        delegateCalls.all { range -> isNotNullCall(range, body()) } -> Nullness.NOT_NULL
+        else -> Nullness.UNKNOWN
+      }
+    }
+
+    override fun getMutability(method: PsiMethod, body: () -> PsiCodeBlock): Mutability {
+      if (value == Nullness.NOT_NULL) {
+        return Mutability.UNKNOWN
+      }
+      return delegateCalls.stream().map { range -> getDelegateMutability(range, body()) }.reduce(
+        Mutability::union).orElse(
+        Mutability.UNKNOWN)
+    }
+
+    private fun getDelegateMutability(delegate: ExpressionRange, body: PsiCodeBlock): Mutability {
+      val call = delegate.restoreExpression(body) as PsiMethodCallExpression
+      val target = call.resolveMethod()
+      return when {
+        target == null -> Mutability.UNKNOWN
+        ClassUtils.isImmutable(target.returnType) -> Mutability.UNMODIFIABLE
+        else -> Mutability.getMutability(target)
+      }
     }
 
     private fun isNotNullCall(delegate: ExpressionRange, body: PsiCodeBlock): Boolean {
@@ -118,12 +137,12 @@ interface NullityInferenceResult {
 }
 
 data class MethodData(
-    val nullity: NullityInferenceResult?,
-    val purity: PurityInferenceResult?,
-    val contracts: List<PreContract>,
-    val notNullParameters: BitSet,
-    internal val bodyStart: Int,
-    internal val bodyEnd: Int
+  val methodReturn: MethodReturnInferenceResult?,
+  val purity: PurityInferenceResult?,
+  val contracts: List<PreContract>,
+  val notNullParameters: BitSet,
+  internal val bodyStart: Int,
+  internal val bodyEnd: Int
 ) {
   fun methodBody(method: PsiMethodImpl): () -> PsiCodeBlock = {
     if (method.stub != null)

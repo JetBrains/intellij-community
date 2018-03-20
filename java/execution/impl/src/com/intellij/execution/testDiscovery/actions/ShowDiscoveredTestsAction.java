@@ -9,10 +9,12 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.testDiscovery.TestDiscoveryConfigurationProducer;
 import com.intellij.execution.testDiscovery.TestDiscoveryProducer;
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.find.FindUtil;
 import com.intellij.find.actions.CompositeActiveComponent;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
@@ -24,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -46,6 +49,7 @@ import org.jetbrains.uast.UastContextKt;
 
 import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
+import javax.swing.tree.TreeModel;
 import java.awt.event.ActionEvent;
 import java.util.List;
 import java.util.Objects;
@@ -78,6 +82,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
     String methodPresentationName = c.getName() + "." + methodName;
 
     DataContext dataContext = DataManager.getInstance().getDataContext(e.getRequiredData(EDITOR).getContentComponent());
+    FeatureUsageTracker.getInstance().triggerFeatureUsed("test.discovery");
     showDiscoveredTests(project, dataContext, methodPresentationName, method);
   }
 
@@ -143,7 +148,13 @@ public class ShowDiscoveredTestsAction extends AnAction {
 
     JBPopup popup = builder.createPopup();
     ref.set(popup);
-    tree.getModel().addTreeModelListener(new TreeModelAdapter() {
+
+    TreeModel model = tree.getModel();
+    if (model instanceof Disposable) {
+      Disposer.register(popup, (Disposable)model);
+    }
+
+    model.addTreeModelListener(new TreeModelAdapter() {
       @Override
       protected void process(TreeModelEvent event, EventType type) {
         ((AbstractPopup)popup).setCaption("Found " + tree.getTestCount() + " Tests for " + title);
@@ -160,9 +171,8 @@ public class ShowDiscoveredTestsAction extends AnAction {
         String fqn = methodFqnName.first;
         String methodName = methodFqnName.second;
 
-        for (TestDiscoveryConfigurationProducer producer : getProducers(project)) {
-          byte frameworkId =
-            ((JavaTestConfigurationBase)producer.getConfigurationFactory().createTemplateConfiguration(project)).getTestFrameworkId();
+        for (TestDiscoveryConfigurationProducer producer : getRunConfigurationProducers(project)) {
+          byte frameworkId = ((JavaTestConfigurationBase)producer.getConfigurationFactory().createTemplateConfiguration(project)).getTestFrameworkId();
           TestDiscoveryProducer.consumeDiscoveredTests(project, fqn, methodName, frameworkId, (testClass, testMethod) -> {
             PsiMethod psiMethod = ReadAction.compute(() -> {
               PsiClass cc = testClass == null ? null : ClassUtil.findPsiClass(PsiManager.getInstance(project), testClass, null, true, scope);
@@ -206,7 +216,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
     Executor executor = DefaultRunExecutor.getRunExecutorInstance();
     Module targetModule = TestDiscoveryConfigurationProducer.detectTargetModule(tree.getContainingModules(), project);
     //first producer with results will be picked
-    StreamEx.of(getProducers(project)).cross(methods)
+    StreamEx.of(getRunConfigurationProducers(project)).cross(methods)
             .mapKeyValue((producer, method) -> producer.createDelegate(method, targetModule).findOrCreateConfigurationFromContext(context))
             .filter(Objects::nonNull)
             .findFirst()
@@ -233,7 +243,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
     return shortcutSet == null ? null : KeymapUtil.getKeyStroke(shortcutSet);
   }
 
-  private static List<TestDiscoveryConfigurationProducer> getProducers(Project project) {
+  private static List<TestDiscoveryConfigurationProducer> getRunConfigurationProducers(Project project) {
     return RunConfigurationProducer.getProducers(project)
                                    .stream()
                                    .filter(producer -> producer instanceof TestDiscoveryConfigurationProducer)

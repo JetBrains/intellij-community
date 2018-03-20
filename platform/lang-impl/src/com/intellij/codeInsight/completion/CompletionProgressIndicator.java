@@ -65,6 +65,7 @@ import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
@@ -734,7 +735,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
     LOG.assertTrue(!isAutopopupCompletion());
 
-    if (ApplicationManager.getApplication().isUnitTestMode() || !myHandler.invokedExplicitly) {
+    if (!myHandler.invokedExplicitly) {
       CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
       return;
     }

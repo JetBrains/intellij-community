@@ -213,9 +213,8 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
     doTest();
   }
 
-  public void testMutabilityJdk() {
-    doTest();
-  }
+  public void testMutabilityJdk() { doTest(); }
+  public void testMutabilityInferred() { doTest(); }
 
   public void testPrimitiveGetters() { doTest(); }
   public void testUnknownOnStack() { doTest(); }

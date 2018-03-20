@@ -118,7 +118,7 @@ public class PsiImplUtil {
     PsiElement oldParent = oldExpr.getParent();
     if (oldParent == null) throw new PsiInvalidElementAccessException(oldExpr);
 
-    if (!(oldExpr instanceof GrApplicationStatement)) {
+    if (convertToMethodCall(oldExpr)) {
       newExpr = ApplicationStatementUtil.convertToMethodCallExpression(newExpr);
     }
 
@@ -231,6 +231,13 @@ public class PsiImplUtil {
       }
     }
     return newExpr;
+  }
+
+  private static boolean convertToMethodCall(GrExpression position) {
+    if (position instanceof GrApplicationStatement) return false;
+    final PsiElement parent = position.getParent();
+    if (parent instanceof GrVariable && ((GrVariable)parent).getInitializerGroovy() == position) return false;
+    return true;
   }
 
   private static boolean isFirstChild(PsiElement element) {
@@ -696,17 +703,8 @@ public class PsiImplUtil {
     return false;
   }
 
-  public static boolean hasClosureArguments(@Nullable GrCall call) {
-    if (call == null) return false;
-
-    for (PsiElement child = call.getFirstChild(); child != null; child = child.getNextSibling()) {
-      if (child instanceof GrClosableBlock) return true;
-    }
-    return false;
-  }
-
   public static boolean hasArguments(@NotNull GrCall call) {
-    if (hasClosureArguments(call)) return true;
+    if (call.hasClosureArguments()) return true;
     GrArgumentList list = call.getArgumentList();
     return hasExpressionArguments(list) || hasNamedArguments(list);
   }
