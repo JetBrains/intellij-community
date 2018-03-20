@@ -119,7 +119,12 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTo
           "strings" to PsiType.getJavaLangString(method.manager, method.resolveScope),
           "ints" to PsiType.INT,
           "longs" to PsiType.LONG,
-          "doubles" to PsiType.DOUBLE)
+          "doubles" to PsiType.DOUBLE,
+          "shorts" to PsiType.SHORT,
+          "bytes" to PsiType.BYTE,
+          "floats" to PsiType.FLOAT,
+          "chars" to PsiType.CHAR,
+          "classes" to PsiType.getJavaLangClass(method.manager, method.resolveScope))
 
         for (valueKey in possibleValues.keys) {
           processArrayInAnnotationParameter(valuesSource.findDeclaredAttributeValue(valueKey),
