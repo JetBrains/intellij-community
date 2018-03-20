@@ -15,7 +15,8 @@
  */
 package com.intellij.java.codeInspection
 
-import com.intellij.codeInspection.dataFlow.ContractInference
+
+import com.intellij.codeInspection.dataFlow.inference.JavaSourceInference
 import com.intellij.psi.PsiAnonymousClass
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.impl.source.PsiMethodImpl
@@ -516,7 +517,7 @@ public static void validate(String p1, String p2, String p3, String p4, String p
             throw new RuntimeException();
     }
         """)
-    assert c.size() <= ContractInference.MAX_CONTRACT_COUNT // there could be 74 of them in total
+    assert c.size() <= JavaSourceInference.MAX_CONTRACT_COUNT // there could be 74 of them in total
   }
 
   void "test no inference for unused anonymous class methods where annotations won't be used anyway"() {
@@ -526,7 +527,7 @@ class Foo {{
     Object foo() { return null;}
   };
 }}"""), PsiAnonymousClass).methods[0]
-    assert ContractInference.inferContracts(method as PsiMethodImpl).collect { it as String } == []
+    assert JavaSourceInference.inferContracts(method as PsiMethodImpl).collect { it as String } == []
   }
 
   void "test inference for used anonymous class methods"() {
@@ -537,7 +538,7 @@ class Foo {{
     Object bar(boolean b) { return foo(b);}
   };
 }}"""), PsiAnonymousClass).methods[0]
-    assert ContractInference.inferContracts(method as PsiMethodImpl).collect { it as String } == ['true -> null', 'false -> !null']
+    assert JavaSourceInference.inferContracts(method as PsiMethodImpl).collect { it as String } == ['true -> null', 'false -> !null']
   }
 
   void "test anonymous class methods potentially used from outside"() {
@@ -549,7 +550,7 @@ class Foo {{
     }
   };    
 }}"""), PsiAnonymousClass).methods[0]
-    assert ContractInference.inferContracts(method as PsiMethodImpl).collect { it as String } == [' -> fail']
+    assert JavaSourceInference.inferContracts(method as PsiMethodImpl).collect { it as String } == [' -> fail']
   }
 
   void "test vararg delegation"() {
@@ -585,7 +586,7 @@ class Foo {{
   private List<String> inferContracts(String method) {
     def clazz = myFixture.addClass("final class Foo { $method }")
     assert !((PsiFileImpl) clazz.containingFile).contentsLoaded
-    def contracts = ContractInference.inferContracts(clazz.methods[0] as PsiMethodImpl)
+    def contracts = JavaSourceInference.inferContracts(clazz.methods[0] as PsiMethodImpl)
     assert !((PsiFileImpl) clazz.containingFile).contentsLoaded
     return contracts.collect { it as String }
   }

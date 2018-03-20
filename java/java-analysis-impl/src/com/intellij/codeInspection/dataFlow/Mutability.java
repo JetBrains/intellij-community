@@ -4,10 +4,10 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInspection.dataFlow.inference.JavaSourceInference;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
-import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiMethodImpl;
 import com.intellij.psi.util.*;
@@ -134,28 +134,7 @@ public enum Mutability {
         return getMutability(method);
       }
     }
-    return inferMutability(owner);
+    return owner instanceof PsiMethodImpl ? JavaSourceInference.inferMutability((PsiMethodImpl)owner) : UNKNOWN;
   }
 
-  public static Mutability inferMutability(PsiModifierListOwner owner) {
-    if (!(owner instanceof PsiMethodImpl)) return UNKNOWN;
-    PsiMethodImpl method = (PsiMethodImpl)owner;
-    if (!InferenceFromSourceUtil.shouldInferFromSource(method)) {
-      return UNKNOWN;
-    }
-
-    PsiType type = method.getReturnType();
-    if (type == null || ClassUtils.isImmutable(type)) {
-      return UNKNOWN;
-    }
-
-    return CachedValuesManager.getCachedValue(method, () -> {
-      MethodData data = ContractInferenceIndexKt.getIndexedData(method);
-      MethodReturnInferenceResult result = data == null ? null : data.getMethodReturn();
-      Mutability mutability = result == null ? null : RecursionManager
-        .doPreventingRecursion(method, true, () -> result.getMutability(method, data.methodBody(method)));
-      if (mutability == null) mutability = UNKNOWN;
-      return CachedValueProvider.Result.create(mutability, method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
-    });
-  }
 }

@@ -3,6 +3,7 @@ package com.intellij.codeInsight;
 
 import com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis;
 import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.codeInspection.dataFlow.inference.JavaSourceInference;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -104,13 +105,14 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
 
   @Nullable
   private PsiAnnotation getInferredMutabilityAnnotation(@NotNull PsiModifierListOwner owner) {
-    if (!(owner instanceof PsiMethod)) return null;
-    PsiModifierList modifiers = ((PsiMethod)owner).getModifierList();
+    if (!(owner instanceof PsiMethodImpl)) return null;
+    PsiMethodImpl method = (PsiMethodImpl)owner;
+    PsiModifierList modifiers = (method).getModifierList();
     if (modifiers.findAnnotation(Mutability.UNMODIFIABLE_ANNOTATION) != null ||
         modifiers.findAnnotation(Mutability.UNMODIFIABLE_VIEW_ANNOTATION) != null) {
       return null;
     }
-    return Mutability.inferMutability(owner).asAnnotation(myProject);
+    return JavaSourceInference.inferMutability(method).asAnnotation(myProject);
   }
 
   @Nullable
@@ -119,7 +121,7 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
       return null;
     }
 
-    return createContractAnnotation(ContractInference.inferContracts(method), PurityInference.inferPurity(method));
+    return createContractAnnotation(JavaSourceInference.inferContracts(method), JavaSourceInference.inferPurity(method));
   }
 
   @Nullable
@@ -134,7 +136,7 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
       return null;
     }
 
-    Nullness nullness = NullityInference.inferNullity(method);
+    Nullness nullness = JavaSourceInference.inferNullity(method);
     if (nullness == Nullness.NOT_NULL) {
       return ProjectBytecodeAnalysis.getInstance(myProject).getNotNullAnnotation();
     }
@@ -168,7 +170,7 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
         }
       }
     }
-    Nullness nullness = NullityInference.inferNullity(parameter);
+    Nullness nullness = JavaSourceInference.inferNullity(parameter);
     return nullness == Nullness.NOT_NULL ? ProjectBytecodeAnalysis.getInstance(myProject).getNotNullAnnotation() : null;
   }
 
