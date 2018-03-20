@@ -99,6 +99,11 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
       return found;
     }
 
+    public TestsSearchResult setFound(int found) {
+      this.found = found;
+      return this;
+    }
+
     @NotNull
     public Map<String, List<String>> getTests() {
       return tests;
@@ -106,7 +111,6 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
 
     public TestsSearchResult setTests(@NotNull Map<String, List<String>> tests) {
       this.tests = tests;
-      this.found = tests.values().stream().mapToInt(List::size).sum();
       return this;
     }
 
