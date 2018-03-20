@@ -718,13 +718,8 @@ public final class EditorUtil {
   /**
    * Number of virtual soft wrap introduced lines on a current logical line before the visual position that corresponds
    * to the current logical position.
-   *
-   * @see LogicalPosition#softWrapLinesOnCurrentLogicalLine
    */
   public static int getSoftWrapCountAfterLineStart(@NotNull Editor editor, @NotNull LogicalPosition position) {
-    if (position.visualPositionAware) {
-      return position.softWrapLinesOnCurrentLogicalLine;
-    }
     int startOffset = editor.getDocument().getLineStartOffset(position.line);
     int endOffset = editor.logicalPositionToOffset(position);
     return editor.getSoftWrapModel().getSoftWrapsForRange(startOffset, endOffset).size();

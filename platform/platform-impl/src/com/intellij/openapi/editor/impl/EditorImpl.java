@@ -1114,7 +1114,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     Rectangle visibleArea = myScrollingModel.getVisibleArea();
     Point zoomCenterRelative = zoomCenter == null ? new Point() : zoomCenter;
     Point zoomCenterAbsolute = new Point(visibleArea.x + zoomCenterRelative.x, visibleArea.y + zoomCenterRelative.y);
-    LogicalPosition zoomCenterLogical = xyToLogicalPosition(zoomCenterAbsolute).withoutVisualPositionInfo();
+    LogicalPosition zoomCenterLogical = xyToLogicalPosition(zoomCenterAbsolute);
     int oldLineHeight = getLineHeight();
     int intraLineOffset = zoomCenterAbsolute.y % oldLineHeight;
 

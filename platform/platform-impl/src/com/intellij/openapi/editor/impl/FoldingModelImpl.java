@@ -410,7 +410,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
       // There is a possible case that caret position is already visual position aware. But visual position depends on number of folded
       // logical lines as well, hence, we can't be sure that target logical position defines correct visual position because fold
       // regions have just changed. Hence, we use 'raw' logical position instead.
-      LogicalPosition caretPosition = caret.getLogicalPosition().withoutVisualPositionInfo();
+      LogicalPosition caretPosition = caret.getLogicalPosition();
       int caretOffset = myEditor.logicalPositionToOffset(caretPosition);
       int selectionStart = caret.getSelectionStart();
       int selectionEnd = caret.getSelectionEnd();
@@ -695,7 +695,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
     private final long docStamp;
 
     private SavedCaretPosition(Caret caret) {
-      position = caret.getLogicalPosition().withoutVisualPositionInfo();
+      position = caret.getLogicalPosition();
       docStamp = caret.getEditor().getDocument().getModificationStamp();
     }
 
