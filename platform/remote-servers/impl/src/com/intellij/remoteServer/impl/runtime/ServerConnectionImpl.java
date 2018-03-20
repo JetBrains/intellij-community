@@ -670,22 +670,20 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
         myRootRuntime = rootRuntime;
       }
 
-      public boolean visitDeployment(@NotNull Deployment deployment) {
-        boolean isDeepChild = visitRuntime(deployment.getRuntime());
-        if (isDeepChild) {
+      public void visitDeployment(@NotNull Deployment deployment) {
+        if (isUnderRootRuntime(deployment.getRuntime())) {
           myCollectedChildren.add(deployment);
         }
-        return isDeepChild;
       }
 
-      private boolean visitRuntime(@Nullable DeploymentRuntime runtime) {
+      private boolean isUnderRootRuntime(@Nullable DeploymentRuntime runtime) {
         if (runtime == null) {
           return false;
         }
         if (runtime == myRootRuntime) {
           return true;
         }
-        return mySettledStatuses.computeIfAbsent(runtime, rt -> this.visitRuntime(rt.getParent()));
+        return mySettledStatuses.computeIfAbsent(runtime, rt -> this.isUnderRootRuntime(rt.getParent()));
       }
 
       public List<Deployment> getChildDeployments() {
