@@ -165,7 +165,9 @@ class PartialLocalLineStatusTracker(project: Project,
       }
     }
 
-    updateAffectedChangeLists()
+    documentTracker.writeLock {
+      updateAffectedChangeLists()
+    }
 
     dropExistingUndoActions()
     if (isValid()) eventDispatcher.multicaster.onBecomingValid(this)
