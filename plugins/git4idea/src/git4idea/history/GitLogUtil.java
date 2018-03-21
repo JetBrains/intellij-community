@@ -253,17 +253,6 @@ public class GitLogUtil {
     readFullDetailsFromHandler(project, root, commitConsumer, renameLimit, handler, parameters);
   }
 
-  public static void assertCorrectNumberOfRecords(@NotNull List<GitLogRecord> records) {
-    GitLogRecord firstRecord = notNull(getFirstItem(records));
-    String[] parents = firstRecord.getParentsHashes();
-    LOG.assertTrue(parents.length == 0 || parents.length == records.size(), "Not enough records for commit " +
-                                                                            firstRecord.getHash() +
-                                                                            " expected " +
-                                                                            parents.length +
-                                                                            " records, but got " +
-                                                                            records.size());
-  }
-
   private static void readFullDetailsFromHandler(@NotNull Project project,
                                                  @NotNull VirtualFile root,
                                                  @NotNull Consumer<? super GitCommit> commitConsumer,
@@ -278,7 +267,16 @@ public class GitLogUtil {
     GitLogRecordCollector recordCollector = new GitLogRecordCollector(project, root) {
       @Override
       public void consume(@NotNull List<GitLogRecord> records) {
-        assertCorrectNumberOfRecords(records);
+        GitLogRecord firstRecord = notNull(getFirstItem(records));
+        String[] parents = firstRecord.getParentsHashes();
+
+        LOG.assertTrue(parents.length == 0 || parents.length == records.size(), "Not enough records for commit " +
+                                                                                firstRecord.getHash() +
+                                                                                " expected " +
+                                                                                parents.length +
+                                                                                " records, but got " +
+                                                                                records.size());
+
         commitConsumer.consume(createCommit(project, root, records, factory, renameLimit));
       }
     };
