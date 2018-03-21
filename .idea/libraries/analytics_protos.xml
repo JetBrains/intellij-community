@@ -1,8 +1,8 @@
 <component name="libraryTable">
   <library name="analytics-protos" type="repository">
-    <properties include-transitive-deps="false" maven-id="com.android.tools.analytics-library:protos:26.0.1" />
+    <properties include-transitive-deps="false" maven-id="com.android.tools.analytics-library:protos:26.1.2" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/android/tools/analytics-library/protos/26.0.1/protos-26.0.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/android/tools/analytics-library/protos/26.1.2/protos-26.1.2.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />
