@@ -38,14 +38,6 @@ public class IntentionsUIImpl extends IntentionsUI {
     //  return;
     //}
 
-    if (!actionsChanged) return;
-
-    //IntentionHintComponent hint = myLastIntentionHint;
-    //if (hint != null && hint.getPopupUpdateResult(actionsChanged) == IntentionHintComponent.PopupUpdateResult.CHANGED_INVISIBLE) {
-    //  hint.recreate();
-    //  return;
-    //}
-
     Project project = cachedIntentions.getProject();
     LogicalPosition caretPos = editor.getCaretModel().getLogicalPosition();
     Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
@@ -62,7 +54,7 @@ public class IntentionsUIImpl extends IntentionsUI {
   }
 
   @Override
-  public void doHide() {
+  public void hide() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     IntentionHintComponent hint = myLastIntentionHint;
     if (hint != null && hint.isVisible()) {
