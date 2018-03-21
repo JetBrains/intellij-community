@@ -9,10 +9,12 @@ import groovy.transform.Immutable
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
+import org.jetbrains.jps.model.java.JpsJavaDependencyScope
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
-import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsRepositoryLibraryType
+import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModule
+import org.jetbrains.jps.model.module.JpsModuleDependency
 /**
  * Generates Maven artifacts for IDE and plugin modules. Artifacts aren't generated for modules which depends on non-repository libraries.
  * @see org.jetbrains.intellij.build.ProductProperties#mavenArtifacts
@@ -97,6 +99,9 @@ ${artifactData.dependencies.collect {"""
              <groupId>$it.coordinates.groupId</groupId>
              <artifactId>$it.coordinates.artifactId</artifactId>
              <version>$it.coordinates.version</version>
+${it.scope == DependencyScope.COMPILE ? "" : """
+             <scope>runtime</scope>
+"""}             
 ${it.includeTransitiveDeps ? "" : """
              <exclusions>
                  <exclusion>
@@ -161,31 +166,56 @@ ${it.includeTransitiveDeps ? "" : """
     boolean mavenizable = true
     computationInProgress << module
     List<MavenArtifactDependency> dependencies = []
-    JpsJavaExtensionService.dependencies(module).productionOnly().runtimeOnly().processModuleAndLibraries({ JpsModule dep ->
-      if (computationInProgress.contains(dep)) {
-        buildContext.messages.debug(" module '$module.name' recursively depends on itself so it cannot be published")
-        mavenizable = false
-        return
+    module.dependenciesList.dependencies.each { dependency ->
+      def extension = JpsJavaExtensionService.getInstance().getDependencyExtension(dependency)
+      if (extension == null) return
+      DependencyScope scope
+      switch (extension.scope) {
+        case JpsJavaDependencyScope.COMPILE:
+          //if a dependency isn't exported transitive dependencies will include it into runtime classpath only
+          scope = extension.isExported() ? DependencyScope.COMPILE : DependencyScope.RUNTIME
+          break
+        case JpsJavaDependencyScope.RUNTIME:
+          scope = DependencyScope.RUNTIME
+          break
+        case JpsJavaDependencyScope.PROVIDED:
+          //'provided' scope is used only for compilation and it shouldn't be exported
+          return
+        case JpsJavaDependencyScope.TEST:
+          return
+        default:
+          return
       }
-      def depArtifact = generateMavenArtifactData(dep, results, nonMavenizableModules, computationInProgress)
-      if (depArtifact == null) {
-        buildContext.messages.debug(" module '$module.name' depends on non-mavenizable module '$dep.name' so it cannot be published")
-        mavenizable = false
-        return
+
+      if (dependency instanceof JpsModuleDependency) {
+        def depModule = (dependency as JpsModuleDependency).module
+        if (computationInProgress.contains(depModule)) {
+          buildContext.messages.debug(" module '$module.name' recursively depends on itself so it cannot be published")
+          mavenizable = false
+          return
+        }
+        def depArtifact = generateMavenArtifactData(depModule, results, nonMavenizableModules, computationInProgress)
+        if (depArtifact == null) {
+          buildContext.messages.debug(" module '$module.name' depends on non-mavenizable module '$depModule.name' so it cannot be published")
+          mavenizable = false
+          return
+        }
+        dependencies << new MavenArtifactDependency(depArtifact.coordinates, true, scope)
       }
-      dependencies << new MavenArtifactDependency(depArtifact.coordinates, true)
-    }, { JpsLibrary library ->
-      def repLibrary = library.asTyped(JpsRepositoryLibraryType.INSTANCE)
-      if (repLibrary == null) {
-        buildContext.messages.debug(" module '$module.name' depends on non-maven library ${LibraryLicensesListGenerator.getLibraryName(library)}")
-        mavenizable = false
+      else if (dependency instanceof JpsLibraryDependency) {
+        def library = (dependency as JpsLibraryDependency).library
+        def repLibrary = library.asTyped(JpsRepositoryLibraryType.INSTANCE)
+        if (repLibrary == null) {
+          buildContext.messages.debug(" module '$module.name' depends on non-maven library ${LibraryLicensesListGenerator.getLibraryName(library)}")
+          mavenizable = false
+        }
+        else {
+          def libraryDescriptor = repLibrary.properties.data
+          dependencies << new MavenArtifactDependency(new MavenCoordinates(libraryDescriptor.groupId, libraryDescriptor.artifactId, libraryDescriptor.version),
+                                                      libraryDescriptor.includeTransitiveDependencies, scope)
+        }
       }
-      else {
-        def libraryDescriptor = repLibrary.properties.data
-        dependencies << new MavenArtifactDependency(new MavenCoordinates(libraryDescriptor.groupId, libraryDescriptor.artifactId, libraryDescriptor.version),
-                                                    libraryDescriptor.includeTransitiveDependencies)
-      }
-    })
+    }
     computationInProgress.remove(module)
     if (!mavenizable) {
       nonMavenizableModules << module
@@ -202,10 +232,13 @@ ${it.includeTransitiveDeps ? "" : """
     List<MavenArtifactDependency> dependencies
   }
 
+  private enum DependencyScope { COMPILE, RUNTIME }
+
   @Immutable
   private static class MavenArtifactDependency {
     MavenCoordinates coordinates
     boolean includeTransitiveDeps
+    DependencyScope scope
   }
 
   @Immutable
