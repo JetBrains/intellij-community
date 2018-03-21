@@ -352,7 +352,6 @@ public class Notification {
   }
 
   public final void assertHasTitleOrContent() {
-    LOG.assertTrue(hasTitle() || hasContent(),
-                   "Notification should have title: [" + myTitle + "] and/or content: [" + myContent + "]; groupId: " + myGroupId);
+    LOG.assertTrue(hasTitle() || hasContent(), "Notification should have title and/or content; groupId: " + myGroupId);
   }
 }
