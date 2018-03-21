@@ -90,7 +90,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
     if (renderer == null && Registry.is("file.chooser.async.tree.model")) {
       renderer = new FileRenderer().forTree();
       myFileTreeModel = new FileTreeModel(descriptor, new FileRefresher(false, 3, () -> ModalityState.stateForComponent(tree)));
-      myAsyncTreeModel = new AsyncTreeModel(myFileTreeModel);
+      myAsyncTreeModel = new AsyncTreeModel(this, myFileTreeModel, false);
       myTreeStructure = null;
     }
     else {
@@ -254,10 +254,6 @@ public class FileSystemTreeImpl implements FileSystemTree {
     if (myTreeBuilder != null) {
       Disposer.dispose(myTreeBuilder);
     }
-    if (myAsyncTreeModel != null) {
-      Disposer.dispose(myAsyncTreeModel);
-    }
-
     myEverExpanded.clear();
   }
 

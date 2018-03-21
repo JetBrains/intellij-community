@@ -55,10 +55,9 @@ class AsyncProjectViewSupport {
     myStructureTreeModel = new StructureTreeModel(true);
     myStructureTreeModel.setStructure(structure);
     myStructureTreeModel.setComparator(comparator);
-    myAsyncTreeModel = new AsyncTreeModel(myStructureTreeModel, true);
+    myAsyncTreeModel = new AsyncTreeModel(parent, myStructureTreeModel, true);
     myAsyncTreeModel.setRootImmediately(myStructureTreeModel.getRootImmediately());
     setModel(tree, myAsyncTreeModel);
-    Disposer.register(parent, myAsyncTreeModel);
     MessageBusConnection connection = project.getMessageBus().connect(parent);
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
