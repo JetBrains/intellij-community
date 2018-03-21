@@ -246,7 +246,7 @@ class CommunityRepositoryModules {
       withModule("intellij.android.artwork")
       withModule("intellij.android.observable", "android.jar")
       withModule("intellij.android.observable.ui", "android.jar")
-      withModule("intellij.android.flags", "android.jar")
+      withModule("android.sdktools.flags", "android.jar")
       withModule("intellij.android.designer", "android.jar")
       withModule("intellij.android.sdkUpdates", "android.jar")
       withModule("intellij.android.wizard", "android.jar")
@@ -265,7 +265,7 @@ class CommunityRepositoryModules {
       withModule("android.sdktools.pixelprobe", "pixelprobe.jar")
 
       withModule("android.sdktools.binary-resources", "sdk-tools.jar")
-      withModule("intellij.android.analyzer", "sdk-tools.jar")
+      withModule("android.sdktools.analyzer", "sdk-tools.jar")
       withModule("android.sdktools.ddmlib", "sdk-tools.jar")
       withModule("android.sdktools.dvlib", "sdk-tools.jar")
       withModule("android.sdktools.draw9patch", "sdk-tools.jar")
