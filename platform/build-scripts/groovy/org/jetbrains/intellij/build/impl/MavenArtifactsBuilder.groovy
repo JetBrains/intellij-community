@@ -98,18 +98,18 @@ ${artifactData.dependencies.collect {"""
              <artifactId>$it.coordinates.artifactId</artifactId>
              <version>$it.coordinates.version</version>
 ${it.includeTransitiveDeps ? "" : """
-                  <exclusions>
-                      <exclusion>
-                          <artifactId>*</artifactId>
-                          <groupId>*</groupId>
-                      </exclusion>
-                  </exclusions>
+             <exclusions>
+                 <exclusion>
+                     <artifactId>*</artifactId>
+                     <groupId>*</groupId>
+                 </exclusion>
+             </exclusions>
 """}             
         </dependency>
 """}.join("\n")}    
     </dependencies>    
 </project>
-""".readLines().findAll {!it.isEmpty()}.join("\n")
+""".readLines().findAll {!it.trim().isEmpty()}.join("\n")
   }
 
   private MavenCoordinates generateMavenCoordinates(JpsModule module) {
