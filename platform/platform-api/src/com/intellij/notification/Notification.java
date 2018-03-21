@@ -118,7 +118,6 @@ public class Notification {
     myListener = listener;
     myTimestamp = System.currentTimeMillis();
 
-    assertHasTitleOrContent();
     id = calculateId(this);
   }
 
@@ -331,7 +330,6 @@ public class Notification {
   }
 
   public void notify(@Nullable Project project) {
-    assertHasTitleOrContent();
     Notifications.Bus.notify(this, project);
   }
 
@@ -353,7 +351,8 @@ public class Notification {
     return String.valueOf(System.currentTimeMillis()) + "." + String.valueOf(System.identityHashCode(notification));
   }
 
-  private void assertHasTitleOrContent() {
-    LOG.assertTrue(hasTitle() || hasContent(), "Notification should have title and/or content; groupId: " + myGroupId);
+  public final void assertHasTitleOrContent() {
+    LOG.assertTrue(hasTitle() || hasContent(),
+                   "Notification should have title: [" + myTitle + "] and/or content: [" + myContent + "]; groupId: " + myGroupId);
   }
 }
