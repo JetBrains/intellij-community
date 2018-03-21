@@ -61,13 +61,25 @@ public class UsageViewManagerImpl extends UsageViewManager {
     myProject = project;
   }
 
+
+  /**
+   * Overriden by on-air for supplying different UsageView implementation
+   */
+  @NotNull
+  protected UsageViewEx createEmptyUsageView(@NotNull UsageTarget[] targets,
+                                             @NotNull UsageViewPresentation presentation,
+                                             Factory<UsageSearcher> usageSearcherFactory) {
+    return new UsageViewImpl(myProject, presentation, targets, usageSearcherFactory);
+  }
+
+
   @Override
   @NotNull
   public UsageViewEx createUsageView(@NotNull UsageTarget[] targets,
                                      @NotNull Usage[] usages,
                                      @NotNull UsageViewPresentation presentation,
                                      Factory<UsageSearcher> usageSearcherFactory) {
-    UsageViewEx usageView = new UsageViewImpl(myProject, presentation, targets, usageSearcherFactory);
+    UsageViewEx usageView = createEmptyUsageView(targets, presentation, usageSearcherFactory);
     if (usages.length != 0) {
       usageView.appendUsagesInBulk(Arrays.asList(usages));
       ProgressManager.getInstance().run(new Task.Modal(myProject, "Waiting For Usages", false) {
