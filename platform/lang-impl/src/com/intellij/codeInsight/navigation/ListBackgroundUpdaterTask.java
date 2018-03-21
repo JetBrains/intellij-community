@@ -17,16 +17,12 @@ package com.intellij.codeInsight.navigation;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.components.JBList;
-import com.intellij.ui.speedSearch.NameFilteringListModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Comparator;
-import java.util.List;
 
-public abstract class ListBackgroundUpdaterTask extends BackgroundUpdaterTask<JBList> {
+public abstract class ListBackgroundUpdaterTask extends BackgroundUpdaterTask {
   /**
    * @deprecated Use {@link #ListBackgroundUpdaterTask(Project, String, Comparator)}
    */
@@ -36,25 +32,5 @@ public abstract class ListBackgroundUpdaterTask extends BackgroundUpdaterTask<JB
   
   public ListBackgroundUpdaterTask(@Nullable final Project project, @NotNull final String title, @Nullable Comparator<PsiElement> comparator) {
     super(project, title, comparator);
-  }
-
-  @Override
-  protected void paintBusy(final boolean paintBusy) {
-    final Runnable runnable = () -> myComponent.setPaintBusy(paintBusy);
-    //ensure start/end order 
-    SwingUtilities.invokeLater(runnable);
-  }
-
-  @Override
-  protected void replaceModel(@NotNull List<PsiElement> data) {
-    final Object selectedValue = myComponent.getSelectedValue();
-    final int index = myComponent.getSelectedIndex();
-    ((NameFilteringListModel)myComponent.getModel()).replaceAll(data);
-    if (index == 0) {
-      myComponent.setSelectedIndex(0);
-    }
-    else {
-      myComponent.setSelectedValue(selectedValue, true);
-    }
   }
 }

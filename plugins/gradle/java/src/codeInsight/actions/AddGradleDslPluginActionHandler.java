@@ -101,7 +101,7 @@ class AddGradleDslPluginActionHandler implements CodeInsightActionHandler {
       JBPopupFactory.getInstance().createListPopupBuilder(list)
         .setTitle(GradleBundle.message("gradle.codeInsight.action.apply_plugin.popup.title"))
         .setItemChoosenCallback(runnable)
-        .setFilteringEnabled(o -> String.valueOf(((Pair)o).first))
+        .setNamerForFiltering(o -> String.valueOf(((Pair)o).first))
         .createPopup()
         .showInBestPositionFor(editor);
     }

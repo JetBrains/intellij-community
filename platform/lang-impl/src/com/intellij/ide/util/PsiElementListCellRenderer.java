@@ -24,7 +24,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FileStatus;
@@ -313,12 +313,12 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     });
   }
 
-  public void installSpeedSearch(PopupChooserBuilder builder) {
+  public void installSpeedSearch(IPopupChooserBuilder builder) {
     installSpeedSearch(builder, false);
   }
 
-  public void installSpeedSearch(PopupChooserBuilder builder, final boolean includeContainerText) {
-    builder.setFilteringEnabled(o -> {
+  public void installSpeedSearch(IPopupChooserBuilder builder, final boolean includeContainerText) {
+    builder.setNamerForFiltering(o -> {
       if (o instanceof PsiElement) {
         final String elementText = getElementText((T)o);
         if (includeContainerText) {
@@ -333,7 +333,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
   }
 
   /**
-   * User {@link #installSpeedSearch(PopupChooserBuilder)} instead
+   * Use {@link #installSpeedSearch(IPopupChooserBuilder)} instead
    */
   @Deprecated
   public void installSpeedSearch(JList list) {

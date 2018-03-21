@@ -36,6 +36,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ListComponentUpdater;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Ref;
@@ -342,8 +343,8 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     }
 
     if (element == null) return; //already found
-    final ImplementationsUpdaterTask task = new ImplementationsUpdaterTask(element, editor, title, isIncludeAlwaysSelf());
-    task.init(popup, component, usageView);
+    final ImplementationsUpdaterTask task = new ImplementationsUpdaterTask(element, editor, title, isIncludeAlwaysSelf(), component);
+    task.init(popup, new ImplementationViewComponentUpdater(component, element), usageView);
 
     myTaskRef = new WeakReference<>(task);
     ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, new BackgroundableProcessIndicator(task));
@@ -413,34 +414,22 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     return false;
   }
 
-  private class ImplementationsUpdaterTask extends BackgroundUpdaterTask<ImplementationViewComponent> {
-    private final String myCaption;
-    private final Editor myEditor;
-    @NotNull
-    private final PsiElement myElement;
-    private final boolean myIncludeSelf;
-    private PsiElement[] myElements;
+  private class ImplementationViewComponentUpdater implements ListComponentUpdater {
+    private ImplementationViewComponent myComponent;
+    private PsiElement myElement;
 
-    private ImplementationsUpdaterTask(@NotNull PsiElement element, final Editor editor, final String caption, boolean includeSelf) {
-      super(element.getProject(), ImplementationSearcher.SEARCHING_FOR_IMPLEMENTATIONS, null);
-      myCaption = caption;
-      myEditor = editor;
+    public ImplementationViewComponentUpdater(ImplementationViewComponent component, PsiElement element) {
+      myComponent = component;
       myElement = element;
-      myIncludeSelf = includeSelf;
     }
 
     @Override
-    public String getCaption(int size) {
-      return myCaption;
-    }
-
-    @Override
-    protected void paintBusy(boolean paintBusy) {
+    public void paintBusy(boolean paintBusy) {
       //todo notify busy
     }
 
     @Override
-    protected void replaceModel(@NotNull List<PsiElement> data) {
+    public void replaceModel(@NotNull List<PsiElement> data) {
       final PsiElement[] elements = myComponent.getElements();
       final int includeSelfIdx = myElement instanceof PomTargetPsiElement ? 0 : 1;
       final int startIdx = elements.length - includeSelfIdx;
@@ -449,6 +438,35 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
       System.arraycopy(PsiUtilCore.toPsiElementArray(data), startIdx, result, elements.length, data.size() - startIdx);
       myComponent.update(result, myComponent.getIndex());
     }
+  }
+
+  private class ImplementationsUpdaterTask extends BackgroundUpdaterTask {
+    private final String myCaption;
+    private final Editor myEditor;
+    @NotNull
+    private final PsiElement myElement;
+    private final boolean myIncludeSelf;
+    private final ImplementationViewComponent myComponent;
+    private PsiElement[] myElements;
+
+    private ImplementationsUpdaterTask(@NotNull PsiElement element,
+                                       final Editor editor,
+                                       final String caption,
+                                       boolean includeSelf,
+                                       ImplementationViewComponent component) {
+      super(element.getProject(), ImplementationSearcher.SEARCHING_FOR_IMPLEMENTATIONS, null);
+      myCaption = caption;
+      myEditor = editor;
+      myElement = element;
+      myIncludeSelf = includeSelf;
+      myComponent = component;
+    }
+
+    @Override
+    public String getCaption(int size) {
+      return myCaption;
+    }
+
 
     @Override
     public void run(@NotNull final ProgressIndicator indicator) {

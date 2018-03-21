@@ -35,7 +35,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.ActiveComponent;
-import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.usages.UsageView;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
@@ -163,7 +162,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
     model.addTreeModelListener(new TreeModelAdapter() {
       @Override
       protected void process(TreeModelEvent event, EventType type) {
-        ((AbstractPopup)popup).setCaption("Found " + tree.getTestCount() + " Tests for " + title);
+        popup.setCaption("Found " + tree.getTestCount() + " Tests for " + title);
       }
     });
 

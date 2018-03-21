@@ -10,7 +10,6 @@ import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.components.JBList;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -26,6 +25,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
@@ -182,26 +182,24 @@ public class SelectBranchPopup {
         return;
       }
 
-      Object[] items = new Object[branches.size() + 1];
-      System.arraycopy(branches.toArray(), 0, items, 0, branches.size());
-      items[items.length - 1] = REFRESH_MESSAGE;
-
-      JBList<Object> branchList = new JBList<>(items);
-      branchList.setCellRenderer(new BranchRenderer());
-      JBPopup popup = JBPopupFactory.getInstance().createListPopupBuilder(branchList)
+      List<Object> items = new ArrayList<>();
+      branches.stream().collect(Collectors.toCollection(() -> items));
+      items.add(REFRESH_MESSAGE);
+      final JBPopup popup = JBPopupFactory.getInstance().createPopupChooserBuilder(items)
         .setTitle(Url.tail(selectedValue))
+        .setRenderer(new BranchRenderer())
         .setResizable(true)
-        .setItemChoosenCallback(() -> {
-          if (REFRESH_MESSAGE.equals(branchList.getSelectedValue())) {
+        .setItemChosenCallback((v) -> {
+          if (REFRESH_MESSAGE.equals(v)) {
             loadBranches(selectedValue, () -> showBranchPopup(selectedValue));
             return;
           }
-          SvnBranchItem item = (SvnBranchItem)branchList.getSelectedValue();
+          SvnBranchItem item = (SvnBranchItem)v;
           if (item != null) {
             myCallback.branchSelected(myProject, myConfiguration, item.getUrl(), item.getRevision());
           }
         })
-        .setFilteringEnabled(item -> item instanceof SvnBranchItem ? getBranchName((SvnBranchItem)item) : null)
+        .setNamerForFiltering(item -> item instanceof SvnBranchItem ? getBranchName((SvnBranchItem)item) : null)
         .createPopup();
       showPopupAt(popup);
     }

@@ -22,9 +22,9 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.ui.ColoredListCellRenderer
-import com.intellij.ui.components.JBList
 import com.intellij.util.BitUtil
 import com.intellij.util.Url
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.xml.util.HtmlUtil
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
@@ -153,28 +153,26 @@ private fun chooseUrl(urls: Collection<Url>): Promise<Url> {
     return resolvedPromise(urls.first())
   }
 
-  val list = JBList<Url>(urls)
-  list.setCellRenderer(object : ColoredListCellRenderer<Url>() {
-    override fun customizeCellRenderer(list: JList<out Url>, value: Url?, index: Int, selected: Boolean, hasFocus: Boolean) {
-      // todo icons looks good, but is it really suitable for all URLs providers?
-      icon = AllIcons.Nodes.Servlet
-      append((value as Url).toDecodedForm())
-    }
-  })
-
   val result = AsyncPromise<Url>()
   JBPopupFactory.getInstance()
-      .createListPopupBuilder(list)
-      .setTitle("Choose Url")
-      .setItemChoosenCallback {
-        val value = list.selectedValue
-        if (value == null) {
-          result.setError("selected value is null")
-        }
-        else {
-          result.setResult(value)
-        }
+    .createPopupChooserBuilder(ContainerUtil.newArrayList(urls))
+    .setRenderer(object : ColoredListCellRenderer<Url>() {
+      override fun customizeCellRenderer(list: JList<out Url>, value: Url?, index: Int, selected: Boolean, hasFocus: Boolean) {
+        // todo icons looks good, but is it really suitable for all URLs providers?
+        icon = AllIcons.Nodes.Servlet
+        append((value as Url).toDecodedForm())
       }
-      .createPopup().showInFocusCenter()
+    })
+    .setTitle("Choose Url")
+    .setItemChosenCallback { value ->
+      if (value == null) {
+        result.setError("selected value is null")
+      }
+      else {
+        result.setResult(value)
+      }
+    }
+    .createPopup()
+    .showInFocusCenter()
   return result
 }

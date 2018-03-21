@@ -133,7 +133,7 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     return CodeInsightBundle.message("goto.implementation.notFound");
   }
 
-  private class ImplementationsUpdaterTask extends ListBackgroundUpdaterTask {
+  private class ImplementationsUpdaterTask extends BackgroundUpdaterTask {
     private final Editor myEditor;
     private final int myOffset;
     private final GotoData myGotoData;
