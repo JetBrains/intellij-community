@@ -19,6 +19,7 @@ import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.*;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
@@ -65,7 +66,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
 
   private volatile List<PyTargetExpression> myInstanceAttributes;
 
-  private volatile Map<String, Property> myPropertyCache;
+  private volatile Map<String, Property> myLocalPropertyCache;
 
   @Override
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
@@ -508,8 +509,8 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   @Override
   @NotNull
   public Map<String, Property> getProperties() {
-    initProperties();
-    return new HashMap<>(myPropertyCache);
+    initLocalProperties();
+    return new HashMap<>(myLocalPropertyCache);
   }
 
   @Override
@@ -672,54 +673,42 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   private final static Maybe<PyCallable> NONE = new Maybe<>(null); // denotes an explicit None
 
   /**
-   * @param name            name of the property
-   * @param property_filter returns true if the property is acceptable
-   * @return the first property that both filters accepted.
+   * @param filter returns true if the property is acceptable
+   * @return the first property that filter accepted.
    */
   @Nullable
-  private Property processPropertiesInClass(@Nullable String name, @Nullable Processor<Property> property_filter) {
-    // NOTE: fast enough to be rerun every time
-    Property prop = processDecoratedProperties(name, property_filter);
-    if (prop != null) return prop;
+  private Property processPropertiesInClass(@Nullable Processor<Property> filter) {
+    final Property decoratedProperty = processDecoratedProperties(filter);
+    if (decoratedProperty != null) return decoratedProperty;
+
     if (getStub() != null) {
-      prop = processStubProperties(name, property_filter);
-      if (prop != null) return prop;
+      return processStubProperties(filter);
     }
     else {
       // name = property(...) assignments from PSI
       for (PyTargetExpression target : getClassAttributes()) {
-        if (name == null || name.equals(target.getName())) {
-          prop = PropertyImpl.fromTarget(target);
-          if (prop != null) {
-            if (property_filter == null || property_filter.process(prop)) return prop;
-          }
+        final Property property = PropertyImpl.fromTarget(target);
+        if (property != null && (filter == null || filter.process(property))) {
+          return property;
         }
       }
     }
+
     return null;
   }
 
   @Nullable
-  private Property processDecoratedProperties(@Nullable String name, @Nullable Processor<Property> filter) {
+  private Property processDecoratedProperties(@Nullable Processor<Property> filter) {
     // look at @property decorators
-    Map<String, List<PyFunction>> grouped = new HashMap<>();
+    final MultiMap<String, PyFunction> grouped = new MultiMap<>();
     // group suitable same-named methods, each group defines a property
     for (PyFunction method : getMethods()) {
-      final String methodName = method.getName();
-      if (name == null || name.equals(methodName)) {
-        List<PyFunction> bucket = grouped.get(methodName);
-        if (bucket == null) {
-          bucket = new SmartList<>();
-          grouped.put(methodName, bucket);
-        }
-        bucket.add(method);
-      }
+      grouped.putValue(method.getName(), method);
     }
-    for (Map.Entry<String, List<PyFunction>> entry : grouped.entrySet()) {
+    for (Map.Entry<String, Collection<PyFunction>> entry : grouped.entrySet()) {
       Maybe<PyCallable> getter = NONE;
       Maybe<PyCallable> setter = NONE;
       Maybe<PyCallable> deleter = NONE;
-      String doc = null;
       final String decoratorName = entry.getKey();
       for (PyFunction method : entry.getValue()) {
         final PyDecoratorList decoratorList = method.getDecoratorList();
@@ -751,7 +740,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
         if (getter != NONE && setter != NONE && deleter != NONE) break; // can't improve
       }
       if (getter != NONE || setter != NONE || deleter != NONE) {
-        final PropertyImpl prop = new PropertyImpl(decoratorName, getter, setter, deleter, doc, null);
+        final PropertyImpl prop = new PropertyImpl(decoratorName, getter, setter, deleter, null, null);
         if (filter == null || filter.process(prop)) return prop;
       }
     }
@@ -771,21 +760,21 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   }
 
   @Nullable
-  private Property processStubProperties(@Nullable String name, @Nullable Processor<Property> propertyProcessor) {
+  private Property processStubProperties(@Nullable Processor<Property> filter) {
     final PyClassStub stub = getStub();
     if (stub != null) {
       for (StubElement subStub : stub.getChildrenStubs()) {
         if (subStub.getStubType() == PyElementTypes.TARGET_EXPRESSION) {
           final PyTargetExpressionStub targetStub = (PyTargetExpressionStub)subStub;
-          PropertyStubStorage prop = targetStub.getCustomStub(PropertyStubStorage.class);
-          if (prop != null && (name == null || name.equals(targetStub.getName()))) {
-            Maybe<PyCallable> getter = fromPacked(prop.getGetter());
-            Maybe<PyCallable> setter = fromPacked(prop.getSetter());
-            Maybe<PyCallable> deleter = fromPacked(prop.getDeleter());
-            String doc = prop.getDoc();
+          final PropertyStubStorage prop = targetStub.getCustomStub(PropertyStubStorage.class);
+          if (prop != null) {
+            final Maybe<PyCallable> getter = fromPacked(prop.getGetter());
+            final Maybe<PyCallable> setter = fromPacked(prop.getSetter());
+            final Maybe<PyCallable> deleter = fromPacked(prop.getDeleter());
+            final String doc = prop.getDoc();
             if (getter != NONE || setter != NONE || deleter != NONE) {
               final PropertyImpl property = new PropertyImpl(targetStub.getName(), getter, setter, deleter, doc, targetStub.getPsi());
-              if (propertyProcessor == null || propertyProcessor.process(property)) return property;
+              if (filter == null || filter.process(property)) return property;
             }
           }
         }
@@ -796,82 +785,86 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
 
   @Nullable
   @Override
-  public Property findProperty(@NotNull final String name, boolean inherited, @Nullable final TypeEvalContext context) {
-    Property property = findLocalProperty(name);
+  public Property findProperty(@NotNull String name, boolean inherited, @Nullable TypeEvalContext context) {
+    initLocalProperties();
+
+    final Property property = myLocalPropertyCache.get(name);
     if (property != null) {
       return property;
     }
+
     if (findMethodByName(name, false, null) != null || findClassAttribute(name, false, null) != null) {
       return null;
     }
+
     if (inherited) {
-      for (PyClass aClass : getAncestorClasses(context)) {
-        final Property ancestorProperty = ((PyClassImpl)aClass).findLocalProperty(name);
+      for (PyClass cls : getAncestorClasses(context)) {
+        final Property ancestorProperty = cls.findProperty(name, false, context);
         if (ancestorProperty != null) {
           return ancestorProperty;
         }
       }
     }
+
     return null;
   }
 
   @Override
+  @Nullable
   public Property findPropertyByCallable(PyCallable callable) {
-    initProperties();
-    for (Property property : myPropertyCache.values()) {
+    initLocalProperties();
+
+    for (Property property : myLocalPropertyCache.values()) {
       if (property.getGetter().valueOrNull() == callable ||
           property.getSetter().valueOrNull() == callable ||
           property.getDeleter().valueOrNull() == callable) {
         return property;
       }
     }
+
     return null;
   }
 
-  private Property findLocalProperty(String name) {
-    initProperties();
-    return myPropertyCache.get(name);
-  }
+  private synchronized void initLocalProperties() {
+    if (myLocalPropertyCache == null) {
+      final Map<String, Property> result = new HashMap<>();
 
-  private synchronized void initProperties() {
-    if (myPropertyCache == null) {
-      myPropertyCache = initializePropertyCache();
+      processProperties(
+        property -> {
+          result.put(property.getName(), property);
+          return false;
+        },
+        false
+      );
+
+      myLocalPropertyCache = result;
     }
-  }
-
-  private Map<String, Property> initializePropertyCache() {
-    final Map<String, Property> result = new HashMap<>();
-    processProperties(null, property -> {
-      result.put(property.getName(), property);
-      return false;
-    }, false);
-    return result;
   }
 
   @Nullable
   @Override
   public Property scanProperties(@Nullable Processor<Property> filter, boolean inherited) {
-    return processProperties(null, filter, inherited);
+    return processProperties(filter, inherited);
   }
 
   @Nullable
-  private Property processProperties(@Nullable String name, @Nullable Processor<Property> filter, boolean inherited) {
+  private Property processProperties(@Nullable Processor<Property> filter, boolean inherited) {
     PyPsiUtils.assertValid(this);
-    final Property local = processPropertiesInClass(name, filter);
+
+    final Property local = processPropertiesInClass(filter);
     if (local != null) {
       return local;
     }
+
     if (inherited) {
-      if (name != null && (findMethodByName(name, false, null) != null || findClassAttribute(name, false, null) != null)) {
-        return null;
-      }
       for (PyClass cls : getAncestorClasses(null)) {
-        final Property property = ((PyClassImpl)cls).processPropertiesInClass(name, filter);
+        final Property property = ((PyClassImpl)cls).processPropertiesInClass(filter);
         if (property != null) {
           return property;
         }
       }
     }
+
     return null;
   }
 
@@ -1338,7 +1331,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     if (myInstanceAttributes != null) {
       myInstanceAttributes = null;
     }
-    myPropertyCache = null;
+    myLocalPropertyCache = null;
   }
 
   @NotNull
