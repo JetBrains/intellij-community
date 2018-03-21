@@ -4,6 +4,7 @@ package com.intellij.coverage;
 
 import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.execution.configurations.coverage.JavaCoverageEnabledConfiguration;
+import com.intellij.execution.testframework.JavaTestAgentUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.rt.coverage.data.ClassData;
 import com.intellij.rt.coverage.data.ProjectData;
@@ -65,9 +66,7 @@ public class IDEACoverageRunner extends JavaCoverageRunner {
                                      final boolean isSampling,
                                      @Nullable String sourceMapPath) {
     StringBuilder argument = new StringBuilder("-javaagent:");
-    final String agentPath = PathUtil.getJarPathForClass(ProjectData.class);
-    final String parentPath = handleSpacesInPath(agentPath, file -> file.getName().startsWith("intellij-coverage-"));
-    argument.append(parentPath).append(File.separator).append(new File(agentPath).getName());
+    argument.append(JavaTestAgentUtil.handleSpacesInAgentPath(PathUtil.getJarPathForClass(ProjectData.class)));
     argument.append("=");
     try {
       final File tempFile = createTempFile();

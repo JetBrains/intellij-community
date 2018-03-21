@@ -3,6 +3,7 @@ package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.server.BuildManager;
+import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.openapi.application.ApplicationManager;
@@ -26,6 +27,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHandler;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.frame.XSuspendContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.java.JavaBuilder;
@@ -40,28 +44,29 @@ import java.util.function.Function;
 // todo: consider batching compilations in order not to start a separate process for every class that needs to be compiled
 public class CompilingEvaluatorImpl extends CompilingEvaluator {
   private Collection<ClassObject> myCompiledClasses;
+  private final Module myModule;
 
   public CompilingEvaluatorImpl(@NotNull Project project,
                                 @NotNull PsiElement context,
                                 @NotNull ExtractLightMethodObjectHandler.ExtractedData data) {
     super(project, context, data);
+    myModule = ModuleUtilCore.findModuleForPsiElement(context);
   }
 
   @Override
   @NotNull
   protected Collection<ClassObject> compile(@Nullable JavaSdkVersion debuggeeVersion) throws EvaluateException {
     if (myCompiledClasses == null) {
-      Module module = ReadAction.compute(() -> ModuleUtilCore.findModuleForPsiElement(myPsiContext));
       List<String> options = new ArrayList<>();
       options.add("-encoding");
       options.add("UTF-8");
       List<File> platformClasspath = new ArrayList<>();
       List<File> classpath = new ArrayList<>();
       AnnotationProcessingConfiguration profile = null;
-      if (module != null) {
-        assert myProject.equals(module.getProject()) : module + " is from another project";
-        profile = CompilerConfiguration.getInstance(myProject).getAnnotationProcessingConfiguration(module);
-        ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
+      if (myModule != null) {
+        assert myProject.equals(myModule.getProject()) : myModule + " is from another project";
+        profile = CompilerConfiguration.getInstance(myProject).getAnnotationProcessingConfiguration(myModule);
+        ModuleRootManager rootManager = ModuleRootManager.getInstance(myModule);
         for (String s : rootManager.orderEntries().compileOnly().recursively().exportedOnly().withoutSdk().getPathsList().getPathList()) {
           classpath.add(new File(s));
         }
@@ -140,11 +145,23 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
     if (Registry.is("debugger.compiling.evaluator") && psiContext != null) {
       return ApplicationManager.getApplication().runReadAction((ThrowableComputable<ExpressionEvaluator, EvaluateException>)() -> {
         try {
+          boolean useReflection = Registry.is("debugger.compiling.evaluator.reflection.access.with.java8");
+          XDebugSession currentSession = XDebuggerManager.getInstance(project).getCurrentSession();
+          if (!useReflection && currentSession != null) {
+            XSuspendContext suspendContext = currentSession.getSuspendContext();
+            if (suspendContext instanceof SuspendContextImpl) {
+              JavaSdkVersion version =
+                JavaSdkVersion.fromVersionString(((SuspendContextImpl)suspendContext).getDebugProcess().getVirtualMachineProxy().version());
+              useReflection = version != null && version.isAtLeast(JavaSdkVersion.JDK_1_9);
+            }
+          }
+
           ExtractLightMethodObjectHandler.ExtractedData data = ExtractLightMethodObjectHandler.extractLightMethodObject(
             project,
             findPhysicalContext(psiContext),
             fragmentFactory.apply(psiContext),
-            getGeneratedClassName());
+            getGeneratedClassName(),
+            useReflection);
           if (data != null) {
             return new CompilingEvaluatorImpl(project, psiContext, data);
           }

@@ -31,7 +31,6 @@ import javax.swing.border.Border;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicArrowButton;
 import javax.swing.plaf.basic.BasicComboBoxEditor;
-import javax.swing.plaf.basic.BasicComboPopup;
 import javax.swing.plaf.basic.ComboPopup;
 import java.awt.*;
 import java.awt.event.FocusAdapter;
@@ -277,7 +276,7 @@ public class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
 
   @Override
   protected ComboPopup createPopup() {
-    return new BasicComboPopup(comboBox) {
+    return new CustomComboPopup(comboBox) {
       @Override
       protected void configurePopup() {
         super.configurePopup();

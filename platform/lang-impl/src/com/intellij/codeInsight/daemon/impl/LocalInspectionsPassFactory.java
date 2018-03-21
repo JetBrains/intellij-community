@@ -30,7 +30,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +44,7 @@ public class LocalInspectionsPassFactory extends AbstractProjectComponent implem
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.LocalInspectionsPassFactory");
   public LocalInspectionsPassFactory(Project project, TextEditorHighlightingPassRegistrar highlightingPassRegistrar) {
     super(project);
-    highlightingPassRegistrar.registerTextEditorHighlightingPass(this, ArrayUtil.EMPTY_INT_ARRAY, new int[]{Pass.UPDATE_ALL}, true, Pass.LOCAL_INSPECTIONS);
+    highlightingPassRegistrar.registerTextEditorHighlightingPass(this, null, new int[]{Pass.UPDATE_ALL}, true, Pass.LOCAL_INSPECTIONS);
   }
 
   @Override

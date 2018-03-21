@@ -473,6 +473,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
         return myComponent.getSelectedIndex();
       }
 
+      @NotNull
       @Override
       protected Object[] getAllElements() {
         return ListSpeedSearch.getAllListElements(myComponent);

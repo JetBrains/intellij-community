@@ -18,20 +18,20 @@ package com.intellij.codeInsight.daemon;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class HighlightDisplayKey {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.HighlightDisplayKey");
 
-  private static final Map<String,HighlightDisplayKey> ourNameToKeyMap = new THashMap<>();
-  private static final Map<String,HighlightDisplayKey> ourIdToKeyMap = new THashMap<>();
-  private static final Map<HighlightDisplayKey, Computable<String>> ourKeyToDisplayNameMap = new THashMap<>();
-  private static final Map<HighlightDisplayKey, String> ourKeyToAlternativeIDMap = new THashMap<>();
+  private static final Map<String,HighlightDisplayKey> ourNameToKeyMap = new ConcurrentHashMap<>();
+  private static final Map<String,HighlightDisplayKey> ourIdToKeyMap = new ConcurrentHashMap<>();
+  private static final Map<HighlightDisplayKey, Computable<String>> ourKeyToDisplayNameMap = new ConcurrentHashMap<>();
+  private static final Map<HighlightDisplayKey, String> ourKeyToAlternativeIDMap = new ConcurrentHashMap<>();
 
   private final String myName;
   private final String myID;
@@ -44,7 +44,7 @@ public class HighlightDisplayKey {
   public static HighlightDisplayKey findById(@NonNls @NotNull final String id) {
     HighlightDisplayKey key = ourIdToKeyMap.get(id);
     if (key != null) return key;
-    key = ourNameToKeyMap.get(id);
+    key = find(id);
     if (key != null && key.getID().equals(id)) return key;
     return null;
   }

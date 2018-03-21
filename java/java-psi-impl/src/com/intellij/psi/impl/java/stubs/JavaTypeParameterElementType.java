@@ -29,7 +29,6 @@ import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
-import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -62,7 +61,7 @@ public class JavaTypeParameterElementType extends JavaStubElementType<PsiTypePar
   public PsiTypeParameterStub createStub(final LighterAST tree, final LighterASTNode node, final StubElement parentStub) {
     final LighterASTNode id = LightTreeUtil.requiredChildOfType(tree, node, JavaTokenType.IDENTIFIER);
     final String name = RecordUtil.intern(tree.getCharTable(), id);
-    return new PsiTypeParameterStubImpl(parentStub, StringRef.fromString(name));
+    return new PsiTypeParameterStubImpl(parentStub, name);
   }
 
   @Override
@@ -74,8 +73,7 @@ public class JavaTypeParameterElementType extends JavaStubElementType<PsiTypePar
   @NotNull
   @Override
   public PsiTypeParameterStub deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub) throws IOException {
-    StringRef name = dataStream.readName();
-    return new PsiTypeParameterStubImpl(parentStub, name);
+    return new PsiTypeParameterStubImpl(parentStub, dataStream.readNameString());
   }
 
   @Override

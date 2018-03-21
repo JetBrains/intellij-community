@@ -1196,6 +1196,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkPackageAndClassConflict(ref, myFile));
     if (!myHolder.hasErrorResults() && resolved instanceof PsiClass) myHolder.add(HighlightUtil.checkLegalVarReference(ref, (PsiClass)resolved));
+    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkMemberReferencedBeforeConstructorCalled(ref, resolved, myFile));
+
 
     return result;
   }
@@ -1419,6 +1421,13 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       }
     }
 
+    if (!myHolder.hasErrorResults() && method instanceof PsiMethod && ((PsiMethod)method).hasModifierProperty(PsiModifier.STATIC)) {
+      PsiClass containingClass = ((PsiMethod)method).getContainingClass();
+      if (containingClass != null && containingClass.isInterface()) {
+        myHolder.add(HighlightMethodUtil.checkStaticInterfaceCallQualifier(expression, result, expression.getTextRange(), containingClass));
+      }
+    }
+    
     if (!myHolder.hasErrorResults()) {
       myHolder.add(PsiMethodReferenceHighlightingUtil.checkRawConstructorReference(expression));
     }

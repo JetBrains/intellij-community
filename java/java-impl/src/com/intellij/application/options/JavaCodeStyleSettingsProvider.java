@@ -18,8 +18,10 @@ package com.intellij.application.options;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.options.Configurable;
-import com.intellij.psi.codeStyle.*;
-import com.intellij.util.PlatformUtils;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
+import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,11 +41,6 @@ public class JavaCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
         return "reference.settingsdialog.codestyle.java";
       }
     };
-  }
-
-  @Override
-  public DisplayPriority getPriority() {
-    return PlatformUtils.isIntelliJ() ? DisplayPriority.KEY_LANGUAGE_SETTINGS : DisplayPriority.LANGUAGE_SETTINGS;
   }
 
   @Override

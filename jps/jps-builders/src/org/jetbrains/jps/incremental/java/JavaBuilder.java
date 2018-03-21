@@ -124,7 +124,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
   public JavaBuilder(Executor tasksExecutor) {
     super(BuilderCategory.TRANSLATOR);
-    myTaskRunner = new SequentialTaskExecutor("JavaBuilder pool", tasksExecutor);
+    myTaskRunner = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("JavaBuilder Pool", tasksExecutor);
     //add here class processors in the sequence they should be executed
   }
 

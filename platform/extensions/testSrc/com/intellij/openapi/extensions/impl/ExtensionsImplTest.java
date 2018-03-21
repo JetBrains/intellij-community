@@ -33,7 +33,7 @@ public class ExtensionsImplTest {
 
   @Test
   public void testCreateAndAccess() {
-    ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(null, new Extensions.SimpleLogProvider());
+    ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(null);
     int numEP = extensionsArea.getExtensionPoints().length;
     extensionsArea.registerExtensionPoint(EXTENSION_POINT_NAME_1, Integer.class.getName());
     assertEquals("Additional EP available", numEP + 1, extensionsArea.getExtensionPoints().length);
@@ -42,7 +42,7 @@ public class ExtensionsImplTest {
 
   @Test(expected = RuntimeException.class)
   public void testInvalidActions() {
-    ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(null, new Extensions.SimpleLogProvider());
+    ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(null);
     extensionsArea.registerExtensionPoint(EXTENSION_POINT_NAME_1, Integer.class.getName());
     extensionsArea.registerExtensionPoint(EXTENSION_POINT_NAME_1, Boolean.class.getName());
     fail("Should not allow duplicate registration");
@@ -50,7 +50,7 @@ public class ExtensionsImplTest {
 
   @Test
   public void testUnregisterEP() {
-    ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(null, new Extensions.SimpleLogProvider());
+    ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(null);
     int numEP = extensionsArea.getExtensionPoints().length;
     extensionsArea.registerExtensionPoint(EXTENSION_POINT_NAME_1, Integer.class.getName());
 
@@ -69,7 +69,7 @@ public class ExtensionsImplTest {
 
   @Test
   public void testAvailabilityListener() {
-    ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(null, new Extensions.SimpleLogProvider());
+    ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(null);
     MyListener.reset();
     extensionsArea.getExtensionPoint(EPAvailabilityListenerExtension.EXTENSION_POINT_NAME).registerExtension(
       new EPAvailabilityListenerExtension(EXTENSION_POINT_NAME_1, MyListener.class.getName()));
@@ -86,7 +86,7 @@ public class ExtensionsImplTest {
 
   @Test
   public void testAvailability2Listeners() {
-    ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(null, new Extensions.SimpleLogProvider());
+    ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(null);
     MyListener.reset();
     extensionsArea.registerExtensionPoint(EXTENSION_POINT_NAME_1, Integer.class.getName());
     extensionsArea.getExtensionPoint(EPAvailabilityListenerExtension.EXTENSION_POINT_NAME).registerExtension(
@@ -103,7 +103,7 @@ public class ExtensionsImplTest {
 
   @Test
   public void testAvailabilityListenerAfter() {
-    ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(null, new Extensions.SimpleLogProvider());
+    ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(null);
     extensionsArea.registerExtensionPoint(EXTENSION_POINT_NAME_1, Integer.class.getName());
     MyListener.reset();
     extensionsArea.getExtensionPoint(EPAvailabilityListenerExtension.EXTENSION_POINT_NAME).registerExtension(
@@ -165,7 +165,7 @@ public class ExtensionsImplTest {
 
   @Test
   public void testExtensionsNamespaces() {
-    ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(new DefaultPicoContainer(), new Extensions.SimpleLogProvider());
+    ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(new DefaultPicoContainer());
     extensionsArea.registerExtensionPoint("plugin.ep1", TestExtensionClassOne.class.getName(), ExtensionPoint.Kind.BEAN_CLASS);
     extensionsArea.registerExtension("plugin", ExtensionComponentAdapterTest.readElement(
         "<plugin:ep1 xmlns:plugin=\"plugin\" order=\"LAST\"><text>3</text></plugin:ep1>"));
@@ -183,7 +183,7 @@ public class ExtensionsImplTest {
 
   @Test
   public void testExtensionsWithOrdering() {
-    ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(new DefaultPicoContainer(), new Extensions.SimpleLogProvider());
+    ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(new DefaultPicoContainer());
     extensionsArea.registerExtensionPoint("ep1", TestExtensionClassOne.class.getName(), ExtensionPoint.Kind.BEAN_CLASS);
     extensionsArea.registerExtension("", ExtensionComponentAdapterTest.readElement(
         "<extension point=\"ep1\" order=\"LAST\"><text>3</text></extension>"));
@@ -201,7 +201,7 @@ public class ExtensionsImplTest {
 
   @Test
   public void testExtensionsWithOrderingUpdate() {
-    ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(new DefaultPicoContainer(), new Extensions.SimpleLogProvider());
+    ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(new DefaultPicoContainer());
     extensionsArea.registerExtensionPoint("ep1", TestExtensionClassOne.class.getName(), ExtensionPoint.Kind.BEAN_CLASS);
     extensionsArea.registerExtension("", ExtensionComponentAdapterTest.readElement(
         "<extension point=\"ep1\" id=\"_7\" order=\"LAST\"><text>7</text></extension>"));

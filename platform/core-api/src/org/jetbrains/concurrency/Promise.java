@@ -52,7 +52,7 @@ public interface Promise<T> {
    * {@code
    *
    * somePromise
-   *  .then { transformOrProcessValue(it) }
+   *  .then(it -> transformOrProcessValue(it))
    * }
    * </pre>
    */
@@ -66,8 +66,8 @@ public interface Promise<T> {
    * {@code
    *
    * somePromise
-   *  .then { transformOrProcessValue(it) }
-   *  .thenAsync { processValueAsync(it) }
+   *  .then(it -> transformOrProcessValue(it))
+   *  .thenAsync(it -> processValueAsync(it))
    * }
    * </pre>
    */
@@ -132,6 +132,7 @@ public interface Promise<T> {
   @Nullable
   T blockingGet(int timeout, @NotNull TimeUnit timeUnit) throws TimeoutException, ExecutionException;
 
+  @Nullable
   default T blockingGet(int timeout) throws TimeoutException, ExecutionException {
     return blockingGet(timeout, TimeUnit.MILLISECONDS);
   }

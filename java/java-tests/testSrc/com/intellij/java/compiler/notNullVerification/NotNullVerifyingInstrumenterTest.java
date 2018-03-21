@@ -200,6 +200,12 @@ public class NotNullVerifyingInstrumenterTest extends UsefulTestCase {
     Object instance = test.newInstance();
     verifyCallThrowsException("@FooAnno method TypeUseAndMemberAnnotations.foo1 must not return null", instance, test.getMethod("foo1"));
     verifyCallThrowsException("Argument 0 for @FooAnno parameter of TypeUseAndMemberAnnotations.foo2 must not be null", instance, test.getMethod("foo2", String.class), (String)null);
+
+    Method returnType = test.getMethod("returnType");
+    verifyCallThrowsException("@FooAnno method TypeUseAndMemberAnnotations.returnType must not return null", instance, returnType);
+
+    assertSize(1, returnType.getAnnotations());
+    assertSize(1, returnType.getAnnotatedReturnType().getAnnotations());
   }
 
   public void testMalformedBytecode() throws Exception {

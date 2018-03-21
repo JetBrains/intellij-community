@@ -48,7 +48,7 @@ public class GitLineHandler extends GitTextHandler {
    * Line listeners
    */
   private final EventDispatcher<GitLineHandlerListener> myLineListeners = EventDispatcher.create(GitLineHandlerListener.class);
-  private final boolean myWithMediator;
+  private boolean myWithMediator = true;
 
   /**
    * Remote url which require authentication
@@ -58,29 +58,19 @@ public class GitLineHandler extends GitTextHandler {
 
   public GitLineHandler(@NotNull Project project, @NotNull File directory, @NotNull GitCommand command) {
     super(project, directory, command);
-    myWithMediator = true;
   }
 
   public GitLineHandler(@NotNull Project project,
                         @NotNull VirtualFile vcsRoot,
                         @NotNull GitCommand command) {
-    this(project, vcsRoot, command, Collections.emptyList());
+    super(project, vcsRoot, command);
   }
 
   public GitLineHandler(@NotNull Project project,
                         @NotNull VirtualFile vcsRoot,
                         @NotNull GitCommand command,
                         @NotNull List<String> configParameters) {
-    this(project, vcsRoot, command, configParameters, true);
-  }
-
-  public GitLineHandler(@NotNull Project project,
-                        @NotNull VirtualFile vcsRoot,
-                        @NotNull GitCommand command,
-                        @NotNull List<String> configParameters,
-                        boolean withMediator) {
     super(project, vcsRoot, command, configParameters);
-    myWithMediator = withMediator;
   }
 
   public GitLineHandler(@Nullable Project project,
@@ -89,7 +79,6 @@ public class GitLineHandler extends GitTextHandler {
                         @NotNull GitCommand command,
                         @NotNull List<String> configParameters) {
     super(project, directory, pathToExecutable, command, configParameters);
-    myWithMediator = true;
   }
 
   public void setUrl(@NotNull String url) {
@@ -115,6 +104,10 @@ public class GitLineHandler extends GitTextHandler {
 
   public void setIgnoreAuthenticationRequest(boolean ignoreAuthenticationRequest) {
     myIgnoreAuthenticationRequest = ignoreAuthenticationRequest;
+  }
+
+  public void setWithMediator(boolean value) {
+    myWithMediator = value;
   }
 
   protected void processTerminated(final int exitCode) {}
@@ -184,7 +177,7 @@ public class GitLineHandler extends GitTextHandler {
 
   /**
    * Will not react to {@link com.intellij.util.io.BaseOutputReader.Options}
-   * other then {@link com.intellij.util.io.BaseOutputReader.Options#policy()} because we do not negotiate with terrorists
+   * other than {@link com.intellij.util.io.BaseOutputReader.Options#policy()} because we do not negotiate with terrorists
    */
   private static class LineReader extends BaseDataReader {
     @NotNull private final Reader myReader;
@@ -214,19 +207,14 @@ public class GitLineHandler extends GitTextHandler {
 
     private boolean read(boolean checkReaderReady) throws IOException {
       boolean read = false;
-      try {
-        int n;
-        while (true) {
-          if (checkReaderReady && !myReader.ready()) break;
-          if ((n = myReader.read(myInputBuffer)) < 0) break;
-          if (n > 0) {
-            read = true;
-            myOutputProcessor.process(myInputBuffer, n);
-          }
+      while (true) {
+        if (checkReaderReady && !myReader.ready()) break;
+        int n = myReader.read(myInputBuffer);
+        if (n < 0) break;
+        if (n > 0) {
+          read = true;
+          myOutputProcessor.process(myInputBuffer, n);
         }
-      }
-      finally {
-        myOutputProcessor.flush();
       }
       return read;
     }
@@ -240,7 +228,12 @@ public class GitLineHandler extends GitTextHandler {
 
     @Override
     protected void close() throws IOException {
-      myReader.close();
+      try {
+        myReader.close();
+      }
+      finally {
+        myOutputProcessor.flush();
+      }
     }
   }
 }

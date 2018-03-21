@@ -2,10 +2,9 @@
 package com.intellij.java.psi.search;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
@@ -17,7 +16,6 @@ import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.containers.IntArrayList;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,7 +27,7 @@ public class PlainTextUsagesTest extends PsiTestCase {
 
     String root = JavaTestUtil.getJavaTestDataPath() + "/psi/search/plainTextUsages/" + getTestName(true);
     PsiTestUtil.removeAllRoots(myModule, IdeaTestUtil.getMockJdk17());
-    PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete);
+    createTestProjectStructure( root);
   }
 
   public void testSimple() {
@@ -39,16 +37,13 @@ public class PlainTextUsagesTest extends PsiTestCase {
   public void testXmlOutOfScope() {
     final VirtualFile resourcesDir = ModuleRootManager.getInstance(myModule).getSourceRoots()[0].findChild("resources");
     assertNotNull(resourcesDir);
-    new WriteAction() {
-      @Override
-      protected void run(@NotNull final Result result) {
-        final Module module = createModule("res");
-        PsiTestUtil.addContentRoot(module, resourcesDir);
-        final VirtualFile child = resourcesDir.findChild("Test.xml");
-        assert child != null;
-        assertSame(module, ModuleUtil.findModuleForFile(child, getProject()));
-      }
-    }.execute();
+    WriteAction.runAndWait(() -> {
+      final Module module = createModule("res");
+      PsiTestUtil.addContentRoot(module, resourcesDir);
+      final VirtualFile child = resourcesDir.findChild("Test.xml");
+      assert child != null;
+      assertSame(module, ModuleUtilCore.findModuleForFile(child, getProject()));
+    });
 
     PsiClass aClass = myJavaFacade.findClass("com.Foo", GlobalSearchScope.allScope(myProject));
     assertNotNull(aClass);

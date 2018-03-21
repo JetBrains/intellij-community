@@ -847,9 +847,10 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
           break;
       }
     }
-  }
-
-  private Cursor getResizeCursor() {
-    return getOrientation() ? Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR) : Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR);
+    private Cursor getResizeCursor() {
+      return getOrientation()
+             ? Cursor.getPredefinedCursor(myIsFirst ? Cursor.S_RESIZE_CURSOR : Cursor.N_RESIZE_CURSOR)
+             : Cursor.getPredefinedCursor(myIsFirst ? Cursor.W_RESIZE_CURSOR : Cursor.E_RESIZE_CURSOR);
+    }
   }
 }

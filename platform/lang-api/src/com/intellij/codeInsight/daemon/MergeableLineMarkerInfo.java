@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
@@ -21,7 +7,6 @@ import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
@@ -91,8 +76,8 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
   }
 
   @NotNull
-  public static List<LineMarkerInfo> merge(@NotNull List<MergeableLineMarkerInfo> markers) {
-    List<LineMarkerInfo> result = new SmartList<>();
+  public static List<LineMarkerInfo<PsiElement>> merge(@NotNull List<MergeableLineMarkerInfo> markers) {
+    List<LineMarkerInfo<PsiElement>> result = new SmartList<>();
     for (int i = 0; i < markers.size(); i++) {
       MergeableLineMarkerInfo marker = markers.get(i);
       List<MergeableLineMarkerInfo> toMerge = new SmartList<>();

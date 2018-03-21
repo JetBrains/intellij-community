@@ -1182,17 +1182,31 @@ public class ExpressionUtils {
   @Nullable
   public static PsiExpression getConstantArrayElement(PsiVariable array, int index) {
     if (index < 0) return null;
+    PsiExpression[] elements = getConstantArrayElements(array);
+    if (elements == null || index >= elements.length) return null;
+    return elements[index];
+  }
+
+  /**
+   * Returns an array of expressions which represent all array elements if array is known to be never modified
+   * after initialization.
+   *
+   * @param array an array variable
+   * @return an array or null if array could be modified after initialization
+   * (empty array means that the initializer is known to be an empty array).
+   */
+  @Nullable
+  public static PsiExpression[] getConstantArrayElements(PsiVariable array) {
     PsiExpression initializer = array.getInitializer();
     if (initializer instanceof PsiNewExpression) initializer = ((PsiNewExpression)initializer).getArrayInitializer();
     if (!(initializer instanceof PsiArrayInitializerExpression)) return null;
     PsiExpression[] initializers = ((PsiArrayInitializerExpression)initializer).getInitializers();
-    if (index >= initializers.length) return null;
     if (array instanceof PsiField && !(array.hasModifierProperty(PsiModifier.PRIVATE) && array.hasModifierProperty(PsiModifier.STATIC))) {
       return null;
     }
     Boolean isConstantArray = CachedValuesManager.<Boolean>getCachedValue(array, () -> CachedValueProvider.Result
       .create(isConstantArray(array), PsiModificationTracker.MODIFICATION_COUNT));
-    return Boolean.TRUE.equals(isConstantArray) ? initializers[index] : null;
+    return Boolean.TRUE.equals(isConstantArray) ? initializers : null;
   }
 
   private static boolean isConstantArray(PsiVariable array) {

@@ -20,7 +20,6 @@
       <interface-class>com.intellij.openapi.vfs.jrt.JrtFileSystem</interface-class>
       <implementation-class>com.intellij.openapi.vfs.impl.jrt.JrtFileSystemImpl</implementation-class>
     </component>
-
     <component>
       <implementation-class>com.intellij.util.xml.impl.JavaDomApplicationComponent</implementation-class>
     </component>
@@ -33,6 +32,9 @@
     </component>
     <component>
       <implementation-class>com.intellij.codeInsight.hints.AnnotationHintsPassFactory</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.intellij.lang.java.JavaModuleRenameListener</implementation-class>
     </component>
   </project-components>
 
@@ -408,6 +410,7 @@
                                  bundle="messages.JavadocBundle"/>
     <editorAppearanceConfigurable instance="com.intellij.codeInsight.hints.AnnotationHintsConfigurable"/>
 
+    <wordBoundaryFilter language="JAVA" implementationClass="com.intellij.codeInsight.editorActions.JavaWordBoundaryFilter"/>
     <editorActionHandler action="PrevParameter" implementationClass="com.intellij.codeInsight.editorActions.JavaVarArgPrevParameterHandler"/>
     <editorActionHandler action="NextParameter" implementationClass="com.intellij.codeInsight.editorActions.JavaVarArgNextParameterHandler"/>
     <editorActionHandler action="EditorLineStart" implementationClass="com.intellij.codeInsight.editorActions.JavadocLineStartHandler"/>
@@ -743,6 +746,10 @@
                      key="inspection.redundant.array.creation.display.name" groupKey="group.names.verbose.or.redundant.code.constructs"
                      enabledByDefault="true" level="WARNING" cleanupTool="true"
                      implementationClass="com.intellij.codeInspection.miscGenerics.RedundantArrayForVarargsCallInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="CharsetObjectCanBeUsed" bundle="messages.InspectionsBundle"
+                     key="inspection.charset.object.can.be.used.display.name" groupKey="group.names.code.style.issues"
+                     enabledByDefault="true" level="WARNING" cleanupTool="true"
+                     implementationClass="com.intellij.codeInspection.CharsetObjectCanBeUsedInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="UnusedAssignment" displayName="Unused assignment" groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle" enabledByDefault="true"
                      level="WARNING" implementationClass="com.intellij.codeInspection.defUse.DefUseInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ConstantConditions" bundle="messages.InspectionsBundle" key="inspection.data.flow.display.name"
@@ -758,6 +765,16 @@
                      enabledByDefault="true" level="WARNING"
                      key="inspection.redundant.comparator.comparing.display.name" bundle="messages.InspectionsBundle"
                      implementationClass="com.intellij.codeInspection.RedundantComparatorComparingInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="SuspiciousListRemoveInLoop"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs"
+                     enabledByDefault="true" level="WARNING"
+                     key="inspection.suspicious.list.remove.display.name" bundle="messages.InspectionsBundle"
+                     implementationClass="com.intellij.codeInspection.SuspiciousListRemoveInLoopInspection"/>
+    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="FoldExpressionIntoStream"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.language.level.specific.issues.and.migration.aids8"
+                     enabledByDefault="true" level="INFORMATION"
+                     key="inspection.fold.expression.into.stream.display.name" bundle="messages.InspectionsBundle"
+                     implementationClass="com.intellij.codeInspection.streamMigration.FoldExpressionIntoStreamInspection"/>
     <globalInspection groupPath="Java" language="JAVA" shortName="EmptyMethod" displayName="Empty method" groupKey="group.names.declaration.redundancy" enabledByDefault="true" groupBundle="messages.InspectionsBundle"
                       level="WARNING" implementationClass="com.intellij.codeInspection.emptyMethod.EmptyMethodInspection"/>
     <globalInspection groupPath="Java" language="JAVA" shortName="UnusedReturnValue" bundle="messages.InspectionsBundle" key="inspection.unused.return.value.display.name"

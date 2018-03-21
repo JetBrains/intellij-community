@@ -244,7 +244,7 @@ class JsonSchemaAnnotatorChecker {
       final JsonSchemaObject schemaObject = JsonSchemaService.Impl.get(object.getProject()).getSchemaObjectForSchemaFile(schemaFile);
       if (schemaObject == null) return;
 
-      final List<JsonSchemaVariantsTreeBuilder.Step> position = JsonOriginalPsiWalker.INSTANCE.findPosition(object, false, true);
+      final List<JsonSchemaVariantsTreeBuilder.Step> position = JsonOriginalPsiWalker.INSTANCE.findPosition(object, true);
       if (position == null) return;
       final List<JsonSchemaVariantsTreeBuilder.Step> steps = skipProperties(position);
       // !! not root schema, because we validate the schema written in the file itself
@@ -371,10 +371,12 @@ class JsonSchemaAnnotatorChecker {
         list.add(type);
       } else {
         final List<JsonSchemaType> variants = schema.getTypeVariants();
-        list.addAll(variants);
+        if (variants != null) {
+          list.addAll(variants);
+        }
       }
     }
-    return list.isEmpty() ? NO_TYPES : list.toArray(new JsonSchemaType[0]);
+    return list.isEmpty() ? NO_TYPES : list.toArray(NO_TYPES);
   }
 
   public static boolean areSchemaTypesCompatible(@NotNull final JsonSchemaObject schema, @NotNull final JsonSchemaType type) {
@@ -516,6 +518,7 @@ class JsonSchemaAnnotatorChecker {
 
   private void checkMaximum(JsonSchemaObject schema, Number value, PsiElement propertyValue,
                             @NotNull JsonSchemaType propValueType) {
+    if (schema.getMaximum() == null) return;
     if (JsonSchemaType._integer.equals(propValueType)) {
       final int intValue = schema.getMaximum().intValue();
       if (Boolean.TRUE.equals(schema.isExclusiveMaximum())) {
@@ -546,6 +549,7 @@ class JsonSchemaAnnotatorChecker {
 
   private void checkMinimum(JsonSchemaObject schema, Number value, PsiElement propertyValue,
                             @NotNull JsonSchemaType schemaType) {
+    if (schema.getMinimum() == null) return;
     if (JsonSchemaType._integer.equals(schemaType)) {
       final int intValue = schema.getMinimum().intValue();
       if (Boolean.TRUE.equals(schema.isExclusiveMinimum())) {

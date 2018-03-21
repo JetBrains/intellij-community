@@ -434,4 +434,10 @@ public interface Application extends ComponentManager {
   boolean isInternal();
 
   boolean isEAP();
+
+  /**  Use {@link AppUIExecutor#onUiThread} */
+  @NotNull
+  default AppUIExecutor createUIExecutor(@NotNull ModalityState modalityState) {
+    throw new UnsupportedOperationException("createUIExecutor is not implemented in " + getClass());
+  }
 }

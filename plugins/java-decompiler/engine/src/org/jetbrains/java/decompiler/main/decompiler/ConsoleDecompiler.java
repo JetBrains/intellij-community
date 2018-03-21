@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.main.decompiler;
 
 import org.jetbrains.java.decompiler.main.DecompilerContext;
@@ -9,6 +9,7 @@ import org.jetbrains.java.decompiler.main.extern.IResultSaver;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
@@ -27,8 +28,8 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
     }
 
     Map<String, Object> mapOptions = new HashMap<>();
-    List<File> lstSources = new ArrayList<>();
-    List<File> lstLibraries = new ArrayList<>();
+    List<File> sources = new ArrayList<>();
+    List<File> libraries = new ArrayList<>();
 
     boolean isOption = true;
     for (int i = 0; i < args.length - 1; ++i) { // last parameter - destination
@@ -49,15 +50,15 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
         isOption = false;
 
         if (arg.startsWith("-e=")) {
-          addPath(lstLibraries, arg.substring(3));
+          addPath(libraries, arg.substring(3));
         }
         else {
-          addPath(lstSources, arg);
+          addPath(sources, arg);
         }
       }
     }
 
-    if (lstSources.isEmpty()) {
+    if (sources.isEmpty()) {
       System.out.println("error: no sources given");
       return;
     }
@@ -71,11 +72,11 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
     PrintStreamLogger logger = new PrintStreamLogger(System.out);
     ConsoleDecompiler decompiler = new ConsoleDecompiler(destination, mapOptions, logger);
 
-    for (File source : lstSources) {
-      decompiler.addSpace(source, true);
+    for (File source : sources) {
+      decompiler.addSource(source);
     }
-    for (File library : lstLibraries) {
-      decompiler.addSpace(library, false);
+    for (File library : libraries) {
+      decompiler.addLibrary(library);
     }
 
     decompiler.decompileContext();
@@ -97,25 +98,29 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
   // *******************************************************************
 
   private final File root;
-  private final Fernflower fernflower;
+  private final Fernflower engine;
   private final Map<String, ZipOutputStream> mapArchiveStreams = new HashMap<>();
   private final Map<String, Set<String>> mapArchiveEntries = new HashMap<>();
 
   protected ConsoleDecompiler(File destination, Map<String, Object> options, IFernflowerLogger logger) {
     root = destination;
-    fernflower = new Fernflower(this, this, options, logger);
+    engine = new Fernflower(this, this, options, logger);
   }
 
-  public void addSpace(File file, boolean isOwn) {
-    fernflower.getStructContext().addSpace(file, isOwn);
+  public void addSource(File source) {
+    engine.addSource(source);
+  }
+
+  public void addLibrary(File library) {
+    engine.addLibrary(library);
   }
 
   public void decompileContext() {
     try {
-      fernflower.decompileContext();
+      engine.decompileContext();
     }
     finally {
-      fernflower.clearContext();
+      engine.clearContext();
     }
   }
 
@@ -234,7 +239,7 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
       ZipOutputStream out = mapArchiveStreams.get(file);
       out.putNextEntry(new ZipEntry(entryName));
       if (content != null) {
-        out.write(content.getBytes("UTF-8"));
+        out.write(content.getBytes(StandardCharsets.UTF_8));
       }
     }
     catch (IOException ex) {

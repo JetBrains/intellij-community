@@ -19,13 +19,7 @@ public class LocalTestDiscoveryProducer implements TestDiscoveryProducer {
                                                      @NotNull String classFQName,
                                                      @NotNull String methodName,
                                                      byte frameworkId) {
-    try {
-      return TestDiscoveryIndex.getInstance(project).getTestsByMethodName(classFQName, methodName, frameworkId);
-    }
-    catch (IOException e) {
-      TestDiscoveryProducer.LOG.error(e);
-      return MultiMap.empty();
-    }
+    return TestDiscoveryIndex.getInstance(project).getTestsByMethodName(classFQName, methodName, frameworkId);
   }
 
   @Override

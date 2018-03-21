@@ -173,6 +173,11 @@ public class MockChangeListManager extends ChangeListManagerEx {
 
   @Override
   public void scheduleAutomaticEmptyChangeListDeletion(@NotNull LocalChangeList list) {
+    scheduleAutomaticEmptyChangeListDeletion(list, false);
+  }
+
+  @Override
+  public void scheduleAutomaticEmptyChangeListDeletion(@NotNull LocalChangeList list, boolean silently) {
     throw new UnsupportedOperationException();
   }
 
@@ -358,6 +363,11 @@ public class MockChangeListManager extends ChangeListManagerEx {
   @Override
   public void setDefaultChangeList(@NotNull LocalChangeList list) {
     myActiveChangeList = list;
+  }
+
+  @Override
+  public void setDefaultChangeList(@NotNull LocalChangeList list, boolean automatic) {
+    throw new UnsupportedOperationException();
   }
 
   @Override

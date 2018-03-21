@@ -1027,7 +1027,7 @@ public class PyUtil {
    * @param target PSI element to check
    * @return PsiDirectory or target unchanged
    */
-  @Contract("null -> null; !null -> !null")
+  @Contract("null -> null")
   @Nullable
   public static PsiElement turnInitIntoDir(@Nullable PsiElement target) {
     if (target instanceof PyFile && isPackage((PsiFile)target)) {
@@ -1848,6 +1848,24 @@ public class PyUtil {
       }
     }
     return false;
+  }
+
+  @Nullable
+  public static PyLoopStatement getCorrespondingLoop(@NotNull PsiElement breakOrContinue) {
+    return breakOrContinue instanceof PyContinueStatement || breakOrContinue instanceof PyBreakStatement
+           ? getCorrespondingLoopImpl(breakOrContinue)
+           : null;
+  }
+
+  @Nullable
+  private static PyLoopStatement getCorrespondingLoopImpl(@NotNull PsiElement element) {
+    final PyLoopStatement loop = PsiTreeUtil.getParentOfType(element, PyLoopStatement.class, true, ScopeOwner.class);
+
+    if (loop instanceof PyStatementWithElse && PsiTreeUtil.isAncestor(((PyStatementWithElse)loop).getElsePart(), element, true)) {
+      return getCorrespondingLoopImpl(loop);
+    }
+
+    return loop;
   }
 
   /**

@@ -49,7 +49,7 @@ public class TestNGTestDiscoveryConfigurationProducer extends TestDiscoveryConfi
   }
 
   @Override
-  protected TestDiscoveryConfigurationProducer createDelegate(PsiMethod sourceMethod, Module module) {
+  public TestDiscoveryConfigurationProducer createDelegate(PsiMethod sourceMethod, Module module) {
     return new TestNGTestDiscoveryConfigurationProducer() {
       @Override
       protected boolean setupConfigurationFromContext(JavaTestConfigurationBase configuration,

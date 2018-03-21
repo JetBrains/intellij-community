@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.io.fastCgi
 
 import com.intellij.util.Consumer
@@ -26,9 +27,9 @@ internal class FastCgiDecoder(private val errorOutputConsumer: Consumer<String>,
   }
 
   object RecordType {
-    val END_REQUEST = 3
-    val STDOUT = 6
-    val STDERR = 7
+    const val END_REQUEST = 3
+    const val STDOUT = 6
+    const val STDERR = 7
   }
 
   private var type = 0
@@ -77,7 +78,7 @@ internal class FastCgiDecoder(private val errorOutputConsumer: Consumer<String>,
   override fun channelInactive(context: ChannelHandlerContext) {
     try {
       if (!dataBuffers.isEmpty) {
-        dataBuffers.forEachEntry { a, buffer ->
+        dataBuffers.forEachEntry { _, buffer ->
           try {
             buffer.release()
           }

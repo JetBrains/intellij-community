@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.concurrency.JobLauncher;
@@ -56,7 +42,37 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
                                 boolean everywhere,
                                 @NotNull final ProgressIndicator indicator,
                                 @NotNull final Processor<Object> consumer) {
-    if (base.myProject != null) base.myProject.putUserData(ChooseByNamePopup.CURRENT_SEARCH_PATTERN, pattern);
+    return filterElements(base, pattern, everywhere, indicator,
+                          myContext == null ? null : myContext.getElement(),
+                          () -> base.getNames(everywhere), consumer);
+  }
+
+  /**
+   * Filters and sorts elements in the given choose by name popup according to the given pattern.
+   *
+   * @param everywhere If true, also return non-project items
+   * @param indicator Progress indicator which can be used to cancel the operation
+   * @param context The PSI element currently open in the editor (used for proximity ordering of returned results)
+   * @param consumer The consumer to which the results (normally NavigationItem instances) are passed
+   * @return true if the operation completed normally, false if it was interrupted
+   */
+  public static boolean filterElements(@NotNull ChooseByNameViewModel base,
+                                       @NotNull String pattern,
+                                       boolean everywhere,
+                                       @NotNull ProgressIndicator indicator,
+                                       @Nullable PsiElement context,
+                                       @NotNull Processor<Object> consumer) {
+    return filterElements(base, pattern, everywhere, indicator, context, null, consumer);
+  }
+
+  private static boolean filterElements(@NotNull ChooseByNameViewModel base,
+                                       @NotNull String pattern,
+                                       boolean everywhere,
+                                       @NotNull ProgressIndicator indicator,
+                                       @Nullable PsiElement context,
+                                       @Nullable Producer<String[]> allNamesProducer,
+                                       @NotNull Processor<Object> consumer) {
+    if (base.getProject() != null) base.getProject().putUserData(ChooseByNamePopup.CURRENT_SEARCH_PATTERN, pattern);
 
     String namePattern = getNamePattern(base, pattern);
     String qualifierPattern = getQualifierPattern(base, pattern);
@@ -90,7 +106,10 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
         LOG.debug("loaded + matched:"+ (System.currentTimeMillis() - started)+ "," + collect.getResult().size());
       }
     } else {
-      String[] names = base.getNames(everywhere);
+      if (allNamesProducer == null) {
+        throw new IllegalArgumentException("Need to specify allNamesProducer when using a model which isn't a ChooseByNameModelEx");
+      }
+      String[] names = allNamesProducer.produce();
       started = System.currentTimeMillis();
       processNamesByPattern(base, names, matchingPattern, indicator, collect);
       if (LOG.isDebugEnabled()) {
@@ -113,7 +132,8 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
 
     Comparator<Object> weightComparator = new Comparator<Object>() {
       @SuppressWarnings("unchecked")
-      Comparator<Object> modelComparator = model instanceof Comparator ? (Comparator<Object>)model : getPathProximityComparator();
+      Comparator<Object> modelComparator = model instanceof Comparator ? (Comparator<Object>)model :
+                                           new PathProximityComparator(context);
 
       @Override
       public int compare(Object o1, Object o2) {
@@ -132,7 +152,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
       idFilter = ((ContributorsBasedGotoByModel)model).getIdFilter(everywhere);
     }
 
-    GlobalSearchScope searchScope = FindSymbolParameters.searchScopeFor(base.myProject, everywhere);
+    GlobalSearchScope searchScope = FindSymbolParameters.searchScopeFor(base.getProject(), everywhere);
     FindSymbolParameters parameters = new FindSymbolParameters(pattern, namePattern, searchScope, idFilter);
 
     for (MatchResult result : namesList) {
@@ -186,7 +206,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
   }
 
   @NotNull
-  private static String getQualifierPattern(@NotNull ChooseByNameBase base, @NotNull String pattern) {
+  private static String getQualifierPattern(@NotNull ChooseByNameViewModel base, @NotNull String pattern) {
     pattern = base.transformPattern(pattern);
     final String[] separators = base.getModel().getSeparators();
     int lastSeparatorOccurrence = 0;
@@ -201,7 +221,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
   }
 
   @NotNull
-  private static String getNamePattern(@NotNull ChooseByNameBase base, String pattern) {
+  private static String getNamePattern(@NotNull ChooseByNameViewModel base, String pattern) {
     String transformedPattern = base.transformPattern(pattern);
     return getNamePattern(base.getModel(), transformedPattern);
   }
@@ -221,7 +241,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
   }
 
   @NotNull
-  private static List<String> split(@NotNull String s, @NotNull ChooseByNameBase base) {
+  private static List<String> split(@NotNull String s, @NotNull ChooseByNameViewModel base) {
     List<String> answer = new ArrayList<>();
     for (String token : StringUtil.tokenize(s, StringUtil.join(base.getModel().getSeparators(), ""))) {
       if (!token.isEmpty()) {
@@ -233,7 +253,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
   }
 
   private static MatchResult matchQualifier(@NotNull Object element,
-                                            @NotNull final ChooseByNameBase base,
+                                            @NotNull final ChooseByNameViewModel base,
                                             @NotNull List<Pair<String, MinusculeMatcher>> patternsAndMatchers) {
     final String name = base.getModel().getFullName(element);
     if (name == null) return null;
@@ -276,7 +296,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
   }
 
   @NotNull
-  private static List<Pair<String, MinusculeMatcher>> getPatternsAndMatchers(@NotNull String qualifierPattern, @NotNull final ChooseByNameBase base) {
+  private static List<Pair<String, MinusculeMatcher>> getPatternsAndMatchers(@NotNull String qualifierPattern, @NotNull final ChooseByNameViewModel base) {
     return ContainerUtil.map2List(split(qualifierPattern, base), s -> {
       String namePattern = addSearchAnywherePatternDecorationIfNeeded(base, getNamePattern(base, s));
       return Pair.create(namePattern, buildPatternMatcher(namePattern, NameUtil.MatchingCaseSensitivity.NONE));
@@ -300,7 +320,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     }
   }
 
-  private static void processNamesByPattern(@NotNull final ChooseByNameBase base,
+  private static void processNamesByPattern(@NotNull final ChooseByNameViewModel base,
                                             @NotNull final String[] names,
                                             @NotNull final String pattern,
                                             final ProgressIndicator indicator,
@@ -314,13 +334,13 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
       }
       return true;
     };
-    if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Arrays.asList(names), indicator, false, true, processor)) {
+    if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Arrays.asList(names), indicator, processor)) {
       throw new ProcessCanceledException();
     }
   }
 
   @Nullable
-  private static String convertToMatchingPattern(@NotNull ChooseByNameBase base, @NotNull String pattern) {
+  private static String convertToMatchingPattern(@NotNull ChooseByNameViewModel base, @NotNull String pattern) {
     pattern = removeModelSpecificMarkup(base.getModel(), pattern);
 
     if (!base.canShowListForEmptyPattern() && pattern.isEmpty()) {
@@ -331,7 +351,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
   }
 
   @NotNull
-  private static String addSearchAnywherePatternDecorationIfNeeded(@NotNull ChooseByNameBase base, @NotNull String pattern) {
+  private static String addSearchAnywherePatternDecorationIfNeeded(@NotNull ChooseByNameViewModel base, @NotNull String pattern) {
     String trimmedPattern;
     if (base.isSearchInAnyPlace() && !(trimmedPattern = pattern.trim()).isEmpty() && trimmedPattern.length() > 1) {
       pattern = "*" + pattern;
@@ -348,7 +368,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
   }
 
   @Nullable
-  protected static MatchResult matches(@NotNull ChooseByNameBase base,
+  protected static MatchResult matches(@NotNull ChooseByNameViewModel base,
                                      @NotNull String pattern,
                                      @NotNull MinusculeMatcher matcher,
                                      @Nullable String name) {

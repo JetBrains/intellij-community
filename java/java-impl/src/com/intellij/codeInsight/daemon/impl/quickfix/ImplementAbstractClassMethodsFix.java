@@ -18,7 +18,6 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.ide.util.MemberChooser;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -83,29 +82,26 @@ public class ImplementAbstractClassMethodsFix extends ImplementMethodsFix {
     final List<PsiMethodMember> selectedElements = chooser.getSelectedElements();
     if (selectedElements == null || selectedElements.isEmpty()) return;
 
-    new WriteCommandAction(project, file) {
-      @Override
-      protected void run(@NotNull final Result result) throws Throwable {
-        PsiNewExpression newExpression =
-          (PsiNewExpression)JavaPsiFacade.getElementFactory(project).createExpressionFromText(startElement.getText() + "{}", startElement);
-        newExpression = (PsiNewExpression)startElement.replace(newExpression);
-        final PsiClass psiClass = newExpression.getAnonymousClass();
-        if (psiClass == null) return;
-        Map<PsiClass, PsiSubstitutor> subst = new HashMap<>();
-        for (PsiMethodMember selectedElement : selectedElements) {
-          final PsiClass baseClass = selectedElement.getElement().getContainingClass();
-          if (baseClass != null) {
-            PsiSubstitutor substitutor = subst.get(baseClass);
-            if (substitutor == null) {
-              substitutor = TypeConversionUtil.getSuperClassSubstitutor(baseClass, psiClass, PsiSubstitutor.EMPTY);
-              subst.put(baseClass, substitutor);
-            }
-            selectedElement.setSubstitutor(substitutor);
+    WriteCommandAction.writeCommandAction(project, file).run(() -> {
+      PsiNewExpression newExpression =
+        (PsiNewExpression)JavaPsiFacade.getElementFactory(project).createExpressionFromText(startElement.getText() + "{}", startElement);
+      newExpression = (PsiNewExpression)startElement.replace(newExpression);
+      final PsiClass psiAnonClass = newExpression.getAnonymousClass();
+      if (psiAnonClass == null) return;
+      Map<PsiClass, PsiSubstitutor> subst = new HashMap<>();
+      for (PsiMethodMember selectedElement : selectedElements) {
+        final PsiClass baseClass = selectedElement.getElement().getContainingClass();
+        if (baseClass != null) {
+          PsiSubstitutor substitutor = subst.get(baseClass);
+          if (substitutor == null) {
+            substitutor = TypeConversionUtil.getSuperClassSubstitutor(baseClass, psiAnonClass, PsiSubstitutor.EMPTY);
+            subst.put(baseClass, substitutor);
           }
+          selectedElement.setSubstitutor(substitutor);
         }
-        OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(editor, psiClass, selectedElements, chooser.isCopyJavadoc(),
-                                                                     chooser.isInsertOverrideAnnotation());
       }
-    }.execute();
+      OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(editor, psiAnonClass, selectedElements, chooser.isCopyJavadoc(),
+                                                                   chooser.isInsertOverrideAnnotation());
+    });
   }
 }

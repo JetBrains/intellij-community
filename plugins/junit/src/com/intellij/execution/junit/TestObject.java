@@ -154,8 +154,9 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
         Collections.sort(testNames); //sort tests in FQN order
       }
 
-      final String category = JUnitConfiguration.TEST_CATEGORY.equals(data.TEST_OBJECT) ? data.getCategory()
-                                                                                        : JUnitConfiguration.TEST_TAGS.equals(data.TEST_OBJECT) ? StringUtil.join(data.getTags(), " ") : "";
+      final String category = JUnitConfiguration.TEST_CATEGORY.equals(data.TEST_OBJECT) 
+                              ? data.getCategory()
+                              : JUnitConfiguration.TEST_TAGS.equals(data.TEST_OBJECT) ? data.getTags().replaceAll(" ", "") : "";
       final String filters = JUnitConfiguration.TEST_PATTERN.equals(data.TEST_OBJECT) ? data.getPatternPresentation() : "";
       JUnitStarter.printClassesList(testNames, packageName, category, filters, myTempFile);
 

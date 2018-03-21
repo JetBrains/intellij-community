@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.scopeView;
 
@@ -10,8 +8,8 @@ import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.*;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.projectView.ProjectView;
-import com.intellij.ide.projectView.ProjectViewNodeDecorator;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
+import com.intellij.ide.projectView.impl.CompoundProjectViewNodeDecorator;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.ProjectViewPane;
 import com.intellij.ide.projectView.impl.ProjectViewTree;
@@ -51,11 +49,11 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.packageDependencies.DefaultScopesProvider;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.packageDependencies.ui.*;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
+import com.intellij.psi.search.scope.ProblemsScope;
 import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
@@ -504,7 +502,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
         }
         final PsiElement psiElement = node.getPsiElement();
         textAttributes.setForegroundColor(CopyPasteManager.getInstance().isCutElement(psiElement) ? CopyPasteManager.CUT_COLOR : node.getColor());
-        if (getCurrentScope() != DefaultScopesProvider.getInstance(myProject).getProblemsScope()) {
+        if (getCurrentScope() != ProblemsScope.INSTANCE) {
           final PsiFile containingFile = psiElement != null ? psiElement.getContainingFile() : null;
           final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(psiElement);
           boolean isProblem;
@@ -526,11 +524,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
         append(node.toString(), SimpleTextAttributes.fromTextAttributes(textAttributes));
 
         String oldToString = toString();
-        if (!myProject.isDisposed()) {
-          for(ProjectViewNodeDecorator decorator: Extensions.getExtensions(ProjectViewNodeDecorator.EP_NAME, myProject)) {
-            decorator.decorate(node, this);
-          }
-        }
+        CompoundProjectViewNodeDecorator.get(myProject).decorate(node, this);
         if (toString().equals(oldToString)) {   // nothing was decorated
           final String locationString = node.getComment();
           if (locationString != null && locationString.length() > 0) {
@@ -870,12 +864,12 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
   private class MyProblemListener extends WolfTheProblemSolver.ProblemListener {
     @Override
     public void problemsAppeared(@NotNull VirtualFile file) {
-      addNode(file, DefaultScopesProvider.getInstance(myProject).getProblemsScope().getName());
+      addNode(file, ProblemsScope.NAME);
     }
 
     @Override
     public void problemsDisappeared(@NotNull VirtualFile file) {
-      removeNode(file, DefaultScopesProvider.getInstance(myProject).getProblemsScope().getName());
+      removeNode(file, ProblemsScope.NAME);
     }
   }
 

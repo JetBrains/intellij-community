@@ -24,7 +24,6 @@ import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.Query;
 import com.intellij.util.SmartList;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -34,8 +33,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 public class TooBroadScopeInspectionBase extends BaseInspection {
@@ -203,7 +200,7 @@ public class TooBroadScopeInspectionBase extends BaseInspection {
       return false;
     }
     final String qualifiedName = aClass.getQualifiedName();
-    if (qualifiedName == null || !qualifiedName.startsWith("java.")) {
+    if (qualifiedName == null || !qualifiedName.startsWith("java.") || qualifiedName.equals("java.lang.Thread")) {
       return false;
     }
     final String methodName = method.getName();
@@ -228,20 +225,10 @@ public class TooBroadScopeInspectionBase extends BaseInspection {
     return aClass != null && aClass.isEnum();
   }
 
-  static List<PsiReferenceExpression> findReferences(@NotNull PsiVariable variable, @Nullable PsiElement context) {
-    if (context == null) {
-      return Collections.emptyList();
-    }
+  static List<PsiReferenceExpression> findReferences(@NotNull PsiLocalVariable variable) {
     final List<PsiReferenceExpression> result = new SmartList<>();
-    final Query<PsiReference> query = ReferencesSearch.search(variable);
-    final Collection<PsiReference> referencesCollection = query.findAll();
-    if (referencesCollection.isEmpty()) {
-      return Collections.emptyList();
-    }
-    for (PsiReference reference : referencesCollection) {
-      final PsiElement referenceElement = reference.getElement();
-      result.add((PsiReferenceExpression)referenceElement);
-    }
+    ReferencesSearch.search(variable, variable.getUseScope())
+                    .forEach(reference -> reference instanceof PsiReferenceExpression && result.add((PsiReferenceExpression)reference));
     return result;
   }
 
@@ -264,13 +251,16 @@ public class TooBroadScopeInspectionBase extends BaseInspection {
       if (!isMoveable(initializer)) {
         return;
       }
-      final PsiElement variableScope = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class, PsiForStatement.class);
-      final List<PsiReferenceExpression> references = findReferences(variable, variableScope);
-      if (references.isEmpty() || variableScope == null) {
+      final List<PsiReferenceExpression> references = findReferences(variable);
+      if (references.isEmpty()) {
         return;
       }
       PsiElement commonParent = ScopeUtils.getCommonParent(references);
       if (commonParent == null) {
+        return;
+      }
+      final PsiElement variableScope = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class, PsiForStatement.class);
+      if (variableScope == null) {
         return;
       }
       if (initializer != null) {

@@ -143,6 +143,15 @@ public class XmlStructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("find tag with css content", 1, findMatchesCount(source, pattern, StdFileTypes.HTML));
   }
 
+  public void testSearchIgnoreComments() {
+    String source = "<user id=\"1\">\n" +
+                    "  <first_name>Max</first_name> <!-- asdf -->\n" +
+                    "  <last_name>Headroom</last_name>\n" +
+                    "</user>";
+      String pattern = "<first_name>$A$</first_name><last_name>$B$</last_name>";
+    assertEquals("find tag ignoring comments", 1, findMatchesCount(source, pattern, StdFileTypes.XML));
+  }
+
   @NotNull
   @Override
   protected String getTestDataPath() {

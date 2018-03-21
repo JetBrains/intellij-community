@@ -88,6 +88,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -96,6 +97,9 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
+
+import static java.util.stream.Collectors.toList;
+import static org.jetbrains.concurrency.Promises.collectResults;
 
 @State(name = "ProjectView", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class ProjectViewImpl extends ProjectView implements PersistentStateComponent<Element>, Disposable, QuickActionProvider, BusyObject  {
@@ -431,7 +435,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       content.putUserData(ID_KEY, id);
       content.putUserData(SUB_ID_KEY, subId);
       content.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);
-      content.setIcon(newPane.getIcon());
+      content.setIcon(subId != null ? newPane.getPresentableSubIdIcon(subId) : newPane.getIcon());
       content.setPopupIcon(subId != null ? AllIcons.General.Bullet : newPane.getIcon());
       content.setPreferredFocusedComponent(() -> {
         final AbstractProjectViewPane current = getCurrentProjectViewPane();
@@ -807,8 +811,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     if (path == null) {
       return null;
     }
-    DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
-    Object userObject = node.getUserObject();
+    Object userObject = TreeUtil.getUserObject(path.getLastPathComponent());
     if (userObject instanceof ProjectViewNode) {
       ProjectViewNode descriptor = (ProjectViewNode)userObject;
       Object element = descriptor.getValue();
@@ -1028,11 +1031,11 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       if (currentProjectViewPane == null) { // can happen if not initialized yet
         return null;
       }
-      DefaultMutableTreeNode node = currentProjectViewPane.getSelectedNode();
-      if (node == null) {
+      TreePath path = currentProjectViewPane.getSelectedPath();
+      if (path == null) {
         return null;
       }
-      Object userObject = node.getUserObject();
+      Object userObject = TreeUtil.getUserObject(path.getLastPathComponent());
       if (userObject instanceof AbstractTreeNode) {
         return ((AbstractTreeNode)userObject).getValue();
       }
@@ -1167,13 +1170,14 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     @Nullable
     private LibraryOrderEntry getSelectedLibrary() {
       final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
-      DefaultMutableTreeNode node = viewPane != null ? viewPane.getSelectedNode() : null;
-      if (node == null) return null;
-      DefaultMutableTreeNode parent = (DefaultMutableTreeNode)node.getParent();
+      if (viewPane == null) return null;
+      TreePath path = viewPane.getSelectedPath();
+      if (path == null) return null;
+      TreePath parent = path.getParentPath();
       if (parent == null) return null;
-      Object userObject = parent.getUserObject();
+      Object userObject = TreeUtil.getUserObject(parent.getLastPathComponent());
       if (userObject instanceof LibraryGroupNode) {
-        userObject = node.getUserObject();
+        userObject = TreeUtil.getUserObject(path.getLastPathComponent());
         if (userObject instanceof NamedLibraryElementNode) {
           NamedLibraryElement element = ((NamedLibraryElementNode)userObject).getValue();
           OrderEntry orderEntry = element.getOrderEntry();
@@ -1181,7 +1185,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         }
         PsiDirectory directory = ((PsiDirectoryNode)userObject).getValue();
         VirtualFile virtualFile = directory.getVirtualFile();
-        Module module = (Module)((AbstractTreeNode)((DefaultMutableTreeNode)parent.getParent()).getUserObject()).getValue();
+        Module module = (Module)((AbstractTreeNode)TreeUtil.getUserObject(parent.getParentPath().getLastPathComponent())).getValue();
 
         if (module == null) return null;
         ModuleFileIndex index = ModuleRootManager.getInstance(module).getFileIndex();
@@ -1578,6 +1582,9 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     return isFoldersAlwaysOnTop();
   }
 
+  /**
+   * @deprecated use {@link ProjectView#isFoldersAlwaysOnTop(String)} instead
+   */
   @Deprecated
   @SuppressWarnings("DeprecatedIsStillUsed")
   public boolean isFoldersAlwaysOnTop() {
@@ -1783,28 +1790,39 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       if (viewPane == null) {
         return;
       }
-      AsyncProjectViewSupport support = viewPane.getAsyncSupport();
-      if (support != null) {
-        List<TreeVisitor> visitors = AsyncProjectViewSupport.createVisitors(Arrays.asList(myElements));
-        if (!visitors.isEmpty()) support.accept(visitors, paths -> TreeUtil.selectPaths(viewPane.myTree, paths));
-        return;
-      }
       AbstractTreeBuilder treeBuilder = viewPane.getTreeBuilder();
       JTree tree = viewPane.myTree;
-      DefaultTreeModel treeModel = (DefaultTreeModel)tree.getModel();
-      List<TreePath> paths = new ArrayList<>(myElements.length);
-      for (final Object element : myElements) {
-        DefaultMutableTreeNode node = treeBuilder.getNodeForElement(element);
-        if (node == null) {
-          treeBuilder.buildNodeForElement(element);
-          node = treeBuilder.getNodeForElement(element);
+      if (treeBuilder != null) {
+        DefaultTreeModel treeModel = (DefaultTreeModel)tree.getModel();
+        List<TreePath> paths = new ArrayList<>(myElements.length);
+        for (final Object element : myElements) {
+          DefaultMutableTreeNode node = treeBuilder.getNodeForElement(element);
+          if (node == null) {
+            treeBuilder.buildNodeForElement(element);
+            node = treeBuilder.getNodeForElement(element);
+          }
+          if (node != null) {
+            paths.add(new TreePath(treeModel.getPathToRoot(node)));
+          }
         }
-        if (node != null) {
-          paths.add(new TreePath(treeModel.getPathToRoot(node)));
+        if (!paths.isEmpty()) {
+          tree.setSelectionPaths(paths.toArray(new TreePath[0]));
         }
       }
-      if (!paths.isEmpty()) {
-        tree.setSelectionPaths(paths.toArray(new TreePath[0]));
+      else {
+        List<TreeVisitor> visitors = AsyncProjectViewSupport.createVisitors(Arrays.asList(myElements));
+        if (1 == visitors.size()) {
+          TreeUtil.visit(tree, visitors.get(0), path -> {
+            if (path != null) TreeUtil.selectPath(tree, path);
+          });
+        }
+        else if (!visitors.isEmpty()) {
+          List<Promise<TreePath>> promises = visitors.stream().map(visitor -> TreeUtil.promiseVisit(tree, visitor)).collect(toList());
+          collectResults(promises, true)
+            .onSuccess(list -> {
+              if (list != null && !list.isEmpty()) TreeUtil.selectPaths(tree, list);
+            });
+        }
       }
     }
 
@@ -1816,8 +1834,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         if (selectionPaths != null) {
           selectedElements = new ArrayList<>();
           for (TreePath path : selectionPaths) {
-            final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
-            final Object userObject = node.getUserObject();
+            final Object userObject = TreeUtil.getUserObject(path.getLastPathComponent());
             if (userObject instanceof NodeDescriptor) {
               selectedElements.add(((NodeDescriptor)userObject).getElement());
             }
@@ -1838,55 +1855,44 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       if (myProject.isDisposed() || !myViewContentPanel.isShowing()) return;
       if (isAutoscrollFromSource(getCurrentViewId())) {
         if (fileEditor instanceof TextEditor) {
-          Editor editor = ((TextEditor)fileEditor).getEditor();
-          selectElementAtCaretNotLosingFocus(editor);
+          TextEditor textEditor = (TextEditor)fileEditor;
+          selectElementAtCaretNotLosingFocus(textEditor.getEditor());
         }
         else {
-          SelectInTarget target = getCurrentSelectInTarget();
-          if (target != null) {
-            final VirtualFile file = FileEditorManagerEx.getInstanceEx(myProject).getFile(fileEditor);
-            if (file != null && file.isValid()) {
-              final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
-              if (psiFile != null) {
-                final MySelectInContext selectInContext = new MySelectInContext(psiFile, null) {
-                  @Override
-                  public Object getSelectorInFile() {
-                    return psiFile;
-                  }
-                };
-
-                if (target.canSelect(selectInContext)) {
-                  target.selectIn(selectInContext, false);
-                }
-              }
-            }
+          PsiFile psiFile = getPsiFile(getVirtualFile(fileEditor));
+          if (psiFile != null) {
+            new MySelectInContext(psiFile, null).selectInCurrentTarget();
           }
         }
       }
     }
 
     public void scrollFromSource() {
-      final FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
-      final Editor selectedTextEditor = fileEditorManager.getSelectedTextEditor();
-      if (selectedTextEditor != null) {
-        selectElementAtCaret(selectedTextEditor);
-        return;
+      FileEditorManager manager = FileEditorManager.getInstance(myProject);
+      if (scrollFromSource(manager.getSelectedEditor())) return;
+      for (FileEditor fileEditor : manager.getSelectedEditors()) {
+        if (scrollFromSource(fileEditor)) return;
       }
-      final FileEditor[] editors = fileEditorManager.getSelectedEditors();
-      for (FileEditor fileEditor : editors) {
-        if (fileEditor instanceof TextEditor) {
-          Editor editor = ((TextEditor)fileEditor).getEditor();
-          selectElementAtCaret(editor);
-          return;
-        }
+    }
+
+    private boolean scrollFromSource(FileEditor fileEditor) {
+      if (fileEditor instanceof TextEditor) {
+        TextEditor textEditor = (TextEditor)fileEditor;
+        selectElementAtCaret(textEditor.getEditor());
+        return true;
       }
-      final VirtualFile[] selectedFiles = fileEditorManager.getSelectedFiles();
-      if (selectedFiles.length > 0) {
-        final PsiFile file = PsiManager.getInstance(myProject).findFile(selectedFiles[0]);
-        if (file != null) {
-          scrollFromFile(file, null);
-        }
-      }
+      PsiFile psiFile = getPsiFile(getVirtualFile(fileEditor));
+      if (psiFile == null) return false;
+      scrollFromFile(psiFile, null);
+      return true;
+    }
+
+    private PsiFile getPsiFile(VirtualFile file) {
+      return file == null || !file.isValid() ? null : PsiManager.getInstance(myProject).findFile(file);
+    }
+
+    private VirtualFile getVirtualFile(FileEditor fileEditor) {
+      return fileEditor == null ? null : FileEditorManagerEx.getInstanceEx(myProject).getFile(fileEditor);
     }
 
     private void selectElementAtCaretNotLosingFocus(@NotNull Editor editor) {
@@ -1904,20 +1910,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
 
     private void scrollFromFile(@NotNull PsiFile file, @Nullable Editor editor) {
-      SmartPsiElementPointer<PsiFile> pointer = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(file);
-      PsiDocumentManager.getInstance(myProject).performLaterWhenAllCommitted(() -> {
-        SelectInTarget target = getCurrentSelectInTarget();
-        if (target == null) return;
-
-        PsiFile restoredPsi = pointer.getElement();
-        if (restoredPsi == null) return;
-
-        final MySelectInContext selectInContext = new MySelectInContext(restoredPsi, editor);
-
-        if (target.canSelect(selectInContext)) {
-          target.selectIn(selectInContext, false);
-        }
-      });
+      MySelectInContext selectInContext = new MySelectInContext(file, editor);
+      PsiDocumentManager.getInstance(myProject).performLaterWhenAllCommitted(selectInContext::selectInCurrentTarget);
     }
 
     @Override
@@ -1967,6 +1961,13 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
           if (element != null) return element;
         }
         return file;
+      }
+
+      void selectInCurrentTarget() {
+        SelectInTarget target = getCurrentSelectInTarget();
+        if (target != null && getPsiFile() != null && target.canSelect(this)) {
+          target.selectIn(this, false);
+        }
       }
     }
   }

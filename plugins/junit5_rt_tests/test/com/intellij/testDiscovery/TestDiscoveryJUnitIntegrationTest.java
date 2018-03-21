@@ -96,9 +96,18 @@ public class TestDiscoveryJUnitIntegrationTest extends JUnitAbstractIntegrationT
   }
 
   private void assertTestDiscoveryIndex(String className, String methodName, Pair<String, String>... expectedTests) throws IOException {
-    MultiMap<String, String> rawActualTests = TestDiscoveryIndex.getInstance(myProject).getTestsByMethodName(className, methodName, JUnitConfiguration.FRAMEWORK_ID);
+    TestDiscoveryIndex testDiscoveryIndex = TestDiscoveryIndex.getInstance(myProject);
+    MultiMap<String, String> rawActualTests = testDiscoveryIndex.getTestsByMethodName(className, methodName, JUnitConfiguration.FRAMEWORK_ID);
     Set<Pair<String, String>> actualTests = rawActualTests.entrySet().stream().flatMap(e -> e.getValue().stream().map(m -> Pair.create(e.getKey(), m))).collect(Collectors.toSet());
     assertEquals(ContainerUtil.newHashSet(expectedTests), actualTests);
+
+    Set<String> modules = actualTests
+      .stream()
+      .flatMap(
+        test -> testDiscoveryIndex.getTestModulesByMethodName(test.getFirst(), test.getSecond(), JUnitConfiguration.FRAMEWORK_ID).stream())
+      .collect(Collectors.toSet());
+    String module = assertOneElement(modules);
+    assertEquals(myModule.getName(), module);
   }
 
   private static Pair<String, String> t(String testClassName, String testMethodName) {

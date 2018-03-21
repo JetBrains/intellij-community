@@ -371,7 +371,7 @@ public class PatternCompiler {
       }
 
       final String compiledName = prefix + name;
-      buf.append(text.substring(prevOffset, offset)).append(compiledName);
+      buf.append(text, prevOffset, offset).append(compiledName);
 
       if (seen.add(compiledName)) {
         // the same variable can occur multiple times in a single template
@@ -466,7 +466,7 @@ public class PatternCompiler {
       addScriptConstraint(project, Configuration.CONTEXT_VAR_NAME, constraint, handler);
     }
 
-    buf.append(text.substring(prevOffset,text.length()));
+    buf.append(text.substring(prevOffset));
 
     PsiElement[] matchStatements;
 

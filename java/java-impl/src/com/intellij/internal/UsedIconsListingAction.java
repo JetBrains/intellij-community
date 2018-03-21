@@ -182,12 +182,9 @@ public class UsedIconsListingAction extends AnAction {
       if (replacement != null) {
         final PsiFile file = att.getContainingFile();
         if (useScope.contains(file.getVirtualFile())) {
-          new WriteCommandAction<Void>(project, file) {
-            @Override
-            protected void run(@NotNull Result<Void> result) throws Throwable {
-              att.setValue(replacement);
-            }
-          }.execute();
+          WriteCommandAction.writeCommandAction(project, file).run(() -> {
+            att.setValue(replacement);
+          });
         }
       }
     }
@@ -202,20 +199,17 @@ public class UsedIconsListingAction extends AnAction {
 
           final PsiFile file = call.getContainingFile();
           if (useScope.contains(file.getVirtualFile())) {
-            new WriteCommandAction(project, file) {
-              @Override
-              protected void run(@NotNull Result result) throws Throwable {
-                if (call instanceof PsiLiteralExpression) {
-                  call.replace(factory.createExpressionFromText("\"" + replacement + "\"", call));
-                }
-                else {
-                  JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
-                  String packageName = replacement.startsWith("AllIcons.") ? "com.intellij.icons." : "icons.";
-                  PsiElement expr = factory.createExpressionFromText(packageName + replacement, call);
-                  styleManager.shortenClassReferences(call.replace(expr));
-                }
+            WriteCommandAction.writeCommandAction(project, file).run(() -> {
+              if (call instanceof PsiLiteralExpression) {
+                call.replace(factory.createExpressionFromText("\"" + replacement + "\"", call));
               }
-            }.execute();
+              else {
+                JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
+                String packageName = replacement.startsWith("AllIcons.") ? "com.intellij.icons." : "icons.";
+                PsiElement expr = factory.createExpressionFromText(packageName + replacement, call);
+                styleManager.shortenClassReferences(call.replace(expr));
+              }
+            });
           }
         }
       }
@@ -231,16 +225,13 @@ public class UsedIconsListingAction extends AnAction {
 
           PsiFile file = annotation.getContainingFile();
           if (useScope.contains(file.getVirtualFile())) {
-            new WriteCommandAction(project, file) {
-              @Override
-              protected void run(@NotNull Result result) throws Throwable {
-                annotation.getNode();
-                annotation.setDeclaredAttributeValue(
-                  "icon",
-                  JavaPsiFacade.getInstance(annotation.getProject()).getElementFactory()
-                    .createAnnotationFromText("@A(\"" + replacement + "\")", null).findDeclaredAttributeValue(null));
-              }
-            }.execute();
+            WriteCommandAction.writeCommandAction(project, file).run(() -> {
+              annotation.getNode();
+              annotation.setDeclaredAttributeValue(
+                "icon",
+                JavaPsiFacade.getInstance(annotation.getProject()).getElementFactory()
+                             .createAnnotationFromText("@A(\"" + replacement + "\")", null).findDeclaredAttributeValue(null));
+            });
           }
         }
       }

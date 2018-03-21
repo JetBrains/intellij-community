@@ -28,8 +28,6 @@ import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashMap;
-import java.util.HashSet;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -1487,10 +1485,10 @@ public class GenericsHighlightUtil {
         final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
         final GlobalSearchScope resolveScope = ref.getResolveScope();
 
-        message = isTypeAccessible(substitutor.substitute(method.getReturnType()), classes, false, resolveScope, facade);
+        message = isTypeAccessible(PsiClassImplUtil.correctType(substitutor.substitute(method.getReturnType()), resolveScope), classes, false, resolveScope, facade);
         if (message == null) {
           for (PsiType type : method.getSignature(substitutor).getParameterTypes()) {
-            message = isTypeAccessible(type, classes, false, resolveScope, facade);
+            message = isTypeAccessible(PsiClassImplUtil.correctType(type, resolveScope), classes, false, resolveScope, facade);
             if (message != null) {
               break;
             }
@@ -1503,7 +1501,7 @@ public class GenericsHighlightUtil {
       if (resolve instanceof PsiField) {
         final GlobalSearchScope resolveScope = ref.getResolveScope();
         final JavaPsiFacade facade = JavaPsiFacade.getInstance(ref.getProject());
-        message = isTypeAccessible(((PsiField)resolve).getType(), new HashSet<>(), false, resolveScope, facade);
+        message = isTypeAccessible(PsiClassImplUtil.correctType(((PsiField)resolve).getType(), resolveScope), new HashSet<>(), false, resolveScope, facade);
       }
     }
 

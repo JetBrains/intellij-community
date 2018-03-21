@@ -89,7 +89,7 @@ public class ContractInspection extends AbstractBaseJavaLocalInspectionTool {
         return "Method takes " + paramCount + " parameters, while contract clause number " + (i + 1) + " expects " + contract.arguments.length;
       }
       PsiType returnType = method.getReturnType();
-      if (returnType != null && !InferenceFromSourceUtil.isReturnTypeCompatible(returnType, contract.returnValue)) {
+      if (returnType != null && !contract.returnValue.isReturnTypeCompatible(returnType)) {
         return "Method returns " + returnType.getPresentableText() + " but the contract specifies " + contract.returnValue;
       }
       if (method.isConstructor() && contract.returnValue != MethodContract.ValueConstraint.THROW_EXCEPTION) {

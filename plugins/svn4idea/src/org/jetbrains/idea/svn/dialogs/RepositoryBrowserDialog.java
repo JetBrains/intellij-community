@@ -617,7 +617,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
         final String path = src.getPath();
         final int folder = path.replace('\\', '/').lastIndexOf('/');
         if (folder != -1) {
-          final String lastFolder = path.substring(folder + 1, path.length());
+          final String lastFolder = path.substring(folder + 1);
           if (myMove && "trunk".equalsIgnoreCase(lastFolder)) {
             final int result =
               Messages.showOkCancelDialog(myProject, "You are about to move folder named '" + lastFolder +

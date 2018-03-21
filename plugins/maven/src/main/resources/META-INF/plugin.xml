@@ -306,6 +306,8 @@
 
       <param name="delimiters/delimiter" disableReferences="true"/>
     </pluginDescriptor>
+
+    <importer implementation="org.jetbrains.idea.maven.importing.MavenCompilerAnnotationProcessorPathsImporter"/>
   </extensions>
 
   <application-components>

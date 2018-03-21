@@ -84,7 +84,7 @@ class IfCanBeSwitch {
     return num;
   }
   void ifWithGetterToSwitch() {
-    <warning descr="'if' statement replaceable with 'switch' statement">if</warning> (getNum() == Num.ONE) {
+    if (getNum() == Num.ONE) {
       System.out.println(1);
     } else if (getNum() == Num.TWO) {
       System.out.println(2);

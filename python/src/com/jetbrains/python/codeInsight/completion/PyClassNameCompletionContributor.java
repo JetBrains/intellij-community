@@ -208,11 +208,8 @@ public class PyClassNameCompletionContributor extends CompletionContributor {
       // no import statement needed
       return;
     }
-    new WriteCommandAction(context.getProject(), context.getFile()) {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        AddImportHelper.addImport(PyUtil.as(item.getPsiElement(), PsiNamedElement.class), context.getFile(), (PyElement)ref.getElement());
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(context.getProject(), context.getFile()).run(() -> {
+      AddImportHelper.addImport(PyUtil.as(item.getPsiElement(), PsiNamedElement.class), context.getFile(), (PyElement)ref.getElement());
+    });
   }
 }

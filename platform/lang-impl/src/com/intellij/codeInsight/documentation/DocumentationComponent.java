@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.documentation;
 
@@ -43,10 +43,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
-import com.intellij.openapi.util.DimensionService;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -572,8 +569,13 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     editorKit.getStyleSheet().addRule(".bottom { padding: 3px 9px 0 7px; }");
     editorKit.getStyleSheet().addRule(".bottom-no-content { padding: 5px 9px 0 7px; }");
     editorKit.getStyleSheet().addRule("p { padding: 1px 0 2px 0; }");
-    editorKit.getStyleSheet().addRule("ul { padding: 5px 9px 0 7px; }");
+    // override ul {margin-left-ltr: 50; margin-right-rtl: 50} from javax/swing/text/html/default.css
+    editorKit.getStyleSheet().addRule("ul { padding: 5px 9px 0 7px; margin-left-ltr: 10px; margin-right-rtl: 10px; }");
     editorKit.getStyleSheet().addRule("li { padding: 1px 0 2px 0; }");
+    String liImgUrl = getLiImgUrl();
+    if (liImgUrl != null) {
+      editorKit.getStyleSheet().addRule("ul {list-style-image:url('" + liImgUrl + "');}");
+    }
     editorKit.getStyleSheet().addRule(".grayed { color: #909090; display: inline;}");
     editorKit.getStyleSheet().addRule(".centered { text-align: center}");
 
@@ -582,6 +584,13 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     editorKit.getStyleSheet().addRule("tr { margin: 0 0 0 0; padding: 0 0 0 0; }");
     editorKit.getStyleSheet().addRule("td { margin: 2px 0 3.5px 0; padding: 0 0 0 0; }");
     editorKit.getStyleSheet().addRule(".section { color: #909090; padding-right: 4px}");
+  }
+
+  @Nullable
+  private static String getLiImgUrl() {
+    String liImg = IdeTooltipManager.getInstance().getUlImg(false);
+    URL url = liImg != null ? SystemInfo.class.getResource(liImg) : null;
+    return url != null ? StringUtil.escapeCharCharacters(url.toExternalForm()) : null;
   }
 
   private static Color getLinkColor() {
@@ -809,7 +818,13 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
         hintSize = new Dimension(width, height);
       } else {
         hintSize = DimensionService.getInstance().getSize(DocumentationManager.NEW_JAVADOC_LOCATION_AND_SIZE, myManager.myProject);
-        hintSize = hintSize != null ? hintSize : MIN_DEFAULT;
+        if (hintSize == null) {
+          hintSize = new Dimension(MIN_DEFAULT);
+        }
+        else {
+          hintSize.width = Math.max(hintSize.width, MIN_DEFAULT.width);
+          hintSize.height = Math.max(hintSize.height, MIN_DEFAULT.height);
+        }
       }
 
       Point location = myHint.getLocationOnScreen();
@@ -990,30 +1005,32 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     final PsiElement element = getElement();
     if (element == null) return null;
 
-    String title = myManager.getTitle(element);
     final DocumentationProvider provider = DocumentationManager.getProviderFromElement(element);
-    if (myEffectiveExternalUrl == null) {
-      if (!isExternalHandler(provider)) {
-        final PsiElement originalElement = DocumentationManager.getOriginalElement(element);
-        List<String> urls = provider.getUrlFor(element, originalElement);
-        if (urls != null) {
-          boolean hasBadUrl = false;
-          StringBuilder result = new StringBuilder();
-          for (String url : urls) {
-            String link = getLink(title, url);
-            if (link == null) {
-              hasBadUrl = true;
-              break;
-            }
+    final PsiElement originalElement = DocumentationManager.getOriginalElement(element);
+    if (!shouldShowExternalDocumentationLink(provider, element, originalElement)) {
+      return null;
+    }
 
-            if (result.length() > 0) result.append("<p>");
-            result.append(link);
+    final String title = myManager.getTitle(element);
+    if (myEffectiveExternalUrl == null) {
+      List<String> urls = provider.getUrlFor(element, originalElement);
+      if (urls != null) {
+        boolean hasBadUrl = false;
+        StringBuilder result = new StringBuilder();
+        for (String url : urls) {
+          String link = getLink(title, url);
+          if (link == null) {
+            hasBadUrl = true;
+            break;
           }
-          if (!hasBadUrl) return result.toString();
+
+          if (result.length() > 0) result.append("<p>");
+          result.append(link);
         }
-        else {
-          return null;
-        }
+        if (!hasBadUrl) return result.toString();
+      }
+      else {
+        return null;
       }
     } else {
       String link = getLink(title, myEffectiveExternalUrl);
@@ -1038,14 +1055,19 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     return result.toString();
   }
 
-  private static boolean isExternalHandler(DocumentationProvider provider) {
+  private static boolean shouldShowExternalDocumentationLink(DocumentationProvider provider,
+                                                             PsiElement element,
+                                                             PsiElement originalElement) {
     if (provider instanceof CompositeDocumentationProvider) {
       for (DocumentationProvider documentationProvider : ((CompositeDocumentationProvider)provider).getProviders()) {
-        if (documentationProvider instanceof ExternalDocumentationHandler) return true;
+        if (documentationProvider instanceof ExternalDocumentationHandler) {
+          return ((ExternalDocumentationHandler)documentationProvider).canHandleExternal(element, originalElement);
+        }
       }
-      return false;
+    } else if (provider instanceof ExternalDocumentationHandler) {
+      return ((ExternalDocumentationHandler)provider).canHandleExternal(element, originalElement);
     }
-    return provider instanceof ExternalDocumentationHandler;
+    return true;
   }
 
   private static String getHostname(String url) {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -53,7 +39,6 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl");
   private final TempFileSystem TEMP_FILE_SYSTEM;
   private final LocalFileSystem LOCAL_FILE_SYSTEM;
-  private final JarFileSystem JAR_FILE_SYSTEM;
   // guarded by this
   private final Map<VirtualFilePointerListener, FilePointerPartNode> myPointers = new LinkedHashMap<>();
 
@@ -67,14 +52,12 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   VirtualFilePointerManagerImpl(@NotNull VirtualFileManager virtualFileManager,
                                 @NotNull MessageBus bus,
                                 @NotNull TempFileSystem tempFileSystem,
-                                @NotNull LocalFileSystem localFileSystem,
-                                @NotNull JarFileSystem jarFileSystem) {
+                                @NotNull LocalFileSystem localFileSystem) {
     myVirtualFileManager = virtualFileManager;
     myBus = bus;
     bus.connect().subscribe(VirtualFileManager.VFS_CHANGES, this);
     TEMP_FILE_SYSTEM = tempFileSystem;
     LOCAL_FILE_SYSTEM = localFileSystem;
-    JAR_FILE_SYSTEM = jarFileSystem;
   }
 
   @Override
@@ -176,7 +159,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
       return found == null ? new LightFilePointer(url) : new LightFilePointer(found);
     }
 
-    boolean isJar = fileSystem == JAR_FILE_SYSTEM;
+    boolean isJar = fileSystem instanceof VfpCapableArchiveFileSystem;
     if (fileSystem != LOCAL_FILE_SYSTEM && !isJar) {
       // we are unable to track alien file systems for now
       VirtualFile found = fileSystem == null ? null : file != null ? file : VirtualFileManager.getInstance().findFileByUrl(url);

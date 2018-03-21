@@ -277,7 +277,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     List<ModuleLoadingErrorDescription> errors = Collections.synchronizedList(new ArrayList<>());
     ModuleGroupInterner groupInterner = new ModuleGroupInterner();
 
-    ExecutorService service = AppExecutorUtil.createBoundedApplicationPoolExecutor("modules loader", JobSchedulerImpl.getCPUCoresCount());
+    ExecutorService service = AppExecutorUtil.createBoundedApplicationPoolExecutor("ModuleManager Loader", JobSchedulerImpl.getCPUCoresCount());
     List<Pair<Future<Module>, ModulePath>> tasks = new ArrayList<>();
     Set<String> paths = new THashSet<>();
     boolean parallel = Registry.is("parallel.modules.loading") && !ApplicationManager.getApplication().isDispatchThread();

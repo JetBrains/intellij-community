@@ -71,7 +71,7 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
   }
 
   @NotNull
-  String getText() {
+  public String getText() {
     return myText;
   }
 

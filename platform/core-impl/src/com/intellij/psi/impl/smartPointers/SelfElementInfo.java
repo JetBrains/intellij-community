@@ -34,21 +34,18 @@ import java.util.List;
 public class SelfElementInfo extends SmartPointerElementInfo {
   private static final FileDocumentManager ourFileDocManager = FileDocumentManager.getInstance();
   private volatile Identikit myIdentikit;
-  protected final SmartPointerManagerImpl myManager;
   private final VirtualFile myFile;
   private final boolean myForInjected;
   private int myStartOffset;
   private int myEndOffset;
 
-  SelfElementInfo(@NotNull Project project,
-                  @Nullable ProperTextRange range,
+  SelfElementInfo(@Nullable ProperTextRange range,
                   @NotNull Identikit identikit,
                   @NotNull PsiFile containingFile,
                   boolean forInjected) {
     myForInjected = forInjected;
     myIdentikit = identikit;
 
-    myManager = (SmartPointerManagerImpl)SmartPointerManager.getInstance(project);
     myFile = containingFile.getViewProvider().getVirtualFile();
     setRange(range);
   }
@@ -98,11 +95,11 @@ public class SelfElementInfo extends SmartPointerElementInfo {
   }
 
   @Override
-  PsiElement restoreElement() {
-    Segment segment = getPsiRange();
+  PsiElement restoreElement(@NotNull SmartPointerManagerImpl manager) {
+    Segment segment = getPsiRange(manager);
     if (segment == null) return null;
 
-    PsiFile file = restoreFile();
+    PsiFile file = restoreFile(manager);
     if (file == null || !file.isValid()) return null;
 
     return myIdentikit.findPsiElement(file, segment.getStartOffset(), segment.getEndOffset());
@@ -110,7 +107,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
 
   @Nullable
   @Override
-  TextRange getPsiRange() {
+  TextRange getPsiRange(@NotNull SmartPointerManagerImpl manager) {
     return calcPsiRange();
   }
 
@@ -124,8 +121,8 @@ public class SelfElementInfo extends SmartPointerElementInfo {
   }
 
   @Override
-  PsiFile restoreFile() {
-    return restoreFileFromVirtual(getVirtualFile(), getProject(), myIdentikit.getFileLanguage());
+  PsiFile restoreFile(@NotNull SmartPointerManagerImpl manager) {
+    return restoreFileFromVirtual(getVirtualFile(), manager.getProject(), myIdentikit.getFileLanguage());
   }
 
   @Override
@@ -183,14 +180,14 @@ public class SelfElementInfo extends SmartPointerElementInfo {
   }
 
   @Override
-  boolean pointsToTheSameElementAs(@NotNull final SmartPointerElementInfo other) {
+  boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other, @NotNull SmartPointerManagerImpl manager) {
     if (other instanceof SelfElementInfo) {
       final SelfElementInfo otherInfo = (SelfElementInfo)other;
       if (!getVirtualFile().equals(other.getVirtualFile()) || myIdentikit != otherInfo.myIdentikit) return false;
 
       return ReadAction.compute(() -> {
-        Segment range1 = getPsiRange();
-        Segment range2 = otherInfo.getPsiRange();
+        Segment range1 = getPsiRange(manager);
+        Segment range2 = otherInfo.getPsiRange(manager);
         return range1 != null && range2 != null
                && range1.getStartOffset() == range2.getStartOffset()
                && range1.getEndOffset() == range2.getEndOffset();
@@ -207,14 +204,14 @@ public class SelfElementInfo extends SmartPointerElementInfo {
 
   @Override
   @Nullable
-  Segment getRange() {
+  Segment getRange(@NotNull SmartPointerManagerImpl manager) {
     if (hasRange()) {
       Document document = getDocumentToSynchronize();
       if (document != null) {
-        PsiDocumentManagerBase documentManager = myManager.getPsiDocumentManager();
+        PsiDocumentManagerBase documentManager = manager.getPsiDocumentManager();
         List<DocumentEvent> events = documentManager.getEventsSinceCommit(document);
         if (!events.isEmpty()) {
-          SmartPointerTracker tracker = myManager.getTracker(getVirtualFile());
+          SmartPointerTracker tracker = manager.getTracker(getVirtualFile());
           if (tracker != null) {
             return tracker.getUpdatedRange(this, (FrozenDocument)documentManager.getLastCommittedDocument(document), events);
           }
@@ -222,12 +219,6 @@ public class SelfElementInfo extends SmartPointerElementInfo {
       }
     }
     return calcPsiRange();
-  }
-
-  @NotNull
-  @Override
-  final Project getProject() {
-    return myManager.getProject();
   }
 
   @Override

@@ -33,7 +33,6 @@ import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.uast.UElement;
 import org.jetbrains.uast.ULiteralExpression;
 import org.jetbrains.uast.UastLiteralUtils;
 
@@ -54,16 +53,12 @@ public class TestDataReferenceContributor extends PsiReferenceContributor {
                                                          new TestDataReferenceProvider(), PsiReferenceRegistrar.DEFAULT_PRIORITY);
   }
 
-  private static class TestDataReferenceProvider extends UastReferenceProvider {
+  private static class TestDataReferenceProvider extends UastLiteralReferenceProvider {
     @NotNull
     @Override
-    public PsiReference[] getReferencesByElement(@NotNull final UElement element, @NotNull final ProcessingContext context) {
-      if (!(element instanceof ULiteralExpression)) return PsiReference.EMPTY_ARRAY;
-
-      ULiteralExpression literalExpression = (ULiteralExpression)element;
-
-      PsiLanguageInjectionHost host = UastLiteralUtils.getPsiLanguageInjectionHost(literalExpression);
-      if (host == null) return PsiReference.EMPTY_ARRAY;
+    public PsiReference[] getReferencesByULiteral(@NotNull final ULiteralExpression literalExpression,
+                                                  @NotNull PsiLanguageInjectionHost host,
+                                                  @NotNull final ProcessingContext context) {
 
       TextRange range = ElementManipulators.getValueTextRange(host);
 

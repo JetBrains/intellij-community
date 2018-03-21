@@ -72,11 +72,8 @@ public class OptimizeImportsQuickFix implements LocalQuickFix, IntentionAction, 
   private void optimizeImports(final Project project, final PsiFile file) {
     ImportOptimizer optimizer = new PyImportOptimizer();
     final Runnable runnable = optimizer.processFile(file);
-    new WriteCommandAction.Simple(project, getFamilyName(), file) {
-      @Override
-      protected void run() throws Throwable {
-        runnable.run();
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(project, file).withName(getFamilyName()).run(() -> {
+      runnable.run();
+    });
   }
 }

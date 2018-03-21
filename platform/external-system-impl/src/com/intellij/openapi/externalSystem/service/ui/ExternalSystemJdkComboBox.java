@@ -15,12 +15,14 @@
  */
 package com.intellij.openapi.externalSystem.service.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkException;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
@@ -36,6 +38,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.Consumer;
 import com.intellij.util.EnvironmentUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,9 +69,9 @@ public class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<ExternalSys
 
       @Override
       protected void customizeCellRenderer(@NotNull JList list, JdkComboBoxItem value, int index, boolean selected, boolean hasFocus) {
+        if (value == null) return;
         CompositeAppearance appearance = new CompositeAppearance();
-        SdkType sdkType = JavaSdk.getInstance();
-        appearance.setIcon(sdkType.getIcon());
+        appearance.setIcon(AllIcons.Nodes.PpJdk);
         SimpleTextAttributes attributes = getTextAttributes(value.valid, selected);
         CompositeAppearance.DequeEnd ending = appearance.getEnding();
 
@@ -118,10 +121,11 @@ public class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<ExternalSys
 
     setUpButton.addActionListener(e -> {
       DefaultActionGroup group = new DefaultActionGroup();
-      jdksModel.createAddActions(group, this, getSelectedJdk(), jdk -> {
+      Sdk selectedJdk = getSelectedJdk();
+      Consumer<Sdk> updateTree = jdk -> {
         Sdk existingJdk = Arrays.stream(ProjectJdkTable.getInstance().getAllJdks())
-          .filter(sdk -> StringUtil.equals(sdk.getHomePath(), jdk.getHomePath()))
-          .findFirst().orElse(null);
+                                .filter(sdk -> StringUtil.equals(sdk.getHomePath(), jdk.getHomePath()))
+                                .findFirst().orElse(null);
 
         String jdkName;
         if (existingJdk == null) {
@@ -132,14 +136,27 @@ public class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<ExternalSys
           jdkName = existingJdk.getName();
         }
         refreshData(jdkName, wizardContext != null ? wizardContext.getProjectJdk() : null);
-      }, creationFilter);
+      };
+      jdksModel.createAddActions(group, this, selectedJdk, updateTree, creationFilter);
+
+      if (group.getChildrenCount() == 0) {
+        SimpleJavaSdkType javaSdkType = SimpleJavaSdkType.getInstance();
+        final AnAction addAction = new DumbAwareAction(javaSdkType.getPresentableName(), null, javaSdkType.getIconForAddAction()) {
+          @Override
+          public void actionPerformed(@NotNull AnActionEvent e) {
+            jdksModel.doAdd(ExternalSystemJdkComboBox.this, selectedJdk, javaSdkType, updateTree);
+          }
+        };
+        group.add(addAction);
+      }
+
       final DataContext dataContext = DataManager.getInstance().getDataContext(this);
       if (group.getChildrenCount() > 1) {
         JBPopupFactory.getInstance()
           .createActionGroupPopup(actionGroupTitle, group, dataContext, JBPopupFactory.ActionSelectionAid.MNEMONICS, false)
           .showUnderneathOf(setUpButton);
       }
-      else {
+      else if (group.getChildrenCount() == 1) {
         final AnActionEvent event =
           new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, new Presentation(""), ActionManager.getInstance(), 0);
         group.getChildren(event)[0].actionPerformed(event);
@@ -208,9 +225,10 @@ public class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<ExternalSys
 
   private Map<String, JdkComboBoxItem> collectComboBoxItem(@Nullable Sdk projectSdk) {
     Map<String, JdkComboBoxItem> result = new LinkedHashMap<>();
-
-    for (Sdk sdk : ProjectJdkTable.getInstance().getSdksOfType(JavaSdk.getInstance())) {
-      if (!((SdkType)sdk.getSdkType()).sdkHasValidPath(sdk)) {
+    for (Sdk sdk : ProjectJdkTable.getInstance().getAllJdks()) {
+      SdkTypeId sdkType = sdk.getSdkType();
+      if (!(sdkType instanceof JavaSdkType && sdkType instanceof SdkType)) continue;
+      if (!((SdkType)sdkType).sdkHasValidPath(sdk)) {
         continue;
       }
       String name = sdk.getName();

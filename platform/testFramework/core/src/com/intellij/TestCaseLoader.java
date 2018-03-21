@@ -30,9 +30,9 @@ public class TestCaseLoader {
   public static final String INCLUDE_PERFORMANCE_TESTS_FLAG = "idea.include.performance.tests";
   public static final String INCLUDE_UNCONVENTIONALLY_NAMED_TESTS_FLAG = "idea.include.unconventionally.named.tests";
 
-  private static final boolean PERFORMANCE_TESTS_ONLY = System.getProperty(PERFORMANCE_TESTS_ONLY_FLAG) != null;
-  private static final boolean INCLUDE_PERFORMANCE_TESTS = System.getProperty(INCLUDE_PERFORMANCE_TESTS_FLAG) != null;
-  private static final boolean INCLUDE_UNCONVENTIONALLY_NAMED_TESTS = System.getProperty(INCLUDE_UNCONVENTIONALLY_NAMED_TESTS_FLAG) != null;
+  private static final boolean PERFORMANCE_TESTS_ONLY = "true".equals(System.getProperty(PERFORMANCE_TESTS_ONLY_FLAG));
+  private static final boolean INCLUDE_PERFORMANCE_TESTS = "true".equals(System.getProperty(INCLUDE_PERFORMANCE_TESTS_FLAG));
+  private static final boolean INCLUDE_UNCONVENTIONALLY_NAMED_TESTS = "true".equals(System.getProperty(INCLUDE_UNCONVENTIONALLY_NAMED_TESTS_FLAG));
 
   /**
    * An implicit group which includes all tests from all defined groups and tests which don't belong to any group.

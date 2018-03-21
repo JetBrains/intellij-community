@@ -200,7 +200,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
           .select(PsiMethodCallExpression.class)
           .mapToEntry(CALL_TO_FIX_MAPPER::mapFirst)
           .nonNullValues()
-          .toMap();
+          .toCustomMap(LinkedHashMap::new);
       for (Map.Entry<PsiMethodCallExpression, CallChainSimplification> entry : callToSimplification.entrySet()) {
         if(entry.getKey().isValid()) {
           PsiElement replacement = entry.getValue().simplify(entry.getKey());
@@ -1590,7 +1590,9 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
             reversed = true;
           } else {
             if (maybeComparator == null) return null;
-            PsiType comparatorType = maybeComparator.getType();
+            PsiType comparatorType = maybeComparator instanceof PsiFunctionalExpression
+                             ? ((PsiFunctionalExpression)maybeComparator).getFunctionalInterfaceType()
+                             : maybeComparator.getType();
             if (comparatorType == null || !InheritanceUtil.isInheritor(comparatorType, CommonClassNames.JAVA_UTIL_COMPARATOR)) return null;
             comparator = maybeComparator.getText();
           }

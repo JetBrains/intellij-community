@@ -3,9 +3,12 @@ package com.intellij.java.codeInsight.completion;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.codeInsight.completion.StaticallyImportable;
 import com.intellij.codeInsight.hints.JavaInlayParameterHintsProvider;
 import com.intellij.codeInsight.hints.Option;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.lookup.Lookup;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.java.codeInsight.AbstractParameterInfoTestCase;
 import com.intellij.java.codeInsight.JavaExternalDocumentationTest;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -915,6 +918,27 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     checkResult("class C { void m() { System.getProperty(<caret>) } }");
     String doc = JavaExternalDocumentationTest.getDocumentationText(getEditor());
     assertTrue(doc.contains("<code>null</code> if there is no property with that key"));
+  }
+
+  public void testHighlightingOfHintsOnMultipleLines() throws Exception {
+    configureJava("class C { void m() { System.setPro<caret> } }");
+    complete("setProperty");
+    next();
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER);
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { void m() { System.setProperty(<Hint text=\"key:\"/>, \n" +
+                          "        <HINT text=\"value:\"/><caret>) } }");
+  }
+
+  public void testGlobalStaticMethodCompletion() throws Exception {
+    configureJava("class C { void m() { arraycop<caret> } }");
+    complete();
+    complete();
+    assertSize(1, myItems);
+    LookupElement item = myItems[0];
+    item.as(StaticallyImportable.CLASS_CONDITION_KEY).setShouldBeImported(true); // emulate 'Import statically' intention
+    selectItem(item, Lookup.NORMAL_SELECT_CHAR);
+    checkResultWithInlays("import static java.lang.System.arraycopy;\n\nclass C { void m() { arraycopy(<HINT text=\"src:\"/><caret>, <Hint text=\"srcPos:\"/>, <Hint text=\"dest:\"/>, <Hint text=\"destPos:\"/>, <Hint text=\"length:\"/>); } }");
   }
 
   private void checkResultWithInlays(String text) {

@@ -31,6 +31,7 @@ import com.intellij.updater.Utils;
 import com.intellij.updater.Utils.OpenByteArrayOutputStream;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.zip.GZIPOutputStream;
 
 /**
@@ -470,7 +471,7 @@ public class JBDiff {
     diffOut.close();
 
     DataOutputStream headerStream = new DataOutputStream(diffFileOut);
-    headerStream.write("jbdiff40".getBytes("US-ASCII"));
+    headerStream.write("jbdiff40".getBytes(StandardCharsets.US_ASCII));
     headerStream.writeLong(ctrlBlockLen);  // ctrlBlockLen (compressed)
     headerStream.writeLong(diffBlockLen);  // diffBlockLen (compressed)
     headerStream.writeLong(newsize);

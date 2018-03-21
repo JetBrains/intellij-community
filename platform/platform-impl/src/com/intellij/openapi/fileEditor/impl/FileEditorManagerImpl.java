@@ -776,7 +776,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
                                                          final boolean focusEditor,
                                                          @Nullable final HistoryEntry entry,
                                                          boolean current) {
-    return openFileImpl4(window, file, entry, current, focusEditor, null, -1);
+    return openFileImpl4(window, file, entry, current, focusEditor, null, -1, false);
   }
 
   /**
@@ -789,7 +789,8 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
                                                          final boolean current,
                                                          final boolean focusEditor,
                                                          final Boolean pin,
-                                                         final int index) {
+                                                         final int index,
+                                                         final boolean exactState) {
     assert ApplicationManager.getApplication().isDispatchThread() || !ApplicationManager.getApplication().isReadAccessAllowed() : "must not open files under read action since we are doing a lot of invokeAndWaits here";
 
     final Ref<EditorWithProviderComposite> compositeRef = new Ref<>();
@@ -883,7 +884,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       FileEditorProvider[] providers = composite.getProviders();
 
       for (int i = 0; i < editors.length; i++) {
-        restoreEditorState(file, providers[i], editors[i], entry, newEditor);
+        restoreEditorState(file, providers[i], editors[i], entry, newEditor, exactState);
       }
 
       // Restore selected editor
@@ -985,7 +986,8 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
                                   @NotNull FileEditorProvider provider,
                                   @NotNull final FileEditor editor,
                                   HistoryEntry entry,
-                                  boolean newEditor) {
+                                  boolean newEditor,
+                                  boolean exactState) {
     FileEditorState state = null;
     if (entry != null) {
       state = entry.getState(provider);
@@ -999,10 +1001,10 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     if (state != null) {
       if (!isDumbAware(editor)) {
         final FileEditorState finalState = state;
-        DumbService.getInstance(getProject()).runWhenSmart(() -> editor.setState(finalState));
+        DumbService.getInstance(getProject()).runWhenSmart(() -> editor.setState(finalState, exactState));
       }
       else {
-        editor.setState(state);
+        editor.setState(state, exactState);
       }
     }
   }
@@ -1249,7 +1251,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   @Override
   @NotNull
   public FileEditor[] getSelectedEditors() {
-    Set<FileEditor> selectedEditors = new HashSet<>();
+    Set<FileEditor> selectedEditors = new LinkedHashSet<>();
     for (EditorsSplitters each : getAllSplitters()) {
       ContainerUtil.addAll(selectedEditors, each.getSelectedEditors());
     }
@@ -1263,6 +1265,17 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     EditorsSplitters active = null;
     if (ApplicationManager.getApplication().isDispatchThread()) active = getActiveSplittersSync();
     return active == null ? getMainSplitters() : active;
+  }
+
+  @Nullable
+  @Override
+  public FileEditor getSelectedEditor() {
+    EditorWindow window = getSplitters().getCurrentWindow();
+    if (window != null) {
+      EditorComposite selected = window.getSelectedEditor();
+      if (selected != null) return selected.getSelectedEditor();
+    }
+    return super.getSelectedEditor();
   }
 
   @Override

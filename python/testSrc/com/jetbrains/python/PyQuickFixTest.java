@@ -738,6 +738,6 @@ public class PyQuickFixTest extends PyTestCase {
   private static String graftBeforeExt(String name, String insertion) {
     int dotpos = name.indexOf('.');
     if (dotpos < 0) dotpos = name.length();
-    return name.substring(0, dotpos) + insertion + name.substring(dotpos, name.length());
+    return name.substring(0, dotpos) + insertion + name.substring(dotpos);
   }
 }

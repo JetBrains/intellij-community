@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.layout
 
 import com.intellij.BundleBase
@@ -42,7 +28,9 @@ import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JLabel
 
-abstract class Row() {
+internal const val COMPONENT_TAG_HINT = "kotlin.dsl.hint.component"
+
+abstract class Row {
   abstract var enabled: Boolean
 
   abstract var visible: Boolean
@@ -55,8 +43,10 @@ abstract class Row() {
 
   protected abstract val builder: LayoutBuilderImpl
 
-  fun label(text: String, gapLeft: Int = 0, style: ComponentStyle? = null, fontColor: FontColor? = null, bold: Boolean = false) {
-    Label(text, style, fontColor, bold)(gapLeft = gapLeft)
+  fun label(text: String, gapLeft: Int = 0, style: ComponentStyle? = null, fontColor: FontColor? = null, bold: Boolean = false): JLabel {
+    val label = Label(text, style, fontColor, bold)
+    label(gapLeft = gapLeft)
+    return label
   }
 
   fun link(text: String, style: ComponentStyle? = null, action: () -> Unit) {
@@ -76,8 +66,8 @@ abstract class Row() {
                                 project: Project? = null,
                                 fileChooserDescriptor: FileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor(),
                                 historyProvider: (() -> List<String>)? = null,
-                                fileChoosen: ((chosenFile: VirtualFile) -> String)? = null): TextFieldWithHistoryWithBrowseButton {
-    val component = textFieldWithHistoryWithBrowseButton(project, browseDialogTitle, fileChooserDescriptor, historyProvider, fileChoosen)
+                                fileChosen: ((chosenFile: VirtualFile) -> String)? = null): TextFieldWithHistoryWithBrowseButton {
+    val component = textFieldWithHistoryWithBrowseButton(project, browseDialogTitle, fileChooserDescriptor, historyProvider, fileChosen)
     value?.let { component.text = it }
     component()
     return component
@@ -105,7 +95,8 @@ abstract class Row() {
   }
 
   fun hint(text: String) {
-    label(text, style = ComponentStyle.SMALL, fontColor = FontColor.BRIGHTER, gapLeft = 3 * HORIZONTAL_GAP)
+    val component = label(text, style = ComponentStyle.SMALL, fontColor = FontColor.BRIGHTER)
+    component.putClientProperty(COMPONENT_TAG_HINT, true)
   }
 
   fun panel(title: String, wrappedComponent: Component, vararg constraints: CCFlags) {
@@ -121,7 +112,8 @@ abstract class Row() {
     init()
   }
 
-  protected abstract fun alignRight()
+  @PublishedApi
+  internal abstract fun alignRight()
 
   inline fun row(label: String, init: Row.() -> Unit): Row {
     val row = createRow(label)
@@ -129,14 +121,14 @@ abstract class Row() {
     return row
   }
 
-
   inline fun row(init: Row.() -> Unit): Row {
     val row = createRow(null)
     row.init()
     return row
   }
 
-  protected abstract fun createRow(label: String?): Row
+  @PublishedApi
+  internal abstract fun createRow(label: String?): Row
 
   @Deprecated(message = "Nested row is prohibited", level = DeprecationLevel.ERROR)
   fun row(label: JLabel? = null, init: Row.() -> Unit) {

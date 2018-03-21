@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.Collection;
@@ -27,13 +28,17 @@ public class HighlightData {
   private final TextAttributesKey myHighlightType;
   private final ColorKey myAdditionalColorKey;
 
-  public HighlightData(int startOffset, TextAttributesKey highlightType, ColorKey additionalColorKey) {
+  public HighlightData(int startOffset, TextAttributesKey highlightType, @Nullable ColorKey additionalColorKey) {
     myStartOffset = startOffset;
     myHighlightType = highlightType;
     myAdditionalColorKey = additionalColorKey;
   }
 
-  public HighlightData(int startOffset, int endOffset, TextAttributesKey highlightType, ColorKey additionalColorKey) {
+  public HighlightData(int startOffset, int endOffset, TextAttributesKey highlightType) {
+    this(startOffset, endOffset, highlightType, null);
+  }
+
+  public HighlightData(int startOffset, int endOffset, TextAttributesKey highlightType, @Nullable ColorKey additionalColorKey) {
     myStartOffset = startOffset;
     myEndOffset = endOffset;
     myHighlightType = highlightType;

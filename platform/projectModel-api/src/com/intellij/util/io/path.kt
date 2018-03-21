@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io
 
 import com.intellij.openapi.diagnostic.Logger
@@ -171,9 +169,9 @@ fun Path.writeSafe(outConsumer: (OutputStream) -> Unit): Path {
   try {
     Files.move(tempFile, this, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
   }
-  catch (e: IOException) {
+  catch (e: AtomicMoveNotSupportedException) {
     LOG.warn(e)
-    FileUtil.rename(tempFile.toFile(), this.toFile())
+    Files.move(tempFile, this, StandardCopyOption.REPLACE_EXISTING)
   }
   return this
 }
@@ -277,3 +275,6 @@ fun sanitizeFileName(name: String, replacement: String? = "_", isTruncate: Boole
 
   return result.toString().truncateFileName()
 }
+
+val Path.isWritable: Boolean
+  get() = Files.isWritable(this)

@@ -490,7 +490,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   public static void assertOrderedEquals(@NotNull byte[] actual, @NotNull byte[] expected) {
-    assertEquals(actual.length, expected.length);
+    assertEquals(expected.length, actual.length);
     for (int i = 0; i < actual.length; i++) {
       byte a = actual[i];
       byte e = expected[i];
@@ -992,7 +992,7 @@ public abstract class UsefulTestCase extends TestCase {
         wasThrown = true;
 
         //noinspection UseOfSystemOutOrSystemErr
-        System.out.println("");
+        System.out.println();
         //noinspection UseOfSystemOutOrSystemErr
         e.printStackTrace(System.out);
 

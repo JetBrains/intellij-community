@@ -56,7 +56,9 @@ public class ChangesBrowserFilePathNode extends ChangesBrowserNode<FilePath> {
       if (renderer.isShowFlatten()) {
         renderer.append(path.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
         FilePath parentPath = path.getParentPath();
-        appendParentPath(renderer, parentPath);
+        if (parentPath != null) {
+          appendParentPath(renderer, parentPath);
+        }
       }
       else {
         renderer.append(getRelativePath(path), SimpleTextAttributes.REGULAR_ATTRIBUTES);

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.UiActivity;
@@ -6,7 +6,9 @@ import com.intellij.ide.UiActivityMonitor;
 import com.intellij.ide.impl.ContentManagerWatcher;
 import com.intellij.notification.EventLog;
 import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
@@ -25,7 +27,6 @@ import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.util.ObjectUtils;
-import java.util.HashSet;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -40,6 +41,7 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -205,6 +207,13 @@ public final class ToolWindowImpl implements ToolWindowEx {
     if (frame == null || !frame.isActive()) return false;
 
     if (myToolWindowManager.isEditorComponentActive()) return false;
+    ActionManager actionManager = ActionManager.getInstance();
+    if (actionManager instanceof ActionManagerImpl
+        && !((ActionManagerImpl)actionManager).isActionPopupStackEmpty()
+        && !((ActionManagerImpl)actionManager).isToolWindowContextMenuVisible()) {
+      return false;
+    }
+
     return myToolWindowManager.isToolWindowActive(myId) || myDecorator != null && myDecorator.isFocused();
   }
 

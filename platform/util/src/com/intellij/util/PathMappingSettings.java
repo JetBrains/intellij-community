@@ -335,6 +335,11 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
     }
 
     @Override
+    public String toString() {
+      return "{'" + myLocalRoot + "' <=> '" + myRemoteRoot + "'}";
+    }
+
+    @Override
     public int hashCode() {
       int result = myLocalRoot != null ? myLocalRoot.hashCode() : 0;
       result = 31 * result + (myRemoteRoot != null ? myRemoteRoot.hashCode() : 0);

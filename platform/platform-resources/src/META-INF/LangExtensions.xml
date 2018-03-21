@@ -203,6 +203,9 @@
     <applicationService serviceInterface="com.intellij.openapi.application.PathMacros"
                         serviceImplementation="com.intellij.ide.macro.IdePathMacros"/>
 
+    <applicationService serviceInterface="com.intellij.lang.IdeLanguageCustomization"
+                        serviceImplementation="com.intellij.lang.IdeLanguageCustomization"/>
+
     <rearranger.ui implementation="com.intellij.application.options.codeStyle.arrangement.component.DefaultArrangementUiComponentFactory"/>
 
     <applicationService serviceInterface="com.intellij.ui.EditorTextFieldProvider"
@@ -226,7 +229,7 @@
     <projectService serviceInterface="com.intellij.psi.PsiFileFactory"
                     serviceImplementation="com.intellij.psi.impl.PsiFileFactoryImpl"/>
     <projectService serviceInterface="com.intellij.psi.text.BlockSupport"
-                    serviceImplementation="com.intellij.psi.impl.source.text.BlockSupportImpl"/>
+                    serviceImplementation="com.intellij.psi.impl.BlockSupportImpl"/>
     <projectService serviceInterface="com.intellij.psi.SmartPointerManager"
                     serviceImplementation="com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl"/>
     <projectService serviceInterface="com.intellij.psi.codeStyle.CodeStyleManager"
@@ -311,6 +314,7 @@
                     serviceImplementation="com.intellij.ide.util.gotoByName.GotoFileConfiguration"/>
     <projectService serviceInterface="com.intellij.ide.util.gotoByName.GotoClassSymbolConfiguration"
                     serviceImplementation="com.intellij.ide.util.gotoByName.GotoClassSymbolConfiguration"/>
+    <preloadingActivity implementation="com.intellij.ide.actions.GotoClassPresentationUpdater"/>
 
     <projectService serviceInterface="com.intellij.ide.hierarchy.HierarchyBrowserManager"
                     serviceImplementation="com.intellij.ide.hierarchy.HierarchyBrowserManager"/>
@@ -409,6 +413,7 @@
 
     <!-- Editor -->
     <search.topHitProvider implementation="com.intellij.application.options.editor.EditorOptionsTopHitProvider"/>
+    <search.topHitProvider implementation="com.intellij.application.options.editor.EditorHintsOptionsTopHitProvider"/>
     <applicationConfigurable groupId="editor" groupWeight="190" instance="com.intellij.application.options.editor.EditorOptions" id="preferences.editor" key="title.editor"
                              bundle="messages.ApplicationBundle" order="after preferences.lookFeel"
                              childrenEPName="com.intellij.editorOptionsProvider"/>
@@ -902,11 +907,13 @@
     <copyPastePostProcessor implementation="com.intellij.codeInsight.editorActions.CopyPasteIndentProcessor"/>
     <copyPastePostProcessor implementation="com.intellij.codeInsight.editorActions.CopyPasteFoldingProcessor"/>
 
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.collectors.legacy.fileTypes.LegacyFileTypeUsagesCollector"/>
+    <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsagesCollector"/>
+
     <statistics.usagesCollector implementation="com.intellij.facet.impl.statistics.FrameworkUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.facet.impl.statistics.ModuleTypeUsagesCollector"/>
-    <statistics.usagesCollector implementation="com.intellij.execution.impl.statistics.RunConfigurationTypeUsagesCollector"/>
-    <statistics.usagesCollector implementation="com.intellij.execution.impl.statistics.TemporaryRunConfigurationTypeUsagesCollector"/>
-    <statistics.usagesCollector implementation="com.intellij.openapi.fileTypes.FileTypeUsagesCollector"/>
+    <statistics.projectUsagesCollector implementation="com.intellij.execution.impl.statistics.RunConfigurationTypeUsagesCollector"/>
+    <statistics.projectUsagesCollector implementation="com.intellij.execution.impl.statistics.TemporaryRunConfigurationTypeUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.editor.LegacyEditorSettingsStatisticsCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.editor.LegacyEditorSettingsStatisticsCollector$ProjectUsages"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.editor.EditorSettingsStatisticsCollector"/>
@@ -917,7 +924,7 @@
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.tools.AbstractToolsUsagesCollector$EnabledListedToolsUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.tools.AbstractToolsUsagesCollector$DisabledBundledToolsUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.tools.AbstractToolsUsagesCollector$DisabledListedToolsUsagesCollector"/>
-    <statistics.usagesCollector implementation="com.intellij.execution.dashboard.RunDashboardUsagesCollector"/>
+    <statistics.projectUsagesCollector implementation="com.intellij.execution.dashboard.RunDashboardUsagesCollector"/>
 
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenamePsiFileProcessor" order="last"/>
     <renameInputValidator implementation="com.intellij.refactoring.rename.RenameToIgnoredDirectoryFileInputValidator" order="last"/>
@@ -1012,6 +1019,8 @@
     <runDashboardGroupingRule implementation="com.intellij.execution.dashboard.tree.StatusDashboardGroupingRule"/>
     <runDashboardGroupingRule implementation="com.intellij.execution.dashboard.tree.FolderDashboardGroupingRule"/>
     <runDashboardGroupingRule implementation="com.intellij.execution.dashboard.tree.RunConfigurationDashboardGroupingRule"/>
+    <projectService serviceInterface="com.intellij.execution.ui.RunContentManager"
+                    serviceImplementation="com.intellij.execution.ui.RunContentManagerImpl"/>
 
     <previewPanelProvider implementation="com.intellij.openapi.fileEditor.impl.FilePreviewPanelProvider"/>
     <previewPanelProvider implementation="com.intellij.codeInsight.documentation.DocumentationPreviewPanelProvider"/>
@@ -1081,6 +1090,29 @@
     <searchEverywhereContributor implementation="com.intellij.ide.util.gotoByName.ClassSearchEverywhereContributor" />
     <searchEverywhereContributor implementation="com.intellij.ide.util.gotoByName.FileSearchEverywhereContributor" />
     <searchEverywhereContributor implementation="com.intellij.ide.util.gotoByName.SymbolSearchEverywhereContributor" />
+
+    <!-- Project tasks execution (delegation of the build/run actions) -->
+    <projectService serviceInterface="com.intellij.task.ProjectTaskManager"
+                    serviceImplementation="com.intellij.task.impl.ProjectTaskManagerImpl"/>
+    <projectService serviceInterface="com.intellij.execution.runners.ExecutionEnvironmentProvider"
+                    serviceImplementation="com.intellij.task.impl.ExecutionEnvironmentProviderImpl"/>
+
+    <!-- Build view -->
+    <projectService serviceInterface="com.intellij.build.BuildContentManager"
+                    serviceImplementation="com.intellij.build.BuildContentManagerImpl"
+                    testServiceImplementation="com.intellij.build.internal.DummyBuildContentManager"/>
+    <projectService serviceInterface="com.intellij.build.BuildViewManager"
+                    serviceImplementation="com.intellij.build.BuildViewManager"
+                    testServiceImplementation="com.intellij.build.internal.DummyBuildViewManager"/>
+    <projectService serviceInterface="com.intellij.build.SyncViewManager"
+                    serviceImplementation="com.intellij.build.SyncViewManager"
+                    testServiceImplementation="com.intellij.build.internal.DummySyncViewManager"/>
+    <projectService serviceInterface="com.intellij.build.RunTasksViewManager"
+                    serviceImplementation="com.intellij.build.RunTasksViewManager"
+                    testServiceImplementation="com.intellij.build.internal.DummyTasksViewManager"/>
+    <projectService serviceInterface="com.intellij.build.DebugTasksViewManager"
+                    serviceImplementation="com.intellij.build.DebugTasksViewManager"
+                    testServiceImplementation="com.intellij.build.internal.DummyTasksViewManager"/>
   </extensions>
 </idea-plugin>
 

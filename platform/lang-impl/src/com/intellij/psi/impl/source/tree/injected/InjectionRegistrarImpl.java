@@ -42,8 +42,8 @@ import com.intellij.psi.impl.smartPointers.SelfElementInfo;
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
-import com.intellij.psi.impl.source.text.BlockSupportImpl;
-import com.intellij.psi.impl.source.text.DiffLog;
+import com.intellij.psi.impl.BlockSupportImpl;
+import com.intellij.psi.impl.DiffLog;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.injection.ReferenceInjector;
@@ -81,6 +81,7 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
     myContextElement = contextElement;
     myHostPsiFile = PsiUtilCore.getTemplateLanguageFile(hostPsiFile);
     FileViewProvider viewProvider = myHostPsiFile.getViewProvider();
+    if (viewProvider instanceof InjectedFileViewProvider) throw new IllegalArgumentException(viewProvider +" must not be injected");
     myHostVirtualFile = viewProvider.getVirtualFile();
     myHostDocument = (DocumentEx)viewProvider.getDocument();
   }

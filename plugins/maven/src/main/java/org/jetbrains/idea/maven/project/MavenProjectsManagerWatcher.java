@@ -3,7 +3,6 @@ package org.jetbrains.idea.maven.project;
 
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
@@ -156,15 +155,12 @@ public class MavenProjectsManagerWatcher {
               myChangedDocuments.clear();
             }
 
-            MavenUtil.invokeLater(myProject, () -> new WriteAction() {
-              @Override
-              protected void run(@NotNull Result result) throws Throwable {
-                for (Document each : copy) {
-                  PsiDocumentManager.getInstance(myProject).commitDocument(each);
-                  ((FileDocumentManagerImpl)FileDocumentManager.getInstance()).saveDocument(each, false);
-                }
+            MavenUtil.invokeLater(myProject, () -> WriteAction.run(() -> {
+              for (Document each : copy) {
+                PsiDocumentManager.getInstance(myProject).commitDocument(each);
+                ((FileDocumentManagerImpl)FileDocumentManager.getInstance()).saveDocument(each, false);
               }
-            }.execute());
+            }));
           }
         });
       }

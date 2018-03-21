@@ -6,6 +6,31 @@ import com.intellij.lang.java.beans.PropertyKind.*
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiPrimitiveType.getUnboxedType
 import com.intellij.psi.PsiType
+import java.beans.Introspector
+
+fun getKindByAccessorName(accessorName: String): PropertyKind? {
+  val propertyKind = getKindInternal(accessorName) ?: return null
+  val prefixLength = propertyKind.prefix.length
+  if (accessorName[prefixLength].isUpperCase()) return propertyKind
+  //groovy support getyYyy as accessor
+  if (accessorName.length > prefixLength + 1 && accessorName[prefixLength + 1].isUpperCase()) return propertyKind
+  return null
+}
+
+fun getNameAndKind(accessorName: String): Pair<PropertyKind, String>? {
+  val propertyKind = getKindByAccessorName(accessorName) ?: return null
+  val propertyName = Introspector.decapitalize(accessorName.substring(propertyKind.prefix.length))
+  return propertyKind to propertyName
+}
+
+private fun getKindInternal(accessorName: String) : PropertyKind? {
+  for (kind in PropertyKind.values()) {
+    val prefix = kind.prefix
+    val prefixLength = prefix.length
+    if (accessorName.startsWith(prefix) && accessorName.length > prefixLength) return kind
+  }
+  return null
+}
 
 /**
  * This method doesn't check if method name is an accessor name

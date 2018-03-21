@@ -46,24 +46,43 @@ public class ExtensionDeclarationRelatedItemLineMarkerProviderTest extends JavaC
     moduleBuilder.addLibrary("platform-api", platformApiJar);
   }
 
-  public void testMyActionInvalid() {
-    myFixture.configureByFile("plugin.xml");
-    GutterMark gutter = myFixture.findGutter("MyInvalidExtension.java");
-    assertNull(gutter);
+
+  public void testInvalidExtension() {
+    doTestInvalidExtension("MyInvalidExtension.java");
   }
 
-  public void testMyProjectService() {
-    PsiFile file = myFixture.configureByFile("plugin.xml");
-    String path = file.getVirtualFile().getPath();
-    Module module = ModuleUtilCore.findModuleForPsiElement(file);
+  public void testInvalidKtExtension() {
+    doTestInvalidExtension("MyInvalidKtExtension.kt");
+  }
+
+  private void doTestInvalidExtension(String file) {
+    myFixture.configureByFile("plugin.xml");
+    assertNull(myFixture.findGutter(file));
+  }
+
+
+  public void testExtension() {
+    doTestExtension("MyExtension.java", "<myEp implementation=\"MyExtension\"/>");
+  }
+
+  public void testKtExtension() {
+    doTestExtension("MyKtExtension.kt", "<myEp implementation=\"MyKtExtension\"/>");
+  }
+
+  private void doTestExtension(String file, String xmlDeclarationText) {
+    PsiFile pluginXmlFile = myFixture.configureByFile("plugin.xml");
+    String pluginXmlPath = pluginXmlFile.getVirtualFile().getPath();
+
+    Module module = ModuleUtilCore.findModuleForPsiElement(pluginXmlFile);
     assertNotNull(module);
+
     String color = ColorUtil.toHex(UIUtil.getInactiveTextColor());
-    int expectedTagPosition = file.getText().indexOf("<myEp implementation=\"MyExtension\"/>");
-    String expectedTooltip = "<html><body>&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"#navigation/" + path
+    int expectedTagPosition = pluginXmlFile.getText().indexOf(xmlDeclarationText);
+    String expectedTooltip = "<html><body>&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"#navigation/" + pluginXmlPath
                              + ":" + expectedTagPosition + "\">myEp</a> declaration in plugin.xml " +
                              "<font color=" + color + ">[" + module.getName() + "]</font><br></body></html>";
 
-    GutterMark gutter = myFixture.findGutter("MyExtension.java");
+    GutterMark gutter = myFixture.findGutter(file);
     DevKitGutterTargetsChecker.checkGutterTargets(gutter, expectedTooltip, AllIcons.Nodes.Plugin, "myEp");
   }
 }

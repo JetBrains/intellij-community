@@ -19,7 +19,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
 import com.intellij.ide.impl.DataManagerImpl;
-import com.intellij.internal.statistic.customUsageCollectors.ui.ShortcutsCollector;
+import com.intellij.internal.statistic.collectors.fus.ui.persistence.ShortcutsCollector;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -628,6 +628,13 @@ public final class IdeKeyEventDispatcher implements Disposable {
     }
 
     if (!nonDumbAwareAction.isEmpty()) {
+
+      if (dumbModeWarningListener != null) {
+        dumbModeWarningListener.actionCanceledBecauseOfDumbMode();
+      }
+
+      IdeEventQueue.getInstance().flushDelayedKeyEvents();
+
       showDumbModeWarningLaterIfNobodyConsumesEvent(e, nonDumbAwareAction.toArray(new AnActionEvent[0]));
     }
 
@@ -642,6 +649,12 @@ public final class IdeKeyEventDispatcher implements Disposable {
           ActionUtil.showDumbModeWarning(actionEvents);
         });
       }
+  }
+
+  private static DumbModeWarningListener dumbModeWarningListener  = null;
+
+  public static void addDumbModeWarningListener (DumbModeWarningListener listener) {
+    dumbModeWarningListener = listener;
   }
 
   /**

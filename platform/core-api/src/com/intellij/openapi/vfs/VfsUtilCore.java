@@ -489,7 +489,7 @@ public class VfsUtilCore {
     }
     if (SystemInfo.isWindows) {
       while (!path.isEmpty() && path.charAt(0) == '/') {
-        path = path.substring(1, path.length());
+        path = path.substring(1);
       }
     }
 

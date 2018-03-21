@@ -1114,7 +1114,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     Rectangle visibleArea = myScrollingModel.getVisibleArea();
     Point zoomCenterRelative = zoomCenter == null ? new Point() : zoomCenter;
     Point zoomCenterAbsolute = new Point(visibleArea.x + zoomCenterRelative.x, visibleArea.y + zoomCenterRelative.y);
-    LogicalPosition zoomCenterLogical = xyToLogicalPosition(zoomCenterAbsolute).withoutVisualPositionInfo();
+    LogicalPosition zoomCenterLogical = xyToLogicalPosition(zoomCenterAbsolute);
     int oldLineHeight = getLineHeight();
     int intraLineOffset = zoomCenterAbsolute.y % oldLineHeight;
 
@@ -1728,7 +1728,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
    * {@link #stopDumbLater} or {@link #stopDumb} must be performed in finally
    */
   public void startDumb() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
     if (!Registry.is("editor.dumb.mode.available")) return;
     putUserData(BUFFER, null);
     Rectangle rect = ((JViewport)myEditorComponent.getParent()).getViewRect();
@@ -3569,6 +3569,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       try {
         for (EditorMouseListener mouseListener : myMouseListeners) {
           mouseListener.mousePressed(event);
+          if (isReleased) return;
         }
       }
       finally {
@@ -3608,6 +3609,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       EditorMouseEvent event = new EditorMouseEvent(EditorImpl.this, e, getMouseEventArea(e));
       for (EditorMouseListener listener : myMouseListeners) {
         listener.mouseClicked(event);
+        if (isReleased) return;
         if (event.isConsumed()) {
           e.consume();
           return;
@@ -3631,6 +3633,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       for (EditorMouseListener listener : myMouseListeners) {
         listener.mouseReleased(event);
+        if (isReleased) return;
         if (event.isConsumed()) {
           e.consume();
           return;
@@ -3652,6 +3655,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       EditorMouseEvent event = new EditorMouseEvent(EditorImpl.this, e, getMouseEventArea(e));
       for (EditorMouseListener listener : myMouseListeners) {
         listener.mouseEntered(event);
+        if (isReleased) return;
         if (event.isConsumed()) {
           e.consume();
           return;
@@ -3663,6 +3667,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       EditorMouseEvent event = new EditorMouseEvent(EditorImpl.this, e, getMouseEventArea(e));
       for (EditorMouseListener listener : myMouseListeners) {
         listener.mouseExited(event);
+        if (isReleased) return;
         if (event.isConsumed()) {
           e.consume();
           return;
@@ -3993,6 +3998,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       for (EditorMouseMotionListener listener : myMouseMotionListeners) {
         listener.mouseDragged(event);
+        if (isReleased) return;
       }
     }
 
@@ -4038,6 +4044,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       for (EditorMouseMotionListener listener : myMouseMotionListeners) {
         listener.mouseMoved(event);
+        if (isReleased) return;
       }
     }
 

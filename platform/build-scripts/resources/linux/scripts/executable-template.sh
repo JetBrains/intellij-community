@@ -17,7 +17,7 @@ message()
   elif [ -n "`which notify-send`" ]; then
     notify-send "ERROR: $TITLE: $1"
   else
-    echo "ERROR: $TITLE\n$1"
+    printf "ERROR: $TITLE\n$1\n"
   fi
 }
 
@@ -176,7 +176,7 @@ if [ -r "$VM_OPTIONS_FILE" ]; then
   VM_OPTIONS=`"$CAT" "$VM_OPTIONS_FILE" | "$GREP" -v "^#.*"`
   if { echo "$VM_OPTIONS" | "$GREP" -q "agentlib:yjpagent" - ; } then
     if [ "$OS_TYPE" = "Linux" ]; then
-      VM_OPTIONS=`echo "$VM_OPTIONS" | "$SED" -e "s|-agentlib:yjpagent\([^=]*\)|-agentpath:$IDE_BIN_HOME/libyjpagent-linux\1.so|"`
+      VM_OPTIONS=`echo "$VM_OPTIONS" | "$SED" -e "s|-agentlib:yjpagent\(-linux\)\?\([^=]*\)|-agentpath:$IDE_BIN_HOME/libyjpagent-linux\2.so|"`
     else
       VM_OPTIONS=`echo "$VM_OPTIONS" | "$SED" -e "s|-agentlib:yjpagent[^ ]\+||"`
     fi

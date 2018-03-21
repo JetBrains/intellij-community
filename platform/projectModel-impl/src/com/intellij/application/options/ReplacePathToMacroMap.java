@@ -140,14 +140,14 @@ public class ReplacePathToMacroMap extends PathMacroMap {
             text.charAt(endOfOccurrence) != '\"' &&
             text.charAt(endOfOccurrence) != ' ' &&
             !text.substring(endOfOccurrence).startsWith("!/")) {
-          newText.append(text.substring(i, endOfOccurrence));
+          newText.append(text, i, endOfOccurrence);
           i = endOfOccurrence;
           continue;
         }
         if (occurrenceOfPath > 0) {
           char prev = text.charAt(occurrenceOfPath - 1);
           if (Character.isLetterOrDigit(prev) || prev == '_') {
-            newText.append(text.substring(i, endOfOccurrence));
+            newText.append(text, i, endOfOccurrence);
             i = endOfOccurrence;
             continue;
           }
@@ -161,7 +161,7 @@ public class ReplacePathToMacroMap extends PathMacroMap {
         break;
       }
       else {
-        newText.append(text.substring(i, occurrenceOfPath));
+        newText.append(text, i, occurrenceOfPath);
         newText.append(myMacroMap.get(path));
         i = occurrenceOfPath + path.length();
       }

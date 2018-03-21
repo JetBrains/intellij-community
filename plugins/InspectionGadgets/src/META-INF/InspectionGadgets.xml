@@ -367,7 +367,7 @@
     <localInspection groupPath="Java" language="JAVA" suppressId="StaticFieldReferencedViaSubclass" shortName="StaticFieldReferenceOnSubclass"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="static.field.via.subclass.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.bugs.StaticFieldReferenceOnSubclassInspection"/>
+                     implementationClass="com.siyeh.ig.bugs.StaticFieldReferenceOnSubclassInspection" cleanupTool="true"/>
     <localInspection groupPath="Java" language="JAVA" shortName="StringEquality" bundle="com.siyeh.InspectionGadgetsBundle" key="string.comparison.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.bugs.StringEqualityInspection"/>
@@ -2405,6 +2405,11 @@
                      key="unnecessary.tostring.call.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING" cleanupTool="true"
                      implementationClass="com.siyeh.ig.style.UnnecessaryToStringCallInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="RedundantCompareCall"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
+                     enabledByDefault="true" level="WARNING"
+                     key="inspection.redundant.compare.call.display.name" bundle="com.siyeh.InspectionGadgetsBundle"
+                     implementationClass="com.intellij.codeInspection.RedundantCompareCallInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="RedundantNoArgConstructor" shortName="UnnecessaryConstructor" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="unnecessary.constructor.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING"
@@ -2518,9 +2523,9 @@
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.siyeh.ig.style.ArrayCreationWithoutNewKeywordInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SimplifiableIfStatement" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="simplifiable.if.statement.display.name" groupBundle="messages.InspectionsBundle"
+                     key="inspection.simplifiable.if.statement.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
-                     implementationClass="com.siyeh.ig.j2me.SimplifiableIfStatementInspection"/>
+                     implementationClass="com.siyeh.ig.style.SimplifiableIfStatementInspection"/>
 
     <!--group.names.threading.issues-->
     <localInspection groupPath="Java" language="JAVA" suppressId="AccessToNonThreadSafeStaticField" shortName="AccessToNonThreadSafeStaticFieldFromInstance"

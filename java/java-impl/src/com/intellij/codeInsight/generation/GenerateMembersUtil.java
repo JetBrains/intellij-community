@@ -18,6 +18,7 @@ package com.intellij.codeInsight.generation;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
+import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -40,7 +41,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
-import java.util.HashMap;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -603,7 +603,7 @@ public class GenerateMembersUtil {
       if (qualifiedName == null || ArrayUtil.contains(qualifiedName, skipAnnotations) || target.findAnnotation(qualifiedName) != null) {
         continue;
       }
-      target.add(annotation);
+      AddAnnotationPsiFix.addPhysicalAnnotation(qualifiedName, annotation.getParameterList().getAttributes(), target);
     }
   }
 
@@ -681,7 +681,6 @@ public class GenerateMembersUtil {
       if (ignoreInvalidTemplate) {
         LOG.info(e);
         result = isGetter ? PropertyUtilBase.generateGetterPrototype(field) : PropertyUtilBase.generateSetterPrototype(field);
-        assert result != null : field.getText();
       }
       else {
         throw new GenerateCodeException(e);
@@ -705,11 +704,11 @@ public class GenerateMembersUtil {
   }
 
   @NotNull
-  private static PsiMethod generatePrototype(@NotNull PsiField field, PsiMethod result) {
+  private static PsiMethod generatePrototype(@NotNull PsiField field, @NotNull PsiMethod result) {
     return setVisibility(field, annotateOnOverrideImplement(field.getContainingClass(), result));
   }
 
-  @Contract("_, null -> null")
+  @Contract("_, null -> null; _, !null -> !null")
   public static PsiMethod setVisibility(PsiMember member, PsiMethod prototype) {
     if (prototype == null) return null;
 
@@ -729,7 +728,7 @@ public class GenerateMembersUtil {
     return prototype;
   }
 
-  @Nullable
+  @Contract("_, null -> null; _, !null -> !null")
   public static PsiMethod annotateOnOverrideImplement(@Nullable PsiClass targetClass, @Nullable PsiMethod generated) {
     if (generated == null || targetClass == null) return generated;
 

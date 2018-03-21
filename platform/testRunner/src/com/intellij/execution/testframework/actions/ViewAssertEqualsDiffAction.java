@@ -56,14 +56,14 @@ public class ViewAssertEqualsDiffAction extends AnAction implements TestTreeView
     final AbstractTestProxy testProxy = AbstractTestProxy.DATA_KEY.getData(context);
     final Project project = CommonDataKeys.PROJECT.getData(context);
     if (testProxy != null) {
+      final List<DiffHyperlink> providers = collectAvailableProviders(TestTreeView.MODEL_DATA_KEY.getData(context));
+      int index = currentHyperlink != null ? providers.indexOf(currentHyperlink) : -1;
+
       DiffHyperlink diffViewerProvider = testProxy.getDiffViewerProvider();
-      if (diffViewerProvider != null) {
-        final List<DiffHyperlink> providers = collectAvailableProviders(TestTreeView.MODEL_DATA_KEY.getData(context));
-        int index = currentHyperlink != null ? providers.indexOf(currentHyperlink) : -1;
-        if (index == -1) index = providers.indexOf(diffViewerProvider);
-        new MyDiffWindow(project, providers, Math.max(0, index)).show();
-        return true;
-      }
+      if (index == -1 && diffViewerProvider != null) index = providers.indexOf(diffViewerProvider);
+
+      new MyDiffWindow(project, providers, Math.max(0, index)).show();
+      return true;
     }
     if (currentHyperlink != null) {
       new MyDiffWindow(project, currentHyperlink).show();
@@ -78,12 +78,21 @@ public class ViewAssertEqualsDiffAction extends AnAction implements TestTreeView
       final AbstractTestProxy root = model.getRoot();
       final List<? extends AbstractTestProxy> allTests = root.getAllTests();
       for (AbstractTestProxy test : allTests) {
-        if (test.isLeaf()) {
-          providers.addAll(test.getDiffViewerProviders());
-        }
+        providers.addAll(test.getDiffViewerProviders());
       }
     }
     return providers;
+  }
+
+  private static boolean hasDiffProvider(AbstractTestProxy root) {
+    DiffHyperlink provider = root.getDiffViewerProvider();
+    if (provider != null) return true;
+    if (root.isDefect()) {
+      for (AbstractTestProxy child : root.getChildren()) {
+        if (hasDiffProvider(child)) return true;
+      }
+    }
+    return false;
   }
 
   public void update(final AnActionEvent e) {
@@ -92,8 +101,10 @@ public class ViewAssertEqualsDiffAction extends AnAction implements TestTreeView
       presentation.setEnabledAndVisible(false);
       return;
     }
-    AbstractTestProxy test = AbstractTestProxy.DATA_KEY.getData(e.getDataContext());
-    boolean visible = test != null && test.getDiffViewerProvider() != null;
+    DataContext context = e.getDataContext();
+    AbstractTestProxy test = AbstractTestProxy.DATA_KEY.getData(context);
+    TestFrameworkRunningModel model = TestTreeView.MODEL_DATA_KEY.getData(context);
+    boolean visible = test != null && model != null && hasDiffProvider(model.getRoot());
 
     presentation.setEnabled(test != null);
     presentation.setVisible(visible);

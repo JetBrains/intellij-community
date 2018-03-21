@@ -26,6 +26,11 @@ class DistributionJARsBuilder {
   private static final boolean COMPRESS_JARS = false
   private static final String RESOURCES_INCLUDED = "resources.included"
   private static final String RESOURCES_EXCLUDED = "resources.excluded"
+  /**
+   * Path to file with third party libraries HTML content,
+   * see the same constant at com.intellij.ide.actions.AboutPopup#THIRD_PARTY_LIBRARIES_FILE_PATH
+   */
+  private static final String THIRD_PARTY_LIBRARIES_FILE_PATH = "license/third-party-libraries.html"
   private final BuildContext buildContext
   private final Set<String> usedModules = new LinkedHashSet<>()
   private final PlatformLayout platform
@@ -65,14 +70,19 @@ class DistributionJARsBuilder {
 
     def productLayout = buildContext.productProperties.productLayout
     def enabledPluginModules = getEnabledPluginModules()
+    buildContext.messages.debug("Collecting project libraries used by plugins: ")
     List<JpsLibrary> projectLibrariesUsedByPlugins = getPluginsByModules(buildContext, enabledPluginModules).collectMany { plugin ->
       plugin.getActualModules(enabledPluginModules).values().collectMany {
         def module = buildContext.findRequiredModule(it)
-        JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).libraries.findAll { library ->
+        def libraries = JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).libraries.findAll { library ->
           !(library.createReference().parentReference instanceof JpsModuleReference) && !plugin.includedProjectLibraries.any {
             it.libraryName == library.name && it.relativeOutputPath == ""
           }
         }
+        if (!libraries.isEmpty()) {
+          buildContext.messages.debug(" plugin '$plugin.mainModule', module '$it': ${libraries.collect {"'$it.name'"}.join(",")}")
+        }
+        libraries
       }
     }
 
@@ -212,12 +222,9 @@ class DistributionJARsBuilder {
 
   void buildAdditionalArtifacts() {
     def productProperties = buildContext.productProperties
-    if (productProperties.generateLibrariesLicensesTable) {
-      buildContext.messages.block("Generate table of licenses for used third-party libraries") {
-        def generator = new LibraryLicensesListGenerator(buildContext.messages, buildContext.project, productProperties.allLibraryLicenses)
-        def artifactNamePrefix = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
-        generator.generateLicensesTable("$buildContext.paths.artifacts/$artifactNamePrefix-third-party-libraries.txt", usedModules)
-      }
+    buildContext.messages.block("Generate table of licenses for used third-party libraries") {
+      def generator = new LibraryLicensesListGenerator(buildContext.messages, buildContext.project, productProperties.allLibraryLicenses)
+      generator.generateLicensesTable("$buildContext.paths.distAll/$THIRD_PARTY_LIBRARIES_FILE_PATH", usedModules)
     }
 
     if (productProperties.scrambleMainJar) {
@@ -265,6 +272,15 @@ class DistributionJARsBuilder {
       def forbiddenJars = packagedFiles.findAll { forbiddenJarNames.contains(it.name) }
       if (!forbiddenJars.empty) {
         buildContext.messages.error( "The following JARs cannot be included into the product 'lib' directory, they need to be scrambled with the main jar: ${forbiddenJars}")
+      }
+      def modulesToBeScrambled = buildContext.proprietaryBuildTools.scrambleTool.namesOfModulesRequiredToBeScrambled
+      platform.moduleJars.keySet().each { jarName ->
+        if (jarName != productLayout.mainJarName) {
+          def notScrambled = platform.moduleJars.get(jarName).intersect(modulesToBeScrambled)
+          if (!notScrambled.isEmpty()) {
+            buildContext.messages.error("Module '${notScrambled.first()}' is included into $jarName which is not scrambled.")
+          }
+        }
       }
     }
 

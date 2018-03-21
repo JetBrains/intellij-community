@@ -16,7 +16,7 @@ class ExtractMethodObjectFail {
       String parm14 = inner.getParm14();
       String parm15 = inner.getParm15();
 
-    System.out.println(parm1 + parm2 + parm3 + parm4 + parm5 + parm6 + parm7 + parm8 + param9 + parm10 + parm11 + parm12 + parm13 + parm14 + parm15);
+      System.out.println(parm1 + parm2 + parm3 + parm4 + parm5 + parm6 + parm7 + parm8 + param9 + parm10 + parm11 + parm12 + parm13 + parm14 + parm15);
   }
 
     private class Inner {

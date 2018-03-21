@@ -46,6 +46,8 @@ public class JBUI {
 
   private static final float DISCRETE_SCALE_RESOLUTION = 0.25f;
 
+  public static final boolean SCALE_VERBOSE = Boolean.getBoolean("ide.ui.scale.verbose");
+
   /**
    * The IDE supports two different HiDPI modes:
    *
@@ -207,7 +209,7 @@ public class JBUI {
     @NotNull
     @Override
     public Float initialize() {
-      if (SystemProperties.has("hidpi") && !SystemProperties.is("hidpi")) {
+      if (!SystemProperties.getBooleanProperty("hidpi", true)) {
         return 1f;
       }
       if (UIUtil.isJreHiDPIEnabled()) {
@@ -421,7 +423,7 @@ public class JBUI {
       return debugScale;
     }
 
-    if (SystemProperties.has("hidpi") && !SystemProperties.is("hidpi")) {
+    if (!SystemProperties.getBooleanProperty("hidpi", true)) {
       setUserScaleFactorProperty(1f);
       return 1f;
     }
@@ -614,6 +616,11 @@ public class JBUI {
     @NotNull
     public static JBFont create(String fontFamily, int size) {
       return JBFont.create(new Font(fontFamily, Font.PLAIN, size));
+    }
+
+    @NotNull
+    public static JBFont toolbarFont() {
+      return SystemInfo.isMac ? smallFont() : label();
     }
   }
 

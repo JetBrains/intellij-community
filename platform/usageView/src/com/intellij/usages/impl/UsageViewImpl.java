@@ -83,12 +83,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.intellij.util.containers.Queue;
 
 /**
  * @author max
  */
-public class UsageViewImpl implements UsageView {
+public class UsageViewImpl implements UsageViewEx {
   @NonNls public static final String SHOW_RECENT_FIND_USAGES_ACTION_ID = "UsageView.ShowRecentFindUsages";
 
   private final UsageNodeTreeBuilder myBuilder;
@@ -378,8 +377,8 @@ public class UsageViewImpl implements UsageView {
   };
 
   // parent nodes under which the child node was just inserted.
-  // it is needed for firing javax.swing.tree.DefaultTreeModel.fireTreeNodesInserted() events in batch
-  // has to be linked because events for child nodes should be fired after events for parent nodes
+  // it is needed for firing javax.swing.tree.DefaultTreeModel.fireTreeNodesInserted() events in batch.
+  // has to be linked because events for child nodes should be fired after events for parent nodes.
   private final Set<Node> nodesInsertedUnder = new LinkedHashSet<>(); // guarded by nodesInsertedUnder
 
   private final Consumer<Node> edtNodeInsertedUnderQueue = (@NotNull Node parent) -> {
@@ -400,7 +399,7 @@ public class UsageViewImpl implements UsageView {
     }
     // for each node synchronize its Swing children (javax.swing.tree.DefaultMutableTreeNode.children)
     // and its model children (com.intellij.usages.impl.GroupNode.getChildren())
-    // by issuing corresponding javax.swing.tree.DefaultMutableTreeNode.insert() and then javax.swing.tree.DefaultTreeModel.nodesWereInserted()
+    // by issuing corresponding javax.swing.tree.DefaultMutableTreeNode.insert() and then calling javax.swing.tree.DefaultTreeModel.nodesWereInserted()
     TIntArrayList indicesToFire = new TIntArrayList();
     List<Node> nodesToFire = new ArrayList<>();
     for (Node parentNode : insertedUnder) {
@@ -458,14 +457,20 @@ public class UsageViewImpl implements UsageView {
       indicesToFire.clear();
     }
   }
+  @Override
+  public void searchFinished() {
+    drainQueuedUsageNodes();
+    setSearchInProgress(false);
+  }
 
-
-  boolean searchHasBeenCancelled() {
+  @Override
+  public boolean searchHasBeenCancelled() {
     ProgressIndicator progress = associatedProgress;
     return progress != null && progress.isCanceled();
   }
 
-  void cancelCurrentSearch() {
+  @Override
+  public void cancelCurrentSearch() {
     ProgressIndicator progress = associatedProgress;
     if (progress != null) {
       ProgressWrapper.unwrap(progress).cancel();
@@ -1042,7 +1047,8 @@ public class UsageViewImpl implements UsageView {
     return configurableTarget == null ? getShowUsagesWithSettingsShortcut() : configurableTarget.getShortcut();
   }
 
-  void associateProgress(@NotNull ProgressIndicator indicator) {
+  @Override
+  public void associateProgress(@NotNull ProgressIndicator indicator) {
     associatedProgress = indicator;
   }
 
@@ -1135,7 +1141,8 @@ public class UsageViewImpl implements UsageView {
     }
   }
 
-  void waitForUpdateRequestsCompletion() {
+  @Override
+  public void waitForUpdateRequestsCompletion() {
     assert !ApplicationManager.getApplication().isDispatchThread();
     while (true) {
       Future<?> request;
@@ -1152,7 +1159,7 @@ public class UsageViewImpl implements UsageView {
     }
   }
 
-  @SuppressWarnings("WeakerAccess")
+  @Override
   public void appendUsagesInBulk(@NotNull Collection<Usage> usages) {
     addUpdateRequest(ApplicationManager.getApplication().executeOnPooledThread(() -> ReadAction.run(() -> {
       for (Usage usage : usages) {
@@ -1170,7 +1177,7 @@ public class UsageViewImpl implements UsageView {
       return null;
     }
 
-    UsageNode child = myBuilder.appendUsage(usage, edtNodeInsertedUnderQueue, isFilterDuplicateLines());
+    UsageNode child = myBuilder.appendOrGet(usage, edtNodeInsertedUnderQueue, isFilterDuplicateLines());
     myUsageNodes.put(usage, child == null ? NULL_NODE : child);
 
     for (Node node = child; node != myRoot && node != null; node = (Node)node.getParent()) {
@@ -1191,17 +1198,16 @@ public class UsageViewImpl implements UsageView {
     UsageNode nodeToSelect = toSelect != null ? myUsageNodes.get(toSelect) : null;
 
     Set<UsageNode> nodes = usagesToNodes(usages.stream()).collect(Collectors.toSet());
-    NotNullLazyValue<Set<UsageInfo>> mergedInfos = new NotNullLazyValue<Set<UsageInfo>>() {
-      @NotNull
-      @Override
-      protected Set<UsageInfo> compute() {
-        return usages.stream().filter(usage -> usage instanceof UsageInfo2UsageAdapter)
-                     .flatMap(usage -> Arrays.stream(((UsageInfo2UsageAdapter)usage).getMergedInfos()))
-                     .collect(Collectors.toSet());
+    usages.forEach(myUsageNodes::remove);
+    if (!myUsageNodes.isEmpty()) {
+      Set<UsageInfo> mergedInfos = usages.stream()
+                                         .filter(usage -> usage instanceof UsageInfo2UsageAdapter && ((UsageInfo2UsageAdapter)usage).getMergedInfos().length > 1)
+                                         .flatMap(usage -> Arrays.stream(((UsageInfo2UsageAdapter)usage).getMergedInfos()))
+                                         .collect(Collectors.toSet());
+      if (!mergedInfos.isEmpty()) {
+        myUsageNodes.keySet().removeIf(usage -> usage instanceof UsageInfo2UsageAdapter && mergedInfos.contains(((UsageInfo2UsageAdapter)usage).getUsageInfo()));
       }
-    };
-    myUsageNodes.keySet().removeIf(usage -> usages.contains(usage) || 
-                                            usage instanceof UsageInfo2UsageAdapter && mergedInfos.getValue().contains(((UsageInfo2UsageAdapter)usage).getUsageInfo()));
+    }
 
     if (!nodes.isEmpty() && !myPresentation.isDetachedMode()) {
       UIUtil.invokeLaterIfNeeded(() -> {
@@ -1400,7 +1406,7 @@ public class UsageViewImpl implements UsageView {
       }
     }
 
-    if (smartPointers.size() > 0) {
+    if (!smartPointers.isEmpty()) {
       SmartPointerManager pointerManager = SmartPointerManager.getInstance(getProject());
       for (SmartPsiElementPointer<?> pointer : smartPointers) {
         pointerManager.removePointer(pointer);
@@ -1414,6 +1420,7 @@ public class UsageViewImpl implements UsageView {
     return mySearchInProgress;
   }
 
+  @Override
   public void setSearchInProgress(boolean searchInProgress) {
     mySearchInProgress = searchInProgress;
     if (!myPresentation.isDetachedMode()) {

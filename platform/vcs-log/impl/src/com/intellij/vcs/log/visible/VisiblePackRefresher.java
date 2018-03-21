@@ -30,7 +30,7 @@ public interface VisiblePackRefresher extends Disposable {
 
   void onRefresh();
 
-  void setValid(boolean validate);
+  void setValid(boolean validate, boolean refresh);
 
   void onFiltersChange(@NotNull VcsLogFilterCollection filters);
 

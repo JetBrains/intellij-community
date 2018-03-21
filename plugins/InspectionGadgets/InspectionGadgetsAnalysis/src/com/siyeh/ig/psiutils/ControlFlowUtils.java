@@ -358,7 +358,7 @@ public class ControlFlowUtils {
       return false;
     }
     final PsiStatement body = loopStatement.getBody();
-    return body != null && PsiTreeUtil.isAncestor(body, element, true);
+    return PsiTreeUtil.isAncestor(body, element, true);
   }
 
   public static boolean isInFinallyBlock(@NotNull PsiElement element) {
@@ -714,7 +714,10 @@ public class ControlFlowUtils {
   public static boolean flowBreaksLoop(PsiStatement statement, PsiLoopStatement loop) {
     if(statement == null || statement == loop) return false;
     for (PsiStatement sibling = statement; sibling != null; sibling = nextExecutedStatement(sibling)) {
-      if(sibling instanceof PsiContinueStatement) return false;
+      if(sibling instanceof PsiContinueStatement) {
+        PsiStatement continueTarget = ((PsiContinueStatement)sibling).findContinuedStatement();
+        return PsiTreeUtil.isAncestor(continueTarget, loop, true);
+      }
       if(sibling instanceof PsiThrowStatement || sibling instanceof PsiReturnStatement) return true;
       if(sibling instanceof PsiBreakStatement) {
         PsiBreakStatement breakStatement = (PsiBreakStatement)sibling;

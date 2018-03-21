@@ -23,10 +23,7 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -39,10 +36,10 @@ import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
-public class DescriptionTypeRelatedItemLineMarkerProvider extends DevkitRelatedLineMarkerProviderBase {
-
+public class DescriptionTypeRelatedItemLineMarkerProvider extends DevkitRelatedClassLineMarkerProviderBase {
   private static final NotNullFunction<PsiFile, Collection<? extends PsiElement>> CONVERTER =
     psiFile -> ContainerUtil.createMaybeSingletonList(psiFile);
 
@@ -50,20 +47,13 @@ public class DescriptionTypeRelatedItemLineMarkerProvider extends DevkitRelatedL
     psiFile -> GotoRelatedItem.createItems(Collections.singleton(psiFile), "DevKit");
 
   @Override
-  protected void collectNavigationMarkers(@NotNull PsiElement element, @NotNull Collection<? super RelatedItemLineMarkerInfo> result) {
-    if (element instanceof PsiClass) {
-      process((PsiClass)element, result);
-    }
-  }
-
-  private static void process(PsiClass psiClass, Collection<? super RelatedItemLineMarkerInfo> result) {
+  protected void process(@NotNull PsiElement highlightingElement,
+                         @NotNull PsiClass psiClass,
+                         @NotNull Collection<? super RelatedItemLineMarkerInfo> result) {
     if (!PsiUtil.isInstantiable(psiClass)) return;
 
     Module module = ModuleUtilCore.findModuleForPsiElement(psiClass);
     if (module == null) return;
-
-    PsiElement highlightingElement = psiClass.getNameIdentifier();
-    if (highlightingElement == null) return;
 
     for (DescriptionType type : DescriptionType.values()) {
       if (!InheritanceUtil.isInheritor(psiClass, type.getClassName())) {
@@ -113,7 +103,7 @@ public class DescriptionTypeRelatedItemLineMarkerProvider extends DevkitRelatedL
   private static void addBeforeAfterTemplateFilesGutterIcon(PsiElement highlightingElement,
                                                             PsiDirectory descriptionDirectory,
                                                             Collection<? super RelatedItemLineMarkerInfo> result) {
-    final List<PsiFile> templateFiles = new SortedList<>((o1, o2) -> o1.getName().compareTo(o2.getName()));
+    final List<PsiFile> templateFiles = new SortedList<>(Comparator.comparing(PsiFileSystemItem::getName));
     for (PsiFile file : descriptionDirectory.getFiles()) {
       final String fileName = file.getName();
       if (fileName.endsWith(".template")) {

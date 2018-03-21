@@ -15,8 +15,8 @@
  */
 package com.intellij.java.codeInspection;
 
-import com.intellij.codeInspection.dataFlow.NullityInference;
 import com.intellij.codeInspection.dataFlow.Nullness;
+import com.intellij.codeInspection.dataFlow.inference.JavaSourceInference;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiMethodImpl;
@@ -155,7 +155,7 @@ public class ParameterNullityInferenceFromSourceTest extends LightCodeInsightFix
     assertFalse(((PsiFileImpl)clazz.getContainingFile()).isContentsLoaded());
     PsiMethodImpl method = (PsiMethodImpl)clazz.getMethods()[0];
     String actual = StreamEx.of(method.getParameterList().getParameters())
-      .map(NullityInference::inferNullity)
+      .map(JavaSourceInference::inferNullity)
       .map(n -> n == Nullness.NOT_NULL ? "+" : "-")
       .joining();
     assertFalse(((PsiFileImpl)clazz.getContainingFile()).isContentsLoaded());

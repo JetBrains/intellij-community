@@ -39,7 +39,7 @@ import com.intellij.psi.impl.file.PsiFileImplUtil;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
-import com.intellij.psi.impl.source.text.BlockSupportImpl;
+import com.intellij.psi.impl.BlockSupportImpl;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -433,7 +433,6 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   @Override
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     checkSetName(name);
-    doClearCaches("setName");
     return PsiFileImplUtil.setName(this, name);
   }
 
@@ -655,13 +654,13 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     final List<Pair<IStubFileElementType, PsiFile>> roots = StubTreeBuilder.getStubbedRoots(viewProvider);
 
     synchronized (myPsiLock) {
-      if (getTreeElement() != null || hasUnbindableCachedPsi()) return null;
+      if (!mayLoadExclusiveStub()) return null;
 
       final StubTree derefdOnLock = derefStub();
       if (derefdOnLock != null) return derefdOnLock;
 
-      PsiFileStub baseRoot = ((StubTree)tree).getRoot();
-      if (baseRoot instanceof PsiFileStubImpl && !((PsiFileStubImpl)baseRoot).rootsAreSet()) {
+      PsiFileStubImpl baseRoot = (PsiFileStubImpl)((StubTree)tree).getRoot();
+      if (!baseRoot.rootsAreSet()) {
         LOG.error("Stub roots must be set when stub tree was read or built with StubTreeLoader");
         return null;
       }
@@ -681,10 +680,17 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
       // now stubs can be safely published
       for (PsiFileImpl eachPsiRoot : bindings.keySet()) {
-        eachPsiRoot.updateTrees(eachPsiRoot.myTrees.withExclusiveStub(bindings.get(eachPsiRoot), bindings.keySet()));
+        FileTrees trees = eachPsiRoot.myTrees;
+        StubTree stub = bindings.get(eachPsiRoot);
+        FileElement ast = trees.derefTreeElement();
+        eachPsiRoot.updateTrees(ast == null ? trees.withExclusiveStub(stub, bindings.keySet()) : trees.withGreenStub(stub, eachPsiRoot));
       }
       return result;
     }
+  }
+
+  private boolean mayLoadExclusiveStub() {
+    return getTreeElement() == null && !hasUnbindableCachedPsi();
   }
 
   private static Map<PsiFileImpl, StubTree> prepareAllStubTrees(List<Pair<IStubFileElementType, PsiFile>> roots, PsiFileStub[] rootStubs) {
@@ -702,7 +708,8 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
         // Even if that file already has AST, stub.getPsi() should be the same as in AST
         TreeUtil.bindStubsToTree(stubTree, fileElement);
         eachPsiRoot.myRefToPsi.clearStubIndexCache();
-      } else {
+        bindings.put(eachPsiRoot, stubTree);
+      } else if (eachPsiRoot.derefStub() == null && eachPsiRoot.mayLoadExclusiveStub()) {
         eachPsiRoot.bindStubsToCachedPsi(stubTree);
         bindings.put(eachPsiRoot, stubTree);
       }

@@ -79,6 +79,7 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testValueNotOnField() { doTest(); }
   public void testValueNotOnStaticField() { doTest(); }
   public void testValueOnNotInitializedField() { doTest(); }
+  public void testEnumValueOfReference() { doTest(); }
   public void testPackageInfo1() { doTest("packageInfo/p1/package-info.java"); }
   public void testPackageInfo2() { doTest("packageInfo/p2/package-info.java"); }
   public void testPackageInfo3() { doTest("packageInfo/p3/package-info.java"); }

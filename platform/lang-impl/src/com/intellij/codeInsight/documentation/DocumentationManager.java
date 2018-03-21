@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.documentation;
 
@@ -13,6 +13,7 @@ import com.intellij.codeInsight.lookup.LookupEx;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.actions.BaseNavigateToSourceAction;
+import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.gotoByName.ChooseByNameBase;
 import com.intellij.lang.Language;
@@ -28,6 +29,9 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
+import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.preview.PreviewManager;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -37,6 +41,8 @@ import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
@@ -51,6 +57,7 @@ import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,7 +67,12 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.IOException;
 import java.lang.ref.WeakReference;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.List;
 
@@ -139,7 +151,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       IdeFocusManager.getInstance(myProject).requestFocus(myPreviouslyFocused, true);
     }
     super.restorePopupBehavior();
-    updateComponent();
+    updateComponent(true);
   }
 
   @Override
@@ -1045,8 +1057,13 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   }
   
   @Override
+  protected void doUpdateComponent(Editor editor, PsiFile psiFile, boolean requestFocus) {
+    showJavaDocInfo(editor, psiFile, requestFocus, null);
+  }
+
+  @Override
   protected void doUpdateComponent(Editor editor, PsiFile psiFile) {
-    showJavaDocInfo(editor, psiFile, false, null);
+    doUpdateComponent(editor, psiFile, false);
   }
 
   @Override
@@ -1147,8 +1164,12 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       final Ref<String> result = new Ref<>();
       QuickDocUtil.runInReadActionWithWriteActionPriorityWithRetries(() -> {
         if (!myElement.isValid()) return;
-        final SmartPsiElementPointer originalElement = myElement.getUserData(ORIGINAL_ELEMENT_KEY);
-        String doc = provider.generateDoc(myElement, originalElement != null ? originalElement.getElement() : null);
+        SmartPsiElementPointer originalPointer = myElement.getUserData(ORIGINAL_ELEMENT_KEY);
+        PsiElement originalPsi = originalPointer != null ? originalPointer.getElement() : null;
+        String doc = provider.generateDoc(myElement, originalPsi);
+        if (doc == null && myElement instanceof PsiFile) {
+          doc = generateFileDoc((PsiFile)myElement);
+        }
         result.set(doc);
       }, DOC_GENERATION_TIMEOUT_MILLISECONDS, DOC_GENERATION_PAUSE_MILLISECONDS, null);
       return result.get();
@@ -1171,5 +1192,29 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     public String getRef() {
       return myRef;
     }
+
+  }
+
+  @Nullable
+  private static String generateFileDoc(@NotNull PsiFile psiFile) {
+    VirtualFile file = PsiUtilCore.getVirtualFile(psiFile);
+    File ioFile = file == null ? null : VfsUtilCore.virtualToIoFile(file);
+    BasicFileAttributes attr = null;
+    try {
+      attr = ioFile == null ? null : Files.readAttributes(Paths.get(ioFile.toURI()), BasicFileAttributes.class);
+    }
+    catch (IOException ignored) { }
+    if (attr == null) return null;
+    FileType type = psiFile.getFileType();
+    String typeName = type == UnknownFileType.INSTANCE ? "Unknown" :
+                      type == PlainTextFileType.INSTANCE ? "Text" :
+                      type == ArchiveFileType.INSTANCE ? "Archive" :
+                      type.getName();
+    String text =
+      "File size " + StringUtil.formatFileSize(attr.size()) +
+      "\n" + typeName + (type.isBinary() ? "" : " (" + psiFile.getLanguage().getDisplayName() + ")") +
+      "\nModified on " + DateFormatUtil.formatDateTime(attr.lastModifiedTime().toMillis()) +
+      "\nCreated on " + DateFormatUtil.formatDateTime(attr.creationTime().toMillis());
+    return StringUtil.replace(StringUtil.escapeXml(text), "\n", "<br>");
   }
 }

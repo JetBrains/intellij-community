@@ -252,6 +252,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
         return table.convertRowIndexToModel(viewIndex);
       }
 
+      @NotNull
       @Override
       protected Object[] getAllElements() {
         return revisions.toArray();

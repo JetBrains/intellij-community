@@ -542,7 +542,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       List<GlobalInspectionToolWrapper> globalSTools = getWrappersFromTools(globalSimpleTools, file, includeDoNotShow);
       final List<GlobalInspectionToolWrapper> tools = globalSTools.stream()
         .filter(wrapper -> !(wrapper.getTool() instanceof ExternalAnnotatorBatchInspection)).collect(Collectors.toList());
-      JobLauncher.getInstance().invokeConcurrentlyUnderProgress(tools, myProgressIndicator, false, toolWrapper -> {
+      JobLauncher.getInstance().invokeConcurrentlyUnderProgress(tools, myProgressIndicator, toolWrapper -> {
         GlobalSimpleInspectionTool tool = (GlobalSimpleInspectionTool)toolWrapper.getTool();
         ProblemsHolder holder = new ProblemsHolder(inspectionManager, file, false);
         ProblemDescriptionsProcessor problemDescriptionProcessor = getProblemDescriptionProcessor(toolWrapper, wrappersMap);

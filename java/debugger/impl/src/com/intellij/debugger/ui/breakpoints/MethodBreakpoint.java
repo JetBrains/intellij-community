@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * Class MethodBreakpoint
@@ -38,7 +36,6 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.xdebugger.XDebuggerManager;
@@ -186,73 +183,67 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     if (!base && !shouldCreateRequest(breakpoint, breakpoint.getXBreakpoint(), debugProcess, true)) {
       return;
     }
-    try {
-      Method lambdaMethod = MethodBytecodeUtil.getLambdaMethod(classType, classesByName);
-      if (lambdaMethod != null &&
-          !breakpoint
-            .matchingMethods(StreamEx.of(((ClassType)classType).interfaces()).flatCollection(ReferenceType::allMethods), debugProcess)
-            .findFirst().isPresent()) {
+    Method lambdaMethod = MethodBytecodeUtil.getLambdaMethod(classType, classesByName);
+    if (lambdaMethod != null &&
+        !breakpoint
+          .matchingMethods(StreamEx.of(((ClassType)classType).interfaces()).flatCollection(ReferenceType::allMethods), debugProcess)
+          .findFirst().isPresent()) {
+      return;
+    }
+    StreamEx<Method> methods = lambdaMethod != null
+                       ? StreamEx.of(lambdaMethod)
+                       : breakpoint.matchingMethods(StreamEx.of(classType.methods()).filter(m -> base || !m.isAbstract()), debugProcess);
+    boolean found = false;
+    for (Method method : methods) {
+      found = true;
+      if (method.isNative()) {
+        breakpoint.disableEmulation();
         return;
       }
-      StreamEx<Method> methods = lambdaMethod != null
-                         ? StreamEx.of(lambdaMethod)
-                         : breakpoint.matchingMethods(StreamEx.of(classType.methods()).filter(m -> base || !m.isAbstract()), debugProcess);
-      boolean found = false;
-      for (Method method : methods) {
-        found = true;
-        if (method.isNative()) {
-          breakpoint.disableEmulation();
-          return;
-        }
-        Method target = MethodBytecodeUtil.getBridgeTargetMethod(method, classesByName);
-        if (target != null && !ContainerUtil.isEmpty(DebuggerUtilsEx.allLineLocations(target))) {
-          method = target;
-        }
-
-        List<Location> allLineLocations = DebuggerUtilsEx.allLineLocations(method);
-        if (allLineLocations == null && !method.isBridge()) { // no line numbers
-          breakpoint.disableEmulation();
-          return;
-        }
-        if (!ContainerUtil.isEmpty(allLineLocations)) {
-          if (breakpoint.isWatchEntry()) {
-            createLocationBreakpointRequest(breakpoint, ContainerUtil.getFirstItem(allLineLocations), debugProcess, true);
-          }
-          if (breakpoint.isWatchExit()) {
-            MethodBytecodeUtil.visit(method, new MethodVisitor(Opcodes.API_VERSION) {
-              int myLastLine = 0;
-              @Override
-              public void visitLineNumber(int line, Label start) {
-                myLastLine = line;
-              }
-
-              @Override
-              public void visitInsn(int opcode) {
-                switch (opcode) {
-                  case Opcodes.RETURN:
-                  case Opcodes.IRETURN:
-                  case Opcodes.FRETURN:
-                  case Opcodes.ARETURN:
-                  case Opcodes.LRETURN:
-                  case Opcodes.DRETURN:
-                  //case Opcodes.ATHROW:
-                    allLineLocations.stream()
-                      .filter(l -> l.lineNumber() == myLastLine)
-                      .findFirst().ifPresent(location -> createLocationBreakpointRequest(breakpoint, location, debugProcess, false));
-                }
-              }
-            }, true);
-          }
-        }
-      }
-      if (base && found) {
-        // desired class found - now also track all new classes
-        createRequestForSubClasses(breakpoint, debugProcess, classType);
+      Method target = MethodBytecodeUtil.getBridgeTargetMethod(method, classesByName);
+      if (target != null && !ContainerUtil.isEmpty(DebuggerUtilsEx.allLineLocations(target))) {
+        method = target;
       }
 
+      List<Location> allLineLocations = DebuggerUtilsEx.allLineLocations(method);
+      if (allLineLocations == null && !method.isBridge()) { // no line numbers
+        breakpoint.disableEmulation();
+        return;
+      }
+      if (!ContainerUtil.isEmpty(allLineLocations)) {
+        if (breakpoint.isWatchEntry()) {
+          createLocationBreakpointRequest(breakpoint, ContainerUtil.getFirstItem(allLineLocations), debugProcess, true);
+        }
+        if (breakpoint.isWatchExit()) {
+          MethodBytecodeUtil.visit(method, new MethodVisitor(Opcodes.API_VERSION) {
+            int myLastLine = 0;
+            @Override
+            public void visitLineNumber(int line, Label start) {
+              myLastLine = line;
+            }
+
+            @Override
+            public void visitInsn(int opcode) {
+              switch (opcode) {
+                case Opcodes.RETURN:
+                case Opcodes.IRETURN:
+                case Opcodes.FRETURN:
+                case Opcodes.ARETURN:
+                case Opcodes.LRETURN:
+                case Opcodes.DRETURN:
+                //case Opcodes.ATHROW:
+                  allLineLocations.stream()
+                    .filter(l -> l.lineNumber() == myLastLine)
+                    .findFirst().ifPresent(location -> createLocationBreakpointRequest(breakpoint, location, debugProcess, false));
+              }
+            }
+          }, true);
+        }
+      }
     }
-    catch (Exception e) {
-      LOG.debug(e);
+    if (base && found) {
+      // desired class found - now also track all new classes
+      createRequestForSubClasses(breakpoint, debugProcess, classType);
     }
   }
 
@@ -386,29 +377,24 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
   }
 
   public String getDisplayName() {
-    final StringBuilder buffer = StringBuilderSpinAllocator.alloc();
-    try {
-      if(isValid()) {
-        final String className = getClassName();
-        final boolean classNameExists = className != null && className.length() > 0;
+    final StringBuilder buffer = new StringBuilder();
+    if(isValid()) {
+      final String className = getClassName();
+      final boolean classNameExists = className != null && className.length() > 0;
+      if (classNameExists) {
+        buffer.append(className);
+      }
+      if(getMethodName() != null) {
         if (classNameExists) {
-          buffer.append(className);
+          buffer.append(".");
         }
-        if(getMethodName() != null) {
-          if (classNameExists) {
-            buffer.append(".");
-          }
-          buffer.append(getMethodName());
-        }
+        buffer.append(getMethodName());
       }
-      else {
-        buffer.append(DebuggerBundle.message("status.breakpoint.invalid"));
-      }
-      return buffer.toString();
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(buffer);
+    else {
+      buffer.append(DebuggerBundle.message("status.breakpoint.invalid"));
     }
+    return buffer.toString();
   }
 
   public boolean evaluateCondition(@NotNull EvaluationContextImpl context, @NotNull LocatableEvent event) throws EvaluateException {

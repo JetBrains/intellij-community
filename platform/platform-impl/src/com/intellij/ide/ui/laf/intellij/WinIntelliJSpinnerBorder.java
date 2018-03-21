@@ -33,6 +33,9 @@ public class WinIntelliJSpinnerBorder extends DarculaSpinnerBorder implements Er
     JSpinner spinner = (JSpinner)c;
     Graphics2D g2 = (Graphics2D)g.create();
     try {
+      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+      g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
+
       Rectangle r = new Rectangle(x, y, width, height);
 
       int bw = 1;

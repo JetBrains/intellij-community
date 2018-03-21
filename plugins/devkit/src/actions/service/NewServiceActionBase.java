@@ -20,8 +20,6 @@ import com.intellij.ide.actions.CreateInDirectoryActionBase;
 import com.intellij.ide.actions.ElementCreator;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.RunResult;
 import com.intellij.openapi.application.WriteActionAware;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -334,24 +332,16 @@ abstract class NewServiceActionBase extends CreateInDirectoryActionBase implemen
     }
 
     private boolean doCreateService(Callable<Boolean> action) {
-      RunResult<Boolean> result = new WriteCommandAction<Boolean>(getProject(), DevKitBundle.message("new.service.class.action.name")) {
-        @Override
-        protected void run(@NotNull Result<Boolean> result) throws Throwable {
-          result.setResult(action.call());
-        }
-
-        @Override
-        protected UndoConfirmationPolicy getUndoConfirmationPolicy() {
-          return UndoConfirmationPolicy.REQUEST_CONFIRMATION;
-        }
-      }.execute();
-
-      if (result.hasException()) {
-        handleException(result.getThrowable());
+      try {
+        return WriteCommandAction.writeCommandAction(getProject())
+                                 .withName(DevKitBundle.message("new.service.class.action.name"))
+                                 .withUndoConfirmationPolicy(UndoConfirmationPolicy.REQUEST_CONFIRMATION)
+                                 .compute(() -> action.call());
+      }
+      catch (Exception e) {
+        handleException(e);
         return false;
       }
-
-      return result.getResultObject();
     }
 
     private void patchPluginXml(@Nullable PsiClass createdInterface, @NotNull PsiClass createdImplementation, XmlFile pluginXml) {

@@ -52,7 +52,7 @@ public abstract class MoreTabsIcon {
                                         iconX + AllIcons.General.MoreTabs.getIconWidth() + 2,
                                         iconY + AllIcons.General.MoreTabs.getIconHeight() - 5,
                                         JBColor.BLACK,
-                                        ColorUtil.withAlpha(JBColor.WHITE, .9));
+                                        ColorUtil.withPreAlpha(JBColor.WHITE, .9));
     } finally {
       g.dispose();
     }

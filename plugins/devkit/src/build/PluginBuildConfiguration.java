@@ -2,7 +2,6 @@
 package org.jetbrains.idea.devkit.build;
 
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -145,12 +144,7 @@ public class PluginBuildConfiguration implements PersistentStateComponent<Plugin
 
   public void setPluginXmlPathAndCreateDescriptorIfDoesntExist(final String pluginXmlPath) {
     myPluginXmlContainer.getConfiguration().removeConfigFiles(PluginDescriptorConstants.META_DATA);
-    new WriteAction() {
-      @Override
-      protected void run(@NotNull final Result result) throws Throwable {
-        createDescriptor(VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(pluginXmlPath)));
-      }
-    }.execute();
+    WriteAction.runAndWait(() -> createDescriptor(VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(pluginXmlPath))));
   }
 
   public void setManifestPath(@Nullable String manifestPath) {

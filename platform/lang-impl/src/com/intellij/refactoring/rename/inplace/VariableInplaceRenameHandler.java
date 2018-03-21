@@ -17,6 +17,7 @@
 package com.intellij.refactoring.rename.inplace;
 
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -123,6 +124,7 @@ public class VariableInplaceRenameHandler implements RenameHandler {
       );
       return false;
     }
+    FeatureUsageTracker.getInstance().triggerFeatureUsed("refactoring.rename");
     return true;
   }
 

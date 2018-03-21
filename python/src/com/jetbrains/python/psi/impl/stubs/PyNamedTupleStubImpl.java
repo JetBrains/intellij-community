@@ -22,7 +22,6 @@ import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.io.StringRef;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
@@ -98,8 +97,8 @@ public class PyNamedTupleStubImpl implements PyNamedTupleStub {
 
   @Nullable
   public static PyNamedTupleStub deserialize(@NotNull StubInputStream stream) throws IOException {
-    final StringRef calleeName = stream.readName();
-    final StringRef name = stream.readName();
+    String calleeName = stream.readNameString();
+    String name = stream.readNameString();
     final LinkedHashMap<String, Optional<String>> fields = deserializeFields(stream, stream.readVarInt());
 
     if (calleeName == null || name == null) {
@@ -107,8 +106,8 @@ public class PyNamedTupleStubImpl implements PyNamedTupleStub {
     }
 
     return new PyNamedTupleStubImpl(
-      QualifiedName.fromDottedString(calleeName.getString()),
-      name.getString(),
+      QualifiedName.fromDottedString(calleeName),
+      name,
       fields
     );
   }
@@ -177,8 +176,8 @@ public class PyNamedTupleStubImpl implements PyNamedTupleStub {
     final LinkedHashMap<String, Optional<String>> fields = new LinkedHashMap<>(fieldsSize);
 
     for (int i = 0; i < fieldsSize; i++) {
-      final String name = StringRef.toString(stream.readName());
-      final String type = StringRef.toString(stream.readName());
+      final String name = stream.readNameString();
+      final String type = stream.readNameString();
 
       if (name != null) {
         fields.put(name, Optional.ofNullable(type));

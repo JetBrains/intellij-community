@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
@@ -139,12 +140,11 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
     myStructureTreeModel = new StructureTreeModel(true);
     myStructureTreeModel.setStructure(myTreeStructure);
-    myAsyncTreeModel = new AsyncTreeModel(myStructureTreeModel, true);
+    myAsyncTreeModel = new AsyncTreeModel(this, myStructureTreeModel, true);
     myAsyncTreeModel.setRootImmediately(myStructureTreeModel.getRootImmediately());
     myTree = new MyTree(myAsyncTreeModel);
 
     Disposer.register(this, () -> myTreeModelWrapper.dispose());
-    Disposer.register(this, myAsyncTreeModel);
 
     registerAutoExpandListener(myTree, myTreeModel);
 
@@ -253,6 +253,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
   public void rebuild() {
     myStructureTreeModel.getInvoker().invokeLaterIfNeeded(() -> {
+      UIUtil.putClientProperty(myTree, STRUCTURE_VIEW_STATE_RESTORED_KEY, null);
       myTreeStructure.rebuildTree();
       myStructureTreeModel.invalidate(null);
     });
@@ -872,7 +873,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     private MyPsiTreeChangeListener(PsiModificationTracker modTracker, Runnable onChange) {
       this.modTracker = modTracker;
       this.onChange = onChange;
-      prevModCount = modTracker.getOutOfCodeBlockModificationCount();
+      prevModCount = modTracker.getModificationCount();
     }
 
     @Override
@@ -947,6 +948,8 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   }
 
   private static class MyExpandListener extends TreeModelAdapter {
+    private static final RegistryValue autoExpandDepth = Registry.get("ide.tree.autoExpandMaxDepth");
+
     private final JTree tree;
     final StructureViewModel.ExpandInfoProvider provider;
     final boolean smartExpand;
@@ -961,21 +964,26 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     public void treeNodesInserted(TreeModelEvent e) {
       TreePath parentPath = e.getTreePath();
       if (Boolean.TRUE.equals(UIUtil.getClientProperty(tree, STRUCTURE_VIEW_STATE_RESTORED_KEY))) return;
-      if (parentPath == null || !tree.isVisible(parentPath) || !tree.isExpanded(parentPath)) return;
+      if (parentPath == null || parentPath.getPathCount() > autoExpandDepth.asInteger() - 1) return;
       Object[] children = e.getChildren();
       if (smartExpand && children.length == 1) {
-        ApplicationManager.getApplication().invokeLater(
-          () -> tree.expandPath(parentPath.pathByAddingChild(children[0])));
+        expandLater(parentPath, children[0]);
       }
       else {
         for (Object o : children) {
           Object userObject = TreeUtil.getUserObject(o);
           if (userObject instanceof NodeDescriptor && isAutoExpandNode((NodeDescriptor)userObject)) {
-            ApplicationManager.getApplication().invokeLater(
-              () -> tree.expandPath(parentPath.pathByAddingChild(o)));
+            expandLater(parentPath, o);
           }
         }
       }
+    }
+
+    void expandLater(@NotNull TreePath parentPath, @NotNull Object o) {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (!tree.isVisible(parentPath) || !tree.isExpanded(parentPath)) return;
+        tree.expandPath(parentPath.pathByAddingChild(o));
+      });
     }
 
     boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
