@@ -306,7 +306,6 @@ public final class HttpRequests {
 
   private static class RequestImpl implements Request, AutoCloseable {
     private final RequestBuilderImpl myBuilder;
-    @SuppressWarnings("FieldMayBeFinal")
     private String myUrl;
     private URLConnection myConnection;
     private InputStream myInputStream;
