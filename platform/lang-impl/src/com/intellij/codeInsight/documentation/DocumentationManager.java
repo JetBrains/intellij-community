@@ -68,7 +68,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -1168,7 +1167,10 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         PsiElement originalPsi = originalPointer != null ? originalPointer.getElement() : null;
         String doc = provider.generateDoc(myElement, originalPsi);
         if (myElement instanceof PsiFile) {
-          doc = (doc == null ? "" : doc) + generateFileDoc((PsiFile)myElement, doc == null);
+          String fileDoc = generateFileDoc((PsiFile)myElement, doc == null);
+          if (fileDoc != null) {
+            doc = doc == null ? fileDoc : doc + fileDoc;
+          }
         }
         result.set(doc);
       }, DOC_GENERATION_TIMEOUT_MILLISECONDS, DOC_GENERATION_PAUSE_MILLISECONDS, null);
@@ -1198,12 +1200,12 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   @Nullable
   private static String generateFileDoc(@NotNull PsiFile psiFile, boolean withUrl) {
     VirtualFile file = PsiUtilCore.getVirtualFile(psiFile);
-    File ioFile = file == null ? null : VfsUtilCore.virtualToIoFile(file);
+    File ioFile = file == null || !file.isInLocalFileSystem() ? null : VfsUtilCore.virtualToIoFile(file);
     BasicFileAttributes attr = null;
     try {
       attr = ioFile == null ? null : Files.readAttributes(Paths.get(ioFile.toURI()), BasicFileAttributes.class);
     }
-    catch (IOException ignored) { }
+    catch (Exception ignored) { }
     if (attr == null) return null;
     FileType type = psiFile.getFileType();
     String typeName = type == UnknownFileType.INSTANCE ? "Unknown" :
