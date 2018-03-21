@@ -45,7 +45,6 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import java.util.HashMap;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.SideEffectChecker;
@@ -722,7 +721,8 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     PsiElement callParent = methodCall.getParent();
     if (callParent instanceof PsiLambdaExpression) {
       methodCall.delete();
-    } else if (callParent instanceof PsiExpressionStatement || tailCall == InlineUtil.TailCallType.Return) {
+    }
+    else if (callParent instanceof PsiExpressionStatement || tailCall == InlineUtil.TailCallType.Return) {
       CommentTracker tracker = new CommentTracker();
       tracker.delete(callParent);
       if (firstAdded != null) {
@@ -732,7 +732,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     else {
       if (blockData.resultVar != null) {
         PsiExpression expr = myFactory.createExpressionFromText(blockData.resultVar.getName(), null);
-        methodCall.replace(expr);
+        new CommentTracker().replaceAndRestoreComments(methodCall, expr);
       }
       else {
         //??

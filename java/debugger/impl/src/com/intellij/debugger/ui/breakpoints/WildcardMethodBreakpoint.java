@@ -36,7 +36,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.PatternUtil;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.sun.jdi.Method;
 import com.sun.jdi.ReferenceType;
@@ -95,17 +94,7 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
     if (!isValid()) {
       return DebuggerBundle.message("status.breakpoint.invalid");
     }
-    final StringBuilder buffer = StringBuilderSpinAllocator.alloc();
-    try {
-      buffer.append(getClassPattern());
-      buffer.append(".");
-      buffer.append(getMethodName());
-      buffer.append("()");
-      return buffer.toString();
-    }
-    finally {
-      StringBuilderSpinAllocator.dispose(buffer);
-    }
+    return getClassPattern() + "." + getMethodName() + "()";
   }
 
   public Icon getIcon() {

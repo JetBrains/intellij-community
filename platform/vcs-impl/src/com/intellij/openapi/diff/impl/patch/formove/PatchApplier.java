@@ -247,14 +247,14 @@ public class PatchApplier<Unused> {
   private static <T> T runUnderChangeList(@NotNull Project project,
                                           @Nullable LocalChangeList targetChangeList,
                                           @NotNull Computable<T> task) {
-    ChangeListManager clm = ChangeListManager.getInstance(project);
+    ChangeListManagerEx clm = (ChangeListManagerEx)ChangeListManager.getInstance(project);
     LocalChangeList oldDefaultList = clm.getDefaultChangeList();
 
     if (targetChangeList == null || targetChangeList.equals(oldDefaultList)) {
       return task.compute();
     }
 
-    clm.setDefaultChangeList(targetChangeList);
+    clm.setDefaultChangeList(targetChangeList, true);
     try {
       return task.compute();
     }
@@ -279,7 +279,7 @@ public class PatchApplier<Unused> {
         }
       }
       finally {
-        clm.setDefaultChangeList(oldDefaultList);
+        clm.setDefaultChangeList(oldDefaultList, true);
       }
     }
   }

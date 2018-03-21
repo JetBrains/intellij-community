@@ -57,6 +57,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil;
 import com.intellij.projectImport.ProjectAttachProcessor;
 import com.intellij.psi.PsiBundle;
 import com.intellij.psi.PsiDocumentManager;
@@ -475,7 +476,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
             FindInProjectUtil.setupProcessPresentation(myProject, showPanelIfOnlyOneUsage, presentation);
           ThreadLocal<VirtualFile> lastUsageFileRef = new ThreadLocal<>();
 
-          FindInProjectUtil.findUsages(findModel, myProject, info -> {
+          FindInProjectUtil.findUsages(findModel, myProject, processPresentation, filesToScanInitially, info -> {
             if(isCancelled()) {
               return false;
             }
@@ -494,7 +495,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
               model.addRow(new Object[]{usage});
             }, state);
             return resultsCount.incrementAndGet() < ShowUsagesAction.getUsagesPageSize();
-          }, processPresentation, filesToScanInitially);
+          });
 
           boolean succeeded = !progressIndicatorWhenSearchStarted.isCanceled();
           if (succeeded) {
@@ -1591,7 +1592,8 @@ public class FindDialog extends DialogWrapper implements FindUI {
       setBackground(myUsageRenderer.getBackground());
       if (!isSelected && value instanceof UsageInfo2UsageAdapter) {
         UsageInfo2UsageAdapter usageAdapter = (UsageInfo2UsageAdapter)value;
-        Color color = FileColorManager.getInstance(usageAdapter.getUsageInfo().getProject()).getFileColor(usageAdapter.getFile());
+        Project project = usageAdapter.getUsageInfo().getProject();
+        Color color = VfsPresentationUtil.getFileBackgroundColor(project, usageAdapter.getFile());
         setBackground(color);
         myUsageRenderer.setBackground(color);
         myFileAndLineNumber.setBackground(color);

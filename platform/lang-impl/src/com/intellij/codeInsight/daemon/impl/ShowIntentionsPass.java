@@ -9,7 +9,10 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
-import com.intellij.codeInsight.intention.impl.*;
+import com.intellij.codeInsight.intention.impl.CachedIntentions;
+import com.intellij.codeInsight.intention.impl.EditIntentionSettingsAction;
+import com.intellij.codeInsight.intention.impl.EnableDisableIntentionAction;
+import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.codeInspection.*;
@@ -66,7 +69,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
   private final PsiFile myFile;
   private final int myPassIdToShowIntentionsFor;
   private final IntentionsInfo myIntentionsInfo = new IntentionsInfo();
-  private final CachedIntentions myCachedIntentions;
+  private volatile CachedIntentions myCachedIntentions;
   private volatile boolean myActionsChanged;
 
   ShowIntentionsPass(@NotNull Project project, @NotNull Editor editor, int passId) {
@@ -80,7 +83,6 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
 
     myFile = documentManager.getPsiFile(myEditor.getDocument());
     assert myFile != null : FileDocumentManager.getInstance().getFile(myEditor.getDocument());
-    myCachedIntentions = new CachedIntentions(myProject, myFile, myEditor);
   }
 
   @NotNull
@@ -222,7 +224,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
         "Errors: " + errorFixesToShow + "; " +
         "Inspection fixes: " + inspectionFixesToShow + "; " +
         "Intentions: " + intentionsToShow + "; " +
-        "Gutters: " + guttersToShow +
+        "Gutters: " + guttersToShow + "; "+
         "Notifications: " + notificationActionsToShow;
     }
   }
@@ -233,6 +235,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     TemplateState state = TemplateManagerImpl.getTemplateState(myEditor);
     if (state != null && !state.isFinished()) return;
     getActionsToShow(myEditor, myFile, myIntentionsInfo, myPassIdToShowIntentionsFor);
+    myCachedIntentions = IntentionsUI.getInstance(myProject).getCachedIntentions(myEditor, myFile);
     myActionsChanged = myCachedIntentions.wrapAndUpdateActions(myIntentionsInfo, true);
   }
 
@@ -240,7 +243,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
   public void doApplyInformationToEditor() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     TemplateState state = TemplateManagerImpl.getTemplateState(myEditor);
-    if ((state == null || state.isFinished())) {
+    if ((state == null || state.isFinished()) && myCachedIntentions != null) {
       IntentionsUI.getInstance(myProject).update(myCachedIntentions, myActionsChanged);
     }
   }
@@ -366,7 +369,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
       if (!psiElement.isPhysical()) {
         VirtualFile virtualFile = hostFile.getVirtualFile();
         String text = hostFile.getText();
-        LOG.error("not physical: '" + psiElement.getText() + "' @" + offset + psiElement.getTextRange() +
+        LOG.error("not physical: '" + psiElement.getText() + "' @" + offset + " " +psiElement.getTextRange() +
                   " elem:" + psiElement + " (" + psiElement.getClass().getName() + ")" +
                   " in:" + psiElement.getContainingFile() + " host:" + hostFile + "(" + hostFile.getClass().getName() + ")",
                   new Attachment(virtualFile != null ? virtualFile.getPresentableUrl() : "null", text != null ? text : "null"));
@@ -434,7 +437,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
         };
         // indicator can be null when run from EDT
         ProgressIndicator progress = ObjectUtils.notNull(ProgressIndicatorProvider.getGlobalProgressIndicator(), new DaemonProgressIndicator());
-        JobLauncher.getInstance().invokeConcurrentlyUnderProgress(intentionTools, progress, false, processor);
+        JobLauncher.getInstance().invokeConcurrentlyUnderProgress(intentionTools, progress, processor);
       }
     }
   }

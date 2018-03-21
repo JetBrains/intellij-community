@@ -66,6 +66,7 @@ public final class CommandProcessor implements Runnable {
     }
   }
 
+  @Override
   public final void run() {
     synchronized (myLock) {
       //noinspection StatementWithEmptyBody
@@ -115,7 +116,8 @@ public final class CommandProcessor implements Runnable {
       myExpireCondition = expireCondition;
     }
 
-    public Condition getExpireCondition() {
+    @NotNull
+    Condition getExpireCondition() {
       return myExpireCondition;
     }
 
@@ -123,7 +125,8 @@ public final class CommandProcessor implements Runnable {
       return myList.isEmpty();
     }
 
-    public FinalizableCommand takeNextCommand() {
+    @NotNull
+    FinalizableCommand takeNextCommand() {
       FinalizableCommand command = myList.remove(0);
       if (isEmpty()) {
         // memory leak otherwise

@@ -15,10 +15,10 @@ import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
+import com.intellij.util.Urls;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.io.ZipUtil;
 import com.intellij.util.text.VersionComparatorUtil;
-import org.apache.http.client.utils.URIBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,8 +29,10 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author anna
@@ -316,12 +318,12 @@ public class PluginDownloader {
                                      app != null ? ApplicationInfo.getInstance().getApiVersion() :
                                      appInfo.getBuild().asString();
 
-        URIBuilder uriBuilder = new URIBuilder(appInfo.getPluginsDownloadUrl());
-        uriBuilder.addParameter("action", "download");
-        uriBuilder.addParameter("id", descriptor.getPluginId().getIdString());
-        uriBuilder.addParameter("build", buildNumberAsString);
-        uriBuilder.addParameter("uuid", PermanentInstallationID.get());
-        url = uriBuilder.build().toString();
+        Map<String, String> parameters = new LinkedHashMap<>();
+        parameters.put("action", "download");
+        parameters.put("id", descriptor.getPluginId().getIdString());
+        parameters.put("build", buildNumberAsString);
+        parameters.put("uuid", PermanentInstallationID.get());
+        url = Urls.newFromEncoded(appInfo.getPluginsDownloadUrl()).addParameters(parameters).toExternalForm();
       }
     }
     catch (URISyntaxException e) {

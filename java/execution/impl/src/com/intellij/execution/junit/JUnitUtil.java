@@ -241,7 +241,7 @@ public class JUnitUtil {
     
     if (psiClass.isAnnotationType()) return false;
 
-    if (psiClass.getContainingClass() != null && AnnotationUtil.isAnnotated(psiClass, JUNIT5_NESTED, 0)) {
+    if (psiClass.getContainingClass() != null && MetaAnnotationUtil.isMetaAnnotated(psiClass, Collections.singleton(JUNIT5_NESTED))) {
       return true;
     }
 

@@ -1,6 +1,5 @@
 package org.jetbrains.intellij.build.pycharm.edu
 
-import com.intellij.util.SystemProperties
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.pycharm.PyCharmMacDistributionCustomizer
 import org.jetbrains.intellij.build.pycharm.PyCharmPropertiesBase
@@ -10,9 +9,11 @@ import org.jetbrains.intellij.build.pycharm.PyCharmWindowsDistributionCustomizer
  */
 class PyCharmEduProperties extends PyCharmPropertiesBase {
   private final String pythonCommunityPath
+  private final String dependenciesPath
 
   PyCharmEduProperties(String home) {
     pythonCommunityPath = new File(home, "community/python").exists() ? "$home/community/python" : "$home/python"
+    dependenciesPath = "$home/edu/dependencies"
     productCode = "PE"
     platformPrefix = "PyCharmEdu"
     applicationInfoModule = "intellij.pycharm.edu"
@@ -36,22 +37,7 @@ class PyCharmEduProperties extends PyCharmPropertiesBase {
       fileset(file: "$context.paths.communityHome/NOTICE.txt")
     }
 
-    copyEduToolsPlugin(context, targetDirectory)
-  }
-
-  private void copyEduToolsPlugin(BuildContext context, String targetDirectory) {
-    def dependenciesProjectDir = new File("$pythonCommunityPath/educational-python/build/dependencies")
-    new GradleRunner(dependenciesProjectDir, context.messages, SystemProperties.getJavaHome()).run("Downloading EduTools plugin...", "setupEduPlugin")
-    Properties properties = new Properties()
-    new File(dependenciesProjectDir, "gradle.properties").withInputStream {
-      properties.load(it)
-    }
-
-    def pluginZip = new File("${dependenciesProjectDir.absolutePath}/build/edu/EduTools-${properties.getProperty("eduPluginVersion")}.zip")
-    if (!pluginZip.exists()) {
-      throw new IllegalStateException("EduTools bundled plugin is not found. Plugin path:${pluginZip.canonicalPath}")
-    }
-    context.ant.unzip(src: pluginZip, dest: "$targetDirectory/plugins/")
+    EduUtils.copyEduToolsPlugin(dependenciesPath, context, targetDirectory)
   }
 
   @Override

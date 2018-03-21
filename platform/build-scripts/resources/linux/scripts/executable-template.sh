@@ -17,7 +17,7 @@ message()
   elif [ -n "`which notify-send`" ]; then
     notify-send "ERROR: $TITLE: $1"
   else
-    echo "ERROR: $TITLE\n$1"
+    printf "ERROR: $TITLE\n$1\n"
   fi
 }
 

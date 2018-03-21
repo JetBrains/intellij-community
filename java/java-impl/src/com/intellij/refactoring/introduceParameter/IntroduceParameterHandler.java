@@ -722,7 +722,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     }
 
     @Override
-    protected boolean isNeedToChangeCallContext() {
+    protected boolean isPossibleToChangeCallContext() {
       return false;
     }
 

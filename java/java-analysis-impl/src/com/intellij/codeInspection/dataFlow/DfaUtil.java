@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.ExpressionUtil;
+import com.intellij.codeInspection.dataFlow.inference.InferenceFromSourceUtil;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
@@ -351,8 +352,7 @@ public class DfaUtil {
     if (concatenation.size() == 1) {
       return concatenation.getHead();
     }
-    String text = StringUtil
-      .join(ContainerUtil.reverse(new ArrayList<>(concatenation)), expression -> expression.getText(), "+");
+    String text = StringUtil.join(ContainerUtil.reverse(new ArrayList<>(concatenation)), PsiElement::getText, "+");
     try {
       return JavaPsiFacade.getElementFactory(concatenation.getHead().getProject()).createExpressionFromText(text, concatenation.getHead());
     }

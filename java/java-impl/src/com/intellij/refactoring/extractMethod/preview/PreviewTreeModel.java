@@ -21,12 +21,14 @@ import java.util.List;
  * @author Pavel.Dolgov
  */
 class PreviewTreeModel extends DefaultTreeModel {
-  private DefaultMutableTreeNode myDuplicatesGroup;
+  private final DefaultMutableTreeNode myDuplicatesGroup;
   private final DefaultMutableTreeNode myMethodGroup;
+  private boolean myValid;
 
   public PreviewTreeModel(@NotNull ExtractMethodProcessor processor) {
     super(new DefaultMutableTreeNode(""));
-    DefaultMutableTreeNode root = (DefaultMutableTreeNode)getRoot();
+    setValidImpl(true);
+    DefaultMutableTreeNode root = getRoot();
 
     myMethodGroup = new DefaultMutableTreeNode("Method to extract");
     root.add(myMethodGroup);
@@ -36,7 +38,7 @@ class PreviewTreeModel extends DefaultTreeModel {
     DefaultMutableTreeNode originalGroup = new DefaultMutableTreeNode("Original code fragment");
     root.add(originalGroup);
     PsiElement[] elements = processor.getElements();
-    originalGroup.add(new OriginalNode(elements));
+    originalGroup.add(new PatternNode(elements));
 
     List<Match> duplicates = getDuplicates(processor);
     if (!ContainerUtil.isEmpty(duplicates)) {
@@ -46,6 +48,14 @@ class PreviewTreeModel extends DefaultTreeModel {
         myDuplicatesGroup.add(new DuplicateNode(duplicate));
       }
     }
+    else {
+      myDuplicatesGroup = null;
+    }
+  }
+
+  @Override
+  public DefaultMutableTreeNode getRoot() {
+    return (DefaultMutableTreeNode)super.getRoot();
   }
 
   void updateMethod(PsiMethod method) {
@@ -85,6 +95,14 @@ class PreviewTreeModel extends DefaultTreeModel {
     return Collections.emptyList();
   }
 
+  public synchronized boolean isValid() {
+    return myValid;
+  }
+
+  private synchronized void setValidImpl(boolean valid) {
+    myValid = valid;
+  }
+
   @Nullable
   public static List<Match> getDuplicates(@NotNull ExtractMethodProcessor processor) {
     List<Match> duplicates = processor.getDuplicates();
@@ -95,5 +113,22 @@ class PreviewTreeModel extends DefaultTreeModel {
       }
     }
     return duplicates;
+  }
+
+  public void setValid(boolean valid) {
+    setValidImpl(valid);
+    setValid(getRoot(), valid);
+  }
+
+  private void setValid(TreeNode node, boolean valid) {
+    if (node instanceof FragmentNode) {
+      ((FragmentNode)node).setValid(valid);
+      reload(node);
+    }
+    if (!node.isLeaf()) {
+      for (int i = 0; i < node.getChildCount(); i++) {
+        setValid(node.getChildAt(i), valid);
+      }
+    }
   }
 }

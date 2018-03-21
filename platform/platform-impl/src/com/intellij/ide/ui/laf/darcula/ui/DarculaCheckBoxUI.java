@@ -48,7 +48,11 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
 
   @Override public void installDefaults(AbstractButton b) {
     super.installDefaults(b);
-    b.setIconTextGap(JBUI.scale(4));
+    b.setIconTextGap(textIconGap());
+  }
+
+  protected int textIconGap() {
+    return JBUI.scale(5);
   }
 
   @Override

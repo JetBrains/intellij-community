@@ -75,7 +75,6 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   private final String myShortcutText;
   private final SeverityRegistrar mySeverityRegistrar;
   private final InspectionProfileWrapper myProfileWrapper;
-  private boolean myFailFastOnAcquireReadAction;
 
   public LocalInspectionsPass(@NotNull PsiFile file,
                               @Nullable Document document,
@@ -118,7 +117,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   protected void collectInformationWithProgress(@NotNull ProgressIndicator progress) {
     try {
       if (!HighlightingLevelManager.getInstance(myProject).shouldInspect(getFile())) return;
-      inspect(getInspectionTools(myProfileWrapper), InspectionManager.getInstance(myProject), true, true, progress);
+      inspect(getInspectionTools(myProfileWrapper), InspectionManager.getInstance(myProject), true, progress);
     }
     finally {
       disposeDescriptors();
@@ -134,7 +133,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                @NotNull final InspectionManager iManager,
                                @NotNull final List<LocalInspectionToolWrapper> toolWrappers) {
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
-    inspect(new ArrayList<>(toolWrappers), iManager, false, false, progress);
+    inspect(new ArrayList<>(toolWrappers), iManager, false, progress);
     addDescriptorsFromInjectedResults(iManager, context);
     List<InspectionResult> resultList = result.get(getFile());
     if (resultList == null) return;
@@ -202,9 +201,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   private void inspect(@NotNull final List<LocalInspectionToolWrapper> toolWrappers,
                        @NotNull final InspectionManager iManager,
                        final boolean isOnTheFly,
-                       boolean failFastOnAcquireReadAction,
                        @NotNull final ProgressIndicator progress) {
-    myFailFastOnAcquireReadAction = failFastOnAcquireReadAction;
     if (toolWrappers.isEmpty()) return;
     List<Divider.DividedElements> allDivided = new ArrayList<>();
     Divider.divideInsideAndOutsideAllRoots(myFile, myRestrictRange, myPriorityRange, SHOULD_INSPECT_FILTER, new CommonProcessors.CollectProcessor<>(allDivided));
@@ -246,7 +243,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         runToolOnElements(toolWrapper, dialectIdsSpecifiedForTool, iManager, isOnTheFly, indicator, elements, session, init, elementDialectIds);
         return true;
       };
-    boolean result = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(entries, indicator, myFailFastOnAcquireReadAction, processor);
+    boolean result = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(entries, indicator, processor);
     if (!result) throw new ProcessCanceledException();
     return init;
   }
@@ -309,7 +306,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         }
         return true;
       };
-    boolean result = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(init, indicator, myFailFastOnAcquireReadAction, processor);
+    boolean result = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(init, indicator, processor);
     if (!result) {
       throw new ProcessCanceledException();
     }
@@ -332,7 +329,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       doInspectInjectedPsi(injectedPsi, onTheFly, indicator, iManager, inVisibleRange, wrappers);
       return true;
     };
-    if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<>(injected), indicator, myFailFastOnAcquireReadAction, processor)) {
+    if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<>(injected), indicator, processor)) {
       throw new ProcessCanceledException();
     }
   }

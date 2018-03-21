@@ -413,6 +413,7 @@
 
     <!-- Editor -->
     <search.topHitProvider implementation="com.intellij.application.options.editor.EditorOptionsTopHitProvider"/>
+    <search.topHitProvider implementation="com.intellij.application.options.editor.EditorHintsOptionsTopHitProvider"/>
     <applicationConfigurable groupId="editor" groupWeight="190" instance="com.intellij.application.options.editor.EditorOptions" id="preferences.editor" key="title.editor"
                              bundle="messages.ApplicationBundle" order="after preferences.lookFeel"
                              childrenEPName="com.intellij.editorOptionsProvider"/>
@@ -906,11 +907,13 @@
     <copyPastePostProcessor implementation="com.intellij.codeInsight.editorActions.CopyPasteIndentProcessor"/>
     <copyPastePostProcessor implementation="com.intellij.codeInsight.editorActions.CopyPasteFoldingProcessor"/>
 
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.collectors.legacy.fileTypes.LegacyFileTypeUsagesCollector"/>
+    <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsagesCollector"/>
+
     <statistics.usagesCollector implementation="com.intellij.facet.impl.statistics.FrameworkUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.facet.impl.statistics.ModuleTypeUsagesCollector"/>
-    <statistics.usagesCollector implementation="com.intellij.execution.impl.statistics.RunConfigurationTypeUsagesCollector"/>
-    <statistics.usagesCollector implementation="com.intellij.execution.impl.statistics.TemporaryRunConfigurationTypeUsagesCollector"/>
-    <statistics.usagesCollector implementation="com.intellij.openapi.fileTypes.FileTypeUsagesCollector"/>
+    <statistics.projectUsagesCollector implementation="com.intellij.execution.impl.statistics.RunConfigurationTypeUsagesCollector"/>
+    <statistics.projectUsagesCollector implementation="com.intellij.execution.impl.statistics.TemporaryRunConfigurationTypeUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.editor.LegacyEditorSettingsStatisticsCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.editor.LegacyEditorSettingsStatisticsCollector$ProjectUsages"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.editor.EditorSettingsStatisticsCollector"/>
@@ -921,7 +924,7 @@
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.tools.AbstractToolsUsagesCollector$EnabledListedToolsUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.tools.AbstractToolsUsagesCollector$DisabledBundledToolsUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.tools.AbstractToolsUsagesCollector$DisabledListedToolsUsagesCollector"/>
-    <statistics.usagesCollector implementation="com.intellij.execution.dashboard.RunDashboardUsagesCollector"/>
+    <statistics.projectUsagesCollector implementation="com.intellij.execution.dashboard.RunDashboardUsagesCollector"/>
 
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenamePsiFileProcessor" order="last"/>
     <renameInputValidator implementation="com.intellij.refactoring.rename.RenameToIgnoredDirectoryFileInputValidator" order="last"/>

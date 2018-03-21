@@ -192,7 +192,11 @@ public final class PsiUtil extends PsiUtilCore {
       ref = factory.createReferenceElementByFQClassName(exceptionName, method.getResolveScope());
     }
     else {
-      PsiClassType type = factory.createType(exceptionClass);
+      PsiClass superClass = exceptionClass.getSuperClass();
+      while (superClass != null && isLocalOrAnonymousClass(superClass)) {
+        superClass = superClass.getSuperClass();
+      }
+      PsiClassType type = factory.createType(superClass != null ? superClass : exceptionClass);
       ref = factory.createReferenceElementByType(type);
     }
     throwsList.add(ref);

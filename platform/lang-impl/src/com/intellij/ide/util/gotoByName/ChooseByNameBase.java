@@ -22,7 +22,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.editor.impl.SettingsImpl;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -88,7 +87,7 @@ import java.util.List;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
-public abstract class ChooseByNameBase {
+public abstract class ChooseByNameBase implements ChooseByNameView {
   public static final String TEMPORARILY_FOCUSABLE_COMPONENT_KEY = "ChooseByNameBase.TemporarilyFocusableComponent";
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.gotoByName.ChooseByNameBase");
@@ -125,7 +124,6 @@ public abstract class ChooseByNameBase {
 
   private final String[][] myNames = new String[2][];
   private volatile CalcElementsThread myCalcElementsThread;
-  private static int VISIBLE_LIST_SIZE_LIMIT = 10;
   private int myListSizeIncreasing = 30;
   private int myMaximumListSizeLimit = 30;
   @NonNls private static final String NOT_FOUND_IN_PROJECT_CARD = "syslib";
@@ -202,6 +200,12 @@ public abstract class ChooseByNameBase {
     myInitIsDone = true;
   }
 
+  @Override
+  public Project getProject() {
+    return myProject;
+  }
+
+  @Override
   public boolean isSearchInAnyPlace() {
     return mySearchInAnyPlace;
   }
@@ -241,6 +245,7 @@ public abstract class ChooseByNameBase {
   }
 
   @NotNull
+  @Override
   public ChooseByNameModel getModel() {
     return myModel;
   }
@@ -443,7 +448,7 @@ public abstract class ChooseByNameBase {
     myTextFieldPanel.add(myTextField);
     Font editorFont = EditorUtil.getEditorFont();
     myTextField.setFont(editorFont);
-    myTextField.putClientProperty("caretWidth", JBUI.scale(new SettingsImpl().getLineCursorWidth()));
+    myTextField.putClientProperty("caretWidth", JBUI.scale(EditorUtil.getDefaultCaretWidth()));
 
     if (checkBoxName != null) {
       if (myCheckBoxShortcut != null) {
@@ -588,7 +593,9 @@ public abstract class ChooseByNameBase {
     myTextField.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(@NotNull ActionEvent actionEvent) {
-        doClose(true);
+        if (!getChosenElements().isEmpty()) {
+          doClose(true);
+        }
       }
     });
 
@@ -624,6 +631,7 @@ public abstract class ChooseByNameBase {
 
     //noinspection unchecked
     myList.setCellRenderer(myModel.getListCellRenderer());
+    myList.setVisibleRowCount(16);
     myList.setFont(editorFont);
 
     myList.addListSelectionListener(new ListSelectionListener() {
@@ -716,6 +724,7 @@ public abstract class ChooseByNameBase {
     }
   }
 
+  @Override
   public String transformPattern(String pattern) {
     return pattern;
   }
@@ -773,6 +782,7 @@ public abstract class ChooseByNameBase {
     return result;
   }
 
+  @Override
   @NotNull
   public String[] getNames(boolean checkboxState) {
     if (ourLoadNamesEachTime) {
@@ -805,9 +815,6 @@ public abstract class ChooseByNameBase {
     final int x = (layeredPane.getWidth() - preferredTextFieldPanelSize.width) / 2;
     final int paneHeight = layeredPane.getHeight();
     final int y = paneHeight / 3 - preferredTextFieldPanelSize.height / 2;
-
-    VISIBLE_LIST_SIZE_LIMIT = Math.max
-      (10, (paneHeight - (y + preferredTextFieldPanelSize.height)) / (preferredTextFieldPanelSize.height / 2) - 1);
 
     ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(myTextFieldPanel, myTextField);
     builder.setLocateWithinScreenBounds(false);
@@ -969,12 +976,10 @@ public abstract class ChooseByNameBase {
     myTextField.setForeground(UIUtil.getTextFieldForeground());
     if (commands == null || commands.isEmpty()) {
       applySelection(pos);
-      myList.setVisibleRowCount(Math.min(VISIBLE_LIST_SIZE_LIMIT, myList.getModel().getSize()));
       showList();
       myTextFieldPanel.repositionHint();
     }
     else {
-      showList();
       appendToModel(commands, pos);
     }
   }
@@ -1032,8 +1037,6 @@ public abstract class ChooseByNameBase {
     for (ModelDiff.Cmd command : commands) {
       command.apply();
     }
-
-    myList.setVisibleRowCount(Math.min(VISIBLE_LIST_SIZE_LIMIT, myList.getModel().getSize()));
     showList();
 
     myTextFieldPanel.repositionHint();
@@ -1065,9 +1068,10 @@ public abstract class ChooseByNameBase {
   @Nullable
   public Object getChosenElement() {
     final List<Object> elements = getChosenElements();
-    return elements != null && elements.size() == 1 ? elements.get(0) : null;
+    return elements.size() == 1 ? elements.get(0) : null;
   }
 
+  @NotNull
   protected List<Object> getChosenElements() {
     return ContainerUtil.filter(myList.getSelectedValuesList(), o -> o != null && !isSpecialElement(o));
   }
@@ -1473,6 +1477,7 @@ public abstract class ChooseByNameBase {
   }
 
 
+  @Override
   public boolean canShowListForEmptyPattern() {
     return isShowListForEmptyPattern() || isShowListAfterCompletionKeyStroke() && lastKeyStrokeIsCompletion();
   }
@@ -1492,6 +1497,7 @@ public abstract class ChooseByNameBase {
     }
   }
 
+  @Override
   public int getMaximumListSizeLimit() {
     return myMaximumListSizeLimit;
   }

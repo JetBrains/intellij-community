@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
 import com.intellij.execution.actions.RunContextAction;
@@ -221,6 +219,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable
 
       final RunnerAndConfigurationSettings selectedConfiguration = getSelectedConfiguration(project);
       boolean enabled = false;
+      boolean hideDisabledExecutorButtons = false;
       String text;
       if (selectedConfiguration != null) {
         if (DumbService.isDumb(project) && !selectedConfiguration.getType().isDumbAware()) {
@@ -235,6 +234,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable
         }
         else {
           enabled = canRun(project, Collections.singletonList(new SettingsAndEffectiveTarget(selectedConfiguration, ExecutionTargetManager.getActiveTarget(project))));
+          hideDisabledExecutorButtons = configuration.hideDisabledExecutorButtons();
         }
         if (enabled) {
           presentation.setDescription(myExecutor.getDescription());
@@ -245,7 +245,13 @@ public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable
         text = getTemplatePresentation().getTextWithMnemonic();
       }
 
-      presentation.setEnabled(enabled);
+      if (hideDisabledExecutorButtons) {
+        presentation.setEnabledAndVisible(enabled);
+      }
+      else {
+        presentation.setVisible(myExecutor.isApplicable(project));
+        presentation.setEnabled(enabled);
+      }
       presentation.setText(text);
     }
 

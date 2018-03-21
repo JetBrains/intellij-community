@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.diagnostic.Dumpable;
@@ -365,11 +363,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     validateCallContext();
     int column = pos.column;
     int line = pos.line;
-    int softWrapLinesBefore = pos.softWrapLinesBeforeCurrentLogicalLine;
-    int softWrapLinesCurrent = pos.softWrapLinesOnCurrentLogicalLine;
-    int softWrapColumns = pos.softWrapColumnDiff;
     boolean leansForward = pos.leansForward;
-    boolean leansRight = pos.visualPositionLeansRight;
 
     Document doc = myEditor.getDocument();
 
@@ -386,8 +380,6 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
           .append(" as it is greater than total document lines number\n");
       }
       line = lineCount - 1;
-      softWrapLinesBefore = 0;
-      softWrapLinesCurrent = 0;
     }
 
     EditorSettings editorSettings = myEditor.getSettings();
@@ -400,15 +392,10 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
         int oldColumn = column;
         column = lineEndColumnNumber;
         leansForward = true;
-        leansRight = true;
-        if (softWrapColumns != 0) {
-          softWrapColumns -= column - lineEndColumnNumber;
-        }
         if (debugBuffer != null) {
           debugBuffer.append("Resetting target logical column (").append(oldColumn).append(") to ").append(lineEndColumnNumber)
             .append(" because caret is not allowed to be located after line end (offset: ").append(lineEndOffset).append(", ")
-            .append("logical position: ").append(endLinePosition).append("). Current soft wrap columns value: ").append(softWrapColumns)
-            .append("\n");
+            .append("logical position: ").append(endLinePosition).append(").\n");
         }
       }
     }
@@ -419,16 +406,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     LogicalPosition oldCaretPosition = myLogicalCaret;
     VisualPosition oldVisualPosition = myVisibleCaret;
 
-    LogicalPosition logicalPositionToUse;
-    if (pos.visualPositionAware) {
-      logicalPositionToUse = new LogicalPosition(
-        line, column, softWrapLinesBefore, softWrapLinesCurrent, softWrapColumns, pos.foldedLines, pos.foldingColumnDiff, 
-        leansForward, leansRight
-      );
-    }
-    else {
-      logicalPositionToUse = new LogicalPosition(line, column, leansForward);
-    }
+    LogicalPosition logicalPositionToUse = new LogicalPosition(line, column, leansForward);
     final int offset = myEditor.logicalPositionToOffset(logicalPositionToUse);
     if (debugBuffer != null) {
       debugBuffer.append("Resulting logical position to use: ").append(logicalPositionToUse).append(". It's mapped to offset ").append(offset).append("\n");
@@ -454,7 +432,6 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
       finally {
         mySkipChangeRequests = false;
       }
-      logicalPositionToUse = logicalPositionToUse.visualPositionAware ? logicalPositionToUse.withoutVisualPositionInfo() : logicalPositionToUse;
     }
 
     setCurrentLogicalCaret(logicalPositionToUse);

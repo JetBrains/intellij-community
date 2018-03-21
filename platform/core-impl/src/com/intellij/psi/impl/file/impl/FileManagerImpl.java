@@ -549,11 +549,11 @@ public class FileManagerImpl implements FileManager {
       fileDocumentManager.reloadFromDisk(document);
     }
     else {
-      reloadPsiAfterTextChange(file, vFile);
+      reloadPsiAfterTextChange(file.getViewProvider(), vFile);
     }
   }
 
-  void reloadPsiAfterTextChange(@NotNull PsiFile file, @NotNull VirtualFile vFile) {
+  void reloadPsiAfterTextChange(@NotNull FileViewProvider viewProvider, @NotNull VirtualFile vFile) {
     FileViewProvider latestProvider = createFileViewProvider(vFile, false);
     PsiFile psi = latestProvider.getPsi(latestProvider.getBaseLanguage());
     if (psi instanceof PsiLargeFile || psi instanceof PsiBinaryFile) {
@@ -561,6 +561,6 @@ public class FileManagerImpl implements FileManager {
       return;
     }
 
-    ((AbstractFileViewProvider)file.getViewProvider()).onContentReload();
+    ((AbstractFileViewProvider)viewProvider).onContentReload();
   }
 }

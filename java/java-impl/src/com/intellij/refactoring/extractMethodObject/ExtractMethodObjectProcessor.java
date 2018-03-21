@@ -750,7 +750,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     }
 
     @Override
-    protected boolean isNeedToChangeCallContext() {
+    protected boolean isPossibleToChangeCallContext() {
       return false;
     }
 

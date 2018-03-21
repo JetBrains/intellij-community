@@ -20,9 +20,10 @@ task downloadJdk18 {
   outputs.file(outputFile)
   doLast {
     logger.info("Downloading up JDK 1.8 to compile (using $jdkRepo repo)")
-    downloadWrapper {
+    download {
       src "$jdkRepo/intellij-jdk/${artifactName}"
       dest outputFile
+      tempAndMove true
     }
   }
 }
@@ -112,6 +113,13 @@ task setupJdk16(dependsOn: configurations.jdk16) {
     logger.info("Setting up JDK 1.6 to compile")
     unpackJdk(jdkArchive.call(), outputDir)
     deleteBrokenSymlink(outputDir)
+    if (!new File(outputDir, "bin").exists() && new File(outputDir, "jre/bin").exists()) {
+      copy {
+        from file(new File(outputDir, "jre/bin"))
+        into file(new File(outputDir, "bin"))
+        include 'java*'
+      }
+    }
   }
 }
 

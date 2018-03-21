@@ -45,4 +45,10 @@ class LayoutBuilder @PublishedApi internal constructor(@PublishedApi internal va
   fun chooseFile(descriptor: FileChooserDescriptor, event: AnActionEvent, fileChosen: (chosenFile: VirtualFile) -> Unit) {
     FileChooser.chooseFile(descriptor, event.getData(PlatformDataKeys.PROJECT), event.getData(PlatformDataKeys.CONTEXT_COMPONENT), null, fileChosen)
   }
+
+  @Suppress("PropertyName")
+  @PublishedApi
+  @Deprecated("", replaceWith = ReplaceWith("builder"), level = DeprecationLevel.ERROR)
+  internal val `$`: LayoutBuilderImpl
+    get() = builder
 }

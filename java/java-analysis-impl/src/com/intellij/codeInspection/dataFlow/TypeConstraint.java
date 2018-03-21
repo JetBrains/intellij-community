@@ -16,10 +16,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.value.DfaPsiType;
-import com.intellij.psi.LambdaUtil;
-import com.intellij.psi.PsiIntersectionType;
-import com.intellij.psi.PsiPrimitiveType;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
@@ -46,6 +43,21 @@ public final class TypeConstraint {
   private TypeConstraint(@NotNull Set<DfaPsiType> instanceofValues, @NotNull Set<DfaPsiType> notInstanceofValues) {
     myInstanceofValues = instanceofValues;
     myNotInstanceofValues = notInstanceofValues;
+  }
+
+  @NotNull
+  public String getPresentationText(PsiType type) {
+    Set<DfaPsiType> instanceOfTypes = myInstanceofValues;
+    if (type instanceof PsiClassType) {
+      instanceOfTypes = StreamEx.of(instanceOfTypes)
+                                .removeBy(DfaPsiType::getPsiType, ((PsiClassType)type).rawType())
+                                .toSet();
+    }
+    return EntryStream.of("instanceof ", instanceOfTypes,
+                          "not instanceof ", myNotInstanceofValues)
+                      .removeValues(Set::isEmpty)
+                      .mapKeyValue((prefix, set) -> StreamEx.of(set).map(DfaPsiType::toString).sorted().joining(", ", prefix, ""))
+                      .joining("\n");
   }
 
   private static TypeConstraint create(@NotNull Set<DfaPsiType> instanceofValues, @NotNull Set<DfaPsiType> notInstanceofValues) {
@@ -222,9 +234,9 @@ public final class TypeConstraint {
   public String toString() {
     return EntryStream.of("instanceof ", myInstanceofValues,
                           "not instanceof ", myNotInstanceofValues)
-      .removeValues(Set::isEmpty)
-      .mapKeyValue((prefix, set) -> StreamEx.of(set).joining(",", prefix, ""))
-      .joining(" ");
+                      .removeValues(Set::isEmpty)
+                      .mapKeyValue((prefix, set) -> StreamEx.of(set).joining(", ", prefix, ""))
+                      .joining(" ");
   }
 
   @Nullable

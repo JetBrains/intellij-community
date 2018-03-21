@@ -333,7 +333,7 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileTreeMod
     }
 
     final void invalidateChildren(Predicate<FileNode> validator) {
-      if (valid) {
+      if (valid || !file.isDirectory()) {
         if (validator == null || !validator.test(this)) {
           validator = null; // all children will be invalid
           valid = false;

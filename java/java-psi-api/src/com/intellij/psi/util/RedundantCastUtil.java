@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
@@ -61,16 +62,18 @@ public class RedundantCastUtil {
 
   public static PsiExpression removeCast(PsiTypeCastExpression castExpression) {
     if (castExpression == null) return null;
+    PsiElement parent = castExpression.getParent();
     PsiExpression operand = castExpression.getOperand();
     if (operand instanceof PsiParenthesizedExpression) {
       final PsiParenthesizedExpression parExpr = (PsiParenthesizedExpression)operand;
-      operand = parExpr.getExpression();
+      if (parent instanceof PsiExpression && !PsiPrecedenceUtil.areParenthesesNeeded(parExpr.getExpression(), (PsiExpression)parent, true)) {
+        operand = parExpr.getExpression();
+      }
     }
     if (operand == null) return null;
 
     PsiExpression toBeReplaced = castExpression;
 
-    PsiElement parent = castExpression.getParent();
     while (parent instanceof PsiParenthesizedExpression) {
       toBeReplaced = (PsiExpression)parent;
       parent = parent.getParent();
@@ -404,7 +407,18 @@ public class RedundantCastUtil {
                  Comparing.equal(PsiUtil.recaptureWildcards(((PsiCallExpression)newCall).getType(), expression), ((PsiCallExpression)expression).getType())) &&
                 newResult.isValidResult() &&
                 !(newResult instanceof MethodCandidateInfo && ((MethodCandidateInfo)newResult).getInferenceErrorMessage() != null)) {
-              if (!(newArgs[i] instanceof PsiFunctionalExpression)) {
+              PsiExpression newArg = PsiUtil.deparenthesizeExpression(newArgs[i]);
+              if (newArg instanceof PsiConditionalExpression && PsiPolyExpressionUtil.isPolyExpression(newArgs[i])) {
+                PsiType targetType = newArg.getType();
+                LOG.assertTrue(targetType != null);
+                //target type is detected by method call
+                //check that both sides are fine with that
+                if (targetType.isAssignableFrom(((PsiConditionalExpression)newArg).getThenExpression().getType()) && 
+                    targetType.isAssignableFrom(((PsiConditionalExpression)newArg).getElseExpression().getType())) {
+                  addToResults(cast);
+                }
+              }
+              else if (!(newArg instanceof PsiFunctionalExpression)) {
                 addToResults(cast);
               }
               else {

@@ -152,7 +152,7 @@ public final class ConsentOptions {
     }
   }
 
-  public Pair<Collection<Consent>, Boolean> getConsents() {
+  public Pair<List<Consent>, Boolean> getConsents() {
     final Map<String, Consent> allDefaults = loadDefaultConsents();
     if (allDefaults.isEmpty()) {
       return Pair.create(Collections.emptyList(), Boolean.FALSE);

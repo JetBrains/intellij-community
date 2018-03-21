@@ -706,6 +706,14 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     doMultiFileTest();
   }
 
+  // PY-20197
+  public void testClassLevelImportUsedInsideMethod() {
+    doTestByText("class DateParser:\n" +
+                 "    from datetime import datetime\n" +
+                 "    def __init__(self):\n" +
+                 "        self.value = self.datetime(2016, 1, 1)");
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

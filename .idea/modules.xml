@@ -18,7 +18,6 @@
     <module old-name="analytics-testing" new-name="android.sdktools.analytics-testing" />
     <module old-name="analyzer" new-name="intellij.android.analyzer" />
     <module old-name="android" new-name="intellij.android" />
-    <module old-name="android-annotations" new-name="android.sdktools.android-annotations" />
     <module old-name="android-common" new-name="intellij.android.common" />
     <module old-name="android-gradle-jps" new-name="intellij.android.gradle.jps" />
     <module old-name="android-jps-plugin" new-name="intellij.android.jps" />
@@ -360,7 +359,6 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/analytics-library/testing/android.sdktools.analytics-testing.iml" filepath="$PROJECT_DIR$/android/tools-base/analytics-library/testing/android.sdktools.analytics-testing.iml" />
-      <module fileurl="file://$PROJECT_DIR$/android/tools-base/annotations/android.sdktools.android-annotations.iml" filepath="$PROJECT_DIR$/android/tools-base/annotations/android.sdktools.android-annotations.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/apkparser/binary-resources/android.sdktools.binary-resources.iml" filepath="$PROJECT_DIR$/android/tools-base/apkparser/binary-resources/android.sdktools.binary-resources.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/build-system/builder-model/android.sdktools.builder-model.iml" filepath="$PROJECT_DIR$/android/tools-base/build-system/builder-model/android.sdktools.builder-model.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/build-system/builder-test-api/android.sdktools.builder-test-api.iml" filepath="$PROJECT_DIR$/android/tools-base/build-system/builder-test-api/android.sdktools.builder-test-api.iml" />
@@ -379,10 +377,7 @@
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/ninepatch/android.sdktools.ninepatch.iml" filepath="$PROJECT_DIR$/android/tools-base/ninepatch/android.sdktools.ninepatch.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/perflib/android.sdktools.perflib.iml" filepath="$PROJECT_DIR$/android/tools-base/perflib/android.sdktools.perflib.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/pixelprobe/android.sdktools.pixelprobe.iml" filepath="$PROJECT_DIR$/android/tools-base/pixelprobe/android.sdktools.pixelprobe.iml" />
-      <module fileurl="file://$PROJECT_DIR$/android/tools-base/repository/android.sdktools.repository.iml" filepath="$PROJECT_DIR$/android/tools-base/repository/android.sdktools.repository.iml" />
-      <module fileurl="file://$PROJECT_DIR$/android/tools-base/sdk-common/android.sdktools.sdk-common.iml" filepath="$PROJECT_DIR$/android/tools-base/sdk-common/android.sdktools.sdk-common.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/sdklib/android.sdktools.sdklib.iml" filepath="$PROJECT_DIR$/android/tools-base/sdklib/android.sdktools.sdklib.iml" />
-      <module fileurl="file://$PROJECT_DIR$/android/tools-base/testutils/android.sdktools.testutils.iml" filepath="$PROJECT_DIR$/android/tools-base/testutils/android.sdktools.testutils.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/android/intellij.android.iml" filepath="$PROJECT_DIR$/android/android/intellij.android.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/adt-branding/intellij.android.adt.branding.iml" filepath="$PROJECT_DIR$/android/adt-branding/intellij.android.adt.branding.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/adt-ui/intellij.android.adt.ui.iml" filepath="$PROJECT_DIR$/android/adt-ui/intellij.android.adt.ui.iml" />
@@ -430,6 +425,8 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/eclipse/common-eclipse-util/intellij.eclipse.common.iml" filepath="$PROJECT_DIR$/plugins/eclipse/common-eclipse-util/intellij.eclipse.common.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/eclipse/jps-plugin/intellij.eclipse.jps.iml" filepath="$PROJECT_DIR$/plugins/eclipse/jps-plugin/intellij.eclipse.jps.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/editorconfig/intellij.editorconfig.iml" filepath="$PROJECT_DIR$/plugins/editorconfig/intellij.editorconfig.iml" />
+      <module fileurl="file://$PROJECT_DIR$/edu/dependencies/intellij.edu.dependencies.iml" filepath="$PROJECT_DIR$/edu/dependencies/intellij.edu.dependencies.iml" />
+      <module fileurl="file://$PROJECT_DIR$/edu/idea/build/intellij.edu.idea.build.iml" filepath="$PROJECT_DIR$/edu/idea/build/intellij.edu.idea.build.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/intellij.gradle.iml" filepath="$PROJECT_DIR$/plugins/gradle/intellij.gradle.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/intellij.gradle.common.iml" filepath="$PROJECT_DIR$/plugins/gradle/intellij.gradle.common.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/java/intellij.gradle.java.iml" filepath="$PROJECT_DIR$/plugins/gradle/java/intellij.gradle.java.iml" />
@@ -637,7 +634,6 @@
       <module fileurl="file://$PROJECT_DIR$/python/python-community-ide-resources/intellij.pycharm.community.resources.iml" filepath="$PROJECT_DIR$/python/python-community-ide-resources/intellij.pycharm.community.resources.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/educational-python/intellij.pycharm.edu.iml" filepath="$PROJECT_DIR$/python/educational-python/intellij.pycharm.edu.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/educational-python/build/intellij.pycharm.edu.build.iml" filepath="$PROJECT_DIR$/python/educational-python/build/intellij.pycharm.edu.build.iml" />
-      <module fileurl="file://$PROJECT_DIR$/python/educational-python/build/dependencies/intellij.pycharm.edu.dependencies.iml" filepath="$PROJECT_DIR$/python/educational-python/build/dependencies/intellij.pycharm.edu.dependencies.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/educational-python/intellij.pycharm.edu.main.iml" filepath="$PROJECT_DIR$/python/educational-python/intellij.pycharm.edu.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/openapi/intellij.python.community.iml" filepath="$PROJECT_DIR$/python/openapi/intellij.python.community.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/intellij.python.community.impl.iml" filepath="$PROJECT_DIR$/python/intellij.python.community.impl.iml" />

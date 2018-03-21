@@ -14,8 +14,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.*;
 
-import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.collapseReflectedMethods;
-
 class GroovyResolverProcessorImpl extends GroovyResolverProcessor implements GrMethodComparator.Context {
 
   GroovyResolverProcessorImpl(@NotNull final GrReferenceExpression ref, @NotNull EnumSet<GroovyResolveKind> kinds, boolean forceRValue) {
@@ -33,8 +31,7 @@ class GroovyResolverProcessorImpl extends GroovyResolverProcessor implements GrM
 
     candidates = getCandidates(GroovyResolveKind.METHOD);
     if (!candidates.isEmpty()) {
-      final List<GroovyResolveResult> results = filterMethodCandidates(candidates);
-      return myRef.hasMemberPointer() ? collapseReflectedMethods(results) : results;
+      return filterMethodCandidates(candidates);
     }
 
     candidates = getCandidates(GroovyResolveKind.ENUM_CONST);
@@ -48,11 +45,6 @@ class GroovyResolverProcessorImpl extends GroovyResolverProcessor implements GrM
     }
 
     candidates = getCandidates(GroovyResolveKind.FIELD);
-    if (!candidates.isEmpty()) {
-      return candidates;
-    }
-
-    candidates = getCandidates(GroovyResolveKind.PACKAGE, GroovyResolveKind.CLASS);
     if (!candidates.isEmpty()) {
       return candidates;
     }
@@ -139,12 +131,6 @@ class GroovyResolverProcessorImpl extends GroovyResolverProcessor implements GrM
   @Override
   public PsiType[] getTypeArguments() {
     return myTypeArguments;
-  }
-
-  @Nullable
-  @Override
-  public PsiType getThisType() {
-    return myThisType;
   }
 
   @NotNull

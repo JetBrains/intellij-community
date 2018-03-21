@@ -4,15 +4,14 @@
 package com.intellij.execution.junit;
 
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.configurations.JavaParameters;
-import com.intellij.execution.configurations.JavaRunConfigurationModule;
-import com.intellij.execution.configurations.RuntimeConfigurationError;
-import com.intellij.execution.configurations.RuntimeConfigurationException;
+import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.util.IncorrectOperationException;
 
 import java.util.Collections;
 
@@ -35,6 +34,36 @@ class TestTags extends TestObject {
     if (getSourceScope() == null) {
       configurationModule.checkForWarning();
     }
+    parseAsJavaExpression(tags);
+  }
+
+  /**
+   * Parse tag as java polyadic expression with boolean operations as top priority
+   * 
+   * 1+2 is accepted as tag
+   * !1+2 is parsed as !tag
+   * IncorrectOperationException is thrown e.g. on unbalanced parenthesis 
+   */
+  private void parseAsJavaExpression(String[] tags) throws RuntimeConfigurationWarning {
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(getConfiguration().getProject());
+    for (String tag : tags) {
+      try {
+        PsiExpression expression = elementFactory.createExpressionFromText(tag, null);
+        if (expression instanceof PsiPolyadicExpression) {
+          IElementType tokenType = ((PsiPolyadicExpression)expression).getOperationTokenType();
+          if (tokenType == JavaTokenType.ANDAND || tokenType == JavaTokenType.OROR) {
+            invalidTagException(tag);
+          }
+        }
+      }
+      catch (IncorrectOperationException e) {
+        invalidTagException(tag);
+      }
+    }
+  }
+
+  private static void invalidTagException(String tag) throws RuntimeConfigurationWarning {
+    throw new RuntimeConfigurationWarning("Tag name [" + tag + "] must be syntactically valid");
   }
 
   @Override

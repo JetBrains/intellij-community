@@ -237,7 +237,7 @@ public class CodeCompletionHandlerBase {
     indicator.getCompletionThreading().startThread(indicator, () -> AsyncCompletion.tryReadOrCancel(indicator, () -> {
       CompletionParameters parameters = prepareCompletionParameters(initContext, indicator);
       if (parameters != null) {
-        indicator.runContributors(initContext, parameters);
+        indicator.runContributors(initContext);
       }
     }));
 

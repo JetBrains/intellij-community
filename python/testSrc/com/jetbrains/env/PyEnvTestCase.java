@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.env;
 
 import com.google.common.collect.Lists;
@@ -16,7 +17,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.LoggingRule;
 import com.jetbrains.TestEnv;
-import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.*;
@@ -29,6 +29,8 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
 /**
  * @author traff
@@ -136,11 +138,9 @@ public abstract class PyEnvTestCase {
   @Before
   public void setUp() {
     if (myRequiredTags != null) { // Ensure all tags exist between available interpreters
-      Assume.assumeThat(
-        "Can't find some tags between all available interpreter, test (all methods) will be skipped",
-        getAvailableTags(),
-        Matchers.hasItems(myRequiredTags)
-      );
+      assertThat(getAvailableTags())
+        .describedAs("Can't find some tags between all available interpreter, test (all methods) will be skipped")
+        .contains(myRequiredTags);
     }
   }
 

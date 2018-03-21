@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.PrioritizedInternalDocumentListener;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.util.DocumentUtil;
@@ -59,7 +60,25 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
     myIsFoldingEnabled = true;
     myIsBatchFoldingProcessing = false;
     myDoNotCollapseCaret = false;
-    myRegionTree = new RangeMarkerTree<>(editor.getDocument());
+    myRegionTree = new RangeMarkerTree<FoldRegionImpl>(editor.getDocument()) {
+      @NotNull
+      @Override
+      protected RMNode<FoldRegionImpl> createNewNode(@NotNull FoldRegionImpl key,
+                                                     int start,
+                                                     int end,
+                                                     boolean greedyToLeft,
+                                                     boolean greedyToRight,
+                                                     boolean stickingToRight,
+                                                     int layer) {
+        return new RMNode<FoldRegionImpl>(this, key, start, end, greedyToLeft, greedyToRight, stickingToRight) {
+          @Override
+          protected Getter<FoldRegionImpl> createGetter(@NotNull FoldRegionImpl region) {
+            // Fold region shouldn't disappear even if no one holds a reference to it, so folding tree needs a strong reference to a region
+            return region;
+          }
+        };
+      }
+    };
     myFoldTree = new FoldRegionsTree(myRegionTree) {
       @Override
       protected boolean isFoldingEnabled() {
@@ -271,6 +290,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
 
     ((FoldRegionImpl)region).setExpanded(true, false);
     notifyListenersOnFoldRegionStateChange(region);
+    notifyListenersOnFoldRegionRemove(region);
 
     myFoldRegionsProcessed = true;
     region.dispose();
@@ -304,6 +324,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
     FoldRegion[] regions = getAllFoldRegions();
     for (FoldRegion region : regions) {
       if (!region.isExpanded()) notifyListenersOnFoldRegionStateChange(region);
+      notifyListenersOnFoldRegionRemove(region);
       region.dispose();
     }
     doClearFoldRegions();
@@ -389,7 +410,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
       // There is a possible case that caret position is already visual position aware. But visual position depends on number of folded
       // logical lines as well, hence, we can't be sure that target logical position defines correct visual position because fold
       // regions have just changed. Hence, we use 'raw' logical position instead.
-      LogicalPosition caretPosition = caret.getLogicalPosition().withoutVisualPositionInfo();
+      LogicalPosition caretPosition = caret.getLogicalPosition();
       int caretOffset = myEditor.logicalPositionToOffset(caretPosition);
       int selectionStart = caret.getSelectionStart();
       int selectionEnd = caret.getSelectionEnd();
@@ -591,6 +612,12 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
     }
   }
 
+  private void notifyListenersOnFoldRegionRemove(@NotNull FoldRegion foldRegion) {
+    for (FoldingListener listener : myListeners) {
+      listener.beforeFoldRegionRemoved(foldRegion);
+    }
+  }
+
   @NotNull
   @Override
   public String dumpState() {
@@ -668,7 +695,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
     private final long docStamp;
 
     private SavedCaretPosition(Caret caret) {
-      position = caret.getLogicalPosition().withoutVisualPositionInfo();
+      position = caret.getLogicalPosition();
       docStamp = caret.getEditor().getDocument().getModificationStamp();
     }
 

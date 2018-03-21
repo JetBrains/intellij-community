@@ -100,6 +100,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myStatisticsServiceUrl;
   private String myStatisticsServiceKey;
   private String myEventLogSettingsUrl;
+  @Deprecated
   private String myThirdPartySoftwareUrl;
   private String myJetbrainsTvUrl;
   private String myEvalLicenseUrl = "https://www.jetbrains.com/store/license.html";
@@ -186,6 +187,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private static final String ATTRIBUTE_STATISTICS_SERVICE = "service";
   private static final String ATTRIBUTE_STATISTICS_SERVICE_KEY = "service-key";
   private static final String ATTRIBUTE_EVENT_LOG_STATISTICS_SETTINGS = "event-log-settings";
+  @Deprecated
   private static final String ELEMENT_THIRD_PARTY = "third-party";
   private static final String ELEMENT_JB_TV = "jetbrains-tv";
   private static final String CUSTOMIZE_IDE_WIZARD_STEPS = "customize-ide-wizard";

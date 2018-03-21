@@ -3,23 +3,20 @@ package com.intellij.packageDependencies;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.psi.search.scope.packageSet.FilteredNamedScope;
 import org.jetbrains.annotations.NotNull;
-
-import static com.intellij.openapi.vcs.changes.ChangesUtil.getAfterRevisionsFiles;
-import static java.util.stream.Collectors.toList;
 
 public final class ChangeListScope extends FilteredNamedScope {
   public static final String NAME = IdeBundle.message("scope.modified.files");
 
   public ChangeListScope(@NotNull ChangeListManager manager) {
-    super(NAME, AllIcons.Toolwindows.ToolWindowChanges, 0, manager.getAffectedFiles());
+    super(NAME, AllIcons.Toolwindows.ToolWindowChanges, 0, manager::isFileAffected);
   }
 
-  public ChangeListScope(@NotNull ChangeList list) {
-    super(list.getName(), AllIcons.Toolwindows.ToolWindowChanges, 0, getAfterRevisionsFiles(list.getChanges().stream()).collect(toList()));
+  public ChangeListScope(@NotNull ChangeListManager manager, @NotNull String name) {
+    super(name, AllIcons.Toolwindows.ToolWindowChanges, 0,
+          file -> manager.getChangeLists(file).stream().anyMatch(list -> list.getName().equals(name)));
   }
 
   @Override

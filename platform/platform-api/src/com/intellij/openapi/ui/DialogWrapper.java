@@ -675,10 +675,16 @@ public abstract class DialogWrapper {
   @NotNull
   protected JPanel createButtonsPanel(@NotNull List<JButton> buttons) {
     int hgap = JBUI.scale(UIUtil.isUnderWin10LookAndFeel() ? 10 : 6);
-    JPanel buttonsPanel = new NonOpaquePanel(new DialogWrapperButtonLayout(buttons.size(), hgap));
-    for (final JButton button : buttons) {
-      buttonsPanel.add(button);
+    JPanel buttonsPanel = new NonOpaquePanel();
+    buttonsPanel.setLayout(new BoxLayout(buttonsPanel, BoxLayout.X_AXIS));
+
+    for (int i = 0; i < buttons.size(); i++) {
+      buttonsPanel.add(buttons.get(i));
+      if (i < buttons.size() - 1) {
+        buttonsPanel.add(Box.createRigidArea(JBUI.size(hgap, 0)));
+      }
     }
+
     return buttonsPanel;
   }
 

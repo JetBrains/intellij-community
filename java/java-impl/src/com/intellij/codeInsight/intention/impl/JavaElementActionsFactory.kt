@@ -26,6 +26,12 @@ class JavaElementActionsFactory(private val renderer: JavaElementRenderer) : Jvm
     listOf(ModifierFix(declaration.modifierList, renderer.render(modifier), shouldPresent, false))
   }
 
+  override fun createAddAnnotationActions(target: JvmModifiersOwner, request: AnnotationRequest): List<IntentionAction> {
+    val declaration = target as? PsiModifierListOwner ?: return emptyList()
+    if (declaration.language != JavaLanguage.INSTANCE) return emptyList()
+    return listOf(CreateAnnotationAction(declaration, request))
+  }
+
   override fun createAddPropertyActions(targetClass: JvmClass, request: MemberRequest.Property): List<IntentionAction> {
     with(request) {
       val psiClass = targetClass.toJavaClassOrNull() ?: return emptyList()

@@ -29,7 +29,6 @@ JNI_createJavaVM pCreateJavaVM = NULL;
 JavaVM* jvm = NULL;
 JNIEnv* env = NULL;
 volatile bool terminating = false;
-bool nativesplash = false;
 
 HANDLE hFileMapping;
 HANDLE hEvent;
@@ -651,22 +650,43 @@ bool CreateJVM()
   return result == JNI_OK;
 }
 
-jobjectArray PrepareCommandLine()
+jobjectArray ArgsToJavaArray(std::vector<LPWSTR> args)
 {
-  int numArgs;
-  LPWSTR* argv = CommandLineToArgvW(GetCommandLineW(), &numArgs);
   jclass stringClass = env->FindClass("java/lang/String");
-  jobjectArray args = env->NewObjectArray(numArgs - (nativesplash ? 2 : 1), stringClass, NULL);
-  for (int i = 1, k = 0; i < numArgs; i++)
+  jobjectArray result = env->NewObjectArray(args.size(), stringClass, NULL);
+  for (int i = 0; i < args.size(); i++)
   {
-    const wchar_t* arg = argv[i];
-    if (_wcsicmp(arg, _T("/nativesplash")) == 0) continue;
-    env->SetObjectArrayElement(args, k++, env->NewString((const jchar *)arg, wcslen(argv[i])));
+     env->SetObjectArrayElement(result, i, env->NewString((const jchar *)args[i], wcslen(args[i])));
   }
-  return args;
+  return result;
 }
 
-bool RunMainClass()
+std::vector<LPWSTR> ParseCommandLine(LPCWSTR commandLine)
+{
+  int numArgs;
+  LPWSTR* argv = CommandLineToArgvW(commandLine, &numArgs);
+
+  // skip process name
+  std::vector<LPWSTR> result;
+  for (int i = 1; i < numArgs; i++)
+  {
+    result.push_back(argv[i]);
+  }
+  return result;
+}
+
+std::vector<LPWSTR> RemovePredefinedArgs(std::vector<LPWSTR> args)
+{
+  std::vector<LPWSTR> result;
+  for (int i = 0; i < args.size(); i++)
+  {
+    if (_wcsicmp(args[i], _T("/nativesplash")) == 0) continue;
+    result.push_back(args[i]);
+  }
+  return result;
+}
+
+bool RunMainClass(std::vector<LPWSTR> args)
 {
   std::string mainClassName = LoadStdString(IDS_MAIN_CLASS);
   jclass mainClass = env->FindClass(mainClassName.c_str());
@@ -687,8 +707,7 @@ bool RunMainClass()
     return false;
   }
 
-  jobjectArray args = PrepareCommandLine();
-  env->CallStaticVoidMethod(mainClass, mainMethod, args);
+  env->CallStaticVoidMethod(mainClass, mainMethod, ArgsToJavaArray(args));
   jthrowable exc = env->ExceptionOccurred();
   if (exc)
   {
@@ -712,11 +731,11 @@ void CallCommandLineProcessor(const std::wstring& curDir, const std::wstring& ar
   jclass processorClass = env->FindClass(processorClassName.c_str());
   if (processorClass)
   {
-    jmethodID processMethodID = env->GetStaticMethodID(processorClass, "processWindowsLauncherCommandLine", "(Ljava/lang/String;Ljava/lang/String;)V");
+    jmethodID processMethodID = env->GetStaticMethodID(processorClass, "processWindowsLauncherCommandLine", "(Ljava/lang/String;[Ljava/lang/String;)V");
     if (processMethodID)
     {
       jstring jCurDir = env->NewString((const jchar *)curDir.c_str(), curDir.size());
-      jstring jArgs = env->NewString((const jchar *)args.c_str(), args.size());
+      jobjectArray jArgs = ArgsToJavaArray(RemovePredefinedArgs(ParseCommandLine(args.c_str())));
       env->CallStaticVoidMethod(processorClass, processMethodID, jCurDir, jArgs);
       jthrowable exc = env->ExceptionOccurred();
       if (exc)
@@ -967,7 +986,16 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
   //it's OK to return 0 here, because the control is transferred to the first instance
   if (!CheckSingleInstance()) return 0;
 
-  if (nativesplash = wcsstr(lpCmdLine, _T("/nativesplash")) != NULL) StartSplashProcess();
+  std::vector<LPWSTR> args = ParseCommandLine(GetCommandLineW());
+
+  bool nativesplash = false;
+  for (int i = 0; i < args.size(); i++)
+  {
+    if (_wcsicmp(args[i], _T("/nativesplash")) == 0) nativesplash = true;
+  }
+  args = RemovePredefinedArgs(args);
+
+  if (nativesplash) StartSplashProcess();
 
   if (!LocateJVM()) return 1;
   if (!LoadVMOptions()) return 1;
@@ -976,7 +1004,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 
   hSingleInstanceWatcherThread = CreateThread(NULL, 0, SingleInstanceThread, NULL, 0, NULL);
 
-  if (!RunMainClass()) return 1;
+  if (!RunMainClass(args)) return 1;
 
   jvm->DestroyJavaVM();
 

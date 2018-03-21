@@ -11,6 +11,10 @@ public abstract class FilteredPackageSet extends AbstractPackageSet {
     super(text);
   }
 
+  public FilteredPackageSet(@NotNull String text, int priority) {
+    super(text, priority);
+  }
+
   public abstract boolean contains(@NotNull VirtualFile file, @NotNull Project project);
 
   @Override

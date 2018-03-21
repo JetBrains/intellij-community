@@ -64,28 +64,30 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
 
   private static final String REFACTORING_NAME = RefactoringBundle.message("inline.variable.title");
 
+  @Override
   public boolean canInlineElement(PsiElement element) {
     return element instanceof PsiLocalVariable;
   }
 
+  @Override
   public void inlineElement(Project project, Editor editor, PsiElement element) {
     final PsiReference psiReference = TargetElementUtil.findReference(editor);
-    final PsiReferenceExpression refExpr = psiReference instanceof PsiReferenceExpression ? ((PsiReferenceExpression)psiReference) : null;
+    final PsiReferenceExpression refExpr = psiReference instanceof PsiReferenceExpression ? (PsiReferenceExpression)psiReference : null;
     invoke(project, editor, (PsiLocalVariable) element, refExpr);
   }
 
   /**
    * should be called in AtomicAction
    */
-  public static void invoke(@NotNull final Project project, final Editor editor, final PsiLocalVariable local, PsiReferenceExpression refExpr) {
+  public static void invoke(@NotNull final Project project, final Editor editor, @NotNull PsiLocalVariable local, PsiReferenceExpression refExpr) {
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, local)) return;
 
     final HighlightManager highlightManager = HighlightManager.getInstance(project);
 
     final String localName = local.getName();
 
-    final List<PsiElement> innerClassesWithUsages = Collections.synchronizedList(new ArrayList<PsiElement>());
-    final List<PsiElement> innerClassUsages = Collections.synchronizedList(new ArrayList<PsiElement>());
+    final List<PsiElement> innerClassesWithUsages = Collections.synchronizedList(new ArrayList<>());
+    final List<PsiElement> innerClassUsages = Collections.synchronizedList(new ArrayList<>());
     final PsiElement containingClass = PsiTreeUtil.getParentOfType(local, PsiClass.class, PsiLambdaExpression.class);
     final Query<PsiReference> query = ReferencesSearch.search(local);
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
@@ -155,7 +157,7 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
         refsToInlineList.add(innerClassUsage);
       }
     }
-    if (refsToInlineList.size() == 0) {
+    if (refsToInlineList.isEmpty()) {
       String message = RefactoringBundle.message("variable.is.never.used.before.modification", localName);
       CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_VARIABLE);
       return;
@@ -320,7 +322,7 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
   }
 
   @Nullable
-  public static PsiElement checkRefsInAugmentedAssignmentOrUnaryModified(final PsiElement[] refsToInline, PsiElement defToInline) {
+  static PsiElement checkRefsInAugmentedAssignmentOrUnaryModified(final PsiElement[] refsToInline, PsiElement defToInline) {
     for (PsiElement element : refsToInline) {
 
       PsiElement parent = element.getParent();
@@ -350,7 +352,7 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
   @Nullable
   static PsiExpression getDefToInline(final PsiVariable local,
                                       final PsiElement refExpr,
-                                      final PsiCodeBlock block,
+                                      @NotNull PsiCodeBlock block,
                                       final boolean rethrow) {
     if (refExpr != null) {
       PsiElement def;

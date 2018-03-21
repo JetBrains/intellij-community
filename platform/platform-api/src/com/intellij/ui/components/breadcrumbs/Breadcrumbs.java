@@ -133,6 +133,10 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
     repaint();
   }
 
+  public int getBaseline() {
+    return views.isEmpty() ? 0 : views.get(0).getBaseline();
+  }
+
   @Override
   public String getToolTipText(MouseEvent event) {
     return hovered == null ? null : hovered.getTooltip();
@@ -420,6 +424,25 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
 
     private boolean contains(int x, int y) {
       return crumb != null && (path != null ? path.contains(x, y) : bounds.contains(x, y));
+    }
+
+    private int getBaseline() {
+      if (font == null) {
+        update();
+      }
+
+      FontMetrics fm = getFontMetrics(font);
+      if (fm != null) {
+        Rectangle textR = new Rectangle();
+        int scale = getScale();
+        String text = layout(fm, new Rectangle(), textR, getBounds(scale * LEFT_RIGHT, scale * TOP_BOTTOM));
+
+        if (!StringUtil.isEmpty(text)) {
+          return textR.y + fm.getAscent();
+        }
+      }
+
+      return 0;
     }
 
     private void paint(Graphics2D g) {
