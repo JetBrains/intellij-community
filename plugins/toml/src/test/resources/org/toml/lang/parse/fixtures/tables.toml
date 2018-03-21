@@ -26,3 +26,12 @@ c = 1
 
 [a]
 d = 2
+
+# INVALID don;t parse next table as an array
+[table-a]
+key
+[table-b]
+
+[table-c]
+key =
+[table-d]

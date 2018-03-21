@@ -42,7 +42,7 @@ private FileForm_recover ::= !(
   BARE_KEY | BARE_KEY_OR_NUMBER | BARE_KEY_OR_DATE | BASIC_STRING | LITERAL_STRING | '['
 )
 
-KeyValue ::= Key '=' Value {pin=1}
+KeyValue ::= Key '=' <<atSameLine Value>> {pin=1}
 
 Key ::= BareKey | BASIC_STRING | LITERAL_STRING
 private BareKey ::= BARE_KEY

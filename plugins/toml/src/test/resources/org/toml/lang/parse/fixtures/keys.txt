@@ -97,3 +97,39 @@ TOML File
     PsiWhiteSpace(' ')
     TomlLiteral
       PsiElement(BASIC_STRING)('"value"')
+  PsiWhiteSpace('\n\n')
+  PsiComment(COMMENT)('# INVALID don't parse next key as a value if the value is not provided')
+  PsiWhiteSpace('\n')
+  TomlKeyValue
+    TomlKey
+      PsiElement(BARE_KEY)('key1')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiErrorElement:VALUE expected, got '"key2"'
+      <empty list>
+  PsiWhiteSpace('\n')
+  TomlKeyValue
+    TomlKey
+      PsiElement(BASIC_STRING)('"key2"')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    TomlLiteral
+      PsiElement(BASIC_STRING)('""')
+  PsiWhiteSpace('\n')
+  TomlKeyValue
+    TomlKey
+      PsiElement(BARE_KEY)('key3')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiErrorElement:VALUE expected, got 'key4'
+      <empty list>
+  PsiWhiteSpace('\n')
+  TomlKeyValue
+    TomlKey
+      PsiElement(BARE_KEY)('key4')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    TomlLiteral
+      PsiElement(BASIC_STRING)('""')
