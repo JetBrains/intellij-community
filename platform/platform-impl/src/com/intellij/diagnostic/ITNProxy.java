@@ -1,8 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Multimap;
 import com.intellij.errorreport.bean.ErrorBean;
 import com.intellij.errorreport.error.InternalEAPException;
 import com.intellij.errorreport.error.NoSuchEAPUserException;
@@ -48,7 +46,10 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.List;
 import java.util.function.IntConsumer;
 
 /**
@@ -127,8 +128,7 @@ class ITNProxy {
       ourSslContext = initContext();
     }
 
-    Multimap<String, String> params = createParameters(login, password, error);
-    HttpURLConnection connection = post(new URL(NEW_THREAD_POST_URL), join(params));
+    HttpURLConnection connection = post(new URL(NEW_THREAD_POST_URL), createRequest(login, password, error));
     int responseCode = connection.getResponseCode();
     if (responseCode != HttpURLConnection.HTTP_OK) {
       throw new InternalEAPException(DiagnosticBundle.message("error.http.result.code", responseCode));
@@ -154,83 +154,73 @@ class ITNProxy {
     }
   }
 
-  private static Multimap<String, String> createParameters(String login, String password, ErrorBean error) {
-    Multimap<String, String> params = ArrayListMultimap.create(40, 1);
+  private static byte[] createRequest(String login, String password, ErrorBean error) throws UnsupportedEncodingException {
+    StringBuilder builder = new StringBuilder(8192);
 
-    params.put("protocol.version", "1");
+    append(builder, "protocol.version", "1");
 
-    params.put("user.login", login);
-    params.put("user.password", password);
+    append(builder, "user.login", login);
+    append(builder, "user.password", password);
 
-    params.put("os.name", SystemInfo.OS_NAME);
-    params.put("java.version", SystemInfo.JAVA_VERSION);
-    params.put("java.vm.vendor", SystemInfo.JAVA_VENDOR);
+    append(builder, "os.name", SystemInfo.OS_NAME);
+    append(builder, "java.version", SystemInfo.JAVA_VERSION);
+    append(builder, "java.vm.vendor", SystemInfo.JAVA_VENDOR);
 
     ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
     ApplicationNamesInfo namesInfo = ApplicationNamesInfo.getInstance();
     Application application = ApplicationManager.getApplication();
-    params.put("app.name", namesInfo.getProductName());
-    params.put("app.name.full", namesInfo.getFullProductName());
-    params.put("app.name.version", appInfo.getVersionName());
-    params.put("app.eap", Boolean.toString(appInfo.isEAP()));
-    params.put("app.internal", Boolean.toString(application.isInternal()));
-    params.put("app.build", appInfo.getApiVersion());
-    params.put("app.version.major", appInfo.getMajorVersion());
-    params.put("app.version.minor", appInfo.getMinorVersion());
-    params.put("app.build.date", format(appInfo.getBuildDate()));
-    params.put("app.build.date.release", format(appInfo.getMajorReleaseBuildDate()));
-    params.put("app.compilation.timestamp", IdeaLogger.getOurCompilationTimestamp());
+    append(builder, "app.name", namesInfo.getProductName());
+    append(builder, "app.name.full", namesInfo.getFullProductName());
+    append(builder, "app.name.version", appInfo.getVersionName());
+    append(builder, "app.eap", Boolean.toString(appInfo.isEAP()));
+    append(builder, "app.internal", Boolean.toString(application.isInternal()));
+    append(builder, "app.build", appInfo.getApiVersion());
+    append(builder, "app.version.major", appInfo.getMajorVersion());
+    append(builder, "app.version.minor", appInfo.getMinorVersion());
+    append(builder, "app.build.date", format(appInfo.getBuildDate()));
+    append(builder, "app.build.date.release", format(appInfo.getMajorReleaseBuildDate()));
+    append(builder, "app.compilation.timestamp", IdeaLogger.getOurCompilationTimestamp());
 
     BuildNumber build = appInfo.getBuild();
     String buildNumberWithAllDetails = build.asString();
-    params.put("app.product.code", build.getProductCode());
+    append(builder, "app.product.code", build.getProductCode());
     if (StringUtil.startsWith(buildNumberWithAllDetails, build.getProductCode() + "-")) {
       buildNumberWithAllDetails = buildNumberWithAllDetails.substring(build.getProductCode().length() + 1);
     }
-    params.put("app.build.number", buildNumberWithAllDetails);
+    append(builder, "app.build.number", buildNumberWithAllDetails);
 
     UpdateSettings updateSettings = UpdateSettings.getInstance();
-    params.put("update.channel.status", updateSettings.getSelectedChannelStatus().getCode());
-    params.put("update.ignored.builds", StringUtil.join(updateSettings.getIgnoredBuildNumbers(), ","));
+    append(builder, "update.channel.status", updateSettings.getSelectedChannelStatus().getCode());
+    append(builder, "update.ignored.builds", StringUtil.join(updateSettings.getIgnoredBuildNumbers(), ","));
 
-    params.put("plugin.name", error.getPluginName());
-    params.put("plugin.version", error.getPluginVersion());
+    append(builder, "plugin.name", error.getPluginName());
+    append(builder, "plugin.version", error.getPluginVersion());
 
-    params.put("last.action", error.getLastAction());
-    params.put("previous.exception", error.getPreviousException() == null ? null : Integer.toString(error.getPreviousException()));
+    append(builder, "last.action", error.getLastAction());
+    append(builder, "previous.exception", error.getPreviousException() == null ? null : Integer.toString(error.getPreviousException()));
 
-    params.put("error.message", error.getMessage());
-    params.put("error.stacktrace", error.getStackTrace());
-    params.put("error.description", error.getDescription());
+    append(builder, "error.message", error.getMessage());
+    append(builder, "error.stacktrace", error.getStackTrace());
+    append(builder, "error.description", error.getDescription());
 
-    params.put("assignee.id", error.getAssigneeId() == null ? null : Integer.toString(error.getAssigneeId()));
+    append(builder, "assignee.id", error.getAssigneeId() == null ? null : Integer.toString(error.getAssigneeId()));
 
     for (Attachment attachment : error.getAttachments()) {
-      params.put("attachment.name", attachment.getName());
-      params.put("attachment.value", attachment.getEncodedBytes());
+      append(builder, "attachment.name", attachment.getName());
+      append(builder, "attachment.value", attachment.getEncodedBytes());
     }
 
-    return params;
+    return builder.toString().getBytes(StandardCharsets.UTF_8);
+  }
+
+  private static void append(StringBuilder builder, String key, @Nullable String value) throws UnsupportedEncodingException {
+    if (StringUtil.isEmpty(value)) return;
+    if (builder.length() > 0) builder.append('&');
+    builder.append(key).append('=').append(URLEncoder.encode(value, StandardCharsets.UTF_8.name()));
   }
 
   private static @Nullable String format(@Nullable Calendar calendar) {
     return calendar == null ?  null : Long.toString(calendar.getTime().getTime());
-  }
-
-  private static byte[] join(Multimap<String, String> params) throws UnsupportedEncodingException {
-    StringBuilder builder = new StringBuilder();
-    for (Map.Entry<String, String> param : params.entries()) {
-      if (StringUtil.isEmpty(param.getKey())) {
-        throw new IllegalArgumentException(param.toString());
-      }
-      if (StringUtil.isNotEmpty(param.getValue())) {
-        if (builder.length() > 0) {
-          builder.append('&');
-        }
-        builder.append(param.getKey()).append('=').append(URLEncoder.encode(param.getValue(), StandardCharsets.UTF_8.name()));
-      }
-    }
-    return builder.toString().getBytes(StandardCharsets.UTF_8);
   }
 
   private static HttpURLConnection post(URL url, byte[] bytes) throws IOException {
