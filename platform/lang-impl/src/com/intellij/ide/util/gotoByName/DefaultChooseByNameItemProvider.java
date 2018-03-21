@@ -42,7 +42,9 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
                                 boolean everywhere,
                                 @NotNull final ProgressIndicator indicator,
                                 @NotNull final Processor<Object> consumer) {
-    return filterElements(base, pattern, everywhere, indicator, myContext.getElement(), () -> base.getNames(everywhere), consumer);
+    return filterElements(base, pattern, everywhere, indicator,
+                          myContext == null ? null : myContext.getElement(),
+                          () -> base.getNames(everywhere), consumer);
   }
 
   /**
