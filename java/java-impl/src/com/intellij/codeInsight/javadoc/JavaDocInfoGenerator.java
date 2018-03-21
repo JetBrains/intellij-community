@@ -210,20 +210,6 @@ public class JavaDocInfoGenerator {
     };
   }
 
-  @Nullable
-  public String generateFileInfo() {
-    StringBuilder buffer = new StringBuilder();
-    if (myElement instanceof PsiFile) {
-      generatePrologue(buffer);
-
-      VirtualFile virtualFile = ((PsiFile)myElement).getVirtualFile();
-      if (virtualFile != null) buffer.append(virtualFile.getPresentableUrl());
-
-    }
-
-    return sanitizeHtml(buffer);
-  }
-
   private String sanitizeHtml(StringBuilder buffer) {
     String text = buffer.toString();
     if (text.isEmpty()) return null;
