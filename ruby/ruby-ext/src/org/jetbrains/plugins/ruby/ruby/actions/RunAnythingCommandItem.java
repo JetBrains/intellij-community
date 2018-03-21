@@ -126,7 +126,7 @@ public class RunAnythingCommandItem extends RunAnythingItem<String> {
     }
 
     List<String> commands = ContainerUtil.newArrayList(shell);
-    if (Registry.is("run.anything.bash.login.mode")) {
+    if (Registry.is("run.anything.bash.login.mode", false)) {
       if (!shell.endsWith("/tcsh") && !shell.endsWith("/csh")) {
         commands.add("--login");
       }
