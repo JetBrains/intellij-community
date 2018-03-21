@@ -793,7 +793,9 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       return property;
     }
 
-    if (findMethodByName(name, false, null) != null || findClassAttribute(name, false, null) != null) {
+    if (findMethodByName(name, false, null) != null ||
+        findClassAttribute(name, false, null) != null ||
+        ContainerUtil.notNullize(getOwnSlots()).contains(name)) {
       return null;
     }
 
