@@ -49,7 +49,6 @@ import javax.swing.Icon;
 import javax.swing.JComponent;
 import javax.swing.JScrollPane;
 import javax.swing.JTree;
-import javax.swing.Timer;
 import javax.swing.ToolTipManager;
 import javax.swing.tree.TreePath;
 import java.util.Comparator;
@@ -59,6 +58,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static com.intellij.ui.ScrollPaneFactory.createScrollPane;
 import static com.intellij.util.ArrayUtilRt.EMPTY_STRING_ARRAY;
+import static com.intellij.util.concurrency.EdtExecutorService.getScheduledExecutorInstance;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 public final class ScopeViewPane extends AbstractProjectViewPane {
   @NonNls public static final String ID = "Scope";
@@ -72,7 +73,7 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
     public void scopesChanged() {
       if (myProject.isDisposed()) return;
       long count = counter.incrementAndGet();
-      Timer timer = new Timer(10, event -> {
+      getScheduledExecutorInstance().schedule(() -> {
         // is this request still actual after 10 ms?
         if (count == counter.get()) {
           ProjectView view = myProject.isDisposed() ? null : ProjectView.getInstance(myProject);
@@ -92,9 +93,7 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
             view.changeView(currentId);
           }
         }
-      });
-      timer.setRepeats(false);
-      timer.start();
+      }, 10, MILLISECONDS);
     }
   };
   private final ScopeViewTreeModel myTreeModel;

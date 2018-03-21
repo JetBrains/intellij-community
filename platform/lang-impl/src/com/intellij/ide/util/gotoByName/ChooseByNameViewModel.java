@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project;
 /**
  * @author yole
  */
-public interface ChooseByNameView {
+public interface ChooseByNameViewModel {
   Project getProject();
 
   ChooseByNameModel getModel();
@@ -18,6 +18,4 @@ public interface ChooseByNameView {
   boolean canShowListForEmptyPattern();
 
   int getMaximumListSizeLimit();
-
-  String[] getNames(boolean everywhere);
 }
