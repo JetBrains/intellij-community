@@ -48,7 +48,6 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collection;
 import java.util.List;
 import java.util.function.IntConsumer;
 
@@ -63,8 +62,8 @@ class ITNProxy {
   private static final String NEW_THREAD_POST_URL = "https://ea-report.jetbrains.com/trackerRpc/idea/createScr";
   private static final String NEW_THREAD_VIEW_URL = "https://ea.jetbrains.com/browser/ea_reports/";
 
-  static @NotNull Collection<Developer> fetchDevelopers(@NotNull ProgressIndicator indicator) throws IOException {
-    return HttpRequests.request(DEVELOPERS_LIST_URL).connect((HttpRequests.RequestProcessor<Collection<Developer>>)request -> {
+  static @NotNull List<Developer> fetchDevelopers(@NotNull ProgressIndicator indicator) throws IOException {
+    return HttpRequests.request(DEVELOPERS_LIST_URL).connect(request -> {
       List<Developer> developers = new ArrayList<>();
       developers.add(Developer.NULL);
 

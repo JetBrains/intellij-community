@@ -38,15 +38,14 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.ui.HeaderlessTabbedPane;
 import com.intellij.ui.HyperlinkLabel;
+import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,12 +62,13 @@ import java.util.*;
 import java.util.List;
 
 public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListener, DataProvider {
-  private static final Logger LOG = Logger.getInstance(IdeErrorsDialog.class.getName());
-  private final boolean myInternalMode;
-  @NonNls private static final String ACTIVE_TAB_OPTION = IdeErrorsDialog.class.getName() + "activeTab";
+  private static final Logger LOG = Logger.getInstance(IdeErrorsDialog.class);
+
   public static final DataKey<String> CURRENT_TRACE_KEY = DataKey.create("current_stack_trace_key");
   public static final int COMPONENTS_WIDTH = 670;
-  private static Collection<Developer> ourDevelopersList = Collections.emptyList();
+
+  private static final String ACTIVE_TAB_OPTION = IdeErrorsDialog.class.getName() + "activeTab";
+  private static List<Developer> ourDevelopersList = Collections.emptyList();
 
   private JPanel myContentPane;
   private JPanel myBackButtonPanel;
@@ -90,24 +90,28 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private List<AbstractMessage> myRawMessages;
   private final MessagePool myMessagePool;
   private final Set<AbstractMessage> myMessagesWithIncludedAttachments = new THashSet<>(1);
+  private final boolean myInternalMode;
+  private final @Nullable MessageDigest myDigest;
+  private boolean myMute;
 
-  private HeaderlessTabbedPane myTabs;
-  @Nullable
-  private CommentsTabForm myCommentsTabForm;
+  private @Nullable TabbedPaneWrapper myTabs;
+  private @Nullable CommentsTabForm myCommentsTabForm;
   private DetailsTabForm myDetailsTabForm;
   private AttachmentsTabForm myAttachmentsTabForm;
 
-  private final ClearFatalsAction myClearAction = new ClearFatalsAction();
-  private BlameAction myBlameAction;
-  @Nullable
-  private AnalyzeAction myAnalyzeAction;
-  private boolean myMute;
+  private final ClearErrorsAction myClearAction = new ClearErrorsAction();
+  private final BlameAction myBlameAction = new BlameAction();
+  private @Nullable AnalyzeAction myAnalyzeAction;
 
   public IdeErrorsDialog(MessagePool messagePool, @Nullable LogMessage defaultMessage) {
     super(JOptionPane.getRootFrame(), false);
     myMessagePool = messagePool;
     ApplicationEx app = ApplicationManagerEx.getApplicationEx();
     myInternalMode = app != null && app.isInternal();
+    MessageDigest md5 = null;
+    try { md5 = MessageDigest.getInstance("MD5"); } catch (NoSuchAlgorithmException ignored) { }
+    myDigest = md5;
+
     setTitle(DiagnosticBundle.message("error.list.title"));
     init();
     rebuildHeaders();
@@ -116,6 +120,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
     setCancelButtonText(CommonBundle.message("close.action.name"));
     setModal(false);
+
     if (myInternalMode) {
       if (ourDevelopersList.isEmpty()) {
         loadDevelopersAsynchronously();
@@ -131,7 +136,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
-          Collection<Developer> developers = ITNProxy.fetchDevelopers(indicator);
+          List<Developer> developers = ITNProxy.fetchDevelopers(indicator);
           myDetailsTabForm.setDevelopers(developers);
           //noinspection AssignmentToStaticFieldFromInstanceMethod
           ourDevelopersList = developers;
@@ -146,8 +151,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private boolean moveSelectionToMessage(LogMessage defaultMessage) {
     int index = -1;
     for (int i = 0; i < myMergedMessages.size(); i++) {
-      final AbstractMessage each = getMessageAt(i);
-      if (each == defaultMessage) {
+      AbstractMessage message = myMergedMessages.get(i).get(0);
+      if (message == defaultMessage) {
         index = i;
         break;
       }
@@ -165,6 +170,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   @Override
   public void newEntryAdded() {
+    //noinspection SSBasedInspection
     SwingUtilities.invokeLater(() -> {
       rebuildHeaders();
       updateControls();
@@ -173,27 +179,19 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   @Override
   public void poolCleared() {
+    //noinspection SSBasedInspection
     SwingUtilities.invokeLater(() -> doOKAction());
   }
 
   @Override
-  public void entryWasRead() {
-  }
+  public void entryWasRead() { }
 
   @NotNull
   @Override
   protected Action[] createActions() {
-    if (SystemInfo.isMac) {
-      return new Action[]{getCancelAction(), myClearAction, myBlameAction};
-    }
-    return new Action[]{myClearAction, myBlameAction, getCancelAction()};
-  }
-
-  @Override
-  protected void createDefaultActions() {
-    super.createDefaultActions();
-    myBlameAction = new BlameAction();
     myBlameAction.putValue(DialogWrapper.DEFAULT_ACTION, true);
+    return SystemInfo.isMac ? new Action[]{getCancelAction(), myClearAction, myBlameAction}
+                            : new Action[]{myClearAction, myBlameAction, getCancelAction()};
   }
 
   private class ForwardAction extends AnAction implements DumbAware {
@@ -207,13 +205,13 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      goForward();
+      myIndex++;
+      updateControls();
     }
 
     @Override
     public void update(AnActionEvent e) {
-      Presentation presentation = e.getPresentation();
-      presentation.setEnabled(myIndex < myMergedMessages.size() - 1);
+      e.getPresentation().setEnabled(myIndex < myMergedMessages.size() - 1);
     }
   }
 
@@ -228,13 +226,13 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      goBack();
+      myIndex--;
+      updateControls();
     }
 
     @Override
     public void update(AnActionEvent e) {
-      Presentation presentation = e.getPresentation();
-      presentation.setEnabled(myIndex > 0);
+      e.getPresentation().setEnabled(myIndex > 0);
     }
   }
 
@@ -256,55 +254,51 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     forwardToolbar.getComponent().setBorder(JBUI.Borders.empty());
     myNextButtonPanel.add(forwardToolbar.getComponent(), BorderLayout.CENTER);
 
-    myTabs = new HeaderlessTabbedPane(getDisposable());
-    final LabeledTextComponent.TextListener commentsListener = newText -> {
-      if (myMute) {
-        return;
-      }
-
-      AbstractMessage message = getSelectedMessage();
-      if (message != null) {
-        message.setAdditionalInfo(newText);
+    LabeledTextComponent.TextListener commentsListener = newText -> {
+      if (!myMute) {
+        AbstractMessage message = getSelectedMessage();
+        if (message != null) {
+          message.setAdditionalInfo(newText);
+        }
       }
     };
+
     if (!myInternalMode) {
-      myDetailsTabForm = new DetailsTabForm(null);
       myCommentsTabForm = new CommentsTabForm();
       myCommentsTabForm.addCommentsListener(commentsListener);
-      myTabs.addTab(DiagnosticBundle.message("error.comments.tab.title"), myCommentsTabForm.getContentPane());
+      myDetailsTabForm = new DetailsTabForm(null);
       myDetailsTabForm.setCommentsAreaVisible(false);
+
+      myTabs = new TabbedPaneWrapper(getDisposable());
+      myTabs.addTab(DiagnosticBundle.message("error.comments.tab.title"), myCommentsTabForm.getContentPane());
+      myTabs.addTab(DiagnosticBundle.message("error.details.tab.title"), myDetailsTabForm.getContentPane());
+      myTabsPanel.add(myTabs.getComponent(), BorderLayout.CENTER);
+
+      int activeTabIndex = Integer.parseInt(PropertiesComponent.getInstance().getValue(ACTIVE_TAB_OPTION, "0"));
+      if (activeTabIndex < 0 || activeTabIndex >= myTabs.getTabCount()) activeTabIndex = 0;
+      myTabs.setSelectedIndex(activeTabIndex);
+
+      myTabs.addChangeListener(e -> {
+        JComponent c = getPreferredFocusedComponent();
+        if (c != null) {
+          IdeFocusManager.findInstanceByComponent(myContentPane).requestFocus(c, true);
+        }
+      });
     }
     else {
-      final AnAction analyzePlatformAction = ActionManager.getInstance().getAction("AnalyzeStacktraceOnError");
+      AnAction analyzePlatformAction = ActionManager.getInstance().getAction("AnalyzeStacktraceOnError");
       if (analyzePlatformAction != null) {
         myAnalyzeAction = new AnalyzeAction(analyzePlatformAction);
       }
       myDetailsTabForm = new DetailsTabForm(myAnalyzeAction);
       myDetailsTabForm.setCommentsAreaVisible(true);
       myDetailsTabForm.addCommentsListener(commentsListener);
+      myTabsPanel.add(myDetailsTabForm.getContentPane(), BorderLayout.CENTER);
     }
-
-    myTabs.addTab(DiagnosticBundle.message("error.details.tab.title"), myDetailsTabForm.getContentPane());
 
     myAttachmentsTabForm = new AttachmentsTabForm();
-    myAttachmentsTabForm.addInclusionListener(__ -> updateAttachmentWarning(getSelectedMessage()));
+    myAttachmentsTabForm.addInclusionListener(e -> updateAttachmentWarning(getSelectedMessage()));
     myAttachments.add(myAttachmentsTabForm.getContentPane(), BorderLayout.CENTER);
-
-    int activeTabIndex = Integer.parseInt(PropertiesComponent.getInstance().getValue(ACTIVE_TAB_OPTION, "0"));
-    if (activeTabIndex >= myTabs.getTabCount() || activeTabIndex < 0) {
-      activeTabIndex = 0; // may happen if myInternalMode changed since last open
-    }
-
-    myTabs.setSelectedIndex(activeTabIndex);
-
-    myTabs.addChangeListener(__ -> {
-      final JComponent c = getPreferredFocusedComponent();
-      if (c != null) {
-        IdeFocusManager.findInstanceByComponent(myContentPane).requestFocus(c, true);
-      }
-    });
-
-    myTabsPanel.add(myTabs, BorderLayout.CENTER);
 
     myDisableLink.setHyperlinkText(UIUtil.removeMnemonic(DiagnosticBundle.message("error.list.disable.plugin")));
     myDisableLink.addHyperlinkListener(e -> {
@@ -328,11 +322,11 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     });
 
     myDetailsTabForm.addAssigneeListener(e -> {
-      if (myMute) return;
-
-      AbstractMessage message = getSelectedMessage();
-      if (message != null) {
-        message.setAssigneeId(myDetailsTabForm.getAssigneeId());
+      if (!myMute) {
+        AbstractMessage message = getSelectedMessage();
+        if (message != null) {
+          message.setAssigneeId(myDetailsTabForm.getAssigneeId());
+        }
       }
     });
 
@@ -342,8 +336,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private void moveSelectionToEarliestMessage() {
     myIndex = 0;
     for (int i = 0; i < myMergedMessages.size(); i++) {
-      final AbstractMessage each = getMessageAt(i);
-      if (!each.isRead()) {
+      AbstractMessage message = myMergedMessages.get(i).get(0);
+      if (message != null && !message.isRead()) {
         myIndex = i;
         break;
       }
@@ -353,25 +347,18 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   }
 
   private void disablePlugin() {
-    final PluginId pluginId = findPluginId(getSelectedMessage().getThrowable());
-    if (pluginId != null) {
-      DisablePluginWarningDialog.disablePlugin(pluginId, getRootPane());
+    AbstractMessage message = getSelectedMessage();
+    if (message != null) {
+      PluginId pluginId = findPluginId(message.getThrowable());
+      if (pluginId != null) {
+        DisablePluginWarningDialog.disablePlugin(pluginId, getRootPane());
+      }
     }
-  }
-
-  private void goBack() {
-    myIndex--;
-    updateControls();
-  }
-
-  private void goForward() {
-    myIndex++;
-    updateControls();
   }
 
   private void updateControls() {
     updateCountLabel();
-    final AbstractMessage message = getSelectedMessage();
+    AbstractMessage message = getSelectedMessage();
     updateInfoLabel(message);
     updateCredentialsPane(message);
     updateAssigneePane(message);
@@ -387,38 +374,34 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
   }
 
-  private void updateAttachmentWarning(final AbstractMessage message) {
-    if (message == null) return;
+  private void updateAttachmentWarning(AbstractMessage message) {
+    if (message != null) {
+      if (!myMessagesWithIncludedAttachments.contains(message) &&
+          (myInternalMode || Registry.is("ide.diagnostics.suggest.sending.all.attachments"))) {
+        for (Attachment attachment : message.getAllAttachments()) attachment.setIncluded(true);
+        myMessagesWithIncludedAttachments.add(message);
+      }
 
-    if (!myMessagesWithIncludedAttachments.contains(message) &&
-        (Registry.is("ide.diagnostics.suggest.sending.all.attachments") || myInternalMode)) {
-      for (Attachment attachment : message.getAllAttachments()) attachment.setIncluded(true);
-      myMessagesWithIncludedAttachments.add(message);
-    }
-
-    final List<Attachment> includedAttachments = message.getIncludedAttachments();
-    if (!includedAttachments.isEmpty()) {
-      myAttachmentWarningPanel.setVisible(true);
-      if (includedAttachments.size() == 1) {
-        myAttachmentWarningLabel.setHtmlText(
-          DiagnosticBundle.message("diagnostic.error.report.include.attachment.warning", includedAttachments.get(0).getName()));
+      List<Attachment> includedAttachments = message.getIncludedAttachments();
+      if (!includedAttachments.isEmpty()) {
+        myAttachmentWarningPanel.setVisible(true);
+        if (includedAttachments.size() == 1) {
+          myAttachmentWarningLabel.setHtmlText(
+            DiagnosticBundle.message("diagnostic.error.report.include.attachment.warning", includedAttachments.get(0).getName()));
+        }
+        else {
+          myAttachmentWarningLabel.setHtmlText(
+            DiagnosticBundle.message("diagnostic.error.report.include.attachments.warning", includedAttachments.size()));
+        }
       }
       else {
-        myAttachmentWarningLabel.setHtmlText(
-          DiagnosticBundle.message("diagnostic.error.report.include.attachments.warning", includedAttachments.size()));
+        myAttachmentWarningPanel.setVisible(false);
       }
-    }
-    else {
-      myAttachmentWarningPanel.setVisible(false);
     }
   }
 
   private static boolean canDisablePlugin(AbstractMessage message) {
-    if (message == null) {
-      return false;
-    }
-
-    PluginId pluginId = findPluginId(message.getThrowable());
+    PluginId pluginId = message != null ? findPluginId(message.getThrowable()) : null;
     return pluginId != null && !ApplicationInfoEx.getInstanceEx().isEssentialPlugin(pluginId.getIdString());
   }
 
@@ -427,11 +410,9 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       myCountLabel.setText(DiagnosticBundle.message("error.list.empty"));
     }
     else {
-      myCountLabel
-        .setText(DiagnosticBundle.message("error.list.message.index.count", Integer.toString(myIndex + 1), myMergedMessages.size()));
+      myCountLabel.setText(DiagnosticBundle.message("error.list.message.index.count", Integer.toString(myIndex + 1), myMergedMessages.size()));
     }
   }
-
 
   private void updateCredentialsPane(AbstractMessage message) {
     if (message != null) {
@@ -453,7 +434,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   }
 
   private void updateAssigneePane(AbstractMessage message) {
-    final ErrorReportSubmitter submitter = message != null ? getSubmitter(message.getThrowable()) : null;
+    ErrorReportSubmitter submitter = message != null ? getSubmitter(message.getThrowable()) : null;
     myDetailsTabForm.setAssigneeVisible(submitter instanceof ITNReporter && myInternalMode);
   }
 
@@ -462,7 +443,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       myInfoLabel.setText("");
       return;
     }
-    final Throwable throwable = message.getThrowable();
+    Throwable throwable = message.getThrowable();
     if (throwable instanceof MessagePool.TooManyErrorsException) {
       myInfoLabel.setText("");
       return;
@@ -479,7 +460,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       }
     }
     else {
-      text.append(DiagnosticBundle.message("error.list.message.blame.plugin", PluginManager.getPlugin(pluginId).getName()));
+      IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
+      text.append(DiagnosticBundle.message("error.list.message.blame.plugin", plugin != null ? plugin.getName() : pluginId));
     }
     text.append(" ").append(DiagnosticBundle.message("error.list.message.info",
                                                      DateFormatUtil.formatPrettyDateTime(message.getDate()),
@@ -519,7 +501,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   private void updateForeignPluginLabel(AbstractMessage message) {
     if (message != null) {
-      final Throwable throwable = message.getThrowable();
+      Throwable throwable = message.getThrowable();
       ErrorReportSubmitter submitter = getSubmitter(throwable);
       if (submitter == null) {
         PluginId pluginId = findPluginId(throwable);
@@ -540,23 +522,19 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
             myForeignPluginWarningLabel.setText(DiagnosticBundle.message("error.dialog.foreign.plugin.warning.text"));
           }
           else {
-            myForeignPluginWarningLabel
-              .setHyperlinkText(DiagnosticBundle.message("error.dialog.foreign.plugin.warning.text.vendor") + " ",
-                                contactInfo, ".");
+            String prefix = DiagnosticBundle.message("error.dialog.foreign.plugin.warning.text.vendor") + " ";
+            myForeignPluginWarningLabel.setHyperlinkText(prefix, contactInfo, ".");
             myForeignPluginWarningLabel.setHyperlinkTarget(contactInfo);
           }
         }
         else {
           if (StringUtil.isEmpty(contactInfo)) {
-            myForeignPluginWarningLabel.setText(DiagnosticBundle.message("error.dialog.foreign.plugin.warning.text.vendor") +
-                                                " " + vendor + ".");
+            myForeignPluginWarningLabel.setText(DiagnosticBundle.message("error.dialog.foreign.plugin.warning.text.vendor") + " " + vendor + ".");
           }
           else {
-            myForeignPluginWarningLabel
-              .setHyperlinkText(
-                DiagnosticBundle.message("error.dialog.foreign.plugin.warning.text.vendor") + " " + vendor + " (",
-                contactInfo, ").");
-            final String target = (StringUtil.equals(contactInfo, plugin.getVendorEmail()) ? "mailto:" : "") + contactInfo;
+            String prefix = DiagnosticBundle.message("error.dialog.foreign.plugin.warning.text.vendor") + " " + vendor + " (";
+            myForeignPluginWarningLabel.setHyperlinkText(prefix, contactInfo, ").");
+            String target = (StringUtil.equals(contactInfo, plugin.getVendorEmail()) ? "mailto:" : "") + contactInfo;
             myForeignPluginWarningLabel.setHyperlinkTarget(target);
           }
         }
@@ -570,19 +548,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private void updateTabs() {
     myMute = true;
     try {
-      if (myInternalMode) {
-        boolean hasAttachment = false;
-        for (List<AbstractMessage> merged : myMergedMessages) {
-          final AbstractMessage message = merged.get(0);
-          if (!message.getAllAttachments().isEmpty()) {
-            hasAttachment = true;
-            break;
-          }
-        }
-        myTabs.setHeaderVisible(hasAttachment);
-      }
-
-      final AbstractMessage message = getSelectedMessage();
+      AbstractMessage message = getSelectedMessage();
       if (myCommentsTabForm != null) {
         if (message != null) {
           String msg = message.getMessage();
@@ -628,68 +594,49 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   }
 
   private static String getDetailsText(AbstractMessage message) {
-    final Throwable throwable = message.getThrowable();
-    if (throwable instanceof MessagePool.TooManyErrorsException) {
-      return throwable.getMessage();
-    }
-    return message.getMessage() + "\n" + message.getThrowableText();
+    Throwable t = message.getThrowable();
+    return t instanceof MessagePool.TooManyErrorsException ? t.getMessage() : message.getMessage() + "\n" + message.getThrowableText();
   }
 
   private void rebuildHeaders() {
     myMergedMessages.clear();
     myRawMessages = myMessagePool.getFatalErrors(true, true);
 
-    Map<String, List<AbstractMessage>> hash2Messages = mergeMessages(myRawMessages);
-
-    myMergedMessages.addAll(hash2Messages.values());
+    Map<Number, List<AbstractMessage>> messageGroups = new LinkedHashMap<>();
+    for (AbstractMessage message : myRawMessages) {
+      Number key = digest(StringUtil.getThrowableText(message.getThrowable()));
+      List<AbstractMessage> group = messageGroups.computeIfAbsent(key, k -> new ArrayList<>());
+      group.add(0, message);
+    }
+    myMergedMessages.addAll(messageGroups.values());
   }
 
-  private void markAllAsRead() {
-    for (AbstractMessage each : myRawMessages) {
-      each.setRead(true);
+  private Number digest(String throwableText) {
+    if (myDigest != null) {
+      myDigest.reset();
+      myDigest.update(throwableText.getBytes(StandardCharsets.UTF_8));
+      return new BigInteger(myDigest.digest());
+    }
+    else {
+      return throwableText.hashCode();
     }
   }
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    final int selectedIndex = myTabs.getSelectedIndex();
-    JComponent result = null;
-    if (selectedIndex == 0) {
-      result = myInternalMode ? myDetailsTabForm.getPreferredFocusedComponent() : myCommentsTabForm.getPreferredFocusedComponent();
-    }
-    else if (selectedIndex == 1 && !myInternalMode) {
+    JComponent result;
+    if (myTabs == null || myTabs.getSelectedIndex() > 0 || myCommentsTabForm == null) {
       result = myDetailsTabForm.getPreferredFocusedComponent();
     }
-
-    return result != null ? result : super.getPreferredFocusedComponent();
-  }
-
-  @NotNull
-  private static Map<String, List<AbstractMessage>> mergeMessages(@NotNull List<AbstractMessage> aErrors) {
-    Map<String, List<AbstractMessage>> hash2Messages = new LinkedHashMap<>();
-    for (final AbstractMessage each : aErrors) {
-      final String hashCode = getThrowableHashCode(each.getThrowable());
-      List<AbstractMessage> list;
-      if (hash2Messages.containsKey(hashCode)) {
-        list = hash2Messages.get(hashCode);
-      }
-      else {
-        list = new ArrayList<>();
-        hash2Messages.put(hashCode, list);
-      }
-      list.add(0, each);
+    else {
+      result = myCommentsTabForm.getPreferredFocusedComponent();
     }
-    return hash2Messages;
+    return result != null ? result : super.getPreferredFocusedComponent();
   }
 
   @Nullable
   private AbstractMessage getSelectedMessage() {
-    return getMessageAt(myIndex);
-  }
-
-  private AbstractMessage getMessageAt(int idx) {
-    if (idx < 0 || idx >= myMergedMessages.size()) return null;
-    return myMergedMessages.get(idx).get(0);
+    return myIndex >= 0 && myIndex < myMergedMessages.size() ? myMergedMessages.get(myIndex).get(0) : null;
   }
 
   @Nullable
@@ -715,17 +662,18 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     if (t instanceof NoSuchMethodException) {
       // check is method called from plugin classes
       if (t.getMessage() != null) {
-        String className = "";
+        StringBuilder className = new StringBuilder();
         StringTokenizer tok = new StringTokenizer(t.getMessage(), ".");
         while (tok.hasMoreTokens()) {
           String token = tok.nextToken();
           if (!token.isEmpty() && Character.isJavaIdentifierStart(token.charAt(0))) {
-            className += token;
+            className.append(token);
           }
         }
 
-        if (PluginManagerCore.isPluginClass(className)) {
-          return PluginManagerCore.getPluginByClassName(className);
+        PluginId pluginId = PluginManagerCore.getPluginByClassName(className.toString());
+        if (pluginId != null) {
+          return pluginId;
         }
       }
     }
@@ -741,7 +689,6 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
     else if (t instanceof AbstractMethodError && t.getMessage() != null) {
       String s = t.getMessage();
-      // org.antlr.works.plugin.intellij.PIFileType.getHighlighter(Lcom/intellij/openapi/project/Project;Lcom/intellij/openapi/vfs/VirtualFile;)Lcom/intellij/openapi/fileTypes/SyntaxHighlighter;
       int pos = s.indexOf('(');
       if (pos >= 0) {
         s = s.substring(0, pos);
@@ -754,7 +701,6 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
         }
       }
     }
-
     else if (t instanceof ExtensionException) {
       String className = ((ExtensionException)t).getExtensionClass().getName();
       if (PluginManagerCore.isPluginClass(className)) {
@@ -779,8 +725,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     return msg;
   }
 
-  private class ClearFatalsAction extends AbstractAction {
-    ClearFatalsAction() {
+  private class ClearErrorsAction extends AbstractAction {
+    private ClearErrorsAction() {
       super(DiagnosticBundle.message("error.dialog.clear.action"));
     }
 
@@ -797,7 +743,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   }
 
   private class BlameAction extends AbstractAction {
-    BlameAction() {
+    private BlameAction() {
       super(DiagnosticBundle.message("error.report.to.jetbrains.action"));
     }
 
@@ -818,8 +764,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     @Override
     public void actionPerformed(ActionEvent e) {
       boolean closeDialog = myMergedMessages.size() == 1;
-      final AbstractMessage logMessage = getSelectedMessage();
-      boolean reportingStarted = reportMessage(logMessage, closeDialog);
+      boolean reportingStarted = reportMessage(getSelectedMessage(), closeDialog);
       if (closeDialog) {
         if (reportingStarted) {
           doOKAction();
@@ -831,8 +776,9 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       }
     }
 
-    private boolean reportMessage(final AbstractMessage logMessage, final boolean dialogClosed) {
-      final ErrorReportSubmitter submitter = getSubmitter(logMessage.getThrowable());
+    private boolean reportMessage(AbstractMessage logMessage, boolean dialogClosed) {
+      if (logMessage == null) return false;
+      ErrorReportSubmitter submitter = getSubmitter(logMessage.getThrowable());
       if (submitter == null) return false;
 
       logMessage.setSubmitting(true);
@@ -848,40 +794,43 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
         parentComponent = getContentPane();
       }
 
-      return submitter.submit(
-        getEvents(logMessage), logMessage.getAdditionalInfo(), parentComponent, submittedReportInfo -> {
-          logMessage.setSubmitting(false);
-          logMessage.setSubmitted(submittedReportInfo);
-          ApplicationManager.getApplication().invokeLater(() -> {
-            if (!dialogClosed) {
-              updateOnSubmit();
-            }
-          });
+      return submitter.submit(getEvents(logMessage), logMessage.getAdditionalInfo(), parentComponent, submittedReportInfo -> {
+        logMessage.setSubmitting(false);
+        logMessage.setSubmitted(submittedReportInfo);
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (!dialogClosed) {
+            updateOnSubmit();
+          }
         });
+      });
     }
 
-    private IdeaLoggingEvent[] getEvents(final AbstractMessage logMessage) {
+    private IdeaLoggingEvent[] getEvents(AbstractMessage logMessage) {
       if (logMessage instanceof GroupedLogMessage) {
-        final List<AbstractMessage> messages = ((GroupedLogMessage)logMessage).getMessages();
+        List<AbstractMessage> messages = ((GroupedLogMessage)logMessage).getMessages();
         IdeaLoggingEvent[] res = new IdeaLoggingEvent[messages.size()];
         for (int i = 0; i < res.length; i++) {
           res[i] = getEvent(messages.get(i));
         }
         return res;
       }
-      return new IdeaLoggingEvent[]{getEvent(logMessage)};
+      else {
+        return new IdeaLoggingEvent[]{getEvent(logMessage)};
+      }
     }
 
-    private IdeaLoggingEvent getEvent(final AbstractMessage logMessage) {
+    private IdeaLoggingEvent getEvent(AbstractMessage logMessage) {
       if (logMessage instanceof LogMessageEx) {
         return ((LogMessageEx)logMessage).toEvent();
       }
-      return new IdeaLoggingEvent(logMessage.getMessage(), logMessage.getThrowable()) {
-        @Override
-        public AbstractMessage getData() {
-          return logMessage;
-        }
-      };
+      else {
+        return new IdeaLoggingEvent(logMessage.getMessage(), logMessage.getThrowable()) {
+          @Override
+          public AbstractMessage getData() {
+            return logMessage;
+          }
+        };
+      }
     }
   }
 
@@ -892,7 +841,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   @Override
   public Object getData(String dataId) {
     if (CURRENT_TRACE_KEY.is(dataId)) {
-      final AbstractMessage message = getSelectedMessage();
+      AbstractMessage message = getSelectedMessage();
       if (message != null) {
         return getDetailsText(message);
       }
@@ -901,12 +850,12 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   }
 
   @Nullable
-  static ErrorReportSubmitter getSubmitter(final Throwable throwable) {
+  static ErrorReportSubmitter getSubmitter(Throwable throwable) {
     if (throwable instanceof MessagePool.TooManyErrorsException || throwable instanceof AbstractMethodError) {
       return null;
     }
-    final PluginId pluginId = findPluginId(throwable);
-    final ErrorReportSubmitter[] reporters;
+    PluginId pluginId = findPluginId(throwable);
+    ErrorReportSubmitter[] reporters;
     try {
       reporters = Extensions.getExtensions(ExtensionPoints.ERROR_HANDLER_EP);
     }
@@ -918,7 +867,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       return getCorePluginSubmitter(reporters);
     }
     for (ErrorReportSubmitter reporter : reporters) {
-      final PluginDescriptor descriptor = reporter.getPluginDescriptor();
+      PluginDescriptor descriptor = reporter.getPluginDescriptor();
       if (descriptor != null && Comparing.equal(pluginId, descriptor.getPluginId())) {
         return reporter;
       }
@@ -932,7 +881,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   @Nullable
   private static ErrorReportSubmitter getCorePluginSubmitter(ErrorReportSubmitter[] reporters) {
     for (ErrorReportSubmitter reporter : reporters) {
-      final PluginDescriptor descriptor = reporter.getPluginDescriptor();
+      PluginDescriptor descriptor = reporter.getPluginDescriptor();
       if (descriptor == null || PluginId.getId(PluginManagerCore.CORE_PLUGIN_ID) == descriptor.getPluginId()) {
         return reporter;
       }
@@ -946,39 +895,23 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     super.doOKAction();
   }
 
-  private void onClose() {
-    markAllAsRead();
-    PropertiesComponent.getInstance().setValue(ACTIVE_TAB_OPTION, String.valueOf(myTabs.getSelectedIndex()));
-  }
-
   @Override
   public void doCancelAction() {
     onClose();
     super.doCancelAction();
   }
 
+  private void onClose() {
+    myRawMessages.forEach(each -> each.setRead(true));
+    if (myTabs != null) {
+      PropertiesComponent.getInstance().setValue(ACTIVE_TAB_OPTION, String.valueOf(myTabs.getSelectedIndex()));
+    }
+  }
+
   @Override
+  @SuppressWarnings("SpellCheckingInspection")
   protected String getDimensionServiceKey() {
     return "IdeErrosDialog";
-  }
-
-  private static String getThrowableHashCode(Throwable exception) {
-    try {
-      return md5(StringUtil.getThrowableText(exception), "stack-trace");
-    }
-    catch (NoSuchAlgorithmException e) {
-      LOG.error(e);
-      return "";
-    }
-  }
-
-  @NotNull
-  private static String md5(String buffer, @NonNls String key) throws NoSuchAlgorithmException {
-    MessageDigest md5 = MessageDigest.getInstance("MD5");
-    md5.update(buffer.getBytes(StandardCharsets.UTF_8));
-    byte[] code = md5.digest(key.getBytes(StandardCharsets.UTF_8));
-    BigInteger bi = new BigInteger(code).abs();
-    return bi.abs().toString(16);
   }
 
   private class AnalyzeAction extends AbstractAction {
