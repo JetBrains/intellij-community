@@ -275,6 +275,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
   }
 
   private void reloadTestKindModel() {
+    int selectedIndex = myTypeChooser.getSelectedIndex();
     final DefaultComboBoxModel<Integer> aModel = new DefaultComboBoxModel<>();
     aModel.addElement(JUnitConfigurationModel.ALL_IN_PACKAGE);
     aModel.addElement(JUnitConfigurationModel.DIR);
@@ -300,6 +301,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
       aModel.addElement(JUnitConfigurationModel.BY_SOURCE_CHANGES);
     }
     myTypeChooser.setModel(aModel);
+    myTypeChooser.setSelectedIndex(selectedIndex);
   }
 
   private static void addRadioButtonsListeners(final JRadioButton[] radioButtons, ChangeListener listener) {
