@@ -50,7 +50,8 @@ private BareKey ::= BARE_KEY
   | <<remap 'BARE_KEY_OR_DATE' 'BARE_KEY'>>
 
 
-private Value ::= Literal | Array | InlineTable
+// The last rule (BARE_KEY) used in the case of completion (key=IntellijIdeaRulezzz)
+private Value ::= Literal | Array | InlineTable | BARE_KEY
 
 Literal ::= Number | Date | BOOLEAN
   | BASIC_STRING | LITERAL_STRING
