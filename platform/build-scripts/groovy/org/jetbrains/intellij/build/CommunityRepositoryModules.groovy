@@ -277,7 +277,7 @@ class CommunityRepositoryModules {
       withModule("android.sdktools.builder-model", "sdk-tools.jar")
       withModule("android.sdktools.builder-test-api", "sdk-tools.jar")
       withModule("android.sdktools.android-annotations", "sdk-tools.jar")
-      withModule("intellij.android.layoutInspector", "sdk-tools.jar")
+      withModule("android.sdktools.layoutinspector", "sdk-tools.jar")
 
       withModule("intellij.android.gradle.jps", "jps/android-gradle-jps.jar")
       withModule("intellij.android.jps", "jps/android-jps-plugin.jar")
