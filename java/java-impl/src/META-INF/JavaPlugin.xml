@@ -765,6 +765,11 @@
                      enabledByDefault="true" level="WARNING"
                      key="inspection.redundant.comparator.comparing.display.name" bundle="messages.InspectionsBundle"
                      implementationClass="com.intellij.codeInspection.RedundantComparatorComparingInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="SuspiciousListRemoveInLoop"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs"
+                     enabledByDefault="true" level="WARNING"
+                     key="inspection.suspicious.list.remove.display.name" bundle="messages.InspectionsBundle"
+                     implementationClass="com.intellij.codeInspection.SuspiciousListRemoveInLoopInspection"/>
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="FoldExpressionIntoStream"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.language.level.specific.issues.and.migration.aids8"
                      enabledByDefault="true" level="INFORMATION"
