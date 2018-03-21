@@ -34,6 +34,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -53,6 +55,13 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   private String myName;
   private PluginId myId;
+
+  @Nullable
+  private String myProductCode;
+  @Nullable
+  private Date myReleaseDate;
+  private int myReleaseVersion;
+  
   private String myResourceBundleBaseName;
   private String myChangeNotes;
   private String myVersion;
@@ -175,7 +184,9 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       idString = myName;
     }
     myId = idString == null ? null : PluginId.getId(idString);
-
+    myProductCode = pluginBean.productCode;
+    myReleaseDate = parseReleaseDate(pluginBean);
+    myReleaseVersion = pluginBean.releaseVersion;
     String internalVersionString = pluginBean.formatVersion;
     if (internalVersionString != null) {
       try {
@@ -279,6 +290,20 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     }
   }
 
+  @Nullable
+  private static Date parseReleaseDate(PluginBean bean) {
+    final String dateStr = bean.releaseDate;
+    if (dateStr != null) {
+      try {
+        return new SimpleDateFormat("yyyyMMdd", Locale.US).parse(dateStr);
+      }
+      catch (ParseException e) {
+        LOG.info("Error parse release date from plugin descriptor for plugin " + bean.name + " {" + bean.id + "}: " + e.getMessage());
+      }
+    }
+    return null;
+  }
+
   public static final Pattern EXPLICIT_BIG_NUMBER_PATTERN = Pattern.compile("(.*)\\.(9{4,}+|10{4,}+)");
 
   /**
@@ -327,6 +352,22 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   @Override
   public String getName() {
     return myName;
+  }
+
+  @Nullable
+  @Override
+  public String getProductCode() {
+    return myProductCode;
+  }
+
+  @Nullable
+  @Override
+  public Date getReleaseDate() {
+    return myReleaseDate;
+  }
+
+  public int getReleaseVersion() {
+    return myReleaseVersion;
   }
 
   @Override

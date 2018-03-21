@@ -24,8 +24,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.*;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -39,6 +43,10 @@ public class PluginDownloader {
 
   private final String myPluginId;
   private final String myPluginName;
+  @Nullable
+  private final String myProductCode;
+  private final Date myReleaseDate;
+  private final int myReleaseVersion;
   private final String myDescription;
   private final List<PluginId> myDepends;
 
@@ -54,6 +62,9 @@ public class PluginDownloader {
   private PluginDownloader(IdeaPluginDescriptor descriptor, String url, BuildNumber buildNumber, boolean forceHttps) {
     myPluginId = descriptor.getPluginId().getIdString();
     myPluginName = descriptor.getName();
+    myProductCode = descriptor.getProductCode();
+    myReleaseDate = descriptor.getReleaseDate();
+    myReleaseVersion = descriptor.getReleaseVersion();
     myDescription = descriptor.getDescription();
     myDepends = descriptor instanceof PluginNode ? ((PluginNode)descriptor).getDepends() : Arrays.asList(descriptor.getDependentPluginIds());
 
@@ -77,6 +88,19 @@ public class PluginDownloader {
   @NotNull
   public String getPluginName() {
     return myPluginName != null ? myPluginName : myPluginId;
+  }
+
+  @Nullable
+  public String getProductCode() {
+    return myProductCode;
+  }
+
+  public Date getReleaseDate() {
+    return myReleaseDate;
+  }
+
+  public int getReleaseVersion() {
+    return myReleaseVersion;
   }
 
   @Nullable
@@ -316,6 +340,9 @@ public class PluginDownloader {
 
     PluginNode node = new PluginNode(PluginId.getId(downloader.getPluginId()));
     node.setName(downloader.getPluginName());
+    node.setProductCode(downloader.getProductCode());
+    node.setReleaseDate(downloader.getReleaseDate());
+    node.setReleaseVersion(downloader.getReleaseVersion());
     node.setVersion(downloader.getPluginVersion());
     node.setRepositoryName(host);
     node.setDownloadUrl(downloader.myPluginUrl);
