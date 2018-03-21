@@ -16,6 +16,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -125,8 +126,10 @@ public class RunAnythingCommandItem extends RunAnythingItem<String> {
     }
 
     List<String> commands = ContainerUtil.newArrayList(shell);
-    if (!shell.endsWith("/tcsh") && !shell.endsWith("/csh")) {
-      commands.add("--login");
+    if (Registry.is("run.anything.bash.login.mode")) {
+      if (!shell.endsWith("/tcsh") && !shell.endsWith("/csh")) {
+        commands.add("--login");
+      }
     }
     commands.add("-c");
     return commands;
