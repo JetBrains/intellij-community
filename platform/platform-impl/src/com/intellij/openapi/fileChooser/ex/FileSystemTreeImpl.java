@@ -90,7 +90,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
     if (renderer == null && Registry.is("file.chooser.async.tree.model")) {
       renderer = new FileRenderer().forTree();
       myFileTreeModel = new FileTreeModel(descriptor, new FileRefresher(false, 3, () -> ModalityState.stateForComponent(tree)));
-      myAsyncTreeModel = new AsyncTreeModel(this, myFileTreeModel, false);
+      myAsyncTreeModel = new AsyncTreeModel(myFileTreeModel, false, this);
       myTreeStructure = null;
     }
     else {

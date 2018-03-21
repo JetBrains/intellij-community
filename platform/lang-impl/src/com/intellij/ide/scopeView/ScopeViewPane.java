@@ -109,7 +109,7 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
     myTreeModel = new ScopeViewTreeModel(project, new ProjectViewSettings.Delegate(project, ID));
     myTreeModel.setStructureProvider(CompoundTreeStructureProvider.get(project));
     myTreeModel.setNodeDecorator(CompoundProjectViewNodeDecorator.get(project));
-    myAsyncTreeModel = new AsyncTreeModel(this, myTreeModel, true);
+    myAsyncTreeModel = new AsyncTreeModel(myTreeModel, true, this);
     myDependencyValidationManager.addScopeListener(myScopeListener);
     myNamedScopeManager.addScopeListener(myScopeListener);
     ChangeListManager.getInstance(project).addChangeListListener(new ChangeListAdapter() {

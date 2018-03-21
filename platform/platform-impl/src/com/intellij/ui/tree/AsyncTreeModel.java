@@ -102,7 +102,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
     this.showLoadingNode = showLoadingNode;
   }
 
-  public AsyncTreeModel(@NotNull Disposable parent, @NotNull TreeModel model, boolean showLoadingNode) {
+  public AsyncTreeModel(@NotNull TreeModel model, boolean showLoadingNode, @NotNull Disposable parent) {
     this(model, showLoadingNode);
     Disposer.register(parent, this);
   }

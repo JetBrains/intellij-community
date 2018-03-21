@@ -55,7 +55,7 @@ class AsyncProjectViewSupport {
     myStructureTreeModel = new StructureTreeModel(true);
     myStructureTreeModel.setStructure(structure);
     myStructureTreeModel.setComparator(comparator);
-    myAsyncTreeModel = new AsyncTreeModel(parent, myStructureTreeModel, true);
+    myAsyncTreeModel = new AsyncTreeModel(myStructureTreeModel, true, parent);
     myAsyncTreeModel.setRootImmediately(myStructureTreeModel.getRootImmediately());
     setModel(tree, myAsyncTreeModel);
     MessageBusConnection connection = project.getMessageBus().connect(parent);

@@ -123,7 +123,7 @@ public class TreeTest implements Disposable {
     }
     if (invoker != null) {
       model = new Wrapper.WithInvoker(model, invoker);
-      model = new AsyncTreeModel(invoker, model, showLoadingNode);
+      model = new AsyncTreeModel(model, showLoadingNode, invoker);
     }
     return model;
   }
