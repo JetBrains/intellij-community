@@ -462,6 +462,7 @@ public class ExternalSystemUtil {
           @Override
           public void onStart(@NotNull ExternalSystemTaskId id, String workingDir) {
             long eventTime = System.currentTimeMillis();
+            /* Android Studio: keep "Refresh Gradle project" out of build view; see b/76099171
             AnAction rerunImportAction = new AnAction() {
               @Override
               public void update(@NotNull AnActionEvent e) {
@@ -480,11 +481,14 @@ public class ExternalSystemUtil {
             rerunImportAction.getTemplatePresentation()
               .setDescription(ExternalSystemBundle.message("action.refresh.project.description", systemId));
             rerunImportAction.getTemplatePresentation().setIcon(AllIcons.Actions.Refresh);
+            */
             String message = isPreviewMode ? "creating of the project preview..." : "syncing...";
             ServiceManager.getService(project, SyncViewManager.class).onEvent(
               new StartBuildEventImpl(new DefaultBuildDescriptor(id, projectName, externalProjectPath, eventTime), message)
                 .withProcessHandler(processHandler, null)
+                /* Android Studio: keep "Refresh Gradle project" out of build view; see b/76099171
                 .withRestartAction(rerunImportAction)
+                */
                 .withContentDescriptorSupplier(() -> {
                   if (consoleView == null) {
                     return null;
