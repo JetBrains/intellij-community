@@ -141,7 +141,7 @@ class CommunityLibraryLicenses {
                        url: "http://hc.apache.org/httpcomponents-client-ga/index.html"),
     new LibraryLicense(name: "imgscalr", libraryName: "imgscalr", version: "4.2", license: "Apache 2.0",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt", url: "https://github.com/thebuzzmedia/imgscalr"),
-    new LibraryLicense(name: "batik", libraryName: "batik", version: "1.7.1", license: "Apache 2.0",
+    new LibraryLicense(name: "batik", libraryName: "batik", version: "1.9", license: "Apache 2.0",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt", url: "https://xmlgraphics.apache.org/batik/"),
     new LibraryLicense(name: "xmlgraphics-commons", libraryName: "xmlgraphics-commons", version: "1.5", license: "Apache 2.0",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt", url: "https://xmlgraphics.apache.org/commons/"),
