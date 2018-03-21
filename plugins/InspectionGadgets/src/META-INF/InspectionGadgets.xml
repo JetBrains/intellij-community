@@ -2523,9 +2523,9 @@
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.siyeh.ig.style.ArrayCreationWithoutNewKeywordInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SimplifiableIfStatement" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="simplifiable.if.statement.display.name" groupBundle="messages.InspectionsBundle"
+                     key="inspection.simplifiable.if.statement.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
-                     implementationClass="com.siyeh.ig.j2me.SimplifiableIfStatementInspection"/>
+                     implementationClass="com.siyeh.ig.style.SimplifiableIfStatementInspection"/>
 
     <!--group.names.threading.issues-->
     <localInspection groupPath="Java" language="JAVA" suppressId="AccessToNonThreadSafeStaticField" shortName="AccessToNonThreadSafeStaticFieldFromInstance"
