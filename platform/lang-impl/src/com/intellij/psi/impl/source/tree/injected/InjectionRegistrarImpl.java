@@ -730,8 +730,15 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
       startToLook = newInjectionHostRange.getStartOffset() - oldRootRange.getStartOffset();
       endToLook = newInjectionHostRange.getEndOffset() - oldRootRange.getStartOffset();
     }
-    Identikit.ByType kit = Identikit.fromPsi(oldInjectionHost, hostPsiFile.getLanguage());
-    return (PsiLanguageInjectionHost)kit.findInside(toLookIn, startToLook, endToLook);
+    try {
+      Identikit.ByType kit = Identikit.fromPsi(oldInjectionHost, hostPsiFile.getLanguage());
+      return (PsiLanguageInjectionHost)kit.findInside(toLookIn, startToLook, endToLook);
+    }
+    // JavaParserDefinition.create() throws this.
+    // DO not over-generalize this exception type to avoid swallowing meaningful exceptions
+    catch (IllegalStateException e) {
+      return null;
+    }
   }
 
 
