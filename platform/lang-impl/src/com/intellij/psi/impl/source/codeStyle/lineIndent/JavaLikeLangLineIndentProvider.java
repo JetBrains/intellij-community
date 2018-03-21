@@ -96,9 +96,10 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
         if (position.hasEmptyLineAfter(offset) &&
             !position.after().matchesRule(
               p->p.isAtAnyOf(ArrayClosingBracket, BlockOpeningBrace, BlockClosingBrace, RightParenthesis) || p.isAtEnd()) &&
-            position.findLeftParenthesisBackwardsSkippingNestedEx(LeftParenthesis, RightParenthesis,
-                                                                  self -> self.isAtAnyOf(BlockClosingBrace, BlockOpeningBrace, Semicolon))
-              .isAt(LeftParenthesis)) {
+            position.findLeftParenthesisBackwardsSkippingNestedWithPredicate(
+              LeftParenthesis,
+              RightParenthesis,
+              self -> self.isAtAnyOf(BlockClosingBrace, BlockOpeningBrace, Semicolon)).isAt(LeftParenthesis)) {
           return myFactory.createIndentCalculator(NONE, IndentCalculator.LINE_AFTER);
         }
       }
@@ -229,10 +230,13 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
     }
   }
 
+  /**
+   * Returns the start offset of the statement that owns the code block in {@code position}  
+   * 
+   * @param position the position in the code block
+   */
   protected int getDeepBlockStatementStartOffset(@NotNull SemanticEditorPosition position) {
-    while (!(position.isAt(BlockOpeningBrace) || position.isAtEnd())) {
-      position.moveBefore();
-    }
+    position.moveToLeftParenthesisBackwardsSkippingNested(BlockOpeningBrace, BlockClosingBrace);
     return getBlockStatementStartOffset(position);
   }
 
@@ -309,6 +313,12 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
     return true;
   }
 
+  /**
+   * Returns abstract semantic position in {@code editor} for indent calculation.  
+   * 
+   * @param editor the editor in action   
+   * @param offset the offset in the {@code editor}    
+   */
   public SemanticEditorPosition getPosition(@NotNull Editor editor, int offset) {
     return SemanticEditorPosition.createEditorPosition((EditorEx)editor, offset,
                                                        (_editor, _offset) -> getIteratorAtPosition(_editor, _offset),
