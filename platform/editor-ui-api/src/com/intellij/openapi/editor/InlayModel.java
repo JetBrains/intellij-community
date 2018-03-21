@@ -44,6 +44,20 @@ public interface InlayModel {
   List<Inlay> getInlineElementsInRange(int startOffset, int endOffset);
 
   /**
+   * Tells whether given range of offsets (both sides inclusive) contains at least one inline element.
+   */
+  default boolean hasInlineElementsInRange(int startOffset, int endOffset) {
+    return !getInlineElementsInRange(startOffset, endOffset).isEmpty();
+  }
+
+  /**
+   * Tells whether there exists at least one inline element currently.
+   */
+  default boolean hasInlineElements() {
+    return hasInlineElementsInRange(0, Integer.MAX_VALUE);
+  }
+
+  /**
    * Tells whether there exists an inline visual element at a given offset.
    */
   boolean hasInlineElementAt(int offset);

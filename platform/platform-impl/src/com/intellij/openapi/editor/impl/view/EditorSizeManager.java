@@ -297,7 +297,7 @@ class EditorSizeManager extends InlayModel.SimpleAdapter implements PrioritizedD
     FoldRegion[] topLevelRegions = myEditor.getFoldingModel().fetchTopLevel();
     if (quickEvaluationListener != null &&
         (topLevelRegions == null || topLevelRegions.length == 0) && myEditor.getSoftWrapModel().getRegisteredSoftWraps().isEmpty() &&
-        !myView.getTextLayoutCache().hasCachedLayoutFor(visualLine)) {
+        !myView.getTextLayoutCache().hasCachedLayoutFor(visualLine) && !myEditor.getInlayModel().hasInlineElements()) {
       // fast path - speeds up editor opening
       quickEvaluationListener.run();
       return myView.getLogicalPositionCache().offsetToLogicalColumn(visualLine,
