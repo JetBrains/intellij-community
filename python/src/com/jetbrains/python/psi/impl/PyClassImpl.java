@@ -312,7 +312,17 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     if (stub != null) {
       return stub.getSlots();
     }
-    return PyFileImpl.getStringListFromTargetExpression(PyNames.SLOTS, getClassAttributes());
+
+    final PyTargetExpression slots = ContainerUtil.find(getClassAttributes(), target -> PyNames.SLOTS.equals(target.getName()));
+    if (slots != null) {
+      final PyExpression value = slots.findAssignedValue();
+
+      return value instanceof PyStringLiteralExpression
+             ? Collections.singletonList(((PyStringLiteralExpression)value).getStringValue())
+             : PyUtil.strListValue(value);
+    }
+
+    return null;
   }
 
   @NotNull

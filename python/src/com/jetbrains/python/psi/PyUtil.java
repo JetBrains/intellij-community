@@ -1214,7 +1214,11 @@ public class PyUtil {
     return null;
   }
 
+  /**
+   * @deprecated This method will be removed in 2018.3.
+   */
   @Nullable
+  @Deprecated
   public static List<String> getStringListFromTargetExpression(PyTargetExpression attr) {
     return strListValue(attr.findAssignedValue());
   }
