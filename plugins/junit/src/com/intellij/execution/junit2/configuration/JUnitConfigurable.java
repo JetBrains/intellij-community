@@ -264,9 +264,11 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     myChangeListLabeledComponent.getComponent().setModel(model);
     model.addElement("All");
 
-    final List<LocalChangeList> changeLists = ChangeListManager.getInstance(project).getChangeLists();
-    for (LocalChangeList changeList : changeLists) {
-      model.addElement(changeList.getName());
+    if (!project.isDefault()) {
+      final List<LocalChangeList> changeLists = ChangeListManager.getInstance(project).getChangeLists();
+      for (LocalChangeList changeList : changeLists) {
+        model.addElement(changeList.getName());
+      }
     }
 
     myShortenClasspathModeCombo.setComponent(new ShortenCommandLineModeCombo(myProject, myJrePathEditor, myModule.getComponent()));
