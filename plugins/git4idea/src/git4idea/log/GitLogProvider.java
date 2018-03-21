@@ -330,7 +330,8 @@ public class GitLogProvider implements VcsLogProvider {
       return;
     }
 
-    GitLogUtil.readFullDetails(myProject, root, commitConsumer, ArrayUtil.toStringArray(GitLogUtil.LOG_ALL));
+    GitLogUtil
+      .readFullDetails(myProject, root, commitConsumer, shouldIncludeRootChanges(root), ArrayUtil.toStringArray(GitLogUtil.LOG_ALL));
   }
 
   @Override
@@ -342,7 +343,8 @@ public class GitLogProvider implements VcsLogProvider {
       return;
     }
 
-    GitLogUtil.readFullDetailsForHashes(myProject, root, myVcs, commitConsumer, hashes, GitLogUtil.DiffRenameLimit.GIT_CONFIG);
+    GitLogUtil.readFullDetailsForHashes(myProject, root, myVcs, commitConsumer, hashes, shouldIncludeRootChanges(root),
+                                        GitLogUtil.DiffRenameLimit.GIT_CONFIG);
   }
 
   @Override
@@ -354,8 +356,14 @@ public class GitLogProvider implements VcsLogProvider {
       return;
     }
 
-    GitLogUtil.readFullDetailsForHashes(myProject, root, myVcs, commitConsumer, hashes,
+    GitLogUtil.readFullDetailsForHashes(myProject, root, myVcs, commitConsumer, hashes, shouldIncludeRootChanges(root),
                                         fast ? GitLogUtil.DiffRenameLimit.REGISTRY : GitLogUtil.DiffRenameLimit.INFINITY);
+  }
+
+  private boolean shouldIncludeRootChanges(@NotNull VirtualFile root) {
+    GitRepository repository = getRepository(root);
+    if (repository == null) return true;
+    return !repository.getInfo().isShallow();
   }
 
   @NotNull
