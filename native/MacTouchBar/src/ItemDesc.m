@@ -77,11 +77,12 @@ static NSImage * createImgFrom4ByteRGBA(const unsigned char *bytes, int w, int h
 @end
 
 @implementation PopoverDesc
-- (id)init:(NSString*)text img:(char*)raster width:(int)w height:(int)h {
+- (id)init:(NSString *)text img:(char *)raster imgW:(int)w imgH:(int)h popoverWidth:(int)popW {
     self = [super init];
     if (self) {
         self.img = createImgFrom4ByteRGBA((unsigned char *)raster, w, h);
         self.text = text;
+        self.width = popW;
     }
     return self;
 }

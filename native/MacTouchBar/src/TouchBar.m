@@ -132,10 +132,26 @@ void nslog(NSString* format, ...) {
         NSPopoverTouchBarItem * popoverTouchBarItem = [[[NSPopoverTouchBarItem alloc] initWithIdentifier:pdesc.uid] autorelease];
         popoverTouchBarItem.showsCloseButton = YES;
 
-        if (pdesc.img != nil)
-            popoverTouchBarItem.collapsedRepresentationImage = pdesc.img;
-        if (pdesc.text != nil)
-            popoverTouchBarItem.collapsedRepresentationLabel = pdesc.text;
+        if (pdesc.width <= 0) {
+            // create 'flexible' view
+            if (pdesc.img != nil)
+                popoverTouchBarItem.collapsedRepresentationImage = pdesc.img;
+            if (pdesc.text != nil)
+                popoverTouchBarItem.collapsedRepresentationLabel = pdesc.text;
+        } else {
+            // create fixed width view
+            NSButton *button = [[[NSButton alloc] init] autorelease];
+            [button setImagePosition:NSImageLeft];
+            [button setImage:pdesc.img];
+            [button setTitle:pdesc.text];
+            [button setTarget:popoverTouchBarItem];
+            [button setAction:@selector(showPopover:)];
+
+            [button setBezelStyle:NSRoundedBezelStyle];
+            [button.widthAnchor constraintEqualToConstant:pdesc.width].active = YES;
+
+            popoverTouchBarItem.collapsedRepresentation = button;
+        }
 
         popoverTouchBarItem.popoverTouchBar = pdesc.expandBar.touchBar;
         popoverTouchBarItem.pressAndHoldTouchBar = pdesc.tapHoldBar.touchBar;
@@ -190,8 +206,8 @@ id registerSpacing(id tbobj, char* type) {
     return spdesc;
 }
 
-id registerPopover(id tbobj, char* text, char* raster4ByteRGBA, int w, int h) {
-    PopoverDesc * pdesc = [[[PopoverDesc alloc] init:[NSString stringWithUTF8String:text] img:raster4ByteRGBA width:w height:h] autorelease];
+id registerPopover(id tbobj, char* text, char* raster4ByteRGBA, int ingW, int imgH, int popW) {
+    PopoverDesc * pdesc = [[[PopoverDesc alloc] init:[NSString stringWithUTF8String:text] img:raster4ByteRGBA imgW:ingW imgH:imgH popoverWidth:popW] autorelease];
     [(TouchBar *)tbobj registerItem:pdesc];
     return pdesc;
 }

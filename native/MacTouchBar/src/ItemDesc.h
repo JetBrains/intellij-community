@@ -46,9 +46,10 @@ typedef void (*callback)(void);
     TouchBar * _expandBar;
     TouchBar * _tapAndHoldBar;
 }
-- (id)init:(NSString*)text img:(char*)praster width:(int)w height:(int)h;
+- (id)init:(NSString *)text img:(char *)praster imgW:(int)w imgH:(int)h popoverWidth:(int)popW;
 @property (retain, nonatomic) NSImage * img;
 @property (retain, nonatomic) NSString * text;
 @property (retain, nonatomic) TouchBar * expandBar;
 @property (retain, nonatomic) TouchBar * tapHoldBar;
+@property (nonatomic) int width;
 @end

@@ -83,7 +83,8 @@ public class TouchBarManager {
             myTB.addItem(new TBItemSpacing(TBItemSpacing.TYPE.small));
             myTB.addItem(new TBItemButtonImg(AllIcons.Toolwindows.ToolWindowRun, TBItemCallback.createPrintTextCallback("pressed image button")));
 
-            TBItemPopover popover = new TBItemPopover(AllIcons.Toolwindows.ToolWindowBuild, "test-popover");
+            final int configPopoverWidth = 143;
+            TBItemPopover popover = new TBItemPopover(AllIcons.Toolwindows.ToolWindowBuild, "test-popover", configPopoverWidth);
             myTB.addItem(popover);
 
             TouchBar expandTB = new TouchBar("main_popover_expand");
