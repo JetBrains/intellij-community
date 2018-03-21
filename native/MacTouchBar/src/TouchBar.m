@@ -71,7 +71,8 @@ void nslog(NSString* format, ...) {
         nslog(@"ERROR: passed nil item-descriptor");
         return;
     }
-    idesc.uid = [NSString stringWithFormat:@"%@.%@.%d", _name, [idesc class], _counter++];
+    if (![idesc isKindOfClass:[SpacingDesc class]])
+        idesc.uid = [NSString stringWithFormat:@"%@.%@.%d", _name, [idesc class], _counter++];
     [_items addObject:idesc];
     nslog(@"TRACE: registered item-descriptor '%@' [%@]", [idesc class], idesc.uid);
 }
@@ -181,6 +182,12 @@ id registerButtonImg(id tbobj, char* raster4ByteRGBA, int w, int h, callback act
     ButtonDesc * bdesc = [[[ButtonImgDesc alloc] init:raster4ByteRGBA width:w height:h act:action] autorelease];
     [(TouchBar *)tbobj registerItem:bdesc];
     return bdesc;
+}
+
+id registerSpacing(id tbobj, char* type) {
+    SpacingDesc * spdesc = [[[SpacingDesc alloc] init:[NSString stringWithUTF8String:type]] autorelease];
+    [(TouchBar *)tbobj registerItem:spdesc];
+    return spdesc;
 }
 
 id registerPopover(id tbobj, char* text, char* raster4ByteRGBA, int w, int h) {

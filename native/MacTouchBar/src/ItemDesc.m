@@ -30,6 +30,22 @@ static NSImage * createImgFrom4ByteRGBA(const unsigned char *bytes, int w, int h
 @synthesize uid = _itemId;
 @end
 
+@implementation SpacingDesc
+- (id)init:(NSString *)type {
+    self = [super init];
+    if (self) {
+        if ([type isEqualToString:@"small"]) {
+            self.uid = NSTouchBarItemIdentifierFixedSpaceSmall;
+        } else if ([type isEqualToString:@"large"]) {
+            self.uid = NSTouchBarItemIdentifierFixedSpaceLarge;
+        } else if ([type isEqualToString:@"flexible"]) {
+            self.uid = NSTouchBarItemIdentifierFlexibleSpace;
+        }
+    }
+    return self;
+}
+@end
+
 @implementation ButtonDesc
 - (id)init:(callback)act {
     self = [super init];

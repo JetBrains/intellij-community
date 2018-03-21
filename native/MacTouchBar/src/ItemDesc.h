@@ -11,6 +11,10 @@ typedef void (*callback)(void);
 @property (retain, nonatomic) NSString * uid;
 @end
 
+@interface SpacingDesc : ItemDesc
+- (id)init:(NSString *)type;
+@end
+
 @interface ButtonDesc : ItemDesc
 {
     callback _action;

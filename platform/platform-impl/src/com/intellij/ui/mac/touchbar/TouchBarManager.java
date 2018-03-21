@@ -77,8 +77,10 @@ public class TouchBarManager {
           }
           else if (this == test) {
             myTB = new TouchBar(name());
+            myTB.addItem(new TBItemSpacing(TBItemSpacing.TYPE.large));
             myTB.addItem(new TBItemButtonText("test1", TBItemCallback.createPrintTextCallback("pressed test1 button")));
             myTB.addItem(new TBItemButtonText("test2", TBItemCallback.createPrintTextCallback("pressed test2 button")));
+            myTB.addItem(new TBItemSpacing(TBItemSpacing.TYPE.small));
             myTB.addItem(new TBItemButtonImg(AllIcons.Toolwindows.ToolWindowRun, TBItemCallback.createPrintTextCallback("pressed image button")));
 
             TBItemPopover popover = new TBItemPopover(AllIcons.Toolwindows.ToolWindowBuild, "test-popover");
