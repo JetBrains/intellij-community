@@ -79,12 +79,17 @@ public class NewProjectUtil {
     LOG.debug("builder " + projectBuilder);
 
     try {
-      File projectDir = new File(projectFilePath).getParentFile();
-      LOG.assertTrue(projectDir != null, "Cannot create project in '" + projectFilePath + "': no parent file exists");
-      FileUtil.ensureExists(projectDir);
-      if (wizard.getStorageScheme() == StorageScheme.DIRECTORY_BASED) {
-        FileUtil.ensureExists(new File(projectFilePath, Project.DIRECTORY_STORE_FOLDER));
+      File directoryToCreate = new File(projectFilePath);
+      if (wizard.getStorageScheme() == StorageScheme.DEFAULT) {
+        directoryToCreate = directoryToCreate.getParentFile();
+        if (directoryToCreate == null) {
+          throw new IOException("Cannot create project in '" + projectFilePath + "': no parent file exists");
+        }
       }
+      else if (wizard.getStorageScheme() == StorageScheme.DIRECTORY_BASED) {
+        directoryToCreate = new File(projectFilePath, Project.DIRECTORY_STORE_FOLDER);
+      }
+      FileUtil.ensureExists(directoryToCreate);
 
       Project newProject;
       if (projectBuilder == null || !projectBuilder.isUpdate()) {
