@@ -248,14 +248,15 @@ public class GitLogUtil {
       return;
     }
 
+    DiffRenameLimit renameLimit = DiffRenameLimit.REGISTRY;
     GitLogRecordCollector recordCollector = new GitLogRecordCollector(project, root) {
       @Override
       public void consume(@NotNull List<GitLogRecord> records) {
         assertCorrectNumberOfRecords(records);
-        commitConsumer.consume(createCommit(project, root, records, factory));
+        commitConsumer.consume(createCommit(project, root, records, factory, renameLimit));
       }
     };
-    readRecords(project, root, false, true, DiffRenameLimit.REGISTRY, recordCollector, parameters);
+    readRecords(project, root, false, true, renameLimit, recordCollector, parameters);
     recordCollector.finish();
   }
 
