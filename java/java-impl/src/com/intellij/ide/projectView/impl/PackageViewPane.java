@@ -58,8 +58,6 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import java.util.*;
 
-import static com.intellij.openapi.application.Experiments.isFeatureEnabled;
-
 public class PackageViewPane extends AbstractProjectViewPSIPane {
   @NonNls public static final String ID = "PackagesPane";
   private final MyDeletePSIElementProvider myDeletePSIElementProvider = new MyDeletePSIElementProvider();
@@ -356,6 +354,6 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
 
   @Override
   protected BaseProjectTreeBuilder createBuilder(DefaultTreeModel model) {
-    return isFeatureEnabled("package.view.async.tree.model") ? null : super.createBuilder(model);
+    return null;
   }
 }
