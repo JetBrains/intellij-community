@@ -81,7 +81,7 @@ public class ScratchFileActions {
       Project project = e.getProject();
       if (project == null) return;
 
-      ScratchFileCreationHelper.Context context = createContext(project, e);
+      ScratchFileCreationHelper.Context context = createContext(e, project);
       Consumer<Language> consumer = l -> {
         context.language = l;
         ScratchFileCreationHelper.EXTENSION.forLanguage(context.language).prepareText(
@@ -92,7 +92,7 @@ public class ScratchFileActions {
         consumer.consume(context.language);
       }
       else {
-        LRUPopupBuilder.forFileLanguages(project, null, consumer).showCenteredInCurrentWindow(project);
+        LRUPopupBuilder.forFileLanguages(project, "New " + ActionsBundle.actionText(ACTION_ID), null, consumer).showCenteredInCurrentWindow(project);
       }
     }
 
@@ -126,7 +126,7 @@ public class ScratchFileActions {
     public void actionPerformed(@NotNull AnActionEvent e) {
       Project project = e.getProject();
       if (project == null) return;
-      ScratchFileCreationHelper.Context context = createContext(project, e);
+      ScratchFileCreationHelper.Context context = createContext(e, project);
       context.filePrefix = "buffer";
       context.createOption = ScratchFileService.Option.create_if_missing;
       context.fileCounter = ScratchFileActions::nextBufferIndex;
@@ -136,7 +136,7 @@ public class ScratchFileActions {
   }
 
   @NotNull
-  static ScratchFileCreationHelper.Context createContext(@NotNull Project project, @NotNull AnActionEvent e) {
+  static ScratchFileCreationHelper.Context createContext(@NotNull AnActionEvent e, @NotNull Project project) {
     PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (file == null && editor != null) {
@@ -246,7 +246,7 @@ public class ScratchFileActions {
       JBIterable<VirtualFile> files = JBIterable.of(e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)).
         filter(fileFilter(project));
       if (project == null || files.isEmpty()) return;
-      actionPerformedImpl(e, project, files);
+      actionPerformedImpl(e, project, "Change " + getLanguageTerm(), files);
     }
 
     @NotNull
@@ -255,7 +255,7 @@ public class ScratchFileActions {
     }
 
     @NotNull
-    protected Function<VirtualFile, Language> fileLanguage(final Project project) {
+    protected Function<VirtualFile, Language> fileLanguage(@NotNull Project project) {
       return new Function<VirtualFile, Language>() {
         ScratchFileService fileService = ScratchFileService.getInstance();
 
@@ -267,10 +267,14 @@ public class ScratchFileActions {
       };
     }
 
-    protected void actionPerformedImpl(AnActionEvent e, Project project, JBIterable<VirtualFile> files) {
+    protected void actionPerformedImpl(@NotNull AnActionEvent e,
+                                       @NotNull Project project,
+                                       @NotNull String title,
+                                       @NotNull JBIterable<VirtualFile> files) {
       ScratchFileService fileService = ScratchFileService.getInstance();
       PerFileMappings<Language> mapping = fileService.getScratchesMapping();
-      LRUPopupBuilder.forFileLanguages(project, files, mapping).showInBestPositionFor(e.getDataContext());
+      LRUPopupBuilder.forFileLanguages(project, title, files, mapping)
+                     .showInBestPositionFor(e.getDataContext());
     }
   }
 }

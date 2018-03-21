@@ -21,11 +21,13 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.JBListUpdater;
 import com.intellij.openapi.ui.ListComponentUpdater;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.UsageInfo2UsageAdapter;
@@ -69,6 +71,16 @@ public abstract class BackgroundUpdaterTask extends Task.Backgroundable {
   @TestOnly
   public ListComponentUpdater getUpdater() {
     return myUpdater;
+  }
+
+  /**
+   * @deprecated Use {@link #init(JBPopup, ListComponentUpdater, Ref)} instead
+   */
+  @Deprecated
+  public void init(@NotNull JBPopup popup, @NotNull Object component, @NotNull Ref<UsageView> usageView) {
+    if (component instanceof JBList) {
+      init(popup, new JBListUpdater((JBList)component), usageView);
+    }
   }
 
   public void init(@NotNull JBPopup popup, @NotNull ListComponentUpdater updater, @NotNull Ref<UsageView> usageView) {

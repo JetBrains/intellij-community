@@ -1166,7 +1166,6 @@ class InternalEvaluateExpression(InternalThreadCommand):
             dbg.writer.add_command(cmd)
         except:
             exc = get_exception_traceback_str()
-            sys.stderr.write('%s\n' % (exc,))
             cmd = dbg.cmd_factory.make_error_message(self.sequence, "Error evaluating expression " + exc)
             dbg.writer.add_command(cmd)
 

@@ -343,6 +343,6 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
 
   @Override
   protected BaseProjectTreeBuilder createBuilder(DefaultTreeModel model) {
-    return isFeatureEnabled("package.view.async.tree.model") ? null : super.createBuilder(model);
+    return null;
   }
 }

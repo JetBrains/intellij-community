@@ -17,7 +17,6 @@ import java.io.*;
 
 import static com.intellij.testFramework.PlatformTestUtil.assertTiming;
 import static com.intellij.util.ImageLoader.ImageDesc.Type;
-import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertNotNull;
 import static org.junit.Assume.assumeTrue;
 
@@ -40,7 +39,7 @@ public class IconsLoadTimeTest {
     TestScaleHelper.setProperty("idea.is.internal", "true");
     RegistryValue rv = Registry.get("ide.svg.icon");
     initialSvgProp = rv.asBoolean();
-    rv.setValue(true);
+    if (!initialSvgProp) rv.setValue(true);
   }
 
   @Test

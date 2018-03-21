@@ -1172,6 +1172,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       FileNameMatcher matcher = trinity.getFirst();
       if (type != null) {
         removeAssociation(type, matcher, false);
+        myRemovedMappings.put(matcher, Pair.create(type, trinity.third));
       }
       else {
         myUnresolvedRemovedMappings.put(matcher, Trinity.create(trinity.getSecond(), myUnresolvedMappings.get(matcher), trinity.getThird()));
@@ -1544,6 +1545,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
     myStandardFileTypes.clear();
     myUnresolvedMappings.clear();
+    myRemovedMappings.clear();
     mySchemeManager.setSchemes(Collections.emptyList());
   }
 

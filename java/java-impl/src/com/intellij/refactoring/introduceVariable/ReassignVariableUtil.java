@@ -101,7 +101,7 @@ public class ReassignVariableUtil {
           })
           .setItemChosenCallback((selectedValue) -> replaceWithAssignment(declaration, selectedValue, editor))
           .createPopup();
-        if (ApplicationManager.getApplication().isOnAir()) {
+        if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
           popup.showInBestPositionFor(editor);
         } else {
           final VisualPosition visualPosition = editor.getCaretModel().getVisualPosition();

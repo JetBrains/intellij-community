@@ -12,16 +12,12 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.function.Supplier;
 
-import static com.intellij.openapi.actionSystem.Presentation.PROP_TEXT;
-
-public class ActionPopupStep implements ListPopupStepEx<ActionPopupStep.ActionItem>, MnemonicNavigationFilter<ActionPopupStep.ActionItem>,
-                                        SpeedSearchFilter<ActionPopupStep.ActionItem> {
-  private final List<ActionItem> myItems;
+public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionItem>, MnemonicNavigationFilter<PopupFactoryImpl.ActionItem>,
+                                        SpeedSearchFilter<PopupFactoryImpl.ActionItem> {
+  private final List<PopupFactoryImpl.ActionItem> myItems;
   private final String myTitle;
   private final Supplier<DataContext> myContext;
   private final boolean myEnableMnemonics;
@@ -31,7 +27,7 @@ public class ActionPopupStep implements ListPopupStepEx<ActionPopupStep.ActionIt
   private Runnable myFinalRunnable;
   @Nullable private final Condition<AnAction> myPreselectActionCondition;
 
-  public ActionPopupStep(@NotNull final List<ActionItem> items,
+  public ActionPopupStep(@NotNull final List<PopupFactoryImpl.ActionItem> items,
                          final String title,
                          @NotNull Supplier<DataContext> context,
                          boolean enableMnemonics,
@@ -49,7 +45,7 @@ public class ActionPopupStep implements ListPopupStepEx<ActionPopupStep.ActionIt
   }
 
   private static int getDefaultOptionIndexFromSelectCondition(@Nullable Condition<AnAction> preselectActionCondition,
-                                                              @NotNull List<ActionItem> items) {
+                                                              @NotNull List<PopupFactoryImpl.ActionItem> items) {
     int defaultOptionIndex = 0;
     if (preselectActionCondition != null) {
       for (int i = 0; i < items.size(); i++) {
@@ -76,7 +72,7 @@ public class ActionPopupStep implements ListPopupStepEx<ActionPopupStep.ActionIt
     final ActionStepBuilder builder =
       new ActionStepBuilder(dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics);
     builder.buildGroup(actionGroup);
-    final List<ActionItem> items = builder.getItems();
+    final List<PopupFactoryImpl.ActionItem> items = builder.getItems();
     boolean enableMnemonics = showNumbers ||
                               honorActionMnemonics &&
                               items.stream().anyMatch(actionItem -> actionItem.getAction().getTemplatePresentation().getMnemonic() != 0);
@@ -94,17 +90,17 @@ public class ActionPopupStep implements ListPopupStepEx<ActionPopupStep.ActionIt
 
   @Override
   @NotNull
-  public List<ActionItem> getValues() {
+  public List<PopupFactoryImpl.ActionItem> getValues() {
     return myItems;
   }
 
   @Override
-  public boolean isSelectable(final ActionItem value) {
+  public boolean isSelectable(final PopupFactoryImpl.ActionItem value) {
     return value.isEnabled();
   }
 
   @Override
-  public int getMnemonicPos(final ActionItem value) {
+  public int getMnemonicPos(final PopupFactoryImpl.ActionItem value) {
     final String text = getTextFor(value);
     int i = text.indexOf(UIUtil.MNEMONIC);
     if (i < 0) {
@@ -117,24 +113,24 @@ public class ActionPopupStep implements ListPopupStepEx<ActionPopupStep.ActionIt
   }
 
   @Override
-  public Icon getIconFor(final ActionItem aValue) {
+  public Icon getIconFor(final PopupFactoryImpl.ActionItem aValue) {
     return aValue.getIcon(false);
   }
 
   @Override
-  public Icon getSelectedIconFor(ActionItem value) {
+  public Icon getSelectedIconFor(PopupFactoryImpl.ActionItem value) {
     return value.getIcon(true);
   }
 
   @Override
   @NotNull
-  public String getTextFor(final ActionItem value) {
+  public String getTextFor(final PopupFactoryImpl.ActionItem value) {
     return value.getText();
   }
 
   @Nullable
   @Override
-  public String getTooltipTextFor(ActionItem value) {
+  public String getTooltipTextFor(PopupFactoryImpl.ActionItem value) {
     return value.getDescription();
   }
 
@@ -143,7 +139,7 @@ public class ActionPopupStep implements ListPopupStepEx<ActionPopupStep.ActionIt
   }
 
   @Override
-  public ListSeparator getSeparatorAbove(final ActionItem value) {
+  public ListSeparator getSeparatorAbove(final PopupFactoryImpl.ActionItem value) {
     return value.isPrependWithSeparator() ? new ListSeparator(value.getSeparatorText()) : null;
   }
 
@@ -158,12 +154,12 @@ public class ActionPopupStep implements ListPopupStepEx<ActionPopupStep.ActionIt
   }
 
   @Override
-  public PopupStep onChosen(final ActionItem actionChoice, final boolean finalChoice) {
+  public PopupStep onChosen(final PopupFactoryImpl.ActionItem actionChoice, final boolean finalChoice) {
     return onChosen(actionChoice, finalChoice, 0);
   }
 
   @Override
-  public PopupStep onChosen(ActionItem actionChoice, boolean finalChoice, final int eventModifiers) {
+  public PopupStep onChosen(PopupFactoryImpl.ActionItem actionChoice, boolean finalChoice, final int eventModifiers) {
     if (!actionChoice.isEnabled()) return FINAL_CHOICE;
     final AnAction action = actionChoice.getAction();
     final DataContext dataContext = myContext.get();
@@ -205,7 +201,7 @@ public class ActionPopupStep implements ListPopupStepEx<ActionPopupStep.ActionIt
   }
 
   @Override
-  public boolean hasSubstep(final ActionItem selectedValue) {
+  public boolean hasSubstep(final PopupFactoryImpl.ActionItem selectedValue) {
     return selectedValue != null && selectedValue.isEnabled() && selectedValue.getAction() instanceof ActionGroup;
   }
 
@@ -219,17 +215,17 @@ public class ActionPopupStep implements ListPopupStepEx<ActionPopupStep.ActionIt
   }
 
   @Override
-  public MnemonicNavigationFilter<ActionItem> getMnemonicNavigationFilter() {
+  public MnemonicNavigationFilter<PopupFactoryImpl.ActionItem> getMnemonicNavigationFilter() {
     return this;
   }
 
   @Override
-  public boolean canBeHidden(final ActionItem value) {
+  public boolean canBeHidden(final PopupFactoryImpl.ActionItem value) {
     return true;
   }
 
   @Override
-  public String getIndexedString(final ActionItem value) {
+  public String getIndexedString(final PopupFactoryImpl.ActionItem value) {
     return getTextFor(value);
   }
 
@@ -244,84 +240,7 @@ public class ActionPopupStep implements ListPopupStepEx<ActionPopupStep.ActionIt
   }
 
   @Override
-  public SpeedSearchFilter<ActionItem> getSpeedSearchFilter() {
+  public SpeedSearchFilter<PopupFactoryImpl.ActionItem> getSpeedSearchFilter() {
     return this;
-  }
-
-  public static class ActionItem implements ShortcutProvider {
-    private final AnAction myAction;
-    private String myText;
-    private final boolean myIsEnabled;
-    private final Icon myIcon;
-    private final Icon mySelectedIcon;
-    private final boolean myPrependWithSeparator;
-    private final String mySeparatorText;
-    private final String myDescription;
-
-    ActionItem(@NotNull AnAction action,
-               @NotNull String text,
-               @Nullable String description,
-               boolean enabled,
-               @Nullable Icon icon,
-               @Nullable Icon selectedIcon,
-               final boolean prependWithSeparator,
-               String separatorText) {
-      myAction = action;
-      myText = text;
-      myIsEnabled = enabled;
-      myIcon = icon;
-      mySelectedIcon = selectedIcon;
-      myPrependWithSeparator = prependWithSeparator;
-      mySeparatorText = separatorText;
-      myDescription = description;
-      myAction.getTemplatePresentation().addPropertyChangeListener(new PropertyChangeListener() {
-        @Override
-        public void propertyChange(PropertyChangeEvent evt) {
-          if (evt.getPropertyName() == PROP_TEXT) {
-            myText = myAction.getTemplatePresentation().getText();
-          }
-        }
-      });
-    }
-
-    @NotNull
-    public AnAction getAction() {
-      return myAction;
-    }
-
-    @NotNull
-    public String getText() {
-      return myText;
-    }
-
-    @Nullable
-    public Icon getIcon(boolean selected) {
-      return selected && mySelectedIcon != null ? mySelectedIcon : myIcon;
-    }
-
-    public boolean isPrependWithSeparator() {
-      return myPrependWithSeparator;
-    }
-
-    public String getSeparatorText() {
-      return mySeparatorText;
-    }
-
-    public boolean isEnabled() { return myIsEnabled; }
-
-    public String getDescription() {
-      return myDescription;
-    }
-
-    @Nullable
-    @Override
-    public ShortcutSet getShortcut() {
-      return myAction.getShortcutSet();
-    }
-
-    @Override
-    public String toString() {
-      return myText;
-    }
   }
 }

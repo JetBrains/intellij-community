@@ -146,7 +146,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
             return myActionElementRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
           }
           PsiElementListCellRenderer renderer = getRenderer(value, gotoData);
-          return renderer.getListCellRendererComponent(list, (PsiElement)value, index, isSelected, cellHasFocus);
+          return renderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         }
       }).
       setItemsChosenCallback(selectedElements -> {
@@ -191,7 +191,6 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       HintUpdateSupply.installSimpleHintUpdateSupply(list);
       listR.set(list);
     }
-
 
     JScrollPane pane = builder instanceof PopupChooserBuilder ? ((PopupChooserBuilder)builder).getScrollPane() : null;
     if (pane != null) {

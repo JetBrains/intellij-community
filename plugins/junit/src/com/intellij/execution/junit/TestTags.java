@@ -8,6 +8,7 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
@@ -26,8 +27,8 @@ class TestTags extends TestObject {
     JavaParametersUtil.checkAlternativeJRE(getConfiguration());
     ProgramParametersUtil.checkWorkingDirectoryExist(
       getConfiguration(), getConfiguration().getProject(), getConfiguration().getConfigurationModule().getModule());
-    final String[] tags = getConfiguration().getPersistentData().getTags();
-    if (tags == null || tags.length == 0) {
+    final String tags = getConfiguration().getPersistentData().getTags();
+    if (StringUtil.isEmptyOrSpaces(tags)) {
       throw new RuntimeConfigurationError("Tags are not specified");
     }
     final JavaRunConfigurationModule configurationModule = getConfiguration().getConfigurationModule();
@@ -44,21 +45,19 @@ class TestTags extends TestObject {
    * !1+2 is parsed as !tag
    * IncorrectOperationException is thrown e.g. on unbalanced parenthesis 
    */
-  private void parseAsJavaExpression(String[] tags) throws RuntimeConfigurationWarning {
+  private void parseAsJavaExpression(String tags) throws RuntimeConfigurationWarning {
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(getConfiguration().getProject());
-    for (String tag : tags) {
-      try {
-        PsiExpression expression = elementFactory.createExpressionFromText(tag, null);
-        if (expression instanceof PsiPolyadicExpression) {
-          IElementType tokenType = ((PsiPolyadicExpression)expression).getOperationTokenType();
-          if (tokenType == JavaTokenType.ANDAND || tokenType == JavaTokenType.OROR) {
-            invalidTagException(tag);
-          }
+    try {
+      PsiExpression expression = elementFactory.createExpressionFromText(tags, null);
+      if (expression instanceof PsiPolyadicExpression) {
+        IElementType tokenType = ((PsiPolyadicExpression)expression).getOperationTokenType();
+        if (tokenType == JavaTokenType.ANDAND || tokenType == JavaTokenType.OROR) {
+          invalidTagException(tags);
         }
       }
-      catch (IncorrectOperationException e) {
-        invalidTagException(tag);
-      }
+    }
+    catch (IncorrectOperationException e) {
+      invalidTagException(tags);
     }
   }
 

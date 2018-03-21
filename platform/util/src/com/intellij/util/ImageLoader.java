@@ -219,6 +219,7 @@ public class ImageLoader implements Serializable {
         }
 
         if (dark && retina) {
+          vars.add(new ImageDesc(name + "_dark@2x." + ext, cls, 2d, ImageDesc.Type.PNG));
           vars.add(new ImageDesc(name + "@2x_dark." + ext, cls, 2d, ImageDesc.Type.PNG));
         }
 
