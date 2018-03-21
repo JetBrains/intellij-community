@@ -28,7 +28,15 @@ public class IntentionsUIImpl extends IntentionsUI {
   public void update(@NotNull CachedIntentions cachedIntentions, boolean actionsChanged) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     Editor editor = cachedIntentions.getEditor();
+    if (editor == null) return;
     if (!ApplicationManager.getApplication().isUnitTestMode() && !editor.getContentComponent().hasFocus()) return;
+    if (!actionsChanged) return;
+
+    //IntentionHintComponent hint = myLastIntentionHint;
+    //if (hint != null && hint.getPopupUpdateResult(actionsChanged) == IntentionHintComponent.PopupUpdateResult.CHANGED_INVISIBLE) {
+    //  hint.recreate();
+    //  return;
+    //}
 
     if (!actionsChanged) return;
 

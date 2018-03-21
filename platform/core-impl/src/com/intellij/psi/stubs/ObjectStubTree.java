@@ -54,12 +54,12 @@ public class ObjectStubTree<T extends Stub> {
   }
 
   @NotNull
-  public List<T> getPlainListFromAllRoots() {
+  List<T> getPlainListFromAllRoots() {
     return getPlainList();
   }
 
   @NotNull
-  public Map<StubIndexKey, Map<Object, int[]>> indexStubTree() {
+  Map<StubIndexKey, Map<Object, int[]>> indexStubTree() {
     StubIndexSink sink = new StubIndexSink();
     final List<T> plainList = getPlainListFromAllRoots();
     for (int i = 0, plainListSize = plainList.size(); i < plainListSize; i++) {

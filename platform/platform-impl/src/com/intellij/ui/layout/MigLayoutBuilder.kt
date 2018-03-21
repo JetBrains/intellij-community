@@ -12,14 +12,16 @@ import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.TextFieldWithHistory
 import com.intellij.ui.TextFieldWithHistoryWithBrowseButton
-import com.intellij.ui.components.Label
 import com.intellij.ui.components.noteComponent
 import com.intellij.util.SmartList
 import net.miginfocom.layout.*
 import net.miginfocom.swing.MigLayout
 import java.awt.Component
 import java.awt.Container
-import javax.swing.*
+import javax.swing.ButtonGroup
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
 import javax.swing.text.JTextComponent
 
 /**
@@ -31,17 +33,23 @@ internal class MigLayoutBuilder : LayoutBuilderImpl {
 
   private val componentConstraints: MutableMap<Component, CC> = SmartHashMap()
 
-  override fun newRow(label: JLabel?, buttonGroup: ButtonGroup?, separated: Boolean, indented: Boolean): Row {
+  override fun newRow(label: JLabel?, buttonGroup: ButtonGroup?, separated: Boolean): Row {
+    return newRow(rows, label, buttonGroup, separated)
+  }
+
+  internal fun newRow(rowList: MutableList<MigLayoutRow>, label: JLabel?, buttonGroup: ButtonGroup? = null, separated: Boolean = false): Row {
     if (separated) {
       val row = MigLayoutRow(componentConstraints, this, noGrid = true, separated = true)
-      rows.add(row)
+      rowList.add(row)
       row.apply { SeparatorComponent(0, OnePixelDivider.BACKGROUND, null)() }
     }
 
-    val row = MigLayoutRow(componentConstraints, this, label != null, buttonGroup = buttonGroup, indented = indented)
-    rows.add(row)
+    val row = MigLayoutRow(componentConstraints, this, label != null, buttonGroup = buttonGroup)
+    rowList.add(row)
 
-    label?.let { row.apply { label() } }
+    if (label != null) {
+      row.apply { label() }
+    }
 
     return row
   }
@@ -56,10 +64,9 @@ internal class MigLayoutBuilder : LayoutBuilderImpl {
   }
 
   override fun build(container: Container, layoutConstraints: Array<out LCFlags>) {
-    val labeled = rows.firstOrNull({ it.labeled && !it.indented }) != null
     var gapTop = -1
 
-    val lc = c()
+    val lc = createLayoutConstraints()
     if (layoutConstraints.isEmpty()) {
       lc.fillX()
       // not fillY because it leads to enormously large cells - we use cc `push` in addition to cc `grow` as a more robust and easy solution
@@ -71,16 +78,18 @@ internal class MigLayoutBuilder : LayoutBuilderImpl {
     lc.noVisualPadding()
     lc.hideMode = 3
 
-    container.layout = MigLayout(lc)
+    val columnConstraints = AC()
+    var columnIndex = 0
+    container.layout = MigLayout(lc, columnConstraints)
 
-    val noGrid = layoutConstraints.contains(LCFlags.noGrid)
+    val isNoGrid = layoutConstraints.contains(LCFlags.noGrid)
 
-    for (row in rows) {
+    fun configureComponents(row: MigLayoutRow, prevRow: MigLayoutRow?, isSubRow: Boolean, isLabeled: Boolean) {
       val lastComponent = row.components.lastOrNull()
       if (lastComponent == null) {
-        if (row === rows.first()) {
+        if (prevRow == null) {
           // do not add gap for the first row
-          continue
+          return
         }
 
         // https://goo.gl/LDylKm
@@ -100,60 +109,93 @@ internal class MigLayoutBuilder : LayoutBuilderImpl {
 
         addGrowIfNeed(cc, component)
 
-        if (!noGrid) {
-          if (component === lastComponent) {
-            isSplitRequired = false
-            cc.wrap()
-          }
+        if (isNoGrid) {
+          container.add(component, cc)
+          continue
+        }
 
-          if (row.noGrid) {
-            if (component === row.components.first()) {
-              // rowConstraints.noGrid() doesn't work correctly
+        if (component === lastComponent) {
+          isSplitRequired = false
+          cc.wrap()
+
+          if (isLabeled) {
+            columnConstraints.grow(100f, columnIndex++)
+          }
+        }
+
+        if (row.noGrid) {
+          if (component === row.components.first()) {
+            // rowConstraints.noGrid() doesn't work correctly
+            cc.spanX()
+            if (row.separated) {
+              cc.vertical.gapBefore = gapToBoundSize(VERTICAL_GAP * 3, false)
+              cc.vertical.gapAfter = gapToBoundSize(VERTICAL_GAP * 2, false)
+            }
+          }
+        }
+        else {
+          var isSkippableComponent = true
+          if (component === row.components.first()) {
+            val isHintComponent = component.getClientProperty(COMPONENT_TAG_HINT) == true
+            if ((isSubRow && !isHintComponent) || (isHintComponent && prevRow != null && !prevRow.labeled)) {
+              cc.horizontal.gapBefore = gapToBoundSize(HORIZONTAL_GAP * 3, true)
+            }
+
+            if (isLabeled) {
+              if (row.labeled) {
+                isSkippableComponent = false
+              }
+              else {
+                cc.skip()
+              }
+            }
+
+            if (row.components.size == 1) {
               cc.spanX()
-              if (row.separated) {
-                cc.vertical.gapBefore = gapToBoundSize(VERTICAL_GAP * 3, false)
-                cc.vertical.gapAfter = gapToBoundSize(VERTICAL_GAP * 2, false)
-              }
-            }
-          }
-          else {
-            var isSkippableComponent = true
-            if (component === row.components.first()) {
-              if (row.indented) {
-                cc.horizontal.gapBefore = gapToBoundSize(HORIZONTAL_GAP * 3, true)
-              }
-
-              if (labeled) {
-                if (row.labeled) {
-                  isSkippableComponent = false
-                }
-                else {
-                  cc.skip()
-                }
-              }
-            }
-
-            if (isSkippableComponent) {
-              if (isSplitRequired) {
-                isSplitRequired = false
-                cc.split()
-              }
-
-              // do not add gap if next component is gear action button
-              if (component !== lastComponent && !row.components.get(index + 1).let { it is JLabel && it.icon === AllIcons.General.Gear }) {
-                cc.horizontal.gapAfter = gapToBoundSize(HORIZONTAL_GAP * 2, true)
-              }
             }
           }
 
-          if (index >= row.rightIndex) {
-            cc.horizontal.gapBefore = BoundSize(null, null, null, true, null)
+          if (isSkippableComponent) {
+            if (isSplitRequired) {
+              isSplitRequired = false
+              cc.split()
+            }
+
+            // do not add gap if next component is gear action button
+            if (component !== lastComponent && !row.components.get(index + 1).let { it is JLabel && it.icon === AllIcons.General.Gear }) {
+              cc.horizontal.gapAfter = gapToBoundSize(HORIZONTAL_GAP * 2, true)
+            }
           }
+        }
+
+        if (index >= row.rightIndex) {
+          cc.horizontal.gapBefore = BoundSize(null, null, null, true, null)
         }
 
         container.add(component, cc)
       }
     }
+
+    fun processRows(rows: List<MigLayoutRow>, isSubRow: Boolean) {
+      val isLabeled = rows.firstOrNull(MigLayoutRow::labeled) != null
+      var prevRow: MigLayoutRow? = null
+      for (row in rows) {
+        columnIndex = 0
+
+        if (isLabeled) {
+          columnConstraints.grow(0f, columnIndex++)
+        }
+
+        configureComponents(row, prevRow, isSubRow, isLabeled)
+        row._subRows?.let {
+          processRows(it, true)
+        }
+
+        prevRow = row
+      }
+    }
+
+    processRows(rows, false)
 
     // do not hold components
     componentConstraints.clear()
@@ -174,160 +216,23 @@ private fun addGrowIfNeed(cc: CC, component: Component) {
   }
 }
 
-private class MigLayoutRow(private val componentConstraints: MutableMap<Component, CC>,
-                           override val builder: LayoutBuilderImpl,
-                           val labeled: Boolean = false,
-                           val noGrid: Boolean = false,
-                           private val buttonGroup: ButtonGroup? = null,
-                           val separated: Boolean = false,
-                           val indented: Boolean = false) : Row() {
-  val components = SmartList<Component>()
-  var rightIndex = Int.MAX_VALUE
-
-  private var _subRows: MutableList<Row>? = null
-
-  override val subRows: List<Row>
-    get() = _subRows ?: emptyList()
-
-  override var enabled: Boolean = true
-    set(value) {
-      if (field == value) {
-        return
-      }
-
-      field = value
-      for (c in components) {
-        c.isEnabled = value
-      }
-    }
-
-  override var visible: Boolean = true
-    set(value) {
-      if (field == value) {
-        return
-      }
-
-      field = value
-      for (c in components) {
-        c.isVisible = value
-      }
-    }
-
-  override var subRowsEnabled: Boolean = true
-    set(value) {
-      if (field == value) {
-        return
-      }
-
-      field = value
-      _subRows?.forEach { it.enabled = value }
-    }
-
-  override var subRowsVisible: Boolean = true
-    set(value) {
-      if (field == value) {
-        return
-      }
-
-      field = value
-      _subRows?.forEach { it.visible = value }
-    }
-
-  override operator fun JComponent.invoke(vararg constraints: CCFlags, gapLeft: Int, growPolicy: GrowPolicy?) {
-    addComponent(this, constraints, gapLeft = gapLeft, growPolicy = growPolicy)
-  }
-
-  private fun addComponent(component: Component, constraints: Array<out CCFlags>, gapLeft: Int, growPolicy: GrowPolicy?) {
-    if (buttonGroup != null && component is JToggleButton) {
-      buttonGroup.add(component)
-    }
-
-    createComponentConstraints(constraints, gapLeft = gapLeft, growPolicy = growPolicy)?.let {
-      componentConstraints.put(component, it)
-    }
-    components.add(component)
-  }
-
-  override fun alignRight() {
-    if (rightIndex != Int.MAX_VALUE) {
-      throw IllegalStateException("right allowed only once")
-    }
-    rightIndex = components.size
-  }
-
-  override fun createRow(label: String?): Row {
-    val row = builder.newRow(label?.let { Label(it) }, indented = true)
-    if (_subRows == null) {
-      _subRows = SmartList()
-    }
-    _subRows!!.add(row)
-    return row
-  }
-}
-
-private fun createComponentConstraints(constraints: Array<out CCFlags>? = null,
-                                       gapLeft: Int = 0,
-                                       gapAfter: Int = 0,
-                                       gapTop: Int = 0,
-                                       gapBottom: Int = 0,
-                                       split: Int = -1,
-                                       growPolicy: GrowPolicy?): CC? {
-  var _cc = constraints?.create()
-  fun cc(): CC {
-    if (_cc == null) {
-      _cc = CC()
-    }
-    return _cc!!
-  }
-
-  if (gapLeft != 0) {
-    cc().horizontal.gapBefore = gapToBoundSize(gapLeft, true)
-  }
-  if (gapAfter != 0) {
-    cc().horizontal.gapAfter = gapToBoundSize(gapAfter, true)
-  }
-
-  if (gapTop != 0) {
-    cc().vertical.gapBefore = gapToBoundSize(gapTop, false)
-  }
-  if (gapBottom != 0) {
-    cc().vertical.gapAfter = gapToBoundSize(gapBottom, false)
-  }
-
-  if (split != -1) {
-    cc().split = split
-  }
-
-  if (growPolicy == GrowPolicy.SHORT_TEXT) {
-    cc().maxWidth("210")
-  }
-  else if (growPolicy == GrowPolicy.MEDIUM_TEXT) {
-    cc().minWidth("210")
-    cc().maxWidth("350")
-  }
-
-  return _cc
-}
-
-private fun gapToBoundSize(value: Int, isHorizontal: Boolean): BoundSize {
+internal fun gapToBoundSize(value: Int, isHorizontal: Boolean): BoundSize {
   val unitValue = UnitValue(value.toFloat(), "", isHorizontal, UnitValue.STATIC, null)
   return BoundSize(unitValue, unitValue, null, false, null)
 }
 
 // default values differs to MigLayout - IntelliJ Platform defaults are used
 // see com.intellij.uiDesigner.core.AbstractLayout.DEFAULT_HGAP and DEFAULT_VGAP (multiplied by 2 to achieve the same look (it seems in terms of MigLayout gap is both left and right space))
-private fun c(insets: String? = "0", gridGapX: Int = HORIZONTAL_GAP * 2, gridGapY: Int = VERTICAL_GAP): LC {
+private fun createLayoutConstraints(gridGapX: Int = HORIZONTAL_GAP * 2, gridGapY: Int = VERTICAL_GAP): LC {
   // no setter for gap, so, create string to parse
   val lc = LC()
   lc.gridGapX = gapToBoundSize(gridGapX, true)
   lc.gridGapY = gapToBoundSize(gridGapY, false)
-  insets?.let {
-    lc.insets(it)
-  }
+  lc.insets = ConstraintParser.parseInsets("0", true)
   return lc
 }
 
-private fun Array<out CCFlags>.create() = if (isEmpty()) null else CC().apply(this)
+internal fun Array<out CCFlags>.create() = if (isEmpty()) null else CC().apply(this)
 
 private fun CC.apply(flags: Array<out CCFlags>): CC {
   for (flag in flags) {

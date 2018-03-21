@@ -76,10 +76,13 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
       ThreadState state = copy.get(i);
       ThreadState.CompoundThreadState compound = new ThreadState.CompoundThreadState(state);
       myMergedThreadDump.add(compound);
-      for (int j = i+1; j < copy.size(); j++) {
+      for (int j = i + 1; j < copy.size(); ) {
         ThreadState toAdd = copy.get(j);
         if (compound.add(toAdd)) {
           copy.remove(j);
+        }
+        else {
+          j++;
         }
       }
     }

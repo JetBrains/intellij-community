@@ -2,15 +2,13 @@
 package com.intellij.structuralsearch.impl.matcher.predicates;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.MatchResult;
-import com.intellij.structuralsearch.SSRBundle;
-import com.intellij.structuralsearch.StructuralSearchException;
+import com.intellij.structuralsearch.StructuralSearchScriptException;
 import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
-import com.intellij.util.ObjectUtils;
 import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
 import groovy.lang.Script;
@@ -106,9 +104,12 @@ public class ScriptSupport {
       final Object o = script.run();
       return String.valueOf(o);
     }
-    catch (RuntimeException ex) {
-      String message = SSRBundle.message("groovy.script.error", StringUtil.replace(ObjectUtils.notNull(ex.getMessage(), ""), UUID, ""));
-      throw new StructuralSearchException(message);
+    catch (ThreadDeath | ProcessCanceledException t) {
+      throw t;
+    }
+    catch (Throwable t) {
+      Logger.getInstance(ScriptSupport.class).warn("Exception thrown by Structural Search Groovy Script", t);
+      throw new StructuralSearchScriptException(t);
     }
     finally {
       script.setBinding(null);

@@ -17,6 +17,7 @@ package com.intellij.openapi.fileTypes;
 
 import com.intellij.internal.statistic.CollectUsagesException;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
+import com.intellij.internal.statistic.collectors.legacy.fileTypes.LegacyFileTypeUsagesCollector;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -32,7 +33,7 @@ import java.util.Set;
 public class FileTypeUsagesCollectorTest extends LightPlatformCodeInsightFixtureTestCase {
 
   private void doTest(@NotNull Collection<FileType> fileTypes) throws CollectUsagesException {
-    final Set<UsageDescriptor> usages = new FileTypeUsagesCollector().getProjectUsages(getProject());
+    final Set<UsageDescriptor> usages = new LegacyFileTypeUsagesCollector().getProjectUsages(getProject());
     for (UsageDescriptor usage : usages) {
       assertEquals(1, usage.getValue());
     }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl;
 
 import com.intellij.diagnostic.PerformanceWatcher;
@@ -70,7 +56,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-class SearchForUsagesRunnable implements Runnable {
+public class SearchForUsagesRunnable implements Runnable {
   @NonNls private static final String FIND_OPTIONS_HREF_TARGET = "FindOptions";
   @NonNls private static final String SEARCH_IN_PROJECT_HREF_TARGET = "SearchInProject";
   @NonNls private static final String LARGE_FILES_HREF_TARGET = "LargeFiles";
@@ -308,20 +294,23 @@ class SearchForUsagesRunnable implements Runnable {
     if (usageView != null) return usageView;
     int usageCount = myUsageCountWithoutDefinition.get();
     if (usageCount >= 2 || usageCount == 1 && myProcessPresentation.isShowPanelIfOnlyOneUsage()) {
-      usageView = myUsageViewManager.createEmptyUsageView(mySearchFor, myPresentation, mySearcherFactory);
+      usageView = myUsageViewManager.createUsageView(mySearchFor, Usage.EMPTY_ARRAY, myPresentation, mySearcherFactory);
       usageView.associateProgress(indicator);
       if (myUsageViewRef.compareAndSet(null, usageView)) {
         if (myProcessPresentation.isShowFindOptionsPrompt()) {
           openView(usageView);
         }
         else {
-          UsageViewEx finalView = usageView;
-          SwingUtilities.invokeLater(() -> {
-            if (myProject.isDisposed()) return;
-            if (myListener != null) {
-              myListener.usageViewCreated(finalView);
-            }
-          });
+          if (myListener != null) {
+            SwingUtilities.invokeLater(() -> {
+              if (!myProject.isDisposed()) {
+                UsageViewEx uv = myUsageViewRef.get();
+                if (uv != null) {
+                  myListener.usageViewCreated(uv);
+                }
+              }
+            });
+          }
         }
         final Usage firstUsage = myFirstUsage.get();
         if (firstUsage != null) {
@@ -424,32 +413,34 @@ class SearchForUsagesRunnable implements Runnable {
   private void endSearchForUsages(@NotNull final AtomicBoolean findStartedBalloonShown) {
     assert !ApplicationManager.getApplication().isDispatchThread() : Thread.currentThread();
     int usageCount = myUsageCountWithoutDefinition.get();
-    if (usageCount == 0 && myProcessPresentation.isShowNotFoundMessage()) {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        if (myProcessPresentation.isCanceled()) {
-          notifyByFindBalloon(null, MessageType.WARNING, Collections.singletonList("Usage search was canceled"));
+    if (usageCount == 0) {
+      if (myProcessPresentation.isShowNotFoundMessage()) {
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (myProcessPresentation.isCanceled()) {
+            notifyByFindBalloon(null, MessageType.WARNING, Collections.singletonList("Usage search was canceled"));
+            findStartedBalloonShown.set(false);
+            return;
+          }
+
+          final String message = UsageViewBundle.message("dialog.no.usages.found.in",
+                                                         StringUtil.decapitalize(myPresentation.getUsagesString()),
+                                                         myPresentation.getScopeText(),
+                                                         myPresentation.getContextText()
+          );
+
+          List<String> lines = new ArrayList<>();
+          lines.add(StringUtil.escapeXml(message));
+          if (myOutOfScopeUsages.get() != 0) {
+            lines.add(UsageViewManagerImpl.outOfScopeMessage(myOutOfScopeUsages.get(), mySearchScopeToWarnOfFallingOutOf));
+          }
+          if (myProcessPresentation.isShowFindOptionsPrompt()) {
+            lines.add(createOptionsHtml(mySearchFor));
+          }
+          MessageType type = myOutOfScopeUsages.get() == 0 ? MessageType.INFO : MessageType.WARNING;
+          notifyByFindBalloon(createGotToOptionsListener(mySearchFor), type, lines);
           findStartedBalloonShown.set(false);
-          return;
-        }
-
-        final String message = UsageViewBundle.message("dialog.no.usages.found.in",
-                                                       StringUtil.decapitalize(myPresentation.getUsagesString()),
-                                                       myPresentation.getScopeText(),
-                                                       myPresentation.getContextText()
-                                                       );
-
-        List<String> lines = new ArrayList<>();
-        lines.add(StringUtil.escapeXml(message));
-        if (myOutOfScopeUsages.get() != 0) {
-          lines.add(UsageViewManagerImpl.outOfScopeMessage(myOutOfScopeUsages.get(), mySearchScopeToWarnOfFallingOutOf));
-        }
-        if (myProcessPresentation.isShowFindOptionsPrompt()) {
-          lines.add(createOptionsHtml(mySearchFor));
-        }
-        MessageType type = myOutOfScopeUsages.get() == 0 ? MessageType.INFO : MessageType.WARNING;
-        notifyByFindBalloon(createGotToOptionsListener(mySearchFor), type, lines);
-        findStartedBalloonShown.set(false);
-      }, ModalityState.NON_MODAL, myProject.getDisposed());
+        }, ModalityState.NON_MODAL, myProject.getDisposed());
+      }
     }
     else if (usageCount == 1 && !myProcessPresentation.isShowPanelIfOnlyOneUsage()) {
       ApplicationManager.getApplication().invokeLater(() -> {

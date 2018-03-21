@@ -610,6 +610,9 @@ public class DuplicatesFinder {
     if (!myWithExtractedParameters || !(pattern instanceof PsiReferenceExpression) || !(candidate instanceof PsiReferenceExpression)) {
       return false;
     }
+    if (myPattern.length == 1 && myPattern[0] == pattern) {
+      return false;
+    }
     ExtractableExpressionPart part1 = ExtractableExpressionPart.matchVariable((PsiReferenceExpression)pattern, null);
     if (part1 == null || part1.myVariable == null) {
       return false;

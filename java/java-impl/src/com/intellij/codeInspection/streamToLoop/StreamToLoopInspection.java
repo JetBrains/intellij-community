@@ -502,6 +502,22 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
       return name;
     }
 
+    public boolean tryUnwrapOrElse(@NotNull Number wantedValue) {
+      if (!(myStreamExpression instanceof PsiExpression)) return false;
+      PsiMethodCallExpression call = ExpressionUtils.getCallForQualifier((PsiExpression)myStreamExpression);
+      if (call == null ||
+          call.getParent() instanceof PsiExpressionStatement ||
+          !"orElse".equals(call.getMethodExpression().getReferenceName())) {
+        return false;
+      }
+      PsiExpression[] args = call.getArgumentList().getExpressions();
+      if (args.length == 1 && wantedValue.equals(ExpressionUtils.computeConstantExpression(args[0]))) {
+        myStreamExpression = call;
+        return true;
+      }
+      return false;
+    }
+
     private static boolean isCompatibleType(@NotNull PsiVariable var, @NotNull PsiType type, @Nullable String mostAbstractAllowedType) {
       if (EquivalenceChecker.getCanonicalPsiEquivalence().typesAreEquivalent(var.getType(), type)) return true;
       if (mostAbstractAllowedType == null) return false;

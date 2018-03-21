@@ -3,13 +3,14 @@ package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiPackage
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyPolyVariantReference
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyReference
 
-fun referenceArray(right: GroovyPolyVariantReference?, left: GroovyPolyVariantReference?): Array<out GroovyPolyVariantReference> {
+fun referenceArray(right: GroovyReference?, left: GroovyReference?): Array<out GroovyReference> {
   return if (left == null) {
     if (right == null) {
-      GroovyPolyVariantReference.EMPTY_ARRAY
+      GroovyReference.EMPTY_ARRAY
     }
     else {
       arrayOf(right)
@@ -28,6 +29,11 @@ fun referenceArray(right: GroovyPolyVariantReference?, left: GroovyPolyVariantRe
 fun GrReferenceElement<*>.resolveClassFqn(): PsiClass? {
   val fqn = qualifiedReferenceName ?: return null
   return JavaPsiFacade.getInstance(project).findClass(fqn, resolveScope)
+}
+
+fun GrReferenceElement<*>.resolvePackageFqn(): PsiPackage? {
+  val fqn = qualifiedReferenceName ?: return null
+  return JavaPsiFacade.getInstance(project).findPackage(fqn)
 }
 
 /**

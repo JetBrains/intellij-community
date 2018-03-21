@@ -19,6 +19,7 @@ import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -198,7 +199,7 @@ public class ExtractLightMethodObjectHandler {
     PsiStatement outStatement = elementFactory.createStatementFromText("System.out.println(" + outputVariables + ");", anchor);
     outStatement = (PsiStatement)container.addAfter(outStatement, elementsCopy[elementsCopy.length - 1]);
 
-    if (!useReflection) {
+    if (Registry.is("debugger.compiling.evaluator.magic.accessor") && !useReflection) {
       copy.accept(new JavaRecursiveElementWalkingVisitor() {
         private void makePublic(PsiMember method) {
           if (method.hasModifierProperty(PsiModifier.PRIVATE)) {

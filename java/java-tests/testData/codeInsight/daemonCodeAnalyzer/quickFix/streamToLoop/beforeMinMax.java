@@ -36,6 +36,15 @@ public class Main {
     return strings.stream().mapToInt(String::length).min().orElseGet(supplier);
   }
 
+  public static int testMinMaxValue(List<String> strings) {
+    return strings.stream().mapToInt(String::length).min().orElse(Integer.MAX_VALUE);
+  }
+
+  public static long testMaxMinValue(List<String> strings) {
+    long max = strings.stream().mapToLong(String::length).max().orElse(Long.MIN_VALUE);
+    return max;
+  }
+
   public static void main(String[] args) {
     System.out.println(testMaxComparator(Arrays.asList()));
     System.out.println(testMaxComparator(Arrays.asList("a", "bbb", "cc", "d", "eee")));

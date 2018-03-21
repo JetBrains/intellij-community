@@ -5,13 +5,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyPolyVariantReference;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyReference;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 
 /**
  * @author ven
  */
-public interface GrReferenceElement<Q extends PsiElement> extends GroovyPsiElement, GroovyPolyVariantReference, GrQualifiedReference<Q> {
+public interface GrReferenceElement<Q extends PsiElement> extends GroovyPsiElement, GroovyReference, GrQualifiedReference<Q> {
 
   @Override
   @Nullable

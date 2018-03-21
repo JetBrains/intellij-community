@@ -287,7 +287,7 @@ public class PyEvaluator {
     }
 
     // Support dict([("k", "v")]) syntax
-    if (expression.isCallee(PythonFQDNNames.DICT_CLASS)) {
+    if (myEnableResolve && expression.isCallee(PythonFQDNNames.DICT_CLASS)) {
       final Collection<PyTupleExpression> tuples = PsiTreeUtil.findChildrenOfType(expression, PyTupleExpression.class);
       if (!tuples.isEmpty()) {
         final Map<Object, Object> result = new HashMap<>();

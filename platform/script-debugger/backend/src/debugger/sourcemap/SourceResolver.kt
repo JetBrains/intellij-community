@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.debugger.sourcemap
 
 import com.intellij.openapi.util.SystemInfo
@@ -22,7 +8,6 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ArrayUtil
 import com.intellij.util.Url
-import com.intellij.util.UrlImpl
 import com.intellij.util.Urls
 import com.intellij.util.containers.ObjectIntHashMap
 import com.intellij.util.containers.isNullOrEmpty
@@ -54,7 +39,7 @@ class SourceResolver(private val rawSources: List<String>, val canonicalizedUrls
     fun isAbsolute(path: String) = path.startsWith('/') || (SystemInfo.isWindows && (path.length > 2 && path[1] == ':'))
   }
 
-  private val canonicalizedUrlToSourceIndex: ObjectIntHashMap<Url> = if (SystemInfo.isFileSystemCaseSensitive) ObjectIntHashMap(rawSources.size) else ObjectIntHashMap(rawSources.size, Urls.getCaseInsensitiveUrlHashingStrategy())
+  private val canonicalizedUrlToSourceIndex: ObjectIntHashMap<Url> = if (SystemInfo.isFileSystemCaseSensitive) ObjectIntHashMap(rawSources.size) else ObjectIntHashMap(rawSources.size, Urls.caseInsensitiveUrlHashingStrategy)
 
   init {
     for (i in rawSources.indices) {
@@ -175,7 +160,7 @@ fun canonicalizeUrl(url: String, baseUrl: Url?, trimFileScheme: Boolean, baseUrl
     // consider checking :/ instead of :// because scheme may be followed by path, not by authority
     // https://tools.ietf.org/html/rfc3986#section-1.1.2
     // be careful with windows paths: C:/Users
-    return Urls.parseEncoded(url) ?: UrlImpl(url)
+    return Urls.parseEncoded(url) ?: Urls.newUri(null, url)
   }
   else {
     return doCanonicalize(url, baseUrl, baseUrlIsFile, true)
@@ -188,10 +173,10 @@ fun doCanonicalize(url: String, baseUrl: Url, baseUrlIsFile: Boolean, asLocalFil
     return Urls.newLocalFileUrl(path)
   }
   else if (asLocalFileIfAbsoluteAndExists && SourceResolver.isAbsolute(path)) {
-    return if (File(path).exists()) Urls.newLocalFileUrl(path) else Urls.parse(url, false) ?: UrlImpl(null, null, url, null)
+    return if (File(path).exists()) Urls.newLocalFileUrl(path) else Urls.parse(url, false) ?: Urls.newUri(null, url)
   }
   else {
     val split = path.split('?', limit = 2)
-    return UrlImpl(baseUrl.scheme, baseUrl.authority, split[0], if (split.size > 1) '?' + split[1] else null)
+    return Urls.newUrl(baseUrl.scheme!!, baseUrl.authority!!, split[0], if (split.size > 1) '?' + split[1] else null)
   }
 }

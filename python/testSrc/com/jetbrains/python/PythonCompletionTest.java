@@ -8,6 +8,7 @@ import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -19,6 +20,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+@TestDataPath("$CONTENT_ROOT/../testData/completion")
 public class PythonCompletionTest extends PyTestCase {
 
   private void doTest() {
@@ -697,10 +699,10 @@ public class PythonCompletionTest extends PyTestCase {
 
   // PY-9342
   public void testBoundMethodSpecialAttributes() {
-    List<String>  suggested = doTestByText("class C(object):\n" +
-                                           "  def f(self): pass\n" +
-                                           "\n" +
-                                           "C().f.im_<caret>");
+    List<String> suggested = doTestByText("class C(object):\n" +
+                                          "  def f(self): pass\n" +
+                                          "\n" +
+                                          "C().f.im_<caret>");
     assertNotNull(suggested);
     assertContainsElements(suggested, PyNames.LEGACY_METHOD_SPECIAL_ATTRIBUTES);
 
@@ -1251,6 +1253,27 @@ public class PythonCompletionTest extends PyTestCase {
                                               "    def __<caret>");
     assertNotNull(suggested);
     assertContainsElements(suggested, "__init__(self)");
+  }
+
+  // PY-28461
+  public void testImplicitImportsInsidePackage() {
+    runWithLanguageLevel(LanguageLevel.PYTHON37,
+                         () -> doMultiFileAssertSameElements("m1", "pkg2", "pkg3", "bar", "foo", "foo2"));
+  }
+
+  // PY-28461
+  public void testImplicitImportsInsidePackagePy2() {
+    runWithLanguageLevel(LanguageLevel.PYTHON27,
+                         () -> doMultiFileAssertSameElements("m1", "pkg2", "pkg3", "bar", "foo", "foo2"));
+  }
+
+  private void doMultiFileAssertSameElements(String... variants) {
+    myFixture.copyDirectoryToProject(getTestName(true), "");
+    myFixture.configureByFile("a.py");
+    myFixture.completeBasic();
+    final List<String> suggested = myFixture.getLookupElementStrings();
+    assertNotNull(suggested);
+    assertSameElements(suggested, variants);
   }
 
   @Override

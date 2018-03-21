@@ -1,13 +1,10 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger;
 
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -38,8 +35,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static org.junit.Assert.*;
 
@@ -65,15 +64,19 @@ public class XDebuggerTestUtil {
 
   @Nullable
   public static XLineBreakpoint toggleBreakpoint(Project project, VirtualFile file, int line) {
-    return new WriteAction<XLineBreakpoint>() {
-      @Override
-      protected void run(@NotNull Result<XLineBreakpoint> result) {
-        Promise<XLineBreakpoint> promise =
-          ((XDebuggerUtilImpl)XDebuggerUtil.getInstance()).toggleAndReturnLineBreakpoint(project, file, line, false);
-
-        promise.done(result::setResult);
+    final Promise<XLineBreakpoint> breakpointPromise = WriteAction.computeAndWait(() -> ((XDebuggerUtilImpl)XDebuggerUtil.getInstance())
+      .toggleAndReturnLineBreakpoint(project, file, line, false));
+    try {
+      try {
+        return breakpointPromise.blockingGet(TIMEOUT_MS);
       }
-    }.execute().getResultObject();
+      catch (TimeoutException e) {
+        throw new RuntimeException(e);
+      }
+    }
+    catch (ExecutionException e) {
+      throw new RuntimeException(e.getCause());
+    }
   }
 
   public static <P extends XBreakpointProperties> XBreakpoint<P> insertBreakpoint(final Project project,
@@ -85,6 +88,19 @@ public class XDebuggerTestUtil {
 
   public static void removeBreakpoint(final Project project, final XBreakpoint<?> breakpoint) {
     WriteAction.runAndWait(() -> XDebuggerManager.getInstance(project).getBreakpointManager().removeBreakpoint(breakpoint));
+  }
+
+  public static void removeBreakpoint(@NotNull final Project project,
+                                      @NotNull final VirtualFile file,
+                                      final int line) {
+    final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
+    XLineBreakpoint breakpoint = ReadAction.compute(() -> {
+      final XLineBreakpointType<?> breakpointType =
+        ((XDebuggerUtilImpl)XDebuggerUtil.getInstance()).getBreakpointTypeByPosition(project, file, line);
+      return breakpointManager.findBreakpointAtLine(breakpointType, file, line);
+    });
+    assertNotNull(breakpoint);
+    removeBreakpoint(project, breakpoint);
   }
 
   public static void assertPosition(XSourcePosition pos, VirtualFile file, int line) throws IOException {
@@ -118,7 +134,7 @@ public class XDebuggerTestUtil {
   public static List<XStackFrame> collectFrames(@Nullable XExecutionStack thread, @NotNull XDebugSession session) {
     return collectFrames(thread == null ? getActiveThread(session) : thread);
   }
-  
+
   public static String getFramePresentation(XStackFrame frame) {
     TextTransferable.ColoredStringBuilder builder = new TextTransferable.ColoredStringBuilder();
     frame.customizePresentation(builder);
@@ -246,7 +262,7 @@ public class XDebuggerTestUtil {
 
   public static void assertVariableValueMatches(@NotNull Collection<XValue> vars,
                                                 @Nullable String name,
-                                                @Nullable @Language("RegExp") String valuePattern) throws InterruptedException {
+                                                @Nullable @Language("RegExp") String valuePattern) {
     assertVariableValueMatches(findVar(vars, name), name, valuePattern);
   }
 
@@ -422,12 +438,10 @@ public class XDebuggerTestUtil {
                                                                       @NotNull final XBreakpointProperties properties) {
     XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
     Ref<XBreakpoint> breakpoint = Ref.create(null);
-    XBreakpointUtil.breakpointTypes().select(exceptionType).findFirst().ifPresent(type ->
-                                                                                    WriteAction.runAndWait(()->
-          breakpoint.set(breakpointManager.addBreakpoint(type, properties))
-                                                                                    )
-      
-    );
+    XBreakpointUtil.breakpointTypes()
+                   .select(exceptionType)
+                   .findFirst()
+                   .ifPresent(type -> WriteAction.runAndWait(() -> breakpoint.set(breakpointManager.addBreakpoint(type, properties))));
     return breakpoint.get();
   }
 
@@ -504,7 +518,7 @@ public class XDebuggerTestUtil {
     assertEquals(expectedExpression, expression);
     return expression;
   }
-  
+
   public static class XTestExecutionStackContainer extends XTestContainer<XExecutionStack> implements XSuspendContext.XExecutionStackContainer {
     @Override
     public void errorOccurred(@NotNull String errorMessage) {
@@ -515,11 +529,11 @@ public class XDebuggerTestUtil {
     public void addExecutionStack(@NotNull List<? extends XExecutionStack> executionStacks, boolean last) {
       addChildren(executionStacks, last);
     }
-  } 
+  }
 
   public static class XTestStackFrameContainer extends XTestContainer<XStackFrame> implements XStackFrameContainerEx {
     public volatile XStackFrame frameToSelect;
-    
+
     public void addStackFrames(@NotNull List<? extends XStackFrame> stackFrames, boolean last) {
       addChildren(stackFrames, last);
     }

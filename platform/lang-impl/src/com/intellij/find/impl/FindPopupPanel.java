@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.impl;
 
 import com.intellij.CommonBundle;
@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DefaultCustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
+import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
@@ -41,6 +42,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.pom.Navigatable;
@@ -156,6 +158,16 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     initByModel();
 
     ApplicationManager.getApplication().invokeLater(this::scheduleResultsUpdate, ModalityState.any());
+    if (SystemInfo.isWindows) {
+      ApplicationManager.getApplication().getMessageBus()
+                        .connect(myDisposable).subscribe(ApplicationActivationListener.TOPIC,
+                                                         new ApplicationActivationListener() {
+                                                           @Override
+                                                           public void applicationDeactivated(IdeFrame ideFrame) {
+                                                             closeImmediately();
+                                                           }
+                                                         });
+    }
   }
 
   @Override
@@ -254,8 +266,8 @@ public class FindPopupPanel extends JBPanel implements FindUI {
   protected boolean canBeClosed() {
     if (!myCanClose.get()) return false;
     if (myIsPinned.get()) return false;
-    if (!ApplicationManager.getApplication().isActive()) return false;
-    if (KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() == null) return false;
+    if (!ApplicationManager.getApplication().isActive()) return SystemInfo.isWindows;
+    if (KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() == null) return SystemInfo.isWindows;
     if (myFileMaskField.isPopupVisible()) {
       myFileMaskField.setPopupVisible(false);
       return false;
@@ -490,16 +502,20 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     myReplaceAllButton.addActionListener(e -> {
       boolean okToReplaceAll = myResultsPreviewTable.getRowCount() < 2;
       if (!okToReplaceAll) {
-        boolean oldPinnedValue = myIsPinned.get();
+        Window window = UIUtil.getWindow(this);
         try {
-          myIsPinned.set(true);
+          if (window != null) {
+            window.setVisible(false);
+          }
           okToReplaceAll = ReplaceInProjectManager.getInstance(myProject).showReplaceAllConfirmDialog(
             myUsagesCount,
             getStringToFind(),
             myFilesCount,
             getStringToReplace());
         } finally {
-          myIsPinned.set(oldPinnedValue);
+          if (window != null) {
+            window.setVisible(true);
+          }
         }
       }
       if (okToReplaceAll) {
@@ -759,10 +775,10 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     regexpPanel.add(myCbRegularExpressions, BorderLayout.CENTER);
     regexpPanel.add(RegExHelpPopup.createRegExLink("<html><body><b>?</b></body></html>", myCbRegularExpressions, LOG), BorderLayout.EAST);
     AnAction[] actions = {
-      new DefaultCustomComponentAction(myCbCaseSensitive),
-      new DefaultCustomComponentAction(JBUI.Borders.emptyLeft(gap).wrap(myCbPreserveCase)),
-      new DefaultCustomComponentAction(JBUI.Borders.emptyLeft(gap).wrap(myCbWholeWordsOnly)),
-      new DefaultCustomComponentAction(JBUI.Borders.emptyLeft(gap).wrap(regexpPanel)),
+      new DefaultCustomComponentAction(() -> myCbCaseSensitive),
+      new DefaultCustomComponentAction(() -> JBUI.Borders.emptyLeft(gap).wrap(myCbPreserveCase)),
+      new DefaultCustomComponentAction(() -> JBUI.Borders.emptyLeft(gap).wrap(myCbWholeWordsOnly)),
+      new DefaultCustomComponentAction(() -> JBUI.Borders.emptyLeft(gap).wrap(regexpPanel)),
     };
 
     @SuppressWarnings("InspectionUniqueToolbarId")
@@ -807,6 +823,13 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       myFileMaskField.setSelectedItem(item);
     }
     scheduleResultsUpdate();
+  }
+
+  private void closeImmediately() {
+    if (canBeClosedImmediately() && myBalloon != null && myBalloon.isVisible()) {
+      myIsPinned.set(false);
+      myBalloon.cancel();
+    }
   }
 
   //Some popups shown above may prevent panel closing, first of all we should close them
@@ -867,12 +890,8 @@ public class FindPopupPanel extends JBPanel implements FindUI {
 
   private void registerCloseAction(JBPopup popup) {
     final AnAction escape = ActionManager.getInstance().getAction("EditorEscape");
-    DumbAwareAction.create(e -> {
-      if (canBeClosedImmediately() && myBalloon != null && myBalloon.isVisible()) {
-        myIsPinned.set(false);
-        myBalloon.cancel();
-      }
-    }).registerCustomShortcutSet(escape == null ? CommonShortcuts.ESCAPE : escape.getShortcutSet(), popup.getContent(), popup);
+    DumbAwareAction.create(e -> closeImmediately())
+                   .registerCustomShortcutSet(escape == null ? CommonShortcuts.ESCAPE : escape.getShortcutSet(), popup.getContent(), popup);
   }
 
   @Override
@@ -1085,7 +1104,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
         ThreadLocal<VirtualFile> lastUsageFileRef = new ThreadLocal<>();
         ThreadLocal<Usage> recentUsageRef = new ThreadLocal<>();
 
-        FindInProjectUtil.findUsages(findModel, myProject, info -> {
+        FindInProjectUtil.findUsages(findModel, myProject, processPresentation, filesToScanInitially, info -> {
           if(isCancelled()) {
             onStop(hash);
             return false;
@@ -1156,7 +1175,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
             onStop(hash);
           }
           return continueSearch;
-        }, processPresentation, filesToScanInitially);
+        });
 
         return new Continuation(() -> {
           if (!isCancelled()) {

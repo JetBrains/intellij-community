@@ -13,5 +13,6 @@
     <orderEntry type="module" module-name="intellij.idea.ultimate.build" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.pycharm.community.build" />
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
+    <orderEntry type="module" module-name="intellij.edu.dependencies" />
   </component>
 </module>

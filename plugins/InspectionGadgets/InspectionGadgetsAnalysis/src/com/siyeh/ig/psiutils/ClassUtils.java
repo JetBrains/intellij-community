@@ -116,7 +116,8 @@ public class ClassUtils {
     return integralTypes.contains(type);
   }
 
-  public static boolean isImmutable(PsiType type) {
+  @Contract("null -> false")
+  public static boolean isImmutable(@Nullable PsiType type) {
     if (TypeConversionUtil.isPrimitiveAndNotNull(type)) {
       return true;
     }
@@ -124,7 +125,8 @@ public class ClassUtils {
     if (aClass == null) {
       return false;
     }
-    if (immutableTypes.contains(aClass.getQualifiedName())) {
+    String qualifiedName = aClass.getQualifiedName();
+    if (immutableTypes.contains(qualifiedName) || (qualifiedName != null && qualifiedName.startsWith("com.google.common.collect.Immutable"))) {
       return true;
     }
     return JCiPUtil.isImmutable(aClass);

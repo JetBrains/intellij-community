@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.BeforeRunTask;
@@ -121,6 +119,15 @@ public interface RunConfiguration extends RunProfile, Cloneable {
       return " (" + StringUtil.first(getType().getDisplayName(), 10, true) + ")";
     }
     return "";
+  }
+
+  /**
+   * If this method returns true, disabled executor buttons (e.g. Run) will be hidden when this configuration is selected.
+   * Note that this will lead to UI flickering when switching between this configuration and others for which this property
+   * is false, so you should avoid overriding this method unless you're really sure of what you're doing.
+   */
+  default boolean hideDisabledExecutorButtons() {
+    return false;
   }
 
   /**

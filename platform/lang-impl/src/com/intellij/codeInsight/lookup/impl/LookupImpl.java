@@ -58,7 +58,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-public class LookupImpl extends LightweightHint implements LookupEx, Disposable {
+public class LookupImpl extends LightweightHint implements LookupEx, Disposable, LookupElementListPresenter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.lookup.impl.LookupImpl");
   private static final Key<Font> CUSTOM_FONT_KEY = Key.create("CustomLookupElementFont");
 
@@ -200,7 +200,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     mySelectionTouched = selectionTouched;
   }
 
-  @TestOnly
   public int getSelectedIndex() {
     return myList.getSelectedIndex();
   }
@@ -291,6 +290,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     return withLock(() -> ContainerUtil.findAll(getListModel().toList(), element -> !(element instanceof EmptyLookupItem)));
   }
 
+  @NotNull
   public String getAdditionalPrefix() {
     return myOffsets.getAdditionalPrefix();
   }
@@ -780,6 +780,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   }
 
   @Override
+  public LookupElement getCurrentItemOrEmpty() {
+    return (LookupElement)myList.getSelectedValue();
+  }
+
+  @Override
   public void setCurrentItem(LookupElement item){
     markSelectionTouched();
     myList.setSelectedValue(item, false);
@@ -941,7 +946,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
   @Override
   public boolean isCompletion() {
-    return myArranger instanceof CompletionLookupArranger;
+    return myArranger instanceof CompletionLookupArrangerImpl;
   }
 
   @Override
@@ -1005,6 +1010,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   @Override
   public boolean isSelectionTouched() {
     return mySelectionTouched;
+  }
+
+  @Override
+  public int getLastVisibleIndex() {
+    return myList.getLastVisibleIndex();
   }
 
   @Override
@@ -1172,5 +1182,4 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   }
 
   public enum FocusDegree { FOCUSED, SEMI_FOCUSED, UNFOCUSED }
-
 }

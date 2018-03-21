@@ -3,92 +3,83 @@ package com.intellij.psi.stubs;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.containers.UnsignedShortArrayList;
-import gnu.trove.TIntIntHashMap;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * A storage for stub-related data, shared by all stubs in one file. More memory-efficient, than keeping the same data in stub objects themselves.
  */
 class StubList {
   /** The list of all stubs ordered by id. The order is DFS (except maybe temporarily during construction, fixed by {@link #finalizeLoadingStage()} later) */
-  private final ArrayList<StubBase<?>> myPlainList = new ArrayList<>();
-  
-  /** A list to hold stub children at contiguous ranges, to avoid allocating separate lists in each parent stub */
-  private final ArrayList<StubBase<?>> myJoinedChildrenList = new ArrayList<>();
+  private final ArrayList<StubBase<?>> myPlainList;
+
+  /** A list to hold ids of stub children at contiguous ranges, to avoid allocating separate lists in each parent stub */
+  private final MostlyUShortIntList myJoinedChildrenList;
 
   /** Means that the children should be found in {@link TempState#myTempJoinedChildrenMap} */
-  private static final int IN_TEMP_MAP = Character.MAX_VALUE;
-  
-  /** Means that a value doesn't fit 2 bytes and should be found in {@link #myLargeCounts} or {@link #myLargeStarts} */
-  private static final int IN_LARGE_MAP = IN_TEMP_MAP - 1;
-  
-  private static final int MAX_SHORT_VALUE = IN_LARGE_MAP - 1;
-  
+  private static final int IN_TEMP_MAP = -1;
+
   /**
    * Holds data for the stub with the given id.
-   * For each id there's 3 shorts:
+   * For each id there's 3 values:
    * <ol>
    *   <li>element type id</li>
-   *   <li>children start: 0 when children are found in {@link #myPlainList} right after parent id, another number for an offset in {@link #myJoinedChildrenList} where the children start, or {@link #IN_TEMP_MAP} or {@link #IN_LARGE_MAP}</li>
-   *   <li>children count or {@link #IN_LARGE_MAP} if doesn't fit</li>
+   *   <li>children start: 0 when children are found in {@link #myPlainList} right after parent id, a positive integer for an offset in {@link #myJoinedChildrenList} where the children start, or {@link #IN_TEMP_MAP}</li>
+   *   <li>children count</li>
    * </ol>
    */
-  private final UnsignedShortArrayList myStubData = new UnsignedShortArrayList();
-  
-  private TIntIntHashMap myLargeStarts = null;
-  private TIntIntHashMap myLargeCounts = null;
+  private final MostlyUShortIntList myStubData;
 
   @Nullable private TempState myTempState = new TempState();
 
-  StubList() {
-    myJoinedChildrenList.add(null); // indices in this list should be non-zero 
+  StubList(int initialCapacity) {
+    myPlainList = new ArrayList<>(initialCapacity);
+    myStubData = new MostlyUShortIntList(initialCapacity * 3);
+    myJoinedChildrenList = new MostlyUShortIntList(initialCapacity);
+    myJoinedChildrenList.add(0); // indices in this list should be non-zero 
   }
 
   IStubElementType<?, ?> getStubType(int id) {
-    return (IStubElementType<?, ?>)IElementType.find((short)myStubData.getQuick(id * 3));
+    return (IStubElementType<?, ?>)IElementType.find(getStubTypeIndex(id));
+  }
+
+  private short getStubTypeIndex(int id) {
+    return (short)myStubData.get(id * 3);
+  }
+
+  private static int childrenStartIndex(int id) {
+    return id * 3 + 1;
+  }
+
+  private static int childrenCountIndex(int id) {
+    return id * 3 + 2;
   }
 
   private int getChildrenStart(int id) {
-    int start = myStubData.getQuick(id * 3 + 1);
-    return start == IN_LARGE_MAP ? myLargeStarts.get(id) : start;
+    return myStubData.get(childrenStartIndex(id));
   }
 
   private int getChildrenCount(int id) {
-    int count = myStubData.getQuick(id * 3 + 2);
-    return count == IN_LARGE_MAP ? myLargeCounts.get(id) : count;
-  }
-
-  private void setChildrenStart(int id, int start) {
-    if (start > MAX_SHORT_VALUE) {
-      if (myLargeStarts == null) myLargeStarts = new TIntIntHashMap();
-      myLargeStarts.put(id, start);
-      start = IN_LARGE_MAP;
-    }
-    myStubData.setQuick(id * 3 + 1, start);
-  }
-
-  private void setChildrenCount(int id, int count) {
-    if (count > MAX_SHORT_VALUE) {
-      if (myLargeCounts == null) myLargeCounts = new TIntIntHashMap();
-      myLargeCounts.put(id, count);
-      count = IN_LARGE_MAP;
-    }
-    
-    myStubData.setQuick(id * 3 + 2, count);
+    return myStubData.get(childrenCountIndex(id));
   }
 
   void addStub(@NotNull StubBase<?> stub, @Nullable StubBase<?> parent, @Nullable IStubElementType<?, ?> type) {
     int stubId = myPlainList.size();
     setStubToListReferences(stub, stubId);
-    addStub(stub, parent, stubId, parent == null ? -1 : parent.id, type);
+
+    int parentId = parent == null ? -1 : parent.id;
+    if (nonDfsOrderDetected(parentId, stubId)) {
+      Objects.requireNonNull(myTempState).switchChildrenToTempMap(parentId);
+    }
+
+    addStub(stub, stubId, parentId, type == null ? 0 : type.getIndex());
+  }
+
+  private boolean nonDfsOrderDetected(int parentId, int childId) {
+    return parentId >= 0 && childId != parentId + 1 && getChildrenCount(parentId) == 0;
   }
 
   private void setStubToListReferences(@NotNull StubBase<?> stub, int stubId) {
@@ -96,50 +87,48 @@ class StubList {
     stub.id = stubId;
   }
 
-  private void addStub(@NotNull StubBase<?> child, @Nullable StubBase<?> parent, int childId, int parentId, @Nullable IStubElementType<?, ?> type) {
+  private void addStub(@NotNull StubBase<?> child, int childId, int parentId, short elementTypeIndex) {
     assert myTempState != null;
     assert childId == myPlainList.size();
 
     myPlainList.add(child);
+    myStubData.add(elementTypeIndex); myStubData.add(0); myStubData.add(0);
 
-    myStubData.add(type == null ? 0 : type.getIndex());
-    myStubData.add(0);
-    myStubData.add(0);
-    
-    if (parent == null) return;
+    if (parentId < 0) return;
 
     int childrenCount = getChildrenCount(parentId);
-    int childrenStart = myTempState.ensureCapacityForNextChild(childId, parentId, childrenCount, parent);
+    int childrenStart = myTempState.ensureCapacityForNextChild(childId, parentId, childrenCount);
 
     ChildrenStorage storage = getChildrenStorage(childrenStart);
     if (storage == ChildrenStorage.inJoinedList) {
-      addToJoinedChildren(child, childrenStart + childrenCount);
+      addToJoinedChildren(childrenStart + childrenCount, childId);
     }
     else if (storage == ChildrenStorage.inTempMap) {
-      tempMap().get(parentId).add(child);
+      tempMap().get(parentId).add(childId);
     }
 
-    setChildrenCount(parentId, childrenCount + 1);
+    myStubData.set(childrenCountIndex(parentId), childrenCount + 1);
   }
-  
+
   private enum ChildrenStorage { inPlainList, inJoinedList, inTempMap }
 
   private static ChildrenStorage getChildrenStorage(int childrenStart) {
     return childrenStart == 0 ? ChildrenStorage.inPlainList :
-           childrenStart <= MAX_SHORT_VALUE ? ChildrenStorage.inJoinedList :
-           ChildrenStorage.inTempMap;
+           childrenStart == IN_TEMP_MAP ? ChildrenStorage.inTempMap :
+           ChildrenStorage.inJoinedList;
   }
 
   private boolean canAddToJoinedList(int index) {
-    return myJoinedChildrenList.size() == index || myJoinedChildrenList.get(index) == null;
+    return myJoinedChildrenList.size() == index || myJoinedChildrenList.get(index) == 0;
   }
 
-  private void addToJoinedChildren(StubBase<?> child, int index) {
+  private void addToJoinedChildren(int index, int childId) {
     if (myJoinedChildrenList.size() == index) {
-      myJoinedChildrenList.add(child);
+      myJoinedChildrenList.add(childId);
     }
-    else if (myJoinedChildrenList.get(index) == null) {
-      myJoinedChildrenList.set(index, child);
+    else {
+      assert myJoinedChildrenList.get(index) == 0;
+      myJoinedChildrenList.set(index, childId);
     }
   }
 
@@ -155,12 +144,26 @@ class StubList {
     int start = getChildrenStart(id);
     switch (getChildrenStorage(start)) {
       case inPlainList: return myPlainList.subList(id + 1, id + 1 + count);
-      case inJoinedList: return myJoinedChildrenList.subList(start, start + count);
-      default: return tempMap().get(id);
+      case inJoinedList: return idSubList(myJoinedChildrenList, start, count);
+      default: return idSubList(tempMap().get(id), 0, count);
     }
   }
 
-  private TIntObjectHashMap<List<StubBase<?>>> tempMap() {
+  private List<StubBase<?>> idSubList(MostlyUShortIntList idList, int start, int count) {
+    return new AbstractList<StubBase<?>>() {
+      @Override
+      public StubBase<?> get(int index) {
+        return myPlainList.get(idList.get(start + index));
+      }
+
+      @Override
+      public int size() {
+        return count;
+      }
+    };
+  }
+
+  private TIntObjectHashMap<MostlyUShortIntList> tempMap() {
     assert myTempState != null;
     return Objects.requireNonNull(myTempState.myTempJoinedChildrenMap);
   }
@@ -170,27 +173,27 @@ class StubList {
     int count = getChildrenCount(id);
     int start = getChildrenStart(id);
     switch (getChildrenStorage(start)) {
-      case inPlainList: return findChildStubByType(elementType, myPlainList, id + 1, id + 1 + count);
+      case inPlainList: return findChildStubByType(elementType, IntIntFunction.IDENTITY, id + 1, id + 1 + count);
       case inJoinedList: return findChildStubByType(elementType, myJoinedChildrenList, start, start + count);
       default: return findChildStubByType(elementType, Objects.requireNonNull(tempMap()).get(id), 0, count);
     }
   }
 
   @Nullable
-  private static <P extends PsiElement, S extends StubElement<P>> S findChildStubByType(IStubElementType<S, P> elementType,
-                                                                                        List<StubBase<?>> childrenStubs,
-                                                                                        int start, int end) {
+  private <P extends PsiElement, S extends StubElement<P>> S findChildStubByType(IStubElementType<S, P> elementType,
+                                                                                 IntIntFunction idList,
+                                                                                 int start, int end) {
     for (int i = start; i < end; ++i) {
-      StubElement childStub = childrenStubs.get(i);
-      if (childStub.getStubType() == elementType) {
+      int id = idList.get(i);
+      if (elementType.getIndex() == getStubTypeIndex(id)) {
         //noinspection unchecked
-        return (S)childStub;
+        return (S)myPlainList.get(id);
       }
     }
     return null;
   }
 
-  /** 
+  /**
    * Ensures stubs are in DFS order and the optimizes memory layout. Might return an optimized copy of this list,
    * with all stubs re-targeted to that copy.
    */
@@ -216,11 +219,11 @@ class StubList {
 
   @NotNull
   private StubList createOptimizedCopy() {
-    StubList copy = new StubList();
+    StubList copy = new StubList(myPlainList.size());
     new Object() {
       void visitStub(StubBase<?> stub, int parentId) {
         int idInCopy = copy.myPlainList.size();
-        copy.addStub(stub, (StubBase<?>)stub.getParentStub(), idInCopy, parentId, stub.getStubType());
+        copy.addStub(stub, idInCopy, parentId, getStubTypeIndex(stub.id));
 
         List<StubBase<?>> children = getChildrenStubs(stub.id);
         Objects.requireNonNull(copy.myTempState).prepareForChildren(idInCopy, children.size());
@@ -245,32 +248,30 @@ class StubList {
   }
 
   private class TempState {
-    @Nullable TIntObjectHashMap<List<StubBase<?>>> myTempJoinedChildrenMap;
+    @Nullable TIntObjectHashMap<MostlyUShortIntList> myTempJoinedChildrenMap;
 
     int myCurrentParent = -1;
     int myExpectedChildrenCount;
 
-    int ensureCapacityForNextChild(int childId, int parentId, int childrenCount, StubBase<?> parent) {
+    int ensureCapacityForNextChild(int childId, int parentId, int childrenCount) {
       if (myCurrentParent >= 0) {
         if (childrenCount == myExpectedChildrenCount - 1) {
           myCurrentParent = -1;
         } else if (parentId != myCurrentParent) {
           myCurrentParent = -1;
-          return switchChildrenToJoinedList(parentId, myExpectedChildrenCount - childrenCount);
+          return switchChildrenToJoinedList(parentId, childrenCount, myExpectedChildrenCount - childrenCount);
         }
       }
 
       int childrenStart = getChildrenStart(parentId);
       ChildrenStorage storage = getChildrenStorage(childrenStart);
-      if (childrenCount == 0) {
-        assert storage == ChildrenStorage.inPlainList;
-        if (parentId != childId - 1) { // stubs created in non-DFS order
-          switchChildrenToTempMap(parentId);
-          return IN_TEMP_MAP;
+      if (storage == ChildrenStorage.inPlainList) {
+        if (childrenCount == 0) {
+          assert parentId == childId - 1;
         }
-      }
-      else if (storage == ChildrenStorage.inPlainList && areChildrenNonAdjacent(childId, parent)) {
-        return switchChildrenToJoinedList(parentId, 0);
+        else if (areChildrenNonAdjacent(childId, parentId)) {
+          return switchChildrenToJoinedList(parentId, childrenCount, 0);
+        }
       }
       else if (storage == ChildrenStorage.inJoinedList && !canAddToJoinedList(childrenStart + childrenCount)) {
         switchChildrenToTempMap(parentId);
@@ -279,29 +280,43 @@ class StubList {
       return childrenStart;
     }
 
-    private boolean areChildrenNonAdjacent(int childId, StubBase<?> parent) {
-      return myPlainList.get(childId - 1).getParentStub() != parent;
+    private boolean areChildrenNonAdjacent(int childId, int parentId) {
+      return myPlainList.get(childId - 1).getParentStub() != myPlainList.get(parentId);
     }
 
-    private int switchChildrenToJoinedList(int parentId, int slotsToReserve) {
+    private int switchChildrenToJoinedList(int parentId, int childrenCount, int slotsToReserve) {
       int start = myJoinedChildrenList.size();
       assert start > 0;
-      myJoinedChildrenList.addAll(getChildrenStubs(parentId));
-      setChildrenStart(parentId, start);
-
-      for (int i = 0; i < slotsToReserve; i++) {
-        myJoinedChildrenList.add(null);
+      for (int i = 0; i < childrenCount; i++) {
+        myJoinedChildrenList.add(parentId + i + 1);
       }
+      for (int i = 0; i < slotsToReserve; i++) {
+        myJoinedChildrenList.add(0);
+      }
+      myStubData.set(childrenStartIndex(parentId), start);
       return start;
     }
 
     private void switchChildrenToTempMap(int parentId) {
-      assert myTempJoinedChildrenMap == null || !myTempJoinedChildrenMap.containsKey(parentId);
-
       if (myTempJoinedChildrenMap == null) myTempJoinedChildrenMap = new TIntObjectHashMap<>();
-      myTempJoinedChildrenMap.put(parentId, new ArrayList<>(getChildrenStubs(parentId)));
 
-      setChildrenStart(parentId, IN_TEMP_MAP);
+      int start = getChildrenStart(parentId);
+      int count = getChildrenCount(parentId);
+      MostlyUShortIntList ids = new MostlyUShortIntList(count + 1);
+      switch (getChildrenStorage(start)) {
+        case inPlainList:
+          for (int i = 0; i < count; i++) ids.add(parentId + i + 1);
+          break;
+        case inJoinedList:
+          for (int i = start; i < start + count; i++) ids.add(myJoinedChildrenList.get(i));
+          break;
+        default: throw new IllegalStateException();
+      }
+
+      MostlyUShortIntList prev = myTempJoinedChildrenMap.put(parentId, ids);
+      assert prev == null;
+
+      myStubData.set(childrenStartIndex(parentId), IN_TEMP_MAP);
     }
 
     void prepareForChildren(int parentId, int childrenCount) {
@@ -309,7 +324,8 @@ class StubList {
       if (childrenCount == 0) return;
 
       if (myCurrentParent >= 0) {
-        switchChildrenToJoinedList(myCurrentParent, myExpectedChildrenCount - getChildrenCount(myCurrentParent));
+        int currentCount = getChildrenCount(myCurrentParent);
+        switchChildrenToJoinedList(myCurrentParent, currentCount, myExpectedChildrenCount - currentCount);
       }
 
       myCurrentParent = parentId;

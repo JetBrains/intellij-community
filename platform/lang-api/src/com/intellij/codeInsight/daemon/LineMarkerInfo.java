@@ -11,7 +11,6 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -26,7 +25,6 @@ import java.awt.*;
 
 public class LineMarkerInfo<T extends PsiElement> {
   private static final Logger LOG = Logger.getInstance(LineMarkerInfo.class);
-  public static final Key<LineMarkerInfo> LINE_MARKER_INFO = Key.create("LINE_MARKER_INFO");
 
   protected final Icon myIcon;
   private final SmartPsiElementPointer<T> elementRef;
@@ -144,11 +142,6 @@ public class LineMarkerInfo<T extends PsiElement> {
   @Nullable
   public GutterIconNavigationHandler<T> getNavigationHandler() {
     return myNavigationHandler;
-  }
-
-  @SuppressWarnings({"unused", "unchecked"})
-  public static <T extends PsiElement> LineMarkerInfo<T> fromRangeHighlighter(RangeHighlighter rangeHighlighter) {
-    return (LineMarkerInfo<T>) rangeHighlighter.getUserData(LINE_MARKER_INFO);
   }
 
   public static class LineMarkerGutterIconRenderer<T extends PsiElement> extends GutterIconRenderer {

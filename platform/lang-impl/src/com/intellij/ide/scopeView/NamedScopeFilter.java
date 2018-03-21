@@ -24,16 +24,20 @@ public final class NamedScopeFilter implements VirtualFileFilter {
   private static final Logger LOG = Logger.getInstance(NamedScopeFilter.class);
   private final NamedScopesHolder holder;
   private final NamedScope scope;
+  private final String string;
 
   public NamedScopeFilter(@NotNull NamedScopesHolder holder, @NotNull NamedScope scope) {
     this.holder = holder;
     this.scope = scope;
+    this.string = scope + "; " + scope.getClass();
   }
 
+  @NotNull
   public NamedScopesHolder getHolder() {
     return holder;
   }
 
+  @NotNull
   public NamedScope getScope() {
     return scope;
   }
@@ -41,7 +45,7 @@ public final class NamedScopeFilter implements VirtualFileFilter {
   @NotNull
   @Override
   public String toString() {
-    return scope.getName();
+    return string;
   }
 
   @Override

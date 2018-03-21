@@ -228,6 +228,7 @@ public class MadTestingUtil {
           file.delete(fixture);
         }
       }))
+      .append(() -> PsiDocumentManager.getInstance(fixture.getProject()).commitAllDocuments())
       .run();
   }
 

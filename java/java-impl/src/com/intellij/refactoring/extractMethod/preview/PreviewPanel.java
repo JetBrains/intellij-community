@@ -5,15 +5,22 @@ import com.intellij.ide.actions.exclusion.ExclusionHandler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.Navigatable;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.impl.PsiDocumentManagerBase;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
 import com.intellij.ui.JBSplitter;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.content.Content;
+import com.intellij.usages.impl.UsageModelTracker;
+import com.intellij.util.Alarm;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
@@ -35,6 +42,8 @@ class PreviewPanel extends BorderLayoutPanel implements Disposable, DataProvider
   private final ExclusionHandler<DefaultMutableTreeNode> myExclusionHandler;
   private Content myContent;
   private final PreviewDiffPanel myDiffPanel;
+  private final long myInitialPsiStamp;
+  private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
   public PreviewPanel(ExtractMethodProcessor processor) {
     myProject = processor.getProject();
@@ -56,6 +65,12 @@ class PreviewPanel extends BorderLayoutPanel implements Disposable, DataProvider
     addToCenter(splitter);
 
     myExclusionHandler = new PreviewExclusionHandler(this);
+
+    UsageModelTracker usageModelTracker = new UsageModelTracker(myProject);
+    Disposer.register(this, usageModelTracker);
+    usageModelTracker.addListener(isPropertyChange -> updateLater(), this);
+
+    myInitialPsiStamp = PsiModificationTracker.SERVICE.getInstance(myProject).getModificationCount();
 
     Disposer.register(processor.getProject(), this);
     Disposer.register(this, myTree);
@@ -109,12 +124,45 @@ class PreviewPanel extends BorderLayoutPanel implements Disposable, DataProvider
   }
 
   private void doRefactor() {
-    myDiffPanel.doExtract(myTree.getEnabledDuplicates());
-    close();
+    if (myTree.isValid()) {
+      myDiffPanel.doExtract(myTree.getEnabledDuplicates());
+      close();
+      return;
+    }
+    if (Messages.showYesNoDialog(myProject,
+                                 "Project files have been changed.\nWould you like to to re-run the refactoring?",
+                                 "Re-Run Refactoring", null) == Messages.YES) {
+      close();
+      myDiffPanel.tryExtractAgain();
+    }
   }
 
   void onTreeUpdated() {
-    myTree.getComponent().repaint();
+    myTree.repaint();
+  }
+
+  private void updateLater() {
+    if (!myTree.isValid()) {
+      return;
+    }
+    myUpdateAlarm.cancelAllRequests();
+    myUpdateAlarm.addRequest(() -> {
+      if (myProject.isDisposed()) return;
+      PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject);
+      documentManager.cancelAndRunWhenAllCommitted("ExtractMethodPreview", this::updateImmediately);
+    }, 300);
+  }
+
+  private void updateImmediately() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (myProject.isDisposed()) return;
+
+    if (PsiModificationTracker.SERVICE.getInstance(myProject).getModificationCount() != myInitialPsiStamp) {
+      myTree.setValid(false);
+    }
+    else {
+      myTree.setValid(true);
+    }
   }
 
   private class ButtonsPanel extends JPanel {

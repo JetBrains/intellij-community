@@ -79,13 +79,6 @@ open class FileBasedStorage(file: Path,
         storage.lineSeparator = lineSeparator
       }
 
-      // only app level components do not use xml prolog
-      if (storage.roamingType == RoamingType.DISABLED && storage.isUseXmlProlog) {
-        if (element == null) {
-
-        }
-      }
-
       val isUseVfs = storage.isUseVfsForWrite
       val virtualFile = if (isUseVfs) storage.virtualFile else null
       if (element == null) {
@@ -200,7 +193,7 @@ internal fun writeFile(file: Path?, requestor: Any, virtualFile: VirtualFile?, e
   if ((LOG.isDebugEnabled || ApplicationManager.getApplication().isUnitTestMode) && !FileUtilRt.isTooLarge(result.length)) {
     val content = element.toBufferExposingByteArray(lineSeparator.separatorString)
     if (isEqualContent(result, lineSeparator, content, prependXmlProlog)) {
-      LOG.error("Content equals, but it must be handled not on this level: file ${result.name}, content\n${content.toByteArray().toString(StandardCharsets.UTF_8)}")
+      LOG.warn("Content equals, but it must be handled not on this level: file ${result.name}, content\n${content.toByteArray().toString(StandardCharsets.UTF_8)}")
     }
     else if (DEBUG_LOG != null && ApplicationManager.getApplication().isUnitTestMode) {
       DEBUG_LOG = "${result.path}:\n$content\nOld Content:\n${LoadTextUtil.loadText(result)}"

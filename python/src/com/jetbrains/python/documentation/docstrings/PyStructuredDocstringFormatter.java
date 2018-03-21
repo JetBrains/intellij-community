@@ -104,7 +104,7 @@ public class PyStructuredDocstringFormatter {
     }
     else {
       sdk = PythonSdkType.findLocalCPython(module);
-      missingInterpreterMessage = PyBundle.message("QDOC.sdk.not.found");
+      missingInterpreterMessage = PyBundle.message("QDOC.local.sdk.not.found");
     }
     if (sdk == null) {
       LOG.warn("Python SDK for docstring formatter " + format +  " is not found");

@@ -6,6 +6,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.testFramework.TestRunnerUtil;
 import com.intellij.testFramework.Timings;
 import junit.framework.TestCase;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.File;
@@ -78,7 +79,7 @@ public class _FirstInSuiteTest extends TestCase {
     assertEncoding("sun.jnu.encoding");
   }
 
-  private static void assertEncoding(String property) {
+  private static void assertEncoding(@NotNull String property) {
     String encoding = System.getProperty(property);
     System.out.println("** " + property + "=" + encoding);
     assertNotNull("The property '" + property + "' is 'null'. Please check build configuration settings.", encoding);

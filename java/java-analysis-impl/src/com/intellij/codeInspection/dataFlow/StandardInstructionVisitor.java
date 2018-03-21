@@ -162,15 +162,10 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
     DfaValue result = instruction.getValue();
     LongRangeSet rangeSet = memState.getValueFact(index, DfaFactType.RANGE);
-    if (rangeSet != null && !rangeSet.isEmpty() && rangeSet.min() == rangeSet.max()) {
-      long longIdx = rangeSet.min();
-      if(longIdx >= 0 && longIdx <= Integer.MAX_VALUE) {
-        int intIdx = (int)longIdx;
-        DfaValue arrayElementValue = runner.getFactory().getExpressionFactory().getArrayElementValue(array, intIdx);
-        if (arrayElementValue != null) {
-          result = arrayElementValue;
-        }
-      }
+    DfaValue arrayElementValue =
+      runner.getFactory().getExpressionFactory().getArrayElementValue(array, rangeSet == null ? LongRangeSet.all() : rangeSet);
+    if (arrayElementValue != DfaUnknownValue.getInstance()) {
+      result = arrayElementValue;
     }
     memState.push(result);
     return nextInstruction(instruction, runner, memState);
@@ -602,46 +597,23 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       }
     }
     DfaValue result = null;
-    if (JavaTokenType.AND == opSign) {
+    PsiElement expr = instruction.getPsiAnchor();
+    PsiType type = expr instanceof PsiExpression ? ((PsiExpression)expr).getType() : null;
+    if (PsiType.INT.equals(type) || PsiType.LONG.equals(type)) {
       LongRangeSet left = memState.getValueFact(dfaLeft, DfaFactType.RANGE);
       LongRangeSet right = memState.getValueFact(dfaRight, DfaFactType.RANGE);
-      if(left != null && right != null) {
-        result = runner.getFactory().getFactValue(DfaFactType.RANGE, left.bitwiseAnd(right));
-      }
-    }
-    else if (JavaTokenType.PERC == opSign) {
-      LongRangeSet left = memState.getValueFact(dfaLeft, DfaFactType.RANGE);
-      LongRangeSet right = memState.getValueFact(dfaRight, DfaFactType.RANGE);
-      if(left != null && right != null) {
-        result = runner.getFactory().getFactValue(DfaFactType.RANGE, left.mod(right));
-      }
-    }
-    else if (JavaTokenType.PLUS == opSign) {
-      PsiElement expr = instruction.getPsiAnchor();
-      PsiType type = expr instanceof PsiExpression ? ((PsiExpression)expr).getType() : null;
-      if(PsiType.INT.equals(type) || PsiType.LONG.equals(type)) {
-        LongRangeSet left = memState.getValueFact(dfaLeft, DfaFactType.RANGE);
-        LongRangeSet right = memState.getValueFact(dfaRight, DfaFactType.RANGE);
-        if(left != null && right != null) {
-          result = runner.getFactory().getFactValue(DfaFactType.RANGE, left.plus(right, PsiType.LONG.equals(type)));
+      if (left != null && right != null) {
+        LongRangeSet resultRange = left.binOpFromToken(opSign, right, PsiType.LONG.equals(type));
+        if (resultRange != null) {
+          result = runner.getFactory().getFactValue(DfaFactType.RANGE, resultRange);
         }
-      } else {
+      }
+    }
+    if (result == null) {
+      if (JavaTokenType.PLUS == opSign) {
         result = instruction.getNonNullStringValue(runner.getFactory());
       }
-    }
-    else if (JavaTokenType.MINUS == opSign) {
-      PsiElement expr = instruction.getPsiAnchor();
-      PsiType type = expr instanceof PsiExpression ? ((PsiExpression)expr).getType() : null;
-      if (PsiType.INT.equals(type) || PsiType.LONG.equals(type)) {
-        LongRangeSet left = memState.getValueFact(dfaLeft, DfaFactType.RANGE);
-        LongRangeSet right = memState.getValueFact(dfaRight, DfaFactType.RANGE);
-        if (left != null && right != null) {
-          result = runner.getFactory().getFactValue(DfaFactType.RANGE, left.minus(right, PsiType.LONG.equals(type)));
-        }
-      }
-    }
-    else {
-      if (instruction instanceof InstanceofInstruction) {
+      else if (instruction instanceof InstanceofInstruction) {
         handleInstanceof((InstanceofInstruction)instruction, dfaRight, dfaLeft);
       }
     }

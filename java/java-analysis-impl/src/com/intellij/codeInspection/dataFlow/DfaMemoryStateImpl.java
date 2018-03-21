@@ -1143,12 +1143,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       }
       value = resolveVariableValue((DfaVariableValue)value);
     }
-    DfaValue finalValue = value;
-    return StreamEx.of(DfaFactType.getTypes()).foldLeft(DfaFactMap.EMPTY, (map, type) -> updateMap(map, type, finalValue));
-  }
-
-  private static <T> DfaFactMap updateMap(DfaFactMap map, DfaFactType<T> factType, DfaValue value) {
-    return map.with(factType, factType.fromDfaValue(value));
+    return DfaFactMap.fromDfaValue(value);
   }
 
   void setVariableState(DfaVariableValue dfaVar, DfaVariableState state) {

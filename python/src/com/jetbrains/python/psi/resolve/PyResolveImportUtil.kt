@@ -54,11 +54,30 @@ import com.jetbrains.python.sdk.PythonSdkType
  */
 
 /**
+ * Resolves qualified [name] to the list of packages, modules and, sometimes, classes.
+ *
+ * This method does not take into account source roots order (see PY-28321 as an example).
+ * The sole purpose of the method is to support classes that require class resolution until they can be migrated to [resolveQualifiedName].
+ *
+ * @see resolveQualifiedName
+ */
+@Deprecated("This method does not provide proper source root resolution")
+fun resolveQualifiedNameWithClasses(name: QualifiedName, context: PyQualifiedNameResolveContext): List<PsiElement> {
+  return resolveQualifiedName(name, context, ::resultsFromRoots)
+}
+
+/**
  * Resolves a qualified [name] to the list of packages and modules according to the [context].
  *
  * @see resolveTopLevelMember
  */
 fun resolveQualifiedName(name: QualifiedName, context: PyQualifiedNameResolveContext): List<PsiElement> {
+  return resolveQualifiedName(name, context, ::resolveModuleFromRoots)
+}
+
+private fun resolveQualifiedName(name: QualifiedName,
+                                 context: PyQualifiedNameResolveContext,
+                                 resolveFromRoots: (QualifiedName, PyQualifiedNameResolveContext) -> List<PsiElement>): List<PsiElement> {
   checkAccess()
   if (!context.isValid) {
     return emptyList()
@@ -82,7 +101,7 @@ fun resolveQualifiedName(name: QualifiedName, context: PyQualifiedNameResolveCon
 
   val foreignResults = foreignResults(name, context)
   val pythonResults = listOf(relativeResults,
-                             resolveModuleFromRoots(name, context),
+                             resolveFromRoots(name, context),
                              relativeResultsFromSkeletons(name, context)).flatten().distinct()
   val allResults = pythonResults + foreignResults
   val results = if (name.componentCount > 0) findFirstResults(pythonResults, context.module) + foreignResults else allResults

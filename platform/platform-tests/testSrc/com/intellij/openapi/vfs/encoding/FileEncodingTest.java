@@ -46,6 +46,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 
@@ -63,6 +64,11 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
   private static final String XML_TEST_BODY = "<web-app>\n" + "<!--\u043f\u0430\u043f\u0430-->\n" + "</web-app>";
   private static final String THREE_RUSSIAN_LETTERS = "\u0416\u041e\u041f";
   private TestDialog myOldTestDialogValue;
+
+  @Override
+  public int show(String message) {
+    return 0;
+  }
 
   private static String prolog(Charset charset) {
     return "<?xml version=\"1.0\" encoding=\"" + charset.name() + "\"?>\n";
@@ -84,15 +90,10 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
     }
   }
 
-  @Override
-  public int show(String message) {
-    return 0;
-  }
-
   private static Document getDocument(VirtualFile file) {
     return FileDocumentManager.getInstance().getDocument(file);
   }
-  
+
   public void testWin1251() {
     VirtualFile vTestRoot = getTestRoot();
     VirtualFile xml = vTestRoot.findChild("xWin1251.xml");
@@ -159,7 +160,7 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
       FileDocumentManager.getInstance().saveAllDocuments();
 
       byte[] savedBytes = FileUtil.loadFileBytes(file);
-      String saved = new String(savedBytes, CharsetToolkit.UTF8).replace("\r\n", "\n");
+      String saved = new String(savedBytes, StandardCharsets.UTF_8).replace("\r\n", "\n");
       String expected = (UTF8_XML_PROLOG + XML_TEST_BODY).replace("\r\n", "\n");
 
       assertEquals(expected, saved);
@@ -214,8 +215,7 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
     String text = document.getText();
     assertEquals("\u041f\u0440\u0438", text);
 
-    File copy = FileUtil.createTempFile("copy", ".txt");
-    myFilesToDelete.add(copy);
+    File copy = getTempDir().createTempFile("copy", ".txt", false);
     FileUtil.copy(source, copy);
     VirtualFile fileCopy = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(copy);
     document = getDocument(fileCopy);
@@ -238,15 +238,13 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
                "<meta charset =\"utf-8\">");
   }
 
-  private static void doHtmlTest(final String metaWithWindowsEncoding, final String metaWithUtf8Encoding) throws IOException {
-    File temp = FileUtil.createTempFile("copy", ".html");
+  private void doHtmlTest(final String metaWithWindowsEncoding, final String metaWithUtf8Encoding) throws IOException {
+    File temp = getTempDir().createTempFile("copy", ".html", false);
     setContentOnDisk(temp, NO_BOM,
                      "<html><head>" + metaWithWindowsEncoding + "</head>" +
                      THREE_RUSSIAN_LETTERS +
                      "</html>",
                      WINDOWS_1252);
-
-    myFilesToDelete.add(temp);
     VirtualFile file = ObjectUtils.assertNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp));
 
     assertEquals(WINDOWS_1252, file.getCharset());
@@ -703,7 +701,7 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
     VirtualFile file = createTempFile("txt", CharsetToolkit.UTF8_BOM, text, CharsetToolkit.UTF8_CHARSET);
     file.contentsToByteArray();
     Document document = ObjectUtils.assertNotNull(FileDocumentManager.getInstance().getDocument(file));
-    
+
     assertEquals(text, document.getText());
     assertEquals(CharsetToolkit.UTF8_CHARSET, file.getCharset());
     assertArrayEquals(CharsetToolkit.UTF8_BOM, file.getBOM());

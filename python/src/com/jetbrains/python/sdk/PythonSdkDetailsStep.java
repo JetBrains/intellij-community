@@ -53,16 +53,19 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
                           @NotNull final Point popupPoint,
                           @Nullable String newProjectPath,
                           @NotNull final NullableConsumer<Sdk> sdkAddedCallback) {
-    final PythonSdkDetailsStep sdkHomesStep = new PythonSdkDetailsStep(project, showAllDialog, ownerComponent, existingSdks,
-                                                                       sdkAddedCallback);
-    sdkHomesStep.myNewProjectPath = newProjectPath;
-    final ListPopup popup = JBPopupFactory.getInstance().createListPopup(sdkHomesStep);
-    popup.showInScreenCoordinates(ownerComponent, popupPoint);
+    final PythonSdkDetailsStep sdkHomesStep = new PythonSdkDetailsStep(project, showAllDialog, existingSdks, sdkAddedCallback);
+    if (showAllDialog == null) {
+      sdkHomesStep.createLocalSdk();
+    }
+    else {
+      sdkHomesStep.myNewProjectPath = newProjectPath;
+      final ListPopup popup = JBPopupFactory.getInstance().createListPopup(sdkHomesStep);
+      popup.showInScreenCoordinates(ownerComponent, popupPoint);
+    }
   }
 
   public PythonSdkDetailsStep(@Nullable final Project project,
                               @Nullable final DialogWrapper showAllDialog,
-                              @NotNull final Component ownerComponent,
                               @NotNull final Sdk[] existingSdks,
                               @NotNull final NullableConsumer<Sdk> sdkAddedCallback) {
     super(null, getAvailableOptions(showAllDialog != null));

@@ -132,6 +132,8 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
     if (instruction.matches(DfaOptionalSupport.OPTIONAL_OF_NULLABLE)) {
       DfaValue arg = memState.peek();
       ThreeState nullArg = memState.isNull(arg) ? ThreeState.YES : memState.isNotNull(arg) ? ThreeState.NO : ThreeState.UNSURE;
+      // Passing variable with unknown nullity to ofNullable assumes that it can be null
+      memState.applyFact(arg, DfaFactType.CAN_BE_NULL, true);
       myOfNullableCalls.merge(instruction, nullArg, ThreeState::merge);
     }
     DfaInstructionState[] states = super.visitMethodCall(instruction, runner, memState);

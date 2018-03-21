@@ -3,7 +3,6 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import org.apache.tools.ant.BuildException
 import org.jetbrains.intellij.build.*
 import org.jetbrains.jps.model.artifact.JpsArtifactService
 import org.jetbrains.jps.model.java.JavaResourceRootType
@@ -84,7 +83,8 @@ class BuildTasksImpl extends BuildTasks {
    */
   void buildProvidedModulesList(String targetFilePath, List<String> modules) {
     buildContext.executeStep("Build provided modules list", BuildOptions.PROVIDED_MODULES_LIST_STEP, {
-      buildContext.messages.progress("Building provided modules list for modules $modules")
+      buildContext.messages.progress("Building provided modules list for ${modules.size()} modules")
+      buildContext.messages.debug("Building provided modules list for the following modules: $modules")
       FileUtil.delete(new File(targetFilePath))
       // Start the product in headless mode using com.intellij.ide.plugins.BundledPluginsLister.
       runApplicationStarter("$buildContext.paths.temp/builtinModules", modules, ['listBundledPlugins', targetFilePath])
@@ -300,6 +300,15 @@ idea.fatal.error.notification=disabled
 
     def patchedApplicationInfo = patchApplicationInfo()
     def distributionJARsBuilder = compileModulesForDistribution(patchedApplicationInfo)
+    def mavenArtifacts = buildContext.productProperties.mavenArtifacts
+    if (mavenArtifacts.forIdeModules || !mavenArtifacts.additionalModules.isEmpty()) {
+      buildContext.executeStep("Generate Maven artifacts", BuildOptions.MAVEN_ARTIFACTS_STEP) {
+        def bundledPlugins = buildContext.productProperties.productLayout.bundledPluginModules as Set<String>
+        def moduleNames = distributionJARsBuilder.platformModules + buildContext.productProperties.productLayout.getIncludedPluginModules(bundledPlugins)
+        new MavenArtifactsBuilder(buildContext).generateMavenArtifacts(moduleNames)
+      }
+    }
+
     buildContext.messages.block("Build platform and plugin JARs") {
       if (buildContext.shouldBuildDistributions()) {
         distributionJARsBuilder.buildJARs()
@@ -395,6 +404,8 @@ idea.fatal.error.notification=disabled
       checkMandatoryPath(macCustomizer.dmgImagePath, "productProperties.macCustomizer.dmgImagePath")
       checkPaths([macCustomizer.dmgImagePathForEAP], "productProperties.macCustomizer.dmgImagePathForEAP")
     }
+
+    checkModules(properties.mavenArtifacts.additionalModules, "productProperties.mavenArtifacts.additionalModules")
   }
 
   private void checkProductLayout() {
@@ -558,7 +569,6 @@ idea.fatal.error.notification=disabled
     def libraryFiles = JpsJavaExtensionService.dependencies(buildContext.findRequiredModule(updaterModule)).productionOnly().runtimeOnly().libraries.collectMany {
       it.getFiles(JpsOrderRootType.COMPILED)
     }
-    buildContext.messages.info("Files: $libraryFiles")
     new LayoutBuilder(buildContext, false).layout(buildContext.paths.artifacts) {
       jar("updater-full.jar") {
         module(updaterModule)

@@ -42,16 +42,6 @@ public class DataInputOutputUtil extends DataInputOutputUtilRt {
     DataInputOutputUtilRt.writeINT(record, val);
   }
 
-  @Nullable
-  public static StringRef readNAME(@NotNull DataInput record, @NotNull AbstractStringEnumerator nameStore) throws IOException {
-    return StringRef.fromStream(record, nameStore);
-  }
-
-  public static void writeNAME(@NotNull DataOutput record, @Nullable String name, @NotNull AbstractStringEnumerator nameStore) throws IOException {
-    final int nameId = name != null ? nameStore.enumerate(name) : 0;
-    writeINT(record, nameId);
-  }
-
   public static long readLONG(@NotNull DataInput record) throws IOException {
     final int val = record.readUnsignedByte();
     if (val < 192) {

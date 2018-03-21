@@ -15,6 +15,8 @@
  */
 package com.intellij.codeInspection.dataFlow.value;
 
+import com.intellij.codeInspection.dataFlow.DfaFactMap;
+
 public abstract class DfaValue {
   private final int myID;
   protected final DfaValueFactory myFactory;
@@ -30,6 +32,17 @@ public abstract class DfaValue {
 
   public int getID() {
     return myID;
+  }
+
+  /**
+   * Produces a value which describes a union of this value and other value
+   *
+   * @param other other value to unite with
+   * @return a union value. Any particular runtime value which satisfies this value or other value, satisfies also the returned value.
+   */
+  public DfaValue union(DfaValue other) {
+    if(this == other) return this;
+    return myFactory.getFactFactory().createValue(DfaFactMap.fromDfaValue(this).union(DfaFactMap.fromDfaValue(other)));
   }
 
   public DfaValue createNegated() {

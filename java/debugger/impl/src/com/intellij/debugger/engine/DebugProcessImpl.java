@@ -63,7 +63,6 @@ import com.intellij.ui.classFilter.DebuggerClassFilterProvider;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -841,26 +840,21 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
 
     String message;
-    final StringBuilder buf = StringBuilderSpinAllocator.alloc();
-    try {
-      buf.append(DebuggerBundle.message("error.cannot.open.debugger.port"));
-      if (address != null) {
-        buf.append(" (").append(address).append(")");
-      }
-      buf.append(": ");
-      buf.append(e.getClass().getName()).append(" ");
-      final String localizedMessage = e.getLocalizedMessage();
-      if (!StringUtil.isEmpty(localizedMessage)) {
-        buf.append('"');
-        buf.append(localizedMessage);
-        buf.append('"');
-      }
-      LOG.debug(e);
-      message = buf.toString();
+    final StringBuilder buf = new StringBuilder();
+    buf.append(DebuggerBundle.message("error.cannot.open.debugger.port"));
+    if (address != null) {
+      buf.append(" (").append(address).append(")");
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(buf);
+    buf.append(": ");
+    buf.append(e.getClass().getName()).append(" ");
+    final String localizedMessage = e.getLocalizedMessage();
+    if (!StringUtil.isEmpty(localizedMessage)) {
+      buf.append('"');
+      buf.append(localizedMessage);
+      buf.append('"');
     }
+    LOG.debug(e);
+    message = buf.toString();
     return message;
   }
 
@@ -1353,23 +1347,18 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       dims++;
     }
 
-    StringBuilder buffer = StringBuilderSpinAllocator.alloc();
-    try {
-      StringUtil.repeatSymbol(buffer, '[', dims);
-      String primitiveSignature = JVMNameUtil.getPrimitiveSignature(className);
-      if(primitiveSignature != null) {
-        buffer.append(primitiveSignature);
-      }
-      else {
-        buffer.append('L');
-        buffer.append(className);
-        buffer.append(';');
-      }
-      return buffer.toString();
+    StringBuilder buffer = new StringBuilder();
+    StringUtil.repeatSymbol(buffer, '[', dims);
+    String primitiveSignature = JVMNameUtil.getPrimitiveSignature(className);
+    if(primitiveSignature != null) {
+      buffer.append(primitiveSignature);
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(buffer);
+    else {
+      buffer.append('L');
+      buffer.append(className);
+      buffer.append(';');
     }
+    return buffer.toString();
   }
 
   @SuppressWarnings({"HardCodedStringLiteral", "SpellCheckingInspection"})
@@ -2169,7 +2158,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   //  if (isAttached()) {
   //    getManagerThread().schedule(new DebuggerCommandImpl() {
   //      @Override
-  //      protected void action() throws Exception {
+  //      protected void action() {
   //        // set the flag before enabling/disabling cause it affects if breakpoints will create requests
   //        if (myBreakpointsMuted.getAndSet(muted) != muted) {
   //          final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager();

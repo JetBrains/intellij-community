@@ -4,7 +4,7 @@ package com.intellij.java.psi.search;
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
@@ -27,7 +27,7 @@ public class PlainTextUsagesTest extends PsiTestCase {
 
     String root = JavaTestUtil.getJavaTestDataPath() + "/psi/search/plainTextUsages/" + getTestName(true);
     PsiTestUtil.removeAllRoots(myModule, IdeaTestUtil.getMockJdk17());
-    PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete);
+    createTestProjectStructure( root);
   }
 
   public void testSimple() {
@@ -42,7 +42,7 @@ public class PlainTextUsagesTest extends PsiTestCase {
       PsiTestUtil.addContentRoot(module, resourcesDir);
       final VirtualFile child = resourcesDir.findChild("Test.xml");
       assert child != null;
-      assertSame(module, ModuleUtil.findModuleForFile(child, getProject()));
+      assertSame(module, ModuleUtilCore.findModuleForFile(child, getProject()));
     });
 
     PsiClass aClass = myJavaFacade.findClass("com.Foo", GlobalSearchScope.allScope(myProject));

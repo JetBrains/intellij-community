@@ -1,11 +1,12 @@
 // "Replace with 'StandardCharsets.US_ASCII'" "true"
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 
 class Test {
   void test(String s) {
     byte[] bytes = null;
     try {
-      string = s.getBytes(java.nio.charset.StandardCharsets.US_ASCII);
+      string = s.getBytes(StandardCharsets.US_ASCII);
     }
     catch (StackOverflowError exception) {
       exception.printStackTrace();

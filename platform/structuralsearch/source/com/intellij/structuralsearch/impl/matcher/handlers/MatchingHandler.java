@@ -3,6 +3,7 @@ package com.intellij.structuralsearch.impl.matcher.handlers;
 
 import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.dupLocator.util.NodeFilter;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.structuralsearch.MatchResult;
@@ -35,71 +36,68 @@ public abstract class MatchingHandler {
    * @return true if matching was successful and false otherwise
    */
   public boolean match(PsiElement patternNode, PsiElement matchedNode, MatchContext context) {
-    if (patternNode == null) {
-      return matchedNode == null;
-    }
-
-    return canMatch(patternNode, matchedNode, context);
+    return (patternNode == null) ? matchedNode == null : canMatch(patternNode, matchedNode, context);
   }
 
   public boolean canMatch(final PsiElement patternNode, final PsiElement matchedNode, MatchContext context) {
-    if (filter!=null) {
-      return filter.accepts(matchedNode);
-    } else {
-      return DefaultFilter.accepts(patternNode, matchedNode);
-    }
+    return (filter != null) ? filter.accepts(matchedNode) : DefaultFilter.accepts(patternNode, matchedNode);
   }
 
-  public boolean matchSequentially(NodeIterator nodes, NodeIterator nodes2, MatchContext context) {
+  public boolean matchSequentially(NodeIterator patternNodes, NodeIterator matchNodes, MatchContext context) {
     final MatchingStrategy strategy = context.getPattern().getStrategy();
+    final PsiElement currentPatternNode = patternNodes.current();
+    final PsiElement currentMatchNode = matchNodes.current();
 
-    skipIfNecessary(nodes, nodes2, strategy);
-    skipIfNecessary(nodes2, nodes, strategy);
+    skipIfNecessary(matchNodes, currentPatternNode, strategy);
+    skipComments(matchNodes, currentPatternNode);
+    skipIfNecessary(patternNodes, matchNodes.current(), strategy);
 
-    final PsiElement patternElement = nodes.current();
+    if (!patternNodes.hasNext()) {
+      return !matchNodes.hasNext();
+    }
+
+    final PsiElement patternElement = patternNodes.current();
     final MatchingHandler handler = context.getPattern().getHandler(patternElement);
-    if (nodes2.hasNext() && handler.match(patternElement, nodes2.current(), context)) {
+    if (matchNodes.hasNext() && handler.match(patternElement, matchNodes.current(), context)) {
 
-      nodes.advance();
-
-      final boolean shouldRewindOnMatchFailure;
-      if (shouldAdvanceTheMatchFor(patternElement, nodes2.current())) {
-        nodes2.advance();
-        skipIfNecessary(nodes, nodes2, strategy);
-        shouldRewindOnMatchFailure = true;
+      patternNodes.advance();
+      skipIfNecessary(patternNodes, matchNodes.current(), strategy);
+      if (shouldAdvanceTheMatchFor(patternElement, matchNodes.current())) {
+        matchNodes.advance();
+        skipIfNecessary(matchNodes, patternNodes.current(), strategy);
+        if (patternNodes.hasNext()) skipComments(matchNodes, patternNodes.current());
       }
-      else {
-        shouldRewindOnMatchFailure = false;
-      }
-      skipIfNecessary(nodes2, nodes, strategy);
 
-      if (nodes.hasNext()) {
-        final MatchingHandler nextHandler = context.getPattern().getHandler(nodes.current());
-
-        if (nextHandler.matchSequentially(nodes,nodes2,context)) {
-          // match was found!
+      if (patternNodes.hasNext()) {
+        final MatchingHandler nextHandler = context.getPattern().getHandler(patternNodes.current());
+        if (nextHandler.matchSequentially(patternNodes, matchNodes, context)) {
           return true;
         } else {
-          // rewind, we was not able to match descendants
-          nodes.rewind();
-          if (shouldRewindOnMatchFailure) nodes2.rewind();
+          patternNodes.rewindTo(currentPatternNode);
+          matchNodes.rewindTo(currentMatchNode);
         }
       } else {
         // match was found
-        return handler.isMatchSequentiallySucceeded(nodes2);
+        return handler.isMatchSequentiallySucceeded(matchNodes);
       }
     }
     return false;
   }
 
-  private static void skipIfNecessary(NodeIterator nodes, NodeIterator nodes2, MatchingStrategy strategy) {
-    while (strategy.shouldSkip(nodes2.current(), nodes.current())) {
-      nodes2.advance();
+  private static void skipComments(NodeIterator matchNodes, PsiElement patternNode) {
+    final boolean skipComment = !(patternNode instanceof PsiComment);
+    while (skipComment && matchNodes.current() instanceof PsiComment) matchNodes.advance();
+  }
+
+  private static void skipIfNecessary(NodeIterator nodes, PsiElement elementToMatchWith, MatchingStrategy strategy) {
+    while (strategy.shouldSkip(nodes.current(), elementToMatchWith)) {
+      nodes.advance();
     }
   }
 
-  protected boolean isMatchSequentiallySucceeded(final NodeIterator nodes2) {
-    return !nodes2.hasNext();
+  protected boolean isMatchSequentiallySucceeded(final NodeIterator matchNodes) {
+    skipComments(matchNodes, null);
+    return !matchNodes.hasNext();
   }
 
   static class ClearStateVisitor extends PsiRecursiveElementWalkingVisitor {
@@ -204,9 +202,9 @@ public abstract class MatchingHandler {
     }
   }
 
-  protected static boolean validateSatisfactionOfHandlers(NodeIterator nodes, MatchContext context) {
-    while(nodes.hasNext()) {
-      final PsiElement element = nodes.current();
+  protected static boolean validateSatisfactionOfHandlers(NodeIterator patternNodes, MatchContext context) {
+    while(patternNodes.hasNext()) {
+      final PsiElement element = patternNodes.current();
       final MatchingHandler handler = context.getPattern().getHandler( element );
 
       if (handler instanceof SubstitutionHandler) {
@@ -216,7 +214,7 @@ public abstract class MatchingHandler {
       } else {
         return false;
       }
-      nodes.advance();
+      patternNodes.advance();
     }
     return true;
   }
