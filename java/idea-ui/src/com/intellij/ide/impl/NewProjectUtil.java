@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -56,34 +42,32 @@ import java.io.File;
 import java.io.IOException;
 
 public class NewProjectUtil {
-  private NewProjectUtil() {
-  }
+  private final static Logger LOG = Logger.getInstance(NewProjectUtil.class);
 
-  public static void createNewProject(Project projectToClose, AbstractProjectWizard wizard) {
-    final boolean proceed = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-      ProjectManager.getInstance().getDefaultProject(); //warm up components
-    }, ProjectBundle.message("project.new.wizard.progress.title"), true, null);
-    if (!proceed) return;
-    if (!wizard.showAndGet()) {
-      return;
+  private NewProjectUtil() { }
+
+  public static void createNewProject(@Nullable Project projectToClose, @NotNull AbstractProjectWizard wizard) {
+    String title = ProjectBundle.message("project.new.wizard.progress.title");
+    Runnable warmUp = () -> ProjectManager.getInstance().getDefaultProject();  // warm-up components
+    boolean proceed = ProgressManager.getInstance().runProcessWithProgressSynchronously(warmUp, title, true, null);
+    if (proceed && wizard.showAndGet()) {
+      createFromWizard(wizard, projectToClose);
     }
-
-    createFromWizard(wizard, projectToClose);
   }
 
-  public static Project createFromWizard(AbstractProjectWizard dialog, Project projectToClose) {
+  public static Project createFromWizard(@NotNull AbstractProjectWizard wizard, @Nullable Project projectToClose) {
     try {
-      return doCreate(dialog, projectToClose);
+      return doCreate(wizard, projectToClose);
     }
-    catch (final IOException e) {
+    catch (IOException e) {
       UIUtil.invokeLaterIfNeeded(() -> Messages.showErrorDialog(e.getMessage(), "Project Initialization Failed"));
       return null;
     }
   }
 
-  private static Project doCreate(final AbstractProjectWizard dialog, @Nullable Project projectToClose) throws IOException {
-    final ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
-    final String projectFilePath = dialog.getNewProjectFilePath();
+  private static Project doCreate(AbstractProjectWizard wizard, @Nullable Project projectToClose) throws IOException {
+    ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
+    String projectFilePath = wizard.getNewProjectFilePath();
     for (Project p : ProjectManager.getInstance().getOpenProjects()) {
       if (ProjectUtil.isSameProject(projectFilePath, p)) {
         ProjectUtil.focusProjectWindow(p, false);
@@ -91,20 +75,25 @@ public class NewProjectUtil {
       }
     }
 
-    final ProjectBuilder projectBuilder = dialog.getProjectBuilder();
+    ProjectBuilder projectBuilder = wizard.getProjectBuilder();
     LOG.debug("builder " + projectBuilder);
 
     try {
-      File projectDir = new File(projectFilePath).getParentFile();
-      LOG.assertTrue(projectDir != null, "Cannot create project in '" + projectFilePath + "': no parent file exists");
-      FileUtil.ensureExists(projectDir);
-      if (StorageScheme.DIRECTORY_BASED == dialog.getStorageScheme()) {
-        FileUtil.ensureExists(new File(projectFilePath, Project.DIRECTORY_STORE_FOLDER));
+      File directoryToCreate = new File(projectFilePath);
+      if (wizard.getStorageScheme() == StorageScheme.DEFAULT) {
+        directoryToCreate = directoryToCreate.getParentFile();
+        if (directoryToCreate == null) {
+          throw new IOException("Cannot create project in '" + projectFilePath + "': no parent file exists");
+        }
       }
+      else if (wizard.getStorageScheme() == StorageScheme.DIRECTORY_BASED) {
+        directoryToCreate = new File(projectFilePath, Project.DIRECTORY_STORE_FOLDER);
+      }
+      FileUtil.ensureExists(directoryToCreate);
 
-      final Project newProject;
+      Project newProject;
       if (projectBuilder == null || !projectBuilder.isUpdate()) {
-        String name = dialog.getProjectName();
+        String name = wizard.getProjectName();
         newProject = projectBuilder == null
                    ? projectManager.newProject(name, projectFilePath, true, false)
                    : projectBuilder.createProject(name, projectFilePath);
@@ -115,22 +104,22 @@ public class NewProjectUtil {
 
       if (newProject == null) return projectToClose;
 
-      final Sdk jdk = dialog.getNewProjectJdk();
+      Sdk jdk = wizard.getNewProjectJdk();
       if (jdk != null) {
         CommandProcessor.getInstance().executeCommand(newProject, () -> ApplicationManager.getApplication().runWriteAction(() -> applyJdkToProject(newProject, jdk)), null, null);
       }
 
-      final String compileOutput = dialog.getNewCompileOutput();
+      String compileOutput = wizard.getNewCompileOutput();
       CommandProcessor.getInstance().executeCommand(newProject, () -> ApplicationManager.getApplication().runWriteAction(() -> {
-        String canonicalPath = compileOutput;
-        try {
-          canonicalPath = FileUtil.resolveShortWindowsName(compileOutput);
+        CompilerProjectExtension extension = CompilerProjectExtension.getInstance(newProject);
+        if (extension != null) {
+          String canonicalPath = compileOutput;
+          try {
+            canonicalPath = FileUtil.resolveShortWindowsName(compileOutput);
+          }
+          catch (IOException ignored) { }
+          extension.setCompilerOutputUrl(VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(canonicalPath)));
         }
-        catch (IOException e) {
-          //file doesn't exist
-        }
-        canonicalPath = FileUtil.toSystemIndependentName(canonicalPath);
-        CompilerProjectExtension.getInstance(newProject).setCompilerOutputUrl(VfsUtilCore.pathToUrl(canonicalPath));
       }), null, null);
 
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
@@ -149,7 +138,7 @@ public class NewProjectUtil {
         projectBuilder.commit(newProject, null, ModulesProvider.EMPTY_MODULES_PROVIDER);
       }
 
-      final boolean need2OpenProjectStructure = projectBuilder == null || projectBuilder.isOpenProjectSettingsAfter();
+      boolean need2OpenProjectStructure = projectBuilder == null || projectBuilder.isOpenProjectSettingsAfter();
       StartupManager.getInstance(newProject).registerPostStartupActivity(() -> {
         // ensure the dialog is shown after all startup activities are done
         ApplicationManager.getApplication().invokeLater(() -> {
@@ -159,7 +148,7 @@ public class NewProjectUtil {
           }
           ApplicationManager.getApplication().invokeLater(() -> {
             if (newProject.isDisposed()) return;
-            final ToolWindow toolWindow = ToolWindowManager.getInstance(newProject).getToolWindow(ToolWindowId.PROJECT_VIEW);
+            ToolWindow toolWindow = ToolWindowManager.getInstance(newProject).getToolWindow(ToolWindowId.PROJECT_VIEW);
             if (toolWindow != null) {
               toolWindow.activate(null);
             }
@@ -210,7 +199,7 @@ public class NewProjectUtil {
     }
   }
 
-  public static void closePreviousProject(final Project projectToClose) {
+  public static void closePreviousProject(Project projectToClose) {
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     if (openProjects.length > 0) {
       int exitCode = ProjectUtil.confirmOpenNewProject(true);
@@ -219,6 +208,4 @@ public class NewProjectUtil {
       }
     }
   }
-
-  private final static Logger LOG = Logger.getInstance(NewProjectUtil.class);
 }

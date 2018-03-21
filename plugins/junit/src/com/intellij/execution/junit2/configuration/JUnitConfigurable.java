@@ -264,9 +264,11 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     myChangeListLabeledComponent.getComponent().setModel(model);
     model.addElement("All");
 
-    final List<LocalChangeList> changeLists = ChangeListManager.getInstance(project).getChangeLists();
-    for (LocalChangeList changeList : changeLists) {
-      model.addElement(changeList.getName());
+    if (!project.isDefault()) {
+      final List<LocalChangeList> changeLists = ChangeListManager.getInstance(project).getChangeLists();
+      for (LocalChangeList changeList : changeLists) {
+        model.addElement(changeList.getName());
+      }
     }
 
     myShortenClasspathModeCombo.setComponent(new ShortenCommandLineModeCombo(myProject, myJrePathEditor, myModule.getComponent()));
@@ -318,7 +320,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
       configuration.setRepeatCount(1);
     }
     configuration.getPersistentData().setUniqueIds(setArrayFromText(myUniqueIdField));
-    configuration.getPersistentData().setTags(setArrayFromText(myTagsField));
+    configuration.getPersistentData().setTags(myTagsField.getComponent().getText());
     configuration.getPersistentData().setChangeList((String)myChangeListLabeledComponent.getComponent().getSelectedItem());
     myModel.apply(getModuleSelector().getModule(), configuration);
     applyHelpersTo(configuration);
@@ -359,8 +361,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     String[] ids = configuration.getPersistentData().getUniqueIds();
     myUniqueIdField.getComponent().setText(ids != null ? StringUtil.join(ids, " ") : null);
 
-    String[] tags = configuration.getPersistentData().getTags();
-    myTagsField.getComponent().setText(tags != null ? StringUtil.join(tags, " ") : null);
+    myTagsField.getComponent().setText(configuration.getPersistentData().getTags());
 
     myCommonJavaParameters.reset(configuration);
     getModuleSelector().reset(configuration);
