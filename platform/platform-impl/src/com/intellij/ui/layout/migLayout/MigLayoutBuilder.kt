@@ -1,5 +1,5 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ui.layout
+package com.intellij.ui.layout.migLayout
 
 import com.intellij.codeInspection.SmartHashMap
 import com.intellij.icons.AllIcons
@@ -13,15 +13,13 @@ import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.TextFieldWithHistory
 import com.intellij.ui.TextFieldWithHistoryWithBrowseButton
 import com.intellij.ui.components.noteComponent
+import com.intellij.ui.layout.*
 import com.intellij.util.SmartList
 import net.miginfocom.layout.*
 import net.miginfocom.swing.MigLayout
 import java.awt.Component
 import java.awt.Container
-import javax.swing.ButtonGroup
-import javax.swing.JComponent
-import javax.swing.JLabel
-import javax.swing.JPanel
+import javax.swing.*
 import javax.swing.text.JTextComponent
 
 /**
@@ -55,12 +53,17 @@ internal class MigLayoutBuilder : LayoutBuilderImpl {
   }
 
   override fun noteRow(text: String) {
-    // add empty row as top gap
-    newRow()
+    val cc = CC()
+    cc.vertical.gapBefore = gapToBoundSize(VERTICAL_GAP, false)
+    cc.vertical.gapAfter = gapToBoundSize(VERTICAL_GAP * 2, false)
 
     val row = MigLayoutRow(componentConstraints, this, noGrid = true)
     rows.add(row)
-    row.apply { noteComponent(text)() }
+    row.apply {
+      val noteComponent = noteComponent(text)
+      componentConstraints.put(noteComponent, cc)
+      noteComponent()
+    }
   }
 
   override fun build(container: Container, layoutConstraints: Array<out LCFlags>) {
@@ -203,16 +206,26 @@ internal class MigLayoutBuilder : LayoutBuilderImpl {
 }
 
 private fun addGrowIfNeed(cc: CC, component: Component) {
-  if (component is TextFieldWithHistory || component is TextFieldWithHistoryWithBrowseButton) {
-    cc.minWidth("350")
-    cc.growX()
-  }
-  else if (component is JTextComponent || component is SeparatorComponent || component is ComponentWithBrowseButton<*>) {
-    cc.growX()
-  }
-  else if (component is JPanel && component.componentCount == 1 &&
-           (component.getComponent(0) as? JComponent)?.getClientProperty(ActionToolbar.ACTION_TOOLBAR_PROPERTY_KEY) != null) {
-    cc.grow().push()
+  when {
+    component is TextFieldWithHistory || component is TextFieldWithHistoryWithBrowseButton -> {
+      cc.minWidth("350")
+      cc.growX()
+    }
+
+    component is JPasswordField -> {
+      applyGrowPolicy(cc, GrowPolicy.SHORT_TEXT)
+      cc.grow(0f)
+      cc.width("210!")
+    }
+
+    component is JTextComponent || component is SeparatorComponent || component is ComponentWithBrowseButton<*> -> {
+      cc.growX()
+    }
+
+    component is JPanel && component.componentCount == 1 &&
+    (component.getComponent(0) as? JComponent)?.getClientProperty(ActionToolbar.ACTION_TOOLBAR_PROPERTY_KEY) != null -> {
+      cc.grow().push()
+    }
   }
 }
 

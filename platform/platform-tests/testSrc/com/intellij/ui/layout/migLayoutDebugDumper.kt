@@ -21,13 +21,13 @@ fun configurationToJson(component: JPanel, layout: MigLayout, isIncludeLayoutCon
   }
 
   val json = objectMapper
-    .writerWithDefaultPrettyPrinter()
     .writeValueAsString(linkedMapOf(
       "layoutConstraints" to if (isIncludeLayoutConstraints) layout.layoutConstraints else null,
       "rowConstraints" to layout.rowConstraints,
       "columnConstraints" to layout.columnConstraints,
       "componentConstrains" to componentConstrains
     ))
+
   // *** *** jackson has ugly API and not clear how to write custom filter, so, GSON is used
   val gson = GsonBuilder()
     .setPrettyPrinting()
