@@ -1416,7 +1416,7 @@ public class GenericsHighlightUtil {
         PsiType[] actualTypeParameters = parameterList.getTypeArguments();
         PsiTypeParameter[] classTypeParameters = aClass.getTypeParameters();
         Map<PsiTypeParameter, PsiType> map = new HashMap<>();
-        for (int j = 0; j < classTypeParameters.length; j++) {
+        for (int j = 0; j < Math.min(classTypeParameters.length, actualTypeParameters.length); j++) {
           PsiTypeParameter classTypeParameter = classTypeParameters[j];
           PsiType actualTypeParameter = actualTypeParameters[j];
           map.put(classTypeParameter, actualTypeParameter);
