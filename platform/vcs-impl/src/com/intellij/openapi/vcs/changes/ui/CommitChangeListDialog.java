@@ -798,7 +798,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       PartialChangesUtil.runUnderChangeList(myProject, myBrowser.getSelectedChangeList(), runnable);
     }
 
-    return compoundResultRef.get();
+    return notNull(compoundResultRef.get(), CheckinHandler.ReturnResult.CANCEL);
   }
 
   @NotNull

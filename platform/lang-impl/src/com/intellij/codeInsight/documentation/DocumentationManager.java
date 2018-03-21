@@ -139,7 +139,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       IdeFocusManager.getInstance(myProject).requestFocus(myPreviouslyFocused, true);
     }
     super.restorePopupBehavior();
-    updateComponent();
+    updateComponent(true);
   }
 
   @Override
@@ -1045,8 +1045,13 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   }
   
   @Override
+  protected void doUpdateComponent(Editor editor, PsiFile psiFile, boolean requestFocus) {
+    showJavaDocInfo(editor, psiFile, requestFocus, null);
+  }
+
+  @Override
   protected void doUpdateComponent(Editor editor, PsiFile psiFile) {
-    showJavaDocInfo(editor, psiFile, true, null);
+    doUpdateComponent(editor, psiFile, false);
   }
 
   @Override

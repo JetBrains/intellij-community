@@ -9,6 +9,7 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileTypes.StdFileTypes
@@ -29,6 +30,7 @@ import com.intellij.psi.impl.compiled.ClsFileImpl
 import com.intellij.ui.Gray
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBPanel
+import com.intellij.util.ArrayUtil
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -38,6 +40,7 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences
 import org.jetbrains.java.decompiler.main.extern.IResultSaver
 import java.awt.BorderLayout
 import java.io.File
+import java.io.IOException
 import java.util.*
 import java.util.concurrent.Callable
 import java.util.concurrent.Future
@@ -165,6 +168,10 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
       throw e
     }
     catch (e: Exception) {
+      if (e is IdeaLogger.InternalException && e.cause is IOException) {
+        Logger.getInstance(IdeaDecompiler::class.java).warn(file.url, e)
+        return ArrayUtil.EMPTY_CHAR_SEQUENCE
+      }
       if (ApplicationManager.getApplication().isUnitTestMode) {
         throw AssertionError(file.url, e)
       }
