@@ -568,7 +568,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     myIdToEqClassesIndices.forEachEntry((id, eqClasses) -> {
       for (int classNum : eqClasses) {
         if (myEqClasses.get(classNum) == null) {
-          LOG.debug("Invariant violated: null-class for id=" + myFactory.getValue(id));
+          LOG.error("Invariant violated: null-class for id=" + myFactory.getValue(id));
         }
       }
       return true;
