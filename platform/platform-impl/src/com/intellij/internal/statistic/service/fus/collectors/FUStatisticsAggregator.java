@@ -82,13 +82,13 @@ public class FUStatisticsAggregator implements UsagesCollectorConsumer {
     if (approvedGroups.contains(usagesCollector.getGroupId())) {
       addUsageDescriptors(usagesCollector.getGroupId(), usageDescriptors, usagesProducer);
     } else if (ApplicationManagerEx.getApplicationEx().isInternal()) {
-      addUsageDescriptors(createDebugModeId(usagesCollector), usageDescriptors, usagesProducer);
+      addUsageDescriptors(createDebugModeId(usagesCollector.getGroupId()), usageDescriptors, usagesProducer);
     }
   }
 
   @NotNull
-  private static String createDebugModeId(@NotNull FeatureUsagesCollector usagesCollector) {
-    return "internal." + usagesCollector.getGroupId();
+  public static String createDebugModeId(@NotNull String groupId) {
+    return "internal." + groupId;
   }
 
   private static void addUsageDescriptors(@NotNull String groupDescriptor, @NotNull Map<String, Set<UsageDescriptor>> allUsageDescriptors,

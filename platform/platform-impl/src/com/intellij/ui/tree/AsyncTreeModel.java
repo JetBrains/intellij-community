@@ -534,7 +534,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
       if (model instanceof ChildrenProvider) {
         //noinspection unchecked
         ChildrenProvider<Object> provider = (ChildrenProvider)model;
-        List<Object> children = provider.getChildren(object);
+        List<?> children = provider.getChildren(object);
         if (children == null) throw new ProcessCanceledException(); // cancel this command
         loaded.children = load(children.size(), index -> children.get(index));
       }

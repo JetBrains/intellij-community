@@ -2,6 +2,7 @@ import <symbolName descr="null" type="CLASS_NAME">java.</symbolName><symbolName 
 import <symbolName descr="null" type="CLASS_NAME">java.</symbolName><symbolName descr="null" type="CLASS_NAME">util.</symbolName>*; // highlight on demand import as class name
 import <symbolName descr="null" type="CLASS_NAME">java.</symbolName><symbolName descr="null" type="CLASS_NAME">lang</symbolName>/*comment*/.<symbolName descr="null" type="CLASS_NAME">String</symbolName>;
 import static <symbolName descr="null" type="CLASS_NAME">java.</symbolName><symbolName descr="null" type="CLASS_NAME">io.</symbolName><symbolName descr="null" type="CLASS_NAME">File</symbolName>.<symbolName descr="null" type="STATIC_FINAL_FIELD">pathSeparator</symbolName>;
+import static <symbolName descr="null" type="CLASS_NAME">java.</symbolName><symbolName descr="null" type="CLASS_NAME">lang.</symbolName><symbolName descr="null" type="CLASS_NAME">Integer</symbolName>.<symbolName descr="null" type="STATIC_METHOD">parseInt</symbolName>;
 import static <symbolName descr="null" type="CLASS_NAME">java.</symbolName><symbolName descr="null" type="CLASS_NAME">io.</symbolName><symbolName descr="null" type="CLASS_NAME">File</symbolName>.*;
 
 class <symbolName descr="null" type="CLASS_NAME">a</symbolName> {
@@ -22,6 +23,7 @@ class <symbolName descr="null" type="CLASS_NAME">a</symbolName> {
   static void <symbolName descr="null" type="METHOD_DECLARATION">f</symbolName>() {
     <symbolName descr="null" type="CLASS_NAME">Integer</symbolName>.<symbolName descr="null" type="STATIC_METHOD">parseInt</symbolName>("");
     <symbolName descr="null" type="CLASS_NAME">java.</symbolName><symbolName descr="null" type="CLASS_NAME">lang.</symbolName><symbolName descr="null" type="CLASS_NAME">Integer</symbolName>.<symbolName descr="null" type="STATIC_METHOD">parseInt</symbolName>("");
+    <symbolName descr="null" type="STATIC_METHOD_CALL_IMPORTED">parseInt</symbolName>("");
     <symbolName descr="null" type="STATIC_METHOD">f</symbolName>();
   }
 
@@ -68,7 +70,7 @@ class <symbolName descr="null" type="CLASS_NAME">InheritedSymbolNames</symbolNam
 
   private static class <symbolName descr="null" type="CLASS_NAME">A</symbolName> {
     public <symbolName descr="null" type="CLASS_NAME">String</symbolName> <symbolName descr="null" type="METHOD_DECLARATION">getName</symbolName>() {
-      return "classA";
+      return <symbolName descr="null" type="STATIC_FINAL_FIELD_IMPORTED">pathSeparator</symbolName>;
     }
   }
 

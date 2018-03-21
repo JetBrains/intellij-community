@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
@@ -180,9 +181,15 @@ public class PyProjectScopeBuilder extends ProjectScopeBuilderImpl {
             libRoot = versionRoot;
           }
         }
+        final String libRootPath = libRoot.getPath();
         for (VirtualFile file : classVFiles) {
-          if (FileUtil.pathsEqual(file.getPath(), libRoot.getPath())) {
+          if (FileUtil.pathsEqual(file.getPath(), libRootPath)) {
             return file;
+          }
+          // venv module doesn't add virtualenv's lib/pythonX.Y directory itself in sys.path
+          final VirtualFile parent = file.getParent();
+          if (PyNames.SITE_PACKAGES.equals(file.getName()) && FileUtil.pathsEqual(parent.getPath(), libRootPath)) {
+            return parent;
           }
         }
       }

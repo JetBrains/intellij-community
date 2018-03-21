@@ -7,7 +7,6 @@ import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -31,15 +30,16 @@ import com.intellij.xdebugger.impl.frame.XStackFrameContainerEx;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.Promise;
 
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static org.junit.Assert.*;
 
@@ -65,15 +65,13 @@ public class XDebuggerTestUtil {
 
   @Nullable
   public static XLineBreakpoint toggleBreakpoint(Project project, VirtualFile file, int line) {
-    return new WriteAction<XLineBreakpoint>() {
-      @Override
-      protected void run(@NotNull Result<XLineBreakpoint> result) {
-        Promise<XLineBreakpoint> promise =
-          ((XDebuggerUtilImpl)XDebuggerUtil.getInstance()).toggleAndReturnLineBreakpoint(project, file, line, false);
-
-        promise.done(result::setResult);
-      }
-    }.execute().getResultObject();
+    try {
+      return WriteAction.computeAndWait(() -> ((XDebuggerUtilImpl)XDebuggerUtil.getInstance())
+        .toggleAndReturnLineBreakpoint(project, file, line, false)).blockingGet(TIMEOUT_MS);
+    }
+    catch (TimeoutException | ExecutionException e) {
+      return null;
+    }
   }
 
   public static <P extends XBreakpointProperties> XBreakpoint<P> insertBreakpoint(final Project project,
@@ -85,6 +83,19 @@ public class XDebuggerTestUtil {
 
   public static void removeBreakpoint(final Project project, final XBreakpoint<?> breakpoint) {
     WriteAction.runAndWait(() -> XDebuggerManager.getInstance(project).getBreakpointManager().removeBreakpoint(breakpoint));
+  }
+
+  public static void removeBreakpoint(@NotNull final Project project,
+                                      @NotNull final VirtualFile file,
+                                      final int line) {
+    final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
+    XLineBreakpoint breakpoint = ReadAction.compute(() -> {
+      final XLineBreakpointType<?> breakpointType =
+        ((XDebuggerUtilImpl)XDebuggerUtil.getInstance()).getBreakpointTypeByPosition(project, file, line);
+      return breakpointManager.findBreakpointAtLine(breakpointType, file, line);
+    });
+    assertNotNull(breakpoint);
+    removeBreakpoint(project, breakpoint);
   }
 
   public static void assertPosition(XSourcePosition pos, VirtualFile file, int line) throws IOException {

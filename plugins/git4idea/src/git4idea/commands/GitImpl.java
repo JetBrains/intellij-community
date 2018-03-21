@@ -27,6 +27,7 @@ import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitVcs;
 import git4idea.branch.GitRebaseParams;
 import git4idea.config.GitVersionSpecialty;
+import git4idea.push.GitPushParams;
 import git4idea.rebase.GitInteractiveRebaseEditorHandler;
 import git4idea.rebase.GitRebaseEditorHandler;
 import git4idea.rebase.GitRebaseEditorService;
@@ -38,8 +39,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.OutputStreamWriter;
-import java.nio.file.Paths;
 import java.util.*;
 
 import static git4idea.GitUtil.COMMENT_CHAR;
@@ -399,14 +398,10 @@ public class GitImpl extends GitImplBase {
   @Override
   @NotNull
   public GitCommandResult push(@NotNull GitRepository repository,
-                               @NotNull GitRemote remote,
-                               @NotNull String spec,
-                               boolean force,
-                               boolean updateTracking,
-                               boolean skipHook,
-                               @Nullable String tagMode,
+                               @NotNull GitPushParams pushParams,
                                GitLineHandlerListener... listeners) {
-    return doPush(repository, remote.getName(), remote.getPushUrls(), spec, force, updateTracking, skipHook, tagMode, listeners);
+    return doPush(repository, pushParams.getRemote().getName(), pushParams.getRemote().getPushUrls(), pushParams.getSpec(),
+                  pushParams.isForce(), pushParams.shouldSetupTracking(), pushParams.shouldSkipHooks(), pushParams.getTagMode(), listeners);
   }
 
   @NotNull

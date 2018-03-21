@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.javadoc;
 
 import com.intellij.JavaTestUtil;
@@ -31,6 +29,7 @@ import org.intellij.lang.annotations.Flow;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 
@@ -271,7 +270,7 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
   public void testPackageInfo() throws Exception {
     final String path = JavaTestUtil.getJavaTestDataPath() + TEST_DATA_FOLDER;
     final String packageInfo = path + getTestName(true);
-    PsiTestUtil.createTestProjectStructure(myProject, myModule, path, myFilesToDelete);
+    createTestProjectStructure(path);
     PsiPackage psiPackage = JavaPsiFacade.getInstance(getProject()).findPackage(getTestName(true));
     final String info = JavaDocumentationProvider.generateExternalJavadoc(psiPackage, (List<String>)null);
     String htmlText = FileUtil.loadFile(new File(packageInfo + File.separator + "packageInfo.html"));
@@ -323,7 +322,7 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     PsiDirectory dir = (PsiDirectory)psiClass.getParent().getParent();
     PsiFile htmlFile = dir.findFile(psiClass.getName() + ".html");
     assertNotNull(htmlFile);
-    assertEquals(StringUtil.convertLineSeparators(new String(htmlFile.getVirtualFile().contentsToByteArray(), "UTF-8").trim()), 
+    assertEquals(StringUtil.convertLineSeparators(new String(htmlFile.getVirtualFile().contentsToByteArray(), StandardCharsets.UTF_8).trim()),
                  replaceEnvironmentDependentContent(doc));
   }
   

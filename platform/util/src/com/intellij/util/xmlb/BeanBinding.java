@@ -52,7 +52,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
     List<MutableAccessor> accessors = getAccessors(myBeanClass);
     myBindings = new Binding[accessors.size()];
     for (int i = 0, size = accessors.size(); i < size; i++) {
-      Binding binding = createBinding(accessors.get(i), serializer, classAnnotation == null ? Property.Style.OLD : classAnnotation.style());
+      Binding binding = createBinding(accessors.get(i), serializer, classAnnotation == null ? Property.Style.OPTION_TAG : classAnnotation.style());
       binding.init(originalType, serializer);
       myBindings[i] = binding;
     }
@@ -479,7 +479,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
     }
 
     if (binding instanceof CompactCollectionBinding) {
-      return new AccessorBindingWrapper(accessor, binding, false, Property.Style.OLD);
+      return new AccessorBindingWrapper(accessor, binding, false, Property.Style.OPTION_TAG);
     }
 
     boolean surroundWithTag = true;

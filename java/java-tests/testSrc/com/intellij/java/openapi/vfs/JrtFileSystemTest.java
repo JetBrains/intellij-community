@@ -1,21 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.openapi.vfs;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -51,23 +39,21 @@ public class JrtFileSystemTest extends BareTestFixtureTestCase {
   @Before
   public void setUp() throws IOException {
     myTestData = Paths.get(JavaTestUtil.getJavaTestDataPath(), "jrt");
-    myTempPath = myTempDir.getRoot().toPath();
+    myTempPath = myTempDir.newFolder("jrt").toPath();
     Files.write(myTempPath.resolve("release"), "JAVA_VERSION=9\n".getBytes(CharsetToolkit.UTF8_CHARSET));
     Path lib = Files.createDirectory(myTempPath.resolve("lib"));
     Files.copy(myTestData.resolve("jrt-fs.jar"), lib.resolve("jrt-fs.jar"));
     Files.copy(myTestData.resolve("image1"), lib.resolve("modules"));
     LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myTempDir.getRoot());
 
-    String url = VirtualFileManager.constructUrl(JrtFileSystem.PROTOCOL, myTempDir.getRoot() + JrtFileSystem.SEPARATOR);
-    myRoot = VirtualFileManager.getInstance().findFileByUrl(url);
+    myRoot = findRoot(myTempPath.toString());
     assertThat(myRoot).isNotNull();
     assertThat(JrtFileSystem.isRoot(myRoot)).isTrue();
   }
 
   @Test
   public void nonRoot() {
-    String url = VirtualFileManager.constructUrl(JrtFileSystem.PROTOCOL, JavaTestUtil.getJavaTestDataPath() + JrtFileSystem.SEPARATOR);
-    VirtualFile root = VirtualFileManager.getInstance().findFileByUrl(url);
+    VirtualFile root = findRoot(JavaTestUtil.getJavaTestDataPath());
     assertThat(root).isNull();
   }
 
@@ -91,17 +77,26 @@ public class JrtFileSystemTest extends BareTestFixtureTestCase {
   @Test
   public void refresh() throws IOException {
     assertThat(childNames(myRoot)).containsExactlyInAnyOrder("java.base", "test.a");
+    VirtualFile local = LocalFileSystem.getInstance().findFileByPath(myTempPath.toString());
+    assertThat(local).isNotNull();
 
     Path modules = myTempPath.resolve("lib/modules");
     Files.move(modules, myTempPath.resolve("lib/modules.bak"), StandardCopyOption.ATOMIC_MOVE);
     Files.copy(myTestData.resolve("image2"), modules);
     Files.write(myTempPath.resolve("release"), "JAVA_VERSION=9.0.1\n".getBytes(CharsetToolkit.UTF8_CHARSET));
-
-    VirtualFile local = LocalFileSystem.getInstance().findFileByIoFile(myTempDir.getRoot());
-    assertThat(local).isNotNull();
     List<VFileEvent> events = VfsTestUtil.getEvents(() -> local.refresh(false, true));
-
     assertThat(childNames(myRoot)).describedAs("events=" + events).containsExactlyInAnyOrder("java.base", "test.a", "test.b");
+
+    if (SystemInfo.isUnix) {
+      assertThat(FileUtil.delete(myTempPath.toFile())).isTrue();
+      events = VfsTestUtil.getEvents(() -> local.refresh(false, true));
+      assertThat(myRoot.isValid()).describedAs("events=" + events).isFalse();
+    }
+  }
+
+  private static VirtualFile findRoot(String path) {
+    String url = VirtualFileManager.constructUrl(JrtFileSystem.PROTOCOL, path + JrtFileSystem.SEPARATOR);
+    return VirtualFileManager.getInstance().findFileByUrl(url);
   }
 
   private static List<String> childNames(VirtualFile dir) {

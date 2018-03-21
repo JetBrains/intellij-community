@@ -332,7 +332,7 @@ public class GitAnnotationProvider implements AnnotationProviderEx {
       throw e;
     }
     catch (Exception e) {
-      LOG.error("Couldn't parse annotation: " + e, new Attachment("output.txt", output));
+      LOG.error("Couldn't parse annotation: " + e.getMessage(), e, new Attachment("output.txt", output));
       throw new VcsException(e);
     }
   }

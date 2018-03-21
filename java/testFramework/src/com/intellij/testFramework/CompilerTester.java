@@ -65,16 +65,13 @@ public class CompilerTester {
     myMainOutput.setUp();
 
     CompilerTestUtil.enableExternalCompiler();
-    new WriteCommandAction(getProject()) {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        //noinspection ConstantConditions
-        CompilerProjectExtension.getInstance(getProject()).setCompilerOutputUrl(myMainOutput.findOrCreateDir("out").getUrl());
-        for (Module module : myModules) {
-          ModuleRootModificationUtil.setModuleSdk(module, JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk());
-        }
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> {
+      //noinspection ConstantConditions
+      CompilerProjectExtension.getInstance(getProject()).setCompilerOutputUrl(myMainOutput.findOrCreateDir("out").getUrl());
+      for (Module module : myModules) {
+        ModuleRootModificationUtil.setModuleSdk(module, JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk());
       }
-    }.execute();
+    });
   }
 
   public void tearDown() {
@@ -130,12 +127,9 @@ public class CompilerTester {
   }
 
   public void setFileName(final PsiFile file, final String name) {
-    new WriteCommandAction(getProject()) {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        file.setName(name);
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> {
+      file.setName(name);
+    });
   }
 
   public List<CompilerMessage> make() {

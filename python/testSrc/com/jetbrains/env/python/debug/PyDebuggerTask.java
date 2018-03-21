@@ -228,7 +228,12 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
         waitFor(processHandler);
       }
 
-      PyDebugValueExecutionService.getInstance(getProject()).shutDownNow();
+      try {
+        PyDebugValueExecutionService.getInstance(getProject()).shutDownNow(NORMAL_TIMEOUT);
+      }
+      catch (InterruptedException e) {
+        //pass
+      }
 
       if (!processHandler.isProcessTerminated()) {
         killDebugProcess();

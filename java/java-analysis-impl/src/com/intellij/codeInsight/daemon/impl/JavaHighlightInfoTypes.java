@@ -16,11 +16,11 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 import com.intellij.ide.highlighter.JavaHighlightingColors;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 import org.jetbrains.annotations.NotNull;
 
 public final class JavaHighlightInfoTypes {
@@ -37,7 +37,9 @@ public final class JavaHighlightInfoTypes {
   public final static HighlightInfoType INSTANCE_FIELD = createSymbolTypeInfo(JavaHighlightingColors.INSTANCE_FIELD_ATTRIBUTES);
   public final static HighlightInfoType INSTANCE_FINAL_FIELD = createSymbolTypeInfo(JavaHighlightingColors.INSTANCE_FINAL_FIELD_ATTRIBUTES);
   public final static HighlightInfoType STATIC_FIELD = createSymbolTypeInfo(JavaHighlightingColors.STATIC_FIELD_ATTRIBUTES);
+  public final static HighlightInfoType STATIC_FIELD_IMPORTED = createSymbolTypeInfo(JavaHighlightingColors.STATIC_FIELD_IMPORTED_ATTRIBUTES);
   public final static HighlightInfoType STATIC_FINAL_FIELD = createSymbolTypeInfo(JavaHighlightingColors.STATIC_FINAL_FIELD_ATTRIBUTES);
+  public final static HighlightInfoType STATIC_FINAL_FIELD_IMPORTED = createSymbolTypeInfo(JavaHighlightingColors.STATIC_FINAL_FIELD_IMPORTED_ATTRIBUTES);
   public final static HighlightInfoType PARAMETER = createSymbolTypeInfo(JavaHighlightingColors.PARAMETER_ATTRIBUTES);
   public final static HighlightInfoType LAMBDA_PARAMETER = createSymbolTypeInfo(JavaHighlightingColors.LAMBDA_PARAMETER_ATTRIBUTES);
   public final static HighlightInfoType METHOD_CALL = createSymbolTypeInfo(JavaHighlightingColors.METHOD_CALL_ATTRIBUTES);
@@ -45,6 +47,7 @@ public final class JavaHighlightInfoTypes {
   public final static HighlightInfoType CONSTRUCTOR_CALL = createSymbolTypeInfo(JavaHighlightingColors.CONSTRUCTOR_CALL_ATTRIBUTES);
   public final static HighlightInfoType CONSTRUCTOR_DECLARATION = createSymbolTypeInfo(JavaHighlightingColors.CONSTRUCTOR_DECLARATION_ATTRIBUTES);
   public final static HighlightInfoType STATIC_METHOD = createSymbolTypeInfo(JavaHighlightingColors.STATIC_METHOD_ATTRIBUTES);
+  public final static HighlightInfoType STATIC_METHOD_CALL_IMPORTED = createSymbolTypeInfo(JavaHighlightingColors.STATIC_METHOD_CALL_IMPORTED_ATTRIBUTES);
   public final static HighlightInfoType ABSTRACT_METHOD = createSymbolTypeInfo(JavaHighlightingColors.ABSTRACT_METHOD_ATTRIBUTES);
   public final static HighlightInfoType INHERITED_METHOD = createSymbolTypeInfo(JavaHighlightingColors.INHERITED_METHOD_ATTRIBUTES);
   public final static HighlightInfoType ANONYMOUS_CLASS_NAME = createSymbolTypeInfo(JavaHighlightingColors.ANONYMOUS_CLASS_NAME_ATTRIBUTES);

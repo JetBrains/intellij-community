@@ -15,10 +15,7 @@
  */
 package com.intellij.util;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.RunResult;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.util.ThrowableComputable;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,14 +43,7 @@ public abstract class ActionRunner {
    */
   @Deprecated
   public static <T> T runInsideWriteAction(@NotNull final InterruptibleRunnableWithResult<T> runnable) throws Exception {
-    RunResult<T> result = new WriteAction<T>() {
-      @Override
-      protected void run(@NotNull Result<T> result) throws Throwable {
-        result.setResult(runnable.run());
-      }
-    }.execute();
-    if (result.getThrowable() instanceof Exception) throw (Exception)result.getThrowable();
-    return result.throwException().getResultObject();
+    return WriteAction.computeAndWait(()->runnable.run());
   }
 
   /**
@@ -61,13 +51,7 @@ public abstract class ActionRunner {
    */
   @Deprecated
   public static void runInsideReadAction(@NotNull final InterruptibleRunnable runnable) throws Exception {
-    ApplicationManager.getApplication().runReadAction(new ThrowableComputable<Void, Exception>() {
-      @Override
-      public Void compute() throws Exception {
-        runnable.run();
-        return null;
-      }
-    });
+    ReadAction.run(()->runnable.run());
   }
 
   @Deprecated

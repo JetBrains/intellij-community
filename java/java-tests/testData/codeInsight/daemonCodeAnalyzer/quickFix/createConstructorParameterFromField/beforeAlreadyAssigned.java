@@ -1,5 +1,5 @@
 // "Add constructor parameter" "true"
-class A {
+class Foo {
   private final String te<caret>xt;
 
   public Foo(String text) {

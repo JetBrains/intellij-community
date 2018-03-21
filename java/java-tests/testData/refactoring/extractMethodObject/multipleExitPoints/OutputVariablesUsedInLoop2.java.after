@@ -20,7 +20,7 @@ class Test {
           Inner inner = new Inner(cur, prev, total).invoke();
           cur = inner.getCur();
           total = inner.getTotal();
-        return cur != null ? total + cur.x : total;
+          return cur != null ? total + cur.x : total;
       }
     }
     return total;

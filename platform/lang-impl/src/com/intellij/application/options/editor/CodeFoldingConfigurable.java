@@ -68,10 +68,7 @@ public class CodeFoldingConfigurable extends CompositeConfigurable<CodeFoldingOp
     EditorOptionsPanel.reinitAllEditors();
     for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
       Project project = editor.getProject();
-      if (project != null) {
-        CodeFoldingManager codeFoldingManager = CodeFoldingManager.getInstance(project);
-        if (codeFoldingManager != null) codeFoldingManager.scheduleAsyncFoldingUpdate(editor); // can be null for default project
-      }
+      if (project != null && !project.isDefault()) CodeFoldingManager.getInstance(project).scheduleAsyncFoldingUpdate(editor);
     }
   }
 

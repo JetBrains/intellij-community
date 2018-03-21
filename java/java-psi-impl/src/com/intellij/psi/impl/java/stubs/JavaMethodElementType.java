@@ -138,11 +138,11 @@ public abstract class JavaMethodElementType extends JavaStubElementType<PsiMetho
   @NotNull
   @Override
   public PsiMethodStub deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub) throws IOException {
-    StringRef name = dataStream.readName();
+    String name = dataStream.readNameString();
     final TypeInfo type = TypeInfo.readTYPE(dataStream);
     byte flags = dataStream.readByte();
-    final StringRef defaultMethodValue = PsiMethodStubImpl.isAnnotationMethod(flags) ? dataStream.readName() : null;
-    return new PsiMethodStubImpl(parentStub, StringRef.toString(name), type, flags, StringRef.toString(defaultMethodValue));
+    String defaultMethodValue = PsiMethodStubImpl.isAnnotationMethod(flags) ? dataStream.readNameString() : null;
+    return new PsiMethodStubImpl(parentStub, name, type, flags, defaultMethodValue);
   }
 
   @Override

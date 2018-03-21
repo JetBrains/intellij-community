@@ -35,6 +35,7 @@ import com.intellij.openapi.options.ex.ConfigurableVisitor;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.RelativeFont;
 import com.intellij.ui.components.labels.LinkLabel;
@@ -260,7 +261,9 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
       myConfigurable = configurable;
       updateCurrent(configurable, false);
       postUpdateCurrent(configurable);
-      FeatureUsageUiEvents.INSTANCE.logSelectConfigurable(getConfigurableEventId(configurable));
+      if (configurable != null) {
+        FeatureUsageUiEvents.INSTANCE.logSelectConfigurable(getConfigurableEventId(configurable));
+      }
     });
     return callback;
   }
@@ -342,7 +345,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
   }
 
   @NotNull
-  private static String getConfigurableEventId(Configurable configurable) {
-    return "ide.settings." + ConvertUsagesUtil.escapeDescriptorName(configurable.getDisplayName());
+  private static String getConfigurableEventId(@NotNull Configurable configurable) {
+    return "ide.settings." + ConvertUsagesUtil.escapeDescriptorName(StringUtil.notNullize(configurable.getDisplayName()));
   }
 }

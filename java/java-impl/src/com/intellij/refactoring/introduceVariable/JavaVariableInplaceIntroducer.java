@@ -239,16 +239,14 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
       myCanBeFinalCb.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
-          new WriteCommandAction(myProject, getCommandName(), getCommandName()) {
-            @Override
-            protected void run(@NotNull Result result) {
-              PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
-              final PsiVariable variable = getVariable();
-              if (variable != null) {
-                finalListener.perform(myCanBeFinalCb.isSelected(), variable);
-              }
+          WriteCommandAction.writeCommandAction(myProject).withName(getCommandName()).withGroupId(getCommandName()).run(() -> {
+            PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
+            final PsiVariable variable = getVariable();
+            if (variable != null) {
+              finalListener.perform(myCanBeFinalCb.isSelected(), variable);
             }
-          }.execute();
+            ;
+          });
         }
       });
     } else {

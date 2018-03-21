@@ -501,7 +501,7 @@ public class InferenceSession {
                                              boolean addConstraint,
                                              PsiSubstitutor initialSubstitutor) {
     final PsiType interfaceReturnType = LambdaUtil.getFunctionalInterfaceReturnType(parameterType);
-    if (interfaceReturnType != null) {
+    if (interfaceReturnType != null && !PsiType.VOID.equals(interfaceReturnType)) {
       final List<PsiExpression> returnExpressions = LambdaUtil.getReturnExpressions(lambdaExpression);
       for (PsiExpression returnExpression : returnExpressions) {
         processReturnExpression(additionalConstraints, ignoredConstraints, returnExpression, interfaceReturnType, addConstraint, initialSubstitutor);
@@ -1032,6 +1032,7 @@ public class InferenceSession {
                                     final PsiSubstitutor substitutor) {
     for (InferenceVariable typeParameter : typeParams) {
       if (typeParameter.getInstantiation() != PsiType.NULL) continue;
+      if (typeParameter.getUserData(ORIGINAL_CAPTURE) != null) continue;
       final PsiType type = substitutor.substitute(typeParameter);
       if (type instanceof PsiClassType) {
         final PsiClass aClass = ((PsiClassType)type).resolve();

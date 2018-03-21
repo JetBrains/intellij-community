@@ -120,7 +120,7 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
     boolean selected = false;
     for (JDKVersionItem value : JDKVersionItem.values()) {
       myJDKVersion.addItem(value);
-      if (!selected && version.isAtLeast(value.myVersion)) {
+      if (!selected && version != null && version.isAtLeast(value.myVersion)) {
         myJDKVersion.setSelectedItem(value);
         selected = true;
       }

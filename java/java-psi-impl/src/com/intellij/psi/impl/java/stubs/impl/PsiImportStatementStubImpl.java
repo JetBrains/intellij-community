@@ -27,7 +27,6 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.BitUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -35,17 +34,13 @@ import org.jetbrains.annotations.Nullable;
  */
 public class PsiImportStatementStubImpl extends StubBase<PsiImportStatementBase> implements PsiImportStatementStub {
   private final byte myFlags;
-  private final StringRef myText;
+  private final String myText;
   private SoftReference<PsiJavaCodeReferenceElement> myReference;
 
   private static final int ON_DEMAND = 0x01;
   private static final int STATIC = 0x02;
 
   public PsiImportStatementStubImpl(final StubElement parent, final String text, final byte flags) {
-    this(parent, StringRef.fromString(text), flags);
-  }
-
-  public PsiImportStatementStubImpl(final StubElement parent, final StringRef text, final byte flags) {
     super(parent, isStatic(flags) ? JavaStubElementTypes.IMPORT_STATIC_STATEMENT : JavaStubElementTypes.IMPORT_STATEMENT);
     myText = text;
     myFlags = flags;
@@ -71,7 +66,7 @@ public class PsiImportStatementStubImpl extends StubBase<PsiImportStatementBase>
 
   @Override
   public String getImportReferenceText() {
-    return StringRef.toString(myText);
+    return myText;
   }
 
   @Override

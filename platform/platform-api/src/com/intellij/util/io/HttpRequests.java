@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
 import com.intellij.Patches;
@@ -27,14 +13,14 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.Url;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.net.ssl.CertificateManager;
 import com.intellij.util.net.ssl.UntrustedCertificateStrategy;
-import org.apache.http.HttpStatus;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,7 +30,9 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import java.io.*;
 import java.net.*;
+import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -66,6 +54,15 @@ public final class HttpRequests {
 
   private static final int BLOCK_SIZE = 16 * 1024;
   private static final Pattern CHARSET_PATTERN = Pattern.compile("charset=([^;]+)");
+
+  private static final int[] REDIRECTS = {
+    // temporary redirects
+    HttpResponseStatus.FOUND.code(), HttpResponseStatus.TEMPORARY_REDIRECT.code(),
+    // permanent redirects
+    HttpResponseStatus.MOVED_PERMANENTLY.code(), HttpResponseStatus.SEE_OTHER.code(), HttpResponseStatus.PERMANENT_REDIRECT.code()
+  };
+
+  private static final int PERMANENT_IDX = ArrayUtil.indexOf(REDIRECTS, HttpResponseStatus.MOVED_PERMANENTLY.code());
 
   private HttpRequests() { }
 
@@ -97,6 +94,9 @@ public final class HttpRequests {
 
     @NotNull
     String readString(@Nullable ProgressIndicator indicator) throws IOException;
+
+    @NotNull
+    CharSequence readChars(@Nullable ProgressIndicator indicator) throws IOException;
   }
 
   public interface RequestProcessor<T> {
@@ -137,6 +137,10 @@ public final class HttpRequests {
     }
   }
 
+  @NotNull
+  public static RequestBuilder request(@NotNull Url url) {
+    return request(url.toExternalForm());
+  }
 
   @NotNull
   public static RequestBuilder request(@NotNull String url) {
@@ -177,7 +181,7 @@ public final class HttpRequests {
     private String myUserAgent;
     private String myAccept;
     private ConnectionTuner myTuner;
-    private UntrustedCertificateStrategy myUntrustedCertificateStrategy = UntrustedCertificateStrategy.ASK_USER;
+    private UntrustedCertificateStrategy myUntrustedCertificateStrategy = null;
 
     private RequestBuilderImpl(@NotNull String url) {
       myUrl = url;
@@ -256,6 +260,7 @@ public final class HttpRequests {
       return this;
     }
 
+    @NotNull
     @Override
     public RequestBuilder untrustedCertificateStrategy(@NotNull UntrustedCertificateStrategy strategy) {
       myUntrustedCertificateStrategy = strategy;
@@ -339,18 +344,39 @@ public final class HttpRequests {
     @Override
     @NotNull
     public byte[] readBytes(@Nullable ProgressIndicator indicator) throws IOException {
+      return doReadBytes(indicator).toByteArray();
+    }
+
+    @NotNull
+    private BufferExposingByteArrayOutputStream doReadBytes(@Nullable ProgressIndicator indicator) throws IOException {
       int contentLength = getConnection().getContentLength();
       BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream(contentLength > 0 ? contentLength : BLOCK_SIZE);
       NetUtils.copyStreamContent(indicator, getInputStream(), out, contentLength);
-      return ArrayUtil.realloc(out.getInternalBuffer(), out.size());
+      return out;
     }
 
     @NotNull
     @Override
     public String readString(@Nullable ProgressIndicator indicator) throws IOException {
-      Charset cs = getCharset(this);
-      byte[] bytes = readBytes(indicator);
-      return new String(bytes, cs);
+      BufferExposingByteArrayOutputStream byteStream = doReadBytes(indicator);
+      if (byteStream.size() == 0) {
+        return "";
+      }
+      else {
+        return new String(byteStream.getInternalBuffer(), 0, byteStream.size(), getCharset(this));
+      }
+    }
+
+    @NotNull
+    @Override
+    public CharSequence readChars(@Nullable ProgressIndicator indicator) throws IOException {
+      BufferExposingByteArrayOutputStream byteStream = doReadBytes(indicator);
+      if (byteStream.size() == 0) {
+        return ArrayUtil.EMPTY_CHAR_SEQUENCE;
+      }
+      else {
+        return getCharset(this).decode(ByteBuffer.wrap(byteStream.getInternalBuffer(), 0, byteStream.size()));
+      }
     }
 
     @Override
@@ -413,7 +439,7 @@ public final class HttpRequests {
   }
 
   private static <T> T doProcess(RequestBuilderImpl builder, RequestProcessor<T> processor) throws IOException {
-    CertificateManager manager = ApplicationManager.getApplication() != null ? CertificateManager.getInstance() : null;
+    CertificateManager manager = builder.myUntrustedCertificateStrategy == null || ApplicationManager.getApplication() == null ? null : CertificateManager.getInstance();
     try (RequestImpl request = new RequestImpl(builder)) {
       if (manager != null) {
         return manager.runWithUntrustedCertificateStrategy(() -> processor.process(request), builder.myUntrustedCertificateStrategy);
@@ -424,7 +450,8 @@ public final class HttpRequests {
     }
   }
 
-  private static Charset getCharset(Request request) throws IOException {
+  @NotNull
+  private static Charset getCharset(@NotNull Request request) throws IOException {
     String contentType = request.getConnection().getContentType();
     if (!StringUtil.isEmptyOrSpaces(contentType)) {
       Matcher m = CHARSET_PATTERN.matcher(contentType);
@@ -438,7 +465,7 @@ public final class HttpRequests {
       }
     }
 
-    return CharsetToolkit.UTF8_CHARSET;
+    return StandardCharsets.UTF_8;
   }
 
   private static URLConnection openConnection(RequestBuilderImpl builder, RequestImpl request) throws IOException {
@@ -509,21 +536,24 @@ public final class HttpRequests {
 
       if (connection instanceof HttpURLConnection) {
         HttpURLConnection httpURLConnection = (HttpURLConnection)connection;
-        assert httpURLConnection.getRequestMethod().equals("GET") : "Please use this class for GET requests only";
+        String method = httpURLConnection.getRequestMethod();
+        LOG.assertTrue(method.equals("GET") || method.equals("HEAD"), "'" + method + "' not supported; please use GET or HEAD");
 
         if (LOG.isDebugEnabled()) LOG.debug("connecting to " + url);
         int responseCode = httpURLConnection.getResponseCode();
         if (LOG.isDebugEnabled()) LOG.debug("response: " + responseCode);
 
-        if (responseCode < 200 || responseCode >= 300 && responseCode != HttpStatus.SC_NOT_MODIFIED) {
+        if (responseCode < 200 || responseCode >= 300 && responseCode != HttpResponseStatus.NOT_MODIFIED.code()) {
           httpURLConnection.disconnect();
 
-          if (responseCode == HttpStatus.SC_MOVED_PERMANENTLY
-              || responseCode == HttpStatus.SC_MOVED_TEMPORARILY
-              || responseCode == HttpStatus.SC_SEE_OTHER
-              || responseCode == HttpStatus.SC_TEMPORARY_REDIRECT) {
-            request.myUrl = url = connection.getHeaderField("Location");
+          int idx = ArrayUtil.indexOf(REDIRECTS, responseCode);
+          if (idx >= 0) {
+            url = connection.getHeaderField("Location");
             if (url != null) {
+              if (idx >= PERMANENT_IDX) {
+                LOG.error("HTTP response " + responseCode + " for '" + request.myUrl + "'; should be updated to '" + url + "'");
+              }
+              request.myUrl = url;
               continue;
             }
           }
@@ -544,7 +574,7 @@ public final class HttpRequests {
    * This method checks if any headers contain NUL byte in value and removes those headers from request.
    * @param httpURLConnection connection to check
    */
-  private static void checkRequestHeadersForNulBytes(URLConnection httpURLConnection) {
+  private static void checkRequestHeadersForNulBytes(@NotNull URLConnection httpURLConnection) {
     for (Map.Entry<String, List<String>> header : httpURLConnection.getRequestProperties().entrySet()) {
       boolean shouldBeIgnored = false;
       for (String headerValue : header.getValue()) {

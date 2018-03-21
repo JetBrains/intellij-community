@@ -681,7 +681,6 @@ public class GenerateMembersUtil {
       if (ignoreInvalidTemplate) {
         LOG.info(e);
         result = isGetter ? PropertyUtilBase.generateGetterPrototype(field) : PropertyUtilBase.generateSetterPrototype(field);
-        assert result != null : field.getText();
       }
       else {
         throw new GenerateCodeException(e);
@@ -705,11 +704,11 @@ public class GenerateMembersUtil {
   }
 
   @NotNull
-  private static PsiMethod generatePrototype(@NotNull PsiField field, PsiMethod result) {
+  private static PsiMethod generatePrototype(@NotNull PsiField field, @NotNull PsiMethod result) {
     return setVisibility(field, annotateOnOverrideImplement(field.getContainingClass(), result));
   }
 
-  @Contract("_, null -> null")
+  @Contract("_, null -> null; _, !null -> !null")
   public static PsiMethod setVisibility(PsiMember member, PsiMethod prototype) {
     if (prototype == null) return null;
 
@@ -729,7 +728,7 @@ public class GenerateMembersUtil {
     return prototype;
   }
 
-  @Nullable
+  @Contract("_, null -> null; _, !null -> !null")
   public static PsiMethod annotateOnOverrideImplement(@Nullable PsiClass targetClass, @Nullable PsiMethod generated) {
     if (generated == null || targetClass == null) return generated;
 

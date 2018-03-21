@@ -18,11 +18,8 @@ import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.collapseRefl
 
 class GroovyResolverProcessorImpl extends GroovyResolverProcessor implements GrMethodComparator.Context {
 
-  private final boolean myIsPartOfFqn;
-
   GroovyResolverProcessorImpl(@NotNull final GrReferenceExpression ref, @NotNull EnumSet<GroovyResolveKind> kinds, boolean forceRValue) {
     super(ref, kinds, null, forceRValue);
-    myIsPartOfFqn = ResolveUtil.isPartOfFQN(ref);
   }
 
   @NotNull
@@ -45,24 +42,12 @@ class GroovyResolverProcessorImpl extends GroovyResolverProcessor implements GrM
       return candidates;
     }
 
-    if (myIsPartOfFqn) {
-      candidates = getCandidates(GroovyResolveKind.PACKAGE, GroovyResolveKind.CLASS);
-      if (!candidates.isEmpty()) {
-        return candidates;
-      }
-    }
-
     candidates = getCandidates(GroovyResolveKind.PROPERTY);
     if (!candidates.isEmpty()) {
       return candidates.size() <= 1 ? candidates : ContainerUtil.newSmartList(candidates.get(0));
     }
 
     candidates = getCandidates(GroovyResolveKind.FIELD);
-    if (!candidates.isEmpty()) {
-      return candidates;
-    }
-
-    candidates = getCandidates(GroovyResolveKind.PACKAGE, GroovyResolveKind.CLASS);
     if (!candidates.isEmpty()) {
       return candidates;
     }

@@ -34,6 +34,7 @@ import org.apache.log4j.Level;
 import org.apache.log4j.PatternLayout;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.io.BuiltInServer;
 
 import javax.swing.*;
@@ -57,6 +58,9 @@ public class StartupUtil {
   private StartupUtil() { }
 
   public static boolean shouldShowSplash(final String[] args) {
+    if ("true".equals(System.getProperty(NO_SPLASH))) {
+      return false;
+    }
     return !Arrays.asList(args).contains(NO_SPLASH);
   }
 
@@ -183,9 +187,13 @@ public class StartupUtil {
     return true;
   }
 
-  // called via reflection from com.intellij.util.ui.HidpiPropTest
+  @TestOnly
+  public static void test_checkHiDPISettings() {
+    checkHiDPISettings();
+  }
+
   private static void checkHiDPISettings() {
-    if (SystemProperties.has("hidpi") && !SystemProperties.is("hidpi")) {
+    if (!SystemProperties.getBooleanProperty("hidpi", true)) {
       // suppress JRE-HiDPI mode
       System.setProperty("sun.java2d.uiScale.enabled", "false");
     }

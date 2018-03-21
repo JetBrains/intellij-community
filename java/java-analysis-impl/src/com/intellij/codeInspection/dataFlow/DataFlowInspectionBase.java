@@ -8,6 +8,7 @@ import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.dataFlow.MethodContract.ValueConstraint;
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind.NullabilityProblem;
 import com.intellij.codeInspection.dataFlow.fix.RedundantInstanceofFix;
 import com.intellij.codeInspection.dataFlow.fix.ReplaceWithConstantValueFix;
@@ -23,16 +24,15 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.psiutils.ComparisonUtils;
-import com.siyeh.ig.psiutils.ControlFlowUtils;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.TestUtils;
+import com.siyeh.ig.psiutils.*;
+import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -431,7 +431,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
 
   @NotNull
   private static String getContractMessage(List<MethodContract> contracts) {
-    if (contracts.stream().allMatch(mc -> mc.getConditions().stream().allMatch(cv -> cv.isBoundCheckingCondition()))) {
+    if (contracts.stream().allMatch(mc -> mc.getConditions().stream().allMatch(ContractValue::isBoundCheckingCondition))) {
       return InspectionsBundle.message("dataflow.message.contract.fail.index");
     }
     return InspectionsBundle.message("dataflow.message.contract.fail");
@@ -506,15 +506,22 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
         continue;
       }
 
-      LocalQuickFix[] fixes = {new ReplaceWithConstantValueFix(presentableName, exprText)};
+      List<LocalQuickFix> fixes = new SmartList<>();
+      fixes.add(new ReplaceWithConstantValueFix(presentableName, exprText));
+      boolean isAssertion = value instanceof Boolean && isAssertionEffectively(ref, (Boolean)value);
+      if (isAssertion && DONT_REPORT_TRUE_ASSERT_STATEMENTS) continue;
       if (holder.isOnTheFly()) {
-        fixes = ArrayUtil.append(fixes, new SetInspectionOptionFix(this, "REPORT_CONSTANT_REFERENCE_VALUES",
-                                                                   InspectionsBundle
-                                                                     .message("inspection.data.flow.turn.off.constant.references.quickfix"),
-                                                                   false));
+        fixes.add(new SetInspectionOptionFix(this, "REPORT_CONSTANT_REFERENCE_VALUES",
+                                             InspectionsBundle.message("inspection.data.flow.turn.off.constant.references.quickfix"),
+                                             false));
+        if (isAssertion) {
+          fixes.add(new SetInspectionOptionFix(this, "DONT_REPORT_TRUE_ASSERT_STATEMENTS",
+                                               InspectionsBundle.message("inspection.data.flow.turn.off.true.asserts.quickfix"), true));
+        }
       }
 
-      holder.registerProblem(ref, "Value <code>#ref</code> #loc is always '" + presentableName + "'", fixes);
+      holder.registerProblem(ref, "Value <code>#ref</code> #loc is always '" + presentableName + "'",
+                             fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
     }
   }
 
@@ -619,11 +626,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
                                new RedundantInstanceofFix());
       }
       else {
-        final LocalQuickFix localQuickFix = createSimplifyBooleanExpressionFix(psiAnchor, true);
-        String message = InspectionsBundle.message(isAtRHSOfBooleanAnd(psiAnchor)
-                                                   ? "dataflow.message.constant.condition.when.reached"
-                                                   : "dataflow.message.constant.condition", Boolean.toString(true));
-        holder.registerProblem(psiAnchor, message, localQuickFix);
+        reportConstantBoolean(holder, psiAnchor, true);
       }
     }
     else if (psiAnchor instanceof PsiSwitchLabelStatement) {
@@ -666,19 +669,23 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
                              createReplaceWithTrivialLambdaFix(evaluatesToTrue));
     }
     else {
-      boolean isAssertion = isAssertionEffectively(psiAnchor, evaluatesToTrue);
-      if (!DONT_REPORT_TRUE_ASSERT_STATEMENTS || !isAssertion) {
-        List<LocalQuickFix> fixes = new ArrayList<>();
-        ContainerUtil.addIfNotNull(fixes, createSimplifyBooleanExpressionFix(psiAnchor, evaluatesToTrue));
-        if (isAssertion && holder.isOnTheFly()) {
-          fixes.add(new SetInspectionOptionFix(this, "DONT_REPORT_TRUE_ASSERT_STATEMENTS",
-                                               InspectionsBundle.message("inspection.data.flow.turn.off.true.asserts.quickfix"), true));
-        }
-        String message = InspectionsBundle.message(isAtRHSOfBooleanAnd(psiAnchor) ?
-                                                   "dataflow.message.constant.condition.when.reached" :
-                                                   "dataflow.message.constant.condition", Boolean.toString(evaluatesToTrue));
-        holder.registerProblem(psiAnchor, message, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+      reportConstantBoolean(holder, psiAnchor, evaluatesToTrue);
+    }
+  }
+
+  private void reportConstantBoolean(ProblemsHolder holder, PsiElement psiAnchor, boolean evaluatesToTrue) {
+    boolean isAssertion = isAssertionEffectively(psiAnchor, evaluatesToTrue);
+    if (!DONT_REPORT_TRUE_ASSERT_STATEMENTS || !isAssertion) {
+      List<LocalQuickFix> fixes = new ArrayList<>();
+      ContainerUtil.addIfNotNull(fixes, createSimplifyBooleanExpressionFix(psiAnchor, evaluatesToTrue));
+      if (isAssertion && holder.isOnTheFly()) {
+        fixes.add(new SetInspectionOptionFix(this, "DONT_REPORT_TRUE_ASSERT_STATEMENTS",
+                                             InspectionsBundle.message("inspection.data.flow.turn.off.true.asserts.quickfix"), true));
       }
+      String message = InspectionsBundle.message(isAtRHSOfBooleanAnd(psiAnchor) ?
+                                                 "dataflow.message.constant.condition.when.reached" :
+                                                 "dataflow.message.constant.condition", Boolean.toString(evaluatesToTrue));
+      holder.registerProblem(psiAnchor, message, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
     }
   }
 
@@ -753,15 +760,62 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
     }
   }
 
-  private static boolean isAssertionEffectively(PsiElement psiAnchor, boolean evaluatesToTrue) {
-    PsiElement parent = PsiUtil.skipParenthesizedExprUp(psiAnchor.getParent());
+  private static boolean isAssertionEffectively(@NotNull PsiElement anchor, boolean evaluatesToTrue) {
+    PsiElement parent;
+    while (true) {
+      parent = anchor.getParent();
+      if (parent instanceof PsiExpression && BoolUtils.isNegation((PsiExpression)parent)) {
+        evaluatesToTrue = !evaluatesToTrue;
+        anchor = parent;
+        continue;
+      }
+      if (parent instanceof PsiParenthesizedExpression) {
+        anchor = parent;
+        continue;
+      }
+      if (parent instanceof PsiPolyadicExpression) {
+        IElementType tokenType = ((PsiPolyadicExpression)parent).getOperationTokenType();
+        if (tokenType.equals(JavaTokenType.ANDAND) || tokenType.equals(JavaTokenType.OROR)) {
+          // always true operand makes always true OR-chain and does not affect the result of AND-chain
+          // Note that in `assert unknownExpression && trueExpression;` the trueExpression should not be reported
+          // because this assert is essentially the shortened `assert unknownExpression; assert trueExpression;`
+          // which is not reported.
+          boolean causesShortCircuit = (tokenType.equals(JavaTokenType.OROR) == evaluatesToTrue) &&
+                                       ArrayUtil.getLastElement(((PsiPolyadicExpression)parent).getOperands()) != anchor;
+          if (!causesShortCircuit) {
+            // We still report `assert trueExpression || unknownExpression`, because here `unknownExpression` is never checked
+            // which is probably not intended.
+            anchor = parent;
+            continue;
+          }
+        }
+      }
+      break;
+    }
     if (parent instanceof PsiAssertStatement) {
       return evaluatesToTrue;
     }
-    if (parent instanceof PsiIfStatement && psiAnchor == ((PsiIfStatement)parent).getCondition()) {
+    if (parent instanceof PsiIfStatement && anchor == ((PsiIfStatement)parent).getCondition()) {
       PsiStatement thenBranch = ControlFlowUtils.stripBraces(((PsiIfStatement)parent).getThenBranch());
       if (thenBranch instanceof PsiThrowStatement) {
         return !evaluatesToTrue;
+      }
+    }
+    if (parent instanceof PsiExpressionList) {
+      int index = ArrayUtil.indexOf(((PsiExpressionList)parent).getExpressions(), anchor);
+      if (index >= 0) {
+        ValueConstraint wantedConstraint = evaluatesToTrue ? ValueConstraint.FALSE_VALUE : ValueConstraint.TRUE_VALUE;
+        PsiMethodCallExpression call = ObjectUtils.tryCast(parent.getParent(), PsiMethodCallExpression.class);
+        if (call != null) {
+          PsiMethod method = call.resolveMethod();
+          if (method != null) {
+            List<StandardMethodContract> contracts = ControlFlowAnalyzer.getMethodContracts(method);
+            return contracts.stream().anyMatch(
+              smc -> smc.getReturnValue() == ValueConstraint.THROW_EXCEPTION &&
+                     IntStreamEx.ofIndices(smc.arguments)
+                                .allMatch(idx -> smc.arguments[idx] == (idx == index ? wantedConstraint : ValueConstraint.ANY_VALUE)));
+          }
+        }
       }
     }
     return false;

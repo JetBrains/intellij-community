@@ -1104,12 +1104,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertEquals("profiles", p.getProfiles().get(0).getModules().get(0));
     assertEquals("profiles.xml", p.getProfiles().get(0).getSource());
 
-    new WriteCommandAction.Simple(myProject) {
-      @Override
-      protected void run() throws Throwable {
-        profiles.delete(this);
-      }
-    }.execute().throwException();
+    WriteCommandAction.writeCommandAction(myProject).run(() -> profiles.delete(this));
 
 
     p = readProject(module);
@@ -1126,12 +1121,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertEmpty("parentProfiles", p.getProfiles().get(0).getModules());
     assertEquals("profiles.xml", p.getProfiles().get(0).getSource());
 
-    new WriteCommandAction.Simple(myProject) {
-      @Override
-      protected void run() throws Throwable {
-        parentProfiles.delete(null);
-      }
-    }.execute().throwException();
+    WriteCommandAction.writeCommandAction(myProject).run(() -> parentProfiles.delete(null));
 
 
     p = readProject(module);

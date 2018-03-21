@@ -15,17 +15,18 @@
  */
 package com.siyeh.ig.bugs;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.PsiReplacementUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class StaticFieldReferenceOnSubclassInspection extends BaseInspection {
+public class StaticFieldReferenceOnSubclassInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   @NotNull
@@ -67,12 +68,13 @@ public class StaticFieldReferenceOnSubclassInspection extends BaseInspection {
 
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) {
-      final PsiIdentifier name = (PsiIdentifier)descriptor.getPsiElement();
-      final PsiReferenceExpression expression = (PsiReferenceExpression)name.getParent();
-      assert expression != null;
-      final PsiField field = (PsiField)expression.resolve();
-      assert field != null;
-      PsiReplacementUtil.replaceExpressionWithReferenceTo(expression, field);
+      final PsiIdentifier name = ObjectUtils.tryCast(descriptor.getPsiElement(), PsiIdentifier.class);
+      if (name == null) return;
+      final PsiReferenceExpression expression = ObjectUtils.tryCast(name.getParent(), PsiReferenceExpression.class);
+      if (expression == null) return;
+      final PsiField field = ObjectUtils.tryCast(expression.resolve(), PsiField.class);
+      if (field == null) return;
+      expression.bindToElement(field);
     }
   }
 
@@ -81,12 +83,10 @@ public class StaticFieldReferenceOnSubclassInspection extends BaseInspection {
     return new StaticFieldOnSubclassVisitor();
   }
 
-  private static class StaticFieldOnSubclassVisitor
-    extends BaseInspectionVisitor {
+  private static class StaticFieldOnSubclassVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitReferenceExpression(
-      PsiReferenceExpression expression) {
+    public void visitReferenceExpression(PsiReferenceExpression expression) {
       super.visitReferenceExpression(expression);
       final PsiElement qualifier = expression.getQualifier();
       if (!(qualifier instanceof PsiReferenceExpression)) {
@@ -100,17 +100,13 @@ public class StaticFieldReferenceOnSubclassInspection extends BaseInspection {
       if (!field.hasModifierProperty(PsiModifier.STATIC)) {
         return;
       }
-      final PsiElement qualifierReferent =
-        ((PsiReference)qualifier).resolve();
+      final PsiElement qualifierReferent = ((PsiReferenceExpression)qualifier).resolve();
       if (!(qualifierReferent instanceof PsiClass)) {
         return;
       }
       final PsiClass referencedClass = (PsiClass)qualifierReferent;
       final PsiClass declaringClass = field.getContainingClass();
-      if (declaringClass == null) {
-        return;
-      }
-      if (declaringClass.equals(referencedClass)) {
+      if (declaringClass == null || declaringClass.equals(referencedClass)) {
         return;
       }
       final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(expression.getProject()).getResolveHelper();

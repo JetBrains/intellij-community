@@ -14,7 +14,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonSchemaAnnotator;
@@ -593,8 +592,8 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
     doTest(file.getVirtualFile(), true, false);
   }
 
-  public static void registerProvider(Project project, @NotNull String schema) throws IOException {
-    File dir = PlatformTestCase.createTempDir("json_schema_test", true);
+  public void registerProvider(Project project, @NotNull String schema) throws IOException {
+    File dir = createTempDir("json_schema_test", true);
     File child = new File(dir, "schema.json");
     //noinspection ResultOfMethodCallIgnored
     child.createNewFile();

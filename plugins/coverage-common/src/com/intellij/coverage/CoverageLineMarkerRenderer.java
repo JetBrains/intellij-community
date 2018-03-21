@@ -21,6 +21,7 @@ import com.intellij.application.options.colors.ColorAndFontPanelFactory;
 import com.intellij.application.options.colors.NewColorAndFontPanel;
 import com.intellij.application.options.colors.SimpleEditorPreview;
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.coverage.actions.HideCoverageInfoAction;
 import com.intellij.coverage.actions.ShowCoveringTestsAction;
@@ -101,7 +102,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
     if (bgColor == null) {
       bgColor = color.getForegroundColor();
     }
-    if (editor.getSettings().isLineNumbersShown() || ((EditorGutterComponentEx)editor.getGutter()).isAnnotationsShown()) {
+    if (editor.getSettings().isLineNumbersShown() || editor.getGutter().isAnnotationsShown()) {
       if (bgColor != null) {
         bgColor = ColorUtil.toAlpha(bgColor, 150);
       }
@@ -190,7 +191,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
       }
     };
     HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, point,
-        HintManagerImpl.HIDE_BY_ANY_KEY | HintManagerImpl.HIDE_BY_TEXT_CHANGE | HintManagerImpl.HIDE_BY_OTHER_HINT | HintManagerImpl.HIDE_BY_SCROLLING, -1, false, new HintHint(editor, point));
+                                                     HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_OTHER_HINT | HintManager.HIDE_BY_SCROLLING, -1, false, new HintHint(editor, point));
   }
 
   private String getReport(final Editor editor, final int lineNumber) {

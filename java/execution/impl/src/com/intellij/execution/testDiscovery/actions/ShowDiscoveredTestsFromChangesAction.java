@@ -2,14 +2,13 @@
 package com.intellij.execution.testDiscovery.actions;
 
 import com.intellij.codeInsight.actions.FormatChangedTextUtil;
-import com.intellij.execution.testDiscovery.TestDiscoveryExtension;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.psi.PsiDocumentManager;
@@ -18,6 +17,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.uast.UastMetaLanguage;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.uast.UFile;
 import org.jetbrains.uast.UMethod;
@@ -27,12 +27,11 @@ import org.jetbrains.uast.visitor.AbstractUastVisitor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 public class ShowDiscoveredTestsFromChangesAction extends AnAction {
   @Override
   public void update(AnActionEvent e) {
-    e.getPresentation().setEnabledAndVisible(Registry.is(TestDiscoveryExtension.TEST_DISCOVERY_REGISTRY_KEY) && e.getProject() != null && e.getData(VcsDataKeys.CHANGES) != null);
+    e.getPresentation().setEnabledAndVisible(ApplicationManager.getApplication().isInternal() && e.getProject() != null && e.getData(VcsDataKeys.CHANGES) != null);
   }
 
   @Override
@@ -69,7 +68,8 @@ public class ShowDiscoveredTestsFromChangesAction extends AnAction {
 
     PsiMethod[] asJavaMethods = methods
       .stream()
-      .map(m -> (PsiMethod)Objects.requireNonNull(UastContextKt.toUElement(m)).getJavaPsi())
+      .map(m -> ObjectUtils.tryCast(Objects.requireNonNull(UastContextKt.toUElement(m)).getJavaPsi(), PsiMethod.class))
+      .filter(Objects::nonNull)
       .toArray(PsiMethod.ARRAY_FACTORY::create);
     ShowDiscoveredTestsAction.showDiscoveredTests(project, e.getDataContext(), "Selected Changes", asJavaMethods);
   }

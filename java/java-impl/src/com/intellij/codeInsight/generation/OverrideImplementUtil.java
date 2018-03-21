@@ -418,12 +418,10 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
     if (selectedElements == null || selectedElements.isEmpty()) return;
 
     LOG.assertTrue(aClass.isValid());
-    new WriteCommandAction(project, aClass.getContainingFile()) {
-      @Override
-      protected void run(@NotNull final Result result) throws Throwable {
-        overrideOrImplementMethodsInRightPlace(editor, aClass, selectedElements, chooser.isCopyJavadoc(), chooser.isInsertOverrideAnnotation());
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(project, aClass.getContainingFile()).run(() -> {
+      overrideOrImplementMethodsInRightPlace(editor, aClass, selectedElements, chooser.isCopyJavadoc(),
+                                             chooser.isInsertOverrideAnnotation());
+    });
   }
 
   /**

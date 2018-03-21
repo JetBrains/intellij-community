@@ -846,7 +846,14 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
         }
       }
       else {
-        newParms[i] = createNewParameter(changeInfo, info, substitutor);
+        PsiElement parent = list.getParent();
+        if (parent instanceof PsiLambdaExpression && !((PsiLambdaExpression)parent).hasFormalParameterTypes()) {
+          PsiExpression dummyLambdaParam = factory.createExpressionFromText(info.getName() + "-> {}", list);
+          newParms[i] = ((PsiLambdaExpression)dummyLambdaParam).getParameterList().getParameters()[0];
+        }
+        else {
+          newParms[i] = createNewParameter(changeInfo, info, substitutor);
+        }
       }
     }
 

@@ -3,6 +3,7 @@
  */
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.util.containers.Stack
 import com.intellij.util.text.UniqueNameGenerator
 import groovy.transform.CompileStatic
 import org.apache.tools.ant.BuildException
@@ -26,6 +27,7 @@ class BuildMessagesImpl implements BuildMessages {
   private final List<BuildMessagesImpl> forkedInstances = []
   private final List<LogMessage> delayedMessages = []
   private final UniqueNameGenerator taskNameGenerator = new UniqueNameGenerator()
+  private final Stack<String> blockNames = new Stack<>();
 
   static BuildMessagesImpl create(Project antProject) {
     String key = "IntelliJBuildMessages"
@@ -111,10 +113,18 @@ class BuildMessagesImpl implements BuildMessages {
   @Override
   <V> V block(String blockName, Closure<V> body) {
     try {
+      blockNames.push(blockName)
       processMessage(new LogMessage(LogMessage.Kind.BLOCK_STARTED, blockName))
       return body()
     }
+    catch (IntelliJBuildException e) {
+      throw e;
+    }
+    catch (BuildException e) {
+      throw new IntelliJBuildException(blockNames.join(" > "), e.message, e.cause)
+    }
     finally {
+      blockNames.pop()
       processMessage(new LogMessage(LogMessage.Kind.BLOCK_FINISHED, blockName))
     }
   }

@@ -282,14 +282,11 @@ public abstract class MavenTestCase extends UsefulTestCase {
     return f;
   }
 
-  protected void deleteSettingsXml() {
-    new WriteCommandAction.Simple(myProject) {
-      @Override
-      protected void run() throws Throwable {
-        VirtualFile f = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(myDir, "settings.xml"));
-        if (f != null) f.delete(this);
-      }
-    }.execute().throwException();
+  protected void deleteSettingsXml() throws IOException {
+    WriteCommandAction.writeCommandAction(myProject).run(() -> {
+      VirtualFile f = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(myDir, "settings.xml"));
+      if (f != null) f.delete(this);
+    });
   }
 
   private static String createSettingsXmlContent(String content) {
@@ -429,14 +426,11 @@ public abstract class MavenTestCase extends UsefulTestCase {
            "</profilesXml>";
   }
 
-  protected void deleteProfilesXml() {
-    new WriteCommandAction.Simple(myProject) {
-      @Override
-      protected void run() throws Throwable {
-        VirtualFile f = myProjectRoot.findChild("profiles.xml");
-        if (f != null) f.delete(this);
-      }
-    }.execute().throwException();
+  protected void deleteProfilesXml() throws IOException {
+    WriteCommandAction.writeCommandAction(myProject).run(() -> {
+      VirtualFile f = myProjectRoot.findChild("profiles.xml");
+      if (f != null) f.delete(this);
+    });
   }
 
   protected void createStdProjectFolders() {

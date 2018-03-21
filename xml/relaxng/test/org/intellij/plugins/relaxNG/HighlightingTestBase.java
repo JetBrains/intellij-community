@@ -203,12 +203,9 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
                                                                                                                fixes,
                                                                                                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                                                                                                true);
-    new WriteCommandAction.Simple(project, myTestFixture.getFile()) {
-      @Override
-      protected void run() {
-        fixes[0].applyFix(project, problemDescriptor);
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(project, myTestFixture.getFile()).run(() -> {
+      fixes[0].applyFix(project, problemDescriptor);
+    });
     myTestFixture.checkResultByFile(file + "_after." + ext);
   }
 

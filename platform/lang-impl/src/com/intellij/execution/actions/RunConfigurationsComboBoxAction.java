@@ -21,10 +21,12 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.util.List;
 import java.util.Map;
@@ -117,7 +119,10 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       }
     };
     NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
-    panel.setBorder(JBUI.Borders.emptyRight(2));
+    Border border = UIUtil.isUnderDefaultMacTheme() ?
+                    JBUI.Borders.emptyLeft(1) : JBUI.Borders.empty(0, 5, 0, 4);
+
+    panel.setBorder(border);
     panel.add(button);
     return panel;
   }

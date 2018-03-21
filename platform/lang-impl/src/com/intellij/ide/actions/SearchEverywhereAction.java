@@ -200,7 +200,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     JPanel panel = new BorderLayoutPanel() {
       @Override
       public Dimension getPreferredSize() {
-        return JBUI.size(25);
+        return JBUI.size(24);
       }
     };
     panel.setOpaque(false);

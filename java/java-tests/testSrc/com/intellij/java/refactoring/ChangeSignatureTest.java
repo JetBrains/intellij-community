@@ -400,6 +400,19 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     doTest(null, null, null, genParams, new SimpleExceptionsGen(), false, true);
   }
 
+  public void testAddParenthesisForLambdaParameterList() {
+    GenParams genParams = method -> new ParameterInfoImpl[]{
+      new ParameterInfoImpl(0, "a", PsiType.INT),
+      new ParameterInfoImpl(-1, "b", PsiType.INT)
+    };
+    doTest(null, null, null, genParams, new SimpleExceptionsGen(), false, true);
+  }
+
+  public void testAddParenthesisForLambdaParameterListDeleteTheOnlyOne() {
+    GenParams genParams = method -> new ParameterInfoImpl[0];
+    doTest(null, null, null, genParams, new SimpleExceptionsGen(), false, true);
+  }
+
   public void testExpandMethodReferenceToDeleteParameter() {
     GenParams genParams = method -> new ParameterInfoImpl[0];
     doTest(null, null, null, genParams, new SimpleExceptionsGen(), false, true);

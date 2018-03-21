@@ -4,11 +4,11 @@ Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socke
 Parallel.java:11
 StreamEx.of(1, 2, 3)
 .parallel((ForkJoinPool) Executors.newWorkStealingPool())
-.count()
+.forEach(x -> {})
 parallel
     before: 1,3,5
     after: 2,4,6
-count
+forEach
     before: 2,4,6
     after: nothing
 mappings for parallel
@@ -20,7 +20,7 @@ mappings for parallel
     1 <- 2
     3 <- 4
     5 <- 6
-mappings for count
+mappings for forEach
   direct:
     2 -> nothing
     4 -> nothing
@@ -30,4 +30,3 @@ mappings for count
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 
 Process finished with exit code 0
-3

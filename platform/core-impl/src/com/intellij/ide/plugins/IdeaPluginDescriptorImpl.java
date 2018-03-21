@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.AbstractBundle;
@@ -20,7 +6,6 @@ import com.intellij.CommonBundle;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionsArea;
@@ -41,7 +26,6 @@ import gnu.trove.THashMap;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,14 +42,18 @@ import java.util.regex.Pattern;
  */
 public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   public static final IdeaPluginDescriptorImpl[] EMPTY_ARRAY = new IdeaPluginDescriptorImpl[0];
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.plugins.PluginDescriptor");
+
+  private final File myPath;
+  private final boolean myBundled;
+
   private final NullableLazyValue<String> myDescription = new NullableLazyValue<String>() {
     @Override
     protected String compute() {
       return computeDescription();
     }
   };
-
   private String myName;
   private PluginId myId;
   private String myResourceBundleBaseName;
@@ -77,7 +65,6 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   private String myVendorLogoPath;
   private String myCategory;
   private String url;
-  private File myPath;
   private PluginId[] myDependencies = PluginId.EMPTY_ARRAY;
   private PluginId[] myOptionalDependencies = PluginId.EMPTY_ARRAY;
   private Map<PluginId, List<String>> myOptionalConfigs;
@@ -92,8 +79,6 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   @Nullable private MultiMap<String, Pair<String, Element>> myExtensions; // extension point name -> list of (extension default NS, extension element)
   @Nullable private MultiMap<String, Element> myExtensionsPoints;
   private String myDescriptionChildText;
-  private String myDownloadCounter;
-  private long myDate;
   private boolean myUseIdeaClassLoader;
   private boolean myUseCoreClassLoader;
   private boolean myAllowBundledUpdate;
@@ -103,8 +88,9 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   private Boolean mySkipped;
   private List<String> myModules;
 
-  public IdeaPluginDescriptorImpl(@NotNull File pluginPath) {
+  public IdeaPluginDescriptorImpl(@NotNull File pluginPath, boolean bundled) {
     myPath = pluginPath;
+    myBundled = bundled;
   }
 
   @Nullable
@@ -119,6 +105,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     }
     return result;
   }
+
   @Nullable
   private static List<Pair<String, Element>> copyChildrenAndNs(@Nullable Element[] elements) {
     if (elements == null || elements.length == 0) {
@@ -153,9 +140,8 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return myPath;
   }
 
-  public void setPath(@NotNull File path) {
-    myPath = path;
-  }
+  /** @deprecated changing a plugin path after loading is not expected (to be removed in IDEA 2019) */
+  public void setPath(@SuppressWarnings("unused") File path) { }
 
   public void readExternal(@NotNull Document document, @NotNull URL url, @NotNull JDOMXIncluder.PathResolver pathResolver) throws InvalidDataException {
     Application application = ApplicationManager.getApplication();
@@ -220,7 +206,6 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     }
 
     myCategory = pluginBean.category;
-
 
     if (pluginBean.vendor != null) {
       myVendor = pluginBean.vendor.name;
@@ -364,11 +349,6 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return myVendor;
   }
 
-  public void setVendor( final String val )
-  {
-    myVendor = val;
-  }
-
   @Override
   public String getVersion() {
     return myVersion;
@@ -475,19 +455,9 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return myVendorEmail;
   }
 
-  public void setVendorEmail( final String val )
-  {
-    myVendorEmail = val;
-  }
-
   @Override
   public String getVendorUrl() {
     return myVendorUrl;
-  }
-
-  public void setVendorUrl( final String val )
-  {
-    myVendorUrl = val;
   }
 
   @Override
@@ -500,7 +470,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     url = val;
   }
 
-  @NonNls
+  @Override
   public String toString() {
     return "PluginDescriptor[name='" + myName + "', classpath='" + myPath + "']";
   }
@@ -517,6 +487,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     myLoader = loader;
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof IdeaPluginDescriptorImpl)) return false;
@@ -526,6 +497,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return myName == null ? pluginDescriptor.myName == null : myName.equals(pluginDescriptor.myName);
   }
 
+  @Override
   public int hashCode() {
     return myName != null ? myName.hashCode() : 0;
   }
@@ -541,31 +513,14 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return myId;
   }
 
-  /*
-     This setter was explicitly defined to be able to set downloads count for a
-     descriptor outside its loading from the xml file since this information
-     is available only from the site.
-  */
-  public void setDownloadsCount(String downloadsCount) {
-    myDownloadCounter = downloadsCount;
+  /** @deprecated doesn't make sense for installed plugins; use PluginNode#getDownloads (to be removed in IDEA 2019) */
+  public String getDownloads() {
+    return null;
   }
 
-  @Override
-  public String getDownloads(){
-    return myDownloadCounter;
-  }
-
-  public long getDate(){
-    return myDate;
-  }
-
-  /*
-     This setter was explicitly defined to be able to set date for a
-     descriptor outside its loading from the xml file since this information
-     is available only from the site.
-  */
-  public void setDate( long date ){
-    myDate = date;
+  /** @deprecated doesn't make sense for installed plugins; use PluginNode#getDate (to be removed in IDEA 2019) */
+  public long getDate() {
+    return 0;
   }
 
   @Override
@@ -576,10 +531,6 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   @Override
   public String getVendorLogoPath() {
     return myVendorLogoPath;
-  }
-
-  public void setVendorLogoPath(final String vendorLogoPath) {
-    myVendorLogoPath = vendorLogoPath;
   }
 
   @Override
@@ -689,28 +640,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   @Override
   public boolean isBundled() {
-    if (PluginManagerCore.CORE_PLUGIN_ID.equals(myId.getIdString())) {
-      return true;
-    }
-
-    String path;
-    try {
-      //to avoid paths like this /home/kb/IDEA/bin/../config/plugins/APlugin
-      path = getPath().getCanonicalPath();
-    } catch (IOException e) {
-      path = getPath().getAbsolutePath();
-    }
-    Application app = ApplicationManager.getApplication();
-    if (app != null && app.isInternal()) {
-      if (path.startsWith(PathManager.getHomePath() + File.separator + "out" + File.separator + "classes")) {
-        return true;
-      }
-      if (app.isUnitTestMode() && !path.startsWith(PathManager.getPluginsPath() + File.separatorChar)) {
-        return true;
-      }
-    }
-
-    return path.startsWith(PathManager.getPreInstalledPluginsPath());
+    return myBundled;
   }
 
   @Override

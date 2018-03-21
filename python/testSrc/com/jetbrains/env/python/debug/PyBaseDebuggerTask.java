@@ -253,19 +253,30 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
    * @param line starting with 0
    */
   protected void toggleBreakpoint(final String file, final int line) {
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> doToggleBreakpoint(file, line));
+    ApplicationManager.getApplication().invokeAndWait(() -> doToggleBreakpoint(file, line), ModalityState.defaultModalityState());
     setBreakpointSuspendPolicy(getProject(), line, myDefaultSuspendPolicy);
 
-    addOrRemoveBreakpoint(file, line);
+    addBreakpointInfo(file, line);
   }
 
-  private void addOrRemoveBreakpoint(String file, int line) {
-    if (myBreakpoints.contains(Pair.create(file, line))) {
-      myBreakpoints.remove(Pair.create(file, line));
-    }
-    else {
-      myBreakpoints.add(Pair.create(file, line));
-    }
+  /**
+   * Removes breakpoint
+   *
+   * @param file getScriptName() or path to script
+   * @param line starting with 0
+   */
+  protected void removeBreakpoint(final String file, final int line) {
+    ApplicationManager.getApplication().invokeAndWait(() -> XDebuggerTestUtil.removeBreakpoint(getProject(), getFileByPath(file), line),
+                                                      ModalityState.defaultModalityState());
+    removeBreakpointInfo(file, line);
+  }
+
+  private void addBreakpointInfo(String file, int line) {
+    myBreakpoints.add(Pair.create(file, line));
+  }
+
+  private void removeBreakpointInfo(String file, int line) {
+    myBreakpoints.remove(Pair.create(file, line));
   }
 
   protected void toggleBreakpointInEgg(final String file, final String innerPath, final int line) {
@@ -279,7 +290,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
       XDebuggerTestUtil.toggleBreakpoint(getProject(), innerFile, line);
     });
 
-    addOrRemoveBreakpoint(file, line);
+    addBreakpointInfo(file, line);
   }
 
   public boolean canPutBreakpointAt(Project project, String file, int line) {
@@ -410,8 +421,9 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
   public void tearDown() throws Exception {
     try {
       EdtTestUtil.runInEdtAndWait(() ->finishSession());
-    }finally {
-      PyBaseDebuggerTask.super.tearDown();
+    }
+    finally {
+      super.tearDown();
     }
   }
 

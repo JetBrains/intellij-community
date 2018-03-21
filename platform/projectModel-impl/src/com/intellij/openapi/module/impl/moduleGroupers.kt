@@ -3,6 +3,7 @@ package com.intellij.openapi.module.impl
 
 import com.intellij.openapi.module.*
 import com.intellij.openapi.project.Project
+import com.intellij.util.SystemProperties
 import org.jetbrains.annotations.TestOnly
 import java.util.*
 
@@ -23,7 +24,10 @@ private abstract class ModuleGrouperBase(protected val project: Project, protect
   protected fun getModuleName(module: Module) = model?.getActualName(module) ?: module.name
 
   override fun getShortenedName(module: Module) = getShortenedNameByFullModuleName(getModuleName(module))
+  override fun getShortenedName(module: Module, parentGroupName: String?) =
+    getShortenedNameByFullModuleName(getModuleName(module), parentGroupName)
 }
+
 
 private class QualifiedNameGrouper(project: Project, model: ModifiableModuleModel?) : ModuleGrouperBase(project, model) {
   override fun getGroupPath(module: Module) = getGroupPathByModuleName(getModuleName(module))
@@ -32,11 +36,22 @@ private class QualifiedNameGrouper(project: Project, model: ModifiableModuleMode
 
   override fun getShortenedNameByFullModuleName(name: String) = name.substringAfterLastDotNotFollowedByIncorrectChar()
 
+  override fun getShortenedNameByFullModuleName(name: String, parentGroupName: String?): String {
+    return if (parentGroupName != null) name.removePrefix("$parentGroupName.") else name
+  }
+
   override fun getGroupPathByModuleName(name: String) = name.splitByDotsJoiningIncorrectIdentifiers().dropLast(1)
 
   override fun getModuleAsGroupPath(module: Module) = getModuleName(module).splitByDotsJoiningIncorrectIdentifiers()
 
   override fun getModuleAsGroupPath(description: ModuleDescription) = description.name.splitByDotsJoiningIncorrectIdentifiers()
+
+  override val compactGroupNodes: Boolean
+    get() = compactImplicitGroupNodes
+
+  companion object {
+    private val compactImplicitGroupNodes = SystemProperties.getBooleanProperty("project.compact.module.group.nodes", true)
+  }
 }
 
 private class ExplicitModuleGrouper(project: Project, model: ModifiableModuleModel?): ModuleGrouperBase(project, model) {
@@ -53,11 +68,16 @@ private class ExplicitModuleGrouper(project: Project, model: ModifiableModuleMod
 
   override fun getShortenedNameByFullModuleName(name: String) = name
 
+  override fun getShortenedNameByFullModuleName(name: String, parentGroupName: String?) = name
+
   override fun getGroupPathByModuleName(name: String): List<String> = emptyList()
 
   override fun getModuleAsGroupPath(module: Module) = null
 
   override fun getModuleAsGroupPath(description: ModuleDescription) = null
+
+  override val compactGroupNodes: Boolean
+    get() = false
 }
 
 /**
