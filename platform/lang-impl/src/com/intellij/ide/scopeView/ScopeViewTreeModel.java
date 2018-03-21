@@ -570,7 +570,7 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
     @Override
     public FileStatus getFileStatus() {
       FileStatusManager manager = getFileStatusManager(getProject());
-      return manager == null ? FileStatus.NOT_CHANGED : manager.getStatus(file);
+      return manager == null ? FileStatus.NOT_CHANGED : manager.getRecursiveStatus(file);
     }
 
     @Nullable
