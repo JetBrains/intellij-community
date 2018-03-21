@@ -15,8 +15,6 @@
  */
 package com.intellij.openapi.command.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.AbnormalCommandTerminationException;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -32,14 +30,7 @@ class CommandProcessorImpl extends CoreCommandProcessor {
     if (myCurrentCommand != command) return;
     final boolean failed;
     try {
-      if (throwable instanceof AbnormalCommandTerminationException) {
-        final AbnormalCommandTerminationException rollback = (AbnormalCommandTerminationException)throwable;
-        if (ApplicationManager.getApplication().isUnitTestMode()) {
-          throw new RuntimeException(rollback);
-        }
-        failed = true;
-      }
-      else if (throwable != null) {
+      if (throwable != null) {
         failed = true;
         ExceptionUtil.rethrowUnchecked(throwable);
         CommandLog.LOG.error(throwable);
