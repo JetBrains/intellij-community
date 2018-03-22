@@ -68,7 +68,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -1167,8 +1166,11 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         SmartPsiElementPointer originalPointer = myElement.getUserData(ORIGINAL_ELEMENT_KEY);
         PsiElement originalPsi = originalPointer != null ? originalPointer.getElement() : null;
         String doc = provider.generateDoc(myElement, originalPsi);
-        if (doc == null && myElement instanceof PsiFile) {
-          doc = generateFileDoc((PsiFile)myElement);
+        if (myElement instanceof PsiFile) {
+          String fileDoc = generateFileDoc((PsiFile)myElement, doc == null);
+          if (fileDoc != null) {
+            doc = doc == null ? fileDoc : doc + fileDoc;
+          }
         }
         result.set(doc);
       }, DOC_GENERATION_TIMEOUT_MILLISECONDS, DOC_GENERATION_PAUSE_MILLISECONDS, null);
@@ -1196,14 +1198,14 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   }
 
   @Nullable
-  private static String generateFileDoc(@NotNull PsiFile psiFile) {
+  private static String generateFileDoc(@NotNull PsiFile psiFile, boolean withUrl) {
     VirtualFile file = PsiUtilCore.getVirtualFile(psiFile);
-    File ioFile = file == null ? null : VfsUtilCore.virtualToIoFile(file);
+    File ioFile = file == null || !file.isInLocalFileSystem() ? null : VfsUtilCore.virtualToIoFile(file);
     BasicFileAttributes attr = null;
     try {
       attr = ioFile == null ? null : Files.readAttributes(Paths.get(ioFile.toURI()), BasicFileAttributes.class);
     }
-    catch (IOException ignored) { }
+    catch (Exception ignored) { }
     if (attr == null) return null;
     FileType type = psiFile.getFileType();
     String typeName = type == UnknownFileType.INSTANCE ? "Unknown" :
@@ -1211,10 +1213,13 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
                       type == ArchiveFileType.INSTANCE ? "Archive" :
                       type.getName();
     String text =
-      "File size " + StringUtil.formatFileSize(attr.size()) +
+      (withUrl ? file.getPresentableUrl() : "") +
+      "\n" +
+      "\nFile size is " + StringUtil.formatFileSize(attr.size()) +
       "\n" + typeName + (type.isBinary() ? "" : " (" + psiFile.getLanguage().getDisplayName() + ")") +
       "\nModified on " + DateFormatUtil.formatDateTime(attr.lastModifiedTime().toMillis()) +
-      "\nCreated on " + DateFormatUtil.formatDateTime(attr.creationTime().toMillis());
-    return StringUtil.replace(StringUtil.escapeXml(text), "\n", "<br>");
+      "\nCreated on " + DateFormatUtil.formatDateTime(attr.creationTime().toMillis()) +
+      "\n";
+    return StringUtil.replace(StringUtil.escapeXml(text) + "&nbsp;", "\n", "<br>");
   }
 }

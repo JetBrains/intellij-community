@@ -42,9 +42,6 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.ui.components.JBList;
-import com.intellij.ui.popup.HintUpdateSupply;
-import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.usages.UsageView;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
@@ -127,7 +124,6 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     Collections.addAll(allElements, targets);
     allElements.addAll(additionalActions);
 
-    final Ref<JBList<Object>> listR = new Ref<>();
     final IPopupChooserBuilder<Object> builder = JBPopupFactory.getInstance().createPopupChooserBuilder(allElements);
     final Ref<UsageView> usageView = new Ref<>();
     final JBPopup popup = builder.setNamerForFiltering(o -> {
@@ -167,11 +163,9 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
           }
         }
       }).
+      withHintUpdateSupply().
       setMovable(true).
       setCancelCallback(() -> {
-        if (!listR.isNull()) {
-          HintUpdateSupply.hideHint(listR.get());
-        }
         final BackgroundUpdaterTask task = gotoData.listUpdaterTask;
         if (task != null) {
           task.cancelTask();
@@ -185,12 +179,6 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       }).
       setAdText(getAdText(gotoData.source, targets.length)).
       createPopup();
-
-    if (builder instanceof PopupChooserBuilder && ((PopupChooserBuilder)builder).getChooserComponent() instanceof ListWithFilter) {
-      JBList<Object> list = (JBList)((ListWithFilter)((PopupChooserBuilder)builder).getChooserComponent()).getList();
-      HintUpdateSupply.installSimpleHintUpdateSupply(list);
-      listR.set(list);
-    }
 
     JScrollPane pane = builder instanceof PopupChooserBuilder ? ((PopupChooserBuilder)builder).getScrollPane() : null;
     if (pane != null) {

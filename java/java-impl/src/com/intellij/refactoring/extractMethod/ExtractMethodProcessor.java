@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.AnonymousTargetClassPreselectionUtil;
@@ -125,6 +126,8 @@ public class ExtractMethodProcessor implements MatchProvider {
   protected boolean myNotNullConditionalCheck;
   protected Nullness myNullness;
 
+  private final CodeStyleSettings myStyleSettings;
+
   public ExtractMethodProcessor(Project project,
                                 Editor editor,
                                 PsiElement[] elements,
@@ -152,6 +155,8 @@ public class ExtractMethodProcessor implements MatchProvider {
     myManager = PsiManager.getInstance(myProject);
     myElementFactory = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory();
     myStyleManager = CodeStyleManager.getInstance(myProject);
+    myStyleSettings = editor != null ? CodeStyle.getSettings(editor) :
+                      CodeStyle.getSettings(elements[0].getContainingFile());
   }
 
   private static PsiElement[] processCodeBlockChildren(PsiElement[] codeBlockChildren) {
@@ -956,7 +961,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     final PsiStatement exitStatementCopy = prepareMethodBody(newMethod, true);
 
     if (myExpression == null) {
-      if (myNeedChangeContext && isPossibleToChangeCallContext()) {
+      if (isNeedToChangeCallContext()) {
         for (PsiElement element : myElements) {
           ChangeContextUtil.encodeContextInfo(element, false);
         }
@@ -1087,7 +1092,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
 
     myExtractedMethod = addExtractedMethod(newMethod);
-    if (isPossibleToChangeCallContext() && myNeedChangeContext) {
+    if (isNeedToChangeCallContext()) {
       ChangeContextUtil.decodeContextInfo(myExtractedMethod, myTargetClass, RefactoringChangeUtil.createThisExpression(myManager, null));
       if (myMethodCall.resolveMethod() != myExtractedMethod) {
         final PsiReferenceExpression methodExpression = myMethodCall.getMethodExpression();
@@ -1217,8 +1222,8 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
   }
 
-  protected boolean isPossibleToChangeCallContext() {
-    return true;
+  protected boolean isNeedToChangeCallContext() {
+    return myNeedChangeContext;
   }
 
   private void declareVariableAtMethodCallLocation(String name) {
@@ -1248,7 +1253,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     exc[0] = null;
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     if (parameters.length > 0) {
-      if (CodeStyleSettingsManager.getSettings(myProject).getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS) {
+      if (myStyleSettings.getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS) {
         method.accept(new JavaRecursiveElementVisitor() {
 
           @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
@@ -1525,10 +1530,6 @@ public class ExtractMethodProcessor implements MatchProvider {
     return myTargetClass;
   }
 
-  public boolean isNeedChangeContext() {
-    return myNeedChangeContext;
-  }
-
   public PsiType getReturnType() {
     return myReturnType;
   }
@@ -1554,7 +1555,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     PsiCodeBlock body = newMethod.getBody();
     LOG.assertTrue(body != null);
 
-    boolean isFinal = CodeStyleSettingsManager.getSettings(myProject).getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS;
+    boolean isFinal = myStyleSettings.getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS;
     PsiParameterList list = newMethod.getParameterList();
     for (VariableData data : myVariableDatum) {
       if (data.passAsParameter) {
@@ -1736,7 +1737,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     else {
       skipInstanceQualifier = instanceQualifier == null || instanceQualifier instanceof PsiThisExpression;
       if (skipInstanceQualifier) {
-        if (isPossibleToChangeCallContext() && myNeedChangeContext) {
+        if (isNeedToChangeCallContext()) {
           boolean needsThisQualifier = false;
           PsiElement parent = myCodeFragmentMember;
           while (!myTargetClass.equals(parent)) {

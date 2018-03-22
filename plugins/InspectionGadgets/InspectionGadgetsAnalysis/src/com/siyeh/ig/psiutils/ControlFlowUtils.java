@@ -778,10 +778,10 @@ public class ControlFlowUtils {
    * @param variable variable to analyze
    * @return true if variable can be referenced between start point and statement entry
    */
-  private static boolean isVariableReferencedBeforeStatementEntry(final ControlFlow flow,
+  private static boolean isVariableReferencedBeforeStatementEntry(@NotNull ControlFlow flow,
                                                                   final int start,
                                                                   final PsiStatement statement,
-                                                                  final PsiVariable variable) {
+                                                                  @NotNull PsiVariable variable) {
     final int statementStart = flow.getStartOffset(statement);
     final int statementEnd = flow.getEndOffset(statement);
 
@@ -849,7 +849,7 @@ public class ControlFlowUtils {
     return var.hasModifierProperty(PsiModifier.FINAL) ? UNKNOWN : AT_WANTED_PLACE;
   }
 
-  static boolean isDeclarationJustBefore(PsiVariable var, PsiStatement nextStatement) {
+  private static boolean isDeclarationJustBefore(PsiVariable var, PsiStatement nextStatement) {
     PsiElement declaration = var.getParent();
     PsiElement nextStatementParent = nextStatement.getParent();
     if(nextStatementParent instanceof PsiLabeledStatement) {

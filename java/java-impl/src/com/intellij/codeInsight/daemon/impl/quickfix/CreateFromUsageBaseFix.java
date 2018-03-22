@@ -36,7 +36,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -178,7 +177,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
     if (parentClass != null && (parentClass.equals(targetClass) || PsiTreeUtil.isAncestor(targetClass, parentClass, true))) {
       return PsiModifier.PRIVATE;
     } else {
-      return CodeStyleSettingsManager.getSettings(targetClass.getProject()).getCustomSettings(JavaCodeStyleSettings.class).VISIBILITY;
+      return JavaCodeStyleSettings.getInstance(targetClass.getContainingFile()).VISIBILITY;
     }
   }
 

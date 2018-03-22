@@ -9,18 +9,20 @@ componentConstrains:
   'JLabel #1':
     horizontal:
       gapBefore:
-        min: {value: 30.0}
-        preferred: {value: 30.0}
+        min: {value: 30.0, unitString: px}
+        preferred: {value: 30.0, unitString: px}
   'JTextField #2': {split: 2097051.0}
   'JLabel #3': {wrap: true}
   'JLabel #4':
     horizontal:
       gapBefore:
-        min: {value: 30.0}
-        preferred: {value: 30.0}
+        min: {value: 30.0, unitString: px}
+        preferred: {value: 30.0, unitString: px}
   'JBPasswordField #5':
     wrap: true
     horizontal:
       size:
-        max: {value: 210.0}
+        min: {value: 250.0, unitString: px}
+        max: {value: 250.0, unitString: px}
+        preferred: {value: 250.0, unitString: px}
   'JBLabel #6': {skip: 1.0, spanX: 2097051.0, wrap: true}

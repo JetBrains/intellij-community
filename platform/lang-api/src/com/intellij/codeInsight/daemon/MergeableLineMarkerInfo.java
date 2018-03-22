@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -75,6 +76,17 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
                                            @NotNull List<MergeableLineMarkerInfo> markers) {
     return false;
   }
+
+  /**
+   * @deprecated use {@link #configurePopupAndRenderer(IPopupChooserBuilder, JBList, List)}
+   */
+  @Deprecated
+  public boolean configurePopupAndRenderer(@NotNull PopupChooserBuilder builder,
+                                           @NotNull JBList list,
+                                           @NotNull List<MergeableLineMarkerInfo> markers) {
+    return false;
+  }
+
 
   @NotNull
   public static List<LineMarkerInfo<PsiElement>> merge(@NotNull List<MergeableLineMarkerInfo> markers) {

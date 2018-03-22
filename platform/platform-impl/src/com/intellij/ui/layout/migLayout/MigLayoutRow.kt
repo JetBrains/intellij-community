@@ -1,20 +1,29 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ui.layout
+package com.intellij.ui.layout.migLayout
 
 import com.intellij.ui.components.Label
+import com.intellij.ui.layout.*
 import com.intellij.util.SmartList
+import com.intellij.util.ui.JBUI
+import net.miginfocom.layout.BoundSize
 import net.miginfocom.layout.CC
+import net.miginfocom.layout.ConstraintParser
 import java.awt.Component
 import javax.swing.ButtonGroup
 import javax.swing.JComponent
 import javax.swing.JToggleButton
 
+internal val SHORT_SHORT_TEXT_WIDTH = JBUI.scale(250)
+internal val MAX_SHORT_TEXT_WIDTH = JBUI.scale(350)
+private val SHORT_TEXT_SIZE: BoundSize = ConstraintParser.parseBoundSize("${SHORT_SHORT_TEXT_WIDTH}px!", false, true)
+private val MEDIUM_TEXT_SIZE: BoundSize = ConstraintParser.parseBoundSize("${SHORT_SHORT_TEXT_WIDTH}px::${MAX_SHORT_TEXT_WIDTH}px", false, true)
+
 internal class MigLayoutRow(private val componentConstraints: MutableMap<Component, CC>,
-                           override val builder: MigLayoutBuilder,
-                           val labeled: Boolean = false,
-                           val noGrid: Boolean = false,
-                           private val buttonGroup: ButtonGroup? = null,
-                           val separated: Boolean = false) : Row() {
+                            override val builder: MigLayoutBuilder,
+                            val labeled: Boolean = false,
+                            val noGrid: Boolean = false,
+                            private val buttonGroup: ButtonGroup? = null,
+                            val separated: Boolean = false) : Row() {
   val components = SmartList<JComponent>()
   var rightIndex = Int.MAX_VALUE
 
@@ -131,13 +140,16 @@ private fun createComponentConstraints(constraints: Array<out CCFlags>? = null,
     cc().split = split
   }
 
-  if (growPolicy == GrowPolicy.SHORT_TEXT) {
-    cc().maxWidth("210")
-  }
-  else if (growPolicy == GrowPolicy.MEDIUM_TEXT) {
-    cc().minWidth("210")
-    cc().maxWidth("350")
+  if (growPolicy != null) {
+    applyGrowPolicy(cc(), growPolicy)
   }
 
   return _cc
+}
+
+internal fun applyGrowPolicy(cc: CC, growPolicy: GrowPolicy) {
+  cc.horizontal.size = when (growPolicy) {
+    GrowPolicy.SHORT_TEXT -> SHORT_TEXT_SIZE
+    GrowPolicy.MEDIUM_TEXT -> MEDIUM_TEXT_SIZE
+  }
 }

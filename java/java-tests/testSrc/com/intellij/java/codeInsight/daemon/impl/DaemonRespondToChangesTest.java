@@ -416,7 +416,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     final AtomicReference<RuntimeException> stopDaemonReason = new AtomicReference<>();
     StorageUtilKt.setDEBUG_LOG("");
     getProject().getMessageBus().connect(disposable).subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC,
-            new DaemonCodeAnalyzer.DaemonListenerAdapter() {
+            new DaemonCodeAnalyzer.DaemonListener() {
               @Override
               public void daemonCancelEventOccurred(@NotNull String reason) {
                 RuntimeException e = new RuntimeException("Some bastard's restarted daemon: " + reason +
@@ -911,7 +911,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       TextRange range = ObjectUtils.assertNotNull(FileStatusMap.getDirtyTextRange(getEditor(), Pass.UPDATE_ALL));
       log.append("FileStatusMap.getDirtyTextRange: " + range+"\n");
       List<PsiElement> elements = CollectHighlightsUtil.getElementsInRange(getFile(), range.getStartOffset(), range.getEndOffset());
-      log.append("CollectHighlightsUtil.getElementsInRange" + range + ": " + elements.size() +" elements : "+ elements+"\n");
+      log.append("CollectHighlightsUtil.getElementsInRange: " + range + ": " + elements.size() +" elements : "+ elements+"\n");
       List<HighlightInfo> infos = doHighlighting();
       log.append(" File text: '" + getFile().getText() + "'\n");
       log.append("infos: " + infos + "\n");
@@ -1313,7 +1313,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     highlightErrors();
 
     GeneralSettings settings = GeneralSettings.getInstance();
-    ApplicationEx application = ApplicationManagerEx.getApplicationEx();
     boolean frameSave = settings.isSaveOnFrameDeactivation();
     settings.setSaveOnFrameDeactivation(true);
     UtilKt.runInAllowSaveMode(() -> {
@@ -1692,9 +1691,9 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
     type(' ');
     CompletionContributor.forLanguage(getFile().getLanguage());
-    long s = System.currentTimeMillis();
+    //long s = System.currentTimeMillis();
     highlightErrors();
-    long e = System.currentTimeMillis();
+    //long e = System.currentTimeMillis();
     //System.out.println("Hi elapsed: "+(e-s));
 
     //List<String> dumps = new ArrayList<>();
@@ -2311,9 +2310,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       waitForDaemon();
       checkFoldingState("[FoldRegion +(25:33), placeholder='{}']");
 
-      WriteCommandAction.runWriteCommandAction(myProject, () -> {
-        myEditor.getDocument().insertString(0, "/*");
-      });
+      WriteCommandAction.runWriteCommandAction(myProject, () -> myEditor.getDocument().insertString(0, "/*"));
       waitForDaemon();
       checkFoldingState("[FoldRegion -(0:37), placeholder='/.../', FoldRegion +(27:35), placeholder='{}']");
 
@@ -2358,7 +2355,10 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       UIUtil.dispatchInvocationEvent();
     }
     while (daemonIsWorkingOrPending()) {
-      if (System.currentTimeMillis() > deadline) fail("Too long waiting for daemon to finish");
+      if (System.currentTimeMillis() > deadline) {
+        dumpThreadsToConsole();
+        fail("Too long waiting for daemon to finish");
+      }
       UIUtil.dispatchInvocationEvent();
     }
   }

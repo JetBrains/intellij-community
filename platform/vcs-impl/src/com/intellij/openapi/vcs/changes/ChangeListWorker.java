@@ -168,6 +168,9 @@ public class ChangeListWorker {
 
     tracker.initChangeTracking(myDefault.id, ContainerUtil.map(myLists, list -> list.id), oldList != null ? oldList.id : null);
 
+    List<String> oldIds = oldList != null ? Collections.singletonList(oldList.id) : Collections.emptyList();
+    notifyChangelistsChanged(filePath, oldIds, tracker.getAffectedChangeListsIds());
+
     if (LOG.isDebugEnabled()) {
       LOG.debug(String.format("[registerChangeTracker] path: %s, old list: %s", filePath, oldList != null ? oldList.id : "null"));
     }
@@ -182,6 +185,9 @@ public class ChangeListWorker {
         newList = getMainList(tracker);
         putChangeMapping(change, newList);
       }
+
+      List<String> newIds = newList != null ? Collections.singletonList(newList.id) : Collections.emptyList();
+      notifyChangelistsChanged(filePath, tracker.getAffectedChangeListsIds(), newIds);
 
       if (LOG.isDebugEnabled()) {
         LOG.debug(String.format("[unregisterChangeTracker] path: %s, new list: %s, tracker lists: %s",
@@ -427,7 +433,6 @@ public class ChangeListWorker {
     myDefault = newDefault;
 
     fireDefaultListChanged(oldDefault.id, newDefault.id);
-    fireChangeListsChanged();
 
     if (LOG.isDebugEnabled()) {
       LOG.debug(String.format("[setDefaultList %s] name: %s id: %s", myMainWorker ? "" : "- updater", name, newDefault.id));
@@ -442,8 +447,6 @@ public class ChangeListWorker {
 
     list.isReadOnly = value;
 
-    fireChangeListsChanged();
-
     return true;
   }
 
@@ -455,8 +458,6 @@ public class ChangeListWorker {
     if (list == null || list.isReadOnly) return false;
 
     list.name = toName;
-
-    fireChangeListsChanged();
 
     return true;
   }
@@ -470,8 +471,6 @@ public class ChangeListWorker {
     if (!Comparing.equal(oldComment, newComment)) {
       list.comment = newComment;
     }
-
-    fireChangeListsChanged();
 
     return oldComment;
   }
@@ -492,8 +491,6 @@ public class ChangeListWorker {
 
     list = putNewListData(list);
 
-    fireChangeListsChanged();
-
     if (LOG.isDebugEnabled()) {
       LOG.debug(String.format("[addChangeList %s] name: %s id: %s", myMainWorker ? "" : "- updater", name, list.id));
     }
@@ -510,16 +507,23 @@ public class ChangeListWorker {
       return false;
     }
 
+    List<Change> movedChanges = new ArrayList<>();
     myChangeMappings.replaceAll((change, list) -> {
-      if (list == removedList) return myDefault;
+      if (list == removedList) {
+        movedChanges.add(change);
+        return myDefault;
+      }
       return list;
     });
 
-    myLists.remove(removedList);
-
     fireChangeListRemoved(removedList.id);
-    fireChangeListsChanged();
     myReadOnlyChangesCache = null;
+
+    if (myMainWorker && !movedChanges.isEmpty()) {
+      myDelayedNotificator.changesMoved(movedChanges, toChangeList(removedList), toChangeList(myDefault));
+    }
+
+    myLists.remove(removedList);
 
     if (LOG.isDebugEnabled()) {
       LOG.debug(String.format("[removeChangeList %s] name: %s id: %s", myMainWorker ? "" : "- updater", name, removedList.id));
@@ -573,7 +577,6 @@ public class ChangeListWorker {
       }
     }
 
-    fireChangeListsChanged();
     myReadOnlyChangesCache = null;
 
     MultiMap<LocalChangeList, Change> notifications = new MultiMap<>();
@@ -592,9 +595,19 @@ public class ChangeListWorker {
   /**
    * Called without external lock
    */
-  public void notifyChangelistsChanged() {
-    if (myReadOnlyChangesCacheInvalidated.compareAndSet(false, true)) {
-      fireChangeListsChanged();
+  public void notifyChangelistsChanged(@NotNull FilePath path,
+                                       @NotNull List<String> beforeChangeListsIds,
+                                       @NotNull List<String> afterChangeListsIds) {
+    myReadOnlyChangesCacheInvalidated.set(true);
+
+    HashSet<String> removed = new HashSet<>(beforeChangeListsIds);
+    removed.removeAll(afterChangeListsIds);
+    HashSet<String> added = new HashSet<>(afterChangeListsIds);
+    added.removeAll(beforeChangeListsIds);
+
+    if (!removed.isEmpty() || !added.isEmpty()) {
+      // We can't take CLM.LOCK here, so LocalChangeList will be created in delayed notificator itself
+      myDelayedNotificator.changeListsForFileChanged(path, removed, added);
     }
   }
 
@@ -643,7 +656,9 @@ public class ChangeListWorker {
       FileStatusManager.getInstance(myProject).fileStatusesChanged();
     }
 
-    fireChangeListsChanged();
+    if (myMainWorker) {
+      myDelayedNotificator.allChangeListsMappingsChanged();
+    }
 
     if (LOG.isDebugEnabled()) {
       LOG.debug(String.format("[applyChangesFromUpdate] %s", this));
@@ -690,7 +705,9 @@ public class ChangeListWorker {
       }
     }
 
-    fireChangeListsChanged();
+    if (myMainWorker) {
+      myDelayedNotificator.allChangeListsMappingsChanged();
+    }
   }
 
 
@@ -706,24 +723,16 @@ public class ChangeListWorker {
     }
   }
 
-  private void fireChangeListsChanged() {
-    if (myMainWorker) {
-      myDelayedNotificator.changeListsChanged();
-    }
-  }
-
 
   @Nullable
   private ListData removeChangeMapping(@NotNull Change change) {
     ListData oldList = myChangeMappings.remove(change);
-    fireChangeListsChanged();
     myReadOnlyChangesCache = null;
     return oldList;
   }
 
   private void putChangeMapping(@NotNull Change change, @NotNull ListData list) {
     myChangeMappings.put(change, list);
-    fireChangeListsChanged();
     myReadOnlyChangesCache = null;
   }
 
@@ -944,10 +953,10 @@ public class ChangeListWorker {
       for (ChangeListWorker.ListData list : myWorker.myLists) {
         final List<Change> removed = new ArrayList<>();
         final List<Change> added = new ArrayList<>();
-        boolean wasChanged = doneProcessingChanges(list, removed, added);
+        doneProcessingChanges(list, removed, added);
 
         LocalChangeListImpl changeList = myWorker.toChangeList(list);
-        if (wasChanged) {
+        if (!removed.isEmpty() || !added.isEmpty()) {
           changedLists.add(changeList);
         }
         if (!removed.isEmpty()) {
@@ -978,9 +987,9 @@ public class ChangeListWorker {
       myChangesBeforeUpdateMap.clear();
     }
 
-    private boolean doneProcessingChanges(@NotNull ChangeListWorker.ListData list,
-                                          @NotNull List<Change> removedChanges,
-                                          @NotNull List<Change> addedChanges) {
+    private void doneProcessingChanges(@NotNull ChangeListWorker.ListData list,
+                                       @NotNull List<Change> removedChanges,
+                                       @NotNull List<Change> addedChanges) {
       OpenTHashSet<Change> changesBeforeUpdate = myChangesBeforeUpdateMap.get(list.id);
 
       Set<Change> listChanges = new HashSet<>();
@@ -997,10 +1006,6 @@ public class ChangeListWorker {
 
       removedChanges.addAll(changesBeforeUpdate);
       removedChanges.removeAll(listChanges);
-
-      return listChanges.size() != changesBeforeUpdate.size() ||
-             !addedChanges.isEmpty() ||
-             !removedChanges.isEmpty();
     }
 
     @Nullable

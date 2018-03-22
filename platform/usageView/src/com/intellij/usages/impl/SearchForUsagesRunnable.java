@@ -56,7 +56,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class SearchForUsagesRunnable implements Runnable {
+class SearchForUsagesRunnable implements Runnable {
   @NonNls private static final String FIND_OPTIONS_HREF_TARGET = "FindOptions";
   @NonNls private static final String SEARCH_IN_PROJECT_HREF_TARGET = "SearchInProject";
   @NonNls private static final String LARGE_FILES_HREF_TARGET = "LargeFiles";

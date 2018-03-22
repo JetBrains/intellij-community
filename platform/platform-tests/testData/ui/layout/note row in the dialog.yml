@@ -1,0 +1,36 @@
+rowConstraints: ''
+columnConstraints:
+  count: 2.0
+  constraints:
+  - {}
+  - {grow: 100.0}
+componentConstrains:
+  'MultiLineLabel #0':
+    spanX: 2097051.0
+    wrap: true
+    vertical:
+      gapBefore:
+        min: {value: 5.0, unitString: px}
+        preferred: {value: 5.0, unitString: px}
+      gapAfter:
+        min: {value: 10.0, unitString: px}
+        preferred: {value: 10.0, unitString: px}
+  'JLabel #1': {}
+  'JPasswordField #2':
+    wrap: true
+    horizontal:
+      size:
+        min: {value: 250.0, unitString: px}
+        max: {value: 250.0, unitString: px}
+        preferred: {value: 250.0, unitString: px}
+  'JCheckBox #3': {skip: 1.0, spanX: 2097051.0, wrap: true}
+  'JLabel #4':
+    spanX: 2097051.0
+    wrap: true
+    vertical:
+      gapBefore:
+        min: {value: 5.0, unitString: px}
+        preferred: {value: 5.0, unitString: px}
+      gapAfter:
+        min: {value: 10.0, unitString: px}
+        preferred: {value: 10.0, unitString: px}

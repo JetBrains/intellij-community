@@ -17,14 +17,15 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.navigation.BackgroundUpdaterTask;
+import com.intellij.codeInsight.navigation.ListBackgroundUpdaterTask;
 import com.intellij.find.FindUtil;
 import com.intellij.ide.PsiCopyPasteManager;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.ui.ListComponentUpdater;
 import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -34,8 +35,6 @@ import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
-import com.intellij.ui.popup.HintUpdateSupply;
-import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.usages.UsageView;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
@@ -50,13 +49,12 @@ import java.util.Arrays;
 import java.util.List;
 
 public class PsiElementListNavigator {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.PsiElementListNavigator");
 
   private PsiElementListNavigator() {
   }
 
   public static void openTargets(MouseEvent e, NavigatablePsiElement[] targets, String title, final String findUsagesTitle, ListCellRenderer listRenderer) {
-    openTargets(e, targets, title, findUsagesTitle, listRenderer, null);
+    openTargets(e, targets, title, findUsagesTitle, listRenderer, (BackgroundUpdaterTask)null);
   }
 
   public static void openTargets(MouseEvent e,
@@ -78,7 +76,7 @@ public class PsiElementListNavigator {
   }
 
   public static void openTargets(Editor e, NavigatablePsiElement[] targets, String title, final String findUsagesTitle, ListCellRenderer listRenderer) {
-    openTargets(e, targets, title, findUsagesTitle, listRenderer, null);
+    openTargets(e, targets, title, findUsagesTitle, listRenderer, (BackgroundUpdaterTask)null);
   }
 
   public static void openTargets(Editor e, NavigatablePsiElement[] targets, String title, final String findUsagesTitle,
@@ -135,9 +133,10 @@ public class PsiElementListNavigator {
       consumer.consume(targets);
       return null;
     }
-    List<NavigatablePsiElement> targetsList = Arrays.asList(targets);
-    final JBList<NavigatablePsiElement>[] listR = new JBList[1];
-    final IPopupChooserBuilder<NavigatablePsiElement> builder = JBPopupFactory.getInstance().createPopupChooserBuilder(targetsList);
+    List<NavigatablePsiElement> initialTargetsList = Arrays.asList(targets);
+    Ref<NavigatablePsiElement[]> updatedTargetsList = Ref.create(targets);
+
+    final IPopupChooserBuilder<NavigatablePsiElement> builder = JBPopupFactory.getInstance().createPopupChooserBuilder(initialTargetsList);
     if (listRenderer instanceof PsiElementListCellRenderer) {
       ((PsiElementListCellRenderer)listRenderer).installSpeedSearch(builder);
     }
@@ -147,14 +146,10 @@ public class PsiElementListNavigator {
       setMovable(true).
       setFont(EditorUtil.getEditorFont()).
       setRenderer(listRenderer).
+      withHintUpdateSupply().
       setResizable(true).
-                                                                               setItemsChosenCallback(selectedValues -> {
-        consumer.consume(ArrayUtil.toObjectArray(selectedValues));
-      }).
+      setItemsChosenCallback(selectedValues -> consumer.consume(ArrayUtil.toObjectArray(selectedValues))).
       setCancelCallback(() -> {
-        if (listR[0] != null) {
-          HintUpdateSupply.hideHint(listR[0]);
-        }
         if (listUpdaterTask != null) {
           listUpdaterTask.cancelTask();
         }
@@ -163,18 +158,16 @@ public class PsiElementListNavigator {
     final Ref<UsageView> usageView = new Ref<>();
     if (findUsagesTitle != null) {
       popupChooserBuilder = popupChooserBuilder.setCouldPin(popup -> {
-        usageView.set(FindUtil.showInUsageView(null, targets, findUsagesTitle, targets[0].getProject()));
+        usageView.set(FindUtil.showInUsageView(null, updatedTargetsList.get(), findUsagesTitle, targets[0].getProject()));
         popup.cancel();
         return false;
       });
     }
 
     final JBPopup popup = popupChooserBuilder.createPopup();
-    if (builder instanceof PopupChooserBuilder && ((PopupChooserBuilder)builder).getChooserComponent() instanceof ListWithFilter) {
-      JBList<NavigatablePsiElement> list = (JBList)((ListWithFilter)((PopupChooserBuilder)builder).getChooserComponent()).getList();
-      HintUpdateSupply.installSimpleHintUpdateSupply(list);
+    if (builder instanceof PopupChooserBuilder) {
+      JBList<NavigatablePsiElement> list = (JBList)((PopupChooserBuilder)builder).getChooserComponent();
       list.setTransferHandler(new TransferHandler(){
-        @Nullable
         @Override
         protected Transferable createTransferable(JComponent c) {
           final Object[] selectedValues = list.getSelectedValues();
@@ -190,7 +183,6 @@ public class PsiElementListNavigator {
           return COPY;
         }
       });
-      listR[0] = list;
     }
     if (builder instanceof PopupChooserBuilder) {
       JScrollPane pane = ((PopupChooserBuilder)builder).getScrollPane();
@@ -199,8 +191,55 @@ public class PsiElementListNavigator {
     }
 
     if (listUpdaterTask != null) {
-      listUpdaterTask.init(popup, builder.getBackgroundUpdater(), usageView);
+      ListComponentUpdater popupUpdater = builder.getBackgroundUpdater();
+      listUpdaterTask.init(popup, new ListComponentUpdater() {
+        @Override
+        public void replaceModel(@NotNull List<PsiElement> data) {
+          updatedTargetsList.set(data.toArray(new NavigatablePsiElement[0]));
+          popupUpdater.replaceModel(data);
+        }
+
+        @Override
+        public void paintBusy(boolean paintBusy) {
+          popupUpdater.paintBusy(paintBusy);
+        }
+      }, usageView);
     }
     return popup;
+  }
+
+
+  /**
+   * @deprecated use {@link #navigateOrCreatePopup(NavigatablePsiElement[], String, String, ListCellRenderer, BackgroundUpdaterTask, Consumer)}
+   */
+  @Nullable
+  public static JBPopup navigateOrCreatePopup(@NotNull final NavigatablePsiElement[] targets,
+                                              final String title,
+                                              final String findUsagesTitle,
+                                              final ListCellRenderer listRenderer,
+                                              @Nullable final ListBackgroundUpdaterTask listUpdaterTask,
+                                              @NotNull final Consumer<Object[]> consumer) {
+    return navigateOrCreatePopup(targets, title, findUsagesTitle, listRenderer, (BackgroundUpdaterTask)listUpdaterTask, consumer);
+  }
+
+
+  /**
+   * @deprecated use {@link #openTargets(Editor, NavigatablePsiElement[], String, String, ListCellRenderer, BackgroundUpdaterTask)} instead
+   */
+  public static void openTargets(Editor e, NavigatablePsiElement[] targets, String title, final String findUsagesTitle,
+                                 ListCellRenderer listRenderer, @Nullable ListBackgroundUpdaterTask listUpdaterTask) {
+    openTargets(e, targets, title, findUsagesTitle, listRenderer, (BackgroundUpdaterTask)listUpdaterTask);
+  }
+
+  /**
+   * @deprecated use {@link #openTargets(MouseEvent, NavigatablePsiElement[], String, String, ListCellRenderer, BackgroundUpdaterTask)} instead
+   */
+  public static void openTargets(MouseEvent e,
+                                 NavigatablePsiElement[] targets,
+                                 String title,
+                                 final String findUsagesTitle,
+                                 ListCellRenderer listRenderer,
+                                 @Nullable ListBackgroundUpdaterTask listUpdaterTask) {
+    openTargets(e, targets, title, findUsagesTitle, listRenderer, (BackgroundUpdaterTask)listUpdaterTask);
   }
 }

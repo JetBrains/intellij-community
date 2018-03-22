@@ -35,7 +35,10 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.codeStyle.SuggestedNameInfo;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -246,7 +249,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
       types.putValue(param.getType(), param);
     }
 
-    final JavaCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class);
+    final JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(file);
     final boolean preferLongerNames = settings.PREFER_LONGER_NAMES;
     for (PsiVariable param : params) {
       final PsiType paramType = param.getType();
@@ -297,8 +300,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
         break;
       }
       newName = n < nameInfo.names.length &&
-                !CodeStyleSettingsManager.getSettings(
-                  variable.getProject()).getCustomSettings(JavaCodeStyleSettings.class).PREFER_LONGER_NAMES
+                !JavaCodeStyleSettings.getInstance(variable.getContainingFile()).PREFER_LONGER_NAMES
                 ? nameInfo.names[n++] : nameInfo.names[0] + n++;
     }
     return newName;
@@ -321,7 +323,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
     PsiParameter[] newParameters = constructor.getParameterList().getParameters();
     if (newParameters == parameters) return false; //user must have canceled dialog
     // do not introduce assignment in chained constructor
-    if (JavaHighlightUtil.getChainedConstructors(constructor) == null) {
+    if (JavaHighlightUtil.getChainedConstructors(constructor).isEmpty()) {
       final SmartPointerManager manager = SmartPointerManager.getInstance(project);
       boolean created = false;
       for (PsiField field : fields.keySet()) {

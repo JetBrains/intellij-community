@@ -135,12 +135,7 @@ fun <T> chooseDebuggee(targets: Collection<T>, selectedIndex: Int, renderer: (T,
       .setTitle("Choose Page to Debug")
       .setCancelOnWindowDeactivation(false)
       .setItemChosenCallback { value ->
-        if (value == null) {
-          result.setError("No target to inspect")
-        }
-        else {
-          result.setResult(value)
-        }
+        result.setResult(value)
       }
     if (selectedIndex != -1) {
       builder.setSelectedValue(model[selectedIndex], false)

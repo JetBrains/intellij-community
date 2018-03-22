@@ -24,6 +24,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.arrangement.MemberOrderService;
 import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.impl.compiled.ClsElementImpl;
@@ -229,8 +230,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
 
   @Override
   public ASTNode getDefaultImportAnchor(@NotNull PsiImportList list, @NotNull PsiImportStatementBase statement) {
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(list.getProject());
-    ImportHelper importHelper = new ImportHelper(settings);
+    ImportHelper importHelper = new ImportHelper(JavaCodeStyleSettings.getInstance(statement.getContainingFile()));
     return importHelper.getDefaultAnchor(list, statement);
   }
 

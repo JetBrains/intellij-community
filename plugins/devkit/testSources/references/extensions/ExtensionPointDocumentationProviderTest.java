@@ -32,8 +32,8 @@ public class ExtensionPointDocumentationProviderTest extends LightCodeInsightFix
                  "<a href=\"psi_element://bar.MyExtensionPoint\"><code>MyExtensionPoint</code></a><br>" +
                  "extensionPointDocumentation.xml" +
                  "<table class='sections'>" +
-                 "<tr><td valign='top' class='section'><p>attributeName:</td><td><a href=\"psi_element://java.lang.String\"><code>String</code></a></td>" +
-                 "<tr><td valign='top' class='section'><p>&lt;tagName&gt;:</td><td><a href=\"psi_element://java.lang.Integer\"><code>Integer</code></a></td></table>" +
+                 "<tr><td valign='top' class='section'><p>attributeName:</td><td valign='top'><a href=\"psi_element://java.lang.String\"><code>String</code></a></td>" +
+                 "<tr><td valign='top' class='section'><p>&lt;tagName&gt;:</td><td valign='top'><a href=\"psi_element://java.lang.Integer\"><code>Integer</code></a></td></table>" +
                  "</pre></div>" +
                  "<div class='content'>" +
                  "<em>Extension Point Implementation Class</em>" +

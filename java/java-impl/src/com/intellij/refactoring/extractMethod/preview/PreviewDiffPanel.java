@@ -77,7 +77,6 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
 
   @Override
   public void dispose() {
-    mySnapshot.clear();
   }
 
   public void doExtract(@NotNull List<DuplicateNode> enabledNodes) {

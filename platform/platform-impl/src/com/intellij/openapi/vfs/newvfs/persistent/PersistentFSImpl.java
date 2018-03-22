@@ -997,7 +997,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
     VfsData.Segment segment = VfsData.getSegment(rootId, true);
     VfsData.DirectoryData directoryData = new VfsData.DirectoryData();
-    VirtualFileSystemEntry newRoot = new FsRoot(rootId, segment, directoryData, fs, rootName, StringUtil.trimEnd(rootPath, '/'));
+    VirtualFileSystemEntry newRoot = new FsRoot(rootId, segment, directoryData, fs, rootName, StringUtil.trimTrailing(rootPath, '/'));
 
     boolean mark;
     synchronized (myRoots) {

@@ -1989,7 +1989,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     );
   }
 
-  private static void checkTypeDefinition(AnnotationHolder holder, GrTypeDefinition typeDefinition) {
+  private static void checkTypeDefinition(AnnotationHolder holder, @NotNull GrTypeDefinition typeDefinition) {
     final GroovyConfigUtils configUtils = GroovyConfigUtils.getInstance();
     if (typeDefinition.isAnonymous()) {
       if (!configUtils.isVersionAtLeast(typeDefinition, GroovyConfigUtils.GROOVY1_7)) {
@@ -2034,7 +2034,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
   private static void checkCyclicInheritance(AnnotationHolder holder,
-                                             GrTypeDefinition typeDefinition) {
+                                             @NotNull GrTypeDefinition typeDefinition) {
     final PsiClass psiClass = HighlightClassUtil.getCircularClass(typeDefinition, new HashSet<>());
     if (psiClass != null) {
       String qname = psiClass.getQualifiedName();

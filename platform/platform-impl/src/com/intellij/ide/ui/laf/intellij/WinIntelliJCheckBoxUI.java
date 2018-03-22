@@ -15,9 +15,9 @@
  */
 package com.intellij.ide.ui.laf.intellij;
 
-import com.intellij.ide.ui.laf.IconCache;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxUI;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.IconCache;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
