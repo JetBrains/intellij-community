@@ -319,7 +319,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     @Override
     public void update(AnActionEvent e) {
       AbstractProjectViewPane pane = getProjectViewPaneById(myId);
-      e.getPresentation().setText(pane.getTitle() + (mySubId != null ? (" - " + pane.getPresentableSubIdName(mySubId)) : ""));
+      e.getPresentation().setText(mySubId != null ? pane.getPresentableSubIdName(mySubId) : pane.getTitle());
+      e.getPresentation().setIcon(mySubId != null ? pane.getPresentableSubIdIcon(mySubId) : pane.getIcon());
     }
 
     @Override
