@@ -29,6 +29,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
   private String myHTDescription;
   private String myHTLinkText;
   private Runnable myHTAction;
+  private JComponent myTopRightComponent;
   private boolean valid = true;
 
   public ComponentPanelBuilder(JComponent component) {
@@ -51,6 +52,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
    */
   public ComponentPanelBuilder moveLabelOnTop() {
     myLabelOnTop = true;
+    valid = StringUtil.isNotEmpty(myCommentText) && StringUtil.isEmpty(myHTDescription);
     return this;
   }
 
@@ -60,7 +62,14 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
    */
   public ComponentPanelBuilder withComment(@NotNull String comment) {
     myCommentText = comment;
-    valid = StringUtil.isNotEmpty(comment) && StringUtil.isEmpty(myHTDescription);
+    valid = StringUtil.isNotEmpty(comment) && StringUtil.isEmpty(myHTDescription) &&
+              (myLabelOnTop || myTopRightComponent == null);
+    return this;
+  }
+
+  public ComponentPanelBuilder withTopRightComponent(@NotNull JComponent topRightComponent) {
+    myTopRightComponent = topRightComponent;
+    valid = StringUtil.isNotEmpty(myCommentText) && StringUtil.isEmpty(myHTDescription) && myLabelOnTop;
     return this;
   }
 
@@ -82,7 +91,8 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
    */
   public ComponentPanelBuilder withTooltip(@NotNull String description) {
     myHTDescription = description;
-    valid = StringUtil.isNotEmpty(description) && StringUtil.isEmpty(myCommentText);
+    valid = StringUtil.isEmpty(myCommentText) && StringUtil.isNotEmpty(description) &&
+            (myLabelOnTop || myTopRightComponent == null);
     return this;
   }
 
@@ -233,7 +243,19 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
         if (myLabelOnTop) {
           gc.insets = JBUI.insetsBottom(4);
           gc.gridx++;
-          panel.add(label, gc);
+
+          JPanel topPanel = new JPanel();
+          topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.X_AXIS));
+          topPanel.add(label);
+
+          if (myTopRightComponent != null) {
+            topPanel.add(new Box.Filler(JBUI.size(UIUtil.DEFAULT_HGAP, 0),
+                                        JBUI.size(UIUtil.DEFAULT_HGAP, 0),
+                                        JBUI.size(Integer.MAX_VALUE)));
+            topPanel.add(myTopRightComponent);
+          }
+
+          panel.add(topPanel, gc);
           gc.gridy++;
         } else {
           gc.insets = JBUI.insetsRight(8);
