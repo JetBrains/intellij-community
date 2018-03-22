@@ -4,6 +4,7 @@ package com.intellij.ui.layout.migLayout
 import com.intellij.ui.components.Label
 import com.intellij.ui.layout.*
 import com.intellij.util.SmartList
+import com.intellij.util.ui.JBUI
 import net.miginfocom.layout.BoundSize
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.ConstraintParser
@@ -12,8 +13,10 @@ import javax.swing.ButtonGroup
 import javax.swing.JComponent
 import javax.swing.JToggleButton
 
-private val SHORT_TEXT_SIZE: BoundSize = ConstraintParser.parseBoundSize("250!", false, true)
-private val MEDIUM_TEXT_SIZE: BoundSize = ConstraintParser.parseBoundSize("250::350", false, true)
+internal val SHORT_SHORT_TEXT_WIDTH = JBUI.scale(250)
+internal val MAX_SHORT_TEXT_WIDTH = JBUI.scale(350)
+private val SHORT_TEXT_SIZE: BoundSize = ConstraintParser.parseBoundSize("${SHORT_SHORT_TEXT_WIDTH}px!", false, true)
+private val MEDIUM_TEXT_SIZE: BoundSize = ConstraintParser.parseBoundSize("${SHORT_SHORT_TEXT_WIDTH}px::${MAX_SHORT_TEXT_WIDTH}px", false, true)
 
 internal class MigLayoutRow(private val componentConstraints: MutableMap<Component, CC>,
                             override val builder: MigLayoutBuilder,

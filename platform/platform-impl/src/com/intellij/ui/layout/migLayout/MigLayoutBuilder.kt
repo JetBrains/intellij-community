@@ -208,7 +208,7 @@ internal class MigLayoutBuilder : LayoutBuilderImpl {
 private fun addGrowIfNeed(cc: CC, component: Component) {
   when {
     component is TextFieldWithHistory || component is TextFieldWithHistoryWithBrowseButton -> {
-      cc.minWidth("350")
+      cc.minWidth("${MAX_SHORT_TEXT_WIDTH}px")
       cc.growX()
     }
 
@@ -228,7 +228,7 @@ private fun addGrowIfNeed(cc: CC, component: Component) {
 }
 
 internal fun gapToBoundSize(value: Int, isHorizontal: Boolean): BoundSize {
-  val unitValue = UnitValue(value.toFloat(), "", isHorizontal, UnitValue.STATIC, null)
+  val unitValue = UnitValue(value.toFloat(), "px", isHorizontal, UnitValue.STATIC, null)
   return BoundSize(unitValue, unitValue, null, false, null)
 }
 
@@ -239,7 +239,7 @@ private fun createLayoutConstraints(gridGapX: Int = HORIZONTAL_GAP * 2, gridGapY
   val lc = LC()
   lc.gridGapX = gapToBoundSize(gridGapX, true)
   lc.gridGapY = gapToBoundSize(gridGapY, false)
-  lc.insets = ConstraintParser.parseInsets("0", true)
+  lc.insets = ConstraintParser.parseInsets("0px", true)
   return lc
 }
 
