@@ -1,7 +1,6 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl.local;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -62,7 +61,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   }
 
   @NotNull
-  protected static File convertToIOFile(@NotNull VirtualFile file) {
+  private static File convertToIOFile(@NotNull VirtualFile file) {
     String path = file.getPath();
     if (StringUtil.endsWithChar(path, ':') && path.length() == 2 && SystemInfo.isWindows) {
       path += "/"; // Make 'c:' resolve to a root directory for drive c:, not the current directory on that drive
@@ -141,7 +140,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
         final String[] names = new String[roots.length];
         for (int i = 0; i < names.length; i++) {
           String name = roots[i].getPath();
-          name = StringUtil.trimEnd(name, File.separator);
+          name = StringUtil.trimTrailing(name, File.separatorChar);
           names[i] = name;
         }
         return names;
@@ -262,7 +261,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   @Override
   public void unregisterAuxiliaryFileOperationsHandler(@NotNull LocalFileOperationsHandler handler) {
     if (!myHandlers.remove(handler)) {
-      LOG.error("Handler" + handler + " haven't been registered or already unregistered.");
+      LOG.error("Handler " + handler + " haven't been registered or already unregistered.");
     }
   }
 
@@ -627,20 +626,14 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   private static final List<String> ourRootPaths = new ArrayList<>();
 
-  {
+  static {
     List<String> persistentFsRoots = StringUtil.split(System.getProperty("idea.persistentfs.roots", ""), File.pathSeparator);
     sortRootsLongestFirst(persistentFsRoots);
-    for(String persistentFsRoot:persistentFsRoots) ourRootPaths.add(persistentFsRoot);
+    ourRootPaths.addAll(persistentFsRoots);
   }
 
   private static void sortRootsLongestFirst(List<String> persistentFsRoots) {
     Collections.sort(persistentFsRoots, (o1, o2) -> o2.length() - o1.length());
-  }
-
-  @VisibleForTesting
-  public void registerCustomRootPath(@NotNull String path) {
-    ourRootPaths.add(path);
-    sortRootsLongestFirst(ourRootPaths);
   }
 
   @NotNull
