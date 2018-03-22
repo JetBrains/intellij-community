@@ -1164,7 +1164,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     final boolean replaceAll = replaceChoice.isMultiple();
     final SuggestedNameInfo suggestedName = getSuggestedName(typeSelectorManager.getDefaultType(), expr, anchor);
     final String variableName = suggestedName.names.length > 0 ? suggestedName.names[0] : "";
-    final boolean declareFinal = replaceAll && declareFinalIfAll || !anyAssignmentLHS && createFinals(project);
+    final boolean declareFinal = replaceAll && declareFinalIfAll || !anyAssignmentLHS && createFinals(anchor.getContainingFile());
     final boolean replaceWrite = anyAssignmentLHS && replaceChoice.isAll();
     return new IntroduceVariableSettings() {
       @Override
@@ -1200,10 +1200,10 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     };
   }
 
-  public static boolean createFinals(Project project) {
+  public static boolean createFinals(@NotNull PsiFile file) {
     final Boolean createFinals = JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS;
     return createFinals == null ?
-           CodeStyleSettingsManager.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_LOCALS :
+           JavaCodeStyleSettings.getInstance(file).GENERATE_FINAL_LOCALS :
            createFinals.booleanValue();
   }
 

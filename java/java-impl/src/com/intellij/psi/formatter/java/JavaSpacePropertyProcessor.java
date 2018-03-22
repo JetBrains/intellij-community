@@ -636,7 +636,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   public void visitImportList(PsiImportList list) {
     if (ElementType.IMPORT_STATEMENT_BASE_BIT_SET.contains(myChild1.getElementType()) &&
         ElementType.IMPORT_STATEMENT_BASE_BIT_SET.contains(myChild2.getElementType())) {
-      if (myImportHelper == null) myImportHelper = new ImportHelper(mySettings.getRootSettings());
+      if (myImportHelper == null) myImportHelper = new ImportHelper(myJavaSettings);
       int emptyLines = myImportHelper.getEmptyLinesBetween(
         SourceTreeToPsiMap.treeToPsiNotNull(myChild1),
         SourceTreeToPsiMap.treeToPsiNotNull(myChild2)

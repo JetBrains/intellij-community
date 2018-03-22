@@ -117,7 +117,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
 
   @Override
   public PsiImportList prepareOptimizeImportsResult(@NotNull PsiJavaFile file) {
-    return new ImportHelper(CodeStyle.getSettings(file)).prepareOptimizeImportsResult(file);
+    return new ImportHelper(JavaCodeStyleSettings.getInstance(file)).prepareOptimizeImportsResult(file);
   }
 
   @Override
@@ -127,7 +127,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
 
   @Override
   public boolean addImport(@NotNull PsiJavaFile file, @NotNull PsiClass refClass) {
-    return new ImportHelper(CodeStyle.getSettings(file)).addImport(file, refClass);
+    return new ImportHelper(JavaCodeStyleSettings.getInstance(file)).addImport(file, refClass);
   }
 
   @Override
@@ -203,7 +203,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
 
   @Override
   public int findEntryIndex(@NotNull PsiImportStatementBase statement) {
-    return new ImportHelper(CodeStyle.getSettings(statement.getContainingFile())).findEntryIndex(statement);
+    return new ImportHelper(JavaCodeStyleSettings.getInstance(statement.getContainingFile())).findEntryIndex(statement);
   }
 
   @NotNull

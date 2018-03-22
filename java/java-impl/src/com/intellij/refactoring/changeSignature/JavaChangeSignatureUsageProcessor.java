@@ -968,7 +968,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       type = psiSubstitutor.substitute(type);
     }
     PsiParameter parameter = factory.createParameter(newParm.getName(), type, list);
-    if (CodeStyleSettingsManager.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS) {
+    if (JavaCodeStyleSettings.getInstance(list.getContainingFile()).GENERATE_FINAL_PARAMETERS) {
       PsiUtil.setModifierProperty(parameter, PsiModifier.FINAL, true);
     }
     return parameter;
@@ -1236,8 +1236,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
               JavaPsiFacade.getElementFactory(method.getProject()).createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, method);
           }
           PsiParameter param = factory.createParameter(info.getName(), parameterType, method);
-          if (CodeStyleSettingsManager.getSettings(manager.getProject())
-            .getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS) {
+          if (JavaCodeStyleSettings.getInstance(method.getContainingFile()).GENERATE_FINAL_PARAMETERS) {
             PsiUtil.setModifierProperty(param, PsiModifier.FINAL, true);
           }
           prototype.getParameterList().add(param);

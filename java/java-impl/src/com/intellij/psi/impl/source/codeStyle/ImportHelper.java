@@ -66,6 +66,15 @@ public class ImportHelper{
   private final JavaCodeStyleSettings mySettings;
   @NonNls private static final String JAVA_LANG_PACKAGE = "java.lang";
 
+  public ImportHelper(@NotNull JavaCodeStyleSettings settings) {
+    mySettings = settings;
+  }
+
+  /**
+   * @deprecated Use {@link #ImportHelper(JavaCodeStyleSettings)} instead. The instance of JavaCodeStyleSettings
+   *             can be obtained using {@link JavaCodeStyleSettings#getInstance(PsiFile)} method.
+   */
+  @Deprecated
   public ImportHelper(@NotNull CodeStyleSettings settings){
     mySettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
   }
