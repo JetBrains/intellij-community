@@ -3,6 +3,7 @@ package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.server.BuildManager;
+import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
@@ -145,23 +146,14 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
     if (Registry.is("debugger.compiling.evaluator") && psiContext != null) {
       return ApplicationManager.getApplication().runReadAction((ThrowableComputable<ExpressionEvaluator, EvaluateException>)() -> {
         try {
-          boolean useReflection = Registry.is("debugger.compiling.evaluator.reflection.access.with.java8");
           XDebugSession currentSession = XDebuggerManager.getInstance(project).getCurrentSession();
-          if (!useReflection && currentSession != null) {
-            XSuspendContext suspendContext = currentSession.getSuspendContext();
-            if (suspendContext instanceof SuspendContextImpl) {
-              JavaSdkVersion version =
-                JavaSdkVersion.fromVersionString(((SuspendContextImpl)suspendContext).getDebugProcess().getVirtualMachineProxy().version());
-              useReflection = version != null && version.isAtLeast(JavaSdkVersion.JDK_1_9);
-            }
-          }
-
+          JavaSdkVersion javaVersion = getJavaVersion(currentSession);
           ExtractLightMethodObjectHandler.ExtractedData data = ExtractLightMethodObjectHandler.extractLightMethodObject(
             project,
             findPhysicalContext(psiContext),
             fragmentFactory.apply(psiContext),
             getGeneratedClassName(),
-            useReflection);
+            javaVersion);
           if (data != null) {
             return new CompilingEvaluatorImpl(project, psiContext, data);
           }
@@ -185,5 +177,18 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
       element = context;
     }
     return element;
+  }
+
+  @Nullable
+  public static JavaSdkVersion getJavaVersion(@Nullable XDebugSession session) {
+    if (session != null) {
+      XSuspendContext suspendContext = session.getSuspendContext();
+      if (suspendContext instanceof SuspendContextImpl) {
+        DebugProcessImpl debugProcess = ((SuspendContextImpl)suspendContext).getDebugProcess();
+        return JavaSdkVersion.fromVersionString(debugProcess.getVirtualMachineProxy().version());
+      }
+    }
+
+    return null;
   }
 }

@@ -16,7 +16,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.ClassObject;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHandler;
 import com.sun.jdi.ClassLoaderReference;
@@ -64,7 +63,7 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
 
     JavaSdkVersion version = JavaSdkVersion.fromVersionString(((VirtualMachineProxyImpl)process.getVirtualMachineProxy()).version());
     Collection<ClassObject> classes = compile(version);
-    defineClasses(version, classes, autoLoadContext, process, classLoader);
+    defineClasses(classes, autoLoadContext, process, classLoader);
 
     try {
       // invoke base evaluator on call code
@@ -87,13 +86,11 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
     }
   }
 
-  private void defineClasses(JavaSdkVersion version,
-                             Collection<ClassObject> classes,
+  private void defineClasses(Collection<ClassObject> classes,
                              EvaluationContext context,
                              DebugProcess process,
                              ClassLoaderReference classLoader) throws EvaluateException {
-    boolean useMagicAccessorImpl = version != null && !version.isAtLeast(JavaSdkVersion.JDK_1_9) &&
-                                   Registry.is("debugger.compiling.evaluator.magic.accessor");
+    boolean useMagicAccessorImpl = myData.useMagicAccessor();
 
     for (ClassObject cls : classes) {
       if (cls.getPath().contains(GEN_CLASS_NAME)) {
