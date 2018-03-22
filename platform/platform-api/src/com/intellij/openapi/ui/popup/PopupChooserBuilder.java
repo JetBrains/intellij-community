@@ -301,6 +301,10 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
       contentPane.add(label, BorderLayout.NORTH);
     }
 
+    if (myAutoselect) {
+      myChooserComponent.autoSelect();
+    }
+
     myChooserComponent.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseReleased(MouseEvent e) {
