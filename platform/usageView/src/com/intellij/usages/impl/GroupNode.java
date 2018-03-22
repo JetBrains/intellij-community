@@ -27,6 +27,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ObjectIntHashMap;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,10 +46,15 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
   private int myRecursiveUsageCount; // EDT only access
   private final List<Node> myChildren = new SmartList<>(); // guarded by this
 
-  GroupNode(Node parent, @Nullable UsageGroup group, int ruleIndex) {
+  private GroupNode(@NotNull Node parent, @NotNull UsageGroup group, int ruleIndex) {
     setUserObject(group);
     setParent(parent);
     myRuleIndex = ruleIndex;
+  }
+
+  // only for root fake node
+  private GroupNode() {
+    myRuleIndex = 0;
   }
 
   @Override
@@ -383,5 +389,23 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
       }
     }
     return list;
+  }
+
+  @NotNull
+  static Root createRoot() {
+    return new Root();
+  }
+
+  static class Root extends GroupNode {
+    @NonNls
+    public String toString() {
+      return "Root "+super.toString();
+    }
+
+    @NotNull
+    @Override
+    protected String getText(@NotNull UsageView view) {
+      return "";
+    }
   }
 }
