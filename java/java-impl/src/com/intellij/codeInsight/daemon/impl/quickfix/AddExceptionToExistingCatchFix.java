@@ -1,5 +1,5 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.codeInsight.intention.impl;
+package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -24,14 +24,18 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class AddExceptionToExistingCatchAction extends PsiElementBaseIntentionAction {
+public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionAction {
+  private final PsiElement myErrorElement;
+
+  public AddExceptionToExistingCatchFix(PsiElement errorElement) {myErrorElement = errorElement;}
+
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     PsiTryStatement tryStatement = PsiTreeUtil.getParentOfType(element, PsiTryStatement.class);
     if (tryStatement == null) return;
     PsiCatchSection[] catchSections = tryStatement.getCatchSections();
     if (catchSections.length == 0) return;
-    List<PsiClassType> unhandledExceptions = new ArrayList<>(ExceptionUtil.getOwnUnhandledExceptions(element));
+    List<PsiClassType> unhandledExceptions = new ArrayList<>(ExceptionUtil.getOwnUnhandledExceptions(myErrorElement));
     if (unhandledExceptions.size() != 1) return;
     List<String> catchTexts = getAvailableCatchSections(catchSections)
       .map(s -> s.getCatchType())
@@ -96,8 +100,8 @@ public class AddExceptionToExistingCatchAction extends PsiElementBaseIntentionAc
     if (notFinishedCatches(catchSections)) return false;
     PsiElement parent = PsiTreeUtil.getParentOfType(element, PsiCallExpression.class, PsiThrowStatement.class);
     if (parent == null) return false;
-    List<PsiClassType> unhandledExceptions = new ArrayList<>(ExceptionUtil.collectUnhandledExceptions(tryStatement.getParent(), parent));
-    return !unhandledExceptions.isEmpty();
+    List<PsiClassType> unhandledExceptions = new ArrayList<>(ExceptionUtil.getOwnUnhandledExceptions(myErrorElement));
+    return unhandledExceptions.size() == 1;
   }
 
   private static boolean notFinishedCatches(PsiCatchSection[] catchSections) {
