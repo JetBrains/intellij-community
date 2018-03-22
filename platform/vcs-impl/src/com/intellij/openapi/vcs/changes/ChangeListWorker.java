@@ -412,7 +412,6 @@ public class ChangeListWorker {
     myDefault = newDefault;
 
     fireDefaultListChanged(oldDefault.id, newDefault.id);
-    fireChangeListsChanged();
 
     if (LOG.isDebugEnabled()) {
       LOG.debug(String.format("[setDefaultList %s] name: %s id: %s", myMainWorker ? "" : "- updater", name, newDefault.id));
@@ -427,8 +426,6 @@ public class ChangeListWorker {
 
     list.isReadOnly = value;
 
-    fireChangeListsChanged();
-
     return true;
   }
 
@@ -440,8 +437,6 @@ public class ChangeListWorker {
     if (list == null || list.isReadOnly) return false;
 
     list.name = toName;
-
-    fireChangeListsChanged();
 
     return true;
   }
@@ -455,8 +450,6 @@ public class ChangeListWorker {
     if (!Comparing.equal(oldComment, newComment)) {
       list.comment = newComment;
     }
-
-    fireChangeListsChanged();
 
     return oldComment;
   }
@@ -476,8 +469,6 @@ public class ChangeListWorker {
     list.data = data;
 
     list = putNewListData(list);
-
-    fireChangeListsChanged();
 
     if (LOG.isDebugEnabled()) {
       LOG.debug(String.format("[addChangeList %s] name: %s id: %s", myMainWorker ? "" : "- updater", name, list.id));
@@ -558,7 +549,6 @@ public class ChangeListWorker {
       }
     }
 
-    fireChangeListsChanged();
     myReadOnlyChangesCache = null;
 
     MultiMap<LocalChangeList, Change> notifications = new MultiMap<>();
@@ -693,7 +683,7 @@ public class ChangeListWorker {
 
   private void fireChangeListsChanged() {
     if (myMainWorker) {
-      myDelayedNotificator.changeListsChanged();
+      myDelayedNotificator.allChangeListsMappingsChanged();
     }
   }
 
