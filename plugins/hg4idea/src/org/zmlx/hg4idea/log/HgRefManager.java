@@ -97,7 +97,30 @@ public class HgRefManager implements VcsLogRefManager {
   @NotNull
   @Override
   public List<RefGroup> groupForBranchFilter(@NotNull Collection<VcsRef> refs) {
-    return ContainerUtil.map(sort(refs), ref -> new SingletonRefGroup(ref));
+    List<VcsRef> sortedRefs = sort(refs);
+    MultiMap<VcsRefType, VcsRef> groupedRefs = ContainerUtil.groupBy(sortedRefs, VcsRef::getType);
+
+    List<RefGroup> result = ContainerUtil.newArrayList();
+    List<VcsRef> branches = ContainerUtil.newArrayList();
+    List<VcsRef> bookmarks = ContainerUtil.newArrayList();
+    for (Map.Entry<VcsRefType, Collection<VcsRef>> entry : groupedRefs.entrySet()) {
+      if (entry.getKey().equals(TIP) || entry.getKey().equals(HEAD)) {
+        for (VcsRef ref : entry.getValue()) {
+          result.add(new SingletonRefGroup(ref));
+        }
+      }
+      else if (entry.getKey().equals(BOOKMARK)) {
+        bookmarks.addAll(entry.getValue());
+      }
+      else {
+        branches.addAll(entry.getValue());
+      }
+    }
+
+    if (!branches.isEmpty()) result.add(new SimpleRefGroup("Branches", branches, true));
+    if (!bookmarks.isEmpty()) result.add(new SimpleRefGroup("Bookmarks", bookmarks, true));
+
+    return result;
   }
 
   @NotNull

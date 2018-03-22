@@ -30,15 +30,21 @@ import java.util.List;
 public class SimpleRefGroup implements RefGroup {
   @NotNull private final String myName;
   @NotNull private final List<VcsRef> myRefs;
+  private final boolean myExpanded;
 
   public SimpleRefGroup(@NotNull String name, @NotNull List<VcsRef> refs) {
+    this(name, refs, false);
+  }
+
+  public SimpleRefGroup(@NotNull String name, @NotNull List<VcsRef> refs, boolean expanded) {
     myName = name;
     myRefs = refs;
+    myExpanded = expanded;
   }
 
   @Override
   public boolean isExpanded() {
-    return false;
+    return myExpanded;
   }
 
   @NotNull
