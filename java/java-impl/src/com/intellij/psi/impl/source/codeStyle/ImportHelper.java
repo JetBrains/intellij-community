@@ -894,7 +894,7 @@ public class ImportHelper{
             continue;
           }
           if (reference instanceof PsiJavaCodeReferenceElementImpl
-              && ((PsiJavaCodeReferenceElementImpl)reference).getKind(((PsiJavaCodeReferenceElementImpl)reference).getContainingFile()) == PsiJavaCodeReferenceElementImpl.CLASS_IN_QUALIFIED_NEW_KIND) {
+              && ((PsiJavaCodeReferenceElementImpl)reference).getKindEnum(((PsiJavaCodeReferenceElementImpl)reference).getContainingFile()) == PsiJavaCodeReferenceElementImpl.Kind.CLASS_IN_QUALIFIED_NEW_KIND) {
             continue;
           }
         }
