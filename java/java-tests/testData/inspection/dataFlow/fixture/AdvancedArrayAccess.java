@@ -124,4 +124,40 @@ class AdvancedArrayAccess {
       System.out.println("never");
     }
   }
+
+  void testLocalRewritten() {
+    String[] arr = {"foo", "bar", "baz"};
+    arr[0] = "qux";
+    String result = "";
+    if(<warning descr="Condition 'arr[1].equals(\"bar\")' is always 'true'">arr[1].equals("bar")</warning>) {
+      result = "yes";
+    }
+    if(<warning descr="Condition 'arr[2].equals(\"bar\")' is always 'false'">arr[2].equals("bar")</warning>) {
+      result = "yes";
+    }
+    if(<warning descr="Condition 'arr[0].equals(\"foo\")' is always 'false'">arr[0].equals("foo")</warning>) {
+      result = "no";
+    }
+    System.out.println(result);
+    arr = new String[] {"bar", "baz", "foo"};
+    arr[2] = "qux";
+    if(<warning descr="Condition 'arr[1].equals(\"bar\")' is always 'false'">arr[1].equals("bar")</warning>) {
+      result = "no";
+    }
+    if(<warning descr="Condition 'arr[2].equals(\"qux\")' is always 'true'">arr[2].equals("qux")</warning>) {
+      <warning descr="Variable is already assigned to this value">result</warning> = "yes";
+    }
+    if(<warning descr="Condition 'arr[0].equals(\"bar\")' is always 'true'">arr[0].equals("bar")</warning>) {
+      result = "no";
+    }
+    System.out.println(result);
+  }
+
+  void testObjectVar() {
+    Object x;
+    x = new String[] {"foo", "bar"};
+    if(((String[])x)[0].equals("foo")) {
+      System.out.println("Not supported if variable type is not array");
+    }
+  }
 }
