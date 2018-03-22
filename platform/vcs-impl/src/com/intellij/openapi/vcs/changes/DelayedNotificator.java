@@ -91,8 +91,7 @@ public class DelayedNotificator implements ChangeListListener {
     myScheduler.submit(() -> myDispatcher.getMulticaster().changeListUpdateDone());
   }
 
-  @SuppressWarnings("deprecation")
-  public void changeListsChanged() {
-    myScheduler.submit(() -> myDispatcher.getMulticaster().changeListsChanged());
+  public void allChangeListsMappingsChanged() {
+    myScheduler.submit(() -> myDispatcher.getMulticaster().allChangeListsMappingsChanged());
   }
 }
