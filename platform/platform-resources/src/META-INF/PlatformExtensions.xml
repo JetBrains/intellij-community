@@ -335,6 +335,10 @@
     <applicationService serviceInterface="com.intellij.openapi.options.colors.ColorSettingsPages"
                         serviceImplementation="com.intellij.openapi.options.colors.pages.ColorSettingsPagesImpl"/>
 
+    <postStartupActivity implementation="com.intellij.externalDependencies.impl.CheckRequiredPluginsActivity"/>
+    <projectConfigurable groupId="build" provider="com.intellij.externalDependencies.impl.ExternalDependenciesConfigurableProvider"
+                         id="preferences.externalDependencies" displayName="Required Plugins"/>
+
     <applicationConfigurable parentId="preferences.general" instance="com.intellij.openapi.updateSettings.impl.UpdateSettingsConfigurable" id="preferences.updates"
                              key="updates.settings.title" bundle="messages.IdeBundle"/>
 
