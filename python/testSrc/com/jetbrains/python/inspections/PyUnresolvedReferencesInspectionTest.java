@@ -41,11 +41,14 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
-  public void testSlotsAndUnlistedAttrAssign() {
+  // PY-10397
+  public void testOwnSlots() {
     doTest();
   }
 
-  public void testSlotsSuperclass() {
+  // PY-5939
+  // PY-29229
+  public void testSlotsAndInheritance() {
     doTest();
   }
 
@@ -53,17 +56,8 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
-  // PY-10397
-  public void testSlotsAndListedAttrAccess() {
-    doTest();
-  }
-
   // PY-18422
   public void testSlotsAndClassAttr() {
-    doTest();
-  }
-
-  public void testSlotsSubclass() {  // PY-5939
     doTest();
   }
 

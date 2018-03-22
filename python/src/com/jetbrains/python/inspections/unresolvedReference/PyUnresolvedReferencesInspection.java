@@ -166,45 +166,34 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         final PyType type = myTypeEvalContext.getType(qualifier);
         if (type instanceof PyClassType) {
           final PyClass pyClass = ((PyClassType)type).getPyClass();
-          if (pyClass.isNewStyleClass(myTypeEvalContext)) {
-            if (pyClass.getOwnSlots() == null) {
-              return;
-            }
-            final String attrName = node.getReferencedName();
-            if (!canHaveAttribute(pyClass, attrName)) {
-              for (PyClass ancestor : pyClass.getAncestorClasses(myTypeEvalContext)) {
-                if (ancestor == null) {
-                  return;
-                }
-                if (PyNames.OBJECT.equals(ancestor.getName())) {
-                  break;
-                }
-                if (canHaveAttribute(ancestor, attrName)) {
-                  return;
-                }
+          final String attrName = node.getReferencedName();
+          if (attrName != null && !canHaveAttribute(pyClass, attrName)) {
+            for (PyClass ancestor : pyClass.getAncestorClasses(myTypeEvalContext)) {
+              if (ancestor == null) {
+                return;
               }
-              final ASTNode nameNode = node.getNameElement();
-              final PsiElement e = nameNode != null ? nameNode.getPsi() : node;
-              registerProblem(e, "'" + pyClass.getName() + "' object has no attribute '" + attrName + "'");
+              if (PyUtil.isObjectClass(ancestor)) {
+                break;
+              }
+              if (canHaveAttribute(ancestor, attrName)) {
+                return;
+              }
             }
+            final ASTNode nameNode = node.getNameElement();
+            final PsiElement e = nameNode != null ? nameNode.getPsi() : node;
+            registerProblem(e, "'" + pyClass.getName() + "' object has no attribute '" + attrName + "'");
           }
         }
       }
     }
 
-    private boolean canHaveAttribute(@NotNull PyClass cls, @Nullable String attrName) {
-      final List<String> slots = cls.getOwnSlots();
+    private boolean canHaveAttribute(@NotNull PyClass cls, @NotNull String attrName) {
+      final List<String> slots = PyUtil.deactivateSlots(cls, cls.getOwnSlots(), myTypeEvalContext);
 
-      // Class instance can contain attributes with arbitrary names
-      if (slots == null || slots.contains(PyNames.DICT)) {
-        return true;
-      }
-
-      if (attrName != null && cls.findClassAttribute(attrName, true, myTypeEvalContext) != null) {
-        return true;
-      }
-
-      return slots.contains(attrName) || cls.getProperties().containsKey(attrName);
+      return slots == null ||
+             slots.contains(attrName) ||
+             cls.findClassAttribute(attrName, false, myTypeEvalContext) != null ||
+             cls.findProperty(attrName, false, myTypeEvalContext) != null;
     }
 
     @Override
@@ -583,9 +572,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
                                                ((PyOperatorReference)reference).getReadableOperatorName());
               }
               else {
-                final List<String> slots = classType.getPyClass().getOwnSlots();
-
-                if (slots != null && slots.contains(refName)) {
+                if (isDeclaredInSlots(classType, refName)) {
                   return;
                 }
 
@@ -681,6 +668,22 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       }
 
       return null;
+    }
+
+    private boolean isDeclaredInSlots(@NotNull PyType type, @NotNull String attrName) {
+      if (type instanceof PyClassType) {
+        final PyClass cls = ((PyClassType)type).getPyClass();
+
+        return StreamEx
+          .of(cls)
+          .append(cls.getAncestorClasses(myTypeEvalContext))
+          .nonNull()
+          .filter(c -> c.isNewStyleClass(myTypeEvalContext))
+          .flatCollection(PyClass::getOwnSlots)
+          .anyMatch(attrName::equals);
+      }
+
+      return false;
     }
 
     private static void addInstallPackageAction(List<LocalQuickFix> actions, String packageName, Module module, Sdk sdk) {
