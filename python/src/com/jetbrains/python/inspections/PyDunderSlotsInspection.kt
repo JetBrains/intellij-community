@@ -101,9 +101,8 @@ class PyDunderSlotsInspection : PyInspection() {
     }
 
     private fun attributeIsWritableInPy2(cls: PyClass, name: String): Boolean {
-      val slots = cls.getSlots(myTypeEvalContext)
+      val slots = PyUtil.deactivateSlots(cls, cls.getSlots(myTypeEvalContext), myTypeEvalContext)
       return slots == null ||
-             slots.contains(PyNames.DICT) ||
              slots.contains(name) && cls.findClassAttribute(name, true, myTypeEvalContext) == null ||
              cls.findProperty(name, true, myTypeEvalContext) != null
     }
@@ -115,9 +114,9 @@ class PyDunderSlotsInspection : PyInspection() {
       for (c in Iterables.concat(listOf(cls), cls.getAncestorClasses(myTypeEvalContext))) {
         if (PyUtil.isObjectClass(c)) continue
 
-        val ownSlots = c.ownSlots
+        val ownSlots = PyUtil.deactivateSlots(c, c.ownSlots, myTypeEvalContext)
 
-        if (ownSlots == null || ownSlots.contains(PyNames.DICT) || c.findProperty(name, false, myTypeEvalContext) != null) return true
+        if (ownSlots == null || c.findProperty(name, false, myTypeEvalContext) != null) return true
 
         if (!classAttrIsFound) {
           classAttrIsFound = c.findClassAttribute(name, false, myTypeEvalContext) != null
