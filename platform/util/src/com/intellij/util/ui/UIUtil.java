@@ -1616,8 +1616,7 @@ public class UIUtil {
   }
 
   public static Insets getListViewportPadding() {
-    return isUnderNativeMacLookAndFeel() ? JBUI.insets(1, 0) :
-           isUnderWin10LookAndFeel() ? JBUI.emptyInsets() : JBUI.insets(5);
+    return isUnderNativeMacLookAndFeel() ? JBUI.insets(1, 0) : JBUI.emptyInsets();
   }
 
   public static boolean isToUseDottedCellBorder() {
