@@ -16,11 +16,16 @@
 package com.intellij.psi;
 
 import com.intellij.lang.jvm.JvmAnnotation;
+import com.intellij.lang.jvm.JvmAnnotationAttribute;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Represents a Java annotation.
@@ -129,5 +134,13 @@ public interface PsiAnnotation extends PsiAnnotationMemberValue, PsiMetaOwner, J
   @Override
   default boolean canNavigateToSource() {
     return false;
+  }
+
+  @NotNull
+  @Override
+  default List<JvmAnnotationAttribute> getAttributes() {
+    return Arrays.stream(getParameterList().getAttributes())
+                 .map(pair -> new JavaAnnotationAttribute(pair, this))
+                 .collect(Collectors.toList());
   }
 }

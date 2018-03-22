@@ -30,7 +30,13 @@ public interface JvmPsiConversionHelper {
   @Deprecated
   @NotNull
   static Project getProject(@NotNull JvmAnnotationTreeElement jvmElement) {
-    return ((PsiElement)jvmElement).getProject();
+    if (jvmElement instanceof PsiElement) {
+      return ((PsiElement)jvmElement).getProject();
+    }
+    if (jvmElement instanceof JvmElement) {
+      return ((JvmElement)jvmElement).getSourceElement().getProject();
+    }
+    throw new UnsupportedOperationException("Not implemented for " + jvmElement);
   }
 
   @Nullable
