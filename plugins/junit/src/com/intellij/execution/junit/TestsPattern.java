@@ -17,6 +17,7 @@
 package com.intellij.execution.junit;
 
 import com.intellij.execution.CantRunException;
+import com.intellij.execution.ConfigurationUtil;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
@@ -74,7 +75,7 @@ public class TestsPattern extends TestPackage {
     if (!hasPattern) {
       return new SearchForTestsTask(project, myServerSocket) {
         @Override
-        protected void search() throws ExecutionException { }
+        protected void search() { }
 
         @Override
         protected void onFound() throws ExecutionException {
@@ -85,6 +86,11 @@ public class TestsPattern extends TestPackage {
     }
 
     return super.createSearchingForTestsTask();
+  }
+
+  @Override
+  protected void searchTests(Module module, TestClassFilter classFilter, Set<PsiClass> classes) {
+    ConfigurationUtil.findAllTestClasses(classFilter, module, classes);
   }
 
   @Override
