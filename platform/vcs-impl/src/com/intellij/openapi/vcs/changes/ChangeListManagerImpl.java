@@ -537,6 +537,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         if (LOG.isDebugEnabled()) {
           String scopeInString = StringUtil.join(scopes, scope -> scope.toString(), "->\n");
           LOG.debug("refresh procedure started, everything: " + wasEverythingDirty + " dirty scope: " + scopeInString +
+                    "\nignored: " + myComposite.getIgnoredFileHolder().values().size() +
+                    "\nunversioned: " + myComposite.getVFHolder(FileHolder.HolderType.UNVERSIONED).getFiles().size() +
                     "\ncurrent changes: " + myWorker);
         }
       }
