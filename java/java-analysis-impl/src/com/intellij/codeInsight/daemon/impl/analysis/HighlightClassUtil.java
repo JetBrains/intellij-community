@@ -523,7 +523,7 @@ public class HighlightClassUtil {
 
   @Nullable
   static HighlightInfo checkClassDoesNotCallSuperConstructorOrHandleExceptions(@NotNull PsiClass aClass,
-                                                                               @NotNull RefCountHolder refCountHolder,
+                                                                               @Nullable RefCountHolder refCountHolder,
                                                                                @NotNull PsiResolveHelper resolveHelper) {
     if (aClass.isEnum()) return null;
     // check only no-ctr classes. Problem with specific constructor will be highlighted inside it
@@ -534,7 +534,7 @@ public class HighlightClassUtil {
   }
 
   static HighlightInfo checkBaseClassDefaultConstructorProblem(@NotNull PsiClass aClass,
-                                                               @NotNull RefCountHolder refCountHolder,
+                                                               @Nullable RefCountHolder refCountHolder,
                                                                @NotNull PsiResolveHelper resolveHelper,
                                                                @NotNull TextRange range,
                                                                @NotNull PsiClassType[] handledExceptions) {
@@ -580,7 +580,9 @@ public class HighlightClassUtil {
         QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createCreateConstructorMatchingSuperFix(aClass));
         return info;
       }
-      refCountHolder.registerLocallyReferenced(constructor);
+      if (refCountHolder != null) {
+        refCountHolder.registerLocallyReferenced(constructor);
+      }
       return null;
     }
 

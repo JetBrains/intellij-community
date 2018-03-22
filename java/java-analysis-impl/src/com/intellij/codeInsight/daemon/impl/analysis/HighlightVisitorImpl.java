@@ -47,7 +47,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   private final PsiResolveHelper myResolveHelper;
 
   private HighlightInfoHolder myHolder;
-  private RefCountHolder myRefCountHolder;
+  private RefCountHolder myRefCountHolder; // can be null during partial file update
   private LanguageLevel myLanguageLevel;
   private JavaSdkVersion myJavaSdkVersion;
 

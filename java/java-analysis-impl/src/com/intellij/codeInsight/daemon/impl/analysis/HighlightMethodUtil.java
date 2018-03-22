@@ -1337,7 +1337,7 @@ public class HighlightMethodUtil {
 
 
   static HighlightInfo checkConstructorCallsBaseClassConstructor(@NotNull PsiMethod constructor,
-                                                                 @NotNull RefCountHolder refCountHolder,
+                                                                 @Nullable RefCountHolder refCountHolder,
                                                                  @NotNull PsiResolveHelper resolveHelper) {
     if (!constructor.isConstructor()) return null;
     PsiClass aClass = constructor.getContainingClass();
