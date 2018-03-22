@@ -922,10 +922,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       return false;
     }
     if (dfaLeft instanceof DfaVariableValue) {
-      if (!applyUnboxedRelation((DfaVariableValue)dfaLeft, dfaRight, isNegated)) {
-        return false;
-      }
-      return applyBoxedRelation((DfaVariableValue)dfaLeft, dfaRight, isNegated);
+      return applyUnboxedRelation((DfaVariableValue)dfaLeft, dfaRight, isNegated) &&
+             applyBoxedRelation((DfaVariableValue)dfaLeft, dfaRight, isNegated);
     }
 
     return true;
@@ -1072,9 +1070,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     val = unwrap(val);
     if (val instanceof DfaVariableValue) {
       DfaVariableValue var = (DfaVariableValue)val;
-      if (myUnknownVariables.contains(val) || myUnknownVariables.contains(var.getNegatedValue())) return true;
-      return equivalentVariables(var)
-        .anyMatch(v -> myUnknownVariables.contains(v) || myUnknownVariables.contains(v.getNegatedValue()));
+      return myUnknownVariables.contains(val) || myUnknownVariables.contains(var.getNegatedValue()) ||
+             equivalentVariables(var).anyMatch(v -> myUnknownVariables.contains(v) || myUnknownVariables.contains(v.getNegatedValue()));
     }
     return false;
   }
