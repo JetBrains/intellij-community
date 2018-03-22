@@ -1,6 +1,8 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
+import com.intellij.lang.jvm.JvmAnnotatedElement;
+import com.intellij.lang.jvm.JvmAnnotation;
 import com.intellij.lang.jvm.JvmTypeDeclaration;
 import com.intellij.lang.jvm.JvmTypeParameter;
 import com.intellij.lang.jvm.types.JvmSubstitutor;
@@ -14,6 +16,20 @@ public class JvmPsiConversionHelperImpl implements JvmPsiConversionHelper {
   @Override
   public PsiClass convertTypeDeclaration(@Nullable JvmTypeDeclaration typeDeclaration) {
     if (typeDeclaration instanceof PsiClass) return (PsiClass)typeDeclaration;
+    throw new RuntimeException("TODO");
+  }
+
+  @NotNull
+  @Override
+  public PsiModifierListOwner convertModifierOwner(@Nullable JvmAnnotatedElement jvmModifiersOwner) {
+    if (jvmModifiersOwner instanceof PsiModifierListOwner) return (PsiModifierListOwner)jvmModifiersOwner;
+    throw new RuntimeException("TODO");
+  }
+
+  @NotNull
+  @Override
+  public PsiAnnotation convertAnnotation(@Nullable JvmAnnotation annotation) {
+    if (annotation instanceof PsiAnnotation) return (PsiAnnotation)annotation;
     throw new RuntimeException("TODO");
   }
 

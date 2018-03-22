@@ -15,16 +15,15 @@
  */
 package com.intellij.psi.ref;
 
+import com.intellij.lang.jvm.JvmAnnotationTreeElement;
 import com.intellij.psi.PsiChildLink;
-import com.intellij.psi.PsiElement;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
  */
-public class InstanceofLink<Parent extends PsiElement, Child extends PsiElement, CastTo extends Child> extends PsiChildLink<Parent, CastTo> {
+public class InstanceofLink<Parent extends JvmAnnotationTreeElement, Child extends JvmAnnotationTreeElement, CastTo extends Child>
+  extends PsiChildLink<Parent, CastTo> {
   private final PsiChildLink<Parent, Child> myDelegate;
   private final Class<CastTo> myCastTo;
 
@@ -39,13 +38,13 @@ public class InstanceofLink<Parent extends PsiElement, Child extends PsiElement,
     return myCastTo.isInstance(existing) ? (CastTo) existing : null;
   }
 
-  @Override
-  @NotNull
-  public CastTo createChild(@NotNull Parent parent) throws IncorrectOperationException {
-    return (CastTo) myDelegate.createChild(parent);
-  }
+  //@Override
+  //@NotNull
+  //public CastTo createChild(@NotNull Parent parent) throws IncorrectOperationException {
+  //  return (CastTo) myDelegate.createChild(parent);
+  //}
 
-  public static <Parent extends PsiElement, Child extends PsiElement, CastTo extends Child> InstanceofLink<Parent, Child, CastTo> create(
+  public static <Parent extends JvmAnnotationTreeElement, Child extends JvmAnnotationTreeElement, CastTo extends Child> InstanceofLink<Parent, Child, CastTo> create(
     PsiChildLink<Parent, Child> delegate, Class<CastTo> castTo) {
     return new InstanceofLink<>(delegate, castTo);
   }

@@ -1,29 +1,15 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
+import com.intellij.lang.jvm.JvmAnnotationTreeElement;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
  */
-public final class PsiElementRef<T extends PsiElement> {
+public final class PsiElementRef<T extends JvmAnnotationTreeElement> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.PsiElementRef");
   private volatile PsiRefColleague<T> myColleague;
 
@@ -42,13 +28,14 @@ public final class PsiElementRef<T extends PsiElement> {
 
   @NotNull
   public final T ensurePsiElementExists() {
-    final PsiRefColleague.Real<T> realColleague = myColleague.makeReal();
-    myColleague = realColleague;
-    return realColleague.getPsiElement();
+    throw new UnsupportedOperationException("Not implemented");
+    //final PsiRefColleague.Real<T> realColleague = myColleague.makeReal();
+    //myColleague = realColleague;
+    //return realColleague.getPsiElement();
   }
 
   @NotNull
-  public final PsiElement getRoot() {
+  public final JvmAnnotationTreeElement getRoot() {
     return myColleague.getRoot();
   }
 
@@ -66,36 +53,37 @@ public final class PsiElementRef<T extends PsiElement> {
     return myColleague.isValid();
   }
 
-  public static <T extends PsiElement> PsiElementRef<T> real(@NotNull final T element) {
+  public static <T extends JvmAnnotationTreeElement> PsiElementRef<T> real(@NotNull final T element) {
     return new PsiElementRef<>(new PsiRefColleague.Real<>(element));
   }
 
-  public static <Child extends PsiElement, Parent extends PsiElement> PsiElementRef<Child> imaginary(final PsiElementRef<? extends Parent> parent, final PsiRefElementCreator<Parent, Child> creator) {
-    return new PsiElementRef<>(new PsiRefColleague.Imaginary<>(parent, creator));
+  public static <Child extends JvmAnnotationTreeElement, Parent extends JvmAnnotationTreeElement> PsiElementRef<Child> imaginary(final PsiElementRef<? extends Parent> parent) {
+    return new PsiElementRef<>(new PsiRefColleague.Imaginary<>(parent));
   }
 
   public PsiManager getPsiManager() {
-    return myColleague.getRoot().getManager();
+    JvmAnnotationTreeElement root = myColleague.getRoot();
+    return JvmPsiConversionHelper.getInstance(JvmPsiConversionHelper.getProject(root)).convertJvmTreeElement(root).getManager();
   }
 
-  private interface PsiRefColleague<T extends PsiElement> {
+  private interface PsiRefColleague<T extends JvmAnnotationTreeElement> {
 
     boolean isValid();
 
     @Nullable
     T getPsiElement();
 
-    @NotNull
-    Real<T> makeReal();
+    //@NotNull
+    //Real<T> makeReal();
 
     @NotNull
-    PsiElement getRoot();
+    JvmAnnotationTreeElement getRoot();
 
-    class Real<T extends PsiElement> implements PsiRefColleague<T> {
+    class Real<T extends JvmAnnotationTreeElement> implements PsiRefColleague<T> {
       private final T myElement;
 
       public Real(@NotNull T element) {
-        PsiUtilCore.ensureValid(element);
+        //PsiUtilCore.ensureValid(element);
         myElement = element;
       }
 
@@ -107,7 +95,8 @@ public final class PsiElementRef<T extends PsiElement> {
 
       @Override
       public boolean isValid() {
-        return myElement.isValid();
+        return true; // TODO: implement
+        //return myElement.isValid();
       }
 
       @Override
@@ -127,26 +116,25 @@ public final class PsiElementRef<T extends PsiElement> {
         return myElement.hashCode();
       }
 
-      @Override
-      @NotNull
-      public Real<T> makeReal() {
-        return this;
-      }
+      //@Override
+      //@NotNull
+      //public Real<T> makeReal() {
+      //  return this;
+      //}
 
       @Override
       @NotNull
-      public PsiElement getRoot() {
+      public JvmAnnotationTreeElement getRoot() {
         return myElement;
       }
     }
 
-    class Imaginary<Child extends PsiElement, Parent extends PsiElement> implements PsiRefColleague<Child> {
+    class Imaginary<Child extends JvmAnnotationTreeElement, Parent extends JvmAnnotationTreeElement> implements PsiRefColleague<Child> {
       private final PsiElementRef<? extends Parent> myParent;
-      private final PsiRefElementCreator<Parent, Child> myCreator;
+      //private final PsiRefElementCreator<Parent, Child> myCreator;
 
-      public Imaginary(PsiElementRef<? extends Parent> parent, PsiRefElementCreator<Parent, Child> creator) {
+      public Imaginary(PsiElementRef<? extends Parent> parent) {
         myParent = parent;
-        myCreator = creator;
       }
 
       @Override
@@ -166,7 +154,7 @@ public final class PsiElementRef<T extends PsiElement> {
 
         Imaginary imaginary = (Imaginary)o;
 
-        if (!myCreator.equals(imaginary.myCreator)) return false;
+        //if (!myCreator.equals(imaginary.myCreator)) return false;
         if (!myParent.equals(imaginary.myParent)) return false;
 
         return true;
@@ -175,19 +163,19 @@ public final class PsiElementRef<T extends PsiElement> {
       @Override
       public int hashCode() {
         int result = myParent.hashCode();
-        result = 31 * result + myCreator.hashCode();
+
         return result;
       }
 
-      @Override
-      @NotNull
-      public Real<Child> makeReal() {
-        return new Real<>(myCreator.createChild(myParent.ensurePsiElementExists()));
-      }
+      //@Override
+      //@NotNull
+      //public Real<Child> makeReal() {
+      //  return new Real<>(myCreator.createChild(myParent.ensurePsiElementExists()));
+      //}
 
       @Override
       @NotNull
-      public PsiElement getRoot() {
+      public JvmAnnotationTreeElement getRoot() {
         return myParent.getRoot();
       }
     }

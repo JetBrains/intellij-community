@@ -15,16 +15,21 @@
  */
 package com.intellij.psi.ref;
 
-import com.intellij.psi.*;
+import com.intellij.lang.jvm.JvmAnnotatedElement;
+import com.intellij.lang.jvm.JvmAnnotation;
+import com.intellij.psi.PsiChildLink;
+import com.intellij.psi.PsiElementRef;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
+
+import java.util.Arrays;
 
 /**
  * @author peter
  */
-public class AnnotationChildLink extends PsiChildLink<PsiModifierListOwner, PsiAnnotation> {
+public class AnnotationChildLink extends PsiChildLink<JvmAnnotatedElement, JvmAnnotation> {
   private final String myAnnoFqn;
 
   public AnnotationChildLink(String fqn) {
@@ -35,24 +40,25 @@ public class AnnotationChildLink extends PsiChildLink<PsiModifierListOwner, PsiA
     return myAnnoFqn;
   }
 
-  public static PsiElementRef<PsiAnnotation> createRef(@NotNull PsiModifierListOwner parent, @NonNls String fqn) {
+  public static PsiElementRef<JvmAnnotation> createRef(@NotNull JvmAnnotatedElement parent, @NonNls String fqn) {
     return new AnnotationChildLink(fqn).createChildRef(parent);
   }
 
   @Override
-  public PsiAnnotation findLinkedChild(@Nullable PsiModifierListOwner member) {
+  public JvmAnnotation findLinkedChild(@Nullable JvmAnnotatedElement member) {
     if (member == null) return null;
 
-    final PsiModifierList modifierList = member.getModifierList();
-    return modifierList != null ? modifierList.findAnnotation(myAnnoFqn) : null;
+    final JvmAnnotation[] modifierList = member.getAnnotations();
+    return Arrays.stream(modifierList).filter(a -> a.getQualifiedName().equals(myAnnoFqn)).findAny().orElse(null);
   }
 
-  @Override
+  //@Override
   @NotNull
-  public PsiAnnotation createChild(@NotNull PsiModifierListOwner member) throws IncorrectOperationException {
-    final PsiModifierList modifierList = member.getModifierList();
-    assert modifierList != null;
-    return modifierList.addAnnotation(myAnnoFqn);
+  public JvmAnnotation createChild(@NotNull JvmAnnotatedElement member) throws IncorrectOperationException {
+    throw new UnsupportedOperationException("Not implemented");
+    //final PsiModifierList modifierList = member.getModifierList();
+    //assert modifierList != null;
+    //return modifierList.addAnnotation(myAnnoFqn);
   }
 
   @Override

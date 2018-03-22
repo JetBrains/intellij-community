@@ -15,9 +15,9 @@
  */
 package com.intellij.psi.ref;
 
-import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
+import com.intellij.lang.jvm.JvmAnnotation;
+import com.intellij.lang.jvm.JvmAnnotationAttributeValue;
+import com.intellij.psi.PsiChildLink;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author peter
 */
-public class AnnotationAttributeChildLink extends PsiChildLink<PsiAnnotation, PsiAnnotationMemberValue> {
+public class AnnotationAttributeChildLink extends PsiChildLink<JvmAnnotation, JvmAnnotationAttributeValue> {
   private final String myAttributeName;
 
   public AnnotationAttributeChildLink(@NotNull @NonNls String attributeName) {
@@ -38,19 +38,26 @@ public class AnnotationAttributeChildLink extends PsiChildLink<PsiAnnotation, Ps
   }
 
   @Override
-  public PsiAnnotationMemberValue findLinkedChild(@Nullable PsiAnnotation psiAnnotation) {
+  @Nullable
+  public JvmAnnotationAttributeValue findLinkedChild(@Nullable JvmAnnotation psiAnnotation) {
     if (psiAnnotation == null) return null;
 
-    return psiAnnotation.findDeclaredAttributeValue(myAttributeName);
+    return psiAnnotation
+      .getAttributes()
+      .stream()
+      .filter(e -> e.getName().equals(myAttributeName))
+      .findAny()
+      .map(a -> a.getValue())
+      .orElse(null);
   }
 
-  @Override
-  @NotNull
-  public PsiAnnotationMemberValue createChild(@NotNull PsiAnnotation psiAnnotation) throws IncorrectOperationException {
-    final PsiExpression nullValue = JavaPsiFacade.getElementFactory(psiAnnotation.getProject()).createExpressionFromText(PsiKeyword.NULL, null);
-    psiAnnotation.setDeclaredAttributeValue(myAttributeName, nullValue);
-    return ObjectUtils.assertNotNull(psiAnnotation.findDeclaredAttributeValue(myAttributeName));
-  }
+  //@Override
+  //@NotNull
+  //public JvmAnnotationAttribute createChild(@NotNull JvmAnnotation psiAnnotation) throws IncorrectOperationException {
+  //  final PsiExpression nullValue = JavaPsiFacade.getElementFactory(psiAnnotation.getProject()).createExpressionFromText(PsiKeyword.NULL, null);
+  //  psiAnnotation.setDeclaredAttributeValue(myAttributeName, nullValue);
+  //  return ObjectUtils.assertNotNull(psiAnnotation.findDeclaredAttributeValue(myAttributeName));
+  //}
 
   @Override
   public boolean equals(final Object o) {
