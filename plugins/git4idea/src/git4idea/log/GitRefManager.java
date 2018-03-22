@@ -123,7 +123,7 @@ public class GitRefManager implements VcsLogRefManager {
 
     List<RefGroup> result = ContainerUtil.newArrayList();
     result.addAll(simpleGroups);
-    if (!localBranches.isEmpty()) result.add(new LogicalRefGroup("Local", localBranches));
+    if (!localBranches.isEmpty()) result.add(new SimpleRefGroup("Local", localBranches, true));
     for (Map.Entry<GitRemote, Collection<VcsRef>> entry : remoteRefGroups.entrySet()) {
       result.add(new RemoteRefGroup(entry.getKey(), entry.getValue()));
     }
@@ -285,39 +285,6 @@ public class GitRefManager implements VcsLogRefManager {
       return HEAD;
     }
     return OTHER;
-  }
-
-  private static class LogicalRefGroup implements RefGroup {
-    private final String myGroupName;
-    private final List<VcsRef> myRefs;
-
-    private LogicalRefGroup(String groupName, List<VcsRef> refs) {
-      myGroupName = groupName;
-      myRefs = refs;
-    }
-
-    @Override
-    public boolean isExpanded() {
-      return true;
-    }
-
-    @NotNull
-    @Override
-    public String getName() {
-      return myGroupName;
-    }
-
-    @NotNull
-    @Override
-    public List<VcsRef> getRefs() {
-      return myRefs;
-    }
-
-    @NotNull
-    @Override
-    public List<Color> getColors() {
-      return Collections.singletonList(VcsLogStandardColors.Refs.TIP);
-    }
   }
 
   private class RemoteRefGroup implements RefGroup {
