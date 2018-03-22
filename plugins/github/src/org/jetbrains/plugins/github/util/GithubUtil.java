@@ -73,6 +73,7 @@ public class GithubUtil {
   public static final Logger LOG = Logger.getInstance("github");
   public static final String SERVICE_DISPLAY_NAME = "GitHub";
   public static final String DEFAULT_TOKEN_NOTE = "IntelliJ Plugin";
+  public static final String GIT_AUTH_PASSWORD_SUBSTITUTE = "x-oauth-basic";
 
   // TODO: Consider sharing of GithubAuthData between actions (as member of GithubSettings)
   public static <T> T runTask(@NotNull Project project,

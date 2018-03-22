@@ -2,9 +2,11 @@
 package org.jetbrains.plugins.github.api
 
 import com.intellij.openapi.application.invokeAndWaitIfNeed
+import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.ui.Messages
 import com.intellij.util.ThrowableConvertor
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.exceptions.GithubOperationCanceledException
@@ -32,6 +34,10 @@ class GithubApiTaskExecutor(private val authenticationManager: GithubAuthenticat
                                        GithubAuthData.createTokenAuth(account.server.toString(),
                                                                       authenticationManager.getTokenForAccount(account))).use(task::convert)
   }
+
+  @TestOnly
+  @Throws(IOException::class)
+  fun <T> execute(account: GithubAccount, task: GithubTask<T>): T = execute(EmptyProgressIndicator(), account, task)
 
   companion object {
     /**
