@@ -180,6 +180,16 @@ public class CommonProcessors {
     }
   }
 
+  public static <T> Processor<T> processAll(@NotNull final Consumer<T> consumer) {
+    return new Processor<T>() {
+      @Override
+      public boolean process(T t) {
+        consumer.consume(t);
+        return true;
+      }
+    };
+  }
+  
   private static final Processor FALSE = new Processor<Object>() {
     @Override
     public boolean process(Object t) {
