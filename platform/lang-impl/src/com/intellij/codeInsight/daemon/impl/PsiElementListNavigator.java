@@ -26,6 +26,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.ui.ListComponentUpdater;
 import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -134,8 +135,10 @@ public class PsiElementListNavigator {
       consumer.consume(targets);
       return null;
     }
-    List<NavigatablePsiElement> targetsList = Arrays.asList(targets);
-    final IPopupChooserBuilder<NavigatablePsiElement> builder = JBPopupFactory.getInstance().createPopupChooserBuilder(targetsList);
+    List<NavigatablePsiElement> initialTargetsList = Arrays.asList(targets);
+    Ref<NavigatablePsiElement[]> updatedTargetsList = Ref.create(targets);
+
+    final IPopupChooserBuilder<NavigatablePsiElement> builder = JBPopupFactory.getInstance().createPopupChooserBuilder(initialTargetsList);
     if (listRenderer instanceof PsiElementListCellRenderer) {
       ((PsiElementListCellRenderer)listRenderer).installSpeedSearch(builder);
     }
@@ -157,7 +160,7 @@ public class PsiElementListNavigator {
     final Ref<UsageView> usageView = new Ref<>();
     if (findUsagesTitle != null) {
       popupChooserBuilder = popupChooserBuilder.setCouldPin(popup -> {
-        usageView.set(FindUtil.showInUsageView(null, targets, findUsagesTitle, targets[0].getProject()));
+        usageView.set(FindUtil.showInUsageView(null, updatedTargetsList.get(), findUsagesTitle, targets[0].getProject()));
         popup.cancel();
         return false;
       });
@@ -190,7 +193,19 @@ public class PsiElementListNavigator {
     }
 
     if (listUpdaterTask != null) {
-      listUpdaterTask.init(popup, builder.getBackgroundUpdater(), usageView);
+      ListComponentUpdater popupUpdater = builder.getBackgroundUpdater();
+      listUpdaterTask.init(popup, new ListComponentUpdater() {
+        @Override
+        public void replaceModel(@NotNull List<PsiElement> data) {
+          updatedTargetsList.set(data.toArray(new NavigatablePsiElement[0]));
+          popupUpdater.replaceModel(data);
+        }
+
+        @Override
+        public void paintBusy(boolean paintBusy) {
+          popupUpdater.paintBusy(paintBusy);
+        }
+      }, usageView);
     }
     return popup;
   }
