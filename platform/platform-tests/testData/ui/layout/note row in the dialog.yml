@@ -1,0 +1,24 @@
+rowConstraints: ''
+columnConstraints:
+  count: 2.0
+  constraints:
+  - {}
+  - {grow: 100.0}
+componentConstrains:
+  'JLabel #0':
+    spanX: 2097051.0
+    wrap: true
+    vertical:
+      gapBefore:
+        min: {value: 5.0, unit: 2.0}
+        preferred: {value: 5.0, unit: 2.0}
+      gapAfter:
+        min: {value: 10.0, unit: 2.0}
+        preferred: {value: 10.0, unit: 2.0}
+  'JLabel #1': {}
+  'JPasswordField #2':
+    wrap: true
+    horizontal:
+      size:
+        preferred: {value: 250.0}
+  'JCheckBox #3': {skip: 1.0, spanX: 2097051.0, wrap: true}

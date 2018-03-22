@@ -214,8 +214,6 @@ private fun addGrowIfNeed(cc: CC, component: Component) {
 
     component is JPasswordField -> {
       applyGrowPolicy(cc, GrowPolicy.SHORT_TEXT)
-      cc.grow(0f)
-      cc.width("210!")
     }
 
     component is JTextComponent || component is SeparatorComponent || component is ComponentWithBrowseButton<*> -> {

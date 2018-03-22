@@ -12,7 +12,8 @@ import javax.swing.JLabel
 internal const val HORIZONTAL_GAP = 10
 internal const val VERTICAL_GAP = 5
 
-fun createLayoutBuilder() = LayoutBuilder(MigLayoutBuilder())
+@PublishedApi
+internal fun createLayoutBuilder() = LayoutBuilder(MigLayoutBuilder())
 
 interface LayoutBuilderImpl {
   fun newRow(label: JLabel? = null, buttonGroup: ButtonGroup? = null, separated: Boolean = false): Row

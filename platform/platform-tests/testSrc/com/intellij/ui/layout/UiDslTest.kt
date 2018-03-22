@@ -1,9 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.layout
 
+import com.intellij.CommonBundle
 import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.assertions.Assertions
 import com.intellij.ui.components.CheckBox
 import com.intellij.ui.components.JBPasswordField
 import com.intellij.ui.components.RadioButton
@@ -30,6 +32,7 @@ import java.util.concurrent.Callable
 import javax.imageio.ImageIO
 import javax.swing.JFrame
 import javax.swing.JPanel
+import javax.swing.JPasswordField
 import javax.swing.JTextField
 import kotlin.properties.Delegates
 
@@ -99,6 +102,16 @@ class UiDslTest {
     }, "[0, 0, 145, 23], [165, 0, 347, 23], [0, 28, 145, 26], [165, 28, 347, 26]")
   }
 
+  @Test
+  fun `note row in the dialog`() {
+    val passwordField = JPasswordField()
+    doTest(panel {
+      noteRow("Profiler requires access to the kernel-level API. Enter the sudo password to allow this. ")
+      row("Sudo password:") { passwordField() }
+      row { CheckBox(CommonBundle.message("checkbox.remember.password"), true)() }
+    }, "[0, 0, 544, 31], [0, 36, 99, 26], [119, 36, 425, 26], [119, 67, 425, 23]")
+  }
+
   private fun doTest(panel: JPanel, expectedLocations: String) {
     val frame = GuiActionRunner.execute(Callable {
       LayoutUtil.setGlobalDebugMillis(1000)
@@ -124,7 +137,7 @@ class UiDslTest {
     try {
       val expectedLayoutDataFile = Paths.get(PlatformTestUtil.getPlatformTestDataPath(), "ui", "layout", "$imageName.yml")
       if (expectedLayoutDataFile.exists()) {
-        com.intellij.testFramework.assertions.Assertions.assertThat(actualLayoutJson).isEqualTo(expectedLayoutDataFile)
+        Assertions.assertThat(actualLayoutJson).isEqualTo(expectedLayoutDataFile)
       }
       else {
         expectedLayoutDataFile.write(actualLayoutJson)

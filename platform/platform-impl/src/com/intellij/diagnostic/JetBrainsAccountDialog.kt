@@ -26,8 +26,8 @@ fun showJetBrainsAccountDialog(parent: Component, project: Project? = null): Dia
   val rememberCheckBox = CheckBox(CommonBundle.message("checkbox.remember.password"), selected = credentials?.userName == null || !credentials.password.isNullOrEmpty())
 
   val panel = panel {
-    noteRow("Login to JetBrains Account to get notified when the submitted\nexceptions are fixed.")
-    row("Username:") { userField() }
+    noteRow("Login to JetBrains Account to get notified\nwhen the submitted exceptions are fixed.")
+    row("Username:") { userField(growPolicy = GrowPolicy.SHORT_TEXT) }
     row("Password:") { passwordField() }
     row {
       rememberCheckBox()
