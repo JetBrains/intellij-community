@@ -2,6 +2,7 @@
 
 package com.intellij.codeInsight.highlighting;
 
+import com.intellij.lang.BracePair;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageBraceMatching;
 import com.intellij.lang.PairedBraceMatcher;
@@ -9,6 +10,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
+import com.intellij.openapi.editor.highlighter.TokensContainer;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeExtensionPoint;
@@ -464,5 +466,20 @@ public class BraceMatchingUtil {
     public int getCodeConstructStart(final PsiFile file, final int openingBraceOffset) {
       return openingBraceOffset;
     }
+  }
+
+  public static boolean isBrace(IElementType tokenType)
+  {
+    Language language = tokenType.getLanguage();
+    PairedBraceMatcher pairedBraceMatcher = LanguageBraceMatching.INSTANCE.forLanguage(language);
+
+    if (pairedBraceMatcher == null) return false;
+    for (BracePair pair : pairedBraceMatcher.getPairs()) {
+      if (pair.getLeftBraceType() == tokenType || pair.getRightBraceType() == tokenType) {
+        return true;
+      }
+    }
+
+    return false;
   }
 }

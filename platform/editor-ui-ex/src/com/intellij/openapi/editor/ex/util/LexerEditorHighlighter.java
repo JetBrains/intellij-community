@@ -31,6 +31,7 @@ import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
+import com.intellij.openapi.editor.highlighter.TokensContainer;
 import com.intellij.openapi.editor.impl.EditorDocumentPriorities;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
@@ -50,7 +51,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDocumentListener {
+public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDocumentListener, TokensContainer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.ex.util.LexerEditorHighlighter");
   private static final int LEXER_INCREMENTALITY_THRESHOLD = 200;
   private static final Set<Class> ourNonIncrementalLexers = new HashSet<>();
@@ -141,6 +142,11 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   private boolean isInSyncWithDocument() {
     Document document = getDocument();
     return document == null || document.getTextLength() == 0 || mySegments.getSegmentCount() > 0;
+  }
+
+  @Override
+  public IElementType getTokenType(int offset) {
+    return getTokenType(myText, offset).get(1);
   }
 
   private static boolean isInitialState(int data) {
