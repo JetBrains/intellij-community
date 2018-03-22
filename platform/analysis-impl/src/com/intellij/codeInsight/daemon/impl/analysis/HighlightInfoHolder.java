@@ -72,7 +72,7 @@ public class HighlightInfoHolder {
     return myErrorCount != 0;
   }
 
-  public boolean addAll(Collection<? extends HighlightInfo> highlightInfos) {
+  public boolean addAll(@Nullable Collection<? extends HighlightInfo> highlightInfos) {
     if (highlightInfos == null) return false;
     LOG.assertTrue(highlightInfos != this);
     boolean added = false;
