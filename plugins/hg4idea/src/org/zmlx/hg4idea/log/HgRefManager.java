@@ -20,6 +20,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.impl.SimpleRefGroup;
+import com.intellij.vcs.log.impl.SimpleRefType;
 import com.intellij.vcs.log.impl.SingletonRefGroup;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
@@ -150,41 +151,5 @@ public class HgRefManager implements VcsLogRefManager {
   @NotNull
   private List<VcsRef> sort(@NotNull Collection<VcsRef> refs) {
     return ContainerUtil.sorted(refs, getLabelsOrderComparator());
-  }
-
-  private static class SimpleRefType implements VcsRefType {
-    @NotNull private final String myName;
-    private final boolean myIsBranch;
-    @NotNull private final Color myColor;
-
-    public SimpleRefType(@NotNull String name, boolean isBranch, @NotNull Color color) {
-      myName = name;
-      myIsBranch = isBranch;
-      myColor = color;
-    }
-
-    @Override
-    public boolean isBranch() {
-      return myIsBranch;
-    }
-
-    @NotNull
-    @Override
-    public Color getBackgroundColor() {
-      return myColor;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      SimpleRefType type = (SimpleRefType)o;
-      return myIsBranch == type.myIsBranch && Objects.equals(myName, type.myName);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(myName, myIsBranch);
-    }
   }
 }

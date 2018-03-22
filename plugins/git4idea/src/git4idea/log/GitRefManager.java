@@ -10,6 +10,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.impl.SimpleRefGroup;
+import com.intellij.vcs.log.impl.SimpleRefType;
 import com.intellij.vcs.log.impl.SingletonRefGroup;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import git4idea.GitBranch;
@@ -32,11 +33,11 @@ import java.util.List;
  * @author Kirill Likhodedov
  */
 public class GitRefManager implements VcsLogRefManager {
-  public static final VcsRefType HEAD = new SimpleRefType(true, VcsLogStandardColors.Refs.TIP, "HEAD");
-  public static final VcsRefType LOCAL_BRANCH = new SimpleRefType(true, VcsLogStandardColors.Refs.BRANCH, "LOCAL_BRANCH");
-  public static final VcsRefType REMOTE_BRANCH = new SimpleRefType(true, VcsLogStandardColors.Refs.BRANCH_REF, "REMOTE_BRANCH");
-  public static final VcsRefType TAG = new SimpleRefType(false, VcsLogStandardColors.Refs.TAG, "TAG");
-  public static final VcsRefType OTHER = new SimpleRefType(false, VcsLogStandardColors.Refs.TAG, "OTHER");
+  public static final VcsRefType HEAD = new SimpleRefType("HEAD", true, VcsLogStandardColors.Refs.TIP);
+  public static final VcsRefType LOCAL_BRANCH = new SimpleRefType("LOCAL_BRANCH", true, VcsLogStandardColors.Refs.BRANCH);
+  public static final VcsRefType REMOTE_BRANCH = new SimpleRefType("REMOTE_BRANCH", true, VcsLogStandardColors.Refs.BRANCH_REF);
+  public static final VcsRefType TAG = new SimpleRefType("TAG", false, VcsLogStandardColors.Refs.TAG);
+  public static final VcsRefType OTHER = new SimpleRefType("OTHER", false, VcsLogStandardColors.Refs.TAG);
 
   private static final List<VcsRefType> REF_TYPE_INDEX = Arrays.asList(HEAD, LOCAL_BRANCH, REMOTE_BRANCH, TAG, OTHER);
 
@@ -286,47 +287,6 @@ public class GitRefManager implements VcsLogRefManager {
     return OTHER;
   }
 
-  private static class SimpleRefType implements VcsRefType {
-    private final boolean myIsBranch;
-    @NotNull private final Color myColor;
-    @NotNull private final String myName;
-
-    public SimpleRefType(boolean isBranch, @NotNull Color color, @NotNull String typeName) {
-      myIsBranch = isBranch;
-      myColor = color;
-      myName = typeName;
-    }
-
-    @Override
-    public boolean isBranch() {
-      return myIsBranch;
-    }
-
-    @NotNull
-    @Override
-    public Color getBackgroundColor() {
-      return myColor;
-    }
-
-    @Override
-    public String toString() {
-      return myName;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      SimpleRefType type = (SimpleRefType)o;
-      return myIsBranch == type.myIsBranch && Objects.equals(myName, type.myName);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(myIsBranch, myName);
-    }
-  }
-
   private static class LogicalRefGroup implements RefGroup {
     private final String myGroupName;
     private final List<VcsRef> myRefs;
@@ -495,8 +455,9 @@ public class GitRefManager implements VcsLogRefManager {
         return false;
       }
       return ContainerUtil.exists(repo.getBranchTrackInfos(), info -> remoteBranch ?
-                                                                  info.getRemoteBranch().getNameForLocalOperations().equals(ref.getName()) :
-                                                                  info.getLocalBranch().getName().equals(ref.getName()));
+                                                                      info.getRemoteBranch().getNameForLocalOperations()
+                                                                          .equals(ref.getName()) :
+                                                                      info.getLocalBranch().getName().equals(ref.getName()));
     }
   }
 }
