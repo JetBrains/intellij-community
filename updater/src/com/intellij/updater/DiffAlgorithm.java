@@ -18,6 +18,8 @@ package com.intellij.updater;
 import com.intellij.updater.Utils.OpenByteArrayOutputStream;
 import com.nothome.delta.Delta;
 import com.nothome.delta.GDiffPatcher;
+import com.nothome.delta.GDiffWriter;
+import com.nothome.delta.RandomAccessFileSeekableSource;
 import ie.wombat.jbdiff.JBDiff;
 import ie.wombat.jbdiff.JBPatch;
 
@@ -139,13 +141,13 @@ public abstract class DiffAlgorithm {
     @Override
     public void writeDiff(File olderFile, File newerFile, OutputStream patchOutput) throws IOException {
       Delta delta = new Delta();
-      delta.compute(olderFile, newerFile, patchOutput);
+      delta.compute(olderFile, newerFile, new GDiffWriter(patchOutput));
     }
 
     @Override
     public void applyDiff(InputStream patchInput, File oldFileIn, OutputStream toFileOut) throws IOException {
       GDiffPatcher patcher = new GDiffPatcher();
-      patcher.patch(oldFileIn, patchInput, toFileOut);
+      patcher.patch(new RandomAccessFileSeekableSource(new RandomAccessFile(oldFileIn, "r")), patchInput, toFileOut);
     }
 
     @Override

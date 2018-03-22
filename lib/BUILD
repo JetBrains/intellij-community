@@ -449,3 +449,18 @@ java_import(
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )
+
+java_import(
+    name = "javaxdelta-2.0.1",
+    jars = ["javaxdelta-2.0.1.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    exports = [":fastutil-7.2.1"],
+)
+
+java_import(
+    name = "fastutil-7.2.1",
+    jars = ["fastutil-7.2.1.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
