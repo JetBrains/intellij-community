@@ -231,8 +231,20 @@ public class PythonCompletionTest extends PyTestCase {
     assertSameElements(myFixture.getLookupElementStrings(), Arrays.asList("my_foo", "my_bar"));
   }
 
-  public void testSlots() {  // PY-1211
-    doTest();
+  // PY-1211, PY-29232
+  public void testSlots() {
+    final String testName = getTestName(true);
+    myFixture.configureByFile(testName + ".py");
+    myFixture.completeBasicAllCarets(null);
+    myFixture.checkResultByFile(testName + ".after.py");
+  }
+
+  // PY-29231
+  public void testSlotsAsAllowedNames() {
+    final String testName = getTestName(true);
+    myFixture.configureByFile(testName + ".py");
+    myFixture.completeBasicAllCarets(null);
+    myFixture.checkResultByFile(testName + ".after.py");
   }
 
   public void testReturnType() {
