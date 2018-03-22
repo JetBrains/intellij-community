@@ -70,6 +70,10 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
   public interface PopupComponentAdapter<T> {
     JComponent getComponent();
 
+    default JComponent getChooserComponent() {
+      return getComponent();
+    }
+
     default void setRenderer(ListCellRenderer renderer) {}
 
     void setItemChosenCallback(Consumer<T> callback);
@@ -109,10 +113,14 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
     default BooleanFunction<KeyEvent> getKeyEventHandler() {
       return null;
     }
+
+    default void setFont(Font f) {
+      getChooserComponent().setFont(f);
+    }
   }
 
   @Override
-  public PopupChooserBuilder setCancelOnClickOutside(boolean cancelOnClickOutside) {
+  public PopupChooserBuilder<T> setCancelOnClickOutside(boolean cancelOnClickOutside) {
     myCancelOnClickOutside = cancelOnClickOutside;
     return this;
   }
@@ -159,7 +167,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
   }
 
   public JComponent getChooserComponent() {
-    return myChooserComponent.getComponent();
+    return myChooserComponent.getChooserComponent();
   }
 
   @NotNull
@@ -235,7 +243,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
 
   @Override
   public PopupChooserBuilder<T> setCancelCallback(Computable<Boolean> callback) {
-    myCancelCallback = callback;
+    addCancelCallback(callback);
     return this;
   }
 
@@ -523,15 +531,24 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
     return this;
   }
 
+  private void addCancelCallback(Computable<Boolean> cbb) {
+    Computable<Boolean> callback = myCancelCallback;
+    myCancelCallback = () -> cbb.compute() && callback.compute();
+  }
+
   @Override
   public IPopupChooserBuilder<T> withHintUpdateSupply() {
-    HintUpdateSupply.installSimpleHintUpdateSupply(myChooserComponent.getComponent());
+    HintUpdateSupply.installSimpleHintUpdateSupply(myChooserComponent.getChooserComponent());
+    addCancelCallback(() -> {
+      HintUpdateSupply.hideHint(myChooserComponent.getChooserComponent());
+      return true;
+    });
     return this;
   }
 
   @Override
   public IPopupChooserBuilder<T> setFont(Font f) {
-    myChooserComponent.getComponent().setFont(f);
+    myChooserComponent.setFont(f);
     return this;
   }
 

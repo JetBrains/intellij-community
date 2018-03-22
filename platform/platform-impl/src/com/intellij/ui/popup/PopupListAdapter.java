@@ -46,6 +46,11 @@ class PopupListAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<T
   }
 
   @Override
+  public JComponent getChooserComponent() {
+    return myListWithFilter.getList();
+  }
+
+  @Override
   public void setRenderer(ListCellRenderer renderer) {
     myListWithFilter.getList().setCellRenderer(renderer);
   }

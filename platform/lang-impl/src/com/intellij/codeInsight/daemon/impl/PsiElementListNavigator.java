@@ -35,8 +35,6 @@ import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
-import com.intellij.ui.popup.HintUpdateSupply;
-import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.usages.UsageView;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
@@ -137,7 +135,6 @@ public class PsiElementListNavigator {
       return null;
     }
     List<NavigatablePsiElement> targetsList = Arrays.asList(targets);
-    final JBList<NavigatablePsiElement>[] listR = new JBList[1];
     final IPopupChooserBuilder<NavigatablePsiElement> builder = JBPopupFactory.getInstance().createPopupChooserBuilder(targetsList);
     if (listRenderer instanceof PsiElementListCellRenderer) {
       ((PsiElementListCellRenderer)listRenderer).installSpeedSearch(builder);
@@ -148,14 +145,10 @@ public class PsiElementListNavigator {
       setMovable(true).
       setFont(EditorUtil.getEditorFont()).
       setRenderer(listRenderer).
+      withHintUpdateSupply().
       setResizable(true).
-                                                                               setItemsChosenCallback(selectedValues -> {
-        consumer.consume(ArrayUtil.toObjectArray(selectedValues));
-      }).
+      setItemsChosenCallback(selectedValues -> consumer.consume(ArrayUtil.toObjectArray(selectedValues))).
       setCancelCallback(() -> {
-        if (listR[0] != null) {
-          HintUpdateSupply.hideHint(listR[0]);
-        }
         if (listUpdaterTask != null) {
           listUpdaterTask.cancelTask();
         }
@@ -171,11 +164,9 @@ public class PsiElementListNavigator {
     }
 
     final JBPopup popup = popupChooserBuilder.createPopup();
-    if (builder instanceof PopupChooserBuilder && ((PopupChooserBuilder)builder).getChooserComponent() instanceof ListWithFilter) {
-      JBList<NavigatablePsiElement> list = (JBList)((ListWithFilter)((PopupChooserBuilder)builder).getChooserComponent()).getList();
-      HintUpdateSupply.installSimpleHintUpdateSupply(list);
+    if (builder instanceof PopupChooserBuilder) {
+      JBList<NavigatablePsiElement> list = (JBList)((PopupChooserBuilder)builder).getChooserComponent();
       list.setTransferHandler(new TransferHandler(){
-        @Nullable
         @Override
         protected Transferable createTransferable(JComponent c) {
           final Object[] selectedValues = list.getSelectedValues();
@@ -191,7 +182,6 @@ public class PsiElementListNavigator {
           return COPY;
         }
       });
-      listR[0] = list;
     }
     if (builder instanceof PopupChooserBuilder) {
       JScrollPane pane = ((PopupChooserBuilder)builder).getScrollPane();
