@@ -70,10 +70,6 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
   public interface PopupComponentAdapter<T> {
     JComponent getComponent();
 
-    default JComponent getChooserComponent() {
-      return getComponent();
-    }
-
     default void setRenderer(ListCellRenderer renderer) {}
 
     void setItemChosenCallback(Consumer<T> callback);
@@ -115,7 +111,11 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
     }
 
     default void setFont(Font f) {
-      getChooserComponent().setFont(f);
+      getComponent().setFont(f);
+    }
+
+    default JComponent buildFinalComponent() {
+      return getComponent();
     }
   }
 
@@ -167,7 +167,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
   }
 
   public JComponent getChooserComponent() {
-    return myChooserComponent.getChooserComponent();
+    return myChooserComponent.getComponent();
   }
 
   @NotNull
@@ -331,6 +331,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
       registerClosePopupKeyboardAction(keystroke, true);
     }
 
+    JComponent finalComponent = myChooserComponent.buildFinalComponent();
     myScrollPane = myChooserComponent.createScrollPane();
 
     myScrollPane.getViewport().setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -338,7 +339,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
     ((JComponent)myScrollPane.getViewport().getView()).setBorder(BorderFactory.createEmptyBorder(viewportPadding.top, viewportPadding.left, viewportPadding.bottom, viewportPadding.right));
 
     if (myChooserComponent.hasOwnScrollPane()) {
-      addCenterComponentToContentPane(contentPane, myChooserComponent.getComponent());
+      addCenterComponentToContentPane(contentPane, finalComponent);
     }
     else {
       addCenterComponentToContentPane(contentPane, myScrollPane);
@@ -352,7 +353,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
       addEastComponentToContentPane(contentPane, myEastComponent);
     }
 
-    ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(contentPane, myChooserComponent.getComponent());
+    ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(contentPane, finalComponent);
     for (JBPopupListener each : myListeners) {
       builder.addListener(each);
     }
@@ -533,14 +534,14 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
 
   private void addCancelCallback(Computable<Boolean> cbb) {
     Computable<Boolean> callback = myCancelCallback;
-    myCancelCallback = () -> cbb.compute() && callback.compute();
+    myCancelCallback = () -> cbb.compute() && (callback == null || callback.compute());
   }
 
   @Override
   public IPopupChooserBuilder<T> withHintUpdateSupply() {
-    HintUpdateSupply.installSimpleHintUpdateSupply(myChooserComponent.getChooserComponent());
+    HintUpdateSupply.installSimpleHintUpdateSupply(myChooserComponent.getComponent());
     addCancelCallback(() -> {
-      HintUpdateSupply.hideHint(myChooserComponent.getChooserComponent());
+      HintUpdateSupply.hideHint(myChooserComponent.getComponent());
       return true;
     });
     return this;
