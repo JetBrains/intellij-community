@@ -22,7 +22,6 @@ import com.intellij.util.text.DateFormatUtil;
 import git4idea.test.TestDialogHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
-import org.jetbrains.plugins.github.api.GithubConnection;
 import org.jetbrains.plugins.github.api.data.GithubGist;
 import org.jetbrains.plugins.github.api.requests.GithubGistRequest.FileContent;
 import org.jetbrains.plugins.github.test.GithubTest;
@@ -54,7 +53,10 @@ public abstract class GithubCreateGistTestBase extends GithubTest {
 
   protected void deleteGist() throws IOException {
     if (GIST_ID != null) {
-      GithubApiUtil.deleteGist(new GithubConnection(myGitHubSettings.getAuthData()), GIST_ID);
+      myApiTaskExecutor.execute(myAccount, c -> {
+        GithubApiUtil.deleteGist(c, GIST_ID);
+        return null;
+      });
       GIST = null;
       GIST_ID = null;
     }
@@ -77,7 +79,7 @@ public abstract class GithubCreateGistTestBase extends GithubTest {
 
     if (GIST == null) {
       try {
-        GIST = GithubApiUtil.getGist(new GithubConnection(myGitHubSettings.getAuthData()), GIST_ID);
+        GIST = myApiTaskExecutor.execute(myAccount, c -> GithubApiUtil.getGist(c, GIST_ID));
       }
       catch (IOException e) {
         System.err.println(e.getMessage());
