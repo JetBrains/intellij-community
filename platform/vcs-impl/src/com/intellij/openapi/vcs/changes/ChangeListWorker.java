@@ -944,10 +944,10 @@ public class ChangeListWorker {
       for (ChangeListWorker.ListData list : myWorker.myLists) {
         final List<Change> removed = new ArrayList<>();
         final List<Change> added = new ArrayList<>();
-        boolean wasChanged = doneProcessingChanges(list, removed, added);
+        doneProcessingChanges(list, removed, added);
 
         LocalChangeListImpl changeList = myWorker.toChangeList(list);
-        if (wasChanged) {
+        if (!removed.isEmpty() || !added.isEmpty()) {
           changedLists.add(changeList);
         }
         if (!removed.isEmpty()) {
@@ -978,9 +978,9 @@ public class ChangeListWorker {
       myChangesBeforeUpdateMap.clear();
     }
 
-    private boolean doneProcessingChanges(@NotNull ChangeListWorker.ListData list,
-                                          @NotNull List<Change> removedChanges,
-                                          @NotNull List<Change> addedChanges) {
+    private void doneProcessingChanges(@NotNull ChangeListWorker.ListData list,
+                                       @NotNull List<Change> removedChanges,
+                                       @NotNull List<Change> addedChanges) {
       OpenTHashSet<Change> changesBeforeUpdate = myChangesBeforeUpdateMap.get(list.id);
 
       Set<Change> listChanges = new HashSet<>();
@@ -997,10 +997,6 @@ public class ChangeListWorker {
 
       removedChanges.addAll(changesBeforeUpdate);
       removedChanges.removeAll(listChanges);
-
-      return listChanges.size() != changesBeforeUpdate.size() ||
-             !addedChanges.isEmpty() ||
-             !removedChanges.isEmpty();
     }
 
     @Nullable
