@@ -91,6 +91,17 @@ public class Windows {
       return false;
     }
 
+    public static boolean isInToolWindow (Component component) {
+      Container c = component.getParent();
+      while (c != null) {
+        if (c instanceof ToolWindow) {
+          return true;
+        }
+        c = c.getParent();
+      }
+      return false;
+    }
+
     public Shortcut[] findShortcuts (String actionId) {
       return KeymapManager.getInstance().getActiveKeymap().getShortcuts(actionId);
     }
