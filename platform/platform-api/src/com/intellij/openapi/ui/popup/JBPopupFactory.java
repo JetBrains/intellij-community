@@ -36,7 +36,7 @@ public abstract class JBPopupFactory {
   }
 
   @NotNull
-  public abstract <T> IPopupChooserBuilder<T> createPopupChooserBuilder(List<T> list);
+  public abstract <T> IPopupChooserBuilder<T> createPopupChooserBuilder(@NotNull List<T> list);
 
   @NotNull
   public PopupChooserBuilder createPopupChooserBuilder(@NotNull JTable table) {

@@ -75,7 +75,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
   @NotNull
   @Override
-  public <T> IPopupChooserBuilder<T> createPopupChooserBuilder(List<T> list) {
+  public <T> IPopupChooserBuilder<T> createPopupChooserBuilder(@NotNull List<T> list) {
     return new PopupChooserBuilder<>(new JBList<>(new CollectionListModel<>(list)));
   }
 
