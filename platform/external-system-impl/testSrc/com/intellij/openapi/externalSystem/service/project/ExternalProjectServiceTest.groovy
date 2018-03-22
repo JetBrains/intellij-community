@@ -78,6 +78,11 @@ class ExternalProjectServiceTest extends AbstractExternalSystemTest {
       (EXCLUDED): ['.gradle', 'build']
     ]
 
+    def projectBaseFile = new File(project.basePath)
+    (contentRoots[TEST] + contentRoots[SOURCE]).forEach {
+      FileUtil.createDirectory(new File(projectBaseFile, it))
+    }
+
     def projectRootBuilder = {
       buildExternalProjectInfo {
         project {
