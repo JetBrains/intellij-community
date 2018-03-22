@@ -375,6 +375,11 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     return myExtensionPoints.containsKey(extensionPointName);
   }
 
+  @Override
+  public boolean hasExtensionPoint(@NotNull ExtensionPointName<?> extensionPointName) {
+    return hasExtensionPoint(extensionPointName.getName());
+  }
+
   void removeAllComponents(@NotNull Set<ExtensionComponentAdapter> extensionAdapters) {
     for (final Object extensionAdapter : extensionAdapters) {
       ExtensionComponentAdapter componentAdapter = (ExtensionComponentAdapter)extensionAdapter;
