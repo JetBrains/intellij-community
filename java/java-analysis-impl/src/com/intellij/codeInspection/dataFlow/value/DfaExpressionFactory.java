@@ -296,7 +296,7 @@ public class DfaExpressionFactory {
   @Nullable
   private PsiVariable getArrayIndexVariable(@NotNull PsiElement anchor, int index) {
     if (index >= 0) {
-      return myMockIndices.computeIfAbsent(index, k -> new LightVariableBuilder<>("$array$index$" + k, PsiType.INT, anchor));
+      return myMockIndices.computeIfAbsent(index, k -> new LightVariableBuilder<>("[" + k + "]", PsiType.INT, anchor));
     }
     return null;
   }
