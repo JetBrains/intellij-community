@@ -132,7 +132,7 @@ public abstract class OccurrencesChooser<T> {
           final Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
           @SuppressWarnings("unchecked") final C choices = (C)value;
 
-          if (choices == ReplaceChoice.ALL) {
+          if (choices != null) {
             setText(choices.formatDescription(occurrencesMap.get(choices).size()));
           }
           return rendererComponent;
