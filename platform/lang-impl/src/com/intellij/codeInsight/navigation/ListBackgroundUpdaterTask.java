@@ -16,7 +16,10 @@
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
+import com.intellij.ui.popup.AbstractPopup;
+import com.intellij.usages.UsageView;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,5 +35,10 @@ public abstract class ListBackgroundUpdaterTask extends BackgroundUpdaterTask {
   
   public ListBackgroundUpdaterTask(@Nullable final Project project, @NotNull final String title, @Nullable Comparator<PsiElement> comparator) {
     super(project, title, comparator);
+  }
+
+  @Deprecated
+  public void init(@NotNull AbstractPopup popup, @NotNull Object component, @NotNull Ref<UsageView> usageView) {
+    super.init(popup, component, usageView);
   }
 }
