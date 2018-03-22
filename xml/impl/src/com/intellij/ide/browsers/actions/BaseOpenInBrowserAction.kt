@@ -165,12 +165,7 @@ private fun chooseUrl(urls: Collection<Url>): Promise<Url> {
     })
     .setTitle("Choose Url")
     .setItemChosenCallback { value ->
-      if (value == null) {
-        result.setError("selected value is null")
-      }
-      else {
-        result.setResult(value)
-      }
+      result.setResult(value)
     }
     .createPopup()
     .showInFocusCenter()
