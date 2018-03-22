@@ -177,7 +177,8 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
 
     myNameListener = (aSource, data) -> {
       myShowDetailPanel = true;
-      JButton backButton = new JButton("Plugins", AllIcons.Actions.Back);
+      JButton backButton = new JButton("Plugins");
+      configureBackButton(backButton);
       backButton.addActionListener(event -> {
         removeDetailsPanel();
         myCardPanel.select(data.second, true);
@@ -264,7 +265,7 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
 
   @NotNull
   private JComponent createTrendingPanel(@NotNull LinkListener<Pair<IdeaPluginDescriptor, Integer>> listener) {
-    PluginsGroupComponent panel = new PluginsGroupComponent(new PluginsGridLayout(myTagBuilder), (aSource, aLinkData) -> listener
+    PluginsGroupComponent panel = new PluginsGroupComponent(new PluginsGridLayout(), (aSource, aLinkData) -> listener
       .linkSelected(aSource, new Pair<>(aLinkData, 0)), descriptor -> new GridCellPluginComponent(descriptor, myTagBuilder));
     panel.getEmptyText().setText("Trending plugins are not loaded.")
          .appendSecondaryText("Check the interner connection.", StatusText.DEFAULT_ATTRIBUTES, null);
@@ -999,7 +1000,7 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
     private int myLineHeight;
 
     @Override
-    public Dimension preferredLayoutSize(Container parent) {
+    public Dimension preferredLayoutSize(@NotNull Container parent) {
       calculateLineHeight(parent);
 
       List<UIPluginGroup> groups = ((PluginsGroupComponent)parent).myGroups;
@@ -1015,7 +1016,7 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
     }
 
     @Override
-    public void layoutContainer(Container parent) {
+    public void layoutContainer(@NotNull Container parent) {
       calculateLineHeight(parent);
 
       List<UIPluginGroup> groups = ((PluginsGroupComponent)parent).myGroups;
@@ -1067,26 +1068,12 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
     private final int myLastVOffset = JBUI.scale(30);
     private final int myMiddleHOffset = JBUI.scale(20);
 
-    private final Dimension myCellSize;
-
-    @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
-    public PluginsGridLayout(@NotNull TagBuilder tagBuilder) {
-      PluginNode pluginNode = new PluginNode(null, "Language Language Lang", null);
-      pluginNode.setDescription("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor " +
-                                "incididunt ut labore et dolore magna aliqua Ut enim ad minim veniam, quis nostrud " +
-                                "exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.");
-      pluginNode.setCategory("languages");
-      pluginNode.setDate(String.valueOf(System.currentTimeMillis()));
-      pluginNode.setDownloads("123456");
-      pluginNode.setRating("5.5");
-      GridCellPluginComponent component = new GridCellPluginComponent(pluginNode, tagBuilder);
-      component.doLayout();
-
-      myCellSize = component.getPreferredSize();
-    }
+    private final Dimension myCellSize = new Dimension();
 
     @Override
-    public Dimension preferredLayoutSize(Container parent) {
+    public Dimension preferredLayoutSize(@NotNull Container parent) {
+      calculateCellSize(parent);
+
       int width = getParentWidth(parent);
       int cellWidth = myCellSize.width;
       int columns = width / (cellWidth + myMiddleHOffset);
@@ -1123,11 +1110,13 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
     }
 
     @Override
-    public void layoutContainer(Container parent) {
+    public void layoutContainer(@NotNull Container parent) {
+      calculateCellSize(parent);
+
       List<UIPluginGroup> groups = ((PluginsGroupComponent)parent).myGroups;
       int width = parent.getWidth();
       int y = 0;
-      int columns = Math.max(1, width / myCellSize.width);
+      int columns = Math.max(1, width / (myCellSize.width + myMiddleHOffset));
 
       for (UIPluginGroup group : groups) {
         Component component = group.panel;
@@ -1138,7 +1127,23 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
       }
     }
 
-    private int layoutPlugins(List<CellPluginComponent> plugins, int startY, int columns) {
+    private void calculateCellSize(@NotNull Container parent) {
+      myCellSize.width = 0;
+      myCellSize.height = 0;
+
+      List<UIPluginGroup> groups = ((PluginsGroupComponent)parent).myGroups;
+
+      for (UIPluginGroup group : groups) {
+        for (CellPluginComponent plugin : group.plugins) {
+          plugin.doLayout();
+          Dimension size = plugin.getPreferredSize();
+          myCellSize.width = Math.max(myCellSize.width, size.width);
+          myCellSize.height = Math.max(myCellSize.height, size.height);
+        }
+      }
+    }
+
+    private int layoutPlugins(@NotNull List<CellPluginComponent> plugins, int startY, int columns) {
       int x = 0;
       int y = 0;
       int width = myCellSize.width;
@@ -1247,9 +1252,7 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
       parent.add(RelativeFont.BOLD.install(myName), constraints);
     }
 
-    protected void addDescriptionComponent(@NotNull JPanel parent,
-                                           @Nullable String description,
-                                           @Nullable Function<JEditorPane, Integer> heightFunction) {
+    protected void addDescriptionComponent(@NotNull JPanel parent, @Nullable String description, @NotNull LineFunction function) {
       if (StringUtil.isEmptyOrSpaces(description)) {
         return;
       }
@@ -1261,16 +1264,23 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
           int width = property == null ? JBUI.scale(180) : property;
           View view = getUI().getRootView(this);
           view.setSize(width, Integer.MAX_VALUE);
-          int height = heightFunction == null ? (int)(view.getPreferredSpan(View.Y_AXIS) + JBUI.scale(2f)) : heightFunction.fun(this);
-          return new Dimension(width, height);
+          return new Dimension(width, function.getHeight(this));
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+          super.paintComponent(g);
+          function.paintComponent(this, g);
         }
       };
+
       myDescription.setEditorKit(new UIUtil.JBWordWrapHtmlEditorKit());
       myDescription.setEditable(false);
       myDescription.setFocusable(false);
       myDescription.setOpaque(false);
       myDescription.setBorder(null);
       myDescription.setText(XmlStringUtil.wrapInHtml(description));
+
       parent.add(installTiny(myDescription));
 
       if (myDescription.getCaret() != null) {
@@ -1334,6 +1344,52 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
     }
   }
 
+  private static class LineFunction {
+    public void paintComponent(@NotNull JEditorPane pane, @NotNull Graphics g) {
+    }
+
+    public int getHeight(@NotNull JEditorPane pane) {
+      return (int)(pane.getUI().getRootView(pane).getPreferredSpan(View.Y_AXIS) + JBUI.scale(2f));
+    }
+  }
+
+  private static class ThreeLineFunction extends LineFunction {
+    protected Point myLastPoint;
+
+    @Override
+    public int getHeight(@NotNull JEditorPane pane) {
+      myLastPoint = null;
+
+      try {
+        int line = 0;
+        int startLineY = -1;
+        int length = pane.getDocument().getLength();
+
+        for (int i = 0; i < length; i++) {
+          Rectangle r = pane.modelToView(i);
+          if (r != null && r.height > 0 && startLineY < r.y) {
+            startLineY = r.y;
+            if (++line == 4) {
+              int ii = i;
+              while (ii > 0) {
+                Rectangle rr = pane.modelToView(--ii);
+                if (rr != null) {
+                  myLastPoint = rr.getLocation();
+                  break;
+                }
+              }
+              return r.y;
+            }
+          }
+        }
+      }
+      catch (BadLocationException ignored) {
+      }
+
+      return super.getHeight(pane);
+    }
+  }
+
   private static class ListPluginComponent extends CellPluginComponent {
     private JLabel myVersion;
     private JLabel myLastUpdated;
@@ -1383,30 +1439,10 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
       myName.setVerticalAlignment(SwingConstants.TOP);
 
       if (update) {
-        addDescriptionComponent(centerPanel, getChangeNotes(plugin), pane -> {
-          try {
-            int line = 0;
-            int startLineY = -1;
-            int length = myDescription.getDocument().getLength();
-
-            for (int i = 0; i < length; i++) {
-              Rectangle r = myDescription.modelToView(i);
-              if (r != null && r.height > 0 && startLineY < r.y) {
-                startLineY = r.y;
-                if (++line == 4) {
-                  return r.y;
-                }
-              }
-            }
-          }
-          catch (BadLocationException ignored) {
-          }
-
-          return (int)(pane.getUI().getRootView(pane).getPreferredSpan(View.Y_AXIS) + JBUI.scale(2f));
-        });
+        addDescriptionComponent(centerPanel, getChangeNotes(plugin), new ThreeLineFunction());
       }
       else {
-        addDescriptionComponent(centerPanel, getShortDescription(plugin), null);
+        addDescriptionComponent(centerPanel, getShortDescription(plugin, true), new LineFunction());
       }
 
       if (update && plugin instanceof PluginNode) {
@@ -1539,7 +1575,18 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
 
       addNameComponent(centerPanel, null);
       addTags(centerPanel, tagBuilder);
-      addDescriptionComponent(centerPanel, getShortDescription(myPlugin), null);
+      addDescriptionComponent(centerPanel, getShortDescription(myPlugin, false), new ThreeLineFunction() {
+        @Override
+        public void paintComponent(@NotNull JEditorPane pane, @NotNull Graphics g) {
+          if (myLastPoint != null) {
+            if (g instanceof Graphics2D) {
+              ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+            }
+            g.setColor(pane.getForeground());
+            g.drawString("...", myLastPoint.x, myLastPoint.y + g.getFontMetrics().getAscent());
+          }
+        }
+      });
 
       if (plugin instanceof PluginNode) {
         String downloads = getDownloads(myPlugin);
@@ -1907,6 +1954,31 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
     }
   }
 
+  private static void configureBackButton(@NotNull JButton button) {
+    button.setIcon(new Icon() {
+      @Override
+      public void paintIcon(Component c, Graphics g, int x, int y) {
+        AllIcons.Actions.Back.paintIcon(c, g, x + JBUI.scale(7), y);
+      }
+
+      @Override
+      public int getIconWidth() {
+        return AllIcons.Actions.Back.getIconWidth() + JBUI.scale(7);
+      }
+
+      @Override
+      public int getIconHeight() {
+        return AllIcons.Actions.Back.getIconHeight();
+      }
+    });
+
+    button.setHorizontalAlignment(SwingConstants.LEFT);
+
+    Dimension size = button.getPreferredSize();
+    size.width -= JBUI.scale(15);
+    button.setPreferredSize(size);
+  }
+
   private static void setWidth72(@NotNull JButton button) {
     int width = JBUI.scale(72);
     if (button instanceof JBOptionButton && button.getComponentCount() == 2) {
@@ -1923,8 +1995,8 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
   }
 
   @Nullable
-  private static String getShortDescription(@NotNull IdeaPluginDescriptor plugin) {
-    return PluginSiteUtils.preparePluginDescription(plugin.getDescription());
+  private static String getShortDescription(@NotNull IdeaPluginDescriptor plugin, boolean shortSize) {
+    return PluginSiteUtils.preparePluginDescription(plugin.getDescription(), shortSize);
   }
 
   public static class PluginSiteUtils {
@@ -1934,39 +2006,43 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
     private static final Pattern BR_PATTERN = Pattern.compile("<br\\s*/?>");
 
     @Nullable
-    public static String preparePluginDescription(@Nullable String s) {
+    public static String preparePluginDescription(@Nullable String s, boolean shortSize) {
       if (s == null || s.isEmpty()) {
         return null;
       }
-      String description = prepareDescription(s);
+      String description = prepareDescription(s, shortSize);
       return description.isEmpty() || description.endsWith(".") ? description : description + ".";
     }
 
     @NotNull
-    private static String prepareDescription(@NotNull String s) {
-      String[] split = BR_PATTERN.split(s);
+    private static String prepareDescription(@NotNull String s, boolean shortSize) {
+      if (shortSize) {
+        String[] split = BR_PATTERN.split(s);
 
-      if (split.length > 1) {
-        String sanitize = stripTags(split[0]);
-        if (sanitize.length() <= SHORT_DESC_SIZE) return sanitize;
+        if (split.length > 1) {
+          String sanitize = stripTags(split[0]);
+          if (sanitize.length() <= SHORT_DESC_SIZE) return sanitize;
+        }
       }
 
       String stripped = stripTags(s);
 
-      for (String sep : new String[]{". ", ".\n", ": ", ":\n"}) {
-        String by = substringBy(stripped, sep);
-        if (by != null) return by;
-      }
-
-      if (stripped.length() > SHORT_DESC_SIZE) {
-        stripped = stripped.substring(0, SHORT_DESC_SIZE);
-
-        int index = stripped.lastIndexOf(' ');
-        if (index == -1) {
-          index = stripped.length();
+      if (shortSize) {
+        for (String sep : new String[]{". ", ".\n", ": ", ":\n"}) {
+          String by = substringBy(stripped, sep);
+          if (by != null) return by;
         }
 
-        stripped = stripped.substring(0, index) + "...";
+        if (stripped.length() > SHORT_DESC_SIZE) {
+          stripped = stripped.substring(0, SHORT_DESC_SIZE);
+
+          int index = stripped.lastIndexOf(' ');
+          if (index == -1) {
+            index = stripped.length();
+          }
+
+          stripped = stripped.substring(0, index) + "...";
+        }
       }
 
       return stripped;

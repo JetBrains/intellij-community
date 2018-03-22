@@ -96,7 +96,7 @@ public class PsiImportStatementStubImpl extends StubBase<PsiImportStatementBase>
     final PsiJavaCodeReferenceElement refElement = createReference();
     if (refElement == null) return null;
     if (isOnDemand() && refElement instanceof PsiJavaCodeReferenceElementImpl) {
-      ((PsiJavaCodeReferenceElementImpl)refElement).setKindWhenDummy(PsiJavaCodeReferenceElementImpl.CLASS_FQ_NAME_KIND);
+      ((PsiJavaCodeReferenceElementImpl)refElement).setKindWhenDummy(PsiJavaCodeReferenceElementImpl.Kind.CLASS_FQ_NAME_KIND);
     }
     return refElement;
   }
@@ -106,8 +106,8 @@ public class PsiImportStatementStubImpl extends StubBase<PsiImportStatementBase>
     final PsiJavaCodeReferenceElement refElement = createReference();
     if (refElement == null) return null;
     ((PsiJavaCodeReferenceElementImpl)refElement).setKindWhenDummy(
-      isOnDemand() ? PsiJavaCodeReferenceElementImpl.CLASS_FQ_OR_PACKAGE_NAME_KIND
-                   : PsiJavaCodeReferenceElementImpl.CLASS_FQ_NAME_KIND);
+      isOnDemand() ? PsiJavaCodeReferenceElementImpl.Kind.CLASS_FQ_OR_PACKAGE_NAME_KIND
+                   : PsiJavaCodeReferenceElementImpl.Kind.CLASS_FQ_NAME_KIND);
     return refElement;
   }
 

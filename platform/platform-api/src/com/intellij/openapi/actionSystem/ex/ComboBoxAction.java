@@ -100,7 +100,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     JPanel panel = new JPanel(new GridBagLayout());
     ComboBoxButton button = createComboBoxButton(presentation);
     panel.add(button,
-              new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, JBUI.insets(0, 3, 0, 3), 0, 0));
+              new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, JBUI.insets(0, 3), 0, 0));
     return panel;
   }
 
@@ -353,7 +353,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       int width = prefSize.width + getArrowIcon(isEnabled()).getIconWidth() + JBUI.scale(5);
       width += UIUtil.isUnderWin10LookAndFeel() ? JBUI.scale(10) :
                UIUtil.isUnderDefaultMacTheme() ? JBUI.scale(5) : 0;
-      return new Dimension(width, isSmallVariant() ? JBUI.scale(24) : prefSize.height);
+      return new Dimension(width, isSmallVariant() ? JBUI.scale(24) : Math.max(JBUI.scale(24), prefSize.height));
     }
 
     @Override

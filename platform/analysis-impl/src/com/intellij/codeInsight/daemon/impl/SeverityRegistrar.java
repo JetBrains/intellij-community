@@ -207,7 +207,11 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
     return list;
   }
 
-  public int getSeveritiesCount() {
+  public List<HighlightSeverity> getAllSeverities() {
+    return getOrderAsList(getOrderMap());
+  }
+
+  int getSeveritiesCount() {
     return createCurrentSeverityNames().size();
   }
 
@@ -223,7 +227,7 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
     return found[0];
   }
 
-  public int getSeverityMaxIndex() {
+  int getSeverityMaxIndex() {
     int[] values = getOrderMap().getValues();
     int max = values[0];
     for(int i = 1; i < values.length; ++i) if (values[i] > max) max = values[i];

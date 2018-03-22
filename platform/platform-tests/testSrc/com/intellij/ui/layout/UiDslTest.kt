@@ -106,10 +106,11 @@ class UiDslTest {
   fun `note row in the dialog`() {
     val passwordField = JPasswordField()
     doTest(panel {
-      noteRow("Profiler requires access to the kernel-level API. Enter the sudo password to allow this. ")
+      noteRow("Profiler requires access to the kernel-level API.\nEnter the sudo password to allow this. ")
       row("Sudo password:") { passwordField() }
       row { CheckBox(CommonBundle.message("checkbox.remember.password"), true)() }
-    }, "[0, 0, 544, 31], [0, 36, 99, 26], [119, 36, 425, 26], [119, 67, 425, 23]")
+      noteRow("Should be an empty row above as a gap")
+    }, "[0, 0, 512, 47], [0, 52, 99, 26], [119, 52, 393, 26], [119, 83, 393, 23], [0, 111, 512, 31]")
   }
 
   private fun doTest(panel: JPanel, expectedLocations: String) {

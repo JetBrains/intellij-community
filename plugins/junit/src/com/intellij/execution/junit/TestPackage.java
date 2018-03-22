@@ -83,25 +83,7 @@ public class TestPackage extends TestObject {
             instance.setAlternativeResolveEnabled(true);
             final TestClassFilter classFilter = getClassFilter(data);
             LOG.assertTrue(classFilter.getBase() != null);
-            long start = System.currentTimeMillis();
-            if (Registry.is("junit4.search.4.tests.all.in.scope", true)) {
-              Condition<PsiClass> acceptClassCondition = aClass -> ReadAction.compute(() -> aClass.isValid() && classFilter.isAccepted(aClass));
-              collectClassesRecursively(classFilter, acceptClassCondition, myClasses);
-            }
-            else if (Registry.is("junit4.search.4.tests.in.classpath", false)) {
-              String packageName = getPackageName(data);
-              String[] classNames = TestClassCollector.collectClassFQNames(packageName, getRootPath(), getConfiguration(), TestPackage::createPredicate);
-              PsiManager manager = PsiManager.getInstance(myProject);
-              Arrays.stream(classNames)
-                .filter(className -> acceptClassName(className)) //check patterns
-                .map(name -> ReadAction.compute(() -> ClassUtil.findPsiClass(manager, name, null, true, classFilter.getScope())))
-                .filter(aClass -> aClass != null)
-                .forEach(myClasses::add);
-              LOG.info("Found tests in " + (System.currentTimeMillis() - start));
-            }
-            else {
-              ConfigurationUtil.findAllTestClasses(classFilter, module, myClasses);
-            }
+            searchTests(module, classFilter, myClasses);
           }
           catch (CantRunException ignored) {}
           finally {
@@ -122,6 +104,30 @@ public class TestPackage extends TestObject {
     };
   }
 
+
+  protected void searchTests(Module module, TestClassFilter classFilter, Set<PsiClass> classes) throws CantRunException {
+    long start = System.currentTimeMillis();
+    if (Registry.is("junit4.search.4.tests.all.in.scope", true)) {
+      Condition<PsiClass> acceptClassCondition = aClass -> ReadAction.compute(() -> aClass.isValid() && classFilter.isAccepted(aClass));
+      collectClassesRecursively(classFilter, acceptClassCondition, classes);
+    }
+    else if (Registry.is("junit4.search.4.tests.in.classpath", false)) {
+      String packageName = getPackageName(getConfiguration().getPersistentData());
+      String[] classNames =
+        TestClassCollector.collectClassFQNames(packageName, getRootPath(), getConfiguration(), TestPackage::createPredicate);
+      PsiManager manager = PsiManager.getInstance(getConfiguration().getProject());
+      Arrays.stream(classNames)
+            .filter(className -> acceptClassName(className)) //check patterns
+            .map(name -> ReadAction.compute(() -> ClassUtil.findPsiClass(manager, name, null, true, classFilter.getScope())))
+            .filter(aClass -> aClass != null)
+            .forEach(classes::add);
+      LOG.info("Found tests in " + (System.currentTimeMillis() - start));
+    }
+    else {
+      ConfigurationUtil.findAllTestClasses(classFilter, module, classes);
+    }
+  }
+  
   @Nullable
   protected Path getRootPath() {
     Module module = getConfiguration().getConfigurationModule().getModule();

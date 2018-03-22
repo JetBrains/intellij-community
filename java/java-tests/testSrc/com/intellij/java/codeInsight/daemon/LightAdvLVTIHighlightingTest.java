@@ -2,10 +2,14 @@
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
+import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.codeInspection.AnonymousCanBeLambdaInspection;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.IdeaTestUtil;
 
 public class LightAdvLVTIHighlightingTest extends LightDaemonAnalyzerTestCase {
@@ -36,6 +40,17 @@ public class LightAdvLVTIHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testVarInLambdaParameters() {
     setLanguageLevel(LanguageLevel.JDK_X);
     doTest();
+  }
+
+  public void testGotoDeclarationOnVar() {
+    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+    final int offset = getEditor().getCaretModel().getOffset();
+    final PsiElement[] elements =
+      GotoDeclarationAction.findAllTargetElements(getProject(), getEditor(), offset);
+    assertSize(1, elements);
+    PsiElement element = elements[0];
+    assertInstanceOf(element, PsiClass.class);
+    assertEquals(CommonClassNames.JAVA_LANG_STRING, ((PsiClass)element).getQualifiedName());
   }
 
   @Override

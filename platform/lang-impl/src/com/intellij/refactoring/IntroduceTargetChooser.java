@@ -96,7 +96,7 @@ public class IntroduceTargetChooser {
 
     JBPopup popup = JBPopupFactory.getInstance().createPopupChooserBuilder(expressions)
       .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
-      .setSelectedValue(expressions.get(selection > -1 ? selection : null), true)
+      .setSelectedValue(expressions.get(selection > -1 ? selection : 0), true)
       .setAccessibleName(title)
       .setTitle(title)
       .setMovable(false)
