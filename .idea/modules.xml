@@ -313,6 +313,7 @@
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/smali/smali.iml" filepath="$PROJECT_DIR$/../adt/idea/smali/smali.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/plugins/cvs/smartcvs-src/smartcvs-src.iml" filepath="$PROJECT_DIR$/plugins/cvs/smartcvs-src/smartcvs-src.iml" group="plugins/VCS/cvs" />
       <module fileurl="file://$PROJECT_DIR$/spellchecker/spellchecker.iml" filepath="$PROJECT_DIR$/spellchecker/spellchecker.iml" group="platform" />
+      <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/clion/lib/ssh.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/clion/lib/ssh.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/plugins/stats-collector/stats-collector.iml" filepath="$PROJECT_DIR$/plugins/stats-collector/stats-collector.iml" group="plugins/stats-collector" />
       <module fileurl="file://$PROJECT_DIR$/plugins/stream-debugger/stream-debugger.iml" filepath="$PROJECT_DIR$/plugins/stream-debugger/stream-debugger.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/platform/structuralsearch/structuralsearch.iml" filepath="$PROJECT_DIR$/platform/structuralsearch/structuralsearch.iml" group="plugins/structuralsearch" />
