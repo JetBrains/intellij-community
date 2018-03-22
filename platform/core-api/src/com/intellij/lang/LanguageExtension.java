@@ -8,14 +8,16 @@ package com.intellij.lang;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.Set;
+
+import static com.intellij.lang.LanguageUtil.matchingMetaLanguages;
 
 public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
   private final T myDefaultImplementation;
@@ -47,21 +49,14 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
     return result;
   }
 
-  protected T findForLanguage(@NotNull Language l) {
-    List<T> extensions = forKey(l);
-    if (!extensions.isEmpty()) {
-      return extensions.get(0);
+  protected T findForLanguage(@NotNull Language language) {
+    for (Language l = language; l != null; l = l.getBaseLanguage()) {
+      List<T> extensions = forKey(l);
+      if (!extensions.isEmpty()) {
+        return extensions.get(0);
+      }
     }
-
-    Language base = l.getBaseLanguage();
-    if (base != null) {
-      return forLanguage(base);
-    }
-
-    Optional<T> forAnyMetaLanguage = MetaLanguage.getAllMatchingMetaLanguages(l)
-      .map(metaLanguage -> forLanguage(metaLanguage)).filter(Objects::nonNull).findAny();
-
-    return forAnyMetaLanguage.orElse(myDefaultImplementation);
+    return myDefaultImplementation;
   }
 
   /**
@@ -90,17 +85,26 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
   }
 
   @NotNull
-  public List<T> allForLanguageOrAny(@NotNull Language l) {
-    List<T> providers = new ArrayList<>(allForLanguage(l));
-    if (l != Language.ANY) {
-      providers.addAll(allForLanguage(Language.ANY));
+  @Override
+  protected List<T> buildExtensions(@NotNull String stringKey, @NotNull Language key) {
+    Collection<MetaLanguage> metaLanguages = matchingMetaLanguages(key);
+    if (metaLanguages.isEmpty()) {
+      return super.buildExtensions(stringKey, key);
     }
 
-    MetaLanguage.getAllMatchingMetaLanguages(l).forEach(metaLanguage -> {
-      providers.addAll(allForLanguage(metaLanguage));
-    });
+    Set<String> allKeys = new THashSet<>();
+    allKeys.add(stringKey);
+    for (MetaLanguage language : metaLanguages) {
+      allKeys.add(keyToString(language));
+    }
+    return buildExtensions(allKeys);
+  }
 
-    return providers;
+  @NotNull
+  public List<T> allForLanguageOrAny(@NotNull Language l) {
+    List<T> forLanguage = allForLanguage(l);
+    if (l == Language.ANY) return forLanguage;
+    return ContainerUtil.concat(forLanguage, allForLanguage(Language.ANY));
   }
 
   protected T getDefaultImplementation() {
