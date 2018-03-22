@@ -292,8 +292,10 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     }
 
     if (toCatchExceptions) {
+      PsiStatement statement;
       if (!(ref instanceof PsiReferenceExpression &&
-            JavaHighlightUtil.isSuperOrThisCall(PsiTreeUtil.getParentOfType(ref, PsiStatement.class), true, false))) {
+            (statement = PsiTreeUtil.getParentOfType(ref, PsiStatement.class)) != null &&
+            JavaHighlightUtil.isSuperOrThisCall(statement, true, false))) {
         if (needToCatchExceptions(changeInfo, caller)) {
           PsiClassType[] newExceptions =
             callee != null ? getCalleeChangedExceptionInfo(callee) : getPrimaryChangedExceptionInfo(changeInfo);

@@ -174,7 +174,7 @@ public class DefUseInspectionBase extends AbstractBaseJavaLocalInspectionTool {
       return false;
     }
     for (PsiMethod constructor : constructors) {
-      if (JavaHighlightUtil.getChainedConstructors(constructor) != null) continue;
+      if (!JavaHighlightUtil.getChainedConstructors(constructor).isEmpty()) continue;
       final PsiCodeBlock body = constructor.getBody();
       if (body == null || !HighlightControlFlowUtil.variableDefinitelyAssignedIn(field, body)) {
         return false;
