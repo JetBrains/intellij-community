@@ -15,7 +15,6 @@ import unittest
 from tests_pydevd_python import debugger_unittest
 from tests_pydevd_python.debugger_unittest import get_free_port
 
-
 CMD_SET_PROPERTY_TRACE, CMD_EVALUATE_CONSOLE_EXPRESSION, CMD_RUN_CUSTOM_OPERATION, CMD_ENABLE_DONT_TRACE = 133, 134, 135, 141
 
 IS_CPYTHON = platform.python_implementation() == 'CPython'
@@ -226,6 +225,23 @@ class WriterThreadCase19(debugger_unittest.AbstractWriterThread):
 
         self.finished_ok = True
 
+#=======================================================================================================================
+# WriterThreadCase20 - [Test Case]: Breakpoint on line with exception
+#======================================================================================================================
+class WriterThreadCase20(debugger_unittest.AbstractWriterThread):
+
+    TEST_FILE = debugger_unittest._get_debugger_test_file('_debugger_case20.py')
+
+    def run(self):
+        self.start_socket()
+        self.write_add_breakpoint(3, 'fn_with_except')
+        self.write_make_initial_run()
+        for i in range(2):
+            thread_id, frame_id, line = self.wait_for_breakpoint_hit('111', True)
+            assert line == 3, 'Expected return to be in line 3, was: %s' % line
+            self.write_run_thread(thread_id)
+
+        self.finished_ok = True
 
 #=======================================================================================================================
 # WriterThreadCase18 - [Test Case]: change local variable
@@ -1346,6 +1362,10 @@ class Test(unittest.TestCase, debugger_unittest.DebuggerRunner):
 
     def test_case_19(self):
         self.check_case(WriterThreadCase19)
+
+    # PY-29051
+    def test_case_20(self):
+        self.check_case(WriterThreadCase20)
 
     if TEST_DJANGO:
         def test_case_django(self):
