@@ -53,6 +53,9 @@ internal class MigLayoutBuilder : LayoutBuilderImpl {
   }
 
   override fun noteRow(text: String) {
+    // add empty row as top gap
+//    newRow()
+
     val cc = CC()
     cc.vertical.gapBefore = gapToBoundSize(VERTICAL_GAP, false)
     cc.vertical.gapAfter = gapToBoundSize(VERTICAL_GAP * 2, false)
