@@ -20,7 +20,9 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.RefGroup;
+import com.intellij.vcs.log.VcsLogDataPack;
+import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.impl.SingletonRefGroup;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
@@ -65,25 +67,13 @@ public abstract class BranchPopupBuilder {
     for (Map.Entry<VirtualFile, Set<VcsRef>> entry : VcsLogUtil.groupRefsByRoot(allRefs).entrySet()) {
       VirtualFile root = entry.getKey();
       if (visibleRoots != null && !visibleRoots.contains(root)) continue;
-      Collection<VcsRef> refs = entry.getValue();
-      VcsLogProvider provider = dataPack.getLogProviders().get(root);
-      VcsLogRefManager refManager = provider.getReferenceManager();
-      List<RefGroup> refGroups = refManager.groupForBranchFilter(refs);
+      List<RefGroup> refGroups = dataPack.getLogProviders().get(root).getReferenceManager().groupForBranchFilter(entry.getValue());
 
       putActionsForReferences(refGroups, filteredGroups);
     }
 
     if (recentItems != null) {
-      for (List<String> recentItem : recentItems) {
-        if (recentItem.size() == 1) {
-          final String item = ContainerUtil.getFirstItem(recentItem);
-          if (filteredGroups.singletonGroups.contains(item) ||
-              ContainerUtil.find(filteredGroups.expandedGroups.values(), strings -> strings.contains(item)) != null) {
-            continue;
-          }
-        }
-        filteredGroups.recentGroups.add(recentItem);
-      }
+      filteredGroups.recentGroups.addAll(recentItems);
     }
 
     return filteredGroups;
