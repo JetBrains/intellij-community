@@ -50,12 +50,4 @@ public class ExtractMethodSnapshot {
     myVariableDatum = StreamEx.of(from.myVariableDatum).map(data -> new VariableDataSnapshot(data, myProject)).toList();
     myTargetClass = from.myTargetClass != null ? smartPointerManager.createSmartPsiElementPointer(from.myTargetClass) : null;
   }
-
-  public void clear() {
-    SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(myProject);
-    myOutputVariables.forEach(smartPointerManager::removePointer);
-    if (myArtificialOutputVariable != null) smartPointerManager.removePointer(myArtificialOutputVariable);
-    myVariableDatum.stream().map(data -> data.myVariable).forEach(smartPointerManager::removePointer);
-    smartPointerManager.removePointer(myTargetClass);
-  }
 }

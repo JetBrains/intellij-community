@@ -961,7 +961,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     final PsiStatement exitStatementCopy = prepareMethodBody(newMethod, true);
 
     if (myExpression == null) {
-      if (myNeedChangeContext && isPossibleToChangeCallContext()) {
+      if (isNeedToChangeCallContext()) {
         for (PsiElement element : myElements) {
           ChangeContextUtil.encodeContextInfo(element, false);
         }
@@ -1092,7 +1092,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
 
     myExtractedMethod = addExtractedMethod(newMethod);
-    if (isPossibleToChangeCallContext() && myNeedChangeContext) {
+    if (isNeedToChangeCallContext()) {
       ChangeContextUtil.decodeContextInfo(myExtractedMethod, myTargetClass, RefactoringChangeUtil.createThisExpression(myManager, null));
       if (myMethodCall.resolveMethod() != myExtractedMethod) {
         final PsiReferenceExpression methodExpression = myMethodCall.getMethodExpression();
@@ -1222,8 +1222,8 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
   }
 
-  protected boolean isPossibleToChangeCallContext() {
-    return true;
+  protected boolean isNeedToChangeCallContext() {
+    return myNeedChangeContext;
   }
 
   private void declareVariableAtMethodCallLocation(String name) {
@@ -1530,10 +1530,6 @@ public class ExtractMethodProcessor implements MatchProvider {
     return myTargetClass;
   }
 
-  public boolean isNeedChangeContext() {
-    return myNeedChangeContext;
-  }
-
   public PsiType getReturnType() {
     return myReturnType;
   }
@@ -1741,7 +1737,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     else {
       skipInstanceQualifier = instanceQualifier == null || instanceQualifier instanceof PsiThisExpression;
       if (skipInstanceQualifier) {
-        if (isPossibleToChangeCallContext() && myNeedChangeContext) {
+        if (isNeedToChangeCallContext()) {
           boolean needsThisQualifier = false;
           PsiElement parent = myCodeFragmentMember;
           while (!myTargetClass.equals(parent)) {
