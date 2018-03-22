@@ -179,7 +179,12 @@ public class CommonProcessors {
       return true;
     }
   }
-
+  
+  /**
+   * @return processor that process all elements. 
+   * Useful if you know that the processor shouldn't be stopped by client. It protects you from accidentally returning false value  
+   */
+  @NotNull
   public static <T> Processor<T> processAll(@NotNull final Consumer<T> consumer) {
     return new Processor<T>() {
       @Override
