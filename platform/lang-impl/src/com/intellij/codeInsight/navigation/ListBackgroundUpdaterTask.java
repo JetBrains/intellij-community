@@ -25,7 +25,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
 
+/**
+ * @deprecated please use {@link BackgroundUpdaterTask}
+ */
+@Deprecated
 public abstract class ListBackgroundUpdaterTask extends BackgroundUpdaterTask {
+
+  protected AbstractPopup myPopup;
+
   /**
    * @deprecated Use {@link #ListBackgroundUpdaterTask(Project, String, Comparator)}
    */
@@ -39,6 +46,7 @@ public abstract class ListBackgroundUpdaterTask extends BackgroundUpdaterTask {
 
   @Deprecated
   public void init(@NotNull AbstractPopup popup, @NotNull Object component, @NotNull Ref<UsageView> usageView) {
-    super.init(popup, component, usageView);
+    myPopup = popup;
+    super.init(myPopup, component, usageView);
   }
 }
