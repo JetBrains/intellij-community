@@ -3,7 +3,7 @@ package com.intellij.testGuiFramework.fixtures
 
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.testGuiFramework.framework.GuiTestUtil
-import com.intellij.ui.popup.ActionPopupStep
+import com.intellij.ui.popup.PopupFactoryImpl
 import org.fest.swing.core.Robot
 import org.fest.swing.fixture.JButtonFixture
 import org.fest.swing.timing.Pause
@@ -95,7 +95,7 @@ class RunConfigurationListFixture(val myRobot: Robot, val myIde: IdeFrameFixture
   private fun getEditConfigurationsState(): Boolean {
     val list = myRobot.finder()
       .find(myIde.target()) { it is JList<*> } as JList<*>
-    val actionItem = list.model.getElementAt(0) as ActionPopupStep.ActionItem
+    val actionItem = list.model.getElementAt(0) as PopupFactoryImpl.ActionItem
     return actionItem.isEnabled
   }
 

@@ -35,7 +35,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextField;
-import com.intellij.ui.popup.ActionPopupStep;
+import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Function;
@@ -1021,7 +1021,7 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
         if (!(glassPane instanceof IdeGlassPane)) rootPane.setGlassPane(new IdeGlassPaneImpl(rootPane));
 
         myHighlightComponent = new HighlightComponent(new JBColor(JBColor.GREEN, JBColor.RED), glassPane, jbList);
-        if (elementAt instanceof ActionPopupStep.ActionItem) {
+        if (elementAt instanceof PopupFactoryImpl.ActionItem) {
           myLabel = new MyLabel(elementAt.getClass().getName() + " (\"" + elementAt.toString() +  "\")", glassPane, cellBounds.width);
         } else {
           myLabel = new MyLabel("JBList Cell: " + elementAt.getClass().getName() + " (\"" + elementAt.toString() +  "\")", glassPane);
@@ -1076,8 +1076,8 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
       Rectangle cellBounds = jbList.getCellBounds(index, index);
       if (cellBounds.contains(pointOnList)) {
         Object elementAt = jbList.getModel().getElementAt(index);
-        if (elementAt instanceof ActionPopupStep.ActionItem) {
-          return ((ActionPopupStep.ActionItem)elementAt).getText();
+        if (elementAt instanceof PopupFactoryImpl.ActionItem) {
+          return ((PopupFactoryImpl.ActionItem)elementAt).getText();
         }
         else {
           return elementAt.toString();

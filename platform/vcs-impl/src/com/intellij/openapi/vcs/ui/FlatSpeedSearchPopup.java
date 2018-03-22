@@ -18,7 +18,6 @@ package com.intellij.openapi.vcs.ui;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.util.Condition;
-import com.intellij.ui.popup.ActionPopupStep;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.WizardPopup;
 import org.jetbrains.annotations.NotNull;
@@ -45,8 +44,8 @@ public class FlatSpeedSearchPopup extends PopupFactoryImpl.ActionGroupPopup {
   @Override
   public final boolean shouldBeShowing(Object value) {
     if (!super.shouldBeShowing(value)) return false;
-    if (!(value instanceof ActionPopupStep.ActionItem)) return true;
-    return shouldBeShowing(((ActionPopupStep.ActionItem)value).getAction());
+    if (!(value instanceof PopupFactoryImpl.ActionItem)) return true;
+    return shouldBeShowing(((PopupFactoryImpl.ActionItem)value).getAction());
   }
 
   protected boolean shouldBeShowing(@NotNull AnAction action) {

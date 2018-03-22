@@ -20,7 +20,7 @@ import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.testGuiFramework.framework.GuiTestUtil;
 import com.intellij.testGuiFramework.matcher.ClassNameMatcher;
 import com.intellij.ui.components.JBList;
-import com.intellij.ui.popup.ActionPopupStep.ActionItem;
+import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.treeStructure.Tree;
 import org.fest.swing.cell.JTreeCellReader;
 import org.fest.swing.core.GenericTypeMatcher;
@@ -145,8 +145,8 @@ public class RunConfigurationsDialogFixture extends ComponentFixture<RunConfigur
     @Override
     public String valueAt(@NotNull JList list, int index) {
       Object element = list.getModel().getElementAt(index);
-      if (element instanceof ActionItem) {
-        return ((ActionItem)element).getText();
+      if (element instanceof PopupFactoryImpl.ActionItem) {
+        return ((PopupFactoryImpl.ActionItem)element).getText();
       }
       return super.valueAt(list, index);
     }
