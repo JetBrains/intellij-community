@@ -30,7 +30,7 @@ import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.util.*;
-import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.containers.IntObjectMap;
 import com.intellij.util.io.*;
@@ -265,7 +265,7 @@ public class FSRecords {
           @NotNull
           @Override
           protected ExecutorService createExecutor() {
-            return AppExecutorUtil.createBoundedApplicationPoolExecutor("FSRecords pool",1);
+            return SequentialTaskExecutor.createSequentialApplicationPoolExecutor("FSRecords Pool");
           }
         }; // sources usually zipped with 4x ratio
         myContentHashesEnumerator = weHaveContentHashes ? new ContentHashesUtil.HashEnumerator(contentsHashesFile, storageLockContext): null;
@@ -903,7 +903,7 @@ public class FSRecords {
           int id = DataInputOutputUtil.readINT(input) + prevId;
           prevId = id;
           int nameId = doGetNameId(id);
-          result[i] = new NameId(id, nameId, FileNameCache.getVFileName(nameId, ()->doGetNameByNameId(nameId)));
+          result[i] = new NameId(id, nameId, FileNameCache.getVFileName(nameId, FSRecords::doGetNameByNameId));
         }
         return result;
       }
@@ -1080,7 +1080,7 @@ public class FSRecords {
   @NotNull
   private static CharSequence doGetNameSequence(int id) throws IOException {
     final int nameId = getRecordInt(id, NAME_OFFSET);
-    return nameId == 0 ? "" : FileNameCache.getVFileName(nameId, ()->doGetNameByNameId(nameId));
+    return nameId == 0 ? "" : FileNameCache.getVFileName(nameId, FSRecords::doGetNameByNameId);
   }
 
   public static String getNameByNameId(int nameId) {
@@ -1536,7 +1536,7 @@ public class FSRecords {
     }
     else {
       int newRecord = getContentStorage().acquireNewRecord();
-      assert page == newRecord :"Unexpected content storage modification";
+      assert page == newRecord : "Unexpected content storage modification: page="+page+"; newRecord="+newRecord;
       
       return -page;
     }

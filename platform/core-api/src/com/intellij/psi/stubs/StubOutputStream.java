@@ -42,14 +42,12 @@ public class StubOutputStream extends DataOutputStream {
   }
 
   public void writeName(@Nullable final String arg) throws IOException {
-    DataInputOutputUtil.writeNAME(this, arg, myNameStorage);
+    final int nameId = arg != null ? myNameStorage.enumerate(arg) : 0;
+    DataInputOutputUtil.writeINT(this, nameId);
   }
 
   public void writeVarInt(final int value) throws IOException {
     DataInputOutputUtil.writeINT(this, value);
   }
 
-  public int getStringId(final String value) throws IOException {
-    return myNameStorage.enumerate(value);
-  }
 }

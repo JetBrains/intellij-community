@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.impl.CachedIntentions;
 import com.intellij.codeInsight.intention.impl.IntentionListStep;
 import com.intellij.codeInspection.QuickFix;
 import com.intellij.icons.AllIcons;
@@ -88,7 +89,7 @@ public class ResourceBundleEditorShowQuickFixesAction extends AnAction {
     LOG.assertTrue(project != null);
     JBPopupFactory
       .getInstance()
-      .createListPopup(new IntentionListStep(null, intentions, null, file, project))
+      .createListPopup(new IntentionListStep(null, null, file, project, CachedIntentions.create(project, file, null, intentions)))
       .showInBestPositionFor(e.getDataContext());
   }
 

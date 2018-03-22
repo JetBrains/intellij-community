@@ -34,7 +34,7 @@ class AnchorElementInfo extends SelfElementInfo {
   private volatile long myStubElementTypeAndId; // stubId in the lower 32 bits; stubElementTypeIndex in the high 32 bits packed together for atomicity
 
   AnchorElementInfo(@NotNull PsiElement anchor, @NotNull PsiFile containingFile, Identikit.ByAnchor identikit) {
-    super(containingFile.getProject(), ProperTextRange.create(anchor.getTextRange()), identikit, containingFile, false);
+    super(ProperTextRange.create(anchor.getTextRange()), identikit, containingFile, false);
     myStubElementTypeAndId = pack(-1, null);
   }
   // will restore by stub index until file tree get loaded
@@ -42,7 +42,7 @@ class AnchorElementInfo extends SelfElementInfo {
                     @NotNull PsiFileWithStubSupport containingFile,
                     int stubId,
                     @NotNull IStubElementType stubElementType) {
-    super(containingFile.getProject(), null,
+    super(null,
           Identikit.fromTypes(anchor.getClass(), stubElementType, LanguageUtil.getRootLanguage(containingFile)),
           containingFile, false);
     myStubElementTypeAndId = pack(stubId, stubElementType);
@@ -61,22 +61,23 @@ class AnchorElementInfo extends SelfElementInfo {
 
   @Override
   @Nullable
-  public PsiElement restoreElement() {
+  public PsiElement restoreElement(@NotNull SmartPointerManagerImpl manager) {
     long typeAndId = myStubElementTypeAndId;
     int stubId = (int)typeAndId;
     if (stubId != -1) {
-      PsiFile file = restoreFile();
+      PsiFile file = restoreFile(manager);
       if (!(file instanceof PsiFileWithStubSupport)) return null;
       short index = (short)(typeAndId >> 32);
       IStubElementType stubElementType = (IStubElementType)IElementType.find(index);
       return PsiAnchor.restoreFromStubIndex((PsiFileWithStubSupport)file, stubId, stubElementType, false);
     }
 
-    return super.restoreElement();
+    return super.restoreElement(manager);
   }
 
   @Override
-  public boolean pointsToTheSameElementAs(@NotNull final SmartPointerElementInfo other) {
+  public boolean pointsToTheSameElementAs(@NotNull final SmartPointerElementInfo other,
+                                          @NotNull SmartPointerManagerImpl manager) {
     if (other instanceof AnchorElementInfo) {
       if (!getVirtualFile().equals(other.getVirtualFile())) return false;
 
@@ -87,23 +88,23 @@ class AnchorElementInfo extends SelfElementInfo {
         return packed1 == packed2;
       }
       if (packed1 != -1 || packed2 != -1) {
-        return ReadAction.compute(() -> Comparing.equal(restoreElement(), other.restoreElement()));
+        return ReadAction.compute(() -> Comparing.equal(restoreElement(manager), other.restoreElement(manager)));
       }
     }
-    return super.pointsToTheSameElementAs(other);
+    return super.pointsToTheSameElementAs(other, manager);
   }
 
   @Override
-  public void fastenBelt() {
+  public void fastenBelt(@NotNull SmartPointerManagerImpl manager) {
     if (getStubId() != -1) {
-      switchToTree();
+      switchToTree(manager);
     }
-    super.fastenBelt();
+    super.fastenBelt(manager);
   }
 
-  private void switchToTree() {
-    PsiElement element = restoreElement();
-    SmartPointerTracker tracker = myManager.getTracker(getVirtualFile());
+  private void switchToTree(SmartPointerManagerImpl manager) {
+    PsiElement element = restoreElement(manager);
+    SmartPointerTracker tracker = manager.getTracker(getVirtualFile());
     if (element != null && tracker != null) {
       tracker.switchStubToAst(this, element);
     }
@@ -115,20 +116,20 @@ class AnchorElementInfo extends SelfElementInfo {
   }
 
   @Override
-  public Segment getRange() {
+  public Segment getRange(@NotNull SmartPointerManagerImpl manager) {
     if (getStubId() != -1) {
-      switchToTree();
+      switchToTree(manager);
     }
-    return super.getRange();
+    return super.getRange(manager);
   }
 
   @Nullable
   @Override
-  public TextRange getPsiRange() {
+  public TextRange getPsiRange(@NotNull SmartPointerManagerImpl manager) {
     if (getStubId() != -1) {
-      switchToTree();
+      switchToTree(manager);
     }
-    return super.getPsiRange();
+    return super.getPsiRange(manager);
   }
 
   @Override

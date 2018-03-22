@@ -20,8 +20,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
-
 public class VcsVirtualFolder extends AbstractVcsVirtualFile {
   private final VirtualFile myChild;
   public VcsVirtualFolder(String name, VirtualFile child, VirtualFileSystem fileSystem) {
@@ -37,6 +35,7 @@ public class VcsVirtualFolder extends AbstractVcsVirtualFile {
     return true;
   }
 
+  @Override
   @NotNull
   public byte[] contentsToByteArray() {
     throw new RuntimeException(VcsBundle.message("exception.text.internal.error.method.should.not.be.called"));

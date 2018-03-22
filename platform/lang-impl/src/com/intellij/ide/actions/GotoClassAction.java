@@ -40,6 +40,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.playback.commands.ActionCommand;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
@@ -65,7 +66,8 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
       super.actionPerformed(e);
     }
     else {
-      DumbService.getInstance(project).showDumbModeNotification(IdeBundle.message("go.to.class.dumb.mode.message"));
+      String message = IdeBundle.message("go.to.class.dumb.mode.message", GotoClassPresentationUpdater.getActionTitle());
+      DumbService.getInstance(project).showDumbModeNotification(message);
       AnAction action = ActionManager.getInstance().getAction(GotoFileAction.ID);
       InputEvent event = ActionCommand.getInputEvent(GotoFileAction.ID);
       Component component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
@@ -83,6 +85,9 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     final GotoClassModel2 model = new GotoClassModel2(project);
+    String pluralKinds = StringUtil.capitalize(
+      StringUtil.join(GotoClassPresentationUpdater.getElementKinds(), s -> StringUtil.pluralize(s), "/"));
+    String title = IdeBundle.message("go.to.class.toolwindow.title", pluralKinds);
     showNavigationPopup(e, model, new GotoActionCallback<Language>() {
       @Override
       protected ChooseByNameFilter<Language> createFilter(@NotNull ChooseByNamePopup popup) {
@@ -93,7 +98,7 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
       public void elementChosen(ChooseByNamePopup popup, Object element) {
         handleSubMemberNavigation(popup, element);
       }
-    }, IdeBundle.message("go.to.class.toolwindow.title"), true);
+    }, title, true);
   }
 
   static void handleSubMemberNavigation(ChooseByNamePopup popup, Object element) {

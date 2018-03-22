@@ -16,5 +16,6 @@ import org.junit.runners.Suite
                     GoToClassFocusTest::class,
                     GoToClassTwiceFocusTest::class,
                     InlineVariableFocusTest::class,
-                    KeyMapSettingsTestFocusTest::class)
+                    KeyMapSettingsTestFocusTest::class,
+                    SearchEverywhereFocusTest::class)
 class FocusIssuesSuite

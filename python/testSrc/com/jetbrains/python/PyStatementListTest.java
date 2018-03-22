@@ -33,12 +33,7 @@ public class PyStatementListTest extends PyTestCase {
     final PyStatementList list1 = function.getStatementList();
     final PyStatementList list2 = function2.getStatementList();
 
-    new WriteCommandAction.Simple(myFixture.getProject()) {
-      @Override
-      protected void run() {
-        list1.add(list2.getStatements()[0]);
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(myFixture.getProject()).run(() -> list1.add(list2.getStatements()[0]));
 
     assertEquals("def foo():\n    print 1\n    print 2", function.getText());
   }

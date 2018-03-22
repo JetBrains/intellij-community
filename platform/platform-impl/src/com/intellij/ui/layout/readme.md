@@ -45,3 +45,9 @@ val panel = panel {
   noteRow("""Do not have an account? <a href="https://account.jetbrains.com/login">Sign Up</a>""")
 }
 ```
+
+## FAQ
+
+### One cell is minimum, second one is maximum
+
+Set `CCFlags.growX` and `CCFlags.pushX` for some component in the second cell.

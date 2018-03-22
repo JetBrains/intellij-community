@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename.inplace;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -228,7 +228,7 @@ public abstract class InplaceRefactoring {
 
   @Nullable
   protected PsiElement checkLocalScope() {
-    final SearchScope searchScope = PsiSearchHelper.SERVICE.getInstance(myElementToRename.getProject()).getUseScope(myElementToRename);
+    final SearchScope searchScope = PsiSearchHelper.getInstance(myElementToRename.getProject()).getUseScope(myElementToRename);
     if (searchScope instanceof LocalSearchScope) {
       final PsiElement[] elements = ((LocalSearchScope)searchScope).getScope();
       return PsiTreeUtil.findCommonParent(elements);
@@ -279,7 +279,8 @@ public abstract class InplaceRefactoring {
     boolean hasReferenceOnNameIdentifier = false;
     for (PsiReference ref : refs) {
       if (isReferenceAtCaret(selectedElement, ref)) {
-        builder.replaceElement(ref.getElement(), getRangeToRename(ref), PRIMARY_VARIABLE_NAME, createLookupExpression(selectedElement), true);
+        builder
+          .replaceElement(ref.getElement(), getRangeToRename(ref), PRIMARY_VARIABLE_NAME, createLookupExpression(selectedElement), true);
         subrefOnPrimaryElement = true;
         continue;
       }
@@ -288,7 +289,7 @@ public abstract class InplaceRefactoring {
     }
     if (nameIdentifier != null) {
       hasReferenceOnNameIdentifier |= selectedElement.getTextRange().contains(nameIdentifier.getTextRange());
-      if (!subrefOnPrimaryElement || !hasReferenceOnNameIdentifier){
+      if (!subrefOnPrimaryElement || !hasReferenceOnNameIdentifier) {
         addVariable(nameIdentifier, selectedElement, builder);
       }
     }
@@ -296,12 +297,12 @@ public abstract class InplaceRefactoring {
       addVariable(usage.first, usage.second, selectedElement, builder);
     }
     addAdditionalVariables(builder);
-    
+
     int segmentsLimit = Registry.intValue("inplace.rename.segments.limit", -1);
     if (segmentsLimit != -1 && builder.getElementsCount() > segmentsLimit) {
       return false;
     }
-    
+
     try {
       myMarkAction = startRename();
     }
@@ -334,12 +335,9 @@ public abstract class InplaceRefactoring {
 
     beforeTemplateStart();
 
-    new WriteCommandAction(myProject, getCommandName()) {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        startTemplate(builder);
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(myProject).withName(getCommandName()).run(() -> {
+      startTemplate(builder);
+    });
 
     if (myBalloon == null) {
       showBalloon();

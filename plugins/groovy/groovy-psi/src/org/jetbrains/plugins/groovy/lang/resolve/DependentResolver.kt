@@ -2,12 +2,12 @@
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.PsiPolyVariantReference
-import com.intellij.psi.ResolveResult
-import com.intellij.psi.impl.source.resolve.ResolveCache
 import com.intellij.util.Consumer
 import com.intellij.util.SmartList
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyReference
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 
-abstract class DependentResolver<T : PsiPolyVariantReference> : ResolveCache.PolyVariantResolver<T> {
+abstract class DependentResolver<T : GroovyReference> : GroovyResolver<T> {
 
   companion object {
     /**
@@ -22,7 +22,7 @@ abstract class DependentResolver<T : PsiPolyVariantReference> : ResolveCache.Pol
     private val resolvingDependencies = ThreadLocal.withInitial { mutableSetOf<PsiPolyVariantReference>() }
   }
 
-  final override fun resolve(ref: T, incomplete: Boolean): Array<out ResolveResult> {
+  final override fun resolve(ref: T, incomplete: Boolean): Collection<GroovyResolveResult> {
     val dependencies = resolveDependencies(ref, incomplete)
     val result = doResolve(ref, incomplete)
     dependencies?.clear()
@@ -53,5 +53,5 @@ abstract class DependentResolver<T : PsiPolyVariantReference> : ResolveCache.Pol
 
   protected open fun collectDependencies(ref: T, consumer: Consumer<in PsiPolyVariantReference>) {}
 
-  protected abstract fun doResolve(ref: T, incomplete: Boolean): Array<out ResolveResult>
+  protected abstract fun doResolve(ref: T, incomplete: Boolean): Collection<GroovyResolveResult>
 }

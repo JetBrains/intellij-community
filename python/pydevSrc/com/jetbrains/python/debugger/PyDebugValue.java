@@ -245,6 +245,7 @@ public class PyDebugValue extends XNamedValue {
 
   public void updateNodeValueAfterLoading(@NotNull XValueNode node, @NotNull String value, @NotNull String linkText) {
     node.setPresentation(getValueIcon(), myType, value, myContainer);
+    if (isNumericContainer()) return; // do not update FullValueEvaluator not to break Array Viewer
     if (value.length() >= MAX_VALUE) {
       node.setFullValueEvaluator(new PyFullValueEvaluator(myFrameAccessor, getEvaluationExpression()));
     }
@@ -299,7 +300,7 @@ public class PyDebugValue extends XNamedValue {
       XValue value = childrenList.getValue(i);
       if (value instanceof PyDebugValue) {
         PyDebugValue debugValue = (PyDebugValue)value;
-        if (debugValue.isLoadValueAsync() && !debugValue.isNumericContainer()) {
+        if (debugValue.isLoadValueAsync()) {
           variables.add(new PyFrameAccessor.PyAsyncValue<>(debugValue, debugValue.createDebugValueCallback()));
         }
       }
@@ -322,13 +323,13 @@ public class PyDebugValue extends XNamedValue {
   private void setFullValueEvaluator(@NotNull XValueNode node, @NotNull String value) {
     String treeName = getEvaluationExpression();
     String postfix = EVALUATOR_POSTFIXES.get(myType);
+    myLastNode = node;
     if (postfix == null) {
       if (value.length() >= MAX_VALUE) {
         node.setFullValueEvaluator(new PyFullValueEvaluator(myFrameAccessor, treeName));
       }
       if (myLoadValueAsync) {
         node.setFullValueEvaluator(new PyLoadingValueEvaluator("... Loading Value", myFrameAccessor, treeName));
-        myLastNode = node;
       }
       return;
     }

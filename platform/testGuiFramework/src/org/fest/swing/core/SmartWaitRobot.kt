@@ -138,6 +138,13 @@ class SmartWaitRobot : BasicRobot(null, ExistingHierarchy()) {
     fastReleaseModifiers(updatedModifiers)
   }
 
+  fun fastPressAndReleaseModifiers(vararg modifiers: Int) {
+    val unifiedModifiers = InputModifiers.unify(*modifiers)
+    fastPressModifiers(unifiedModifiers)
+    Pause.pause(50)
+    fastReleaseModifiers(unifiedModifiers)
+  }
+
   fun fastPressAndReleaseKeyWithoutModifiers(keyCode: Int) {
     fastPressKey(keyCode)
     fastReleaseKey(keyCode)
@@ -153,7 +160,7 @@ class SmartWaitRobot : BasicRobot(null, ExistingHierarchy()) {
       .map { KeyStrokeMap.keyStrokeFor(it)?.keyCode ?: throw Exception("Unable to get keystroke for char '$it'") }
       .toIntArray()
     if (delayBetweenShortcutAndTypingMs > 0) Pause.pause(delayBetweenShortcutAndTypingMs.toLong())
-    keyCodeArray.forEach { fastPressAndReleaseKeyWithoutModifiers(keyCode = it); Pause.pause(10) }
+    keyCodeArray.forEach { fastPressAndReleaseKeyWithoutModifiers(keyCode = it); Pause.pause(50) }
   }
 
   private fun fastPressKey(keyCode: Int) {

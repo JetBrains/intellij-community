@@ -16,7 +16,7 @@
 
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeInsight.navigation.ListBackgroundUpdaterTask;
+import com.intellij.codeInsight.navigation.BackgroundUpdaterTask;
 import com.intellij.find.FindUtil;
 import com.intellij.ide.PsiCopyPasteManager;
 import com.intellij.ide.util.PsiElementListCellRenderer;
@@ -25,18 +25,20 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
-import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.HintUpdateSupply;
+import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.usages.UsageView;
 import com.intellij.util.Alarm;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,6 +46,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.MouseEvent;
+import java.util.Arrays;
 import java.util.List;
 
 public class PsiElementListNavigator {
@@ -61,14 +64,15 @@ public class PsiElementListNavigator {
                                  String title,
                                  final String findUsagesTitle,
                                  ListCellRenderer listRenderer,
-                                 @Nullable ListBackgroundUpdaterTask listUpdaterTask) {
+                                 @Nullable BackgroundUpdaterTask listUpdaterTask) {
     JBPopup popup = navigateOrCreatePopup(targets, title, findUsagesTitle, listRenderer, listUpdaterTask);
     if (popup != null) {
+      RelativePoint point = new RelativePoint(e);
       if (listUpdaterTask != null) {
-        runActionAndListUpdaterTask(popup, () -> popup.show(new RelativePoint(e)), listUpdaterTask);
+        runActionAndListUpdaterTask(popup, () -> popup.show(point), listUpdaterTask);
       }
       else {
-        popup.show(new RelativePoint(e));
+        popup.show(point);
       }
     }
   }
@@ -78,7 +82,7 @@ public class PsiElementListNavigator {
   }
 
   public static void openTargets(Editor e, NavigatablePsiElement[] targets, String title, final String findUsagesTitle,
-                                 ListCellRenderer listRenderer, @Nullable ListBackgroundUpdaterTask listUpdaterTask) {
+                                 ListCellRenderer listRenderer, @Nullable BackgroundUpdaterTask listUpdaterTask) {
     final JBPopup popup = navigateOrCreatePopup(targets, title, findUsagesTitle, listRenderer, listUpdaterTask);
     if (popup != null) {
       if (listUpdaterTask != null) {
@@ -91,10 +95,10 @@ public class PsiElementListNavigator {
   }
 
   /**
-   * @see #navigateOrCreatePopup(NavigatablePsiElement[], String, String, ListCellRenderer, ListBackgroundUpdaterTask, Consumer)
+   * @see #navigateOrCreatePopup(NavigatablePsiElement[], String, String, ListCellRenderer, BackgroundUpdaterTask, Consumer)
    */
   private static void runActionAndListUpdaterTask(@NotNull Disposable popup, @NotNull Runnable action,
-                                                  @NotNull ListBackgroundUpdaterTask listUpdaterTask) {
+                                                  @NotNull BackgroundUpdaterTask listUpdaterTask) {
     Alarm alarm = new Alarm(popup);
     alarm.addRequest(action, 300);
     ProgressManager.getInstance().run(listUpdaterTask);
@@ -105,7 +109,7 @@ public class PsiElementListNavigator {
                                                final String title,
                                                final String findUsagesTitle,
                                                final ListCellRenderer listRenderer,
-                                               @Nullable final ListBackgroundUpdaterTask listUpdaterTask) {
+                                               @Nullable final BackgroundUpdaterTask listUpdaterTask) {
     return navigateOrCreatePopup(targets, title, findUsagesTitle, listRenderer, listUpdaterTask, selectedElements -> {
       for (Object element : selectedElements) {
         PsiElement selected = (PsiElement)element;
@@ -124,55 +128,33 @@ public class PsiElementListNavigator {
                                               final String title,
                                               final String findUsagesTitle,
                                               final ListCellRenderer listRenderer,
-                                              @Nullable final ListBackgroundUpdaterTask listUpdaterTask,
+                                              @Nullable final BackgroundUpdaterTask listUpdaterTask,
                                               @NotNull final Consumer<Object[]> consumer) {
     if (targets.length == 0) return null;
     if (targets.length == 1 && (listUpdaterTask == null || listUpdaterTask.isFinished())) {
       consumer.consume(targets);
       return null;
     }
-    final CollectionListModel<NavigatablePsiElement> model = new CollectionListModel<>(targets);
-    final JBList list = new JBList(model);
-    HintUpdateSupply.installSimpleHintUpdateSupply(list);
-
-    list.setTransferHandler(new TransferHandler(){
-      @Nullable
-      @Override
-      protected Transferable createTransferable(JComponent c) {
-        final Object[] selectedValues = list.getSelectedValues();
-        final PsiElement[] copy = new PsiElement[selectedValues.length];
-        for (int i = 0; i < selectedValues.length; i++) {
-          copy[i] = (PsiElement)selectedValues[i];
-        }
-        return new PsiCopyPasteManager.MyTransferable(copy);
-      }
-
-      @Override
-      public int getSourceActions(JComponent c) {
-        return COPY;
-      }
-    });
-
-    list.setCellRenderer(listRenderer);
-    list.setFont(EditorUtil.getEditorFont());
-
-    final PopupChooserBuilder builder = new PopupChooserBuilder(list);
+    List<NavigatablePsiElement> targetsList = Arrays.asList(targets);
+    final JBList<NavigatablePsiElement>[] listR = new JBList[1];
+    final IPopupChooserBuilder<NavigatablePsiElement> builder = JBPopupFactory.getInstance().createPopupChooserBuilder(targetsList);
     if (listRenderer instanceof PsiElementListCellRenderer) {
       ((PsiElementListCellRenderer)listRenderer).installSpeedSearch(builder);
     }
 
-    PopupChooserBuilder popupChooserBuilder = builder.
+    IPopupChooserBuilder<NavigatablePsiElement> popupChooserBuilder = builder.
       setTitle(title).
       setMovable(true).
+      setFont(EditorUtil.getEditorFont()).
+      setRenderer(listRenderer).
       setResizable(true).
-      setItemChoosenCallback(() -> {
-        int[] ids = list.getSelectedIndices();
-        if (ids == null || ids.length == 0) return;
-        Object[] selectedElements = list.getSelectedValues();
-        consumer.consume(selectedElements);
+                                                                               setItemsChosenCallback(selectedValues -> {
+        consumer.consume(ArrayUtil.toObjectArray(selectedValues));
       }).
       setCancelCallback(() -> {
-        HintUpdateSupply.hideHint(list);
+        if (listR[0] != null) {
+          HintUpdateSupply.hideHint(listR[0]);
+        }
         if (listUpdaterTask != null) {
           listUpdaterTask.cancelTask();
         }
@@ -181,20 +163,43 @@ public class PsiElementListNavigator {
     final Ref<UsageView> usageView = new Ref<>();
     if (findUsagesTitle != null) {
       popupChooserBuilder = popupChooserBuilder.setCouldPin(popup -> {
-        final List<NavigatablePsiElement> items = model.getItems();
-        usageView.set(FindUtil.showInUsageView(null, items.toArray(PsiElement.EMPTY_ARRAY), findUsagesTitle, targets[0].getProject()));
+        usageView.set(FindUtil.showInUsageView(null, targets, findUsagesTitle, targets[0].getProject()));
         popup.cancel();
         return false;
       });
     }
 
     final JBPopup popup = popupChooserBuilder.createPopup();
+    if (builder instanceof PopupChooserBuilder && ((PopupChooserBuilder)builder).getChooserComponent() instanceof ListWithFilter) {
+      JBList<NavigatablePsiElement> list = (JBList)((ListWithFilter)((PopupChooserBuilder)builder).getChooserComponent()).getList();
+      HintUpdateSupply.installSimpleHintUpdateSupply(list);
+      list.setTransferHandler(new TransferHandler(){
+        @Nullable
+        @Override
+        protected Transferable createTransferable(JComponent c) {
+          final Object[] selectedValues = list.getSelectedValues();
+          final PsiElement[] copy = new PsiElement[selectedValues.length];
+          for (int i = 0; i < selectedValues.length; i++) {
+            copy[i] = (PsiElement)selectedValues[i];
+          }
+          return new PsiCopyPasteManager.MyTransferable(copy);
+        }
 
-    builder.getScrollPane().setBorder(null);
-    builder.getScrollPane().setViewportBorder(null);
+        @Override
+        public int getSourceActions(JComponent c) {
+          return COPY;
+        }
+      });
+      listR[0] = list;
+    }
+    if (builder instanceof PopupChooserBuilder) {
+      JScrollPane pane = ((PopupChooserBuilder)builder).getScrollPane();
+      pane.setBorder(null);
+      pane.setViewportBorder(null);
+    }
 
     if (listUpdaterTask != null) {
-      listUpdaterTask.init((AbstractPopup)popup, list, usageView);
+      listUpdaterTask.init(popup, builder.getBackgroundUpdater(), usageView);
     }
     return popup;
   }

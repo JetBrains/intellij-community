@@ -16,11 +16,15 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.fileChooser.PathChooserDialog;
 import com.intellij.openapi.options.CompositeConfigurable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.ui.components.JBRadioButton;
 import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
@@ -67,6 +71,7 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
     }
     catch (NumberFormatException ignored) { }
     settings.setUseSafeWrite(myComponent.myChkUseSafeWrite.isSelected());
+    settings.setDefaultProjectDirectory(myComponent.myProjectDirectoryTextField.getText());
   }
 
   private GeneralSettings.ProcessCloseConfirmation getProcessCloseConfirmation() {
@@ -110,6 +115,7 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
     isModified |= isModified(myComponent.myTfInactiveTimeout, settings.getInactiveTimeout(), GeneralSettings.SAVE_FILES_AFTER_IDLE_SEC);
 
     isModified |= settings.isUseSafeWrite() != myComponent.myChkUseSafeWrite.isSelected();
+    isModified |= !settings.getDefaultProjectDirectory().equals(myComponent.myProjectDirectoryTextField.getText());
 
     return isModified;
   }
@@ -176,6 +182,7 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
         myComponent.myAskJBRadioButton.setSelected(true);
         break;
     }
+    myComponent.myProjectDirectoryTextField.setText(settings.getDefaultProjectDirectory());
   }
 
   @Override
@@ -208,8 +215,16 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
     private JBRadioButton myTerminateProcessJBRadioButton;
     private JBRadioButton myDisconnectJBRadioButton;
     private JBRadioButton myAskJBRadioButton;
+    private TextFieldWithBrowseButton myProjectDirectoryTextField;
 
     public MyComponent() { }
+
+    private void createUIComponents() {
+      myProjectDirectoryTextField = new TextFieldWithBrowseButton();
+      FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
+      descriptor.putUserData(PathChooserDialog.PREFER_LAST_OVER_EXPLICIT, false);
+      myProjectDirectoryTextField.addBrowseFolderListener(null, null, null, descriptor);
+    }
   }
 
   @Override

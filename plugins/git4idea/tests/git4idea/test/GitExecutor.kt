@@ -40,6 +40,7 @@ fun git(project: Project, command: String, ignoreNonZeroExitCode: Boolean = fals
   val workingDir = ourCurrentDir()
   val split = splitCommandInParameters(command)
   val handler = GitLineHandler(project, workingDir, getGitCommandInstance(split[0]))
+  handler.setWithMediator(false)
   handler.addParameters(split.subList(1, split.size))
 
   val result = Git.getInstance().runCommand(handler)

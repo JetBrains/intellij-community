@@ -31,7 +31,7 @@ import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.gotoByName.*;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
-import com.intellij.internal.statistic.customUsageCollectors.ui.ToolbarClicksCollector;
+import com.intellij.internal.statistic.collectors.fus.ui.persistence.ToolbarClicksCollector;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguagePsiElementExternalizer;
 import com.intellij.navigation.ItemPresentation;
@@ -200,7 +200,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     JPanel panel = new BorderLayoutPanel() {
       @Override
       public Dimension getPreferredSize() {
-        return JBUI.size(25);
+        return JBUI.size(24);
       }
     };
     panel.setOpaque(false);
@@ -468,12 +468,19 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       else if (index == model.moreIndex.runConfigurations) wid = WidgetID.RUN_CONFIGURATIONS;
       if (wid != null) {
         final WidgetID widgetID = wid;
-        myCurrentWorker.doWhenProcessed(() -> {
-          myCalcThread = new CalcThread(project, pattern, true);
-          myPopupActualWidth = 0;
-          myCurrentWorker = myCalcThread.insert(index, widgetID);
-        });
-
+        synchronized (myWorkerRestartRequestLock) { // this lock together with RestartRequestId should be enough to prevent two CalcThreads running at the same time
+          final int currentRestartRequest = ++myCalcThreadRestartRequestId;
+          myCurrentWorker.doWhenProcessed(() -> {
+            synchronized (myWorkerRestartRequestLock) {
+              if (currentRestartRequest != myCalcThreadRestartRequestId) {
+                return;
+              }
+              myCalcThread = new CalcThread(project, pattern, true);
+              myPopupActualWidth = 0;
+              myCurrentWorker = myCalcThread.insert(index, widgetID);
+            }
+          });
+        }
         return;
       }
     }
@@ -2216,8 +2223,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           myPopup = null;
           myHistoryIndex = 0;
           myPopupActualWidth = 0;
-          myCurrentWorker = ActionCallback.DONE;
           showAll.set(false);
+          myCurrentWorker = myCalcThread.cancel();
           myCalcThread = null;
           myEditor = null;
           myFileEditor = null;

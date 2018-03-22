@@ -27,6 +27,8 @@ import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.Url
+import com.intellij.util.Urls
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.io.HttpRequests
@@ -34,21 +36,16 @@ import com.intellij.util.io.URLUtil
 import com.intellij.util.loadElement
 import com.intellij.util.ui.UIUtil
 import com.intellij.xml.util.XmlStringUtil
-import org.apache.http.client.utils.URIBuilder
+import gnu.trove.THashMap
 import org.jdom.JDOMException
 import java.io.File
 import java.io.IOException
 import java.lang.IllegalStateException
 import java.util.*
-import kotlin.collections.component1
-import kotlin.collections.component2
 import kotlin.collections.set
 
 /**
  * See XML file by [ApplicationInfoEx.getUpdateUrls] for reference.
- *
- * @author mike
- * @since Oct 31, 2002
  */
 object UpdateChecker {
   private val LOG = Logger.getInstance("#com.intellij.openapi.updateSettings.impl.UpdateChecker")
@@ -60,7 +57,7 @@ object UpdateChecker {
   private enum class NotificationUniqueType { PLATFORM, PLUGINS, EXTERNAL }
 
   private var ourDisabledToUpdatePlugins: MutableSet<String>? = null
-  private val ourAdditionalRequestOptions = hashMapOf<String, String>()
+  private val ourAdditionalRequestOptions = THashMap<String, String>()
   private val ourUpdatedPlugins = hashMapOf<String, PluginDownloader>()
   private val ourShownNotifications = MultiMap<NotificationUniqueType, Notification>()
 
@@ -161,11 +158,10 @@ object UpdateChecker {
 
     val updateInfo: UpdatesInfo?
     try {
-      val uriBuilder = URIBuilder(updateUrl)
-      if (URLUtil.FILE_PROTOCOL != uriBuilder.scheme) {
-        prepareUpdateCheckArgs(uriBuilder)
+      var updateUrl = Urls.newFromEncoded(updateUrl)
+      if (updateUrl.scheme != URLUtil.FILE_PROTOCOL) {
+        updateUrl = prepareUpdateCheckArgs(updateUrl)
       }
-      val updateUrl = uriBuilder.build().toString()
       LogUtil.debug(LOG, "load update xml (UPDATE_URL='%s')", updateUrl)
 
       updateInfo = HttpRequests.request(updateUrl)
@@ -441,17 +437,14 @@ object UpdateChecker {
     ourAdditionalRequestOptions[name] = value
   }
 
-  private fun prepareUpdateCheckArgs(uriBuilder: URIBuilder) {
+  private fun prepareUpdateCheckArgs(url: Url): Url {
     addUpdateRequestParameter("build", ApplicationInfo.getInstance().build.asString())
     addUpdateRequestParameter("uid", PermanentInstallationID.get())
     addUpdateRequestParameter("os", SystemInfo.OS_NAME + ' ' + SystemInfo.OS_VERSION)
     if (ApplicationInfoEx.getInstanceEx().isEAP) {
       addUpdateRequestParameter("eap", "")
     }
-
-    for ((name, value) in ourAdditionalRequestOptions) {
-      uriBuilder.addParameter(name, if (StringUtil.isEmpty(value)) null else value)
-    }
+    return url.addParameters(ourAdditionalRequestOptions)
   }
 
   @Deprecated("Replaced", ReplaceWith("PermanentInstallationID.get()", "com.intellij.openapi.application.PermanentInstallationID"))

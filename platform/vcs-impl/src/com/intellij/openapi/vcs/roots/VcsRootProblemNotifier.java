@@ -146,10 +146,8 @@ public class VcsRootProblemNotifier {
   }
 
   private boolean isIgnoredOrExcludedPath(@NotNull String mapping) {
-    return ReadAction.compute(() -> {
-      VirtualFile file = LocalFileSystem.getInstance().findFileByPath(mapping);
-      return file != null && (myChangeListManager.isIgnoredFile(file) || myProjectFileIndex.isExcluded(file));
-    });
+    VirtualFile file = LocalFileSystem.getInstance().findFileByPath(mapping);
+    return file != null && (myChangeListManager.isIgnoredFile(file) || ReadAction.compute(() -> myProjectFileIndex.isExcluded(file)));
   }
 
   private void expireNotification() {

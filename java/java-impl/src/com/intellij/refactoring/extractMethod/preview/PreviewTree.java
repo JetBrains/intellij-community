@@ -38,6 +38,7 @@ class PreviewTree implements Disposable {
 
     myModel = new PreviewTreeModel(processor);
     myTree = createTree(myModel);
+    myTree.setPaintBusy(true);
   }
 
   private Tree createTree(DefaultTreeModel model) {
@@ -99,9 +100,23 @@ class PreviewTree implements Disposable {
     return myTree;
   }
 
+  public void repaint() {
+    myTree.repaint();
+  }
+
   void updateMethod(PsiMethod method) {
     myModel.updateMethod(method);
+    myTree.setPaintBusy(false);
     onSelectionUpdate();
+  }
+
+  public boolean isValid() {
+    return myModel.isValid();
+  }
+
+  public void setValid(boolean valid) {
+    myModel.setValid(valid);
+    repaint();
   }
 
   @Override

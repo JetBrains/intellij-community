@@ -46,10 +46,8 @@ import javax.swing.plaf.basic.BasicRadioButtonUI;
 import javax.swing.plaf.basic.BasicTextUI;
 import javax.swing.plaf.basic.ComboPopup;
 import javax.swing.text.*;
-import javax.swing.text.html.CSS;
-import javax.swing.text.html.HTML;
-import javax.swing.text.html.HTMLEditorKit;
-import javax.swing.text.html.StyleSheet;
+import javax.swing.text.html.*;
+import javax.swing.text.html.ParagraphView;
 import javax.swing.undo.UndoManager;
 import java.awt.*;
 import java.awt.event.*;
@@ -75,9 +73,11 @@ import java.net.URL;
 import java.text.NumberFormat;
 import java.util.*;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
 /**
@@ -387,9 +387,15 @@ public class UIUtil {
     return isJreHiDPIEnabled() && JBUI.isHiDPI(JBUI.sysScale(ctx));
   }
 
-  // accessed from com.intellij.util.ui.paint.AbstractPainter2D via reflect
-  private static Boolean jreHiDPI;
-  private static boolean jreHiDPI_earlierVersion;
+  // accessed from com.intellij.util.ui.TestScaleHelper via reflect
+  private static final AtomicReference<Boolean> jreHiDPI = new AtomicReference<Boolean>();
+  private static volatile boolean jreHiDPI_earlierVersion;
+
+  @TestOnly
+  public static final AtomicReference<Boolean> test_jreHiDPI() {
+    if (jreHiDPI.get() == null) isJreHiDPIEnabled(); // force init
+    return jreHiDPI;
+  }
 
   /**
    * Returns whether the JRE-managed HiDPI mode is enabled.
@@ -398,30 +404,36 @@ public class UIUtil {
    * @see JBUI.ScaleType
    */
   public static boolean isJreHiDPIEnabled() {
-    if (jreHiDPI != null) {
-      return jreHiDPI;
-    }
-    jreHiDPI = false;
-    jreHiDPI_earlierVersion = true;
-    if (SystemInfo.isLinux) {
-      return false; // pending support
-    }
-    if (SystemInfo.isJetBrainsJvm) {
-      try {
-        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-        if (ge instanceof SunGraphicsEnvironment) {
-          Method m = ReflectionUtil.getDeclaredMethod(SunGraphicsEnvironment.class, "isUIScaleOn");
-          jreHiDPI = (Boolean)m.invoke(ge);
-          jreHiDPI_earlierVersion = false;
+    if (jreHiDPI.get() != null) return jreHiDPI.get();
+
+    synchronized (jreHiDPI) {
+      if (jreHiDPI.get() != null) return jreHiDPI.get();
+
+      jreHiDPI.set(false);
+      if (!SystemProperties.getBooleanProperty("hidpi", true)) {
+        return false;
+      }
+      jreHiDPI_earlierVersion = true;
+      if (SystemInfo.isLinux) {
+        return false; // pending support
+      }
+      if (SystemInfo.isJetBrainsJvm) {
+        try {
+          GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+          if (ge instanceof SunGraphicsEnvironment) {
+            Method m = ReflectionUtil.getDeclaredMethod(SunGraphicsEnvironment.class, "isUIScaleOn");
+            jreHiDPI.set(m != null && (Boolean)m.invoke(ge));
+            jreHiDPI_earlierVersion = false;
+          }
+        }
+        catch (Throwable ignore) {
         }
       }
-      catch (Throwable ignore) {
+      if (SystemInfo.isMac) {
+        jreHiDPI.set(true);
       }
+      return jreHiDPI.get();
     }
-    if (SystemInfo.isMac) {
-      jreHiDPI = true;
-    }
-    return jreHiDPI;
   }
 
   /**
@@ -1286,15 +1298,7 @@ public class UIUtil {
   }
 
   public static Color getSeparatorColor() {
-    Color separatorColor = getSeparatorForeground();
-    if (false) {
-      separatorColor = getSeparatorShadow();
-    }
-    //under GTK+ L&F colors set hard
-    if (isUnderGTKLookAndFeel()) {
-      separatorColor = Gray._215;
-    }
-    return separatorColor;
+    return isUnderGTKLookAndFeel() ? Gray._215 : getSeparatorForeground();
   }
 
   public static Border getTableFocusCellHighlightBorder() {
@@ -1532,6 +1536,11 @@ public class UIUtil {
       }
     }
     return null;
+  }
+
+  @NotNull
+  public static Font getToolbarFont() {
+    return SystemInfo.isMac ? getLabelFont(UIUtil.FontSize.SMALL) : getLabelFont();
   }
 
   @SuppressWarnings("HardCodedStringLiteral")
@@ -2723,12 +2732,43 @@ public class UIUtil {
     }
   }
 
+  public static class JBWordWrapHtmlEditorKit extends JBHtmlEditorKit {
+    private final HTMLFactory myFactory = new HTMLFactory() {
+      public View create(Element e) {
+        View view = super.create(e);
+        if (view instanceof javax.swing.text.html.ParagraphView) {
+          // wrap too long words, for example: ATEST_TABLE_SIGNLE_ROW_UPDATE_AUTOCOMMIT_A_FIK
+          return new ParagraphView(e) {
+            protected SizeRequirements calculateMinorAxisRequirements(int axis, SizeRequirements r) {
+              if (r == null) {
+                r = new SizeRequirements();
+              }
+              r.minimum = (int)layoutPool.getMinimumSpan(axis);
+              r.preferred = Math.max(r.minimum, (int)layoutPool.getPreferredSpan(axis));
+              r.maximum = Integer.MAX_VALUE;
+              r.alignment = 0.5f;
+              return r;
+            }
+          };
+        }
+        return view;
+      }
+    };
+
+    @Override
+    public ViewFactory getViewFactory() {
+      return myFactory;
+    }
+  }
+
   public static FontUIResource getFontWithFallback(@NotNull Font font) {
     return getFontWithFallback(font.getFamily(), font.getStyle(), font.getSize());
   }
 
   public static FontUIResource getFontWithFallback(@Nullable String familyName, @JdkConstants.FontStyle int style, int size) {
-    Font fontWithFallback = new StyleContext().getFont(familyName, style, size);
+    // On macOS font fallback is implemented in JDK by default
+    // (except for explicitly registered fonts, e.g. the fonts we bundle with IDE, for them we don't have a solution now)
+    Font fontWithFallback = SystemInfo.isMac ? new Font(familyName, style, size) : new StyleContext().getFont(familyName, style, size);
     return fontWithFallback instanceof FontUIResource ? (FontUIResource)fontWithFallback : new FontUIResource(fontWithFallback);
   }
 
@@ -2985,9 +3025,11 @@ public class UIUtil {
 
     // With JB Linux JDK the label font comes properly scaled based on Xft.dpi settings.
     Font font = getLabelFont();
+    verbose("Label font: %s, %d", font.getFontName(), font.getSize());
 
     if (SystemInfo.isLinux) {
       Object value = Toolkit.getDefaultToolkit().getDesktopProperty("gnome.Xft/DPI");
+      verbose("gnome.Xft/DPI: %s", value);
       if (value instanceof Integer) { // defined by JB JDK when the resource is available in the system
         // If the property is defined, then:
         // 1) it provides correct system scale
@@ -2996,10 +3038,13 @@ public class UIUtil {
         if (dpi < 50) dpi = 50;
         float scale = JBUI.discreteScale(dpi / 96f);
         DEF_SYSTEM_FONT_SIZE = font.getSize() / scale; // derive actual system base font size
+        verbose("DEF_SYSTEM_FONT_SIZE: %.2f, %d", DEF_SYSTEM_FONT_SIZE, dpi);
       }
       else if (!SystemInfo.isJetBrainsJvm) {
         // With Oracle JDK: derive scale from X server DPI, do not change DEF_SYSTEM_FONT_SIZE
-        font = font.deriveFont(DEF_SYSTEM_FONT_SIZE * getScreenScale());
+        float size = DEF_SYSTEM_FONT_SIZE * getScreenScale();
+        font = font.deriveFont(size);
+        verbose("(Not-JB JRE) reset font size: %.2f", size);
       }
     }
     else if (SystemInfo.isWindows) {
@@ -3007,9 +3052,15 @@ public class UIUtil {
       Font winFont = (Font)Toolkit.getDefaultToolkit().getDesktopProperty("win.messagebox.font");
       if (winFont != null) {
         font = winFont; // comes scaled
+        verbose("Windows sys font: %s, %d", winFont.getFontName(), winFont.getSize());
       }
     }
     ourSystemFontData = Pair.create(font.getName(), font.getSize());
+    verbose("ourSystemFontData: %s, %d", ourSystemFontData.first, ourSystemFontData.second);
+  }
+
+  private static void verbose(String msg, Object... args) {
+    if (JBUI.SCALE_VERBOSE) LOG.info(String.format(msg, args));
   }
 
   @Nullable

@@ -36,13 +36,17 @@ fun nullPromise(): Promise<*> = InternalPromiseUtil.FULFILLED_PROMISE.value
 fun <T> resolvedPromise(result: T): Promise<T> = Promise.resolve(result)
 
 @Suppress("UNCHECKED_CAST")
+/**
+ * Consider to pass error.
+ */
 fun <T> rejectedPromise(): Promise<T> = REJECTED as Promise<T>
 
 fun <T> rejectedPromise(error: String): Promise<T> = DonePromise(InternalPromiseUtil.PromiseValue.createRejected(createError(error, true)))
 
 fun <T> rejectedPromise(error: Throwable?): Promise<T> {
+  @Suppress("UNCHECKED_CAST")
   return when (error) {
-    null -> rejectedPromise()
+    null -> REJECTED as Promise<T>
     else -> DonePromise(InternalPromiseUtil.PromiseValue.createRejected(error))
   }
 }

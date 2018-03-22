@@ -131,8 +131,8 @@ public class PyTypingAliasStubType extends CustomTargetExpressionStubType<PyTypi
   @Nullable
   @Override
   public PyTypingAliasStub deserializeStub(StubInputStream stream) throws IOException {
-    final StringRef ref = stream.readName();
-    return ref != null ? new PyTypingTypeAliasStubImpl(ref.getString()) : null;
+    String ref = stream.readNameString();
+    return ref != null ? new PyTypingTypeAliasStubImpl(ref) : null;
   }
 
 

@@ -27,6 +27,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -71,6 +72,8 @@ public class OptionalChainInliner implements CallInliner {
     new CallMapper<BiConsumer<CFGBuilder, PsiMethodCallExpression>>()
       .register(OPTIONAL_OR_ELSE, (builder, call) -> {
         PsiExpression argument = call.getArgumentList().getExpressions()[0];
+        // orElse(null) is a no-op
+        if (ExpressionUtils.isNullLiteral(argument)) return;
         builder.pushExpression(argument) // stack: .. optValue, elseValue
           .boxUnbox(argument, call.getType())
           .splice(2, 0, 1, 1) // stack: .. elseValue, optValue, optValue
@@ -253,16 +256,13 @@ public class OptionalChainInliner implements CallInliner {
   private static void inlineOf(CFGBuilder builder, PsiType optionalElementType, PsiMethodCallExpression qualifierCall) {
     PsiExpression argument = qualifierCall.getArgumentList().getExpressions()[0];
     builder.pushExpression(argument)
-           .boxUnbox(argument, optionalElementType);
+      .boxUnbox(argument, optionalElementType)
+      .pushUnknown() // ... arg, ?
+      .splice(2, 1, 0, 1) // ... arg, ?, arg
+      .invoke(qualifierCall) // ... arg, opt -- keep original call in CFG so some warnings like "ofNullable for null" can work
+      .pop(); // ... arg
     if ("of".equals(qualifierCall.getMethodExpression().getReferenceName())) {
       builder.checkNotNull(argument, NullabilityProblemKind.passingNullableToNotNullParameter);
-    }
-    else {
-      // ... arg, opt -- keep original call in CFG so some warnings like "ofNullable for null" can work
-      builder.pushUnknown() // ... arg, ?
-             .splice(2, 1, 0, 1) // ... arg, ?, arg
-             .invoke(qualifierCall)
-             .pop(); // ... arg
     }
   }
 }

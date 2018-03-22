@@ -40,11 +40,8 @@ public class GenerateParentAction extends GenerateDomElementAction {
           final MavenProject parentProject = d.getResult();
           if (parentProject == null) return null;
 
-          return new WriteCommandAction<MavenDomParent>(editor.getProject(), getDescription()) {
-            protected void run(@NotNull Result result) throws Throwable {
-              result.setResult(MavenDomUtil.updateMavenParent(mavenModel, parentProject));
-            }
-          }.execute().getResultObject();
+          return WriteCommandAction.writeCommandAction(editor.getProject()).withName(getDescription())
+                                   .compute(() -> MavenDomUtil.updateMavenParent(mavenModel, parentProject));
         }
 
         @Override

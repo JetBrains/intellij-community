@@ -122,11 +122,9 @@ public class GenerateTemplateConfigurable implements UnnamedConfigurable{
     }
 
     public void reset() {
-        new WriteCommandAction(null) {
-            protected void run(@NotNull Result result) throws Throwable {
-                myEditor.getDocument().setText(template.getTemplate());
-            }
-        }.execute();
+      WriteCommandAction.writeCommandAction(null).run(() -> {
+        myEditor.getDocument().setText(template.getTemplate());
+      });
     }
 
     public void disposeUIResources() {

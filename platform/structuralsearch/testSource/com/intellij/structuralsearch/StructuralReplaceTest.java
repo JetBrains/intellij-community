@@ -2184,7 +2184,53 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                             "  }\n" +
                             "}";
     assertEquals(expected, Replacer.testReplace(in, what, by, options, getProject()));
+    options.clearVariableDefinitions();
 
+    final String in2 = "class Limitless {\n" +
+                 "    public int id;\n" +
+                 "    public String field;\n" +
+                 "    public Limitless() {\n" +
+                 "        this.field = \"default\";\n" +
+                 "        this.id = 01;\n" +
+                 "    }\n" +
+                 "    public int getId() {\n" +
+                 "        return id;\n" +
+                 "    }\n" +
+                 "    public String getField() { return field; }\n" +
+                 "    public static void main(String [] args) {\n" +
+                 "        Limitless myClass = new Limitless();\n" +
+                 "        System.out.println(myClass.getField()+\" \"+myClass.getId());\n" +
+                 "        Example example = new Example(1, \"name\");\n" +
+                 "        int r = example.getI()+9;\n" +
+                 "        myClass.getId();\n" +
+                 "    }\n" +
+                 "}";
+    final String what2 = "'_Instance:[exprtype( Limitless )].'property:[regex( get(.*) )]()";
+    final String by2 = "$Instance$.$field$";
+    final ReplacementVariableDefinition variable2 = new ReplacementVariableDefinition();
+    variable2.setName("field");
+    variable2.setScriptCodeConstraint("String name = property.methodExpression.referenceName[3..-1]\n" +
+                                      "name[0].toLowerCase() + name[1..-1]");
+    options.addVariableDefinition(variable2);
+    assertEquals("class Limitless {\n" +
+                 "    public int id;\n" +
+                 "    public String field;\n" +
+                 "    public Limitless() {\n" +
+                 "        this.field = \"default\";\n" +
+                 "        this.id = 01;\n" +
+                 "    }\n" +
+                 "    public int getId() {\n" +
+                 "        return id;\n" +
+                 "    }\n" +
+                 "    public String getField() { return field; }\n" +
+                 "    public static void main(String [] args) {\n" +
+                 "        Limitless myClass = new Limitless();\n" +
+                 "        System.out.println(myClass.field+\" \"+myClass.id);\n" +
+                 "        Example example = new Example(1, \"name\");\n" +
+                 "        int r = example.getI()+9;\n" +
+                 "        myClass.id;\n" +
+                 "    }\n" +
+                 "}", Replacer.testReplace(in2, what2, by2, options, getProject()));
     options.clearVariableDefinitions();
   }
 

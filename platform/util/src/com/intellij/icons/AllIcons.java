@@ -102,6 +102,7 @@ public class AllIcons {
     public static final Icon MoveToAnotherChangelist = IconLoader.getIcon("/actions/moveToAnotherChangelist.png"); // 16x16
     public static final Icon MoveToStandardPlace = IconLoader.getIcon("/actions/moveToStandardPlace.png"); // 16x16
     public static final Icon MoveUp = IconLoader.getIcon("/actions/moveUp.png"); // 14x14
+    public static final Icon Multicaret = IconLoader.getIcon("/actions/multicaret.png"); // 16x16
     public static final Icon New = IconLoader.getIcon("/actions/new.png"); // 16x16
     public static final Icon NewFolder = IconLoader.getIcon("/actions/newFolder.png"); // 16x16
     public static final Icon Nextfile = IconLoader.getIcon("/actions/nextfile.png"); // 16x16

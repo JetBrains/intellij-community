@@ -23,14 +23,13 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.FileAppearanceService;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.openapi.vfs.impl.http.RemoteFileState;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.components.JBList;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
 import com.intellij.util.containers.ContainerUtil;
@@ -68,21 +67,24 @@ class JumpFromRemoteFileToLocalAction extends AnAction {
       navigateToFile(myProject, ContainerUtil.getFirstItem(files, null));
     }
     else {
-      final JList list = new JBList(files);
-      //noinspection unchecked
-      list.setCellRenderer(new ColoredListCellRenderer() {
-        @Override
-        protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
-          FileAppearanceService.getInstance().forVirtualFile((VirtualFile)value).customize(this);
-        }
-      });
-      new PopupChooserBuilder(list)
+      JBPopupFactory.getInstance()
+        .createPopupChooserBuilder(ContainerUtil.newArrayList(files))
+        .setRenderer(new ColoredListCellRenderer<VirtualFile>() {
+          @Override
+          protected void customizeCellRenderer(@NotNull JList<? extends VirtualFile> list,
+                                               VirtualFile value,
+                                               int index,
+                                               boolean selected,
+                                               boolean hasFocus) {
+            FileAppearanceService.getInstance().forVirtualFile(value).customize(this);
+          }
+        })
        .setTitle("Select Target File")
        .setMovable(true)
-       .setItemChoosenCallback(() -> {
+       .setItemsChosenCallback((selectedValues) -> {
          //noinspection deprecation
-         for (Object value : list.getSelectedValues()) {
-           navigateToFile(myProject, (VirtualFile)value);
+         for (VirtualFile value : selectedValues) {
+           navigateToFile(myProject, value);
          }
        }).createPopup().showUnderneathOf(e.getInputEvent().getComponent());
     }

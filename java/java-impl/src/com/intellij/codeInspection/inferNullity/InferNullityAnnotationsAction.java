@@ -25,17 +25,15 @@ import com.intellij.codeInsight.daemon.impl.quickfix.JetBrainsAnnotationsExterna
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.application.TransactionId;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.DependencyScope;
@@ -227,30 +225,28 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
     return () -> {
       final LocalHistoryAction action = LocalHistory.getInstance().startAction(INFER_NULLITY_ANNOTATIONS);
       try {
-        new WriteCommandAction(project, INFER_NULLITY_ANNOTATIONS) {
-          @Override
-          protected void run(@NotNull Result result) throws Throwable {
-            final UsageInfo[] infos = computable.compute();
-            if (infos.length > 0) {
+        WriteCommandAction.writeCommandAction(project).withName(INFER_NULLITY_ANNOTATIONS).run(() -> {
+          final UsageInfo[] infos = computable.compute();
+          if (infos.length > 0) {
 
-              final Set<PsiElement> elements = new LinkedHashSet<>();
-              for (UsageInfo info : infos) {
-                final PsiElement element = info.getElement();
-                if (element != null) {
-                  ContainerUtil.addIfNotNull(elements, element.getContainingFile());
-                }
+            final Set<PsiElement> elements = new LinkedHashSet<>();
+            for (UsageInfo info : infos) {
+              final PsiElement element = info.getElement();
+              if (element != null) {
+                ContainerUtil.addIfNotNull(elements, element.getContainingFile());
               }
-              if (!FileModificationService.getInstance().preparePsiElementsForWrite(elements)) return;
-
-              final SequentialModalProgressTask progressTask = new SequentialModalProgressTask(project, INFER_NULLITY_ANNOTATIONS, false);
-              progressTask.setMinIterationTime(200);
-              progressTask.setTask(new AnnotateTask(project, progressTask, infos));
-              ProgressManager.getInstance().run(progressTask);
-            } else {
-              NullityInferrer.nothingFoundMessage(project);
             }
+            if (!FileModificationService.getInstance().preparePsiElementsForWrite(elements)) return;
+
+            final SequentialModalProgressTask progressTask = new SequentialModalProgressTask(project, INFER_NULLITY_ANNOTATIONS, false);
+            progressTask.setMinIterationTime(200);
+            progressTask.setTask(new AnnotateTask(project, progressTask, infos));
+            ProgressManager.getInstance().run(progressTask);
           }
-        }.execute();
+          else {
+            NullityInferrer.nothingFoundMessage(project);
+          }
+        });
       }
       finally {
         action.finish();
@@ -259,16 +255,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
   }
 
   protected void restartAnalysis(final Project project, final AnalysisScope scope) {
-    TransactionGuard guard = TransactionGuard.getInstance();
-    TransactionId id = guard.getContextTransaction();
-    DumbService.getInstance(project).smartInvokeLater(
-      () -> TransactionGuard.getInstance().submitTransaction(project, id, () -> {
-        if (DumbService.isDumb(project)) {
-          restartAnalysis(project, scope);
-        } else {
-          analyze(project, scope);
-        }
-      }));
+    AppUIExecutor.onUiThread().inSmartMode(project).inTransaction(project).execute(() -> analyze(project, scope));
   }
 
   private void showUsageView(@NotNull Project project, final UsageInfo[] usageInfos, @NotNull AnalysisScope scope) {

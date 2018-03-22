@@ -157,7 +157,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
     myFirstRun = false;
   }
 
-  private void setFile(VirtualFile file) {
+  private void setFile(@Nullable VirtualFile file) {
     boolean forceRebuild = !Comparing.equal(file, myFile);
     if (!forceRebuild && myStructureView != null) {
       StructureViewModel model = myStructureView.getTreeModel();
@@ -167,6 +167,9 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
           value instanceof PsiElement && !((PsiElement)value).isValid() ||
           myStructureView instanceof StructureViewComposite && ((StructureViewComposite)myStructureView).isOutdated()) {
         forceRebuild = true;
+      }
+      else if (file != null) {
+        forceRebuild = FileEditorManager.getInstance(myProject).getSelectedEditor(file) != myFileEditor;
       }
     }
     if (forceRebuild) {
@@ -284,7 +287,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
           final StructureViewBuilder structureViewBuilder = editor.getStructureViewBuilder();
           if (structureViewBuilder != null) {
             myStructureView = structureViewBuilder.createStructureView(editor, myProject);
-            myFileEditor = editor;
+            myFileEditor = needDisposeEditor ? null : editor;
             Disposer.register(this, myStructureView);
             updateHeaderActions(myStructureView);
 

@@ -174,8 +174,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
   private static void syncPaths(@NotNull Module module, @NotNull ModifiableRootModel modifiableModel, @NotNull ModuleData data) {
     CompilerModuleExtension extension = modifiableModel.getModuleExtension(CompilerModuleExtension.class);
     if (extension == null) {
-      //modifiableModel.dispose();
-      LOG.warn(String.format("Can't sync paths for module '%s'. Reason: no compiler extension is found for it", module.getName()));
+      LOG.debug(String.format("No compiler extension is found for '%s', compiler output path will not be synced.", module.getName()));
       return;
     }
     String compileOutputPath = data.getCompileOutputPath(ExternalSystemSourceType.SOURCE);

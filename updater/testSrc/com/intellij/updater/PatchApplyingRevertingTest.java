@@ -23,6 +23,7 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -220,7 +221,7 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
 
   @Test
   public void testApplyingWithAbsentOptionalFile() throws Exception {
-    FileUtil.writeToFile(new File(myNewerDir, "bin/idea.bat"), "new content".getBytes("UTF-8"));
+    FileUtil.writeToFile(new File(myNewerDir, "bin/idea.bat"), "new content".getBytes(StandardCharsets.UTF_8));
 
     myPatchSpec.setOptionalFiles(Collections.singletonList("bin/idea.bat"));
     createPatch();

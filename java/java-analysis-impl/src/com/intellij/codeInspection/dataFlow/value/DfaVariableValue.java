@@ -128,7 +128,7 @@ public class DfaVariableValue extends DfaValue {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
-    return (myIsNegated ? "!" : "") + ((PsiNamedElement)myVariable).getName() + (myQualifier == null ? "" : "|" + myQualifier.toString());
+    return (myIsNegated ? "!" : "") + (myQualifier == null ? "" : myQualifier + ".") + ((PsiNamedElement)myVariable).getName();
   }
 
   private boolean hardEquals(PsiModifierListOwner psiVar, PsiType varType, boolean negated, DfaVariableValue qualifier) {

@@ -296,13 +296,13 @@ public class FindUtil {
 
     CharSequence text = document.getCharsSequence();
     int textLength = document.getTextLength();
-    final List<Usage> usages = new ArrayList<>();
     FindManager findManager = FindManager.getInstance(project);
     findModel.setForward(true); // when find all there is no diff in direction
 
     int offset = 0;
     VirtualFile virtualFile = getVirtualFile(editor);
 
+    final List<Usage> usages = new ArrayList<>();
     while (offset < textLength) {
       FindResult result = findManager.findString(text, offset, findModel, virtualFile);
       if (!result.isStringFound()) break;
@@ -504,7 +504,7 @@ public class FindUtil {
     boolean toPrompt = model.isPromptOnReplace();
 
     try {
-      doReplace(project, editor, model, document, offset, toPrompt, delegate);
+      doReplace(project, editor, model, offset, toPrompt, delegate);
     }
     catch (ReadOnlyFragmentModificationException e) {
       EditorActionManager.getInstance().getReadonlyFragmentModificationHandler(document).handle(e);
@@ -519,7 +519,6 @@ public class FindUtil {
   private static void doReplace(@NotNull Project project,
                                 @NotNull Editor editor,
                                 @NotNull FindModel aModel,
-                                @NotNull Document document,
                                 int caretOffset,
                                 boolean toPrompt,
                                 ReplaceDelegate delegate) {
@@ -533,7 +532,8 @@ public class FindUtil {
     boolean reallyReplaced = false;
 
     int offset = caretOffset;
-    while (offset >= 0 && offset < editor.getDocument().getTextLength()) {
+    Document document = editor.getDocument();
+    while (offset >= 0 && offset < document.getTextLength()) {
       caretOffset = offset;
       FindResult result = doSearch(project, editor, offset, !replaced, model, toPrompt);
       if (result == null) {

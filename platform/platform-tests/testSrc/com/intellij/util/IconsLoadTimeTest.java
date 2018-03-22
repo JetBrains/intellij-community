@@ -8,6 +8,7 @@ import com.intellij.internal.IconsLoadTime.StatData;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.ui.TestScaleHelper;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -16,7 +17,6 @@ import java.io.*;
 
 import static com.intellij.testFramework.PlatformTestUtil.assertTiming;
 import static com.intellij.util.ImageLoader.ImageDesc.Type;
-import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertNotNull;
 import static org.junit.Assume.assumeTrue;
 
@@ -32,16 +32,14 @@ public class IconsLoadTimeTest {
   // a list of icons for which we have SVG versions
   private static final String ICONS_LIST_PATH = PlatformTestUtil.getPlatformTestDataPath() + "icons/icons_list.txt";
 
-  private static String initialInternalProp;
   private static boolean initialSvgProp;
 
   @Before
   public void setState() {
-    initialInternalProp = System.getProperty("idea.is.internal");
-    System.setProperty("idea.is.internal", "true");
+    TestScaleHelper.setProperty("idea.is.internal", "true");
     RegistryValue rv = Registry.get("ide.svg.icon");
     initialSvgProp = rv.asBoolean();
-    rv.setValue(true);
+    if (!initialSvgProp) rv.setValue(true);
   }
 
   @Test
@@ -68,12 +66,7 @@ public class IconsLoadTimeTest {
 
   @After
   public void restoreState() {
-    if (initialInternalProp == null) {
-      System.clearProperty("idea.is.internal");
-    }
-    else {
-      System.setProperty("idea.is.internal", initialInternalProp);
-    }
+    TestScaleHelper.restoreProperties();
     Registry.get("ide.svg.icon").setValue(initialSvgProp);
   }
 }

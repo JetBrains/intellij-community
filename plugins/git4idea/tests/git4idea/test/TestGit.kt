@@ -24,9 +24,9 @@ import git4idea.commands.GitCommandResult
 import git4idea.commands.GitImpl
 import git4idea.commands.GitLineHandler
 import git4idea.commands.GitLineHandlerListener
+import git4idea.push.GitPushParams
 import git4idea.rebase.GitInteractiveRebaseEditorHandler
 import git4idea.rebase.GitRebaseEditorService
-import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import java.io.File
 
@@ -51,16 +51,10 @@ class TestGitImpl : GitImpl() {
                                 val plainTextEditor: ((String) -> String)?)
 
   override fun push(repository: GitRepository,
-                    remote: GitRemote,
-                    spec: String,
-                    force: Boolean,
-                    updateTracking: Boolean,
-                    skipHook: Boolean,
-                    tagMode: String?,
+                    pushParams: GitPushParams,
                     vararg listeners: GitLineHandlerListener): GitCommandResult {
     pushListener?.invoke(repository)
-    return myPushHandler(repository) ?:
-        super.push(repository, remote, spec, force, updateTracking, skipHook, tagMode, *listeners)
+    return myPushHandler(repository) ?: super.push(repository, pushParams, *listeners)
   }
 
   override fun branchDelete(repository: GitRepository,

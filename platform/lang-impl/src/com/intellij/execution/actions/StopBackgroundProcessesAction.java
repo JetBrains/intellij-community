@@ -90,7 +90,7 @@ public class StopBackgroundProcessesAction extends DumbAwareAction implements An
     JBPopup popup = JBPopupFactory.getInstance().createListPopupBuilder(list)
       .setMovable(true)
       .setTitle(handlerItems.size() == 1 ? "Confirm background process stop" : "Stop background process")
-      .setFilteringEnabled(o -> ((StopAction.HandlerItem)o).displayName)
+      .setNamerForFiltering(o -> ((StopAction.HandlerItem)o).displayName)
       .setItemChoosenCallback(() -> {
         List valuesList = list.getSelectedValuesList();
         for (Object o : valuesList) {

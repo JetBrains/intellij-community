@@ -152,7 +152,7 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
     myCachedType = null;
 
     PsiTypeElement typeElement = getTypeElement();
-    if (typeElement == null) {
+    if (typeElement == null || isLambdaParameter() && typeElement.isInferredType()) {
       assert isLambdaParameter() : this;
       return getLambdaParameterType(this);
     }

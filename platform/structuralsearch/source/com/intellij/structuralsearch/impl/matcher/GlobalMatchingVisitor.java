@@ -159,17 +159,13 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
   /**
    * Matches tree segments starting with given elements to find equality
    *
-   * @param nodes the pattern element for matching
-   * @param nodes2 the tree element for matching
+   * @param patternNodes the pattern element for matching
+   * @param matchNodes the tree element for matching
    * @return if they are equal and false otherwise
    */
   @Override
-  public boolean matchSequentially(NodeIterator nodes, NodeIterator nodes2) {
-    if (!nodes.hasNext()) {
-      return !nodes2.hasNext();
-    }
-
-    return matchContext.getPattern().getHandler(nodes.current()).matchSequentially(nodes, nodes2, matchContext);
+  public boolean matchSequentially(NodeIterator patternNodes, NodeIterator matchNodes) {
+    return matchContext.getPattern().getHandler(patternNodes.current()).matchSequentially(patternNodes, matchNodes, matchContext);
   }
 
   /**

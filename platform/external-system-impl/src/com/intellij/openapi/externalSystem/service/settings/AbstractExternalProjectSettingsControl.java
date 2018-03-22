@@ -50,7 +50,9 @@ public abstract class AbstractExternalProjectSettingsControl<S extends ExternalP
   private JBCheckBox myUseAutoImportBox;
   @Nullable
   private JBCheckBox myCreateEmptyContentRootDirectoriesBox;
+  @Nullable
   private JBRadioButton myUseQualifiedModuleNamesRadioButton;
+  @Nullable
   private JBRadioButton myUseModuleGroupsRadioButton;
   @NotNull
   private final ExternalSystemSettingsControlCustomizer myCustomizer;
@@ -83,16 +85,19 @@ public abstract class AbstractExternalProjectSettingsControl<S extends ExternalP
         new JBCheckBox(ExternalSystemBundle.message("settings.label.create.empty.content.root.directories"));
       canvas.add(myCreateEmptyContentRootDirectoriesBox, ExternalSystemUiUtil.getFillLineConstraints(indentLevel));
     }
-    JPanel organizeModuleNamesPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-    organizeModuleNamesPanel.add(new JBLabel(ExternalSystemBundle.message("settings.label.group.modules")));
-    myUseModuleGroupsRadioButton = new JBRadioButton(ExternalSystemBundle.message("settings.radio.button.use.module.groups"), true);
-    organizeModuleNamesPanel.add(myUseModuleGroupsRadioButton);
-    myUseQualifiedModuleNamesRadioButton = new JBRadioButton(ExternalSystemBundle.message("settings.radio.button.use.qualified.name"));
-    organizeModuleNamesPanel.add(myUseQualifiedModuleNamesRadioButton);
-    ButtonGroup group = new ButtonGroup();
-    group.add(myUseModuleGroupsRadioButton);
-    group.add(myUseQualifiedModuleNamesRadioButton);
-    canvas.add(organizeModuleNamesPanel, ExternalSystemUiUtil.getFillLineConstraints(indentLevel));
+
+    if (!myCustomizer.isModulesGroupingOptionPanelHidden()) {
+      JPanel organizeModuleNamesPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+      organizeModuleNamesPanel.add(new JBLabel(ExternalSystemBundle.message("settings.label.group.modules")));
+      myUseModuleGroupsRadioButton = new JBRadioButton(ExternalSystemBundle.message("settings.radio.button.use.module.groups"), true);
+      organizeModuleNamesPanel.add(myUseModuleGroupsRadioButton);
+      myUseQualifiedModuleNamesRadioButton = new JBRadioButton(ExternalSystemBundle.message("settings.radio.button.use.qualified.name"));
+      organizeModuleNamesPanel.add(myUseQualifiedModuleNamesRadioButton);
+      ButtonGroup group = new ButtonGroup();
+      group.add(myUseModuleGroupsRadioButton);
+      group.add(myUseQualifiedModuleNamesRadioButton);
+      canvas.add(organizeModuleNamesPanel, ExternalSystemUiUtil.getFillLineConstraints(indentLevel));
+    }
     fillExtraControls(canvas, indentLevel); 
   }
   
@@ -107,7 +112,9 @@ public abstract class AbstractExternalProjectSettingsControl<S extends ExternalP
     if (!myCustomizer.isCreateEmptyContentRootDirectoriesBoxHidden() && myCreateEmptyContentRootDirectoriesBox != null) {
       result = result || myCreateEmptyContentRootDirectoriesBox.isSelected() != getInitialSettings().isCreateEmptyContentRootDirectories();
     }
-    result |= myUseQualifiedModuleNamesRadioButton.isSelected() != getInitialSettings().isUseQualifiedModuleNames();
+    if (!myCustomizer.isModulesGroupingOptionPanelHidden() && myUseQualifiedModuleNamesRadioButton != null) {
+      result |= myUseQualifiedModuleNamesRadioButton.isSelected() != getInitialSettings().isUseQualifiedModuleNames();
+    }
     return result || isExtraSettingModified();
   }
 
@@ -140,9 +147,14 @@ public abstract class AbstractExternalProjectSettingsControl<S extends ExternalP
     if (!isDefaultModuleCreation && !myCustomizer.isCreateEmptyContentRootDirectoriesBoxHidden() && myCreateEmptyContentRootDirectoriesBox != null) {
       myCreateEmptyContentRootDirectoriesBox.setSelected(getInitialSettings().isCreateEmptyContentRootDirectories());
     }
-    boolean useQualifiedModuleNames = getInitialSettings().isUseQualifiedModuleNames();
-    myUseModuleGroupsRadioButton.setSelected(!useQualifiedModuleNames);
-    myUseQualifiedModuleNamesRadioButton.setSelected(useQualifiedModuleNames);
+
+    if (!myCustomizer.isModulesGroupingOptionPanelHidden() &&
+        myUseModuleGroupsRadioButton != null &&
+        myUseQualifiedModuleNamesRadioButton != null) {
+      boolean useQualifiedModuleNames = getInitialSettings().isUseQualifiedModuleNames();
+      myUseModuleGroupsRadioButton.setSelected(!useQualifiedModuleNames);
+      myUseQualifiedModuleNamesRadioButton.setSelected(useQualifiedModuleNames);
+    }
     resetExtraSettings(isDefaultModuleCreation, wizardContext);
   }
 
@@ -165,7 +177,9 @@ public abstract class AbstractExternalProjectSettingsControl<S extends ExternalP
     if (myInitialSettings.getExternalProjectPath() != null) {
       settings.setExternalProjectPath(myInitialSettings.getExternalProjectPath());
     }
-    settings.setUseQualifiedModuleNames(myUseQualifiedModuleNamesRadioButton.isSelected());
+    if (!myCustomizer.isModulesGroupingOptionPanelHidden() && myUseQualifiedModuleNamesRadioButton != null) {
+      settings.setUseQualifiedModuleNames(myUseQualifiedModuleNamesRadioButton.isSelected());
+    }
     applyExtraSettings(settings);
   }
 
@@ -189,7 +203,9 @@ public abstract class AbstractExternalProjectSettingsControl<S extends ExternalP
     if (!myCustomizer.isCreateEmptyContentRootDirectoriesBoxHidden() && myCreateEmptyContentRootDirectoriesBox != null) {
       myInitialSettings.setCreateEmptyContentRootDirectories(myCreateEmptyContentRootDirectoriesBox.isSelected());
     }
-    myInitialSettings.setUseQualifiedModuleNames(myUseQualifiedModuleNamesRadioButton.isSelected());
+    if (!myCustomizer.isModulesGroupingOptionPanelHidden() && myUseQualifiedModuleNamesRadioButton != null) {
+      myInitialSettings.setUseQualifiedModuleNames(myUseQualifiedModuleNamesRadioButton.isSelected());
+    }
     updateInitialExtraSettings();
   }
 

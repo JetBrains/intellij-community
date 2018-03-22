@@ -798,11 +798,13 @@ abstract class TerminalOperation extends Operation {
     private final PsiType myType;
     private final String myTemplate;
     private @Nullable final FunctionHelper myComparator;
+    private final boolean myMax;
 
-    public MinMaxTerminalOperation(PsiType type, String template, @Nullable FunctionHelper comparator) {
+    public MinMaxTerminalOperation(PsiType type, String template, @Nullable FunctionHelper comparator, boolean max) {
       myType = type;
       myTemplate = template;
       myComparator = comparator;
+      myMax = max;
     }
 
     @Override
@@ -812,8 +814,33 @@ abstract class TerminalOperation extends Operation {
       }
     }
 
+    Number getExtremeValue() {
+      if (PsiType.INT.equals(myType)) {
+        return myMax ? Integer.MIN_VALUE : Integer.MAX_VALUE;
+      }
+      if (PsiType.LONG.equals(myType)) {
+        return myMax ? Long.MIN_VALUE : Long.MAX_VALUE;
+      }
+      return null;
+    }
+
+    String getExtremeValueExpression() {
+      if (PsiType.INT.equals(myType)) {
+        return CommonClassNames.JAVA_LANG_INTEGER + (myMax ? ".MIN_VALUE" : ".MAX_VALUE");
+      }
+      if (PsiType.LONG.equals(myType)) {
+        return CommonClassNames.JAVA_LANG_LONG + (myMax ? ".MIN_VALUE" : ".MAX_VALUE");
+      }
+      return null;
+    }
+
     @Override
     String generate(StreamVariable inVar, StreamToLoopReplacementContext context) {
+      if (getExtremeValue() != null && context.tryUnwrapOrElse(getExtremeValue())) {
+        String best = context.declareResult("best", myType, getExtremeValueExpression(), ResultKind.NON_FINAL);
+        String comparePredicate = myTemplate.replace("{best}", best).replace("{item}", inVar.getName());
+        return "if(" + comparePredicate + ")\n" + best + "=" + inVar + ";\n";
+      }
       String seen = context.declare("seen", "boolean", "false");
       String best = context.declareResult("best", myType, myType instanceof PsiPrimitiveType ? "0" : "null", ResultKind.UNKNOWN);
       context.setFinisher(new ConditionalExpression.Optional(myType, seen, best));
@@ -837,16 +864,16 @@ abstract class TerminalOperation extends Operation {
       String sign = max ? ">" : "<";
       if(comparator == null) {
         if (PsiType.INT.equals(elementType) || PsiType.LONG.equals(elementType)) {
-          return new MinMaxTerminalOperation(elementType, "{item}" + sign + "{best}", null);
+          return new MinMaxTerminalOperation(elementType, "{item}" + sign + "{best}", null, max);
         }
         if (PsiType.DOUBLE.equals(elementType)) {
-          return new MinMaxTerminalOperation(elementType, "java.lang.Double.compare({item},{best})" + sign + "0", null);
+          return new MinMaxTerminalOperation(elementType, "java.lang.Double.compare({item},{best})" + sign + "0", null, max);
         }
       }
       else {
         FunctionHelper fn = FunctionHelper.create(comparator, 2);
         if(fn != null) {
-          return new MinMaxTerminalOperation(elementType, "{comparator}"+sign+"0", fn);
+          return new MinMaxTerminalOperation(elementType, "{comparator}" + sign + "0", fn, max);
         }
       }
       return null;

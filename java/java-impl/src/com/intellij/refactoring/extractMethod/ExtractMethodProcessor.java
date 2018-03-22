@@ -15,7 +15,6 @@ import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.PsiClassListCellRenderer;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -253,7 +252,12 @@ public class ExtractMethodProcessor implements MatchProvider {
 
     myOutputVariables = myControlFlowWrapper.getOutputVariables();
 
-    return chooseTargetClass(codeFragment, pass);
+    PsiClass defaultTargetClass = Optional.ofNullable(myElements[0].getContainingFile())
+                                          .map(ExtractMethodSnapshot.SNAPSHOT_KEY::get)
+                                          .map(snapshot -> snapshot.myTargetClass)
+                                          .map(SmartPsiElementPointer::getElement)
+                                          .orElse(null);
+    return chooseTargetClass(codeFragment, pass, defaultTargetClass);
   }
 
   private boolean checkExitPoints() throws PrepareFailedException {
@@ -576,10 +580,21 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   public boolean showDialog(final boolean direct) {
     AbstractExtractDialog dialog = createExtractMethodDialog(direct);
-    dialog.show();
-    if (!dialog.isOK()) return false;
-    apply(dialog);
-    return true;
+    Ref<Boolean> result = Ref.create(Boolean.FALSE);
+    Runnable showAndApply = () -> {
+      dialog.show();
+      if (dialog.isOK()) {
+        apply(dialog);
+        result.set(Boolean.TRUE);
+      }
+    };
+    if (dialog.showInTransaction()) {
+      TransactionGuard.getInstance().submitTransactionAndWait(showAndApply);
+    }
+    else {
+      showAndApply.run();
+    }
+    return result.get();
   }
 
   protected void apply(final AbstractExtractDialog dialog) {
@@ -941,7 +956,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     final PsiStatement exitStatementCopy = prepareMethodBody(newMethod, true);
 
     if (myExpression == null) {
-      if (myNeedChangeContext && isNeedToChangeCallContext()) {
+      if (myNeedChangeContext && isPossibleToChangeCallContext()) {
         for (PsiElement element : myElements) {
           ChangeContextUtil.encodeContextInfo(element, false);
         }
@@ -1059,24 +1074,20 @@ public class ExtractMethodProcessor implements MatchProvider {
     if (myNullness != null &&
         PsiUtil.resolveClassInType(newMethod.getReturnType()) != null &&
         PropertiesComponent.getInstance(myProject).getBoolean(ExtractMethodDialog.EXTRACT_METHOD_GENERATE_ANNOTATIONS, true)) {
-      AddAnnotationPsiFix annotationFix;
+      NullableNotNullManager nullManager = NullableNotNullManager.getInstance(myProject);
       switch (myNullness) {
         case NOT_NULL:
-          annotationFix = AddAnnotationPsiFix.createAddNotNullFix(newMethod);
+          updateAnnotations(newMethod, nullManager.getNullables(), nullManager.getDefaultNotNull(), nullManager.getNotNulls());
           break;
         case NULLABLE:
-          annotationFix = AddAnnotationPsiFix.createAddNullableFix(newMethod);
+          updateAnnotations(newMethod, nullManager.getNotNulls(), nullManager.getDefaultNullable(), nullManager.getNullables());
           break;
         default:
-          annotationFix = null;
-      }
-      if (annotationFix != null) {
-        annotationFix.invoke(myProject, myTargetClass.getContainingFile(), newMethod, newMethod);
       }
     }
 
     myExtractedMethod = addExtractedMethod(newMethod);
-    if (isNeedToChangeCallContext() && myNeedChangeContext) {
+    if (isPossibleToChangeCallContext() && myNeedChangeContext) {
       ChangeContextUtil.decodeContextInfo(myExtractedMethod, myTargetClass, RefactoringChangeUtil.createThisExpression(myManager, null));
       if (myMethodCall.resolveMethod() != myExtractedMethod) {
         final PsiReferenceExpression methodExpression = myMethodCall.getMethodExpression();
@@ -1206,7 +1217,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
   }
 
-  protected boolean isNeedToChangeCallContext() {
+  protected boolean isPossibleToChangeCallContext() {
     return true;
   }
 
@@ -1514,6 +1525,10 @@ public class ExtractMethodProcessor implements MatchProvider {
     return myTargetClass;
   }
 
+  public boolean isNeedChangeContext() {
+    return myNeedChangeContext;
+  }
+
   public PsiType getReturnType() {
     return myReturnType;
   }
@@ -1611,16 +1626,19 @@ public class ExtractMethodProcessor implements MatchProvider {
       final Boolean isNotNull = isNotNullAt(variable, myElements[0]);
       if (isNotNull != null) {
         final List<String> toKeep = isNotNull ? notNullAnnotations : nullableAnnotations;
-        final String[] toRemove = (!isNotNull ? notNullAnnotations : nullableAnnotations).toArray(ArrayUtil.EMPTY_STRING_ARRAY);
-
-        AddAnnotationPsiFix.removePhysicalAnnotations(parm, toRemove);
-        if (!AnnotationUtil.isAnnotated(parm, toKeep, CHECK_TYPE)) {
-          final String toAdd = isNotNull ? nullabilityManager.getDefaultNotNull() : nullabilityManager.getDefaultNullable();
-          final PsiAnnotation added =
-            AddAnnotationPsiFix.addPhysicalAnnotation(toAdd, PsiNameValuePair.EMPTY_ARRAY, parm.getModifierList());
-          JavaCodeStyleManager.getInstance(myProject).shortenClassReferences(added);
-        }
+        final List<String> toRemove = isNotNull ? nullableAnnotations : notNullAnnotations;
+        final String toAdd = isNotNull ? nullabilityManager.getDefaultNotNull() : nullabilityManager.getDefaultNullable();
+        updateAnnotations(parm, toRemove, toAdd, toKeep);
       }
+    }
+  }
+
+  private void updateAnnotations(PsiModifierListOwner owner, List<String> toRemove, String toAdd, List<String> toKeep) {
+    AddAnnotationPsiFix.removePhysicalAnnotations(owner, toRemove.toArray(ArrayUtil.EMPTY_STRING_ARRAY));
+    PsiModifierList modifierList = owner.getModifierList();
+    if (modifierList != null && !AnnotationUtil.isAnnotated(owner, toKeep, CHECK_TYPE)) {
+      PsiAnnotation annotation = AddAnnotationPsiFix.addPhysicalAnnotation(toAdd, PsiNameValuePair.EMPTY_ARRAY, modifierList);
+      JavaCodeStyleManager.getInstance(myProject).shortenClassReferences(annotation);
     }
   }
 
@@ -1718,7 +1736,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     else {
       skipInstanceQualifier = instanceQualifier == null || instanceQualifier instanceof PsiThisExpression;
       if (skipInstanceQualifier) {
-        if (isNeedToChangeCallContext() && myNeedChangeContext) {
+        if (isPossibleToChangeCallContext() && myNeedChangeContext) {
           boolean needsThisQualifier = false;
           PsiElement parent = myCodeFragmentMember;
           while (!myTargetClass.equals(parent)) {
@@ -1769,7 +1787,9 @@ public class ExtractMethodProcessor implements MatchProvider {
     return (PsiMethodCallExpression)JavaCodeStyleManager.getInstance(myProject).shortenClassReferences(expr);
   }
 
-  private boolean chooseTargetClass(PsiElement codeFragment, final Pass<ExtractMethodProcessor> extractPass) throws PrepareFailedException {
+  private boolean chooseTargetClass(PsiElement codeFragment,
+                                    final Pass<ExtractMethodProcessor> extractPass,
+                                    @Nullable PsiClass defaultTargetClass) throws PrepareFailedException {
     final List<PsiVariable> inputVariables = myControlFlowWrapper.getInputVariables(codeFragment, myElements, myOutputVariables);
 
     myNeedChangeContext = false;
@@ -1782,30 +1802,32 @@ public class ExtractMethodProcessor implements MatchProvider {
     if (!shouldAcceptCurrentTarget(extractPass, myTargetClass)) {
 
       final LinkedHashMap<PsiClass, List<PsiVariable>> classes = new LinkedHashMap<>();
-      final PsiElementProcessor<PsiClass> processor = selectedClass -> {
-        AnonymousTargetClassPreselectionUtil.rememberSelection(selectedClass, myTargetClass);
-        final List<PsiVariable> array = classes.get(selectedClass);
-        myNeedChangeContext = myTargetClass != selectedClass;
-        myTargetClass = selectedClass;
-        if (array != null) {
-          for (PsiVariable variable : array) {
-            if (!inputVariables.contains(variable)) {
-              inputVariables.addAll(array);
+      final PsiElementProcessor<PsiClass> processor = new PsiElementProcessor<PsiClass>() {
+        @Override
+        public boolean execute(@NotNull PsiClass selectedClass) {
+          AnonymousTargetClassPreselectionUtil.rememberSelection(selectedClass, myTargetClass);
+          final List<PsiVariable> array = classes.get(selectedClass);
+          myNeedChangeContext = myTargetClass != selectedClass;
+          myTargetClass = selectedClass;
+          if (array != null) {
+            for (PsiVariable variable : array) {
+              if (!inputVariables.contains(variable)) {
+                inputVariables.addAll(array);
+              }
             }
           }
-        }
-        final Application app = ApplicationManager.getApplication();
-        if (!app.isDispatchThread() && app.isReadAccessAllowed()) {
-          LOG.assertTrue(!myShowErrorDialogs, "in background");
-          return applyChosenClassAndExtractImpl(inputVariables, extractPass);
-        }
-        final Ref<Boolean> result = Ref.create(Boolean.FALSE);
-        TransactionGuard.getInstance().submitTransactionAndWait(() -> {
-          if (applyChosenClassAndExtractImpl(inputVariables, extractPass)) {
-            result.set(Boolean.TRUE);
+          try {
+            return applyChosenClassAndExtract(inputVariables, extractPass);
           }
-        });
-        return result.get();
+          catch (PrepareFailedException e) {
+            if (myShowErrorDialogs) {
+              CommonRefactoringUtil
+                .showErrorHint(myProject, myEditor, e.getMessage(), ExtractMethodHandler.REFACTORING_NAME, HelpID.EXTRACT_METHOD);
+              ExtractMethodHandler.highlightPrepareError(e, e.getFile(), myEditor, myProject);
+            }
+            return false;
+          }
+        }
       };
 
       classes.put(myTargetClass, null);
@@ -1833,7 +1855,13 @@ public class ExtractMethodProcessor implements MatchProvider {
       }
 
       if (classes.size() > 1) {
+        if (defaultTargetClass != null) {
+          return processor.execute(defaultTargetClass);
+        }
         final PsiClass[] psiClasses = classes.keySet().toArray(PsiClass.EMPTY_ARRAY);
+        if (myEditor == null) {
+          return processor.execute(psiClasses[0]);
+        }
         final PsiClass preselection = AnonymousTargetClassPreselectionUtil.getPreselection(classes.keySet(), psiClasses[0]);
         NavigationUtil.getPsiElementPopup(psiClasses, new PsiClassListCellRenderer(), "Choose Destination Class", processor, preselection)
           .showInBestPositionFor(myEditor);
@@ -1842,20 +1870,6 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
 
     return applyChosenClassAndExtract(inputVariables, extractPass);
-  }
-
-  private boolean applyChosenClassAndExtractImpl(List<PsiVariable> inputVariables, Pass<ExtractMethodProcessor> extractPass) {
-    try {
-      return applyChosenClassAndExtract(inputVariables, extractPass);
-    }
-    catch (PrepareFailedException e) {
-      if (myShowErrorDialogs) {
-        CommonRefactoringUtil.showErrorHint(myProject, myEditor, e.getMessage(),
-                                            ExtractMethodHandler.REFACTORING_NAME, HelpID.EXTRACT_METHOD);
-        ExtractMethodHandler.highlightPrepareError(e, e.getFile(), myEditor, myProject);
-      }
-      return false;
-    }
   }
 
   @NotNull

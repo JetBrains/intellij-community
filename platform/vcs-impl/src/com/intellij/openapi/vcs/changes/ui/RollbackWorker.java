@@ -60,10 +60,23 @@ public class RollbackWorker {
     myExceptions = new ArrayList<>(0);
   }
 
-  public void doRollback(final Collection<Change> changes,
-                         final boolean deleteLocallyAddedFiles,
-                         @Nullable final Runnable afterVcsRefreshInAwt,
-                         @Nullable final String localHistoryActionName) {
+  public void doRollback(@NotNull Collection<Change> changes,
+                         boolean deleteLocallyAddedFiles) {
+    doRollback(changes, deleteLocallyAddedFiles, null, null);
+  }
+
+  public void doRollback(@NotNull Collection<Change> changes,
+                         boolean deleteLocallyAddedFiles,
+                         @Nullable Runnable afterVcsRefreshInAwt,
+                         @Nullable String localHistoryActionName) {
+    doRollback(changes, deleteLocallyAddedFiles, true, afterVcsRefreshInAwt, localHistoryActionName);
+  }
+
+  public void doRollback(@NotNull Collection<Change> changes,
+                         boolean deleteLocallyAddedFiles,
+                         boolean rollbackRangesExcludedFromCommit,
+                         @Nullable Runnable afterVcsRefreshInAwt,
+                         @Nullable String localHistoryActionName) {
     ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
     Collection<LocalChangeList> affectedChangelists = changeListManager.getAffectedLists(changes);
 
@@ -87,7 +100,7 @@ public class RollbackWorker {
       }, updateMode, "Refresh changelists after update", ModalityState.current());
     };
 
-    List<Change> otherChanges = revertPartialChanges(changes);
+    List<Change> otherChanges = revertPartialChanges(changes, rollbackRangesExcludedFromCommit);
     if (otherChanges.isEmpty()) {
       WaitForProgressToShow.runOrInvokeLaterAboveProgress(afterRefresh, null, myProject);
       return;
@@ -127,16 +140,18 @@ public class RollbackWorker {
   }
 
   @NotNull
-  private List<Change> revertPartialChanges(Collection<Change> changes) {
+  private List<Change> revertPartialChanges(@NotNull Collection<Change> changes, boolean rollbackRangesExcludedFromCommit) {
     return PartialChangesUtil.processPartialChanges(
       myProject, changes, true,
       (partialChanges, tracker) -> {
-        Set<String> selectedIds = ContainerUtil.map2Set(partialChanges, change -> change.getChangeListId());
-        if (selectedIds.containsAll(tracker.getAffectedChangeListsIds())) return false;
-
-        for (ChangeListChange change : partialChanges) {
-          tracker.rollbackChangelistChanges(change.getChangeListId());
+        if (!tracker.hasPartialChangesToCommit()) return false;
+        if (rollbackRangesExcludedFromCommit) {
+          Set<String> selectedIds = ContainerUtil.map2Set(partialChanges, change -> change.getChangeListId());
+          if (selectedIds.containsAll(tracker.getAffectedChangeListsIds())) return false;
         }
+
+        List<String> changelistIds = ContainerUtil.map(partialChanges, change -> change.getChangeListId());
+        tracker.rollbackChangelistChanges(changelistIds, rollbackRangesExcludedFromCommit);
         return true;
       }
     );

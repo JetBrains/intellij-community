@@ -39,12 +39,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.popup.list.ListPopupImpl");
 
-  private MyList myList;
+  protected MyList myList;
 
   private MyMouseMotionListener myMouseMotionListener;
   private MyMouseListener myMouseListener;
 
-  private ListPopupModel myListModel;
+  protected ListPopupModel myListModel;
 
   private int myIndexForShowingChild = -1;
   private int myMaxRowCount = 30;
@@ -224,7 +224,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
 
     ListPopupStep<Object> step = getListStep();
     myListModel = new ListPopupModel(this, getSpeedSearch(), step);
-    myList = new MyList();
+    myList = createList();
     if (myStep.getTitle() != null) {
       myList.getAccessibleContext().setAccessibleName(myStep.getTitle());
     }
@@ -239,7 +239,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
 
     ScrollingUtil.installActions(myList);
 
-    myList.setCellRenderer(getListElementRenderer());
+    setCellRenderer(getListElementRenderer());
 
     myList.getActionMap().get("selectNextColumn").setEnabled(false);
     myList.getActionMap().get("selectPreviousColumn").setEnabled(false);
@@ -271,6 +271,15 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     myList.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
     return myList;
+  }
+
+  public void setCellRenderer(ListCellRenderer renderer) {
+    myList.setCellRenderer(renderer);
+  }
+
+  @NotNull
+  protected MyList createList() {
+    return new MyList(myListModel);
   }
 
   private boolean isMultiSelectionEnabled() {
@@ -424,7 +433,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       }
       final JComponent container = getContent();
       assert container != null : "container == null";
-      
+
       int y = point.y;
       if (parentValue != null && getListModel().isSeparatorAboveOf(parentValue)) {
         SeparatorWithText swt = new SeparatorWithText();
@@ -504,14 +513,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   }
 
   protected boolean handleFinalChoices(MouseEvent e, Object selectedValue, ListPopupStep<Object> listStep) {
-    return selectedValue == null || !listStep.hasSubstep(selectedValue) || !listStep.isSelectable(selectedValue) || !isOnNextStepButton(e);
-  }
-
-  private boolean isOnNextStepButton(MouseEvent e) {
-    final int index = myList.getSelectedIndex();
-    final Rectangle bounds = myList.getCellBounds(index, index);
-    final Point point = e.getPoint();
-    return bounds != null && point.getX() > bounds.width + bounds.getX() - AllIcons.Icons.Ide.NextStep.getIconWidth();
+    return selectedValue == null || !listStep.hasSubstep(selectedValue) || !listStep.isSelectable(selectedValue) || !myList.isOnNextStepButton(e);
   }
 
   @Override
@@ -527,9 +529,9 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     myIndexForShowingChild = aIndexForShowingChild;
   }
 
-  private class MyList extends JBList implements DataProvider {
-    public MyList() {
-      super(myListModel);
+  public class MyList extends JBList implements DataProvider {
+    public MyList(ListPopupModel listModel) {
+      super(listModel);
       HintUpdateSupply.installSimpleHintUpdateSupply(this);
     }
 
@@ -537,6 +539,13 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     public void processKeyEvent(KeyEvent e) {
       e.setSource(this);
       super.processKeyEvent(e);
+    }
+
+    private boolean isOnNextStepButton(MouseEvent e) {
+      final int index = getSelectedIndex();
+      final Rectangle bounds = getCellBounds(index, index);
+      final Point point = e.getPoint();
+      return bounds != null && point.getX() > bounds.width + bounds.getX() - AllIcons.Icons.Ide.NextStep.getIconWidth();
     }
 
     @Override
@@ -555,10 +564,10 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     @Override
     public Object getData(String dataId) {
        if (PlatformDataKeys.SELECTED_ITEM.is(dataId)){
-        return myList.getSelectedValue();
+        return getSelectedValue();
       }
       if (PlatformDataKeys.SELECTED_ITEMS.is(dataId)){
-         return myList.getSelectedValues();
+         return getSelectedValues();
       }
       if (PlatformDataKeys.SPEED_SEARCH_COMPONENT.is(dataId)) {
         if (mySpeedSearchPatternField != null && mySpeedSearchPatternField.isVisible()) {

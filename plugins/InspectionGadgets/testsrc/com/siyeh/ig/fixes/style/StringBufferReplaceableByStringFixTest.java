@@ -46,6 +46,7 @@ public class StringBufferReplaceableByStringFixTest extends IGQuickFixesTestCase
   public void testComment1() { doTest(); }
   public void testComment2() { doTest(InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix")); }
   public void testComment3() { doTest(); }
+  public void testComment4() { doTest(InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix")); }
 
   public void testComplexSignOnNextLine() {
     final CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);

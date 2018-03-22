@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.concurrency.Job;
@@ -562,14 +548,14 @@ public class VirtualFilePointerTest extends PlatformTestCase {
     LOG.debug("final i = " + i);
   }
 
-  private static void refreshVFS() {
+  public static void refreshVFS() {
     ApplicationManager.getApplication().runWriteAction(() -> {
       VirtualFileManager.getInstance().syncRefresh();
     });
     UIUtil.dispatchAllInvocationEvents();
   }
 
-  private static void verifyPointersInCorrectState(VirtualFilePointer[] pointers) {
+  public static void verifyPointersInCorrectState(VirtualFilePointer[] pointers) {
     for (VirtualFilePointer pointer : pointers) {
       final VirtualFile file = pointer.getFile();
       assertTrue(file == null || file.isValid());
@@ -644,7 +630,7 @@ public class VirtualFilePointerTest extends PlatformTestCase {
     assertFalse(pointer.isValid());
   }
 
-  private static VirtualFile refreshAndFind(@NotNull final String url) {
+  public static VirtualFile refreshAndFind(@NotNull final String url) {
     return WriteCommandAction.runWriteCommandAction(null, (Computable<VirtualFile>)() -> VirtualFileManager.getInstance().refreshAndFindFileByUrl(url));
   }
 
@@ -690,14 +676,11 @@ public class VirtualFilePointerTest extends PlatformTestCase {
         // ptr is now null, cached as map
 
         VirtualFile v = PlatformTestUtil.notNull(LocalFileSystem.getInstance().findFileByIoFile(ioSandPtr));
-        new WriteCommandAction.Simple(getProject()) {
-          @Override
-          protected void run() throws Throwable {
-            v.delete(this); //inc FS modCount
-            VirtualFile file = PlatformTestUtil.notNull(LocalFileSystem.getInstance().findFileByIoFile(ioSand));
-            file.createChildData(this, ioSandPtr.getName());
-          }
-        }.execute().throwException();
+        WriteCommandAction.writeCommandAction(getProject()).run(() -> {
+          v.delete(this); //inc FS modCount
+          VirtualFile file = PlatformTestUtil.notNull(LocalFileSystem.getInstance().findFileByIoFile(ioSand));
+          file.createChildData(this, ioSandPtr.getName());
+        });
 
         // ptr is still null
 
@@ -1048,5 +1031,26 @@ public class VirtualFilePointerTest extends PlatformTestCase {
 
     createChildData(deep, "1");
     assertEquals("[before:true, after:true]", listener.getLog().toString());
+  }
+
+  public void testNotQuiteCanonicalPath() throws Exception {
+    final File dir = createTempDirectory();
+    VirtualFile vDir = LocalFileSystem.getInstance().findFileByIoFile(dir);
+    assertNotNull(vDir);
+    VirtualFile deep = createChildDirectory(vDir, "deep");
+    VirtualFile file = createChildData(deep, "x..txt");
+    VirtualFilePointer ptr = myVirtualFilePointerManager.create(file, disposable, null);
+    assertTrue(ptr.isValid());
+    assertTrue(ptr.getUrl(), ptr.getUrl().contains(".."));
+
+    VirtualFile existing = createChildData(vDir, "existing.txt");
+    assertNotNull(existing);
+    VirtualFilePointer ptr2 = myVirtualFilePointerManager.create(deep.getUrl()+"/../existing.txt", disposable, null);
+    assertTrue(ptr2.isValid());
+    assertFalse(ptr2.getUrl(), ptr2.getUrl().contains(".."));
+
+    VirtualFilePointer ptr3 = myVirtualFilePointerManager.create(deep.getUrl()+"/../madeup.txt", disposable, null);
+    assertFalse(ptr3.isValid());
+    assertTrue(ptr3.getUrl(), ptr3.getUrl().contains(".."));
   }
 }

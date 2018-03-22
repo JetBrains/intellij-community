@@ -103,7 +103,7 @@ public class NullnessUtil {
     SearchScope scope = field.getUseScope();
     if (!(scope instanceof GlobalSearchScope)) return true;
 
-    PsiSearchHelper helper = PsiSearchHelper.SERVICE.getInstance(field.getProject());
+    PsiSearchHelper helper = PsiSearchHelper.getInstance(field.getProject());
     PsiSearchHelper.SearchCostResult result =
       helper.isCheapEnoughToSearch(name, (GlobalSearchScope)scope, field.getContainingFile(), null);
     return result != PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES;

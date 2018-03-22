@@ -11,6 +11,7 @@ import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.projectView.TestProjectTreeStructure;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.util.ui.tree.TreeUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -160,6 +161,7 @@ public class PropertiesProjectViewTest extends LightPlatformCodeInsightFixtureTe
     });
 
     PlatformTestUtil.waitWhileBusy(pane.getTree());
+    TreeUtil.expandAll(pane.getTree());
     return pane;
   }
 }

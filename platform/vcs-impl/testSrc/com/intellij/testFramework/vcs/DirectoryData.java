@@ -50,12 +50,12 @@ public class DirectoryData {
   public void clear() {
     final VirtualFile base = getBase();
     if (base != null) {
-      new WriteCommandAction.Simple(null) {
-        @Override
-        protected void run() throws Throwable {
-          base.delete(this);
-        }
-      }.execute().throwException();
+      try {
+        WriteCommandAction.writeCommandAction(null).run(() -> base.delete(base));
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
     }
   }
 

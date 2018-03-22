@@ -321,7 +321,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
     PsiParameter[] newParameters = constructor.getParameterList().getParameters();
     if (newParameters == parameters) return false; //user must have canceled dialog
     // do not introduce assignment in chained constructor
-    if (JavaHighlightUtil.getChainedConstructors(constructor) == null) {
+    if (JavaHighlightUtil.getChainedConstructors(constructor).isEmpty()) {
       final SmartPointerManager manager = SmartPointerManager.getInstance(project);
       boolean created = false;
       for (PsiField field : fields.keySet()) {

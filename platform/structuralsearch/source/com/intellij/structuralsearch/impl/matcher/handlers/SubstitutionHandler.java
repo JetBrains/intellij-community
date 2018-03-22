@@ -4,6 +4,7 @@ package com.intellij.structuralsearch.impl.matcher.handlers;
 import com.intellij.dupLocator.iterators.FilteringNodeIterator;
 import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.dupLocator.util.NodeFilter;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.StructuralSearchProfile;
@@ -392,79 +393,77 @@ public class SubstitutionHandler extends MatchingHandler {
   }
 
   @Override
-  public boolean matchSequentially(NodeIterator nodes, NodeIterator nodes2, MatchContext context) {
-    return doMatchSequentially(nodes, nodes2, context);
+  public boolean matchSequentially(NodeIterator patternNodes, NodeIterator matchNodes, MatchContext context) {
+    return doMatchSequentially(patternNodes, matchNodes, context);
   }
 
-  protected boolean doMatchSequentiallyBySimpleHandler(NodeIterator nodes, NodeIterator nodes2, MatchContext context) {
+  protected boolean doMatchSequentiallyBySimpleHandler(NodeIterator patternNodes, NodeIterator matchNodes, MatchContext context) {
     final boolean oldValue = context.shouldRecursivelyMatch();
     context.setShouldRecursivelyMatch(false);
-    final boolean result = super.matchSequentially(nodes, nodes2, context);
+    final boolean result = super.matchSequentially(patternNodes, matchNodes, context);
     context.setShouldRecursivelyMatch(oldValue);
     return result;
   }
 
-  protected boolean doMatchSequentially(NodeIterator nodes, NodeIterator nodes2, MatchContext context) {
+  protected boolean doMatchSequentially(NodeIterator patternNodes, NodeIterator matchNodes, MatchContext context) {
     final int previousMatchedOccurs = matchedOccurs;
-
-    FilteringNodeIterator fNodes2 = new FilteringNodeIterator(nodes2, VARS_DELIM_FILTER);
+    FilteringNodeIterator fNodes = new FilteringNodeIterator(matchNodes, VARS_DELIM_FILTER);
 
     try {
-      MatchingHandler handler = context.getPattern().getHandler(nodes.current());
+      MatchingHandler handler = context.getPattern().getHandler(patternNodes.current());
       matchedOccurs = 0;
 
       boolean flag = false;
 
-      while(fNodes2.hasNext() && matchedOccurs < minOccurs) {
-        if (handler.match(nodes.current(), nodes2.current(), context)) {
+      while(fNodes.hasNext() && matchedOccurs < minOccurs) {
+        if (handler.match(patternNodes.current(), matchNodes.current(), context)) {
           ++matchedOccurs;
-        } else {
+        } else if (patternNodes.current() instanceof PsiComment || !(matchNodes.current() instanceof PsiComment)) {
           break;
         }
-        fNodes2.advance();
-        flag = true;
+        fNodes.advance();
+        flag = true;;
       }
 
-      if (matchedOccurs!=minOccurs) {
+      if (matchedOccurs != minOccurs) {
         // failed even for min occurs
         removeLastResults(matchedOccurs, context);
-        fNodes2.rewind(matchedOccurs);
+        fNodes.rewind(matchedOccurs);
         return false;
       }
 
       if (greedy)  {
         // go greedily to maxOccurs
 
-        while(fNodes2.hasNext() && matchedOccurs < maxOccurs) {
-          if (handler.match(nodes.current(), nodes2.current(), context)) {
+        while(fNodes.hasNext() && matchedOccurs < maxOccurs) {
+          if (handler.match(patternNodes.current(), matchNodes.current(), context)) {
             ++matchedOccurs;
-          } else {
-            // no more matches could take!
+          } else if (patternNodes.current() instanceof PsiComment || !(matchNodes.current() instanceof PsiComment)) {
             break;
           }
-          fNodes2.advance();
+          fNodes.advance();
           flag = true;
         }
 
         if (flag) {
-          fNodes2.rewind();
-          nodes2.advance();
+          fNodes.rewind();
+          matchNodes.advance();
         }
 
-        nodes.advance();
+        patternNodes.advance();
 
-        if (nodes.hasNext()) {
-          final MatchingHandler nextHandler = context.getPattern().getHandler(nodes.current());
+        if (patternNodes.hasNext()) {
+          final MatchingHandler nextHandler = context.getPattern().getHandler(patternNodes.current());
 
           while(matchedOccurs >= minOccurs) {
-            if (nextHandler.matchSequentially(nodes, nodes2, context)) {
+            if (nextHandler.matchSequentially(patternNodes, matchNodes, context)) {
               totalMatchedOccurs = matchedOccurs;
               // match found
               return true;
             }
 
             if (matchedOccurs > 0) {
-              nodes2.rewind();
+              matchNodes.rewind();
               removeLastResults(1, context);
             }
             --matchedOccurs;
@@ -473,51 +472,51 @@ public class SubstitutionHandler extends MatchingHandler {
           if (matchedOccurs > 0) {
             removeLastResults(matchedOccurs, context);
           }
-          nodes.rewind();
+          patternNodes.rewind();
           return false;
         } else {
           // match found
-          if (handler.isMatchSequentiallySucceeded(nodes2)) {
+          if (handler.isMatchSequentiallySucceeded(matchNodes)) {
             return checkSameOccurrencesConstraint();
           }
           removeLastResults(matchedOccurs, context);
           return false;
         }
       } else {
-        nodes.advance();
+        patternNodes.advance();
 
         if (flag) {
-          fNodes2.rewind();
-          nodes2.advance();
+          fNodes.rewind();
+          matchNodes.advance();
         }
 
-        if (nodes.hasNext()) {
-          final MatchingHandler nextHandler = context.getPattern().getHandler(nodes.current());
+        if (patternNodes.hasNext()) {
+          final MatchingHandler nextHandler = context.getPattern().getHandler(patternNodes.current());
 
           flag = false;
 
-          while(nodes2.hasNext() && matchedOccurs <= maxOccurs) {
-            if (nextHandler.matchSequentially(nodes, nodes2, context)) {
+          while(matchNodes.hasNext() && matchedOccurs <= maxOccurs) {
+            if (nextHandler.matchSequentially(patternNodes, matchNodes, context)) {
               return checkSameOccurrencesConstraint();
             }
 
             if (flag) {
-              nodes2.rewind();
-              fNodes2.advance();
+              matchNodes.rewind();
+              fNodes.advance();
             }
 
-            if (handler.match(nodes.current(), nodes2.current(), context)) {
+            if (handler.match(patternNodes.current(), matchNodes.current(), context)) {
               matchedOccurs++;
             } else {
-              nodes.rewind();
+              patternNodes.rewind();
               removeLastResults(matchedOccurs, context);
               return false;
             }
-            nodes2.advance();
+            matchNodes.advance();
             flag = true;
           }
 
-          nodes.rewind();
+          patternNodes.rewind();
           removeLastResults(matchedOccurs, context);
           return false;
         } else {

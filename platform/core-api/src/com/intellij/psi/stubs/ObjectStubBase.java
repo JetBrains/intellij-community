@@ -27,7 +27,7 @@ public abstract class ObjectStubBase<T extends Stub> extends UserDataHolderBase 
   private static final Key<Boolean> DANGLING_STUB = Key.create("DIRECT_PARENT_IS_STUBBED");
 
   protected final T myParent;
-  public int id;
+  int id;
 
   public ObjectStubBase(T parent) {
     myParent = parent;
@@ -51,5 +51,12 @@ public abstract class ObjectStubBase<T extends Stub> extends UserDataHolderBase 
    */
   public void markDangling() {
     putUserData(DANGLING_STUB, true);
+  }
+
+  /**
+   * @return the index of this stub in {@code ObjectStubTree#getPlainList}.
+   */
+  public int getStubId() {
+    return id;
   }
 }

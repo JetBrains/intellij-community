@@ -10,7 +10,7 @@ import java.util.List;
 
 
 public class LoadFullValueCommand extends AbstractFrameCommand {
-  private static final String NEXT_VALUE_SEPARATOR = "__pydev_val__";
+  public static final String NEXT_VALUE_SEPARATOR = "__pydev_val__";
   private final @NotNull IPyDebugProcess myDebugProcess;
   private final @NotNull List<PyFrameAccessor.PyAsyncValue<String>> myVars;
 

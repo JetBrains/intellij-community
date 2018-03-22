@@ -8,6 +8,7 @@ import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.testframework.JavaTestAgentUtil;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerEventsAdapter;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerEventsListener;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
@@ -25,7 +26,6 @@ import com.intellij.rt.coverage.data.SingleTrFileDiscoveryProtocolDataListener;
 import com.intellij.rt.coverage.data.SocketTestDiscoveryProtocolDataListener;
 import com.intellij.rt.coverage.data.TestDiscoveryProjectData;
 import com.intellij.rt.coverage.data.api.TestDiscoveryProtocolUtil;
-import com.intellij.rt.coverage.main.CoveragePremain;
 import com.intellij.util.Alarm;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
@@ -83,12 +83,8 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
     if (runnerSettings != null || !isApplicableFor(configuration)) {
       return;
     }
-    StringBuilder argument = new StringBuilder("-javaagent:");
-    final String agentPath = PathUtil.getJarPathForClass(TestDiscoveryProjectData.class);//todo spaces
-    argument.append(agentPath);
-    params.getVMParametersList().add(argument.toString());
-    params.getClassPath().add(agentPath);
-    params.getClassPath().add(PathUtil.getJarPathForClass(CoveragePremain.class));
+    params.getVMParametersList().add("-javaagent:" + JavaTestAgentUtil
+      .handleSpacesInAgentPath(PathUtil.getJarPathForClass(TestDiscoveryProjectData.class)));
     TestDiscoveryDataSocketListener listener = tryInstallSocketListener(configuration);
     if (listener != null) {
       params.getVMParametersList().addProperty(SocketTestDiscoveryProtocolDataListener.PORT_PROP, Integer.toString(listener.getPort()));

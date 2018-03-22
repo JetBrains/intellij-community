@@ -117,7 +117,7 @@ public class JavaExecutionStack extends XExecutionStack {
       }
 
       @Override
-      public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
+      public void contextAction(@NotNull SuspendContextImpl suspendContext) {
         if (container.isObsolete()) return;
         if (!myThreadProxy.isCollected() && myDebugProcess.getSuspendManager().isSuspended(myThreadProxy)) {
           int status = myThreadProxy.status();
@@ -169,7 +169,7 @@ public class JavaExecutionStack extends XExecutionStack {
     }
 
     @Override
-    public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
+    public void contextAction(@NotNull SuspendContextImpl suspendContext) {
       if (myContainer.isObsolete()) return;
       if (myStackFramesIterator.hasNext()) {
         StackFrameProxyImpl frameProxy;

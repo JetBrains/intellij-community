@@ -18,7 +18,6 @@ package com.intellij.openapi.actionSystem.ex;
 import com.intellij.openapi.actionSystem.ActionButtonComponent;
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook;
 import com.intellij.openapi.actionSystem.impl.Win10ActionButtonLook;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -40,10 +39,6 @@ public abstract class ActionButtonLook {
 
     @Override public void paintBorder(Graphics g, JComponent component, int state) {
       delegate.paintBorder(g, component, state);
-    }
-
-    @Override public Insets getInsets() {
-      return delegate.getInsets();
     }
   };
 
@@ -83,9 +78,5 @@ public abstract class ActionButtonLook {
 
   public void paintIconAt(Graphics g, Icon icon, int x, int y) {
     icon.paintIcon(null, g, x, y);
-  }
-
-  public Insets getInsets() {
-    return JBUI.emptyInsets();
   }
 }

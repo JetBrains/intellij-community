@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -86,14 +86,37 @@ public class XmlStructuralSearchTest extends StructuralSearchTestCase {
 
   public void testNoUnexpectedException() {
     String source = "<html><title>title</title></html>";
-    String pattern = "<title>$A$$</title>";
-    MalformedPatternException ex = null;
+
     try {
-      findMatchesCount(source, pattern, StdFileTypes.HTML);
+      findMatchesCount(source, "<'_tag>", StdFileTypes.XML);
     } catch (MalformedPatternException e) {
-      ex = e;
+      fail();
     }
-    assertNotNull(ex);
+
+    try {
+      findMatchesCount(source, "<'_tag '_attr>", StdFileTypes.XML);
+    } catch (MalformedPatternException e) {
+      fail();
+    }
+  }
+
+  public void testInvalidPatternWarnings() {
+    String source = "<x>z</x>";
+
+    try {
+      findMatchesCount(source, "<title>$A$$</title>", StdFileTypes.HTML);
+      fail();
+    } catch (MalformedPatternException ignore) {}
+
+    try {
+      findMatchesCount(source, "<x>1<3</x>", StdFileTypes.XML);
+      fail();
+    } catch (MalformedPatternException ignore) {}
+
+    try {
+      findMatchesCount(source, "<x'_tag>", StdFileTypes.XML);
+      fail();
+    } catch (MalformedPatternException ignore) {}
   }
 
   public void testWithinPredicate() {
@@ -118,6 +141,15 @@ public class XmlStructuralSearchTest extends StructuralSearchTestCase {
                    "</html>";
     String pattern = "<'_a type=\"text/css\">'_content*</'_a>";
     assertEquals("find tag with css content", 1, findMatchesCount(source, pattern, StdFileTypes.HTML));
+  }
+
+  public void testSearchIgnoreComments() {
+    String source = "<user id=\"1\">\n" +
+                    "  <first_name>Max</first_name> <!-- asdf -->\n" +
+                    "  <last_name>Headroom</last_name>\n" +
+                    "</user>";
+      String pattern = "<first_name>$A$</first_name><last_name>$B$</last_name>";
+    assertEquals("find tag ignoring comments", 1, findMatchesCount(source, pattern, StdFileTypes.XML));
   }
 
   @NotNull

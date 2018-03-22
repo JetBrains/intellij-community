@@ -60,7 +60,6 @@ import javax.swing.plaf.UIResource;
 import javax.swing.text.*;
 import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLDocument;
-import javax.swing.text.html.ParagraphView;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Rectangle2D;
@@ -351,34 +350,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
         }
       }
     };
-    text.setEditorKit(new UIUtil.JBHtmlEditorKit() {
-      final HTMLFactory factory = new HTMLFactory() {
-        public View create(Element e) {
-          View view = super.create(e);
-          if (view instanceof ParagraphView) {
-            // wrap too long words, for example: ATEST_TABLE_SIGNLE_ROW_UPDATE_AUTOCOMMIT_A_FIK
-            return new ParagraphView(e) {
-              protected SizeRequirements calculateMinorAxisRequirements(int axis, SizeRequirements r) {
-                if (r == null) {
-                  r = new SizeRequirements();
-                }
-                r.minimum = (int)layoutPool.getMinimumSpan(axis);
-                r.preferred = Math.max(r.minimum, (int)layoutPool.getPreferredSpan(axis));
-                r.maximum = Integer.MAX_VALUE;
-                r.alignment = 0.5f;
-                return r;
-              }
-            };
-          }
-          return view;
-        }
-      };
-
-      @Override
-      public ViewFactory getViewFactory() {
-        return factory;
-      }
-    });
+    text.setEditorKit(new UIUtil.JBWordWrapHtmlEditorKit());
     text.setForeground(foreground);
 
     final HyperlinkListener listener = NotificationsUtil.wrapListener(notification);
@@ -388,10 +360,10 @@ public class NotificationsManagerImpl extends NotificationsManager {
 
     String fontStyle = NotificationsUtil.getFontStyle();
     int prefSize = new JLabel(NotificationsUtil.buildHtml(notification, null, true, null, fontStyle)).getPreferredSize().width;
-    String style = prefSize > BalloonLayoutConfiguration.MaxWidth ? BalloonLayoutConfiguration.MaxWidthStyle : null;
+    String style = prefSize > BalloonLayoutConfiguration.MaxWidth() ? BalloonLayoutConfiguration.MaxWidthStyle() : null;
 
     if (layoutData.showFullContent) {
-      style = prefSize > BalloonLayoutConfiguration.MaxFullContentWidth ? BalloonLayoutConfiguration.MaxFullContentWidthStyle : null;
+      style = prefSize > BalloonLayoutConfiguration.MaxFullContentWidth() ? BalloonLayoutConfiguration.MaxFullContentWidthStyle() : null;
     }
 
     String textR = NotificationsUtil.buildHtml(notification, style, true, foregroundR, fontStyle);
@@ -1203,9 +1175,9 @@ public class NotificationsManagerImpl extends NotificationsManager {
 
       int width = Math.max(centerWidth, Math.max(titleWidth, actionWidth));
       if (!myLayoutData.showFullContent) {
-        width = Math.min(width, BalloonLayoutConfiguration.MaxWidth);
+        width = Math.min(width, BalloonLayoutConfiguration.MaxWidth());
       }
-      width = Math.max(width, BalloonLayoutConfiguration.MinWidth);
+      width = Math.max(width, BalloonLayoutConfiguration.MinWidth());
 
       return new Dimension(width, height);
     }

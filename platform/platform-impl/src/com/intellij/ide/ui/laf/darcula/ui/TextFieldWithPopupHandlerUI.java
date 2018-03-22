@@ -146,6 +146,9 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     for (IconHolder holder : icons.values()) {
       int gap = holder.extension.getIconGap();
       if (holder.extension.isIconBeforeText()) {
+        int offset = holder.extension.getBeforeIconOffset();
+        bounds.x += offset;
+        bounds.width -= offset;
         holder.bounds.x = bounds.x;
         bounds.width -= holder.bounds.width + gap;
         bounds.x += holder.bounds.width + gap;
@@ -567,6 +570,12 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     @Override
     public Icon getIcon(boolean hovered) {
       return getSearchIcon(hovered, null != getActionOnClick());
+    }
+
+    @Override
+    public int getBeforeIconOffset() {
+      Integer gap = (Integer)getComponent().getClientProperty("JTextField.Search.Gap");
+      return gap == null ? 0 : gap;
     }
 
     @Override

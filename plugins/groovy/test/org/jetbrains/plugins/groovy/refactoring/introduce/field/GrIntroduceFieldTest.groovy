@@ -200,7 +200,7 @@ class MyTest extends GroovyTestCase {
     void setUp() {
         super.setUp()
         def x = 'abc'
-    f = 'ac'
+        f = 'ac'
     }
 
     void foo() {

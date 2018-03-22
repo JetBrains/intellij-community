@@ -118,7 +118,7 @@ public abstract class AbstractLineWrapPositionStrategyTest {
     }
 
     private void processWrap() {
-      buffer.append(rawDocument.substring(index, tmpWrapIndex));
+      buffer.append(rawDocument, index, tmpWrapIndex);
       index = tmpWrapIndex + WRAP_MARKER.length();
       wrapIndex = buffer.length();
       if (rawDocument.indexOf(WRAP_MARKER, index) >= 0) {
@@ -127,7 +127,7 @@ public abstract class AbstractLineWrapPositionStrategyTest {
     }
 
     private void processMaxPreferredIndex() {
-      buffer.append(rawDocument.substring(index, tmpEdgeIndex));
+      buffer.append(rawDocument, index, tmpEdgeIndex);
       index = tmpEdgeIndex + EDGE_MARKER.length();
       edgeIndex = buffer.length();
       if (rawDocument.indexOf(EDGE_MARKER, index) >= 0) {

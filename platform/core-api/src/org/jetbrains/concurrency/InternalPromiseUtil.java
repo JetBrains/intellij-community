@@ -90,6 +90,10 @@ public class InternalPromiseUtil {
         return result;
       }
 
+      if (error == OBSOLETE_ERROR) {
+        return null;
+      }
+
       ExceptionUtil.rethrowUnchecked(error);
       if (error instanceof ExecutionException) {
         throw ((ExecutionException)error);

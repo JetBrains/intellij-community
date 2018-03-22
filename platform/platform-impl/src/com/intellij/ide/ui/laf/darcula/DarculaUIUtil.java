@@ -17,6 +17,7 @@ package com.intellij.ide.ui.laf.darcula;
 
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.laf.IntelliJLaf;
+import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaEditorTextFieldBorder;
 import com.intellij.openapi.editor.event.EditorMouseAdapter;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
@@ -33,6 +34,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.plaf.UIResource;
 import javax.swing.text.JTextComponent;
 import javax.swing.text.Position;
 import java.awt.*;
@@ -143,7 +145,7 @@ public class DarculaUIUtil {
   @SuppressWarnings("SuspiciousNameCombination")
   private static void doPaint(Graphics2D g, int width, int height, float arc, boolean symmetric) {
     float bw = UIUtil.isUnderDefaultMacTheme() ? JBUI.scale(3) : bw();
-    float lw = UIUtil.isUnderDefaultMacTheme() ? JBUI.scale(UIUtil.isRetina(g) ? 0.5f : 1.0f) : JBUI.scale(0.5f);
+    float lw = UIUtil.isUnderDefaultMacTheme() ? JBUI.scale(UIUtil.isRetina(g) ? 0.5f : 1.0f) : lw(g);
 
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
@@ -391,8 +393,9 @@ public class DarculaUIUtil {
     }
   }
 
+  @SuppressWarnings("unused")
   public static float lw(Graphics2D g2) {
-    return UIUtil.isJreHiDPI(g2) ? JBUI.scale(0.5f) : 1.0f;
+    return JBUI.scale(1.0f);
   }
 
   public static float bw() {
@@ -421,5 +424,16 @@ public class DarculaUIUtil {
 
   public static boolean isEmpty(Dimension d) {
     return d == null || d.width == 0 && d.height == 0;
+  }
+
+  public static Color getButtonTextColor(@NotNull AbstractButton button) {
+    Color fg = button.getForeground();
+    if (fg instanceof UIResource && DarculaButtonUI.isDefaultButton(button)) {
+      Color selectedFg = UIManager.getColor("Button.darcula.selectedButtonForeground");
+      if (selectedFg != null) {
+        return selectedFg;
+      }
+    }
+    return fg;
   }
 }

@@ -44,7 +44,10 @@ public class GutterIconTooltipHelper {
     return composeText(elements, start, pattern, "");
   }
 
-  public static String composeText(@NotNull Iterable<? extends PsiElement> elements, @NotNull String start, @NotNull String pattern, @NotNull String postfix) {
+  static String composeText(@NotNull Iterable<? extends PsiElement> elements,
+                            @NotNull String start,
+                            @NotNull String pattern,
+                            @NotNull String postfix) {
     @NonNls StringBuilder result = new StringBuilder();
     result.append("<html><body>");
     result.append(start);

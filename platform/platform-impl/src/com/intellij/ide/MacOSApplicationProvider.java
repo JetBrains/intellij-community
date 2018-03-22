@@ -22,6 +22,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
+import com.intellij.ui.mac.touchbar.TouchBarManager;
 import com.sun.jna.Callback;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -136,6 +137,9 @@ public class MacOSApplicationProvider {
         });
       });
       installAutoUpdateMenu();
+
+      TouchBarManager.initialize();
+      TouchBarManager.setCurrent(TouchBarManager.TOUCHBARS.main);
     }
 
     private static void installAutoUpdateMenu() {

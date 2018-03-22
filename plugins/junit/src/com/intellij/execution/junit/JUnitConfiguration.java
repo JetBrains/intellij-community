@@ -416,11 +416,17 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
       getPersistentData().setUniqueIds(ArrayUtil.toStringArray(ids));
     }
 
-    Element tagsElement = element.getChild("tags");
-    if (tagsElement != null) {
-      List<String> tags = new ArrayList<>();
-      tagsElement.getChildren("tag").forEach(tagElement -> tags.add(tagElement.getAttributeValue("value")));
-      getPersistentData().setTags(ArrayUtil.toStringArray(tags));
+    Element tagElement = element.getChild("tag");
+    if (tagElement != null) {
+      getPersistentData().setTags(tagElement.getAttributeValue("value"));
+    }
+    else {
+      Element tagsElement = element.getChild("tags");
+      if (tagsElement != null) {
+        List<String> tags = new ArrayList<>();
+        tagsElement.getChildren("tag").forEach(tElement -> tags.add(tElement.getAttributeValue("value")));
+        getPersistentData().setTags(StringUtil.join(tags, "|"));
+      }
     }
   }
 
@@ -477,10 +483,10 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
       element.addContent(uniqueIds);
     }
 
-    String[] tags = persistentData.getTags();
-    if (tags != null && tags.length > 0) {
-      Element tagsElement = new Element("tags");
-      Arrays.stream(tags).forEach(id -> tagsElement.addContent(new Element("tag").setAttribute("value", id)));
+    String tags = persistentData.getTags();
+    if (tags != null && tags.length() > 0) {
+      Element tagsElement = new Element("tag");
+      tagsElement.setAttribute("value", tags);
       element.addContent(tagsElement);
     }
   }
@@ -554,7 +560,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
     public String MAIN_CLASS_NAME;
     public String METHOD_NAME;
     private String[] UNIQUE_ID = ArrayUtil.EMPTY_STRING_ARRAY;
-    private String[] TAGS = ArrayUtil.EMPTY_STRING_ARRAY;
+    private String TAGS;
     public String TEST_OBJECT = TEST_CLASS;
     public String VM_PARAMETERS;
     public String PARAMETERS;
@@ -669,11 +675,11 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
       return setMainClass(methodLocation instanceof MethodLocation ? ((MethodLocation)methodLocation).getContainingClass() : method.getContainingClass());
     }
 
-    public String[] getTags() {
+    public String getTags() {
       return TAGS;
     }
 
-    public void setTags(String[] tags) {
+    public void setTags(String tags) {
       TAGS = tags;
     }
 
@@ -720,7 +726,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
         return UNIQUE_ID != null && UNIQUE_ID.length > 0 ? StringUtil.join(UNIQUE_ID, " ") : "Temp suite";
       }
       if (TEST_TAGS.equals(TEST_OBJECT)) {
-        return TAGS != null && TAGS.length > 0 ? "Tags (" + StringUtil.join(TAGS, " ") + ")" : "Temp suite";
+        return TAGS != null && TAGS.length() > 0 ? "Tags (" + StringUtil.join(TAGS, " ") + ")" : "Temp suite";
       }
       final String className = JavaExecutionUtil.getPresentableClassName(getMainClassName());
       if (TEST_METHOD.equals(TEST_OBJECT)) {

@@ -277,7 +277,7 @@ final public class LogMessageParser extends AbstractMessageParser {
     }
 
     final String symName = line.substring(0, index).trim();
-    final String revName = line.substring(index + 1, line.length()).trim();
+    final String revName = line.substring(index + 1).trim();
     logInfo.addSymbolicName(symName, revName);
   }
 

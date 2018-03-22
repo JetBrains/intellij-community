@@ -42,7 +42,7 @@ public class XmlAttributeValueManipulator extends AbstractElementManipulator<Xml
     final String oldText = element.getText();
     try {
       String textBeforeRange = oldText.substring(0, range.getStartOffset());
-      String textAfterRange = oldText.substring(range.getEndOffset(), oldText.length());
+      String textAfterRange = oldText.substring(range.getEndOffset());
       newContent = oldText.startsWith("'") || oldText.endsWith("'") ?
                    newContent.replace("'", oldText.contains("&#39;") ? "&#39;" : "&apos;") :
                    newContent.replace("\"", oldText.contains("&#34;") ? "&#34;" : "&quot;");

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.pom;
 
 /**
@@ -31,13 +17,26 @@ public interface Navigatable {
   void navigate(boolean requestFocus);
 
   /**
+   * Indicates whether this instance supports navigation of any kind.
+   * Usually this method is called to ensure that navigation is possible.
+   * Note that it is not called if navigation to source is supported,
+   * i.e. {@link #canNavigateToSource()} returns {@code true}.
+   * We assume that this method should return {@code true} in such case,
+   * so implement this method respectively.
+   *
    * @return {@code false} if navigation is not possible for any reason.
    */
   boolean canNavigate();
 
   /**
+   * Indicates whether this instance supports navigation to source (that means some kind of editor).
+   * Note that navigation can be supported even if this method returns {@code false}.
+   * In such cases it is not recommended to do batch navigation for all navigatables
+   * available via {@link com.intellij.openapi.actionSystem.CommonDataKeys#NAVIGATABLE_ARRAY},
+   * because it may lead to opening several modal dialogs.
+   * Use {@link com.intellij.util.OpenSourceUtil#navigate} to process such arrays correctly.
+   *
    * @return {@code false} if navigation to source is not possible for any reason.
-   * Source means some kind of editor
    */
   boolean canNavigateToSource();
 }

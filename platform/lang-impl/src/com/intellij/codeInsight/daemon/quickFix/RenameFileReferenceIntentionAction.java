@@ -61,12 +61,9 @@ class RenameFileReferenceIntentionAction implements IntentionAction, LocalQuickF
   @Override
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     if (isAvailable(project, null, null)) {
-      new WriteCommandAction(project) {
-        @Override
-        protected void run(@NotNull Result result) throws Throwable {
-          invoke(project, null, descriptor.getPsiElement().getContainingFile());
-        }
-      }.execute();
+      WriteCommandAction.writeCommandAction(project).run(() -> {
+        invoke(project, null, descriptor.getPsiElement().getContainingFile());
+      });
     }
   }
 

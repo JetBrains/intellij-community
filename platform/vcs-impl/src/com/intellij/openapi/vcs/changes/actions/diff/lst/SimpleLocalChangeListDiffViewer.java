@@ -127,7 +127,11 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
           data.affectedChangelist.contains(myChangelistId)) {
         // tracker is waiting for initialisation
         // there are only one changelist, so it's safe to fallback to default logic
-        return super.performRediff(indicator);
+        Runnable callback = super.performRediff(indicator);
+        return () -> {
+          callback.run();
+          getStatusPanel().setBusy(true);
+        };
       }
 
       if (data.ranges == null) {
@@ -317,10 +321,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
       List<MySimpleDiffChange> selectedChanges = getSelectedChanges(side);
       if (selectedChanges.isEmpty()) return;
 
-      BitSet selectedLines = new BitSet();
-      for (SimpleDiffChange change : selectedChanges) {
-        selectedLines.set(change.getStartLine(side), change.getEndLine(side));
-      }
+      BitSet selectedLines = getLocalSelectedLines(selectedChanges);
 
       if (ContainerUtil.and(selectedChanges, change -> !change.isFromActiveChangelist())) {
         LocalChangeList changeList = ChangeListManager.getInstance(getProject()).getChangeList(myChangelistId);
@@ -384,10 +385,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
       List<MySimpleDiffChange> activeChanges = getActiveChanges(side);
       if (activeChanges.isEmpty()) return;
 
-      BitSet selectedLines = new BitSet();
-      for (SimpleDiffChange change : activeChanges) {
-        selectedLines.set(change.getStartLine(side), change.getEndLine(side));
-      }
+      BitSet selectedLines = getLocalSelectedLines(activeChanges);
 
       boolean hasExcluded = ContainerUtil.or(activeChanges, MySimpleDiffChange::isExcludedFromCommit);
       myTracker.setExcludedFromCommit(selectedLines, !hasExcluded);
@@ -400,6 +398,17 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
       List<MySimpleDiffChange> selectedChanges = ContainerUtil.findAll(getSelectedChanges(side), MySimpleDiffChange.class);
       return ContainerUtil.filter(selectedChanges, MySimpleDiffChange::isFromActiveChangelist);
     }
+  }
+
+  @NotNull
+  private static BitSet getLocalSelectedLines(@NotNull List<MySimpleDiffChange> changes) {
+    BitSet selectedLines = new BitSet();
+    for (SimpleDiffChange change : changes) {
+      int startLine = change.getStartLine(Side.RIGHT);
+      int endLine = change.getEndLine(Side.RIGHT);
+      selectedLines.set(startLine, startLine == endLine ? startLine + 1 : endLine);
+    }
+    return selectedLines;
   }
 
   private static class TrackerData {

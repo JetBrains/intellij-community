@@ -102,6 +102,11 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
     this.showLoadingNode = showLoadingNode;
   }
 
+  public AsyncTreeModel(@NotNull TreeModel model, boolean showLoadingNode, @NotNull Disposable parent) {
+    this(model, showLoadingNode);
+    Disposer.register(parent, this);
+  }
+
   @Override
   public void dispose() {
     super.dispose();
@@ -534,7 +539,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
       if (model instanceof ChildrenProvider) {
         //noinspection unchecked
         ChildrenProvider<Object> provider = (ChildrenProvider)model;
-        List<Object> children = provider.getChildren(object);
+        List<?> children = provider.getChildren(object);
         if (children == null) throw new ProcessCanceledException(); // cancel this command
         loaded.children = load(children.size(), index -> children.get(index));
       }

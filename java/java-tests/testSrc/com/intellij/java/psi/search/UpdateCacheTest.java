@@ -5,7 +5,6 @@ import com.intellij.JavaTestUtil;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.todo.TodoConfiguration;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
@@ -35,7 +34,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -60,7 +58,7 @@ public class UpdateCacheTest extends PsiTestCase {
     setUpModule();
 
     final String root = JavaTestUtil.getJavaTestDataPath() + "/psi/search/updateCache";
-    PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete);
+    createTestProjectStructure( root);
 
     setUpJdk();
 
@@ -83,13 +81,7 @@ public class UpdateCacheTest extends PsiTestCase {
 
     PsiFile file = PsiFileFactory.getInstance(myProject).createFileFromText("New.java", JavaFileType.INSTANCE, "class A{ Object o;}");
     final PsiFile finalFile = file;
-    file = new WriteAction<PsiFile>() {
-      @Override
-      protected void run(@NotNull Result<PsiFile> result) {
-        PsiFile res = (PsiFile)root.add(finalFile);
-        result.setResult(res);
-      }
-    }.execute().throwException().getResultObject();
+    file = WriteAction.compute(()->(PsiFile)root.add(finalFile));
     assertNotNull(file);
 
     PsiClass objectClass = myJavaFacade.findClass(CommonClassNames.JAVA_LANG_OBJECT, GlobalSearchScope.allScope(getProject()));
@@ -236,19 +228,16 @@ public class UpdateCacheTest extends PsiTestCase {
 
     final VirtualFile dir = root.findChild("aDir");
 
-    new WriteCommandAction.Simple(getProject()) {
-      @Override
-      protected void run() {
-        VirtualFile newFile = createChildData(dir, "New.java");
-        setFileText(newFile, "class A{ Exception e;} //todo");
-      }
-    }.execute().throwException();
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> {
+      VirtualFile newFile = createChildData(dir, "New.java");
+      setFileText(newFile, "class A{ Exception e;} //todo");
+    });
 
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
     PsiTestUtil.addExcludedRoot(myModule, dir);
 
-    PsiClass exceptionClass = myJavaFacade.findClass("java.lang.Exception",GlobalSearchScope.allScope(getProject()));
+    PsiClass exceptionClass = myJavaFacade.findClass("java.lang.Exception", GlobalSearchScope.allScope(getProject()));
     assertNotNull(exceptionClass);
     checkUsages(exceptionClass, new String[]{"1.java"});
     checkTodos(new String[]{});
@@ -264,13 +253,10 @@ public class UpdateCacheTest extends PsiTestCase {
 
     PsiTodoSearchHelper.SERVICE.getInstance(myProject).findFilesWithTodoItems(); // to initialize caches
 
-    new WriteCommandAction.Simple(getProject()) {
-      @Override
-      protected void run() {
-        VirtualFile newFile = createChildData(dir, "New.java");
-        setFileText(newFile, "class A{ Exception e;} //todo");
-      }
-    }.execute().throwException();
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> {
+      VirtualFile newFile = createChildData(dir, "New.java");
+      setFileText(newFile, "class A{ Exception e;} //todo");
+    });
 
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
@@ -284,20 +270,18 @@ public class UpdateCacheTest extends PsiTestCase {
     checkTodos(new String[]{"2.java", "New.java"});
   }
 
-  public void testAddSourceRoot() throws Exception{
+  public void testAddSourceRoot() throws Exception {
     File dir = createTempDirectory();
 
-    final VirtualFile root = LocalFileSystem.getInstance().refreshAndFindFileByPath(dir.getCanonicalPath().replace(File.separatorChar, '/'));
+    final VirtualFile root =
+      LocalFileSystem.getInstance().refreshAndFindFileByPath(dir.getCanonicalPath().replace(File.separatorChar, '/'));
 
-    new WriteCommandAction.Simple(getProject()) {
-      @Override
-      protected void run() {
-        PsiTestUtil.addContentRoot(myModule, root);
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> {
+      PsiTestUtil.addContentRoot(myModule, root);
 
-        VirtualFile newFile = createChildData(root, "New.java");
-        setFileText(newFile, "class A{ Exception e;} //todo");
-      }
-    }.execute().throwException();
+      VirtualFile newFile = createChildData(root, "New.java");
+      setFileText(newFile, "class A{ Exception e;} //todo");
+    });
 
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
@@ -316,13 +300,10 @@ public class UpdateCacheTest extends PsiTestCase {
 
     PsiTodoSearchHelper.SERVICE.getInstance(myProject).findFilesWithTodoItems(); // to initialize caches
 
-    new WriteCommandAction.Simple(getProject()) {
-      @Override
-      protected void run() {
-        VirtualFile newFile = createChildData(root, "New.java");
-        setFileText(newFile, "class A{ Exception e;} //todo");
-      }
-    }.execute().throwException();
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> {
+      VirtualFile newFile = createChildData(root, "New.java");
+      setFileText(newFile, "class A{ Exception e;} //todo");
+    });
 
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
@@ -341,24 +322,22 @@ public class UpdateCacheTest extends PsiTestCase {
     checkTodos(new String[]{"2.java", "New.java"});
   }
 
-  public void testAddProjectRoot() throws Exception{
+  public void testAddProjectRoot() throws Exception {
     File dir = createTempDirectory();
 
-    final VirtualFile root = LocalFileSystem.getInstance().refreshAndFindFileByPath(dir.getCanonicalPath().replace(File.separatorChar, '/'));
+    final VirtualFile root =
+      LocalFileSystem.getInstance().refreshAndFindFileByPath(dir.getCanonicalPath().replace(File.separatorChar, '/'));
 
-    new WriteCommandAction.Simple(getProject()) {
-      @Override
-      protected void run() {
-        PsiTestUtil.addSourceRoot(myModule, root);
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> {
+      PsiTestUtil.addSourceRoot(myModule, root);
 
-        VirtualFile newFile = createChildData(root, "New.java");
-        setFileText(newFile, "class A{ Exception e;} //todo");
-      }
-    }.execute().throwException();
+      VirtualFile newFile = createChildData(root, "New.java");
+      setFileText(newFile, "class A{ Exception e;} //todo");
+    });
 
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
-    PsiSearchHelper.SERVICE.getInstance(myProject).processAllFilesWithWord("aaa", GlobalSearchScope.allScope(myProject), psiFile -> true, true); // to initialize caches
+    PsiSearchHelper.getInstance(myProject).processAllFilesWithWord("aaa", GlobalSearchScope.allScope(myProject), psiFile -> true, true); // to initialize caches
 
 /*
     rootManager.startChange();
@@ -378,13 +357,10 @@ public class UpdateCacheTest extends PsiTestCase {
 
     PsiTodoSearchHelper.SERVICE.getInstance(myProject).findFilesWithTodoItems(); // to initialize caches
 
-    new WriteCommandAction.Simple(getProject()) {
-      @Override
-      protected void run() {
-        VirtualFile newFile = createChildData(root, "New.java");
-        setFileText(newFile, "class A{ Exception e;} //todo");
-      }
-    }.execute().throwException();
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> {
+      VirtualFile newFile = createChildData(root, "New.java");
+      setFileText(newFile, "class A{ Exception e;} //todo");
+    });
 
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
