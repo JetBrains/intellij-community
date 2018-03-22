@@ -578,8 +578,11 @@ class BaseInterpreterInterface:
                     os.environ[env_name] = "%s%c%s" % (existing_value, os.path.pathsep, value)
                 else:
                     os.environ[env_name] = value
+                if env_name == "PYTHONPATH":
+                    sys.path.append(value)
 
             del debugger_options[env_key]
+
         def do_connect_to_debugger():
             try:
                 # Try to import the packages needed to attach the debugger
