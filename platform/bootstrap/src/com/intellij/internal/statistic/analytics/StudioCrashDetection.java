@@ -20,19 +20,32 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileFilter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-/** Static utility methods to detect when Android Studio has crashed. */
+/**
+ * Static utility methods to detect when Android Studio has crashed.
+ * <p>
+ *   File format of the record file:<br>
+ *   1st line: Android Studio build version number<br>
+ *   2nd line: JVM runtime version<br>
+ *   3rd line: JVM start time (milliseconds since 1970) (optional)<br>
+ *   4th line: PID of Android Studio (optional)<br>
+ * </p>
+ */
 public class StudioCrashDetection {
-  private StudioCrashDetection() {}
-
   private static final String RECORD_FILE_KEY = "studio.record.file";
   private static final String PLATFORM_PREFIX = "AndroidStudio";
-
   private static final String LINE_SEPARATOR = System.getProperty("line.separator");
+
+  private StudioCrashDetection() {
+  }
 
   /**
    * Creates a record of the application starting, unique to this run.
@@ -48,8 +61,7 @@ public class StudioCrashDetection {
         // We use a system property to pass the filename across classloaders.
         System.setProperty(RECORD_FILE_KEY, f.getAbsolutePath());
 
-        FileWriter fw = new FileWriter(f);
-        try {
+        try (FileWriter fw = new FileWriter(f)) {
           File buildInfo = new File(PathManager.getHomePath(), "build.txt");
           if (!buildInfo.exists() && SystemInfo.isMac) {
             // On a Mac, also try to find it under Resources.
@@ -59,50 +71,67 @@ public class StudioCrashDetection {
           String buildVersion = "<unknown>";
           if (buildInfo.exists()) {
             List<String> lines = FileUtil.loadLines(buildInfo);
-            if (lines.size() > 0) {
+            if (!lines.isEmpty()) {
               buildVersion = lines.get(0);
             }
           }
           fw.write(buildVersion);
           fw.write(LINE_SEPARATOR);
           fw.write(System.getProperty("java.runtime.version"));
-        } finally {
-          fw.close();
+          fw.write(LINE_SEPARATOR);
+          fw.write(String.valueOf(ManagementFactory.getRuntimeMXBean().getStartTime()));
+          fw.write(LINE_SEPARATOR);
+          fw.write(String.valueOf(getMyPID()));
         }
       }
-    } catch (IOException ex) {
+    }
+    catch (IOException ex) {
       // continue anyway.
     }
   }
 
-  /** Updates the record created by {@link #start} in this run with the accurate version number. */
-  public static void updateRecordedVersionNumber(@NotNull String version) {
-      String recordFileName = System.getProperty(RECORD_FILE_KEY);
-
-      if (recordFileName != null) {
-        File recordFile = new File(recordFileName);
-        try {
-          List<String> lines = FileUtil.loadLines(recordFile);
-          lines.set(0, version);
-
-          FileWriter fw = new FileWriter(recordFile);
-          try {
-            for (String line : lines) {
-              fw.write(line);
-              fw.write(LINE_SEPARATOR);
-            }
-          } catch (IOException ex) {
-            // continue anyway.
-          } finally {
-            fw.close();
-          }
-        } catch (IOException ex) {
-          // continue anyway.
-        }
+  private static long getMyPID() {
+    String pidAndMachineName = ManagementFactory.getRuntimeMXBean().getName();
+    String[] split = pidAndMachineName.split("@");
+    long pid = -1;
+    if (split.length == 2) {
+      try {
+        pid = Long.parseLong(split[0]);
       }
+      catch (NumberFormatException ignore) {
+      }
+    }
+    return pid;
   }
 
-  /** Deletes the record created by {@link #start} for this run, if it exists. */
+  /**
+   * Updates the record created by {@link #start} in this run with the accurate version number.
+   */
+  public static void updateRecordedVersionNumber(@NotNull String version) {
+    String recordFileName = System.getProperty(RECORD_FILE_KEY);
+
+    if (recordFileName != null) {
+      File recordFile = new File(recordFileName);
+      try {
+        List<String> lines = FileUtil.loadLines(recordFile);
+        lines.set(0, version);
+
+        try (FileWriter fw = new FileWriter(recordFile)) {
+          for (String line : lines) {
+            fw.write(line);
+            fw.write(LINE_SEPARATOR);
+          }
+        }
+      }
+      catch (IOException ex) {
+        // continue anyway.
+      }
+    }
+  }
+
+  /**
+   * Deletes the record created by {@link #start} for this run, if it exists.
+   */
   public static void stop() {
     String recordFileName = System.getProperty(RECORD_FILE_KEY);
     if (recordFileName != null) {
@@ -111,28 +140,34 @@ public class StudioCrashDetection {
     }
   }
 
-  /** Returns and deletes any records created by {@link #start} in previous runs. */
-  public static List<String> reapCrashDescriptions() {
+  /**
+   * Returns and deletes any records created by {@link #start} in previous runs.
+   */
+  public static List<StudioCrashDetails> reapCrashDescriptions() {
     File[] previousRecords = new File(PathManager.getTempPath()).listFiles(
       new FileFilter() {
         final String recordFile = System.getProperty(RECORD_FILE_KEY);
-        @Override public boolean accept(File pathname) {
+
+        @Override
+        public boolean accept(File pathname) {
           return pathname.getName().startsWith(PLATFORM_PREFIX) && !pathname.getAbsolutePath().equals(recordFile);
         }
       });
-    ArrayList<String> descriptions = new ArrayList<>();
+    ArrayList<StudioCrashDetails> crashes = new ArrayList<>();
     if (previousRecords != null) {
       for (File record : previousRecords) {
-        String description = "<unknown>";
+        StudioCrashDetails crash;
         try {
-          description = FileUtil.loadFile(record);
-        } catch (IOException ignored) {
+          crash = StudioCrashDetails.loadFromRecordFile(record);
+        }
+        catch (IOException ignored) {
+          crash = StudioCrashDetails.UNKNOWN;
         }
         if (FileUtil.delete(record)) {
-          descriptions.add(description);
+          crashes.add(crash);
         }
       }
     }
-    return descriptions;
+    return crashes;
   }
 }

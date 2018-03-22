@@ -35,6 +35,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.actions.*;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.internal.statistic.analytics.StudioCrashDetails;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.internal.statistic.analytics.StudioCrashDetection;
 import com.intellij.jna.JnaLoader;
@@ -331,7 +332,7 @@ public class SystemHealthMonitor implements ApplicationComponent {
     });
   }
 
-  public static void trackCrashes(@NotNull List<String> descriptions) {
+  public static void trackCrashes(@NotNull List<StudioCrashDetails> descriptions) {
     if (descriptions.isEmpty()) {
       return;
     }
@@ -733,7 +734,7 @@ public class SystemHealthMonitor implements ApplicationComponent {
     }
   }
 
-  private static void reportCrashes(@NotNull List<String> descriptions) {
+  private static void reportCrashes(@NotNull List<StudioCrashDetails> descriptions) {
     if (!UsageTracker.getInstance().getAnalyticsSettings().hasOptedIn()) {
       return;
     }
@@ -783,18 +784,18 @@ public class SystemHealthMonitor implements ApplicationComponent {
   }
 
   private static class AndroidStudioCrashEvents extends IdeaLoggingEvent {
-    private List<String> myDescriptions;
+    private List<StudioCrashDetails> myCrashDetails;
 
-    public AndroidStudioCrashEvents(@NotNull List<String> descriptions) {
+    public AndroidStudioCrashEvents(@NotNull List<StudioCrashDetails> crashDetails) {
       super("", null);
-      myDescriptions = descriptions;
+      myCrashDetails = crashDetails;
     }
 
     @Nullable
     @Override
     public Object getData() {
       return ImmutableMap.of("Type", "Crashes", // keep consistent with the error reporter in android plugin
-                             "descriptions", myDescriptions);
+                             "crashDetails", myCrashDetails);
     }
   }
 }
