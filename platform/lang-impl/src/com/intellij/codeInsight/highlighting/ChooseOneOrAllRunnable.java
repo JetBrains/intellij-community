@@ -65,8 +65,8 @@ public abstract class ChooseOneOrAllRunnable<T extends PsiElement> implements Ru
 
       final IPopupChooserBuilder builder = JBPopupFactory.getInstance()
         .createPopupChooserBuilder(model)
-        .setRenderer((list, value, index, isSelected, cellHasFocus) ->
-          ((ListCellRenderer<Object>)renderer).getListCellRendererComponent(list, value, index, isSelected, cellHasFocus))
+        .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
+        .setRenderer(renderer)
         .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
         .setItemChosenCallback((selectedValue) -> {
           if (selectedValue.equals(selectAll)) {
