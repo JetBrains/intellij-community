@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.ui.laf.darcula.ui;
 
-import com.intellij.ide.ui.laf.IconCache;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.*;
 import sun.swing.SwingUtilities2;

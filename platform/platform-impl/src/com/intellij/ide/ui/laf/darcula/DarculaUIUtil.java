@@ -16,7 +16,6 @@
 package com.intellij.ide.ui.laf.darcula;
 
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.ui.laf.IntelliJLaf;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaEditorTextFieldBorder;
 import com.intellij.openapi.editor.event.EditorMouseAdapter;
@@ -114,7 +113,7 @@ public class DarculaUIUtil {
   }
 
   public static void paintFocusOval(Graphics2D g, float x, float y, float width, float height) {
-    g.setPaint(IntelliJLaf.isGraphite() ? GRAPHITE_COLOR : REGULAR_COLOR);
+    g.setPaint(UIUtil.isGraphite() ? GRAPHITE_COLOR : REGULAR_COLOR);
 
     float blw = bw() + lw(g);
     Path2D shape = new Path2D.Float(Path2D.WIND_EVEN_ODD);
@@ -138,7 +137,7 @@ public class DarculaUIUtil {
   }
 
   public static void paintFocusBorder(Graphics2D g, int width, int height, float arc, boolean symmetric) {
-    g.setPaint(IntelliJLaf.isGraphite() ? GRAPHITE_COLOR : REGULAR_COLOR);
+    g.setPaint(UIUtil.isGraphite() ? GRAPHITE_COLOR : REGULAR_COLOR);
     doPaint(g, width, height, arc, symmetric);
   }
 

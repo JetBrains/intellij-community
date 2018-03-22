@@ -15,14 +15,9 @@
  */
 package com.intellij.ide.ui.laf.intellij;
 
-import com.intellij.ide.ui.laf.IconCache;
-import com.intellij.ide.ui.laf.IntelliJLaf;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
 import com.intellij.ui.Gray;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.MacUIUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
@@ -101,7 +96,7 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
     if (!b.isEnabled()) {
       return Gray.xF1;
     } else if (isDefaultButton(b)) {
-      return IntelliJLaf.isGraphite() ?
+      return UIUtil.isGraphite() ?
           new GradientPaint(0, i.top, new Color(0xb2b2b7), 0, h - (i.top + i.bottom), new Color(0x929297)) :
           new GradientPaint(0, i.top, new Color(0x68b2fa), 0, b.getHeight() - (i.top + i.bottom), new Color(0x0e80ff));
     } else {
@@ -118,7 +113,7 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
     if (!b.isEnabled()) {
       return new GradientPaint(0, i.top, Gray.xD2, 0, h - (i.top + i.bottom), Gray.xC3);
     } else if (isDefaultButton(b)) {
-      return IntelliJLaf.isGraphite() ?
+      return UIUtil.isGraphite() ?
           new GradientPaint(0, i.top, new Color(0xa5a5ab), 0, h - (i.top + i.bottom), new Color(0x7d7d83)) :
           new GradientPaint(0, i.top, new Color(0x4ba0f8), 0, h - (i.top + i.bottom), new Color(0x095eff));
     } else {
