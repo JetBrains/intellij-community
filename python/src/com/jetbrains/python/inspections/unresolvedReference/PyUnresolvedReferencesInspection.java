@@ -553,7 +553,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         if (qualifier != null) {
           final PyType type = myTypeEvalContext.getType(qualifier);
           if (type != null) {
-            if (ignoreUnresolvedMemberForType(type, reference, refName)) {
+            if (ignoreUnresolvedMemberForType(type, reference, refName) || isDeclaredInSlots(type, refName)) {
               return;
             }
             addCreateMemberFromUsageFixes(type, reference, refText, actions);
@@ -572,10 +572,6 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
                                                ((PyOperatorReference)reference).getReadableOperatorName());
               }
               else {
-                if (isDeclaredInSlots(classType, refName)) {
-                  return;
-                }
-
                 description = PyBundle.message("INSP.unresolved.ref.$0.for.class.$1", refText, type.getName());
               }
               markedQualified = true;
@@ -671,19 +667,14 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     }
 
     private boolean isDeclaredInSlots(@NotNull PyType type, @NotNull String attrName) {
-      if (type instanceof PyClassType) {
-        final PyClass cls = ((PyClassType)type).getPyClass();
-
-        return StreamEx
-          .of(cls)
-          .append(cls.getAncestorClasses(myTypeEvalContext))
-          .nonNull()
-          .filter(c -> c.isNewStyleClass(myTypeEvalContext))
-          .flatCollection(PyClass::getOwnSlots)
-          .anyMatch(attrName::equals);
-      }
-
-      return false;
+      return PyTypeUtil.toStream(type)
+                       .select(PyClassType.class)
+                       .map(PyClassType::getPyClass)
+                       .flatMap(cls -> StreamEx.of(cls).append(cls.getAncestorClasses(myTypeEvalContext)))
+                       .nonNull()
+                       .filter(c -> c.isNewStyleClass(myTypeEvalContext))
+                       .flatCollection(PyClass::getOwnSlots)
+                       .anyMatch(attrName::equals);
     }
 
     private static void addInstallPackageAction(List<LocalQuickFix> actions, String packageName, Module module, Sdk sdk) {
