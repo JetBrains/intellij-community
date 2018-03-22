@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.navigation.BackgroundUpdaterTask;
+import com.intellij.codeInsight.navigation.ListBackgroundUpdaterTask;
 import com.intellij.find.FindUtil;
 import com.intellij.ide.PsiCopyPasteManager;
 import com.intellij.ide.util.PsiElementListCellRenderer;
@@ -56,7 +57,7 @@ public class PsiElementListNavigator {
   }
 
   public static void openTargets(MouseEvent e, NavigatablePsiElement[] targets, String title, final String findUsagesTitle, ListCellRenderer listRenderer) {
-    openTargets(e, targets, title, findUsagesTitle, listRenderer, null);
+    openTargets(e, targets, title, findUsagesTitle, listRenderer, (BackgroundUpdaterTask)null);
   }
 
   public static void openTargets(MouseEvent e,
@@ -78,7 +79,7 @@ public class PsiElementListNavigator {
   }
 
   public static void openTargets(Editor e, NavigatablePsiElement[] targets, String title, final String findUsagesTitle, ListCellRenderer listRenderer) {
-    openTargets(e, targets, title, findUsagesTitle, listRenderer, null);
+    openTargets(e, targets, title, findUsagesTitle, listRenderer, (BackgroundUpdaterTask)null);
   }
 
   public static void openTargets(Editor e, NavigatablePsiElement[] targets, String title, final String findUsagesTitle,
@@ -202,5 +203,25 @@ public class PsiElementListNavigator {
       listUpdaterTask.init(popup, builder.getBackgroundUpdater(), usageView);
     }
     return popup;
+  }
+
+  /**
+   * @deprecated use {@link #openTargets(Editor, NavigatablePsiElement[], String, String, ListCellRenderer, BackgroundUpdaterTask)} instead
+   */
+  public static void openTargets(Editor e, NavigatablePsiElement[] targets, String title, final String findUsagesTitle,
+                                 ListCellRenderer listRenderer, @Nullable ListBackgroundUpdaterTask listUpdaterTask) {
+    openTargets(e, targets, title, findUsagesTitle, listRenderer, (BackgroundUpdaterTask)listUpdaterTask);
+  }
+
+  /**
+   * @deprecated use {@link #openTargets(MouseEvent, NavigatablePsiElement[], String, String, ListCellRenderer, BackgroundUpdaterTask)} instead
+   */
+  public static void openTargets(MouseEvent e,
+                                 NavigatablePsiElement[] targets,
+                                 String title,
+                                 final String findUsagesTitle,
+                                 ListCellRenderer listRenderer,
+                                 @Nullable ListBackgroundUpdaterTask listUpdaterTask) {
+    openTargets(e, targets, title, findUsagesTitle, listRenderer, (BackgroundUpdaterTask)listUpdaterTask);
   }
 }

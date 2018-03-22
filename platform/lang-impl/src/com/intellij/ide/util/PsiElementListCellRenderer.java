@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
+import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FileStatus;
@@ -311,6 +312,20 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
       String containerText = getContainerText(element, elementText);
       return containerText == null ? elementText : elementText + " " + containerText;
     });
+  }
+
+  /**
+   * @deprecated use {@link #installSpeedSearch(IPopupChooserBuilder)} instead
+   */
+  public void installSpeedSearch(PopupChooserBuilder<?> builder) {
+    installSpeedSearch((IPopupChooserBuilder)builder);
+  }
+
+  /**
+   * @deprecated use {@link #installSpeedSearch(IPopupChooserBuilder, boolean)} instead
+   */
+  public void installSpeedSearch(PopupChooserBuilder<?> builder, boolean includeContainerText) {
+    installSpeedSearch((IPopupChooserBuilder)builder, includeContainerText);
   }
 
   public void installSpeedSearch(IPopupChooserBuilder builder) {
