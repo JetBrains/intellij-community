@@ -22,7 +22,6 @@ import com.intellij.find.FindUtil;
 import com.intellij.ide.PsiCopyPasteManager;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.progress.ProgressManager;
@@ -50,7 +49,6 @@ import java.util.Arrays;
 import java.util.List;
 
 public class PsiElementListNavigator {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.PsiElementListNavigator");
 
   private PsiElementListNavigator() {
   }
