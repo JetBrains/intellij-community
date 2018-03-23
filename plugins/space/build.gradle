@@ -11,11 +11,7 @@ plugins {
 applyKotlinJVM()
 
 dependencies {
-    compile project(':runtime')
-    compile project(':runtime:runtime-jvm')
-    compile project(':client')
-    compile project(':client:client-jvm')
-    compile project(':client-api')
+    compile project(':app:app-state')
 
     compile "io.ktor:ktor-server-core:$ktor_version"
     compile "io.ktor:ktor-server-jetty:$ktor_version"
