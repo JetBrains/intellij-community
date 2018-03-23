@@ -31,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public abstract class BranchPopupBuilder {
-  @NotNull private final VcsLogDataPack myDataPack;
+  @NotNull protected final VcsLogDataPack myDataPack;
   @Nullable private final Collection<VirtualFile> myVisibleRoots;
   @Nullable private final List<List<String>> myRecentItems;
 
@@ -44,15 +44,15 @@ public abstract class BranchPopupBuilder {
   }
 
   @NotNull
-  protected abstract AnAction createAction(@NotNull String name);
+  protected abstract AnAction createAction(@NotNull String name, @NotNull Collection<VcsRef> refs);
 
   protected void createRecentAction(@NotNull DefaultActionGroup actionGroup, @NotNull List<String> recentItem) {
     assert myRecentItems == null;
   }
 
   @NotNull
-  protected AnAction createCollapsedAction(String actionName) {
-    return createAction(actionName);
+  protected AnAction createCollapsedAction(@NotNull String actionName, @NotNull Collection<VcsRef> refs) {
+    return createAction(actionName, refs);
   }
 
   public ActionGroup build() {
@@ -79,10 +79,11 @@ public abstract class BranchPopupBuilder {
     return filteredGroups;
   }
 
+  @NotNull
   private DefaultActionGroup createActions(@NotNull Groups groups) {
     DefaultActionGroup actionGroup = new DefaultActionGroup();
-    for (String actionName : groups.singletonGroups) {
-      actionGroup.add(createAction(actionName));
+    for (Map.Entry<String, Collection<VcsRef>> entry : groups.singletonGroups.entrySet()) {
+      actionGroup.add(createAction(entry.getKey(), entry.getValue()));
     }
     if (!groups.recentGroups.isEmpty()) {
       actionGroup.addSeparator("Recent");
@@ -90,20 +91,20 @@ public abstract class BranchPopupBuilder {
         createRecentAction(actionGroup, recentItem);
       }
     }
-    for (String actionName : groups.favoriteGroups) {
-      actionGroup.add(createAction(actionName));
+    for (Map.Entry<String, Collection<VcsRef>> entry : groups.favoriteGroups.entrySet()) {
+      actionGroup.add(createAction(entry.getKey(), entry.getValue()));
     }
-    for (Map.Entry<String, TreeSet<String>> group : groups.expandedGroups.entrySet()) {
+    for (Map.Entry<String, TreeMap<String, Collection<VcsRef>>> group : groups.expandedGroups.entrySet()) {
       actionGroup.addSeparator(group.getKey());
-      for (String actionName : group.getValue()) {
-        actionGroup.add(createAction(actionName));
+      for (Map.Entry<String, Collection<VcsRef>> entry : group.getValue().entrySet()) {
+        actionGroup.add(createAction(entry.getKey(), entry.getValue()));
       }
     }
     actionGroup.addSeparator();
-    for (Map.Entry<String, TreeSet<String>> group : groups.collapsedGroups.entrySet()) {
+    for (Map.Entry<String, TreeMap<String, Collection<VcsRef>>> group : groups.collapsedGroups.entrySet()) {
       DefaultActionGroup popupGroup = new DefaultActionGroup(group.getKey(), true);
-      for (String actionName : group.getValue()) {
-        popupGroup.add(createCollapsedAction(actionName));
+      for (Map.Entry<String, Collection<VcsRef>> entry : group.getValue().entrySet()) {
+        popupGroup.add(createCollapsedAction(entry.getKey(), entry.getValue()));
       }
       actionGroup.add(popupGroup);
     }
@@ -111,11 +112,11 @@ public abstract class BranchPopupBuilder {
   }
 
   private static class Groups {
-    private final TreeSet<String> favoriteGroups = ContainerUtil.newTreeSet();
-    private final TreeSet<String> singletonGroups = ContainerUtil.newTreeSet();
+    private final TreeMap<String, Collection<VcsRef>> favoriteGroups = ContainerUtil.newTreeMap();
+    private final TreeMap<String, Collection<VcsRef>> singletonGroups = ContainerUtil.newTreeMap();
     private final List<List<String>> recentGroups = ContainerUtil.newArrayList();
-    private final TreeMap<String, TreeSet<String>> expandedGroups = ContainerUtil.newTreeMap();
-    private final TreeMap<String, TreeSet<String>> collapsedGroups = ContainerUtil.newTreeMap();
+    private final TreeMap<String, TreeMap<String, Collection<VcsRef>>> expandedGroups = ContainerUtil.newTreeMap();
+    private final TreeMap<String, TreeMap<String, Collection<VcsRef>>> collapsedGroups = ContainerUtil.newTreeMap();
   }
 
   private static void putActionsForReferences(@NotNull VcsLogDataPack pack, @NotNull List<RefGroup> references, @NotNull Groups actions) {
@@ -123,20 +124,21 @@ public abstract class BranchPopupBuilder {
       if (refGroup instanceof SingletonRefGroup) {
         VcsRef ref = ((SingletonRefGroup)refGroup).getRef();
         if (isFavorite(pack, ref)) {
-          actions.favoriteGroups.add(refGroup.getName());
+          append(actions.favoriteGroups, refGroup.getName(), ref);
         }
         else {
-          actions.singletonGroups.add(refGroup.getName());
+          append(actions.singletonGroups, refGroup.getName(), ref);
         }
       }
       else {
-        TreeMap<String, TreeSet<String>> groups = refGroup.isExpanded() ? actions.expandedGroups : actions.collapsedGroups;
-        TreeSet<String> groupActions = groups.computeIfAbsent(refGroup.getName(), key -> new TreeSet<>());
+        TreeMap<String, TreeMap<String, Collection<VcsRef>>> groups =
+          refGroup.isExpanded() ? actions.expandedGroups : actions.collapsedGroups;
+        TreeMap<String, Collection<VcsRef>> groupActions = groups.computeIfAbsent(refGroup.getName(), key -> new TreeMap<>());
         for (VcsRef ref : refGroup.getRefs()) {
           if (isFavorite(pack, ref)) {
-            actions.favoriteGroups.add(ref.getName());
+            append(actions.favoriteGroups, ref.getName(), ref);
           }
-          groupActions.add(ref.getName());
+          append(groupActions, ref.getName(), ref);
         }
       }
     }
@@ -144,5 +146,13 @@ public abstract class BranchPopupBuilder {
 
   public static boolean isFavorite(@NotNull VcsLogDataPack pack, @NotNull VcsRef ref) {
     return pack.getLogProviders().get(ref.getRoot()).getReferenceManager().isFavorite(ref);
+  }
+
+  private static <T> void append(@NotNull TreeMap<String, Collection<T>> map, @NotNull String key, @NotNull T value) {
+    append(map, key, Collections.singleton(value));
+  }
+
+  private static <T> void append(@NotNull TreeMap<String, Collection<T>> map, @NotNull String key, @NotNull Collection<T> values) {
+    map.computeIfAbsent(key, k -> new HashSet<>()).addAll(values);
   }
 }

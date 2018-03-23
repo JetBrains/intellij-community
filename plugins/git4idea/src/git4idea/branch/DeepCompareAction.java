@@ -25,10 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.VcsLogDataKeys;
-import com.intellij.vcs.log.VcsLogDataPack;
-import com.intellij.vcs.log.VcsLogDataProvider;
-import com.intellij.vcs.log.VcsLogUi;
+import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogBranchFilterImpl;
 import com.intellij.vcs.log.ui.filter.BranchPopupBuilder;
 import com.intellij.vcs.log.util.VcsLogUtil;
@@ -81,12 +78,12 @@ public class DeepCompareAction extends ToggleAction implements DumbAware {
 
   private static void selectBranchAndPerformAction(@NotNull VcsLogDataPack dataPack,
                                                    @NotNull AnActionEvent event,
-                                                   @NotNull final Consumer<String> consumer,
+                                                   @NotNull Consumer<String> consumer,
                                                    @NotNull Collection<VirtualFile> visibleRoots) {
     ActionGroup actionGroup = new BranchPopupBuilder(dataPack, visibleRoots, null) {
       @NotNull
       @Override
-      protected AnAction createAction(@NotNull final String name) {
+      protected AnAction createAction(@NotNull String name, @NotNull Collection<VcsRef> refs) {
         return new DumbAwareAction(name) {
           @Override
           public void actionPerformed(AnActionEvent e) {

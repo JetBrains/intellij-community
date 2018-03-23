@@ -23,7 +23,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.popup.KeepingPopupOpenAction;
-import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.list.ListPopupModel;
@@ -320,20 +319,6 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     return super.createPopup(parent, step, parentValue);
   }
 
-  private static <T> T getSpecificAction(Object value, @NotNull Class<T> clazz) {
-    if (value instanceof PopupFactoryImpl.ActionItem) {
-      AnAction action = ((PopupFactoryImpl.ActionItem)value).getAction();
-      if (clazz.isInstance(action)) {
-        return clazz.cast(action);
-      }
-      else if (action instanceof EmptyAction.MyDelegatingActionGroup) {
-        ActionGroup group = ((EmptyAction.MyDelegatingActionGroup)action).getDelegate();
-        return clazz.isInstance(group) ? clazz.cast(group) : null;
-      }
-    }
-    return null;
-  }
-
   @Override
   protected MyPopupListElementRenderer getListElementRenderer() {
     if (myListElementRenderer == null) {
@@ -483,7 +468,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
       saveState();
       updateActionText();
     }
-    
+
     private void updateActionText() {
       getTemplatePresentation().setText(myIsExpanded ? myToCollapseText : myToExpandText);
     }
