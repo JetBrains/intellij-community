@@ -12,6 +12,7 @@ import com.intellij.ui.components.Label
 import com.intellij.ui.layout.*
 import com.intellij.util.SmartList
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import net.miginfocom.layout.BoundSize
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.ConstraintParser
@@ -53,8 +54,8 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       row.apply {
         val separatorComponent = SeparatorComponent(0, OnePixelDivider.BACKGROUND, null)
         val cc = CC()
-        cc.vertical.gapBefore = gapToBoundSize(VERTICAL_GAP * 3, false)
-        cc.vertical.gapAfter = gapToBoundSize(VERTICAL_GAP * 2, false)
+        cc.vertical.gapBefore = gapToBoundSize(UIUtil.LARGE_VGAP, false)
+        cc.vertical.gapAfter = gapToBoundSize(UIUtil.DEFAULT_VGAP * 2, false)
         componentConstraints.put(separatorComponent, cc)
         separatorComponent()
       }
@@ -80,7 +81,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
         return ComponentPanelBuilder.computeCommentInsets(firstComponent, true).left
       }
       else {
-        return HORIZONTAL_GAP * 3
+        return UIUtil.DEFAULT_HGAP * 3
       }
     }
   }

@@ -14,6 +14,7 @@ import com.intellij.util.io.exists
 import com.intellij.util.io.outputStream
 import com.intellij.util.io.sanitizeFileName
 import com.intellij.util.io.write
+import io.netty.util.internal.SystemPropertyUtil
 import net.miginfocom.layout.Grid
 import net.miginfocom.layout.LayoutUtil
 import net.miginfocom.swing.MigLayout
@@ -139,11 +140,12 @@ class UiDslTest {
     val actualLayoutJson = configurationToJson(component, component.layout as MigLayout, false, rectangles.joinToString(", ") { "[${it.joinToString(", ")}]" })
     try {
       val expectedLayoutDataFile = Paths.get(PlatformTestUtil.getPlatformTestDataPath(), "ui", "layout", "$imageName.yml")
-      if (expectedLayoutDataFile.exists()) {
-        Assertions.assertThat(actualLayoutJson).isEqualTo(expectedLayoutDataFile)
+      val isUpdateSnapshots = SystemPropertyUtil.getBoolean("test.update.snapshots", false)
+      if (!expectedLayoutDataFile.exists() || isUpdateSnapshots) {
+        expectedLayoutDataFile.write(actualLayoutJson)
       }
       else {
-        expectedLayoutDataFile.write(actualLayoutJson)
+        Assertions.assertThat(actualLayoutJson).isEqualTo(expectedLayoutDataFile)
       }
 
       if (imageDir.isNullOrEmpty()) {
@@ -151,7 +153,7 @@ class UiDslTest {
       }
 
       val imagePath = Paths.get(imageDir, "$imageName.png")
-      if (!imagePath.exists()) {
+      if (!imagePath.exists() || isUpdateSnapshots) {
         System.out.println("Write a new snapshot image ${imagePath.fileName}")
         saveImage(imagePath)
         return

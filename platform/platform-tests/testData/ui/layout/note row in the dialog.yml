@@ -12,10 +12,10 @@ componentConstrains:
     spanX: 2097051
     vertical:
       gapAfter:
-        min: &id001 {horizontal: false, operation: 100, unit: 0, unitString: px, value: 10.0}
+        min: &id001 {horizontal: false, operation: 100, unit: 0, unitString: px, value: 8.0}
         preferred: *id001
       gapBefore:
-        min: &id002 {horizontal: false, operation: 100, unit: 0, unitString: px, value: 5.0}
+        min: &id002 {horizontal: false, operation: 100, unit: 0, unitString: px, value: 4.0}
         preferred: *id002
     wrap: true
   'JLabel #1': {}
@@ -25,11 +25,11 @@ componentConstrains:
     spanX: 2097051
     vertical:
       gapAfter:
-        min: &id003 {horizontal: false, operation: 100, unit: 0, unitString: px, value: 10.0}
+        min: &id003 {horizontal: false, operation: 100, unit: 0, unitString: px, value: 8.0}
         preferred: *id003
       gapBefore:
-        min: &id004 {horizontal: false, operation: 100, unit: 0, unitString: px, value: 15.0}
+        min: &id004 {horizontal: false, operation: 100, unit: 0, unitString: px, value: 12.0}
         preferred: *id004
     wrap: true
-rectangles: '[0, 0, 512, 47], [0, 52, 99, 26], [119, 52, 393, 26], [119, 83, 393,
-  23], [0, 111, 512, 41]'
+rectangles: '[0, 0, 512, 44], [0, 48, 99, 26], [119, 48, 393, 26], [119, 78, 393,
+  23], [0, 105, 512, 36]'
