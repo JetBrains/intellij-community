@@ -267,16 +267,15 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
       place.add(shred);
       info.newInjectionHostRange = shred.getSmartPointer().getRange();
     }
+    DocumentWindowImpl documentWindow = new DocumentWindowImpl(hostDocument, place);
+    String fileName = PathUtil.makeFileName(hostVirtualFile.getName(), injectedFileExtension);
+
+    ASTNode parsedNode =
+      parseFile(language, forcedLanguage, documentWindow, hostVirtualFile, hostDocument, hostPsiFile, project, documentWindow.getText(),
+                placeInfos, decodedChars, fileName);
+    PsiFile psiFile = (PsiFile)parsedNode.getPsi();
+    InjectedFileViewProvider viewProvider = (InjectedFileViewProvider)psiFile.getViewProvider();
     synchronized (InjectedLanguageManagerImpl.ourInjectionPsiLock) {
-      DocumentWindowImpl documentWindow = new DocumentWindowImpl(hostDocument, place);
-      String fileName = PathUtil.makeFileName(hostVirtualFile.getName(), injectedFileExtension);
-
-      ASTNode parsedNode =
-        parseFile(language, forcedLanguage, documentWindow, hostVirtualFile, hostDocument, hostPsiFile, project, documentWindow.getText(),
-                  placeInfos, decodedChars, fileName);
-      PsiFile psiFile = (PsiFile)parsedNode.getPsi();
-      InjectedFileViewProvider viewProvider = (InjectedFileViewProvider)psiFile.getViewProvider();
-
       cacheEverything(place, documentWindow, viewProvider, psiFile);
 
       PsiFile cachedPsiFile = documentManager.getCachedPsiFile(documentWindow);
@@ -551,65 +550,64 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
                                  @NotNull PsiFile hostPsiFile,
                                  @NotNull ProgressIndicator indicator,
                                  @NotNull ASTNode oldRoot, @NotNull ASTNode newRoot) {
-    synchronized (InjectedLanguageManagerImpl.ourInjectionPsiLock) {
-      Project project = hostPsiFile.getProject();
-      String newText = oldDocumentWindow.getText();
-      FileASTNode oldNode = oldInjectedPsi.getNode();
-      InjectedFileViewProvider oldInjectedPsiViewProvider = (InjectedFileViewProvider)oldInjectedPsi.getViewProvider();
-      String oldPsiText = oldNode.getText();
-      if (newText.equals(oldPsiText)) return ()->true;
-      if (oldDocumentWindow.isOneLine() && newText.contains("\n") != oldPsiText.contains("\n")) {
-        // one-lineness changed, e.g. when enter pressed in the middle of a string literal
+    Project project = hostPsiFile.getProject();
+    String newText = oldDocumentWindow.getText();
+    FileASTNode oldNode = oldInjectedPsi.getNode();
+    InjectedFileViewProvider oldInjectedPsiViewProvider = (InjectedFileViewProvider)oldInjectedPsi.getViewProvider();
+    String oldPsiText = oldNode.getText();
+    if (newText.equals(oldPsiText)) return ()->true;
+    if (oldDocumentWindow.isOneLine() && newText.contains("\n") != oldPsiText.contains("\n")) {
+      // one-lineness changed, e.g. when enter pressed in the middle of a string literal
+      return null;
+    }
+    Place oldPlace = oldDocumentWindow.getShreds();
+    // can be different from newText if decode fails in the middle and we'll have to shrink the document
+    StringBuilder newDocumentText = new StringBuilder(newText.length());
+    // we need escaper but it only works with committed PSI,
+    // so we get the committed (but not yet applied) PSI from the commit-document-in-the-background process
+    // and find the corresponding injection host there
+    // and create literal escaper from that new (dummy) psi
+    List<PlaceInfo> placeInfos = new SmartList<>();
+    StringBuilder chars = new StringBuilder();
+    for (PsiLanguageInjectionHost.Shred shred : oldPlace) {
+      PsiLanguageInjectionHost oldHost = shred.getHost();
+      if (oldHost == null) return null;
+      SmartPsiElementPointer<PsiLanguageInjectionHost> hostPointer = ((ShredImpl)shred).getSmartPointer();
+      Segment newInjectionHostRange = calcActualRange(hostPsiFile, oldDocumentWindow.getDelegate(), hostPointer.getPsiRange());
+      if (newInjectionHostRange == null) return null;
+      PsiLanguageInjectionHost newDummyInjectionHost = findNewInjectionHost(hostPsiFile, oldRoot, newRoot, oldHost, newInjectionHostRange);
+      if (newDummyInjectionHost == null) {
         return null;
       }
-      Place oldPlace = oldDocumentWindow.getShreds();
-      // can be different from newText if decode fails in the middle and we'll have to shrink the document
-      StringBuilder newDocumentText = new StringBuilder(newText.length());
-      // we need escaper but it only works with committed PSI,
-      // so we get the committed (but not yet applied) PSI from the commit-document-in-the-background process
-      // and find the corresponding injection host there
-      // and create literal escaper from that new (dummy) psi
-      List<PlaceInfo> placeInfos = new SmartList<>();
-      StringBuilder chars = new StringBuilder();
-      for (PsiLanguageInjectionHost.Shred shred : oldPlace) {
-        PsiLanguageInjectionHost oldHost = shred.getHost();
-        if (oldHost == null) return null;
-        SmartPsiElementPointer<PsiLanguageInjectionHost> hostPointer = ((ShredImpl)shred).getSmartPointer();
-        Segment newInjectionHostRange = calcActualRange(hostPsiFile, oldDocumentWindow.getDelegate(), hostPointer.getPsiRange());
-        if (newInjectionHostRange == null) return null;
-        PsiLanguageInjectionHost newDummyInjectionHost = findNewInjectionHost(hostPsiFile, oldRoot, newRoot, oldHost, newInjectionHostRange);
-        if (newDummyInjectionHost == null) {
-          return null;
-        }
-        newInjectionHostRange = newDummyInjectionHost.getTextRange().shiftRight(oldRoot.getTextRange().getStartOffset());
-        Segment hostInjectionRange = shred.getHostRangeMarker(); // in the new document
-        if (hostInjectionRange == null) return null;
-        TextRange rangeInsideHost = TextRange.create(hostInjectionRange).shiftLeft(newInjectionHostRange.getStartOffset());
+      newInjectionHostRange = newDummyInjectionHost.getTextRange().shiftRight(oldRoot.getTextRange().getStartOffset());
+      Segment hostInjectionRange = shred.getHostRangeMarker(); // in the new document
+      if (hostInjectionRange == null) return null;
+      TextRange rangeInsideHost = TextRange.create(hostInjectionRange).shiftLeft(newInjectionHostRange.getStartOffset());
 
-        PlaceInfo info = new PlaceInfo(shred.getPrefix(), shred.getSuffix(), newDummyInjectionHost, rangeInsideHost);
-        placeInfos.add(info);
-        info.newInjectionHostRange = newInjectionHostRange;
+      PlaceInfo info = new PlaceInfo(shred.getPrefix(), shred.getSuffix(), newDummyInjectionHost, rangeInsideHost);
+      placeInfos.add(info);
+      info.newInjectionHostRange = newInjectionHostRange;
 
-        decode(info, chars);
+      decode(info, chars);
 
-        // pass the old pointers because their offsets will be adjusted automatically (SmartPsiElementPointer does that)
-        TextRange rangeInHostElementPSI = info.rangeInHostElement;
+      // pass the old pointers because their offsets will be adjusted automatically (SmartPsiElementPointer does that)
+      TextRange rangeInHostElementPSI = info.rangeInHostElement;
 
-        newDocumentText.append(shred.getPrefix());
-        newDocumentText.append(newDummyInjectionHost.getText(), rangeInHostElementPSI.getStartOffset(), rangeInHostElementPSI.getEndOffset());
-        newDocumentText.append(shred.getSuffix());
-      }
-      // newDocumentText can be shorter if decode failed
-      //assert newText.equals(newDocumentText.toString()) : "-\n"+newText+"\n--\n"+newDocumentText+"\n---\n";
+      newDocumentText.append(shred.getPrefix());
+      newDocumentText.append(newDummyInjectionHost.getText(), rangeInHostElementPSI.getStartOffset(), rangeInHostElementPSI.getEndOffset());
+      newDocumentText.append(shred.getSuffix());
+    }
+    // newDocumentText can be shorter if decode failed
+    //assert newText.equals(newDocumentText.toString()) : "-\n"+newText+"\n--\n"+newDocumentText+"\n---\n";
 
-      PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(project);
-      DocumentEx hostDocument = oldDocumentWindow.getDelegate();
-      assert documentManager.isUncommited(hostDocument);
-      String fileName = ((VirtualFileWindowImpl)oldInjectedVirtualFile).getName();
-      ASTNode parsedNode = parseFile(language, language, oldDocumentWindow,
-                                     hostVirtualFile, hostDocument, hostPsiFile, project, newDocumentText, placeInfos, chars,
-                                     fileName);
-
+    PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(project);
+    DocumentEx hostDocument = oldDocumentWindow.getDelegate();
+    assert documentManager.isUncommited(hostDocument);
+    String fileName = ((VirtualFileWindowImpl)oldInjectedVirtualFile).getName();
+    ASTNode parsedNode = parseFile(language, language, oldDocumentWindow,
+                                   hostVirtualFile, hostDocument, hostPsiFile, project, newDocumentText, placeInfos, chars,
+                                   fileName);
+    synchronized (InjectedLanguageManagerImpl.ourInjectionPsiLock) {
       DiffLog diffLog = BlockSupportImpl.mergeTrees((PsiFileImpl)oldInjectedPsi, oldNode, parsedNode, indicator, oldPsiText);
 
       return () -> {
@@ -681,7 +679,6 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
 
     virtualFile.setContent(null, decodedChars, false);
     virtualFile.setWritable(virtualFile.getDelegate().isWritable());
-
 
     try {
       List<InjectedLanguageUtil.TokenInfo> tokens = obtainHighlightTokensFromLexer(language, decodedChars, virtualFile, project, placeInfos);
@@ -774,7 +771,7 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
     int suffixLength = 0;
     TextRange rangeInsideHost = null;
     int shredEndOffset = -1;
-    List<InjectedLanguageUtil.TokenInfo> tokens = new ArrayList<>(10);
+    List<InjectedLanguageUtil.TokenInfo> tokens = new ArrayList<>(outChars.length()/5); // avg. token per 5 chars
     for (IElementType tokenType = lexer.getTokenType(); tokenType != null; lexer.advance(), tokenType = lexer.getTokenType()) {
       TextRange range = new ProperTextRange(lexer.getTokenStart(), lexer.getTokenEnd());
       while (range != null && !range.isEmpty()) {
