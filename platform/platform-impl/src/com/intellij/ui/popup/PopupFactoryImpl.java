@@ -162,69 +162,6 @@ public class PopupFactoryImpl extends JBPopupFactory {
   }
 
 
-  private static ListPopup createActionGroupPopup(final String title,
-                                                  @NotNull ActionGroup actionGroup,
-                                                  @NotNull DataContext dataContext,
-                                                  boolean showNumbers,
-                                                  boolean useAlphaAsNumbers,
-                                                  boolean showDisabledActions,
-                                                  boolean honorActionMnemonics,
-                                                  final Runnable disposeCallback,
-                                          final int maxRowCount) {
-    return createActionGroupPopup(title, actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics, disposeCallback,
-                                  maxRowCount, null, null);
-  }
-
-  public ListPopup createActionGroupPopup(final String title,
-                                          final ActionGroup actionGroup,
-                                          @NotNull DataContext dataContext,
-                                          boolean showNumbers,
-                                          boolean showDisabledActions,
-                                          boolean honorActionMnemonics,
-                                          final Runnable disposeCallback,
-                                          final int maxRowCount) {
-    return createActionGroupPopup(title, actionGroup, dataContext, showNumbers, showDisabledActions, honorActionMnemonics, disposeCallback,
-                                  maxRowCount, null);
-  }
-
-  @NotNull
-  public ListPopup createActionGroupPopup(String title,
-                                          @NotNull ActionGroup actionGroup,
-                                          @NotNull DataContext dataContext,
-                                          ActionSelectionAid aid,
-                                          boolean showDisabledActions,
-                                          Runnable disposeCallback,
-                                          int maxRowCount,
-                                          Condition<AnAction> preselectActionCondition,
-                                          @Nullable String actionPlace) {
-    return new ActionGroupPopup(title,
-                                actionGroup,
-                                dataContext,
-                                aid == ActionSelectionAid.ALPHA_NUMBERING || aid == ActionSelectionAid.NUMBERING,
-                                aid == ActionSelectionAid.ALPHA_NUMBERING,
-                                showDisabledActions,
-                                aid == ActionSelectionAid.MNEMONICS,
-                                disposeCallback,
-                                maxRowCount,
-                                preselectActionCondition,
-                                actionPlace);
-  }
-
-  private static ListPopup createActionGroupPopup(String title,
-                                                  @NotNull ActionGroup actionGroup,
-                                                  @NotNull DataContext dataContext,
-                                                  boolean showNumbers,
-                                                  boolean useAlphaAsNumbers,
-                                                  boolean showDisabledActions,
-                                                  boolean honorActionMnemonics,
-                                                  Runnable disposeCallback,
-                                                  int maxRowCount,
-                                                  Condition<AnAction> preselectActionCondition,
-                                                  @Nullable String actionPlace) {
-    return new ActionGroupPopup(title, actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics,
-                                disposeCallback, maxRowCount, preselectActionCondition, actionPlace);
-  }
-
   public static class ActionGroupPopup extends ListPopupImpl {
 
     private final Runnable myDisposeCallback;
@@ -406,6 +343,29 @@ public class PopupFactoryImpl extends JBPopupFactory {
   }
 
   @NotNull
+  public ListPopup createActionGroupPopup(String title,
+                                          @NotNull ActionGroup actionGroup,
+                                          @NotNull DataContext dataContext,
+                                          ActionSelectionAid aid,
+                                          boolean showDisabledActions,
+                                          Runnable disposeCallback,
+                                          int maxRowCount,
+                                          Condition<AnAction> preselectActionCondition,
+                                          @Nullable String actionPlace) {
+    return new ActionGroupPopup(title,
+                                actionGroup,
+                                dataContext,
+                                aid == ActionSelectionAid.ALPHA_NUMBERING || aid == ActionSelectionAid.NUMBERING,
+                                aid == ActionSelectionAid.ALPHA_NUMBERING,
+                                showDisabledActions,
+                                aid == ActionSelectionAid.MNEMONICS,
+                                disposeCallback,
+                                maxRowCount,
+                                preselectActionCondition,
+                                actionPlace);
+  }
+
+  @NotNull
   @Override
   public ListPopup createActionGroupPopup(final String title,
                                           @NotNull final ActionGroup actionGroup,
@@ -416,46 +376,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                           final Runnable disposeCallback,
                                           final int maxRowCount,
                                           final Condition<AnAction> preselectActionCondition) {
-    return createActionGroupPopup(title, actionGroup, dataContext, showNumbers, true, showDisabledActions, honorActionMnemonics,
+    return new ActionGroupPopup(title, actionGroup, dataContext, showNumbers, true, showDisabledActions, honorActionMnemonics,
                                   disposeCallback, maxRowCount, preselectActionCondition, null);
-  }
-
-  @NotNull
-  @Override
-  public ListPopup createActionGroupPopup(String title,
-                                          @NotNull ActionGroup actionGroup,
-                                          @NotNull DataContext dataContext,
-                                          ActionSelectionAid selectionAidMethod,
-                                          boolean showDisabledActions) {
-    return createActionGroupPopup(title, actionGroup, dataContext,
-                                  selectionAidMethod == ActionSelectionAid.NUMBERING || selectionAidMethod == ActionSelectionAid.ALPHA_NUMBERING,
-                                  selectionAidMethod == ActionSelectionAid.ALPHA_NUMBERING,
-                                  showDisabledActions,
-                                  selectionAidMethod == ActionSelectionAid.MNEMONICS,
-                                  null, -1);
-  }
-
-  @NotNull
-  @Override
-  public ListPopup createActionGroupPopup(String title,
-                                          @NotNull ActionGroup actionGroup,
-                                          @NotNull DataContext dataContext,
-                                          ActionSelectionAid selectionAidMethod,
-                                          boolean showDisabledActions,
-                                          @Nullable String actionPlace) {
-    return createActionGroupPopup(title, actionGroup, dataContext, selectionAidMethod, showDisabledActions, null, -1, null, actionPlace);
-  }
-
-  @NotNull
-  @Override
-  public ListPopup createActionGroupPopup(String title,
-                                          @NotNull ActionGroup actionGroup,
-                                          @NotNull DataContext dataContext,
-                                          ActionSelectionAid selectionAidMethod,
-                                          boolean showDisabledActions,
-                                          Runnable disposeCallback,
-                                          int maxRowCount) {
-    return createActionGroupPopup(title, actionGroup, dataContext, selectionAidMethod, showDisabledActions, disposeCallback, maxRowCount, null, null);
   }
 
   @NotNull
