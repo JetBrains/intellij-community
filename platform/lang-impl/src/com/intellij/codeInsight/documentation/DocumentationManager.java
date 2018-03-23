@@ -1215,11 +1215,10 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     String text =
       (withUrl ? file.getPresentableUrl() : "") +
       "\n" +
-      "\nFile size is " + StringUtil.formatFileSize(attr.size()) +
-      "\n" + typeName + (type.isBinary() ? "" : " (" + psiFile.getLanguage().getDisplayName() + ")") +
+      "\n" + StringUtil.formatFileSize(attr.size()) + ", " + typeName + (type.isBinary() ? "" : " (" + psiFile.getLanguage().getDisplayName() + ")") +
       "\nModified on " + DateFormatUtil.formatDateTime(attr.lastModifiedTime().toMillis()) +
       "\nCreated on " + DateFormatUtil.formatDateTime(attr.creationTime().toMillis()) +
       "\n";
-    return StringUtil.replace(StringUtil.escapeXml(text) + "&nbsp;", "\n", "<br>");
+    return StringUtil.replace(StringUtil.escapeXml(text) + "&nbsp;", "\n", "<p>");
   }
 }
