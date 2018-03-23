@@ -1,9 +1,8 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.spellchecker.dictionary;
 
 
 import com.intellij.spellchecker.inspection.SpellcheckerInspectionTestCase;
-import com.intellij.util.containers.HashSet;
 
 import java.util.*;
 
@@ -29,7 +28,7 @@ public class AppDictionaryTest extends SpellcheckerInspectionTestCase {
   private static void doContainTest(String wordToCheck, Boolean expected) {
     assertEquals(expected, APP_DICTIONARY.contains(wordToCheck));
   }
-  
+
   public void testContainsProject() {
     doContainTest(BBBB);
   }
@@ -120,7 +119,7 @@ public class AppDictionaryTest extends SpellcheckerInspectionTestCase {
   public void testGetSuggestions(){
     final List<String> suggestions = new ArrayList<>();
     APP_DICTIONARY.getSuggestions("AAAB", suggestions::add);
-    assert suggestions.isEmpty(); // TODO: change current behavior 
+    assert suggestions.isEmpty(); // TODO: change current behavior
   }
 
   public void testNoSuggestions(){
