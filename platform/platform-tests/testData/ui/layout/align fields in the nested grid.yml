@@ -1,28 +1,43 @@
-rowConstraints: ''
-columnConstraints:
-  count: 2.0
+layoutConstraints: null
+rowConstraints:
   constraints:
+  - align: {horizontal: false, operation: 100, unit: 6, value: 0.0}
   - {}
+  - gapAfter:
+      max: &id001 {horizontal: true, operation: 100, unit: 0, unitString: px, value: 0.0}
+      min: *id001
+      preferred: *id001
+  - {}
+  count: 4
+columnConstraints:
+  constraints:
+  - {grow: 0.0}
   - {grow: 100.0}
+  count: 2
 componentConstrains:
-  'JRadioButton #0': {spanX: 2097051.0, wrap: true}
+  'JRadioButton #0': {spanX: 2097051, wrap: true}
   'JLabel #1':
     horizontal:
       gapBefore:
-        min: {value: 30.0, unitString: px}
-        preferred: {value: 30.0, unitString: px}
-  'JTextField #2': {split: 2097051.0}
+        min: &id002 {horizontal: true, operation: 100, unit: 0, unitString: px, value: 23.0}
+        preferred: *id002
+  'JTextField #2':
+    horizontal: {grow: 100.0}
+    split: 2097051
   'JLabel #3': {wrap: true}
   'JLabel #4':
     horizontal:
       gapBefore:
-        min: {value: 30.0, unitString: px}
-        preferred: {value: 30.0, unitString: px}
-  'JBPasswordField #5':
-    wrap: true
+        min: &id003 {horizontal: true, operation: 100, unit: 0, unitString: px, value: 23.0}
+        preferred: *id003
+  'JBPasswordField #5': {wrap: true}
+  'JBLabel #6':
     horizontal:
-      size:
-        min: {value: 250.0, unitString: px}
-        max: {value: 250.0, unitString: px}
-        preferred: {value: 250.0, unitString: px}
-  'JBLabel #6': {skip: 1.0, spanX: 2097051.0, wrap: true}
+      gapBefore:
+        min: &id004 {horizontal: true, operation: 100, unit: 0, unitString: px, value: 4.0}
+        preferred: *id004
+    skip: 1
+    spanX: 2097051
+    wrap: true
+rectangles: '[0, 0, 512, 23], [0, 28, 132, 26], [152, 28, 360, 26], [152, 28, 360,
+  26], [0, 59, 132, 26], [152, 59, 360, 26], [152, 85, 360, 14]'

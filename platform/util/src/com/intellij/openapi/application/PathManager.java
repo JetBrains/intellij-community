@@ -512,7 +512,7 @@ public class PathManager {
       FileUtils.class,              // JNA (jna-platform)
       PatternMatcher.class,         // OROMatcher
       Snappy.class,                 // Snappy
-      LZ4Factory.class,             // Snappy
+      LZ4Factory.class,             // lz4-java
     };
 
     final Set<String> classPath = new HashSet<String>();

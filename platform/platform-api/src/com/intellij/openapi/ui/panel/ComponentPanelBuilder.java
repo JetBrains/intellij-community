@@ -6,12 +6,16 @@ import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ContextHelpLabel;
+import com.intellij.ui.Gray;
 import com.intellij.ui.TextComponent;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -29,10 +33,39 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
   private String myHTLinkText;
   private Runnable myHTAction;
   private JComponent myTopRightComponent;
+  private UI.Anchor myAnchor = UI.Anchor.Center;
+  private boolean myResizeY;
+  private boolean myResizeX = true;
   private boolean valid = true;
 
   public ComponentPanelBuilder(JComponent component) {
     myComponent = component;
+  }
+
+  /**
+   * Allow resizing component vertically when the panel is resized. Useful when {@link JTextArea} or
+   * {@link JTextPane} need to be resized along with the dialog window.
+   *
+   * @param resize <code>true</code> to enable resize, <code>false</code> to disable.
+   *              Default is <code>false</code>
+   * @return <code>this</code>
+   */
+  public ComponentPanelBuilder resizeY(boolean resize) {
+    myResizeY = resize;
+    return this;
+  }
+
+  /**
+   * Allow resizing component horizontally when the panel is resized. Useful for
+   * limiting {@link JComboBox} and other resizable component to preferred width.
+   *
+   * @param resize <code>true</code> to enable resize, <code>false</code> to disable.
+   *              Default is <code>true</code>
+   * @return <code>this</code>
+   */
+  public ComponentPanelBuilder resizeX(boolean resize) {
+    myResizeX = resize;
+    return this;
   }
 
   /**
@@ -55,20 +88,32 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
     return this;
   }
 
+  public ComponentPanelBuilder anchorLabelOn(UI.Anchor anchor) {
+    myAnchor = anchor;
+    return this;
+  }
+
   /**
    * @param comment help context styled text written below the owner component.
    * @return <code>this</code>
    */
   public ComponentPanelBuilder withComment(@NotNull String comment) {
     myCommentText = comment;
-    valid = StringUtil.isNotEmpty(comment) && StringUtil.isEmpty(myHTDescription) &&
-              (myLabelOnTop || myTopRightComponent == null);
+    valid = StringUtil.isNotEmpty(comment) && StringUtil.isEmpty(myHTDescription);
     return this;
   }
 
+  /**
+   * Adds a custom (one line) component to the top right location of the main component.
+   * Useful for adding control like {@link com.intellij.ui.components.labels.LinkLabel} or
+   * {@link com.intellij.ui.components.labels.DropDownLink}
+   *
+   * @param topRightComponent the component to be added
+   * @return <code>this</code>
+   */
   public ComponentPanelBuilder withTopRightComponent(@NotNull JComponent topRightComponent) {
     myTopRightComponent = topRightComponent;
-    valid = StringUtil.isNotEmpty(myCommentText) && StringUtil.isEmpty(myHTDescription) && myLabelOnTop;
+    valid = StringUtil.isNotEmpty(myCommentText) && StringUtil.isEmpty(myHTDescription);
     return this;
   }
 
@@ -90,8 +135,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
    */
   public ComponentPanelBuilder withTooltip(@NotNull String description) {
     myHTDescription = description;
-    valid = StringUtil.isEmpty(myCommentText) && StringUtil.isNotEmpty(description) &&
-            (myLabelOnTop || myTopRightComponent == null);
+    valid = StringUtil.isEmpty(myCommentText) && StringUtil.isNotEmpty(description);
     return this;
   }
 
@@ -137,46 +181,81 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
     }
   }
 
+
   private Border getCommentBorder() {
     if (StringUtil.isNotEmpty(myCommentText)) {
-      boolean isMacDefault = UIUtil.isUnderDefaultMacTheme();
-      boolean isWin10 = UIUtil.isUnderWin10LookAndFeel();
-
-      if (myCommentBelow) {
-        int top = 8, left = 2, bottom = 0;
-
-        if (myComponent instanceof JRadioButton || myComponent instanceof JCheckBox) {
-          top = 0;
-          left = isMacDefault ? 27 : isWin10 ? 17 : 23;
-          bottom = isWin10 ? 10 : isMacDefault ? 8 : 9;
-        }
-        else if (myComponent instanceof JTextField || myComponent instanceof TextComponent ||
-                 myComponent instanceof JComboBox || myComponent instanceof ComponentWithBrowseButton) {
-          top = isWin10 ? 3 : 4;
-          left = isWin10 ? 2 : isMacDefault ? 5 : 4;
-          bottom = isWin10 ? 10 : isMacDefault ? 8 : 9;
-        }
-        else if (myComponent instanceof JButton) {
-          top = isWin10 ? 2 : 4;
-          left = isWin10 ? 2 : isMacDefault ? 5 : 4;
-          bottom = 0;
-        }
-
-        return JBUI.Borders.empty(top, left, bottom, 0);
-      } else {
-        int left = 14;
-
-        if (myComponent instanceof JRadioButton || myComponent instanceof JCheckBox) {
-          left = isMacDefault ? 8 : 13;
-        }
-        else if (myComponent instanceof JTextField || myComponent instanceof TextComponent ||
-                 myComponent instanceof JComboBox || myComponent instanceof ComponentWithBrowseButton) {
-          left = isMacDefault ? 13 : 14;
-        }
-        return JBUI.Borders.emptyLeft(left);
-      }
+      return new JBEmptyBorder(computeCommentInsets(myComponent, myCommentBelow));
     } else {
       return JBUI.Borders.empty();
+    }
+  }
+
+  @NotNull
+  public static Insets computeCommentInsets(@NotNull JComponent component, boolean commentBelow) {
+    boolean isMacDefault = UIUtil.isUnderDefaultMacTheme();
+    boolean isWin10 = UIUtil.isUnderWin10LookAndFeel();
+
+    if (commentBelow) {
+      int top = 8, left = 2, bottom = 0;
+
+      if (component instanceof JRadioButton || component instanceof JCheckBox) {
+        top = 0;
+        left = isMacDefault ? 27 : isWin10 ? 17 : 23;
+        bottom = isWin10 ? 10 : isMacDefault ? 8 : 9;
+      }
+      else if (component instanceof JTextField || component instanceof TextComponent ||
+               component instanceof JComboBox || component instanceof ComponentWithBrowseButton) {
+        top = isWin10 ? 3 : 4;
+        left = isWin10 ? 2 : isMacDefault ? 5 : 4;
+        bottom = isWin10 ? 10 : isMacDefault ? 8 : 9;
+      }
+      else if (component instanceof JButton) {
+        top = isWin10 ? 2 : 4;
+        left = isWin10 ? 2 : isMacDefault ? 5 : 4;
+        bottom = 0;
+      }
+
+      return JBUI.insets(top, left, bottom, 0);
+    } else {
+      int left = 14;
+
+      if (component instanceof JRadioButton || component instanceof JCheckBox) {
+        left = isMacDefault ? 8 : 13;
+      }
+      else if (component instanceof JTextField || component instanceof TextComponent ||
+               component instanceof JComboBox || component instanceof ComponentWithBrowseButton) {
+        left = isMacDefault ? 13 : 14;
+      }
+      return JBUI.insetsLeft(left);
+    }
+  }
+
+  @NotNull
+  public static JBLabel createCommentComponent(@Nullable String commentText, boolean isCommentBelow) {
+    JBLabel component = new JBLabel("").setCopyable(true).setAllowAutoWrapping(true);
+    component.setVerticalTextPosition(SwingConstants.TOP);
+    component.setFocusable(false);
+    component.setForeground(UIUtil.getContextHelpForeground());
+    if (SystemInfo.isMac) {
+      Font font = component.getFont();
+      float size = font.getSize2D();
+      Font smallFont = font.deriveFont(size - 2.0f);
+      component.setFont(smallFont);
+    }
+
+    setCommentText(component, commentText, isCommentBelow);
+    return component;
+  }
+
+  private static void setCommentText(@NotNull JBLabel component, @Nullable String commentText, boolean isCommentBelow) {
+    if (commentText != null) {
+      if (commentText.length() > 70 && isCommentBelow) {
+        int width = component.getFontMetrics(component.getFont()).stringWidth(commentText.substring(0, 70));
+        component.setText(String.format("<html><div width=%d>%s</div></html>", width, commentText));
+      }
+      else {
+        component.setText(String.format("<html><div>%s</div></html>", commentText));
+      }
     }
   }
 
@@ -193,19 +272,8 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
         label = new JLabel("");
       }
 
-      comment = new JBLabel("").setCopyable(true).setAllowAutoWrapping(true);
-      comment.setVerticalTextPosition(SwingConstants.TOP);
-      comment.setFocusable(false);
-      comment.setForeground(UIUtil.getContextHelpForeground());
+      comment = createCommentComponent(myCommentText, myCommentBelow);
       comment.setBorder(getCommentBorder());
-      setCommentTextImpl(myCommentText);
-
-      if (SystemInfo.isMac) {
-        Font font = comment.getFont();
-        float size = font.getSize2D();
-        Font smallFont = font.deriveFont(size - 2.0f);
-        comment.setFont(smallFont);
-      }
     }
 
     @Override
@@ -222,14 +290,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
     }
 
     private void setCommentTextImpl(String commentText) {
-      if (commentText != null) {
-        if (commentText.length() > 70 && myCommentBelow) {
-          int width = comment.getFontMetrics(comment.getFont()).stringWidth(commentText.substring(0, 70));
-          comment.setText(String.format("<html><div width=%d>%s</div></html>", width, commentText));
-        } else {
-          comment.setText(String.format("<html><div>%s</div></html>", commentText));
-        }
-      }
+      ComponentPanelBuilder.setCommentText(comment, commentText, myCommentBelow);
     }
 
     private void addToPanel(JPanel panel, GridBagConstraints gc) {
@@ -239,13 +300,15 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
       gc.anchor = GridBagConstraints.LINE_START;
 
       if (StringUtil.isNotEmpty(myLabelText)) {
-        if (myLabelOnTop) {
+        if (myLabelOnTop || myTopRightComponent != null) {
           gc.insets = JBUI.insetsBottom(4);
-          gc.gridx++;
+          gc.gridx = 1;
 
           JPanel topPanel = new JPanel();
           topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.X_AXIS));
-          topPanel.add(label);
+          if (myLabelOnTop) {
+            topPanel.add(label);
+          }
 
           if (myTopRightComponent != null) {
             topPanel.add(new Box.Filler(JBUI.size(UIUtil.DEFAULT_HGAP, 0),
@@ -256,8 +319,24 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
 
           panel.add(topPanel, gc);
           gc.gridy++;
-        } else {
-          gc.insets = JBUI.insetsRight(8);
+        }
+
+        if (!myLabelOnTop) {
+          gc.gridx = 0;
+          switch (myAnchor) {
+            case Top:
+              gc.anchor = GridBagConstraints.PAGE_START;
+              gc.insets = JBUI.insets(4, 0, 0, 8);
+              break;
+            case Center:
+              gc.anchor = GridBagConstraints.LINE_START;
+              gc.insets = JBUI.insetsRight(8);
+              break;
+            case Bottom:
+              gc.anchor = GridBagConstraints.PAGE_END;
+              gc.insets = JBUI.insets(0, 0, 4, 8);
+              break;
+          }
           panel.add(label, gc);
         }
       }
@@ -284,8 +363,12 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
         componentPanel.add(comment);
       }
 
+      gc.fill = myResizeY ? GridBagConstraints.BOTH : myResizeX ? GridBagConstraints.HORIZONTAL: GridBagConstraints.NONE;
+      gc.weighty = myResizeY ? 1.0 : 0.0;
       panel.add(componentPanel, gc);
 
+      gc.fill = GridBagConstraints.HORIZONTAL;
+      gc.weighty = 0.0;
       if (myCommentBelow) {
         gc.gridx = 1;
         gc.gridy++;

@@ -2,14 +2,11 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.IconLoader.CachedImageIcon;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.ui.JBUI.ScaleContext;
 import com.intellij.util.ui.paint.ImageComparator;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -27,22 +24,11 @@ import static junit.framework.TestCase.assertTrue;
  * @author tav
  */
 public class SvgIconPaintTest extends TestScaleHelper {
-  private static boolean initialSvgProp;
-
   @Before
   @Override
   public void setState() {
     super.setState();
-    RegistryValue rv = Registry.get("ide.svg.icon");
-    initialSvgProp = rv.asBoolean();
-    if (!initialSvgProp) rv.setValue(true);
-  }
-
-  @After
-  @Override
-  public void restoreState() {
-    super.restoreState();
-    Registry.get("ide.svg.icon").setValue(initialSvgProp);
+    setRegistryProperty("ide.svg.icon", "true");
   }
 
   @Test
@@ -56,8 +42,7 @@ public class SvgIconPaintTest extends TestScaleHelper {
     //save(iconImage);
     BufferedImage goldImage = load();
 
-    ImageComparator comparator =
-      new ImageComparator(new ImageComparator.ColorAASmoother(0, 0.3f));
+    ImageComparator comparator = new ImageComparator(new ImageComparator.ColorAASmoother(0, 0.3f));
     StringBuilder sb = new StringBuilder("images mismatch: ");
     assertTrue(sb.toString(), comparator.compare(iconImage, goldImage, sb));
   }

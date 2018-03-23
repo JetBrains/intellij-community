@@ -1,0 +1,1 @@
+0 <= row < self.height and 0 <= col < self.width

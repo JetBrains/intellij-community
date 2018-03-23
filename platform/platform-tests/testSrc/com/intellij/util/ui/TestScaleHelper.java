@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,7 +22,8 @@ import java.util.Map;
 public class TestScaleHelper {
   private static final String STANDALONE_PROP = "intellij.test.standalone";
 
-  private static final Map<String, String> origProps = new HashMap<>();
+  private static final Map<String, String> originalSysProps = new HashMap<>();
+  private static final Map<String, String> originalRegProps = new HashMap<>();
 
   private float originalUserScale;
   private boolean originalJreHiDPIEnabled;
@@ -35,11 +38,18 @@ public class TestScaleHelper {
   public void restoreState() {
     JBUI.setUserScaleFactor(originalUserScale);
     overrideJreHiDPIEnabled(originalJreHiDPIEnabled);
-    restoreProperties();
+    restoreRegistryProperties();
+    restoreSystemProperties();
   }
 
-  public static void setProperty(@NotNull String name, @Nullable String value) {
-    origProps.put(name, System.getProperty(name));
+  public static void setRegistryProperty(@NotNull String key, @NotNull String value) {
+    final RegistryValue prop = Registry.get(key);
+    originalRegProps.put(key, prop.asString());
+    prop.setValue(value);
+  }
+
+  public static void setSystemProperty(@NotNull String name, @Nullable String value) {
+    originalSysProps.put(name, System.getProperty(name));
     _setProperty(name, value);
   }
 
@@ -52,9 +62,15 @@ public class TestScaleHelper {
     }
   }
 
-  public static void restoreProperties() {
-    for (Map.Entry<String, String> entry : origProps.entrySet()) {
+  public static void restoreSystemProperties() {
+    for (Map.Entry<String, String> entry : originalSysProps.entrySet()) {
       _setProperty(entry.getKey(), entry.getValue());
+    }
+  }
+
+  public static void restoreRegistryProperties() {
+    for (Map.Entry<String, String> entry : originalRegProps.entrySet()) {
+      Registry.get(entry.getKey()).setValue(entry.getValue());
     }
   }
 

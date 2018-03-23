@@ -478,6 +478,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
       }
 
       if (root != null && loaded != null && root.object.equals(loaded.object)) {
+        tree.fixEqualButNotSame(root, loaded.object);
         LOG.debug("same root: ", root.object);
         if (!root.isLoadingRequired()) processor.process(new CmdGetChildren("Update root children", root, true));
         tree.queue.done(this, root);
@@ -613,6 +614,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
           list.add(child);
         }
         else {
+          tree.fixEqualButNotSame(found, child.object);
           list.add(found);
           if (found.leaf) {
             if (!child.leaf) {
@@ -672,7 +674,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
 
       if (!reload.isEmpty()) {
         for (Node child : newChildren) {
-          if (!child.isLoadingRequired() && reload.contains(child.object)) {
+          if (reload.contains(child.object)) {
             processor.process(new CmdGetChildren("Update children recursively", child, true));
           }
         }
@@ -762,12 +764,20 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
         }
       }
     }
+
+    private void fixEqualButNotSame(@NotNull Node node, @NotNull Object object) {
+      if (object == node.object) return;
+      // always use new instance of user's object, because
+      // some trees provide equal nodes with different behavior
+      node.object = object;
+      map.put(object, node); // update key
+    }
   }
 
   private static final class Node {
     private final CommandQueue<CmdGetChildren> queue = new CommandQueue<>();
     private final Set<TreePath> paths = new SmartHashSet<>();
-    private final Object object;
+    private volatile Object object;
     private volatile boolean leaf;
     private volatile List<Node> children;
     private volatile Node loading;

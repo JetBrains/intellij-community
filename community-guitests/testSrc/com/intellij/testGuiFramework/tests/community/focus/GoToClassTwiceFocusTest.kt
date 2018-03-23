@@ -91,7 +91,7 @@ class GoToClassTwiceFocusTest : GuiTestCase() {
     }
     with(guiTestCase) {
       val textfield = textfield("", searchWindow, guiTestCase.defaultTimeout)
-      Assert.assertEquals(textfield.target().text, typedString)
+      Assert.assertEquals(typedString, textfield.target().text)
     }
   }
 

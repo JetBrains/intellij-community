@@ -14,7 +14,7 @@ import org.junit.Test
 class TypeAheadTest : GuiTestCase() {
 
   @Test
-  fun testProjectCreate() {
+  fun testTypeAhead() {
     CommunityProjectCreator.createCommandLineProject("type-ahead-problem")
     ideFrame {
       waitForBackgroundTasksToFinish()

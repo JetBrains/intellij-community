@@ -2,6 +2,7 @@
 package com.intellij.ui.layout
 
 import com.intellij.CommonBundle
+import com.intellij.ide.ui.laf.IntelliJLaf
 import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
@@ -30,10 +31,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.Callable
 import javax.imageio.ImageIO
-import javax.swing.JFrame
-import javax.swing.JPanel
-import javax.swing.JPasswordField
-import javax.swing.JTextField
+import javax.swing.*
 import kotlin.properties.Delegates
 
 class UiDslTest {
@@ -42,6 +40,7 @@ class UiDslTest {
     @BeforeClass
     fun setUpOnce() {
       FailOnThreadViolationRepaintManager.install()
+      UIManager.setLookAndFeel(IntelliJLaf())
     }
 
     private val imageDir: String? = System.getenv("LAYOUT_IMAGE_REPO")
@@ -84,14 +83,11 @@ class UiDslTest {
             gearButton()
           }
           row("Master Password:") {
-            JBPasswordField()(growPolicy = GrowPolicy.SHORT_TEXT)
-          }
-          row {
-            hint("Stored using weak encryption.")
+            JBPasswordField()(comment = "Stored using weak encryption.")
           }
         }
       }
-    }, "[0, 0, 512, 23], [0, 28, 139, 26], [159, 28, 353, 26], [159, 28, 353, 26], [0, 59, 139, 26], [159, 59, 353, 26], [159, 90, 353, 14]")
+    })
   }
 
   @Test
@@ -99,7 +95,7 @@ class UiDslTest {
     doTest(panel {
       row("Create Android module") { CheckBox("Android module name:")() }
       row("Android module name:") { JTextField("input")() }
-    }, "[0, 0, 145, 23], [165, 0, 347, 23], [0, 28, 145, 26], [165, 28, 347, 26]")
+    })
   }
 
   @Test
@@ -110,10 +106,10 @@ class UiDslTest {
       row("Sudo password:") { passwordField() }
       row { CheckBox(CommonBundle.message("checkbox.remember.password"), true)() }
       noteRow("Should be an empty row above as a gap")
-    }, "[0, 0, 512, 47], [0, 52, 99, 26], [119, 52, 393, 26], [119, 83, 393, 23], [0, 111, 512, 31]")
+    })
   }
 
-  private fun doTest(panel: JPanel, expectedLocations: String) {
+  private fun doTest(panel: JPanel) {
     val frame = GuiActionRunner.execute(Callable {
       LayoutUtil.setGlobalDebugMillis(1000)
 
@@ -133,8 +129,14 @@ class UiDslTest {
 
     val component = window.panel("test").target() as JPanel
     val layout = component.layout as MigLayout
+
+    val gridField = MigLayout::class.java.getDeclaredField("grid")
+    gridField.isAccessible = true
+    val grid = gridField.get(layout) as Grid
+    val rectangles = MigLayoutTestUtil.getRectangles(grid)
+
     val imageName = sanitizeFileName(testName.methodName)
-    val actualLayoutJson = configurationToJson(component, component.layout as MigLayout, false)
+    val actualLayoutJson = configurationToJson(component, component.layout as MigLayout, false, rectangles.joinToString(", ") { "[${it.joinToString(", ")}]" })
     try {
       val expectedLayoutDataFile = Paths.get(PlatformTestUtil.getPlatformTestDataPath(), "ui", "layout", "$imageName.yml")
       if (expectedLayoutDataFile.exists()) {
@@ -143,12 +145,6 @@ class UiDslTest {
       else {
         expectedLayoutDataFile.write(actualLayoutJson)
       }
-
-      val gridField = MigLayout::class.java.getDeclaredField("grid")
-      gridField.isAccessible = true
-      val grid = gridField.get(layout) as Grid
-      val rectangles = MigLayoutTestUtil.getRectangles(grid)
-      assertThat(rectangles.joinToString(", ") { "[${it.joinToString(", ")}]" }).isEqualTo(expectedLocations)
 
       if (imageDir.isNullOrEmpty()) {
         return

@@ -258,7 +258,7 @@ class CommunityLibraryLicenses {
                        licenseUrl: "https://github.com/willemv/mercurial_prompthooks/blob/master/LICENSE.txt"),
     new LibraryLicense(name: "Microba", libraryName: "microba", version: "0.4.2", license: "BSD", url: "http://microba.sourceforge.net/",
                        licenseUrl: "http://microba.sourceforge.net/license.txt"),
-    new LibraryLicense(name: "MigLayout", libraryName: "miglayout-swing", version: "5.0.0", license: "BSD", url: "http://www.miglayout.com/",
+    new LibraryLicense(name: "MigLayout", libraryName: "miglayout-swing", version: "5.1.0", license: "BSD", url: "http://www.miglayout.com/",
                        licenseUrl: "http://www.miglayout.com/mavensite/license.html"),
     new LibraryLicense(name: "minlog", libraryName: "minlog-1.2.jar", version: "1.2", license: "BSD",
                        url: "https://github.com/EsotericSoftware/minlog", licenseUrl: "http://opensource.org/licenses/BSD-3-Clause"),
