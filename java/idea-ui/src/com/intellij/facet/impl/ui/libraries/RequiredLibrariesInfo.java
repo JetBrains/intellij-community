@@ -2,13 +2,13 @@
 
 package com.intellij.facet.impl.ui.libraries;
 
+import com.google.common.io.BaseEncoding;
 import com.intellij.facet.ui.libraries.LibraryInfo;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
-import org.apache.commons.codec.binary.Hex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -76,7 +76,7 @@ public class RequiredLibrariesInfo {
       md5.update(file.contentsToByteArray());
       final byte[] digest = md5.digest();
 
-      return new String(Hex.encodeHex(digest));
+      return BaseEncoding.base16().lowerCase().encode(digest);
     }
     catch (Exception e) {
       return null;
