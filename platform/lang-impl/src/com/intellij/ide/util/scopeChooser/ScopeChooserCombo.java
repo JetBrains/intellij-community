@@ -275,10 +275,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
   private static class ScopeDescriptionWithDelimiterRenderer extends ListCellRendererWrapper<ScopeDescriptor> {
     @Override
     public void customize(JList list, ScopeDescriptor value, int index, boolean selected, boolean hasFocus) {
-      /*
-      SearchScope scope = value.getScope();
-      setIcon(scope == null ? null : scope.getDisplayIcon());
-      */
+      setIcon(value.getDisplayIcon());
       setText(value.getDisplay());
       if (value instanceof ScopeSeparator) {
         setSeparator();
