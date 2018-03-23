@@ -35,6 +35,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.HeldDownKeyListener;
 import com.intellij.util.ui.UIUtil;
+import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,7 +66,8 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
           project.putUserData(ChooseByNamePopup.CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY, null);
         }
         String enteredText = popup.getTrimmedText();
-        openOptionOrPerformAction(((GotoActionModel.MatchedValue)element).value, enteredText, project, component);
+        int modifiers = popup.isClosedByShiftEnter() ? InputEvent.SHIFT_MASK : 0;
+        openOptionOrPerformAction(((GotoActionModel.MatchedValue)element).value, enteredText, project, component, modifiers);
       }
     };
 
@@ -258,7 +260,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
     else if (value instanceof GotoActionModel.ActionWrapper) {
       AnAction action = ((GotoActionModel.ActionWrapper)value).getAction();
       if (action instanceof ToggleAction) {
-        performAction(action, component, e, () -> repaint(popup));
+        performAction(action, component, e, 0, () -> repaint(popup));
         return true;
       }
     }
@@ -272,6 +274,14 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
   }
 
   public static void openOptionOrPerformAction(@NotNull Object element, String enteredText, @Nullable Project project, Component component) {
+    openOptionOrPerformAction(element, enteredText, project, component, 0);
+  }
+
+  private static void openOptionOrPerformAction(Object element,
+                                                String enteredText,
+                                                @Nullable Project project,
+                                                Component component,
+                                                @JdkConstants.InputEventMask int modifiers) {
     if (element instanceof OptionDescription) {
       OptionDescription optionDescription = (OptionDescription)element;
       String configurableId = optionDescription.getConfigurableId();
@@ -287,23 +297,30 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
     else {
       ApplicationManager.getApplication().invokeLater(
         () -> IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(
-          () -> performAction(element, component, null)));
+          () -> performAction(element, component, null, modifiers, null)));
     }
   }
 
   public static void performAction(@NotNull Object element, @Nullable Component component, @Nullable AnActionEvent e) {
-    performAction(element, component, e, null);
+    performAction(element, component, e, 0, null);
   }
 
-  private static void performAction(Object element, @Nullable Component component, @Nullable AnActionEvent e, @Nullable Runnable callback) {
+  private static void performAction(Object element,
+                                    @Nullable Component component,
+                                    @Nullable AnActionEvent e,
+                                    @JdkConstants.InputEventMask int modifiers,
+                                    @Nullable Runnable callback) {
     // element could be AnAction (SearchEverywhere)
     if (component == null) return;
     AnAction action = element instanceof AnAction ? (AnAction)element : ((GotoActionModel.ActionWrapper)element).getAction();
     TransactionGuard.getInstance().submitTransactionLater(ApplicationManager.getApplication(), () -> {
         DataManager instance = DataManager.getInstance();
         DataContext context = instance != null ? instance.getDataContext(component) : DataContext.EMPTY_CONTEXT;
-        InputEvent inputEvent = e == null ? null : e.getInputEvent();
+        InputEvent inputEvent = e != null ? e.getInputEvent() : null;
         AnActionEvent event = AnActionEvent.createFromAnAction(action, inputEvent, ActionPlaces.ACTION_SEARCH, context);
+        if (inputEvent == null && modifiers != 0) {
+          event = new AnActionEvent(null, event.getDataContext(), event.getPlace(), event.getPresentation(), event.getActionManager(), modifiers);
+        }
 
         if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
           if (action instanceof ActionGroup && ((ActionGroup)action).getChildren(event).length > 0) {
