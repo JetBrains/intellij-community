@@ -7,7 +7,9 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.ide.DataManager;
 import com.intellij.internal.statistic.UsageTrigger;
+import com.intellij.json.psi.JsonProperty;
 import com.intellij.json.psi.JsonStringLiteral;
+import com.intellij.json.psi.JsonValue;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -20,7 +22,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
@@ -322,13 +326,14 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       };
     }
 
-    private boolean handleInsideQuotesInsertion(InsertionContext context, Editor editor, boolean hasValue) {
+    private boolean handleInsideQuotesInsertion(@NotNull InsertionContext context, @NotNull Editor editor, boolean hasValue) {
       if (myInsideStringLiteral) {
         int offset = editor.getCaretModel().getOffset();
         PsiElement element = context.getFile().findElementAt(offset);
         int tailOffset = context.getTailOffset();
         int guessEndOffset = tailOffset + 1;
-        if (element != null) {
+        if (element instanceof LeafPsiElement) {
+          if (handleIncompleteString(editor, element)) return false;
           int endOffset = element.getTextRange().getEndOffset();
           if (endOffset > tailOffset) {
             context.getDocument().deleteString(tailOffset, endOffset - 1);
@@ -339,6 +344,21 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
         }
         editor.getCaretModel().moveToOffset(guessEndOffset);
       } else editor.getCaretModel().moveToOffset(context.getTailOffset());
+      return false;
+    }
+
+    private static boolean handleIncompleteString(@NotNull Editor editor, @NotNull PsiElement element) {
+      if (((LeafPsiElement)element).getElementType() == TokenType.WHITE_SPACE) {
+        PsiElement prevSibling = element.getPrevSibling();
+        if (prevSibling instanceof JsonProperty) {
+          JsonValue nameElement = ((JsonProperty)prevSibling).getNameElement();
+          if (!nameElement.getText().endsWith("\"")) {
+            editor.getCaretModel().moveToOffset(nameElement.getTextRange().getEndOffset());
+            EditorModificationUtil.insertStringAtCaret(editor, "\"", false, true, 1);
+            return true;
+          }
+        }
+      }
       return false;
     }
 

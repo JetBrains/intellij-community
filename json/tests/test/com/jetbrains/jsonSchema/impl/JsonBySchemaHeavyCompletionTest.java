@@ -55,6 +55,10 @@ public class JsonBySchemaHeavyCompletionTest extends JsonSchemaHeavyAbstractTest
     baseInsertTest("insertPropertyName", "testNameWithDefaultStringValue");
   }
 
+  public void testIncompleteNameWithDefaultStringValue() throws Exception {
+    baseInsertTest("insertPropertyName", "testIncompleteNameWithDefaultStringValue");
+  }
+
   public void testInsertNameWithDefaultIntegerValue() throws Exception {
     baseInsertTest("insertPropertyName", "testNameWithDefaultIntegerValue");
   }
