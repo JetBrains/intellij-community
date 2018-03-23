@@ -55,7 +55,7 @@ class SearchEverywhereFocusTest : GuiTestCase() {
   private fun GuiTestCase.checkTextInSearchWindow(searchWindow: Container, expectedText: String) {
     with(this) {
       val textfield = textfield("", searchWindow, this.defaultTimeout)
-      Assert.assertEquals(textfield.target().text, expectedText)
+      Assert.assertEquals(expectedText, textfield.target().text)
     }
   }
 
