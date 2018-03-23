@@ -2,6 +2,7 @@
 
 package com.intellij.facet.impl.ui.libraries;
 
+import com.google.common.io.BaseEncoding;
 import com.intellij.facet.ui.libraries.LibraryInfo;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -14,7 +15,6 @@ import org.jetbrains.annotations.Nullable;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.List;
 
 /**
@@ -76,7 +76,7 @@ public class RequiredLibrariesInfo {
       md5.update(file.contentsToByteArray());
       final byte[] digest = md5.digest();
 
-      return Base64.getEncoder().encodeToString(digest);
+      return BaseEncoding.base16().lowerCase().encode(digest);
     }
     catch (Exception e) {
       return null;

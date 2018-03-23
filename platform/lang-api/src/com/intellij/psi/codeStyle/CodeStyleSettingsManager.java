@@ -67,9 +67,6 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
     return ServiceManager.getService(AppCodeStyleSettingsManager.class);
   }
 
-  @SuppressWarnings({"UnusedDeclaration"})
-  public CodeStyleSettingsManager(Project project) {
-  }
   public CodeStyleSettingsManager() {}
 
   /**

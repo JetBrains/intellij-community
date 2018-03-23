@@ -152,18 +152,17 @@ public class DrawImageTest extends TestScaleHelper {
     testDrawImage(dest = new Dest(scale), bounds(dstCol, dstRow), bounds(srcCol, srcRow), colors);
   }
 
-  private void testDrawImage(Dest dest, Rectangle dstBounds, Rectangle srcBounds, TestColor[] testColors) {
+  private static void testDrawImage(Dest dest, Rectangle dstBounds, Rectangle srcBounds, TestColor[] testColors) {
     UIUtil.drawImage(dest.gr, source, dstBounds, srcBounds, null);
     for (TestColor t : testColors) t.test();
     dest.dispose();
   }
 
+  @SuppressWarnings("SameParameterValue")
   private static Pair<Image, Graphics2D> supplyImage(double scale, int width, int height, Color[] quarterColors, boolean supplyGraphics) {
-    @SuppressWarnings("UndesirableClassUsage")
-    BufferedImage image = new BufferedImage((int)ceil(width * scale), (int)ceil(height * scale), BufferedImage.TYPE_INT_RGB);
-    Graphics2D g = image.createGraphics();
-    double gScale = UIUtil.isJreHiDPIEnabled() ? scale : 1;
-    g.scale(gScale, gScale);
+    Pair<BufferedImage, Graphics2D> pair = createImageAndGraphics(scale, width, height);
+    BufferedImage image = pair.first;
+    Graphics2D g = pair.second;
 
     int qw = JBUI.scale(width) / 2;
     int qh = JBUI.scale(height) / 2;
@@ -184,15 +183,15 @@ public class DrawImageTest extends TestScaleHelper {
     return new Pair<>(image, g);
   }
 
-  private Rectangle bounds() {
+  private static Rectangle bounds() {
     return bounds(0, 0, JBUI.scale(IMAGE_SIZE));
   }
 
-  private Rectangle bounds(int col, int row) {
+  private static Rectangle bounds(int col, int row) {
     return bounds(col, row, JBUI.scale(IMAGE_QUARTER_SIZE));
   }
 
-  private Rectangle bounds(int col, int row, int size) {
+  private static Rectangle bounds(int col, int row, int size) {
     return new Rectangle(col * size, row * size, size, size);
   }
 }

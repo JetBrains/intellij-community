@@ -1,9 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
+import com.intellij.util.ImageLoader;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.ui.JBUI.ScaleContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.After;
@@ -12,6 +15,8 @@ import org.junit.Before;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.io.File;
+import java.net.MalformedURLException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -87,5 +92,34 @@ public class TestScaleHelper {
     Graphics2D g = new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB).createGraphics();
     g.scale(scale, scale);
     return g;
+  }
+
+  public static Pair<BufferedImage, Graphics2D> createImageAndGraphics(double scale, int width, int height) {
+    //noinspection UndesirableClassUsage
+    final BufferedImage image = new BufferedImage((int)Math.ceil(width * scale), (int)Math.ceil(height * scale), BufferedImage.TYPE_INT_ARGB);
+    Graphics2D g = image.createGraphics();
+    double gScale = UIUtil.isJreHiDPIEnabled() ? scale : 1;
+    g.scale(gScale, gScale);
+    return Pair.create(image, g);
+  }
+
+  @SuppressWarnings("unused")
+  public static void saveImage(BufferedImage image, String path) {
+    try {
+      javax.imageio.ImageIO.write(image, "png", new File(path));
+    } catch (java.io.IOException e) {
+      e.printStackTrace();
+    }
+  }
+
+  public static BufferedImage loadImage(String path) {
+    try {
+      Image img = ImageLoader.loadFromUrl(
+        new File(path).toURI().toURL(), false, false, null, ScaleContext.createIdentity());
+      return ImageUtil.toBufferedImage(img);
+    }
+    catch (MalformedURLException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

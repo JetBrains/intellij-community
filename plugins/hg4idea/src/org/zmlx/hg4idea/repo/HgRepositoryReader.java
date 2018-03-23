@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea.repo;
 
+import com.google.common.io.BaseEncoding;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.repo.RepoStateException;
 import com.intellij.dvcs.repo.Repository;
@@ -104,7 +105,7 @@ public class HgRepositoryReader {
   public String readCurrentRevision() {
     if (!isDirStateInfoAvailable()) return null;
     try {
-      return Base64.getEncoder().encodeToString(readHashBytesFromFile(myDirStateFile));
+      return BaseEncoding.base16().lowerCase().encode(readHashBytesFromFile(myDirStateFile));
     }
     catch (IOException e) {
       // dirState exists if not fresh,  if we could not load dirState info repository must be corrupted

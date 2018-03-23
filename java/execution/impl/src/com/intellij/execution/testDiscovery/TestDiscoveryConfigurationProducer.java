@@ -7,6 +7,7 @@ import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.junit.JavaRunConfigurationProducerBase;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -25,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.IOException;
 import java.util.*;
 
 public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigurationProducerBase<JavaTestConfigurationBase> {
@@ -59,27 +59,22 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
     final PsiMethod sourceMethod = getSourceMethod(location);
     final Pair<String, String> position = getPosition(sourceMethod);
     if (sourceMethod != null && position != null) {
-      try {
-        final Project project = configuration.getProject();
-        final TestDiscoveryIndex testDiscoveryIndex = TestDiscoveryIndex.getInstance(project);
-        if (testDiscoveryIndex.getTestsByMethodName(position.first, position.second, configuration.getTestFrameworkId()).isEmpty()) {
-          return false;
-        }
-
-        Module targetModule = getTargetModule(configuration, configurationContext, position, project, testDiscoveryIndex);
-        setupDiscoveryConfiguration(configuration, sourceMethod, targetModule);
-        return true;
-      }
-      catch (IOException e) {
+      final Project project = configuration.getProject();
+      final TestDiscoveryIndex testDiscoveryIndex = TestDiscoveryIndex.getInstance(project);
+      if (testDiscoveryIndex.getTestsByMethodName(position.first, position.second, configuration.getTestFrameworkId()).isEmpty()) {
         return false;
       }
+
+      Module targetModule = getTargetModule(configuration, configurationContext, position, project, testDiscoveryIndex);
+      setupDiscoveryConfiguration(configuration, sourceMethod, targetModule);
+      return true;
     }
     return false;
   }
 
   private Module getTargetModule(JavaTestConfigurationBase configuration,
                                  ConfigurationContext configurationContext,
-                                 Pair<String, String> position, Project project, TestDiscoveryIndex testDiscoveryIndex) throws IOException {
+                                 Pair<String, String> position, Project project, TestDiscoveryIndex testDiscoveryIndex) {
     final RunnerAndConfigurationSettings template =
       configurationContext.getRunManager().getConfigurationTemplate(getConfigurationFactory());
     final Module predefinedModule = ((ModuleBasedConfiguration)template.getConfiguration()).getConfigurationModule().getModule();
@@ -120,6 +115,12 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
     RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(context);
     JavaTestConfigurationBase configuration = (JavaTestConfigurationBase)settings.getConfiguration();
     configuration.setModule(module);
+    if (module == null) {
+      configuration.setSearchScope(TestSearchScope.WHOLE_PROJECT);
+    }
+    else {
+      configuration.setSearchScope(TestSearchScope.MODULE_WITH_DEPENDENCIES);
+    }
     return new RunProfile() {
       @Nullable
       @Override

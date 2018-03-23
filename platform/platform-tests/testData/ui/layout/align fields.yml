@@ -14,5 +14,5 @@ componentConstrains:
   'JTextField #3':
     horizontal: {grow: 100.0}
     wrap: true
-rectangles: '[0, 0, 145, 23], [165, 0, 347, 23], [0, 28, 145, 26], [165, 28, 347,
+rectangles: '[0, 0, 145, 23], [165, 0, 347, 23], [0, 27, 145, 26], [165, 27, 347,
   26]'

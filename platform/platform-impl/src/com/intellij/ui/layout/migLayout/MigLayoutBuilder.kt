@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ui.components.noteComponent
 import com.intellij.ui.layout.*
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.ui.UIUtil
 import net.miginfocom.layout.*
 import net.miginfocom.swing.MigLayout
 import java.awt.Component
@@ -32,8 +33,8 @@ internal class MigLayoutBuilder : LayoutBuilderImpl {
     newRow()
 
     val cc = CC()
-    cc.vertical.gapBefore = gapToBoundSize(VERTICAL_GAP, false)
-    cc.vertical.gapAfter = gapToBoundSize(VERTICAL_GAP * 2, false)
+    cc.vertical.gapBefore = gapToBoundSize(UIUtil.DEFAULT_VGAP, false)
+    cc.vertical.gapAfter = gapToBoundSize(UIUtil.DEFAULT_VGAP * 2, false)
 
     val row = rootRow.createChildRow(label = null, noGrid = true)
     row.apply {
@@ -78,7 +79,7 @@ internal class MigLayoutBuilder : LayoutBuilderImpl {
 
         // https://goo.gl/LDylKm
         // gap = 10u where u = 4px
-        gapTop = VERTICAL_GAP * 3
+        gapTop = UIUtil.DEFAULT_VGAP * 3
       }
 
       var isSplitRequired = true
@@ -140,7 +141,7 @@ internal class MigLayoutBuilder : LayoutBuilderImpl {
 
             // do not add gap if next component is gear action button
             if (component !== lastComponent && !row.components.get(index + 1).let { it is JLabel && it.icon === AllIcons.General.Gear }) {
-              cc.horizontal.gapAfter = gapToBoundSize(HORIZONTAL_GAP * 2, true)
+              cc.horizontal.gapAfter = gapToBoundSize(UIUtil.DEFAULT_HGAP * 2, true)
             }
           }
         }
@@ -190,7 +191,7 @@ internal fun gapToBoundSize(value: Int, isHorizontal: Boolean): BoundSize {
 
 // default values differs to MigLayout - IntelliJ Platform defaults are used
 // see com.intellij.uiDesigner.core.AbstractLayout.DEFAULT_HGAP and DEFAULT_VGAP (multiplied by 2 to achieve the same look (it seems in terms of MigLayout gap is both left and right space))
-private fun createLayoutConstraints(gridGapX: Int = HORIZONTAL_GAP * 2, gridGapY: Int = VERTICAL_GAP): LC {
+private fun createLayoutConstraints(gridGapX: Int = UIUtil.DEFAULT_HGAP * 2, gridGapY: Int = UIUtil.DEFAULT_VGAP): LC {
   // no setter for gap, so, create string to parse
   val lc = LC()
   lc.gridGapX = gapToBoundSize(gridGapX, true)

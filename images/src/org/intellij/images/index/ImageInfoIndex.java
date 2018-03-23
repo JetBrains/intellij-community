@@ -16,6 +16,7 @@
 package org.intellij.images.index;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.indexing.*;
@@ -33,14 +34,7 @@ import java.io.IOException;
  * @author spleaner
  */
 public class ImageInfoIndex extends SingleEntryFileBasedIndexExtension<ImageInfoIndex.ImageInfo> {
-  private static final int ourMaxImageSize;
-  static {
-    int maxImageSize = 200;
-    try {
-      maxImageSize = Integer.parseInt(System.getProperty("idea.max.image.filesize", Integer.toString(maxImageSize)), 10);
-    } catch (NumberFormatException ex) {}
-    ourMaxImageSize = maxImageSize;
-  }
+  private static final long ourMaxImageSize = (long)(Registry.get("ide.index.image.max.size").asDouble() * 1024 * 1024);
 
   public static final ID<Integer, ImageInfo> INDEX_ID = ID.create("ImageFileInfoIndex");
 
@@ -94,17 +88,15 @@ public class ImageInfoIndex extends SingleEntryFileBasedIndexExtension<ImageInfo
   public FileBasedIndex.InputFilter getInputFilter() {
     return new DefaultFileTypeSpecificInputFilter(ImageFileTypeManager.getInstance().getImageFileType()) {
       @Override
-      public boolean acceptInput(@NotNull final VirtualFile file) {
-        return file.isInLocalFileSystem() &&
-               file.getLength() / 1024 < ourMaxImageSize
-          ;
+      public boolean acceptInput(@NotNull VirtualFile file) {
+        return file.isInLocalFileSystem() && file.getLength() < ourMaxImageSize;
       }
     };
   }
 
   @Override
   public int getVersion() {
-    return 5;
+    return 6;
   }
 
   public static class ImageInfo {

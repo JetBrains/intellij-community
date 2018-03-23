@@ -4,9 +4,9 @@ package com.intellij.util.ui;
 import com.intellij.openapi.util.IconLoader.CachedImageIcon;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.IconUtil;
-import com.intellij.util.ImageLoader;
 import com.intellij.util.ui.JBUI.ScaleContext;
 import com.intellij.util.ui.paint.ImageComparator;
+import com.intellij.util.ui.paint.ImageComparator.AASmootherComparator;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -16,7 +16,6 @@ import java.io.File;
 import java.net.MalformedURLException;
 
 import static com.intellij.util.ui.JBUI.ScaleType.SYS_SCALE;
-import static junit.framework.TestCase.assertTrue;
 
 /**
  * Tests SVG icon painting.
@@ -39,32 +38,13 @@ public class SvgIconPaintTest extends TestScaleHelper {
     CachedImageIcon icon = new CachedImageIcon(new File(getSvgIconPath()).toURI().toURL());
     icon.updateScaleContext(ScaleContext.create(SYS_SCALE.of(1)));
     BufferedImage iconImage = ImageUtil.toBufferedImage(IconUtil.toImage(icon));
-    //save(iconImage);
-    BufferedImage goldImage = load();
 
-    ImageComparator comparator = new ImageComparator(new ImageComparator.ColorAASmoother(0, 0.3f));
-    StringBuilder sb = new StringBuilder("images mismatch: ");
-    assertTrue(sb.toString(), comparator.compare(iconImage, goldImage, sb));
-  }
+    //saveImage(iconImage, getGoldImagePath()); // uncomment to save gold image
 
-  @SuppressWarnings("unused")
-  private static void save(BufferedImage bi) {
-    try {
-      javax.imageio.ImageIO.write(bi, "png", new File(getGoldImagePath()));
-    } catch (java.io.IOException e) {
-      e.printStackTrace();
-    }
-  }
+    BufferedImage goldImage = loadImage(getGoldImagePath());
 
-  private static BufferedImage load() {
-    try {
-      Image img = ImageLoader.loadFromUrl(
-        new File(getGoldImagePath()).toURI().toURL(), false, false, null, ScaleContext.createIdentity());
-      return ImageUtil.toBufferedImage(img);
-    }
-    catch (MalformedURLException e) {
-      throw new RuntimeException(e);
-    }
+    ImageComparator.compareAndAssert(
+      new AASmootherComparator(0.1, 0.1, new Color(0, 0, 0, 0)), iconImage, goldImage, null);
   }
 
   private static String getSvgIconPath() {
