@@ -495,7 +495,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       @Override
       public Dimension getPreferredSize() {
         Dimension size = myScrollPane.getPreferredSize();
-        if (myHint == null && myManager.myToolWindow == null) {
+        if (myHint == null && myManager != null && myManager.myToolWindow == null) {
           int em = myEditorPane.getFont().getSize();
           int prefHeightMax = PREFERRED_HEIGHT_MAX_EM * em;
           return new Dimension(size.width, Math.min(prefHeightMax,
