@@ -403,8 +403,6 @@
 
     <action class="com.intellij.execution.testDiscovery.actions.ShowDiscoveredTestsAction" id="ShowDiscoveredTests" text="Show Discovered Tests">
       <add-to-group group-id="RunMenu" anchor="before" relative-to-action="DebugMainMenu"/>
-    </action>
-    <action class="com.intellij.execution.testDiscovery.actions.ShowDiscoveredTestsFromChangesAction" id="ShowDiscoveredTestsFromChangeList" text="Show Discovered Tests">
       <add-to-group group-id="ChangesViewPopupMenu" anchor="last"/>
     </action>
 
