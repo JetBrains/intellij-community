@@ -160,4 +160,11 @@ class AdvancedArrayAccess {
       System.out.println("Not supported if variable type is not array");
     }
   }
+
+  void testWidening(byte[] b, int idx) {
+    int i = b[idx] & 0xFF;
+    if(<warning descr="Condition 'i > 255' is always 'false'">i > 255</warning>) {
+      System.out.println("Impossible");
+    }
+  }
 }
