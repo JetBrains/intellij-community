@@ -19,7 +19,7 @@ import java.awt.Container
 class KeyMapSettingsTestFocusTest : GuiTestCase() {
 
   @Test
-  fun testInlineVariableFocus() {
+  fun testKeyMapSettingsTestFocus() {
     CommunityProjectCreator.createCommandLineProject()
     Pause.pause(1000)
     ideFrame {

@@ -23,7 +23,7 @@ class SearchEverywhereFocusTest : GuiTestCase() {
   private val searchWindowLabelText = "Search Everywhere:"
 
   @Test
-  fun testGoToClassFocus() {
+  fun testSearchEverywhereFocus() {
     CommunityProjectCreator.createCommandLineProject()
     Pause.pause(1000)
     ideFrame {
