@@ -765,13 +765,12 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
       }
     }
 
-    private boolean fixEqualButNotSame(@NotNull Node node, @NotNull Object object) {
-      if (object == node.object) return false;
+    private void fixEqualButNotSame(@NotNull Node node, @NotNull Object object) {
+      if (object == node.object) return;
       // always use new instance of user's object, because
       // some trees provide equal nodes with different behavior
       node.object = object;
       map.put(object, node); // update key
-      return true;
     }
   }
 
