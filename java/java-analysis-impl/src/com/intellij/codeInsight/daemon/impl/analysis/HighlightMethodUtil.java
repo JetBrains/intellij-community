@@ -889,6 +889,14 @@ public class HighlightMethodUtil {
     QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, QUICK_FIX_FACTORY.createSurroundWithArrayFix(methodCall, null));
     QualifyThisArgumentFix.registerQuickFixAction(methodCandidates, methodCall, highlightInfo, fixRange);
 
+    PsiType expectedTypeByParent = PsiTypesUtil.getExpectedTypeByParent(methodCall);
+    if (expectedTypeByParent != null) {
+      PsiType methodCallType = methodCall.getType();
+      if (methodCallType != null && TypeConversionUtil.areTypesConvertible(methodCallType, expectedTypeByParent)) {
+        QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createAddTypeCastFix(expectedTypeByParent, methodCall));
+      }
+    }
+
     CandidateInfo[] candidates = resolveHelper.getReferencedMethodCandidates(methodCall, true);
     ChangeStringLiteralToCharInMethodCallFix.registerFixes(candidates, methodCall, highlightInfo);
   }
