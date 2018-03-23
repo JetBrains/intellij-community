@@ -17,19 +17,42 @@
 package com.intellij.completion.enhancer
 
 import com.intellij.codeInsight.completion.CompletionContributorEP
+import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.openapi.application.PreloadingActivity
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
 
 class FirstContributorPreloader : PreloadingActivity() {
+    private companion object {
+        val LOG = Logger.getInstance(FirstContributorPreloader::class.java)
+    }
+
 
     override fun preload(indicator: ProgressIndicator) {
         val id = PluginId.findId("com.intellij.stats.completion")
         val descriptor = PluginManager.getPlugin(id)
 
+        if (descriptor == null) {
+            LOG.error("Plugin descriptor not found")
+        } else {
+            addCustomWeigherContributor(descriptor)
+//            addInvocationCountContributor(descriptor) // disabled for a while
+        }
+    }
+
+    private fun addInvocationCountContributor(descriptor: IdeaPluginDescriptor) {
+        addContrubitor(descriptor, InvocationCountEnhancingContributor::class.java.name)
+    }
+
+    private fun addCustomWeigherContributor(descriptor: IdeaPluginDescriptor) {
+        addContrubitor(descriptor, CustomRankingContributor::class.java.name)
+    }
+
+    private fun addContrubitor(descriptor: IdeaPluginDescriptor, implClass: String) {
         CompletionContributorEP().apply {
-            implementationClass = InvocationCountEnhancingContributor::class.java.name
+            implementationClass = implClass
             language = "any"
             pluginDescriptor = descriptor
         }.let {
