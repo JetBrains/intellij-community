@@ -7,6 +7,7 @@ import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.junit.JavaRunConfigurationProducerBase;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -120,6 +121,12 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
     RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(context);
     JavaTestConfigurationBase configuration = (JavaTestConfigurationBase)settings.getConfiguration();
     configuration.setModule(module);
+    if (module == null) {
+      configuration.setSearchScope(TestSearchScope.WHOLE_PROJECT);
+    }
+    else {
+      configuration.setSearchScope(TestSearchScope.MODULE_WITH_DEPENDENCIES);
+    }
     return new RunProfile() {
       @Nullable
       @Override
