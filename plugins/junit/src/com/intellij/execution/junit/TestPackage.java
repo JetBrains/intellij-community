@@ -38,6 +38,7 @@ import com.intellij.psi.search.PackageScope;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.rt.execution.junit.JUnitStarter;
+import com.intellij.util.Function;
 import com.intellij.util.containers.JBTreeTraverser;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
@@ -71,10 +72,10 @@ public class TestPackage extends TestObject {
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
 
     return new SearchForTestsTask(getConfiguration().getProject(), myServerSocket) {
-      private final THashSet<PsiClass> myClasses = new THashSet<>();
+      private final THashSet<String> myClassNames = new THashSet<>();
       @Override
       protected void search() {
-        myClasses.clear();
+        myClassNames.clear();
         final SourceScope sourceScope = getSourceScope();
         final Module module = getConfiguration().getConfigurationModule().getModule();
         if (sourceScope != null && !JUnitStarter.JUNIT5_PARAMETER.equals(getRunner())) {
@@ -83,7 +84,7 @@ public class TestPackage extends TestObject {
             instance.setAlternativeResolveEnabled(true);
             final TestClassFilter classFilter = getClassFilter(data);
             LOG.assertTrue(classFilter.getBase() != null);
-            searchTests(module, classFilter, myClasses);
+            searchTests(module, classFilter, myClassNames);
           }
           catch (CantRunException ignored) {}
           finally {
@@ -96,8 +97,7 @@ public class TestPackage extends TestObject {
       protected void onFound() {
 
         try {
-          addClassesListToJavaParameters(myClasses,
-                                         psiClass -> psiClass != null ? JavaExecutionUtil.getRuntimeQualifiedName(psiClass) : null, getPackageName(data), createTempFiles(), getJavaParameters());
+          addClassesListToJavaParameters(myClassNames, Function.ID, getPackageName(data), createTempFiles(), getJavaParameters());
         }
         catch (ExecutionException ignored) {}
       }
@@ -105,26 +105,28 @@ public class TestPackage extends TestObject {
   }
 
 
-  protected void searchTests(Module module, TestClassFilter classFilter, Set<PsiClass> classes) throws CantRunException {
-    long start = System.currentTimeMillis();
-    if (Registry.is("junit4.search.4.tests.all.in.scope", true)) {
-      Condition<PsiClass> acceptClassCondition = aClass -> ReadAction.compute(() -> aClass.isValid() && classFilter.isAccepted(aClass));
-      collectClassesRecursively(classFilter, acceptClassCondition, classes);
-    }
-    else if (Registry.is("junit4.search.4.tests.in.classpath", false)) {
+  protected void searchTests(Module module, TestClassFilter classFilter, Set<String> names) throws CantRunException {
+    Set<PsiClass> classes = new THashSet<>();
+    if (Registry.is("junit4.search.4.tests.in.classpath", false)) {
       String packageName = getPackageName(getConfiguration().getPersistentData());
       String[] classNames =
         TestClassCollector.collectClassFQNames(packageName, getRootPath(), getConfiguration(), TestPackage::createPredicate);
       PsiManager manager = PsiManager.getInstance(getConfiguration().getProject());
       Arrays.stream(classNames)
             .filter(className -> acceptClassName(className)) //check patterns
-            .map(name -> ReadAction.compute(() -> ClassUtil.findPsiClass(manager, name, null, true, classFilter.getScope())))
-            .filter(aClass -> aClass != null)
-            .forEach(classes::add);
-      LOG.info("Found tests in " + (System.currentTimeMillis() - start));
+            .filter(name -> ReadAction.compute(() -> ClassUtil.findPsiClass(manager, name, null, true, classFilter.getScope())) != null)
+            .forEach(className -> names.add(className));
     }
     else {
-      ConfigurationUtil.findAllTestClasses(classFilter, module, classes);
+      if (Registry.is("junit4.search.4.tests.all.in.scope", true)) {
+        Condition<PsiClass> acceptClassCondition = aClass -> ReadAction.compute(() -> aClass.isValid() && classFilter.isAccepted(aClass));
+        collectClassesRecursively(classFilter, acceptClassCondition, classes);
+      }
+      else {
+        ConfigurationUtil.findAllTestClasses(classFilter, module, classes);
+      }
+
+      classes.forEach(psiClass -> names.add(JavaExecutionUtil.getRuntimeQualifiedName(psiClass)));
     }
   }
   
