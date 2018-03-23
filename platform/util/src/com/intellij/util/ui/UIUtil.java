@@ -981,6 +981,10 @@ public class UIUtil {
     return UIManager.getColor("Label.disabledText");
   }
 
+  public static Color getContextHelpForeground() {
+    return Gray.x78;
+  }
+
   @NotNull
   public static String removeMnemonic(@NotNull String s) {
     if (s.indexOf('&') != -1) {

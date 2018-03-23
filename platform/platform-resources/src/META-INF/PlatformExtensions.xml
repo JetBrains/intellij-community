@@ -326,7 +326,7 @@
     <actionFromOptionDescriptorProvider implementation="com.intellij.ide.plugins.InstalledPluginsManagerMain$PluginsActionFromOptionDescriptorProvider"/>
     <customFileDropHandler implementation="com.intellij.ide.plugins.InstalledPluginsManagerMain$PluginDropHandler"/>
     <applicationConfigurable parentId="preferences.general" instance="com.intellij.util.net.HttpProxyConfigurable" id="http.proxy" displayName="HTTP Proxy"/>
-    <applicationConfigurable parentId="preferences.general" instance="com.intellij.ide.gdpr.ConsentConfigurable" id="consents" displayName="Analytics"/>
+    <applicationConfigurable parentId="preferences.general" instance="com.intellij.ide.gdpr.ConsentConfigurable" id="consents" displayName="Data Sharing"/>
     <applicationConfigurable groupId="tools" displayName="Server Certificates" id="http.certificates" instance="com.intellij.util.net.ssl.CertificateConfigurable"/>
 
     <fileTypeFactory implementation="com.intellij.openapi.fileTypes.impl.PlatformFileTypeFactory"/>

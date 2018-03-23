@@ -6,7 +6,6 @@ import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ContextHelpLabel;
-import com.intellij.ui.Gray;
 import com.intellij.ui.TextComponent;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -197,7 +196,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
       comment = new JBLabel("").setCopyable(true).setAllowAutoWrapping(true);
       comment.setVerticalTextPosition(SwingConstants.TOP);
       comment.setFocusable(false);
-      comment.setForeground(Gray.x78);
+      comment.setForeground(UIUtil.getContextHelpForeground());
       comment.setBorder(getCommentBorder());
       setCommentTextImpl(myCommentText);
 
