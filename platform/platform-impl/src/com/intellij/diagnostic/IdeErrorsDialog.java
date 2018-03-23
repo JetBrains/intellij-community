@@ -732,7 +732,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
     @Override
     public void actionPerformed(ActionEvent e) {
-      myMessagePool.clearFatals();
+      myMessagePool.clearErrors();
       doOKAction();
     }
 
