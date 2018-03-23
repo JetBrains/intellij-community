@@ -49,7 +49,7 @@ public abstract class DfaFactType<T> extends Key<T> {
 
     @NotNull
     @Override
-    public String getPresentationText(Boolean fact, PsiType type) {
+    public String getPresentationText(@NotNull Boolean fact, @Nullable PsiType type) {
       if (type instanceof PsiPrimitiveType) return "";
       return super.getPresentationText(fact, type);
     }
@@ -172,7 +172,7 @@ public abstract class DfaFactType<T> extends Key<T> {
 
     @NotNull
     @Override
-    public String getPresentationText(LongRangeSet fact, PsiType type) {
+    public String getPresentationText(@NotNull LongRangeSet fact, @Nullable PsiType type) {
       LongRangeSet fromType = LongRangeSet.fromType(type);
       if(fact.equals(fromType)) return "";
       return fact.toString();
@@ -215,7 +215,7 @@ public abstract class DfaFactType<T> extends Key<T> {
 
     @NotNull
     @Override
-    public String getPresentationText(TypeConstraint fact, PsiType type) {
+    public String getPresentationText(@NotNull TypeConstraint fact, @Nullable PsiType type) {
       return fact.getPresentationText(type);
     }
   };
@@ -289,12 +289,12 @@ public abstract class DfaFactType<T> extends Key<T> {
   /**
    * Produces a user-friendly presentation of the fact based on the fact itself and the type of the expression
    * @param fact a fact to represent
-   * @param type an expression type
+   * @param type an expression type, if known
    * @return a user-friendly string representation of the fact; empty string if the fact adds nothing to the expression type
    * (e.g. fact is Range {0..65535} and type is 'char').
    */
   @NotNull
-  public String getPresentationText(T fact, PsiType type) {
+  public String getPresentationText(@NotNull T fact, @Nullable PsiType type) {
     return toString(fact);
   }
 

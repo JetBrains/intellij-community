@@ -16,7 +16,10 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.value.DfaPsiType;
-import com.intellij.psi.*;
+import com.intellij.psi.LambdaUtil;
+import com.intellij.psi.PsiIntersectionType;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
@@ -46,11 +49,11 @@ public final class TypeConstraint {
   }
 
   @NotNull
-  public String getPresentationText(PsiType type) {
+  public String getPresentationText(@Nullable PsiType type) {
     Set<DfaPsiType> instanceOfTypes = myInstanceofValues;
-    if (type instanceof PsiClassType) {
+    if (type != null) {
       instanceOfTypes = StreamEx.of(instanceOfTypes)
-                                .removeBy(DfaPsiType::getPsiType, ((PsiClassType)type).rawType())
+                                .removeBy(DfaPsiType::getPsiType, DfaPsiType.normalizeType(type))
                                 .toSet();
     }
     return EntryStream.of("instanceof ", instanceOfTypes,

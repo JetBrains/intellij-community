@@ -95,14 +95,7 @@ public class DfaValueFactory {
 
   @NotNull
   public DfaPsiType createDfaType(@NotNull PsiType psiType) {
-    int dimensions = psiType.getArrayDimensions();
-    psiType = psiType.getDeepComponentType();
-    if (psiType instanceof PsiClassType) {
-      psiType = ((PsiClassType)psiType).rawType();
-    }
-    while (dimensions-- > 0) {
-      psiType = psiType.createArrayType();
-    }
+    psiType = DfaPsiType.normalizeType(psiType);
     DfaPsiType dfaType = myDfaTypes.get(psiType);
     if (dfaType == null) {
       myDfaTypes.put(psiType, dfaType = new DfaPsiType(myDfaTypes.size() + 1, psiType, myAssignableCache, myConvertibleCache));
