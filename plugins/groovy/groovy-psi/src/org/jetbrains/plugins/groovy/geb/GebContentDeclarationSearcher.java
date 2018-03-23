@@ -17,10 +17,7 @@ package org.jetbrains.plugins.groovy.geb;
 
 import com.intellij.pom.PomDeclarationSearcher;
 import com.intellij.pom.PomTarget;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiModifier;
+import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
@@ -52,11 +49,11 @@ public class GebContentDeclarationSearcher extends PomDeclarationSearcher {
     if (!InheritanceUtil.isInheritor(containingClass, "geb.Page")
         && !InheritanceUtil.isInheritor(containingClass, "geb.Module")) return;
 
-    Map<String, PsiField> elements = GebUtil.getContentElements(containingClass);
+    Map<String, PsiMember> contentElements = GebUtil.getContentElements(containingClass);
 
-    for (PsiField f : elements.values()) {
-      if (f.getNavigationElement() == element) {
-        consumer.consume(f);
+    for (PsiMember contentElement : contentElements.values()) {
+      if (contentElement.getNavigationElement() == element) {
+        consumer.consume(contentElement);
         return;
       }
     }
