@@ -11,6 +11,8 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
@@ -246,12 +248,29 @@ public class SameParameterValueInspectionBase extends GlobalJavaBatchInspectionT
                                             Object value,
                                             boolean usedForWriting) {
     final String name = parameter.getName();
-    String stringPresentation = value instanceof PsiType ? ((PsiType)value).getPresentableText() + ".class" 
-                                                         : String.valueOf(value);
+    String shortName;
+    String stringPresentation;
+    if (value instanceof PsiType) {
+      stringPresentation = ((PsiType)value).getCanonicalText() + ".class";
+      shortName = ((PsiType)value).getPresentableText() + ".class";
+    }
+    else {
+      if (value instanceof PsiField) {
+        stringPresentation = PsiFormatUtil.formatVariable((PsiVariable)value, 
+                                                          PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_FQ_NAME, 
+                                                          PsiSubstitutor.EMPTY);
+        shortName = PsiFormatUtil.formatVariable((PsiVariable)value, 
+                                                 PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_CONTAINING_CLASS, 
+                                                 PsiSubstitutor.EMPTY);
+      }
+      else {
+        stringPresentation = shortName =  String.valueOf(value);
+      }
+    }
     return manager.createProblemDescriptor(ObjectUtils.notNull(parameter.getNameIdentifier(), parameter),
                                            InspectionsBundle.message("inspection.same.parameter.problem.descriptor",
                                                                      name,
-                                                                     StringUtil.unquoteString(stringPresentation)),
+                                                                     StringUtil.unquoteString(shortName)),
                                            usedForWriting ? null : createFix(name, stringPresentation),
                                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false);
   }
