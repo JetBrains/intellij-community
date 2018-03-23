@@ -13,7 +13,7 @@ import java.awt.event.KeyEvent;
 
 import static java.awt.event.ComponentEvent.COMPONENT_FIRST;
 
-public class TBItemAction extends TBItemCallback {
+public class TBItemAction implements NSTLibrary.Action {
   final String myActionId;
 
   public TBItemAction(String actionId) {
@@ -21,7 +21,7 @@ public class TBItemAction extends TBItemCallback {
   }
 
   @Override
-  public void callback () {
+  public void execute() {
     ApplicationManager.getApplication().invokeLater(() -> _performAction());
   }
 
