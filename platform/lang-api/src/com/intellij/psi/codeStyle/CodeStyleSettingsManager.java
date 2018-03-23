@@ -38,10 +38,9 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
   private static final Logger LOG = Logger.getInstance(CodeStyleSettingsManager.class);
 
   /**
-   * Use {@code get/setMainProjectCodeStyle()} instead
-   * @Deprecated
+   * Use {@link #setMainProjectCodeStyle(CodeStyleSettings)} or {@link #getMainProjectCodeStyle()} instead
    */
-  @SuppressWarnings("DeprecatedIsStillUsed") @Deprecated
+  @Deprecated
   @Nullable
   public volatile CodeStyleSettings PER_PROJECT_SETTINGS;
 
@@ -52,7 +51,6 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
   /**
    * @deprecated see comments for {@link #getSettings(Project)}
    */
-  @SuppressWarnings("deprecation")
   @Deprecated
   public static CodeStyleSettingsManager getInstance(@Nullable Project project) {
     if (project == null || project.isDefault()) return getInstance();
