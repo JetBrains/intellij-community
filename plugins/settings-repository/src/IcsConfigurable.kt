@@ -49,9 +49,9 @@ internal class IcsConfigurableUi : ConfigurableUi<IcsSettings>, Disposable {
     saveSettings(settings, icsManager.settingsFile)
   }
 
-  override fun getComponent() = verticalPanel {
-    editors.get(0).component()
-    autoSync(comment = "Use VCS -> Sync Settings to sync when you want")
-    panel("Read-only Sources", editors.get(1).component)
+  override fun getComponent() = panel {
+    row { editors.get(0).component() }
+    row { autoSync(comment = "Use VCS -> Sync Settings to sync when you want") }
+    row { panel("Read-only Sources", editors.get(1).component) }
   }
 }

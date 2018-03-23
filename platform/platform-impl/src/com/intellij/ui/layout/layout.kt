@@ -2,7 +2,6 @@
 package com.intellij.ui.layout
 
 import com.intellij.ui.components.Panel
-import com.intellij.ui.layout.LCFlags.*
 import javax.swing.JPanel
 
 /**
@@ -23,8 +22,4 @@ inline fun panel(vararg constraints: LCFlags, title: String? = null, init: Layou
   val panel = Panel(title, layout = null)
   builder.builder.build(panel, constraints)
   return panel
-}
-
-inline fun verticalPanel(init: Row.() -> Unit) = panel(noGrid, flowY, fillX) {
-  row(init = init)
 }
