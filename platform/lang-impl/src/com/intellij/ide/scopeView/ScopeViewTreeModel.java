@@ -310,6 +310,7 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
         children.forEach(child -> {
           if (child instanceof AbstractTreeNode) {
             AbstractTreeNode node = (AbstractTreeNode)child;
+            node.setParent(parent);
             node.update();
             result.add(node);
           }
