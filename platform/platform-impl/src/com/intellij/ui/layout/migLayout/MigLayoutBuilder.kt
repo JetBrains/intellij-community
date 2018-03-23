@@ -1,67 +1,41 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.layout.migLayout
 
-import com.intellij.codeInspection.SmartHashMap
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.actionSystem.ActionToolbar
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.ToggleAction
-import com.intellij.openapi.project.DumbAware
-import com.intellij.openapi.ui.ComponentWithBrowseButton
-import com.intellij.openapi.ui.OnePixelDivider
-import com.intellij.ui.SeparatorComponent
-import com.intellij.ui.TextFieldWithHistory
-import com.intellij.ui.TextFieldWithHistoryWithBrowseButton
 import com.intellij.ui.components.noteComponent
 import com.intellij.ui.layout.*
-import com.intellij.util.SmartList
+import com.intellij.util.containers.ContainerUtil
 import net.miginfocom.layout.*
 import net.miginfocom.swing.MigLayout
 import java.awt.Component
 import java.awt.Container
-import javax.swing.*
-import javax.swing.text.JTextComponent
+import javax.swing.ButtonGroup
+import javax.swing.JLabel
 
 /**
  * Automatically add `growX` to JTextComponent (see isAddGrowX).
  * Automatically add `grow` and `push` to JPanel (see isAddGrowX).
  */
 internal class MigLayoutBuilder : LayoutBuilderImpl {
-  private val rows = SmartList<MigLayoutRow>()
-
-  private val componentConstraints: MutableMap<Component, CC> = SmartHashMap()
+  /**
+   * Map of component to constraints shared among rows (since components are unique)
+   */
+  private val componentConstraints: MutableMap<Component, CC> = ContainerUtil.newIdentityTroveMap()
+  private val rootRow = MigLayoutRow(parent = null, componentConstraints = componentConstraints, builder = this, indent = 0)
 
   override fun newRow(label: JLabel?, buttonGroup: ButtonGroup?, separated: Boolean): Row {
-    return newRow(rows, label, buttonGroup, separated)
-  }
-
-  internal fun newRow(rowList: MutableList<MigLayoutRow>, label: JLabel?, buttonGroup: ButtonGroup? = null, separated: Boolean = false): Row {
-    if (separated) {
-      val row = MigLayoutRow(componentConstraints, this, noGrid = true, separated = true)
-      rowList.add(row)
-      row.apply { SeparatorComponent(0, OnePixelDivider.BACKGROUND, null)() }
-    }
-
-    val row = MigLayoutRow(componentConstraints, this, label != null, buttonGroup = buttonGroup)
-    rowList.add(row)
-
-    if (label != null) {
-      row.apply { label() }
-    }
-
-    return row
+    return rootRow.createChildRow(label = label, buttonGroup = buttonGroup, separated = separated)
   }
 
   override fun noteRow(text: String) {
     // add empty row as top gap
-//    newRow()
+    newRow()
 
     val cc = CC()
     cc.vertical.gapBefore = gapToBoundSize(VERTICAL_GAP, false)
     cc.vertical.gapAfter = gapToBoundSize(VERTICAL_GAP * 2, false)
 
-    val row = MigLayoutRow(componentConstraints, this, noGrid = true)
-    rows.add(row)
+    val row = rootRow.createChildRow(label = null, noGrid = true)
     row.apply {
       val noteComponent = noteComponent(text)
       componentConstraints.put(noteComponent, cc)
@@ -86,11 +60,15 @@ internal class MigLayoutBuilder : LayoutBuilderImpl {
 
     val columnConstraints = AC()
     var columnIndex = 0
-    container.layout = MigLayout(lc, columnConstraints)
+    val rowConstraints = AC()
+    rowConstraints.align("top")
+    container.layout = MigLayout(lc, columnConstraints, rowConstraints)
 
     val isNoGrid = layoutConstraints.contains(LCFlags.noGrid)
 
-    fun configureComponents(row: MigLayoutRow, prevRow: MigLayoutRow?, isSubRow: Boolean, isLabeled: Boolean) {
+    var rowIndex = 0
+
+    fun configureComponents(row: MigLayoutRow, prevRow: MigLayoutRow?, isLabeled: Boolean) {
       val lastComponent = row.components.lastOrNull()
       if (lastComponent == null) {
         if (prevRow == null) {
@@ -113,8 +91,6 @@ internal class MigLayoutBuilder : LayoutBuilderImpl {
           gapTop = -1
         }
 
-        addGrowIfNeed(cc, component)
-
         if (isNoGrid) {
           container.add(component, cc)
           continue
@@ -133,18 +109,13 @@ internal class MigLayoutBuilder : LayoutBuilderImpl {
           if (component === row.components.first()) {
             // rowConstraints.noGrid() doesn't work correctly
             cc.spanX()
-            if (row.separated) {
-              cc.vertical.gapBefore = gapToBoundSize(VERTICAL_GAP * 3, false)
-              cc.vertical.gapAfter = gapToBoundSize(VERTICAL_GAP * 2, false)
-            }
           }
         }
         else {
           var isSkippableComponent = true
           if (component === row.components.first()) {
-            val isHintComponent = component.getClientProperty(COMPONENT_TAG_HINT) == true
-            if ((isSubRow && !isHintComponent) || (isHintComponent && prevRow != null && !prevRow.labeled)) {
-              cc.horizontal.gapBefore = gapToBoundSize(HORIZONTAL_GAP * 3, true)
+            row.gapAfter?.let {
+              rowConstraints.gap(it, rowIndex)
             }
 
             if (isLabeled) {
@@ -180,9 +151,11 @@ internal class MigLayoutBuilder : LayoutBuilderImpl {
 
         container.add(component, cc)
       }
+
+      rowIndex++
     }
 
-    fun processRows(rows: List<MigLayoutRow>, isSubRow: Boolean) {
+    fun processRows(rows: List<MigLayoutRow>) {
       val isLabeled = rows.firstOrNull(MigLayoutRow::labeled) != null
       var prevRow: MigLayoutRow? = null
       for (row in rows) {
@@ -192,41 +165,21 @@ internal class MigLayoutBuilder : LayoutBuilderImpl {
           columnConstraints.grow(0f, columnIndex++)
         }
 
-        configureComponents(row, prevRow, isSubRow, isLabeled)
-        row._subRows?.let {
-          processRows(it, true)
+        configureComponents(row, prevRow, isLabeled)
+        row.subRows?.let {
+          processRows(it)
         }
 
         prevRow = row
       }
     }
 
-    processRows(rows, false)
+    rootRow.subRows?.let {
+      processRows(it)
+    }
 
     // do not hold components
     componentConstraints.clear()
-  }
-}
-
-private fun addGrowIfNeed(cc: CC, component: Component) {
-  when {
-    component is TextFieldWithHistory || component is TextFieldWithHistoryWithBrowseButton -> {
-      cc.minWidth("${MAX_SHORT_TEXT_WIDTH}px")
-      cc.growX()
-    }
-
-    component is JPasswordField -> {
-      applyGrowPolicy(cc, GrowPolicy.SHORT_TEXT)
-    }
-
-    component is JTextComponent || component is SeparatorComponent || component is ComponentWithBrowseButton<*> -> {
-      cc.growX()
-    }
-
-    component is JPanel && component.componentCount == 1 &&
-    (component.getComponent(0) as? JComponent)?.getClientProperty(ActionToolbar.ACTION_TOOLBAR_PROPERTY_KEY) != null -> {
-      cc.grow().push()
-    }
   }
 }
 
@@ -295,15 +248,4 @@ private fun LC.apply(flags: Array<out LCFlags>): LC {
     }
   }
   return this
-}
-
-private class DebugMigLayoutAction : ToggleAction(), DumbAware {
-  private var debugEnabled = false
-
-  override fun setSelected(e: AnActionEvent, state: Boolean) {
-    debugEnabled = state
-    LayoutUtil.setGlobalDebugMillis(if (debugEnabled) 300 else 0)
-  }
-
-  override fun isSelected(e: AnActionEvent) = debugEnabled
 }

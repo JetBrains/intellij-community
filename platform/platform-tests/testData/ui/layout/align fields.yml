@@ -1,11 +1,18 @@
-rowConstraints: ''
-columnConstraints:
-  count: 2.0
+layoutConstraints: null
+rowConstraints:
   constraints:
-  - {}
+  - align: {horizontal: false, operation: 100, unit: 6, value: 0.0}
+columnConstraints:
+  constraints:
+  - {grow: 0.0}
   - {grow: 100.0}
+  count: 2
 componentConstrains:
   'JLabel #0': {}
   'JCheckBox #1': {wrap: true}
   'JLabel #2': {}
-  'JTextField #3': {wrap: true}
+  'JTextField #3':
+    horizontal: {grow: 100.0}
+    wrap: true
+rectangles: '[0, 0, 145, 23], [165, 0, 347, 23], [0, 28, 145, 26], [165, 28, 347,
+  26]'

@@ -28,8 +28,6 @@ import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JLabel
 
-internal const val COMPONENT_TAG_HINT = "kotlin.dsl.hint.component"
-
 abstract class Row {
   abstract var enabled: Boolean
 
@@ -38,8 +36,6 @@ abstract class Row {
   abstract var subRowsEnabled: Boolean
 
   abstract var subRowsVisible: Boolean
-
-  abstract val subRows: List<Row>
 
   protected abstract val builder: LayoutBuilderImpl
 
@@ -94,18 +90,13 @@ abstract class Row {
     label()
   }
 
-  fun hint(text: String) {
-    val component = label(text, style = ComponentStyle.SMALL, fontColor = FontColor.BRIGHTER)
-    component.putClientProperty(COMPONENT_TAG_HINT, true)
-  }
-
   fun panel(title: String, wrappedComponent: Component, vararg constraints: CCFlags) {
     val panel = Panel(title)
     panel.add(wrappedComponent)
     panel(*constraints)
   }
 
-  abstract operator fun JComponent.invoke(vararg constraints: CCFlags, gapLeft: Int = 0, growPolicy: GrowPolicy? = null)
+  abstract operator fun JComponent.invoke(vararg constraints: CCFlags, gapLeft: Int = 0, growPolicy: GrowPolicy? = null, comment: String? = null)
 
   inline fun right(init: Row.() -> Unit) {
     alignRight()

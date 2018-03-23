@@ -1,36 +1,35 @@
-rowConstraints: ''
-columnConstraints:
-  count: 2.0
+layoutConstraints: null
+rowConstraints:
   constraints:
-  - {}
+  - align: {horizontal: false, operation: 100, unit: 6, value: 0.0}
+columnConstraints:
+  constraints:
+  - {grow: 0.0}
   - {grow: 100.0}
+  count: 2
 componentConstrains:
   'MultiLineLabel #0':
-    spanX: 2097051.0
-    wrap: true
+    spanX: 2097051
     vertical:
-      gapBefore:
-        min: {value: 5.0, unitString: px}
-        preferred: {value: 5.0, unitString: px}
       gapAfter:
-        min: {value: 10.0, unitString: px}
-        preferred: {value: 10.0, unitString: px}
+        min: &id001 {horizontal: false, operation: 100, unit: 0, unitString: px, value: 10.0}
+        preferred: *id001
+      gapBefore:
+        min: &id002 {horizontal: false, operation: 100, unit: 0, unitString: px, value: 5.0}
+        preferred: *id002
+    wrap: true
   'JLabel #1': {}
-  'JPasswordField #2':
-    wrap: true
-    horizontal:
-      size:
-        min: {value: 250.0, unitString: px}
-        max: {value: 250.0, unitString: px}
-        preferred: {value: 250.0, unitString: px}
-  'JCheckBox #3': {skip: 1.0, spanX: 2097051.0, wrap: true}
+  'JPasswordField #2': {wrap: true}
+  'JCheckBox #3': {skip: 1, spanX: 2097051, wrap: true}
   'JLabel #4':
-    spanX: 2097051.0
-    wrap: true
+    spanX: 2097051
     vertical:
-      gapBefore:
-        min: {value: 5.0, unitString: px}
-        preferred: {value: 5.0, unitString: px}
       gapAfter:
-        min: {value: 10.0, unitString: px}
-        preferred: {value: 10.0, unitString: px}
+        min: &id003 {horizontal: false, operation: 100, unit: 0, unitString: px, value: 10.0}
+        preferred: *id003
+      gapBefore:
+        min: &id004 {horizontal: false, operation: 100, unit: 0, unitString: px, value: 15.0}
+        preferred: *id004
+    wrap: true
+rectangles: '[0, 0, 512, 47], [0, 52, 99, 26], [119, 52, 393, 26], [119, 83, 393,
+  23], [0, 111, 512, 41]'
