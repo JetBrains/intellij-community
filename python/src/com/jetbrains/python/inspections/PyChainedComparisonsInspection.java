@@ -121,11 +121,20 @@ public class PyChainedComparisonsInspection extends PyInspection {
 
     private boolean isRightSimplified(@NotNull final PyBinaryExpression leftExpression,
                                       @NotNull final PyBinaryExpression rightExpression) {
+      final PyExpression leftLeft = leftExpression.getLeftExpression();
       final PyExpression leftRight = leftExpression.getRightExpression();
-      if (leftRight instanceof PyBinaryExpression && PyTokenTypes.AND_KEYWORD == leftExpression.getOperator()) {
-        if (isRightSimplified((PyBinaryExpression)leftRight, rightExpression)) {
-          getInnerRight = true;
-          return true;
+      if (PyTokenTypes.AND_KEYWORD == leftExpression.getOperator()) {
+        if (leftRight instanceof PyBinaryExpression) {
+          if (isRightSimplified((PyBinaryExpression)leftRight, rightExpression)) {
+            getInnerRight = true;
+            return true;
+          }
+        }
+        if (leftLeft instanceof PyBinaryExpression &&
+            PyTokenTypes.RELATIONAL_OPERATIONS.contains(((PyBinaryExpression)leftLeft).getOperator())) {
+          if (isRightSimplified(((PyBinaryExpression)leftLeft), rightExpression)) {
+            return true;
+          }
         }
       }
 
