@@ -67,7 +67,7 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
     }
     if (!myPreferencesMode) {
       JLabel hintLabel = new JBLabel("You can always change this behavior in " + ShowSettingsUtil.getSettingsMenuName() + " | Appearance & Behavior | System Settings | Analytics.");
-      hintLabel.setEnabled(false);
+      hintLabel.setForeground(UIUtil.getContextHelpForeground());
       hintLabel.setVerticalAlignment(SwingConstants.TOP);
       hintLabel.setFont(JBUI.Fonts.smallFont());
       //noinspection UseDPIAwareInsets
@@ -88,36 +88,6 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
   @NotNull
   private JComponent createConsentElement(Consent consent, boolean addCheckBox) {
     //TODO: refactor DocumentationComponent to use external link marker here, there and everywhere
-    final JEditorPane viewer = SwingHelper.createHtmlViewer(true, null, JBColor.WHITE, JBColor.BLACK);
-    viewer.setOpaque(false);
-    viewer.setFocusable(false);
-    viewer.setCaret(new DefaultCaret(){
-      @Override
-      protected void adjustVisibility(Rectangle nloc) {
-        //do nothing to avoid autoscroll
-      }
-    });
-    viewer.addHyperlinkListener(new HyperlinkAdapter() {
-      @Override
-      protected void hyperlinkActivated(HyperlinkEvent e) {
-        final URL url = e.getURL();
-        if (url != null) {
-          BrowserUtil.browse(url);
-        }
-      }
-    });
-    viewer.setText("<html><body><div width=\"600\">" + StringUtil.replace(consent.getText(), "\n", "<br>") + "</div></body></html>");
-    StyleSheet styleSheet = ((HTMLDocument)viewer.getDocument()).getStyleSheet();
-    //styleSheet.addRule("body {font-family: \"Segoe UI\", Tahoma, sans-serif;}");
-    styleSheet.addRule("body {margin-top:0;padding-top:0;}");
-    //styleSheet.addRule("body {font-size:" + JBUI.scaleFontSize(13) + "pt;}");
-    styleSheet.addRule("h2, em {margin-top:" + JBUI.scaleFontSize(20) + "pt;}");
-    styleSheet.addRule("h1, h2, h3, p, h4, em {margin-bottom:0;padding-bottom:0;}");
-    styleSheet.addRule("p, h1 {margin-top:0;padding-top:"+JBUI.scaleFontSize(6)+"pt;}");
-    styleSheet.addRule("li {margin-bottom:" + JBUI.scaleFontSize(6) + "pt;}");
-    styleSheet.addRule("h2 {margin-top:0;padding-top:"+JBUI.scaleFontSize(13)+"pt;}");
-    viewer.setCaretPosition(0);
-
     final JPanel pane;
     if (addCheckBox) {
       final JCheckBox cb = new JBCheckBox(consent.getName(), consent.isAccepted());
@@ -126,6 +96,35 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
       consentMapping.add(Pair.create(cb, consent));
     } else {
       pane = new JPanel(new BorderLayout());
+      final JEditorPane viewer = SwingHelper.createHtmlViewer(true, null, JBColor.WHITE, JBColor.BLACK);
+      viewer.setOpaque(false);
+      viewer.setFocusable(false);
+      viewer.setCaret(new DefaultCaret(){
+        @Override
+        protected void adjustVisibility(Rectangle nloc) {
+          //do nothing to avoid autoscroll
+        }
+      });
+      viewer.addHyperlinkListener(new HyperlinkAdapter() {
+        @Override
+        protected void hyperlinkActivated(HyperlinkEvent e) {
+          final URL url = e.getURL();
+          if (url != null) {
+            BrowserUtil.browse(url);
+          }
+        }
+      });
+      viewer.setText("<html><body>" + StringUtil.replace(consent.getText(), "\n", "<br>") + "</body></html>");
+      StyleSheet styleSheet = ((HTMLDocument)viewer.getDocument()).getStyleSheet();
+      //styleSheet.addRule("body {font-family: \"Segoe UI\", Tahoma, sans-serif;}");
+      styleSheet.addRule("body {margin-top:0;padding-top:0;}");
+      //styleSheet.addRule("body {font-size:" + JBUI.scaleFontSize(13) + "pt;}");
+      styleSheet.addRule("h2, em {margin-top:" + JBUI.scaleFontSize(20) + "pt;}");
+      styleSheet.addRule("h1, h2, h3, p, h4, em {margin-bottom:0;padding-bottom:0;}");
+      styleSheet.addRule("p, h1 {margin-top:0;padding-top:"+JBUI.scaleFontSize(6)+"pt;}");
+      styleSheet.addRule("li {margin-bottom:" + JBUI.scaleFontSize(6) + "pt;}");
+      styleSheet.addRule("h2 {margin-top:0;padding-top:"+JBUI.scaleFontSize(13)+"pt;}");
+      viewer.setCaretPosition(0);
       pane.add(viewer, BorderLayout.CENTER);
       consentMapping.add(Pair.create(null, consent));
     }
