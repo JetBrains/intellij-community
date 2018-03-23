@@ -10,9 +10,11 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.TextComponent;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -138,46 +140,81 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
     }
   }
 
+
   private Border getCommentBorder() {
     if (StringUtil.isNotEmpty(myCommentText)) {
-      boolean isMacDefault = UIUtil.isUnderDefaultMacTheme();
-      boolean isWin10 = UIUtil.isUnderWin10LookAndFeel();
-
-      if (myCommentBelow) {
-        int top = 8, left = 2, bottom = 0;
-
-        if (myComponent instanceof JRadioButton || myComponent instanceof JCheckBox) {
-          top = 0;
-          left = isMacDefault ? 27 : isWin10 ? 17 : 23;
-          bottom = isWin10 ? 10 : isMacDefault ? 8 : 9;
-        }
-        else if (myComponent instanceof JTextField || myComponent instanceof TextComponent ||
-                 myComponent instanceof JComboBox || myComponent instanceof ComponentWithBrowseButton) {
-          top = isWin10 ? 3 : 4;
-          left = isWin10 ? 2 : isMacDefault ? 5 : 4;
-          bottom = isWin10 ? 10 : isMacDefault ? 8 : 9;
-        }
-        else if (myComponent instanceof JButton) {
-          top = isWin10 ? 2 : 4;
-          left = isWin10 ? 2 : isMacDefault ? 5 : 4;
-          bottom = 0;
-        }
-
-        return JBUI.Borders.empty(top, left, bottom, 0);
-      } else {
-        int left = 14;
-
-        if (myComponent instanceof JRadioButton || myComponent instanceof JCheckBox) {
-          left = isMacDefault ? 8 : 13;
-        }
-        else if (myComponent instanceof JTextField || myComponent instanceof TextComponent ||
-                 myComponent instanceof JComboBox || myComponent instanceof ComponentWithBrowseButton) {
-          left = isMacDefault ? 13 : 14;
-        }
-        return JBUI.Borders.emptyLeft(left);
-      }
+      return new JBEmptyBorder(computeCommentInsets(myComponent, myCommentBelow));
     } else {
       return JBUI.Borders.empty();
+    }
+  }
+
+  @NotNull
+  public static Insets computeCommentInsets(@NotNull JComponent component, boolean commentBelow) {
+    boolean isMacDefault = UIUtil.isUnderDefaultMacTheme();
+    boolean isWin10 = UIUtil.isUnderWin10LookAndFeel();
+
+    if (commentBelow) {
+      int top = 8, left = 2, bottom = 0;
+
+      if (component instanceof JRadioButton || component instanceof JCheckBox) {
+        top = 0;
+        left = isMacDefault ? 27 : isWin10 ? 17 : 23;
+        bottom = isWin10 ? 10 : isMacDefault ? 8 : 9;
+      }
+      else if (component instanceof JTextField || component instanceof TextComponent ||
+               component instanceof JComboBox || component instanceof ComponentWithBrowseButton) {
+        top = isWin10 ? 3 : 4;
+        left = isWin10 ? 2 : isMacDefault ? 5 : 4;
+        bottom = isWin10 ? 10 : isMacDefault ? 8 : 9;
+      }
+      else if (component instanceof JButton) {
+        top = isWin10 ? 2 : 4;
+        left = isWin10 ? 2 : isMacDefault ? 5 : 4;
+        bottom = 0;
+      }
+
+      return JBUI.insets(top, left, bottom, 0);
+    } else {
+      int left = 14;
+
+      if (component instanceof JRadioButton || component instanceof JCheckBox) {
+        left = isMacDefault ? 8 : 13;
+      }
+      else if (component instanceof JTextField || component instanceof TextComponent ||
+               component instanceof JComboBox || component instanceof ComponentWithBrowseButton) {
+        left = isMacDefault ? 13 : 14;
+      }
+      return JBUI.insetsLeft(left);
+    }
+  }
+
+  @NotNull
+  public static JBLabel createCommentComponent(@Nullable String commentText, boolean isCommentBelow) {
+    JBLabel component = new JBLabel("").setCopyable(true).setAllowAutoWrapping(true);
+    component.setVerticalTextPosition(SwingConstants.TOP);
+    component.setFocusable(false);
+    component.setForeground(Gray.x78);
+    if (SystemInfo.isMac) {
+      Font font = component.getFont();
+      float size = font.getSize2D();
+      Font smallFont = font.deriveFont(size - 2.0f);
+      component.setFont(smallFont);
+    }
+
+    setCommentText(component, commentText, isCommentBelow);
+    return component;
+  }
+
+  private static void setCommentText(@NotNull JBLabel component, @Nullable String commentText, boolean isCommentBelow) {
+    if (commentText != null) {
+      if (commentText.length() > 70 && isCommentBelow) {
+        int width = component.getFontMetrics(component.getFont()).stringWidth(commentText.substring(0, 70));
+        component.setText(String.format("<html><div width=%d>%s</div></html>", width, commentText));
+      }
+      else {
+        component.setText(String.format("<html><div>%s</div></html>", commentText));
+      }
     }
   }
 
@@ -194,19 +231,8 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
         label = new JLabel("");
       }
 
-      comment = new JBLabel("").setCopyable(true).setAllowAutoWrapping(true);
-      comment.setVerticalTextPosition(SwingConstants.TOP);
-      comment.setFocusable(false);
-      comment.setForeground(Gray.x78);
+      comment = createCommentComponent(myCommentText, myCommentBelow);
       comment.setBorder(getCommentBorder());
-      setCommentTextImpl(myCommentText);
-
-      if (SystemInfo.isMac) {
-        Font font = comment.getFont();
-        float size = font.getSize2D();
-        Font smallFont = font.deriveFont(size - 2.0f);
-        comment.setFont(smallFont);
-      }
     }
 
     @Override
@@ -223,14 +249,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
     }
 
     private void setCommentTextImpl(String commentText) {
-      if (commentText != null) {
-        if (commentText.length() > 70 && myCommentBelow) {
-          int width = comment.getFontMetrics(comment.getFont()).stringWidth(commentText.substring(0, 70));
-          comment.setText(String.format("<html><div width=%d>%s</div></html>", width, commentText));
-        } else {
-          comment.setText(String.format("<html><div>%s</div></html>", commentText));
-        }
-      }
+      ComponentPanelBuilder.setCommentText(comment, commentText, myCommentBelow);
     }
 
     private void addToPanel(JPanel panel, GridBagConstraints gc) {
