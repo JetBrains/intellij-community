@@ -140,10 +140,6 @@ public class GradleManager
         Predicate<GradleProjectResolverExtension> extensionsFilter = ext ->
           isJavaIde || !javaIdeDependentExtensions.contains(ext.getClass().getName());
 
-        ExtensionPoint<GradleProjectResolverExtension> extensionPoint =
-          Extensions.getRootArea().getExtensionPoint(GradleProjectResolverExtension.EP_NAME);
-        extensionPoint.addExtensionPointListener(new ExtensionPointListener.Adapter<>());
-
         Arrays.stream(GradleProjectResolverExtension.EP_NAME.getExtensions())
               .filter(extensionsFilter)
               .forEach(result::add);
