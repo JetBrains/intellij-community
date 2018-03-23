@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testDiscovery.actions;
 
+import com.intellij.codeInsight.actions.FormatChangedTextUtil;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.JavaTestConfigurationBase;
@@ -17,12 +18,15 @@ import com.intellij.find.FindUtil;
 import com.intellij.find.actions.CompositeActiveComponent;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -32,10 +36,14 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vcs.VcsDataKeys;
+import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.uast.UastMetaLanguage;
 import com.intellij.ui.ActiveComponent;
 import com.intellij.usages.UsageView;
 import com.intellij.util.ArrayUtil;
@@ -47,14 +55,18 @@ import com.intellij.util.ui.tree.TreeModelAdapter;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.UFile;
 import org.jetbrains.uast.UMethod;
 import org.jetbrains.uast.UastContextKt;
+import org.jetbrains.uast.visitor.AbstractUastVisitor;
 
 import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.tree.TreeModel;
 import java.awt.event.ActionEvent;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.actionSystem.CommonDataKeys.EDITOR;
@@ -65,7 +77,10 @@ public class ShowDiscoveredTestsAction extends AnAction {
 
   @Override
   public void update(AnActionEvent e) {
-    e.getPresentation().setEnabledAndVisible(isEnabledForProject(e) && findMethodAtCaret(e) != null);
+    e.getPresentation().setEnabledAndVisible(
+      isEnabledForProject(e) &&
+      (findMethodAtCaret(e) != null || e.getData(VcsDataKeys.CHANGES) != null)
+    );
   }
 
   @Override
@@ -74,8 +89,16 @@ public class ShowDiscoveredTestsAction extends AnAction {
     assert project != null;
 
     PsiMethod method = findMethodAtCaret(e);
-    assert method != null;
 
+    if (method != null) {
+      showDiscoveredTestsByPsi(e, project, method);
+    }
+    else {
+      showDiscoveredTestsByChanges(e);
+    }
+  }
+
+  private static void showDiscoveredTestsByPsi(AnActionEvent e, Project project, PsiMethod method) {
     Couple<String> couple = getMethodQualifiedName(method);
     PsiClass c = method.getContainingClass();
     String fqn = couple != null ? couple.first : null;
@@ -86,6 +109,44 @@ public class ShowDiscoveredTestsAction extends AnAction {
     DataContext dataContext = DataManager.getInstance().getDataContext(e.getRequiredData(EDITOR).getContentComponent());
     FeatureUsageTracker.getInstance().triggerFeatureUsed("test.discovery");
     showDiscoveredTests(project, dataContext, methodPresentationName, method);
+  }
+
+  private static void showDiscoveredTestsByChanges(AnActionEvent e) {
+    Change[] changes = e.getRequiredData(VcsDataKeys.CHANGES);
+    Project project = e.getProject();
+    assert project != null;
+    UastMetaLanguage jvmLanguage = Language.findInstance(UastMetaLanguage.class);
+
+    List<PsiElement> methods = FormatChangedTextUtil.getInstance().getChangedElements(project, changes, file -> {
+      PsiFile psiFile = PsiUtilCore.getPsiFile(project, file);
+      if (!jvmLanguage.matchesLanguage(psiFile.getLanguage())) {
+        return null;
+      }
+      Document document = FileDocumentManager.getInstance().getDocument(file);
+      if (document == null) return null;
+      UFile uFile = UastContextKt.toUElement(psiFile, UFile.class);
+      if (uFile == null) return null;
+
+      PsiDocumentManager.getInstance(project).commitDocument(document);
+      List<PsiElement> physicalMethods = new ArrayList<>();
+      uFile.accept(new AbstractUastVisitor() {
+        @Override
+        public boolean visitMethod(@NotNull UMethod node) {
+          physicalMethods.add(node.getSourcePsi());
+          return true;
+        }
+      });
+
+      return physicalMethods;
+    });
+
+    PsiMethod[] asJavaMethods = methods
+      .stream()
+      .map(m -> ObjectUtils.tryCast(Objects.requireNonNull(UastContextKt.toUElement(m)).getJavaPsi(), PsiMethod.class))
+      .filter(Objects::nonNull)
+      .toArray(PsiMethod.ARRAY_FACTORY::create);
+    FeatureUsageTracker.getInstance().triggerFeatureUsed("test.discovery.selected.changes");
+    showDiscoveredTests(project, e.getDataContext(), "Selected Changes", asJavaMethods);
   }
 
   static boolean isEnabledForProject(AnActionEvent e) {

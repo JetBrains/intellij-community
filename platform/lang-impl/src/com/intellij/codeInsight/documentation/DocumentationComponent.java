@@ -328,6 +328,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       // Note: Making the caret visible is merely for convenience
       myEditorPane.getCaret().setVisible(true);
     }
+    myEditorPane.getCaret().setSelectionVisible(true);
     myEditorPane.setBackground(EditorColorsUtil.getGlobalOrDefaultColor(COLOR_KEY));
     HTMLEditorKit editorKit = new UIUtil.JBHtmlEditorKit(true) {
       @Override
