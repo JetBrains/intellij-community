@@ -1,11 +1,13 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testDiscovery.actions;
 
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.JavaTestConfigurationBase;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.testDiscovery.TestDiscoveryConfigurationProducer;
 import com.intellij.execution.testDiscovery.TestDiscoveryExtension;
@@ -53,7 +55,6 @@ import javax.swing.event.TreeModelEvent;
 import javax.swing.tree.TreeModel;
 import java.awt.event.ActionEvent;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.actionSystem.CommonDataKeys.EDITOR;
@@ -113,7 +114,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
 
     ConfigurationContext context = ConfigurationContext.getFromContext(dataContext);
 
-    ActiveComponent runButton = createButton(RUN_ALL_ACTION_TEXT, AllIcons.Actions.Execute, () -> runAllDiscoveredTests(project, tree, ref, context, methods));
+    ActiveComponent runButton = createButton(RUN_ALL_ACTION_TEXT, AllIcons.Actions.Execute, () -> runAllDiscoveredTests(project, tree, ref, context, initTitle));
 
     Runnable pinActionListener = () -> {
       UsageView view = FindUtil.showInUsageView(null, tree.getTestMethods(), initTitle, project);
@@ -121,7 +122,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
         view.addButtonToLowerPane(new AbstractAction(RUN_ALL_ACTION_TEXT, AllIcons.Actions.Execute) {
           @Override
           public void actionPerformed(ActionEvent e) {
-            runAllDiscoveredTests(project, tree, ref, context, methods);
+            runAllDiscoveredTests(project, tree, ref, context, initTitle);
           }
         });
         view.getPresentation().setUsagesWord("test");
@@ -217,16 +218,24 @@ public class ShowDiscoveredTestsAction extends AnAction {
   private static void runAllDiscoveredTests(@NotNull Project project,
                                             DiscoveredTestsTree tree,
                                             Ref<JBPopup> ref,
-                                            ConfigurationContext context, @NotNull PsiMethod[] methods) {
+                                            ConfigurationContext context, 
+                                            String title) {
     Executor executor = DefaultRunExecutor.getRunExecutorInstance();
     Module targetModule = TestDiscoveryConfigurationProducer.detectTargetModule(tree.getContainingModules(), project);
     //first producer with results will be picked
-    StreamEx.of(getRunConfigurationProducers(project)).cross(methods)
-            .mapKeyValue((producer, method) -> producer.createDelegate(method, targetModule).findOrCreateConfigurationFromContext(context))
-            .filter(Objects::nonNull)
+    PsiMethod[] testMethods = tree.getTestMethods();
+    StreamEx.of(getRunConfigurationProducers(project))
+            .filter(producer -> producer.isApplicable(testMethods))
+            .map((producer) -> producer.createProfile(testMethods, targetModule, context, title))
             .findFirst()
-            .ifPresent(configuration -> {
-              ExecutionUtil.runConfiguration(configuration.getConfigurationSettings(), executor);
+            .ifPresent(profile -> {
+              try {
+                ExecutionEnvironmentBuilder.create(project, executor, profile).buildAndExecute();
+              }
+              catch (ExecutionException e) {
+                ExecutionUtil.handleExecutionError(project, executor.getToolWindowId(), title, e);
+              }
+
               JBPopup popup = ref.get();
               if (popup != null) {
                 popup.cancel();

@@ -15,17 +15,23 @@
  */
 package com.intellij.execution.junit.testDiscovery;
 
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.JavaTestConfigurationBase;
 import com.intellij.execution.PsiLocation;
-import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.JUnitConfigurationType;
+import com.intellij.execution.junit.JUnitUtil;
+import com.intellij.execution.junit.TestsPattern;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testDiscovery.TestDiscoveryConfigurationProducer;
+import com.intellij.execution.testframework.SearchForTestsTask;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+
+import java.util.Arrays;
 
 public class JUnitTestDiscoveryConfigurationProducer extends TestDiscoveryConfigurationProducer {
   protected JUnitTestDiscoveryConfigurationProducer() {
@@ -47,14 +53,28 @@ public class JUnitTestDiscoveryConfigurationProducer extends TestDiscoveryConfig
   }
 
   @Override
-  public TestDiscoveryConfigurationProducer createDelegate(PsiMethod sourceMethod, Module module) {
-    return new JUnitTestDiscoveryConfigurationProducer() {
+  public boolean isApplicable(PsiMethod[] methods) {
+    return Arrays.stream(methods).anyMatch(method -> JUnitUtil.isTestMethod(new PsiLocation<>(method)));
+  }
+
+  @Override
+  public RunProfileState createProfile(PsiMethod[] testMethods,
+                                       Module module,
+                                       RunConfiguration configuration,
+                                       ExecutionEnvironment environment) {
+    return new TestsPattern((JUnitConfiguration)configuration, environment) {
+
       @Override
-      protected boolean setupConfigurationFromContext(JavaTestConfigurationBase configuration,
-                                                      ConfigurationContext configurationContext,
-                                                      Ref<PsiElement> ref) {
-        setupDiscoveryConfiguration(configuration, sourceMethod, module);
-        return true;
+      public SearchForTestsTask createSearchingForTestsTask() {
+        return new SearchForTestsTask(configuration.getProject(), myServerSocket) {
+          @Override
+          protected void search() { }
+
+          @Override
+          protected void onFound() throws ExecutionException { 
+            addClassesListToJavaParameters(Arrays.asList(testMethods), method -> method.getContainingClass().getQualifiedName() + "," + method.getName(), "", false, getJavaParameters());
+          }
+        };
       }
     };
   }
