@@ -8,13 +8,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import org.apache.commons.codec.binary.Hex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.List;
 
 /**
@@ -76,7 +76,7 @@ public class RequiredLibrariesInfo {
       md5.update(file.contentsToByteArray());
       final byte[] digest = md5.digest();
 
-      return Base64.getEncoder().encodeToString(digest);
+      return new String(Hex.encodeHex(digest));
     }
     catch (Exception e) {
       return null;
