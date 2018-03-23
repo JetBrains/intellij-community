@@ -12,6 +12,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,10 +33,39 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
   private String myHTLinkText;
   private Runnable myHTAction;
   private JComponent myTopRightComponent;
+  private UI.Anchor myAnchor = UI.Anchor.Center;
+  private boolean myResizeY;
+  private boolean myResizeX = true;
   private boolean valid = true;
 
   public ComponentPanelBuilder(JComponent component) {
     myComponent = component;
+  }
+
+  /**
+   * Allow resizing component vertically when the panel is resized. Useful when {@link JTextArea} or
+   * {@link JTextPane} need to be resized along with the dialog window.
+   *
+   * @param resize <code>true</code> to enable resize, <code>false</code> to disable.
+   *              Default is <code>false</code>
+   * @return <code>this</code>
+   */
+  public ComponentPanelBuilder resizeY(boolean resize) {
+    myResizeY = resize;
+    return this;
+  }
+
+  /**
+   * Allow resizing component horizontally when the panel is resized. Useful for
+   * limiting {@link JComboBox} and other resizable component to preferred width.
+   *
+   * @param resize <code>true</code> to enable resize, <code>false</code> to disable.
+   *              Default is <code>true</code>
+   * @return <code>this</code>
+   */
+  public ComponentPanelBuilder resizeX(boolean resize) {
+    myResizeX = resize;
+    return this;
   }
 
   /**
@@ -58,20 +88,32 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
     return this;
   }
 
+  public ComponentPanelBuilder anchorLabelOn(UI.Anchor anchor) {
+    myAnchor = anchor;
+    return this;
+  }
+
   /**
    * @param comment help context styled text written below the owner component.
    * @return <code>this</code>
    */
   public ComponentPanelBuilder withComment(@NotNull String comment) {
     myCommentText = comment;
-    valid = StringUtil.isNotEmpty(comment) && StringUtil.isEmpty(myHTDescription) &&
-              (myLabelOnTop || myTopRightComponent == null);
+    valid = StringUtil.isNotEmpty(comment) && StringUtil.isEmpty(myHTDescription);
     return this;
   }
 
+  /**
+   * Adds a custom (one line) component to the top right location of the main component.
+   * Useful for adding control like {@link com.intellij.ui.components.labels.LinkLabel} or
+   * {@link com.intellij.ui.components.labels.DropDownLink}
+   *
+   * @param topRightComponent the component to be added
+   * @return <code>this</code>
+   */
   public ComponentPanelBuilder withTopRightComponent(@NotNull JComponent topRightComponent) {
     myTopRightComponent = topRightComponent;
-    valid = StringUtil.isNotEmpty(myCommentText) && StringUtil.isEmpty(myHTDescription) && myLabelOnTop;
+    valid = StringUtil.isNotEmpty(myCommentText) && StringUtil.isEmpty(myHTDescription);
     return this;
   }
 
@@ -93,8 +135,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
    */
   public ComponentPanelBuilder withTooltip(@NotNull String description) {
     myHTDescription = description;
-    valid = StringUtil.isEmpty(myCommentText) && StringUtil.isNotEmpty(description) &&
-            (myLabelOnTop || myTopRightComponent == null);
+    valid = StringUtil.isEmpty(myCommentText) && StringUtil.isNotEmpty(description);
     return this;
   }
 
@@ -259,13 +300,15 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
       gc.anchor = GridBagConstraints.LINE_START;
 
       if (StringUtil.isNotEmpty(myLabelText)) {
-        if (myLabelOnTop) {
+        if (myLabelOnTop || myTopRightComponent != null) {
           gc.insets = JBUI.insetsBottom(4);
-          gc.gridx++;
+          gc.gridx = 1;
 
           JPanel topPanel = new JPanel();
           topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.X_AXIS));
-          topPanel.add(label);
+          if (myLabelOnTop) {
+            topPanel.add(label);
+          }
 
           if (myTopRightComponent != null) {
             topPanel.add(new Box.Filler(JBUI.size(UIUtil.DEFAULT_HGAP, 0),
@@ -276,8 +319,24 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
 
           panel.add(topPanel, gc);
           gc.gridy++;
-        } else {
-          gc.insets = JBUI.insetsRight(8);
+        }
+
+        if (!myLabelOnTop) {
+          gc.gridx = 0;
+          switch (myAnchor) {
+            case Top:
+              gc.anchor = GridBagConstraints.PAGE_START;
+              gc.insets = JBUI.insets(4, 0, 0, 8);
+              break;
+            case Center:
+              gc.anchor = GridBagConstraints.LINE_START;
+              gc.insets = JBUI.insetsRight(8);
+              break;
+            case Bottom:
+              gc.anchor = GridBagConstraints.PAGE_END;
+              gc.insets = JBUI.insets(0, 0, 4, 8);
+              break;
+          }
           panel.add(label, gc);
         }
       }
@@ -304,8 +363,12 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
         componentPanel.add(comment);
       }
 
+      gc.fill = myResizeY ? GridBagConstraints.BOTH : myResizeX ? GridBagConstraints.HORIZONTAL: GridBagConstraints.NONE;
+      gc.weighty = myResizeY ? 1.0 : 0.0;
       panel.add(componentPanel, gc);
 
+      gc.fill = GridBagConstraints.HORIZONTAL;
+      gc.weighty = 0.0;
       if (myCommentBelow) {
         gc.gridx = 1;
         gc.gridy++;

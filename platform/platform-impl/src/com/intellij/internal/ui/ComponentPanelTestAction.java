@@ -51,6 +51,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       super(project);
       myProject = project;
       init();
+      setTitle("Component Panel Test Action");
     }
 
     @Nullable
@@ -187,11 +188,11 @@ public class ComponentPanelTestAction extends DumbAwareAction {
 
       add(UI.PanelFactory.panel(pane).
         withLabel("Text area:").
+        anchorLabelOn(UI.Anchor.Top).
         withComment("Text area comment").
-        moveLabelOnTop().
-        withTopRightComponent(linkLabel)).
-
-      createPanel();
+        //moveLabelOnTop().
+        withTopRightComponent(linkLabel)
+      ).createPanel();
 
       ButtonGroup bg = new ButtonGroup();
       JRadioButton rb1 = new JRadioButton("RadioButton 1");
@@ -278,7 +279,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
           withLabel("Label 1.2").
           withPause(()-> System.out.println("Pause action #2")).
           withResume(()-> System.out.println("Resume action #2"))).
-        expandVertically().
+                                 resize().
         createPanel());
 
       ObjectUtils.assertNotNull(ProgressPanel.getProgressPanel(pb1)).setCommentText("Long long long long long long long text");
@@ -295,7 +296,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
           withLabel("Label 2.2").moveLabelLeft().
           withPause(()-> System.out.println("Pause action #4")).
           withResume(()-> System.out.println("Resume action #4"))).
-        expandVertically().
+                                 resize().
         createPanel());
 
       ObjectUtils.assertNotNull(ProgressPanel.getProgressPanel(pb3)).setCommentText("Long long long long long long text");
