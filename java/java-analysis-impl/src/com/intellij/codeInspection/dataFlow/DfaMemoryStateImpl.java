@@ -1274,6 +1274,18 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     for (DfaVariableValue dependent : myFactory.getVarFactory().getAllQualifiedBy(variable)) {
       doFlush(dependent, false);
     }
+    PsiModifierListOwner psiVariable = variable.getPsiVariable();
+    if (psiVariable instanceof PsiField) {
+      StreamEx<DfaVariableValue> toFlush;
+      // Flush method results on field write
+      if (variable.getQualifier() != null) {
+        toFlush = StreamEx.of(myFactory.getVarFactory().getAllQualifiedBy(variable.getQualifier()));
+      } else {
+        toFlush = StreamEx.of(myFactory.getValues()).select(DfaVariableValue.class).without(variable)
+                          .filterBy(DfaVariableValue::getQualifier, null);
+      }
+      toFlush.filter(val -> val.getPsiVariable() instanceof PsiMethod).forEach(val -> doFlush(val, shouldMarkUnknown(val)));
+    }
   }
 
   @NotNull

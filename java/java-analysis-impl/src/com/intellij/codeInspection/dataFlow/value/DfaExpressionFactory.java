@@ -274,6 +274,7 @@ public class DfaExpressionFactory {
                 .orElse(DfaUnknownValue.getInstance());
   }
 
+  @Contract("null, _ -> null")
   @Nullable
   public DfaValue getArrayElementValue(DfaValue array, int index) {
     if (!(array instanceof DfaVariableValue)) return null;

@@ -282,8 +282,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       // initialize with default value
       DfaVariableValue dfaVariable = myFactory.getVarFactory().createVariableValue(field, false);
       addInstruction(new PushInstruction(dfaVariable, null, true));
-      addInstruction(new PushInstruction(
-        myFactory.getConstFactory().createFromValue(PsiTypesUtil.getDefaultValue(field.getType()), field.getType(), null), null));
+      addInstruction(new PushInstruction(myFactory.getConstFactory().createDefault(field.getType()), null));
       addInstruction(new AssignInstruction(null, dfaVariable));
       addInstruction(new PopInstruction());
     }
@@ -1716,14 +1715,11 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     if (operand != null) {
       operand.accept(this);
       generateBoxingUnboxingInstructionFor(operand, PsiType.INT);
-    } else {
       pushUnknown();
+      addInstruction(new AssignInstruction(operand, null, myFactory.createValue(operand)));
+      addInstruction(new PopInstruction());
     }
-
-    addInstruction(new PopInstruction());
     pushUnknown();
-
-    flushIncrementedValue(operand);
 
     finishElement(expression);
   }
@@ -1732,7 +1728,11 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     startElement(expression);
 
     DfaValue dfaValue = myFactory.createValue(expression);
-    if (dfaValue == null) {
+    if (dfaValue != null) {
+      // Constant expression is computed: just push the result
+      addInstruction(new PushInstruction(dfaValue, expression));
+    }
+    else {
       PsiExpression operand = PsiUtil.skipParenthesizedExprDown(expression.getOperand());
 
       if (operand == null) {
@@ -1743,37 +1743,26 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         PsiType type = expression.getType();
         PsiPrimitiveType unboxed = PsiPrimitiveType.getUnboxedType(type);
         generateBoxingUnboxingInstructionFor(operand, unboxed == null ? type : unboxed);
-        if (expression.getOperationTokenType() == JavaTokenType.EXCL) {
+        if (PsiUtil.isIncrementDecrementOperation(expression)) {
+          pushUnknown();
+          addInstruction(new AssignInstruction(operand, null, myFactory.createValue(operand)));
+        }
+        else if (expression.getOperationTokenType() == JavaTokenType.EXCL) {
           addInstruction(new NotInstruction());
         }
         else if (expression.getOperationTokenType() == JavaTokenType.MINUS && (PsiType.INT.equals(type) || PsiType.LONG.equals(type))) {
-          addInstruction(new PushInstruction(myFactory.getConstFactory().createFromValue(PsiTypesUtil.getDefaultValue(type), type, null), null));
+          addInstruction(new PushInstruction(myFactory.getConstFactory().createDefault(type), null));
           addInstruction(new SwapInstruction());
           addInstruction(new BinopInstruction(expression.getOperationTokenType(), expression, myProject));
         }
         else {
           addInstruction(new PopInstruction());
           pushUnknown();
-
-          flushIncrementedValue(operand);
         }
       }
     }
-    else {
-      addInstruction(new PushInstruction(dfaValue, expression));
-    }
 
     finishElement(expression);
-  }
-
-  private void flushIncrementedValue(@Nullable PsiExpression operand) {
-    DfaValue dfaVariable = operand == null ? null : myFactory.createValue(operand);
-    if (dfaVariable instanceof DfaVariableValue && PsiUtil.isAccessedForWriting(operand)) {
-      addInstruction(new FlushVariableInstruction((DfaVariableValue)dfaVariable));
-      if (((DfaVariableValue)dfaVariable).getPsiVariable() instanceof PsiField) {
-        addInstruction(new FlushVariableInstruction(null));
-      }
-    }
   }
 
   @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
