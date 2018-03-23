@@ -78,7 +78,10 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
    *   <li>{@link CodeStyle#getLanguageSettings(PsiFile, Language)} to get common settings for a language.</li>
    *   <li>{@link CodeStyle#getCustomSettings(PsiFile, Class)} to get custom settings.</li>
    * </ul>
-   * If {@code PsiFile} is not applicable, use {@link CodeStyle#getSettings(Project)}.
+   * If {@code PsiFile} is not applicable, use {@link CodeStyle#getSettings(Project)} but only in cases
+   * when using main project settings is <b>logically the only choice</b> in a given context. It shouldn't be used just because the existing
+   * code doesn't allow to easily retrieve a PsiFile. Otherwise the code will not catch up with proper file code style settings since the
+   * settings may differ for different files depending on their scope.
    */
   @NotNull
   @Deprecated
