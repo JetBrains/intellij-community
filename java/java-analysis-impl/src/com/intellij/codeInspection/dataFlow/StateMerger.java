@@ -412,7 +412,7 @@ class StateMerger {
     // If there are too many states, try to drop range information from some variable
     DfaVariableValue lastVar = Collections.max(rangeVariables, Comparator.comparingInt(DfaVariableValue::getID));
     for (DfaMemoryStateImpl state : states) {
-      state.setFact(lastVar, RANGE, null);
+      state.dropFact(lastVar, RANGE);
     }
     return new ArrayList<>(new HashSet<>(states));
   }

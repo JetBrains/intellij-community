@@ -705,6 +705,17 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   @Override
+  public void dropFact(@NotNull DfaValue value, @NotNull DfaFactType<?> factType) {
+    if (value instanceof DfaVariableValue) {
+      DfaVariableValue var = (DfaVariableValue)value;
+      if (!isUnknownState(var)) {
+        DfaVariableState state = getVariableState(var).withoutFact(factType);
+        setVariableState(var, state);
+      }
+    }
+  }
+
+  @Override
   public <T> boolean applyFact(@NotNull DfaValue value, @NotNull DfaFactType<T> factType, @Nullable T factValue) {
     if (value instanceof DfaFactMapValue) {
       return ((DfaFactMapValue)value).getFacts().intersect(factType, factValue) != null;
