@@ -610,7 +610,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       }
     }
     if (result == null) {
-      if (JavaTokenType.PLUS == opSign) {
+      if (JavaTokenType.PLUS == opSign && !(type instanceof PsiPrimitiveType)) {
         result = instruction.getNonNullStringValue(runner.getFactory());
       }
       else if (instruction instanceof InstanceofInstruction) {
