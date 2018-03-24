@@ -599,7 +599,7 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
     List<String> modules = pyVersion != null && pyVersion.startsWith("3") ? py3LibraryModules : py2LibraryModules;
     boolean foundModule = false;
     for (String module : modules) {
-      if (qnameString.startsWith(module)) {
+      if (qnameString.equals(module)) {
         urlBuilder.append(module.toLowerCase());
         urlBuilder.append(".html");
         foundModule = true;
