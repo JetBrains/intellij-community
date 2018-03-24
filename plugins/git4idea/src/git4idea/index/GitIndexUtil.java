@@ -132,7 +132,6 @@ public class GitIndexUtil {
     String path = VcsFileUtil.relativePath(repository.getRoot(), filePath);
 
     GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.UPDATE_INDEX);
-    h.setSilent(true);
     h.addParameters("--cacheinfo", mode + "," + blobHash.asString() + "," + path);
     h.endOptions();
     Git.getInstance().runCommandWithoutCollectingOutput(h).getOutputOrThrow();
