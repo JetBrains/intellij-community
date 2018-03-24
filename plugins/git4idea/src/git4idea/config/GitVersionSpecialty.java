@@ -214,6 +214,13 @@ public enum GitVersionSpecialty {
     public boolean existsIn(@NotNull GitVersion version) {
       return version.isLaterOrEqual(new GitVersion(2, 1, 0, 0));
     }
+  },
+
+  CACHEINFO_SUPPORTS_SINGLE_PARAMETER_FORM {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(2, 0, 0, 0));
+    }
   };
 
   public abstract boolean existsIn(@NotNull GitVersion version);
