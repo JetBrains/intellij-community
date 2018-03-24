@@ -1078,7 +1078,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return constValue instanceof Number ? ((Number)constValue).doubleValue() : null;
   }
 
-  private boolean isUnknownState(DfaValue val) {
+  boolean isUnknownState(DfaValue val) {
     val = unwrap(val);
     if (val instanceof DfaVariableValue) {
       DfaVariableValue var = (DfaVariableValue)val;
@@ -1221,7 +1221,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   void forVariableStates(BiConsumer<DfaVariableValue, DfaVariableState> consumer) {
-    myVariableStates.forEach(consumer);
+    myVariableStates.forEach((value, state) -> {
+      if (!isUnknownState(value)) {
+        consumer.accept(value, state);
+      }
+    });
   }
 
   @NotNull
