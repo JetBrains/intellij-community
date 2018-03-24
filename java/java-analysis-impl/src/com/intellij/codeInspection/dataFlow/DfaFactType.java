@@ -220,6 +220,19 @@ public abstract class DfaFactType<T> extends Key<T> {
     }
   };
 
+  public static final DfaFactType<Boolean> LOCALITY = new DfaFactType<Boolean>("Locality") {
+    @Override
+    boolean isUnknown(@NotNull Boolean fact) {
+      return !fact;
+    }
+
+    @NotNull
+    @Override
+    public String toString(@NotNull Boolean fact) {
+      return fact ? "Local object" : "";
+    }
+  };
+
   private final String myName;
 
   private DfaFactType(String name) {

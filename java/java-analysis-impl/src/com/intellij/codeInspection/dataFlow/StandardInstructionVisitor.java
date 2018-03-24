@@ -56,6 +56,11 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       // (e.g. during StateMerger#mergeByFacts), so we try to restore the original destination.
       dfaDest = instruction.getAssignedValue();
     }
+    if (dfaSource == dfaDest) {
+      memState.push(dfaDest);
+      return nextInstruction(instruction, runner, memState);
+    }
+    memState.dropFact(dfaSource, DfaFactType.LOCALITY);
 
     PsiExpression lValue = PsiUtil.skipParenthesizedExprDown(instruction.getLExpression());
     PsiExpression rValue = instruction.getRExpression();
@@ -373,6 +378,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       DfaValue arg = memState.pop();
       int paramIndex = argCount - i - 1;
 
+      memState.dropFact(arg, DfaFactType.LOCALITY);
       PsiElement anchor = instruction.getArgumentAnchor(paramIndex);
       Nullness requiredNullability = instruction.getArgRequiredNullability(paramIndex);
       if (requiredNullability == Nullness.NOT_NULL) {
