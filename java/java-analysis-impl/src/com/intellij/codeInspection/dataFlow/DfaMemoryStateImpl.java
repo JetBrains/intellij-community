@@ -244,6 +244,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
     value = handleFlush(var, value);
     flushVariable(var);
+    flushQualifiedMethods(var);
 
     if (value instanceof DfaUnknownValue) {
       setVariableState(var, getVariableState(var).withNotNull());
@@ -1285,6 +1286,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     for (DfaVariableValue dependent : myFactory.getVarFactory().getAllQualifiedBy(variable)) {
       doFlush(dependent, false);
     }
+  }
+
+  private void flushQualifiedMethods(@NotNull DfaVariableValue variable) {
     PsiModifierListOwner psiVariable = variable.getPsiVariable();
     if (psiVariable instanceof PsiField) {
       StreamEx<DfaVariableValue> toFlush;
@@ -1295,7 +1299,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         toFlush = StreamEx.of(myFactory.getValues()).select(DfaVariableValue.class).without(variable)
                           .filterBy(DfaVariableValue::getQualifier, null);
       }
-      toFlush.filter(val -> val.getPsiVariable() instanceof PsiMethod).forEach(val -> doFlush(val, shouldMarkUnknown(val)));
+      toFlush.filter(DfaVariableValue::containsCalls).forEach(val -> doFlush(val, shouldMarkUnknown(val)));
     }
   }
 
