@@ -55,7 +55,7 @@ class EscapeAnalysis {
       void run() {
         x[0] = Math.random() > 0.5 ? 1 : 0;
       }
-    }
+    };
     if(x[0] == 1) {
       System.out.println("possible");
     }
