@@ -18,9 +18,6 @@
           </grid>
         </constraints>
         <properties/>
-        <clientProperties>
-          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithoutIndent"/>
-        </clientProperties>
         <border type="none" title-resource-bundle="messages/SSRBundle" title-key="var.constraints.variables.border"/>
         <children>
           <component id="e85ba" class="com.intellij.ui.components.JBList" binding="parameterList">
@@ -39,9 +36,6 @@
           <grid row="1" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
-        <clientProperties>
-          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
-        </clientProperties>
         <border type="none" title-resource-bundle="messages/SSRBundle" title-key="var.constraints.text.constraints.border"/>
         <children>
           <component id="cc210" class="javax.swing.JLabel">
@@ -92,9 +86,6 @@
           <grid row="5" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
-        <clientProperties>
-          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
-        </clientProperties>
         <border type="none" title-resource-bundle="messages/SSRBundle" title-key="var.constraints.expression.constraints.border"/>
         <children>
           <component id="e9391" class="com.intellij.ui.EditorTextField" binding="regexprForExprType" custom-create="true">
@@ -176,15 +167,12 @@
           <grid row="8" column="1" row-span="1" col-span="2" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
         </constraints>
       </vspacer>
-      <grid id="d8664" binding="occurencePanel" layout-manager="GridLayoutManager" row-count="2" column-count="4" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+      <grid id="d8664" binding="occurencePanel" layout-manager="GridLayoutManager" row-count="1" column-count="4" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
           <grid row="3" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
-        <clientProperties>
-          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
-        </clientProperties>
         <border type="none" title-resource-bundle="messages/SSRBundle" title-key="var.constraints.occurrences.count.border"/>
         <children>
           <component id="e4b4a" class="javax.swing.JLabel">
@@ -195,14 +183,15 @@
               <text resource-bundle="messages/SSRBundle" key="editvarcontraints.minimum.count"/>
             </properties>
           </component>
-          <component id="f6a1a" class="javax.swing.JTextField" binding="minoccurs">
+          <component id="f6a1a" class="com.intellij.ui.components.fields.IntegerField" binding="minoccurs">
             <constraints>
               <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
-                <preferred-size width="50" height="-1"/>
-                <maximum-size width="50" height="-1"/>
+                <preferred-size width="70" height="-1"/>
+                <maximum-size width="70" height="-1"/>
               </grid>
             </constraints>
             <properties>
+              <horizontalAlignment value="11"/>
               <text value="1"/>
             </properties>
           </component>
@@ -214,81 +203,20 @@
               <text resource-bundle="messages/SSRBundle" key="editvarcontraints.maximum.count"/>
             </properties>
           </component>
-          <component id="42" class="javax.swing.JTextField" binding="maxoccurs">
+          <component id="42" class="com.intellij.ui.components.fields.IntegerField" binding="maxoccurs">
             <constraints>
               <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
-                <preferred-size width="50" height="-1"/>
+                <preferred-size width="70" height="-1"/>
+                <maximum-size width="70" height="-1"/>
               </grid>
             </constraints>
             <properties>
+              <canBeEmpty value="true"/>
               <columns value="0"/>
+              <horizontalAlignment value="11"/>
               <text value="1"/>
             </properties>
           </component>
-          <component id="7c33b" class="javax.swing.JCheckBox" binding="maxoccursUnlimited">
-            <constraints>
-              <grid row="1" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text resource-bundle="messages/SSRBundle" key="editvarcontraints.unlimited"/>
-            </properties>
-          </component>
-          <grid id="8c6b9" layout-manager="GridLayoutManager" row-count="1" column-count="6" same-size-horizontally="false" same-size-vertically="false" hgap="0" vgap="-1">
-            <margin top="0" left="0" bottom="0" right="0"/>
-            <constraints>
-              <grid row="1" column="0" row-span="1" col-span="3" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties/>
-            <border type="none"/>
-            <children>
-              <component id="e53" class="javax.swing.JButton" binding="myZeroZeroButton">
-                <constraints>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties>
-                  <margin top="0" left="10" bottom="0" right="2"/>
-                  <text value="0,0"/>
-                </properties>
-              </component>
-              <hspacer id="df56b">
-                <constraints>
-                  <grid row="0" column="5" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-                </constraints>
-              </hspacer>
-              <component id="725b3" class="javax.swing.JButton" binding="myOneOneButton">
-                <constraints>
-                  <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties>
-                  <text value="1,1"/>
-                </properties>
-              </component>
-              <component id="b737e" class="javax.swing.JButton" binding="myOneInfinityButton">
-                <constraints>
-                  <grid row="0" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties>
-                  <text value="1,∞"/>
-                </properties>
-              </component>
-              <component id="4a7a1" class="javax.swing.JButton" binding="myZeroOneButton">
-                <constraints>
-                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties>
-                  <text value="0,1"/>
-                </properties>
-              </component>
-              <component id="890e2" class="javax.swing.JButton" binding="myZeroInfinityButton">
-                <constraints>
-                  <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties>
-                  <text value="0,∞"/>
-                </properties>
-              </component>
-            </children>
-          </grid>
         </children>
       </grid>
       <grid id="463bd" binding="containedInConstraints" layout-manager="GridLayoutManager" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
@@ -297,9 +225,6 @@
           <grid row="2" column="1" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
-        <clientProperties>
-          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
-        </clientProperties>
         <border type="none" title-resource-bundle="messages/SSRBundle" title-key="var.constraints.within.pattern.border"/>
         <children>
           <component id="bfd62" class="com.intellij.structuralsearch.plugin.ui.TextFieldWithAutoCompletionWithBrowseButton" binding="withinTextField" custom-create="true">
@@ -338,9 +263,6 @@
           <grid row="6" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
-        <clientProperties>
-          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
-        </clientProperties>
         <border type="none" title-resource-bundle="messages/SSRBundle" title-key="var.constraints.script.constraints.border"/>
         <children>
           <component id="cdf9" class="javax.swing.JLabel">
@@ -367,9 +289,6 @@
           <grid row="4" column="1" row-span="1" col-span="2" vsize-policy="3" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
-        <clientProperties>
-          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
-        </clientProperties>
         <border type="none" title-resource-bundle="messages/SSRBundle" title-key="var.constraints.reference.target.constraints.border"/>
         <children>
           <component id="2e0d7" class="com.intellij.ui.components.JBLabel">
