@@ -18,7 +18,14 @@
 
   <idea-version since-build="173.0"/>
 
+  <extensionPoints>
+  <extensionPoint qualifiedName="com.intellij.stats.ngram.ngramElementProvider"
+                  interface="com.intellij.stats.ngram.NGramElementProvider"/>
+  </extensionPoints>
+
   <extensions defaultExtensionNs="com.intellij">
+
+    <stats.ngram.ngramElementProvider implementation="com.intellij.stats.ngram.lang.JavaElementProvider"/>
 
     <applicationService serviceInterface="com.intellij.stats.completion.CompletionLoggerProvider"
                         serviceImplementation="com.intellij.stats.completion.CompletionFileLoggerProvider">
@@ -68,12 +75,19 @@
     <applicationService serviceImplementation="com.intellij.sorting.SortingTimeStatistics"/>
     <applicationService serviceImplementation="com.intellij.completion.enhancer.ContributorsTimeStatistics"/>
 
+    <applicationService serviceImplementation="com.intellij.stats.ngram.NGramEnumeratingService"/>
+
     <postStartupActivity implementation="com.intellij.plugin.NotificationManager"/>
 
     <applicationService serviceInterface="com.intellij.completion.tracker.LookupElementPositionTracker"
                         serviceImplementation="com.intellij.completion.tracker.UserDataLookupElementPositionTracker"/>
 
     <applicationConfigurable provider="com.intellij.plugin.PluginSettingsConfigurableProvider"/>
+
+    <fileBasedIndex implementation="com.intellij.stats.ngram.NGramFileBasedIndex"/>
+
+    <!--<preloadingActivity implementation="com.intellij.completion.enhancer.FirstContributorPreloader" order="last"/>-->
+
     <preloadingActivity implementation="com.intellij.completion.enhancer.FirstContributorPreloader" order="last"/>
   </extensions>
 
