@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
  */
 @State(
   name = "LombokSettings",
-  storages = @Storage(id = "other", file = StoragePathMacros.APP_CONFIG + "/lombok.xml")
+  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/lombok.xml")
 )
 public class LombokSettings implements PersistentStateComponent<LombokPluginState> {
 
