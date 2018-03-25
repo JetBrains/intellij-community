@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.layout.migLayout
 
-import com.intellij.icons.AllIcons
 import com.intellij.ui.components.noteComponent
 import com.intellij.ui.layout.*
 import com.intellij.util.containers.ContainerUtil
@@ -12,6 +11,7 @@ import java.awt.Component
 import java.awt.Container
 import javax.swing.ButtonGroup
 import javax.swing.JLabel
+import javax.swing.JScrollPane
 
 /**
  * Automatically add `growX` to JTextComponent (see isAddGrowX).
@@ -23,6 +23,8 @@ internal class MigLayoutBuilder : LayoutBuilderImpl {
    */
   private val componentConstraints: MutableMap<Component, CC> = ContainerUtil.newIdentityTroveMap()
   private val rootRow = MigLayoutRow(parent = null, componentConstraints = componentConstraints, builder = this, indent = 0)
+
+  val columnConstraints = AC()
 
   override fun newRow(label: JLabel?, buttonGroup: ButtonGroup?, separated: Boolean): Row {
     return rootRow.createChildRow(label = label, buttonGroup = buttonGroup, separated = separated)
@@ -59,8 +61,7 @@ internal class MigLayoutBuilder : LayoutBuilderImpl {
     lc.noVisualPadding()
     lc.hideMode = 3
 
-    val columnConstraints = AC()
-    var columnIndex = 0
+    // if constraint specified only for rows 0 and 1, MigLayout will use constraint 1 for any rows with index 1+ (see LayoutUtil.getIndexSafe - use last element if index > size)
     val rowConstraints = AC()
     rowConstraints.align("top")
     container.layout = MigLayout(lc, columnConstraints, rowConstraints)
@@ -77,12 +78,9 @@ internal class MigLayoutBuilder : LayoutBuilderImpl {
           return
         }
 
-        // https://goo.gl/LDylKm
-        // gap = 10u where u = 4px
-        gapTop = UIUtil.DEFAULT_VGAP * 3
+        gapTop = UIUtil.LARGE_VGAP
       }
 
-      var isSplitRequired = true
       for ((index, component) in row.components.withIndex()) {
         // MigLayout in any case always creates CC, so, create instance even if it is not required
         val cc = componentConstraints.get(component) ?: CC()
@@ -98,51 +96,22 @@ internal class MigLayoutBuilder : LayoutBuilderImpl {
         }
 
         if (component === lastComponent) {
-          isSplitRequired = false
+          cc.spanX()
           cc.wrap()
-
-          if (isLabeled) {
-            columnConstraints.grow(100f, columnIndex++)
-          }
         }
 
         if (row.noGrid) {
           if (component === row.components.first()) {
-            // rowConstraints.noGrid() doesn't work correctly
-            cc.spanX()
+            rowConstraints.noGrid(rowIndex)
           }
         }
-        else {
-          var isSkippableComponent = true
-          if (component === row.components.first()) {
-            row.gapAfter?.let {
-              rowConstraints.gap(it, rowIndex)
-            }
-
-            if (isLabeled) {
-              if (row.labeled) {
-                isSkippableComponent = false
-              }
-              else {
-                cc.skip()
-              }
-            }
-
-            if (row.components.size == 1) {
-              cc.spanX()
-            }
+        else if (component === row.components.first()) {
+          row.gapAfter?.let {
+            rowConstraints.gap(it, rowIndex)
           }
 
-          if (isSkippableComponent) {
-            if (isSplitRequired) {
-              isSplitRequired = false
-              cc.split()
-            }
-
-            // do not add gap if next component is gear action button
-            if (component !== lastComponent && !row.components.get(index + 1).let { it is JLabel && it.icon === AllIcons.General.Gear }) {
-              cc.horizontal.gapAfter = gapToBoundSize(UIUtil.DEFAULT_HGAP * 2, true)
-            }
+          if (row.components.size == 1 && component is JScrollPane) {
+            columnConstraints.grow(100f, 2)
           }
         }
 
@@ -160,12 +129,6 @@ internal class MigLayoutBuilder : LayoutBuilderImpl {
       val isLabeled = rows.firstOrNull(MigLayoutRow::labeled) != null
       var prevRow: MigLayoutRow? = null
       for (row in rows) {
-        columnIndex = 0
-
-        if (isLabeled) {
-          columnConstraints.grow(0f, columnIndex++)
-        }
-
         configureComponents(row, prevRow, isLabeled)
         row.subRows?.let {
           processRows(it)
@@ -198,38 +161,6 @@ private fun createLayoutConstraints(gridGapX: Int = UIUtil.DEFAULT_HGAP * 2, gri
   lc.gridGapY = gapToBoundSize(gridGapY, false)
   lc.insets = ConstraintParser.parseInsets("0px", true)
   return lc
-}
-
-internal fun Array<out CCFlags>.create() = if (isEmpty()) null else CC().apply(this)
-
-private fun CC.apply(flags: Array<out CCFlags>): CC {
-  for (flag in flags) {
-    when (flag) {
-      //CCFlags.wrap -> isWrap = true
-      CCFlags.grow -> grow()
-      CCFlags.growX -> growX()
-      CCFlags.growY -> growY()
-
-    // If you have more than one component in a cell the alignment keywords will not work since the behavior would be indeterministic.
-    // You can however accomplish the same thing by setting a gap before and/or after the components.
-    // That gap may have a minimum size of 0 and a preferred size of a really large value to create a "pushing" gap.
-    // There is even a keyword for this: "push". So "gapleft push" will be the same as "align right" and work for multi-component cells as well.
-      //CCFlags.right -> horizontal.gapBefore = BoundSize(null, null, null, true, null)
-
-      CCFlags.push -> push()
-      CCFlags.pushX -> pushX()
-      CCFlags.pushY -> pushY()
-
-      //CCFlags.span -> span()
-      //CCFlags.spanX -> spanX()
-      //CCFlags.spanY -> spanY()
-
-      //CCFlags.split -> split()
-
-      //CCFlags.skip -> skip()
-    }
-  }
-  return this
 }
 
 private fun LC.apply(flags: Array<out LCFlags>): LC {

@@ -3,17 +3,18 @@ package com.intellij.ui.layout
 
 import com.intellij.ide.ui.laf.IntelliJLaf
 import com.intellij.testFramework.runInEdtAndWait
-import com.intellij.ui.components.JBPasswordField
-import com.intellij.ui.components.RadioButton
 import com.intellij.ui.components.dialog
-import javax.swing.JPasswordField
-import javax.swing.JTextField
+import com.intellij.util.io.write
+import net.miginfocom.layout.LayoutUtil
+import net.miginfocom.swing.MigLayout
+import java.awt.Dimension
+import java.nio.file.Paths
 import javax.swing.UIManager
 
 object MigLayoutTestApp {
   @JvmStatic
   fun main(args: Array<String>) {
-//    LayoutUtil.setGlobalDebugMillis(1000)
+    LayoutUtil.setGlobalDebugMillis(1000)
 
     runInEdtAndWait {
       try {
@@ -22,48 +23,20 @@ object MigLayoutTestApp {
       catch (ignored: Exception) {
       }
 
-      val passwordField = JPasswordField()
-//      val panel = panel {
-//        noteRow("Profiler requires access to the kernel-level API.\nEnter the sudo password to allow this. ")
-//        row("Sudo password:") { passwordField() }
-//        row { CheckBox(CommonBundle.message("checkbox.remember.password"), true)() }
-//      }
-
-      val panel = panel {
-//        noteRow("Login to JetBrains Account to get notified\nwhen the submitted exceptions are fixed.")
-//        row("Username:") { JTextField()(growPolicy = GrowPolicy.SHORT_TEXT) }
-//        row("Password:") { passwordField() }
-//        row {
-//          CheckBox(CommonBundle.message("checkbox.remember.password"))(comment = "Use VCS -> Sync Settings to sync")
-//        }
-//        noteRow("""Do not have an account? <a href="https://account.jetbrains.com/login?signup">Sign Up</a>""")
-
-        buttonGroup {
-          row {
-            RadioButton("In KeePass")()
-            row("Database:") {
-              JTextField()()
-              gearButton()
-            }
-            row("Master Password:") {
-              JBPasswordField()(growPolicy = GrowPolicy.SHORT_TEXT, comment = "Stored using weak encryption.")
-            }
-          }
-        }
-      }
-
-
+      val panel = cellPanel()
       val dialog = dialog(
-        title = "Access Required",
+        title = "",
         panel = panel,
-        focusedComponent = passwordField,
+        resizable = true,
         okActionEnabled = false
       ) {
         return@dialog null
       }
+
+      panel.preferredSize = Dimension(512, 256)
       dialog.toFront()
+      Paths.get(System.getProperty("user.home"), "layout-dump.yml").write(configurationToJson(panel, panel.layout as MigLayout))
       dialog.showAndGet()
-    }
 
 //    val frame = JFrame()
 //    frame.defaultCloseOperation = JFrame.EXIT_ON_CLOSE
@@ -75,6 +48,6 @@ object MigLayoutTestApp {
 //    frame.minimumSize = Dimension(512, 256)
 //    frame.isVisible = true
 //
-//    System.out.println(configurationToJson(panel, panel.layout as MigLayout, false))
+    }
   }
 }

@@ -2,6 +2,7 @@
 package com.intellij.ui.layout
 
 import com.intellij.configurationStore.serialize
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.xmlb.SkipDefaultsSerializationFilter
 import net.miginfocom.layout.*
 import net.miginfocom.swing.MigLayout
@@ -11,10 +12,13 @@ import org.yaml.snakeyaml.introspector.Property
 import org.yaml.snakeyaml.nodes.NodeTuple
 import org.yaml.snakeyaml.nodes.Tag
 import org.yaml.snakeyaml.representer.Representer
+import javax.swing.AbstractButton
+import javax.swing.JLabel
 import javax.swing.JPanel
 
 private val filter by lazy {
   object : Representer() {
+    private val emptyLC = LC()
     private val emptyAC = AC()
     private val emptyCC = CC()
     private val emptyDimConstraint = DimConstraint()
@@ -36,6 +40,7 @@ private val filter by lazy {
         is CC -> emptyCC
         is DimConstraint -> emptyDimConstraint
         is BoundSize -> emptyBoundSize
+        is LC -> emptyLC
         else -> null
       }
 
@@ -56,10 +61,17 @@ private val filter by lazy {
 }
 
 @Suppress("UNCHECKED_CAST")
-fun configurationToJson(component: JPanel, layout: MigLayout, isIncludeLayoutConstraints: Boolean, rectangles: String? = null): String {
+fun configurationToJson(component: JPanel, layout: MigLayout, rectangles: String? = null): String {
   val componentConstrains = LinkedHashMap<String, Any>()
   for ((index, c) in component.components.withIndex()) {
-    componentConstrains.put("${c.javaClass.simpleName} #${index}", layout.getComponentConstraints(c))
+    var key = "${c.javaClass.simpleName} #${index}"
+    if (c is JLabel && c.text.isNotEmpty()) {
+      key = StringUtil.removeHtmlTags(c.text)
+    }
+    if (c is AbstractButton && c.text.isNotEmpty()) {
+      key = StringUtil.removeHtmlTags(c.text)
+    }
+    componentConstrains.put(key, layout.getComponentConstraints(c))
   }
 
   val dumperOptions = DumperOptions()
@@ -67,7 +79,7 @@ fun configurationToJson(component: JPanel, layout: MigLayout, isIncludeLayoutCon
   dumperOptions.lineBreak = DumperOptions.LineBreak.UNIX
   val yaml = Yaml(filter, dumperOptions)
   return yaml.dump(linkedMapOf(
-    "layoutConstraints" to if (isIncludeLayoutConstraints) layout.layoutConstraints else null,
+    "layoutConstraints" to layout.layoutConstraints,
     "rowConstraints" to layout.rowConstraints,
     "columnConstraints" to layout.columnConstraints,
     "componentConstrains" to componentConstrains,

@@ -33,6 +33,7 @@ enum class LCFlags {
 
 /**
  * See FAQ in the [docs](https://github.com/JetBrains/intellij-community/tree/master/platform/platform-impl/src/com/intellij/ui/layout).
+ * Do not use this flags directly.
  */
 enum class CCFlags {
   /**

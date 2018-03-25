@@ -1,15 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.layout
 
-import com.intellij.CommonBundle
 import com.intellij.ide.ui.laf.IntelliJLaf
 import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.assertions.Assertions
-import com.intellij.ui.components.CheckBox
-import com.intellij.ui.components.JBPasswordField
-import com.intellij.ui.components.RadioButton
 import com.intellij.util.io.exists
 import com.intellij.util.io.outputStream
 import com.intellij.util.io.sanitizeFileName
@@ -32,9 +28,17 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.Callable
 import javax.imageio.ImageIO
-import javax.swing.*
+import javax.swing.JFrame
+import javax.swing.JPanel
+import javax.swing.UIManager
 import kotlin.properties.Delegates
 
+/**
+ * Set `test.update.snapshots=true` to automatically update snapshots if need
+ *
+ * Checkout git@github.com:develar/intellij-ui-dsl-test-snapshots.git (or create own repo) to some local dir and set env LAYOUT_IMAGE_REPO
+ * to store image snapshots
+ */
 class UiDslTest {
   companion object {
     @Suppress("unused")
@@ -75,39 +79,22 @@ class UiDslTest {
 
   @Test
   fun `align fields in the nested grid`() {
-    doTest(panel {
-      buttonGroup {
-        row {
-          RadioButton("In KeePass")()
-          row("Database:") {
-            JTextField()()
-            gearButton()
-          }
-          row("Master Password:") {
-            JBPasswordField()(comment = "Stored using weak encryption.")
-          }
-        }
-      }
-    })
+    doTest(alignFieldsInTheNestedGrid())
   }
 
   @Test
   fun `align fields`() {
-    doTest(panel {
-      row("Create Android module") { CheckBox("Android module name:")() }
-      row("Android module name:") { JTextField("input")() }
-    })
+    doTest(labelRowShouldNotGrow())
+  }
+
+  @Test
+  fun `cell`() {
+    doTest(cellPanel())
   }
 
   @Test
   fun `note row in the dialog`() {
-    val passwordField = JPasswordField()
-    doTest(panel {
-      noteRow("Profiler requires access to the kernel-level API.\nEnter the sudo password to allow this. ")
-      row("Sudo password:") { passwordField() }
-      row { CheckBox(CommonBundle.message("checkbox.remember.password"), true)() }
-      noteRow("Should be an empty row above as a gap")
-    })
+    doTest(noteRowInTheDialog())
   }
 
   private fun doTest(panel: JPanel) {
@@ -137,7 +124,8 @@ class UiDslTest {
     val rectangles = MigLayoutTestUtil.getRectangles(grid)
 
     val imageName = sanitizeFileName(testName.methodName)
-    val actualLayoutJson = configurationToJson(component, component.layout as MigLayout, false, rectangles.joinToString(", ") { "[${it.joinToString(", ")}]" })
+    val actualLayoutJson = configurationToJson(component, component.layout as MigLayout,
+                                               rectangles.joinToString(", ") { "[${it.joinToString(", ")}]" })
     try {
       val expectedLayoutDataFile = Paths.get(PlatformTestUtil.getPlatformTestDataPath(), "ui", "layout", "$imageName.yml")
       val isUpdateSnapshots = SystemPropertyUtil.getBoolean("test.update.snapshots", false)
@@ -153,13 +141,27 @@ class UiDslTest {
       }
 
       val imagePath = Paths.get(imageDir, "$imageName.png")
-      if (!imagePath.exists() || isUpdateSnapshots) {
+      if (!imagePath.exists()) {
         System.out.println("Write a new snapshot image ${imagePath.fileName}")
         saveImage(imagePath)
         return
       }
 
-      assertThat(componentToImage(getContentPane())).isEqualTo(ImageIO.read(imagePath.toFile()), Offset.offset(32))
+      val newImage = ImageIO.read(imagePath.toFile())
+      try {
+        assertThat(componentToImage(getContentPane())).isEqualTo(newImage, Offset.offset(32))
+      }
+      catch (e: AssertionError) {
+        if (isUpdateSnapshots) {
+          System.out.println("UPDATED snapshot image ${imagePath.fileName}")
+          imagePath.outputStream().use {
+            ImageIO.write(componentToImage(getContentPane()), "png", it)
+          }
+        }
+        else {
+          throw e
+        }
+      }
     }
     catch (e: AssertionError) {
       if (!imageDir.isNullOrEmpty()) {
