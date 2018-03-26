@@ -540,64 +540,70 @@ class LineStatusTrackerManager(
     override fun handleResult(request: RefreshRequest, result: Result<RefreshData>) {
       val document = request.document
       when (result) {
-        is Result.Canceled -> {
-          val virtualFile = fileDocumentManager.getFile(document) ?: return
+        is Result.Canceled -> handleCanceled(document)
+        is Result.Error -> handleError(document)
+        is Result.Success -> handleSuccess(document, result.data)
+      }
+    }
 
-          val state = synchronized(LOCK) {
-            fileStatesAwaitingRefresh.remove(virtualFile) ?: return
-          }
+    private fun LineStatusTrackerManager.handleCanceled(document: Document) {
+      val virtualFile = fileDocumentManager.getFile(document) ?: return
 
-          val tracker = getLineStatusTracker(document)
-          if (tracker is PartialLocalLineStatusTracker) {
-            tracker.restoreState(state)
-            log("Loading canceled: state restored", virtualFile)
-          }
+      val state = synchronized(LOCK) {
+        fileStatesAwaitingRefresh.remove(virtualFile) ?: return
+      }
 
-          checkIfTrackerCanBeReleased(document)
+      val tracker = getLineStatusTracker(document)
+      if (tracker is PartialLocalLineStatusTracker) {
+        tracker.restoreState(state)
+        log("Loading canceled: state restored", virtualFile)
+      }
+
+      checkIfTrackerCanBeReleased(document)
+    }
+
+    private fun handleError(document: Document) {
+      synchronized(LOCK) {
+        val data = trackers[document] ?: return
+
+        data.tracker.dropBaseRevision()
+        data.contentInfo = null
+
+        checkIfTrackerCanBeReleased(document)
+      }
+    }
+
+    private fun LineStatusTrackerManager.handleSuccess(document: Document,
+                                                       refreshData: RefreshData) {
+      val virtualFile = fileDocumentManager.getFile(document)!!
+
+      synchronized(LOCK) {
+        val data = trackers[document]
+        if (data == null) {
+          log("Loading finished: tracker already released", virtualFile)
+          return
         }
-        is Result.Error -> {
-          synchronized(LOCK) {
-            val data = trackers[document] ?: return
-
-            data.tracker.dropBaseRevision()
-            data.contentInfo = null
-
-            checkIfTrackerCanBeReleased(document)
-          }
+        if (!shouldBeUpdated(data.contentInfo, refreshData.info)) {
+          log("Loading finished: no need to update", virtualFile)
+          return
         }
-        is Result.Success -> {
-          val virtualFile = fileDocumentManager.getFile(document)!!
-          val refreshData = result.data
 
-          synchronized(LOCK) {
-            val data = trackers[document]
-            if (data == null) {
-              log("Loading finished: tracker already released", virtualFile)
-              return
-            }
-            if (!shouldBeUpdated(data.contentInfo, refreshData.info)) {
-              log("Loading finished: no need to update", virtualFile)
-              return
-            }
+        data.contentInfo = refreshData.info
+      }
 
-            data.contentInfo = refreshData.info
-          }
+      val tracker = getLineStatusTracker(document)!!
+      tracker.setBaseRevision(refreshData.text)
+      log("Loading finished: success", virtualFile)
 
-          val tracker = getLineStatusTracker(document)!!
-          tracker.setBaseRevision(refreshData.text)
-          log("Loading finished: success", virtualFile)
-
-          if (tracker is PartialLocalLineStatusTracker) {
-            val state = fileStatesAwaitingRefresh.remove(tracker.virtualFile)
-            if (state != null) {
-              tracker.restoreState(state)
-              log("Loading finished: state restored", virtualFile)
-            }
-          }
-
-          checkIfTrackerCanBeReleased(document)
+      if (tracker is PartialLocalLineStatusTracker) {
+        val state = fileStatesAwaitingRefresh.remove(tracker.virtualFile)
+        if (state != null) {
+          tracker.restoreState(state)
+          log("Loading finished: state restored", virtualFile)
         }
       }
+
+      checkIfTrackerCanBeReleased(document)
     }
   }
 
