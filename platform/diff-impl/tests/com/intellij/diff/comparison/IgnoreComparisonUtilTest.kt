@@ -494,6 +494,20 @@ class IgnoreComparisonUtilTest : DiffTestCase() {
       .changedLinesNumber(0, 0)
       .noInnerChanges()
       .run()
+
+    Test("X_a Y_Z", "Y_aY_Z",
+         "   + + ", "    + ",
+         "  ---  ", "  --  ")
+      .ranged(Range(1, 2, 1, 2))
+      .changedLinesNumber(1, 1)
+      .run()
+
+    Test("X_a Y_Z", "X_aY_Z",
+         "   + + ", "    + ",
+         "  ---  ", "  --  ")
+      .ranged(Range(1, 2, 1, 2))
+      .changedLinesNumber(1, 1)
+      .run()
   }
 
   private inner class Test(val input1: String, val input2: String,
