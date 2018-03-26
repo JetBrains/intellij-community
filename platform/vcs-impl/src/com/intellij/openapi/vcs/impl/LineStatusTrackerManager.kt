@@ -544,6 +544,8 @@ class LineStatusTrackerManager(
         is Result.Error -> handleError(document)
         is Result.Success -> handleSuccess(document, result.data)
       }
+
+      checkIfTrackerCanBeReleased(document)
     }
 
     private fun LineStatusTrackerManager.handleCanceled(document: Document) {
@@ -558,8 +560,6 @@ class LineStatusTrackerManager(
         tracker.restoreState(state)
         log("Loading canceled: state restored", virtualFile)
       }
-
-      checkIfTrackerCanBeReleased(document)
     }
 
     private fun handleError(document: Document) {
@@ -568,8 +568,6 @@ class LineStatusTrackerManager(
 
         data.tracker.dropBaseRevision()
         data.contentInfo = null
-
-        checkIfTrackerCanBeReleased(document)
       }
     }
 
@@ -602,8 +600,6 @@ class LineStatusTrackerManager(
           log("Loading finished: state restored", virtualFile)
         }
       }
-
-      checkIfTrackerCanBeReleased(document)
     }
   }
 
@@ -1186,6 +1182,10 @@ private abstract class SingleThreadLoader<Request, T> {
 
     runInEdt(ModalityState.any()) {
       try {
+        synchronized(LOCK) {
+          waitingForRefresh.remove(request)
+        }
+
         handleResult(request, result)
       }
       finally {
@@ -1200,8 +1200,6 @@ private abstract class SingleThreadLoader<Request, T> {
 
     val callbacks = mutableListOf<Runnable>()
     synchronized(LOCK) {
-      waitingForRefresh.remove(request)
-
       if (taskQueue.isEmpty() && waitingForRefresh.isEmpty()) {
         callbacks += callbacksWaitingUpdateCompletion
         callbacksWaitingUpdateCompletion.clear()
