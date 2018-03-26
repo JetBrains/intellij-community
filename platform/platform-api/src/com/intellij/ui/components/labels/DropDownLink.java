@@ -1,10 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components.labels;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.ui.IconCache;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,7 +22,7 @@ public class DropDownLink extends JPanel implements LinkListener<Object> {
 
   public DropDownLink(@NotNull String mainText, @NotNull Runnable mainAction) {
     mainLabel = LinkLabel.create(mainText, mainAction);
-    dropLabel = new LinkLabel<>(null, IconCache.getIcon("linkDropTriangle"), this);
+    dropLabel = new LinkLabel<>(null, AllIcons.General.LinkDropTriangle, this);
     //dropLabel.setHoveringIcon(AllIcons.Ide.Notification.ExpandHover);
 
     setLayout(new DropDownLinkLayout());
