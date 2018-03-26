@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.tests.community
 
+import com.intellij.ide.IdeBundle
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.testGuiFramework.impl.GuiTestCase
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt
@@ -11,6 +12,7 @@ import com.intellij.testGuiFramework.util.Modifier.META
 import com.intellij.testGuiFramework.util.plus
 import com.intellij.testGuiFramework.utils.TestUtilsClass
 import com.intellij.testGuiFramework.utils.TestUtilsClassCompanion
+import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.exception.WaitTimedOutError
 import org.junit.Assert
 import java.io.File
@@ -41,12 +43,20 @@ class CommunityProjectCreator(guiTestCase: GuiTestCase) : TestUtilsClass(guiTest
           jList("Command Line App").clickItem("Command Line App")
           button("Next").click()
           typeText(projectName)
+          checkFileAlreadyExistsDialog() //confirm overwriting already created project
           button("Finish").click()
         }
       }
       waitForFirstIndexing()
       if (needToOpenMainJava) openMainInCommandLineProject()
     }
+  }
+
+  private fun GuiTestCase.checkFileAlreadyExistsDialog() {
+    try {
+      val dialogFixture = dialog(IdeBundle.message("title.file.already.exists"), false, 10L)
+      dialogFixture.button("Yes").click()
+    } catch (cle: ComponentLookupException) { /*do nothing here */ }
   }
 
   private fun GuiTestCase.openMainInCommandLineProject() {
@@ -69,7 +79,7 @@ class CommunityProjectCreator(guiTestCase: GuiTestCase) : TestUtilsClass(guiTest
 
   private fun GuiTestCase.waitForFirstIndexing() {
     ideFrame {
-      val secondToWaitIndexing = 300
+      val secondToWaitIndexing = 10
       try {
         waitForStartingIndexing(secondToWaitIndexing) //let's wait for 2 minutes until indexing bar will appeared
       }

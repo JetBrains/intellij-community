@@ -12,6 +12,7 @@ import com.intellij.testGuiFramework.util.plus
 import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.exception.WaitTimedOutError
 import org.fest.swing.timing.Pause
+import org.junit.Ignore
 import org.junit.Test
 import java.util.concurrent.TimeUnit
 
@@ -24,7 +25,7 @@ class ReplaceInPathFocusTest : GuiTestCase() {
    */
   @Test
   fun testReplaceInPathDumbModeFocus() {
-    CommunityProjectCreator.createCommandLineProject(projectName = "replace-in-path-dumb-mode")
+    CommunityProjectCreator.importCommandLineAppAndOpenMain()
     Pause.pause(1000)
     ideFrame {
       dumbMode {
@@ -39,7 +40,7 @@ class ReplaceInPathFocusTest : GuiTestCase() {
    * IDEA-188229
    * Fixed by 6bd20c4a483a78713c08e426316d29d3cfd1f6a5
    */
-  @Test
+  @Test @Ignore
   fun testReplaceInPathFocus() {
     CommunityProjectCreator.importCommandLineAppAndOpenMain()
     Pause.pause(1000)

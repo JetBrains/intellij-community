@@ -26,7 +26,7 @@ class GoToClassFocusTest : GuiTestCase() {
 
   @Test
   fun testGoToClassFocus() {
-    CommunityProjectCreator.createCommandLineProject()
+    CommunityProjectCreator.importCommandLineAppAndOpenMain()
     Pause.pause(1000)
     ideFrame {
       focusOnEditor()

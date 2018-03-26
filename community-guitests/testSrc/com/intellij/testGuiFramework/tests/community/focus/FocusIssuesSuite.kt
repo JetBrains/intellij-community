@@ -13,7 +13,7 @@ import org.junit.runners.Suite
 @RunWithIde(CommunityIde::class)
 @FirstStartWith(CommunityIdeFirstStart::class)
 @Suite.SuiteClasses(CompletionFocusTest::class,
-                    TypeAheadTest::class,
+//                    TypeAheadTest::class,
                     GoToClassFocusTest::class,
                     GoToClassTwiceFocusTest::class,
                     InlineVariableFocusTest::class,
