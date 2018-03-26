@@ -29,7 +29,7 @@ class MainTest {
     assert fixture.findAllGutters().size() == 2
   }
 
-  void 'test implicit String[]'() {
+  void 'test implicit String array'() {
     fixture.configureByText '_.groovy', '''\
 class MainTest {
   static void main(args) {}
