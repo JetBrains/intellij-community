@@ -24,6 +24,7 @@ class IdeaEduProperties extends IdeaCommunityProperties {
   IdeaEduProperties(String home) {
     super(home)
     dependenciesPath = "$home/edu/dependencies"
+    additionalIDEPropertiesFilePaths = []
   }
 
   @Override
