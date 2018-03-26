@@ -13,6 +13,7 @@ import com.intellij.testGuiFramework.utils.TestUtilsClass
 import com.intellij.testGuiFramework.utils.TestUtilsClassCompanion
 import org.fest.swing.exception.WaitTimedOutError
 import org.junit.Assert
+import java.io.File
 
 val GuiTestCase.CommunityProjectCreator by CommunityProjectCreator
 
@@ -39,23 +40,43 @@ class CommunityProjectCreator(guiTestCase: GuiTestCase) : TestUtilsClass(guiTest
           Assert.assertTrue("Checkbox \"Create project from template\" should be selected!", projectFromTemplateCheckbox.isSelected)
           jList("Command Line App").clickItem("Command Line App")
           button("Next").click()
-          if (projectName != defaultProjectName) typeText("typeAheadProblem")
+          typeText(projectName)
           button("Finish").click()
         }
       }
-      ideFrame {
-        val secondToWaitIndexing = 300
-        try {
-          waitForStartingIndexing(secondToWaitIndexing) //let's wait for 2 minutes until indexing bar will appeared
-        } catch (timedOutError: WaitTimedOutError) { LOG.warn("Waiting for indexing has been exceeded $secondToWaitIndexing seconds") }
+      waitForFirstIndexing()
+      if (needToOpenMainJava) openMainInCommandLineProject()
+    }
+  }
+
+  private fun GuiTestCase.openMainInCommandLineProject() {
+    ideFrame {
+      projectView {
+        path(project.name, "src", "com.company", "Main").doubleClick()
         waitForBackgroundTasksToFinish()
-        if (needToOpenMainJava) {
-          projectView {
-            path(project.name, "src", "com.company", "Main").doubleClick()
-            waitForBackgroundTasksToFinish()
-          }
-        }
       }
+    }
+  }
+
+  private fun GuiTestCase.openFileInCommandLineProject(fileName: String) {
+    ideFrame {
+      projectView {
+        path(project.name, "src", "com.company", fileName).doubleClick()
+        waitForBackgroundTasksToFinish()
+      }
+    }
+  }
+
+  private fun GuiTestCase.waitForFirstIndexing() {
+    ideFrame {
+      val secondToWaitIndexing = 300
+      try {
+        waitForStartingIndexing(secondToWaitIndexing) //let's wait for 2 minutes until indexing bar will appeared
+      }
+      catch (timedOutError: WaitTimedOutError) {
+        LOG.warn("Waiting for indexing has been exceeded $secondToWaitIndexing seconds")
+      }
+      waitForBackgroundTasksToFinish()
     }
   }
 
@@ -77,6 +98,34 @@ class CommunityProjectCreator(guiTestCase: GuiTestCase) : TestUtilsClass(guiTest
         }
       }
     }
+  }
+
+  /**
+   * @projectName of importing project should be locate in the current module testData/
+   */
+  fun importProject(projectName: String) {
+    val commandLineAppDirUrl = this.javaClass.classLoader.getResource(projectName)
+    val commandLineAppDir = File(commandLineAppDirUrl.toURI())
+    guiTestCase.guiTestRule.importProject(commandLineAppDir)
+  }
+
+  fun importCommandLineApp() {
+    importProject("command-line-app")
+  }
+
+  /**
+   * @fileName - name of file with extension stored in src/com.company/
+   */
+  fun importCommandLineAppAndOpenFile(fileName: String) {
+    importCommandLineApp()
+    guiTestCase.waitForFirstIndexing()
+    guiTestCase.openFileInCommandLineProject(fileName)
+  }
+
+  fun importCommandLineAppAndOpenMain() {
+    importCommandLineApp()
+    guiTestCase.waitForFirstIndexing()
+    guiTestCase.openMainInCommandLineProject()
   }
 
 }
