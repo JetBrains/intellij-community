@@ -15,7 +15,6 @@
  */
 package git4idea.branch;
 
-import com.google.common.collect.Collections2;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -212,10 +211,7 @@ public class GitBranchUtil {
    */
   @NotNull
   public static Collection<String> getBranchNamesWithoutRemoteHead(@NotNull Collection<GitRemoteBranch> remoteBranches) {
-    return Collections2.filter(convertBranchesToNames(remoteBranches), input -> {
-      assert input != null;
-      return !input.equals("HEAD");
-    });
+    return ContainerUtil.filter(convertBranchesToNames(remoteBranches), input -> !input.equals("HEAD"));
   }
 
   @NotNull
