@@ -46,6 +46,10 @@ class GradleRunner {
     return runInner(title, true, tasks)
   }
 
+  GradleRunner forProject(String projectPath) {
+    new GradleRunner(new File(projectPath), messages, javaHome)
+  }
+
   private boolean runInner(String title, boolean force, String... tasks) {
     def result = false
     messages.block("Gradle $tasks") {
