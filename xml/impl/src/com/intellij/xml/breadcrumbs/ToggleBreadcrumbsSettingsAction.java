@@ -38,16 +38,16 @@ class ToggleBreadcrumbsSettingsAction extends ToggleBreadcrumbsAction {
   @Override
   public boolean isSelected(@NotNull AnActionEvent event) {
     boolean selected = super.isSelected(event);
-    if (!show && !selected) return true;
-    if (!show || !selected) return false;
-    EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
-    return above == settings.isBreadcrumbsAbove();
+    if (show && selected) {
+      return above == EditorSettingsExternalizable.getInstance().isBreadcrumbsAbove();
+    }
+    return !show && !selected;
   }
 
   @Override
   public void setSelected(AnActionEvent event, boolean selected) {
     Editor editor = findEditor(event);
-    boolean modified = editor != null && setForcedShown(null, editor);
+    boolean modified = editor != null && BreadcrumbsForceShownSettings.setForcedShown(null, editor);
     EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
     if (settings.setBreadcrumbsShown(show)) modified = true;
     if (show) {

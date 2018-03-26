@@ -390,8 +390,11 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
   public static BreadcrumbsProvider findInfoProvider(@NotNull Editor editor, @Nullable FileViewProvider viewProvider) {
     if (viewProvider == null) return null;
 
-    Boolean shown = ToggleBreadcrumbsAction.getForcedShown(editor);
-    return shown != null && !shown ? null : findInfoProvider(shown == null, viewProvider);
+    Boolean forceShown = BreadcrumbsForceShownSettings.getForcedShown(editor);
+    if (forceShown == null) {
+      return findInfoProvider(true, viewProvider);
+    }
+    return forceShown ? findInfoProvider(false, viewProvider) : null;
   }
 
   @Nullable

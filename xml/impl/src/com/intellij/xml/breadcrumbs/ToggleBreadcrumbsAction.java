@@ -9,14 +9,11 @@ import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.util.Key;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Objects;
 
 abstract class ToggleBreadcrumbsAction extends ToggleAction implements DumbAware {
 
@@ -29,13 +26,11 @@ abstract class ToggleBreadcrumbsAction extends ToggleAction implements DumbAware
     @Override
     public void setSelected(@NotNull AnActionEvent event, boolean selected) {
       Editor editor = findEditor(event);
-      if (editor != null && setForcedShown(selected, editor)) {
+      if (editor != null && BreadcrumbsForceShownSettings.setForcedShown(selected, editor)) {
         UISettings.getInstance().fireUISettingsChanged();
       }
     }
   }
-
-  private static final Key<Boolean> FORCED_BREADCRUMBS = new Key<>("FORCED_BREADCRUMBS");
 
   @Override
   public void update(@NotNull AnActionEvent event) {
@@ -58,22 +53,12 @@ abstract class ToggleBreadcrumbsAction extends ToggleAction implements DumbAware
     Editor editor = findEditor(event);
     if (editor == null) return shown;
 
-    Boolean forcedShown = getForcedShown(editor);
+    Boolean forcedShown = BreadcrumbsForceShownSettings.getForcedShown(editor);
     if (forcedShown != null) return forcedShown;
     if (!shown) return false;
 
     String languageID = findLanguageID(event);
     return languageID == null || settings.isBreadcrumbsShownFor(languageID);
-  }
-
-  static boolean setForcedShown(Boolean selected, @NotNull Editor editor) {
-    Boolean old = getForcedShown(editor);
-    editor.putUserData(FORCED_BREADCRUMBS, selected);
-    return !Objects.equals(old, selected);
-  }
-
-  static Boolean getForcedShown(@NotNull Editor editor) {
-    return editor.getUserData(FORCED_BREADCRUMBS);
   }
 
   @Contract("null -> null")
