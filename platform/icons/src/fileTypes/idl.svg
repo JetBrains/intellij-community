@@ -1,15 +1,15 @@
-<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
   <title>idl</title>
   <g>
-    <rect x="1" y="9" width="15" height="7" fill="#b99bf8" opacity="0.5"/>
-    <path d="M10,10h0.87879v4.19972H13.507V15H10V10Z" fill="#231f20" opacity="0.6"/>
+    <rect x="1" y="9" width="15" height="7" fill="#b99bf8" opacity="0.7"/>
+    <path d="M6.64941,10H5v5H6.64941A2.35551,2.35551,0,0,0,9,12.50049v-.01465A2.34392,2.34392,0,0,0,6.64941,10Zm1.53565,2.51416a1.74772,1.74772,0,0,1-.48145,1.26563V14H7.41113a1.52,1.52,0,0,1-.76172.19971H5.77734V10.80029h.87207A1.50324,1.50324,0,0,1,7.40527,11h.29834v.22656a1.77374,1.77374,0,0,1,.48145,1.27393Z" fill="#231f20" opacity="0.7"/>
+    <path d="M10,10h.87879v4.19972H13.507V15H10Z" fill="#231f20" opacity="0.7"/>
     <g>
       <g>
-        <polygon points="6 0 2 4 6 4 6 0" fill="#9aa7b0" opacity="0.7" style="isolation: isolate"/>
-        <polygon points="7 0 7 4 7 5 6 5 2 5 2 8 13 8 13 0 7 0" fill="#9aa7b0" opacity="0.7" style="isolation: isolate"/>
+        <polygon points="7 1 3 5 7 5 7 1" fill="#9aa7b0" opacity="0.8" style="isolation: isolate"/>
+        <polygon points="8 1 8 5 8 6 7 6 3 6 3 8 13 8 13 1 8 1" fill="#9aa7b0" opacity="0.8" style="isolation: isolate"/>
       </g>
-      <path d="M5,10H6.6496A2.34381,2.34381,0,0,1,9,12.48575v0.01454A2.35566,2.35566,0,0,1,6.6496,15H5V10Zm0.77746,0.80028v3.39944H6.6496A1.539,1.539,0,0,0,8.185,12.51425v-0.014a1.5514,1.5514,0,0,0-1.53537-1.7H5.77746Z" fill="#231f20" opacity="0.6"/>
-      <path d="M3,10H3.87879v5H3V10Z" fill="#231f20" opacity="0.6"/>
+      <path d="M3,10h.87879v5H3Z" fill="#231f20" opacity="0.7"/>
     </g>
   </g>
 </svg>

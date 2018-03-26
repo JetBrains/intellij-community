@@ -72,6 +72,7 @@ public class AllIcons {
     public static final Icon Forward = IconLoader.getIcon("/actions/forward.png"); // 16x16
     public static final Icon GC = IconLoader.getIcon("/actions/gc.png"); // 16x16
     public static final Icon Get = IconLoader.getIcon("/actions/get.png"); // 16x16
+    public static final Icon GroupBy = IconLoader.getIcon("/actions/groupBy.png"); // 16x16
     public static final Icon GroupByClass = IconLoader.getIcon("/actions/GroupByClass.png"); // 16x16
     public static final Icon GroupByFile = IconLoader.getIcon("/actions/GroupByFile.png"); // 16x16
     public static final Icon GroupByMethod = IconLoader.getIcon("/actions/groupByMethod.png"); // 16x16
@@ -112,7 +113,7 @@ public class AllIcons {
     public static final Icon Prevfile = IconLoader.getIcon("/actions/prevfile.png"); // 16x16
     public static final Icon Preview = IconLoader.getIcon("/actions/preview.png"); // 16x16
     public static final Icon PreviewDetails = IconLoader.getIcon("/actions/previewDetails.png"); // 16x16
-    public static final Icon PreviousOccurence = IconLoader.getIcon("/actions/previousOccurence.png"); // 14x14
+    public static final Icon PreviousOccurence = IconLoader.getIcon("/actions/previousOccurence.png"); // 16x16
     public static final Icon Profile = IconLoader.getIcon("/actions/profile.png"); // 16x16
     public static final Icon ProfileCPU = IconLoader.getIcon("/actions/profileCPU.png"); // 16x16
     public static final Icon ProfileMemory = IconLoader.getIcon("/actions/profileMemory.png"); // 16x16

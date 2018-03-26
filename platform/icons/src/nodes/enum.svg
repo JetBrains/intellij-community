@@ -1,7 +1,9 @@
-<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
   <title>enum</title>
-  <g id="_Group_" data-name=" Group " opacity="0.5">
-    <circle cx="8" cy="8" r="7" fill="#40b6e0"/>
+  <g>
+    <g id="_Group_" data-name="&lt;Group&gt;" opacity="0.6">
+      <circle cx="8" cy="8" r="7" fill="#40b6e0"/>
+    </g>
+    <path d="M10,11H6V5h4V6H7v.9999H9.4219V8H7V9.9999h3Z" fill="#231f20" opacity="0.7"/>
   </g>
-  <path d="M10,11H6V5h4V6H7V6.9999H9.4219V8H7V9.9999h3V11Z" fill="#231f20" opacity="0.6"/>
 </svg>
