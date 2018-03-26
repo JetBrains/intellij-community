@@ -369,6 +369,8 @@
                                implementationClass="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionSuppressor"/>
 
     <colorSettingsPage implementation="org.jetbrains.plugins.groovy.highlighter.GroovyColorSettingsPage"/>
+    <editorHighlighterProvider filetype="Groovy"
+                               implementationClass="org.jetbrains.plugins.groovy.highlighter.GroovyEditorHighlighterProvider"/>
     <framework.type implementation="org.jetbrains.plugins.groovy.config.GroovyFrameworkType"/>
     <renameHandler implementation="org.jetbrains.plugins.groovy.refactoring.rename.PropertyRenameHandler"/>
     <renamePsiElementProcessor id="groovyFieldRenameProcessor"
