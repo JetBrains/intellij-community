@@ -22,6 +22,7 @@ def process_args():
     extension_folder = None
     target_pydevd_name = None
     target_frame_eval = None
+    target_native_tracing = None
     force_cython = False
 
     for i, arg in enumerate(sys.argv[:]):
@@ -34,11 +35,14 @@ def process_args():
         if arg.startswith('--target-pyd-frame-eval='):
             sys.argv.remove(arg)
             target_frame_eval = arg[len('--target-pyd-frame-eval='):]
+        if arg.startswith('--target-pyd-tracing-name'):
+            sys.argv.remove(arg)
+            target_native_tracing = arg[len('--target-pyd-tracing-name='):]
         if arg == '--force-cython':
             sys.argv.remove(arg)
             force_cython = True
 
-    return extension_folder, target_pydevd_name, target_frame_eval, force_cython
+    return extension_folder, target_pydevd_name, target_native_tracing, target_frame_eval, force_cython
 
 
 def build_extension(dir_name, extension_name, target_pydevd_name, force_cython, extended=False, has_pxd=False):
@@ -100,12 +104,17 @@ def build_extension(dir_name, extension_name, target_pydevd_name, force_cython, 
                     traceback.print_exc()
 
 
-extension_folder, target_pydevd_name, target_frame_eval, force_cython = process_args()
+extension_folder, target_pydevd_name, target_native_tracing, target_frame_eval, force_cython = process_args()
 
 extension_name = "pydevd_cython"
 if target_pydevd_name is None:
     target_pydevd_name = extension_name
 build_extension("_pydevd_bundle", extension_name, target_pydevd_name, force_cython, extension_folder)
+
+extension_name = "pydevd_native_tracing"
+if target_native_tracing is None:
+    target_native_tracing = extension_name
+build_extension("_pydevd_bundle", extension_name, target_native_tracing, force_cython, extension_folder)
 
 if IS_PY36_OR_GREATER:
     extension_name = "pydevd_frame_evaluator"

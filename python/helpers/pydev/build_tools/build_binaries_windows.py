@@ -97,7 +97,7 @@ def list_binaries():
 
 
 def extract_version(python_install):
-    return python_install.split('\\')[-3][2:]
+    return python_install.split('\\')[-2][2:]
 
 
 def main():
@@ -121,6 +121,10 @@ def main():
         new_name = 'pydevd_cython_%s_%s' % (sys.platform, extract_version(python_install))
         args = [
             python_install, os.path.join(root_dir, 'build_tools', 'build.py'), '--no-remove-binaries', '--target-pyd-name=%s' % new_name, '--force-cython']
+
+        native_tracing_name = 'pydevd_native_tracing_%s_%s' % (sys.platform, extract_version(python_install))
+        args.append('--target-pyd-tracing-name=%s' % native_tracing_name)
+
         if i != 0:
             args.append('--no-regenerate-files')
         version_number = extract_version(python_install)

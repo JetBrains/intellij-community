@@ -142,7 +142,7 @@ def build():
 
     additional_args = []
     for arg in sys.argv:
-        if arg.startswith('--target-pyd-name='):
+        if arg.startswith( ('--target-pyd-name=', '--target-pyd-tracing-name=')):
             additional_args.append(arg)
         if arg.startswith('--target-pyd-frame-eval='):
             additional_args.append(arg)

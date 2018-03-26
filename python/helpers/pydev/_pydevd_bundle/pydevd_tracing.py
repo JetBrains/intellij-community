@@ -91,15 +91,13 @@ def SetTrace(tracing_func, frame_eval_func=None, dummy_tracing_func=None):
 
     if TracingFunctionHolder._original_tracing is None:
         #This may happen before replace_sys_set_trace_func is called.
-        sys.settrace(tracing_func)
+        _set_trace(tracing_func)
         return
 
     with _do_not_trace_ctx():
         TracingFunctionHolder._lock.acquire()
         try:
-            TracingFunctionHolder._warn = False
-            _internal_set_trace(tracing_func)
-            TracingFunctionHolder._warn = True
+            _set_trace(tracing_func)
         finally:
             TracingFunctionHolder._lock.release()
 
@@ -143,3 +141,10 @@ def settrace_while_running_if_frame_eval(py_db, trace_func):
             py_db.do_not_use_frame_eval = True
     except:
         traceback.print_exc()
+
+try:
+    from pydevd_native_tracing_wrapper import set_trace as _set_trace, set_dummy_trace
+except ImportError:
+    _set_trace = _original_settrace
+    def set_dummy_trace():
+        pass
