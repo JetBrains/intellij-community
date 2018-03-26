@@ -79,12 +79,11 @@ python_installations = [
     r'%s\py36_32\Scripts\python.exe' % miniconda32_envs,
     r'%s\py37_32\Scripts\python.exe' % miniconda32_envs,
 
-    r'%s\py26_64\Scripts\python.exe' % miniconda64_envs,
-    r'%s\py27_64\Scripts\python.exe' % miniconda64_envs,
-    r'%s\py34_64\Scripts\python.exe' % miniconda64_envs,
-    r'%s\py35_64\Scripts\python.exe' % miniconda64_envs,
-    r'%s\py36_64\Scripts\python.exe' % miniconda64_envs,
-    r'%s\py37_64\Scripts\python.exe' % miniconda64_envs,
+    # r'%s\py26_64\python.exe' % miniconda64_envs,
+    r'%s\py27_64\python.exe' % miniconda64_envs,
+    # r'%s\py34_64\python.exe' % miniconda64_envs,
+   # r'%s\py35_64\python.exe' % miniconda64_envs,
+     r'%s\py36_64\python.exe' % miniconda64_envs,
 ]
 
 root_dir = os.path.dirname(os.path.dirname(__file__))
@@ -97,7 +96,7 @@ def list_binaries():
 
 
 def extract_version(python_install):
-    return python_install.split('\\')[-2][2:]
+    return python_install.split('\\')[-3][2:]
 
 
 def main():
