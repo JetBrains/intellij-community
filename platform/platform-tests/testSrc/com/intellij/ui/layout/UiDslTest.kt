@@ -34,10 +34,10 @@ import javax.swing.UIManager
 import kotlin.properties.Delegates
 
 /**
- * Set `test.update.snapshots=true` to automatically update snapshots if need
+ * Set `test.update.snapshots=true` to automatically update snapshots if need.
  *
  * Checkout git@github.com:develar/intellij-ui-dsl-test-snapshots.git (or create own repo) to some local dir and set env LAYOUT_IMAGE_REPO
- * to store image snapshots
+ * to use image snapshots.
  */
 class UiDslTest {
   companion object {
@@ -88,7 +88,7 @@ class UiDslTest {
   }
 
   @Test
-  fun `cell`() {
+  fun cell() {
     doTest(cellPanel())
   }
 

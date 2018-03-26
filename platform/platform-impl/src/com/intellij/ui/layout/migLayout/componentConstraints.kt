@@ -112,9 +112,10 @@ private fun addGrowIfNeed(cc: Lazy<CC>, component: Component) {
     component is JScrollPane ||
     (component is JPanel && component.componentCount == 1 && (component.getComponent(0) as? JComponent)?.getClientProperty(
       ActionToolbar.ACTION_TOOLBAR_PROPERTY_KEY) != null) -> {
+      // no need to use pushX - default pushX for cell is 100. avoid to configure more than need
       cc.value
         .grow()
-        .push()
+        .pushY()
     }
   }
 }

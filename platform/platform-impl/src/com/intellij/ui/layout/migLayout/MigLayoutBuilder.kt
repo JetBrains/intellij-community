@@ -11,7 +11,6 @@ import java.awt.Component
 import java.awt.Container
 import javax.swing.ButtonGroup
 import javax.swing.JLabel
-import javax.swing.JScrollPane
 
 /**
  * Automatically add `growX` to JTextComponent (see isAddGrowX).
@@ -70,7 +69,7 @@ internal class MigLayoutBuilder : LayoutBuilderImpl {
 
     var rowIndex = 0
 
-    fun configureComponents(row: MigLayoutRow, prevRow: MigLayoutRow?, isLabeled: Boolean) {
+    fun configureComponents(row: MigLayoutRow, prevRow: MigLayoutRow?) {
       val lastComponent = row.components.lastOrNull()
       if (lastComponent == null) {
         if (prevRow == null) {
@@ -109,10 +108,6 @@ internal class MigLayoutBuilder : LayoutBuilderImpl {
           row.gapAfter?.let {
             rowConstraints.gap(it, rowIndex)
           }
-
-          if (row.components.size == 1 && component is JScrollPane) {
-            columnConstraints.grow(100f, 2)
-          }
         }
 
         if (index >= row.rightIndex) {
@@ -126,10 +121,9 @@ internal class MigLayoutBuilder : LayoutBuilderImpl {
     }
 
     fun processRows(rows: List<MigLayoutRow>) {
-      val isLabeled = rows.firstOrNull(MigLayoutRow::labeled) != null
       var prevRow: MigLayoutRow? = null
       for (row in rows) {
-        configureComponents(row, prevRow, isLabeled)
+        configureComponents(row, prevRow)
         row.subRows?.let {
           processRows(it)
         }
@@ -153,9 +147,8 @@ internal fun gapToBoundSize(value: Int, isHorizontal: Boolean): BoundSize {
 }
 
 // default values differs to MigLayout - IntelliJ Platform defaults are used
-// see com.intellij.uiDesigner.core.AbstractLayout.DEFAULT_HGAP and DEFAULT_VGAP (multiplied by 2 to achieve the same look (it seems in terms of MigLayout gap is both left and right space))
+// gap multiplied by 2 (it seems in terms of MigLayout gap is both left and right space)
 private fun createLayoutConstraints(gridGapX: Int = UIUtil.DEFAULT_HGAP * 2, gridGapY: Int = UIUtil.DEFAULT_VGAP): LC {
-  // no setter for gap, so, create string to parse
   val lc = LC()
   lc.gridGapX = gapToBoundSize(gridGapX, true)
   lc.gridGapY = gapToBoundSize(gridGapY, false)

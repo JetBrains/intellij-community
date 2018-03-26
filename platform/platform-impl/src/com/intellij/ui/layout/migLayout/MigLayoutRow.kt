@@ -229,6 +229,8 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
         // if pushX defined for component, set column grow to 1000 (value that greater than default non-labeled column grow)
         // (for now we don't allow to specify custom weight for push, so, real value of specified pushX doesn't matter)
         builder.columnConstraints.grow(1000f, columnIndex)
+        // unset
+        cc.value.pushX = null
       }
     }
     else if (columnIndex > 0 && columnIndex >= builder.columnConstraints.count) {
