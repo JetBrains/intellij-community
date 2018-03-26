@@ -260,6 +260,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       @Override
       protected void processMouseEvent(MouseEvent e) {
         if (e.getID() == MouseEvent.MOUSE_PRESSED && myHint != null) {
+          //DocumentationComponent.this.requestFocus();
           initialClick = null;
           StyledDocument document = (StyledDocument)getDocument();
           int x = e.getX();
@@ -328,7 +329,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       // Note: Making the caret visible is merely for convenience
       myEditorPane.getCaret().setVisible(true);
     }
-    myEditorPane.getCaret().setSelectionVisible(true);
     myEditorPane.setBackground(EditorColorsUtil.getGlobalOrDefaultColor(COLOR_KEY));
     HTMLEditorKit editorKit = new UIUtil.JBHtmlEditorKit(true) {
       @Override
@@ -913,6 +913,9 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
           PopupPositionManager.positionPopupInBestPosition(myHint, editor, dataContext);
         }
         myIsShown = true;
+        // workaround for IDEA-188907
+        myHint.getPopupWindow().setFocusableWindowState(true);
+        myHint.getPopupWindow().setFocusable(true);
         if (myHint.getDimensionServiceKey() == null) {
           SwingUtilities.invokeLater(this::registerSizeTracker);
         }
