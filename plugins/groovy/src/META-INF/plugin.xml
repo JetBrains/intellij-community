@@ -1849,6 +1849,10 @@
     <uastLanguagePlugin implementation="org.jetbrains.plugins.groovy.lang.psi.uast.GroovyUastPlugin"/>
   </extensions>
 
+  <extensions defaultExtensionNs="com.intellij.jvm">
+    <declarationSearcher language="Groovy" implementationClass="org.jetbrains.plugins.groovy.jvm.GroovyDeclarationSearcher"/>
+  </extensions>
+
   <xi:include href="groovy-console.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="groovy-templates.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="groovy-dynamic-members.xml" xpointer="xpointer(/idea-plugin/*)"/>
