@@ -18,6 +18,7 @@ package com.intellij.codeInspection.dataFlow.value;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
@@ -31,6 +32,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import one.util.streamex.LongStreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -220,7 +222,7 @@ public class DfaExpressionFactory {
           return method;
         }
       }
-      if (method.getParameterList().getParametersCount() == 0) {
+      if (method.getParameterList().isEmpty()) {
         if ((ControlFlowAnalyzer.isPure(method) ||
             AnnotationUtil.findAnnotation(method.getContainingClass(), "javax.annotation.concurrent.Immutable") != null) &&
             ControlFlowAnalyzer.getMethodCallContracts(method, null).isEmpty()) {
@@ -231,6 +233,49 @@ public class DfaExpressionFactory {
     return null;
   }
 
+  @NotNull
+  private DfaValue getAdvancedExpressionDfaValue(@Nullable PsiExpression expression) {
+    if (expression == null) return DfaUnknownValue.getInstance();
+    DfaValue value = getExpressionDfaValue(expression);
+    if (value != null) {
+      return value;
+    }
+    if (expression instanceof PsiConditionalExpression) {
+      return getAdvancedExpressionDfaValue(((PsiConditionalExpression)expression).getThenExpression()).union(
+        getAdvancedExpressionDfaValue(((PsiConditionalExpression)expression).getElseExpression()));
+    }
+    PsiType type = expression.getType();
+    if (type instanceof PsiPrimitiveType) return DfaUnknownValue.getInstance();
+    return myFactory.createTypeValue(type, NullnessUtil.getExpressionNullness(expression));
+  }
+
+  @NotNull
+  public DfaValue getArrayElementValue(DfaValue array, LongRangeSet indexSet) {
+    if (!(array instanceof DfaVariableValue)) return DfaUnknownValue.getInstance();
+    if (indexSet.isEmpty()) return DfaUnknownValue.getInstance();
+    long min = indexSet.min();
+    long max = indexSet.max();
+    if (min == max && min >= 0 && min < Integer.MAX_VALUE) {
+      DfaValue value = getArrayElementValue(array, (int)min);
+      return value == null ? DfaUnknownValue.getInstance() : value;
+    }
+    DfaVariableValue arrayDfaVar = (DfaVariableValue)array;
+    PsiModifierListOwner arrayPsiVar = arrayDfaVar.getPsiVariable();
+    if (!(arrayPsiVar instanceof PsiVariable)) return DfaUnknownValue.getInstance();
+    PsiExpression[] elements = ExpressionUtils.getConstantArrayElements((PsiVariable)arrayPsiVar);
+    if (elements == null || elements.length == 0) return DfaUnknownValue.getInstance();
+    indexSet = indexSet.intersect(LongRangeSet.range(0, elements.length - 1));
+    if (indexSet.isEmpty() || indexSet.max() - indexSet.min() > 100) return DfaUnknownValue.getInstance();
+    return LongStreamEx.of(indexSet.stream())
+                .mapToObj(idx -> getAdvancedExpressionDfaValue(elements[(int)idx]))
+                .prefix(DfaValue::union)
+                .takeWhileInclusive(value -> value != DfaUnknownValue.getInstance())
+                .reduce((a, b) -> b)
+                .orElse(DfaUnknownValue.getInstance());
+  }
+
+  @Contract("null, _ -> null")
+  @Nullable
   public DfaValue getArrayElementValue(DfaValue array, int index) {
     if (!(array instanceof DfaVariableValue)) return null;
     DfaVariableValue arrayDfaVar = (DfaVariableValue)array;
@@ -241,7 +286,7 @@ public class DfaExpressionFactory {
     if (arrayPsiVar instanceof PsiVariable) {
       PsiExpression constantArrayElement = ExpressionUtils.getConstantArrayElement((PsiVariable)arrayPsiVar, index);
       if (constantArrayElement != null) {
-        return getExpressionDfaValue(constantArrayElement);
+        return getAdvancedExpressionDfaValue(constantArrayElement);
       }
     }
     PsiVariable indexVariable = getArrayIndexVariable(arrayPsiVar, index);
@@ -252,7 +297,7 @@ public class DfaExpressionFactory {
   @Nullable
   private PsiVariable getArrayIndexVariable(@NotNull PsiElement anchor, int index) {
     if (index >= 0) {
-      return myMockIndices.computeIfAbsent(index, k -> new LightVariableBuilder<>("$array$index$" + k, PsiType.INT, anchor));
+      return myMockIndices.computeIfAbsent(index, k -> new LightVariableBuilder<>("[" + k + "]", PsiType.INT, anchor));
     }
     return null;
   }

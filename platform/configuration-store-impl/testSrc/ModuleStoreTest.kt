@@ -117,7 +117,7 @@ class ModuleStoreTest {
     }
 
     fun Module.removeContentRoot() {
-      val modulePath = stateStore.stateStorageManager.expandMacros(StoragePathMacros.MODULE_FILE)
+      val modulePath = stateStore.storageManager.expandMacros(StoragePathMacros.MODULE_FILE)
       val moduleFile = Paths.get(modulePath)
       assertThat(moduleFile).isRegularFile
 

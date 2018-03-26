@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing;
 
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -45,7 +44,7 @@ import java.util.*;
 public class MavenProjectModelModifier extends JavaProjectModelModifier {
   private final Project myProject;
   private final MavenProjectsManager myProjectsManager;
-  private MavenProjectIndicesManager myIndicesManager;
+  private final MavenProjectIndicesManager myIndicesManager;
 
   public MavenProjectModelModifier(Project project, MavenProjectsManager projectsManager, MavenProjectIndicesManager manager) {
     myProject = project;
@@ -108,23 +107,20 @@ public class MavenProjectModelModifier extends JavaProjectModelModifier {
       projectToUpdate.add(fromProject);
     }
 
-    new WriteCommandAction(myProject, "Add Maven Dependency", PsiUtilCore.toPsiFileArray(files)) {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        for (Trinity<MavenDomProjectModel, MavenId, String> trinity : models) {
-          final MavenDomProjectModel model = trinity.first;
-          MavenDomDependency dependency = MavenDomUtil.createDomDependency(model, null, trinity.second);
-          String mavenScope = trinity.third;
-          if (mavenScope != null) {
-            dependency.getScope().setStringValue(mavenScope);
-          }
-          Document document = PsiDocumentManager.getInstance(myProject).getDocument(DomUtil.getFile(model));
-          if (document != null) {
-            FileDocumentManager.getInstance().saveDocument(document);
-          }
+    WriteCommandAction.writeCommandAction(myProject, PsiUtilCore.toPsiFileArray(files)).withName("Add Maven Dependency").run(() -> {
+      for (Trinity<MavenDomProjectModel, MavenId, String> trinity : models) {
+        final MavenDomProjectModel model = trinity.first;
+        MavenDomDependency dependency = MavenDomUtil.createDomDependency(model, null, trinity.second);
+        String ms = trinity.third;
+        if (ms != null) {
+          dependency.getScope().setStringValue(ms);
+        }
+        Document document = PsiDocumentManager.getInstance(myProject).getDocument(DomUtil.getFile(model));
+        if (document != null) {
+          FileDocumentManager.getInstance().saveDocument(document);
         }
       }
-    }.execute();
+    });
     return myProjectsManager.forceUpdateProjects(projectToUpdate);
   }
 
@@ -178,19 +174,17 @@ public class MavenProjectModelModifier extends JavaProjectModelModifier {
     final MavenDomProjectModel model = MavenDomUtil.getMavenDomProjectModel(myProject, mavenProject.getFile());
     if (model == null) return null;
 
-    new WriteCommandAction(myProject, "Add Maven Dependency", DomUtil.getFile(model)) {
-      @Override
-      protected void run(@NotNull Result result) {
-        XmlTag tag = getCompilerPlugin(model).getConfiguration().ensureTagExists();
-        String option = JpsJavaSdkType.complianceOption(level.toJavaVersion());
-        setChildTagValue(tag, "source", option);
-        setChildTagValue(tag, "target", option);
-        Document document = PsiDocumentManager.getInstance(myProject).getDocument(DomUtil.getFile(model));
-        if (document != null) {
-          FileDocumentManager.getInstance().saveDocument(document);
-        }
+    WriteCommandAction.writeCommandAction(myProject, DomUtil.getFile(model)).withName("Add Maven Dependency").run(() -> {
+      XmlTag tag = getCompilerPlugin(model).getConfiguration().ensureTagExists();
+      String option = JpsJavaSdkType.complianceOption(level.toJavaVersion());
+      setChildTagValue(tag, "source", option);
+      setChildTagValue(tag, "target", option);
+      Document document = PsiDocumentManager.getInstance(myProject).getDocument(DomUtil.getFile(model));
+      if (document != null) {
+        FileDocumentManager.getInstance().saveDocument(document);
       }
-    }.execute();
+      ;
+    });
     return myProjectsManager.forceUpdateProjects(Collections.singleton(mavenProject));
   }
 

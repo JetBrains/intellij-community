@@ -163,6 +163,11 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
         if (iteratedValue != null) {
           return JavaGenericsUtil.getCollectionItemType(iteratedValue);
         }
+        return null;
+      }
+
+      if (declarationScope instanceof PsiLambdaExpression) {
+        return ((PsiParameter)parent).getType();
       }
     }
     else {

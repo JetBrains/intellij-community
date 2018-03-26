@@ -1,25 +1,16 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.border.CustomLineBorder;
+import com.intellij.util.LazyInitializer.NotNullValue;
+import com.intellij.util.LazyInitializer.NullableValue;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import gnu.trove.TDoubleObjectHashMap;
@@ -31,7 +22,6 @@ import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
-import java.awt.geom.AffineTransform;
 import java.awt.image.ImageObserver;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -46,6 +36,7 @@ import static com.intellij.util.ui.JBUI.ScaleType.*;
  * @author Konstantin Bulenkov
  * @author tav
  */
+@SuppressWarnings("UseJBColor")
 public class JBUI {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.ui.JBUI");
 
@@ -54,6 +45,8 @@ public class JBUI {
   private static final PropertyChangeSupport PCS = new PropertyChangeSupport(new JBUI());
 
   private static final float DISCRETE_SCALE_RESOLUTION = 0.25f;
+
+  public static final boolean SCALE_VERBOSE = Boolean.getBoolean("ide.ui.scale.verbose");
 
   /**
    * The IDE supports two different HiDPI modes:
@@ -212,18 +205,68 @@ public class JBUI {
   /**
    * The system scale factor, corresponding to the default monitor device.
    */
-  private static final Float SYSTEM_SCALE_FACTOR = sysScale();
+  private static final NotNullValue<Float> SYSTEM_SCALE_FACTOR = new NotNullValue<Float>() {
+    @NotNull
+    @Override
+    public Float initialize() {
+      if (!SystemProperties.getBooleanProperty("hidpi", true)) {
+        return 1f;
+      }
+      if (UIUtil.isJreHiDPIEnabled()) {
+        GraphicsDevice gd = null;
+        try {
+          gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+        } catch (HeadlessException ignore) {}
+        if (gd != null && gd.getDefaultConfiguration() != null) {
+          return sysScale(gd.getDefaultConfiguration());
+        }
+        return 1f;
+      }
+      UIUtil.initSystemFontData();
+      Pair<String, Integer> fdata = UIUtil.getSystemFontData();
+
+      int size = fdata == null ? Fonts.label().getSize() : fdata.getSecond();
+      return getFontScale(size);
+    }
+
+    @Override
+    protected void onInitialized(@NotNull Float scale) {
+      LOG.info("System scale factor: " + scale + " (" + (UIUtil.isJreHiDPIEnabled() ? "JRE" : "IDE") + "-managed HiDPI)");
+    }
+  };
 
   /**
-   * The user space scale factor.
+   * For internal usage.
    */
-  private static float userScaleFactor;
+  public static final NullableValue<Float> DEBUG_USER_SCALE_FACTOR = new NullableValue<Float>() {
+    @Nullable
+    @Override
+    public Float initialize() {
+      String prop = System.getProperty("ide.ui.scale");
+      if (prop != null) {
+        try {
+          return Float.parseFloat(prop);
+        }
+        catch (NumberFormatException e) {
+          LOG.error("ide.ui.scale system property is not a float value: " + prop);
+        }
+      }
+      else if (Registry.is("ide.ui.scale.override")) {
+        return Float.valueOf((float)Registry.get("ide.ui.scale").asDouble());
+      }
+      return null;
+    }
 
-  static {
-    setUserScaleFactor(UIUtil.isJreHiDPIEnabled() ? 1f : SYSTEM_SCALE_FACTOR);
-    LOG.info("System scale factor: " + SYSTEM_SCALE_FACTOR + " (" +
-             (UIUtil.isJreHiDPIEnabled() ? "JRE-managed" : "IDE-managed") + " HiDPI)");
-  }
+    @Override
+    protected void onInitialized(@Nullable Float scale) {
+      if (isNotNull()) setUserScaleFactor(ObjectUtils.notNull(scale));
+    }
+  };
+
+  /**
+   * The user scale factor, see {@link ScaleType#USR_SCALE}.
+   */
+  private static float userScaleFactor = setUserScaleFactor(UIUtil.isJreHiDPIEnabled() ? 1f : SYSTEM_SCALE_FACTOR.get());
 
   /**
    * Adds property change listener. Supported properties:
@@ -244,30 +287,7 @@ public class JBUI {
    * Returns the system scale factor, corresponding to the default monitor device.
    */
   public static float sysScale() {
-    if (SYSTEM_SCALE_FACTOR != null) {
-      return SYSTEM_SCALE_FACTOR;
-    }
-
-    if (UIUtil.isJreHiDPIEnabled()) {
-      GraphicsDevice gd = null;
-      try {
-        gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
-      } catch (HeadlessException ignore) {}
-      if (gd != null && gd.getDefaultConfiguration() != null) {
-        return sysScale(gd.getDefaultConfiguration());
-      }
-      return 1.0f;
-    }
-
-    if (SystemProperties.has("hidpi") && !SystemProperties.is("hidpi")) {
-      return 1.0f;
-    }
-
-    UIUtil.initSystemFontData();
-    Pair<String, Integer> fdata = UIUtil.getSystemFontData();
-
-    int size = fdata == null ? Fonts.label().getSize() : fdata.getSecond();
-    return getFontScale(size);
+    return SYSTEM_SCALE_FACTOR.get();
   }
 
   /**
@@ -378,6 +398,7 @@ public class JBUI {
   }
 
   private static void setUserScaleFactorProperty(float scale) {
+    if (userScaleFactor == scale) return;
     PCS.firePropertyChange(USER_SCALE_FACTOR_PROPERTY, userScaleFactor, userScaleFactor = scale);
     LOG.info("User scale factor: " + userScaleFactor);
   }
@@ -385,14 +406,26 @@ public class JBUI {
   /**
    * Sets the user scale factor.
    * The method is used by the IDE, it's not recommended to call the method directly from the client code.
-   * For debugging purposes, the following registry keys can be used:
+   * For debugging purposes, the following JVM system property can be used:
+   * ide.ui.scale=[float]
+   * or the IDE registry keys (for backward compatibility):
    * ide.ui.scale.override=[boolean]
    * ide.ui.scale=[float]
+   *
+   * @return the result
    */
-  public static void setUserScaleFactor(float scale) {
-    if (SystemProperties.has("hidpi") && !SystemProperties.is("hidpi")) {
-      setUserScaleFactorProperty(1.0f);
-      return;
+  public static float setUserScaleFactor(float scale) {
+    if (DEBUG_USER_SCALE_FACTOR.isNotNull()) {
+      float debugScale = ObjectUtils.notNull(DEBUG_USER_SCALE_FACTOR.get());
+      if (scale == debugScale) {
+        setUserScaleFactorProperty(debugScale); // set the debug value as is, or otherwise ignore
+      }
+      return debugScale;
+    }
+
+    if (!SystemProperties.getBooleanProperty("hidpi", true)) {
+      setUserScaleFactorProperty(1f);
+      return 1f;
     }
 
     scale = discreteScale(scale);
@@ -406,10 +439,8 @@ public class JBUI {
       //Default UI font size for Unity and Gnome is 15. Scaling factor 1.25f works badly on Linux
       scale = 1f;
     }
-    if (userScaleFactor == scale) {
-      return;
-    }
     setUserScaleFactorProperty(scale);
+    return scale;
   }
 
   static float discreteScale(float scale) {
@@ -499,6 +530,7 @@ public class JBUI {
   }
 
   @NotNull
+  @SuppressWarnings("unchecked")
   public static <T extends JBIcon> T scale(@NotNull T icon) {
     return (T)icon.withIconPreScaled(false);
   }
@@ -560,46 +592,6 @@ public class JBUI {
     return scale > 1f;
   }
 
-  /**
-   * Aligns the x or/and y translate of the graphics to the integer coordinate grid if the graphics has fractional scale transform,
-   * otherwise does nothing. This is used to avoid the rounding problem, see JRE-502.
-   *
-   * @param g the graphics to align
-   * @param alignX should the x-translate be aligned
-   * @param alignY should the y-translate be aligned
-   * @return the original graphics transform when aligned, otherwise null
-   */
-  public static AffineTransform alignToIntGrid(@NotNull Graphics2D g, boolean alignX, boolean alignY) {
-    try {
-      AffineTransform tx = g.getTransform();
-      if (isFractionalScale(tx)) {
-        double scaleX = tx.getScaleX();
-        double scaleY = tx.getScaleY();
-        AffineTransform alignedTx = new AffineTransform();
-        double trX = alignX ? (int)Math.ceil(tx.getTranslateX() - 0.5) : tx.getTranslateX();
-        double trY = alignY ? (int)Math.ceil(tx.getTranslateY() - 0.5) : tx.getTranslateY();
-        alignedTx.translate(trX, trY);
-        alignedTx.scale(scaleX, scaleY);
-        assert tx.getShearX() == 0 && tx.getShearY() == 0; // the shear is ignored
-        g.setTransform(alignedTx);
-        return tx;
-      }
-    }
-    catch (Exception e) {
-      LOG.trace(e);
-    }
-    return null;
-  }
-
-  /**
-   * Returns true if the transform matrix contains fractional scale element.
-   */
-  public static boolean isFractionalScale(AffineTransform tx) {
-    double scaleX = tx.getScaleX();
-    double scaleY = tx.getScaleY();
-    return scaleX != (int)scaleX || scaleY != (int)scaleY;
-  }
-
   public static class Fonts {
     @NotNull
     public static JBFont label() {
@@ -624,6 +616,11 @@ public class JBUI {
     @NotNull
     public static JBFont create(String fontFamily, int size) {
       return JBFont.create(new Font(fontFamily, Font.PLAIN, size));
+    }
+
+    @NotNull
+    public static JBFont toolbarFont() {
+      return SystemInfo.isMac ? smallFont() : label();
     }
   }
 
@@ -759,6 +756,13 @@ public class JBUI {
     }
 
     /**
+     * Creates a context with all scale factors set to 1.
+     */
+    public static BaseScaleContext createIdentity() {
+      return create(USR_SCALE.of(1));
+    }
+
+    /**
      * Creates a context with the provided scale factors (system scale is ignored)
      */
     public static BaseScaleContext create(@NotNull Scale... scales) {
@@ -891,6 +895,18 @@ public class JBUI {
       }
       return true;
     }
+
+    public <T extends BaseScaleContext> T copy() {
+      BaseScaleContext ctx = createIdentity();
+      ctx.updateAll(this);
+      //noinspection unchecked
+      return (T)ctx;
+    }
+
+    @Override
+    public String toString() {
+      return usrScale + ", " + objScale + ", " + pixScale;
+    }
   }
 
   /**
@@ -920,6 +936,13 @@ public class JBUI {
         case PIX_SCALE: break;
       }
       update(pixScale, derivePixScale());
+    }
+
+    /**
+     * Creates a context with all scale factors set to 1.
+     */
+    public static ScaleContext createIdentity() {
+      return create(USR_SCALE.of(1), SYS_SCALE.of(1));
     }
 
     /**
@@ -1045,6 +1068,19 @@ public class JBUI {
         compRef.clear();
       }
     }
+
+    @Override
+    public <T extends BaseScaleContext> T copy() {
+      ScaleContext ctx = createIdentity();
+      ctx.updateAll(this);
+      //noinspection unchecked
+      return (T)ctx;
+    }
+
+    @Override
+    public String toString() {
+      return usrScale + ", " + sysScale + ", " + objScale + ", " + pixScale;
+    }
   }
 
   /**
@@ -1146,6 +1182,28 @@ public class JBUI {
       myScaler.setPreScaled(preScaled);
     }
 
+    /**
+     * The pre-scaled state of the icon indicates whether the initial size of the icon
+     * is pre-scaled (by the global user scale) or not. If the size is not pre-scaled,
+     * then there're two approaches to deal with it:
+     * 1) scale its initial size right away and store;
+     * 2) scale its initial size every time it's requested.
+     * The 2nd approach is preferable because of the the following. Scaling of the icon may
+     * involve not only USR_SCALE but OBJ_SCALE as well. In which case applying all the scale
+     * factors and then rounding (the size is integer, the scale factors are not) gives more
+     * accurate result than rounding and then scaling.
+     * <p>
+     * For example, say we have an icon of 15x15 initial size, USR_SCALE is 1.5f, OBJ_SCALE is 1,5f.
+     * Math.round(Math.round(15 * USR_SCALE) * OBJ_SCALE) = 35
+     * Math.round(15 * USR_SCALE * OBJ_SCALE) = 34
+     * <p>
+     * Thus, JBUI.scale(MyIcon.create(w, h)) is preferable to MyIcon.create(JBUI.scale(w), JBUI.scale(h)).
+     * Here [w, h] is "raw" unscaled size.
+     *
+     * @param preScaled whether the icon is pre-scaled
+     * @return the icon in the provided pre-scaled state
+     * @see JBUI#scale(JBIcon)
+     */
     @NotNull
     public JBIcon withIconPreScaled(boolean preScaled) {
       setIconPreScaled(preScaled);
@@ -1269,5 +1327,115 @@ public class JBUI {
     public RasterJBIcon() {
       super(ScaleContext.create());
     }
+  }
+
+  public static class CurrentTheme {
+    public static class ToolWindow {
+      public static Color tabSelectedBackground() {
+        return getColor("ToolWindow.header.tab.selected.background", 0xDEDEDE);
+      }
+
+      public static Color tabSelectedActiveBackground() {
+        return getColor("ToolWindow.header.tab.selected.active.background", 0xD0D4D8);
+      }
+
+      public static Color tabHoveredBackground() {
+        return getColor("ToolWindow.header.tab.hovered.background", tabSelectedBackground());
+      }
+
+      public static Color tabHoveredActiveBackground() {
+        return getColor("ToolWindow.header.tab.hovered.active.background", tabSelectedActiveBackground());
+      }
+
+      public static Color tabSelectedBackground(boolean active) {
+        return active ? tabSelectedActiveBackground() : tabSelectedBackground();
+      }
+
+      public static Color tabHoveredBackground(boolean active) {
+        return active ? tabHoveredActiveBackground() : tabHoveredBackground();
+      }
+
+      public static Color headerBackground(boolean active) {
+        return active ? headerActiveBackground() : headerBackground();
+      }
+
+      public static Color headerBackground() {
+        return getColor("ToolWindow.header.background", 0xECECEC);
+      }
+
+      public static Color headerBorderBackground() {
+        return getColor("ToolWindow.header.border.background", 0xC9C9C9);
+      }
+
+      public static Color headerActiveBackground() {
+        return getColor("ToolWindow.header.active.background", 0xE2E6EC);
+      }
+
+      public static int tabVerticalPadding() {
+        return getInt("ToolWindow.tab.verticalPadding", scale(3));
+      }
+
+      public static Font headerFont() {
+        JBFont font = Fonts.label();
+        Object size = UIManager.get("ToolWindow.header.font.size");
+        if (size instanceof Integer) {
+          return font.deriveFont(((Integer)size).floatValue());
+        }
+        return font;
+      }
+
+      public static Color hoveredIconBackground() {
+        return getColor("ToolWindow.header.closeButton.background", 0xB9B9B9);
+      }
+
+      public static Icon closeTabIcon(boolean hovered) {
+        return hovered ? getIcon("ToolWindow.header.closeButton.hovered.icon", AllIcons.Actions.CloseNewHovered)
+                       : getIcon("ToolWindow.header.closeButton.icon", AllIcons.Actions.CloseNew);
+      }
+
+      public static Icon comboTabIcon(boolean hovered) {
+        return hovered ? getIcon("ToolWindow.header.comboButton.hovered.icon", AllIcons.General.ComboArrow)
+                       : getIcon("ToolWindow.header.comboButton.icon", AllIcons.General.ComboArrow);
+      }
+    }
+
+    public static class Label {
+      public static Color foreground(boolean selected) {
+        return selected ? getColor("Label.selectedForeground", 0xFFFFFF)
+                        : getColor("Label.foreground", 0x000000);
+      }
+
+      public static Color foreground() {
+        return foreground(false);
+      }
+
+      public static Color disabledForeground(boolean selected) {
+        return selected ? getColor("Label.selectedDisabledForeground", 0x999999)
+                        : getColor("Label.disabledForeground", getColor("Label.disabledText", 0x999999));
+      }
+
+      public static Color disabledForeground() {
+        return foreground(false);
+      }
+    }
+  }
+
+  private static Color getColor(String propertyName, int defaultColor) {
+    return getColor(propertyName, new Color(defaultColor));
+  }
+
+  private static Color getColor(String propertyName, Color defaultColor) {
+    Color color = UIManager.getColor(propertyName);
+    return color == null ? defaultColor : color;
+  }
+
+  private static int getInt(String propertyName, int defaultValue) {
+    Object value = UIManager.get(propertyName);
+    return value instanceof Integer ? (Integer)value : defaultValue;
+  }
+
+  private static Icon getIcon(String propertyName, Icon defaultIcon) {
+    Icon icon = UIManager.getIcon(propertyName);
+    return icon == null ? defaultIcon : icon;
   }
 }

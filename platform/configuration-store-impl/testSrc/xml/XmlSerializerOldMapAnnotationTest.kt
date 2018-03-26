@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore.xml
 
 import com.intellij.util.xmlb.SkipDefaultsSerializationFilter
@@ -110,17 +96,17 @@ internal class XmlSerializerOldMapAnnotationTest {
     @Tag("bean")
     class BeanWithMapWithSetValue {
       @MapAnnotation(entryTagName = "entry-tag", keyAttributeName = "key-attr", surroundWithTag = false)
-      var myValues = LinkedHashMap<String, Set<String>>()
+      var values = LinkedHashMap<String, Set<String>>()
     }
 
     val bean = BeanWithMapWithSetValue()
 
-    bean.myValues.put("a", LinkedHashSet(Arrays.asList("first1", "second1")))
-    bean.myValues.put("b", LinkedHashSet(Arrays.asList("first2", "second2")))
+    bean.values.put("a", linkedSetOf("first1", "second1"))
+    bean.values.put("b", linkedSetOf("first2", "second2"))
 
     testSerializer("""
     <bean>
-      <option name="myValues">
+      <option name="values">
         <entry-tag key-attr="a">
           <value>
             <set>
@@ -162,5 +148,26 @@ internal class XmlSerializerOldMapAnnotationTest {
     bean.VALUES.put("3", "c")
 
     testSerializer("<BeanWithMapWithAnnotations>\n  <option name=\"1\" value=\"a\" />\n  <option name=\"2\" value=\"b\" />\n  <option name=\"3\" value=\"c\" />\n</BeanWithMapWithAnnotations>", bean)
+  }
+
+  @Test fun `propertyWithoutSurroundingElement`() {
+    @Tag("branch-storage")
+    class BranchStorage {
+      @Property(surroundWithTag = false)
+      @MapAnnotation(keyAttributeName = "type")
+      @JvmField
+      var branches = THashMap<String, String>()
+    }
+
+    val bean = BranchStorage()
+    bean.branches.put("branchName", "foo")
+
+    testSerializer("""
+      <branch-storage>
+        <map>
+          <entry type="branchName" value="foo" />
+        </map>
+      </branch-storage>
+    """, bean, SkipDefaultsSerializationFilter())
   }
 }

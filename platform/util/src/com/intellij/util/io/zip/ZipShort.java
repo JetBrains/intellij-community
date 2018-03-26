@@ -28,7 +28,7 @@ public final class ZipShort implements Cloneable {
   private static final int BYTE_1_MASK = 0xFF00;
   private static final int BYTE_1_SHIFT = 8;
 
-  private int value;
+  private final int value;
 
   /**
    * Create instance from a number.

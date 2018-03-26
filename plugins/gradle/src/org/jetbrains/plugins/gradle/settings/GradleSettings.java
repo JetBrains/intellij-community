@@ -9,8 +9,10 @@ import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjec
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListener;
+import com.intellij.openapi.project.ExternalStorageConfigurationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
@@ -116,8 +118,9 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
     if (old.isResolveModulePerSourceSet() != current.isResolveModulePerSourceSet()) {
       ExternalProjectsManager.getInstance(getProject()).getExternalProjectsWatcher().markDirty(current.getExternalProjectPath());
     }
-    if (old.isStoreProjectFilesExternally() != current.isStoreProjectFilesExternally()) {
-      ExternalProjectsManagerImpl.getInstance(getProject()).setStoreExternally(current.isStoreProjectFilesExternally());
+    ThreeState storeProjectFilesExternally = current.getStoreProjectFilesExternally();
+    if (old.getStoreProjectFilesExternally() != storeProjectFilesExternally) {
+      ExternalProjectsManagerImpl.getInstance(getProject()).setStoreExternally(storeProjectFilesExternally != ThreeState.NO);
     }
   }
 
@@ -125,17 +128,17 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
   @Override
   public Collection<GradleProjectSettings> getLinkedProjectsSettings() {
     Collection<GradleProjectSettings> settings = super.getLinkedProjectsSettings();
-    boolean isStoredExternally = ExternalProjectsManagerImpl.getInstance(getProject()).isStoredExternally();
+    boolean isStoredExternally = ExternalStorageConfigurationManager.getInstance(getProject()).isEnabled();
     // GradleProjectSettings has transient field isStoredExternally - used when no project yet,
     // but when project created, isStoredExternally stored in the ExternalProjectsManagerImpl and we need to transfer it
     for (GradleProjectSettings setting : settings) {
-      setting.setStoreProjectFilesExternally(isStoredExternally);
+      setting.setStoreProjectFilesExternally(ThreeState.fromBoolean(isStoredExternally));
     }
     return settings;
   }
 
   public static class MyState implements State<GradleProjectSettings> {
-    private Set<GradleProjectSettings> myProjectSettings = ContainerUtilRt.newTreeSet();
+    private final Set<GradleProjectSettings> myProjectSettings = ContainerUtilRt.newTreeSet();
 
     @XCollection(elementTypes = {GradleProjectSettings.class})
     public Set<GradleProjectSettings> getLinkedExternalProjectsSettings() {

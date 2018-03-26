@@ -20,10 +20,11 @@ import com.intellij.openapi.ui.ComponentWithBrowseButton
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testGuiFramework.cellReader.ExtendedJComboboxCellReader
 import com.intellij.testGuiFramework.cellReader.ExtendedJListCellReader
-import com.intellij.testGuiFramework.cellReader.ExtendedJTableCellReader
 import com.intellij.testGuiFramework.fixtures.*
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedButtonFixture
+import com.intellij.testGuiFramework.fixtures.extended.ExtendedTableFixture
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedTreeFixture
+import com.intellij.testGuiFramework.fixtures.extended.RowFixture
 import com.intellij.testGuiFramework.fixtures.newProjectWizard.NewProjectWizardFixture
 import com.intellij.testGuiFramework.framework.GuiTestLocalRunner
 import com.intellij.testGuiFramework.framework.GuiTestUtil
@@ -388,20 +389,24 @@ open class GuiTestCase {
    * @throws ComponentLookupException if component has not been found or timeout exceeded
    */
   fun <S, C : Component> ComponentFixture<S, C>.textfield(textLabel: String?, timeout: Long = defaultTimeout): JTextComponentFixture {
-    if (target() is Container) {
-      val container = target() as Container
-      if (textLabel.isNullOrEmpty()) {
-        val jTextField = waitUntilFound(container, JTextField::class.java, timeout) { jTextField -> jTextField.isShowing }
-        return JTextComponentFixture(guiTestRule.robot(), jTextField)
-      }
-      //wait until label has appeared
-      waitUntilFound(container, Component::class.java, timeout) {
-        it.isShowing && it.isVisible && it.isTextComponent() && it.getComponentText() == textLabel
-      }
-      val jTextComponent = findBoundedComponentByText(guiTestRule.robot(), container, textLabel!!, JTextComponent::class.java)
-      return JTextComponentFixture(guiTestRule.robot(), jTextComponent)
+    val target = target()
+    if (target is Container) {
+      return textfield(textLabel, target, timeout)
     }
     else throw unableToFindComponent("""JTextComponent (JTextField) by label "$textLabel"""")
+  }
+
+  fun textfield(textLabel: String?, container: Container, timeout: Long): JTextComponentFixture {
+    if (textLabel.isNullOrEmpty()) {
+      val jTextField = waitUntilFound(container, JTextField::class.java, timeout) { jTextField -> jTextField.isShowing }
+      return JTextComponentFixture(guiTestRule.robot(), jTextField)
+    }
+    //wait until label has appeared
+    waitUntilFound(container, Component::class.java, timeout) {
+      it.isShowing && it.isVisible && it.isTextComponent() && it.getComponentText() == textLabel
+    }
+    val jTextComponent = findBoundedComponentByText(guiTestRule.robot(), container, textLabel!!, JTextComponent::class.java)
+    return JTextComponentFixture(guiTestRule.robot(), jTextComponent)
   }
 
   /**
@@ -437,20 +442,20 @@ open class GuiTestCase {
    * @timeout in seconds to find JTable component
    * @throws ComponentLookupException if component has not been found or timeout exceeded
    */
-  fun <S, C : Component> ComponentFixture<S, C>.table(cellText: String, timeout: Long = defaultTimeout): JTableFixture =
+  fun <S, C : Component> ComponentFixture<S, C>.table(cellText: String, timeout: Long = defaultTimeout): ExtendedTableFixture =
     if (target() is Container) {
-      val jTable = waitUntilFound(target() as Container, JTable::class.java, timeout) {
-        val jTableFixture = JTableFixture(guiTestRule.robot(), it)
-        jTableFixture.replaceCellReader(ExtendedJTableCellReader())
+      var tableFixture: ExtendedTableFixture? = null
+      waitUntilFound(target() as Container, JTable::class.java, timeout) {
+        tableFixture = ExtendedTableFixture(guiTestRule.robot(), it)
         try {
-          jTableFixture.cell(cellText)
-          true
+          tableFixture?.cell(cellText)
+          tableFixture != null
         }
         catch (e: ActionFailedException) {
           false
         }
       }
-      JTableFixture(guiTestRule.robot(), jTable)
+      tableFixture ?: throw unableToFindComponent("""JTable with cell text "$cellText"""")
     }
     else throw unableToFindComponent("""JTable with cell text "$cellText"""")
 
@@ -572,7 +577,7 @@ open class GuiTestCase {
    * Context function for IdeFrame: get the tab with specific opened file and create EditorFixture instance as a receiver object. Code block after
    * it call methods on the receiver object (EditorFixture instance).
    */
-  fun IdeFrameFixture.editor(tabName: String, func: EditorFixture.() -> Unit) {
+  fun IdeFrameFixture.editor(tabName: String, func: FileEditorFixture.() -> Unit) {
     val editorFixture = this.editor.selectTab(tabName)
     func(editorFixture)
   }
@@ -593,13 +598,16 @@ open class GuiTestCase {
     func(this.navigationBar)
   }
 
+  fun IdeFrameFixture.configurationList(func: RunConfigurationListFixture.() -> Unit) {
+    func(this.runConfigurationList)
+  }
+
   /**
    * Extension function for IDE to iterate through the menu.
    *
    * @path items like: popup("New", "File")
    */
-  fun IdeFrameFixture.popup(vararg path: String)
-    = this.invokeMenuPath(*path)
+  fun IdeFrameFixture.popup(vararg path: String) = this.invokeMenuPath(*path)
 
 
   fun CustomToolWindowFixture.ContentFixture.editor(func: EditorFixture.() -> Unit) {
@@ -621,6 +629,11 @@ open class GuiTestCase {
   fun shortcut(keyStroke: String) = GuiTestUtil.invokeActionViaShortcut(guiTestRule.robot(), keyStroke)
 
   fun shortcut(shortcut: Shortcut) = shortcut(shortcut.getKeystroke())
+
+  fun shortcut(winShortcut: Shortcut, macShortcut: Shortcut) {
+    if (SystemInfo.isMac()) shortcut(macShortcut)
+    else shortcut(winShortcut)
+  }
 
   fun shortcut(key: Key) = shortcut(key.name)
 
@@ -744,4 +757,46 @@ open class GuiTestCase {
       override fun test() = testFunction()
     }, Timeout.timeout(timeoutSeconds, TimeUnit.SECONDS))
   }
+
+  fun tableRowValues(table: JTableFixture, rowIndex: Int): List<String> {
+    val fixture = ExtendedTableFixture(guiTestRule.robot(), table.target())
+    return RowFixture(guiTestRule.robot(), rowIndex, fixture).values()
+  }
+
+  fun tableRowCount(table: JTableFixture): Int {
+    val fixture = ExtendedTableFixture(guiTestRule.robot(), table.target())
+    return fixture.rowCount()
+  }
+
+  fun waitForPanelToDisappear(panelTitle: String, timeout: Long = 300000) {
+    Pause.pause(object : Condition("Wait for $panelTitle panel appears") {
+      override fun test(): Boolean {
+        try {
+          robot().finder().find(guiTestRule.findIdeFrame().target()) {
+            it is JLabel && it.text == panelTitle
+          }
+        }
+        catch (cle: ComponentLookupException) {
+          return false
+        }
+        return true
+      }
+    }, timeout)
+
+    Pause.pause(object : Condition("Wait for $panelTitle panel disappears") {
+      override fun test(): Boolean {
+        try {
+          robot().finder().find(guiTestRule.findIdeFrame().target()) {
+            it is JLabel && it.text == panelTitle
+          }
+        }
+        catch (cle: ComponentLookupException) {
+          return true
+        }
+        return false
+      }
+    })
+
+  }
+
 }

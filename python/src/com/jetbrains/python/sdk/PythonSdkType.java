@@ -46,6 +46,7 @@ import com.intellij.remote.ext.LanguageCaseCollector;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
@@ -138,7 +139,7 @@ public final class PythonSdkType extends SdkType {
   @NonNls
   public static String getBuiltinsFileName(@NotNull Sdk sdk) {
     final LanguageLevel level = getLanguageLevelForSdk(sdk);
-    return level.isOlderThan(LanguageLevel.PYTHON30) ? PyBuiltinCache.BUILTIN_FILE : PyBuiltinCache.BUILTIN_FILE_3K;
+    return level.isPython2() ? PyBuiltinCache.BUILTIN_FILE : PyBuiltinCache.BUILTIN_FILE_3K;
   }
 
   @Override
@@ -735,14 +736,15 @@ public final class PythonSdkType extends SdkType {
   }
 
   public static boolean isStdLib(@NotNull VirtualFile vFile, @Nullable Sdk pythonSdk) {
+    final VirtualFile resolved = ObjectUtils.notNull(vFile.getCanonicalFile(), vFile);
     if (pythonSdk != null) {
       final VirtualFile libDir = PyProjectScopeBuilder.findLibDir(pythonSdk);
-      if (libDir != null && VfsUtilCore.isAncestor(libDir, vFile, false)) {
-        return isNotSitePackages(vFile, libDir);
+      if (libDir != null && VfsUtilCore.isAncestor(libDir, resolved, false)) {
+        return isNotSitePackages(resolved, libDir);
       }
       final VirtualFile venvLibDir = PyProjectScopeBuilder.findVirtualEnvLibDir(pythonSdk);
-      if (venvLibDir != null && VfsUtilCore.isAncestor(venvLibDir, vFile, false)) {
-        return isNotSitePackages(vFile, venvLibDir);
+      if (venvLibDir != null && VfsUtilCore.isAncestor(venvLibDir, resolved, false)) {
+        return isNotSitePackages(resolved, venvLibDir);
       }
       final VirtualFile skeletonsDir = PySdkUtil.findSkeletonsDir(pythonSdk);
       if (skeletonsDir != null &&
@@ -765,6 +767,27 @@ public final class PythonSdkType extends SdkType {
       return false;
     }
     return true;
+  }
+
+  /**
+   * Returns the "site-packages" directory that is going to be used for installing new packages with {@code pip}.
+   * <p>
+   * Note that on a virtual env there might be two such directories in {@code sys.path} depending on whether
+   * the option "--system-site-packages" was given during its creation. Then the one inside the actual virtual
+   * env tree will be returned, as it's the one used to install new packages.
+   * Also, on some systems, first of all in system distributions of Python on Linux, there might be no
+   * "site-packages" at all, and this method returns {@code null} accordingly in this case.
+   */
+  @Nullable
+  public static VirtualFile getSitePackagesDirectory(@NotNull Sdk pythonSdk) {
+    final VirtualFile libDir;
+    if (isVirtualEnv(pythonSdk)) {
+      libDir = PyProjectScopeBuilder.findVirtualEnvLibDir(pythonSdk);
+    }
+    else {
+      libDir = PyProjectScopeBuilder.findLibDir(pythonSdk);
+    }
+    return libDir != null ? libDir.findChild(PyNames.SITE_PACKAGES) : null;
   }
 
   @Nullable

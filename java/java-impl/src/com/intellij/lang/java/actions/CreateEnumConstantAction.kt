@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.java.actions
 
 import com.intellij.codeInsight.CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement
@@ -22,8 +8,10 @@ import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix.posi
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix.startTemplate
 import com.intellij.codeInsight.daemon.impl.quickfix.EmptyExpression
 import com.intellij.codeInsight.template.TemplateBuilderImpl
+import com.intellij.lang.jvm.actions.CreateEnumConstantActionGroup
 import com.intellij.lang.jvm.actions.CreateFieldRequest
 import com.intellij.lang.jvm.actions.ExpectedTypes
+import com.intellij.lang.jvm.actions.JvmActionGroup
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.JavaPsiFacade
@@ -32,25 +20,18 @@ import com.intellij.psi.PsiEnumConstant
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 
-class CreateEnumConstantAction(targetClass: PsiClass, request: CreateFieldRequest) : CreateFieldActionBase(targetClass, request) {
+internal class CreateEnumConstantAction(
+  target: PsiClass,
+  override val request: CreateFieldRequest
+) : CreateFieldActionBase(target, request) {
 
-  private val myData: EnumConstantData?
-    get() {
-      val targetClass = myTargetClass.element
-      if (targetClass == null || !myRequest.isValid) return null
-      return extractRenderData(targetClass, myRequest)
-    }
+  override fun getActionGroup(): JvmActionGroup = CreateEnumConstantActionGroup
 
-  override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean {
-    val data = myData ?: return false
-    text = QuickFixBundle.message("create.enum.constant.from.usage.text", data.constantName)
-    return true
-  }
+  override fun getText(): String = QuickFixBundle.message("create.enum.constant.from.usage.text", request.fieldName)
 
   override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
-    val data = myData ?: return
-    val name = data.constantName
-    val targetClass = data.targetClass
+    val name = request.fieldName
+    val targetClass = target
     val elementFactory = JavaPsiFacade.getElementFactory(project)!!
 
     // add constant
@@ -81,19 +62,13 @@ class CreateEnumConstantAction(targetClass: PsiClass, request: CreateFieldReques
   }
 }
 
-private class EnumConstantData(
-  val targetClass: PsiClass,
-  val constantName: String
-)
-
-private fun extractRenderData(targetClass: PsiClass, request: CreateFieldRequest): EnumConstantData? {
-  if (!targetClass.isEnum) return null
+internal fun canCreateEnumConstant(targetClass: PsiClass, request: CreateFieldRequest): Boolean {
+  if (!targetClass.isEnum) return false
 
   val lastConstant = targetClass.fields.filterIsInstance<PsiEnumConstant>().lastOrNull()
-  if (lastConstant != null && PsiTreeUtil.hasErrorElements(lastConstant)) return null
+  if (lastConstant != null && PsiTreeUtil.hasErrorElements(lastConstant)) return false
 
-  if (!checkExpectedTypes(request.fieldType, targetClass, targetClass.project)) return null
-  return EnumConstantData(targetClass, request.fieldName)
+  return checkExpectedTypes(request.fieldType, targetClass, targetClass.project)
 }
 
 private fun checkExpectedTypes(types: ExpectedTypes, targetClass: PsiClass, project: Project): Boolean {

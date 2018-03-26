@@ -33,8 +33,8 @@ public class ComparisonFailureData {
   private final String myFilePath;
   private final String myActualFilePath;
 
-  private static Map EXPECTED = new HashMap();
-  private static Map ACTUAL = new HashMap();
+  private static final Map EXPECTED = new HashMap();
+  private static final Map ACTUAL = new HashMap();
 
   static {
     try {

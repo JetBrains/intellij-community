@@ -17,7 +17,10 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.chains.DiffRequestProducerException;
+import com.intellij.diff.contents.DiffContent;
+import com.intellij.diff.contents.FileContent;
 import com.intellij.diff.impl.CacheDiffRequestProcessor;
+import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.ErrorDiffRequest;
 import com.intellij.diff.requests.LoadingDiffRequest;
@@ -83,6 +86,25 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
     return producer.process(getContext(), indicator);
   }
 
+  @Nullable
+  @Override
+  protected DiffRequest loadRequestFast(@NotNull DiffRequestProducer provider) {
+    DiffRequest request = super.loadRequestFast(provider);
+    return isRequestValid(request) ? request : null;
+  }
+
+  private static boolean isRequestValid(@Nullable DiffRequest request) {
+    if (request instanceof ErrorDiffRequest) return false;
+    if (request instanceof ContentDiffRequest) {
+      for (DiffContent content : ((ContentDiffRequest)request).getContents()) {
+        // We compare CurrentContentRevision by their FilePath in cache map
+        // If file was removed and then created again - we should not reuse request with old invalidated VirtualFile
+        if (content instanceof FileContent && !((FileContent)content).getFile().isValid()) return false;
+      }
+    }
+    return true;
+  }
+
   //
   // Impl
   //
@@ -129,7 +151,7 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
 
     Wrapper selectedChange = myCurrentChange != null ? ContainerUtil.find(selectedChanges, myCurrentChange) : null;
     if (selectedChange == null) {
-      if (myCurrentChange != null && isFocused()) { // Do not automatically switch file if focused
+      if (myCurrentChange != null && getContext().isWindowFocused() && getContext().isFocusedInWindow()) { // Do not automatically switch file if focused
         if (selectedChanges.size() == 1 && getAllChanges().contains(myCurrentChange)) {
           selectChange(myCurrentChange); // Restore selection if necessary
         }

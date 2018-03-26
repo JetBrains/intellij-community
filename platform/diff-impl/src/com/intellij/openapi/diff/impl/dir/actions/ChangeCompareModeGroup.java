@@ -31,7 +31,7 @@ import java.util.ArrayList;
  */
 public class ChangeCompareModeGroup extends ComboBoxAction implements ShortcutProvider, DumbAware {
   private final DefaultActionGroup myGroup;
-  private DirDiffSettings mySettings;
+  private final DirDiffSettings mySettings;
   private JButton myButton;
 
   public ChangeCompareModeGroup(DirDiffTableModel model) {

@@ -72,6 +72,6 @@ public class MethodSourceReference extends PsiReferenceBase<PsiLiteral> {
   }
 
   private static boolean staticNoParams(PsiMethod method) {
-    return method.hasModifierProperty(PsiModifier.STATIC) && method.getParameterList().getParametersCount() == 0;
+    return method.hasModifierProperty(PsiModifier.STATIC) && method.getParameterList().isEmpty();
   }
 }

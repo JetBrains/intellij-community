@@ -12,13 +12,12 @@ import java.util.Map;
 
 import static cucumber.api.Result.Type.*;
 import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.*;
-import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.escape;
 
 @SuppressWarnings("unused")
 public class CucumberJvm2SMFormatter implements Formatter {
   private static final String EXAMPLES_CAPTION = "Examples:";
   private static final String SCENARIO_OUTLINE_CAPTION = "Scenario: Line: ";
-  private Map<String, String> pathToDescription = new HashMap<String, String>();
+  private final Map<String, String> pathToDescription = new HashMap<String, String>();
   private String currentFilePath;
   private int currentScenarioOutlineLine;
   private String currentScenarioOutlineName;
@@ -28,37 +27,37 @@ public class CucumberJvm2SMFormatter implements Formatter {
     outCommand(String.format(TEMPLATE_SCENARIO_COUNTING_STARTED, 0, getCurrentTime()));
   }
 
-  private EventHandler<TestCaseStarted> testCaseStartedHandler = new EventHandler<TestCaseStarted>() {
+  private final EventHandler<TestCaseStarted> testCaseStartedHandler = new EventHandler<TestCaseStarted>() {
     public void receive(TestCaseStarted event) {
       CucumberJvm2SMFormatter.this.handleTestCaseStarted(event);
     }
   };
 
-  private EventHandler<TestCaseFinished> testCaseFinishedHandler = new EventHandler<TestCaseFinished>() {
+  private final EventHandler<TestCaseFinished> testCaseFinishedHandler = new EventHandler<TestCaseFinished>() {
     public void receive(TestCaseFinished event) {
       handleTestCaseFinished(event);
     }
   };
 
-  private EventHandler<TestRunFinished> testRunFinishedHandler = new EventHandler<TestRunFinished>() {
+  private final EventHandler<TestRunFinished> testRunFinishedHandler = new EventHandler<TestRunFinished>() {
     public void receive(TestRunFinished event) {
       CucumberJvm2SMFormatter.this.handleTestRunFinished(event);
     }
   };
 
-  private EventHandler<TestStepStarted> testStepStartedHandler = new EventHandler<TestStepStarted>() {
+  private final EventHandler<TestStepStarted> testStepStartedHandler = new EventHandler<TestStepStarted>() {
     public void receive(TestStepStarted event) {
       handleTestStepStarted(event);
     }
   };
 
-  private EventHandler<TestStepFinished> testStepFinishedHandler = new EventHandler<TestStepFinished>() {
+  private final EventHandler<TestStepFinished> testStepFinishedHandler = new EventHandler<TestStepFinished>() {
     public void receive(TestStepFinished event) {
       handleTestStepFinished(event);
     }
   };
 
-  private EventHandler<TestSourceRead> testSourceReadHandler = new EventHandler<TestSourceRead>() {
+  private final EventHandler<TestSourceRead> testSourceReadHandler = new EventHandler<TestSourceRead>() {
     public void receive(TestSourceRead event) {
       CucumberJvm2SMFormatter.this.handleTestSourceRead(event);
     }
@@ -129,7 +128,14 @@ public class CucumberJvm2SMFormatter implements Formatter {
 
   private static void handleTestStepFinished(TestStepFinished event) {
     if (event.testStep.isHook()) {
-      return;
+      if (event.result.getStatus() == FAILED) {
+        outCommand(String.format(TEMPLATE_TEST_STARTED, getCurrentTime(), "", getStepName(event.testStep)));
+
+        outCommand(String.format(TEMPLATE_TEST_FAILED, getCurrentTime(), "",
+                                 escape(event.result.getErrorMessage()), getStepName(event.testStep), ""));
+      } else {
+        return;
+      }
     }
     if (event.result.getStatus() == PASSED) {
       // write nothing
@@ -175,7 +181,13 @@ public class CucumberJvm2SMFormatter implements Formatter {
   }
 
   private static String getStepName(TestStep step) {
-    return escape(step.getStepText());
+    String stepName;
+    if (step.isHook()) {
+      stepName = "Hook: " + step.getHookType().toString();
+    } else {
+      stepName = step.getStepText();
+    }
+    return escape(stepName);
   }
 
   private static void outCommand(String s) {

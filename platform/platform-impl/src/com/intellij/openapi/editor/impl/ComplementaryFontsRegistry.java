@@ -44,7 +44,7 @@ public class ComplementaryFontsRegistry {
   private static final Map<String, Pair<String, Integer>[]> ourStyledFontMap = new HashMap<>();
   private static final LinkedHashMap<FontFaceKey, FallBackInfo> ourUsedFonts;
   public static final FallBackInfo DEFAULT_FONT_INFO = new FallBackInfo("", Font.PLAIN, Font.PLAIN);
-  private static FontFaceKey ourSharedKeyInstance = new FontFaceKey("", Font.PLAIN);
+  private static final FontFaceKey ourSharedKeyInstance = new FontFaceKey("", Font.PLAIN);
   private static FallBackInfo ourSharedFallBackInfo = DEFAULT_FONT_INFO;
   private static final TIntHashSet ourUndisplayableChars = new TIntHashSet();
 

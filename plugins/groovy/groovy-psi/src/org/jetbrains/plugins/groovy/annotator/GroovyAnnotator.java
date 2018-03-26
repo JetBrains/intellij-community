@@ -31,7 +31,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashSet;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -740,7 +739,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     if (byName.length == 0) return null;
     Outer:
     for (PsiMethod method : byName) {
-      if (method.getParameterList().getParametersCount() == 0) return method;
+      if (method.getParameterList().isEmpty()) return method;
       if (!(method instanceof GrMethod)) continue;
       final GrParameter[] parameters = ((GrMethod)method).getParameterList().getParameters();
 
@@ -1990,7 +1989,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     );
   }
 
-  private static void checkTypeDefinition(AnnotationHolder holder, GrTypeDefinition typeDefinition) {
+  private static void checkTypeDefinition(AnnotationHolder holder, @NotNull GrTypeDefinition typeDefinition) {
     final GroovyConfigUtils configUtils = GroovyConfigUtils.getInstance();
     if (typeDefinition.isAnonymous()) {
       if (!configUtils.isVersionAtLeast(typeDefinition, GroovyConfigUtils.GROOVY1_7)) {
@@ -2035,7 +2034,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
   private static void checkCyclicInheritance(AnnotationHolder holder,
-                                             GrTypeDefinition typeDefinition) {
+                                             @NotNull GrTypeDefinition typeDefinition) {
     final PsiClass psiClass = HighlightClassUtil.getCircularClass(typeDefinition, new HashSet<>());
     if (psiClass != null) {
       String qname = psiClass.getQualifiedName();

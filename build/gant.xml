@@ -1,4 +1,4 @@
-<project name="Test gant invocation from Ant script" default="doGant" xmlns:if="ant:if">
+<project name="Test gant invocation from Ant script" default="doGant">
   <dirname property="build.dir" file="${ant.file}"/>
   <property name="project.home" value="${build.dir}/.."/>
   <property name="idea.lib" value="${project.home}/lib"/>
@@ -35,7 +35,6 @@
       <fileset dir="${idea.lib}">
         <include name="jdom.jar"/>
         <include name="log4j.jar"/>
-        <include name="netty*.jar"/>
         <include name="asm-all.jar"/>
         <include name="jgoodies-forms.jar"/>
         <include name="picocontainer.jar"/>

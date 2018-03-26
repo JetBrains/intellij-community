@@ -96,11 +96,7 @@ public abstract class CompilerManager {
   public abstract <T  extends Compiler> T[] getCompilers(@NotNull Class<T> compilerClass);
 
   /**
-   * Returns all registered compilers of the specified class that the filter accepts
-   *
-   * @param compilerClass the class for which the compilers should be returned.
-   * @param filter additional filter to restrict compiler instances
-   * @return all registered compilers of the specified class.
+   * @deprecated use {@link #getCompilers(Class)} instead
    */
   @NotNull
   public abstract <T  extends Compiler> T[] getCompilers(@NotNull Class<T> compilerClass, CompilerFilter filter);
@@ -227,12 +223,7 @@ public abstract class CompilerManager {
   public abstract void makeWithModalProgress(@NotNull CompileScope scope, @Nullable CompileStatusNotification callback);
 
   /**
-   * Compile all modified files and all files that depend on them from the scope given.
-   * Files are compiled according to dependencies between the modules they belong to. Compiler excludes are honored. All modules must belong to the same project
-   *
-   * @param scope    a scope to be compiled
-   * @param filter filter allowing choose what compilers should be executed
-   * @param callback a notification callback, or null if no notifications needed
+   * @deprecated use {@link #make(CompileScope, CompileStatusNotification)} instead
    */
   public abstract void make(@NotNull CompileScope scope, CompilerFilter filter, @Nullable CompileStatusNotification callback);
 

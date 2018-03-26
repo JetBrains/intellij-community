@@ -2,6 +2,7 @@
 package com.intellij.ui;
 
 import com.intellij.util.NotNullProducer;
+import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -53,17 +54,19 @@ public class JBColor extends Color {
   }
 
   public static Color linkHover() {
-    return new JBColor(0x52639b, 0x52639b);
+    Color hoverColor = UIManager.getColor("link.hover.foreground");
+    return hoverColor == null ? link() : hoverColor;
   }
 
   public static Color linkPressed() {
-    return new JBColor(0xba6f25, 0xba6f25);
+    Color pressedColor = UIManager.getColor("link.pressed.foreground");
+    return pressedColor == null ? new JBColor(0xf00000, 0xba6f25) : pressedColor;
   }
 
   public static Color linkVisited() {
-    return new JBColor(0x800080, 0x9776a9);
+    Color visitedColor = UIManager.getColor("link.visited.foreground");
+    return visitedColor == null ? new JBColor(0x800080, 0x9776a9) : visitedColor;
   }
-
 
   public static void setDark(boolean dark) {
     DARK = dark;
@@ -288,5 +291,36 @@ public class JBColor extends Color {
         return UIUtil.getBorderColor();
       }
     });
+  }
+
+  private static final HashMap<String, Color> currentThemeColors = new HashMap<String, Color>();
+  private static final HashMap<String, Color> defaultThemeColors = new HashMap<String, Color>();
+
+  public static Color get(@NotNull final String colorId, @NotNull final Color defaultColor) {
+    return new JBColor(new NotNullProducer<Color>() {
+      @NotNull
+      @Override
+      public Color produce() {
+        Color color = currentThemeColors.get(colorId);
+        if (color != null) {
+          return color;
+        }
+        color = defaultThemeColors.get(colorId);
+        if (color != null) {
+          return color;
+        }
+
+        defaultThemeColors.put(colorId, defaultColor);
+        return defaultColor;
+      }
+    });
+  }
+
+  public static void setCurrentThemeColor(@NotNull String colorId, @NotNull Color color) {
+    currentThemeColors.put(colorId, color);
+  }
+
+  public static void clearCurrentThemeColors() {
+    currentThemeColors.clear();
   }
 }

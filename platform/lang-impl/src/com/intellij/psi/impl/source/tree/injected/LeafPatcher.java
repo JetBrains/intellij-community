@@ -138,17 +138,13 @@ class LeafPatcher extends RecursiveTreeElementWalkingVisitor {
       "\nFile root: " + parsedNode +
       "\nLanguage: " + parsedNode.getPsi().getLanguage() +
       "\nHost file: " + placeInfos.get(0).host.getContainingFile().getVirtualFile();
-    DebugUtil.startPsiModification("injection leaf patching");
-    try {
+    DebugUtil.performPsiModification("injection leaf patching", () -> {
       for (Map.Entry<LeafElement, String> entry : newTexts.entrySet()) {
         LeafElement leaf = entry.getKey();
         String newText = entry.getValue();
         leaf.rawReplaceWithText(newText);
       }
-    }
-    finally {
-      DebugUtil.finishPsiModification();
-    }
+    });
 
     TreeUtil.clearCaches((TreeElement)parsedNode);
   }

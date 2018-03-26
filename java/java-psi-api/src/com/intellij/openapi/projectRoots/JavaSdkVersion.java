@@ -25,9 +25,8 @@ public enum JavaSdkVersion {
   JDK_1_7(LanguageLevel.JDK_1_7),
   JDK_1_8(LanguageLevel.JDK_1_8),
   JDK_1_9(LanguageLevel.JDK_1_9),
-  JDK_10(LanguageLevel.JDK_1_9);
-
-  private static final JavaSdkVersion MAX_JDK = JDK_1_9;
+  JDK_10(LanguageLevel.JDK_10),
+  JDK_11(LanguageLevel.JDK_X);
 
   private final LanguageLevel myMaxLanguageLevel;
 
@@ -55,15 +54,16 @@ public enum JavaSdkVersion {
     if (languageLevel == LanguageLevel.JDK_1_3) {
       return JDK_1_3;
     }
+    JavaSdkVersion[] values = values();
     if (languageLevel == LanguageLevel.JDK_X) {
-      return MAX_JDK;
+      return values[values.length - 1];
     }
-    for (JavaSdkVersion version : values()) {
+    for (JavaSdkVersion version : values) {
       if (version.getMaxLanguageLevel().isAtLeast(languageLevel)) {
         return version;
       }
     }
-    throw new IllegalArgumentException("Can't map " + languageLevel + " to any of " + Arrays.toString(values()));
+    throw new IllegalArgumentException("Can't map " + languageLevel + " to any of " + Arrays.toString(values));
   }
 
   /** See {@link JavaVersion#parse(String)} for supported formats. */

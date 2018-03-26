@@ -16,7 +16,6 @@
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
@@ -27,7 +26,6 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.model.MavenId;
@@ -2370,22 +2368,19 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
 
     importProject();
 
-    new WriteAction() {
-      @Override
-      protected void run(@NotNull Result result) {
-        ModifiableRootModel rootModel = ModuleRootManager.getInstance(getModule("m1")).getModifiableModel();
-        OrderEntry[] orderEntries = rootModel.getOrderEntries().clone();
-        assert orderEntries.length == 4;
-        assert orderEntries[0] instanceof JdkOrderEntry;
-        assert orderEntries[1] instanceof ModuleSourceOrderEntry;
-        assert ((ModuleOrderEntry)orderEntries[2]).getModuleName().equals("m2");
-        assert "Maven: junit:junit:4.0".equals(((LibraryOrderEntry)orderEntries[3]).getLibraryName());
+    WriteAction.runAndWait(() -> {
+      ModifiableRootModel rootModel = ModuleRootManager.getInstance(getModule("m1")).getModifiableModel();
+      OrderEntry[] orderEntries = rootModel.getOrderEntries().clone();
+      assert orderEntries.length == 4;
+      assert orderEntries[0] instanceof JdkOrderEntry;
+      assert orderEntries[1] instanceof ModuleSourceOrderEntry;
+      assert ((ModuleOrderEntry)orderEntries[2]).getModuleName().equals("m2");
+      assert "Maven: junit:junit:4.0".equals(((LibraryOrderEntry)orderEntries[3]).getLibraryName());
 
-        rootModel.rearrangeOrderEntries(new OrderEntry[]{orderEntries[2], orderEntries[3], orderEntries[0], orderEntries[1]});
+      rootModel.rearrangeOrderEntries(new OrderEntry[]{orderEntries[2], orderEntries[3], orderEntries[0], orderEntries[1]});
 
-        rootModel.commit();
-      }
-    }.execute();
+      rootModel.commit();
+    });
 
     resolveDependenciesAndImport();
 
@@ -2420,22 +2415,19 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                      "</dependencies>");
     importProject();
 
-    new WriteAction() {
-      @Override
-      protected void run(@NotNull Result result) {
-        ModifiableRootModel rootModel = ModuleRootManager.getInstance(getModule("m1")).getModifiableModel();
-        OrderEntry[] orderEntries = rootModel.getOrderEntries().clone();
-        assert orderEntries.length == 4;
-        assert orderEntries[0] instanceof JdkOrderEntry;
-        assert orderEntries[1] instanceof ModuleSourceOrderEntry;
-        assert "Maven: test:systemDep:1".equals(((LibraryOrderEntry)orderEntries[2]).getLibraryName());
-        assert "Maven: junit:junit:4.0".equals(((LibraryOrderEntry)orderEntries[3]).getLibraryName());
+    WriteAction.runAndWait(() -> {
+      ModifiableRootModel rootModel = ModuleRootManager.getInstance(getModule("m1")).getModifiableModel();
+      OrderEntry[] orderEntries = rootModel.getOrderEntries().clone();
+      assert orderEntries.length == 4;
+      assert orderEntries[0] instanceof JdkOrderEntry;
+      assert orderEntries[1] instanceof ModuleSourceOrderEntry;
+      assert "Maven: test:systemDep:1".equals(((LibraryOrderEntry)orderEntries[2]).getLibraryName());
+      assert "Maven: junit:junit:4.0".equals(((LibraryOrderEntry)orderEntries[3]).getLibraryName());
 
-        rootModel.rearrangeOrderEntries(new OrderEntry[]{orderEntries[2], orderEntries[3], orderEntries[0], orderEntries[1]});
+      rootModel.rearrangeOrderEntries(new OrderEntry[]{orderEntries[2], orderEntries[3], orderEntries[0], orderEntries[1]});
 
-        rootModel.commit();
-      }
-    }.execute();
+      rootModel.commit();
+    });
 
     resolveDependenciesAndImport();
 

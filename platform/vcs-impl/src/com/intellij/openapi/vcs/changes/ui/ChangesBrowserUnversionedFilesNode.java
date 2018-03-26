@@ -25,7 +25,9 @@ public class ChangesBrowserUnversionedFilesNode extends ChangesBrowserSpecificFi
                                             int unversionedSize,
                                             int unversionedDirsSize,
                                             boolean manyUnversioned) {
-    super(UNVERSIONED_FILES_TAG, unversionedSize, unversionedDirsSize, manyUnversioned, () -> new UnversionedViewDialog(project).show());
+    super(UNVERSIONED_FILES_TAG, unversionedSize, unversionedDirsSize, manyUnversioned, () -> {
+      if (!project.isDisposed()) new UnversionedViewDialog(project).show();
+    });
   }
 
   @Override

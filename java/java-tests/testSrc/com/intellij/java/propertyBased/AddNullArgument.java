@@ -32,7 +32,7 @@ class AddNullArgument extends FilePsiMutation {
   protected void performMutation() {
     PsiTreeUtil.findChildrenOfType(getFile(), PsiMethodCallExpression.class).stream()
       .filter(PsiElement::isValid)
-      .filter(call -> call.getArgumentList().getExpressions().length > 1)
+      .filter(call -> call.getArgumentList().getExpressionCount() > 1)
       .forEach(call -> call.getArgumentList().add(
         JavaPsiFacade.getElementFactory(getFile().getProject()).createExpressionFromText("null", call)));
   }

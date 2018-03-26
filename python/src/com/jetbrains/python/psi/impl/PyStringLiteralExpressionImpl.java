@@ -98,6 +98,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     pyVisitor.visitPyStringLiteralExpression(this);
   }
 
+  @Override
   public void subtreeChanged() {
     super.subtreeChanged();
     myStringValue = null;
@@ -105,6 +106,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     myDecodedFragments = null;
   }
 
+  @Override
   @NotNull
   public List<TextRange> getStringValueTextRanges() {
     List<TextRange> result = myValueTextRanges;
@@ -144,7 +146,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
   }
 
   private boolean isUnicodeByDefault() {
-    if (LanguageLevel.forElement(this).isAtLeast(LanguageLevel.PYTHON30)) {
+    if (!LanguageLevel.forElement(this).isPython2()) {
       return true;
     }
     final PsiFile file = getContainingFile();
@@ -251,6 +253,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     return matcher.group(group.ordinal());
   }
 
+  @Override
   @NotNull
   public List<ASTNode> getStringNodes() {
     return Arrays.asList(getNode().getChildren(PyTokenTypes.STRING_NODES));
@@ -300,6 +303,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     return true;
   }
 
+  @Override
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     final List<ASTNode> nodes = getStringNodes();
     if (nodes.size() > 0) {
@@ -440,6 +444,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     return createLiteralTextEscaper().getOffsetInHost(valueOffset, getStringValueTextRange());
   }
 
+  @Override
   public boolean characterNeedsEscaping(char c) {
     if (c == '#') {
       return isVerboseInjection();
@@ -460,18 +465,22 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     return false;
   }
 
+  @Override
   public boolean supportsPerl5EmbeddedComments() {
     return true;
   }
 
+  @Override
   public boolean supportsPossessiveQuantifiers() {
     return false;
   }
 
+  @Override
   public boolean supportsPythonConditionalRefs() {
     return true;
   }
 
+  @Override
   public boolean supportsNamedGroupSyntax(RegExpGroup group) {
     return group.getType() == RegExpGroup.Type.PYTHON_NAMED_GROUP;
   }

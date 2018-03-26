@@ -668,11 +668,23 @@ public class DiffUtil {
     IdeFocusManager.getInstance(project).requestFocus(component, true);
   }
 
+  public static boolean isFocusedComponentInWindow(@Nullable Component component) {
+    if (component == null) return false;
+    Window window = UIUtil.getWindow(component);
+    if (window == null) return false;
+    Component windowFocusOwner = window.getMostRecentFocusOwner();
+    return windowFocusOwner != null && SwingUtilities.isDescendingFrom(windowFocusOwner, component);
+  }
+
+  public static void requestFocusInWindow(@Nullable Component component) {
+    if (component != null) component.requestFocusInWindow();
+  }
+
   public static void runPreservingFocus(@NotNull FocusableContext context, @NotNull Runnable task) {
-    boolean hadFocus = context.isFocused();
+    boolean hadFocus = context.isFocusedInWindow();
     if (hadFocus) KeyboardFocusManager.getCurrentKeyboardFocusManager().clearFocusOwner();
     task.run();
-    if (hadFocus) context.requestFocus();
+    if (hadFocus) context.requestFocusInWindow();
   }
 
   //
@@ -814,20 +826,40 @@ public class DiffUtil {
     int totalLines = getLineCount(document);
     BitSet lines = new BitSet(totalLines + 1);
 
-    for (Caret caret : editor.getCaretModel().getAllCarets()) {
-      if (caret.hasSelection()) {
-        int line1 = editor.offsetToLogicalPosition(caret.getSelectionStart()).line;
-        int line2 = editor.offsetToLogicalPosition(caret.getSelectionEnd()).line;
-        lines.set(line1, line2 + 1);
-        if (caret.getSelectionEnd() == document.getTextLength()) lines.set(totalLines);
-      }
-      else {
-        lines.set(caret.getLogicalPosition().line);
-        if (caret.getOffset() == document.getTextLength()) lines.set(totalLines);
+    if (editor instanceof EditorEx) {
+      int expectedCaretOffset = ((EditorEx)editor).getExpectedCaretOffset();
+      if (editor.getCaretModel().getOffset() != expectedCaretOffset) {
+        Caret caret = editor.getCaretModel().getPrimaryCaret();
+        appendSelectedLines(editor, lines, caret, expectedCaretOffset);
+        return lines;
       }
     }
 
+    for (Caret caret : editor.getCaretModel().getAllCarets()) {
+      appendSelectedLines(editor, lines, caret, -1);
+    }
+
     return lines;
+  }
+
+  private static void appendSelectedLines(@NotNull Editor editor, @NotNull BitSet lines, @NotNull Caret caret, int expectedCaretOffset) {
+    Document document = editor.getDocument();
+    int totalLines = getLineCount(document);
+
+    if (caret.hasSelection()) {
+      int line1 = editor.offsetToLogicalPosition(caret.getSelectionStart()).line;
+      int line2 = editor.offsetToLogicalPosition(caret.getSelectionEnd()).line;
+      lines.set(line1, line2 + 1);
+      if (caret.getSelectionEnd() == document.getTextLength()) lines.set(totalLines);
+    }
+    else if (expectedCaretOffset == -1) {
+      lines.set(caret.getLogicalPosition().line);
+      if (caret.getOffset() == document.getTextLength()) lines.set(totalLines);
+    }
+    else {
+      lines.set(document.getLineNumber(expectedCaretOffset));
+      if (expectedCaretOffset == document.getTextLength()) lines.set(totalLines);
+    }
   }
 
   public static boolean isSelectedByLine(int line, int line1, int line2) {

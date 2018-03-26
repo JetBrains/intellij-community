@@ -13,7 +13,6 @@
 // limitations under the License.
 package com.intellij.openapi.vfs;
 
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -319,15 +318,8 @@ public class VfsUtil extends VfsUtilCore {
     return name == null || name.isEmpty() || "/".equals(name) || "\\".equals(name);
   }
 
-  @SuppressWarnings("RedundantThrows")
   public static VirtualFile createDirectories(@NotNull final String directoryPath) throws IOException {
-    return new WriteAction<VirtualFile>() {
-      @Override
-      protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
-        VirtualFile res = createDirectoryIfMissing(directoryPath);
-        result.setResult(res);
-      }
-    }.execute().throwException().getResultObject();
+    return WriteAction.computeAndWait(()-> createDirectoryIfMissing(directoryPath));
   }
 
   public static VirtualFile createDirectoryIfMissing(@Nullable VirtualFile parent, String relativePath) throws IOException {

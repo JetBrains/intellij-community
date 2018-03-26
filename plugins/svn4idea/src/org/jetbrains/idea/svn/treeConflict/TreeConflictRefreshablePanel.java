@@ -74,7 +74,7 @@ public class TreeConflictRefreshablePanel implements Disposable {
   private final ConflictedSvnChange myChange;
   private final SvnVcs myVcs;
   private SvnRevisionNumber myCommittedRevision;
-  private FilePath myPath;
+  private final FilePath myPath;
   private final CompositeDisposable myChildDisposables = new CompositeDisposable();
   private final TLongArrayList myRightRevisionsList;
   @NotNull private final String myLoadingTitle;

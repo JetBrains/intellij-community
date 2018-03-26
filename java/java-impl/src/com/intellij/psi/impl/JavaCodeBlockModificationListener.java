@@ -61,7 +61,7 @@ public class JavaCodeBlockModificationListener extends PsiTreeChangePreprocessor
 
   @Override
   protected boolean containsStructuralElements(@NotNull PsiElement element) {
-    return mayHaveJavaStructureInside(element);
+    return mayHaveModifiedJavaStructureInside(element);
   }
 
   @Override
@@ -69,7 +69,7 @@ public class JavaCodeBlockModificationListener extends PsiTreeChangePreprocessor
     Set<PsiElement> changedChildren = getChangedChildren(event);
 
     PsiModificationTrackerImpl tracker = (PsiModificationTrackerImpl)myPsiManager.getModificationTracker();
-    if (!changedChildren.isEmpty() && changedChildren.stream().anyMatch(JavaCodeBlockModificationListener::mayHaveJavaStructureInside)) {
+    if (!changedChildren.isEmpty() && changedChildren.stream().anyMatch(JavaCodeBlockModificationListener::mayHaveModifiedJavaStructureInside)) {
       tracker.incCounter();
     }
 
@@ -104,12 +104,12 @@ public class JavaCodeBlockModificationListener extends PsiTreeChangePreprocessor
     return Collections.emptySet();
   }
 
-  private static boolean mayHaveJavaStructureInside(@NotNull PsiElement root) {
-    return !SyntaxTraverser.psiTraverser(root)
+  private static boolean mayHaveModifiedJavaStructureInside(@NotNull PsiElement root) {
+    return SyntaxTraverser.psiTraverser(root)
       .expand(e -> !TreeUtil.isCollapsedChameleon(e.getNode()))
       .traverse()
+      .filter(e -> !(e instanceof PsiModifiableCodeBlock) || ((PsiModifiableCodeBlock)e).shouldChangeModificationCount(e))
       .filter(e -> e instanceof PsiClass || e instanceof PsiLambdaExpression || TreeUtil.isCollapsedChameleon(e.getNode()))
-      .isEmpty();
+      .isNotEmpty();
   }
-
 }

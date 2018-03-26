@@ -17,6 +17,7 @@ package com.intellij.spellchecker.inspection.quickfixes;
 
 import com.intellij.spellchecker.quickfixes.ChangeTo;
 import com.intellij.spellchecker.quickfixes.RenameTo;
+import com.intellij.spellchecker.quickfixes.SaveTo;
 
 public class PlainTextSpellCheckerFixesTest extends AbstractSpellCheckerFixesTest {
   protected String getExtension() {
@@ -53,6 +54,14 @@ public class PlainTextSpellCheckerFixesTest extends AbstractSpellCheckerFixesTes
 
   public void testEmptyRenameTo() {
     doNoQuickFixTest(RenameTo.FIX_NAME);
+  }
+
+  public void testEmptySaveTo() {
+    doNoQuickFixTest(SaveTo.FIX_NAME);
+  }
+
+  public void testNoTypoSaveTo() {
+    doNoQuickFixTest(SaveTo.FIX_NAME);
   }
 
   public void testNoTypoRenameTo() {

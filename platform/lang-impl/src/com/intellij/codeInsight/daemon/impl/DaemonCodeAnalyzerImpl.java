@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.daemon.impl;
 
@@ -105,7 +103,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
   private final FileStatusMap myFileStatusMap;
   private DaemonCodeAnalyzerSettings myLastSettings;
 
-  private volatile IntentionHintComponent myLastIntentionHint;
   private volatile boolean myDisposed;     // the only possible transition: false -> true
   private volatile boolean myInitialized;  // the only possible transition: false -> true
 
@@ -353,7 +350,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
 
     myUpdateRunnableFuture.cancel(false);
 
-    final DaemonProgressIndicator progress = createUpdateProgress();
+    final DaemonProgressIndicator progress = createUpdateProgress(map.keySet());
     myPassExecutorService.submitPasses(map, progress);
     try {
       long start = System.currentTimeMillis();
@@ -681,7 +678,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
 
     if (foundInfoList.isEmpty()) return null;
     if (foundInfoList.size() == 1) return foundInfoList.get(0);
-    return new HighlightInfoComposite(foundInfoList);
+    return HighlightInfoComposite.create(foundInfoList);
   }
 
   private static boolean isOffsetInsideHighlightInfo(int offset, @NotNull HighlightInfo info, boolean includeFixRange) {
@@ -712,38 +709,9 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
     return result;
   }
 
-  void setLastIntentionHint(@NotNull Project project,
-                            @NotNull PsiFile file,
-                            @NotNull Editor editor,
-                            @NotNull ShowIntentionsPass.IntentionsInfo intentions,
-                            boolean hasToRecreate) {
-    if (!editor.getSettings().isShowIntentionBulb()) {
-      return;
-    }
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    hideLastIntentionHint();
-    
-    if (editor.getCaretModel().getCaretCount() > 1) return;
-    
-    IntentionHintComponent hintComponent = IntentionHintComponent.showIntentionHint(project, file, editor, intentions, false);
-    if (hasToRecreate) {
-      hintComponent.recreate();
-    }
-    myLastIntentionHint = hintComponent;
-  }
-
-  void hideLastIntentionHint() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    IntentionHintComponent hint = myLastIntentionHint;
-    if (hint != null && hint.isVisible()) {
-      hint.hide();
-      myLastIntentionHint = null;
-    }
-  }
-
   @Nullable
   public IntentionHintComponent getLastIntentionHint() {
-    return myLastIntentionHint;
+    return ((IntentionsUIImpl)IntentionsUI.getInstance(myProject)).getLastIntentionHint();
   }
 
   @Nullable
@@ -834,7 +802,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
       // cancel all after calling createPasses() since there are perverts {@link com.intellij.util.xml.ui.DomUIFactoryImpl} who are changing PSI there
       cancelUpdateProgress(true, "Cancel by alarm");
       myUpdateRunnableFuture.cancel(false);
-      DaemonProgressIndicator progress = createUpdateProgress();
+      DaemonProgressIndicator progress = createUpdateProgress(passes.keySet());
       myPassExecutorService.submitPasses(passes, progress);
     }
   };
@@ -881,23 +849,37 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
   }
 
   @NotNull
-  private synchronized DaemonProgressIndicator createUpdateProgress() {
+  private synchronized DaemonProgressIndicator createUpdateProgress(@NotNull Collection<FileEditor> fileEditors) {
     DaemonProgressIndicator old = myUpdateProgress;
     if (!old.isCanceled()) {
       old.cancel();
     }
-    DaemonProgressIndicator progress = new DaemonProgressIndicator() {
-      @Override
-      public void stopIfRunning() {
-        super.stopIfRunning();
-        myProject.getMessageBus().syncPublisher(DAEMON_EVENT_TOPIC).daemonFinished();
-      }
-    };
+    DaemonProgressIndicator progress = new MyDaemonProgressIndicator(myProject, fileEditors);
     progress.setModalityProgress(null);
     progress.start();
+    myProject.getMessageBus().syncPublisher(DAEMON_EVENT_TOPIC).daemonStarting(fileEditors);
     myUpdateProgress = progress;
     return progress;
   }
+
+  private static class MyDaemonProgressIndicator extends DaemonProgressIndicator {
+    private final Project myProject;
+    private Collection<FileEditor> myFileEditors;
+
+    public MyDaemonProgressIndicator(Project project, Collection<FileEditor> fileEditors) {
+      myFileEditors = fileEditors;
+      myProject = project;
+    }
+
+    @Override
+    public void stopIfRunning() {
+      super.stopIfRunning();
+      myProject.getMessageBus().syncPublisher(DAEMON_EVENT_TOPIC).daemonFinished(myFileEditors);
+      myFileEditors = null;
+      HighlightingSessionImpl.clearProgressIndicator(this);
+    }
+  }
+
 
   @Override
   public void autoImportReferenceAtCursor(@NotNull Editor editor, @NotNull PsiFile file) {
@@ -929,18 +911,21 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
       return activeTextEditors;
     }
 
-    // Editors in tabs.
     Collection<FileEditor> result = new THashSet<>();
     Collection<VirtualFile> files = new THashSet<>(activeTextEditors.size());
-    final FileEditor[] tabEditors = FileEditorManager.getInstance(myProject).getSelectedEditors();
-    for (FileEditor tabEditor : tabEditors) {
-      if (!tabEditor.isValid()) continue;
-      VirtualFile file = ((FileEditorManagerEx)FileEditorManager.getInstance(myProject)).getFile(tabEditor);
-      if (file != null) {
-        files.add(file);
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      // Editors in tabs.
+      final FileEditor[] tabEditors = FileEditorManager.getInstance(myProject).getSelectedEditors();
+      for (FileEditor tabEditor : tabEditors) {
+        if (!tabEditor.isValid()) continue;
+        VirtualFile file = ((FileEditorManagerEx)FileEditorManager.getInstance(myProject)).getFile(tabEditor);
+        if (file != null) {
+          files.add(file);
+        }
+        result.add(tabEditor);
       }
-      result.add(tabEditor);
     }
+
     // do not duplicate documents
     for (FileEditor fileEditor : activeTextEditors) {
       VirtualFile file = ((FileEditorManagerEx)FileEditorManager.getInstance(myProject)).getFile(fileEditor);

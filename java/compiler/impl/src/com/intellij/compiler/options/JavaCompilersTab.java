@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.components.JBCheckBox;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -32,6 +33,7 @@ public class JavaCompilersTab implements SearchableConfigurable, Configurable.No
   private JPanel myContentPanel;
   private JComboBox myCompiler;
   private JPanel myTargetOptionsPanel;
+  private JBCheckBox myCbUseReleaseOption;
   private final CardLayout myCardLayout;
 
   private final Project myProject;
@@ -104,6 +106,9 @@ public class JavaCompilersTab implements SearchableConfigurable, Configurable.No
     if (!Comparing.equal(mySelectedCompiler, myCompilerConfiguration.getDefaultCompiler())) {
       return true;
     }
+    if (myCbUseReleaseOption.isSelected() != myCompilerConfiguration.useReleaseOption()) {
+      return true;
+    }
     for (Configurable configurable : myConfigurables) {
       if (configurable.isModified()) {
         return true;
@@ -120,6 +125,8 @@ public class JavaCompilersTab implements SearchableConfigurable, Configurable.No
 
   public void apply() throws ConfigurationException {
     try {
+      myCompilerConfiguration.setUseReleaseOption(myCbUseReleaseOption.isSelected());
+      
       for (Configurable configurable : myConfigurables) {
         if (configurable.isModified()) {
           configurable.apply();
@@ -141,6 +148,8 @@ public class JavaCompilersTab implements SearchableConfigurable, Configurable.No
   }
 
   public void reset() {
+    myCbUseReleaseOption.setSelected(myCompilerConfiguration.useReleaseOption());
+
     for (Configurable configurable : myConfigurables) {
       configurable.reset();
     }

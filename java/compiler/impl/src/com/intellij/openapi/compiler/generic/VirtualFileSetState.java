@@ -33,7 +33,7 @@ import java.util.Set;
  */
 public class VirtualFileSetState {
   public static final DataExternalizer<VirtualFileSetState> EXTERNALIZER = new VirtualFileWithDependenciesExternalizer();
-  private Map<String, Long> myTimestamps = new HashMap<>();
+  private final Map<String, Long> myTimestamps = new HashMap<>();
 
   public VirtualFileSetState() {
   }

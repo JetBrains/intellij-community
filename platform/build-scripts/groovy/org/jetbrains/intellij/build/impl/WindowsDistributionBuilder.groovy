@@ -197,7 +197,7 @@ IDS_VM_OPTIONS=$vmOptions
       def communityHome = "$buildContext.paths.communityHome"
       String inputPath = "$communityHome/bin/WinLauncher/WinLauncher${arch.fileSuffix}.exe"
       def outputPath = "$winDistPath/bin/$exeFileName"
-      def resourceModules = [buildContext.findApplicationInfoModule(), buildContext.findModule("icons")]
+      def resourceModules = [buildContext.findApplicationInfoModule(), buildContext.findModule("intellij.platform.icons")]
       buildContext.ant.java(classname: "com.pme.launcher.LauncherGeneratorMain", fork: "true", failonerror: "true") {
         sysproperty(key: "java.awt.headless", value: "true")
         arg(value: inputPath)

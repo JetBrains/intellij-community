@@ -256,18 +256,18 @@ public abstract class SimplifiableAssertionInspection extends BaseInspection {
       final PsiType lhsType = lhs.getType();
       final PsiType rhsType = rhs.getType();
       if (lhsType != null && rhsType != null && PsiUtil.isLanguageLevel5OrHigher(lhs)) {
-        if (isPrimitiveAndBoxedWithOverloads(lhsType, rhsType)) {
-          final PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(rhsType);
-          assert unboxedType != null;
-          buf.append(lhs.getText()).append(",(").append(unboxedType.getCanonicalText()).append(')').append(rhs.getText());
-        }
-        else if (isPrimitiveAndBoxedWithOverloads(rhsType, lhsType)) {
-          final PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(lhsType);
-          assert unboxedType != null;
-          buf.append('(').append(unboxedType.getCanonicalText()).append(')').append(lhs.getText()).append(',').append(rhs.getText());
+        final PsiPrimitiveType rhsUnboxedType = PsiPrimitiveType.getUnboxedType(rhsType);
+        if (isPrimitiveAndBoxedWithOverloads(lhsType, rhsType) && rhsUnboxedType != null) {
+          buf.append(lhs.getText()).append(",(").append(rhsUnboxedType.getCanonicalText()).append(')').append(rhs.getText());
         }
         else {
-          buf.append(lhs.getText()).append(',').append(rhs.getText());
+          final PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(lhsType);
+          if (isPrimitiveAndBoxedWithOverloads(rhsType, lhsType) && unboxedType != null) {
+            buf.append('(').append(unboxedType.getCanonicalText()).append(')').append(lhs.getText()).append(',').append(rhs.getText());
+          }
+          else {
+            buf.append(lhs.getText()).append(',').append(rhs.getText());
+          }
         }
       }
       else {

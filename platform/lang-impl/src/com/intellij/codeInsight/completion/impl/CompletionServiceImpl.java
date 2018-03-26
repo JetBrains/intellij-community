@@ -1,24 +1,12 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion.impl;
 
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -81,6 +69,18 @@ public final class CompletionServiceImpl extends CompletionService {
   }
 
   @Override
+  public CompletionParameters createCompletionParameters(@NotNull Project project,
+                                                         @NotNull Editor editor,
+                                                         @NotNull Caret caret,
+                                                         int invocationCount,
+                                                         CompletionType completionType) {
+    CompletionInitializationContext context = CompletionInitializationUtil.createCompletionInitializationContext(project, editor, caret,
+                                                                                                                     invocationCount, completionType);
+    CompletionProcessBase progress = new CompletionProcessBase(context);
+    return CompletionInitializationUtil.prepareCompletionParameters(context, progress);
+  }
+
+  @Override
   public CompletionResultSet createResultSet(final CompletionParameters parameters, final Consumer<CompletionResult> consumer,
                                              @NotNull final CompletionContributor contributor) {
     final PsiElement position = parameters.getPosition();
@@ -110,13 +110,9 @@ public final class CompletionServiceImpl extends CompletionService {
     @Nullable
     private final CompletionResultSetImpl myOriginal;
 
-
-    public CompletionResultSetImpl(final Consumer<CompletionResult> consumer, final int lengthOfTextBeforePosition,
-                                   final PrefixMatcher prefixMatcher,
-                                   CompletionContributor contributor,
-                                   CompletionParameters parameters,
-                                   @NotNull CompletionSorterImpl sorter,
-                                   @Nullable CompletionResultSetImpl original) {
+    CompletionResultSetImpl(Consumer<CompletionResult> consumer, int lengthOfTextBeforePosition, PrefixMatcher prefixMatcher,
+                            CompletionContributor contributor, CompletionParameters parameters,
+                            @NotNull CompletionSorterImpl sorter, @Nullable CompletionResultSetImpl original) {
       super(prefixMatcher, consumer, contributor);
       myLengthOfTextBeforePosition = lengthOfTextBeforePosition;
       myParameters = parameters;
@@ -126,7 +122,7 @@ public final class CompletionServiceImpl extends CompletionService {
 
     @Override
     public void addAllElements(@NotNull Iterable<? extends LookupElement> elements) {
-      CompletionThreadingBase.withBatchUpdate(() -> super.addAllElements(elements));
+      CompletionThreadingBase.withBatchUpdate(() -> super.addAllElements(elements), myParameters.getProcess());
     }
 
     @Override
@@ -191,17 +187,17 @@ public final class CompletionServiceImpl extends CompletionService {
 
     @Override
     public void restartCompletionOnPrefixChange(ElementPattern<String> prefixCondition) {
-      final CompletionProgressIndicator indicator = getCompletionService().getCurrentCompletion();
-      if (indicator != null) {
-        indicator.addWatchedPrefix(myLengthOfTextBeforePosition - getPrefixMatcher().getPrefix().length(), prefixCondition);
+      CompletionProcess process = myParameters.getProcess();
+      if (process instanceof CompletionProgressIndicator) {
+        ((CompletionProgressIndicator)process).addWatchedPrefix(myLengthOfTextBeforePosition - getPrefixMatcher().getPrefix().length(), prefixCondition);
       }
     }
 
     @Override
     public void restartCompletionWhenNothingMatches() {
-      final CompletionProgressIndicator indicator = getCompletionService().getCurrentCompletion();
-      if (indicator != null) {
-        indicator.getLookup().setStartCompletionWhenNothingMatches(true);
+      CompletionProcess process = myParameters.getProcess();
+      if (process instanceof CompletionProgressIndicator) {
+        ((CompletionProgressIndicator)process).getLookup().setStartCompletionWhenNothingMatches(true);
       }
     }
   }
@@ -284,6 +280,11 @@ public final class CompletionServiceImpl extends CompletionService {
   @Override
   public CompletionSorterImpl emptySorter() {
     return new CompletionSorterImpl(new ArrayList<>());
+  }
+
+  @SuppressWarnings("unused")
+  public CompletionLookupArranger createLookupArranger(CompletionParameters parameters) {
+    return new CompletionLookupArrangerImpl(parameters);
   }
 
   public static boolean isStartMatch(LookupElement element, WeighingContext context) {

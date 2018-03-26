@@ -8,10 +8,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
-import org.jetbrains.jetCheck.Generator;
-import org.jetbrains.jetCheck.PropertyChecker;
 import org.jdom.Verifier;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jetCheck.Generator;
+import org.jetbrains.jetCheck.PropertyChecker;
 import org.junit.Test;
 
 import java.nio.CharBuffer;
@@ -110,7 +110,7 @@ public class StringUtilTest {
     assertEquals("Inherits", StringUtil.unpluralize("Inheritses"));
     assertEquals("s", StringUtil.unpluralize("ss"));
     assertEquals("I", StringUtil.unpluralize("Is"));
-    assertEquals(null, StringUtil.unpluralize("s"));
+    assertNull(StringUtil.unpluralize("s"));
     assertEquals("z", StringUtil.unpluralize("zs"));
     // normal
     assertEquals("case", StringUtil.unpluralize("cases"));
@@ -174,7 +174,7 @@ public class StringUtilTest {
 
   @Test
   public void testNaturalCompareTransitivityProperty() {
-    PropertyChecker.forAll(Generator.listsOf(Generator.stringsOf("ab01()_# "))).shouldHold(l -> {
+    PropertyChecker.forAll(Generator.listsOf(Generator.stringsOf("ab01()_# ")), l -> {
       List<String> sorted = ContainerUtil.sorted(l, StringUtil::naturalCompare);
       for (int i = 0; i < sorted.size(); i++) {
         for (int j = i + 1; j < sorted.size(); j++) {
@@ -448,9 +448,9 @@ public class StringUtilTest {
 
   @Test
   public void testDetectSeparators() {
-    assertEquals(null, StringUtil.detectSeparators(""));
-    assertEquals(null, StringUtil.detectSeparators("asd"));
-    assertEquals(null, StringUtil.detectSeparators("asd\t"));
+    assertNull(StringUtil.detectSeparators(""));
+    assertNull(StringUtil.detectSeparators("asd"));
+    assertNull(StringUtil.detectSeparators("asd\t"));
 
     assertEquals(LineSeparator.LF, StringUtil.detectSeparators("asd\n"));
     assertEquals(LineSeparator.LF, StringUtil.detectSeparators("asd\nads\r"));
@@ -467,12 +467,12 @@ public class StringUtilTest {
 
   @Test
   public void testFindStartingLineSeparator() {
-    assertEquals(null, StringUtil.getLineSeparatorAt("", -1));
-    assertEquals(null, StringUtil.getLineSeparatorAt("", 0));
-    assertEquals(null, StringUtil.getLineSeparatorAt("", 1));
-    assertEquals(null, StringUtil.getLineSeparatorAt("\nHello", -1));
-    assertEquals(null, StringUtil.getLineSeparatorAt("\nHello", 1));
-    assertEquals(null, StringUtil.getLineSeparatorAt("\nH\rel\nlo", 6));
+    assertNull(StringUtil.getLineSeparatorAt("", -1));
+    assertNull(StringUtil.getLineSeparatorAt("", 0));
+    assertNull(StringUtil.getLineSeparatorAt("", 1));
+    assertNull(StringUtil.getLineSeparatorAt("\nHello", -1));
+    assertNull(StringUtil.getLineSeparatorAt("\nHello", 1));
+    assertNull(StringUtil.getLineSeparatorAt("\nH\rel\nlo", 6));
 
     assertEquals(LineSeparator.LF, StringUtil.getLineSeparatorAt("\nHello", 0));
     assertEquals(LineSeparator.LF, StringUtil.getLineSeparatorAt("\nH\rel\nlo", 5));
@@ -489,28 +489,46 @@ public class StringUtilTest {
 
   @Test
   public void testFormatFileSize() {
-    assertEquals("0B", StringUtil.formatFileSize(0));
-    assertEquals("1B", StringUtil.formatFileSize(1));
-    assertEquals("2.15G", StringUtil.formatFileSize(Integer.MAX_VALUE));
-    assertEquals("9.22E", StringUtil.formatFileSize(Long.MAX_VALUE));
+    assertEquals("0 B", StringUtil.formatFileSize(0, " "));
+    assertEquals("1 B", StringUtil.formatFileSize(1, " "));
+    assertEquals("2 GB", StringUtil.formatFileSize(Integer.MAX_VALUE, " "));
+    assertEquals("8 EB", StringUtil.formatFileSize(Long.MAX_VALUE, " "));
 
-    assertEquals("60.10K", StringUtil.formatFileSize(60100));
+    assertEquals("58.69 KB", StringUtil.formatFileSize(60100, " "));
 
-    assertEquals("1.23K", StringUtil.formatFileSize(1234));
-    assertEquals("12.35K", StringUtil.formatFileSize(12345));
-    assertEquals("123.46K", StringUtil.formatFileSize(123456));
-    assertEquals("1.23M", StringUtil.formatFileSize(1234567));
-    assertEquals("12.35M", StringUtil.formatFileSize(12345678));
-    assertEquals("123.46M", StringUtil.formatFileSize(123456789));
-    assertEquals("1.23G", StringUtil.formatFileSize(1234567890));
+    assertEquals("1.21 KB", StringUtil.formatFileSize(1234, " "));
+    assertEquals("12.06 KB", StringUtil.formatFileSize(12345, " "));
+    assertEquals("120.56 KB", StringUtil.formatFileSize(123456, " "));
+    assertEquals("1.18 MB", StringUtil.formatFileSize(1234567, " "));
+    assertEquals("11.77 MB", StringUtil.formatFileSize(12345678, " "));
+    assertEquals("117.74 MB", StringUtil.formatFileSize(123456789, " "));
+    assertEquals("1.15 GB", StringUtil.formatFileSize(1234567890, " "));
+  }
+
+  @Test
+  public void testFormatNumber() {
+    assertEquals("0", StringUtil.formatNumber(0, " "));
+    assertEquals("1", StringUtil.formatNumber(1, " "));
+    assertEquals("2.15 G", StringUtil.formatNumber(Integer.MAX_VALUE, " "));
+    assertEquals("9.22 E", StringUtil.formatNumber(Long.MAX_VALUE, " "));
+
+    assertEquals("60.10 K", StringUtil.formatNumber(60100, " "));
+
+    assertEquals("1.23 K", StringUtil.formatNumber(1234, " "));
+    assertEquals("12.35 K", StringUtil.formatNumber(12345, " "));
+    assertEquals("123.46 K", StringUtil.formatNumber(123456, " "));
+    assertEquals("1.23 M", StringUtil.formatNumber(1234567, " "));
+    assertEquals("12.35 M", StringUtil.formatNumber(12345678, " "));
+    assertEquals("123.46 M", StringUtil.formatNumber(123456789, " "));
+    assertEquals("1.23 G", StringUtil.formatNumber(1234567890, " "));
   }
 
   @Test
   public void testFormatDuration() {
     assertEquals("0ms", StringUtil.formatDuration(0));
     assertEquals("1ms", StringUtil.formatDuration(1));
-    assertEquals("3w 3d 20h 31m 23s 647ms", StringUtil.formatDuration(Integer.MAX_VALUE));
-    assertEquals("31ep 7714ml 2c 59yr 5mo 0w 3d 7h 12m 55s 807ms", StringUtil.formatDuration(Long.MAX_VALUE));
+    assertEquals("24d 20h 31m 23s 647ms", StringUtil.formatDuration(Integer.MAX_VALUE));
+    assertEquals("29ep 6533ml 3c 8yr 9mo 17d 7h 12m 55s 807ms", StringUtil.formatDuration(Long.MAX_VALUE));
 
     assertEquals("1m 0s 100ms", StringUtil.formatDuration(60100));
 
@@ -520,7 +538,9 @@ public class StringUtilTest {
     assertEquals("20m 34s 567ms", StringUtil.formatDuration(1234567));
     assertEquals("3h 25m 45s 678ms", StringUtil.formatDuration(12345678));
     assertEquals("1d 10h 17m 36s 789ms", StringUtil.formatDuration(123456789));
-    assertEquals("2w 0d 6h 56m 7s 890ms", StringUtil.formatDuration(1234567890));
+    assertEquals("14d 6h 56m 7s 890ms", StringUtil.formatDuration(1234567890));
+
+    assertEquals("1yr 1mo 1d 1h 1m 1s 1ms", StringUtil.formatDuration(33786061001L));
   }
 
   @Test
@@ -650,5 +670,16 @@ public class StringUtilTest {
     assertFalse(StringUtil.isLatinAlphanumeric(""));
     assertFalse(StringUtil.isLatinAlphanumeric(null));
     assertFalse(StringUtil.isLatinAlphanumeric("'"));
+  }
+
+  @Test
+  public void testIsShortNameOf() {
+    assertTrue(StringUtil.isShortNameOf("a.b.c", "c"));
+    assertTrue(StringUtil.isShortNameOf("foo", "foo"));
+    assertFalse(StringUtil.isShortNameOf("foo", ""));
+    assertFalse(StringUtil.isShortNameOf("", "foo"));
+    assertFalse(StringUtil.isShortNameOf("a.b.c", "d"));
+    assertFalse(StringUtil.isShortNameOf("x.y.zzz", "zz"));
+    assertFalse(StringUtil.isShortNameOf("x", "a.b.x"));
   }
 }

@@ -24,9 +24,9 @@ import git4idea.commands.GitCommandResult
 import git4idea.commands.GitImpl
 import git4idea.commands.GitLineHandler
 import git4idea.commands.GitLineHandlerListener
+import git4idea.push.GitPushParams
 import git4idea.rebase.GitInteractiveRebaseEditorHandler
 import git4idea.rebase.GitRebaseEditorService
-import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import java.io.File
 
@@ -34,8 +34,6 @@ import java.io.File
  * Any unknown error that could be returned by Git.
  */
 val UNKNOWN_ERROR_TEXT: String = "unknown error"
-
-val SUCCESS_RESULT = GitCommandResult(true, 0, false, emptyList(), emptyList())
 
 class TestGitImpl : GitImpl() {
   private val LOG = Logger.getInstance(TestGitImpl::class.java)
@@ -53,16 +51,10 @@ class TestGitImpl : GitImpl() {
                                 val plainTextEditor: ((String) -> String)?)
 
   override fun push(repository: GitRepository,
-                    remote: GitRemote,
-                    spec: String,
-                    force: Boolean,
-                    updateTracking: Boolean,
-                    skipHook: Boolean,
-                    tagMode: String?,
+                    pushParams: GitPushParams,
                     vararg listeners: GitLineHandlerListener): GitCommandResult {
     pushListener?.invoke(repository)
-    return myPushHandler(repository) ?:
-        super.push(repository, remote, spec, force, updateTracking, skipHook, tagMode, *listeners)
+    return myPushHandler(repository) ?: super.push(repository, pushParams, *listeners)
   }
 
   override fun branchDelete(repository: GitRepository,
@@ -171,7 +163,7 @@ class TestGitImpl : GitImpl() {
     }
   }
 
-  private fun fatalResult() = GitCommandResult(false, 128, false, listOf("fatal: error: $UNKNOWN_ERROR_TEXT"), emptyList<String>())
+  private fun fatalResult() = GitCommandResult(false, 128, listOf("fatal: error: $UNKNOWN_ERROR_TEXT"), emptyList<String>())
 }
 
 

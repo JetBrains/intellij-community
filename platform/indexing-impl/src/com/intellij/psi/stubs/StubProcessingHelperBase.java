@@ -25,6 +25,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.impl.source.StubbedSpine;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -40,13 +41,14 @@ public abstract class StubProcessingHelperBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.StubProcessingHelperBase");
 
   public <Psi extends PsiElement> boolean processStubsInFile(@NotNull Project project,
-                                                      @NotNull VirtualFile file,
-                                                      @NotNull StubIdList value,
-                                                      @NotNull Processor<? super Psi> processor,
-                                                      @NotNull Class<Psi> requiredClass) {
+                                                             @NotNull VirtualFile file,
+                                                             @NotNull StubIdList value,
+                                                             @NotNull Processor<? super Psi> processor,
+                                                             @Nullable GlobalSearchScope scope,
+                                                             @NotNull Class<Psi> requiredClass) {
     PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
     if (psiFile == null) {
-      LOG.error("Stub index points to a file without PSI: " + file.getFileType());
+      LOG.error("Stub index points to a file without PSI: " + file.getFileType() + ", used scope " + scope);
       onInternalError(file);
       return true;
     }

@@ -38,6 +38,16 @@ public class PsiExpressionListImpl extends CompositePsiElement implements PsiExp
   }
 
   @Override
+  public int getExpressionCount() {
+    return countChildren(ElementType.EXPRESSION_BIT_SET);
+  }
+
+  @Override
+  public boolean isEmpty() {
+    return findChildByType(ElementType.EXPRESSION_BIT_SET) == null;
+  }
+
+  @Override
   @NotNull
   public PsiType[] getExpressionTypes() {
     PsiExpression[] expressions = getExpressions();
@@ -71,7 +81,7 @@ public class PsiExpressionListImpl extends CompositePsiElement implements PsiExp
   }
 
   @Override
-  public int getChildRole(ASTNode child) {
+  public int getChildRole(@NotNull ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == JavaTokenType.COMMA) {

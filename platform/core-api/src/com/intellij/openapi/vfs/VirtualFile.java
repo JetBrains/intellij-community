@@ -482,8 +482,8 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
     }
 
     EncodingRegistry.doActionAndRestoreEncoding(this, () -> {
-      getFileSystem().moveFile(requestor, VirtualFile.this, newParent);
-      return VirtualFile.this;
+      getFileSystem().moveFile(requestor, this, newParent);
+      return this;
     });
   }
 
@@ -498,7 +498,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
     }
 
     return EncodingRegistry.doActionAndRestoreEncoding(this,
-                                                       () -> getFileSystem().copyFile(requestor, VirtualFile.this, newParent, copyName));
+                                                       () -> getFileSystem().copyFile(requestor, this, newParent, copyName));
   }
 
   /**

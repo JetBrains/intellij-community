@@ -33,7 +33,7 @@ class DeleteSecondArgument extends FilePsiMutation {
       .filter(PsiElement::isValid)
       .map(PsiCall::getArgumentList)
       .filter(Objects::nonNull)
-      .filter(argList -> argList.getExpressions().length > 1)
+      .filter(argList -> argList.getExpressionCount() > 1)
       .limit(20)
       .forEach(argList -> {
         if (!argList.isValid()) return;

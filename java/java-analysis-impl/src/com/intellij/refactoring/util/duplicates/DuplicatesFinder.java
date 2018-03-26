@@ -610,6 +610,9 @@ public class DuplicatesFinder {
     if (!myWithExtractedParameters || !(pattern instanceof PsiReferenceExpression) || !(candidate instanceof PsiReferenceExpression)) {
       return false;
     }
+    if (myPattern.length == 1 && myPattern[0] == pattern) {
+      return false;
+    }
     ExtractableExpressionPart part1 = ExtractableExpressionPart.matchVariable((PsiReferenceExpression)pattern, null);
     if (part1 == null || part1.myVariable == null) {
       return false;
@@ -739,11 +742,8 @@ public class DuplicatesFinder {
           if (ArrayUtil.find(methods, method1) != -1) return true;
         }
       }
-      return false;
     }
-    else {
-      return false;
-    }
+    return false;
   }
 
   static boolean isUnder(@Nullable PsiElement element, @NotNull List<PsiElement> parents) {

@@ -135,7 +135,7 @@ public class ConditionalCanBePushedInsideExpressionInspection extends BaseInspec
         return false;
       }
       final PsiExpressionList expressionList = (PsiExpressionList)parent;
-      if (expressionList.getExpressions().length != 1) {
+      if (expressionList.getExpressionCount() != 1) {
         return false;
       }
       final PsiElement grandParent = expressionList.getParent();

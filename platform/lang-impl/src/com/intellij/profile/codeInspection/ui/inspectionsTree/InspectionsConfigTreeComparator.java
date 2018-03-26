@@ -7,7 +7,7 @@ import java.util.Comparator;
 public class InspectionsConfigTreeComparator {
   public static final Comparator<InspectionConfigTreeNode> INSTANCE =
     Comparator.<InspectionConfigTreeNode>comparingInt(n -> n instanceof InspectionConfigTreeNode.Group ? 0 : 1)
-      .thenComparing(n -> getDisplayTextToSort(n.getText()));
+      .thenComparing(n -> getDisplayTextToSort(n.getText()), String.CASE_INSENSITIVE_ORDER);
 
   public static String getDisplayTextToSort(String s) {
     if (s.length() == 0) {

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -19,7 +17,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -42,6 +39,7 @@ import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory;
 import com.intellij.xdebugger.impl.breakpoints.ui.XLightBreakpointPropertiesPanel;
+import com.intellij.xdebugger.impl.frame.XWatchesView;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
@@ -54,6 +52,8 @@ import org.jetbrains.concurrency.Promise;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
@@ -375,11 +375,20 @@ public class DebuggerUIUtil {
    */
   public static boolean hasEvaluationExpression(@NotNull XValue value) {
     Promise<XExpression> promise = value.calculateEvaluationExpression();
-    if (promise.getState() == Promise.State.PENDING) return true;
-    if (promise instanceof Getter) {
-      return ((Getter)promise).get() != null;
+    try {
+      return promise.getState() == Promise.State.PENDING || promise.blockingGet(0) != null;
     }
-    return true;
+    catch (ExecutionException | TimeoutException e) {
+      return true;
+    }
+  }
+
+  public static void addToWatches(@NotNull XWatchesView watchesView, @NotNull XValueNodeImpl node) {
+    node.getValueContainer().calculateEvaluationExpression().onSuccess(expression -> {
+      if (expression != null) {
+        invokeLater(() -> watchesView.addWatchExpression(expression, -1, false));
+      }
+    });
   }
 
   public static void registerActionOnComponent(String name, JComponent component, Disposable parentDisposable) {
@@ -426,7 +435,7 @@ public class DebuggerUIUtil {
     return object instanceof Obsolescent && ((Obsolescent)object).isObsolete();
   }
 
-  public static void setTreeNodeValue(XValueNodeImpl valueNode, String text, Consumer<String> errorConsumer) {
+  public static void setTreeNodeValue(XValueNodeImpl valueNode, XExpression text, Consumer<String> errorConsumer) {
     XDebuggerTree tree = valueNode.getTree();
     Project project = tree.getProject();
     XValueModifier modifier = valueNode.getValueContainer().getModifier();

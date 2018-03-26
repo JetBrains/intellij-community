@@ -41,56 +41,48 @@ import org.jetbrains.jetCheck.Generator;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class InvokeIntention extends ActionOnRange {
+public class InvokeIntention extends ActionOnFile {
   private static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.propertyBased.InvokeIntention");
-  private final int myIntentionIndex;
   private final IntentionPolicy myPolicy;
-  private String myInvocationLog = "not invoked";
 
-  public InvokeIntention(PsiFile file, int offset, int intentionIndex, IntentionPolicy policy) {
-    super(file, offset, offset);
-    myIntentionIndex = intentionIndex;
+  public InvokeIntention(PsiFile file, IntentionPolicy policy) {
+    super(file);
     myPolicy = policy;
   }
 
-  @NotNull
-  public static Generator<InvokeIntention> randomIntentions(@NotNull PsiFile psiFile, @NotNull IntentionPolicy policy) {
-    return Generator.zipWith(Generator.integers(0, psiFile.getTextLength()), Generator.integers(0, 100),
-                             (offset, index) -> new InvokeIntention(psiFile, offset, index, policy)).noShrink();
-  }
-
   @Override
-  public String toString() {
-    return "InvokeIntention{" + getVirtualFile().getPath() + ", " + myInvocationLog + "}";
+  public void performCommand(@NotNull Environment env) {
+    int offset = generateDocOffset(env, "Go to offset %s and run daemon");
+
+    doInvokeIntention(offset, actions -> {
+      if (actions.isEmpty()) {
+        env.logMessage("No intentions found");
+        return null;
+      }
+
+      IntentionAction result = env.generateValue(Generator.sampledFrom(actions).noShrink(), null);
+      env.logMessage("Invoke intention '" + result.getText() + "'");
+      return result;
+    }, env);
   }
 
-  @Override
-  public String getConstructorArguments() {
-    return "file, " + myInitialStart + "," + myIntentionIndex + ", intentionPolicy";
-  }
-
-  public void performAction() {
-    int offset = getFinalStartOffset();
-    myInvocationLog = "offset " + offset;
-    if (offset < 0) return;
-
+  private void doInvokeIntention(int offset, Function<List<IntentionAction>, IntentionAction> intentionChooser, @Nullable Environment env) {
     Project project = getProject();
     Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, getVirtualFile(), offset), true);
 
     boolean hasErrors = !highlightErrors(project, editor).isEmpty();
 
     PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, getProject());
-    IntentionAction intention = getRandomIntention(editor, file);
-    if (intention == null) {
-      myInvocationLog += ", no intentions found after highlighting";
-      return;
-    }
-    myInvocationLog += ", invoked '" + intention.getText() + "'";
+    IntentionAction intention = intentionChooser.apply(getAvailableIntentions(editor, file));
+    if (intention == null) return;
+
     String intentionString = intention.toString();
 
-    boolean checkComments = myPolicy.checkComments(intention) && PsiTreeUtil.getParentOfType(file.findElementAt(offset), PsiComment.class, false) == null;
+    boolean checkComments = myPolicy.checkComments(intention) && PsiTreeUtil
+                                                                   .getParentOfType(file.findElementAt(offset), PsiComment.class, false) == null;
     Collection<String> comments = checkComments
                                   ? extractCommentsReformattedToSingleWhitespace(file)
                                   : Collections.emptyList();
@@ -108,7 +100,7 @@ public class InvokeIntention extends ActionOnRange {
         r.run();
       }
 
-      if (changedDocument != null && 
+      if (changedDocument != null &&
           PsiDocumentManager.getInstance(project).isDocumentBlockedByPsi(changedDocument)) {
         throw new AssertionError("Document is left blocked by PSI");
       }
@@ -137,7 +129,10 @@ public class InvokeIntention extends ActionOnRange {
       }
     }
     catch (Throwable error) {
-      LOG.debug("Error occurred in " + this + ", text before:\n" + textBefore);
+      LOG.debug("Error occurred, text before intention invocation:\n" + textBefore);
+      if (env != null) {
+        env.logMessage("Error happened, the file's text before invoking printed to the debug log, search for 'text before intention invocation' there");
+      }
       throw error;
     }
   }
@@ -176,16 +171,17 @@ public class InvokeIntention extends ActionOnRange {
   }
 
   @Nullable
-  private IntentionAction getRandomIntention(Editor editor, PsiFile file) {
-    List<IntentionAction> actions = ContainerUtil.filter(CodeInsightTestFixtureImpl.getAvailableIntentions(editor, file), myPolicy::mayInvokeIntention);
-    if (actions.isEmpty()) return null;
-    
+  private List<IntentionAction> getAvailableIntentions(Editor editor, PsiFile file) {
+    List<IntentionAction> actions =
+      ContainerUtil.filter(CodeInsightTestFixtureImpl.getAvailableIntentions(editor, file), myPolicy::mayInvokeIntention);
+    if (actions.isEmpty()) return Collections.emptyList();
+
     // skip only after checking intentions for applicability, to catch possible exceptions from them
     int offset = editor.getCaretModel().getOffset();
     if (MadTestingUtil.isAfterError(file, offset) || MadTestingUtil.isAfterError(file, offset - 1)) {
-      return null;
+      return Collections.emptyList();
     }
-    
-    return actions.get(myIntentionIndex % actions.size());
+
+    return actions;
   }
 }

@@ -39,7 +39,7 @@ import com.intellij.psi.impl.file.PsiFileImplUtil;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
-import com.intellij.psi.impl.source.text.BlockSupportImpl;
+import com.intellij.psi.impl.BlockSupportImpl;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -49,6 +49,7 @@ import com.intellij.psi.stubs.*;
 import com.intellij.psi.tree.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.reference.SoftReference;
+import com.intellij.testFramework.ReadOnlyLightVirtualFile;
 import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
@@ -174,10 +175,14 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return derefTreeElement() != null;
   }
 
+  protected void assertReadAccessAllowed() {
+    if (myViewProvider.getVirtualFile() instanceof ReadOnlyLightVirtualFile) return;
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+  }
+
   @NotNull
   private FileElement loadTreeElement() {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
-
+    assertReadAccessAllowed();
     final FileViewProvider viewProvider = getViewProvider();
     if (viewProvider.isPhysical() && myManager.isAssertOnFileLoading(viewProvider.getVirtualFile())) {
       LOG.error("Access to tree elements not allowed in tests. path='" + viewProvider.getVirtualFile().getPresentableUrl()+"'");
@@ -428,7 +433,6 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   @Override
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     checkSetName(name);
-    doClearCaches("setName");
     return PsiFileImplUtil.setName(this, name);
   }
 
@@ -586,8 +590,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   public void onContentReload() {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
-    DebugUtil.startPsiModification("onContentReload");
-    try {
+    DebugUtil.performPsiModification("onContentReload", () -> {
       synchronized (myPsiLock) {
         myRefToPsi.invalidatePsi();
 
@@ -599,10 +602,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
         updateTrees(myTrees.clearStub("onContentReload"));
         setTreeElementPointer(null);
       }
-    }
-    finally {
-      DebugUtil.finishPsiModification();
-    }
+    });
     clearCaches();
   }
 
@@ -635,7 +635,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   @Override
   @Nullable
   public StubTree getStubTree() {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
+    assertReadAccessAllowed();
 
     if (myTrees.astLoaded && !mayReloadStub()) return null;
     if (Boolean.TRUE.equals(getUserData(BUILDING_STUB))) return null;
@@ -654,13 +654,13 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     final List<Pair<IStubFileElementType, PsiFile>> roots = StubTreeBuilder.getStubbedRoots(viewProvider);
 
     synchronized (myPsiLock) {
-      if (getTreeElement() != null || hasUnbindableCachedPsi()) return null;
+      if (!mayLoadExclusiveStub()) return null;
 
       final StubTree derefdOnLock = derefStub();
       if (derefdOnLock != null) return derefdOnLock;
 
-      PsiFileStub baseRoot = ((StubTree)tree).getRoot();
-      if (baseRoot instanceof PsiFileStubImpl && !((PsiFileStubImpl)baseRoot).rootsAreSet()) {
+      PsiFileStubImpl baseRoot = (PsiFileStubImpl)((StubTree)tree).getRoot();
+      if (!baseRoot.rootsAreSet()) {
         LOG.error("Stub roots must be set when stub tree was read or built with StubTreeLoader");
         return null;
       }
@@ -680,10 +680,17 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
       // now stubs can be safely published
       for (PsiFileImpl eachPsiRoot : bindings.keySet()) {
-        eachPsiRoot.updateTrees(eachPsiRoot.myTrees.withExclusiveStub(bindings.get(eachPsiRoot), bindings.keySet()));
+        FileTrees trees = eachPsiRoot.myTrees;
+        StubTree stub = bindings.get(eachPsiRoot);
+        FileElement ast = trees.derefTreeElement();
+        eachPsiRoot.updateTrees(ast == null ? trees.withExclusiveStub(stub, bindings.keySet()) : trees.withGreenStub(stub, eachPsiRoot));
       }
       return result;
     }
+  }
+
+  private boolean mayLoadExclusiveStub() {
+    return getTreeElement() == null && !hasUnbindableCachedPsi();
   }
 
   private static Map<PsiFileImpl, StubTree> prepareAllStubTrees(List<Pair<IStubFileElementType, PsiFile>> roots, PsiFileStub[] rootStubs) {
@@ -701,7 +708,8 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
         // Even if that file already has AST, stub.getPsi() should be the same as in AST
         TreeUtil.bindStubsToTree(stubTree, fileElement);
         eachPsiRoot.myRefToPsi.clearStubIndexCache();
-      } else {
+        bindings.put(eachPsiRoot, stubTree);
+      } else if (eachPsiRoot.derefStub() == null && eachPsiRoot.mayLoadExclusiveStub()) {
         eachPsiRoot.bindStubsToCachedPsi(stubTree);
         bindings.put(eachPsiRoot, stubTree);
       }
@@ -1033,7 +1041,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       tree = derefStub();
 
       if (tree == null) {
-        ApplicationManager.getApplication().assertReadAccessAllowed();
+        assertReadAccessAllowed();
         IStubFileElementType contentElementType = getElementTypeForStubBuilder();
         if (contentElementType == null) {
           VirtualFile vFile = getVirtualFile();
@@ -1118,7 +1126,9 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   private void checkWritable() {
     PsiDocumentManager docManager = PsiDocumentManager.getInstance(getProject());
-    if (docManager instanceof PsiDocumentManagerBase && !((PsiDocumentManagerBase)docManager).isCommitInProgress() && !(myViewProvider instanceof FreeThreadedFileViewProvider)) {
+    if (docManager instanceof PsiDocumentManagerBase &&
+        !((PsiDocumentManagerBase)docManager).isCommitInProgress() &&
+        !(myViewProvider instanceof FreeThreadedFileViewProvider)) {
       CheckUtil.checkWritable(this);
     }
   }

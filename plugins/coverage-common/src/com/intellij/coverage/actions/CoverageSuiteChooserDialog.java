@@ -12,11 +12,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
-import java.util.HashMap;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -268,6 +268,9 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
           }
         }, myProject, null);
       if (file != null) {
+        //ensure timestamp in vfs is updated
+        VfsUtil.markDirtyAndRefresh(false, false, false, file);
+        
         final CoverageRunner coverageRunner = getCoverageRunner(file);
         if (coverageRunner == null) {
           Messages.showErrorDialog(myProject, "No coverage runner available for " + file.getName(), CommonBundle.getErrorTitle());

@@ -56,6 +56,11 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       // (e.g. during StateMerger#mergeByFacts), so we try to restore the original destination.
       dfaDest = instruction.getAssignedValue();
     }
+    if (dfaSource == dfaDest) {
+      memState.push(dfaDest);
+      return nextInstruction(instruction, runner, memState);
+    }
+    memState.dropFact(dfaSource, DfaFactType.LOCALITY);
 
     PsiExpression lValue = PsiUtil.skipParenthesizedExprDown(instruction.getLExpression());
     PsiExpression rValue = instruction.getRExpression();
@@ -71,9 +76,12 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     if (dfaDest instanceof DfaVariableValue) {
       DfaVariableValue var = (DfaVariableValue) dfaDest;
 
-      final PsiModifierListOwner psi = var.getPsiVariable();
+      PsiModifierListOwner psi = var.getPsiVariable();
       boolean forceDeclaredNullity = !(psi instanceof PsiParameter && psi.getParent() instanceof PsiParameterList);
-      if (forceDeclaredNullity && var.getInherentNullability() == Nullness.NOT_NULL) {
+      if (psi instanceof PsiField && !psi.hasModifierProperty(PsiModifier.FINAL) && var.getInherentNullability() == Nullness.UNKNOWN) {
+        checkNotNullable(memState, dfaSource, NullabilityProblemKind.assigningNullableValueToNonAnnotatedField.problem(rValue));        
+      }
+      else if (forceDeclaredNullity && var.getInherentNullability() == Nullness.NOT_NULL) {
         checkNotNullable(memState, dfaSource, kind.problem(rValue));
       }
       if (!(psi instanceof PsiField) || !psi.hasModifierProperty(PsiModifier.VOLATILE)) {
@@ -159,15 +167,10 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
     DfaValue result = instruction.getValue();
     LongRangeSet rangeSet = memState.getValueFact(index, DfaFactType.RANGE);
-    if (rangeSet != null && !rangeSet.isEmpty() && rangeSet.min() == rangeSet.max()) {
-      long longIdx = rangeSet.min();
-      if(longIdx >= 0 && longIdx <= Integer.MAX_VALUE) {
-        int intIdx = (int)longIdx;
-        DfaValue arrayElementValue = runner.getFactory().getExpressionFactory().getArrayElementValue(array, intIdx);
-        if (arrayElementValue != null) {
-          result = arrayElementValue;
-        }
-      }
+    DfaValue arrayElementValue =
+      runner.getFactory().getExpressionFactory().getArrayElementValue(array, rangeSet == null ? LongRangeSet.all() : rangeSet);
+    if (arrayElementValue != DfaUnknownValue.getInstance()) {
+      result = arrayElementValue;
     }
     memState.push(result);
     return nextInstruction(instruction, runner, memState);
@@ -201,9 +204,10 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     PsiMethod method = ObjectUtils.tryCast(resolveResult.getElement(), PsiMethod.class);
     if (method == null || !ControlFlowAnalyzer.isPure(method)) return;
     List<? extends MethodContract> contracts = ControlFlowAnalyzer.getMethodCallContracts(method, null);
-    if (contracts.isEmpty()) return;
     PsiSubstitutor substitutor = resolveResult.getSubstitutor();
     DfaCallArguments callArguments = getMethodReferenceCallArguments(methodRef, qualifier, runner, sam, method, substitutor);
+    dereference(state, callArguments.myQualifier, NullabilityProblemKind.callMethodRefNPE.problem(methodRef));
+    if (contracts.isEmpty()) return;
     PsiType returnType = substitutor.substitute(method.getReturnType());
     DfaValue defaultResult = runner.getFactory().createTypeValue(returnType, DfaPsiUtil.getElementNullability(returnType, method));
     Stream<DfaValue> returnValues = possibleReturnValues(callArguments, state, contracts, runner.getFactory(), defaultResult);
@@ -334,10 +338,10 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   }
 
   @NotNull
-  private DfaCallArguments popCall(MethodCallInstruction instruction,
-                                   DataFlowRunner runner,
-                                   DfaMemoryState memState,
-                                   boolean contractOnly) {
+  protected DfaCallArguments popCall(MethodCallInstruction instruction,
+                                     DataFlowRunner runner,
+                                     DfaMemoryState memState,
+                                     boolean contractOnly) {
     PsiMethod method = instruction.getTargetMethod();
     MutationSignature sig = MutationSignature.fromMethod(method);
     DfaValue[] argValues = popCallArguments(instruction, runner, memState, contractOnly, sig);
@@ -374,6 +378,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       DfaValue arg = memState.pop();
       int paramIndex = argCount - i - 1;
 
+      memState.dropFact(arg, DfaFactType.LOCALITY);
       PsiElement anchor = instruction.getArgumentAnchor(paramIndex);
       Nullness requiredNullability = instruction.getArgRequiredNullability(paramIndex);
       if (requiredNullability == Nullness.NOT_NULL) {
@@ -563,7 +568,9 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
   protected boolean checkNotNullable(DfaMemoryState state, DfaValue value, @Nullable NullabilityProblemKind.NullabilityProblem<?> problem) {
     boolean notNullable = state.checkNotNullable(value);
-    if (notNullable && !NullabilityProblemKind.passingNullableArgumentToNonAnnotatedParameter.isMyProblem(problem)) {
+    if (notNullable && 
+        !NullabilityProblemKind.passingNullableArgumentToNonAnnotatedParameter.isMyProblem(problem) &&
+        !NullabilityProblemKind.assigningNullableValueToNonAnnotatedField.isMyProblem(problem)) {
       DfaValueFactory factory = ((DfaMemoryStateImpl)state).getFactory();
       state.applyCondition(factory.createCondition(value, RelationType.NE, factory.getConstFactory().getNull()));
     }
@@ -596,46 +603,23 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       }
     }
     DfaValue result = null;
-    if (JavaTokenType.AND == opSign) {
+    PsiElement expr = instruction.getPsiAnchor();
+    PsiType type = expr instanceof PsiExpression ? ((PsiExpression)expr).getType() : null;
+    if (PsiType.INT.equals(type) || PsiType.LONG.equals(type)) {
       LongRangeSet left = memState.getValueFact(dfaLeft, DfaFactType.RANGE);
       LongRangeSet right = memState.getValueFact(dfaRight, DfaFactType.RANGE);
-      if(left != null && right != null) {
-        result = runner.getFactory().getFactValue(DfaFactType.RANGE, left.bitwiseAnd(right));
-      }
-    }
-    else if (JavaTokenType.PERC == opSign) {
-      LongRangeSet left = memState.getValueFact(dfaLeft, DfaFactType.RANGE);
-      LongRangeSet right = memState.getValueFact(dfaRight, DfaFactType.RANGE);
-      if(left != null && right != null) {
-        result = runner.getFactory().getFactValue(DfaFactType.RANGE, left.mod(right));
-      }
-    }
-    else if (JavaTokenType.PLUS == opSign) {
-      PsiElement expr = instruction.getPsiAnchor();
-      PsiType type = expr instanceof PsiExpression ? ((PsiExpression)expr).getType() : null;
-      if(PsiType.INT.equals(type) || PsiType.LONG.equals(type)) {
-        LongRangeSet left = memState.getValueFact(dfaLeft, DfaFactType.RANGE);
-        LongRangeSet right = memState.getValueFact(dfaRight, DfaFactType.RANGE);
-        if(left != null && right != null) {
-          result = runner.getFactory().getFactValue(DfaFactType.RANGE, left.plus(right, PsiType.LONG.equals(type)));
+      if (left != null && right != null) {
+        LongRangeSet resultRange = left.binOpFromToken(opSign, right, PsiType.LONG.equals(type));
+        if (resultRange != null) {
+          result = runner.getFactory().getFactValue(DfaFactType.RANGE, resultRange);
         }
-      } else {
+      }
+    }
+    if (result == null) {
+      if (JavaTokenType.PLUS == opSign && !(type instanceof PsiPrimitiveType)) {
         result = instruction.getNonNullStringValue(runner.getFactory());
       }
-    }
-    else if (JavaTokenType.MINUS == opSign) {
-      PsiElement expr = instruction.getPsiAnchor();
-      PsiType type = expr instanceof PsiExpression ? ((PsiExpression)expr).getType() : null;
-      if (PsiType.INT.equals(type) || PsiType.LONG.equals(type)) {
-        LongRangeSet left = memState.getValueFact(dfaLeft, DfaFactType.RANGE);
-        LongRangeSet right = memState.getValueFact(dfaRight, DfaFactType.RANGE);
-        if (left != null && right != null) {
-          result = runner.getFactory().getFactValue(DfaFactType.RANGE, left.minus(right, PsiType.LONG.equals(type)));
-        }
-      }
-    }
-    else {
-      if (instruction instanceof InstanceofInstruction) {
+      else if (instruction instanceof InstanceofInstruction) {
         handleInstanceof((InstanceofInstruction)instruction, dfaRight, dfaLeft);
       }
     }

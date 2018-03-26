@@ -130,7 +130,7 @@ public class UtilityClassWithoutPrivateConstructorInspection extends UtilityClas
       final PsiMethod[] constructors = aClass.getConstructors();
       for (final PsiMethod constructor : constructors) {
         final PsiParameterList parameterList = constructor.getParameterList();
-        if (parameterList.getParametersCount() == 0) {
+        if (parameterList.isEmpty()) {
           final PsiModifierList modifiers = constructor.getModifierList();
           modifiers.setModifierProperty(PsiModifier.PUBLIC, false);
           modifiers.setModifierProperty(PsiModifier.PROTECTED, false);

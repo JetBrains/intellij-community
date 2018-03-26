@@ -1,25 +1,12 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.openapi.editor.Editor;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilCore;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -28,20 +15,23 @@ public final class CompletionParameters {
   private final PsiElement myPosition;
   private final PsiFile myOriginalFile;
   private final CompletionType myCompletionType;
-  private final Editor myEditor;
+  @NotNull private final Editor myEditor;
   private final int myOffset;
   private final int myInvocationCount;
+  private final CompletionProcess myProcess;
 
   CompletionParameters(@NotNull final PsiElement position, @NotNull final PsiFile originalFile,
-                       @NotNull CompletionType completionType, int offset, final int invocationCount, @NotNull Editor editor) {
+                       @NotNull CompletionType completionType, int offset, int invocationCount, @NotNull Editor editor,
+                       @NotNull CompletionProcess process) {
+    PsiUtilCore.ensureValid(position);
     assert position.getTextRange().containsOffset(offset) : position;
     myPosition = position;
-    assert position.isValid();
     myOriginalFile = originalFile;
     myCompletionType = completionType;
     myOffset = offset;
     myInvocationCount = invocationCount;
     myEditor = editor;
+    myProcess = process;
   }
 
   @NotNull
@@ -51,12 +41,12 @@ public final class CompletionParameters {
 
   @NotNull
   public CompletionParameters withType(@NotNull CompletionType type) {
-    return new CompletionParameters(myPosition, myOriginalFile, type, myOffset, myInvocationCount, myEditor);
+    return new CompletionParameters(myPosition, myOriginalFile, type, myOffset, myInvocationCount, myEditor, myProcess);
   }
 
   @NotNull
   public CompletionParameters withInvocationCount(int newCount) {
-    return new CompletionParameters(myPosition, myOriginalFile, myCompletionType, myOffset, newCount, myEditor);
+    return new CompletionParameters(myPosition, myOriginalFile, myCompletionType, myOffset, newCount, myEditor, myProcess);
   }
 
   @NotNull
@@ -99,15 +89,23 @@ public final class CompletionParameters {
 
   @NotNull
   public CompletionParameters withPosition(@NotNull PsiElement element, int offset) {
-    return new CompletionParameters(element, myOriginalFile, myCompletionType, offset, myInvocationCount, myEditor);
+    return new CompletionParameters(element, myOriginalFile, myCompletionType, offset, myInvocationCount, myEditor, myProcess);
   }
 
   public boolean isExtendedCompletion() {
     return myCompletionType == CompletionType.BASIC && myInvocationCount >= 2;
   }
 
+  /**
+   * @return the editor where the completion was started
+   */
   @NotNull
   public Editor getEditor() {
     return myEditor;
+  }
+
+  @NotNull
+  public CompletionProcess getProcess() {
+    return myProcess;
   }
 }

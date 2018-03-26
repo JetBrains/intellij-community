@@ -166,7 +166,7 @@ public class PythonStringUtil {
         }
       }
       if (flag) {
-        StringBuilder res = new StringBuilder("");
+        StringBuilder res = new StringBuilder();
         for (int j = 0; j <= i; j++) {
           if (j > 0) {
             res.append(".");

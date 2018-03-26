@@ -48,11 +48,11 @@ import java.awt.event.ActionListener;
 public final class StringEditor extends PropertyEditor<StringDescriptor> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.propertyInspector.editors.string.StringEditor");
 
-  @Nullable private IntroStringProperty myProperty;
+  @Nullable private final IntroStringProperty myProperty;
   private final TextFieldWithBrowseButton myTfWithButton;
   /* Initial value of string property that was passed into getComponent() method */
   private StringDescriptor myValue;
-  private Project myProject;
+  private final Project myProject;
   private RadComponent myComponent;
   private boolean myTextFieldModified = false;
 

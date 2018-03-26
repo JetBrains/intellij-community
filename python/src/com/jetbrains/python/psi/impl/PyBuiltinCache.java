@@ -34,12 +34,13 @@ import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
 import com.jetbrains.python.psi.resolve.PythonSdkPathCache;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.sdk.PythonSdkType;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
@@ -52,8 +53,6 @@ public class PyBuiltinCache {
   private static final String EXCEPTIONS_FILE = "exceptions.py";
 
   private static final PyBuiltinCache DUD_INSTANCE = new PyBuiltinCache(null, null);
-
-  private static final int MAX_ANALYZED_ELEMENTS_OF_LITERALS = 10; /* performance */
 
   /**
    * Stores the most often used types, returned by getNNNType().
@@ -162,84 +161,9 @@ public class PyBuiltinCache {
   public PyType createLiteralCollectionType(final PySequenceExpression sequence, final String name, @NotNull TypeEvalContext context) {
     final PyClass cls = getClass(name);
     if (cls != null) {
-      return new PyCollectionTypeImpl(cls, false, getSequenceElementTypes(sequence, context));
+      return new PyCollectionTypeImpl(cls, false, PyCollectionTypeUtil.INSTANCE.getTypeByModifications(sequence, context));
     }
     return null;
-  }
-
-  @NotNull
-  private static List<PyType> getSequenceElementTypes(@NotNull PySequenceExpression sequence, @NotNull TypeEvalContext context) {
-    if (sequence instanceof PyListLiteralExpression || sequence instanceof PySetLiteralExpression) {
-      return Collections.singletonList(getListOrSetIteratedValueType(sequence.getElements(), context));
-    }
-    else if (sequence instanceof PyDictLiteralExpression) {
-      return getDictElementTypes(sequence.getElements(), context);
-    }
-    else {
-      return Collections.singletonList(null);
-    }
-  }
-
-  @Nullable
-  private static PyType getListOrSetIteratedValueType(@NotNull PyExpression[] elements, @NotNull TypeEvalContext context) {
-    final int maxAnalyzedElements = Math.min(MAX_ANALYZED_ELEMENTS_OF_LITERALS, elements.length);
-
-    final PyType analyzedElementsType = StreamEx
-      .of(elements, 0, maxAnalyzedElements)
-      .map(context::getType)
-      .toListAndThen(PyUnionType::union);
-
-    if (elements.length > maxAnalyzedElements) {
-      return PyUnionType.createWeakType(analyzedElementsType);
-    }
-    else {
-      return analyzedElementsType;
-    }
-  }
-
-  @NotNull
-  private static List<PyType> getDictElementTypes(@NotNull PyExpression[] elements, @NotNull TypeEvalContext context) {
-    final int maxAnalyzedElements = Math.min(MAX_ANALYZED_ELEMENTS_OF_LITERALS, elements.length);
-
-    final List<PyType> keyTypes = new ArrayList<>();
-    final List<PyType> valueTypes = new ArrayList<>();
-
-    StreamEx
-      .of(elements, 0, maxAnalyzedElements)
-      .map(element -> as(context.getType(element), PyTupleType.class))
-      .forEach(
-        tupleType -> {
-          if (tupleType != null) {
-            final List<PyType> tupleElementTypes = tupleType.getElementTypes();
-
-            if (tupleType.isHomogeneous()) {
-              final PyType keyAndValueType = tupleType.getIteratedItemType();
-
-              keyTypes.add(keyAndValueType);
-              valueTypes.add(keyAndValueType);
-            }
-            else if (tupleElementTypes.size() == 2) {
-              keyTypes.add(tupleElementTypes.get(0));
-              valueTypes.add(tupleElementTypes.get(1));
-            }
-            else {
-              keyTypes.add(null);
-              valueTypes.add(null);
-            }
-          }
-          else {
-            keyTypes.add(null);
-            valueTypes.add(null);
-          }
-        }
-      );
-
-    if (elements.length > maxAnalyzedElements) {
-      keyTypes.add(null);
-      valueTypes.add(null);
-    }
-
-    return Arrays.asList(PyUnionType.union(keyTypes), PyUnionType.union(valueTypes));
   }
 
   @Nullable

@@ -51,7 +51,7 @@ public class MethodUsagesSearcher extends QueryExecutorBase<PsiReference, Method
       methodName[0] = method.getName();
       isValueAnnotation[0] = PsiUtil.isAnnotationMethod(method) &&
                              PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.equals(methodName[0]) &&
-                             method.getParameterList().getParametersCount() == 0;
+                             method.getParameterList().isEmpty();
       needStrictSignatureSearch[0] = strictSignatureSearch && (aClass1 instanceof PsiAnonymousClass
                                                                || aClass1.hasModifierProperty(PsiModifier.FINAL)
                                                                || method.hasModifierProperty(PsiModifier.STATIC)

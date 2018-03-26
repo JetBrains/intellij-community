@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.typeMigration.rules.guava;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -55,7 +41,7 @@ public class GuavaPredicatesUtil {
       return new TypeConversionDescriptorWithLocalVariable("equalTo", "$x$ -> java.util.Objects.equals($x$, $v$)");
     }
     if (!isConvertablePredicatesMethod(method, (PsiMethodCallExpression)context)) return null;
-    if (((PsiMethodCallExpression)context).getArgumentList().getExpressions().length == 0) {
+    if (((PsiMethodCallExpression)context).getArgumentList().isEmpty()) {
       return createConstantPredicate(name, name.equals("and"));
     }
     if (PREDICATES_AND_OR.contains(name) && canMigrateAndOrOr((PsiMethodCallExpression)context)) {
@@ -76,7 +62,7 @@ public class GuavaPredicatesUtil {
     private final String myReplaceByStringTemplate;
 
     TypeConversionDescriptorWithLocalVariable(String methodName, String replaceByString) {
-      super("'Predicates*." + methodName + "(" + (methodName.equals("equalTo") ? "$v$" : "") + ")", null);
+      super("'_Predicates?." + methodName + "(" + (methodName.equals("equalTo") ? "$v$" : "") + ")", null);
       myReplaceByStringTemplate = replaceByString;
     }
 
@@ -120,7 +106,7 @@ public class GuavaPredicatesUtil {
     if (method == null) return false;
     final PsiParameterList parameters = method.getParameterList();
     if (parameters.getParametersCount() != 1) {
-      return parameters.getParametersCount() != 0;
+      return !parameters.isEmpty();
     }
     final PsiParameter parameter = parameters.getParameters()[0];
     final PsiType type = parameter.getType();

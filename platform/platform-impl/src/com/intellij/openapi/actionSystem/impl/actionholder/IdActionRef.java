@@ -18,7 +18,7 @@ package com.intellij.openapi.actionSystem.impl.actionholder;
 import com.intellij.openapi.actionSystem.AnAction;
 
 class IdActionRef<T extends AnAction> extends ActionRef<T> {
-  private String myId;
+  private final String myId;
 
   public IdActionRef(String id) {
     myId = id;

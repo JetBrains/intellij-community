@@ -1,6 +1,5 @@
 package org.jetbrains.intellij.build.pycharm.edu
 
-import com.intellij.util.SystemProperties
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.pycharm.PyCharmMacDistributionCustomizer
 import org.jetbrains.intellij.build.pycharm.PyCharmPropertiesBase
@@ -10,22 +9,24 @@ import org.jetbrains.intellij.build.pycharm.PyCharmWindowsDistributionCustomizer
  */
 class PyCharmEduProperties extends PyCharmPropertiesBase {
   private final String pythonCommunityPath
+  private final String dependenciesPath
 
   PyCharmEduProperties(String home) {
     pythonCommunityPath = new File(home, "community/python").exists() ? "$home/community/python" : "$home/python"
+    dependenciesPath = new File(home, "community/edu/dependencies").exists() ? "$home/community/edu/dependencies" : "$home/edu/dependencies"
     productCode = "PE"
     platformPrefix = "PyCharmEdu"
-    applicationInfoModule = "educational-python"
+    applicationInfoModule = "intellij.pycharm.edu"
     brandingResourcePaths = ["$pythonCommunityPath/educational-python/resources"]
 
-    productLayout.mainModules = ["main_pycharm_edu"]
-    productLayout.platformApiModules = CommunityRepositoryModules.PLATFORM_API_MODULES + ["dom-openapi"]
+    productLayout.mainModules = ["intellij.pycharm.edu.main"]
+    productLayout.platformApiModules = CommunityRepositoryModules.PLATFORM_API_MODULES + ["intellij.xml.dom"]
     productLayout.platformImplementationModules = CommunityRepositoryModules.PLATFORM_IMPLEMENTATION_MODULES + [
-      "dom-impl", "python-community", "python-community-ide-resources",
-      "python-community-ide", "python-community-configure", "educational-python", "python-openapi", "python-psi-api", "platform-main"
+      "intellij.xml.dom.impl", "intellij.python.community.impl", "intellij.pycharm.community.resources",
+      "intellij.pycharm.community", "intellij.python.configure", "intellij.pycharm.edu", "intellij.python.community", "intellij.python.psi", "intellij.platform.main"
     ]
     productLayout.bundledPluginModules = new File("$pythonCommunityPath/educational-python/build/plugin-list.txt").readLines()
-    additionalIDEPropertiesFilePaths = ["$home/community/python/educational-python/build/pycharm-edu.properties".toString()]
+    additionalIDEPropertiesFilePaths = ["$pythonCommunityPath/educational-python/build/pycharm-edu.properties".toString()]
   }
 
   @Override
@@ -36,22 +37,7 @@ class PyCharmEduProperties extends PyCharmPropertiesBase {
       fileset(file: "$context.paths.communityHome/NOTICE.txt")
     }
 
-    copyEduToolsPlugin(context, targetDirectory)
-  }
-
-  private void copyEduToolsPlugin(BuildContext context, String targetDirectory) {
-    def dependenciesProjectDir = new File("$pythonCommunityPath/educational-python/build/dependencies")
-    new GradleRunner(dependenciesProjectDir, context.messages, SystemProperties.getJavaHome()).run("Downloading EduTools plugin...", "setupEduPlugin")
-    Properties properties = new Properties()
-    new File(dependenciesProjectDir, "gradle.properties").withInputStream {
-      properties.load(it)
-    }
-
-    def pluginZip = new File("${dependenciesProjectDir.absolutePath}/build/edu/EduTools-${properties.getProperty("eduPluginVersion")}.zip")
-    if (!pluginZip.exists()) {
-      throw new IllegalStateException("EduTools bundled plugin is not found. Plugin path:${pluginZip.canonicalPath}")
-    }
-    context.ant.unzip(src: pluginZip, dest: "$targetDirectory/plugins/")
+    EduUtils.copyEduToolsPlugin(dependenciesPath, context, targetDirectory)
   }
 
   @Override
@@ -112,7 +98,7 @@ class PyCharmEduProperties extends PyCharmPropertiesBase {
       {
         icnsPath = "$pythonCommunityPath/educational-python/resources/PyCharmEdu.icns"
         bundleIdentifier = "com.jetbrains.pycharm"
-        dmgImagePath = "$pythonCommunityPath/educational-python/build/DMG_background.png"
+        dmgImagePath = "$pythonCommunityPath/educational-python/build/dmg_background.tiff"
       }
 
       @Override

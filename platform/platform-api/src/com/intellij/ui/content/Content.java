@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.content;
 
 import com.intellij.openapi.Disposable;
@@ -14,6 +12,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.beans.PropertyChangeListener;
 
 /**
@@ -30,9 +29,11 @@ public interface Content extends UserDataHolder, ComponentContainer {
   @NonNls String PROP_DESCRIPTION = "description";
   @NonNls 
   String PROP_COMPONENT = "component";
+  String IS_CLOSABLE = "isClosable";
 
   Key<Boolean> TABBED_CONTENT_KEY = Key.create("tabbedContent");
   Key<String> TAB_GROUP_NAME_KEY = Key.create("tabbedGroupName");
+  Key<ComponentOrientation> TAB_LABEL_ORIENTATION_KEY = Key.create("tabLabelComponentOrientation");
 
   String PROP_ALERT = "alerting";
 

@@ -4,7 +4,7 @@ import java.awt.*;
 import java.util.List;
 
 public class Main {
-  private static Point ZERO = new Point(0, 0);
+  private static final Point ZERO = new Point(0, 0);
 
   public static Point find(List<Point> points) {
     for (Point pt : point<caret>s) {

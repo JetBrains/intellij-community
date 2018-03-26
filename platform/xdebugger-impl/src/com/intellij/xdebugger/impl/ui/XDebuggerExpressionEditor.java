@@ -1,12 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -55,6 +52,7 @@ public class XDebuggerExpressionEditor extends XDebuggerEditorBase {
         editor.setHorizontalScrollbarVisible(multiline);
         editor.setVerticalScrollbarVisible(multiline);
         editor.getSettings().setUseSoftWraps(isUseSoftWraps());
+        editor.getSettings().setLineCursorWidth(EditorUtil.getDefaultCaretWidth());
         editor.getColorsScheme().setEditorFontName(getFont().getFontName());
         editor.getColorsScheme().setEditorFontSize(getFont().getSize());
         if (multiline) {
@@ -86,11 +84,8 @@ public class XDebuggerExpressionEditor extends XDebuggerEditorBase {
     }
 
     if (multiline) {
-      DumbAwareAction.create(e -> goForward()).registerCustomShortcutSet(
-        ActionManager.getInstance().getAction(IdeActions.ACTION_NEXT_OCCURENCE).getShortcutSet(), myEditorTextField);
-
-      DumbAwareAction.create(e -> goBackward()).registerCustomShortcutSet(
-        ActionManager.getInstance().getAction(IdeActions.ACTION_PREVIOUS_OCCURENCE).getShortcutSet(), myEditorTextField);
+      DumbAwareAction.create(e -> goForward()).registerCustomShortcutSet(CommonShortcuts.MOVE_UP, myEditorTextField);
+      DumbAwareAction.create(e -> goBackward()).registerCustomShortcutSet(CommonShortcuts.MOVE_DOWN, myEditorTextField);
     }
 
     myComponent = decorate(myEditorTextField, multiline, showEditor);

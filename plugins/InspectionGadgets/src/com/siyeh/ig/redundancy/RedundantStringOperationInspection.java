@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.redundancy;
 
+import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.project.Project;
@@ -8,7 +9,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
@@ -21,9 +21,15 @@ import java.util.List;
 import java.util.Objects;
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
+import static com.intellij.util.ObjectUtils.tryCast;
 import static com.siyeh.InspectionGadgetsBundle.BUNDLE;
 
 public class RedundantStringOperationInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
+  enum FixType {
+    REPLACE_WITH_QUALIFIER,
+    REPLACE_WITH_ARGUMENTS
+  }
+
   private static final CallMatcher STRING_TO_STRING = CallMatcher.instanceCall(JAVA_LANG_STRING, "toString").parameterCount(0);
   private static final CallMatcher STRING_INTERN = CallMatcher.instanceCall(JAVA_LANG_STRING, "intern").parameterCount(0);
   private static final CallMatcher STRING_LENGTH = CallMatcher.instanceCall(JAVA_LANG_STRING, "length").parameterCount(0);
@@ -67,9 +73,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       @Override
       public void visitNewExpression(PsiNewExpression expression) {
         PsiJavaCodeReferenceElement classRef = expression.getClassReference();
-        if (classRef == null) return;
-        String className = classRef.getQualifiedName();
-        if (CommonClassNames.JAVA_LANG_STRING_BUILDER.equals(className) || CommonClassNames.JAVA_LANG_STRING_BUFFER.equals(className)) {
+        if (ConstructionUtils.isReferenceTo(classRef, CommonClassNames.JAVA_LANG_STRING_BUILDER, CommonClassNames.JAVA_LANG_STRING_BUFFER)) {
           checkUnnecessaryEmptyStringArgument(expression);
         }
       }
@@ -94,24 +98,50 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
 
       private void processSubstring(PsiMethodCallExpression call) {
         PsiExpression[] args = call.getArgumentList().getExpressions();
-        if (!ExpressionUtils.isZero(args[0])) return;
-        if (args.length == 2) {
-          PsiMethodCallExpression argCall =
-            ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(args[1]), PsiMethodCallExpression.class);
-          if (!STRING_LENGTH.test(argCall) ||
-              !EquivalenceChecker.getCanonicalPsiEquivalence()
-                .expressionsAreEquivalent(call.getMethodExpression().getQualifierExpression(),
-                                          argCall.getMethodExpression().getQualifierExpression())) {
-            return;
-          }
+        PsiExpression stringExpression = call.getMethodExpression().getQualifierExpression();
+        switch (args.length) {
+          case 1:
+            if(ExpressionUtils.isZero(args[0])) {
+              registerProblem(call, "inspection.redundant.string.call.message");
+            }
+            break;
+          case 2:
+            if (isLengthOf(args[1], stringExpression)) {
+              if (ExpressionUtils.isZero(args[0])) {
+                registerProblem(call, "inspection.redundant.string.call.message");
+              } else {
+                DeleteElementFix fix =
+                  new DeleteElementFix(args[1], InspectionGadgetsBundle.message("inspection.redundant.string.remove.argument.fix.name"));
+                holder.registerProblem(args[1], InspectionGadgetsBundle.message("inspection.redundant.string.call.message"),
+                                       ProblemHighlightType.LIKE_UNUSED_SYMBOL, fix);
+              }
+            } else {
+              PsiElement parent = PsiUtil.skipParenthesizedExprUp(call.getParent());
+              if (parent instanceof PsiExpressionList && ((PsiExpressionList)parent).getExpressionCount() == 1) {
+                PsiMethodCallExpression parentCall = tryCast(parent.getParent(), PsiMethodCallExpression.class);
+                if (STRING_BUILDER_APPEND.test(parentCall)) {
+                  PsiElement nameElement = Objects.requireNonNull(call.getMethodExpression().getReferenceNameElement());
+                  holder.registerProblem(nameElement, InspectionGadgetsBundle.message("inspection.redundant.string.call.message"),
+                                         ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+                                         new RemoveRedundantStringCallFix(nameElement.getText(), FixType.REPLACE_WITH_ARGUMENTS));
+                }
+              }
+            }
+            break;
         }
-        registerProblem(call, "inspection.redundant.string.call.message");
+      }
+
+      private boolean isLengthOf(PsiExpression stringLengthCandidate, PsiExpression stringExpression) {
+        PsiMethodCallExpression argCall = tryCast(PsiUtil.skipParenthesizedExprDown(stringLengthCandidate), PsiMethodCallExpression.class);
+        return STRING_LENGTH.test(argCall) &&
+               EquivalenceChecker.getCanonicalPsiEquivalence()
+                                 .expressionsAreEquivalent(stringExpression, argCall.getMethodExpression().getQualifierExpression());
       }
 
       private void registerProblem(PsiMethodCallExpression call, @NotNull @PropertyKey(resourceBundle = BUNDLE) String key) {
         String name = call.getMethodExpression().getReferenceName();
-        holder.registerProblem(call, InspectionGadgetsBundle.message(key),
-                               ProblemHighlightType.LIKE_UNUSED_SYMBOL, getRange(call), new ReplaceWithQualifierFix(name));
+        holder.registerProblem(call, InspectionGadgetsBundle.message(key), ProblemHighlightType.LIKE_UNUSED_SYMBOL, getRange(call),
+                               new RemoveRedundantStringCallFix(name, FixType.REPLACE_WITH_QUALIFIER));
       }
     };
   }
@@ -127,11 +157,13 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     return call.getTextRange();
   }
 
-  private static class ReplaceWithQualifierFix implements LocalQuickFix {
-    private String myToRemove;
+  private static class RemoveRedundantStringCallFix implements LocalQuickFix {
+    private final FixType myFixType;
+    private final String myToRemove;
 
-    public ReplaceWithQualifierFix(String toRemove) {
+    public RemoveRedundantStringCallFix(String toRemove, FixType fixType) {
       myToRemove = toRemove;
+      myFixType = fixType;
     }
 
     @Nls
@@ -154,9 +186,22 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       if (call == null) return;
       PsiExpression qualifier = ExpressionUtils.getQualifierOrThis(call.getMethodExpression());
       CommentTracker ct = new CommentTracker();
-      PsiExpression result = (PsiExpression)ct.replaceAndRestoreComments(call, ct.markUnchanged(qualifier));
-      if (result.getParent() instanceof PsiExpressionStatement) {
-        extractSideEffects(result, (PsiExpressionStatement)result.getParent());
+      switch (myFixType) {
+        case REPLACE_WITH_QUALIFIER: {
+          PsiExpression result = (PsiExpression)ct.replaceAndRestoreComments(call, ct.markUnchanged(qualifier));
+          if (result.getParent() instanceof PsiExpressionStatement) {
+            extractSideEffects(result, (PsiExpressionStatement)result.getParent());
+          }
+          break;
+        }
+        case REPLACE_WITH_ARGUMENTS:
+          PsiExpressionList list = tryCast(PsiUtil.skipParenthesizedExprUp(call.getParent()), PsiExpressionList.class);
+          if (list == null) return;
+          for (PsiExpression arg : call.getArgumentList().getExpressions()) {
+            list.add(ct.markUnchanged(arg));
+          }
+          ct.replaceAndRestoreComments(call, ct.markUnchanged(qualifier));
+          break;
       }
     }
 

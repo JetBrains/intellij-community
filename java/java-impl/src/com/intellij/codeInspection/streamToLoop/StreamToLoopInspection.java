@@ -1,7 +1,10 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.streamToLoop;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.lang.java.lexer.JavaLexer;
@@ -47,8 +50,9 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
   // To quickly filter out most of the non-interesting method calls
   private static final Set<String> SUPPORTED_TERMINALS = ContainerUtil.set(
     "count", "sum", "summaryStatistics", "reduce", "collect", "findFirst", "findAny", "anyMatch", "allMatch", "noneMatch", "toArray",
-    "average", "forEach", "forEachOrdered", "min", "max", "toList", "toSet");
+    "average", "forEach", "forEachOrdered", "min", "max", "toList", "toSet", "toImmutableList", "toImmutableSet");
 
+  @SuppressWarnings("PublicField")
   public boolean SUPPORT_UNKNOWN_SOURCES = false;
 
   @Nullable
@@ -224,7 +228,7 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
   }
 
   static class ReplaceStreamWithLoopFix implements LocalQuickFix {
-    private String myMessage;
+    private final String myMessage;
 
     public ReplaceStreamWithLoopFix(String message) {
       myMessage = message;
@@ -498,6 +502,22 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
       return name;
     }
 
+    public boolean tryUnwrapOrElse(@NotNull Number wantedValue) {
+      if (!(myStreamExpression instanceof PsiExpression)) return false;
+      PsiMethodCallExpression call = ExpressionUtils.getCallForQualifier((PsiExpression)myStreamExpression);
+      if (call == null ||
+          call.getParent() instanceof PsiExpressionStatement ||
+          !"orElse".equals(call.getMethodExpression().getReferenceName())) {
+        return false;
+      }
+      PsiExpression[] args = call.getArgumentList().getExpressions();
+      if (args.length == 1 && wantedValue.equals(ExpressionUtils.computeConstantExpression(args[0]))) {
+        myStreamExpression = call;
+        return true;
+      }
+      return false;
+    }
+
     private static boolean isCompatibleType(@NotNull PsiVariable var, @NotNull PsiType type, @Nullable String mostAbstractAllowedType) {
       if (EquivalenceChecker.getCanonicalPsiEquivalence().typesAreEquivalent(var.getType(), type)) return true;
       if (mostAbstractAllowedType == null) return false;
@@ -633,7 +653,7 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
           }
         }
         if (candidate != null &&
-            (unwrapLazilyEvaluated || ExpressionUtils.isSimpleExpression(createExpression(candidate.getFalseBranch())))) {
+            (unwrapLazilyEvaluated || ExpressionUtils.isSafelyRecomputableExpression(createExpression(candidate.getFalseBranch())))) {
           myStreamExpression = parent;
           return candidate;
         }

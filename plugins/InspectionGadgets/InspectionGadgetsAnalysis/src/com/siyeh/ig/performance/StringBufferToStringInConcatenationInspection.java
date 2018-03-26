@@ -95,7 +95,7 @@ public class StringBufferToStringInConcatenationInspection extends BaseInspectio
         return;
       }
       final PsiParameterList parameterList = method.getParameterList();
-      if (parameterList.getParametersCount() != 0) {
+      if (!parameterList.isEmpty()) {
         return;
       }
       final PsiClass aClass = method.getContainingClass();

@@ -2,6 +2,7 @@
 package com.intellij.lang;
 
 import com.intellij.injected.editor.VirtualFileWindow;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -40,13 +41,17 @@ import java.util.*;
 /**
  * @author gregsh
  */
-public abstract class PerFileMappingsBase<T> implements PersistentStateComponent<Element>, PerFileMappings<T> {
+public abstract class PerFileMappingsBase<T> implements PersistentStateComponent<Element>, PerFileMappings<T>, Disposable {
 
   private final TreeMap<VirtualFile, T> myMappings = new TreeMap<>(
     (f1, f2) -> Comparing.compare(f1 == null ? null : f1.getUrl(), f2 == null ? null : f2.getUrl()));
 
   public PerFileMappingsBase() {
     installDeleteUndo();
+  }
+
+  @Override
+  public void dispose() {
   }
 
   @Nullable
@@ -112,7 +117,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
       if (t != null) return t;
       t = getMappingForHierarchy(originalFile, mappings);
       if (t != null) return t;
-      return getNotInHierarchy(file, mappings);
+      return getNotInHierarchy(originalFile != null ? originalFile : file, mappings);
     }
   }
 
@@ -209,14 +214,13 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
         return o1.getPath().compareTo(o2.getPath());
       });
       for (VirtualFile file : files) {
-        final T dialect = myMappings.get(file);
-        String value = serialize(dialect);
-        if (value != null) {
-          final Element child = new Element("file");
-          element.addContent(child);
-          child.setAttribute("url", file == null ? "PROJECT" : file.getUrl());
-          child.setAttribute(getValueAttribute(), value);
-        }
+        T dialect = myMappings.get(file);
+        String value = dialect == null ? null : serialize(dialect);
+        if (value == null) continue;
+        Element child = new Element("file");
+        element.addContent(child);
+        child.setAttribute("url", file == null ? "PROJECT" : file.getUrl());
+        child.setAttribute(getValueAttribute(), value);
       }
       return element;
     }
@@ -281,8 +285,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
   private void installDeleteUndo() {
     Application app = ApplicationManager.getApplication();
     if (app == null) return;
-    
-    app.getMessageBus().connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+    app.getMessageBus().connect(this).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       
       WeakReference<MyUndoableAction> lastAction;
       
@@ -290,14 +293,15 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
       public void before(@NotNull List<? extends VFileEvent> events) {
         if (CommandProcessor.getInstance().isUndoTransparentActionInProgress()) return;
         Project project = CommandProcessor.getInstance().getCurrentCommandProject();
-        UndoManager undoManager = (project != null ? UndoManager.getInstance(project) : UndoManager.getGlobalInstance());
-        if (project == null) return;
+        if (project == null || !project.isOpen()) return;
+
         MyUndoableAction action = createUndoableAction(events);
-        if (action != null) {
-          action.doRemove(action.removed);
-          lastAction = new WeakReference<>(action);
-          undoManager.undoableActionPerformed(action);
-        }
+        if (action == null) return;
+        
+        action.doRemove(action.removed);
+        lastAction = new WeakReference<>(action);
+        
+        UndoManager.getInstance(project).undoableActionPerformed(action);
       }
 
       @Override

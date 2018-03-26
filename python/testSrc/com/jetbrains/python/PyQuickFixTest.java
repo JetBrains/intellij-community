@@ -301,6 +301,16 @@ public class PyQuickFixTest extends PyTestCase {
     doInspectionTest(PyChainedComparisonsInspection.class, "Simplify chained comparison", true, true);
   }
 
+  // PY-24942
+  public void testChainedComparison8() {
+    doInspectionTest(PyChainedComparisonsInspection.class, "Simplify chained comparison", true, true);
+  }
+
+  // PY-29121
+  public void testChainedComparison9() {
+    doInspectionTest(PyChainedComparisonsInspection.class, "Simplify chained comparison", true, true);
+  }
+
   // PY-1362, PY-2585
   public void testStatementEffect() {
     doInspectionTest(PyStatementEffectInspection.class, PyBundle.message("QFIX.statement.effect"), true, true);
@@ -649,7 +659,7 @@ public class PyQuickFixTest extends PyTestCase {
   // PY-8174
   public void testChangeSignatureAddKeywordOnlyParameter() {
     runWithLanguageLevel(
-      LanguageLevel.PYTHON30,
+      LanguageLevel.PYTHON34,
       () -> doInspectionTest(PyArgumentListInspection.class, "<html>Change signature of func(x, *args, foo, <b>bar</b>)</html>", true, true)
     );
   }
@@ -738,6 +748,6 @@ public class PyQuickFixTest extends PyTestCase {
   private static String graftBeforeExt(String name, String insertion) {
     int dotpos = name.indexOf('.');
     if (dotpos < 0) dotpos = name.length();
-    return name.substring(0, dotpos) + insertion + name.substring(dotpos, name.length());
+    return name.substring(0, dotpos) + insertion + name.substring(dotpos);
   }
 }

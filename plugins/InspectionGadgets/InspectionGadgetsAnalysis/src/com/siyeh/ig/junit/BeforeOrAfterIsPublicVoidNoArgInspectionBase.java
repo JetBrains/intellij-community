@@ -66,7 +66,7 @@ public class BeforeOrAfterIsPublicVoidNoArgInspectionBase extends BaseInspection
         return;
       }
       final PsiParameterList parameterList = method.getParameterList();
-      if (parameterList.getParametersCount() != 0 || !returnType.equals(PsiType.VOID) ||
+      if (!parameterList.isEmpty() || !returnType.equals(PsiType.VOID) ||
           !method.hasModifierProperty(PsiModifier.PUBLIC) || method.hasModifierProperty(PsiModifier.STATIC)) {
         registerMethodError(method, method);
       }

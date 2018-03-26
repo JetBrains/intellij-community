@@ -1,17 +1,17 @@
 0(1) element: null
 1(2,3) element: PyIfStatement
-2(3) element: PyStatementList. Condition: 0:true
+2(3) element: PyStatementList. Condition: 0j:true
 3(4,5) element: PyIfStatement
-4(6) element: PyStatementList. Condition: 1:true
-5(6) element: PyElsePart. Condition: 1:false
+4(6) element: PyStatementList. Condition: 1j:true
+5(6) element: PyStatementList. Condition: 1j:false
 6(7,8) element: PyIfStatement
-7(10) element: PyStatementList. Condition: 2:true
-8(9,10) element: PyIfPartElif. Condition: 2:false
-9(10) element: PyIfPartElif. Condition: 3:true
+7(10) element: PyStatementList. Condition: 2j:true
+8(9,10) element: PyIfPartElif. Condition: 2j:false
+9(10) element: PyStatementList. Condition: 3j:true
 10(11,12) element: PyIfStatement
-11(16) element: PyStatementList. Condition: 4:true
-12(13,14) element: PyIfPartElif. Condition: 4:false
-13(16) element: PyIfPartElif. Condition: 5:true
-14(15) element: PyElsePart. Condition: 5:false
+11(16) element: PyStatementList. Condition: 4j:true
+12(13,14) element: PyIfPartElif. Condition: 4j:false
+13(16) element: PyStatementList. Condition: 5j:true
+14(15) element: PyStatementList. Condition: 5j:false
 15(16) element: PyExpressionStatement
 16() element: null

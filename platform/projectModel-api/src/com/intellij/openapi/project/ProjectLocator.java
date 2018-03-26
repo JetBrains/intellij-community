@@ -20,17 +20,16 @@
 package com.intellij.openapi.project;
 
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 public abstract class ProjectLocator {
-
-  private static final Key<ThreadLocal<Project>> PREFERRED_PROJECT_KEY = Key.create("PREFERRED_PROJECT_KEY");
 
   public static ProjectLocator getInstance() {
     return ServiceManager.getService(ProjectLocator.class);
@@ -58,22 +57,20 @@ public abstract class ProjectLocator {
   public static <T, E extends Throwable> T computeWithPreferredProject(@NotNull VirtualFile file,
                                                                        @NotNull Project preferredProject,
                                                                        @NotNull ThrowableComputable<T, E> action) throws E {
-    ThreadLocal<Project> local = file.getUserData(PREFERRED_PROJECT_KEY);
-    if (local == null) {
-      local = file.putUserDataIfAbsent(PREFERRED_PROJECT_KEY, new ThreadLocal<>());
-    }
-    local.set(preferredProject);
+    Map<VirtualFile, Project> local = ourPreferredProjects.get();
+    local.put(file, preferredProject);
     try {
       return action.compute();
     }
     finally {
-      local.remove();
+      local.remove(file);
     }
   }
 
   @Nullable
   static Project getPreferredProject(@NotNull VirtualFile file) {
-    ThreadLocal<Project> local = file.getUserData(PREFERRED_PROJECT_KEY);
-    return local != null ? local.get() : null;
+    return ourPreferredProjects.get().get(file);
   }
+
+  private static final ThreadLocal<Map<VirtualFile, Project>> ourPreferredProjects = ThreadLocal.withInitial(() -> new HashMap<>());
 }

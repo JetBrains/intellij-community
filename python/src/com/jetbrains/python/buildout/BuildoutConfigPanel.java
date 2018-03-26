@@ -48,7 +48,7 @@ public class BuildoutConfigPanel extends JPanel {
   private JPanel myErrorPanel;
   private final Module myModule;
   private boolean myFacetEnabled = true;
-  private BuildoutFacetConfiguration myConfiguration;
+  private final BuildoutFacetConfiguration myConfiguration;
 
   public BuildoutConfigPanel(Module module, BuildoutFacetConfiguration config) {
     myModule = module;

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -29,7 +15,6 @@ import com.intellij.ide.structureView.newStructureView.TreeActionsOwner;
 import com.intellij.ide.structureView.newStructureView.TreeModelWrapper;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeRenderer;
-import com.intellij.ide.util.treeView.ValidateableNode;
 import com.intellij.ide.util.treeView.smartTree.*;
 import com.intellij.navigation.LocationPresentation;
 import com.intellij.openapi.Disposable;
@@ -69,12 +54,11 @@ import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashSet;
 import com.intellij.util.containers.JBIterable;
+import com.intellij.util.text.TextRangeUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
@@ -91,8 +75,6 @@ import org.jetbrains.concurrency.Promises;
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
@@ -112,8 +94,6 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.FileStructurePopup");
   private static final String NARROW_DOWN_PROPERTY_KEY = "FileStructurePopup.narrowDown";
 
-  private final boolean myUseATM = true; //todo inline & remove
-
   private final Project myProject;
   private final FileEditor myFileEditor;
   private final StructureViewModel myTreeModelWrapper;
@@ -126,7 +106,6 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
   private final Tree myTree;
   private final SmartTreeStructure myTreeStructure;
   private final FilteringTreeStructure myFilteringStructure;
-  private final FilteringTreeBuilder myTreeBuilder;
 
   private final AsyncTreeModel myAsyncTreeModel;
   private final StructureTreeModel myStructureTreeModel;
@@ -200,48 +179,14 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     FileStructurePopupFilter filter = new FileStructurePopupFilter();
     myFilteringStructure = new FilteringTreeStructure(filter, myTreeStructure, false);
 
-    if (myUseATM) {
-      myStructureTreeModel = new StructureTreeModel(true);
-      myStructureTreeModel.setStructure(myFilteringStructure);
-      myAsyncTreeModel = new AsyncTreeModel(myStructureTreeModel);
-      myAsyncTreeModel.setRootImmediately(myStructureTreeModel.getRootImmediately());
-      myTree = new MyTree(myAsyncTreeModel);
-      registerAutoExpandListener(myTree, myTreeModel);
-      Disposer.register(this, () -> myTreeModelWrapper.dispose());
-      Disposer.register(this, myAsyncTreeModel);
+    myStructureTreeModel = new StructureTreeModel(true);
+    myStructureTreeModel.setStructure(myFilteringStructure);
+    myAsyncTreeModel = new AsyncTreeModel(myStructureTreeModel, false, this);
+    myAsyncTreeModel.setRootImmediately(myStructureTreeModel.getRootImmediately());
+    myTree = new MyTree(myAsyncTreeModel);
+    registerAutoExpandListener(myTree, myTreeModel);
+    Disposer.register(this, () -> myTreeModelWrapper.dispose());
 
-      myTreeBuilder = null;
-    }
-    else {
-      myStructureTreeModel = null;
-      myAsyncTreeModel = null;
-      myTree = new MyTree(new DefaultTreeModel(new DefaultMutableTreeNode(myFilteringStructure.getRootElement())));
-      myTreeBuilder = new FilteringTreeBuilder(myTree, filter, myFilteringStructure, null) {
-        @Override
-        public void initRootNode() {
-        }
-
-        @Override
-        protected boolean validateNode(Object child) {
-          Object o = child instanceof FilteringTreeStructure.FilteringNode ?
-                     ((FilteringTreeStructure.FilteringNode)child).getDelegate() : child;
-          return !(o instanceof ValidateableNode) || ((ValidateableNode)o).isValid();
-        }
-
-        @Override
-        public void revalidateTree() {
-          //myTree.revalidate();
-          //myTree.repaint();
-        }
-
-        @Override
-        public boolean isToEnsureSelectionOnFocusGained() {
-          return false;
-        }
-      };
-      Disposer.register(this, myTreeBuilder);
-      myTreeBuilder.getUi().getUpdater().setDelay(1);
-    }
     ModelListener modelListener = new ModelListener() {
       @Override
       public void onModelChanged() {
@@ -288,7 +233,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
           }
           return ObjectUtils.chooseNotNull(psi.getText(), defaultPresentation);
         }, "\n");
-        
+
         String htmlText = "<body>\n" + text + "\n</body>";
         return new TextTransferable(XmlStringUtil.wrapInHtml(htmlText), text);
       }
@@ -439,13 +384,6 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
 
   @NotNull
   public Promise<TreePath> select(Object element) {
-    if (!myUseATM) {
-      FilteringTreeStructure.FilteringNode node =
-        element instanceof PsiElement ? selectPsiElement((PsiElement)element) : null;
-      if (node == null) return Promises.rejectedPromise();
-      return Promise.resolve(new TreePath(node));
-    }
-    AsyncPromise<TreePath> result = new AsyncPromise<>();
     int[] stage = {1, 0}; // 1 - first pass, 2 - optimization applied, 3 - retry w/o optimization
     TreePath[] deepestPath = {null};
     TreeVisitor visitor = path -> {
@@ -492,21 +430,23 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
         }
         else {
           TreePath adjusted = path == null ? deepestPath[0] : path;
+          if (path == null && adjusted != null && element instanceof PsiElement) {
+            Object minChild = findClosestPsiElement((PsiElement)element, adjusted, myAsyncTreeModel);
+            if (minChild != null) adjusted = adjusted.pathByAddingChild(minChild);
+          }
           return adjusted == null ? Promises.rejectedPromise() : action.fun(adjusted);
         }
       }
     };
-    myAsyncTreeModel.accept(visitor).thenAsync(fallback).processed(result);
-    return result;
+
+    return myAsyncTreeModel
+      .accept(visitor)
+      .thenAsync(fallback);
   }
 
   @TestOnly
   public AsyncPromise<Void> rebuildAndUpdate() {
     AsyncPromise<Void> result = new AsyncPromise<>();
-    if (!myUseATM) {
-      rebuild(false).notify(result);
-      return result;
-    }
     TreeVisitor visitor = path -> {
       Object o = TreeUtil.getUserObject(path.getLastPathComponent());
       if (o instanceof AbstractTreeNode) ((AbstractTreeNode)o).update();
@@ -570,9 +510,11 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
         }
       }
     }
+
     int checkBoxCount = fileStructureNodeProviders.size() + fileStructureFilters.size();
     JPanel panel = new JPanel(new BorderLayout());
-    JPanel chkPanel = new JPanel(new GridLayout(0, checkBoxCount > 0 && checkBoxCount % 4 == 0 ? checkBoxCount / 2 : 3, 0, 0));
+    JPanel chkPanel = new JPanel(new GridLayout(0, checkBoxCount > 0 && checkBoxCount % 4 == 0 ? checkBoxCount / 2 : 3,
+      JBUI.scale(UIUtil.DEFAULT_HGAP), 0));
 
     Shortcut[] F4 = ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE).getShortcutSet().getShortcuts();
     Shortcut[] ENTER = CustomShortcutSet.fromString("ENTER").getShortcuts();
@@ -600,7 +542,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         TreePath path = myTree.getClosestPathForLocation(e.getX(), e.getY());
         Rectangle bounds = path == null ? null : myTree.getPathBounds(path);
-        if (bounds == null || 
+        if (bounds == null ||
             bounds.x > e.getX() ||
             bounds.y > e.getY() || bounds.y + bounds.height < e.getY()) return false;
         navigateSelectedElement();
@@ -619,13 +561,11 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     topPanel.add(chkPanel, BorderLayout.WEST);
 
     topPanel.add(createSettingsButton(), BorderLayout.EAST);
+    topPanel.setBorder(JBUI.Borders.emptyLeft(UIUtil.DEFAULT_HGAP));
 
     panel.add(topPanel, BorderLayout.NORTH);
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
     scrollPane.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.BOTTOM));
-    Dimension preferredSize = scrollPane.getPreferredSize();
-    preferredSize.width = Math.max(chkPanel.getPreferredSize().width, JBUI.scale(350));
-    scrollPane.setPreferredSize(preferredSize);
     panel.add(scrollPane, BorderLayout.CENTER);
     //panel.add(createSouthPanel(), BorderLayout.SOUTH);
     DataManager.registerDataProvider(panel, new DataProvider() {
@@ -745,6 +685,29 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     return actions;
   }
 
+  @Nullable
+  private static Object findClosestPsiElement(@NotNull PsiElement element,
+                                              @NotNull TreePath adjusted,
+                                              @NotNull TreeModel treeModel) {
+    TextRange range = element.getTextRange();
+    if (range == null) return null;
+    Object parent = adjusted.getLastPathComponent();
+    int minDistance = 0;
+    Object minChild = null;
+    for (int i = 0, count = treeModel.getChildCount(parent); i < count; i++) {
+      Object child = treeModel.getChild(parent, i);
+      Object value = unwrapValue(child);
+      TextRange r = value instanceof PsiElement ? ((PsiElement)value).getTextRange() : null;
+      if (r == null) continue;
+      int distance = TextRangeUtil.getDistance(range, r);
+      if (minChild == null || distance < minDistance) {
+        minDistance = distance;
+        minChild = child;
+      }
+    }
+    return minChild;
+  }
+
   private class MyTreeActionWrapper extends TreeActionWrapper {
     private final TreeAction myAction;
 
@@ -852,6 +815,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     }
     checkBox.setText(StringUtil.capitalize(StringUtil.trimStart(text.trim(), "Show ")));
     panel.add(checkBox);
+
     myCheckBoxes.put(action.getClass(), checkBox);
   }
 
@@ -865,18 +829,6 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
   @NotNull
   private Promise<TreePath> rebuildAndSelect(boolean refilterOnly, Object selection) {
     AsyncPromise<TreePath> result = new AsyncPromise<>();
-    if (!myUseATM) {
-      if (!refilterOnly) {
-        myTreeStructure.rebuildTree();
-      }
-      myTreeBuilder.refilter(selection, true, false).doWhenProcessed(() -> {
-        if (selection instanceof PsiElement) {
-          selectPsiElement((PsiElement)selection);
-        }
-        result.setResult(null);
-      });
-      return result;
-    }
     myStructureTreeModel.getInvoker().invokeLaterIfNeeded(() -> {
       if (refilterOnly) {
         myFilteringStructure.refilter();
@@ -884,7 +836,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
           () ->
             (selection == null ? myAsyncTreeModel.accept(o -> TreeVisitor.Action.CONTINUE) : select(selection))
               .rejected(ignore2 -> result.setError("rejected"))
-              .done(p -> UIUtil.invokeLaterIfNeeded(
+              .onSuccess(p -> UIUtil.invokeLaterIfNeeded(
                 () -> {
                   TreeUtil.expand(getTree(), myTreeModel instanceof StructureViewCompositeModel ? 3 : 2);
                   TreeUtil.ensureSelection(myTree);
@@ -894,7 +846,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       }
       else {
         myTreeStructure.rebuildTree();
-        myStructureTreeModel.invalidate(() -> rebuildAndSelect(true, selection).notify(result));
+        myStructureTreeModel.invalidate(() -> rebuildAndSelect(true, selection).processed(result));
       }
     });
     return result;
@@ -1136,56 +1088,6 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
   @Nullable
   private static PsiElement getPsi(FilteringTreeStructure.FilteringNode n) {
     return ObjectUtils.tryCast(unwrapValue(n), PsiElement.class);
-  }
-
-  @Nullable
-  public FilteringTreeStructure.FilteringNode selectPsiElement(PsiElement element) {
-    Set<PsiElement> parents = getAllParents(element);
-
-    FilteringTreeStructure.FilteringNode node = (FilteringTreeStructure.FilteringNode)myTreeBuilder.getRootElement();
-    if (element != null && node != null && myTreeModel instanceof StructureViewCompositeModel) {
-      parents.remove(element.getContainingFile());
-      final List<FilteringTreeStructure.FilteringNode> fileNodes = node.children();
-
-      for (FilteringTreeStructure.FilteringNode fileNode : fileNodes) {
-        final FilteringTreeStructure.FilteringNode found = findNode(parents, fileNode);
-        if (found != null && found != fileNode) {
-          return found;
-        }
-      }
-    }
-    else {
-      final FilteringTreeStructure.FilteringNode found = findNode(parents, node);
-      if (found == null) {
-        TreeUtil.ensureSelection(myTree);
-      }
-      return found;
-    }
-    TreeUtil.ensureSelection(myTree);
-    return null;
-  }
-
-  private FilteringTreeStructure.FilteringNode findNode(Set<PsiElement> parents, FilteringTreeStructure.FilteringNode node) {
-    while (node != null) {
-      boolean changed = false;
-      for (FilteringTreeStructure.FilteringNode n : node.children()) {
-        final PsiElement psiElement = getPsi(n);
-        if (psiElement != null && parents.contains(psiElement)) {
-          node = n;
-          changed = true;
-          break;
-        }
-      }
-      if (!changed) {
-        myTreeBuilder.select(node);
-        if (myTreeBuilder.getSelectedElements().isEmpty()) {
-          TreeUtil.selectFirstNode(myTree);
-        }
-        myInitialNodeIsLeaf = node.getChildren().length == 0;
-        return node;
-      }
-    }
-    return null;
   }
 
   private static Set<PsiElement> getAllParents(PsiElement element) {

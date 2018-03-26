@@ -20,7 +20,10 @@ import com.intellij.formatting.SpacingImpl;
 import com.intellij.formatting.WhiteSpace;
 import com.intellij.openapi.util.TextRange;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 /**
  * Formatter provides a notion of {@link DependantSpacingImpl dependent spacing}, i.e. spacing that insist on line feed if target
@@ -51,7 +54,7 @@ import java.util.*;
 public class DependentSpacingEngine {
   private final BlockRangesMap myBlockRangesMap;
   
-  private SortedMap<TextRange, DependantSpacingImpl> myPreviousDependencies =
+  private final SortedMap<TextRange, DependantSpacingImpl> myPreviousDependencies =
     new TreeMap<>((o1, o2) -> {
       int offsetsDelta = o1.getEndOffset() - o2.getEndOffset();
 

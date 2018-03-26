@@ -63,6 +63,8 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
   public static final Final FINAL_NOT_NULL = new Final(Value.NotNull);
   public static final Final FINAL_NULL = new Final(Value.Null);
 
+  static final String STRING_CONCAT_FACTORY = "java/lang/invoke/StringConcatFactory";
+
   public static final Consumer<Map<HMember, Equations>> ourIndexSizeStatistics =
     ApplicationManager.getApplication().isUnitTestMode() ? new ClassDataIndexerStatistics() : map -> {};
 

@@ -127,7 +127,7 @@ abstract class ImageResourcesTestBase {
     @JvmStatic
     fun collectNonRegeneratedIconClasses(root: TestRoot): List<Array<Any?>> {
       val model = loadProjectModel(root)
-      val util = model.project.modules.find { it.name == "util" } ?: throw IllegalStateException("Can't load module 'util'")
+      val util = model.project.modules.find { it.name == "intellij.platform.util" } ?: throw IllegalStateException("Can't load module 'util'")
       val modules = collectModules(root, model)
 
       val checker = MyIconClassFileChecker(File(PathManager.getHomePath()), util)

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.Disposable;
@@ -103,6 +89,11 @@ public class VcsLogManager implements Disposable {
   }
 
   @NotNull
+  public VcsLogColorManagerImpl getColorManager() {
+    return myColorManager;
+  }
+
+  @NotNull
   public VcsLogUiImpl createLogUi(@NotNull String logId, @Nullable String contentTabName) {
     return createLogUi(contentTabName, getMainLogUiFactory(logId));
   }
@@ -115,7 +106,7 @@ public class VcsLogManager implements Disposable {
   @NotNull
   public <U extends AbstractVcsLogUi> U createLogUi(@Nullable String contentTabName,
                                                     @NotNull VcsLogUiFactory<U> factory) {
-    U ui = factory.createLogUi(myProject, myLogData, myColorManager);
+    U ui = factory.createLogUi(myProject, myLogData);
 
     Disposable disposable;
     if (contentTabName != null) {
@@ -225,8 +216,7 @@ public class VcsLogManager implements Disposable {
 
   @FunctionalInterface
   public interface VcsLogUiFactory<T extends AbstractVcsLogUi> {
-    T createLogUi(@NotNull Project project, @NotNull VcsLogData logData,
-                  @NotNull VcsLogColorManager colorManager);
+    T createLogUi(@NotNull Project project, @NotNull VcsLogData logData);
   }
 
   private class MainVcsLogUiFactory implements VcsLogUiFactory<VcsLogUiImpl> {
@@ -238,15 +228,14 @@ public class VcsLogManager implements Disposable {
 
     @Override
     public VcsLogUiImpl createLogUi(@NotNull Project project,
-                                    @NotNull VcsLogData logData,
-                                    @NotNull VcsLogColorManager manager) {
+                                    @NotNull VcsLogData logData) {
       MainVcsLogUiProperties properties = myUiProperties.createProperties(myLogId);
       VisiblePackRefresherImpl refresher =
         new VisiblePackRefresherImpl(project, logData, properties.get(MainVcsLogUiProperties.BEK_SORT_TYPE),
                                      new VcsLogFilterer(logData.getLogProviders(), logData.getStorage(),
                                                         logData.getTopCommitsCache(),
                                                         logData.getCommitDetailsGetter(), logData.getIndex()));
-      return new VcsLogUiImpl(logData, project, manager, properties, refresher);
+      return new VcsLogUiImpl(logData, myColorManager, properties, refresher);
     }
   }
 }

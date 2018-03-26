@@ -30,7 +30,7 @@ import java.util.List;
 import java.util.Map;
 
 public class ChildrenBlocksBuilder {
-  private Config myConfig;
+  private final Config myConfig;
 
   private ChildrenBlocksBuilder(Config builder) {
     myConfig = builder;
@@ -60,11 +60,11 @@ public class ChildrenBlocksBuilder {
     private static final Alignment NO_ALIGNMENT = Alignment.createAlignment();
     private static final Wrap NO_WRAP = Wrap.createWrap(0, false);
 
-    private Map<IElementType, Alignment> myAlignments = ContainerUtil.newHashMap();
-    private Map<IElementType, Indent> myIndents = ContainerUtil.newHashMap();
-    private Map<IElementType, Wrap> myWraps = ContainerUtil.newHashMap();
+    private final Map<IElementType, Alignment> myAlignments = ContainerUtil.newHashMap();
+    private final Map<IElementType, Indent> myIndents = ContainerUtil.newHashMap();
+    private final Map<IElementType, Wrap> myWraps = ContainerUtil.newHashMap();
 
-    private Map<IElementType, Condition<ASTNode>> myNoneAlignmentCondition = ContainerUtil.newHashMap();
+    private final Map<IElementType, Condition<ASTNode>> myNoneAlignmentCondition = ContainerUtil.newHashMap();
 
     private Alignment myDefaultAlignment;
     private Indent myDefaultIndent;

@@ -222,7 +222,7 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
 
   // PY-6745
   public void testQualNameAttribute() {
-    runWithLanguageLevel(LanguageLevel.PYTHON33, this::doTest);
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
   }
 
   // PY-7389
@@ -232,7 +232,7 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
 
   // PY-7389
   public void testComprehensionScope33() {
-    runWithLanguageLevel(LanguageLevel.PYTHON33, this::doTest);
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
   }
 
   // PY-7516
@@ -532,7 +532,7 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
 
   // PY-18521
   public void testFunctionTypeCommentUsesImportsFromTyping() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTest);
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
   }
 
   // PY-22620
@@ -588,7 +588,7 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
 
   // PY-23540
   public void testMemberFromMetaclassWhenSuperclassMetaclassIsABCMeta() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTest);
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
   }
 
   // PY-23623
@@ -663,6 +663,55 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
   // PY-28017
   public void testModuleWithGetAttr() {
     runWithLanguageLevel(LanguageLevel.PYTHON37, this::doMultiFileTest);
+  }
+
+  // PY-22868
+  public void testStubWithGetAttr() {
+    doMultiFileTest();
+  }
+
+  // PY-27913
+  public void testDunderClassGetItem() {
+    runWithLanguageLevel(LanguageLevel.PYTHON37, this::doTest);
+  }
+
+
+  // PY-28332
+  public void testIndirectFromImport() {
+    doMultiFileTest();
+  }
+
+  // PY-18629
+  public void testPreferImportedModuleOverNamespacePackage() {
+    doMultiFileTest();
+  }
+
+  // PY-22221
+  public void testFunctionInIgnoredIdentifiers() {
+    myFixture.copyDirectoryToProject(getTestDirectoryPath(), "");
+    final PsiFile currentFile = myFixture.configureFromTempProjectFile("a.py");
+
+    final PyUnresolvedReferencesInspection inspection = new PyUnresolvedReferencesInspection();
+    inspection.ignoredIdentifiers.add("mock.patch.*");
+
+    myFixture.enableInspections(inspection);
+    myFixture.checkHighlighting(isWarning(), isInfo(), isWeakWarning());
+
+    assertProjectFilesNotParsed(currentFile);
+    assertSdkRootsNotParsed(currentFile);
+  }
+
+  // PY-23632
+  public void testMockPatchObject() {
+    doMultiFileTest();
+  }
+
+  // PY-20197
+  public void testClassLevelImportUsedInsideMethod() {
+    doTestByText("class DateParser:\n" +
+                 "    from datetime import datetime\n" +
+                 "    def __init__(self):\n" +
+                 "        self.value = self.datetime(2016, 1, 1)");
   }
 
   @NotNull

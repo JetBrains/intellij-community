@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLLanguage;
 import org.jetbrains.yaml.meta.model.Field;
+import org.jetbrains.yaml.meta.model.TypeFieldPair;
 import org.jetbrains.yaml.meta.model.YamlMetaType;
 import org.jetbrains.yaml.meta.model.YamlMetaType.ForcedCompletionPath;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
@@ -57,7 +58,10 @@ public abstract class YamlDocumentationProviderBase extends AbstractDocumentatio
     if (object instanceof ForcedCompletionPath) {  // deep completion
       return createFromCompletionPath((ForcedCompletionPath)object, contextElement);
     }
-    else if (object instanceof String) {  // basic completion
+    else if (object instanceof TypeFieldPair) {  // basic completion with Field object
+      return createFromField((TypeFieldPair)object, contextElement);
+    }
+    else if (object instanceof String) {  // basic completion with plain string
       return createFromString((String)object, contextElement);
     }
     else {
@@ -179,6 +183,12 @@ public abstract class YamlDocumentationProviderBase extends AbstractDocumentatio
 
     return new DocumentationElement(contextElement.getManager(), proxy.getMetaType(), field);
   }
+
+  @NotNull
+  private DocumentationElement createFromField(@NotNull TypeFieldPair field, @NotNull PsiElement contextElement) {
+    return new DocumentationElement(contextElement.getManager(), field.getMetaType(), field.getField());
+  }
+
 
 
   private class DocumentationElement extends LightElement {

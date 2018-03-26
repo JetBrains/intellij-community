@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.execution.junit;
 
@@ -8,6 +6,7 @@ import com.intellij.codeInsight.MetaAnnotationUtil;
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.*;
 import com.intellij.execution.actions.RunConfigurationProducer;
+import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultRunExecutor;
@@ -43,6 +42,7 @@ import java.util.*;
 
 public class JUnitConfiguration extends JavaTestConfigurationBase {
   public static final String DEFAULT_PACKAGE_NAME = ExecutionBundle.message("default.package.presentable.name");
+  public static final byte FRAMEWORK_ID = 0x0;
 
   @NonNls public static final String TEST_CLASS = "class";
   @NonNls public static final String TEST_PACKAGE = "package";
@@ -264,7 +264,9 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
 
   @Override
   public void setAlternativeJrePathEnabled(boolean enabled) {
+    boolean changed = ALTERNATIVE_JRE_PATH_ENABLED != enabled;
     ALTERNATIVE_JRE_PATH_ENABLED = enabled;
+    ApplicationConfiguration.onAlternativeJreChanged(changed, getProject());
   }
 
   @Override
@@ -274,7 +276,9 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
 
   @Override
   public void setAlternativeJrePath(String path) {
+    boolean changed = !Objects.equals(ALTERNATIVE_JRE_PATH, path);
     ALTERNATIVE_JRE_PATH = path;
+    ApplicationConfiguration.onAlternativeJreChanged(changed, getProject());
   }
 
   @Override
@@ -319,6 +323,11 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
   @Override
   public TestSearchScope getTestSearchScope() {
     return getPersistentData().getScope();
+  }
+
+  @Override
+  public void setSearchScope(TestSearchScope searchScope) {
+    getPersistentData().setScope(searchScope);
   }
 
   public void beFromSourcePosition(PsiLocation<PsiMethod> sourceLocation) {
@@ -412,11 +421,17 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
       getPersistentData().setUniqueIds(ArrayUtil.toStringArray(ids));
     }
 
-    Element tagsElement = element.getChild("tags");
-    if (tagsElement != null) {
-      List<String> tags = new ArrayList<>();
-      tagsElement.getChildren("tag").forEach(tagElement -> tags.add(tagElement.getAttributeValue("value")));
-      getPersistentData().setTags(ArrayUtil.toStringArray(tags));
+    Element tagElement = element.getChild("tag");
+    if (tagElement != null) {
+      getPersistentData().setTags(tagElement.getAttributeValue("value"));
+    }
+    else {
+      Element tagsElement = element.getChild("tags");
+      if (tagsElement != null) {
+        List<String> tags = new ArrayList<>();
+        tagsElement.getChildren("tag").forEach(tElement -> tags.add(tElement.getAttributeValue("value")));
+        getPersistentData().setTags(StringUtil.join(tags, "|"));
+      }
     }
   }
 
@@ -473,10 +488,10 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
       element.addContent(uniqueIds);
     }
 
-    String[] tags = persistentData.getTags();
-    if (tags != null && tags.length > 0) {
-      Element tagsElement = new Element("tags");
-      Arrays.stream(tags).forEach(id -> tagsElement.addContent(new Element("tag").setAttribute("value", id)));
+    String tags = persistentData.getTags();
+    if (tags != null && tags.length() > 0) {
+      Element tagsElement = new Element("tag");
+      tagsElement.setAttribute("value", tags);
       element.addContent(tagsElement);
     }
   }
@@ -540,10 +555,9 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
     return new JUnitConsoleProperties(this, executor);
   }
 
-  @NotNull
   @Override
-  public String getFrameworkPrefix() {
-    return "j";
+  public byte getTestFrameworkId() {
+    return FRAMEWORK_ID;
   }
 
   public static class Data implements Cloneable {
@@ -551,7 +565,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
     public String MAIN_CLASS_NAME;
     public String METHOD_NAME;
     private String[] UNIQUE_ID = ArrayUtil.EMPTY_STRING_ARRAY;
-    private String[] TAGS = ArrayUtil.EMPTY_STRING_ARRAY;
+    private String TAGS;
     public String TEST_OBJECT = TEST_CLASS;
     public String VM_PARAMETERS;
     public String PARAMETERS;
@@ -666,16 +680,16 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
       return setMainClass(methodLocation instanceof MethodLocation ? ((MethodLocation)methodLocation).getContainingClass() : method.getContainingClass());
     }
 
-    public String[] getTags() {
+    public String getTags() {
       return TAGS;
     }
 
-    public void setTags(String[] tags) {
+    public void setTags(String tags) {
       TAGS = tags;
     }
 
     public static String getMethodPresentation(PsiMethod method) {
-      if (method.getParameterList().getParametersCount() > 0 && MetaAnnotationUtil.isMetaAnnotated(method, JUnitUtil.TEST5_ANNOTATIONS)) {
+      if (!method.getParameterList().isEmpty() && MetaAnnotationUtil.isMetaAnnotated(method, JUnitUtil.TEST5_ANNOTATIONS)) {
         return method.getName() + "(" + ClassUtil.getVMParametersMethodSignature(method) + ")";
       }
       else {
@@ -717,7 +731,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
         return UNIQUE_ID != null && UNIQUE_ID.length > 0 ? StringUtil.join(UNIQUE_ID, " ") : "Temp suite";
       }
       if (TEST_TAGS.equals(TEST_OBJECT)) {
-        return TAGS != null && TAGS.length > 0 ? "Tags (" + StringUtil.join(TAGS, " ") + ")" : "Temp suite";
+        return TAGS != null && TAGS.length() > 0 ? "Tags (" + StringUtil.join(TAGS, " ") + ")" : "Temp suite";
       }
       final String className = JavaExecutionUtil.getPresentableClassName(getMainClassName());
       if (TEST_METHOD.equals(TEST_OBJECT)) {

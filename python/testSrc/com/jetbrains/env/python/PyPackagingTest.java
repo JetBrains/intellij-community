@@ -19,6 +19,7 @@ import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor;
 import com.jetbrains.python.tools.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.Assume;
 import org.junit.Test;
 
 import java.io.File;
@@ -37,10 +38,8 @@ import static org.junit.Assert.*;
 public class PyPackagingTest extends PyEnvTestCase {
   @Override
   public void runPythonTest(PyTestTask testTask) {
-    if (UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows) {
-      return; //Don't run under Windows as after deleting from created virtualenvs original interpreter got spoiled
-    }
-
+    Assume.assumeFalse("Don't run under Windows as after deleting from created virtualenvs original interpreter got spoiled",
+                       UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows);
     super.runPythonTest(testTask);
   }
 
@@ -48,7 +47,7 @@ public class PyPackagingTest extends PyEnvTestCase {
   public void testGetPackages() {
     runPythonTest(new PyPackagingTestTask() {
       @Override
-      public void runTestOn(String sdkHome) throws Exception {
+      public void runTestOn(@NotNull String sdkHome, @Nullable Sdk existingSdk) throws Exception {
         final Sdk sdk = createTempSdk(sdkHome, SdkCreationType.EMPTY_SDK);
         List<PyPackage> packages = null;
         try {
@@ -71,7 +70,7 @@ public class PyPackagingTest extends PyEnvTestCase {
   public void testCreateVirtualEnv() {
     runPythonTest(new PyPackagingTestTask() {
       @Override
-      public void runTestOn(String sdkHome) throws Exception {
+      public void runTestOn(@NotNull String sdkHome, @Nullable Sdk existingSdk) throws Exception {
         final Sdk sdk = createTempSdk(sdkHome, SdkCreationType.EMPTY_SDK);
         try {
           final File tempDir = FileUtil.createTempDirectory(getTestName(false), null);
@@ -106,7 +105,7 @@ public class PyPackagingTest extends PyEnvTestCase {
     runPythonTest(new PyPackagingTestTask() {
 
       @Override
-      public void runTestOn(String sdkHome) throws Exception {
+      public void runTestOn(@NotNull String sdkHome, @Nullable Sdk existingSdk) throws Exception {
         final Sdk sdk = createTempSdk(sdkHome, SdkCreationType.EMPTY_SDK);
         try {
           final File tempDir = FileUtil.createTempDirectory(getTestName(false), null);

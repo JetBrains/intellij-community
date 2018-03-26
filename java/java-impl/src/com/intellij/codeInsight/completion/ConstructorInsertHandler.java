@@ -243,7 +243,7 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
 
     final PsiElement place = context.getFile().findElementAt(context.getStartOffset());
     assert place != null;
-    boolean hasParams = constructor != null ? constructor.getParameterList().getParametersCount() > 0 : hasConstructorParameters(psiClass, place);
+    boolean hasParams = constructor != null ? !constructor.getParameterList().isEmpty() : hasConstructorParameters(psiClass, place);
 
     RangeMarker refEnd = context.getDocument().createRangeMarker(context.getTailOffset(), context.getTailOffset());
     
@@ -264,7 +264,7 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
     boolean hasParams = false;
     for (PsiMethod constructor : psiClass.getConstructors()) {
       if (!resolveHelper.isAccessible(constructor, place, null)) continue;
-      if (constructor.getParameterList().getParametersCount() > 0) {
+      if (!constructor.getParameterList().isEmpty()) {
         hasParams = true;
         break;
       }
@@ -366,27 +366,24 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
 
   private static void startTemplate(final PsiAnonymousClass aClass, final Editor editor, final Runnable runnable, @NotNull final PsiTypeElement[] parameters) {
     final Project project = aClass.getProject();
-    new WriteCommandAction(project, getCommandName(), getCommandName()) {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
-        editor.getCaretModel().moveToOffset(aClass.getTextOffset());
-        final TemplateBuilderImpl templateBuilder = (TemplateBuilderImpl)TemplateBuilderFactory.getInstance().createTemplateBuilder(aClass);
-        for (int i = 0; i < parameters.length; i++) {
-          PsiTypeElement parameter = parameters[i];
-          templateBuilder.replaceElement(parameter, "param" + i, new TypeExpression(project, new PsiType[]{parameter.getType()}), true);
-        }
-        Template template = templateBuilder.buildInlineTemplate();
-        TemplateManager.getInstance(project).startTemplate(editor, template, false, null, new TemplateEditingAdapter() {
-          @Override
-          public void templateFinished(Template template, boolean brokenOff) {
-            if (!brokenOff) {
-              runnable.run();
-            }
-          }
-        });
+    WriteCommandAction.writeCommandAction(project).withName(getCommandName()).withGroupId(getCommandName()).run(() -> {
+      PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
+      editor.getCaretModel().moveToOffset(aClass.getTextOffset());
+      final TemplateBuilderImpl templateBuilder = (TemplateBuilderImpl)TemplateBuilderFactory.getInstance().createTemplateBuilder(aClass);
+      for (int i = 0; i < parameters.length; i++) {
+        PsiTypeElement parameter = parameters[i];
+        templateBuilder.replaceElement(parameter, "param" + i, new TypeExpression(project, new PsiType[]{parameter.getType()}), true);
       }
-    }.execute();
+      Template template = templateBuilder.buildInlineTemplate();
+      TemplateManager.getInstance(project).startTemplate(editor, template, false, null, new TemplateEditingAdapter() {
+        @Override
+        public void templateFinished(Template template, boolean brokenOff) {
+          if (!brokenOff) {
+            runnable.run();
+          }
+        }
+      });
+    });
   }
 
   private static String getCommandName() {

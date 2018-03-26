@@ -1,0 +1,39 @@
+layoutConstraints: !!net.miginfocom.layout.LC
+  fillX: true
+  gridGapX:
+    min: &id001 {horizontal: true, operation: 100, unit: 0, unitString: px, value: 20.0}
+    preferred: *id001
+  gridGapY:
+    min: &id002 {horizontal: false, operation: 100, unit: 0, unitString: px, value: 4.0}
+    preferred: *id002
+  hideMode: 3
+  insets:
+  - {horizontal: false, operation: 100, unit: 0, unitString: px, value: 0.0}
+  - {horizontal: true, operation: 100, unit: 0, unitString: px, value: 0.0}
+  - {horizontal: false, operation: 100, unit: 0, unitString: px, value: 0.0}
+  - {horizontal: true, operation: 100, unit: 0, unitString: px, value: 0.0}
+  visualPadding: false
+rowConstraints:
+  constraints:
+  - align: {horizontal: false, operation: 100, unit: 6, value: 0.0}
+columnConstraints:
+  constraints:
+  - {}
+  - {grow: 100.0}
+  count: 2
+componentConstrains:
+  Create Android module:
+    vertical:
+      gapBefore: &id004
+        max: &id003 {horizontal: false, operation: 100, unit: 0, unitString: px, value: 4.0}
+        min: *id003
+        preferred: *id003
+  'Android module name:':
+    vertical:
+      gapBefore: *id004
+  'JTextField #3':
+    horizontal: {grow: 100.0}
+    spanX: 2097051
+    wrap: true
+rectangles: '[0, 0, 145, 23], [165, 0, 347, 23], [0, 27, 145, 26], [165, 27, 347,
+  26]'

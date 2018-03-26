@@ -41,7 +41,7 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> implements 
   private final SmartPsiElementPointer<PsiClass> myClass;
   private final String myQualifiedName;
   private String myForcedPresentableName;
-  private String myPackageDisplayName;
+  private final String myPackageDisplayName;
   private PsiSubstitutor mySubstitutor = PsiSubstitutor.EMPTY;
 
   public JavaPsiClassReferenceElement(PsiClass psiClass) {

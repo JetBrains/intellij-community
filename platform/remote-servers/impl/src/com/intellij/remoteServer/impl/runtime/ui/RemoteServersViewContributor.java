@@ -12,7 +12,7 @@ import java.util.List;
 
 /**
  * This is a temporary solution to integrate JavaEE based application servers into common Remote Servers/Clouds view. It should be removed
- * when remote app servers will be migrated to use remote-servers-api
+ * when remote app servers will be migrated to use intellij.platform.remoteServers
  *
  * @author nik
  */

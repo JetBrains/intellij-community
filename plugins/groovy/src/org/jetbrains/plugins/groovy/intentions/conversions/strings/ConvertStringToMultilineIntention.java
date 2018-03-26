@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.intentions.conversions.strings;
 
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
@@ -66,13 +65,7 @@ public class ConvertStringToMultilineIntention extends Intention {
       expressions = Collections.singletonList(((GrExpression)element));
     }
     else {
-      final AccessToken accessToken = ReadAction.start();
-      try {
-        expressions = collectExpressions(element);
-      }
-      finally {
-        accessToken.finish();
-      }
+      expressions = ReadAction.compute(() -> collectExpressions(element));
     }
 
     if (expressions.size() == 1) {

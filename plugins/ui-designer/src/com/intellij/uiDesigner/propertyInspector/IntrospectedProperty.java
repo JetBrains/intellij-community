@@ -170,7 +170,7 @@ public abstract class IntrospectedProperty<V> extends Property<RadComponent, V> 
     final PsiMethod[] psiMethods = componentClass.findMethodsByName(myReadMethod.getName(), true);
     for(PsiMethod method: psiMethods) {
       if (!method.hasModifierProperty(PsiModifier.STATIC) &&
-          method.getParameterList().getParametersCount() == 0) {
+          method.getParameterList().isEmpty()) {
         return true;
       }
     }

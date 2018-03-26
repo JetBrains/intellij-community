@@ -16,18 +16,17 @@
 package com.intellij.java.propertyBased;
 
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.propertyBased.*;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.jetCheck.Generator;
 import org.jetbrains.jetCheck.IntDistribution;
 import org.jetbrains.jetCheck.PropertyChecker;
 
-import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 @SkipSlowTestLocally
@@ -47,48 +46,43 @@ public class UnivocityTest extends AbstractApplyAndRevertTestCase {
     AtomicLong rebuildStamp = new AtomicLong();
 
     Generator<MadTestingAction> genIntention = psiJavaFiles().flatMap(
-      file -> Generator.frequency(5, InvokeIntention.randomIntentions(file, new JavaGreenIntentionPolicy()),
+      file -> Generator.frequency(5, Generator.constant(new InvokeIntention(file, new JavaGreenIntentionPolicy())),
                                   1, Generator.constant(new InvalidateAllPsi(myProject)),
                                   10, Generator.constant(new FilePropertiesChanged(file))));
-    PropertyChecker.forAll(Generator.listsOf(genIntention.noShrink())).withIterationCount(30).shouldHold(list -> {
+    PropertyChecker.customized().withIterationCount(30).checkScenarios(() -> env -> {
       long startModCount = tracker.getModificationCount();
       if (rebuildStamp.getAndSet(startModCount) != startModCount) {
         checkCompiles(myCompilerTester.rebuild());
       }
 
       MadTestingUtil.changeAndRevert(myProject, () -> {
-        MadTestingAction.runActions(list);
-        
+        env.executeCommands(genIntention);
+
         if (tracker.getModificationCount() != startModCount) {
           checkCompiles(myCompilerTester.make());
         }
       });
-      return true;
     });
   }
 
   public void testRandomActivity() {
-    Generator<List<MadTestingAction>> genActionGroup = psiJavaFiles().flatMap(
-      file -> {
-        Generator<MadTestingAction> mutation = Generator.anyOf(DeleteRange.psiRangeDeletions(file),
-                                                               Generator.constant(new AddNullArgument(file)),
-                                                               Generator.constant(new DeleteForeachInitializers(file)),
-                                                               Generator.constant(new DeleteSecondArgument(file)),
-                                                               InvokeCompletion.completions(file, new JavaCompletionPolicy()),
-                                                               Generator.constant(new MakeAllMethodsVoid(file)));
-        Generator<MadTestingAction> allActions = Generator.frequency(2, InvokeIntention.randomIntentions(file, new JavaIntentionPolicy()),
-                                                                     1, Generator.constant(new RehighlightAllEditors(myProject)),
-                                                                     1, mutation);
-        return Generator.listsOf(IntDistribution.uniform(0, 5), allActions.noShrink());
-      });
+    PropertyChecker.customized().withIterationCount(30).checkScenarios(() -> env ->
+      MadTestingUtil.changeAndRevert(myProject, () ->
+        env.executeCommands(Generator.constant(env1 -> {
+          PsiJavaFile file = env1.generateValue(psiJavaFiles(), "Working with %s");
+          Generator<MadTestingAction> mutations = Generator.sampledFrom(new DeleteRange(file),
+                                                                        new AddNullArgument(file),
+                                                                        new DeleteForeachInitializers(file),
+                                                                        new DeleteSecondArgument(file),
+                                                                        new InvokeCompletion(file, new JavaCompletionPolicy()),
+                                                                        new MakeAllMethodsVoid(file));
+          Generator<MadTestingAction> allActions = Generator.frequency(2, Generator
+                                                                         .constant(new InvokeIntention(file, new JavaIntentionPolicy())),
+                                                                       1, Generator.constant(new RehighlightAllEditors(myProject)),
+                                                                       1, mutations);
 
-    PropertyChecker.forAll(Generator.listsOf(genActionGroup).map(ContainerUtil::flatten)).withIterationCount(50).shouldHold(list -> {
-      MadTestingUtil.changeAndRevert(myProject, () -> {
-        //System.out.println(list);
-        MadTestingAction.runActions(list);
-      });
-      return true;
-    });
+          env1.executeCommands(IntDistribution.uniform(1, 5), allActions.noShrink());
+        }))));
   }
 
   @Override

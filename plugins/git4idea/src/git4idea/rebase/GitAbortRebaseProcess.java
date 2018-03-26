@@ -148,9 +148,8 @@ class GitAbortRebaseProcess {
 
   private void doAbort(final boolean rollback) {
     new GitFreezingProcess(myProject, "rebase", () -> {
-      AccessToken token = DvcsUtil.workingTreeChangeStarted(myProject);
       List<GitRepository> repositoriesToRefresh = ContainerUtil.newArrayList();
-      try {
+      try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, "Rebase")) {
         if (myRepositoryToAbort != null) {
           myIndicator.setText2("git rebase --abort" + GitUtil.mention(myRepositoryToAbort));
           GitCommandResult result = myGit.rebaseAbort(myRepositoryToAbort);
@@ -197,7 +196,6 @@ class GitAbortRebaseProcess {
       }
       finally {
         refresh(repositoriesToRefresh);
-        token.finish();
       }
     }).execute();
   }

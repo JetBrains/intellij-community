@@ -18,6 +18,7 @@ package com.intellij.ui;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.gdpr.Consent;
 import com.intellij.ide.gdpr.ConsentOptions;
+import com.intellij.ide.gdpr.ConsentSettingsUi;
 import com.intellij.ide.gdpr.EndUserAgreement;
 import com.intellij.idea.Main;
 import com.intellij.openapi.application.Application;
@@ -36,10 +37,9 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.AppIcon.MacAppIcon;
-import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -54,25 +54,23 @@ import sun.awt.AWTAccessor;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.HyperlinkEvent;
-import javax.swing.plaf.ButtonUI;
-import javax.swing.plaf.basic.BasicRadioButtonUI;
-import javax.swing.plaf.synth.SynthCheckBoxUI;
-import javax.swing.plaf.synth.SynthContext;
-import javax.swing.text.DefaultCaret;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.StyleSheet;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
 import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 
-import static javax.swing.ScrollPaneConstants.*;
+import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
+import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
 
 /**
  * @author yole
@@ -171,7 +169,7 @@ public class AppUIUtil {
       .replace(' ', '-')
       .replace("intellij-idea", "idea").replace("android-studio", "studio")  // backward compatibility
       .replace("-community-edition", "-ce").replace("-ultimate-edition", "").replace("-professional-edition", "");
-    String wmClass = VENDOR_PREFIX + name;
+    String wmClass = name.startsWith(VENDOR_PREFIX) ? name : VENDOR_PREFIX + name;
     if (DEBUG_MODE) wmClass += "-debug";
     return wmClass;
   }
@@ -266,7 +264,7 @@ public class AppUIUtil {
           Logger.getInstance(AppUIUtil.class).warn(e);
         }
       }
-      final Pair<Collection<Consent>, Boolean> consentsToShow = ConsentOptions.getInstance().getConsents();
+      final Pair<List<Consent>, Boolean> consentsToShow = ConsentOptions.getInstance().getConsents();
       if (consentsToShow.second) {
         try {
           final Ref<Collection<Consent>> result = Ref.create(null);
@@ -366,11 +364,12 @@ public class AppUIUtil {
     dialog.show();
   }
 
-  // todo: need a separate action to view and change state of all consets on demand
-  
-  public static Collection<Consent> confirmConsentOptions(@NotNull Collection<Consent> consents) {
-    final Collection<Pair<JCheckBox, Consent>> consentMapping = new ArrayList<>();
-    final DialogWrapper dialog = new DialogWrapper(true) {
+  @Nullable
+  public static List<Consent> confirmConsentOptions(@NotNull List<Consent> consents) {
+    if (consents.isEmpty()) return null;
+
+    ConsentSettingsUi ui = new ConsentSettingsUi(false);
+    final DialogWrapper dialog = new DialogWrapper(WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow(), true) {
       @Nullable
       @Override
       protected Border createContentPaneBorder() {
@@ -389,89 +388,24 @@ public class AppUIUtil {
 
       @Override
       protected JComponent createCenterPanel() {
-
-        if (consents.isEmpty()) {
-          JLabel label = new JLabel("There are no data-sharing options available", SwingConstants.CENTER);
-          label.setVerticalAlignment(SwingConstants.CENTER);
-          label.setOpaque(true);
-          label.setBackground(JBColor.background());
-          return label;
-        }
-        final JPanel body = new JPanel(new GridBagLayout());
-
-        //noinspection UseDPIAwareInsets
-        body.add(new JLabel("Please review your options regarding the sharing your data with JetBrains:"),
-                 new GridBagConstraints(
-                   0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTH, GridBagConstraints.BOTH,
-                   new Insets(JBUI.scale(10), getLeftTextMargin(new JCheckBox()), JBUI.scale(10), 0), 0, 0));
-        for (Iterator<Consent> it = consents.iterator(); it.hasNext(); ) {
-          final Consent consent = it.next();
-          final JComponent comp = createConsentElement(consent);
-          boolean lastConsent = !it.hasNext();
-          if (lastConsent) {
-            body.setBackground(comp.getBackground());
-          } else {
-            comp.setBorder(JBUI.Borders.emptyBottom(15));
-          }
-          body.add(comp, new GridBagConstraints(
-            0, GridBagConstraints.RELATIVE, 1, 1, 1.0, lastConsent ? 1.0 : 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, JBUI.insets(10, 0, 0, 0), 0, 0)
-          );
-        }
-        body.setBorder(JBUI.Borders.empty(10));
-        return new JBScrollPane(body, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        return ui.getComponent();
       }
 
       @NotNull
-      private JComponent createConsentElement(Consent consent) {
-        final JEditorPane viewer = SwingHelper.createHtmlViewer(true, null, JBColor.WHITE, JBColor.BLACK);
-        viewer.setFocusable(false);
-        viewer.setCaret(new DefaultCaret(){
+      @Override
+      protected Action[] createActions() {
+        if (consents.size() > 1) {
+          return super.createActions();
+        }
+        setOKButtonText(consents.iterator().next().getName());
+        return new Action[]{getOKAction(), new DialogWrapperAction("Don't send") {
           @Override
-          protected void adjustVisibility(Rectangle nloc) {
-            //do nothing to avoid autoscroll
+          protected void doAction(ActionEvent e) {
+            close(NEXT_USER_EXIT_CODE);
           }
-        });
-        viewer.addHyperlinkListener(new HyperlinkAdapter() {
-          @Override
-          protected void hyperlinkActivated(HyperlinkEvent e) {
-            final URL url = e.getURL();
-            if (url != null) {
-              BrowserUtil.browse(url);
-            }
-          }
-        });
-        viewer.setText(consentTextToHtml(consent.getText()));
-        StyleSheet styleSheet = ((HTMLDocument)viewer.getDocument()).getStyleSheet();
-        //styleSheet.addRule("body {font-family: \"Segoe UI\", Tahoma, sans-serif;}");
-        styleSheet.addRule("body {margin-top:0;padding-top:0;}");
-        //styleSheet.addRule("body {font-size:" + JBUI.scaleFontSize(13) + "pt;}");
-        styleSheet.addRule("h2, em {margin-top:" + JBUI.scaleFontSize(20) + "pt;}");
-        styleSheet.addRule("h1, h2, h3, p, h4, em {margin-bottom:0;padding-bottom:0;}");
-        styleSheet.addRule("p, h1 {margin-top:0;padding-top:"+JBUI.scaleFontSize(6)+"pt;}");
-        styleSheet.addRule("li {margin-bottom:" + JBUI.scaleFontSize(6) + "pt;}");
-        styleSheet.addRule("h2 {margin-top:0;padding-top:"+JBUI.scaleFontSize(13)+"pt;}");
-        viewer.setCaretPosition(0);
-
-        final JCheckBox cb = new JBCheckBox(consent.getName(), consent.isAccepted());
-        cb.setBackground(viewer.getBackground());
-        cb.setFont(cb.getFont().deriveFont(Font.BOLD));
-        int leftInset = getLeftTextMargin(cb);
-        //noinspection UseDPIAwareBorders
-        viewer.setBorder(new EmptyBorder(JBUI.scale(5), leftInset, 0, 0));
-
-        final JPanel pane = new JPanel(new BorderLayout());
-        pane.setBackground(viewer.getBackground());
-        pane.add(cb, BorderLayout.NORTH);
-        pane.add(viewer, BorderLayout.CENTER);
-        consentMapping.add(Pair.create(cb, consent));
-        return pane;
+        }};
       }
 
-      @NotNull
-      private String consentTextToHtml(String text) {
-        return "<html>" + StringUtil.replace(text, "\n", "<br>") + "</html>";
-      }
-      
       @Override
       protected void createDefaultActions() {
         super.createDefaultActions();
@@ -480,22 +414,26 @@ public class AppUIUtil {
       }
 
     };
+    ui.reset(consents);
     dialog.setModal(true);
-    dialog.setTitle("Data Sharing Options");
-    dialog.setSize(JBUI.scale(600), JBUI.scale(400));
+    dialog.setTitle("Data Sharing");
+    dialog.pack();
+    if (consents.size() < 2) {
+      dialog.setSize(dialog.getWindow().getWidth(), dialog.getWindow().getHeight() + JBUI.scale(75));
+    }
     dialog.show();
 
-    final Collection<Consent> result;
-    if (dialog.isOK()) {
-      result = new ArrayList<>();
-      for (Pair<JCheckBox, Consent> pair : consentMapping) {
-        result.add(pair.second.derive(pair.first.isSelected()));
-      }
+    int exitCode = dialog.getExitCode();
+    if (exitCode == DialogWrapper.CANCEL_EXIT_CODE) {
+      return null; //Don't save any changes in this case: user hasn't made a choice
     }
-    else {
-      // no changes were made, save as-is
-      result = consents;
+    if (consents.size() == 1) {
+      consents.set(0, consents.get(0).derive(exitCode == DialogWrapper.OK_EXIT_CODE));
+      return consents;
     }
+
+    List<Consent> result = new ArrayList<>();
+    ui.apply(result);
     return result;
   }
 
@@ -520,30 +458,5 @@ public class AppUIUtil {
     if (comp.isShowing()) return;
     GraphicsConfiguration gc = target != null ? target.getGraphicsConfiguration() : null;
     AWTAccessor.getComponentAccessor().setGraphicsConfiguration(comp, gc);
-  }
-
-  /**
-   * Returns distance (px) from the left edge to actual text position for specified checkbox.
-   * It may be used as left margin when you need to align text in a label located above or below the checkbox
-   */
-  public static int getLeftTextMargin(@NotNull JCheckBox checkBox) {
-    int leftMargin = 0;
-    Insets margin = checkBox.getMargin();
-    if (margin != null) leftMargin += margin.left;
-    Border border = checkBox.getBorder();
-    if (border != null) leftMargin += border.getBorderInsets(checkBox).left;
-    ButtonUI ui = checkBox.getUI();
-    Icon icon = null;
-    if (ui instanceof BasicRadioButtonUI) {
-      icon = ((BasicRadioButtonUI)ui).getDefaultIcon();
-    } else if (ui instanceof SynthCheckBoxUI){
-      SynthCheckBoxUI sui = (SynthCheckBoxUI)ui;
-      SynthContext context = sui.getContext(checkBox);
-      icon = context.getStyle().getIcon(context, "CheckBox.icon");
-    }
-    if (icon != null) {
-      leftMargin += icon.getIconWidth() + checkBox.getIconTextGap();
-    }
-    return leftMargin;
   }
 }

@@ -52,7 +52,7 @@ class ChainedCallCompletion {
       return;
     }
 
-    if (object instanceof PsiMethod && ((PsiMethod)object).getParameterList().getParametersCount() > 0) {
+    if (object instanceof PsiMethod && !((PsiMethod)object).getParameterList().isEmpty()) {
       return;
     }
 

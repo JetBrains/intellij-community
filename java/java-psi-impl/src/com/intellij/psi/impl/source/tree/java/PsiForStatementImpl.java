@@ -126,7 +126,7 @@ public class PsiForStatementImpl extends CompositePsiElement implements PsiForSt
   }
 
   @Override
-  public int getChildRole(ASTNode child) {
+  public int getChildRole(@NotNull ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == FOR_KEYWORD) {

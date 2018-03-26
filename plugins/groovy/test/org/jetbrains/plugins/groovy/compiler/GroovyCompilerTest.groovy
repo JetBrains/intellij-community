@@ -561,7 +561,7 @@ class Indirect {
 
     touch(used.virtualFile)
     touch(main)
-    assertEmpty make()
+    assert make().collect { it.message } == chunkRebuildMessage('Groovy stub generator')
 
     assertEmpty compileModule(myModule)
     assertEmpty compileModule(myModule)
@@ -576,6 +576,8 @@ class Indirect {
 
     assert findClassFile('Used2') == null
   }
+
+  protected abstract List<String> chunkRebuildMessage(String builder)
 
   void testClassLoadingDuringBytecodeGeneration() {
     def used = myFixture.addFileToProject('Used.groovy', 'class Used { }')
@@ -595,7 +597,7 @@ class Main {
 
     touch(used.virtualFile)
     touch(main)
-    assertEmpty make()
+    assert make().collect { it.message } == chunkRebuildMessage("Groovy compiler")
   }
 
   void testMakeInDependentModuleAfterChunkRebuild() {
@@ -613,7 +615,7 @@ class Main {
     touch(main)
     setFileText(dep, 'class Dep { String prop = new Used().getProp(); }')
 
-    assertEmpty make()
+    assert make().collect { it.message } == chunkRebuildMessage('Groovy stub generator')
   }
 
   void "test extend package-private class from another module"() {
@@ -815,7 +817,7 @@ string
     touch bar3.virtualFile
     touch using.virtualFile
 
-    assertEmpty make()
+    assert make().collect { it.message } == chunkRebuildMessage('Groovy compiler')
   }
 
   void "test rename class to java and touch its usage"() {
@@ -904,8 +906,8 @@ class AppTest {
     addGroovyLibrary(anotherModule)
 
     PsiTestUtil.addProjectLibrary(myModule, "junit", IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("JUnit3"))
-    PsiTestUtil.addProjectLibrary(myModule, "cli", IntelliJProjectConfiguration.getModuleLibrary("build", "commons-cli").classesPaths)
-    PsiTestUtil.addProjectLibrary(anotherModule, "cli", IntelliJProjectConfiguration.getModuleLibrary("build", "commons-cli").classesPaths)
+    PsiTestUtil.addProjectLibrary(myModule, "cli", IntelliJProjectConfiguration.getModuleLibrary("intellij.idea.community.build", "commons-cli").classesPaths)
+    PsiTestUtil.addProjectLibrary(anotherModule, "cli", IntelliJProjectConfiguration.getModuleLibrary("intellij.idea.community.build", "commons-cli").classesPaths)
 
     myFixture.addFileToProject("a.groovy", "class Foo extends GroovyTestCase {}")
     myFixture.addFileToProject("b.groovy", "class Bar extends CliBuilder {}")
@@ -939,6 +941,36 @@ class AppTest {
     touch2.run()
 
     assert !make().find { it.category == CompilerMessageCategory.ERROR }
+  }
+
+  void "test recompile one file that triggers chunk rebuild inside"() {
+    myFixture.addFileToProject('BuildContext.groovy', '''
+@groovy.transform.CompileStatic 
+class BuildContext {
+  static BuildContext createContext(PropTools tools) { return BuildContextImpl.create(tools) } 
+}
+
+''')
+    myFixture.addFileToProject('PropTools.groovy', 'class PropTools { SomeTool someTool }')
+    myFixture.addFileToProject('SomeTool.groovy', 'interface SomeTool { void call(BuildContext ctx) }')
+    def subText = '''
+@groovy.transform.CompileStatic 
+class BuildContextImpl extends BuildContext {
+  static BuildContextImpl create(PropTools tools) { return new BuildContextImpl() }
+  void foo(SomeTool tool) { tool.call(this) } 
+}
+'''
+    def sub = myFixture.addFileToProject('BuildContextImpl.groovy', subText)
+    assertEmpty(make())
+    
+    setFileText(sub, subText + ' ')
+    assert make().collect { it.message } == chunkRebuildMessage('Groovy compiler')
+    def fileMessages = compileFiles(sub.virtualFile)
+    if (this instanceof GroovycTest) {
+      assert fileMessages.collect { it.message == 'Consider building whole project or rebuilding the module' }
+    } else {
+      assert fileMessages.empty
+    }
   }
 
   void "test report real compilation errors"() {
@@ -984,6 +1016,10 @@ class Bar {}'''
       assert msg.message.contains('org.apache.commons.logging.Log')
     }
 
+    protected List<String> chunkRebuildMessage(String builder) {
+      return ['Builder "' + builder + '" requested rebuild of module chunk "mainModule"']
+    }
+
   }
 
   static class EclipseTest extends GroovyCompilerTest {
@@ -1008,5 +1044,10 @@ class Bar {}'''
 
       super.runTest()
     }
+
+    protected List<String> chunkRebuildMessage(String builder) {
+      return []
+    }
+
   }
 }

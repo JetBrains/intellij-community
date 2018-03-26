@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.AbstractBundle;
@@ -24,8 +10,8 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.idea.IdeaLogger;
-import com.intellij.internal.statistic.customUsageCollectors.actions.ActionIdProvider;
-import com.intellij.internal.statistic.customUsageCollectors.actions.ActionsCollector;
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionIdProvider;
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -1098,12 +1084,14 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
   }
 
-  //@Override
-  //public AnAction replaceAction(String actionId, @NotNull AnAction newAction) {
-  //  synchronized (myLock) {
-  //    return replaceAction(actionId, newAction, null);
-  //  }
-  //}
+  public boolean isToolWindowContextMenuVisible() {
+    for (ActionPopupMenuImpl popup : myPopups) {
+      if (popup.isToolWindowContextMenu()) {
+        return true;
+      }
+    }
+    return false;
+  }
 
   @Override
   public boolean isActionPopupStackEmpty() {
@@ -1176,7 +1164,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       }
       //noinspection AssignmentToStaticFieldFromInstanceMethod
       IdeaLogger.ourLastActionId = myLastPreformedActionId;
-      ActionsCollector.getInstance().record(myLastPreformedActionId);
+      ActionsCollectorImpl.getInstance().record(myLastPreformedActionId);
     }
     for (AnActionListener listener : myActionListeners) {
       listener.beforeActionPerformed(action, dataContext, event);
@@ -1243,17 +1231,17 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   public void preloadActions(ProgressIndicator indicator) {
-    final Application application = ApplicationManager.getApplication();
+    Application application = ApplicationManager.getApplication();
 
     for (String id : getActionIds()) {
       indicator.checkCanceled();
-      if (application.isDisposed()) return;
+      if (application.isDisposeInProgress() || application.isDisposed()) return;
 
-      final AnAction action = getAction(id);
+      AnAction action = getAction(id);
       if (action instanceof PreloadableAction) {
         ((PreloadableAction)action).preload();
       }
-      // don't preload ActionGroup.getChildren() because that would unstub child actions
+      // don't preload ActionGroup.getChildren() because that would un-stub child actions
       // and make it impossible to replace the corresponding actions later
       // (via unregisterAction+registerAction, as some app components do)
     }

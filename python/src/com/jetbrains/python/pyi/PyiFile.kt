@@ -30,7 +30,7 @@ class PyiFile(viewProvider: FileViewProvider) : PyFileImpl(viewProvider, PyiLang
 
   override fun toString() = "PyiFile:" + name
 
-  override fun getLanguageLevel() = LanguageLevel.PYTHON36
+  override fun getLanguageLevel() = LanguageLevel.PYTHON37
 
   override fun multiResolveName(name: String, exported: Boolean): List<RatedResolveResult> {
     val baseResults = super.multiResolveName(name, exported)

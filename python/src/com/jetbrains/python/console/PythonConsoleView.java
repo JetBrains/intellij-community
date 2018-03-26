@@ -34,9 +34,11 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
@@ -96,13 +98,13 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   private boolean myHyperlink;
 
   private XStandaloneVariablesView mySplitView;
-  private ActionCallback myInitialized = new ActionCallback();
+  private final ActionCallback myInitialized = new ActionCallback();
   private boolean isShowVars;
 
   /**
    * @param testMode this console will be used to display test output and should support TC messages
    */
-  public PythonConsoleView(final Project project, final String title, final Sdk sdk,  final boolean testMode) {
+  public PythonConsoleView(final Project project, final String title, final Sdk sdk, final boolean testMode) {
     super(project, title, PythonLanguage.getInstance());
     myTestMode = testMode;
     isShowVars = PyConsoleOptions.getInstance(project).isShowVariableByDefault();
@@ -126,6 +128,15 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     if (isShowVars && communication instanceof PydevConsoleCommunication) {
       showVariables((PydevConsoleCommunication)communication);
     }
+  }
+
+  public void applySoftWrapping() {
+    // apply soft wrapping settings when console initialized
+    myInitialized.doWhenDone(() -> {
+      final boolean useSoftWraps = EditorSettingsExternalizable.getInstance().isUseSoftWraps(SoftWrapAppliancePlaces.CONSOLE);
+      getEditor().getSettings().setUseSoftWraps(useSoftWraps);
+      getConsoleEditor().getSettings().setUseSoftWraps(useSoftWraps);
+    });
   }
 
   @Nullable
@@ -215,7 +226,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
                   if (editor != null) {
                     UIUtil.invokeLaterIfNeeded(
                       () -> HintManager.getInstance()
-                        .showErrorHint(editor, myExecuteActionHandler.getCantExecuteMessage()));
+                                       .showErrorHint(editor, myExecuteActionHandler.getCantExecuteMessage()));
                   }
                   return;
                 }
@@ -226,7 +237,8 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
               }
             }
           });
-        } else {
+        }
+        else {
           requestFocus();
         }
       }
@@ -246,8 +258,9 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
         if (psiFile != null) {
           CommandProcessor.getInstance().runUndoTransparentAction(() ->
                                                                     CodeStyleManager.getInstance(getProject())
-                                                                      .adjustLineIndent(psiFile,
-                                                                                        new TextRange(0, psiFile.getTextLength())));
+                                                                                    .adjustLineIndent(psiFile,
+                                                                                                      new TextRange(0, psiFile
+                                                                                                        .getTextLength())));
         }
       });
       int oldOffset = getConsoleEditor().getCaretModel().getOffset();
@@ -390,7 +403,8 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     EditorEx viewer = getHistoryViewer();
     DocumentEx document = viewer.getDocument();
     RangeHighlighter highlighter = getHistoryViewer().getMarkupModel()
-      .addRangeHighlighter(document.getTextLength(), document.getTextLength(), 0, null, HighlighterTargetArea.EXACT_RANGE);
+                                                     .addRangeHighlighter(document.getTextLength(), document.getTextLength(), 0, null,
+                                                                          HighlighterTargetArea.EXACT_RANGE);
     final String prompt;
     if (isMainPrompt) {
       prompt = myPromptView.getMainPrompt();
@@ -524,5 +538,9 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
 
   public boolean isShowVars() {
     return isShowVars;
+  }
+
+  public void whenInitialized(Runnable runnable) {
+    myInitialized.doWhenDone(runnable);
   }
 }

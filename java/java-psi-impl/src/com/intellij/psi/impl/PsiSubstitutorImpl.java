@@ -20,10 +20,10 @@ import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightTypeParameter;
+import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
-import java.util.HashMap;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NonNls;
@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -143,7 +144,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
     return mySubstitutionMap != null ? mySubstitutionMap.hashCode() : 0;
   }
 
-  private static RecursionGuard ourGuard = RecursionManager.createGuard("substituteGuard");
+  private static final RecursionGuard ourGuard = RecursionManager.createGuard("substituteGuard");
   private PsiType rawTypeForTypeParameter(final PsiTypeParameter typeParameter) {
     final PsiClassType[] extendsTypes = typeParameter.getExtendsListTypes();
     if (extendsTypes.length > 0) {
@@ -152,6 +153,23 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
     }
     // Object
     return PsiType.getJavaLangObject(typeParameter.getManager(), typeParameter.getResolveScope());
+  }
+
+  @NotNull
+  private static TypeAnnotationProvider getMergedProvider(@NotNull PsiType type1, @NotNull PsiType type2) {
+    if(type1.getAnnotationProvider() == TypeAnnotationProvider.EMPTY && !(type1 instanceof PsiClassReferenceType)) {
+      return type2.getAnnotationProvider();
+    }
+    if(type2.getAnnotationProvider() == TypeAnnotationProvider.EMPTY && !(type2 instanceof PsiClassReferenceType)) {
+      return type1.getAnnotationProvider();
+    }
+    return new TypeAnnotationProvider() {
+      @NotNull
+      @Override
+      public PsiAnnotation[] getAnnotations() {
+        return ArrayUtil.mergeArrays(type1.getAnnotations(), type2.getAnnotations());
+      }
+    };
   }
 
   private class SubstitutionVisitor extends PsiTypeMapper {
@@ -214,13 +232,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
           if (result != null) {
             PsiUtil.ensureValidType(result);
             if (result instanceof PsiClassType || result instanceof PsiArrayType || result instanceof PsiWildcardType) {
-              return result.annotate(new TypeAnnotationProvider() {
-                @NotNull
-                @Override
-                public PsiAnnotation[] getAnnotations() {
-                  return ArrayUtil.mergeArrays(result.getAnnotations(), classType.getAnnotations());
-                }
-              });
+              return result.annotate(getMergedProvider(classType, result));
             }
           }
           return result;
@@ -233,7 +245,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
       }
       PsiClassType result = JavaPsiFacade.getElementFactory(aClass.getProject()).createType(aClass, createSubstitutor(hashMap), classType.getLanguageLevel());
       PsiUtil.ensureValidType(result);
-      return result;
+      return result.annotate(classType.getAnnotationProvider());
     }
 
     private PsiType substituteTypeParameter(@NotNull PsiTypeParameter typeParameter) {

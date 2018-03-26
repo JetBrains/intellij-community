@@ -35,10 +35,7 @@ import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-@State(
-  name = "FileTemplateManagerImpl",
-  storages = @Storage(StoragePathMacros.WORKSPACE_FILE)
-)
+@State(name = "FileTemplateManagerImpl", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class FileTemplateManagerImpl extends FileTemplateManager implements PersistentStateComponent<FileTemplateManagerImpl.State> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.fileTemplates.impl.FileTemplateManagerImpl");
 

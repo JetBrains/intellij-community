@@ -31,7 +31,7 @@ import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.gotoByName.*;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
-import com.intellij.internal.statistic.customUsageCollectors.ui.ToolbarClicksCollector;
+import com.intellij.internal.statistic.collectors.fus.ui.persistence.ToolbarClicksCollector;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguagePsiElementExternalizer;
 import com.intellij.navigation.ItemPresentation;
@@ -43,9 +43,9 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actions.TextComponentEditorAction;
@@ -149,17 +149,17 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private volatile GotoSymbolModel2 mySymbolsModel;
   private Component myFocusComponent;
   private JBPopup myPopup;
-  private Map<String, String> myConfigurables = new HashMap<>();
+  private final Map<String, String> myConfigurables = new HashMap<>();
 
-  private Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, ApplicationManager.getApplication());
+  private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, ApplicationManager.getApplication());
   private JBList myList;
   private JCheckBox myNonProjectCheckBox;
   private AnActionEvent myActionEvent;
-  private Set<AnAction> myDisabledActions = new HashSet<>();
+  private final Set<AnAction> myDisabledActions = new HashSet<>();
   private Component myContextComponent;
   private CalcThread myCalcThread;
-  private static AtomicBoolean ourShiftIsPressed = new AtomicBoolean(false);
-  private static AtomicBoolean showAll = new AtomicBoolean(false);
+  private static final AtomicBoolean ourShiftIsPressed = new AtomicBoolean(false);
+  private static final AtomicBoolean showAll = new AtomicBoolean(false);
   private volatile ActionCallback myCurrentWorker = ActionCallback.DONE;
   private int myCalcThreadRestartRequestId = 0;
   private final Object myWorkerRestartRequestLock = new Object();
@@ -200,7 +200,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     JPanel panel = new BorderLayoutPanel() {
       @Override
       public Dimension getPreferredSize() {
-        return JBUI.size(25);
+        return JBUI.size(24);
       }
     };
     panel.setOpaque(false);
@@ -468,12 +468,19 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       else if (index == model.moreIndex.runConfigurations) wid = WidgetID.RUN_CONFIGURATIONS;
       if (wid != null) {
         final WidgetID widgetID = wid;
-        myCurrentWorker.doWhenProcessed(() -> {
-          myCalcThread = new CalcThread(project, pattern, true);
-          myPopupActualWidth = 0;
-          myCurrentWorker = myCalcThread.insert(index, widgetID);
-        });
-
+        synchronized (myWorkerRestartRequestLock) { // this lock together with RestartRequestId should be enough to prevent two CalcThreads running at the same time
+          final int currentRestartRequest = ++myCalcThreadRestartRequestId;
+          myCurrentWorker.doWhenProcessed(() -> {
+            synchronized (myWorkerRestartRequestLock) {
+              if (currentRestartRequest != myCalcThreadRestartRequestId) {
+                return;
+              }
+              myCalcThread = new CalcThread(project, pattern, true);
+              myPopupActualWidth = 0;
+              myCurrentWorker = myCalcThread.insert(index, widgetID);
+            }
+          });
+        }
         return;
       }
     }
@@ -499,17 +506,13 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       SwingUtilities.invokeLater(() -> getField().setText("#" + ((OptionsTopHitProvider)value).getId() + " "));
       return;
     }
-    Runnable onDone = null;
-
-    AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
-    try {
+    Runnable onDone =
+    ReadAction.compute(() -> {
       if (value instanceof PsiElement) {
-        onDone = () -> NavigationUtil.activateFileWithPsiElement((PsiElement)value, true);
-        return;
+        return () -> NavigationUtil.activateFileWithPsiElement((PsiElement)value, true);
       }
       else if (isVirtualFile(value)) {
-        onDone = () -> OpenSourceUtil.navigate(true, new OpenFileDescriptor(project, (VirtualFile)value));
-        return;
+        return () -> OpenSourceUtil.navigate(true, new OpenFileDescriptor(project, (VirtualFile)value));
       }
       else if (isActionValue(value) || isSetting(value) || isRunConfiguration(value)) {
         focusManager.requestDefaultFocus(true);
@@ -530,24 +533,23 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                 itemWrapper.perform(project, executor, dataManager.getDataContext(c));
               }
             }
-          } else {
-            GotoActionAction.openOptionOrPerformAction(value, pattern, project, c, event);
-            if (isToolWindowAction(value)) return;
+          }
+          else {
+            GotoActionAction.openOptionOrPerformAction(value, pattern, project, c);
           }
         });
-        return;
+        return ()->{};
       }
       else if (value instanceof Navigatable) {
-        onDone = () -> OpenSourceUtil.navigate(true, (Navigatable)value);
-        return;
+        return () -> OpenSourceUtil.navigate(true, (Navigatable)value);
       }
-    }
-    finally {
-      token.finish();
-      final ActionCallback callback = onFocusLost();
-      if (onDone != null) {
-        callback.doWhenDone(onDone);
-      }
+      return null;
+    });
+
+    final ActionCallback callback = onFocusLost();
+    if (onDone != null) {
+      callback.doWhenDone(onDone);
+      return;
     }
     focusManager.requestDefaultFocus(true);
   }
@@ -636,6 +638,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       Disposer.dispose(myPopupField);
     }
     myPopupField = new MySearchTextField();
+    //UIUtil.typeAheadUntilFocused(e.getInputEvent(), myPopupField.getTextEditor());
     myPopupField.getTextEditor().addKeyListener(new KeyAdapter() {
       @Override
       public void keyTyped(KeyEvent e) {
@@ -735,7 +738,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       .setCancelOnClickOutside(true)
       .setModalContext(false)
       .setRequestFocus(true)
-      .setCancelCallback(() -> !mySkipFocusGain)
       .createPopup();
     myBalloon.getContent().setBorder(JBUI.Borders.empty());
     final Window window = WindowManager.getInstance().suggestParentWindow(project);
@@ -1031,8 +1033,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     private String myLocationString;
     private Icon myLocationIcon;
     private Project myProject;
-    private MyAccessibleComponent myMainPanel = new MyAccessibleComponent(new BorderLayout());
-    private JLabel myTitle = new JLabel();
+    private final MyAccessibleComponent myMainPanel = new MyAccessibleComponent(new BorderLayout());
+    private final JLabel myTitle = new JLabel();
 
     MyListRenderer(@NotNull JBList myList) {
       assert myList == SearchEverywhereAction.this.myList;
@@ -2221,8 +2223,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           myPopup = null;
           myHistoryIndex = 0;
           myPopupActualWidth = 0;
-          myCurrentWorker = ActionCallback.DONE;
           showAll.set(false);
+          myCurrentWorker = myCalcThread.cancel();
           myCalcThread = null;
           myEditor = null;
           myFileEditor = null;

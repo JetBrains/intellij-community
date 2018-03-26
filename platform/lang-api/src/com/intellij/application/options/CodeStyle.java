@@ -51,6 +51,7 @@ public class CodeStyle {
    */
   @NotNull
   public static CodeStyleSettings getSettings(@NotNull Project project) {
+    //noinspection deprecation
     return CodeStyleSettingsManager.getInstance(project).getCurrentSettings();
   }
 
@@ -64,6 +65,7 @@ public class CodeStyle {
   public static CodeStyleSettings getSettings(@NotNull PsiFile file) {
     if (file.isValid()) {
       Project project = file.getProject();
+      //noinspection deprecation
       return CodeStyleSettingsManager.getInstance(project).getCurrentSettings();
     }
     return getDefaultSettings();
@@ -183,6 +185,30 @@ public class CodeStyle {
    */
   public static int getIndentSize(@NotNull PsiFile file) {
     return getIndentOptions(file).INDENT_SIZE;
+  }
+
+  /**
+   * Set temporary settings for the project. Temporary settings will override any user settings until {@link #dropTemporarySettings(Project)}
+   * is called.
+   *
+   * @param project The project.
+   * @param settings The settings to use temporarily with the project.
+   */
+  public static void setTemporarySettings(@NotNull Project project, @NotNull CodeStyleSettings settings) {
+    //noinspection deprecation
+    CodeStyleSettingsManager.getInstance(project).setTemporarySettings(settings);
+  }
+
+
+  /**
+   * Drop temporary settings.
+   *
+   * @param project The project to drop temporary settings for.
+   * @see #setTemporarySettings(Project, CodeStyleSettings)
+   */
+  public static void dropTemporarySettings(@NotNull Project project) {
+    //noinspection deprecation
+    CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
   }
 
 }

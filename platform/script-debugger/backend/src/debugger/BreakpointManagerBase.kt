@@ -113,6 +113,11 @@ abstract class BreakpointManagerBase<T : BreakpointBase<*>> : BreakpointManager 
   override fun flush(breakpoint: Breakpoint) = (breakpoint as T).flush(this)
 
   override fun enableBreakpoints(enabled: Boolean): Promise<*> = rejectedPromise<Any?>("Unsupported")
+
+  override fun setBreakOnFirstStatement() {
+  }
+
+  override fun isBreakOnFirstStatement(context: SuspendContext<*>): Boolean = false
 }
 
 // used in goland
@@ -135,4 +140,9 @@ class DummyBreakpointManager : BreakpointManager {
   override fun flush(breakpoint: Breakpoint) = nullPromise()
 
   override fun enableBreakpoints(enabled: Boolean) = nullPromise()
+
+  override fun setBreakOnFirstStatement() {
+  }
+
+  override fun isBreakOnFirstStatement(context: SuspendContext<*>): Boolean = false
 }

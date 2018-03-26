@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
+import com.intellij.execution.process.OSProcessUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
@@ -154,8 +155,6 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   private State myState = new State();
 
   private final Map<String, String> myNameCache = Collections.synchronizedMap(new THashMap<String, String>());
-  private Set<String> myDuplicatesCache = null;
-  private boolean isDuplicatesCacheUpdating = false;
   private boolean myBatchOpening;
 
   protected RecentProjectsManagerBase(@NotNull MessageBus messageBus) {
@@ -168,7 +167,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   public State getState() {
     synchronized (myStateLock) {
       if (myState.pid == null) {
-        myState.pid = ApplicationManager.getApplicationPid();
+        myState.pid = OSProcessUtil.getApplicationPid();
       }
       updateLastProjectPath();
       myState.validateRecentProjects();
@@ -410,26 +409,14 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   }
 
   private Set<String> getDuplicateProjectNames(Set<String> openedPaths, Set<String> recentPaths) {
-    if (myDuplicatesCache != null) {
-      return myDuplicatesCache;
+    Set<String> names = ContainerUtil.newHashSet();
+    Set<String> duplicates = ContainerUtil.newHashSet();
+    for (String path : ContainerUtil.concat(openedPaths, recentPaths)) {
+      if (!names.add(getProjectName(path))) {
+        duplicates.add(path);
+      }
     }
-
-    if (!isDuplicatesCacheUpdating) {
-      isDuplicatesCacheUpdating = true; //assuming that this check happens only on EDT. So, no synchronised block or double-checked locking needed
-      Set<String> names = ContainerUtil.newHashSet();
-      final HashSet<String> duplicates = ContainerUtil.newHashSet();
-      ArrayList<String> list = ContainerUtil.newArrayList(ContainerUtil.concat(openedPaths, recentPaths));
-      ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        for (String path : list) {
-          if (!names.add(getProjectName(path))) {
-            duplicates.add(path);
-          }
-        }
-        myDuplicatesCache = duplicates;
-        isDuplicatesCacheUpdating = false;
-      });
-    }
-    return ContainerUtil.newHashSet();
+    return duplicates;
   }
 
   @Override
@@ -451,7 +438,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
     }
 
     paths.remove(null);
-    paths.removeAll(openedPaths);
+    //paths.removeAll(openedPaths);
 
     List<AnAction> actions = new SmartList<>();
     Set<String> duplicates = getDuplicateProjectNames(openedPaths, paths);

@@ -16,6 +16,7 @@
 package com.intellij.vcs.commit;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
@@ -59,15 +60,27 @@ public class CommitMessageInspectionProfile extends InspectionProfileImpl
     return getInstance(project).getBodyRightMargin();
   }
 
+  public static int getSubjectRightMargin(@NotNull Project project) {
+    return getInstance(project).getSubjectRightMargin();
+  }
+
   @NotNull
   public Project getProject() {
     return myProject;
   }
 
   private int getBodyRightMargin() {
-    InspectionToolWrapper toolWrapper = getInspectionTool(InspectionProfileEntry.getShortName(BodyLimitInspection.class.getSimpleName()), myProject);
+    return getTool(BodyLimitInspection.class).RIGHT_MARGIN;
+  }
 
-    return ((BodyLimitInspection)ObjectUtils.notNull(toolWrapper).getTool()).RIGHT_MARGIN;
+  private int getSubjectRightMargin() {
+    return getTool(SubjectLimitInspection.class).RIGHT_MARGIN;
+  }
+
+  public <T extends LocalInspectionTool> T getTool(Class<T> aClass) {
+    InspectionToolWrapper tool = getInspectionTool(InspectionProfileEntry.getShortName(aClass.getSimpleName()), myProject);
+    //noinspection unchecked
+    return (T)ObjectUtils.notNull(tool).getTool();
   }
 
   @Override
@@ -120,8 +133,8 @@ public class CommitMessageInspectionProfile extends InspectionProfileImpl
     public List<InspectionToolWrapper> get() {
       return Stream.of(new SubjectBodySeparationInspection(), new SubjectLimitInspection(), new BodyLimitInspection(),
                        new CommitMessageSpellCheckingInspection())
-        .map(LocalInspectionToolWrapper::new)
-        .collect(Collectors.toList());
+                   .map(LocalInspectionToolWrapper::new)
+                   .collect(Collectors.toList());
     }
   }
 }

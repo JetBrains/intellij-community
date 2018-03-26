@@ -26,14 +26,18 @@ public class PropertyFalsified extends RuntimeException {
 
   private String calcMessage() {
     StringBuilder traceBuilder = new StringBuilder();
-    
-    String msg = "Falsified on " + valueToString(failure.getMinimalCounterexample(), traceBuilder) + "\n" +
-                 getMinimizationStats() +
-                 failure.iteration.printToReproduce();
+
+    String exampleString = valueToString(failure.getMinimalCounterexample(), traceBuilder);
 
     Throwable failureReason = failure.getMinimalCounterexample().getExceptionCause();
+    Throwable rootCause = failureReason == null ? null : getRootCause(failureReason);
+    String msg = rootCause != null ? "Failed with " + rootCause + "\nOn " + exampleString : "Falsified on " + exampleString;
+
+    msg += "\n" + 
+           getMinimizationStats() +
+           "\n" + failure.iteration.printToReproduce(failureReason, failure.getMinimalCounterexample()) + "\n";
+
     if (failureReason != null) {
-      Throwable rootCause = getRootCause(failureReason);
       appendTrace(traceBuilder, 
                   rootCause == failureReason ? "Property failure reason: " : "Property failure reason, innermost exception (see full trace below): ", 
                   rootCause);
@@ -106,7 +110,7 @@ public class PropertyFalsified extends RuntimeException {
     List<String> result = new ArrayList<>();
     for (StackTraceElement element : e.getStackTrace()) {
       String s = element.toString();
-      if (s.startsWith("org.jetbrains.jetCheck.CounterExampleImpl.checkProperty")) {
+      if (s.startsWith("org.jetbrains.jetCheck.") && !s.contains("Test.")) {
         break;
       }
       result.add(s);
@@ -122,7 +126,4 @@ public class PropertyFalsified extends RuntimeException {
     return failure.getMinimalCounterexample().getExampleValue();
   }
 
-  public DataStructure getData() {
-    return failure.getMinimalCounterexample().createReplayData();
-  }
 }

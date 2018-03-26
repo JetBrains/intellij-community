@@ -30,7 +30,6 @@ import java.util.Collection;
 import java.util.List;
 
 public class ExtensionPointDeclarationRelatedItemLineMarkerProvider extends DevkitRelatedLineMarkerProviderBase {
-
   @Override
   protected void collectNavigationMarkers(@NotNull PsiElement element, @NotNull Collection<? super RelatedItemLineMarkerInfo> result) {
     if (element instanceof PsiField) {

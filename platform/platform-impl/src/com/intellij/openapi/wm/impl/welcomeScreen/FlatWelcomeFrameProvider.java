@@ -17,7 +17,6 @@ package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WelcomeFrameProvider;
-import com.intellij.util.PlatformUtils;
 
 /**
  * @author Konstantin Bulenkov
@@ -25,10 +24,6 @@ import com.intellij.util.PlatformUtils;
 public class FlatWelcomeFrameProvider implements WelcomeFrameProvider {
   @Override
   public IdeFrame createFrame() {
-    return isAvailable() ? new FlatWelcomeFrame() : null;
-  }
-
-  public static boolean isAvailable() {
-    return !PlatformUtils.isDatabaseIDE();
+    return new FlatWelcomeFrame();
   }
 }

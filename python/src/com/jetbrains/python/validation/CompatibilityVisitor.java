@@ -1,7 +1,6 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.validation;
 
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.lang.ASTNode;
@@ -21,6 +20,7 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.inspections.quickfix.*;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,26 +36,19 @@ import java.util.stream.Stream;
 public abstract class CompatibilityVisitor extends PyAnnotator {
 
   @NotNull
-  private static final Map<LanguageLevel, Set<String>> AVAILABLE_PREFIXES = Maps.newHashMap();
+  private static final Set<String> PYTHON2_PREFIXES = Sets.newHashSet("R", "U", "UR", "B", "BR");
 
   @NotNull
-  private static final Set<String> DEFAULT_PREFIXES = Sets.newHashSet("R", "U", "B", "BR", "RB");
+  private static final Set<String> PYTHON34_PREFIXES = Sets.newHashSet("R", "U", "B", "BR", "RB");
+
+  @NotNull
+  private static final Set<String> PYTHON36_PREFIXES = Sets.newHashSet("R", "U", "B", "BR", "RB", "F", "FR", "RF");
 
   @NotNull
   protected static final String COMMON_MESSAGE = "Python version ";
 
   @NotNull
   protected List<LanguageLevel> myVersionsToProcess;
-
-  static {
-    AVAILABLE_PREFIXES.put(LanguageLevel.PYTHON26, Sets.newHashSet("R", "U", "UR", "B", "BR"));
-    AVAILABLE_PREFIXES.put(LanguageLevel.PYTHON27, Sets.newHashSet("R", "U", "UR", "B", "BR"));
-    AVAILABLE_PREFIXES.put(LanguageLevel.PYTHON30, Sets.newHashSet("R", "B"));
-    AVAILABLE_PREFIXES.put(LanguageLevel.PYTHON31, Sets.newHashSet("R", "B", "BR"));
-    AVAILABLE_PREFIXES.put(LanguageLevel.PYTHON32, Sets.newHashSet("R", "B", "BR"));
-    AVAILABLE_PREFIXES.put(LanguageLevel.PYTHON36, Sets.newHashSet("R", "U", "B", "BR", "RB", "F", "FR", "RF"));
-    AVAILABLE_PREFIXES.put(LanguageLevel.PYTHON37, Sets.newHashSet("R", "U", "B", "BR", "RB", "F", "FR", "RF"));
-  }
 
   public CompatibilityVisitor(@NotNull List<LanguageLevel> versionsToProcess) {
     myVersionsToProcess = versionsToProcess;
@@ -134,7 +127,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
 
       if (qName != null) {
         if (qName.matches("builtins")) {
-          registerForAllMatchingVersions(level -> level.isPython2(), " not have module builtins", node, new ReplaceBuiltinsQuickFix());
+          registerForAllMatchingVersions(LanguageLevel::isPython2, " not have module builtins", node, new ReplaceBuiltinsQuickFix());
         }
         else if (qName.matches("__builtin__")) {
           registerForAllMatchingVersions(LanguageLevel::isPy3K, " not have module __builtin__", node, new ReplaceBuiltinsQuickFix());
@@ -148,7 +141,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     super.visitPyStarExpression(node);
 
     if (node.isAssignmentTarget()) {
-      registerOnFirstMatchingVersion(level -> level.isOlderThan(LanguageLevel.PYTHON30),
+      registerOnFirstMatchingVersion(LanguageLevel::isPython2,
                                      "Python versions < 3.0 do not support starred expressions as assignment targets",
                                      node);
     }
@@ -231,12 +224,25 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
       if (prefix.isEmpty()) continue;
 
       final TextRange range = TextRange.create(stringNode.getStartOffset(), stringNode.getStartOffset() + prefixLength);
-      registerForAllMatchingVersions(level -> !AVAILABLE_PREFIXES.getOrDefault(level, DEFAULT_PREFIXES).contains(prefix),
+      registerForAllMatchingVersions(level -> !getSupportedStringPrefixes(level).contains(prefix),
                                      " not support a '" + prefix + "' prefix",
                                      node,
                                      range,
                                      new RemovePrefixQuickFix(prefix),
                                      true);
+    }
+  }
+
+  @NotNull
+  private static Set<String> getSupportedStringPrefixes(@NotNull LanguageLevel level) {
+    if (level.isPython2()) {
+      return PYTHON2_PREFIXES;
+    }
+    else if (level.isOlderThan(LanguageLevel.PYTHON36)) {
+      return PYTHON34_PREFIXES;
+    }
+    else {
+      return PYTHON36_PREFIXES;
     }
   }
 
@@ -330,7 +336,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
 
     final PsiElement firstChild = node.getFirstChild();
     if (firstChild != null && PyNames.SUPER.equals(firstChild.getText()) && ArrayUtil.isEmpty(node.getArguments())) {
-      registerForAllMatchingVersions(level -> level.isPython2(),
+      registerForAllMatchingVersions(LanguageLevel::isPython2,
                                      " not support this syntax. super() should have arguments in Python 2",
                                      node,
                                      null);
@@ -376,7 +382,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
       return;
     }
 
-    registerOnFirstMatchingVersion(level -> level.isOlderThan(LanguageLevel.PYTHON33),
+    registerOnFirstMatchingVersion(LanguageLevel::isPython2,
                                    "Python versions < 3.3 do not support this syntax. Delegating to a subgenerator is available since " +
                                    "Python 3.3; use explicit iteration over subgenerator instead.",
                                    node);
@@ -384,7 +390,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
 
   @Override
   public void visitPyReturnStatement(PyReturnStatement node) {
-    if (myVersionsToProcess.stream().anyMatch(level -> level.isOlderThan(LanguageLevel.PYTHON33))) {
+    if (ContainerUtil.exists(myVersionsToProcess, LanguageLevel::isPython2)) {
       final PyFunction function = PsiTreeUtil.getParentOfType(node, PyFunction.class, false, PyClass.class);
       if (function != null && node.getExpression() != null) {
         final YieldVisitor visitor = new YieldVisitor();
@@ -407,7 +413,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
       if (sliceItem != null) {
         return;
       }
-      registerOnFirstMatchingVersion(level -> level.isOlderThan(LanguageLevel.PYTHON30),
+      registerOnFirstMatchingVersion(LanguageLevel::isPython2,
                                      "Python versions < 3.0 do not support '...' outside of sequence slicings.",
                                      node);
     }
@@ -557,7 +563,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
 
   @Override
   public void visitPyNonlocalStatement(final PyNonlocalStatement node) {
-    registerOnFirstMatchingVersion(level -> level.isOlderThan(LanguageLevel.PYTHON30), "nonlocal keyword available only since py3", node);
+    registerOnFirstMatchingVersion(LanguageLevel::isPython2, "nonlocal keyword available only since py3", node);
   }
 
   private void highlightIncorrectArguments(@NotNull PyCallExpression callExpression) {
@@ -618,6 +624,19 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
         else if (seenKeywordContainer) {
           registerProblem(argument, "Positional argument after **expression", new PyRemoveArgumentQuickFix());
         }
+      }
+    }
+
+    /* check for trailing comma */
+    PyExpression lastArg = ContainerUtil.getLastItem(Arrays.asList(callExpression.getArguments()));
+    if (lastArg instanceof PyStarArgument) {
+      PsiElement sibling = PyPsiUtils.getNextNonWhitespaceSibling(lastArg);
+      if (sibling != null && sibling.getNode().getElementType() == PyTokenTypes.COMMA) {
+        boolean isKeyword = ((PyStarArgument)lastArg).isKeyword();
+        registerOnFirstMatchingVersion(level -> level.isOlderThan(LanguageLevel.PYTHON35),
+                                       "Python versions < 3.5 do not allow a trailing comma after "
+                                       + (isKeyword ? "**" : "*") + "expression",
+                                       sibling);
       }
     }
   }

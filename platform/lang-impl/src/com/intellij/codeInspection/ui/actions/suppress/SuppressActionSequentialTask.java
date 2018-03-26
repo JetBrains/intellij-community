@@ -42,7 +42,7 @@ import java.util.Set;
 public class SuppressActionSequentialTask implements SequentialTask {
   private static final Logger LOG = Logger.getInstance(SuppressActionSequentialTask.class);
 
-  private SuppressableInspectionTreeNode[] myNodesToSuppress;
+  private final SuppressableInspectionTreeNode[] myNodesToSuppress;
   @NotNull private final SuppressIntentionAction mySuppressAction;
   @NotNull private final InspectionToolWrapper myWrapper;
   private int myCount = 0;

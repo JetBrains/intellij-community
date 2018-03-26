@@ -135,7 +135,7 @@ public class PyClassNameCompletionContributor extends CompletionContributor {
     }
   }
 
-  private static Condition<PsiElement> IS_TOPLEVEL = element -> PyUtil.isTopLevel(element);
+  private static final Condition<PsiElement> IS_TOPLEVEL = element -> PyUtil.isTopLevel(element);
 
   private static <T extends PsiNamedElement> void addVariantsFromIndex(@NotNull CompletionResultSet resultSet,
                                                                        @NotNull PsiFile targetFile,
@@ -208,11 +208,8 @@ public class PyClassNameCompletionContributor extends CompletionContributor {
       // no import statement needed
       return;
     }
-    new WriteCommandAction(context.getProject(), context.getFile()) {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        AddImportHelper.addImport(PyUtil.as(item.getPsiElement(), PsiNamedElement.class), context.getFile(), (PyElement)ref.getElement());
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(context.getProject(), context.getFile()).run(() -> {
+      AddImportHelper.addImport(PyUtil.as(item.getPsiElement(), PsiNamedElement.class), context.getFile(), (PyElement)ref.getElement());
+    });
   }
 }

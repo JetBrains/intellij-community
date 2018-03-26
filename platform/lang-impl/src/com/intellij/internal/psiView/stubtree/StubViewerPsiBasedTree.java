@@ -231,7 +231,7 @@ public class StubViewerPsiBasedTree implements ViewerPsiBasedTree {
 
   private class StubTreeSelectionListener implements TreeSelectionListener {
     @NotNull
-    private PsiFileWithStubSupport myFile;
+    private final PsiFileWithStubSupport myFile;
 
     public StubTreeSelectionListener(@NotNull PsiFileWithStubSupport element) {
       myFile = element;

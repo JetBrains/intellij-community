@@ -21,7 +21,7 @@ import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
 import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;
 
 public class HgBookmarkDialog extends DialogWrapper {
-  @NotNull private HgRepository myRepository;
+  @NotNull private final HgRepository myRepository;
   @NotNull private JBTextField myBookmarkName;
   @NotNull private JBCheckBox myActiveCheckbox;
 

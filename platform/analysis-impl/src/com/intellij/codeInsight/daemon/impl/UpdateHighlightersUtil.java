@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.daemon.impl;
 
@@ -26,9 +12,9 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
-import com.intellij.openapi.editor.impl.SweepProcessor;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.RedBlackTree;
+import com.intellij.openapi.editor.impl.SweepProcessor;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -378,15 +364,20 @@ public class UpdateHighlightersUtil {
     if (highlighter == null) {
       highlighter = markup.addRangeHighlighterAndChangeAttributes(infoStartOffset, infoEndOffset, layer, null,
                                                                   HighlighterTargetArea.EXACT_RANGE, false, changeAttributes);
+      if (HighlightInfoType.VISIBLE_IF_FOLDED.contains(info.type)) {
+        highlighter.setVisibleIfFolded(true);
+      }
     }
     else {
       markup.changeAttributesInBatch(highlighter, changeAttributes);
     }
 
-    boolean attributesSet = Comparing.equal(infoAttributes, highlighter.getTextAttributes());
-    assert attributesSet : "Info: " + infoAttributes +
-                           "; colorsScheme: " + (colorsScheme == null ? "[global]" : colorsScheme.getName()) +
-                           "; highlighter:" + highlighter.getTextAttributes();
+    if (infoAttributes != null) {
+      boolean attributesSet = Comparing.equal(infoAttributes, highlighter.getTextAttributes());
+      assert attributesSet : "Info: " + infoAttributes +
+                             "; colorsScheme: " + (colorsScheme == null ? "[global]" : colorsScheme.getName()) +
+                             "; highlighter:" + highlighter.getTextAttributes();
+    }
   }
 
   private static int getLayer(@NotNull HighlightInfo info, @NotNull SeverityRegistrar severityRegistrar) {
@@ -487,11 +478,8 @@ public class UpdateHighlightersUtil {
     RangeHighlighter[] allHighlighters = markup.getAllHighlighters();
     for (RangeHighlighter highlighter : allHighlighters) {
       if (!highlighter.isValid()) continue;
-      Object tooltip = highlighter.getErrorStripeTooltip();
-      if (!(tooltip instanceof HighlightInfo)) {
-        continue;
-      }
-      final HighlightInfo info = (HighlightInfo)tooltip;
+      HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
+      if (info == null) continue;
       boolean contains = !DaemonCodeAnalyzerEx
         .processHighlights(document, project, null, info.getActualStartOffset(), info.getActualEndOffset(),
                            highlightInfo -> BY_START_OFFSET_NODUPS.compare(highlightInfo, info) != 0);

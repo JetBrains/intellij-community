@@ -10,14 +10,12 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.util.Consumer;
 import com.intellij.util.PairConsumer;
-import org.jetbrains.annotations.Debugger;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Map;
-
-import static com.intellij.util.containers.ContainerUtil.newIdentityTroveMap;
 
 /**
  * <p>QueueProcessor processes elements which are being added to a queue via {@link #add(Object)} and {@link #addFirst(Object)} methods.</p>
@@ -25,7 +23,7 @@ import static com.intellij.util.containers.ContainerUtil.newIdentityTroveMap;
  * The processor itself is passed in the constructor and is called from that thread.
  * By default processing starts when the first element is added to the queue, though there is an 'autostart' option which holds
  * the processor until {@link #start()} is called.</p>
- *
+ * This class is thread-safe.
  * @param <T> type of queue elements.
  */
 public class QueueProcessor<T> {
@@ -43,7 +41,7 @@ public class QueueProcessor<T> {
 
   private final ThreadToUse myThreadToUse;
   private final Condition<?> myDeathCondition;
-  private final Map<Object, ModalityState> myModalityState = newIdentityTroveMap();
+  private final Map<Object, ModalityState> myModalityState = ContainerUtil.newIdentityTroveMap();
 
   /**
    * Constructs a QueueProcessor, which will autostart as soon as the first element is added to it.

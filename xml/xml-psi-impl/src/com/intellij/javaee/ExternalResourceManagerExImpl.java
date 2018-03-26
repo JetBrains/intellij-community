@@ -4,6 +4,7 @@ package com.intellij.javaee;
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -349,6 +350,47 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
     }
   }
 
+  public void addIgnoredResources(@NotNull List<String> urls, @Nullable Disposable disposable) {
+    Application app = ApplicationManager.getApplication();
+    if (app.isWriteAccessAllowed()) {
+      doAddIgnoredResources(urls, disposable);
+    }
+    else {
+      app.runWriteAction(() -> {
+        doAddIgnoredResources(urls, disposable);
+      });
+    }
+  }
+
+  private void doAddIgnoredResources(@NotNull List<String> urls, @Nullable Disposable disposable) {
+    long modificationCount = getModificationCount();
+    for (String url : urls) {
+      addIgnoredSilently(url);
+    }
+
+    if (modificationCount != getModificationCount()) {
+      if (disposable != null) {
+        //noinspection CodeBlock2Expr
+        Disposer.register(disposable, () -> {
+          ApplicationManager.getApplication().runWriteAction(() -> {
+            boolean isChanged = false;
+            for (String url : urls) {
+              if (myIgnoredResources.remove(url)) {
+                isChanged = true;
+              }
+            }
+
+            if (isChanged) {
+              fireExternalResourceChanged();
+            }
+          });
+        });
+      }
+
+      fireExternalResourceChanged();
+    }
+  }
+
   private boolean addIgnoredSilently(@NotNull String url) {
     if (myStandardIgnoredResources.contains(url)) {
       return false;
@@ -477,7 +519,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
     for (Element element : state.getChildren(RESOURCE_ELEMENT)) {
       String url = element.getAttributeValue(URL_ATTR);
       if (!StringUtil.isEmpty(url)) {
-        addSilently(url, DEFAULT_VERSION, element.getAttributeValue(LOCATION_ATTR).replace('/', File.separatorChar));
+        addSilently(url, DEFAULT_VERSION, Objects.requireNonNull(element.getAttributeValue(LOCATION_ATTR)).replace('/', File.separatorChar));
       }
     }
 
@@ -602,14 +644,9 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
 
   @TestOnly
   public static void registerResourceTemporarily(final String url, final String location, Disposable disposable) {
-    ApplicationManager.getApplication().runWriteAction(() -> getInstance().addResource(url, location));
-
-    Disposer.register(disposable, new Disposable() {
-      @Override
-      public void dispose() {
-        ApplicationManager.getApplication().runWriteAction(() -> getInstance().removeResource(url));
-      }
-    });
+    Application app = ApplicationManager.getApplication();
+    app.runWriteAction(() -> getInstance().addResource(url, location));
+    Disposer.register(disposable, () -> app.runWriteAction(() -> getInstance().removeResource(url)));
   }
 
   static class Resource {

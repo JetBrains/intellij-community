@@ -149,7 +149,7 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends JUnit4Annot
       @NonNls final String name = method.getName();
       if (!method.hasModifierProperty(PsiModifier.STATIC) &&
           PsiType.VOID.equals(method.getReturnType()) &&
-          method.getParameterList().getParametersCount() == 0) {
+          method.getParameterList().isEmpty()) {
         final PsiModifierList modifierList = method.getModifierList();
         if (name.startsWith("test")) {
           addAnnotationIfNotPresent(modifierList, "org.junit.Test");

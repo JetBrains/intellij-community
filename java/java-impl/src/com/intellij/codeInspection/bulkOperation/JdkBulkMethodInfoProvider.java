@@ -25,7 +25,7 @@ import java.util.stream.Stream;
  * @author Tagir Valeev
  */
 public class JdkBulkMethodInfoProvider implements BulkMethodInfoProvider {
-  private static BulkMethodInfo[] INFOS = {
+  private static final BulkMethodInfo[] INFOS = {
     new BulkMethodInfo(CommonClassNames.JAVA_UTIL_COLLECTION, "add", "addAll")
   };
 

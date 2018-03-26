@@ -16,6 +16,7 @@
 package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaSpinnerUI;
+import com.intellij.util.ui.IconCache;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -125,6 +126,9 @@ public class WinIntelliJSpinnerUI extends DarculaSpinnerUI {
       @Override public void paint(Graphics g) {
         Graphics2D g2 = (Graphics2D)g.create();
         try {
+          g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+          g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
+
           int bw = scale(1);
           ButtonModel bm = getModel();
 
@@ -160,7 +164,7 @@ public class WinIntelliJSpinnerUI extends DarculaSpinnerUI {
           g2.fill(outerRect);
 
           // paint icon
-          Icon icon = MacIntelliJIconCache.getIcon(iconName, false, false, isEnabled());
+          Icon icon = IconCache.getIcon(iconName, false, false, isEnabled());
           icon.paintIcon(this, g2, scale(5), scale(3));
 
           // paint border

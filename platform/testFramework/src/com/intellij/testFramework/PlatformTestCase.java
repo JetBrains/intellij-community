@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
@@ -25,8 +12,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.DocumentReferenceManagerImpl;
@@ -69,14 +56,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.impl.DocumentCommitThread;
+import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
-import com.intellij.util.MemoryDumpHelper;
-import com.intellij.util.PathUtilRt;
-import com.intellij.util.PlatformUtils;
-import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.*;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.IndexableSetContributor;
@@ -101,20 +84,27 @@ import java.lang.annotation.Target;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author yole
  */
+@SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
 public abstract class PlatformTestCase extends UsefulTestCase implements DataProvider {
   private static IdeaTestApplication ourApplication;
   private static boolean ourReportedLeakedProjects;
   protected ProjectManagerEx myProjectManager;
   protected Project myProject;
   protected Module myModule;
-  protected static final Collection<File> myFilesToDelete = new THashSet<>();
+
+  protected final Collection<File> myFilesToDelete = new THashSet<>();
+  private final TempFiles myTempFiles = new TempFiles(myFilesToDelete);
+
   protected boolean myAssertionsInTestDetected;
   public static Thread ourTestThread;
   private static TestCase ourTestCase;
@@ -127,6 +117,20 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   private static Set<VirtualFile> ourEternallyLivingFilesCache;
   private SdkLeakTracker myOldSdks;
   private VirtualFilePointerTracker myVirtualFilePointerTracker;
+
+
+  @NotNull
+  public TempFiles getTempDir() {
+    return myTempFiles;
+  }
+
+  protected final VirtualFile createTestProjectStructure() throws IOException {
+    return PsiTestUtil.createTestProjectStructure(myProject, myModule, myFilesToDelete);
+  }
+
+  protected final VirtualFile createTestProjectStructure(String rootPath) throws Exception {
+    return PsiTestUtil.createTestProjectStructure(myProject, myModule, rootPath, myFilesToDelete);
+  }
 
   /**
    * If a temp directory is reused from some previous test run, there might be cached children in its VFS.
@@ -183,7 +187,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   @Override
   protected CodeStyleSettings getCurrentCodeStyleSettings() {
     if (CodeStyleSchemes.getInstance().getCurrentScheme() == null) return new CodeStyleSettings();
-    return CodeStyleSettingsManager.getSettings(getProject());
+    return CodeStyle.getSettings(getProject());
   }
 
   @Override
@@ -215,11 +219,11 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     ourTestCase = this;
     if (myProject != null) {
       ProjectManagerEx.getInstanceEx().openTestProject(myProject);
-      CodeStyleSettingsManager.getInstance(myProject).setTemporarySettings(new CodeStyleSettings());
-      InjectedLanguageManagerImpl.pushInjectors(getProject());
+      CodeStyle.setTemporarySettings(myProject, new CodeStyleSettings());
+      InjectedLanguageManagerImpl.pushInjectors(myProject);
+      ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject)).clearUncommittedDocuments();
     }
 
-    DocumentCommitThread.getInstance().clearQueue();
     UIUtil.dispatchAllInvocationEvents();
     myVirtualFilePointerTracker = new VirtualFilePointerTracker();
   }
@@ -240,9 +244,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     myProjectManager = ProjectManagerEx.getInstanceEx();
     assertNotNull("Cannot instantiate ProjectManager component", myProjectManager);
 
-    File projectFile = getIprFile();
-
-    myProject = doCreateProject(projectFile);
+    myProject = doCreateProject(getProjectDirOrFile());
     myProjectManager.openTestProject(myProject);
     LocalFileSystem.getInstance().refreshIoFiles(myFilesToDelete);
 
@@ -256,8 +258,8 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
   }
 
-  protected Project doCreateProject(@NotNull File projectFile) throws Exception {
-    return createProject(projectFile, getClass().getName() + "." + getName());
+  protected Project doCreateProject(@NotNull Path projectFile) throws Exception {
+    return createProject(projectFile.toFile(), getClass().getName() + "." + getName());
   }
 
   @NotNull
@@ -273,7 +275,6 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       String projectName = FileUtilRt.getNameWithoutExtension(fileName);
       Project project = ProjectManagerEx.getInstanceEx().newProject(projectName, path, false, false);
       assert project != null;
-
       project.putUserData(CREATION_PLACE, creationPlace);
       return project;
     }
@@ -303,9 +304,9 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       leakers.append("Too many projects leaked: \n");
       LeakHunter.processLeaks(LeakHunter.allRoots(), ProjectImpl.class, p -> hashCodes.contains(System.identityHashCode(p)), (leaked,backLink)->{
         int hashCode = System.identityHashCode(leaked);
-        leakers.append("Leaked project found:" + leaked + "; hash: " +
-                           hashCode + "; place: " + getCreationPlace(leaked)+"\n");
-        leakers.append(backLink+"\n");
+        leakers.append("Leaked project found:").append(leaked).append("; hash: ").append(hashCode).append("; place: ")
+               .append(getCreationPlace(leaked)).append("\n");
+        leakers.append(backLink).append("\n");
         leakers.append(";-----\n");
 
         hashCodes.remove(hashCode);
@@ -321,7 +322,6 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   @NotNull
   @TestOnly
   public static String getCreationPlace(@NotNull Project project) {
-    String place = project.getUserData(CREATION_PLACE);
     Object base;
     try {
       base = project.isDisposed() ? "" : project.getBaseDir();
@@ -329,7 +329,8 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     catch (Exception e) {
       base = " (" + e + " while getting base dir)";
     }
-    return project + (place != null ? place : "") + base;
+    String place = project.getUserData(CREATION_PLACE);
+    return project + " " +(place == null ? "" : place) + base;
   }
 
   protected void runStartupActivities() {
@@ -339,19 +340,41 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     startupManager.runPostStartupActivities();
   }
 
-  protected File getIprFile() throws IOException {
-    File tempFile = FileUtil.createTempFile(getName(), ProjectFileType.DOT_DEFAULT_EXTENSION);
-    myFilesToDelete.add(tempFile);
+  @NotNull
+  protected Path getProjectDirOrFile() {
+    return getProjectDirOrFile(false);
+  }
+
+  protected boolean isCreateProjectFileExplicitly() {
+    return true;
+  }
+
+  @NotNull
+  protected final Path getProjectDirOrFile(boolean isDirectoryBasedProject) {
+    if (!isDirectoryBasedProject && isCreateProjectFileExplicitly()) {
+      try {
+        File tempFile = FileUtil.createTempFile(getName(), ProjectFileType.DOT_DEFAULT_EXTENSION);
+        myFilesToDelete.add(tempFile);
+        return tempFile.toPath();
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    Path tempFile = TemporaryDirectoryKt
+      .generateTemporaryPath(FileUtil.sanitizeFileName(getName(), false) + (isDirectoryBasedProject ? "" : ProjectFileType.DOT_DEFAULT_EXTENSION));
+    myFilesToDelete.add(tempFile.toFile());
     return tempFile;
   }
 
   protected void setUpModule() {
-    new WriteCommandAction.Simple(getProject()) {
-      @Override
-      protected void run() throws Throwable {
-        myModule = createMainModule();
-      }
-    }.execute().throwException();
+    try {
+      WriteCommandAction.writeCommandAction(getProject()).run(() -> myModule = createMainModule());
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @NotNull
@@ -370,27 +393,28 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   @NotNull
-  protected static Module doCreateRealModuleIn(String moduleName, final Project project, final ModuleType moduleType) {
-    final VirtualFile baseDir = project.getBaseDir();
-    assertNotNull(baseDir);
-    return createModuleAt(moduleName, project, moduleType, baseDir.getPath());
+  protected Module doCreateRealModuleIn(@NotNull String moduleName, @NotNull Project project, final ModuleType moduleType) {
+    return createModuleAt(moduleName, project, moduleType, Objects.requireNonNull(project.getBasePath()));
   }
 
   @NotNull
-  protected static Module createModuleAt(String moduleName, Project project, ModuleType moduleType, String path) {
-    File moduleFile = new File(FileUtil.toSystemDependentName(path), moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
-    FileUtil.createIfDoesntExist(moduleFile);
-    myFilesToDelete.add(moduleFile);
-    return new WriteAction<Module>() {
-      @Override
-      protected void run(@NotNull Result<Module> result) {
+  protected Module createModuleAt(@NotNull String moduleName, @NotNull Project project, ModuleType moduleType, @NotNull String path) {
+    if (isCreateProjectFileExplicitly()) {
+      File moduleFile = new File(FileUtil.toSystemDependentName(path), moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
+      FileUtil.createIfDoesntExist(moduleFile);
+      myFilesToDelete.add(moduleFile);
+      return WriteAction.computeAndWait(() -> {
         VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(moduleFile);
         assertNotNull(virtualFile);
         Module module = ModuleManager.getInstance(project).newModule(virtualFile.getPath(), moduleType.getId());
         module.getModuleFile();
-        result.setResult(module);
-      }
-    }.execute().getResultObject();
+        return module;
+      });
+    }
+
+    ModuleManager moduleManager = ModuleManager.getInstance(project);
+    return WriteAction.computeAndWait(
+      () -> moduleManager.newModule(path + File.separatorChar + moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION, moduleType.getId()));
   }
 
   protected ModuleType getModuleType() {
@@ -494,11 +518,11 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       })
       .append(() -> {
         ((JarFileSystemImpl)JarFileSystem.getInstance()).cleanupForNextTest();
-        
-        for (final File fileToDelete : myFilesToDelete) {
-          delete(fileToDelete);
-        }
+
+        getTempDir().deleteAll();
         LocalFileSystem.getInstance().refreshIoFiles(myFilesToDelete);
+        LaterInvocator.dispatchPendingFlushes();
+        ((FileBasedIndexImpl)FileBasedIndex.getInstance()).waitForVfsEventsExecuted(1, TimeUnit.MINUTES);
       })
       .append(() -> {
         if (!myAssertionsInTestDetected) {
@@ -576,21 +600,8 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     resetClassFields(aClass.getSuperclass());
   }
 
-  private String getFullName() {
-    return getClass().getName() + "." + getName();
-  }
-
-  private void delete(File file) {
-    boolean b = FileUtil.delete(file);
-    if (!b && file.exists() && !myAssertionsInTestDetected) {
-      fail("Can't delete " + file.getAbsolutePath() + " in " + getFullName());
-    }
-  }
-
   protected void setUpJdk() {
-    //final ProjectJdkEx jdk = ProjectJdkUtil.getDefaultJdk("java 1.4");
     final Sdk jdk = getTestProjectJdk();
-//    ProjectJdkImpl jdk = ProjectJdkTable.getInstance().addJdk(defaultJdk);
     Module[] modules = ModuleManager.getInstance(myProject).getModules();
     for (Module module : modules) {
       ModuleRootModificationUtil.setModuleSdk(module, jdk);
@@ -617,8 +628,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
           resetAllFields();
         });
       }
-      catch (Throwable e) {
-        // Ignore
+      catch (Throwable ignored) {
       }
     }
   }
@@ -739,12 +749,12 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   @NotNull
-  public static File createTempDir(@NonNls final String prefix) throws IOException {
+  public File createTempDir(@NonNls @NotNull String prefix) throws IOException {
     return createTempDir(prefix, true);
   }
 
   @NotNull
-  public static File createTempDir(@NonNls final String prefix, final boolean refresh) throws IOException {
+  public File createTempDir(@NonNls @NotNull String prefix, final boolean refresh) throws IOException {
     final File tempDirectory = FileUtilRt.createTempDirectory("idea_test_" + prefix, null, false);
     myFilesToDelete.add(tempDirectory);
     if (refresh) {
@@ -791,7 +801,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   @NotNull
-  public static VirtualFile createTempFile(@NonNls @NotNull String ext, @Nullable byte[] bom, @NonNls @NotNull String content, @NotNull Charset charset) throws IOException {
+  public VirtualFile createTempFile(@NonNls @NotNull String ext, @Nullable byte[] bom, @NonNls @NotNull String content, @NotNull Charset charset) throws IOException {
     File temp = FileUtil.createTempFile("copy", "." + ext);
     setContentOnDisk(temp, bom, content, charset);
 
@@ -818,31 +828,31 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
   @NotNull
   protected static VirtualFile createChildData(@NotNull final VirtualFile dir, @NotNull @NonNls final String name) {
-    return new WriteAction<VirtualFile>() {
-      @Override
-      protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
-        result.setResult(dir.createChildData(null, name));
-      }
-    }.execute().throwException().getResultObject();
+    try {
+      return WriteAction.computeAndWait(()-> dir.createChildData(null, name));
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @NotNull
   protected static VirtualFile createChildDirectory(@NotNull final VirtualFile dir, @NotNull @NonNls final String name) {
-    return new WriteAction<VirtualFile>() {
-      @Override
-      protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
-        result.setResult(dir.createChildDirectory(null, name));
-      }
-    }.execute().throwException().getResultObject();
+    try {
+      return WriteAction.computeAndWait(()-> dir.createChildDirectory(null, name));
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   protected static void rename(@NotNull final VirtualFile vFile1, @NotNull final String newName) {
-    new WriteCommandAction.Simple(null) {
-      @Override
-      protected void run() throws Throwable {
-        vFile1.rename(this, newName);
-      }
-    }.execute().throwException();
+    try {
+      WriteCommandAction.writeCommandAction(null).run(() -> vFile1.rename(vFile1, newName));
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   protected static void delete(@NotNull final VirtualFile vFile1) {
@@ -850,61 +860,86 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   public static void move(@NotNull final VirtualFile vFile1, @NotNull final VirtualFile newFile) {
-    new WriteCommandAction.Simple(null) {
-      @Override
-      protected void run() throws Throwable {
-        vFile1.move(this, newFile);
-      }
-    }.execute().throwException();
+    try {
+      WriteCommandAction.writeCommandAction(null).run(() -> vFile1.move(vFile1, newFile));
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
   
   @NotNull
   protected static VirtualFile copy(@NotNull final VirtualFile file, @NotNull final VirtualFile newParent, @NotNull final String copyName) {
     final VirtualFile[] copy = new VirtualFile[1];
 
-    new WriteCommandAction.Simple(null) {
-      @Override
-      protected void run() throws Throwable {
-        copy[0] = file.copy(this, newParent, copyName);
-      }
-    }.execute().throwException();
+    try {
+      WriteCommandAction.writeCommandAction(null).run(() -> copy[0] = file.copy(file, newParent, copyName));
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
     return copy[0];
   }
 
   public static void copyDirContentsTo(@NotNull final VirtualFile vTestRoot, @NotNull final VirtualFile toDir) {
-    new WriteCommandAction.Simple(null) {
-      @Override
-      protected void run() throws Throwable {
+    try {
+      WriteCommandAction.writeCommandAction(null).run(() -> {
         for (VirtualFile file : vTestRoot.getChildren()) {
-          VfsUtil.copy(this, file, toDir);
+          VfsUtil.copy(file, file, toDir);
         }
-      }
-    }.execute().throwException();
+      });
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public static void setFileText(@NotNull final VirtualFile file, @NotNull final String text) {
-    new WriteAction() {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        VfsUtil.saveText(file, text);
-      }
-    }.execute().throwException();
+    try {
+      WriteAction.runAndWait(() -> VfsUtil.saveText(file, text));
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public static void setBinaryContent(@NotNull final VirtualFile file, @NotNull final byte[] content) {
-    new WriteAction() {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        file.setBinaryContent(content);
-      }
-    }.execute().throwException();
+    try {
+    WriteAction.runAndWait(() -> file.setBinaryContent(content));
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
   public static void setBinaryContent(@NotNull final VirtualFile file, @NotNull final byte[] content, final long newModificationStamp, final long newTimeStamp, final Object requestor) {
-    new WriteAction() {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        file.setBinaryContent(content,newModificationStamp, newTimeStamp,requestor);
+    try {
+    WriteAction.runAndWait(() -> file.setBinaryContent(content, newModificationStamp, newTimeStamp, requestor));
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @NotNull
+  protected VirtualFile getOrCreateProjectBaseDir() {
+    VirtualFile baseDir = myProject.getBaseDir();
+    if (baseDir == null) {
+      String basePath = myProject.getBasePath();
+      try {
+        FileUtil.ensureExists(new File(Objects.requireNonNull(basePath)));
       }
-    }.execute().throwException();
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+      return LocalFileSystem.getInstance().refreshAndFindFileByPath(basePath);
+    }
+    return baseDir;
+  }
+
+  @NotNull
+  protected static VirtualFile getOrCreateModuleDir(@NotNull Module module) throws IOException {
+    File moduleDir = new File(PathUtil.getParentPath(module.getModuleFilePath()));
+    FileUtil.ensureExists(moduleDir);
+    return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(moduleDir);
   }
 }

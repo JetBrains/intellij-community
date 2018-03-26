@@ -162,7 +162,7 @@
   </target>
 
 
-  <!-- Module IntelliLang -->
+  <!-- Module intellij.platform.langInjection -->
 
   <dirname property="module.intellilang.basedir" file="${ant.file}"/>
 

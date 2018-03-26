@@ -46,6 +46,7 @@ public class CodeStyleFacadeImpl extends CodeStyleFacade {
   }
 
   @Override
+  @Deprecated
   public int getIndentSize(final FileType fileType) {
     return CodeStyleSettingsManager.getSettings(myProject).getIndentSize(fileType);
   }

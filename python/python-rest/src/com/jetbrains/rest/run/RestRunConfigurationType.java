@@ -24,7 +24,7 @@ public class RestRunConfigurationType implements ConfigurationType {
   public final ConfigurationFactory DOCUTILS_FACTORY = new DocutilsRunConfigurationFactory(this);
   public final ConfigurationFactory SPHINX_FACTORY = new SphinxRunConfigurationFactory(this);
 
-  private String myId = "docs";
+  private final String myId = "docs";
 
   public String getDisplayName() {
     return RestBundle.message("runcfg.docutils.display_name");

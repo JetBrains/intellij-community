@@ -22,13 +22,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiImportStaticStatement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
 public class ImportsHighlightUtil {
   public static final Key<Set<String>> IMPORTS_FROM_TEMPLATE = Key.create("IMPORT_FROM_FILE_TEMPLATE");
 
-  static HighlightInfo checkStaticOnDemandImportResolvesToClass(PsiImportStaticStatement statement) {
+  static HighlightInfo checkStaticOnDemandImportResolvesToClass(@NotNull PsiImportStaticStatement statement) {
     if (statement.isOnDemand() && statement.resolveTargetClass() == null) {
       PsiJavaCodeReferenceElement ref = statement.getImportReference();
       if (ref != null) {

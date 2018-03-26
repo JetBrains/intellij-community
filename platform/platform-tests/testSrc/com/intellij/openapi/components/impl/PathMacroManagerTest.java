@@ -62,7 +62,7 @@ public class PathMacroManagerTest {
   private Mockery context;
 
   protected ApplicationEx myApplication;
-  private Disposable myRootDisposable = Disposer.newDisposable();
+  private final Disposable myRootDisposable = Disposer.newDisposable();
 
   @Before
   public final void setupApplication() {

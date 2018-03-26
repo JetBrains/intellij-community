@@ -1,28 +1,16 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.evaluation;
 
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ExpressionInfo {
-  private final TextRange textRange;
-  private final String expressionText;
-  private final String displayText;
+  private final TextRange myTextRange;
+  private final String myExpressionText;
+  private final String myDisplayText;
+  private final PsiElement myElement;
 
   public ExpressionInfo(@NotNull TextRange textRange) {
     this(textRange, null);
@@ -33,9 +21,17 @@ public class ExpressionInfo {
   }
 
   public ExpressionInfo(@NotNull TextRange textRange, @Nullable String expressionText, @Nullable String displayText) {
-    this.textRange = textRange;
-    this.expressionText = expressionText;
-    this.displayText = displayText;
+    this(textRange, expressionText, displayText, null);
+  }
+
+  public ExpressionInfo(@NotNull TextRange textRange,
+                        @Nullable String expressionText,
+                        @Nullable String displayText,
+                        @Nullable PsiElement element) {
+    myTextRange = textRange;
+    myExpressionText = expressionText;
+    myDisplayText = displayText;
+    myElement = element;
   }
 
   /**
@@ -44,7 +40,7 @@ public class ExpressionInfo {
    */
   @NotNull
   public TextRange getTextRange() {
-    return textRange;
+    return myTextRange;
   }
 
   /**
@@ -52,11 +48,16 @@ public class ExpressionInfo {
    */
   @Nullable
   public String getExpressionText() {
-    return expressionText;
+    return myExpressionText;
   }
 
   @Nullable
   public String getDisplayText() {
-    return displayText;
+    return myDisplayText;
+  }
+
+  @Nullable
+  public PsiElement getElement() {
+    return myElement;
   }
 }

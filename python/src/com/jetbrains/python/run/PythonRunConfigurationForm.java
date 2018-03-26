@@ -30,6 +30,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.UserActivityProviderComponent;
@@ -37,12 +38,12 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBComboBoxLabel;
 import com.intellij.ui.components.JBLabel;
 import com.jetbrains.PySymbolFieldWithBrowseButton;
+import com.jetbrains.PySymbolFieldWithBrowseButtonKt;
 import com.jetbrains.extensions.python.FileChooserDescriptorExtKt;
 import com.jetbrains.extenstions.ContextAnchor;
 import com.jetbrains.extenstions.ModuleBasedContextAnchor;
 import com.jetbrains.extenstions.ProjectSdkContextAnchor;
 import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
-import com.jetbrains.python.psi.PyFile;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -69,7 +70,7 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
   private final Project myProject;
   private JBCheckBox myShowCommandLineCheckbox;
   private JBCheckBox myEmulateTerminalCheckbox;
-  private PySymbolFieldWithBrowseButton myModuleField;
+  private final PySymbolFieldWithBrowseButton myModuleField;
   private JBComboBoxLabel myTargetComboBox;
   private JPanel myModuleFieldPanel;
   private boolean myModuleMode;
@@ -84,7 +85,8 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
     myProject = configuration.getProject();
 
     final FileChooserDescriptor chooserDescriptor =
-      FileChooserDescriptorExtKt.withPythonFiles(FileChooserDescriptorFactory.createSingleFileDescriptor().withTitle("Select Script"), true);
+      FileChooserDescriptorExtKt
+        .withPythonFiles(FileChooserDescriptorFactory.createSingleFileDescriptor().withTitle("Select Script"), true);
 
     final PyBrowseActionListener listener = new PyBrowseActionListener(configuration, chooserDescriptor) {
 
@@ -117,7 +119,8 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
     final ContextAnchor contentAnchor =
       (module != null ? new ModuleBasedContextAnchor(module) : new ProjectSdkContextAnchor(myProject, sdk));
     myModuleField = new PySymbolFieldWithBrowseButton(contentAnchor,
-                                                      element -> element instanceof PyFile, () -> {
+                                                      element -> element instanceof PsiFileSystemItem
+                                                                 && PySymbolFieldWithBrowseButtonKt.isPythonModule(element), () -> {
       final String workingDirectory = myCommonOptionsForm.getWorkingDirectory();
       if (StringUtil.isEmpty(workingDirectory)) {
         return null;

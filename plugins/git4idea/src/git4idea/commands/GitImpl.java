@@ -18,17 +18,16 @@ package git4idea.commands;
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitVcs;
 import git4idea.branch.GitRebaseParams;
 import git4idea.config.GitVersionSpecialty;
+import git4idea.push.GitPushParams;
 import git4idea.rebase.GitInteractiveRebaseEditorHandler;
 import git4idea.rebase.GitRebaseEditorHandler;
 import git4idea.rebase.GitRebaseEditorService;
@@ -182,14 +181,14 @@ public class GitImpl extends GitImplBase {
   public GitCommandResult checkAttr(@NotNull final GitRepository repository,
                                     @NotNull final Collection<String> attributes,
                                     @NotNull Collection<VirtualFile> files) {
-    List<List<String>> listOfPaths = VcsFileUtil.chunkFiles(repository.getRoot(), files);
-    return runAll(ContainerUtil.map(listOfPaths, relativePaths -> () -> {
-      final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.CHECK_ATTR);
-      h.addParameters(new ArrayList<>(attributes));
-      h.endOptions();
-      h.addParameters(relativePaths);
-      return runCommand(h);
-    }));
+    List<String> relativeFilePaths = ContainerUtil.map(files, file -> VcsFileUtil.relativePath(repository.getRoot(), file));
+
+    final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.CHECK_ATTR);
+    h.addParameters("--stdin");
+    h.addParameters(new ArrayList<>(attributes));
+    h.endOptions();
+    h.setInputProcessor(GitHandlerInputProcessorUtil.writeLines(relativeFilePaths, h.getCharset()));
+    return runCommand(h);
   }
 
   @NotNull
@@ -399,14 +398,10 @@ public class GitImpl extends GitImplBase {
   @Override
   @NotNull
   public GitCommandResult push(@NotNull GitRepository repository,
-                               @NotNull GitRemote remote,
-                               @NotNull String spec,
-                               boolean force,
-                               boolean updateTracking,
-                               boolean skipHook,
-                               @Nullable String tagMode,
+                               @NotNull GitPushParams pushParams,
                                GitLineHandlerListener... listeners) {
-    return doPush(repository, remote.getName(), remote.getPushUrls(), spec, force, updateTracking, skipHook, tagMode, listeners);
+    return doPush(repository, pushParams.getRemote().getName(), pushParams.getRemote().getPushUrls(), pushParams.getSpec(),
+                  pushParams.isForce(), pushParams.shouldSetupTracking(), pushParams.shouldSkipHooks(), pushParams.getTagMode(), listeners);
   }
 
   @NotNull
@@ -641,7 +636,7 @@ public class GitImpl extends GitImplBase {
   @NotNull
   private static GitCommandResult toCancelledResult(@NotNull GitCommandResult result) {
     int exitCode = result.getExitCode() == 0 ? 1 : result.getExitCode();
-    return new GitCommandResult(false, exitCode, false, result.getErrorOutput(), result.getOutput()) {
+    return new GitCommandResult(false, exitCode, result.getErrorOutput(), result.getOutput()) {
       @Override
       public boolean cancelled() {
         return true;
@@ -700,18 +695,5 @@ public class GitImpl extends GitImplBase {
     for (GitLineHandlerListener listener : listeners) {
       handler.addLineListener(listener);
     }
-  }
-
-  @NotNull
-  private static GitCommandResult runAll(@NotNull List<Computable<GitCommandResult>> commands) {
-    if (commands.isEmpty()) {
-      LOG.error("List of commands should not be empty", new Exception());
-      return GitCommandResult.error("Internal error");
-    }
-    GitCommandResult compoundResult = null;
-    for (Computable<GitCommandResult> command : commands) {
-      compoundResult = GitCommandResult.merge(compoundResult, command.compute());
-    }
-    return ObjectUtils.assertNotNull(compoundResult);
   }
 }

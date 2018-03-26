@@ -23,7 +23,6 @@ import com.intellij.openapi.progress.SomeQueue;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import org.jetbrains.annotations.NotNull;
@@ -172,14 +171,9 @@ public class UpdateRequestsQueue {
   public void invokeAfterUpdate(@NotNull Runnable afterUpdate,
                                 @NotNull InvokeAfterUpdateMode mode,
                                 @Nullable String title,
-                                @Nullable Consumer<VcsDirtyScopeManager> dirtyScopeManagerFiller,
                                 @Nullable ModalityState state) {
     LOG.debug("invokeAfterUpdate for project: " + myProject.getName());
     final CallbackData data = CallbackData.create(myProject, mode, afterUpdate, title, state);
-
-    if (dirtyScopeManagerFiller != null && !myProject.isDisposed()) {
-      dirtyScopeManagerFiller.consume(VcsDirtyScopeManager.getInstance(myProject));
-    }
 
     boolean stopped;
     synchronized (myLock) {

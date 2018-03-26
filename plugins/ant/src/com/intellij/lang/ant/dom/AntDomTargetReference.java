@@ -210,7 +210,7 @@ class AntDomTargetReference extends AntDomReferenceBase implements BindablePsiRe
   }
   
   public static class ReferenceGroup {
-    private List<AntDomTargetReference> myRefs = new ArrayList<>();
+    private final List<AntDomTargetReference> myRefs = new ArrayList<>();
     
     public void addReference(AntDomTargetReference ref) {
       myRefs.add(ref);

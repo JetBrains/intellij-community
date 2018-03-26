@@ -29,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
@@ -44,7 +43,17 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
 
   @Override
   protected OutputChecker initOutputChecker() {
-    return new OutputChecker(getTestAppPath(), getAppOutputPath());
+    return new OutputChecker(getTestAppPath(), getAppOutputPath()) {
+      @Override
+      protected String replaceAdditionalInOutput(String str) {
+        return TraceExecutionTestCase.this.replaceAdditionalInOutput(super.replaceAdditionalInOutput(str));
+      }
+    };
+  }
+
+  @NotNull
+  protected String replaceAdditionalInOutput(@NotNull String str) {
+    return str;
   }
 
   protected LibrarySupportProvider getLibrarySupportProvider() {
@@ -92,7 +101,7 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
   }
 
   private void doTestImpl(boolean isResultNull, @NotNull String className, @NotNull ChainSelector chainSelector)
-    throws InterruptedException, ExecutionException, InvocationTargetException {
+    throws ExecutionException {
     createLocalProcess(className);
     final XDebugSession session = getDebuggerSession().getXDebugSession();
     assertNotNull(session);
@@ -110,7 +119,20 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
           resume();
           return;
         }
+        try {
+          sessionPausedImpl();
+        }
+        catch (Throwable t) {
+          println("Exception caught: " + t + ", " + t.getMessage(), ProcessOutputTypes.SYSTEM);
 
+          //noinspection CallToPrintStackTrace
+          t.printStackTrace();
+
+          resume();
+        }
+      }
+
+      private void sessionPausedImpl() {
         printContext(getDebugProcess().getDebuggerContext());
         final StreamChain chain = ApplicationManager.getApplication().runReadAction((Computable<StreamChain>)() -> {
           final PsiElement elementAtBreakpoint = positionResolver.getNearestElementToBreakpoint(session);

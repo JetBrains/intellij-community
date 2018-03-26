@@ -15,11 +15,13 @@
  */
 package com.intellij.diff.util;
 
+import com.intellij.codeInsight.folding.impl.FoldingUtil;
 import com.intellij.openapi.diff.impl.splitter.Transformation;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.ui.GraphicsConfig;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.util.ui.GraphicsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -95,21 +97,25 @@ public class DiffDividerDrawUtil {
 
     paintable.process(new DividerPaintable.Handler() {
       @Override
-      public boolean process(int startLine1, int endLine1, int startLine2, int endLine2, @NotNull Color color, boolean resolved) {
+      public boolean process(int startLine1, int endLine1, int startLine2, int endLine2,
+                             @Nullable Color fillColor, @Nullable Color borderColor, boolean dottedBorder) {
         if (leftInterval.start > endLine1 && rightInterval.start > endLine2) return true;
         if (leftInterval.end < startLine1 && rightInterval.end < startLine2) return false;
 
-        polygons.add(createPolygon(transformations, startLine1, endLine1, startLine2, endLine2, color, resolved));
+        if (isIntervalVisible(editor1, startLine1, endLine1) ||
+            isIntervalVisible(editor2, startLine2, endLine2)) {
+          polygons.add(createPolygon(transformations, startLine1, endLine1, startLine2, endLine2, fillColor, borderColor, dottedBorder));
+        }
         return true;
-      }
-
-      @Override
-      public boolean process(int startLine1, int endLine1, int startLine2, int endLine2, @NotNull Color color) {
-        return process(startLine1, endLine1, startLine2, endLine2, color, false);
       }
     });
 
     return polygons;
+  }
+
+  private static boolean isIntervalVisible(@NotNull Editor editor, int startLine, int endLine) {
+    TextRange range = DiffUtil.getLinesRange(editor.getDocument(), startLine, endLine);
+    return !FoldingUtil.isTextRangeFolded(editor, range);
   }
 
   @NotNull
@@ -155,12 +161,12 @@ public class DiffDividerDrawUtil {
   private static DividerPolygon createPolygon(@NotNull Transformation[] transformations,
                                               int startLine1, int endLine1,
                                               int startLine2, int endLine2,
-                                              @NotNull Color color, boolean resolved) {
+                                              @Nullable Color fillColor, @Nullable Color borderColor, boolean dottedBorder) {
     int start1 = transformations[0].transform(startLine1);
     int end1 = transformations[0].transform(endLine1);
     int start2 = transformations[1].transform(startLine2);
     int end2 = transformations[1].transform(endLine2);
-    return new DividerPolygon(start1, start2, end1, end2, color, resolved);
+    return new DividerPolygon(start1, start2, end1, end2, fillColor, borderColor, dottedBorder);
   }
 
   @NotNull
@@ -185,9 +191,25 @@ public class DiffDividerDrawUtil {
     void process(@NotNull Handler handler);
 
     abstract class Handler {
-      public abstract boolean process(int startLine1, int endLine1, int startLine2, int endLine2, @NotNull Color color);
+      public boolean process(int startLine1, int endLine1, int startLine2, int endLine2, @NotNull Color color) {
+        return process(startLine1, endLine1, startLine2, endLine2, color, null, false);
+      }
 
-      public abstract boolean process(int startLine1, int endLine1, int startLine2, int endLine2, @NotNull Color color, boolean resolved);
+      public boolean processResolvable(int startLine1, int endLine1, int startLine2, int endLine2,
+                                       @NotNull Editor editor, @NotNull TextDiffType type, boolean resolved) {
+        Color color = type.getColor(editor);
+        return process(startLine1, endLine1, startLine2, endLine2, resolved ? null : color, resolved ? color : null, resolved);
+      }
+
+      public boolean processExcludable(int startLine1, int endLine1, int startLine2, int endLine2,
+                                       @NotNull Editor editor, @NotNull TextDiffType type, boolean excluded) {
+        Color borderColor = excluded ? type.getColor(editor) : null;
+        Color fillColor = excluded ? type.getIgnoredColor(editor) : type.getColor(editor);
+        return process(startLine1, endLine1, startLine2, endLine2, fillColor, borderColor, false);
+      }
+
+      public abstract boolean process(int startLine1, int endLine1, int startLine2, int endLine2,
+                                      @Nullable Color backgroundColor, @Nullable Color borderColor, boolean dottedBorder);
     }
   }
 
@@ -208,16 +230,19 @@ public class DiffDividerDrawUtil {
     private final int myStart2;
     private final int myEnd1;
     private final int myEnd2;
-    @NotNull private final Color myColor;
-    private final boolean myResolved;
+    @Nullable private final Color myFillColor;
+    @Nullable private final Color myBorderColor;
+    private final boolean myDottedBorder;
 
-    public DividerPolygon(int start1, int start2, int end1, int end2, @NotNull Color color, boolean resolved) {
+    public DividerPolygon(int start1, int start2, int end1, int end2,
+                          @Nullable Color fillColor, @Nullable Color borderColor, boolean dottedBorder) {
       myStart1 = start1;
       myStart2 = start2;
       myEnd1 = end1;
       myEnd2 = end2;
-      myColor = color;
-      myResolved = resolved;
+      myFillColor = fillColor;
+      myBorderColor = borderColor;
+      myDottedBorder = dottedBorder;
     }
 
     public void paint(Graphics2D g, int width, boolean curve) {
@@ -245,24 +270,22 @@ public class DiffDividerDrawUtil {
       }
 
       Stroke oldStroke = g.getStroke();
-      if (myResolved) {
+      if (myDottedBorder) {
         g.setStroke(BOLD_DOTTED_STROKE);
       }
 
-      Color fillColor = myResolved ? null : myColor;
-      Color borderColor = myResolved ? myColor : null;
       if (curve) {
-        DiffDrawUtil.drawCurveTrapezium(g, 0, width, startY1, endY1, startY2, endY2, fillColor, borderColor);
+        DiffDrawUtil.drawCurveTrapezium(g, 0, width, startY1, endY1, startY2, endY2, myFillColor, myBorderColor);
       }
       else {
-        DiffDrawUtil.drawTrapezium(g, 0, width, startY1, endY1, startY2, endY2, fillColor, borderColor);
+        DiffDrawUtil.drawTrapezium(g, 0, width, startY1, endY1, startY2, endY2, myFillColor, myBorderColor);
       }
 
       g.setStroke(oldStroke);
     }
 
     public String toString() {
-      return "<" + myStart1 + ", " + myEnd1 + " : " + myStart2 + ", " + myEnd2 + "> " + myColor;
+      return "<" + myStart1 + ", " + myEnd1 + " : " + myStart2 + ", " + myEnd2 + "> " + myFillColor + ", " + myBorderColor;
     }
   }
 

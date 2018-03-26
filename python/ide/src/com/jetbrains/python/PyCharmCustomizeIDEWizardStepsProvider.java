@@ -3,6 +3,7 @@ package com.jetbrains.python;
 
 import com.intellij.ide.customize.*;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 
 import javax.swing.*;
 import java.util.List;
@@ -20,6 +21,10 @@ public class PyCharmCustomizeIDEWizardStepsProvider implements CustomizeIDEWizar
         featuredPlugins.put("R Language Support", "Languages:R language support:R4Intellij");
       }
     };
+
+    if (SystemInfo.isMac) {
+      steps.add(new CustomizeMacKeyboardLayoutStep());
+    }
 
     steps.add(new CustomizeUIThemeStepPanel());
 

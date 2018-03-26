@@ -15,6 +15,12 @@ public interface DebuggerTransport {
 
   boolean sendFrame(@NotNull ProtocolFrame frame);
 
+  /**
+   * Returns {@code true} if IDE is in process of connecting to the debugger
+   * and {@code false} otherwise.
+   */
+  boolean isConnecting();
+
   boolean isConnected();
 
   void disconnect();

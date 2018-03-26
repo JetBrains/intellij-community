@@ -29,7 +29,7 @@ public class PyUnusedLocalInspectionTest extends PyInspectionTestCase {
   }
 
   public void testNonlocal() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTest);
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
   }
 
   // PY-1235

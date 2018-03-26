@@ -98,6 +98,7 @@ public class StubTreeBuilder {
               if (element instanceof PsiFileStub) {
                 stubs.add((PsiFileStub)element);
               }
+              ensureNormalizedOrder(element);
             }
             final PsiFileStub[] stubsArray = stubs.toArray(PsiFileStub.EMPTY_ARRAY);
             for (PsiFileStub stub : stubsArray) {
@@ -113,8 +114,15 @@ public class StubTreeBuilder {
         }
       }
 
+      ensureNormalizedOrder(data);
       inputData.putUserData(stubElementKey, data);
       return data;
+    }
+  }
+
+  private static void ensureNormalizedOrder(Stub element) {
+    if (element instanceof StubBase<?>) {
+      ((StubBase)element).myStubList.finalizeLoadingStage();
     }
   }
 

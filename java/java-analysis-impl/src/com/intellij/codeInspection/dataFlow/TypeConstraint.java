@@ -48,6 +48,21 @@ public final class TypeConstraint {
     myNotInstanceofValues = notInstanceofValues;
   }
 
+  @NotNull
+  public String getPresentationText(@Nullable PsiType type) {
+    Set<DfaPsiType> instanceOfTypes = myInstanceofValues;
+    if (type != null) {
+      instanceOfTypes = StreamEx.of(instanceOfTypes)
+                                .removeBy(DfaPsiType::getPsiType, DfaPsiType.normalizeType(type))
+                                .toSet();
+    }
+    return EntryStream.of("instanceof ", instanceOfTypes,
+                          "not instanceof ", myNotInstanceofValues)
+                      .removeValues(Set::isEmpty)
+                      .mapKeyValue((prefix, set) -> StreamEx.of(set).map(DfaPsiType::toString).sorted().joining(", ", prefix, ""))
+                      .joining("\n");
+  }
+
   private static TypeConstraint create(@NotNull Set<DfaPsiType> instanceofValues, @NotNull Set<DfaPsiType> notInstanceofValues) {
     if (instanceofValues.isEmpty() && notInstanceofValues.isEmpty()) {
       return EMPTY;
@@ -222,9 +237,9 @@ public final class TypeConstraint {
   public String toString() {
     return EntryStream.of("instanceof ", myInstanceofValues,
                           "not instanceof ", myNotInstanceofValues)
-      .removeValues(Set::isEmpty)
-      .mapKeyValue((prefix, set) -> StreamEx.of(set).joining(",", prefix, ""))
-      .joining(" ");
+                      .removeValues(Set::isEmpty)
+                      .mapKeyValue((prefix, set) -> StreamEx.of(set).joining(", ", prefix, ""))
+                      .joining(" ");
   }
 
   @Nullable

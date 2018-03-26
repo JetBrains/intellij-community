@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.dataFlow.Nullness;
@@ -141,7 +141,7 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
   static PsiReferenceExpression extractOptionalFromIfPresentCheck(PsiExpression expression) {
     if (!(expression instanceof PsiMethodCallExpression)) return null;
     PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
-    if (call.getArgumentList().getExpressions().length != 0) return null;
+    if (!call.getArgumentList().isEmpty()) return null;
     if (!"isPresent".equals(call.getMethodExpression().getReferenceName())) return null;
     PsiMethod method = call.resolveMethod();
     if (method == null) return null;
@@ -159,7 +159,7 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
   static boolean isOptionalGetCall(PsiElement element, @NotNull PsiReferenceExpression optionalRef) {
     if (!(element instanceof PsiMethodCallExpression)) return false;
     PsiMethodCallExpression call = (PsiMethodCallExpression)element;
-    if (call.getArgumentList().getExpressions().length != 0) return false;
+    if (!call.getArgumentList().isEmpty()) return false;
     PsiReferenceExpression methodExpression = call.getMethodExpression();
     return "get".equals(methodExpression.getReferenceName()) &&
            areElementsEquivalent(ExpressionUtils.getQualifierOrThis(methodExpression), optionalRef);
@@ -242,7 +242,7 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
   }
 
   static boolean isSimpleOrUnchecked(PsiExpression expression) {
-    return ExpressionUtils.isSimpleExpression(expression) || LambdaGenerationUtil.canBeUncheckedLambda(expression);
+    return ExpressionUtils.isSafelyRecomputableExpression(expression) || LambdaGenerationUtil.canBeUncheckedLambda(expression);
   }
 
   static class OptionalIsPresentFix implements LocalQuickFix {

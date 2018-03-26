@@ -128,13 +128,10 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
           LOG.error(this + ".createFile() must create new file instance but got the same: " + psiFile);
         }
         if (psiFile instanceof PsiFileEx) {
-          DebugUtil.startPsiModification("invalidating throw-away copy");
-          try {
-            ((PsiFileEx)psiFile).markInvalidated();
-          }
-          finally {
-            DebugUtil.finishPsiModification();
-          }
+          PsiFile finalPsiFile = psiFile;
+          DebugUtil.performPsiModification("invalidating throw-away copy", () ->
+            ((PsiFileEx)finalPsiFile).markInvalidated()
+          );
         }
         psiFile = alreadyCreated;
       }
@@ -209,10 +206,10 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
   }
 
   private static boolean checkFileSizeLimit(@NotNull VirtualFile vFile) {
-    return !Boolean.TRUE.equals(vFile.getUserData(OUR_NO_SIZE_LIMIT_KEY));
+    return !Boolean.TRUE.equals(vFile.getCopyableUserData(OUR_NO_SIZE_LIMIT_KEY));
   }
   public static void doNotCheckFileSizeLimit(@NotNull VirtualFile vFile) {
-    vFile.putUserData(OUR_NO_SIZE_LIMIT_KEY, Boolean.TRUE);
+    vFile.putCopyableUserData(OUR_NO_SIZE_LIMIT_KEY, Boolean.TRUE);
   }
 
   public static boolean isTooLargeForIntelligence(@NotNull VirtualFile vFile, final long contentSize) {

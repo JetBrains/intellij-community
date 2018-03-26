@@ -21,14 +21,19 @@ import java.util.List;
 public class CleanupInspectionUtilImpl implements CleanupInspectionUtil {
   private final static Logger LOG = Logger.getInstance(CleanupInspectionUtilImpl.class);
 
-  @Override
-  public AbstractPerformFixesTask applyFixesNoSort(@NotNull Project project, @NotNull String presentationText, @NotNull List<ProblemDescriptor> descriptions, @Nullable Class quickfixClass, boolean startInWriteAction) {
+@Override
+  public AbstractPerformFixesTask applyFixesNoSort(@NotNull Project project,
+                                                   @NotNull String presentationText,
+                                                   @NotNull List<ProblemDescriptor> descriptions,
+                                                   @Nullable Class quickfixClass,
+                                                   boolean startInWriteAction,
+                                                   boolean markGlobal) {
     final boolean isBatch = quickfixClass != null && BatchQuickFix.class.isAssignableFrom(quickfixClass);
     final AbstractPerformFixesTask fixesTask = isBatch ?
         new PerformBatchFixesTask(project, descriptions.toArray(ProblemDescriptor.EMPTY_ARRAY), quickfixClass) :
         new PerformFixesTask(project, descriptions.toArray(ProblemDescriptor.EMPTY_ARRAY), quickfixClass);
     CommandProcessor.getInstance().executeCommand(project, () -> {
-      CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
+      if (markGlobal) CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
       if (quickfixClass != null && startInWriteAction) {
         ((ApplicationImpl)ApplicationManager.getApplication())
             .runWriteActionWithCancellableProgressInDispatchThread(presentationText, project, null, fixesTask::doRun);
@@ -44,6 +49,14 @@ public class CleanupInspectionUtilImpl implements CleanupInspectionUtil {
     return fixesTask;
   }
 
+  @Override
+  public AbstractPerformFixesTask applyFixesNoSort(@NotNull Project project,
+                                                   @NotNull String presentationText,
+                                                   @NotNull List<ProblemDescriptor> descriptions,
+                                                   @Nullable Class quickfixClass,
+                                                   boolean startInWriteAction) {
+    return applyFixesNoSort(project, presentationText, descriptions, quickfixClass, startInWriteAction, true);
+  }
 
   private static class PerformBatchFixesTask extends AbstractPerformFixesTask {
     private final List<ProblemDescriptor> myBatchModeDescriptors = new ArrayList<>();

@@ -3,6 +3,7 @@ package com.intellij.refactoring.extractMethod;
 
 import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
@@ -14,17 +15,20 @@ import java.util.List;
  * @author Pavel.Dolgov
  */
 public class ExtractMethodSnapshot {
-  final Project myProject;
-  final String myMethodName;
-  final boolean myStatic;
-  final boolean myIsChainedConstructor;
-  final String myMethodVisibility;
-  final Nullness myNullness;
-  final SmartTypePointer myReturnType;
-  final List<SmartPsiElementPointer<PsiVariable>> myOutputVariables;
-  final SmartPsiElementPointer<PsiVariable> myOutputVariable;
-  final SmartPsiElementPointer<PsiVariable> myArtificialOutputVariable;
-  final List<VariableDataSnapshot> myVariableDatum;
+  public static final Key<ExtractMethodSnapshot> SNAPSHOT_KEY = Key.create("ExtractMethodSnapshot");
+
+  public final Project myProject;
+  public final String myMethodName;
+  public final boolean myStatic;
+  public final boolean myIsChainedConstructor;
+  public final String myMethodVisibility;
+  public final Nullness myNullness;
+  public final SmartTypePointer myReturnType;
+  public final List<SmartPsiElementPointer<PsiVariable>> myOutputVariables;
+  public final SmartPsiElementPointer<PsiVariable> myOutputVariable;
+  public final SmartPsiElementPointer<PsiVariable> myArtificialOutputVariable;
+  public final List<VariableDataSnapshot> myVariableDatum;
+  public final SmartPsiElementPointer<PsiClass> myTargetClass;
 
   public ExtractMethodSnapshot(@NotNull ExtractMethodProcessor from) {
     myProject = from.getProject();
@@ -38,11 +42,12 @@ public class ExtractMethodSnapshot {
     myReturnType = typePointerManager.createSmartTypePointer(from.myReturnType);
 
     SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(myProject);
-    myOutputVariables = StreamEx.of(from.myOutputVariables).map(v -> smartPointerManager.createSmartPsiElementPointer(v)).toList();
+    myOutputVariables = StreamEx.of(from.myOutputVariables).map(smartPointerManager::createSmartPsiElementPointer).toList();
     myOutputVariable = ContainerUtil.getFirstItem(myOutputVariables);
     myArtificialOutputVariable = from.myArtificialOutputVariable != null
                                  ? smartPointerManager.createSmartPsiElementPointer(from.myArtificialOutputVariable) : null;
 
     myVariableDatum = StreamEx.of(from.myVariableDatum).map(data -> new VariableDataSnapshot(data, myProject)).toList();
+    myTargetClass = from.myTargetClass != null ? smartPointerManager.createSmartPsiElementPointer(from.myTargetClass) : null;
   }
 }

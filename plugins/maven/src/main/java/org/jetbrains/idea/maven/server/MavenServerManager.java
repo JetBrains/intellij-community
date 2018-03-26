@@ -408,10 +408,10 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
     final String root = pluginFileOrDir.getParent();
 
     if (pluginFileOrDir.isDirectory()) {
-      classpath.add(new File(root, "maven-server-api"));
+      classpath.add(new File(root, "intellij.maven.server"));
       File parentFile = getMavenPluginParentFile();
       if (StringUtil.compareVersionNumbers(mavenVersion, "3") < 0) {
-        classpath.add(new File(root, "maven2-server-impl"));
+        classpath.add(new File(root, "intellij.maven.server.m2.impl"));
         addDir(classpath, new File(parentFile, "maven2-server-impl/lib"));
         // use bundled maven 2.2.1 for all 2.0.x version (since we use org.apache.maven.project.interpolation.StringSearchModelInterpolator introduced in 2.1.0)
         if (StringUtil.compareVersionNumbers(mavenVersion, "2.1.0") < 0) {
@@ -419,14 +419,14 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
         }
       }
       else {
-        classpath.add(new File(root, "maven3-server-common"));
+        classpath.add(new File(root, "intellij.maven.server.m3.common"));
         addDir(classpath, new File(parentFile, "maven3-server-common/lib"));
 
         if (StringUtil.compareVersionNumbers(mavenVersion, "3.1") < 0) {
-          classpath.add(new File(root, "maven30-server-impl"));
+          classpath.add(new File(root, "intellij.maven.server.m30.impl"));
         }
         else {
-          classpath.add(new File(root, "maven3-server-impl"));
+          classpath.add(new File(root, "intellij.maven.server.m3.impl"));
         }
       }
     }

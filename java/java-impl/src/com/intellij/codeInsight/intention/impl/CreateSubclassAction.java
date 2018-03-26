@@ -156,19 +156,16 @@ public class CreateSubclassAction extends BaseIntentionAction {
   }
 
   public static void createInnerClass(final PsiClass aClass) {
-    new WriteCommandAction(aClass.getProject(), getTitle(aClass), getTitle(aClass)) {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        final PsiClass containingClass = aClass.getContainingClass();
-        LOG.assertTrue(containingClass != null);
+    WriteCommandAction.writeCommandAction(aClass.getProject()).withName(getTitle(aClass)).withGroupId(getTitle(aClass)).run(() -> {
+      final PsiClass containingClass = aClass.getContainingClass();
+      LOG.assertTrue(containingClass != null);
 
-        final PsiTypeParameterList oldTypeParameterList = aClass.getTypeParameterList();
-        PsiClass classFromText = JavaPsiFacade.getElementFactory(aClass.getProject()).createClass(
-          suggestTargetClassName(aClass));
-        classFromText = (PsiClass)containingClass.addAfter(classFromText, aClass);
-        startTemplate(oldTypeParameterList, aClass.getProject(), aClass, classFromText, true);
-      }
-    }.execute();
+      final PsiTypeParameterList oldTypeParameterList = aClass.getTypeParameterList();
+      PsiClass classFromText = JavaPsiFacade.getElementFactory(aClass.getProject()).createClass(
+        suggestTargetClassName(aClass));
+      classFromText = (PsiClass)containingClass.addAfter(classFromText, aClass);
+      startTemplate(oldTypeParameterList, aClass.getProject(), aClass, classFromText, true);
+    });
   }
 
   protected void createTopLevelClass(PsiClass psiClass) {
@@ -212,7 +209,7 @@ public class CreateSubclassAction extends BaseIntentionAction {
   }
 
   public static String suggestTargetClassName(PsiClass psiClass) {
-    JavaCodeStyleSettings javaSettings = CodeStyle.getSettings(psiClass.getProject()).getCustomSettings(JavaCodeStyleSettings.class);
+    JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(psiClass.getContainingFile());
     return javaSettings.SUBCLASS_NAME_PREFIX + psiClass.getName() + javaSettings.SUBCLASS_NAME_SUFFIX;
   }
 
@@ -223,26 +220,23 @@ public class CreateSubclassAction extends BaseIntentionAction {
   public static PsiClass createSubclass(final PsiClass psiClass, final PsiDirectory targetDirectory, final String className, boolean showChooser) {
     final Project project = psiClass.getProject();
     final PsiClass[] targetClass = new PsiClass[1];
-    new WriteCommandAction(project, getTitle(psiClass), getTitle(psiClass)) {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
+    WriteCommandAction.writeCommandAction(project).withName(getTitle(psiClass)).withGroupId(getTitle(psiClass)).run(() -> {
+      IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
 
-        final PsiTypeParameterList oldTypeParameterList = psiClass.getTypeParameterList();
+      final PsiTypeParameterList oldTypeParameterList = psiClass.getTypeParameterList();
 
-        try {
-          targetClass[0] = JavaDirectoryService.getInstance().createClass(targetDirectory, className);
-        }
-        catch (final IncorrectOperationException e) {
-          ApplicationManager.getApplication().invokeLater(
-            () -> Messages.showErrorDialog(project, CodeInsightBundle.message("intention.error.cannot.create.class.message", className) +
+      try {
+        targetClass[0] = JavaDirectoryService.getInstance().createClass(targetDirectory, className);
+      }
+      catch (final IncorrectOperationException e) {
+        ApplicationManager.getApplication().invokeLater(
+          () -> Messages.showErrorDialog(project, CodeInsightBundle.message("intention.error.cannot.create.class.message", className) +
                                                   "\n" + e.getLocalizedMessage(),
                                          CodeInsightBundle.message("intention.error.cannot.create.class.title")));
-          return;
-        }
-        startTemplate(oldTypeParameterList, project, psiClass, targetClass[0], false);
+        return;
       }
-    }.execute();
+      startTemplate(oldTypeParameterList, project, psiClass, targetClass[0], false);
+    });
     if (targetClass[0] == null) return null;
     if (!ApplicationManager.getApplication().isUnitTestMode() && !psiClass.hasTypeParameters()) {
 
@@ -347,7 +341,7 @@ public class CreateSubclassAction extends BaseIntentionAction {
     boolean hasNonTrivialConstructor = false;
     final PsiMethod[] constructors = psiClass.getConstructors();
     for (PsiMethod constructor : constructors) {
-      if (constructor.getParameterList().getParametersCount() > 0) {
+      if (!constructor.getParameterList().isEmpty()) {
         hasNonTrivialConstructor = true;
         break;
       }

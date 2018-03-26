@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.artifacts.ui;
 
 import com.intellij.compiler.CompilerConfiguration;
@@ -178,7 +179,7 @@ public class JarFromModulesTemplateTest extends PackagingElementsTestCase {
     final VirtualFile dir = createDir("lib");
     final Module a = addModuleWithSourceRoot("a");
     addProjectLibrary(a, "dir", dir);
-    final String basePath = getBaseDir().getPath();
+    final String basePath = myProject.getBasePath();
     createFromTemplate(a, null, basePath, false);
     assertLayout("<root>\n" +
                  " a.jar\n" +
@@ -203,7 +204,7 @@ public class JarFromModulesTemplateTest extends PackagingElementsTestCase {
     final VirtualFile dir = createDir("lib");
     final Module a = addModuleWithSourceRoot("a");
     addProjectLibrary(a, "dir", dir, getJDomJar());
-    final String basePath = getBaseDir().getPath();
+    final String basePath = myProject.getBasePath();
     createFromTemplate(a, null, basePath, false);
     assertLayout("<root>\n" +
                  " a.jar\n" +

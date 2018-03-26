@@ -17,7 +17,7 @@ public class PyIntroduceConstantTest extends PyIntroduceTestCase {
   }
 
   public void testPy1840EntireLine() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTest);
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
   }
 
   public void testInsertAfterImport() {  // PY-2149

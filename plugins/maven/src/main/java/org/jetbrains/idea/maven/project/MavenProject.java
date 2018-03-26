@@ -43,6 +43,7 @@ import org.jetbrains.idea.maven.utils.*;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 public class MavenProject {
 
@@ -181,6 +182,7 @@ public class MavenProject {
     LinkedHashSet<MavenArtifactNode> newDependencyTree = new LinkedHashSet<>();
     LinkedHashSet<MavenPlugin> newPlugins = new LinkedHashSet<>();
     LinkedHashSet<MavenArtifact> newExtensions = new LinkedHashSet<>();
+    LinkedHashSet<MavenArtifact> newAnnotationProcessors = new LinkedHashSet<>();
 
     if (!reset) {
       if (state.myUnresolvedArtifactIds != null) newUnresolvedArtifacts.addAll(state.myUnresolvedArtifactIds);
@@ -189,6 +191,7 @@ public class MavenProject {
       if (state.myDependencyTree != null) newDependencyTree.addAll(state.myDependencyTree);
       if (state.myPlugins != null) newPlugins.addAll(state.myPlugins);
       if (state.myExtensions != null) newExtensions.addAll(state.myExtensions);
+      if (state.myAnnotationProcessors != null) newAnnotationProcessors.addAll(state.myAnnotationProcessors);
     }
 
     newUnresolvedArtifacts.addAll(readerResult.unresolvedArtifactIds);
@@ -204,6 +207,7 @@ public class MavenProject {
     state.myDependencyTree = new ArrayList<>(newDependencyTree);
     state.myPlugins = new ArrayList<>(newPlugins);
     state.myExtensions = new ArrayList<>(newExtensions);
+    state.myAnnotationProcessors = new ArrayList<>(newAnnotationProcessors);
   }
 
   private MavenProjectChanges setFolders(MavenProjectReaderResult readerResult) {
@@ -784,6 +788,19 @@ public class MavenProject {
     }
   }
 
+  private static List<MavenArtifact> getUnresolvedAnnotationProcessors(State state) {
+    synchronized (state) {
+      if (state.myUnresolvedAnnotationProcessors == null) {
+        List<MavenArtifact> result = new ArrayList<>();
+        for (MavenArtifact each : state.myAnnotationProcessors) {
+          if (!each.isResolved()) result.add(each);
+        }
+        state.myUnresolvedAnnotationProcessors = result;
+      }
+      return state.myUnresolvedAnnotationProcessors;
+    }
+  }
+
   private static boolean pomFileExists(File localRepository, MavenArtifact artifact) {
     return MavenArtifactUtil.hasArtifactFile(localRepository, artifact.getMavenId(), "pom");
   }
@@ -842,6 +859,17 @@ public class MavenProject {
   }
 
   @NotNull
+  public List<MavenArtifact> getAnnotationProcessors() {
+    return myState.myAnnotationProcessors;
+  }
+
+  @NotNull
+  public String getAnnotationProcessorPath() {
+    return getAnnotationProcessors()
+      .stream().map(MavenArtifact::getPath).map(FileUtil::toSystemDependentName).collect(Collectors.joining(File.pathSeparator));
+  }
+
+  @NotNull
   public List<MavenArtifactNode> getDependencyTree() {
     return myState.myDependencyTree;
   }
@@ -889,6 +917,15 @@ public class MavenProject {
     state.myCache.clear();
   }
 
+  public void addAnnotationProcessors(@NotNull Collection<MavenArtifact> annotationProcessors) {
+    State state = myState;
+    List<MavenArtifact> annotationProcessorsCopy = new ArrayList<>(state.myAnnotationProcessors);
+    annotationProcessorsCopy.addAll(annotationProcessors);
+    state.myAnnotationProcessors = annotationProcessorsCopy;
+
+    state.myUnresolvedAnnotationProcessors = null;
+  }
+
   @NotNull
   public List<MavenArtifact> findDependencies(@NotNull MavenProject depProject) {
     return findDependencies(depProject.getMavenId());
@@ -907,7 +944,8 @@ public class MavenProject {
     State state = myState;
     return !isParentResolved(state)
            || !getUnresolvedDependencies(state).isEmpty()
-           || !getUnresolvedExtensions(state).isEmpty();
+           || !getUnresolvedExtensions(state).isEmpty()
+           || !getUnresolvedAnnotationProcessors(state).isEmpty();
   }
 
   public boolean hasUnresolvedPlugins() {
@@ -1101,6 +1139,7 @@ public class MavenProject {
     List<MavenArtifact> myDependencies;
     List<MavenArtifactNode> myDependencyTree;
     List<MavenRemoteRepository> myRemoteRepositories;
+    List<MavenArtifact> myAnnotationProcessors;
 
     Map<String, String> myModulesPathsAndNames;
 
@@ -1117,6 +1156,7 @@ public class MavenProject {
     volatile List<MavenArtifact> myUnresolvedDependenciesCache;
     volatile List<MavenPlugin> myUnresolvedPluginsCache;
     volatile List<MavenArtifact> myUnresolvedExtensionsCache;
+    volatile List<MavenArtifact> myUnresolvedAnnotationProcessors;
 
     transient ConcurrentHashMap<Key, Object> myCache = new ConcurrentHashMap<>();
 
@@ -1138,6 +1178,7 @@ public class MavenProject {
       myUnresolvedDependenciesCache = null;
       myUnresolvedPluginsCache = null;
       myUnresolvedExtensionsCache = null;
+      myUnresolvedAnnotationProcessors = null;
 
       myCache.clear();
     }

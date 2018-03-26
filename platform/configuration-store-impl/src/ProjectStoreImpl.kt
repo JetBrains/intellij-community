@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.ide.highlighter.ProjectFileType
@@ -26,6 +12,7 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.components.StateStorage.SaveSession
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.IProjectStore
+import com.intellij.openapi.components.impl.stores.SaveSessionAndFile
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -35,7 +22,6 @@ import com.intellij.openapi.project.ex.ProjectNameProvider
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.project.impl.ProjectManagerImpl.UnableToSaveProjectNotification
 import com.intellij.openapi.project.impl.ProjectStoreClassProvider
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.Registry
@@ -50,9 +36,6 @@ import com.intellij.util.containers.isNullOrEmpty
 import com.intellij.util.io.*
 import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.text.nullize
-import java.io.IOException
-import java.nio.file.FileAlreadyExistsException
-import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -132,7 +115,7 @@ internal abstract class ProjectStoreBase(override final val project: ProjectImpl
   }
 
   // used in upsource
-  protected fun setPath(filePath: String, refreshVfs: Boolean, useOldWorkspaceContentIfExists: Boolean) {
+  protected fun setPath(filePath: String, refreshVfs: Boolean) {
     val storageManager = storageManager
     val fs = LocalFileSystem.getInstance()
     if (filePath.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) {
@@ -161,10 +144,6 @@ internal abstract class ProjectStoreBase(override final val project: ProjectImpl
       storageManager.addMacro(PROJECT_CONFIG_DIR, configDir)
       storageManager.addMacro(PROJECT_FILE, "$configDir/misc.xml")
       storageManager.addMacro(StoragePathMacros.WORKSPACE_FILE, "$configDir/workspace.xml")
-
-      if (useOldWorkspaceContentIfExists && !Paths.get(filePath).isDirectory()) {
-        useOldWorkspaceContent(filePath, Paths.get(workspaceFilePath))
-      }
 
       if (ApplicationManager.getApplication().isUnitTestMode) {
         // load state only if there are existing files
@@ -199,11 +178,13 @@ internal abstract class ProjectStoreBase(override final val project: ProjectImpl
       }
       else {
         result!!.sortWith(deprecatedComparator)
-        StreamProviderFactory.EP_NAME.getExtensions(project).computeIfAny {
-          LOG.runAndLogException { it.customizeStorageSpecs(component, project, stateSpec, result!!, operation) }
-        }?.let {
-          // yes, DEPRECATED_PROJECT_FILE_STORAGE_ANNOTATION is not added in this case
-          return it
+        if (isDirectoryBased) {
+          StreamProviderFactory.EP_NAME.getExtensions(project).computeIfAny {
+            LOG.runAndLogException { it.customizeStorageSpecs(component, storageManager, stateSpec, result!!, operation) }
+          }?.let {
+              // yes, DEPRECATED_PROJECT_FILE_STORAGE_ANNOTATION is not added in this case
+              return it
+            }
         }
 
         // if we create project from default, component state written not to own storage file, but to project file,
@@ -271,8 +252,8 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
 
   override val storageManager = ProjectStateStorageManager(pathMacroManager.createTrackingSubstitutor(), project)
 
-  override fun setPath(filePath: String) {
-    setPath(filePath, true, true)
+  override fun setPath(path: String) {
+    setPath(path, true)
   }
 
   override fun getProjectName(): String {
@@ -320,7 +301,7 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
     }
   }
 
-  override fun doSave(saveSessions: List<SaveSession>, readonlyFiles: MutableList<Pair<SaveSession, VirtualFile>>, prevErrors: MutableList<Throwable>?): MutableList<Throwable>? {
+  override fun doSave(saveSessions: List<SaveSession>, readonlyFiles: MutableList<SaveSessionAndFile>, prevErrors: MutableList<Throwable>?): MutableList<Throwable>? {
     try {
       saveProjectName()
     }
@@ -354,7 +335,7 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
     val oldList = readonlyFiles.toTypedArray()
     readonlyFiles.clear()
     for (entry in oldList) {
-      errors = executeSave(entry.first, readonlyFiles, errors)
+      errors = executeSave(entry.session, readonlyFiles, errors)
     }
 
     CompoundRuntimeException.throwIfNotEmpty(errors)
@@ -367,7 +348,7 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
     return errors
   }
 
-  protected open fun beforeSave(readonlyFiles: List<Pair<SaveSession, VirtualFile>>) {
+  protected open fun beforeSave(readonlyFiles: MutableList<SaveSessionAndFile>) {
   }
 }
 
@@ -381,10 +362,10 @@ private fun dropUnableToSaveProjectNotification(project: Project, readOnlyFiles:
   }
 }
 
-private fun getFilesList(readonlyFiles: List<Pair<SaveSession, VirtualFile>>) = Array(readonlyFiles.size) { readonlyFiles[it].second }
+private fun getFilesList(readonlyFiles: List<SaveSessionAndFile>) = Array(readonlyFiles.size) { readonlyFiles[it].file }
 
 private class ProjectWithModulesStoreImpl(project: ProjectImpl, pathMacroManager: PathMacroManager) : ProjectStoreImpl(project, pathMacroManager) {
-  override fun beforeSave(readonlyFiles: List<Pair<SaveSession, VirtualFile>>) {
+  override fun beforeSave(readonlyFiles: MutableList<SaveSessionAndFile>) {
     super.beforeSave(readonlyFiles)
 
     for (module in (ModuleManager.getInstance(project)?.modules ?: Module.EMPTY_ARRAY)) {
@@ -407,20 +388,3 @@ private class PlatformProjectStoreClassProvider : ProjectStoreClassProvider {
 }
 
 private fun composeFileBasedProjectWorkSpacePath(filePath: String) = "${FileUtilRt.getNameWithoutExtension(filePath)}${WorkspaceFileType.DOT_DEFAULT_EXTENSION}"
-
-private fun useOldWorkspaceContent(filePath: String, newWorkspacePath: Path) {
-  if (newWorkspacePath.exists()) {
-    return
-  }
-
-  try {
-    Paths.get(composeFileBasedProjectWorkSpacePath(filePath)).copy(newWorkspacePath)
-  }
-  catch (ignored: NoSuchFileException) {
-  }
-  catch (ignored: FileAlreadyExistsException) {
-  }
-  catch (e: IOException) {
-    LOG.error(e)
-  }
-}

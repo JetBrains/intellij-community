@@ -267,7 +267,12 @@ public class PyQuickDocTest extends LightMarkedTestCase {
   public void testTypeVars() {
     runWithLanguageLevel(LanguageLevel.PYTHON35, this::checkHTMLOnly);
   }
-  
+
+  // PY-28808
+  public void testEmptyTupleType() {
+    checkHTMLOnly();
+  }
+
   // PY-22730
   public void testOptionalAndUnionTypesContainingTypeVars() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, this::checkHTMLOnly);
@@ -339,11 +344,11 @@ public class PyQuickDocTest extends LightMarkedTestCase {
   }
 
   public void testClassWithAllKindSuperClassExpressions() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, this::checkHTMLOnly);
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::checkHTMLOnly);
   }
 
   public void testHoverOverClassWithAllKindSuperClassExpressions() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, this::checkHover);
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::checkHover);
   }
 
   // PY-23247

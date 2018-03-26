@@ -347,18 +347,15 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
     int start = 0;
     while (start < length && matcher.find(start)) {
       final int groupCount = matcher.groupCount();
-      if (groupCount == 0) {
-        start = matcher.end();
-      }
-      else {
-        for (int i=1; i<=groupCount; i++) {
+      if (groupCount != 0) {
+        for (int i = 1; i <= groupCount; i++) {
           start = matcher.start(i);
           if (start == -1) continue;
           list.add(new TextRange(start, matcher.end(i)));
         }
         if (start >= matcher.end()) break;
-        start = matcher.end();
       }
+      start = matcher.end();
     }
     return list;
   }

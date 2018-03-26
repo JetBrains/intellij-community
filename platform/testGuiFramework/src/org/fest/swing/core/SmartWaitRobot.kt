@@ -20,31 +20,29 @@ import org.fest.swing.awt.AWT
 import org.fest.swing.edt.GuiActionRunner
 import org.fest.swing.edt.GuiTask
 import org.fest.swing.hierarchy.ExistingHierarchy
+import org.fest.swing.keystroke.KeyStrokeMap
 import org.fest.swing.timing.Pause
+import org.fest.swing.util.Modifiers
 import org.fest.util.Preconditions
 import java.awt.Component
 import java.awt.MouseInfo
 import java.awt.Point
 import java.awt.Window
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import javax.swing.KeyStroke
 import javax.swing.SwingUtilities
 
-/**
- * @author Sergey Karashevich
- */
-class SmartWaitRobot() : BasicRobot(null, ExistingHierarchy()) {
+class SmartWaitRobot : BasicRobot(null, ExistingHierarchy()) {
 
   init {
     settings().delayBetweenEvents(10)
   }
 
-  val waitConst = 30L
-  var myAwareClick: Boolean = false
-
-  fun superWaitForIdle() {
-    super.waitForIdle()
-  }
+  private val waitConst = 30L
+  private var myAwareClick: Boolean = false
+  private val fastRobot: java.awt.Robot = java.awt.Robot()
 
   override fun waitForIdle() {
     if (myAwareClick) {
@@ -58,7 +56,7 @@ class SmartWaitRobot() : BasicRobot(null, ExistingHierarchy()) {
 
   override fun close(w: Window) {
     super.close(w)
-    superWaitForIdle()
+    super.waitForIdle()
   }
 
   //smooth mouse move
@@ -120,20 +118,71 @@ class SmartWaitRobot() : BasicRobot(null, ExistingHierarchy()) {
   private fun waitFor(condition: () -> Boolean) {
     val timeout = 5000 //5 sec
     val cdl = CountDownLatch(1)
-    val timeStart = System.currentTimeMillis()
-    invokeWithCondition(timeStart, timeout, cdl, condition)
-    cdl.await(timeout.toLong(), TimeUnit.MILLISECONDS)
-  }
-
-  private fun invokeWithCondition(timeStart: Long, timeout: Int, cdl: CountDownLatch, condition: () -> Boolean) {
-    EdtInvocationManager.getInstance().invokeLater {
-      if (condition.invoke()) {
+    val executor = Executors.newSingleThreadScheduledExecutor().scheduleWithFixedDelay(Runnable {
+      if(condition()){
         cdl.countDown()
       }
-      else {
-        if (System.currentTimeMillis() - timeStart < timeout) invokeWithCondition(timeStart, timeout, cdl, condition)
-      }
+    }, 0, 100, TimeUnit.MILLISECONDS)
+    cdl.await(timeout.toLong(), TimeUnit.MILLISECONDS)
+    executor.cancel(true)
+  }
+
+  fun fastPressAndReleaseKey(keyCode: Int, vararg modifiers: Int) {
+    val unifiedModifiers = InputModifiers.unify(*modifiers)
+    val updatedModifiers = Modifiers.updateModifierWithKeyCode(keyCode, unifiedModifiers)
+    fastPressModifiers(updatedModifiers)
+    if (updatedModifiers == unifiedModifiers) {
+      fastPressKey(keyCode)
+      fastReleaseKey(keyCode)
     }
+    fastReleaseModifiers(updatedModifiers)
+  }
+
+  fun fastPressAndReleaseModifiers(vararg modifiers: Int) {
+    val unifiedModifiers = InputModifiers.unify(*modifiers)
+    fastPressModifiers(unifiedModifiers)
+    Pause.pause(50)
+    fastReleaseModifiers(unifiedModifiers)
+  }
+
+  fun fastPressAndReleaseKeyWithoutModifiers(keyCode: Int) {
+    fastPressKey(keyCode)
+    fastReleaseKey(keyCode)
+  }
+
+  fun shortcutAndTypeString(keyStoke: KeyStroke, string: String, delayBetweenShortcutAndTypingMs: Int = 0) {
+    fastPressAndReleaseKey(keyStoke.keyCode, keyStoke.modifiers)
+    fastTyping(string, delayBetweenShortcutAndTypingMs)
+  }
+
+  fun fastTyping(string: String, delayBetweenShortcutAndTypingMs: Int = 0) {
+    val keyCodeArray: IntArray = string
+      .map { KeyStrokeMap.keyStrokeFor(it)?.keyCode ?: throw Exception("Unable to get keystroke for char '$it'") }
+      .toIntArray()
+    if (delayBetweenShortcutAndTypingMs > 0) Pause.pause(delayBetweenShortcutAndTypingMs.toLong())
+    keyCodeArray.forEach { fastPressAndReleaseKeyWithoutModifiers(keyCode = it); Pause.pause(50) }
+  }
+
+  private fun fastPressKey(keyCode: Int) {
+    fastRobot.keyPress(keyCode)
+  }
+
+  private fun fastReleaseKey(keyCode: Int) {
+    fastRobot.keyRelease(keyCode)
+  }
+
+  private fun fastPressModifiers(modifierMask: Int) {
+    val keys = Modifiers.keysFor(modifierMask)
+    val keysSize = keys.size
+    (0 until keysSize)
+      .map { keys[it] }
+      .forEach { fastPressKey(it) }
+  }
+
+  private fun fastReleaseModifiers(modifierMask: Int) {
+    val modifierKeys = Modifiers.keysFor(modifierMask)
+    for (i in modifierKeys.indices.reversed())
+      fastReleaseKey(modifierKeys[i])
   }
 
   private fun myEdtAwareClick(button: MouseButton, times: Int, point: Point, component: Component?) {

@@ -30,6 +30,7 @@ import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -909,7 +910,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals("${childName}", myTree.findProject(child).getMavenId().getArtifactId());
   }
 
-  public void testHandlingSelfInheritance() {
+  public void testHandlingSelfInheritance() throws IOException {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>parent</artifactId>" +
                      "<version>1</version>" +
@@ -929,7 +930,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     updateAll(myProjectPom); // shouldn't hang
   }
 
-  public void testHandlingRecursiveInheritance() {
+  public void testHandlingRecursiveInheritance() throws IOException {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>parent</artifactId>" +
                      "<version>1</version>" +
@@ -1035,7 +1036,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals("${subChildName}", myTree.findProject(subChild).getMavenId().getArtifactId());
   }
 
-  public void testRecursiveInheritanceAndAggregation() {
+  public void testRecursiveInheritanceAndAggregation() throws IOException {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>parent</artifactId>" +
                      "<version>1</version>" +
@@ -2061,7 +2062,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
                                     "settings");
   }
 
-  public void testDeletingAndRestoringActiveProfilesWhenAvailableProfilesChange() {
+  public void testDeletingAndRestoringActiveProfilesWhenAvailableProfilesChange() throws IOException {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -2107,7 +2108,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertUnorderedElementsAreEqual(myTree.getExplicitProfiles().getEnabledProfiles(), "one", "two");
   }
 
-  public void testDeletingAndRestoringActiveProfilesWhenProjectDeletes() {
+  public void testDeletingAndRestoringActiveProfilesWhenProjectDeletes() throws IOException {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -2138,13 +2139,10 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertUnorderedElementsAreEqual(myTree.getExplicitProfiles().getEnabledProfiles(), "one", "two");
 
     final VirtualFile finalM = m;
-    new WriteCommandAction.Simple(myProject) {
-      @Override
-      protected void run() throws Throwable {
-        finalM.delete(this);
-        deleteProject(finalM);
-      }
-    }.execute().throwException();
+    WriteCommandAction.writeCommandAction(myProject).run(() -> {
+      finalM.delete(this);
+      deleteProject(finalM);
+    });
 
     assertUnorderedElementsAreEqual(myTree.getExplicitProfiles().getEnabledProfiles(), "one");
 

@@ -233,15 +233,15 @@ public class FindInProjectUtil {
                                 @NotNull final Project project,
                                 @NotNull final Processor<UsageInfo> consumer,
                                 @NotNull FindUsagesProcessPresentation processPresentation) {
-    findUsages(findModel, project, consumer, processPresentation, Collections.emptySet());
+    findUsages(findModel, project, processPresentation, Collections.emptySet(), consumer);
   }
 
   public static void findUsages(@NotNull FindModel findModel,
                                 @NotNull final Project project,
-                                @NotNull final Processor<UsageInfo> consumer,
                                 @NotNull FindUsagesProcessPresentation processPresentation,
-                                @NotNull Set<VirtualFile> filesToStart) {
-    new FindInProjectTask(findModel, project, filesToStart).findUsages(consumer, processPresentation);
+                                @NotNull Set<VirtualFile> filesToStart,
+                                @NotNull final Processor<UsageInfo> consumer) {
+    new FindInProjectTask(findModel, project, filesToStart).findUsages(processPresentation, consumer);
   }
 
   // returns number of hits
@@ -267,7 +267,7 @@ public class FindInProjectUtil {
       tooManyUsagesStatus.pauseProcessingIfTooManyUsages(); // wait for user out of read action
       found = ReadAction.compute(() -> {
         if (!psiFile.isValid()) return 0;
-        return addToUsages(document, consumer, findModel, psiFile, offset, USAGES_PER_READ_ACTION);
+        return addToUsages(document, findModel, psiFile, offset, USAGES_PER_READ_ACTION, consumer);
       });
       count += found;
     }
@@ -275,8 +275,12 @@ public class FindInProjectUtil {
     return count;
   }
 
-  private static int addToUsages(@NotNull Document document, @NotNull Processor<UsageInfo> consumer, @NotNull FindModel findModel,
-                                 @NotNull final PsiFile psiFile, @NotNull int[] offsetRef, int maxUsages) {
+  private static int addToUsages(@NotNull Document document,
+                                 @NotNull FindModel findModel,
+                                 @NotNull final PsiFile psiFile,
+                                 @NotNull int[] offsetRef,
+                                 int maxUsages,
+                                 @NotNull Processor<UsageInfo> consumer) {
     int count = 0;
     CharSequence text = document.getCharsSequence();
     int textLength = document.getTextLength();
@@ -378,6 +382,7 @@ public class FindInProjectUtil {
       presentation.setSearchPattern(null);
       presentation.setReplacePattern(null);
     }
+    presentation.setReplaceMode(findModel.isReplaceState());
   }
 
   @NotNull

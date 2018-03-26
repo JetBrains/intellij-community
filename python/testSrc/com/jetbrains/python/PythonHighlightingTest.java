@@ -65,7 +65,7 @@ public class PythonHighlightingTest extends PyTestCase {
   }
 
   public void testAssignmentTargets3K() {
-    doTest(LanguageLevel.PYTHON30, true, false);    
+    doTest(LanguageLevel.PYTHON34, true, false);    
   }
   
   public void testBreakOutsideOfLoop() {
@@ -76,7 +76,7 @@ public class PythonHighlightingTest extends PyTestCase {
     doTest();
   }
 
-  public void testContinueInFinallyBlock() {
+  public void testContinueOutsideOfLoop() {
     doTest(false, false);
   }
 
@@ -128,11 +128,11 @@ public class PythonHighlightingTest extends PyTestCase {
   }
 
   public void testRegularAfterVarArgs() {
-    doTest(LanguageLevel.PYTHON30, true, false);
+    doTest(LanguageLevel.PYTHON34, true, false);
   }
 
   public void testKeywordOnlyArguments() {
-    doTest(LanguageLevel.PYTHON30, true, false);
+    doTest(LanguageLevel.PYTHON34, true, false);
   }
 
   public void testMalformedStringTripleQuoteUnterminated() {
@@ -156,17 +156,12 @@ public class PythonHighlightingTest extends PyTestCase {
   }
 
   public void testUnsupportedFeaturesInPython3() {
-    doTest(LanguageLevel.PYTHON30, true, false);
+    doTest(LanguageLevel.PYTHON34, true, false);
   }
 
   // PY-6703
   public void testUnicode33() {
-    doTest(LanguageLevel.PYTHON33, true, false);
-  }
-
-  // PY-6702
-  public void testYieldFromBefore33() {
-    doTest(LanguageLevel.PYTHON32, true, false);
+    doTest(LanguageLevel.PYTHON34, true, false);
   }
 
   public void testParenthesizedGenerator() {
@@ -174,11 +169,11 @@ public class PythonHighlightingTest extends PyTestCase {
   }
 
   public void testStarInGenerator() {  // PY-10177
-    doTest(LanguageLevel.PYTHON33, false, false);
+    doTest(LanguageLevel.PYTHON34, false, false);
   }
 
   public void testStarArgs() {  // PY-6456
-    doTest(LanguageLevel.PYTHON32, true, false);
+    doTest(LanguageLevel.PYTHON34, true, false);
   }
 
   public void testDocstring() {  // PY-8025
@@ -373,7 +368,7 @@ public class PythonHighlightingTest extends PyTestCase {
 
   // PY-22729
   public void testParametersWithAnnotationsAndDefaults() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTest);
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
   }
 
   // PY-26491
@@ -389,6 +384,16 @@ public class PythonHighlightingTest extends PyTestCase {
   // PY-26510
   public void testEmptyRaise() {
     doTest(false, false);
+  }
+
+  // PY-28247
+  public void testAsyncAndAwaitAsIdentifiersIn37() {
+    doTest(LanguageLevel.PYTHON37, false, false);
+  }
+
+  // PY-27913
+  public void testDunderClassGetItem() {
+    doTest(LanguageLevel.PYTHON37, false, true);
   }
 
   @NotNull

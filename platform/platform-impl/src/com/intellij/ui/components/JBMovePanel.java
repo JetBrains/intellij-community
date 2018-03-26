@@ -89,7 +89,7 @@ public class JBMovePanel extends JBPanel {
   @NotNull protected final ActionButton myDownButton;
 
   @NotNull private InsertPositionStrategy myLeftInsertionStrategy = ANCHORING_SELECTION;
-  @NotNull private InsertPositionStrategy myRightInsertionStrategy = ANCHORING_SELECTION;
+  @NotNull private final InsertPositionStrategy myRightInsertionStrategy = ANCHORING_SELECTION;
 
   private boolean myActivePreferredSizeProcessing;
 

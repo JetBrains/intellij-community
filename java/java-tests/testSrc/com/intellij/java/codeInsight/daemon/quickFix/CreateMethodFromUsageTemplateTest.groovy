@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon.quickFix
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase
@@ -207,5 +193,92 @@ class A {
     finally {
       settings.setUseFqClassNames(fqClassNames)
     }
+  }
+
+  void "test format adjusted imports"() {
+    configureFromFileText "a.java", """
+  /**javadoc*/
+  class A {
+      void m(java.util.List<String> list){
+        fo<caret>o(list);
+      }
+  }
+  """
+      TemplateManagerImpl.setTemplateTesting(project, testRootDisposable)
+      doAction("Create method 'foo' in 'A'")
+      def state = TemplateManagerImpl.getTemplateState(getEditor())
+    
+      state.gotoEnd(false)
+
+      checkResultByText """import java.util.List;
+
+/**javadoc*/
+  class A {
+      void m(java.util.List<String> list){
+        foo(list);
+      }
+
+    private void foo(List<String> list) {
+        
+    }
+  }
+  """
+  }
+
+  void 'test guess type parameters'() {
+    configureFromFileText 'a.java', '''\
+public class A {
+    void m(java.util.List<String> list, B<String> b) {
+        b.<caret>foo(list);
+    }
+}
+
+class B<T>
+{
+}
+'''
+    doAction("Create method 'foo' in 'B'")
+    checkResultByText '''\
+import java.util.List;
+
+public class A {
+    void m(java.util.List<String> list, B<String> b) {
+        b.foo(list);
+    }
+}
+
+class B<T>
+{
+    public void foo(List<T> list) {
+        <caret>
+    }
+}
+'''
+  }
+
+  void 'test create property in invalid class'() {
+    configureFromFileText 'InvalidClass.java', '''\
+public class InvalidClass {
+    void usage() {
+        <caret>getFoo();
+    }
+'''
+
+    TemplateManagerImpl.setTemplateTesting project, testRootDisposable
+    doAction "Create read-only property 'foo' in 'InvalidClass'"
+    TemplateManagerImpl.getTemplateState editor gotoEnd false
+
+    checkResultByText '''\
+public class InvalidClass {
+    private Object foo;
+
+    void usage() {
+        getFoo();
+    }
+
+    public Object getFoo() {<caret>
+        return foo;
+    }
+'''
   }
 }

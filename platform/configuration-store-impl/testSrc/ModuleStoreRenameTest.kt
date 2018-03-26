@@ -30,7 +30,7 @@ import java.util.*
 import kotlin.properties.Delegates
 
 private val Module.storage: FileBasedStorage
-  get() = (stateStore.stateStorageManager as StateStorageManagerImpl).getCachedFileStorages(listOf(StoragePathMacros.MODULE_FILE)).first()
+  get() = (stateStore.storageManager as StateStorageManagerImpl).getCachedFileStorages(listOf(StoragePathMacros.MODULE_FILE)).first()
 
 internal class ModuleStoreRenameTest {
   companion object {
@@ -71,7 +71,7 @@ internal class ModuleStoreRenameTest {
 
       // should be invoked after project tearDown
       override fun after() {
-        (ApplicationManager.getApplication().stateStore.stateStorageManager as StateStorageManagerImpl).getVirtualFileTracker()!!.remove {
+        (ApplicationManager.getApplication().stateStore.storageManager as StateStorageManagerImpl).getVirtualFileTracker()!!.remove {
           if (it.storageManager.componentManager == module) {
             throw AssertionError("Storage manager is not disposed, module $module, storage $it")
           }
@@ -127,7 +127,7 @@ internal class ModuleStoreRenameTest {
     assertThat(newFile).isRegularFile
 
     // ensure that macro value updated
-    assertThat(module.stateStore.stateStorageManager.expandMacros(StoragePathMacros.MODULE_FILE)).isEqualTo(newFile.systemIndependentPath)
+    assertThat(module.stateStore.storageManager.expandMacros(StoragePathMacros.MODULE_FILE)).isEqualTo(newFile.systemIndependentPath)
 
     runInEdtAndWait {
       dependentModule.saveStore()

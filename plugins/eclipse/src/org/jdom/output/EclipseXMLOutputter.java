@@ -1381,7 +1381,7 @@ public class EclipseXMLOutputter implements Cloneable {
                     buffer = new StringBuffer(str.length() + 20);
                     // Copy previous skipped characters and fall through
                     // to pickup current character
-                    buffer.append(str.substring(0, i));
+                    buffer.append(str, 0, i);
                     buffer.append(entity);
                 }
             }
@@ -1454,7 +1454,7 @@ public class EclipseXMLOutputter implements Cloneable {
                     buffer = new StringBuffer(str.length() + 20);
                     // Copy previous skipped characters and fall through
                     // to pickup current character
-                    buffer.append(str.substring(0, i));
+                    buffer.append(str, 0, i);
                     buffer.append(entity);
                 }
             }

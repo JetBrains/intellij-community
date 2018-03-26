@@ -29,7 +29,7 @@ import org.jetbrains.jps.model.ex.JpsElementChildRoleBase;
 public class JpsGradleModuleExtensionImpl extends JpsElementBase<JpsGradleModuleExtensionImpl> implements JpsGradleModuleExtension {
   public static final JpsElementChildRole<JpsGradleModuleExtension> ROLE = JpsElementChildRoleBase.create("gradle");
 
-  private String myModuleType;
+  private final String myModuleType;
 
   public JpsGradleModuleExtensionImpl(String moduleType) {
     myModuleType = moduleType;

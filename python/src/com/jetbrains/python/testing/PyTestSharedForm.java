@@ -16,16 +16,12 @@
 package com.jetbrains.python.testing;
 
 import com.google.common.collect.ObjectArrays;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.TextBrowseFolderListener;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.TextAccessor;
@@ -35,15 +31,14 @@ import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.util.ThreeState;
 import com.intellij.util.ui.JBUI;
 import com.jetbrains.PySymbolFieldWithBrowseButton;
-import com.jetbrains.extensions.python.FileChooserDescriptorExtKt;
 import com.jetbrains.extenstions.ContextAnchor;
 import com.jetbrains.extenstions.ModuleBasedContextAnchor;
 import com.jetbrains.extenstions.ProjectSdkContextAnchor;
-import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.run.AbstractPyCommonOptionsForm;
 import com.jetbrains.python.run.PyBrowseActionListener;
 import com.jetbrains.python.run.PyCommonOptionsFormFactory;
+import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant;
 import com.jetbrains.reflection.ReflectionUtilsKt;
 import com.jetbrains.reflection.SimplePropertiesProvider;
 import org.jetbrains.annotations.NotNull;
@@ -156,7 +151,7 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
                                         @NotNull final CustomOption... customOptions) {
     final PyTestSharedForm form = new PyTestSharedForm(configuration.getModule(), configuration);
 
-    for (final TestTargetType testTargetType : TestTargetType.values()) {
+    for (final PyRunTargetVariant testTargetType : PyRunTargetVariant.values()) {
       final JBRadioButton button =
         new JBRadioButton(StringUtil.capitalize(testTargetType.getCustomName().toLowerCase(Locale.getDefault())));
       button.setActionCommand(testTargetType.name());
@@ -174,7 +169,7 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
     setBorderToPanel(form.myPanel, configuration.getTestFrameworkName());
 
     form.addCustomOptions(
-      ObjectArrays.concat(customOptions, new CustomOption(PyTestsSharedKt.getAdditionalArgumentsPropertyName(), TestTargetType.values()))
+      ObjectArrays.concat(customOptions, new CustomOption(PyTestsSharedKt.getAdditionalArgumentsPropertyName(), PyRunTargetVariant.values()))
     );
     configuration.copyTo(ReflectionUtilsKt.getProperties(form, null, true));
     return form;
@@ -226,7 +221,7 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
     // We should always use system-independent path because only this type of path is processed correctly
     // when stored (folder changed to macros to prevent hard code)
     final String targetText = getActiveTextField().getText().trim();
-    return getTargetType() == TestTargetType.PATH ? FileUtil.toSystemIndependentName(targetText) : targetText;
+    return getTargetType() == PyRunTargetVariant.PATH ? FileUtil.toSystemIndependentName(targetText) : targetText;
   }
 
 
@@ -235,7 +230,7 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
   }
 
   private void onTargetTypeChanged() {
-    final TestTargetType targetType = getTargetType();
+    final PyRunTargetVariant targetType = getTargetType();
 
     for (final OptionHolder optionHolder : myCustomOptions.values()) {
       optionHolder.setType(targetType);
@@ -246,31 +241,31 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
     cons.fill = GridBagConstraints.HORIZONTAL;
     cons.weightx = 1;
 
-    if (targetType == TestTargetType.PATH) {
+    if (targetType == PyRunTargetVariant.PATH) {
       myPanelForTargetFields.add(myPathTarget, cons);
     }
-    else if (targetType == TestTargetType.PYTHON) {
+    else if (targetType == PyRunTargetVariant.PYTHON) {
       myPanelForTargetFields.add(myPythonTarget, cons);
     }
   }
 
   @NotNull
   private TextAccessor getActiveTextField() {
-    return (getTargetType() == TestTargetType.PATH ? myPathTarget : myPythonTarget);
+    return (getTargetType() == PyRunTargetVariant.PATH ? myPathTarget : myPythonTarget);
   }
 
   @SuppressWarnings("WeakerAccess") // Accessor for property
   @NotNull
-  public TestTargetType getTargetType() {
-    return TestTargetType.valueOf(myButtonGroup.getSelection().getActionCommand());
+  public PyRunTargetVariant getTargetType() {
+    return PyRunTargetVariant.valueOf(myButtonGroup.getSelection().getActionCommand());
   }
 
   @SuppressWarnings("unused") // Mutator for property
-  public void setTargetType(@NotNull final TestTargetType target) {
+  public void setTargetType(@NotNull final PyRunTargetVariant target) {
     final Enumeration<AbstractButton> elements = myButtonGroup.getElements();
     while (elements.hasMoreElements()) {
       final AbstractButton button = elements.nextElement();
-      if (TestTargetType.valueOf(button.getActionCommand()) == target) {
+      if (PyRunTargetVariant.valueOf(button.getActionCommand()) == target) {
         myButtonGroup.setSelected(button.getModel(), true);
         break;
       }
@@ -287,10 +282,10 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
     /**
      * Types to display this option for
      */
-    private final EnumSet<TestTargetType> mySupportedTypes;
+    private final EnumSet<PyRunTargetVariant> mySupportedTypes;
 
     CustomOption(@NotNull final String name,
-                 @NotNull final TestTargetType... supportedTypes) {
+                 @NotNull final PyRunTargetVariant... supportedTypes) {
       myName = name;
       mySupportedTypes = EnumSet.copyOf(Arrays.asList(supportedTypes));
     }
@@ -312,7 +307,7 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
       myOptionValue = optionValue;
     }
 
-    private void setType(@NotNull final TestTargetType type) {
+    private void setType(@NotNull final PyRunTargetVariant type) {
       final boolean visible = myOption.mySupportedTypes.contains(type);
       myOptionLabel.setVisible(visible);
       myOptionValue.setVisible(visible);

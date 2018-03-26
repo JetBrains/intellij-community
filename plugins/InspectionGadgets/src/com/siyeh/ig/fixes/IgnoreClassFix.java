@@ -1,29 +1,30 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.fixes;
 
+import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
-import com.intellij.util.containers.OrderedSet;
+import com.intellij.psi.util.PsiUtilCore;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
+
 /**
  * @author Bas Leijdekkers
  */
-public class IgnoreClassFix extends InspectionGadgetsFix {
+public class IgnoreClassFix extends InspectionGadgetsFix implements LowPriorityAction {
 
-  final OrderedSet<String> myIgnoredClasses;
+  final Collection<String> myIgnoredClasses;
   final String myQualifiedName;
   private final String myFixName;
 
-  public IgnoreClassFix(String qualifiedName, OrderedSet<String> ignoredClasses, String fixName) {
+  public IgnoreClassFix(String qualifiedName, Collection<String> ignoredClasses, String fixName) {
     myIgnoredClasses = ignoredClasses;
     myQualifiedName = qualifiedName;
     myFixName = fixName;
@@ -54,7 +55,7 @@ public class IgnoreClassFix extends InspectionGadgetsFix {
       return;
     }
     ProjectInspectionProfileManager.getInstance(project).fireProfileChanged();
-    final VirtualFile vFile = descriptor.getPsiElement().getContainingFile().getVirtualFile();
+    final VirtualFile vFile = PsiUtilCore.getVirtualFile(descriptor.getPsiElement());
     UndoManager.getInstance(project).undoableActionPerformed(new BasicUndoableAction(vFile) {
       @Override
       public void undo() {

@@ -25,7 +25,7 @@ import java.util.List;
 
 public class InMemoryChangeListStorage implements ChangeListStorage {
   private int myCurrentId;
-  private List<ChangeSet> mySets = new ArrayList<>();
+  private final List<ChangeSet> mySets = new ArrayList<>();
 
   @Override
   public void close() {

@@ -15,9 +15,18 @@
  */
 package com.siyeh.ig.psiutils;
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
+import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Collection;
+import java.util.Map;
 
 public class FinalUtils {
 
@@ -28,121 +37,31 @@ public class FinalUtils {
       // parameters have an implicit initializer
       return !VariableAccessUtils.variableIsAssigned(variable);
     }
-    final FinalDefiniteAssignment definiteAssignment = new FinalDefiniteAssignment(variable);
-    DefiniteAssignmentUtil.checkVariable(variable, definiteAssignment);
-    return definiteAssignment.isDefinitelyAssigned() &&
-           !definiteAssignment.isDefinitelyUnassigned() && // spec?
-           definiteAssignment.canBeFinal() &&
-           !isWrittenToOutsideOfConstruction(variable);
-  }
-
-  private static boolean isWrittenToOutsideOfConstruction(PsiVariable variable) {
-    if (!(variable instanceof PsiField)) {
+    if (variable instanceof PsiField && !HighlightControlFlowUtil.isFieldInitializedAfterObjectConstruction((PsiField)variable)) {
       return false;
     }
-    final PsiField field = (PsiField)variable;
-    final PsiClass containingClass = field.getContainingClass();
-    if (containingClass == null) {
-      return false;
-    }
-    final PsiClass topLevelClass = PsiUtil.getTopLevelClass(variable);
-    final VariableAssignedVisitor visitor = new VariableAssignedVisitor(field);
-    if (topLevelClass != null && !containingClass.equals(topLevelClass)) {
-      visitor.setExcludedElement(containingClass);
-      topLevelClass.accept(visitor);
-      if (visitor.isAssigned()) {
-        return true;
+    PsiElement scope = variable instanceof PsiField
+                       ? PsiUtil.getTopLevelClass(variable)
+                       : PsiUtil.getVariableCodeBlock(variable, null);
+    if (scope == null) return false;
+    Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> finalVarProblems = new THashMap<>();
+    Map<PsiElement, Collection<PsiReferenceExpression>> uninitializedVarProblems = new THashMap<>();
+    PsiElementProcessor elementDoesNotViolateFinality = e -> {
+      if (!(e instanceof PsiReferenceExpression)) return true;
+      PsiReferenceExpression ref = (PsiReferenceExpression)e;
+      if (!ref.isReferenceTo(variable)) return true;
+      HighlightInfo highlightInfo = HighlightControlFlowUtil
+        .checkVariableInitializedBeforeUsage(ref, variable, uninitializedVarProblems, variable.getContainingFile(), true);
+      if (highlightInfo != null) return false;
+      if (!PsiUtil.isAccessedForWriting(ref)) return true;
+      if (ControlFlowUtil.isVariableAssignedInLoop(ref, variable)) return false;
+      if (variable instanceof PsiField) {
+        if (PsiUtil.findEnclosingConstructorOrInitializer(ref) == null) return false;
+        PsiElement innerClass = HighlightControlFlowUtil.getInnerClassVariableReferencedFrom(variable, ref);
+        if (innerClass != null && innerClass != ((PsiField)variable).getContainingClass()) return false;
       }
-    }
-    if (field.hasModifierProperty(PsiModifier.STATIC)) {
-      for (PsiElement child : containingClass.getChildren()) {
-        if (child instanceof PsiClassInitializer) {
-          final PsiClassInitializer classInitializer = (PsiClassInitializer)child;
-          if (classInitializer.hasModifierProperty(PsiModifier.STATIC)) {
-            continue;
-          }
-          classInitializer.accept(visitor);
-        }
-        else if (child instanceof PsiField) {
-          final PsiField otherField = (PsiField)child;
-          if (otherField.hasModifierProperty(PsiModifier.STATIC)) {
-            continue;
-          }
-          otherField.accept(visitor);
-        }
-        else if (child instanceof PsiMethod || child instanceof PsiClass) {
-          child.accept(visitor);
-        }
-        if (visitor.isAssigned()) {
-          return true;
-        }
-      }
-    }
-    else {
-      for (PsiElement child : containingClass.getChildren()) {
-        if (child instanceof PsiField) {
-          final PsiField otherField = (PsiField)child;
-          if (!otherField.hasModifierProperty(PsiModifier.STATIC)) {
-            continue;
-          }
-          otherField.accept(visitor);
-        }
-        else if (child instanceof PsiClassInitializer) {
-          final PsiClassInitializer classInitializer = (PsiClassInitializer)child;
-          if (!classInitializer.hasModifierProperty(PsiModifier.STATIC)) {
-            continue;
-          }
-          classInitializer.accept(visitor);
-        }
-        else if (child instanceof PsiMethod) {
-          final PsiMethod method = (PsiMethod)child;
-          if (method.isConstructor()) {
-            continue;
-          }
-          method.accept(visitor);
-        }
-        else if (child instanceof PsiClass) {
-          child.accept(visitor);
-        }
-        if (visitor.isAssigned()) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
-  private static class FinalDefiniteAssignment extends DefiniteAssignment {
-
-    private boolean canBeFinal = true;
-
-    public FinalDefiniteAssignment(PsiVariable variable) {
-      super(variable);
-    }
-
-    @Override
-    public void assign(@NotNull PsiReferenceExpression expression, boolean definiteAssignment) {
-      if (!isDefinitelyUnassigned()) {
-        canBeFinal = false;
-      }
-      super.assign(expression, definiteAssignment);
-    }
-
-    @Override
-    public void valueAccess(PsiReferenceExpression expression) {
-      if (!isDefinitelyAssigned()) {
-        canBeFinal = false;
-      }
-      super.valueAccess(expression);
-    }
-
-    @Override
-    public boolean stop() {
-      return !canBeFinal;
-    }
-
-    public boolean canBeFinal() {
-      return canBeFinal;
-    }
+      return HighlightControlFlowUtil.checkFinalVariableMightAlreadyHaveBeenAssignedTo(variable, ref, finalVarProblems) == null;
+    };
+    return PsiTreeUtil.processElements(scope, elementDoesNotViolateFinality);
   }
 }

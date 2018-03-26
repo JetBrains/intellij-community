@@ -41,7 +41,7 @@ public abstract class JdkVersionDetector {
   @Nullable
   public abstract JdkVersionInfo detectJdkVersionInfo(@NotNull String homePath, @NotNull ActionRunner actionRunner);
 
-  //todo[nik] replace with a service with different implementations for IDE process and for JPS process (need to exclude jps-builders module from IDEA classpath)
+  //todo[nik] replace with a service with different implementations for IDE process and for JPS process (need to exclude intellij.platform.jps.build module from IDEA classpath)
   public interface ActionRunner {
     Future<?> run(Runnable runnable);
   }

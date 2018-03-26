@@ -15,9 +15,9 @@
  */
 package org.jetbrains.plugins.groovy.completion
 
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager
-import org.jetbrains.plugins.groovy.util.TestUtils
+import com.intellij.application.options.CodeStyle
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings
+import org.jetbrains.plugins.groovy.util.TestUtils
 
 /**
  * @author Max Medvedev
@@ -30,7 +30,7 @@ class GrDocCompletionTest extends GroovyCompletionTestBase {
 
   void testLinkCompletion() { doBasicTest() }
   void testLinkCompletion1() {
-    CodeStyleSettingsManager.getSettings(project).getCustomSettings(GroovyCodeStyleSettings.class).USE_FQ_CLASS_NAMES_IN_JAVADOC = false
+    CodeStyle.getSettings(project).getCustomSettings(GroovyCodeStyleSettings.class).USE_FQ_CLASS_NAMES_IN_JAVADOC = false
     doBasicTest()
   }
 }

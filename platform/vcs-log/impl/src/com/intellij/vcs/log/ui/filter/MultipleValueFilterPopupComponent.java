@@ -97,11 +97,16 @@ abstract class MultipleValueFilterPopupComponent<Filter extends VcsLogFilter> ex
   }
 
   protected class PredefinedValueAction extends DumbAwareAction {
-
     @NotNull protected final List<String> myValues;
+    private boolean myAddToRecent;
+
+    public PredefinedValueAction(@NotNull String value, boolean addToRecent) {
+      this(Collections.singletonList(value));
+      myAddToRecent = addToRecent;
+    }
 
     public PredefinedValueAction(@NotNull String value) {
-      this(Collections.singletonList(value));
+      this(value, true);
     }
 
     public PredefinedValueAction(@NotNull List<String> values) {
@@ -113,7 +118,7 @@ abstract class MultipleValueFilterPopupComponent<Filter extends VcsLogFilter> ex
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       myFilterModel.setFilter(myFilterModel.createFilter(myValues));
-      rememberValuesInSettings(myValues);
+      if (myAddToRecent) rememberValuesInSettings(myValues);
     }
   }
 

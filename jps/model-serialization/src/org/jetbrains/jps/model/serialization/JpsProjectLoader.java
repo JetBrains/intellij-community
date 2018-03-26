@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.model.serialization;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,7 +7,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.concurrency.BoundedTaskExecutor;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jdom.Element;
@@ -42,6 +40,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.stream.Stream;
 
@@ -50,7 +49,8 @@ import java.util.stream.Stream;
  */
 public class JpsProjectLoader extends JpsLoaderBase {
   private static final Logger LOG = Logger.getInstance(JpsProjectLoader.class);
-  private static final BoundedTaskExecutor ourThreadPool = new BoundedTaskExecutor("JpsProjectLoader pool",SharedThreadPool.getInstance(), Runtime.getRuntime().availableProcessors());
+  private static final ExecutorService
+    ourThreadPool = AppExecutorUtil.createBoundedApplicationPoolExecutor("JpsProjectLoader Pool", SharedThreadPool.getInstance(), Runtime.getRuntime().availableProcessors());
   public static final String CLASSPATH_ATTRIBUTE = "classpath";
   public static final String CLASSPATH_DIR_ATTRIBUTE = "classpath-dir";
   private final JpsProject myProject;
@@ -123,14 +123,25 @@ public class JpsProjectLoader extends JpsLoaderBase {
   protected <E extends JpsElement> Element loadComponentData(@NotNull JpsElementExtensionSerializerBase<E> serializer, @NotNull Path configFile) {
     Path externalConfigDir = resolveExternalProjectConfig("project");
     Element data = super.loadComponentData(serializer, configFile);
-    if (externalConfigDir != null && serializer.getComponentName().equals("CompilerConfiguration")) {
-      Element externalData = JDomSerializationUtil.findComponent(loadRootElement(externalConfigDir.resolve(configFile.getFileName())), "External" + serializer.getComponentName());
-      if (data == null) {
-        return externalData;
+    String componentName = serializer.getComponentName();
+    if (externalConfigDir == null || !(componentName.equals("CompilerConfiguration"))) {
+      return data;
+    }
+
+    String prefixedComponentName = "External" + componentName;
+    Element externalData = null;
+    for (Element child : (JDOMUtil.getChildren(loadRootElement(externalConfigDir.resolve(configFile.getFileName()))))) {
+      // be ready to handle both original name and prefixed
+      if (child.getName().equals(prefixedComponentName) || child.getName().equals(componentName)) {
+        externalData = child;
+        break;
       }
-      else if (externalData != null) {
-        return JDOMUtil.deepMerge(data, externalData);
-      }
+    }
+    if (data == null) {
+      return externalData;
+    }
+    else if (externalData != null) {
+      return JDOMUtil.deepMerge(data, externalData);
     }
     return data;
   }
@@ -200,6 +211,9 @@ public class JpsProjectLoader extends JpsLoaderBase {
     Runnable artifactsTimingLog = TimingLog.startActivity("loading artifacts");
     for (Path artifactFile : listXmlFiles(dir.resolve("artifacts"))) {
       loadArtifacts(loadRootElement(artifactFile));
+    }
+    if (externalConfigDir != null) {
+      loadArtifacts(loadRootElement(externalConfigDir.resolve("artifacts.xml")));
     }
     artifactsTimingLog.run();
 

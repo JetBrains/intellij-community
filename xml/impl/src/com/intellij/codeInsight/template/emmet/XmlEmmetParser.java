@@ -78,7 +78,7 @@ public class XmlEmmetParser extends EmmetParser {
     pair("object", "param"),
     pair("map", "area"));
 
-  private boolean isHtml;
+  private final boolean isHtml;
 
   public XmlEmmetParser(List<ZenCodingToken> tokens,
                         CustomTemplateCallback callback,

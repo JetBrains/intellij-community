@@ -19,8 +19,7 @@ import com.intellij.debugger.PositionManager;
 import com.intellij.debugger.PositionManagerFactory;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.JavaPsiFacade;
 import org.jetbrains.annotations.NotNull;
@@ -43,12 +42,15 @@ public class SpringLoadedPositionManagerFactory extends PositionManagerFactory {
     Boolean force = process.getProcessHandler().getUserData(FORCE_SPRINGLOADED);
     if (force == Boolean.TRUE) return true;
 
-    try (AccessToken ignored = ApplicationManager.getApplication().acquireReadActionLock()) {
+    if (ReadAction.compute(()->{
       JavaPsiFacade facade = JavaPsiFacade.getInstance(process.getProject());
       if (facade.findPackage("com.springsource.loaded") != null ||
           facade.findPackage("org.springsource.loaded") != null) {
         return true;
       }
+      return false;
+    })) {
+      return true;
     }
 
     // Check spring loaded for remote process

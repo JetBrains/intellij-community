@@ -66,7 +66,7 @@ public class TypedHandlerUtil {
                                                         boolean allowAfterDot) {
     HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(offset);
     if (iterator.atEnd()) return false;
-    if (iterator.getStart() > 0) iterator.retreat();
+    if (offset != iterator.getEnd() && iterator.getStart() > 0) iterator.retreat();
     final IElementType tokenType = iterator.getTokenType();
     if (allowAfterDot && tokenType == dot) return true;
     return isClassLikeIdentifier(offset, editor, iterator, identifier);

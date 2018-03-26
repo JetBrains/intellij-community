@@ -39,7 +39,6 @@ import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
-import java.util.HashMap;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -54,7 +53,7 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
   private final PsiClass myTargetSuperClass;
   private final boolean myIsTargetInterface;
   private final DocCommentPolicy myJavaDocPolicy;
-  private Set<PsiMember> myMembersAfterMove;
+  private final Set<PsiMember> myMembersAfterMove;
   private final Set<PsiMember> myMembersToMove;
   private final Project myProject;
 
@@ -328,6 +327,9 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
       PsiExpression qualifierExpression = ((PsiReferenceExpression)element).getQualifierExpression();
       if (qualifierExpression instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifierExpression).resolve() == mySourceClass) {
         ((PsiReferenceExpression)qualifierExpression).bindToElement(myTargetSuperClass);
+      }
+      else if (qualifierExpression == null && myTargetSuperClass.isInterface()) {
+        ((PsiReferenceExpression)element).setQualifierExpression(JavaPsiFacade.getElementFactory(myProject).createReferenceExpression(myTargetSuperClass));
       }
     }
   }
@@ -655,7 +657,7 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
       }
 
       // check default constructor
-      if (constructor == null || constructor.getParameterList().getParametersCount() == 0) {
+      if (constructor == null || constructor.getParameterList().isEmpty()) {
         RefactoringUtil.visitImplicitSuperConstructorUsages(mySourceClass, new RefactoringUtil.ImplicitConstructorUsageVisitor() {
           public void visitConstructor(PsiMethod constructor, PsiMethod baseConstructor) {
             referencingSubConstructors.add(constructor);

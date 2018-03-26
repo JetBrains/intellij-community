@@ -126,6 +126,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
         }
       }
 
+      @Override
       public void onCancel() {
         onSuccess();
       }

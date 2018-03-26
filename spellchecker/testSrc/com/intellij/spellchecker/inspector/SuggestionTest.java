@@ -16,12 +16,16 @@
 package com.intellij.spellchecker.inspector;
 
 import com.intellij.spellchecker.SpellCheckerManager;
+import com.intellij.spellchecker.settings.SpellCheckerSettings;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 
 import java.util.List;
 
 @SuppressWarnings("SpellCheckingInspection")
 public class SuggestionTest extends LightPlatformCodeInsightFixtureTestCase {
+
+  public static final String TYPPPO = "Typppo";
+
   public void testSuggestions() { doTest("upgade", "upgrade"); }
   public void testFirstLetterUppercaseSuggestions() { doTest("Upgade", "Upgrade"); }
   public void testCamelCaseSuggestions() { doTest("TestUpgade", "TestUpgrade"); }
@@ -29,5 +33,43 @@ public class SuggestionTest extends LightPlatformCodeInsightFixtureTestCase {
   private void doTest(String word, String expected) {
     List<String> result = SpellCheckerManager.getInstance(myFixture.getProject()).getSuggestions(word);
     assertEquals(expected, result.get(0));
+  }
+
+  public void testMaxSuggestions(){
+    final SpellCheckerManager manager = SpellCheckerManager.getInstance(myFixture.getProject());
+    final SpellCheckerSettings settings = SpellCheckerSettings.getInstance(myFixture.getProject());
+    int oldCorrectionsLimit = settings.getCorrectionsLimit();
+    assertTrue(oldCorrectionsLimit <= manager.getSuggestions(TYPPPO).size());
+  }
+
+  public void testMaxSuggestions1() {
+    final SpellCheckerManager manager = SpellCheckerManager.getInstance(myFixture.getProject());
+    final SpellCheckerSettings settings = SpellCheckerSettings.getInstance(myFixture.getProject());
+    int oldCorrectionsLimit = settings.getCorrectionsLimit();
+    settings.setCorrectionsLimit(1);
+    assertEquals(1, manager.getSuggestions(TYPPPO).size());
+
+    settings.setCorrectionsLimit(oldCorrectionsLimit);
+  }
+
+  public void testMaxSuggestions0() {
+    final SpellCheckerManager manager = SpellCheckerManager.getInstance(myFixture.getProject());
+    final SpellCheckerSettings settings = SpellCheckerSettings.getInstance(myFixture.getProject());
+    int oldCorrectionsLimit = settings.getCorrectionsLimit();
+    settings.setCorrectionsLimit(0); // some incorrect value appeared
+    assertEquals(0, manager.getSuggestions(TYPPPO).size());
+
+    settings.setCorrectionsLimit(oldCorrectionsLimit);
+  }
+
+  public void testMaxSuggestions1000() {
+    final SpellCheckerManager manager = SpellCheckerManager.getInstance(myFixture.getProject());
+    final SpellCheckerSettings settings = SpellCheckerSettings.getInstance(myFixture.getProject());
+    int oldCorrectionsLimit = settings.getCorrectionsLimit();
+    settings.setCorrectionsLimit(1000);
+    // because of quality threshold
+    assertTrue(manager.getSuggestions("SomeVeryLongWordToReduceSuggestionsCount").size() < 1000);
+
+    settings.setCorrectionsLimit(oldCorrectionsLimit);
   }
 }

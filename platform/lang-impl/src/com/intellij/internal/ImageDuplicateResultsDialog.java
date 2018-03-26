@@ -152,7 +152,7 @@ public class ImageDuplicateResultsDialog extends DialogWrapper {
           modules.installCellRenderer(modulesRenderer);
           JBPopupFactory.getInstance().createListPopupBuilder(modules)
             .setTitle("Add Resource Module")
-            .setFilteringEnabled(o -> ((Module)o).getName())
+            .setNamerForFiltering(o -> ((Module)o).getName())
             .setItemChoosenCallback(() -> {
               final Object value = modules.getSelectedValue();
               if (value instanceof Module && !myResourceModules.contains((Module)value)) {
@@ -316,11 +316,8 @@ public class ImageDuplicateResultsDialog extends DialogWrapper {
         if (module != null) {
           setIcon(PlatformIcons.CONTENT_ROOT_ICON_CLOSED);
           append("[" + module.getName() + "] ", new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, UIUtil.getTreeForeground()));
-          append(getRelativePathToProject(myProject, file));
         }
-        else {
-          append(getRelativePathToProject(myProject, file));
-        }
+        append(getRelativePathToProject(myProject, file));
       }
       else if (value instanceof MyDuplicatesNode) {
         final Set<VirtualFile> files = ((MyDuplicatesNode)value).getUserObject();

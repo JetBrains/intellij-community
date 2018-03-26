@@ -21,7 +21,6 @@ import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.find.replaceInProject.ReplaceInProjectManager;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -32,7 +31,10 @@ import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -158,17 +160,14 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
       }
 
       final String replaceWith = PREFIX + propertyName + SUFFIX;
-      new WriteCommandAction(project) {
-        @Override
-        protected void run(@NotNull Result result) {
-          editor.getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), replaceWith);
-          PsiDocumentManager.getInstance(project).commitAllDocuments();
+      WriteCommandAction.runWriteCommandAction(project, () -> {
+        editor.getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), replaceWith);
+        PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-          createMavenProperty(selectedProject, propertyName, selectedString);
+        createMavenProperty(selectedProject, propertyName, selectedString);
 
-          PsiDocumentManager.getInstance(project).commitAllDocuments();
-        }
-      }.execute();
+        PsiDocumentManager.getInstance(project).commitAllDocuments();
+      });
 
       showFindUsages(project, propertyName, selectedString, replaceWith, selectedProject);
     }
@@ -265,9 +264,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
 
           @Override
           public void generate(@NotNull final Processor<Usage> processor) {
-            AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
-
-            try {
+            ApplicationManager.getApplication().runReadAction(() -> {
               collectUsages(myModel);
               for (MavenDomProjectModel model : MavenDomProjectProcessorUtils.getChildrenProjects(myModel)) {
                 collectUsages(model);
@@ -276,10 +273,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
               for (UsageInfo usage : usages) {
                 processor.process(UsageInfo2UsageAdapter.CONVERTER.fun(usage));
               }
-            }
-            finally {
-              accessToken.finish();
-            }
+            });
           }
 
           private void collectUsages(@NotNull MavenDomProjectModel model) {

@@ -150,7 +150,7 @@ public class GroovyExpectedTypesProvider {
 
     private static boolean resolvesToDefaultConstructor(GrCall call) {
       PsiMethod method = call.resolveMethod();
-      if (method != null && method.isConstructor() && method.getParameterList().getParametersCount() == 0) return true;
+      if (method != null && method.isConstructor() && method.getParameterList().isEmpty()) return true;
 
       if (call instanceof GrConstructorCall) {
         PsiElement resolved = PsiImplUtil.extractUniqueResult(((GrConstructorCall)call).multiResolveClass()).getElement();

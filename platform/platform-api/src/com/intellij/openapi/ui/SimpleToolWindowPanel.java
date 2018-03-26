@@ -23,7 +23,7 @@ public class SimpleToolWindowPanel extends JPanel implements QuickActionProvider
   private JComponent myToolbar;
   private JComponent myContent;
 
-  private boolean myBorderless;
+  private final boolean myBorderless;
   protected boolean myVertical;
   private boolean myProvideQuickActions;
 

@@ -1,12 +1,9 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.EvaluatingComputable;
 import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.engine.ContextUtil;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.engine.evaluation.*;
@@ -66,11 +63,10 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
 
     JavaSdkVersion version = JavaSdkVersion.fromVersionString(((VirtualMachineProxyImpl)process.getVirtualMachineProxy()).version());
     Collection<ClassObject> classes = compile(version);
-    defineClasses(version, classes, autoLoadContext, process, classLoader);
+    defineClasses(classes, autoLoadContext, process, classLoader);
 
     try {
       // invoke base evaluator on call code
-      SourcePosition position = ContextUtil.getSourcePosition(evaluationContext);
       ExpressionEvaluator evaluator =
         DebuggerInvocationUtil.commitAndRunReadAction(myProject, new EvaluatingComputable<ExpressionEvaluator>() {
           @Override
@@ -78,7 +74,9 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
             TextWithImports callCode = getCallCode();
             PsiElement copyContext = myData.getAnchor();
             CodeFragmentFactory factory = DebuggerUtilsEx.findAppropriateCodeFragmentFactory(callCode, copyContext);
-            return factory.getEvaluatorBuilder().build(factory.createCodeFragment(callCode, copyContext, myProject), position);
+            return factory.getEvaluatorBuilder().build(factory.createCodeFragment(callCode, copyContext, myProject),
+                                                       // can not use evaluation position here, it does not match classes then
+                                                       SourcePosition.createFromElement(copyContext));
           }
         });
       return evaluator.evaluate(autoLoadContext);
@@ -88,12 +86,11 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
     }
   }
 
-  private void defineClasses(JavaSdkVersion version,
-                             Collection<ClassObject> classes,
+  private void defineClasses(Collection<ClassObject> classes,
                              EvaluationContext context,
                              DebugProcess process,
                              ClassLoaderReference classLoader) throws EvaluateException {
-    boolean useMagicAccessorImpl = version != null && !version.isAtLeast(JavaSdkVersion.JDK_1_9);
+    boolean useMagicAccessorImpl = myData.useMagicAccessor();
 
     for (ClassObject cls : classes) {
       if (cls.getPath().contains(GEN_CLASS_NAME)) {

@@ -16,9 +16,8 @@
 
 package com.intellij.openapi.project;
 
-import com.intellij.ui.components.JBLabel;
-import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.ui.components.JBPanelWithEmptyText;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -26,20 +25,17 @@ import java.awt.*;
 /**
  * @author peter
  */
-public class DumbUnawareHider extends JPanel {
-  @NonNls private static final String CONTENT = "content";
-  @NonNls private static final String EXCUSE = "excuse";
+public class DumbUnawareHider extends JBPanelWithEmptyText {
 
-  public DumbUnawareHider(JComponent dumbUnawareContent) {
-    super(new CardLayout());
-    add(dumbUnawareContent, CONTENT);
-    final JBLabel label = new JBLabel("This view is not available until indices are built");
-    label.setFontColor(UIUtil.FontColor.BRIGHTER);
-    label.setHorizontalAlignment(SwingConstants.CENTER);
-    add(label, EXCUSE);
+  public DumbUnawareHider(@NotNull JComponent dumbUnawareContent) {
+    super(new BorderLayout());
+    getEmptyText().setText("This view is not available until indices are built");
+    add(dumbUnawareContent, BorderLayout.CENTER);
   }
 
   public void setContentVisible(boolean show) {
-    ((CardLayout)getLayout()).show(this, show ? CONTENT : EXCUSE);
+    for (int i = 0, count = getComponentCount(); i < count; i++) {
+      getComponent(i).setVisible(show);
+    }
   }
 }

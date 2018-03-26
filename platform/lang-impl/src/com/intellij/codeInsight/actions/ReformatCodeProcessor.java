@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.actions;
 
@@ -28,11 +14,11 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.codeStyle.ChangedRangesInfo;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -106,7 +92,7 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
   protected FutureTask<Boolean> prepareTask(@NotNull final PsiFile file, final boolean processChangedTextOnly)
     throws IncorrectOperationException
   {
-    LOG.assertTrue(file.isValid(), "Invalid Psi file, name: " + file.getName() + " , class: " + file.getClass().getSimpleName());
+    assertFileIsValid(file);
     return new FutureTask<>(() -> {
       FormattingProgressTask.FORMATTING_CANCELLED_FLAG.set(false);
       try {
@@ -122,6 +108,7 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
         if (processChangedTextOnly) {
           ChangedRangesInfo info = FormatChangedTextUtil.getInstance().getChangedRangesInfo(file);
           if (info != null) {
+            assertFileIsValid(file);
             CodeStyleManager.getInstance(myProject).reformatTextWithContext(file, info);
           }
         }
@@ -138,10 +125,6 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
 
         return !FormattingProgressTask.FORMATTING_CANCELLED_FLAG.get();
       }
-      catch (FilesTooBigForDiffException e) {
-        handleFileTooBigException(LOG, e, file);
-        return false;
-      }
       catch (IncorrectOperationException e) {
         LOG.error(e);
         return false;
@@ -150,6 +133,15 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
         myRanges.clear();
       }
     });
+  }
+
+  private static void assertFileIsValid(@NotNull PsiFile file) {
+    if (!file.isValid()) {
+      LOG.error(
+        "Invalid Psi file, name: " + file.getName() +
+        " , class: " + file.getClass().getSimpleName() +
+        " , " + PsiInvalidElementAccessException.findOutInvalidationReason(file));
+    }
   }
 
   private void prepareUserNotificationMessage(@NotNull Document document, @NotNull CharSequence before) {

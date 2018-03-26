@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,12 +65,14 @@ public class TooBroadScopeInspection extends TooBroadScopeInspectionBase {
       if (!(variableIdentifier instanceof PsiIdentifier)) {
         return;
       }
-      final PsiVariable variable = (PsiVariable)variableIdentifier.getParent();
+      final PsiLocalVariable variable = (PsiLocalVariable)variableIdentifier.getParent();
       assert variable != null;
       final PsiElement variableScope = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class, PsiForStatement.class, PsiTryStatement.class);
-      final List<PsiReferenceExpression> references = VariableAccessUtils.findReferences(variable, variableScope);
+      final List<PsiReferenceExpression> references = findReferences(variable);
       PsiElement commonParent = ScopeUtils.getCommonParent(references);
-      assert commonParent != null;
+      if (commonParent == null) {
+        return;
+      }
       final PsiExpression initializer = variable.getInitializer();
       if (initializer != null) {
         assert variableScope != null;
@@ -88,7 +90,7 @@ public class TooBroadScopeInspection extends TooBroadScopeInspectionBase {
       CommentTracker tracker = new CommentTracker();
       if (commonParent instanceof PsiTryStatement) {
         PsiElement resourceReference = referenceElement.getParent();
-        PsiResourceVariable resourceVariable = createResourceVariable(project, (PsiLocalVariable)variable, initializer != null ? tracker.markUnchanged(initializer) : null);
+        PsiResourceVariable resourceVariable = createResourceVariable(project, variable, initializer != null ? tracker.markUnchanged(initializer) : null);
         newDeclaration = resourceReference.getParent().addBefore(resourceVariable, resourceReference);
         resourceReference.delete();
       }

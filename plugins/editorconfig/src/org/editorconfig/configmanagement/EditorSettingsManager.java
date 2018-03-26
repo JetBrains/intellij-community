@@ -18,7 +18,7 @@ import java.util.List;
 public class EditorSettingsManager extends EditorFactoryAdapter {
   // Handles the following EditorConfig settings:
   public static final String maxLineLengthKey = "max_line_length";
-  private Project myProject;
+  private final Project myProject;
 
   public EditorSettingsManager(Project project) {
     myProject = project;

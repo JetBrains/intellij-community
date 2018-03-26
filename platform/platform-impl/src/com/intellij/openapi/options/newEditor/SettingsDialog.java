@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.CommonBundle;
@@ -45,13 +31,13 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
 
   private final String myDimensionServiceKey;
   private final AbstractEditor myEditor;
-  private boolean myApplyButtonNeeded;
+  private final boolean myApplyButtonNeeded;
   private boolean myResetButtonNeeded;
 
   public SettingsDialog(Project project, String key, @NotNull Configurable configurable, boolean showApplyButton, boolean showResetButton) {
     super(project, true);
     myDimensionServiceKey = key;
-    myEditor = new ConfigurableEditor(myDisposable, configurable);
+    myEditor = new SingleSettingEditor(myDisposable, configurable);
     myApplyButtonNeeded = showApplyButton;
     myResetButtonNeeded = showResetButton;
     init(configurable, project);
@@ -60,7 +46,7 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
   public SettingsDialog(@NotNull Component parent, String key, @NotNull Configurable configurable, boolean showApplyButton, boolean showResetButton) {
     super(parent, true);
     myDimensionServiceKey = key;
-    myEditor = new ConfigurableEditor(myDisposable, configurable);
+    myEditor = new SingleSettingEditor(myDisposable, configurable);
     myApplyButtonNeeded = showApplyButton;
     myResetButtonNeeded = showResetButton;
     init(configurable, null);
@@ -171,7 +157,7 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
   @Override
   public void doOKAction() {
     if (myEditor.apply()) {
-      ApplicationManager.getApplication().saveAll();
+      ApplicationManager.getApplication().saveAll(true);
       super.doOKAction();
     }
   }

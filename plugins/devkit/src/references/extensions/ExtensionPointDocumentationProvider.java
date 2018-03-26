@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,23 +16,29 @@
 package org.jetbrains.idea.devkit.references.extensions;
 
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
+import com.intellij.codeInsight.javadoc.JavaDocUtil;
+import com.intellij.lang.documentation.DocumentationMarkup;
 import com.intellij.lang.documentation.DocumentationProviderEx;
 import com.intellij.lang.java.JavaDocumentationProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.PomTarget;
 import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomTarget;
 import com.intellij.util.xml.DomUtil;
+import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
+import org.jetbrains.idea.devkit.dom.With;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
+
+import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
@@ -51,7 +57,7 @@ public class ExtensionPointDocumentationProvider extends DocumentationProviderEx
     final PsiClass epClass = getExtensionPointClass(extensionPoint);
     StringBuilder epClassText = new StringBuilder();
     if (epClass != null) {
-      JavaDocInfoGenerator.generateType(epClassText, PsiTypesUtil.getClassType(epClass), epClass, true);
+      generateClassLink(epClassText, epClass);
     }
     else {
       epClassText.append("<unknown>");
@@ -72,18 +78,55 @@ public class ExtensionPointDocumentationProvider extends DocumentationProviderEx
 
     final PsiClass epClass = getExtensionPointClass(extensionPoint);
     if (epClass != null) {
-      StringBuilder sb = new StringBuilder();
-      sb.append("<em>EP Definition</em><br/>");
-      final String quickInfo = StringUtil.notNullize(getQuickNavigateInfo(element, originalElement));
-      sb.append(quickInfo);
-      sb.append("<br/>");
-      sb.append("<br/>");
-      sb.append("<em>EP Implementation</em>");
+      StringBuilder sb = new StringBuilder(DocumentationMarkup.DEFINITION_START);
+      sb.append("<b>").append(extensionPoint.getEffectiveName()).append("</b> [").append(extensionPoint.getNamePrefix()).append("]<br>");
+      generateClassLink(sb, epClass);
+      sb.append("<br>").append(DomUtil.getFile(extensionPoint).getName());
+
+      List<With> withElements = extensionPoint.getWithElements();
+      if (!withElements.isEmpty()) {
+        sb.append(DocumentationMarkup.SECTIONS_START);
+        for (With withElement : withElements) {
+
+          String name = DomUtil.hasXml(withElement.getAttribute())
+                        ? withElement.getAttribute().getStringValue()
+                        : "<" + withElement.getTag().getStringValue() + ">";
+
+          StringBuilder classLinkSb = new StringBuilder();
+          generateClassLink(classLinkSb, withElement.getImplements().getValue());
+
+          appendSection(sb, XmlUtil.escape(name), classLinkSb.toString());
+        }
+        sb.append(DocumentationMarkup.SECTIONS_END);
+      }
+      sb.append(DocumentationMarkup.DEFINITION_END);
+
+      sb.append(DocumentationMarkup.CONTENT_START);
+      String epDocumentationType = DomUtil.hasXml(extensionPoint.getBeanClass()) ? "Bean Class" : "Implementation Class";
+      sb.append("<em>Extension Point ").append(epDocumentationType).append("</em>");
       sb.append(JavaDocumentationProvider.generateExternalJavadoc(epClass));
+      sb.append(DocumentationMarkup.CONTENT_END);
 
       return sb.toString();
     }
     return null;
+  }
+
+  @Override
+  public PsiElement getDocumentationElementForLink(PsiManager psiManager, String link, PsiElement context) {
+    return JavaDocUtil.findReferenceTarget(psiManager, link, context);
+  }
+
+  private static void generateClassLink(StringBuilder epClassText, @Nullable PsiClass epClass) {
+    if (epClass == null) return;
+    JavaDocInfoGenerator.generateType(epClassText, PsiTypesUtil.getClassType(epClass), epClass, true);
+  }
+
+  private static void appendSection(StringBuilder sb, String sectionName, String sectionContent) {
+    sb.append(DocumentationMarkup.SECTION_HEADER_START).append(sectionName).append(":")
+      .append(DocumentationMarkup.SECTION_SEPARATOR);
+    sb.append(sectionContent);
+    sb.append(DocumentationMarkup.SECTION_END);
   }
 
   @Nullable

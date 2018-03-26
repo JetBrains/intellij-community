@@ -53,15 +53,15 @@ public class PluginDescriptorChooser {
 
   private static final Map<String, String> INTELLIJ_MODULES =
     ContainerUtil.<String, String>immutableMapBuilder()
-      .put("platform-api", "PlatformExtensions.xml")
-      .put("platform-impl", "PlatformExtensions.xml")
-      .put("lang-api", "LangExtensions.xml")
-      .put("lang-impl", "LangExtensions.xml")
-      .put("vcs-api", "VcsExtensions.xml")
-      .put("vcs-impl", "VcsExtensions.xml")
-      .put("openapi", "IdeaPlugin.xml")
-      .put("java-impl", "IdeaPlugin.xml")
-      .put("java-analysis-impl", "IdeaPlugin.xml")
+      .put("intellij.platform.ide", "PlatformExtensions.xml")
+      .put("intellij.platform.ide.impl", "PlatformExtensions.xml")
+      .put("intellij.platform.lang", "LangExtensions.xml")
+      .put("intellij.platform.lang.impl", "LangExtensions.xml")
+      .put("intellij.platform.vcs", "VcsExtensions.xml")
+      .put("intellij.platform.vcs.impl", "VcsExtensions.xml")
+      .put("intellij.java", "IdeaPlugin.xml")
+      .put("intellij.java.impl", "IdeaPlugin.xml")
+      .put("intellij.java.analysis.impl", "IdeaPlugin.xml")
       .build();
 
   public static void show(final Project project,

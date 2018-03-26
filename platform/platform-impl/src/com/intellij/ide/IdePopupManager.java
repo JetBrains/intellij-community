@@ -61,15 +61,11 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
           focused = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
         }
 
-        if (focused == null) {
-          shouldCloseAllPopup = true;
-        }
-
         Component ultimateParentForFocusedComponent = UIUtil.findUltimateParent(focused);
         Window sourceWindow = ((WindowEvent)e).getWindow();
         Component ultimateParentForEventWindow = UIUtil.findUltimateParent(sourceWindow);
 
-        if (!shouldCloseAllPopup && ultimateParentForEventWindow == null || ultimateParentForFocusedComponent == null) {
+        if (ultimateParentForEventWindow == null || ultimateParentForFocusedComponent == null) {
           shouldCloseAllPopup = true;
         }
 
@@ -78,11 +74,6 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
           if (ultimateParentWindowForEvent.isInFullScreen()
               && !ultimateParentForFocusedComponent.equals(ultimateParentForEventWindow)) {
             shouldCloseAllPopup = true;
-          }
-          else if (focused instanceof Dialog && ((Dialog)focused).isModal()) {
-            // close all popups except one that is opening a modal dialog
-            closeAllPopups(true, focused.getOwner());
-            return false;
           }
         }
 

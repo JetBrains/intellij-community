@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.lang.ASTFactory;
@@ -81,6 +79,18 @@ public class CommentTracker {
     return element;
   }
 
+  public void markRangeUnchanged(@NotNull PsiElement firstElement, @NotNull PsiElement lastElement) {
+    checkState();
+    PsiElement e;
+    for (e = firstElement; e != null && e != lastElement; e = e.getNextSibling()) {
+      addIgnored(e);
+    }
+    if (e == null) {
+      throw new IllegalArgumentException("Elements must be siblings: " + firstElement + " and " + lastElement);
+    }
+    addIgnored(lastElement);
+  }
+
   /**
    * Deletes given PsiElement collecting all the comments inside it.
    *
@@ -112,7 +122,11 @@ public class CommentTracker {
    */
   public void deleteAndRestoreComments(@NotNull PsiElement element) {
     grabCommentsOnDelete(element);
-    insertCommentsBefore(element instanceof PsiVariable ? element.getParent() : element);
+    PsiElement anchor = element;
+    while (anchor.getParent() != null && !(anchor.getParent() instanceof PsiFile) && anchor.getParent().getFirstChild() == anchor) {
+      anchor = anchor.getParent();
+    }
+    insertCommentsBefore(anchor);
     element.delete();
   }
 
@@ -164,6 +178,9 @@ public class CommentTracker {
       anchor = ((PsiLambdaExpression)anchor).getBody();
     }
     if (anchor instanceof PsiVariable && anchor.getParent() instanceof PsiDeclarationStatement) {
+      anchor = anchor.getParent();
+    }
+    if (anchor instanceof PsiStatement && (anchor.getParent() instanceof PsiIfStatement || anchor.getParent() instanceof PsiLoopStatement)) {
       anchor = anchor.getParent();
     }
     if (anchor == null) anchor = result;
@@ -262,20 +279,9 @@ public class CommentTracker {
   }
 
   private void grabCommentsOnDelete(PsiElement element) {
-    if (element instanceof PsiExpression && element.getParent() instanceof PsiExpressionStatement) {
+    if (element instanceof PsiExpression && element.getParent() instanceof PsiExpressionStatement ||
+        element.getParent() instanceof PsiJavaCodeReferenceElement) {
       element = element.getParent();
-    }
-    if (element.getParent() instanceof PsiJavaCodeReferenceElement) {
-      PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)element.getParent();
-      if (element == ref.getQualifier()) {
-        for (PsiElement child : ref.getChildren()) {
-          if(child.textMatches(".")) {
-            break;
-          }
-          grabComments(child);
-        }
-        return;
-      }
     }
     grabComments(element);
   }

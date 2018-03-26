@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.index
 
 import com.intellij.ide.todo.TodoConfiguration
@@ -58,18 +44,12 @@ import com.intellij.psi.impl.search.JavaNullMethodArgumentIndex
 import com.intellij.psi.impl.source.JavaFileElementType
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.psi.impl.source.PsiFileWithStubSupport
-import com.intellij.psi.search.EverythingGlobalScope
-import com.intellij.psi.search.FilenameIndex
-import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.search.PsiSearchHelper
-import com.intellij.psi.search.TodoAttributesUtil
-import com.intellij.psi.search.TodoPattern
+import com.intellij.psi.search.*
 import com.intellij.psi.stubs.SerializedStubTree
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexImpl
 import com.intellij.psi.stubs.StubUpdatingIndex
 import com.intellij.testFramework.IdeaTestUtil
-import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.SkipSlowTestLocally
@@ -83,6 +63,7 @@ import com.intellij.util.indexing.*
 import com.intellij.util.indexing.impl.MapIndexStorage
 import com.intellij.util.indexing.impl.MapReduceIndex
 import com.intellij.util.io.*
+import com.intellij.util.ref.GCUtil
 import com.siyeh.ig.JavaOverridingMethodUtil
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
@@ -272,7 +253,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
   void testSkipUnknownFileTypes() throws IOException {
     final VirtualFile vFile = myFixture.addFileToProject("Foo.test", "Foo").getVirtualFile()
     assertEquals(PlainTextFileType.INSTANCE, vFile.getFileType())
-    final PsiSearchHelper helper = PsiSearchHelper.SERVICE.getInstance(getProject())
+    final PsiSearchHelper helper = PsiSearchHelper.getInstance(getProject())
     assertOneElement(helper.findFilesWithPlainTextWords("Foo"))
 
     final Document document = FileDocumentManager.getInstance().getDocument(vFile)
@@ -533,6 +514,48 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     document.setText("class Foo2 { }")
     PsiDocumentManager.getInstance(project).commitAllDocuments()
     assertTrue(stamp != ((StubIndexImpl)StubIndex.instance).getIndexModificationStamp(JavaStubIndexKeys.CLASS_SHORT_NAMES, project))
+  }
+
+  void "test internalErrorOfStubProcessingInvalidatesIndex"() throws IOException {
+    final VirtualFile vFile = myFixture.addClass("class Foo {}").getContainingFile().getVirtualFile()
+    
+    assertTrue(findClass("Foo") != null)
+
+    runFindClassStubIndexQueryThatProducesInvalidResult("Foo")
+
+    GCUtil.tryGcSoftlyReachableObjects() // invalidates cache in findClass
+    assertNull(findClass("Foo"))
+
+    // check invalidation of transient indices state
+    def document = FileDocumentManager.instance.getDocument(vFile)
+    document.setText("class Foo2 {}")
+    PsiDocumentManager.getInstance(project).commitDocument(document)
+
+    assertTrue(findClass("Foo2") != null)
+
+    runFindClassStubIndexQueryThatProducesInvalidResult("Foo2")
+    GCUtil.tryGcSoftlyReachableObjects() // invalidates cache in findClass
+    assertNull(findClass("Foo2"))
+  }
+
+  private void runFindClassStubIndexQueryThatProducesInvalidResult(String qName) {
+    try {
+      def foundFile = [null]
+
+      StubIndex.instance.
+        processElements(JavaStubIndexKeys.CLASS_FQN, qName.hashCode(), project, GlobalSearchScope.allScope(project), PsiFile.class, new Processor<PsiFile>() {
+          @Override
+          boolean process(PsiFile file) {
+            foundFile[0] = file
+            return false
+          }
+        })
+
+      fail("Unexpected")
+    }
+    catch (AssertionError ignored) {
+      // stub mismatch
+    }
   }
 
   void "test do not collect stub tree while holding stub elements"() throws IOException {

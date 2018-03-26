@@ -101,7 +101,7 @@ public class StartMarkAction extends BasicUndoableAction {
 
   public static class AlreadyStartedException extends Exception {
     private final DocumentReference[] myAffectedDocuments;
-    private Document myDocument;
+    private final Document myDocument;
 
     public AlreadyStartedException(String commandName,
                                    Document document,

@@ -97,7 +97,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
   }
 
   @Nullable
-  protected JComponent createAdditionalInfoPanel(@NotNull Editor editor, @NotNull Range range) {
+  protected JComponent createAdditionalInfoPanel(@NotNull Editor editor, @NotNull Range range, @Nullable Point mousePosition) {
     return null;
   }
 
@@ -142,7 +142,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     toolbar.updateActionsImmediately(); // we need valid ActionToolbar.getPreferredSize() to calc size of popup
     toolbar.setReservePlaceAutoPopupIcon(false);
 
-    JComponent additionalInfoPanel = createAdditionalInfoPanel(editor, range);
+    JComponent additionalInfoPanel = createAdditionalInfoPanel(editor, range, mousePosition);
 
     PopupPanel popupPanel = new PopupPanel(editor, toolbar, editorComponent, additionalInfoPanel);
 
@@ -420,10 +420,10 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     @NotNull private final Range myRange;
     @NotNull private final Editor myEditor;
 
-    public RangeMarkerAction(@NotNull Editor editor, @NotNull Range range, @NotNull String actionId) {
+    public RangeMarkerAction(@NotNull Editor editor, @NotNull Range range, @Nullable String actionId) {
       myRange = range;
       myEditor = editor;
-      ActionUtil.copyFrom(this, actionId);
+      if (actionId != null) ActionUtil.copyFrom(this, actionId);
     }
 
     @Override

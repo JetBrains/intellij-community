@@ -26,7 +26,7 @@ import com.jetbrains.python.psi.LanguageLevel;
 @TestDataPath("$CONTENT_ROOT/../testData/pyi/parsing")
 public class PyiParsingTest extends ParsingTestCase {
   public PyiParsingTest() {
-    super("pyi/parsing", "pyi", new PyiParserDefinition());
+    super("pyi/parsing", "pyi", new PyiParserDefinition(), new PythonParserDefinition());
   }
 
   @Override
@@ -50,6 +50,6 @@ public class PyiParsingTest extends ParsingTestCase {
     doTest();
     assertInstanceOf(myFile, PyiFile.class);
     final PyiFile pyiFile = (PyiFile)myFile;
-    assertEquals(LanguageLevel.PYTHON36, pyiFile.getLanguageLevel());
+    assertEquals(LanguageLevel.PYTHON37, pyiFile.getLanguageLevel());
   }
 }

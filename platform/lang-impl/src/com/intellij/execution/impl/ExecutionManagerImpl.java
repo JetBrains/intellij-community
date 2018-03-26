@@ -28,7 +28,6 @@ import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
-import com.intellij.execution.ui.RunContentManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
@@ -46,7 +45,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.docking.DockManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -68,7 +66,6 @@ public abstract class ExecutionManagerImpl extends ExecutionManager implements D
   private final Map<RunProfile, ExecutionEnvironment> myAwaitingRunProfiles = ContainerUtil.newHashMap();
   protected final List<Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor>> myRunningConfigurations =
     ContainerUtil.createLockFreeCopyOnWriteList();
-  private RunContentManagerImpl myContentManager;
 
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   @NotNull
@@ -247,17 +244,12 @@ public abstract class ExecutionManagerImpl extends ExecutionManager implements D
   @NotNull
   @Override
   public RunContentManager getContentManager() {
-    if (myContentManager == null) {
-      myContentManager = new RunContentManagerImpl(myProject, DockManager.getInstance(myProject));
-      Disposer.register(myProject, myContentManager);
-    }
-    return myContentManager;
+    return RunContentManager.getInstance(myProject);
   }
 
   @NotNull
   @Override
   public ProcessHandler[] getRunningProcesses() {
-    if (myContentManager == null) return EMPTY_PROCESS_HANDLERS;
     List<ProcessHandler> handlers = null;
     for (RunContentDescriptor descriptor : getContentManager().getAllDescriptors()) {
       ProcessHandler processHandler = descriptor.getProcessHandler();

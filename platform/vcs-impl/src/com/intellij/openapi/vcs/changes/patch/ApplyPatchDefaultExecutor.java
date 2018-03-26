@@ -69,7 +69,8 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor<AbstractFil
     for (VirtualFile base : patchGroups.keySet()) {
       appliers.add(new PatchApplier<BinaryFilePatch>(myProject, base,
                                                      ContainerUtil
-                                                       .map(patchGroups.get(base), patchInProgress -> patchInProgress.getPatch()), localList, null, commitContext));
+                                                       .map(patchGroups.get(base), patchInProgress -> patchInProgress.getPatch()), localList,
+                                                     commitContext));
     }
     return appliers;
   }

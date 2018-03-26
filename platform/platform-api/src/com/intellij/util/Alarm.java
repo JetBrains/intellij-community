@@ -20,7 +20,7 @@ import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
-import org.jetbrains.annotations.Debugger;
+import org.jetbrains.annotations.Async;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -122,7 +122,7 @@ public class Alarm implements Disposable {
                         // or pass to app pooled thread.
                         // have to restrict the number of running tasks because otherwise the (implicit) contract of
                         // "addRequests with the same delay are executed in order" will be broken
-                        AppExecutorUtil.createBoundedScheduledExecutorService("Alarm pool",1);
+                        AppExecutorUtil.createBoundedScheduledExecutorService("Alarm Pool", 1);
 
     if (parentDisposable == null) {
       if (threadToUse == ThreadToUse.POOLED_THREAD || threadToUse != ThreadToUse.SWING_THREAD) {
@@ -333,7 +333,7 @@ public class Alarm implements Disposable {
     private Future<?> myFuture; // guarded by LOCK
     private final long myDelay;
 
-    @Debugger.Capture
+    @Async.Schedule
     private Request(@NotNull final Runnable task, @Nullable ModalityState modalityState, long delayMillis) {
       synchronized (LOCK) {
         myTask = task;
@@ -398,7 +398,7 @@ public class Alarm implements Disposable {
       }
     }
 
-    @Debugger.Insert
+    @Async.Execute
     private void runSafely(@Nullable Runnable task) {
       try {
         if (!myDisposed && task != null) {

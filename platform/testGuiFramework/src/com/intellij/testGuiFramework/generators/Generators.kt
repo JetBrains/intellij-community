@@ -57,6 +57,7 @@ import com.intellij.ui.components.JBList
 import com.intellij.ui.components.labels.ActionLink
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.messages.SheetController
+import com.intellij.ui.tabs.impl.TabLabel
 import com.intellij.ui.treeStructure.SimpleTree
 import com.intellij.ui.treeStructure.treetable.TreeTable
 import com.intellij.util.ui.tree.TreeUtil
@@ -80,10 +81,6 @@ import javax.swing.*
 import javax.swing.plaf.basic.BasicArrowButton
 import javax.swing.tree.TreeNode
 import javax.swing.tree.TreePath
-
-/**
- * @author Sergey Karashevich
- */
 
 //**********COMPONENT GENERATORS**********
 
@@ -309,7 +306,14 @@ class PluginTableGenerator : ComponentCodeGenerator<PluginTable> {
   }
 }
 
-class EditorComponentGenerator : ComponentCodeGenerator<EditorComponentImpl> {
+class EditorComponentGenerator : ComponentSelectionCodeGenerator<EditorComponentImpl> {
+  override fun generateSelection(cmp: EditorComponentImpl, firstPoint: Point, lastPoint: Point): String {
+    val editor = cmp.editor
+    val firstOffset = editor.logicalPositionToOffset(editor.xyToLogicalPosition(firstPoint))
+    val lastOffset = editor.logicalPositionToOffset(editor.xyToLogicalPosition(lastPoint))
+    return "select($firstOffset, $lastOffset)"
+  }
+
   override fun accept(cmp: Component) = cmp is EditorComponentImpl
 
   override fun generate(cmp: EditorComponentImpl, me: MouseEvent, cp: Point): String {
@@ -387,7 +391,7 @@ class ActionMenuItemGenerator : ComponentCodeGenerator<ActionMenuItem> {
 
 class WelcomeFrameGenerator : GlobalContextCodeGenerator<FlatWelcomeFrame>() {
   override fun priority() = 1
-  override fun accept(cmp: Component) = (cmp as JComponent).rootPane.parent is FlatWelcomeFrame
+  override fun accept(cmp: Component) = cmp is JComponent && cmp.rootPane.parent is FlatWelcomeFrame
   override fun generate(cmp: FlatWelcomeFrame): String {
     return "welcomeFrame {"
   }
@@ -576,6 +580,13 @@ class NavigationBarGenerator : LocalContextCodeGenerator<JPanel>() {
   override fun generate(cmp: JPanel): String = "navigationBar {"
 }
 
+class TabGenerator : LocalContextCodeGenerator<TabLabel>() {
+  override fun acceptor(): (Component) -> Boolean = { component ->
+    component is TabLabel
+  }
+
+  override fun generate(cmp: TabLabel): String = "editor(\"" + cmp.info.text + "\") {"
+}
 
 //class JBPopupMenuGenerator: LocalContextCodeGenerator<JBPopupMenu>() {
 //
@@ -590,7 +601,7 @@ object Generators {
     val classLoader = Generators.javaClass.classLoader
     return generatorClassPaths
       .map { clzPath -> classLoader.loadClass("${Generators.javaClass.`package`.name}.${File(clzPath).nameWithoutExtension}") }
-      .filter { clz -> clz.interfaces.contains(ComponentCodeGenerator::class.java) }
+      .filter { clz -> ComponentCodeGenerator::class.java.isAssignableFrom(clz) && !clz.isInterface }
       .map(Class<*>::newInstance)
       .filterIsInstance(ComponentCodeGenerator::class.java)
   }

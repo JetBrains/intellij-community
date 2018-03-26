@@ -43,8 +43,8 @@ import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.impl.source.text.BlockSupportImpl;
-import com.intellij.psi.impl.source.text.DiffLog;
+import com.intellij.psi.impl.BlockSupportImpl;
+import com.intellij.psi.impl.DiffLog;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -123,12 +123,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
   @Override
   public void addModelListener(@NotNull final PomModelListener listener, @NotNull Disposable parentDisposable) {
     addModelListener(listener);
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        removeModelListener(listener);
-      }
-    });
+    Disposer.register(parentDisposable, () -> removeModelListener(listener));
   }
 
   @Override
@@ -144,7 +139,6 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     if (!isAllowPsiModification()) {
       throw new IncorrectOperationException("Must not modify PSI inside save listener");
     }
-    List<Throwable> throwables = new ArrayList<>(0);
     final PomModelAspect aspect = transaction.getTransactionAspect();
     startTransaction(transaction);
 
@@ -153,62 +147,53 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
       block.getSecond().getAccumulatedEvent().beforeNestedTransaction();
     }
 
-    try{
-      DebugUtil.startPsiModification(null);
-      Stack<Pair<PomModelAspect, PomTransaction>> blockedAspects = myBlockedAspects.get();
-      blockedAspects.push(Pair.create(aspect, transaction));
-
-      final PomModelEvent event;
+    List<Throwable> throwables = new ArrayList<>(0);
+    DebugUtil.performPsiModification(null, ()->{
       try{
-        transaction.run();
-        event = transaction.getAccumulatedEvent();
-      }
-      catch (ProcessCanceledException e) {
-        throw e;
-      }
-      catch(Exception e){
-        throwables.add(e);
-        return;
-      }
-      finally{
-        blockedAspects.pop();
-      }
-      if(block != null){
-        block.getSecond().getAccumulatedEvent().merge(event);
-        return;
-      }
+        Stack<Pair<PomModelAspect, PomTransaction>> blockedAspects = myBlockedAspects.get();
+        blockedAspects.push(Pair.create(aspect, transaction));
 
-      { // update
-        final Set<PomModelAspect> changedAspects = event.getChangedAspects();
-        final Collection<PomModelAspect> dependants = new LinkedHashSet<>();
-        for (final PomModelAspect pomModelAspect : changedAspects) {
-          dependants.addAll(getAllDependants(pomModelAspect));
+        final PomModelEvent event;
+        try{
+          transaction.run();
+          event = transaction.getAccumulatedEvent();
         }
-        for (final PomModelAspect modelAspect : dependants) {
-          if (!changedAspects.contains(modelAspect)) {
-            modelAspect.update(event);
+        catch (ProcessCanceledException e) {
+          throw e;
+        }
+        catch(Exception e){
+          throwables.add(e);
+          return;
+        }
+        finally{
+          blockedAspects.pop();
+        }
+        if(block != null){
+          block.getSecond().getAccumulatedEvent().merge(event);
+          return;
+        }
+
+        { // update
+          final Set<PomModelAspect> changedAspects = event.getChangedAspects();
+          final Collection<PomModelAspect> dependants = new LinkedHashSet<>();
+          for (final PomModelAspect pomModelAspect : changedAspects) {
+            dependants.addAll(getAllDependants(pomModelAspect));
+          }
+          for (final PomModelAspect modelAspect : dependants) {
+            if (!changedAspects.contains(modelAspect)) {
+              modelAspect.update(event);
+            }
           }
         }
-      }
-      for (final PomModelListener listener : myListeners) {
-        final Set<PomModelAspect> changedAspects = event.getChangedAspects();
-        for (PomModelAspect modelAspect : changedAspects) {
-          if (listener.isAspectChangeInteresting(modelAspect)) {
-            listener.modelChanged(event);
-            break;
+        for (final PomModelListener listener : myListeners) {
+          final Set<PomModelAspect> changedAspects = event.getChangedAspects();
+          for (PomModelAspect modelAspect : changedAspects) {
+            if (listener.isAspectChangeInteresting(modelAspect)) {
+              listener.modelChanged(event);
+              break;
+            }
           }
         }
-      }
-    }
-    catch (ProcessCanceledException e) {
-      throw e;
-    }
-    catch (Throwable t) {
-      throwables.add(t);
-    }
-    finally {
-      try {
-        commitTransaction(transaction);
       }
       catch (ProcessCanceledException e) {
         throw e;
@@ -217,10 +202,18 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
         throwables.add(t);
       }
       finally {
-        DebugUtil.finishPsiModification();
+        try {
+          commitTransaction(transaction);
+        }
+        catch (ProcessCanceledException e) {
+          throw e;
+        }
+        catch (Throwable t) {
+          throwables.add(t);
+        }
+        if (!throwables.isEmpty()) CompoundRuntimeException.throwIfNotEmpty(throwables);
       }
-      if (!throwables.isEmpty()) CompoundRuntimeException.throwIfNotEmpty(throwables);
-    }
+    });
   }
 
   @Nullable
@@ -295,7 +288,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
 
   @Nullable
   private Runnable reparseFile(@NotNull final PsiFile file, @NotNull FileElement treeElement, @NotNull CharSequence newText) {
-    TextRange changedPsiRange = DocumentCommitThread.getChangedPsiRange(file, treeElement, newText);
+    TextRange changedPsiRange = ChangedPsiRangeUtil.getChangedPsiRange(file, treeElement, newText);
     if (changedPsiRange == null) return null;
 
     Runnable reparseLeaf = tryReparseOneLeaf(treeElement, newText, changedPsiRange);

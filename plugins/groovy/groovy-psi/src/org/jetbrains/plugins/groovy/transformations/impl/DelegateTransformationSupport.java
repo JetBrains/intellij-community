@@ -57,7 +57,7 @@ public class DelegateTransformationSupport implements AstTransformationSupport {
     for (PsiMethod method : context.getMethods()) {
       final PsiAnnotation annotation = PsiImplUtil.getAnnotation(method, GroovyCommonClassNames.GROOVY_LANG_DELEGATE);
       if (annotation == null) continue;
-      if (method.getParameterList().getParametersCount() > 0) continue;
+      if (!method.getParameterList().isEmpty()) continue;
       declaredTypes.putIfAbsent(method.getReturnType(), annotation);
     }
 

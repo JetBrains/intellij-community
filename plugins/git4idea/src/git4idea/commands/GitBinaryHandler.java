@@ -126,7 +126,7 @@ public class GitBinaryHandler extends GitHandler {
     addListener(new GitHandlerListener() {
       @Override
       public void processTerminated(int exitCode) {
-        if (exitCode != 0 && !isIgnoredErrorCode(exitCode)) {
+        if (exitCode != 0) {
           Charset cs = getCharset();
           String message = new String(myStderr.toByteArray(), cs);
           if (message.length() == 0) {
@@ -166,7 +166,12 @@ public class GitBinaryHandler extends GitHandler {
       vcsConsoleWriter.showCommandLine("[" + GitImpl.stringifyWorkingDir(project.getBasePath(), getWorkingDirectory()) + "] "
                                        + printableCommandLine());
     }
-    runInCurrentThread();
+    try {
+      runInCurrentThread();
+    }
+    catch (IOException e) {
+      throw new VcsException(e.getMessage(), e);
+    }
     //noinspection ThrowableResultOfMethodCallIgnored
     if (myException.get() != null) {
       throw myException.get();

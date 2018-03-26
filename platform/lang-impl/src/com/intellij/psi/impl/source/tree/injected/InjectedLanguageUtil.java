@@ -510,13 +510,8 @@ public class InjectedLanguageUtil {
     PsiManagerEx psiManagerEx = (PsiManagerEx)injected.getManager();
     if (psiManagerEx.getProject().isDisposed()) return;
 
-    DebugUtil.startPsiModification("injected clearCaches");
-    try {
-      psiManagerEx.getFileManager().setViewProvider(virtualFile, null);
-    }
-    finally {
-      DebugUtil.finishPsiModification();
-    }
+    DebugUtil.performPsiModification("injected clearCaches", () ->
+      psiManagerEx.getFileManager().setViewProvider(virtualFile, null));
 
     VirtualFile delegate = virtualFile.getDelegate();
     if (!delegate.isValid()) return;
@@ -590,6 +585,9 @@ public class InjectedLanguageUtil {
     return combinedEditablesLength != elementRange.getLength();
   }
 
+  /**
+   * @deprecated Use {@link InjectedLanguageManager#getInjectedPsiFiles(PsiElement)} != null instead
+   */
   public static boolean hasInjections(@NotNull PsiLanguageInjectionHost host) {
     if (!host.isPhysical()) return false;
     final Ref<Boolean> result = Ref.create(false);

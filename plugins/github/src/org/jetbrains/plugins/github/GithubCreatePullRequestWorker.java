@@ -353,7 +353,7 @@ public class GithubCreatePullRequestWorker {
 
   @NotNull
   private DiffInfo doLoadDiffInfo(@NotNull final BranchInfo branch) throws VcsException {
-    // TODO: make cancelable and abort old speculative requests (when git4idea will allow to do so)
+    // TODO: make cancelable and abort old speculative requests (when intellij.vcs.git will allow to do so)
     String currentBranch = myCurrentBranch;
     String targetBranch = branch.getForkInfo().getRemoteName() + "/" + branch.getRemoteName();
 

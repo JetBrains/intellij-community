@@ -88,11 +88,11 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
 
     String getterOrSetter = null;
     if (methodName.startsWith(GET_PREFIX) || methodName.startsWith(IS_PREFIX)) {
-      if (myMethodCall.getArgumentList().getExpressions().length != 0) return false;
+      if (!myMethodCall.getArgumentList().isEmpty()) return false;
       getterOrSetter = QuickFixBundle.message("create.getter");
     }
     else if (methodName.startsWith(SET_PREFIX)) {
-      if (myMethodCall.getArgumentList().getExpressions().length != 1) return false;
+      if (myMethodCall.getArgumentList().getExpressionCount() != 1) return false;
       getterOrSetter = QuickFixBundle.message("create.setter");
     }
     else {

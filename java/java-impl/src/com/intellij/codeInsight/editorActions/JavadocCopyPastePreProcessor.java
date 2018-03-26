@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.CodeStyle;
@@ -31,6 +31,8 @@ public class JavadocCopyPastePreProcessor implements CopyPastePreProcessor {
     if (!settings.JD_LEADING_ASTERISKS_ARE_ENABLED) return text;
     
     int offset = editor.getSelectionModel().getSelectionStart();
+    if (DocumentUtil.isAtLineEnd(offset, editor.getDocument()) && text.startsWith("\n")) return text;
+
     PsiElement element = file.findElementAt(offset);
     PsiDocComment docComment = PsiTreeUtil.getParentOfType(element, PsiDocComment.class, false);
     if (docComment == null) return text;
@@ -39,7 +41,7 @@ public class JavadocCopyPastePreProcessor implements CopyPastePreProcessor {
     int lineStartOffset = DocumentUtil.getLineStartOffset(offset, document);
     CharSequence chars = document.getImmutableCharSequence();
     int firstNonWsLineOffset = CharArrayUtil.shiftForward(chars, lineStartOffset, " \t");
-    if (firstNonWsLineOffset >= chars.length() || chars.charAt(firstNonWsLineOffset) != '*') return text;
+    if (firstNonWsLineOffset >= offset || chars.charAt(firstNonWsLineOffset) != '*') return text;
 
     String lineStartReplacement = "\n" + chars.subSequence(lineStartOffset, firstNonWsLineOffset + 1) + " ";
     return StringUtil.trimTrailing(text, '\n').replace("\n", lineStartReplacement);

@@ -162,7 +162,7 @@ public class PyExecuteSelectionAction extends AnAction {
     presentation.setVisible(enabled);
   }
 
-  private static boolean isPython(Editor editor) {
+  public static boolean isPython(Editor editor) {
     if (editor == null) {
       return false;
     }
@@ -238,7 +238,7 @@ public class PyExecuteSelectionAction extends AnAction {
     return processHandler != null && !processHandler.isProcessTerminated();
   }
 
-  private static void findCodeExecutor(@NotNull AnActionEvent e,
+  public static void findCodeExecutor(@NotNull AnActionEvent e,
                                        @NotNull Consumer<PyCodeExecutor> consumer,
                                        @Nullable Editor editor,
                                        @Nullable Project project,

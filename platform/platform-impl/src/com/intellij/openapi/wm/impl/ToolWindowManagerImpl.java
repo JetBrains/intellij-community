@@ -7,6 +7,7 @@ import com.intellij.ide.actions.ActivateToolWindowAction;
 import com.intellij.ide.actions.MaximizeActiveDialogAction;
 import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
@@ -201,23 +202,24 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         myCommandProcessor.execute(commands, myProject.getDisposed());
       })
       .handleWindowed(toolWindowId -> {})
-      .handleDeactivatingShortcut(toolWindowId -> {
-        JComponent defaultFocusedComponentInEditor = null;
-        EditorsSplitters splittersToFocus = getSplittersToFocus();
-        if (splittersToFocus != null) {
-        final EditorWindow window = splittersToFocus.getCurrentWindow();
-          if (window != null) {
-            final EditorWithProviderComposite editor = window.getSelectedEditor();
-            if (editor != null) {
-              defaultFocusedComponentInEditor = editor.getPreferredFocusedComponent();
-              if (defaultFocusedComponentInEditor != null) {
-                defaultFocusedComponentInEditor.requestFocus();
-              }
-            }
+      .bind(myProject);
+  }
+
+  private void focusDefaultElementInSelectedEditor() {
+    JComponent defaultFocusedComponentInEditor = null;
+    EditorsSplitters splittersToFocus = getSplittersToFocus();
+    if (splittersToFocus != null) {
+    final EditorWindow window = splittersToFocus.getCurrentWindow();
+      if (window != null) {
+        final EditorWithProviderComposite editor = window.getSelectedEditor();
+        if (editor != null) {
+          defaultFocusedComponentInEditor = editor.getPreferredFocusedComponent();
+          if (defaultFocusedComponentInEditor != null) {
+            defaultFocusedComponentInEditor.requestFocus();
           }
         }
-      })
-      .bind(myProject);
+      }
+    }
   }
 
   private void updateToolWindowHeaders() {
@@ -588,7 +590,9 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   @Override
-  public void activateEditorComponent() {}
+  public void activateEditorComponent() {
+    focusDefaultElementInSelectedEditor();
+  }
 
   private void deactivateWindows(@Nullable String idToIgnore, @NotNull List<FinalizableCommand> commandList) {
     final WindowInfoImpl[] infos = myLayout.getInfos();
@@ -659,6 +663,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
                                       @NotNull List<FinalizableCommand> commandList,
                                       boolean forced,
                                       boolean autoFocusContents) {
+    ToolWindowCollector.getInstance().recordActivation(id);
     autoFocusContents &= forced;
 
     if (LOG.isDebugEnabled()) {
@@ -1125,21 +1130,24 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
     final WindowInfoImpl info = getInfo(id);
     final ToolWindowEx toolWindow = (ToolWindowEx)getToolWindow(id);
-    // Save recent appearance of tool window
-    myLayout.unregister(id);
+
     // Remove decorator and tool button from the screen
     List<FinalizableCommand> commandsList = new ArrayList<>();
     if (info.isVisible()) {
       applyInfo(id, info, commandsList);
     }
+
+    // Save recent appearance of tool window
+    myLayout.unregister(id);
+    myActiveStack.remove(id, true);
+    mySideStack.remove(id);
     appendRemoveButtonCmd(id, commandsList);
     appendApplyWindowInfoCmd(info, commandsList);
     execute(commandsList);
     // Remove all references on tool window and save its last properties
     assert toolWindow != null;
     toolWindow.removePropertyChangeListener(myToolWindowPropertyChangeListener);
-    myActiveStack.remove(id, true);
-    mySideStack.remove(id);
+
     // Destroy stripe button
     final StripeButton button = getStripeButton(id);
     Disposer.dispose(button);

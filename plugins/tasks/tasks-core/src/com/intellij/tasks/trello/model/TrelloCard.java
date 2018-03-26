@@ -39,7 +39,8 @@ public class TrelloCard extends TrelloModel {
 
   private String idBoard, idList, idShort;
   private List<String> idMembers;
-  private String name;
+  @NotNull
+  private String name = "";
   @SerializedName("desc")
   private String description;
   private String url;
@@ -47,7 +48,7 @@ public class TrelloCard extends TrelloModel {
   private Date dateLastActivity;
   private List<TrelloLabel> labels;
   @SerializedName("actions")
-  private List<TrelloCommentAction> comments = ContainerUtil.emptyList();
+  private final List<TrelloCommentAction> comments = ContainerUtil.emptyList();
   /**
    * This field is not part of card representation downloaded from server
    * and set explicitly in {@code com.intellij.tasks.trello.TrelloRepository}

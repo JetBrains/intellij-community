@@ -1,8 +1,8 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.typeMigration.intentions;
 
 import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInsight.intention.HighPriorityAction;
-import com.intellij.codeInsight.intention.LowPriorityAction;
+import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.WriteAction;
@@ -33,7 +33,7 @@ import static com.intellij.util.ObjectUtils.assertNotNull;
  * @author anna
  * @since 26-Aug-2009
  */
-public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction implements LowPriorityAction {
+public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction implements PriorityAction {
   private static final Logger LOG = Logger.getInstance(ConvertFieldToAtomicIntention.class);
 
   private final Map<PsiType, String> myFromToMap = ContainerUtil.newHashMap();
@@ -56,6 +56,12 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
   @Override
   public String getFamilyName() {
     return getText();
+  }
+
+  @NotNull
+  @Override
+  public Priority getPriority() {
+    return Priority.LOW;
   }
 
   @Override
@@ -199,11 +205,17 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
     return false;
   }
 
-  public static class ConvertNonFinalLocalToAtomicFix extends ConvertFieldToAtomicIntention implements HighPriorityAction {
-    private PsiElement myContext;
+  public static class ConvertNonFinalLocalToAtomicFix extends ConvertFieldToAtomicIntention {
+    private final PsiElement myContext;
 
     public ConvertNonFinalLocalToAtomicFix(PsiElement context) {
       myContext = context;
+    }
+
+    @NotNull
+    @Override
+    public Priority getPriority() {
+      return Priority.HIGH;
     }
 
     @Override

@@ -166,7 +166,6 @@ public class VcsFileStatusProvider implements FileStatusProvider, VcsBaseContent
     if (change == null) return null;
     final ContentRevision beforeRevision = change.getBeforeRevision();
     if (beforeRevision == null) return null;
-    if (beforeRevision instanceof BinaryContentRevision) return null;
     return new BaseContentImpl(beforeRevision);
   }
 

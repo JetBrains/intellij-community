@@ -42,7 +42,7 @@ public class TypeNameEP extends AbstractExtensionPointBean {
   @Attribute("resourceKey")
   public String resourceKey;
 
-  private NullableLazyValue<String> myName = new NullableLazyValue<String>() {
+  private final NullableLazyValue<String> myName = new NullableLazyValue<String>() {
     @Override
     protected String compute() {
       if (name != null) {

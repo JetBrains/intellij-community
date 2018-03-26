@@ -53,7 +53,7 @@ public class PsiManagerImpl extends PsiManagerEx {
   private final MessageBus myMessageBus;
   private final PsiModificationTracker myModificationTracker;
 
-  private final FileManager myFileManager;
+  private final FileManagerImpl myFileManager;
 
   private final List<PsiTreeChangePreprocessor> myTreeChangePreprocessors = ContainerUtil.createLockFreeCopyOnWriteList();
   private final List<PsiTreeChangeListener> myTreeChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -82,9 +82,7 @@ public class PsiManagerImpl extends PsiManagerEx {
     //We need to initialize PsiBuilderFactory service so it won't initialize under PsiLock from ChameleonTransform
     @SuppressWarnings({"UnusedDeclaration", "UnnecessaryLocalVariable"}) Object used = psiBuilderFactory;
 
-    boolean isProjectDefault = project.isDefault();
-
-    myFileManager = isProjectDefault ? new EmptyFileManager(this) : new FileManagerImpl(this, fileDocumentManager, fileIndex);
+    myFileManager = new FileManagerImpl(this, fileDocumentManager, fileIndex);
 
     myTreeChangePreprocessors.add((PsiTreeChangePreprocessor)modificationTracker);
 
@@ -103,10 +101,7 @@ public class PsiManagerImpl extends PsiManagerEx {
 
   @Override
   public void dropResolveCaches() {
-    FileManager fileManager = myFileManager;
-    if (fileManager instanceof FileManagerImpl) { // mock tests
-      ((FileManagerImpl)fileManager).processQueue();
-    }
+    myFileManager.processQueue();
     beforeChange(true);
     beforeChange(false);
   }
@@ -114,13 +109,7 @@ public class PsiManagerImpl extends PsiManagerEx {
   @Override
   public void dropPsiCaches() {
     dropResolveCaches();
-    WriteAction.run(() -> {
-      if (myFileManager instanceof FileManagerImpl) {
-        ((FileManagerImpl)myFileManager).firePropertyChangedForUnloadedPsi();
-      } else {
-        ((PsiModificationTrackerImpl)myModificationTracker).incCounter();
-      }
-    });
+    WriteAction.run(myFileManager::firePropertyChangedForUnloadedPsi);
   }
 
   @Override

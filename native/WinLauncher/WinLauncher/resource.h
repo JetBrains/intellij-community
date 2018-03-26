@@ -16,7 +16,6 @@
 #define IDS_JDK_ONLY                    108
 #define IDC_WINLAUNCHER                 109
 #define IDS_COMMAND_LINE_PROCESSOR_CLASS 110
-#define IDS_BOOTCLASSPATH_LIBS          111
 #define IDS_PROPS_ENV_VAR               112
 #define IDS_VM_OPTIONS_ENV_VAR          113
 #define IDS_ERROR_LAUNCHING_APP         114

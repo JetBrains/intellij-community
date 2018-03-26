@@ -90,7 +90,7 @@ public class PyRainbowHighlightingTest extends PyTestCase {
 
   public void testSameNameOuterAndNonLocalVariableAndItsReferenceHaveSameColors() {
     runWithLanguageLevel(
-      LanguageLevel.PYTHON30,
+      LanguageLevel.PYTHON34,
       () -> doTest("def outer():\n" +
                    "    <rainbow color='ff000001'>another</rainbow> = None\n" +
                    "    <rainbow color='ff000002'>another2</rainbow> = None\n" +
@@ -104,7 +104,7 @@ public class PyRainbowHighlightingTest extends PyTestCase {
 
   public void testSameNameOuterAndNonLocalVariableAndItsReferenceAfterReassignmentHaveSameColors() {
     runWithLanguageLevel(
-      LanguageLevel.PYTHON30,
+      LanguageLevel.PYTHON34,
       () -> doTest("def outer():\n" +
                    "    <rainbow color='ff000001'>another</rainbow> = None\n" +
                    "    <rainbow color='ff000002'>another2</rainbow> = None\n" +

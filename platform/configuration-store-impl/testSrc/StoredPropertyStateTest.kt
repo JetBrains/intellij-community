@@ -4,6 +4,7 @@ import com.intellij.openapi.components.BaseState
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.loadElement
 import com.intellij.util.xmlb.annotations.Attribute
+import com.intellij.util.xmlb.annotations.CollectionBean
 import org.junit.Test
 
 internal class AState(languageLevel: String? = null, nestedComplex: NestedState? = null) : BaseState() {
@@ -96,5 +97,30 @@ class StoredPropertyStateTest {
     @Suppress("USELESS_CAST")
     assertThat(state.languageLevel as String?).isEqualTo("foo")
     assertThat(state.modificationCount).isEqualTo(5)
+  }
+
+  @Test
+  fun listModificationCount() {
+    class UpdateOptions : BaseState() {
+      @get:CollectionBean
+      val pluginHosts by list<String>()
+    }
+
+    val state = UpdateOptions()
+    val oldModificationCount = state.modificationCount
+
+    val list = state.pluginHosts
+    list.clear()
+    list.addAll(listOf("foo"))
+    assertThat(state.modificationCount).isNotEqualTo(oldModificationCount)
+    assertThat(state.isEqualToDefault()).isFalse()
+
+    val element = state.serialize()
+    assertThat(element).isEqualTo("""
+    <UpdateOptions>
+      <pluginHosts>
+        <item value="foo" />
+      </pluginHosts>
+    </UpdateOptions>""")
   }
 }

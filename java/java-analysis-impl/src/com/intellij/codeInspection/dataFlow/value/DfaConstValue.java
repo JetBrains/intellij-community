@@ -18,6 +18,7 @@ package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -87,6 +88,17 @@ public class DfaConstValue extends DfaValue {
       return "TRUE".equals(name) ? Boolean.TRUE : "FALSE".equals(name) ? Boolean.FALSE : null;
     }
 
+    /**
+     * Creates a constant which corresponds to the default value of given type
+     *
+     * @param type type to get the default value for
+     * @return a constant (e.g. 0 from int, false for boolean, null for reference type).
+     */
+    @NotNull
+    public DfaConstValue createDefault(PsiType type) {
+      return createFromValue(PsiTypesUtil.getDefaultValue(type), type, null);
+    }
+
     @NotNull
     public DfaConstValue createFromValue(Object value, final PsiType type, @Nullable PsiVariable constant) {
       if (value == Boolean.TRUE) return dfaTrue;
@@ -99,7 +111,7 @@ public class DfaConstValue extends DfaValue {
       if (value instanceof Double || value instanceof Float) {
         double doubleValue = ((Number)value).doubleValue();
         if (doubleValue == -0.0) doubleValue = +0.0;
-        value = new Double(doubleValue);
+        value = doubleValue;
       }
       DfaConstValue instance = myValues.get(value);
       if (instance == null) {

@@ -51,7 +51,7 @@ public class PyMethodParametersInspection extends PyInspection {
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    ComboBox comboBox = new ComboBox(new String[] {"mcs", "metacls"});
+    ComboBox comboBox = new ComboBox<>(new String[] {"mcs", "metacls"});
     comboBox.setSelectedItem(MCS);
     comboBox.addActionListener(new ActionListener() {
       @Override
@@ -70,12 +70,14 @@ public class PyMethodParametersInspection extends PyInspection {
     return root;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return PyBundle.message("INSP.NAME.problematic.first.parameter");
   }
 
+  @Override
   @NotNull
   public HighlightDisplayLevel getDefaultLevel() {
     return HighlightDisplayLevel.WEAK_WARNING;
@@ -205,9 +207,7 @@ public class PyMethodParametersInspection extends PyInspection {
                 );
               }
             }
-            else if (flags.isClassMethod() ||
-                     PyNames.NEW.equals(methodName) ||
-                     PyNames.INIT_SUBCLASS.equals(methodName) && LanguageLevel.forElement(node).isAtLeast(LanguageLevel.PYTHON36)) {
+            else if (flags.isClassMethod() || PyNames.NEW.equals(methodName)) {
               if (!CLS.equals(pname)) {
                 registerProblem(
                   PyUtil.sure(params[0].getNode()).getPsi(),

@@ -120,7 +120,6 @@ public class PsiVFSListener implements VirtualFileListener, BulkFileListener {
         }
       });
       connection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new MyFileDocumentManagerAdapter());
-      myFileManager.markInitialized();
     });
   }
 
@@ -218,13 +217,7 @@ public class PsiVFSListener implements VirtualFileListener, BulkFileListener {
   }
 
   private void clearViewProvider(@NotNull VirtualFile vFile, @NotNull String why) {
-    DebugUtil.startPsiModification(why);
-    try {
-      myFileManager.setViewProvider(vFile, null);
-    }
-    finally {
-      DebugUtil.finishPsiModification();
-    }
+    DebugUtil.performPsiModification(why, ()->myFileManager.setViewProvider(vFile, null));
   }
 
   @Override
@@ -578,7 +571,6 @@ public class PsiVFSListener implements VirtualFileListener, BulkFileListener {
     private int depthCounter; // accessed from within write action only
     @Override
     public void beforeRootsChange(final ModuleRootEvent event) {
-      if (!myFileManager.isInitialized()) return;
       if (event.isCausedByFileTypesChange()) return;
       ApplicationManager.getApplication().runWriteAction(
         (ExternalChangeAction)() -> {
@@ -600,7 +592,6 @@ public class PsiVFSListener implements VirtualFileListener, BulkFileListener {
     public void rootsChanged(final ModuleRootEvent event) {
       myFileManager.dispatchPendingEvents();
 
-      if (!myFileManager.isInitialized()) return;
       if (event.isCausedByFileTypesChange()) return;
       ApplicationManager.getApplication().runWriteAction(
         (ExternalChangeAction)() -> {
@@ -608,13 +599,7 @@ public class PsiVFSListener implements VirtualFileListener, BulkFileListener {
           assert depthCounter >= 0 : depthCounter;
           if (depthCounter > 0) return;
 
-          DebugUtil.startPsiModification(null);
-          try {
-            myFileManager.invalidateAllPsi();
-          }
-          catch (Exception e) {
-            DebugUtil.finishPsiModification();
-          }
+          DebugUtil.performPsiModification(null, () -> myFileManager.invalidateAllPsi());
 
           PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(myManager);
           treeEvent.setPropertyName(PsiTreeChangeEvent.PROP_ROOTS);
@@ -632,15 +617,15 @@ public class PsiVFSListener implements VirtualFileListener, BulkFileListener {
   private class MyFileDocumentManagerAdapter extends FileDocumentManagerAdapter {
     @Override
     public void fileWithNoDocumentChanged(@NotNull final VirtualFile file) {
-      final PsiFile psiFile = myFileManager.getCachedPsiFileInner(file);
-      if (psiFile != null) {
+      FileViewProvider viewProvider = myFileManager.findCachedViewProvider(file);
+      if (viewProvider != null) {
         ApplicationManager.getApplication().runWriteAction(
           (ExternalChangeAction)() -> {
             if (FileDocumentManagerImpl.recomputeFileTypeIfNecessary(file)) {
               myFileManager.forceReload(file);
             }
             else {
-              myFileManager.reloadPsiAfterTextChange(psiFile, file);
+              myFileManager.reloadPsiAfterTextChange(viewProvider, file);
             }
           }
         );
@@ -651,7 +636,7 @@ public class PsiVFSListener implements VirtualFileListener, BulkFileListener {
 
     @Override
     public void fileContentReloaded(@NotNull VirtualFile file, @NotNull Document document) {
-      PsiFile psiFile = myFileManager.getCachedPsiFileInner(file);
+      FileViewProvider psiFile = myFileManager.findCachedViewProvider(file);
       if (!file.isValid() || psiFile == null || !FileUtilRt.isTooLarge(file.getLength()) || psiFile instanceof PsiLargeFile) return;
       ApplicationManager.getApplication().runWriteAction((ExternalChangeAction)() -> myFileManager.reloadPsiAfterTextChange(psiFile, file));
     }

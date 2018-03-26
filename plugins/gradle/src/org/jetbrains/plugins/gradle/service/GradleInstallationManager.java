@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.service;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkException;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
@@ -47,9 +48,9 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleEnvironment;
 import org.jetbrains.plugins.gradle.util.GradleLog;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
-import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 
 import java.io.File;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -71,6 +72,12 @@ public class GradleInstallationManager {
   public static final Pattern ANY_GRADLE_JAR_FILE_PATTERN;
   public static final Pattern ANT_JAR_PATTERN = Pattern.compile("ant(-(.*))?\\.jar");
   public static final Pattern IVY_JAR_PATTERN = Pattern.compile("ivy(-(.*))?\\.jar");
+
+  /**
+   * copied from org.jetbrains.plugins.groovy.config.GroovyConfigUtils#GROOVY_ALL_JAR_PATTERN
+   */
+  @NonNls private static final Pattern GROOVY_ALL_JAR_PATTERN =
+    Pattern.compile("groovy-all(-minimal)?(-(\\d+(\\.\\d+)*))?(-indy|-alpha.*|-beta.*)?\\.jar");
 
   private static final String[] GRADLE_START_FILE_NAMES;
   @NonNls private static final String GRADLE_ENV_PROPERTY_NAME;
@@ -522,7 +529,7 @@ public class GradleInstallationManager {
     return ANY_GRADLE_JAR_FILE_PATTERN.matcher(fileName).matches()
            || ANT_JAR_PATTERN.matcher(fileName).matches()
            || IVY_JAR_PATTERN.matcher(fileName).matches()
-           || GroovyConfigUtils.matchesGroovyAll(fileName);
+           || matchesGroovyAll(fileName);
   }
 
   private void addRoots(@NotNull List<File> result, @Nullable File... files) {
@@ -559,5 +566,54 @@ public class GradleInstallationManager {
       f -> f.isDirectory() && StringUtil.startsWith(f.getName(), "gradle-"));
 
     return distFiles == null || distFiles.length == 0 ? null : distFiles[0];
+  }
+
+  /**
+   * copied from org.jetbrains.plugins.groovy.config.GroovyConfigUtils#matchesGroovyAll(java.lang.String)
+   */
+  private static boolean matchesGroovyAll(@NotNull String name) {
+    return GROOVY_ALL_JAR_PATTERN.matcher(name).matches() && !name.contains("src") && !name.contains("doc");
+  }
+
+  @Nullable
+  public static GradleVersion getGradleVersion(@NotNull GradleProjectSettings settings) {
+    GradleVersion version = null;
+    DistributionType distributionType = settings.getDistributionType();
+    if (distributionType == null) return null;
+
+    if (distributionType == DistributionType.LOCAL) {
+      String gradleVersion = getGradleVersion(settings.getGradleHome());
+      if (gradleVersion != null) {
+        version = GradleVersion.version(gradleVersion);
+      }
+    }
+    else if (distributionType == DistributionType.BUNDLED) {
+      return GradleVersion.current();
+    }
+    else if (distributionType == DistributionType.DEFAULT_WRAPPED) {
+      WrapperConfiguration wrapperConfiguration = GradleUtil.getWrapperConfiguration(settings.getExternalProjectPath());
+      GradleInstallationManager installationManager = ServiceManager.getService(GradleInstallationManager.class);
+      File gradleHome = installationManager.getWrappedGradleHome(settings.getExternalProjectPath(), wrapperConfiguration);
+      if (gradleHome != null) {
+        String gradleVersion = getGradleVersion(settings.getGradleHome());
+        if (gradleVersion != null) {
+          version = GradleVersion.version(gradleVersion);
+        }
+      }
+      if (version == null && wrapperConfiguration != null) {
+        URI uri = wrapperConfiguration.getDistribution();
+        if (uri != null && uri.getRawPath() != null) {
+          String s = StringUtil.substringAfterLast(uri.getRawPath(), "/gradle-");
+          if (s != null) {
+            int i = s.lastIndexOf('-');
+            if (i > 0) {
+              String gradleVersion = s.substring(0, i);
+              version = GradleVersion.version(gradleVersion);
+            }
+          }
+        }
+      }
+    }
+    return version;
   }
 }

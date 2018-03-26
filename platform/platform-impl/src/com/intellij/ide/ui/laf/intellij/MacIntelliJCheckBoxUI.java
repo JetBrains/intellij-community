@@ -15,17 +15,17 @@
  */
 package com.intellij.ide.ui.laf.intellij;
 
+import com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxUI;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
-import java.awt.*;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class MacIntelliJCheckBoxUI extends IntelliJCheckBoxUI {
+public class MacIntelliJCheckBoxUI extends DarculaCheckBoxUI {
   public static final Icon DEFAULT_ICON = JBUI.scale(EmptyIcon.create(22));
 
   public MacIntelliJCheckBoxUI(JCheckBox c) {
@@ -38,14 +38,12 @@ public class MacIntelliJCheckBoxUI extends IntelliJCheckBoxUI {
   }
 
   @Override
-  protected void drawCheckIcon(JComponent c, Graphics2D g, AbstractButton b, Rectangle iconRect, boolean selected, boolean enabled) {
-    String iconName = isIndeterminate(b) ? "checkBoxIndeterminate" : "checkBox";
-    Icon icon = MacIntelliJIconCache.getIcon(iconName, selected || isIndeterminate(b), c.hasFocus(), b.isEnabled());
-    icon.paintIcon(c, g, iconRect.x, iconRect.y);
+  public Icon getDefaultIcon() {
+    return DEFAULT_ICON;
   }
 
   @Override
-  public Icon getDefaultIcon() {
-    return DEFAULT_ICON;
+  protected int textIconGap() {
+    return JBUI.scale(4);
   }
 }

@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.featureStatistics;
 
+import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
+import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
@@ -17,7 +19,10 @@ import java.util.Set;
 @SuppressWarnings({"NonPrivateFieldAccessedInSynchronizedContext"})
 @State(
   name = "FeatureUsageStatistics",
-  storages = @Storage(value = "feature.usage.statistics.xml", roamingType = RoamingType.DISABLED)
+  storages = {
+    @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED),
+    @Storage(value = "feature.usage.statistics.xml", roamingType = RoamingType.DISABLED, deprecated = true)
+  }
 )
 public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements PersistentStateComponent<Element> {
   private static final int HOUR = 1000 * 60 * 60;
@@ -172,6 +177,7 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Pers
      // TODO: LOG.error("Feature '" + featureId +"' must be registered prior triggerFeatureUsed() is called");
     }
     else {
+      FeatureUsageLogger.INSTANCE.log(descriptor.getGroupId(), descriptor.getId());
       descriptor.triggerUsed();
     }
   }

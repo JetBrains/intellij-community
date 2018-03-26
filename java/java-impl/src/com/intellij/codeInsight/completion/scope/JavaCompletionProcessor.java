@@ -220,7 +220,9 @@ public class JavaCompletionProcessor implements PsiScopeProcessor, ElementClassH
 
   public void setQualifierType(@Nullable PsiType qualifierType) {
     myQualifierType = qualifierType;
-    myQualifierClass = PsiUtil.resolveClassInClassTypeOnly(qualifierType);
+    myQualifierClass = PsiUtil.resolveClassInClassTypeOnly(qualifierType instanceof PsiIntersectionType
+                                                           ? ((PsiIntersectionType)qualifierType).getRepresentative()
+                                                           : qualifierType);
   }
 
   @Nullable

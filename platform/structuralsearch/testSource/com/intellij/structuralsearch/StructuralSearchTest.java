@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -270,6 +270,15 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertFalse("subexpr match", findMatchesCount(s2, "dialog = new SearchDialog()") == 0);
     assertEquals("search for new ", 0, findMatchesCount(s10, " new XXX()"));
     assertEquals("search for anonymous classes", 1, findMatchesCount(s12, "new Runnable() {}"));
+
+    String source = "import java.util.*;" +
+                    "class X {{" +
+                    "  new ArrayList() {};" +
+                    "  new ArrayList();" +
+                    "  new ArrayList<String>();" +
+                    "  new ArrayList<String>() {}" +
+                    "}}";
+    assertEquals("search for parameterized anonymous class", 1, findMatchesCount(source, "new '_A<'_B>() {}"));
     assertEquals("expr in def initializer", 3, findMatchesCount(s53, "System.getProperty('T)"));
 
     assertEquals("a.class expression", 1, findMatchesCount(s55, "'T.class"));
@@ -296,12 +305,6 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                       "}}";
     assertEquals("no smart detection of search target", 3,
                  findMatchesCount(in, "'instance?.processInheritors('_param1{1,6});"));
-
-    String arrays = "class X {{" +
-                    "int[] a = new int[20];\n" +
-                    "byte[] b = new byte[30]" +
-                    "}}";
-    assertEquals("Improper array search", 1, findMatchesCount(arrays, "new int['_a]"));
 
     String someCode = "class X {{ a *= 2; a+=2; }}";
     assertEquals("Improper *= 2 search", 1, findMatchesCount(someCode, "a *= 2;"));
@@ -371,6 +374,34 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     String s13 = "class X {{ try { } catch(Exception e) { e.printStackTrace(); }}}";
     assertEquals("Find statement in catch", 1, findMatchesCount(s13, "'_Instance.'_MethodCall('_Parameter*)"));
 
+    String s10 = "class X {{" +
+                 "int time = 99;\n" +
+                 "String str = time < 0 ? \"\" : \"\";" +
+                 "String str2 = time < time ? \"\" : \"\";" +
+                 "}}";
+
+    assertEquals("Find expressions mistaken for declarations by parser in block mode", 1,
+                 findMatchesCount(s10, "time < time"));
+
+    assertEquals("Find expressions mistaken for declarations by parser in block mode 2", 1,
+                 findMatchesCount(s10, "time < 0"));
+
+    assertEquals("Find expressions mistaken for declarations by parser in block mode 3", 1,
+                 findMatchesCount(s10, "time < 0 ? '_a : '_b"));
+
+    assertEquals("Find expressions mistaken for declarations by parser in block mode 4", 2,
+                 findMatchesCount(s10, "'_a < '_b"));
+
+    String s11 = "import java.io.*;" +
+                 "class X {" +
+                 "  void m() throws IOException {" +
+                 "    try (InputStream in = null) {}" +
+                 "  }" +
+                 "}";
+    assertEquals("Find expression inside try-with-resources", 1, findMatchesCount(s11, "null"));
+  }
+
+  public void testNewArrayExpressions() {
     String s9 = "class X {{" +
                 "int a[] = new int[] { 1,2,3,4};\n" +
                 "int b[] = { 2,3,4,5 };\n" +
@@ -406,31 +437,19 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("Try to find String array initializer expressions", 0,
                  findMatchesCount(s9, "new '_{0,0}:String [] { '_* }"));
 
-    String s10 = "class X {{" +
-                 "int time = 99;\n" +
-                 "String str = time < 0 ? \"\" : \"\";" +
-                 "String str2 = time < time ? \"\" : \"\";" +
-                 "}}";
+    String arrays = "class X {{" +
+                    "int[] a = new int[20];\n" +
+                    "byte[] b = new byte[30]" +
+                    "}}";
+    assertEquals("Improper array search", 1, findMatchesCount(arrays, "new int['_a]"));
 
-    assertEquals("Find expressions mistaken for declarations by parser in block mode", 1,
-                 findMatchesCount(s10, "time < time"));
-
-    assertEquals("Find expressions mistaken for declarations by parser in block mode 2", 1,
-                 findMatchesCount(s10, "time < 0"));
-
-    assertEquals("Find expressions mistaken for declarations by parser in block mode 3", 1,
-                 findMatchesCount(s10, "time < 0 ? '_a : '_b"));
-
-    assertEquals("Find expressions mistaken for declarations by parser in block mode 4", 2,
-                 findMatchesCount(s10, "'_a < '_b"));
-
-    String s11 = "import java.io.*;" +
-                 "class X {" +
-                 "  void m() throws IOException {" +
-                 "    try (InputStream in = null) {}" +
-                 "  }" +
-                 "}";
-    assertEquals("Find expression inside try-with-resources", 1, findMatchesCount(s11, "null"));
+    String multiDimensional = "class X {{" +
+                              "  String[] s1 = {};\n" +
+                              "  String[] s2 = new String[]{};\n" +
+                              "  String[][] s3 = new String[][]{};" +
+                              "}";
+    assertEquals("Find 2 dimensional array", 1, findMatchesCount(multiDimensional, "new String[][]{}"));
+    assertEquals("Find 1 dimensional arrays", 2, findMatchesCount(multiDimensional, "new String[]{}"));
   }
 
   public void testLiteral() {
@@ -896,6 +915,16 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                                       "import static com.intellij.psi.util.PsiUtil.*\n" +
                                       "Symbol instanceof PsiExpression && isAccessedForWriting(Symbol) ||\n" +
                                       "  Symbol instanceof PsiVariable && Symbol.getInitializer() != null\")]"));
+
+    try {
+      findMatchesCount(in, "[script( com.intellij.psi.PsiField field = __context__; true; )]" +
+                           "int i;");
+      fail("Catch RuntimeExceptions from Groovy runtime");
+    } catch (StructuralSearchException ignore) {
+    } catch (Throwable t) {
+      fail("Catch RuntimeExceptions from Groovy runtime");
+    }
+
   }
 
   public void testCheckScriptValidation() {
@@ -1376,6 +1405,9 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("Comment matching", 3, findMatchesCount(s1, "// 'Comment:[regex( .*(?:comment).* )]"));
     assertEquals("Comment matching, 2", 3, findMatchesCount(s1, "/* 'Comment:[regex( .*(?:comment).* )] */"));
     assertEquals("Java doc matching", 1, findMatchesCount(s1, "/** 'Comment:[regex( .*(?:comment).* )] */"));
+    assertEquals("Comment matching with negate", 2, findMatchesCount(s1, "// 'not_comment:[!regex( .*(?:comment).* )]"));
+    assertEquals("Multi line", 1, findMatchesCount(s1, "//'_comment:[regex( .*another.* )]"));
+    assertEquals("Multi line negated", 4, findMatchesCount(s1, "//'_comment:[!regex( .*another.* )]"));
 
     String s4 = "class X {{ java.util.Arrays.asList(\"'test\", \"another test\", \"garbage\"); }}";
     assertEquals("Literal content", 2, findMatchesCount(s4, "\"'test:[regex( .*test.* )]\""));
@@ -2206,6 +2238,12 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     String pattern2 = "System.out.println('_v);" +
                       "System.out.println('_v);";
     assertEquals(1, findMatchesCount(source, pattern2));
+
+    String source2 = "class B {{" +
+                     "  System.out.println((3 * 8) + 2 + (((2))));" +
+                     "}}";
+    String pattern3 = "3 * 8 + 2 + 2";
+    assertEquals(1, findMatchesCount(source2, pattern3));
   }
 
   public void testFindSelfAssignment() {
@@ -2327,6 +2365,11 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       fail("malformed pattern warning expected");
     } catch (MalformedPatternException ignored) {}
 
+    findMatchesCount(source, "'_ReturnType '_Method*('_ParameterType '_Parameter);");
+  }
+
+  public void testInvalidPatternWarnings() {
+    final String source = "{}";
     try {
       findMatchesCount(source, "import java.util.ArrayList;");
       fail("malformed pattern warning expected");
@@ -2343,11 +2386,20 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     } catch (MalformedPatternException ignored) {}
 
     try {
-      findMatchesCount(s4, "0x100000000");
+      findMatchesCount(source, "0x100000000");
       fail("malformed pattern warning expected");
     } catch (MalformedPatternException ignored) {}
 
-    findMatchesCount(source, "'_ReturnType '_Method*('_ParameterType '_Parameter);");
+    try {
+      findMatchesCount(source, "assert '_C;\n" +
+                               "System.out.println(");
+      fail("malformed pattern warning expected");
+    } catch (MalformedPatternException ignored) {}
+
+    try {
+      findMatchesCount(source, "get'_property()");
+      fail("malformed pattern warning expected");
+    } catch (MalformedPatternException ignored) {}
   }
 
   public void testFindInnerClass() {
@@ -2765,5 +2817,49 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                  findMatchesCount(source, "'_instance?.'_call:[ref( \"@Deprecated void '_x();\" )] ()"));
     assertEquals("find calls to non-deprecated methods", 2,
                  findMatchesCount(source, "'_instance?.'_call:[ref( \"@'_Anno{0,0} void '_x();\" )] ()"));
+  }
+
+  public void testSearchIgnoreComments() {
+    String source = "class ExampleTest {\n" +
+                    "  void m(String example) {\n" +
+                    "    synchronized (ExampleTest.class) { // comment\n" +
+                    "      if (example == null) { \n" +
+                    "      }\n" +
+                    "    }\n" +
+                    "  }\n" +
+                    "}";
+    assertEquals("find code ignoring comments", 1,
+                 findMatchesCount(source, "synchronized ('_a.class) { if ('_b == null) {}}"));
+
+    String source2 = "class X {" +
+                     "  int[] is = new int/*1*/[10];" +
+                     "  int[] js = new int[1];" +
+                     "}";
+    assertEquals("find code ignoring comments 2", 2,
+                 findMatchesCount(source2, "new int['_a]"));
+    assertEquals("find code ignoring comments 2a", 1,
+                 findMatchesCount(source2, "new int/*1*/['_a]"));
+
+    String source3 = "class X {{" +
+                     "  new java.util.ArrayList(/**/1);" +
+                     "}}";
+    assertEquals("find code ignoring comments 3", 1,
+                 findMatchesCount(source3, "new ArrayList(1)"));
+
+    String source4 = "class X {" +
+                     "  void m(int i, /**/String s) {}" +
+                     "}";
+    assertEquals("find code ignoring comments 4", 1,
+                 findMatchesCount(source4, "void m(int i, String s);"));
+    assertEquals("find code ignoring comments 4a", 1,
+                 findMatchesCount(source4, "void m('_T '_p*);"));
+
+    String source5 = "class X {{" +
+                     "  new String(/*nothing*/);" +
+                     "}}";
+    assertEquals("find code ignoring comments 5", 1,
+                 findMatchesCount(source5, "new String()"));
+    assertEquals("find code ignored comments 5a", 1,
+                 findMatchesCount(source5, "new String('_a{0,0})"));
   }
 }

@@ -85,7 +85,7 @@ public class SuspiciousArrayCastInspection extends BaseInspection {
       }
       final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
       final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
-      if (argumentList.getExpressions().length != 1) {
+      if (argumentList.getExpressionCount() != 1) {
         return false;
       }
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();

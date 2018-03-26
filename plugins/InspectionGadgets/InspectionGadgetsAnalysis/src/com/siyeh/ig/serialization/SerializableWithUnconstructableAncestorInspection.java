@@ -15,7 +15,10 @@
  */
 package com.siyeh.ig.serialization;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiParameterList;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -84,7 +87,7 @@ public class SerializableWithUnconstructableAncestorInspection extends BaseInspe
       for (final PsiMethod constructor : aClass.getConstructors()) {
         hasConstructor = true;
         final PsiParameterList parameterList = constructor.getParameterList();
-        if (parameterList.getParametersCount() == 0 &&
+        if (parameterList.isEmpty() &&
             (constructor.hasModifierProperty(PsiModifier.PUBLIC) || constructor.hasModifierProperty(PsiModifier.PROTECTED))) {
           hasNoArgConstructor = true;
         }

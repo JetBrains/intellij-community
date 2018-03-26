@@ -72,7 +72,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
   @NonNls private static final String TOGGLE_CONTENT_UI_TYPE_ACTION_ID = "ToggleContentUiTypeMode";
 
   private ToolWindowHeader myHeader;
-  private ActionGroup myToggleToolbarGroup;
+  private final ActionGroup myToggleToolbarGroup;
 
   InternalDecorator(final Project project, @NotNull WindowInfoImpl info, final ToolWindowImpl toolWindow, boolean dumbAware) {
     super(new BorderLayout());
@@ -303,14 +303,8 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
 
     @Override
     public void paintBorder(final Component c, final Graphics g, final int x, final int y, final int width, final int height) {
-      if (UIUtil.isUnderDarcula()) {
-        g.setColor(Gray._40);
-        doPaintBorder(c, g, x, y, width, height);
-      }
-      else {
-        g.setColor(SystemInfo.isMac && UIUtil.isUnderIntelliJLaF() ? Gray.xC9 : Gray._155);
-        doPaintBorder(c, g, x, y, width, height);
-      }
+      g.setColor(JBColor.border());
+      doPaintBorder(c, g, x, y, width, height);
     }
 
     private void doPaintBorder(Component c, Graphics g, int x, int y, int width, int height) {

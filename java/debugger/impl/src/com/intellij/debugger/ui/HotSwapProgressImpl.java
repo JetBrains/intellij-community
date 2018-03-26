@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui;
 
 import com.intellij.debugger.DebuggerBundle;
@@ -51,7 +37,7 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
-public class HotSwapProgressImpl extends HotSwapProgress{
+public class HotSwapProgressImpl extends HotSwapProgress {
   static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup("HotSwap", ToolWindowId.DEBUG);
 
   private final TIntObjectHashMap<List<String>> myMessages = new TIntObjectHashMap<>();
@@ -59,6 +45,7 @@ public class HotSwapProgressImpl extends HotSwapProgress{
   private String myTitle = DebuggerBundle.message("progress.hot.swap.title");
   private final MergingUpdateQueue myUpdateQueue;
   private WeakReference<XDebugSession> mySessionRef = null;
+  private final List<HotSwapProgressListener> myListeners = ContainerUtil.newSmartList();
 
   public HotSwapProgressImpl(Project project) {
     super(project);
@@ -68,6 +55,7 @@ public class HotSwapProgressImpl extends HotSwapProgress{
         return DebuggerSettings.getInstance().HOTSWAP_IN_BACKGROUND;
       }
     }, null, null, true);
+    myProgressWindow.setIndeterminate(false);
     myProgressWindow.addStateDelegate(new AbstractProgressIndicatorExBase(){
       @Override
       public void cancel() {
@@ -79,8 +67,20 @@ public class HotSwapProgressImpl extends HotSwapProgress{
   }
 
   @Override
+  public void cancel() {
+    super.cancel();
+    for (HotSwapProgressListener listener : myListeners) {
+      listener.onCancel();
+    }
+  }
+
+  @Override
   public void finished() {
     super.finished();
+
+    for (HotSwapProgressListener listener : myListeners) {
+      listener.onFinish();
+    }
 
     List<String> errors = getMessages(MessageCategory.ERROR);
     List<String> warnings = getMessages(MessageCategory.WARNING);
@@ -143,7 +143,7 @@ public class HotSwapProgressImpl extends HotSwapProgress{
     mySessionRef = new WeakReference<>(session.getXDebugSession());
   }
 
-  private List<String> getMessages(int category) {
+  List<String> getMessages(int category) {
     return ContainerUtil.notNullize(myMessages.get(category));
   }
 
@@ -214,5 +214,17 @@ public class HotSwapProgressImpl extends HotSwapProgress{
   public void setDebuggerSession(DebuggerSession session) {
     myTitle = DebuggerBundle.message("progress.hot.swap.title") + " : " + session.getSessionName();
     myProgressWindow.setTitle(myTitle);
+  }
+
+  void addProgressListener(@NotNull HotSwapProgressListener listener) {
+    myListeners.add(listener);
+  }
+
+  interface HotSwapProgressListener {
+    default void onCancel() {
+    }
+
+    default void onFinish() {
+    }
   }
 }

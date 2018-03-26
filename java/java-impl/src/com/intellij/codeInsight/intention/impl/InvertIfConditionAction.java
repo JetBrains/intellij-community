@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -86,16 +72,15 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
 
     LOG.assertTrue(ifStatement != null);
     PsiElement block = findCodeBlock(ifStatement);
-
+    LOG.assertTrue(block != null);
     ControlFlow controlFlow = buildControlFlow(block);
-
-    PsiExpression condition = (PsiExpression) Objects.requireNonNull(ifStatement.getCondition()).copy();
-
     ifStatement = setupBranches(ifStatement, controlFlow);
+
+    PsiExpression condition = Objects.requireNonNull(ifStatement.getCondition());
     if (condition != null) {
-      PsiExpression negatedExpression =
-        JavaPsiFacade.getElementFactory(project).createExpressionFromText(BoolUtils.getNegatedExpressionText(condition), condition);
-      Objects.requireNonNull(ifStatement.getCondition()).replace(negatedExpression);
+      final CommentTracker tracker = new CommentTracker();
+      final String negatedCondition = BoolUtils.getNegatedExpressionText(condition, tracker);
+      tracker.replaceAndRestoreComments(condition, negatedCondition);
     }
 
     formatIf(ifStatement);
@@ -178,13 +163,14 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
     PsiElementFactory factory = JavaPsiFacade.getInstance(ifStatement.getProject()).getElementFactory();
     Project project = ifStatement.getProject();
 
+    CommentTracker ct = new CommentTracker();
     PsiStatement thenBranch = Objects.requireNonNull(ifStatement.getThenBranch());
     PsiStatement elseBranch = ifStatement.getElseBranch();
 
     if (elseBranch != null) {
       elseBranch = (PsiStatement) elseBranch.copy();
-      setElseBranch(ifStatement, thenBranch, flow);
-      ifStatement.getThenBranch().replace(elseBranch);
+      setElseBranch(ifStatement, thenBranch, flow, ct);
+      ct.replaceAndRestoreComments(ifStatement.getThenBranch(), elseBranch);
       return ifStatement;
     }
 
@@ -193,7 +179,7 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
       ifStatement.setElseBranch(thenBranch);
       PsiStatement statement = factory.createStatementFromText("{}", ifStatement);
       statement = (PsiStatement) codeStyle.reformat(statement);
-      statement = (PsiStatement) ifStatement.getThenBranch().replace(statement);
+      statement = (PsiStatement) ct.replaceAndRestoreComments(ifStatement.getThenBranch(), statement);
       codeStyle.reformat(statement);
       return ifStatement;
     }
@@ -211,13 +197,14 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
         PsiElement lastElement = codeBlock.getLastBodyElement();
         if (firstElement != null && lastElement != null) {
           ifStatement.getParent().addRangeAfter(firstElement, lastElement, ifStatement);
+          ct.markRangeUnchanged(firstElement, lastElement);
         }
       } else {
         if (!(thenBranch instanceof PsiReturnStatement)) {
           ifStatement = addAfterWithinCodeBlock(ifStatement, thenBranch);
         }
       }
-      Objects.requireNonNull(ifStatement.getThenBranch()).replace(statement);
+      ct.replaceAndRestoreComments(Objects.requireNonNull(ifStatement.getThenBranch()), statement);
       return ifStatement;
     }
     PsiElement element = flow.getElement(endOffset);
@@ -236,7 +223,7 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
     if (element instanceof PsiReturnStatement) {
       PsiReturnStatement returnStatement = (PsiReturnStatement) element;
       ifStatement = addAfterWithinCodeBlock(ifStatement, thenBranch);
-      Objects.requireNonNull(ifStatement.getThenBranch()).replace(returnStatement.copy());
+      ct.replaceAndRestoreComments(Objects.requireNonNull(ifStatement.getThenBranch()), returnStatement.copy());
 
       ControlFlow flow2 = buildControlFlow(findCodeBlock(ifStatement));
       if (!ControlFlowUtil.isInstructionReachable(flow2, flow2.getStartOffset(returnStatement), 0)) returnStatement.delete();
@@ -259,7 +246,7 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
       }
     }
     if (nextUnreachable) {
-      setElseBranch(ifStatement, thenBranch, flow);
+      setElseBranch(ifStatement, thenBranch, flow, ct);
 
       PsiElement first = ifStatement.getNextSibling();
       if (first != null) {
@@ -276,21 +263,24 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
         PsiBlockStatement codeBlock = (PsiBlockStatement) factory.createStatementFromText("{}", ifStatement);
         codeBlock.getCodeBlock().addRange(first, last);
         first.getParent().deleteChildRange(first, last);
-        ifStatement.getThenBranch().replace(codeBlock);
+        ct.replaceAndRestoreComments(ifStatement.getThenBranch(), codeBlock);
       }
       codeStyle.reformat(ifStatement);
       return ifStatement;
     }
 
-    setElseBranch(ifStatement, thenBranch, flow);
+    setElseBranch(ifStatement, thenBranch, flow, ct);
     PsiStatement statement = factory.createStatementFromText("{}", ifStatement);
     statement = (PsiStatement) codeStyle.reformat(statement);
-    statement = (PsiStatement) Objects.requireNonNull(ifStatement.getThenBranch()).replace(statement);
+    statement = (PsiStatement)ct.replaceAndRestoreComments(Objects.requireNonNull(ifStatement.getThenBranch()), statement);
     codeStyle.reformat(statement);
     return ifStatement;
   }
 
-  private static void setElseBranch(PsiIfStatement ifStatement, PsiStatement thenBranch, ControlFlow flow)
+  private static void setElseBranch(PsiIfStatement ifStatement,
+                                    PsiStatement thenBranch,
+                                    ControlFlow flow,
+                                    CommentTracker ct)
     throws IncorrectOperationException {
     if (flow.getEndOffset(ifStatement) == flow.getEndOffset(thenBranch)) {
       final PsiLoopStatement loopStmt = PsiTreeUtil.getParentOfType(ifStatement, PsiLoopStatement.class);
@@ -300,7 +290,7 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
           final PsiStatement[] statements = ((PsiBlockStatement)body).getCodeBlock().getStatements();
           if (statements.length > 0 && !PsiTreeUtil.isAncestor(statements[statements.length - 1], ifStatement, false) &&
               ArrayUtilRt.find(statements, ifStatement) < 0) {
-            ifStatement.setElseBranch(thenBranch);
+            ifStatement.setElseBranch(ct.markUnchanged(thenBranch));
             return;
           }
         }
@@ -312,14 +302,14 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
         }
         return;
       }
-      else if (thenBranch instanceof PsiBlockStatement) {
+      if (thenBranch instanceof PsiBlockStatement) {
         PsiStatement[] statements = ((PsiBlockStatement) thenBranch).getCodeBlock().getStatements();
         if (statements.length > 0 && statements[statements.length - 1] instanceof PsiContinueStatement) {
           new CommentTracker().deleteAndRestoreComments(statements[statements.length - 1]);
         }
       }
     }
-    ifStatement.setElseBranch(thenBranch);
+    ifStatement.setElseBranch(ct.markUnchanged(thenBranch));
   }
 
   private static PsiStatement wrapWithCodeBlock(@NotNull PsiStatement statement) {

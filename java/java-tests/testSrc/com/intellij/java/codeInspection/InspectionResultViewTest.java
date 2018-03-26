@@ -42,7 +42,7 @@ public class InspectionResultViewTest extends LightJava9ModulesCodeInsightFixtur
     TreeUtil.expandAll(view.getTree());
     PlatformTestUtil.assertTreeEqual(view.getTree(), "-" + getProject() + "\n" +
                                                      " -Java\n" +
-                                                     "  -Code maturity issues\n" +
+                                                     "  -Code maturity\n" +
                                                      "   -MarkedForRemoval\n" +
                                                      "    -some.module\n" +
                                                      "     'M2' is deprecated and marked for removal(LIKE_DEPRECATED)\n" +
@@ -58,7 +58,7 @@ public class InspectionResultViewTest extends LightJava9ModulesCodeInsightFixtur
     TreeUtil.expandAll(view.getTree());
     PlatformTestUtil.assertTreeEqual(view.getTree(), "-" + getProject() + "\n" +
                                                      " -Java\n" +
-                                                     "  -Code maturity issues\n" +
+                                                     "  -Code maturity\n" +
                                                      "   -MarkedForRemoval\n" +
                                                      "    -Module: 'light_idea_test_case'\n" +
                                                      "     -some.module\n" +

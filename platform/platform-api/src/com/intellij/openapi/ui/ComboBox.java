@@ -146,7 +146,9 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
     }
 
     if (getModel().getSize() == 0 && visible) return;
-    if (visible && JBPopupFactory.getInstance().getChildFocusedPopup(this) != null) return;
+    if (visible &&
+        ApplicationManager.getApplication() != null /* Allow ComboBox on welcome wizard*/ &&
+        JBPopupFactory.getInstance().getChildFocusedPopup(this) != null) return;
 
     final boolean wasShown = isPopupVisible();
     super.setPopupVisible(visible);

@@ -57,13 +57,7 @@ public class LibrariesUtil {
     if (module == null) return Library.EMPTY_ARRAY;
     final ArrayList<Library> libraries = new ArrayList<>();
 
-    AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
-    try {
-      populateOrderEntries(module, condition, libraries, false, new THashSet<>());
-    }
-    finally {
-      accessToken.finish();
-    }
+    ApplicationManager.getApplication().runReadAction(() -> populateOrderEntries(module, condition, libraries, false, new THashSet<>()));
 
     return libraries.toArray(Library.EMPTY_ARRAY);
   }

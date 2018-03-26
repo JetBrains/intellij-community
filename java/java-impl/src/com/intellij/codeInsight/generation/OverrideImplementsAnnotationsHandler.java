@@ -50,7 +50,10 @@ public interface OverrideImplementsAnnotationsHandler {
         if (AnnotationUtil.isAnnotated(source, annotation, flags) && !AnnotationUtil.isAnnotated(target, annotation, flags)) {
           PsiModifierList modifierList = target.getModifierList();
           assert modifierList != null : target;
-          AddAnnotationPsiFix.addPhysicalAnnotation(annotation, PsiNameValuePair.EMPTY_ARRAY, modifierList);
+          PsiAnnotation srcAnnotation = AnnotationUtil.findAnnotation(source, annotation);
+          PsiNameValuePair[] valuePairs = srcAnnotation != null ? srcAnnotation.getParameterList().getAttributes() 
+                                                                : PsiNameValuePair.EMPTY_ARRAY;
+          AddAnnotationPsiFix.addPhysicalAnnotation(annotation, valuePairs, modifierList);
         }
       }
     }

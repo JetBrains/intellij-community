@@ -179,7 +179,7 @@ public class GitTask {
     final GitLineHandlerListener listener = new GitLineHandlerListener() {
       @Override
       public void processTerminated(int exitCode) {
-        if (exitCode != 0 && !myHandler.isIgnoredErrorCode(exitCode)) {
+        if (exitCode != 0) {
           if (myHandler.errors().isEmpty()) {
             myHandler.addError(new VcsException(myHandler.getLastOutput()));
           }

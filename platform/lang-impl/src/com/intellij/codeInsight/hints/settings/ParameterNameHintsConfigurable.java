@@ -56,7 +56,7 @@ import static com.intellij.codeInsight.hints.HintUtilsKt.getBlackListInvalidLine
 import static com.intellij.openapi.editor.colors.CodeInsightColors.ERRORS_ATTRIBUTES;
 
 public class ParameterNameHintsConfigurable extends DialogWrapper {
-  private static String LAST_EDITED_LANGUAGE_ID_KEY = "param.hints.settings.last.edited.language";
+  private static final String LAST_EDITED_LANGUAGE_ID_KEY = "param.hints.settings.last.edited.language";
 
   private JPanel myConfigurable;
   private ComboBox<Language> myCurrentLanguageCombo;

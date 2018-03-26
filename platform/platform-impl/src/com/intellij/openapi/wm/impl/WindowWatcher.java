@@ -203,7 +203,7 @@ public final class WindowWatcher implements PropertyChangeListener{
           return focusedComponent;
         }
         else{
-          return null;
+          return window == KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow() ? window : null;
         }
       }else{
          // info isn't valid, i.e. window was garbage collected, so we need the remove invalid info

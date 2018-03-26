@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInsight.AutoPopupController;
@@ -6,7 +7,9 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.ide.DataManager;
 import com.intellij.internal.statistic.UsageTrigger;
+import com.intellij.json.psi.JsonProperty;
 import com.intellij.json.psi.JsonStringLiteral;
+import com.intellij.json.psi.JsonValue;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -19,7 +22,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
@@ -114,7 +119,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       final PsiElement checkable = myWalker.goUpToCheckable(myPosition);
       if (checkable == null) return;
       final boolean isName = myWalker.isName(checkable);
-      final List<JsonSchemaVariantsTreeBuilder.Step> position = myWalker.findPosition(checkable, isName, !isName);
+      final List<JsonSchemaVariantsTreeBuilder.Step> position = myWalker.findPosition(checkable, !isName);
       if (position == null || position.isEmpty() && !isName) return;
 
       final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(myRootSchema, false, position).resolve();
@@ -216,9 +221,9 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       key = !myWrapInQuotes ? key : StringUtil.wrapWithDoubleQuote(key);
       LookupElementBuilder builder = LookupElementBuilder.create(key);
 
-      final String typeText = jsonSchemaObject.getDocumentation(true);
+      final String typeText = JsonSchemaDocumentationProvider.getBestDocumentation(true, jsonSchemaObject);
       if (!StringUtil.isEmptyOrSpaces(typeText)) {
-        builder = builder.withTypeText(typeText, true);
+        builder = builder.withTypeText(StringUtil.removeHtmlTags(typeText), true);
       }
 
       final JsonSchemaType type = jsonSchemaObject.getType();
@@ -321,13 +326,14 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       };
     }
 
-    private boolean handleInsideQuotesInsertion(InsertionContext context, Editor editor, boolean hasValue) {
+    private boolean handleInsideQuotesInsertion(@NotNull InsertionContext context, @NotNull Editor editor, boolean hasValue) {
       if (myInsideStringLiteral) {
         int offset = editor.getCaretModel().getOffset();
         PsiElement element = context.getFile().findElementAt(offset);
         int tailOffset = context.getTailOffset();
         int guessEndOffset = tailOffset + 1;
-        if (element != null) {
+        if (element instanceof LeafPsiElement) {
+          if (handleIncompleteString(editor, element)) return false;
           int endOffset = element.getTextRange().getEndOffset();
           if (endOffset > tailOffset) {
             context.getDocument().deleteString(tailOffset, endOffset - 1);
@@ -338,6 +344,21 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
         }
         editor.getCaretModel().moveToOffset(guessEndOffset);
       } else editor.getCaretModel().moveToOffset(context.getTailOffset());
+      return false;
+    }
+
+    private static boolean handleIncompleteString(@NotNull Editor editor, @NotNull PsiElement element) {
+      if (((LeafPsiElement)element).getElementType() == TokenType.WHITE_SPACE) {
+        PsiElement prevSibling = element.getPrevSibling();
+        if (prevSibling instanceof JsonProperty) {
+          JsonValue nameElement = ((JsonProperty)prevSibling).getNameElement();
+          if (!nameElement.getText().endsWith("\"")) {
+            editor.getCaretModel().moveToOffset(nameElement.getTextRange().getEndOffset());
+            EditorModificationUtil.insertStringAtCaret(editor, "\"", false, true, 1);
+            return true;
+          }
+        }
+      }
       return false;
     }
 

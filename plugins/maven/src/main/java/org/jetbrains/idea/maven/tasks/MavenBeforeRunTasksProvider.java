@@ -27,10 +27,11 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.PathUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.execution.ParametersListUtil;
 import icons.MavenIcons;
@@ -48,6 +49,8 @@ import org.jetbrains.idea.maven.utils.MavenLog;
 import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
+
+import static com.intellij.openapi.util.Pair.pair;
 
 public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBeforeRunTask> {
   public static final Key<MavenBeforeRunTask> ID = Key.create("Maven.BeforeRunTask");
@@ -93,11 +96,6 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
     String pomXmlPath = task.getProjectPath();
     if (StringUtil.isEmpty(pomXmlPath)) return null;
 
-    String pomFileName = getPomFileName(task.getGoal());
-    if (!pomFileName.equals(PathUtil.getFileName(pomXmlPath))) { // fix corrupted configuration
-      pomXmlPath = PathUtil.getParentPath(pomXmlPath) + "/" + pomFileName;
-    }
-
     VirtualFile file = LocalFileSystem.getInstance().findFileByPath(pomXmlPath);
     if (file == null) return null;
 
@@ -129,12 +127,21 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
       }
     }
     else {
-      dialog.setGoals(task.getGoal());
+      String goals = splitToGoalsAndPomFileName(task.getGoal()).first;
+
       MavenProject mavenProject = getMavenProject(task);
       if (mavenProject != null) {
+        String pomFileName = mavenProject.getFile().getName();
+        if (FileUtil.namesEqual(pomFileName, MavenConstants.POM_XML)) {
+          dialog.setGoals(goals);
+        }
+        else {
+          dialog.setGoals(goals + " -f " + ParametersListUtil.join(pomFileName));
+        }
         dialog.setSelectedMavenProject(mavenProject);
       }
       else {
+        dialog.setGoals(goals);
         dialog.setSelectedMavenProject(null);
       }
     }
@@ -143,8 +150,9 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
       return false;
     }
 
-    task.setProjectPath(dialog.getWorkDirectory() + "/" + getPomFileName(dialog.getGoals()));
-    task.setGoal(dialog.getGoals());
+    Pair<String, String> goalsAndPomFileName = splitToGoalsAndPomFileName(dialog.getGoals());
+    task.setProjectPath(dialog.getWorkDirectory() + "/" + goalsAndPomFileName.second);
+    task.setGoal(goalsAndPomFileName.first);
     return true;
   }
 
@@ -215,14 +223,17 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
   }
 
   @NotNull
-  private static String getPomFileName(@Nullable String goals) {
-    if (goals != null) {
-      List<String> commandLine = ParametersListUtil.parse(goals);
-      int pomFileNameIndex = 1 + commandLine.indexOf("-f");
-      if (pomFileNameIndex != 0 && pomFileNameIndex < commandLine.size()) {
-        return commandLine.get(pomFileNameIndex);
-      }
+  private static Pair<String, String> splitToGoalsAndPomFileName(@Nullable String goals) {
+    if (goals == null) {
+      return pair(null, MavenConstants.POM_XML);
     }
-    return MavenConstants.POM_XML;
+    List<String> commandLine = ParametersListUtil.parse(goals);
+    int pomFileNameIndex = 1 + commandLine.indexOf("-f");
+    if (pomFileNameIndex != 0 && pomFileNameIndex < commandLine.size()) {
+      String pomFileName = commandLine.remove(pomFileNameIndex);
+      commandLine.remove(pomFileNameIndex - 1);
+      return pair(ParametersListUtil.join(commandLine), pomFileName);
+    }
+    return pair(goals, MavenConstants.POM_XML);
   }
 }

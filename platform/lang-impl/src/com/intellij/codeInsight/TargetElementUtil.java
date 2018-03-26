@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight;
 
@@ -24,7 +10,6 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -153,8 +138,14 @@ public class TargetElementUtil extends TargetElementUtilBase {
     else if (!isIdentifierPart(file, text, offset)) {
       correctedOffset--;
     }
-    if (correctedOffset < 0 || !isIdentifierPart(file, text, correctedOffset)) return offset;
-    return correctedOffset;
+    if (correctedOffset >= 0) {
+      char charAt = text.charAt(correctedOffset);
+      if (isIdentifierPart(file, text, correctedOffset) ||
+          charAt == '\'' || charAt == '"' || charAt == ')' || charAt == ']') {
+        return correctedOffset;
+      }
+    }
+    return offset;
   }
 
   private static boolean isIdentifierPart(@Nullable PsiFile file, CharSequence text, int offset) {
@@ -320,7 +311,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
     PsiElement parent = element;
 
     int offset = offsetInElement;
-    while (parent != null) {
+    while (parent != null && !(parent instanceof PsiFileSystemItem)) {
       for (PomDeclarationSearcher searcher : PomDeclarationSearcher.EP_NAME.getExtensions()) {
         searcher.findDeclarationsAt(parent, offset, consumer);
         if (!targets.isEmpty()) {
@@ -348,10 +339,8 @@ public class TargetElementUtil extends TargetElementUtilBase {
 
     PsiElement parent;
     if ((parent = PsiTreeUtil.getParentOfType(element, PsiNamedElement.class, false)) != null) {
-      boolean isInjected = parent instanceof PsiFile
-                           && InjectedLanguageManager.getInstance(parent.getProject()).isInjectedFragment((PsiFile)parent);
       // A bit hacky: depends on the named element's text offset being overridden correctly
-      if (!isInjected && parent.getTextOffset() == element.getTextRange().getStartOffset()) {
+      if (!(parent instanceof PsiFile) && parent.getTextOffset() == element.getTextRange().getStartOffset()) {
         if (evaluator == null || evaluator.isAcceptableNamedParent(parent)) {
           return parent;
         }
@@ -464,10 +453,10 @@ public class TargetElementUtil extends TargetElementUtilBase {
     if (result != null) return result;
 
     PsiFile file = element.getContainingFile();
-    return PsiSearchHelper.SERVICE.getInstance(element.getProject()).getUseScope(file != null ? file : element);
+    return PsiSearchHelper.getInstance(element.getProject()).getUseScope(file != null ? file : element);
   }
 
-  protected final LanguageExtension<TargetElementEvaluator> targetElementEvaluator =
+  protected static final LanguageExtension<TargetElementEvaluator> targetElementEvaluator =
     new LanguageExtension<>("com.intellij.targetElementEvaluator");
   @Nullable
   private TargetElementEvaluatorEx getElementEvaluatorsEx(@NotNull Language language) {

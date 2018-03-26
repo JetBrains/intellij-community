@@ -50,10 +50,10 @@ public class Endpoint {
 
         public static class Artifact {
 
-            private DSDispatcher _dsDispatcher;
-            private UriBuilder _uriBuilder;
+            private final DSDispatcher _dsDispatcher;
+            private final UriBuilder _uriBuilder;
             private JAXBContext _jc;
-            private HashMap<String, Object> _templateAndMatrixParameterValues;
+            private final HashMap<String, Object> _templateAndMatrixParameterValues;
 
             /**
              * Create new instance
@@ -89,10 +89,10 @@ public class Endpoint {
         public static class Gavc {
 
             private JAXBDispatcher _jaxbDispatcher;
-            private DSDispatcher _dsDispatcher;
-            private UriBuilder _uriBuilder;
+            private final DSDispatcher _dsDispatcher;
+            private final UriBuilder _uriBuilder;
             private JAXBContext _jc;
-            private HashMap<String, Object> _templateAndMatrixParameterValues;
+            private final HashMap<String, Object> _templateAndMatrixParameterValues;
 
             /**
              * Create new instance
@@ -130,10 +130,10 @@ public class Endpoint {
         public static class Archive {
 
             private JAXBDispatcher _jaxbDispatcher;
-            private DSDispatcher _dsDispatcher;
-            private UriBuilder _uriBuilder;
+            private final DSDispatcher _dsDispatcher;
+            private final UriBuilder _uriBuilder;
             private JAXBContext _jc;
-            private HashMap<String, Object> _templateAndMatrixParameterValues;
+            private final HashMap<String, Object> _templateAndMatrixParameterValues;
 
             /**
              * Create new instance
@@ -171,10 +171,10 @@ public class Endpoint {
     public static class System {
 
         private JAXBDispatcher _jaxbDispatcher;
-        private DSDispatcher _dsDispatcher;
-        private UriBuilder _uriBuilder;
+        private final DSDispatcher _dsDispatcher;
+        private final UriBuilder _uriBuilder;
         private JAXBContext _jc;
-        private HashMap<String, Object> _templateAndMatrixParameterValues;
+        private final HashMap<String, Object> _templateAndMatrixParameterValues;
 
         /**
          * Create new instance
@@ -205,10 +205,10 @@ public class Endpoint {
         public static class Configuration {
 
             private JAXBDispatcher _jaxbDispatcher;
-            private DSDispatcher _dsDispatcher;
-            private UriBuilder _uriBuilder;
+            private final DSDispatcher _dsDispatcher;
+            private final UriBuilder _uriBuilder;
             private JAXBContext _jc;
-            private HashMap<String, Object> _templateAndMatrixParameterValues;
+            private final HashMap<String, Object> _templateAndMatrixParameterValues;
 
             /**
              * Create new instance
@@ -250,10 +250,10 @@ public class Endpoint {
             public static class RemoteRepositories {
 
                 private JAXBDispatcher _jaxbDispatcher;
-                private DSDispatcher _dsDispatcher;
-                private UriBuilder _uriBuilder;
+                private final DSDispatcher _dsDispatcher;
+                private final UriBuilder _uriBuilder;
                 private JAXBContext _jc;
-                private HashMap<String, Object> _templateAndMatrixParameterValues;
+                private final HashMap<String, Object> _templateAndMatrixParameterValues;
 
                 /**
                  * Create new instance
@@ -292,10 +292,10 @@ public class Endpoint {
     public static class SystemVersion {
 
         private JAXBDispatcher _jaxbDispatcher;
-        private DSDispatcher _dsDispatcher;
-        private UriBuilder _uriBuilder;
+        private final DSDispatcher _dsDispatcher;
+        private final UriBuilder _uriBuilder;
         private JAXBContext _jc;
-        private HashMap<String, Object> _templateAndMatrixParameterValues;
+        private final HashMap<String, Object> _templateAndMatrixParameterValues;
 
         /**
          * Create new instance
@@ -331,10 +331,10 @@ public class Endpoint {
   public static class Repositories {
 
       private JAXBDispatcher _jaxbDispatcher;
-      private DSDispatcher _dsDispatcher;
-      private UriBuilder _uriBuilder;
+      private final DSDispatcher _dsDispatcher;
+      private final UriBuilder _uriBuilder;
       private JAXBContext _jc;
-      private HashMap<String, Object> _templateAndMatrixParameterValues;
+      private final HashMap<String, Object> _templateAndMatrixParameterValues;
 
       /**
        * Create new instance
@@ -366,10 +366,10 @@ public class Endpoint {
       public static class RepoKeyConfiguration {
 
           private JAXBDispatcher _jaxbDispatcher;
-          private DSDispatcher _dsDispatcher;
-          private UriBuilder _uriBuilder;
+          private final DSDispatcher _dsDispatcher;
+          private final UriBuilder _uriBuilder;
           private JAXBContext _jc;
-          private HashMap<String, Object> _templateAndMatrixParameterValues;
+          private final HashMap<String, Object> _templateAndMatrixParameterValues;
 
           /**
            * Create new instance

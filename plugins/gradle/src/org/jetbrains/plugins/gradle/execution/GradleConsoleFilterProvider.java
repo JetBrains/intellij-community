@@ -38,7 +38,7 @@ public class GradleConsoleFilterProvider implements ConsoleFilterProvider {
     return new Filter[]{
       new GradleConsoleFilter(project),
       new RegexpFilter(project, RegexpFilter.FILE_PATH_MACROS + ":" + RegexpFilter.LINE_MACROS) {
-        private CachedValue<Boolean> myIsGradleProject = new CachedValueImpl<>(
+        private final CachedValue<Boolean> myIsGradleProject = new CachedValueImpl<>(
           () -> CachedValueProvider.Result.create(isGradleProject(), ProjectRootModificationTracker.getInstance(project)));
 
         @Override

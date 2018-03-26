@@ -15,15 +15,15 @@
  */
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
+
+import java.util.Objects;
 
 public abstract class CompletionThreadingBase implements CompletionThreading {
   protected final static ThreadLocal<Boolean> ourIsInBatchUpdate = ThreadLocal.withInitial(() -> Boolean.FALSE);
 
-  public static void withBatchUpdate(Runnable runnable) {
-    if (ourIsInBatchUpdate.get().booleanValue()) {
+  public static void withBatchUpdate(Runnable runnable, CompletionProcess process) {
+    if (ourIsInBatchUpdate.get().booleanValue() || !(process instanceof CompletionProgressIndicator)) {
       runnable.run();
       return;
     }
@@ -32,10 +32,8 @@ public abstract class CompletionThreadingBase implements CompletionThreading {
       ourIsInBatchUpdate.set(Boolean.TRUE);
       runnable.run();
       ProgressManager.checkCanceled();
-      final CompletionProgressIndicator currentIndicator = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
-      if(currentIndicator == null) throw new ProcessCanceledException();
-      CompletionThreadingBase threading = currentIndicator.getCompletionThreading();
-      assert threading != null;
+      CompletionProgressIndicator currentIndicator = (CompletionProgressIndicator)process;
+      CompletionThreadingBase threading = Objects.requireNonNull(currentIndicator.getCompletionThreading());
       threading.flushBatchResult(currentIndicator);
     } finally {
       ourIsInBatchUpdate.set(Boolean.FALSE);

@@ -105,20 +105,12 @@ public class LastUnchangedContentTracker {
 
     long stamp = file.getTimeStamp();
     try {
-      final DataOutputStream contentStream = ACQUIRED_CONTENT_ATTR.writeAttribute(file);
-      try {
+      try (DataOutputStream contentStream = ACQUIRED_CONTENT_ATTR.writeAttribute(file)) {
         contentStream.writeInt(contentId);
       }
-      finally {
-        contentStream.close();
-      }
 
-      final DataOutputStream tsStream = LAST_TS_ATTR.writeAttribute(file);
-      try {
+      try (DataOutputStream tsStream = LAST_TS_ATTR.writeAttribute(file)) {
         tsStream.writeLong(stamp);
-      }
-      finally {
-        tsStream.close();
       }
 
       file.putUserData(LAST_TS_KEY, stamp);

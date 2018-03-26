@@ -2,7 +2,6 @@
 package com.jetbrains.python;
 
 import com.intellij.lang.FileASTNode;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbServiceImpl;
@@ -24,10 +23,7 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
 import com.jetbrains.python.psi.stubs.*;
-import com.jetbrains.python.psi.types.PyCallableType;
-import com.jetbrains.python.psi.types.PyClassType;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.toolbox.Maybe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -192,23 +188,17 @@ public class PyStubsTest extends PyTestCase {
     assertEquals(1, children.length);
     assertSame(pyClass, children[0]);
 
-    new WriteCommandAction(myFixture.getProject(), fileImpl) {
-      @Override
-      protected void run(@NotNull final Result result) {
-        pyClass.setName("RenamedClass");
-        assertEquals("RenamedClass", pyClass.getName());
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(myFixture.getProject(), fileImpl).run(() -> {
+      pyClass.setName("RenamedClass");
+      assertEquals("RenamedClass", pyClass.getName());
+    });
 
     StubElement fileStub = fileImpl.getStub();
     assertNull("There should be no stub if file holds tree element", fileStub);
 
-    new WriteCommandAction(myFixture.getProject(), fileImpl) {
-      @Override
-      protected void run(@NotNull Result result) {
-        ((SingleRootFileViewProvider)fileImpl.getViewProvider()).onContentReload();
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(myFixture.getProject(), fileImpl).run(() -> {
+      ((SingleRootFileViewProvider)fileImpl.getViewProvider()).onContentReload();
+    });
     assertNull(fileImpl.getTreeElement()); // Test unload succeeded.
 
     assertEquals("RenamedClass", fileImpl.getTopLevelClasses().get(0).getName());
@@ -364,18 +354,15 @@ public class PyStubsTest extends PyTestCase {
   public void testStubIndexMismatch() {
     VirtualFile vFile = myFixture.getTempDirFixture().createFile("foo.py");
     final Project project = myFixture.getProject();
-    PsiFileImpl fooPyFile = (PsiFileImpl) PsiManager.getInstance(project).findFile(vFile);
+    PsiFileImpl fooPyFile = (PsiFileImpl)PsiManager.getInstance(project).findFile(vFile);
     assertNotNull(fooPyFile);
     final Document fooDocument = fooPyFile.getViewProvider().getDocument();
     assertNotNull(fooDocument);
     final Collection<PyClass> classes = PyClassNameIndex.find("Foo", project, GlobalSearchScope.allScope(project));
     assertEquals(0, classes.size());
-    new WriteCommandAction.Simple(project, fooPyFile) {
-      @Override
-      public void run() {
-        fooDocument.setText("class Foo: pass");
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(project, fooPyFile).run(() -> {
+      fooDocument.setText("class Foo: pass");
+    });
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     documentManager.commitDocument(fooDocument);
     documentManager.performForCommittedDocument(fooDocument, () -> {
@@ -384,7 +371,7 @@ public class PyStubsTest extends PyTestCase {
       //fooPyFile.unloadContent();
       DumbServiceImpl.getInstance(project).setDumb(true);
       try {
-        assertEquals(1, ((PyFile) fooPyFile).getTopLevelClasses().size());
+        assertEquals(1, ((PyFile)fooPyFile).getTopLevelClasses().size());
         assertFalse(fooPyFile.isContentsLoaded());
       }
       finally {
@@ -741,7 +728,7 @@ public class PyStubsTest extends PyTestCase {
 
   // PY-18116
   public void testParameterAnnotation() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> {
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> {
       final PyFile file = getTestFile();
       final PyFunction func = file.findTopLevelFunction("func");
       final PyNamedParameter param = func.getParameterList().findParameterByName("x");
@@ -756,7 +743,7 @@ public class PyStubsTest extends PyTestCase {
 
   // PY-18116
   public void testFunctionAnnotation() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> {
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> {
       final PyFile file = getTestFile();
       final PyFunction func = file.findTopLevelFunction("func");
       final String annotation = func.getAnnotationValue();
@@ -804,7 +791,7 @@ public class PyStubsTest extends PyTestCase {
 
   // PY-18116
   public void testTypeAliasInParameterAnnotation() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> {
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> {
       final PyFile file = getTestFile();
       final PyFunction func = file.findTopLevelFunction("func");
       final PyNamedParameter param = func.getParameterList().findParameterByName("x");
@@ -838,7 +825,7 @@ public class PyStubsTest extends PyTestCase {
 
   // PY-18166
   public void testUnresolvedTypingSymbol() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> {
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> {
       final PyFile file = getTestFile();
       final PyFunction func = file.findTopLevelFunction("func");
       assertType("() -> Any", func, TypeEvalContext.codeInsightFallback(file.getProject()));
@@ -887,7 +874,7 @@ public class PyStubsTest extends PyTestCase {
 
   // PY-18816
   public void testComplexGenericType() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> {
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> {
       myFixture.copyDirectoryToProject(getTestName(true), "");
       final PsiManager manager = PsiManager.getInstance(myFixture.getProject());
       final PyFile originFile = (PyFile)manager.findFile(myFixture.findFileInTempDir("a.py"));
@@ -971,5 +958,37 @@ public class PyStubsTest extends PyTestCase {
         assertNotParsed(file3);
       }
     );
+  }
+
+  // PY-27398
+  public void testTypingNewType() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> {
+        final PyFile file = getTestFile("typingNewType/new_type.py");
+
+        final PyTargetExpression type = file.findTopLevelAttribute("UserId");
+        final PyTypingNewTypeStub stub = type.getStub().getCustomStub(PyTypingNewTypeStub.class);
+
+        assertNotNull(stub);
+        assertTrue("UserId".equals(stub.getName()));
+        assertTrue("int".equals(stub.getClassType()));
+
+        final TypeEvalContext context = TypeEvalContext.codeInsightFallback(myFixture.getProject());
+        final PyType typeDef = context.getType(type);
+
+        assertTrue(typeDef instanceof PyTypingNewType);
+        assertNotParsed(file);
+      }
+    );
+  }
+
+  // PY-28879
+  public void testVariableTypeCommentWithTupleType() {
+    final PyFile file = getTestFile();
+    final PyTargetExpression target = file.findTopLevelAttribute("var");
+    final TypeEvalContext context = TypeEvalContext.codeInsightFallback(target.getProject());
+    context.getType(target);
+    assertNotParsed(file);
   }
 }

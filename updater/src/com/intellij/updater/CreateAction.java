@@ -16,6 +16,7 @@
 package com.intellij.updater;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
@@ -50,7 +51,7 @@ public class CreateAction extends PatchAction {
   private static void writeLinkInfo(File file, OutputStream out) throws IOException {
     String target = Utils.readLink(file);
     if (target.isEmpty()) throw new IOException("Invalid link: " + file);
-    byte[] bytes = target.getBytes("UTF-8");
+    byte[] bytes = target.getBytes(StandardCharsets.UTF_8);
     out.write(bytes.length);
     out.write(bytes);
   }
@@ -127,7 +128,7 @@ public class CreateAction extends PatchAction {
     int length = in.read();
     if (length <= 0) throw new IOException("Stream format error");
     byte[] bytes = Utils.readBytes(in, length);
-    return new String(bytes, "UTF-8");
+    return new String(bytes, StandardCharsets.UTF_8);
   }
 
   protected void doBackup(File toFile, File backupFile) {

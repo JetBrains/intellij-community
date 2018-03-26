@@ -33,7 +33,7 @@ import static com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils
  */
 public abstract class CreateServiceClassFixBase implements IntentionAction {
   public static final Key<PsiDirectory> SERVICE_ROOT_DIR = Key.create("SERVICE_ROOT_DIR");
-  public static final Key<Boolean> SERVICE_IS_CLASS = Key.create("SERVICE_IS_CLASS");
+  public static final Key<CreateClassKind> SERVICE_CLASS_KIND = Key.create("SERVICE_CLASS_KIND");
   public static final Key<Boolean> SERVICE_IS_SUBCLASS = Key.create("SERVICE_IS_SUBCLASS");
 
   @Override
@@ -109,7 +109,7 @@ public abstract class CreateServiceClassFixBase implements IntentionAction {
 
   @Nullable
   protected static PsiClass createClassInRoot(@NotNull String classFQN,
-                                              boolean isClass,
+                                              @NotNull CreateClassKind classKind,
                                               @NotNull PsiDirectory rootDir,
                                               @NotNull PsiElement contextElement,
                                               @Nullable String superClassName) {
@@ -119,7 +119,7 @@ public abstract class CreateServiceClassFixBase implements IntentionAction {
     PsiDirectory packageDir = getOrCreatePackageDirInRoot(packageName, rootDir);
     if (packageDir == null) return null;
 
-    return CreateFromUsageUtils.createClass(isClass ? CreateClassKind.CLASS : CreateClassKind.INTERFACE,
+    return CreateFromUsageUtils.createClass(classKind,
                                             packageDir, className, contextElement.getManager(),
                                             contextElement, null, superClassName);
   }

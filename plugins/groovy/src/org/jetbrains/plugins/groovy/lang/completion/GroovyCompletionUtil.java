@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.completion;
 
@@ -72,6 +72,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+
+import static org.jetbrains.plugins.groovy.lang.resolve.ReferencesKt.resolvePackageFqn;
 
 /**
  * @author ilyas
@@ -406,7 +408,7 @@ public class GroovyCompletionUtil {
     for (GroovyResolveResult result : constructors) {
       final PsiElement element = result.getElement();
       if (element instanceof PsiMethod) {
-        if (((PsiMethod)element).getParameterList().getParametersCount() > 0) {
+        if (!((PsiMethod)element).getParameterList().isEmpty()) {
           hasParameters = true;
         }
         if (result.isAccessible()) {
@@ -664,5 +666,10 @@ public class GroovyCompletionUtil {
       }
     }
     return qualifierType;
+  }
+
+  static boolean canResolveToPackage(@NotNull PsiElement qualifier) {
+    return qualifier instanceof GrReferenceExpression
+           && resolvePackageFqn((GrReferenceElement<?>)qualifier) != null;
   }
 }

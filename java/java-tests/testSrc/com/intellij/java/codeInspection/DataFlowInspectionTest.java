@@ -585,4 +585,10 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testNullableGetterInLoop() { doTest(); }
   public void testNullabilityBasics() { doTest(); }
   public void testReassignedVarInLoop() { doTest(); }
+  public void testLoopDoubleComparisonNotComplex() { doTest(); }
+  public void testAssumeNotNull() {
+    myFixture.addClass("package org.junit; public class Assert { public static void assertTrue(boolean b) {}}");
+    myFixture.addClass("package org.junit; public class Assume { public static void assumeNotNull(Object... objects) {}}");
+    doTest();
+  }
 }

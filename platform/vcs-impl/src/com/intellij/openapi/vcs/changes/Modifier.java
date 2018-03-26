@@ -45,8 +45,8 @@ public class Modifier {
     return command.getNewListCopy();
   }
 
-  public void setDefault(String name) {
-    SetDefault command = new SetDefault(name);
+  public void setDefault(@NotNull String name, boolean automatic) {
+    SetDefault command = new SetDefault(name, automatic);
     impl(command);
   }
 
@@ -55,12 +55,12 @@ public class Modifier {
     impl(command);
   }
 
-  public void moveChangesTo(String name, @NotNull Change[] changes) {
+  public void moveChangesTo(@NotNull String name, @NotNull Change[] changes) {
     MoveChanges command = new MoveChanges(name, changes);
     impl(command);
   }
 
-  public boolean setReadOnly(String name, boolean value) {
+  public boolean setReadOnly(@NotNull String name, boolean value) {
     SetReadOnly command = new SetReadOnly(name, value);
     impl(command);
     return command.isResult();
@@ -80,7 +80,7 @@ public class Modifier {
   }
 
 
-  private void impl(ChangeListCommand command) {
+  private void impl(@NotNull ChangeListCommand command) {
     if (myInsideUpdate) {
       // apply command and store it to be applied again when update is finished
       // notification about this invocation might be sent later if the update is cancelled

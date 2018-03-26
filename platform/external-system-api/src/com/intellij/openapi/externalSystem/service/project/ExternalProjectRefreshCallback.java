@@ -34,9 +34,27 @@ public interface ExternalProjectRefreshCallback {
    * {@link ExternalSystemProjectResolver#resolveProjectInfo(ExternalSystemTaskId, String, boolean, ExternalSystemExecutionSettings, ExternalSystemTaskNotificationListener)}
    * returns without exception.
    *
+   * @param externalTaskId id of task being called (to use when reporting issues)
    * @param externalProject  target external project (if available)
    */
-  void onSuccess(@Nullable DataNode<ProjectData> externalProject);
+  default void onSuccess(@NotNull ExternalSystemTaskId externalTaskId, @Nullable DataNode<ProjectData> externalProject) {
+    onSuccess(externalProject);
+  }
 
-  void onFailure(@NotNull String errorMessage, @Nullable String errorDetails);
+  default void onSuccess(@Nullable DataNode<ProjectData> externalProject) {}
+
+  /**
+   * Is expected to be called when
+   * {@link ExternalSystemProjectResolver#resolveProjectInfo(ExternalSystemTaskId, String, boolean, ExternalSystemExecutionSettings, ExternalSystemTaskNotificationListener)}
+   * throws an exception.
+   *
+   * @param externalTaskId id of task being called (to use when reporting issues)
+   * @param errorMessage
+   * @param errorDetails
+   */
+  default void onFailure(@NotNull ExternalSystemTaskId externalTaskId, @NotNull String errorMessage, @Nullable String errorDetails) {
+    onFailure(errorMessage, errorDetails);
+  }
+
+  default void onFailure(@NotNull String errorMessage, @Nullable String errorDetails) {}
 }

@@ -1,37 +1,23 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.postfix.templates;
 
-import com.intellij.psi.PsiElement;
+import com.intellij.codeInsight.template.postfix.templates.editable.JavaEditablePostfixTemplate;
+import com.intellij.codeInsight.template.postfix.templates.editable.JavaPostfixTemplateExpressionCondition;
+import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.IS_BOOLEAN;
-import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.selectorTopmost;
+import java.util.Collections;
 
-public class WhileStatementPostfixTemplate extends StringBasedPostfixTemplate {
-  public WhileStatementPostfixTemplate() {
-    super("while", "while (expr) {}", selectorTopmost(IS_BOOLEAN));
+public class WhileStatementPostfixTemplate extends JavaEditablePostfixTemplate {
+  public WhileStatementPostfixTemplate(@NotNull JavaPostfixTemplateProvider provider) {
+    super("while", "while ($EXPR$) {\n$END$\n}", "while (expr) {}",
+          Collections.singleton(new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateBooleanExpressionCondition()),
+          LanguageLevel.JDK_1_3, true, provider);
   }
 
-
-  @Nullable
   @Override
-  public String getTemplateString(@NotNull PsiElement element) {
-    return "while ($expr$) {\n$END$\n}";
+  public boolean isBuiltin() {
+    return true;
   }
 }
 

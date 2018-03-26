@@ -41,7 +41,6 @@ import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashMap;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -193,7 +192,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
 
           //insert implicit call to super
           for (PsiMethod superConstructor : superConstructors) {
-            if (superConstructor.getParameterList().getParametersCount() == 0) {
+            if (superConstructor.getParameterList().isEmpty()) {
               final PsiExpression expression = JavaPsiFacade.getElementFactory(myProject).createExpressionFromText("super()", constructor);
               usages.add(new InlineSuperCallUsageInfo((PsiMethodCallExpression)expression, constrBody));
             }
@@ -203,7 +202,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
         if (targetClass.getConstructors().length == 0) {
           //copy default constructor
           for (PsiMethod superConstructor : superConstructors) {
-            if (superConstructor.getParameterList().getParametersCount() == 0) {
+            if (superConstructor.getParameterList().isEmpty()) {
               usages.add(new CopyDefaultConstructorUsageInfo(targetClass, superConstructor));
               break;
             }

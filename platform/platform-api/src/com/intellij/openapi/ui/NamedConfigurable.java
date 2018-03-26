@@ -38,7 +38,7 @@ public abstract class NamedConfigurable<T> implements Configurable {
   private JPanel myTopRightPanel;
   private ErrorLabel myErrorLabel;
   private JComponent myOptionsComponent;
-  private boolean myNameEditable;
+  private final boolean myNameEditable;
 
   protected NamedConfigurable() {
     this(false, null);

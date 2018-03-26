@@ -61,7 +61,7 @@ import java.util.regex.Pattern;
  */
 public class MavenResourceCompilerConfigurationGenerator {
 
-  private static Logger LOG = Logger.getInstance(MavenResourceCompilerConfigurationGenerator.class);
+  private static final Logger LOG = Logger.getInstance(MavenResourceCompilerConfigurationGenerator.class);
 
   private static final Pattern SIMPLE_NEGATIVE_PATTERN = Pattern.compile("!\\?(\\*\\.\\w+)");
   private static final String IDEA_MAVEN_DISABLE_MANIFEST = System.getProperty("idea.maven.disable.manifest");
@@ -355,6 +355,7 @@ public class MavenResourceCompilerConfigurationGenerator {
 
     addSplitAndTrimmed(artifactResourceCfg.packagingIncludes, warCfg.getChildTextTrim("packagingIncludes"));
     addSplitAndTrimmed(artifactResourceCfg.packagingExcludes, warCfg.getChildTextTrim("packagingExcludes"));
+    addConfigValues(artifactResourceCfg.nonFilteredFileExtensions, "nonFilteredFileExtensions", "nonFilteredFileExtension", warCfg);
 
     String warSourceDirectory = warCfg.getChildTextTrim("warSourceDirectory");
     if (warSourceDirectory == null) warSourceDirectory = "src/main/webapp";
@@ -381,31 +382,8 @@ public class MavenResourceCompilerConfigurationGenerator {
 
         r.targetPath = resource.getChildTextTrim("targetPath");
 
-        Element includes = resource.getChild("includes");
-        if (includes != null) {
-          for (Element include : includes.getChildren("include")) {
-            String includeText = include.getTextTrim();
-            if (!includeText.isEmpty()) {
-              r.includes.add(includeText);
-            }
-          }
-          if (includes.getChildren("include").isEmpty()) {
-            addSplitAndTrimmed(r.includes, includes.getTextTrim());
-          }
-        }
-
-        Element excludes = resource.getChild("excludes");
-        if (excludes != null) {
-          for (Element exclude : excludes.getChildren("exclude")) {
-            String excludeText = exclude.getTextTrim();
-            if (!excludeText.isEmpty()) {
-              r.excludes.add(excludeText);
-            }
-          }
-          if (excludes.getChildren("exclude").isEmpty()) {
-            addSplitAndTrimmed(r.excludes, excludes.getTextTrim());
-          }
-        }
+        addConfigValues(r.includes, "includes", "include", resource);
+        addConfigValues(r.excludes, "excludes", "exclude", resource);
 
         artifactResourceCfg.webResources.add(r);
       }
@@ -418,6 +396,21 @@ public class MavenResourceCompilerConfigurationGenerator {
       r.isFiltered = true;
       r.targetPath = "";
       artifactResourceCfg.webResources.add(r);
+    }
+  }
+
+  private static void addConfigValues(Collection<String> collection, String tag, String subTag, Element resource) {
+    Element config = resource.getChild(tag);
+    if (config != null) {
+      for (Element value : config.getChildren(subTag)) {
+        String text = value.getTextTrim();
+        if (!text.isEmpty()) {
+          collection.add(text);
+        }
+      }
+      if (config.getChildren(subTag).isEmpty()) {
+        addSplitAndTrimmed(collection, config.getTextTrim());
+      }
     }
   }
 

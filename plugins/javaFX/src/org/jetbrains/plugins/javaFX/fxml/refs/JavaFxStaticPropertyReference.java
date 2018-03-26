@@ -13,8 +13,8 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
  * @author Pavel.Dolgov
  */
 public class JavaFxStaticPropertyReference extends JavaFxPropertyReference<XmlAttribute> {
-  private String myPropertyName;
-  private PsiMethod myStaticMethod;
+  private final String myPropertyName;
+  private final PsiMethod myStaticMethod;
 
   public JavaFxStaticPropertyReference(@NotNull XmlAttribute xmlAttribute,
                                        @Nullable PsiClass psiClass,

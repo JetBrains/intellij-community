@@ -15,25 +15,9 @@
  */
 package com.intellij.testFramework.propertyBased;
 
-import java.util.List;
+import org.jetbrains.jetCheck.ImperativeCommand;
 
 /**
- * @author peter
+ * A marker interface to find commands related to PSI mad testing easier
  */
-public interface MadTestingAction {
-  
-  void performAction();
-
-  default String getConstructorArguments() {
-    return "file";
-  }
-
-  static void runActions(List<? extends MadTestingAction> list) {
-    for (int i = 0; i < list.size(); i++) {
-      MadTestingAction action = list.get(i);
-      if (i > 0 && action == list.get(i - 1)) continue;
-
-      action.performAction();
-    }
-  }
-}
+public interface MadTestingAction extends ImperativeCommand {}

@@ -2,8 +2,10 @@
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.engine.JVMNameUtil;
+import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.jdi.DecompiledLocalVariable;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -18,12 +20,15 @@ import java.util.List;
  * @author egor
  */
 public class CaptureSettingsProvider {
+  private static final Logger LOG = Logger.getInstance(CaptureSettingsProvider.class);
+
   private static final List<AgentCapturePoint> CAPTURE_POINTS = new ArrayList<>();
   private static final List<AgentInsertPoint> INSERT_POINTS = new ArrayList<>();
   private static final List<CapturePoint> IDE_INSERT_POINTS;
 
   private static final KeyProvider THIS_KEY = new StringKeyProvider("this");
   private static final KeyProvider FIRST_PARAM = param(0);
+  private static final String ANY = "*";
 
   static {
     addCapture("java/awt/event/InvocationEvent", "<init>", THIS_KEY);
@@ -34,10 +39,12 @@ public class CaptureSettingsProvider {
 
     addCapture("java/util/concurrent/FutureTask", "<init>", THIS_KEY);
     addInsert("java/util/concurrent/FutureTask", "run", THIS_KEY);
+    addInsert("java/util/concurrent/FutureTask", "runAndReset", THIS_KEY);
 
     addCapture("java/util/concurrent/CompletableFuture", "supplyAsync", FIRST_PARAM);
     AgentInsertPoint point = new AgentInsertPoint("java/util/concurrent/CompletableFuture$AsyncSupply",
                                                   "run",
+                                                  ANY,
                                                   new FieldKeyProvider("java/util/concurrent/CompletableFuture$AsyncSupply", "fn"));
     point.myInsertPoint.myInsertMethodName = "run$$$capture";
     point.myInsertPoint.myInsertKeyExpression = "f";
@@ -46,6 +53,7 @@ public class CaptureSettingsProvider {
     addCapture("java/util/concurrent/CompletableFuture", "runAsync", FIRST_PARAM);
     point = new AgentInsertPoint("java/util/concurrent/CompletableFuture$AsyncRun",
                                  "run",
+                                 ANY,
                                  new FieldKeyProvider("java/util/concurrent/CompletableFuture$AsyncRun", "fn"));
     point.myInsertPoint.myInsertMethodName = "run$$$capture";
     point.myInsertPoint.myInsertKeyExpression = "f";
@@ -118,6 +126,13 @@ public class CaptureSettingsProvider {
         }
         String className = JVMNameUtil.getNonAnonymousClassName(method.getContainingClass()).replaceAll("\\.", "/");
         String methodName = JVMNameUtil.getJVMMethodName(method);
+        String methodDesc = ANY;
+        try {
+          methodDesc = JVMNameUtil.getJVMSignature(method).getName(null);
+        }
+        catch (EvaluateException ex) {
+          LOG.error(ex);
+        }
 
         PsiModifierList modifierList = e.getModifierList();
         if (modifierList != null) {
@@ -129,8 +144,9 @@ public class CaptureSettingsProvider {
             }
           }
         }
-        AgentPoint point =
-          capture ? new AgentCapturePoint(className, methodName, keyProvider) : new AgentInsertPoint(className, methodName, keyProvider);
+        AgentPoint point = capture ?
+                           new AgentCapturePoint(className, methodName, methodDesc, keyProvider) :
+                           new AgentInsertPoint(className, methodName, methodDesc, keyProvider);
         annotationPoints.add(point);
       });
       return annotationPoints;
@@ -140,23 +156,30 @@ public class CaptureSettingsProvider {
   public static abstract class AgentPoint {
     public final String myClassName;
     public final String myMethodName;
+    public final String myMethodDesc;
     public final KeyProvider myKey;
 
     public static final String SEPARATOR = " ";
 
-    public AgentPoint(String className, String methodName, KeyProvider key) {
+    public AgentPoint(String className, String methodName, String methodDesc, KeyProvider key) {
       assert !className.contains(".") : "Classname should not contain . here";
       myClassName = className;
       myMethodName = methodName;
+      myMethodDesc = methodDesc;
       myKey = key;
     }
 
     public abstract boolean isCapture();
+
+    @Override
+    public String toString() {
+      return myClassName + "." + myMethodName + " " + myKey.asString();
+    }
   }
 
   public static class AgentCapturePoint extends AgentPoint {
-    public AgentCapturePoint(String className, String methodName, KeyProvider key) {
-      super(className, methodName, key);
+    public AgentCapturePoint(String className, String methodName, String methodDesc, KeyProvider key) {
+      super(className, methodName, methodDesc, key);
     }
 
     @Override
@@ -168,8 +191,8 @@ public class CaptureSettingsProvider {
   public static class AgentInsertPoint extends AgentPoint {
     public final CapturePoint myInsertPoint; // for IDE
 
-    public AgentInsertPoint(String className, String methodName, KeyProvider key) {
-      super(className, methodName, key);
+    public AgentInsertPoint(String className, String methodName, String methodDesc, KeyProvider key) {
+      super(className, methodName, methodDesc, key);
       this.myInsertPoint = new CapturePoint();
       myInsertPoint.myInsertClassName = className.replaceAll("/", ".");
       myInsertPoint.myInsertMethodName = methodName;
@@ -230,10 +253,10 @@ public class CaptureSettingsProvider {
   }
 
   private static void addCapture(String className, String methodName, KeyProvider key) {
-    CAPTURE_POINTS.add(new AgentCapturePoint(className, methodName, key));
+    CAPTURE_POINTS.add(new AgentCapturePoint(className, methodName, ANY, key));
   }
 
   private static void addInsert(String className, String methodName, KeyProvider key) {
-    INSERT_POINTS.add(new AgentInsertPoint(className, methodName, key));
+    INSERT_POINTS.add(new AgentInsertPoint(className, methodName, ANY, key));
   }
 }

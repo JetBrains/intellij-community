@@ -29,6 +29,7 @@ import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -194,7 +195,13 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
   public void testNestedPackageNamedAsSourceRoot() {
     doMultiFileTest("a.py", Collections.singletonList("lib1"));
   }
-  
+
+
+  //PY-28383
+  public void testNamespacePackageInMultipleRoots() {
+    doMultiFileTest("a.py", Arrays.asList("root1/src", "root2/src"));
+  }
+
   // PY-18972
   public void testReferencesInFStringLiterals() {
     doTest();
@@ -220,6 +227,11 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
     doTest();
   }
 
+  // PY-28177
+  public void testTypingOpaqueNameDunderGetItem() {
+    doTest();
+  }
+
   // PY-21655
   public void testUsageOfFunctionDecoratedWithAsyncioCoroutine() {
     doMultiFileTest("a.py");
@@ -242,6 +254,25 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
 
   // PY-13273
   public void testComprehensionInDecorator() {
+    doTest();
+  }
+
+  // PY-28406
+  public void testFromNamespacePackageImportInManySourceRoots() {
+    doMultiFileTest("a.py", Arrays.asList("root1", "root2"));
+  }
+
+  public void testNamespacePackageRedundantUnion() {
+    doMultiFileTest("a.py", Arrays.asList("root1", "root2"));
+  }
+
+  // PY-18629
+  public void testPreferImportedModuleOverNamespacePackage() {
+    doMultiFileTest();
+  }
+
+  // PY-27964
+  public void testUsingFunctoolsSingledispatch() {
     doTest();
   }
 }

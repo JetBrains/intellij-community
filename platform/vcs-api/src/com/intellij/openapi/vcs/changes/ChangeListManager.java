@@ -50,6 +50,7 @@ public abstract class ChangeListManager implements ChangeListModification {
                                          @Nullable String title,
                                          @Nullable ModalityState state);
 
+  @Deprecated
   public abstract void invokeAfterUpdate(@NotNull Runnable afterUpdate,
                                          @NotNull InvokeAfterUpdateMode mode,
                                          @Nullable String title,
@@ -100,6 +101,12 @@ public abstract class ChangeListManager implements ChangeListModification {
   @Nullable
   public abstract LocalChangeList getChangeList(String id);
 
+
+  @NotNull
+  public abstract List<LocalChangeList> getChangeLists(@NotNull Change change);
+
+  @NotNull
+  public abstract List<LocalChangeList> getChangeLists(@NotNull VirtualFile file);
 
   @Nullable
   public abstract LocalChangeList getChangeList(@NotNull Change change);
@@ -154,6 +161,7 @@ public abstract class ChangeListManager implements ChangeListModification {
 
   public abstract void scheduleAutomaticEmptyChangeListDeletion(@NotNull LocalChangeList list);
 
+  public abstract void scheduleAutomaticEmptyChangeListDeletion(@NotNull LocalChangeList list, boolean silently);
 
   @NotNull
   public abstract IgnoredFileBean[] getFilesToIgnore();

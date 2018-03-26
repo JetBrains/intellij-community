@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.ide.CutProvider;
@@ -42,8 +42,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.Grayer;
 import com.intellij.ui.components.Magnificator;
+import com.intellij.ui.paint.PaintUtil;
 import com.intellij.util.ui.JBSwingUtilities;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.intellij.lang.annotations.MagicConstant;
@@ -230,7 +230,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
         UISettings.setupAntialiasing(gg);
       }
       gg.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, myEditor.myFractionalMetricsHintValue);
-      AffineTransform origTx = JBUI.alignToIntGrid(gg, true, false);
+      AffineTransform origTx = PaintUtil.alignToInt(gg, true, false);
       myEditor.paint(gg);
       if (origTx != null) gg.setTransform(origTx);
     }
@@ -897,13 +897,12 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     public AccessibleEditorComponentImpl() {
       if (myEditor.isDisposed()) return;
 
-      myEditor.getCaretModel().addCaretListener(this);
+      myEditor.getCaretModel().addCaretListener(this, myEditor.getDisposable());
       myEditor.getDocument().addDocumentListener(this);
 
       Disposer.register(myEditor.getDisposable(), new Disposable() {
         @Override
         public void dispose() {
-          myEditor.getCaretModel().removeCaretListener(AccessibleEditorComponentImpl.this);
           myEditor.getDocument().removeDocumentListener(AccessibleEditorComponentImpl.this);
         }
       });

@@ -16,52 +16,52 @@ import java.util.function.Consumer
  */
 abstract class BaseIdeaProperties extends ProductProperties {
   protected static final List<String> JAVA_API_MODULES = [
-    "compiler-openapi",
-    "debugger-openapi",
-    "dom-openapi",
-    "execution-openapi",
-    "remote-servers-java-api",
-    "testFramework-java",
-    "testFramework.core"
+    "intellij.java.compiler",
+    "intellij.java.debugger",
+    "intellij.xml.dom",
+    "intellij.java.execution",
+    "intellij.java.remoteServers",
+    "intellij.java.testFramework",
+    "intellij.platform.testFramework.core"
   ]
   protected static final List<String> JAVA_IMPLEMENTATION_MODULES = [
-    "compiler-impl",
-    "debugger-impl",
-    "dom-impl",
-    "execution-impl",
-    "external-system-impl",
-    "idea-ui",
-    "java-structure-view",
-    "manifest",
-    "remote-servers-java-impl",
-    "testFramework",
-    "tests_bootstrap",
-    "ui-designer-core"
+    "intellij.java.compiler.impl",
+    "intellij.java.debugger.impl",
+    "intellij.xml.dom.impl",
+    "intellij.java.execution.impl",
+    "intellij.platform.externalSystem.impl",
+    "intellij.java.ui",
+    "intellij.java.structureView",
+    "intellij.java.manifest",
+    "intellij.java.remoteServers.impl",
+    "intellij.platform.testFramework",
+    "intellij.tools.testsBootstrap",
+    "intellij.uiDesigner"
   ]
   protected static final List<String> BUNDLED_PLUGIN_MODULES = [
-    "copyright", "properties", "terminal", "editorconfig", "settings-repository", "yaml",
-    "tasks-core", "tasks-java",
-    "maven", "gradle",
-    "git4idea", "remote-servers-git", "remote-servers-git-java", "svn4idea", "hg4idea", "github", "cvs-plugin",
-    "jetgroovy", "junit", "testng", "xpath", "xslt-debugger", "android-plugin", "javaFX-CE",
-    "java-i18n", "ant", "ui-designer", "ByteCodeViewer", "coverage", "java-decompiler-plugin", "devkit", "eclipse",
-    "IntelliLang", "IntelliLang-java", "IntelliLang-xml", "intellilang-jps-plugin", "stream-debugger", "smali"
+    "intellij.copyright", "intellij.properties", "intellij.terminal", "intellij.editorconfig", "intellij.settingsRepository", "intellij.yaml",
+    "intellij.tasks.core", "intellij.tasks.java",
+    "intellij.maven", "intellij.gradle",
+    "intellij.vcs.git", "intellij.platform.remoteServers.git", "intellij.java.remoteServers.git", "intellij.vcs.svn", "intellij.vcs.hg", "intellij.vcs.github", "intellij.vcs.cvs",
+    "intellij.groovy", "intellij.junit", "intellij.testng", "intellij.xpath", "intellij.xslt.debugger", "intellij.android.plugin", "intellij.javaFX.community",
+    "intellij.java.i18n", "intellij.ant", "intellij.java.guiForms.designer", "intellij.java.byteCodeViewer", "intellij.java.coverage", "intellij.java.decompiler", "intellij.devkit", "intellij.eclipse",
+    "intellij.platform.langInjection", "intellij.java.langInjection", "intellij.xml.langInjection", "intellij.java.langInjection.jps", "intellij.java.debugger.streams", "intellij.android.smali"
   ]
 
   BaseIdeaProperties() {
     productLayout.mainJarName = "idea.jar"
-    productLayout.searchableOptionsModule = "resources-en"
+    productLayout.searchableOptionsModule = "intellij.java.resources.en"
 
-    productLayout.additionalPlatformJars.put("external-system-rt.jar", "external-system-rt")
-    productLayout.additionalPlatformJars.put("jps-launcher.jar", "jps-launcher")
-    productLayout.additionalPlatformJars.put("jps-builders.jar", "jps-builders")
-    productLayout.additionalPlatformJars.put("jps-builders-6.jar", "jps-builders-6")
-    productLayout.additionalPlatformJars.put("aether-dependency-resolver.jar", "aether-dependency-resolver")
-    productLayout.additionalPlatformJars.put("jshell-protocol.jar", "jshell-protocol")
-    productLayout.additionalPlatformJars.putAll("resources.jar", ["resources", "resources-en"])
+    productLayout.additionalPlatformJars.put("external-system-rt.jar", "intellij.platform.externalSystem.rt")
+    productLayout.additionalPlatformJars.put("jps-launcher.jar", "intellij.platform.jps.build.launcher")
+    productLayout.additionalPlatformJars.put("jps-builders.jar", "intellij.platform.jps.build")
+    productLayout.additionalPlatformJars.put("jps-builders-6.jar", "intellij.platform.jps.build.javac.rt")
+    productLayout.additionalPlatformJars.put("aether-dependency-resolver.jar", "intellij.java.aetherDependencyResolver")
+    productLayout.additionalPlatformJars.put("jshell-protocol.jar", "intellij.java.jshell.protocol")
+    productLayout.additionalPlatformJars.putAll("resources.jar", ["intellij.java.resources", "intellij.java.resources.en"])
     productLayout.additionalPlatformJars.
-      putAll("javac2.jar", ["javac2", "forms-compiler", "forms_rt", "instrumentation-util", "instrumentation-util-8", "javac-ref-scanner-8"])
-    productLayout.additionalPlatformJars.putAll("annotations-java8.jar", ["annotations-common", "annotations-java8"])
+      putAll("javac2.jar", ["intellij.java.compiler.antTasks", "intellij.java.guiForms.compiler", "intellij.java.guiForms.rt", "intellij.java.compiler.instrumentationUtil", "intellij.java.compiler.instrumentationUtil.java8", "intellij.java.jps.javacRefScanner8"])
+    productLayout.additionalPlatformJars.putAll("annotations-java8.jar", ["intellij.platform.annotations.common", "intellij.platform.annotations"])
 
     def JAVA_API_JAR = "java-api.jar"
     def JAVA_IMPL_JAR = "java-impl.jar"
@@ -71,22 +71,22 @@ abstract class BaseIdeaProperties extends ProductProperties {
     productLayout.platformLayoutCustomizer = { PlatformLayout layout ->
       layout.customize {
         def JAVA_RESOURCES_JAR = "java_resources_en.jar"
-        withModule("java-analysis-api", JAVA_API_JAR, JAVA_RESOURCES_JAR)
-        withModule("java-indexing-api", JAVA_API_JAR, JAVA_RESOURCES_JAR)
-        withModule("java-psi-api", JAVA_API_JAR, JAVA_RESOURCES_JAR)
-        withModule("openapi", JAVA_API_JAR, JAVA_RESOURCES_JAR)
-        withModule("jsp-base-openapi", JAVA_API_JAR, JAVA_RESOURCES_JAR)
-        withModule("jsp-openapi", JAVA_API_JAR, JAVA_RESOURCES_JAR)
-        withModule("uast-common", JAVA_API_JAR, JAVA_RESOURCES_JAR)
+        withModule("intellij.java.analysis", JAVA_API_JAR, JAVA_RESOURCES_JAR)
+        withModule("intellij.java.indexing", JAVA_API_JAR, JAVA_RESOURCES_JAR)
+        withModule("intellij.java.psi", JAVA_API_JAR, JAVA_RESOURCES_JAR)
+        withModule("intellij.java", JAVA_API_JAR, JAVA_RESOURCES_JAR)
+        withModule("intellij.jsp.base", JAVA_API_JAR, JAVA_RESOURCES_JAR)
+        withModule("intellij.jsp", JAVA_API_JAR, JAVA_RESOURCES_JAR)
+        withModule("intellij.platform.uast", JAVA_API_JAR, JAVA_RESOURCES_JAR)
 
-        withModule("java-analysis-impl", JAVA_IMPL_JAR, JAVA_RESOURCES_JAR)
-        withModule("java-indexing-impl", JAVA_IMPL_JAR, JAVA_RESOURCES_JAR)
-        withModule("java-psi-impl", JAVA_IMPL_JAR, JAVA_RESOURCES_JAR)
-        withModule("java-impl", JAVA_IMPL_JAR, JAVA_RESOURCES_JAR)
-        withModule("jsp-spi", JAVA_IMPL_JAR, JAVA_RESOURCES_JAR)
-        withModule("uast-java", JAVA_IMPL_JAR, JAVA_RESOURCES_JAR)
+        withModule("intellij.java.analysis.impl", JAVA_IMPL_JAR, JAVA_RESOURCES_JAR)
+        withModule("intellij.java.indexing.impl", JAVA_IMPL_JAR, JAVA_RESOURCES_JAR)
+        withModule("intellij.java.psi.impl", JAVA_IMPL_JAR, JAVA_RESOURCES_JAR)
+        withModule("intellij.java.impl", JAVA_IMPL_JAR, JAVA_RESOURCES_JAR)
+        withModule("intellij.jsp.spi", JAVA_IMPL_JAR, JAVA_RESOURCES_JAR)
+        withModule("intellij.java.uast", JAVA_IMPL_JAR, JAVA_RESOURCES_JAR)
 
-        withModule("java-runtime", "idea_rt.jar", null)
+        withModule("intellij.java.rt", "idea_rt.jar", null)
         withArtifact("debugger-agent", "rt")
         withArtifact("debugger-agent-storage", "rt")
         withProjectLibrary("Eclipse")
@@ -99,8 +99,8 @@ abstract class BaseIdeaProperties extends ProductProperties {
       }
     } as Consumer<PlatformLayout>
 
-    additionalModulesToCompile = ["jps-standalone-builder"]
-    modulesToCompileTests = ["jps-builders"]
+    additionalModulesToCompile = ["intellij.tools.jps.build.standalone"]
+    modulesToCompileTests = ["intellij.platform.jps.build"]
     productLayout.buildAllCompatiblePlugins = true
     productLayout.prepareCustomPluginRepositoryForPublishedPlugins = SystemProperties.getBooleanProperty('intellij.build.prepare.plugin.repository', false)
   }

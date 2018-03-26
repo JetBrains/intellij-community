@@ -192,7 +192,7 @@ class CollectConversion {
 
       PsiMethodCallExpression innerCall = (PsiMethodCallExpression)args[0];
       PsiMethod collectorMethod = innerCall.resolveMethod();
-      if (collectorMethod != null && collectorMethod.getParameterList().getParametersCount() > 0) {
+      if (collectorMethod != null && !collectorMethod.getParameterList().isEmpty()) {
         context.getEditor().getCaretModel().moveToOffset(innerCall.getArgumentList().getFirstChild().getTextRange().getEndOffset());
       }
 

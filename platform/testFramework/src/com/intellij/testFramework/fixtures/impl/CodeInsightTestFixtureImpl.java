@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.analysis.AnalysisScope;
@@ -29,6 +15,7 @@ import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.codeInsight.highlighting.actions.HighlightUsagesAction;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.impl.CachedIntentions;
 import com.intellij.codeInsight.intention.impl.IntentionListStep;
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
 import com.intellij.codeInsight.lookup.Lookup;
@@ -68,7 +55,6 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -137,7 +123,6 @@ import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.ComparisonFailure;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -236,7 +221,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           // canceled because of an exception, no need to repeat the same a lot times
           throw e;
         }
-        
+
         PsiDocumentManager.getInstance(project).commitAllDocuments();
         UIUtil.dispatchAllInvocationEvents();
         exception = e;
@@ -264,11 +249,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @NotNull
   private static List<IntentionAction> doGetAvailableIntentions(@NotNull Editor editor, @NotNull PsiFile file) {
-    ShowIntentionsPass.IntentionsInfo intentions = new ShowIntentionsPass.IntentionsInfo();
-    ShowIntentionsPass.getActionsToShow(editor, file, intentions, -1);
+    ShowIntentionsPass.IntentionsInfo intentions = ShowIntentionsPass.getActionsToShow(editor, file);
 
     List<IntentionAction> result = new ArrayList<>();
-    IntentionListStep intentionListStep = new IntentionListStep(null, intentions, editor, file, file.getProject());
+    IntentionListStep intentionListStep = new IntentionListStep(null, editor, file, file.getProject(),
+                                                                CachedIntentions.create(file.getProject(), file, editor, intentions));
     for (Map.Entry<IntentionAction, List<IntentionAction>> entry : intentionListStep.getActionsWithSubActions().entrySet()) {
       result.add(entry.getKey());
       result.addAll(entry.getValue());
@@ -357,14 +342,16 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   private static void copyContent(File sourceFile, VirtualFile targetFile) {
-    new WriteAction() {
-      @Override
-      protected void run(@NotNull Result result) throws IOException {
+    try {
+      WriteAction.runAndWait(() -> {
         targetFile.setBinaryContent(FileUtil.loadFileBytes(sourceFile));
         // update the document now, otherwise MemoryDiskConflictResolver will do it later at unexpected moment of time
         FileDocumentManager.getInstance().reloadFiles(targetFile);
-      }
-    }.execute();
+      });
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @NotNull
@@ -586,6 +573,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return getAvailableIntentions(getHostEditor(), getHostFileAtCaret());
   }
 
+  @NotNull
   private Editor getHostEditor() {
     return InjectedLanguageUtil.getTopLevelEditor(getEditor());
   }
@@ -1006,26 +994,26 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   protected PsiFile addFileToProject(@NotNull final String rootPath, @NotNull final String relativePath, @NotNull final String fileText) {
-    VirtualFile file = new WriteCommandAction<VirtualFile>(getProject()) {
-      @Override
-      protected void run(@NotNull Result<VirtualFile> result) {
+    try {
+      VirtualFile file = WriteCommandAction.runWriteCommandAction(getProject(), (ThrowableComputable<VirtualFile, IOException>)() -> {
         try {
           if (myTempDirFixture instanceof LightTempDirTestFixtureImpl) {
-            result.setResult(myTempDirFixture.createFile(relativePath, fileText));
+            return myTempDirFixture.createFile(relativePath, fileText);
           }
           else {
-            result.setResult(((HeavyIdeaTestFixture)myProjectFixture).addFileToProject(rootPath, relativePath, fileText).getViewProvider().getVirtualFile());
+            return ((HeavyIdeaTestFixture)myProjectFixture).addFileToProject(rootPath, relativePath, fileText).getViewProvider()
+                                                           .getVirtualFile();
           }
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
         }
         finally {
           PsiManager.getInstance(getProject()).dropPsiCaches();
         }
-      }
-    }.execute().getResultObject();
-    return ReadAction.compute(() -> PsiManager.getInstance(getProject()).findFile(file));
+      });
+      return ReadAction.compute(() -> PsiManager.getInstance(getProject()).findFile(file));
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public <T> void registerExtension(final ExtensionsArea area, final ExtensionPointName<T> epName, final T extension) {
@@ -1110,12 +1098,12 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public void saveText(@NotNull final VirtualFile file, @NotNull final String text) {
-    new WriteAction() {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        VfsUtil.saveText(file, text);
-      }
-    }.execute().throwException();
+    try {
+    WriteAction.runAndWait(() -> VfsUtil.saveText(file, text));
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @Override
@@ -1138,26 +1126,20 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public void checkResult(@NotNull String text, boolean stripTrailingSpaces) {
-    new WriteCommandAction(getProject()) {
-      @Override
-      protected void run(@NotNull Result result) {
-        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-        EditorUtil.fillVirtualSpaceUntilCaret(getHostEditor());
-        checkResult("TEXT", stripTrailingSpaces, SelectionAndCaretMarkupLoader.fromText(text), getHostFile().getText());
-      }
-    }.execute();
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+      EditorUtil.fillVirtualSpaceUntilCaret(getHostEditor());
+      checkResult("TEXT", stripTrailingSpaces, SelectionAndCaretMarkupLoader.fromText(text), getHostFile().getText());
+    });
   }
 
   @Override
   public void checkResult(@NotNull String filePath, @NotNull String text, boolean stripTrailingSpaces) {
-    new WriteCommandAction(getProject()) {
-      @Override
-      protected void run(@NotNull Result result) {
-        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-        PsiFile psiFile = getFileToCheck(filePath);
-        checkResult("TEXT", stripTrailingSpaces, SelectionAndCaretMarkupLoader.fromText(text), psiFile.getText());
-      }
-    }.execute();
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+      PsiFile psiFile = getFileToCheck(filePath);
+      checkResult("TEXT", stripTrailingSpaces, SelectionAndCaretMarkupLoader.fromText(text), psiFile.getText());
+    });
   }
 
   @Override
@@ -1217,7 +1199,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       myVirtualFilePointerTracker = new VirtualFilePointerTracker();
     }
   }
-  
+
   protected boolean shouldTrackVirtualFilePointers() {
     return true;
   }
@@ -1242,7 +1224,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         myChooseByNamePopup = null;
       })
       .append(() -> disposeRootDisposable())
-      .append(() -> EdtTestUtil.runInEdtAndWait(() -> myProjectFixture.tearDown())) 
+      .append(() -> EdtTestUtil.runInEdtAndWait(() -> myProjectFixture.tearDown()))
       .append(() -> EdtTestUtil.runInEdtAndWait(() -> myTempDirFixture.tearDown()))
       .append(() -> super.tearDown())
       .append(() -> {
@@ -1291,12 +1273,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     final String extension = fileType.getDefaultExtension();
     final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     if (fileTypeManager.getFileTypeByExtension(extension) != fileType) {
-      new WriteCommandAction(getProject()) {
-        @Override
-        protected void run(@NotNull Result result) {
-          fileTypeManager.associateExtension(fileType, extension);
-        }
-      }.execute();
+      WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+        fileTypeManager.associateExtension(fileType, extension);
+      });
     }
     final String fileName = "aaa." + extension;
     return configureByText(fileName, text);
@@ -1305,38 +1284,41 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public PsiFile configureByText(@NotNull final String fileName, @NotNull final String text) {
     assertInitialized();
-    VirtualFile vFile = new WriteCommandAction<VirtualFile>(getProject()) {
-      @Override
-      protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
-        final VirtualFile vFile;
+    VirtualFile vFile = null;
+    try {
+      vFile = WriteCommandAction.writeCommandAction(getProject()).compute(() -> {
+        final VirtualFile file;
         if (myTempDirFixture instanceof LightTempDirTestFixtureImpl) {
           final VirtualFile root = LightPlatformTestCase.getSourceRoot();
           root.refresh(false, false);
-          vFile = root.findOrCreateChildData(this, fileName);
-          assertNotNull(fileName + " not found in " + root.getPath(), vFile);
+          file = root.findOrCreateChildData(this, fileName);
+          assertNotNull(fileName + " not found in " + root.getPath(), file);
         }
         else if (myTempDirFixture instanceof TempDirTestFixtureImpl) {
           final File tempFile = ((TempDirTestFixtureImpl)myTempDirFixture).createTempFile(fileName);
-          vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempFile);
-          assertNotNull(tempFile + " not found", vFile);
+          file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempFile);
+          assertNotNull(tempFile + " not found", file);
         }
         else {
-          vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(getTempDirPath(), fileName));
-          assertNotNull(fileName + " not found in " + getTempDirPath(), vFile);
+          file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(getTempDirPath(), fileName));
+          assertNotNull(fileName + " not found in " + getTempDirPath(), file);
         }
 
-        prepareVirtualFile(vFile);
+        prepareVirtualFile(file);
 
-        final Document document = FileDocumentManager.getInstance().getCachedDocument(vFile);
+        final Document document = FileDocumentManager.getInstance().getCachedDocument(file);
         if (document != null) {
           PsiDocumentManager.getInstance(getProject()).doPostponedOperationsAndUnblockDocument(document);
           FileDocumentManager.getInstance().saveDocument(document);
         }
 
-        VfsUtil.saveText(vFile, text);
-        result.setResult(vFile);
-      }
-    }.execute().getResultObject();
+        VfsUtil.saveText(file, text);
+        return file;
+      });
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
     configureInner(vFile, SelectionAndCaretMarkupLoader.fromFile(vFile));
     return getFile();
   }
@@ -1610,19 +1592,19 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    String newFileText1 = loader.newFileText;
+    String expectedText = loader.newFileText;
     if (stripTrailingSpaces) {
-      newFileText1 = stripTrailingSpaces(newFileText1);
+      expectedText = stripTrailingSpaces(expectedText);
     }
 
     actualText = StringUtil.convertLineSeparators(actualText);
 
-    if (!Comparing.equal(newFileText1, actualText)) {
+    if (!Comparing.equal(expectedText, actualText)) {
       if (loader.filePath != null) {
-        throw new FileComparisonFailure(expectedFile, newFileText1, actualText, loader.filePath);
+        throw new FileComparisonFailure(expectedFile, expectedText, actualText, loader.filePath);
       }
       else {
-        throw new ComparisonFailure(expectedFile, newFileText1, actualText);
+        throw new ComparisonFailure(expectedFile, expectedText, actualText);
       }
     }
 
@@ -1643,21 +1625,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @NotNull
   public String getFoldingDescription(boolean withCollapseStatus) {
-    final Editor topEditor = getTopEditor(myEditor);
+    final Editor topEditor = getHostEditor();
     CodeFoldingManager.getInstance(getProject()).buildInitialFoldings(topEditor);
     return getTagsFromSegments(topEditor.getDocument().getText(),
                                Arrays.asList(topEditor.getFoldingModel().getAllFoldRegions()),
                                FOLD,
                                foldRegion -> "text=\'" + foldRegion.getPlaceholderText() + "\'"
                                              + (withCollapseStatus ? " expand=\'" + foldRegion.isExpanded() + "\'" : ""));
-  }
-
-  @Contract("null -> null")
-  private static Editor getTopEditor(Editor editor) {
-    while(editor instanceof EditorWindow) {
-      editor = ((EditorWindow)editor).getDelegate();
-    }
-    return editor;
   }
 
   @NotNull
@@ -1919,7 +1893,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         }
         catch (StubTextInconsistencyException e) {
           PsiTestUtil.compareStubTexts(e);
-        } 
+        }
       });
       UIUtil.dispatchAllInvocationEvents();
       checkPsiTextConsistency(project, vFile);
@@ -1944,7 +1918,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   private static void setReadOnly(VirtualFile vFile, boolean readOnlyStatus) {
     try {
-      WriteAction.run(() -> ReadOnlyAttributeUtil.setReadOnlyAttribute(vFile, readOnlyStatus));
+      WriteAction.runAndWait(() -> ReadOnlyAttributeUtil.setReadOnlyAttribute(vFile, readOnlyStatus));
     }
     catch (IOException e) {
       throw new UncheckedIOException(e);

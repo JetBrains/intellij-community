@@ -42,12 +42,7 @@ public class JarRootsRefreshTest extends PlatformTestCase {
     File jar = IoTestUtil.createTestJar();
     VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(jar);
     assertNotNull(vFile);
-    new WriteCommandAction.Simple(myProject) {
-      @Override
-      protected void run() {
-        PsiTestUtil.addContentRoot(myModule, vFile.getParent());
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(myProject).run(() -> PsiTestUtil.addContentRoot(myModule, vFile.getParent()));
 
     VirtualFile jarRoot = JarFileSystem.getInstance().getRootByLocal(vFile);
     assertNotNull(jarRoot);

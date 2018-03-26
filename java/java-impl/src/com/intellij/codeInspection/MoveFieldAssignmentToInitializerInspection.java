@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -85,7 +85,7 @@ public class MoveFieldAssignmentToInitializerInspection extends AbstractBaseJava
     }
     // Or allow simple initializers
     PsiExpression value = assignment.getRExpression();
-    return ExpressionUtils.isSimpleExpression(value) || ConstructionUtils.isEmptyCollectionInitializer(value);
+    return ExpressionUtils.isSafelyRecomputableExpression(value) || ConstructionUtils.isEmptyCollectionInitializer(value);
   }
 
   private static boolean isValidAsFieldInitializer(final PsiExpression initializer,
@@ -241,11 +241,12 @@ public class MoveFieldAssignmentToInitializerInspection extends AbstractBaseJava
             parent instanceof PsiWhileStatement ||
             parent instanceof PsiForStatement ||
             parent instanceof PsiForeachStatement) {
-          ct.replaceAndRestoreComments(statement, ";");
+          ct.replace(statement, ";");
         }
         else {
-          ct.deleteAndRestoreComments(statement);
+          ct.delete(statement);
         }
+        ct.insertCommentsBefore(field);
         // if we replace/delete several assignments we want to restore comments at each place separately
         ct = new CommentTracker();
       }
@@ -253,8 +254,8 @@ public class MoveFieldAssignmentToInitializerInspection extends AbstractBaseJava
       // Delete empty initializer left after fix
       if (owner instanceof PsiClassInitializer) {
         PsiCodeBlock body = ((PsiClassInitializer)owner).getBody();
-        if(body.getStatements().length == 0 && Arrays.stream(body.getChildren()).noneMatch(PsiComment.class::isInstance)) {
-          owner.delete();
+        if(body.isEmpty() && Arrays.stream(body.getChildren()).noneMatch(PsiComment.class::isInstance)) {
+          new CommentTracker().deleteAndRestoreComments(owner);
         }
       }
     }

@@ -57,6 +57,12 @@ class TerminalFixture(project: Project, robot: Robot): ToolWindowFixture("Termin
     }
   }
 
+  fun waitUntilRegExAppeared(regex: Regex, timeoutInSeconds: Int = 60) {
+    waitUntil(condition = "'$regex' appeared in terminal", timeoutInSeconds = timeoutInSeconds) {
+      terminalTextBuffer.screenLines.contains(regex)
+    }
+  }
+
   private fun getJBTerminalPanel(content: Content): JBTerminalPanel? {
     return try {
       myRobot.finder().find(content.component) { component -> component is JBTerminalPanel } as JBTerminalPanel

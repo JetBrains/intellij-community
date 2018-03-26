@@ -20,10 +20,7 @@ import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.PopupMenuListenerAdapter;
-import com.intellij.util.ui.JBDimension;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,7 +30,6 @@ import javax.swing.event.PopupMenuEvent;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicArrowButton;
 import javax.swing.plaf.basic.BasicComboBoxEditor;
-import javax.swing.plaf.basic.BasicComboPopup;
 import javax.swing.plaf.basic.ComboPopup;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
@@ -57,7 +53,6 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
 
   private MouseListener buttonReleaseListener;
   private MouseListener buttonHoverListener;
-  private PropertyChangeListener propertyListener;
 
   private MouseListener editorHoverListener;
 
@@ -72,33 +67,29 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
     if (!comboBox.isEditable()) {
       comboBox.addMouseListener(mouseListener = new ComboBoxMouseListener());
     }
+  }
 
-    propertyListener = (evt) -> {
-      if("enabled".equals(evt.getPropertyName())) {
+  @Override public void uninstallListeners() {
+    super.uninstallListeners();
+    comboBox.removeMouseListener(mouseListener);
+  }
+
+  @Override
+  protected PropertyChangeListener createPropertyListener() {
+    return e -> {
+      if("enabled".equals(e.getPropertyName())) {
         EditorTextField etf = UIUtil.findComponentOfType((JComponent)editor, EditorTextField.class);
         if (etf != null) {
           etf.setBackground(getComboBackground(true));
         }
-      } else if ("editable".equals(evt.getPropertyName())) {
-        if (evt.getNewValue() == Boolean.TRUE) {
+      } else if ("editable".equals(e.getPropertyName())) {
+        if (e.getNewValue() == Boolean.TRUE) {
           comboBox.removeMouseListener(mouseListener);
         } else {
           comboBox.addMouseListener(mouseListener);
         }
       }
     };
-
-    comboBox.addPropertyChangeListener(propertyListener);
-  }
-
-  @Override public void uninstallListeners() {
-    super.uninstallListeners();
-    comboBox.removeMouseListener(mouseListener);
-
-    if (propertyListener != null) {
-      comboBox.removePropertyChangeListener(propertyListener);
-      propertyListener = null;
-    }
   }
 
   @Override public void paint(Graphics g, JComponent c) {
@@ -165,24 +156,24 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
     c.setForeground(comboBox.isEnabled() ? UIManager.getColor("Label.foreground") : UIManager.getColor("Label.disabledForeground"));
 
     Rectangle r = new Rectangle(bounds);
-    boolean changeOpaque = false;
-    if (c instanceof JComponent) {
-      JComponent jc = (JComponent)c;
-      jc.setBorder(DEFAULT_EDITOR_BORDER);
-      JBInsets.removeFrom(r, jc.getInsets());
+    JComponent jc = (JComponent)c;
 
-      changeOpaque = c.isOpaque();
-      // paint selection in table-cell-editor mode correctly
-      if (changeOpaque) {
-        jc.setOpaque(false);
-      }
+    jc.setBorder(DEFAULT_EDITOR_BORDER);
+    JBInsets.removeFrom(r, jc.getInsets());
+
+    // paint selection in table-cell-editor mode correctly
+    boolean changeOpaque = isTableCellEditor(comboBox) && c.isOpaque();
+    if (changeOpaque) {
+      jc.setOpaque(false);
+    } else if (c.isOpaque()) {
+      c.setBackground(getComboBackground(true));
     }
 
     currentValuePane.paintComponent(g, c, comboBox, r.x, r.y, r.width, r.height, c instanceof JPanel);
 
     // return opaque for combobox popup items painting
     if (changeOpaque) {
-      ((JComponent)c).setOpaque(true);
+      jc.setOpaque(true);
     }
   }
 
@@ -217,9 +208,11 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
 
         Graphics2D g2 = (Graphics2D)g.create();
         try {
+          g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+          g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
+
           Rectangle outerRect = new Rectangle(getSize());
-          JBInsets.removeFrom(outerRect, comboBox.getComponentOrientation().isLeftToRight() ?
-                                         JBUI.insets(1, 0, 1, 1) : JBUI.insets(1, 1, 1, 0));
+          JBInsets.removeFrom(outerRect, JBUI.insets(1));
 
           Rectangle innerRect = new Rectangle(outerRect);
           JBInsets.removeFrom(innerRect, JBUI.insets(1));
@@ -251,7 +244,7 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
             }
           }
 
-          Icon icon = MacIntelliJIconCache.getIcon("comboDropTriangle", false, false, isEnabled());
+          Icon icon = getArrowIcon(this);
           int x = JBUI.scale(5);
           int y = (getHeight() - icon.getIconHeight()) / 2;
           icon.paintIcon(this, g2, x, y);
@@ -263,8 +256,6 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
 
     button.setOpaque(false);
 
-    button.setBorder(comboBox.getComponentOrientation().isLeftToRight() ?
-                     JBUI.Borders.empty(2, 1, 2, 2) : JBUI.Borders.empty(2, 2, 2, 1));
     buttonReleaseListener = new MouseAdapter() {
       @Override
       public void mouseReleased(MouseEvent e) {
@@ -279,6 +270,10 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
     button.addMouseListener(buttonHoverListener);
     button.addMouseListener(buttonReleaseListener);
     return button;
+  }
+
+  public static Icon getArrowIcon(@NotNull JComponent c) {
+    return IconCache.getIcon("comboDropTriangle", false, false, c.isEnabled());
   }
 
   @Override public void unconfigureArrowButton() {
@@ -517,8 +512,9 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
   }
 
 
-  @Override protected ComboPopup createPopup() {
-    return new BasicComboPopup(comboBox) {
+  @Override
+  protected ComboPopup createPopup() {
+    return new CustomComboPopup(comboBox) {
       @Override
       protected void configurePopup() {
         super.configurePopup();

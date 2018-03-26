@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.scratch;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -35,15 +21,9 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiErrorElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.SyntaxTraverser;
+import com.intellij.psi.*;
 import com.intellij.ui.LayeredIcon;
-import com.intellij.util.Consumer;
-import com.intellij.util.Function;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.PathUtil;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
@@ -101,7 +81,7 @@ public class ScratchFileActions {
       Project project = e.getProject();
       if (project == null) return;
 
-      ScratchFileCreationHelper.Context context = createContext(project, e);
+      ScratchFileCreationHelper.Context context = createContext(e, project);
       Consumer<Language> consumer = l -> {
         context.language = l;
         ScratchFileCreationHelper.EXTENSION.forLanguage(context.language).prepareText(
@@ -112,7 +92,7 @@ public class ScratchFileActions {
         consumer.consume(context.language);
       }
       else {
-        LRUPopupBuilder.forFileLanguages(project, null, consumer).showCenteredInCurrentWindow(project);
+        LRUPopupBuilder.forFileLanguages(project, "New " + ActionsBundle.actionText(ACTION_ID), null, consumer).showCenteredInCurrentWindow(project);
       }
     }
 
@@ -127,6 +107,7 @@ public class ScratchFileActions {
     }
 
     private boolean isIdeWithoutNewSubmenu() {
+      if (PlatformUtils.isRider()) return true;
       final AnAction group = ActionManager.getInstance().getActionOrStub(SMALLER_IDE_CONTAINER_GROUP);
       return group instanceof DefaultActionGroup && ContainerUtil.find(((DefaultActionGroup)group).getChildActionsOrStubs(), action ->
         action == this || (action instanceof ActionStub && ((ActionStub)action).getId().equals(ACTION_ID))) != null;
@@ -145,7 +126,7 @@ public class ScratchFileActions {
     public void actionPerformed(@NotNull AnActionEvent e) {
       Project project = e.getProject();
       if (project == null) return;
-      ScratchFileCreationHelper.Context context = createContext(project, e);
+      ScratchFileCreationHelper.Context context = createContext(e, project);
       context.filePrefix = "buffer";
       context.createOption = ScratchFileService.Option.create_if_missing;
       context.fileCounter = ScratchFileActions::nextBufferIndex;
@@ -155,9 +136,13 @@ public class ScratchFileActions {
   }
 
   @NotNull
-  static ScratchFileCreationHelper.Context createContext(@NotNull Project project, @NotNull AnActionEvent e) {
+  static ScratchFileCreationHelper.Context createContext(@NotNull AnActionEvent e, @NotNull Project project) {
     PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
     Editor editor = e.getData(CommonDataKeys.EDITOR);
+    if (file == null && editor != null) {
+      // see data provider in com.intellij.diff.tools.holders.TextEditorHolder
+      file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    }
 
     ScratchFileCreationHelper.Context context = new ScratchFileCreationHelper.Context();
     context.text = StringUtil.notNullize(getSelectionText(editor));
@@ -261,7 +246,7 @@ public class ScratchFileActions {
       JBIterable<VirtualFile> files = JBIterable.of(e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)).
         filter(fileFilter(project));
       if (project == null || files.isEmpty()) return;
-      actionPerformedImpl(e, project, files);
+      actionPerformedImpl(e, project, "Change " + getLanguageTerm(), files);
     }
 
     @NotNull
@@ -270,7 +255,7 @@ public class ScratchFileActions {
     }
 
     @NotNull
-    protected Function<VirtualFile, Language> fileLanguage(final Project project) {
+    protected Function<VirtualFile, Language> fileLanguage(@NotNull Project project) {
       return new Function<VirtualFile, Language>() {
         ScratchFileService fileService = ScratchFileService.getInstance();
 
@@ -282,10 +267,14 @@ public class ScratchFileActions {
       };
     }
 
-    protected void actionPerformedImpl(AnActionEvent e, Project project, JBIterable<VirtualFile> files) {
+    protected void actionPerformedImpl(@NotNull AnActionEvent e,
+                                       @NotNull Project project,
+                                       @NotNull String title,
+                                       @NotNull JBIterable<VirtualFile> files) {
       ScratchFileService fileService = ScratchFileService.getInstance();
       PerFileMappings<Language> mapping = fileService.getScratchesMapping();
-      LRUPopupBuilder.forFileLanguages(project, files, mapping).showInBestPositionFor(e.getDataContext());
+      LRUPopupBuilder.forFileLanguages(project, title, files, mapping)
+                     .showInBestPositionFor(e.getDataContext());
     }
   }
 }

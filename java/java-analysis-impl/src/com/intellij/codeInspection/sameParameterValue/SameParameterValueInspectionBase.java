@@ -8,15 +8,22 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+
+import static com.intellij.codeInspection.reference.RefParameter.VALUE_IS_NOT_CONST;
+import static com.intellij.codeInspection.reference.RefParameter.VALUE_UNDEFINED;
 
 /**
  * @author max
@@ -44,8 +51,8 @@ public class SameParameterValueInspectionBase extends GlobalJavaBatchInspectionT
 
       RefParameter[] parameters = refMethod.getParameters();
       for (RefParameter refParameter : parameters) {
-        String value = refParameter.getActualValueIfSame();
-        if (value != null) {
+        Object value = refParameter.getActualConstValue();
+        if (value != VALUE_IS_NOT_CONST && value != RefParameter.VALUE_UNDEFINED) {
           if (!globalContext.shouldCheck(refParameter, this)) continue;
           if (problems == null) problems = new ArrayList<>(1);
           problems.add(registerProblem(manager, refParameter.getElement(), value, refParameter.isUsedForWriting()));
@@ -126,8 +133,6 @@ public class SameParameterValueInspectionBase extends GlobalJavaBatchInspectionT
   }
 
   private class LocalSameParameterValueInspection extends AbstractBaseJavaLocalInspectionTool {
-    private static final String NOT_CONST = "_NOT_CONST";
-
     private final SameParameterValueInspectionBase myGlobal;
 
     private LocalSameParameterValueInspection(SameParameterValueInspectionBase global) {
@@ -178,14 +183,15 @@ public class SameParameterValueInspectionBase extends GlobalJavaBatchInspectionT
           if (!method.getHierarchicalMethodSignature().getSuperSignatures().isEmpty()) return;
 
           PsiParameter lastParameter = parameters[parameters.length - 1];
-          final String[] paramValues;
+          final Object[] paramValues;
           final boolean hasVarArg = lastParameter.getType() instanceof PsiEllipsisType;
           if (hasVarArg) {
             if (parameters.length == 1) return;
-            paramValues = new String[parameters.length - 1];
+            paramValues = new Object[parameters.length - 1];
           } else {
-            paramValues = new String[parameters.length];
+            paramValues = new Object[parameters.length];
           }
+          Arrays.fill(paramValues, VALUE_UNDEFINED);
 
           if (UnusedSymbolUtil.processUsages(holder.getProject(), method.getContainingFile(), method, new EmptyProgressIndicator(), null, info -> {
             PsiElement element = info.getElement();
@@ -204,15 +210,15 @@ public class SameParameterValueInspectionBase extends GlobalJavaBatchInspectionT
             boolean needFurtherProcess = false;
             for (int i = 0; i < paramValues.length; i++) {
               Object value = paramValues[i];
-              final String currentArg = getArgValue(arguments[i]);
-              if (value == null) {
+              final Object currentArg = getArgValue(arguments[i]);
+              if (value == VALUE_UNDEFINED) {
                 paramValues[i] = currentArg;
-                if (currentArg != NOT_CONST) {
+                if (currentArg != VALUE_IS_NOT_CONST) {
                   needFurtherProcess = true;
                 }
-              } else if (value != NOT_CONST) {
-                if (!paramValues[i].equals(currentArg)) {
-                  paramValues[i] = NOT_CONST;
+              } else if (value != VALUE_IS_NOT_CONST) {
+                if (!Comparing.equal(paramValues[i], currentArg)) {
+                  paramValues[i] = VALUE_IS_NOT_CONST;
                 } else {
                   needFurtherProcess = true;
                 }
@@ -222,8 +228,8 @@ public class SameParameterValueInspectionBase extends GlobalJavaBatchInspectionT
             return needFurtherProcess;
           })) {
             for (int i = 0, length = paramValues.length; i < length; i++) {
-              String value = paramValues[i];
-              if (value != null && value != NOT_CONST) {
+              Object value = paramValues[i];
+              if (value != VALUE_UNDEFINED && value != VALUE_IS_NOT_CONST) {
                 holder.registerProblem(registerProblem(holder.getManager(), parameters[i], value, false));
               }
             }
@@ -232,21 +238,40 @@ public class SameParameterValueInspectionBase extends GlobalJavaBatchInspectionT
       };
     }
 
-    private String getArgValue(PsiExpression arg) {
-      return arg instanceof PsiLiteralExpression ? arg.getText() : NOT_CONST;
+    private Object getArgValue(PsiExpression arg) {
+      return RefParameterImpl.getExpressionValue(arg);
     }
   }
 
   private ProblemDescriptor registerProblem(@NotNull InspectionManager manager,
                                             PsiParameter parameter,
-                                            String value,
+                                            Object value,
                                             boolean usedForWriting) {
     final String name = parameter.getName();
+    String shortName;
+    String stringPresentation;
+    if (value instanceof PsiType) {
+      stringPresentation = ((PsiType)value).getCanonicalText() + ".class";
+      shortName = ((PsiType)value).getPresentableText() + ".class";
+    }
+    else {
+      if (value instanceof PsiField) {
+        stringPresentation = PsiFormatUtil.formatVariable((PsiVariable)value, 
+                                                          PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_FQ_NAME, 
+                                                          PsiSubstitutor.EMPTY);
+        shortName = PsiFormatUtil.formatVariable((PsiVariable)value, 
+                                                 PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_CONTAINING_CLASS, 
+                                                 PsiSubstitutor.EMPTY);
+      }
+      else {
+        stringPresentation = shortName =  String.valueOf(value);
+      }
+    }
     return manager.createProblemDescriptor(ObjectUtils.notNull(parameter.getNameIdentifier(), parameter),
                                            InspectionsBundle.message("inspection.same.parameter.problem.descriptor",
                                                                      name,
-                                                                     StringUtil.unquoteString(value)),
-                                           usedForWriting ? null : createFix(name, value),
+                                                                     StringUtil.unquoteString(shortName)),
+                                           usedForWriting ? null : createFix(name, stringPresentation),
                                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false);
   }
 }

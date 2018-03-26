@@ -50,6 +50,14 @@ public interface EclipseFormatterOptions {
 
   String OPTION_JOIN_WRAPPED_LINES = "org.eclipse.jdt.core.formatter.join_wrapped_lines";
 
+  String OPTION_ON_DEMAND_IMPORT_THRESHOLD = "org.eclipse.jdt.ui.ondemandthreshold";
+  String OPTION_ON_DEMAND_STATIC_IMPORT_THRESHOLD = "org.eclipse.jdt.ui.staticondemandthreshold";
+
+  String OPTION_IMPORT_ORDER = "org.eclipse.jdt.ui.importorder";
+  String OPTION_FORMATTER_PROFILE = "formatter_profile";
+
+  int DEFAULT_IMPORTS_THRESHOLD = 99;
+
   int WRAP_MASK = 0x70;
 
   int DO_NOT_WRAP                       = 0x00;

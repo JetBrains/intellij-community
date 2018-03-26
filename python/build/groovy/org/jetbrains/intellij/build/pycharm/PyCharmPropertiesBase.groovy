@@ -25,14 +25,14 @@ abstract class PyCharmPropertiesBase extends ProductProperties {
     baseFileName = "pycharm"
     reassignAltClickToMultipleCarets = true
     productLayout.mainJarName = "pycharm.jar"
-    productLayout.additionalPlatformJars.put("pycharm-pydev.jar", "python-pydev")
+    productLayout.additionalPlatformJars.put("pycharm-pydev.jar", "intellij.python.pydev")
   }
 
   @Override
   void copyAdditionalFiles(BuildContext context, String targetDirectory) {
     def tasks = BuildTasks.create(context)
-    tasks.zipSourcesOfModules(["python-pydev"], "$targetDirectory/lib/src/pycharm-pydev-src.zip")
-    tasks.zipSourcesOfModules(["python-openapi", "python-psi-api"], "$targetDirectory/lib/src/pycharm-openapi-src.zip")
+    tasks.zipSourcesOfModules(["intellij.python.pydev"], "$targetDirectory/lib/src/pycharm-pydev-src.zip")
+    tasks.zipSourcesOfModules(["intellij.python.community", "intellij.python.psi"], "$targetDirectory/lib/src/pycharm-openapi-src.zip")
 
     context.ant.copy(todir: "$targetDirectory/helpers") {
       fileset(dir: "$context.paths.communityHome/python/helpers")
@@ -63,8 +63,8 @@ abstract class PyCharmPropertiesBase extends ProductProperties {
 class PyPrebuiltIndicesGenerator implements ResourcesGenerator {
   @Override
   File generateResources(BuildContext context) {
-    CompilationTasks.create(context).compileModules(["python-community-tools"])
-    List<String> buildClasspath = context.getModuleRuntimeClasspath(context.findModule("python-community-tools"), false)
+    CompilationTasks.create(context).compileModules(["intellij.python.tools"])
+    List<String> buildClasspath = context.getModuleRuntimeClasspath(context.findModule("intellij.python.tools"), false)
 
     def zipPath = "$context.paths.temp/zips"
 

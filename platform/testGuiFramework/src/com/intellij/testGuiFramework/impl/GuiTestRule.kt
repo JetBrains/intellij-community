@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.impl
 
 import com.intellij.diagnostic.MessagePool
@@ -40,6 +26,7 @@ import com.intellij.testGuiFramework.impl.GuiTestUtilKt.runOnEdt
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.waitUntil
 import com.intellij.testGuiFramework.util.Key
 import com.intellij.ui.Splash
+import com.intellij.util.concurrency.AppExecutorUtil
 import org.fest.swing.core.Robot
 import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.exception.WaitTimedOutError
@@ -72,7 +59,6 @@ class GuiTestRule : TestRule {
   private var myProjectPath: File? = null
     set
   private var myTestName: String = "undefined"
-  private var currentTestErrors = 0
   private var currentTestDateStart: Date = Date()
 
   private val myRuleChain = RuleChain.emptyRuleChain()
@@ -112,7 +98,6 @@ class GuiTestRule : TestRule {
               errors.addAll(tearDown())  // shouldn't throw, but called inside a try-finally for defense in depth
             }
             finally {
-              currentTestErrors = errors.size
               //noinspection ThrowFromFinallyBlock; assertEmpty is intended to throw here
               MultipleFailureException.assertEmpty(errors)
             }
@@ -227,21 +212,17 @@ class GuiTestRule : TestRule {
   }
 
   inner class FatalErrorsFlusher : ExternalResource() {
-
     override fun after() {
       try {
-        if (currentTestErrors > 0) {
-          GuiTestUtilKt.waitUntil("fatal errors in message log will sync") {
-            MessagePool.getInstance().getFatalErrors(true, true).size >= currentTestErrors
-          }
-        }
-        MessagePool.getInstance().clearFatals()
+        val executorService = AppExecutorUtil.getAppExecutorService()
+        //wait 10 second for the termination of all
+        if (!executorService.awaitTermination(10, TimeUnit.SECONDS)) executorService.shutdownNow()
+        MessagePool.getInstance().clearErrors()
       }
       catch (e: Exception) {
         //TODO: log it
       }
     }
-
   }
 
   fun findWelcomeFrame(): WelcomeFrameFixture {

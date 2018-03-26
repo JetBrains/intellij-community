@@ -117,7 +117,7 @@ class SmartPointerTracker {
                                     (file.getUserData(refKey) != null ? "; has another pointer list" : "");
   }
 
-  private void processAlivePointers(@NotNull Processor<SmartPsiElementPointerImpl> processor) {
+  private void processAlivePointers(@NotNull Processor<SmartPsiElementPointerImpl<?>> processor) {
     for (int i = 0; i < nextAvailableIndex; i++) {
       PointerReference ref = references[i];
       if (ref == null) continue;
@@ -137,7 +137,7 @@ class SmartPointerTracker {
 
   private void ensureSorted() {
     if (!mySorted) {
-      List<SmartPsiElementPointerImpl> pointers = new ArrayList<>();
+      List<SmartPsiElementPointerImpl<?>> pointers = new ArrayList<>();
       processAlivePointers(new CommonProcessors.CollectProcessor<>(pointers));
       assert size == pointers.size();
 
@@ -145,6 +145,7 @@ class SmartPointerTracker {
         .sort((p1, p2) -> MarkerCache.INFO_COMPARATOR.compare((SelfElementInfo)p1.getElementInfo(), (SelfElementInfo)p2.getElementInfo()));
 
       for (int i = 0; i < pointers.size(); i++) {
+        //noinspection ConstantConditions
         storePointerReference(references, i, pointers.get(i).pointerReference);
       }
       Arrays.fill(references, pointers.size(), nextAvailableIndex, null);
@@ -175,10 +176,10 @@ class SmartPointerTracker {
     mySorted = false;
   }
 
-  synchronized void fastenBelts() {
+  synchronized void fastenBelts(@NotNull SmartPointerManagerImpl manager) {
     processQueue();
     processAlivePointers(pointer -> {
-      pointer.getElementInfo().fastenBelt();
+      pointer.getElementInfo().fastenBelt(manager);
       return true;
     });
   }

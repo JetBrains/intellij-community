@@ -424,8 +424,8 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
   }
 
   private static class ColorWheelPanel extends JPanel {
-    private ColorWheel myColorWheel;
-    private SlideComponent myBrightnessComponent;
+    private final ColorWheel myColorWheel;
+    private final SlideComponent myBrightnessComponent;
     private SlideComponent myOpacityComponent = null;
 
     private ColorWheelPanel(ColorListener listener, boolean enableOpacity, boolean opacityInPercent) {
@@ -952,9 +952,9 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
   }
 
   public static class ColorWheelImageProducer extends MemoryImageSource {
-    private int[] myPixels;
-    private int myWidth;
-    private int myHeight;
+    private final int[] myPixels;
+    private final int myWidth;
+    private final int myHeight;
     private float myBrightness = 1f;
 
     private float[] myHues;

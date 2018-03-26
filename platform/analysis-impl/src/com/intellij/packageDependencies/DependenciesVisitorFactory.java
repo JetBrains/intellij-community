@@ -20,7 +20,6 @@ import com.intellij.psi.*;
 
 /** @deprecated use {@link DependencyVisitorFactory} (to be removed in IDEA 17) */
 public class DependenciesVisitorFactory {
-  @SuppressWarnings("deprecation")
   public static DependenciesVisitorFactory getInstance() {
     return ServiceManager.getService(DependenciesVisitorFactory.class);
   }

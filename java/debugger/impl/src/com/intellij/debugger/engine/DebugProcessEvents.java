@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.*;
@@ -145,7 +145,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
               }
 
               @Override
-              protected void action() throws Exception {
+              protected void action() {
                 int processed = 0;
                 for (Event event : eventSet) {
                   if (myReturnValueWatcher != null && myReturnValueWatcher.isTrackingEnabled()) {
@@ -273,7 +273,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
     private void invokeVMDeathEvent() {
       getManagerThread().invokeAndWait(new DebuggerCommandImpl() {
         @Override
-        protected void action() throws Exception {
+        protected void action() {
           SuspendContextImpl suspendContext = getSuspendManager().pushSuspendContext(EventRequest.SUSPEND_NONE, 1);
           processVMDeathEvent(suspendContext, null);
         }
@@ -478,7 +478,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
     //this is especially necessary if a method is breakpoint condition
     getManagerThread().schedule(new SuspendContextCommandImpl(suspendContext) {
       @Override
-      public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
+      public void contextAction(@NotNull SuspendContextImpl suspendContext) {
         final SuspendManager suspendManager = getSuspendManager();
         SuspendContextImpl evaluatingContext = SuspendManagerUtil.getEvaluatingContext(suspendManager, suspendContext.getThread());
 
@@ -552,7 +552,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
     });
   }
 
-  private AtomicBoolean myNotificationsCoolDown = new AtomicBoolean();
+  private final AtomicBoolean myNotificationsCoolDown = new AtomicBoolean();
 
   private void notifySkippedBreakpoints(@Nullable LocatableEvent event) {
     if (event != null && myNotificationsCoolDown.compareAndSet(false, true)) {

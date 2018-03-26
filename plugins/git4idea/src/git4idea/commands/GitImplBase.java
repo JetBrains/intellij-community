@@ -3,14 +3,22 @@ package git4idea.commands;
 
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitVcs;
+import git4idea.config.GitExecutableManager;
+import git4idea.config.GitExecutableProblemsNotifier;
+import git4idea.config.GitVersion;
+import git4idea.config.GitVersionSpecialty;
+import git4idea.i18n.GitBundle;
 import git4idea.util.GitVcsConsoleWriter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,9 +26,10 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
-import java.util.function.Consumer;
 
 import static git4idea.commands.GitCommand.LockingPolicy.WRITE;
 
@@ -31,13 +40,18 @@ abstract class GitImplBase implements Git {
   @NotNull
   @Override
   public GitCommandResult runCommand(@NotNull GitLineHandler handler) {
-    return runCommand(() -> handler);
+    return run(handler, getCollectingCollector());
   }
 
   @Override
   @NotNull
   public GitCommandResult runCommand(@NotNull Computable<GitLineHandler> handlerConstructor) {
-    return run(handlerConstructor, () -> new OutputCollector() {
+    return run(handlerConstructor, GitImplBase::getCollectingCollector);
+  }
+
+  @NotNull
+  private static OutputCollector getCollectingCollector() {
+    return new OutputCollector() {
       @Override
       public void outputLineReceived(@NotNull String line) {
         addOutputLine(line);
@@ -52,12 +66,12 @@ abstract class GitImplBase implements Git {
           addErrorLine(line);
         }
       }
-    });
+    };
   }
 
   @NotNull
   public GitCommandResult runCommandWithoutCollectingOutput(@NotNull GitLineHandler handler) {
-    return run(() -> handler, () -> new OutputCollector() {
+    return run(handler, new OutputCollector() {
       @Override
       protected void outputLineReceived(@NotNull String line) {}
 
@@ -68,40 +82,95 @@ abstract class GitImplBase implements Git {
     });
   }
 
+  /**
+   * Run handler with retry on authentication failure
+   */
   @NotNull
-  private static GitCommandResult run(@NotNull Computable<GitLineHandler> handlerConstructor,
-                                      @NotNull Computable<OutputCollector> outputCollectorConstructor) {
-    @NotNull GitLineHandler handler;
-    @NotNull OutputCollector outputCollector;
-    @NotNull GitCommandResultListener resultListener;
+  private GitCommandResult run(@NotNull Computable<GitLineHandler> handlerConstructor,
+                               @NotNull Computable<OutputCollector> outputCollectorConstructor) {
+    @NotNull GitCommandResult result;
 
-    Ref<Boolean> authFailedRef = Ref.create(false);
     int authAttempt = 0;
     do {
-      handler = handlerConstructor.compute();
+      GitLineHandler handler = handlerConstructor.compute();
+      OutputCollector outputCollector = outputCollectorConstructor.compute();
 
-      outputCollector = outputCollectorConstructor.compute();
-      resultListener = new GitCommandResultListener(outputCollector);
+      result = run(handler, outputCollector);
+    }
+    while (result.isAuthenticationFailed() && authAttempt++ < 2);
+    return result;
+  }
 
-      handler.addLineListener(resultListener);
-
-      try (AccessToken locking = lock(handler);
-           AccessToken auth = remoteAuth(handler, authFailedRef::set)) {
-        writeOutputToConsole(handler);
-
-        handler.runInCurrentThread();
+  /**
+   * Run handler with per-project locking, logging and authentication
+   */
+  @NotNull
+  private GitCommandResult run(@NotNull GitLineHandler handler, @NotNull OutputCollector outputCollector) {
+    Project project = handler.project();
+    if (project != null && handler.isRemote()) {
+      try (GitHandlerAuthenticationManager authenticationManager = prepareAuthentication(project, handler)) {
+        return GitCommandResult.withAuthentication(doRun(handler, outputCollector), authenticationManager.isHttpAuthFailed());
       }
       catch (IOException e) {
-        resultListener.startFailed(e);
+        return GitCommandResult.startError("Failed to start Git process " + e.getLocalizedMessage());
       }
     }
-    while (authFailedRef.get() && authAttempt++ < 2);
-    return new GitCommandResult(
-      !resultListener.myStartFailed && (handler.isIgnoredErrorCode(resultListener.myExitCode) || resultListener.myExitCode == 0),
-      resultListener.myExitCode,
-      authFailedRef.get(),
-      outputCollector.myErrorOutput,
-      outputCollector.myOutput);
+
+    return doRun(handler, outputCollector);
+  }
+
+  @NotNull
+  protected GitHandlerAuthenticationManager prepareAuthentication(@NotNull Project project, @NotNull GitLineHandler handler)
+    throws IOException {
+    return GitHandlerAuthenticationManager.prepare(project, handler);
+  }
+
+  /**
+   * Run handler with per-project locking, logging
+   */
+  @NotNull
+  private static GitCommandResult doRun(@NotNull GitLineHandler handler, @NotNull OutputCollector outputCollector) {
+    GitVersion version = GitVersion.NULL;
+    if (handler.isPreValidateExecutable()) {
+      String executablePath = handler.getExecutablePath();
+      try {
+        version = GitExecutableManager.getInstance().identifyVersion(executablePath);
+      }
+      catch (Exception e) {
+        return handlePreValidationException(handler.project(), e);
+      }
+    }
+
+    getGitTraceEnvironmentVariables(version).forEach(handler::addCustomEnvironmentVariable);
+
+    GitCommandResultListener resultListener = new GitCommandResultListener(outputCollector);
+    handler.addLineListener(resultListener);
+
+    try (AccessToken ignored = lock(handler)) {
+      writeOutputToConsole(handler);
+      handler.runInCurrentThread();
+    }
+    catch (IOException e) {
+      return GitCommandResult.error("Error processing input stream: " + e.getLocalizedMessage());
+    }
+    return new GitCommandResult(resultListener.myStartFailed,
+                                resultListener.myExitCode,
+                                outputCollector.myErrorOutput,
+                                outputCollector.myOutput);
+  }
+
+  /**
+   * Only public because of {@link git4idea.config.GitExecutableValidator#isExecutableValid()}
+   */
+  @NotNull
+  public static Map<String, String> getGitTraceEnvironmentVariables(@NotNull GitVersion version) {
+    Map<String, String> environment = new HashMap<>(5);
+    environment.put("GIT_TRACE", "0");
+    if (GitVersionSpecialty.ENV_GIT_TRACE_PACK_ACCESS_ALLOWED.existsIn(version)) environment.put("GIT_TRACE_PACK_ACCESS", "");
+    environment.put("GIT_TRACE_PACKET", "");
+    environment.put("GIT_TRACE_PERFORMANCE", "0");
+    environment.put("GIT_TRACE_SETUP", "0");
+    return environment;
   }
 
   private static class GitCommandResultListener implements GitLineHandlerListener {
@@ -157,6 +226,24 @@ abstract class GitImplBase implements Git {
     abstract void errorLineReceived(@NotNull String line);
   }
 
+  @NotNull
+  private static GitCommandResult handlePreValidationException(@Nullable Project project, @NotNull Exception e) {
+    // Show notification if it's a project non-modal task and cancel the task
+    ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+    if (project != null
+        && progressIndicator != null
+        && !progressIndicator.getModalityState().dominates(ModalityState.NON_MODAL)) {
+      GitExecutableProblemsNotifier.getInstance(project).notifyExecutionError(e);
+      throw new ProcessCanceledException(e);
+    }
+    else {
+      return GitCommandResult.startError(
+        GitBundle.getString("git.executable.validation.error.start.title") + ": \n" +
+        GitExecutableProblemsNotifier.getPrettyErrorMessage(e)
+      );
+    }
+  }
+
   private static void writeOutputToConsole(@NotNull GitLineHandler handler) {
     Project project = handler.project();
     if (project != null && !project.isDefault()) {
@@ -169,7 +256,7 @@ abstract class GitImplBase implements Git {
               vcsConsoleWriter.showMessage(line);
             }
             else if (outputType == ProcessOutputTypes.STDERR && !handler.isStderrSuppressed()) {
-              vcsConsoleWriter.showErrorMessage(line);
+              if (!looksLikeProgress(line)) vcsConsoleWriter.showErrorMessage(line);
             }
           }
         }
@@ -197,22 +284,20 @@ abstract class GitImplBase implements Git {
     return AccessToken.EMPTY_ACCESS_TOKEN;
   }
 
-  @NotNull
-  private static AccessToken remoteAuth(@NotNull GitLineHandler handler, @NotNull Consumer<Boolean> authResultConsumer) throws IOException {
-    Project project = handler.project();
-    if (project != null && handler.isRemote()) {
-      GitHandlerAuthenticationManager authManager = GitHandlerAuthenticationManager.prepare(project, handler);
-      return new AccessToken() {
-        @Override
-        public void finish() {
-          authResultConsumer.accept(authManager.isHttpAuthFailed());
-          authManager.cleanup();
-        }
-      };
-    }
-    return AccessToken.EMPTY_ACCESS_TOKEN;
+  private static boolean looksLikeProgress(@NotNull String line) {
+    String trimmed = StringUtil.trimStart(line, REMOTE_PROGRESS_PREFIX);
+    return ContainerUtil.exists(PROGRESS_INDICATORS, indicator -> StringUtil.startsWith(trimmed, indicator));
   }
 
+  public static final String REMOTE_PROGRESS_PREFIX = "remote: ";
+
+  public static final String[] PROGRESS_INDICATORS = {
+    "Counting objects:",
+    "Compressing objects:",
+    "Writing objects:",
+    "Receiving objects:",
+    "Resolving deltas:"
+  };
 
   private static boolean looksLikeError(@NotNull final String text) {
     return ContainerUtil.exists(ERROR_INDICATORS, indicator -> StringUtil.startsWithIgnoreCase(text.trim(), indicator));
@@ -231,6 +316,7 @@ abstract class GitImplBase implements Git {
     "cannot rebase:",
     "conflict",
     "unable",
+    "The file will have its original",
     "runnerw:"
   };
 

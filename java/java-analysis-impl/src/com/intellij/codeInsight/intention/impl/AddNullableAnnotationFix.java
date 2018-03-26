@@ -23,6 +23,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+/**
+ * @deprecated use {@link com.intellij.codeInsight.intention.AddAnnotationPsiFix#createAddNullableFix(PsiModifierListOwner)}
+ */
+@Deprecated
 public class AddNullableAnnotationFix extends AddNullableNotNullAnnotationFix {
   public AddNullableAnnotationFix(@NotNull PsiModifierListOwner owner) {
     super(NullableNotNullManager.getInstance(owner.getProject()).getDefaultNullable(),

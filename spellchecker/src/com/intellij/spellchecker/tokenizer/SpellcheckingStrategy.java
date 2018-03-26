@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.spellchecker.tokenizer;
 
 import com.intellij.codeInspection.SuppressionUtil;
@@ -27,13 +13,12 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.spellchecker.SpellCheckerManager.DictionaryLevel;
 import com.intellij.spellchecker.inspections.PlainTextSplitter;
-import com.intellij.spellchecker.inspections.TextSplitter;
-import com.intellij.spellchecker.quickfixes.AcceptWordAsCorrect;
-import com.intellij.spellchecker.quickfixes.ChangeTo;
-import com.intellij.spellchecker.quickfixes.RenameTo;
-import com.intellij.spellchecker.quickfixes.SpellCheckerQuickFix;
+import com.intellij.spellchecker.quickfixes.*;
+import com.intellij.spellchecker.settings.SpellCheckerSettings;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class SpellcheckingStrategy {
   protected final Tokenizer<PsiComment> myCommentTokenizer = new CommentTokenizer();
@@ -44,11 +29,17 @@ public class SpellcheckingStrategy {
     @Override
     public void tokenize(@NotNull PsiElement element, TokenConsumer consumer) {
     }
+
+    @Override
+    public String toString() {
+      return "EMPTY_TOKENIZER";
+    }
   };
 
   public static final Tokenizer<PsiElement> TEXT_TOKENIZER = new TokenizerBase<>(PlainTextSplitter.getInstance());
 
-  private static final SpellCheckerQuickFix[] BATCH_FIXES = new SpellCheckerQuickFix[]{new AcceptWordAsCorrect()};
+  private static final SpellCheckerQuickFix[] BATCH_FIXES =
+    new SpellCheckerQuickFix[]{SaveTo.getSaveToLevelFix(DictionaryLevel.APP), SaveTo.getSaveToLevelFix(DictionaryLevel.PROJECT)};
 
   @NotNull
   public Tokenizer getTokenizer(PsiElement element) {
@@ -91,14 +82,23 @@ public class SpellcheckingStrategy {
                                                 @NotNull TextRange textRange,
                                                 boolean useRename,
                                                 String wordWithTypo) {
-    return getDefaultRegularFixes(useRename, wordWithTypo);
+    return getDefaultRegularFixes(useRename, wordWithTypo, element);
   }
 
+  /**
+   * @deprecated will be removed in 2018.X, use @link {@link SpellcheckingStrategy#getDefaultRegularFixes(boolean, String, PsiElement)} instead
+   */
   public static SpellCheckerQuickFix[] getDefaultRegularFixes(boolean useRename, String wordWithTypo) {
-    return new SpellCheckerQuickFix[]{
-      useRename ? new RenameTo(wordWithTypo) : new ChangeTo(wordWithTypo),
-      new AcceptWordAsCorrect(wordWithTypo)
-    };
+    return getDefaultRegularFixes(useRename, wordWithTypo, null);
+  }
+
+  public static SpellCheckerQuickFix[] getDefaultRegularFixes(boolean useRename, String wordWithTypo, @Nullable PsiElement element) {
+    final SpellCheckerSettings settings = element != null ? SpellCheckerSettings.getInstance(element.getProject()) : null;
+    if (settings != null && settings.isUseSingleDictionaryToSave()) {
+      return new SpellCheckerQuickFix[]{useRename ? new RenameTo(wordWithTypo) : new ChangeTo(wordWithTypo),
+        new SaveTo(wordWithTypo, DictionaryLevel.getLevelByName(settings.getDictionaryToSave()))};
+    }
+    return new SpellCheckerQuickFix[]{useRename ? new RenameTo(wordWithTypo) : new ChangeTo(wordWithTypo), new SaveTo(wordWithTypo)};
   }
 
   public static SpellCheckerQuickFix[] getDefaultBatchFixes() {

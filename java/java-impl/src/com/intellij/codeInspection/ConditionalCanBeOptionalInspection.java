@@ -6,7 +6,6 @@ import com.intellij.codeInspection.dataFlow.NullnessUtil;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.LocalSearchScope;
@@ -37,7 +36,7 @@ public class ConditionalCanBeOptionalInspection extends AbstractBaseJavaLocalIns
         PsiVariable variable = ternaryNullCheck.myVariable;
         PsiExpression nullBranch = ternaryNullCheck.myNullBranch;
         PsiExpression notNullBranch = ternaryNullCheck.myNotNullBranch;
-        if (!ExpressionUtils.isSimpleExpression(nullBranch) && !LambdaGenerationUtil.canBeUncheckedLambda(nullBranch, variable::equals)) {
+        if (!ExpressionUtils.isSafelyRecomputableExpression(nullBranch) && !LambdaGenerationUtil.canBeUncheckedLambda(nullBranch, variable::equals)) {
           return;
         }
         if (!VariableAccessUtils.variableIsUsed(variable, notNullBranch) ||
@@ -48,8 +47,7 @@ public class ConditionalCanBeOptionalInspection extends AbstractBaseJavaLocalIns
         boolean mayChangeSemantics =
           !ExpressionUtils.isNullLiteral(nullBranch) && NullnessUtil.getExpressionNullness(notNullBranch, true) != Nullness.NOT_NULL;
         if (!isOnTheFly && mayChangeSemantics) return;
-        boolean informationLevel = mayChangeSemantics || InspectionProjectProfileManager.isInformationLevel(getShortName(), ternary);
-        holder.registerProblem(informationLevel ? ternary : ternary.getCondition(),
+        holder.registerProblem(ternary.getCondition(),
                                "Can be replaced with Optional.ofNullable()",
                                mayChangeSemantics ? ProblemHighlightType.INFORMATION : ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                new ReplaceConditionWithOptionalFix(mayChangeSemantics));
@@ -68,7 +66,7 @@ public class ConditionalCanBeOptionalInspection extends AbstractBaseJavaLocalIns
   }
 
   private static class ReplaceConditionWithOptionalFix implements LocalQuickFix {
-    private boolean myChangesSemantics;
+    private final boolean myChangesSemantics;
 
     public ReplaceConditionWithOptionalFix(boolean changesSemantics) {
       myChangesSemantics = changesSemantics;
@@ -121,7 +119,7 @@ public class ConditionalCanBeOptionalInspection extends AbstractBaseJavaLocalIns
       PsiExpression trueBody = (PsiExpression)trueLambda.getBody();
       String replacement = OptionalUtil.generateOptionalUnwrap(CommonClassNames.JAVA_UTIL_OPTIONAL + ".ofNullable(" + name + ")",
                                                                lambdaParameter, trueBody, ct.markUnchanged(nullBranch), ternary.getType(),
-                                                               !ExpressionUtils.isSimpleExpression(nullBranch));
+                                                               !ExpressionUtils.isSafelyRecomputableExpression(nullBranch));
       PsiElement result = ct.replaceAndRestoreComments(ternary, replacement);
       JavaCodeStyleManager.getInstance(project).shortenClassReferences(result);
       LambdaCanBeMethodReferenceInspection.replaceAllLambdasWithMethodReferences(result);

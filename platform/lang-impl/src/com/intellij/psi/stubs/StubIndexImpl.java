@@ -44,6 +44,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import static com.intellij.util.indexing.FileBasedIndex.getFileId;
+
 @State(name = "FileBasedIndex", storages = @Storage(value = "stubIndex.xml", roamingType = RoamingType.DISABLED))
 public class StubIndexImpl extends StubIndex implements PersistentStateComponent<StubIndexState>, ApplicationComponent {
   private static final AtomicReference<Boolean> ourForcedClean = new AtomicReference<>(null);
@@ -62,7 +64,7 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
 
   private StubIndexState myPreviouslyRegistered;
 
-  public StubIndexImpl(FileBasedIndex fileBasedIndex /* need this to ensure initialization order*/ ) throws IOException {
+  public StubIndexImpl(FileBasedIndex fileBasedIndex /* need this to ensure initialization order*/) throws IOException {
     myStubProcessingHelper = new StubProcessingHelper(fileBasedIndex);
   }
 
@@ -79,14 +81,16 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
     if (state == null) {
       try {
         myState = state = myStateFuture.get();
-      } catch(Throwable t) {
+      }
+      catch (Throwable t) {
         throw new RuntimeException(t);
       }
     }
     return state;
   }
 
-  private static <K> boolean registerIndexer(@NotNull final StubIndexExtension<K, ?> extension, final boolean forceClean, AsyncState state) throws IOException {
+  private static <K> boolean registerIndexer(@NotNull final StubIndexExtension<K, ?> extension, final boolean forceClean, AsyncState state)
+    throws IOException {
     final StubIndexKey<K, ?> indexKey = extension.getKey();
     final int version = extension.getVersion();
     synchronized (state) {
@@ -161,7 +165,8 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
       catch (IOException e) {
         needRebuild = true;
         onExceptionInstantiatingIndex(indexKey, version, indexRootDir, e);
-      } catch (RuntimeException e) {
+      }
+      catch (RuntimeException e) {
         //noinspection ThrowableResultOfMethodCallIgnored
         Throwable cause = FileBasedIndexImpl.getCauseToRebuildIndex(e);
         if (cause == null) throw e;
@@ -212,7 +217,7 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
       }
       else {
         DataInputOutputUtil.writeINT(out, -size);
-        for(int i = 0; i < size; ++i) {
+        for (int i = 0; i < size; ++i) {
           DataInputOutputUtil.writeINT(out, value.get(i));
         }
       }
@@ -231,7 +236,7 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
       else {
         size = -size;
         int[] result = new int[size];
-        for(int i = 0; i < size; ++i) {
+        for (int i = 0; i < size; ++i) {
           result[i] = DataInputOutputUtil.readINT(in);
         }
         return new StubIdList(result, size);
@@ -244,7 +249,7 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
     KeyDescriptor<K> keyDescriptor = index.getExtension().getKeyDescriptor();
 
     DataInputOutputUtil.writeINT(out, map.size());
-    for(K key:map.keySet()) {
+    for (K key : map.keySet()) {
       keyDescriptor.save(out, key);
       StubIdExternalizer.INSTANCE.save(out, map.get(key));
     }
@@ -256,7 +261,7 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
     int mapSize = DataInputOutputUtil.readINT(in);
 
     Map<K, StubIdList> result = new THashMap<>(mapSize);
-    for(int i = 0; i < mapSize; ++i) {
+    for (int i = 0; i < mapSize; ++i) {
       K key = keyDescriptor.read(in);
       StubIdList read = StubIdExternalizer.INSTANCE.read(in);
       result.put(key, read);
@@ -286,31 +291,32 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
 
   @Override
   public <Key, Psi extends PsiElement> boolean processElements(@NotNull StubIndexKey<Key, Psi> indexKey,
-                                                       @NotNull Key key,
-                                                       @NotNull Project project,
-                                                       @Nullable GlobalSearchScope scope,
-                                                       Class<Psi> requiredClass,
-                                                       @NotNull Processor<? super Psi> processor) {
+                                                               @NotNull Key key,
+                                                               @NotNull Project project,
+                                                               @Nullable GlobalSearchScope scope,
+                                                               Class<Psi> requiredClass,
+                                                               @NotNull Processor<? super Psi> processor) {
     return processElements(indexKey, key, project, scope, null, requiredClass, processor);
   }
 
   @Override
   public <Key, Psi extends PsiElement> boolean processElements(@NotNull final StubIndexKey<Key, Psi> indexKey,
-                                                       @NotNull final Key key,
-                                                       @NotNull final Project project,
-                                                       @Nullable final GlobalSearchScope scope,
-                                                       @Nullable IdFilter idFilter,
-                                                       @NotNull final Class<Psi> requiredClass,
-                                                       @NotNull final Processor<? super Psi> processor) {
+                                                               @NotNull final Key key,
+                                                               @NotNull final Project project,
+                                                               @Nullable final GlobalSearchScope scope,
+                                                               @Nullable IdFilter idFilter,
+                                                               @NotNull final Class<Psi> requiredClass,
+                                                               @NotNull final Processor<? super Psi> processor) {
     return doProcessStubs(indexKey, key, project, scope, new StubIdListContainerAction(idFilter, project) {
       final PersistentFS fs = (PersistentFS)ManagingFS.getInstance();
+
       @Override
       protected boolean process(int id, StubIdList value) {
         final VirtualFile file = IndexInfrastructure.findFileByIdIfCached(fs, id);
         if (file == null || scope != null && !scope.contains(file)) {
           return true;
         }
-        return myStubProcessingHelper.processStubsInFile(project, file, value, processor, requiredClass);
+        return myStubProcessingHelper.processStubsInFile(project, file, value, processor, scope, requiredClass);
       }
     });
   }
@@ -324,7 +330,7 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
     ID<Integer, SerializedStubTree> stubUpdatingIndexId = StubUpdatingIndex.INDEX_ID;
     myAccessValidator.checkAccessingIndexDuringOtherIndexProcessing(stubUpdatingIndexId);
     final MyIndex<Key> index = (MyIndex<Key>)getAsyncState().myIndices.get(indexKey);   // wait for initialization to finish
-    
+
     fileBasedIndex.ensureUpToDate(stubUpdatingIndexId, project, scope);
 
     UpdatableIndex<Integer, SerializedStubTree, FileContent> stubUpdatingIndex = fileBasedIndex.getIndex(stubUpdatingIndexId);
@@ -345,13 +351,12 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
         myAccessValidator.stoppedProcessingActivityForIndex(stubUpdatingIndexId);
         stubUpdatingIndex.getReadLock().unlock();
         FileBasedIndexImpl.enableUpToDateCheckForCurrentThread();
+
+        wipeProblematicFileIdsForParticularKeyAndStubIndex(indexKey, key, stubUpdatingIndex);
       }
     }
     catch (StorageException e) {
       forceRebuild(e);
-    } catch (AssertionError e) {
-      forceRebuild(e);
-      throw e;
     }
     catch (RuntimeException e) {
       final Throwable cause = FileBasedIndexImpl.getCauseToRebuildIndex(e);
@@ -364,6 +369,31 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
     }
 
     return true;
+  }
+
+  // Self repair for IDEA-181227, caused by (yet) unknown file event processing problem in indices
+  // FileBasedIndex.requestReindex doesn't handle the situation properly because update requires old data that was lost  
+  private <Key> void wipeProblematicFileIdsForParticularKeyAndStubIndex(@NotNull StubIndexKey<Key, ?> indexKey,
+                                                                        @NotNull Key key,
+                                                                        UpdatableIndex<Integer, SerializedStubTree, FileContent> stubUpdatingIndex) {
+    Set<VirtualFile> filesWithProblems = myStubProcessingHelper.takeAccumulatedFilesWithIndexProblems();
+
+    if (filesWithProblems != null) {
+      ((FileBasedIndexImpl)FileBasedIndex.getInstance()).runCleanupAction(() -> {
+        stubUpdatingIndex.getWriteLock().lock();
+        try {
+          Map<Key, StubIdList> artificialOldValues = new THashMap<>();
+          artificialOldValues.put(key, new StubIdList());
+
+          for (VirtualFile file : filesWithProblems) {
+            updateIndex(indexKey, getFileId(file), artificialOldValues, Collections.emptyMap());
+          }
+        }
+        finally {
+          stubUpdatingIndex.getWriteLock().unlock();
+        }
+      });
+    }
   }
 
   @Override
@@ -389,7 +419,10 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
   }
 
   @Override
-  public <K> boolean processAllKeys(@NotNull StubIndexKey<K, ?> indexKey, @NotNull Processor<K> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter) {
+  public <K> boolean processAllKeys(@NotNull StubIndexKey<K, ?> indexKey,
+                                    @NotNull Processor<K> processor,
+                                    @NotNull GlobalSearchScope scope,
+                                    @Nullable IdFilter idFilter) {
     final MyIndex<K> index = (MyIndex<K>)getAsyncState().myIndices.get(indexKey); // wait for initialization to finish
     FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, scope.getProject(), scope);
 
@@ -408,7 +441,8 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
         forceRebuild(e);
       }
       throw e;
-    } finally {
+    }
+    finally {
       FileBasedIndexImpl.enableUpToDateCheckForCurrentThread();
       myAccessValidator.stoppedProcessingActivityForIndex(StubUpdatingIndex.INDEX_ID);
     }
@@ -431,6 +465,7 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
     });
     return new IdIterator() {
       int cursor;
+
       @Override
       public boolean hasNext() {
         return cursor < result.size();
@@ -461,7 +496,8 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
     if (!IndexInfrastructure.ourDoAsyncIndicesInitialization) {
       try {
         myStateFuture.get();
-      } catch (Throwable t) {
+      }
+      catch (Throwable t) {
         LOG.error(t);
       }
     }
@@ -471,7 +507,7 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
   public static StubIndexExtension<?, ?>[] initExtensions() {
     StubIndexExtension[] extensions = Extensions.getExtensions(StubIndexExtension.EP_NAME);
     // initialize stub index keys
-    for(StubIndexExtension extension:extensions) extension.getKey();
+    for (StubIndexExtension extension : extensions) extension.getKey();
     return extensions;
   }
 
@@ -646,7 +682,7 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
         // avoid direct forceRebuild as it produces dependency cycle (IDEA-105485)
         ApplicationManager.getApplication().invokeLater(() -> forceRebuild(e), ModalityState.NON_MODAL);
       }
-      
+
       myInitialized = true;
       return state;
     }

@@ -99,7 +99,7 @@ class ProductModulesLayout {
   /**
    * Name of the module containing search/searchableOptions.xml file.
    */
-  String searchableOptionsModule = "platform-resources"
+  String searchableOptionsModule = "intellij.platform.resources"
 
   /**
    * If {@code true} a special xml descriptor in custom plugin repository format will be generated for {@link #pluginModulesToPublish} plugins.

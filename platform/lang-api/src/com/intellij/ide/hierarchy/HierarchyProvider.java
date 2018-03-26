@@ -49,7 +49,7 @@ public interface HierarchyProvider {
    * @return the browser instance.
    */
   @NotNull
-  HierarchyBrowser createHierarchyBrowser(final PsiElement target);
+  HierarchyBrowser createHierarchyBrowser(@NotNull PsiElement target);
 
   /**
    * Notifies that the toolwindow has been shown and the specified browser is currently being displayed.

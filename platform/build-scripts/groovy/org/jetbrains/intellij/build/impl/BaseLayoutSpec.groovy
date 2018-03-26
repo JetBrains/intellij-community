@@ -37,6 +37,14 @@ class BaseLayoutSpec {
   }
 
   /**
+   * Register an additional module to be included into the plugin distribution into a separate JAR file. Module-level libraries from
+   * {@code moduleName} with scopes 'Compile' and 'Runtime' will be also copied to the 'lib' directory of the plugin.
+   */
+  void withModule(String moduleName) {
+    layout.moduleJars.put("${BaseLayout.convertModuleNameToFileName(moduleName)}.jar", moduleName)
+  }
+
+  /**
    * Register an additional module to be included into the plugin distribution. If {@code relativeJarPath} doesn't contain '/' (i.e. the
    * JAR will be added to the plugin's classpath) this will also cause modules library from {@code moduleName} with scopes 'Compile' and
    * 'Runtime' to be copied to the 'lib' directory of the plugin.
@@ -46,18 +54,20 @@ class BaseLayoutSpec {
    * @param localizableResourcesInCommonJar if {@code true} the translatable resources from the module (messages, inspection descriptions, etc) will be
    * placed into a separate 'resources_en.jar'. <strong>Do not use this for new plugins, this parameter is temporary added to keep layout of old plugins</strong>.
    */
-  void withModule(String moduleName, String relativeJarPath = "${moduleName}.jar", String localizableResourcesInJar = "resources_en.jar") {
+  void withModule(String moduleName, String relativeJarPath, String localizableResourcesInJar = "resources_en.jar") {
     if (localizableResourcesInJar != null) {
       layout.modulesWithLocalizableResourcesInCommonJar.put(moduleName, localizableResourcesInJar)
     }
     layout.moduleJars.put(relativeJarPath, moduleName)
+    layout.explicitlySetJarPaths.add(relativeJarPath)
   }
 
   /**
-   * Include the project library to 'lib' directory of the plugin distribution
+   * Include the project library to 'lib' directory or its subdirectory of the plugin distribution
+   * @relativeOutputPath path relative to 'lib' plugin directory
    */
-  void withProjectLibrary(String libraryName) {
-    layout.includedProjectLibraries << libraryName
+  void withProjectLibrary(String libraryName, String relativeOutputPath = "") {
+    layout.includedProjectLibraries << new ProjectLibraryData(libraryName, relativeOutputPath)
   }
 
   /**

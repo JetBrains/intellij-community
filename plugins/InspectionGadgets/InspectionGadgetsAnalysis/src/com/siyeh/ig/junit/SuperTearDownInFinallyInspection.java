@@ -51,6 +51,8 @@ public class SuperTearDownInFinallyInspection extends BaseInspection {
 
     @Override
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+      if (!MethodCallUtils.hasSuperQualifier(expression)) return;
+
       final PsiMethod method = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, true, PsiMember.class, PsiLambdaExpression.class);
       if (method == null || !method.getName().equals("tearDown")) {
         return;

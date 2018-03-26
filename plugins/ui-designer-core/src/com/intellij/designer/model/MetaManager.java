@@ -47,7 +47,7 @@ public abstract class MetaManager extends ModelLoader {
   private final List<PaletteGroup> myPaletteGroups = new ArrayList<>();
   private final List<MetaModel> myWrapModels = new ArrayList<>();
 
-  private Map<Object, Object> myCache = new HashMap<>();
+  private final Map<Object, Object> myCache = new HashMap<>();
 
   protected MetaManager(Project project, String name) {
     super(project);

@@ -300,31 +300,28 @@ public class BytecodeAnalysisIntegrationTest extends JavaCodeInsightFixtureTestC
     private void saveXmlForPackage(VirtualFile root, PsiPackage aPackage, XmlTag newContent) {
       XmlTag[] tags = newContent.getSubTags();
       if (tags.length == 0) return;
-      new WriteCommandAction(getProject()) {
-        @Override
-        protected void run(@NotNull Result result) {
-          XmlFile xml = ExternalAnnotationsManagerImpl.createAnnotationsXml(root, aPackage.getQualifiedName(), aPackage.getManager());
-          if (xml == null) {
-            throw new IllegalStateException("Unable to get XML for package " + aPackage.getQualifiedName() + "; root = " + root);
-          }
-          XmlTag rootTag = xml.getRootTag();
-          if (rootTag == null) {
-            throw new IllegalStateException("No root tag in " + xml);
-          }
-          XmlTag[] existingItems = rootTag.getSubTags();
-          if (existingItems.length > 0) {
-            rootTag.deleteChildRange(ArrayUtil.getFirstElement(existingItems), ArrayUtil.getLastElement(existingItems));
-          }
-          rootTag.collapseIfEmpty();
-          for (XmlTag item : tags) {
-            rootTag.addSubTag(item, false);
-          }
-          PsiDocumentManager documentManager = PsiDocumentManager.getInstance(xml.getProject());
-          Document doc = documentManager.getDocument(xml);
-          documentManager.doPostponedOperationsAndUnblockDocument(doc);
-          FileDocumentManager.getInstance().saveDocument(doc);
+      WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+        XmlFile xml = ExternalAnnotationsManagerImpl.createAnnotationsXml(root, aPackage.getQualifiedName(), aPackage.getManager());
+        if (xml == null) {
+          throw new IllegalStateException("Unable to get XML for package " + aPackage.getQualifiedName() + "; root = " + root);
         }
-      }.execute();
+        XmlTag rootTag = xml.getRootTag();
+        if (rootTag == null) {
+          throw new IllegalStateException("No root tag in " + xml);
+        }
+        XmlTag[] existingItems = rootTag.getSubTags();
+        if (existingItems.length > 0) {
+          rootTag.deleteChildRange(ArrayUtil.getFirstElement(existingItems), ArrayUtil.getLastElement(existingItems));
+        }
+        rootTag.collapseIfEmpty();
+        for (XmlTag item : tags) {
+          rootTag.addSubTag(item, false);
+        }
+        PsiDocumentManager documentManager = PsiDocumentManager.getInstance(xml.getProject());
+        Document doc = documentManager.getDocument(xml);
+        documentManager.doPostponedOperationsAndUnblockDocument(doc);
+        FileDocumentManager.getInstance().saveDocument(doc);
+      });
     }
 
     @NotNull

@@ -1,11 +1,11 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
-import com.intellij.internal.statistic.customUsageCollectors.ui.ToolbarClicksCollector;
+import com.intellij.internal.statistic.collectors.fus.ui.persistence.ToolbarClicksCollector;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -29,6 +29,8 @@ import com.intellij.util.BitUtil;
 import com.intellij.util.Producer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBSwingUtilities;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NonNls;
@@ -336,6 +338,11 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
   }
 
   @Override
+  protected Graphics getComponentGraphics(Graphics g) {
+    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(g));
+  }
+
+  @Override
   protected void paintComponent(Graphics g) {
     Rectangle r = getBounds();
     Graphics2D g2d = (Graphics2D)g;
@@ -369,7 +376,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
   private static BufferedImage drawToBuffer(Graphics2D g2d, boolean active, int height, boolean floating) {
     final int width = 150;
 
-    BufferedImage image = UIUtil.createImage(g2d, width, height, BufferedImage.TYPE_INT_ARGB);
+    BufferedImage image = UIUtil.createImage(g2d, width, height, BufferedImage.TYPE_INT_RGB);
     Graphics2D g = image.createGraphics();
     UIUtil.drawHeader(g, 0, width, height, active, true, !floating, true);
     g.dispose();
@@ -416,13 +423,13 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
   @Override
   public Dimension getPreferredSize() {
     Dimension size = super.getPreferredSize();
-    return new Dimension(size.width, TabsUtil.getTabsHeight());
+    return new Dimension(size.width, TabsUtil.getTabsHeight(JBUI.CurrentTheme.ToolWindow.tabVerticalPadding()));
   }
 
   @Override
   public Dimension getMinimumSize() {
     Dimension size = super.getMinimumSize();
-    return new Dimension(size.width, TabsUtil.getTabsHeight());
+    return new Dimension(size.width, TabsUtil.getTabsHeight(JBUI.CurrentTheme.ToolWindow.tabVerticalPadding()));
   }
 
   private class ActionButton extends Wrapper implements ActionListener, AltStateManager.AltListener {

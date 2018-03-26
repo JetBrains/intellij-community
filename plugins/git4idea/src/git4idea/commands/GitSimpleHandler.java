@@ -26,6 +26,8 @@ import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.HashSet;
 
 /**
  * Simple Git handler that accumulates stdout and stderr and has nothing on stdin.
@@ -57,6 +59,10 @@ public class GitSimpleHandler extends GitTextHandler {
    * Reminder of the last stdout line
    */
   private final StringBuilder myStdoutLine = new StringBuilder();
+  /**
+   * Error codes that are ignored for the handler
+   */
+  private final HashSet<Integer> myIgnoredErrorCodes = new HashSet<>();
 
   /**
    * A constructor
@@ -148,7 +154,7 @@ public class GitSimpleHandler extends GitTextHandler {
         if (last != '\r' || savedPos != i) {
           String line;
           if (lineRest.length() == 0) {
-            line = lineRest.append(text.substring(start, savedPos)).toString();
+            line = lineRest.append(text, start, savedPos).toString();
             lineRest.setLength(0);
           }
           else {
@@ -222,7 +228,12 @@ public class GitSimpleHandler extends GitTextHandler {
           new VcsException("Process failed to start (" + myCommandLine.getCommandLineString() + "): " + exception.toString(), exception));
       }
     });
-    runInCurrentThread();
+    try {
+      runInCurrentThread();
+    }
+    catch (IOException e) {
+      exRef.set(new VcsException(e.getMessage(), e));
+    }
     if (!exRef.isNull()) {
       throw new VcsException(exRef.get().getMessage() + " " + DURING_EXECUTING_ERROR_MESSAGE + " " + printableCommandLine(), exRef.get());
     }
@@ -230,5 +241,24 @@ public class GitSimpleHandler extends GitTextHandler {
       throw new VcsException("The git command returned null: " + printableCommandLine());
     }
     return resultRef.get();
+  }
+
+  /**
+   * Add error code to ignored list
+   *
+   * @param code the code to ignore
+   */
+  public void ignoreErrorCode(int code) {
+    myIgnoredErrorCodes.add(code);
+  }
+
+  /**
+   * Check if error code should be ignored
+   *
+   * @param code a code to check
+   * @return true if error code is ignorable
+   */
+  public boolean isIgnoredErrorCode(int code) {
+    return myIgnoredErrorCodes.contains(code);
   }
 }

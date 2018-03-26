@@ -17,7 +17,6 @@ package org.jetbrains.idea.maven.wizards;
 
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -90,18 +89,15 @@ public class MavenModuleBuilderHelper {
     PsiFile[] psiFiles = myAggregatorProject != null
                          ? new PsiFile[]{getPsiFile(project, myAggregatorProject.getFile())}
                          : PsiFile.EMPTY_ARRAY;
-    final VirtualFile pom = new WriteCommandAction<VirtualFile>(project, myCommandName, psiFiles) {
-      @Override
-      protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
-        VirtualFile file;
+    final VirtualFile pom = WriteCommandAction.writeCommandAction(project, psiFiles).withName(myCommandName).compute(() -> {
+        VirtualFile file = null;
         try {
           file = root.createChildData(this, MavenConstants.POM_XML);
           MavenUtil.runOrApplyMavenProjectFileTemplate(project, file, myProjectId, isInteractive);
-          result.setResult(file);
         }
         catch (IOException e) {
           showError(project, e);
-          return;
+          return file;
         }
 
         updateProjectPom(project, file);
@@ -114,8 +110,8 @@ public class MavenModuleBuilderHelper {
             module.setValue(getPsiFile(project, file));
           }
         }
-      }
-    }.execute().getResultObject();
+        return file;
+      });
 
     if (pom == null) return;
 
@@ -147,49 +143,47 @@ public class MavenModuleBuilderHelper {
   private void updateProjectPom(final Project project, final VirtualFile pom) {
     if (myParentProject == null) return;
 
-    new WriteCommandAction.Simple(project, myCommandName) {
-      protected void run() {
-        PsiDocumentManager.getInstance(project).commitAllDocuments();
+    WriteCommandAction.writeCommandAction(project).withName(myCommandName).run(() -> {
+      PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-        MavenDomProjectModel model = MavenDomUtil.getMavenDomProjectModel(project, pom);
-        if (model == null) return;
+      MavenDomProjectModel model = MavenDomUtil.getMavenDomProjectModel(project, pom);
+      if (model == null) return;
 
-        MavenDomUtil.updateMavenParent(model, myParentProject);
+      MavenDomUtil.updateMavenParent(model, myParentProject);
 
-        if (myInheritGroupId) {
-          XmlElement el = model.getGroupId().getXmlElement();
-          if (el != null) el.delete();
-        }
-        if (myInheritVersion) {
-          XmlElement el = model.getVersion().getXmlElement();
-          if (el != null) el.delete();
-        }
+      if (myInheritGroupId) {
+        XmlElement el = model.getGroupId().getXmlElement();
+        if (el != null) el.delete();
+      }
+      if (myInheritVersion) {
+        XmlElement el = model.getVersion().getXmlElement();
+        if (el != null) el.delete();
+      }
 
-        CodeStyleManager.getInstance(project).reformat(getPsiFile(project, pom));
+      CodeStyleManager.getInstance(project).reformat(getPsiFile(project, pom));
 
-        List<VirtualFile> pomFiles = ContainerUtil.newArrayListWithCapacity(2);
-        pomFiles.add(pom);
+      List<VirtualFile> pomFiles = ContainerUtil.newArrayListWithCapacity(2);
+      pomFiles.add(pom);
 
-        if (!FileUtil.namesEqual(MavenConstants.POM_XML, myParentProject.getFile().getName())) {
-          pomFiles.add(myParentProject.getFile());
-          MavenProjectsManager.getInstance(project).forceUpdateProjects(Collections.singleton(myParentProject));
-        }
+      if (!FileUtil.namesEqual(MavenConstants.POM_XML, myParentProject.getFile().getName())) {
+        pomFiles.add(myParentProject.getFile());
+        MavenProjectsManager.getInstance(project).forceUpdateProjects(Collections.singleton(myParentProject));
+      }
 
-        for (VirtualFile pom : pomFiles) {
-          pom.putUserData(MavenProjectsManagerWatcher.FORCE_IMPORT_AND_RESOLVE_ON_REFRESH, Boolean.TRUE);
-          try {
-            Document doc = FileDocumentManager.getInstance().getDocument(pom);
-            if (doc != null) {
-              PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(doc);
-              FileDocumentManager.getInstance().saveDocument(doc);
-            }
+      for (VirtualFile v : pomFiles) {
+        v.putUserData(MavenProjectsManagerWatcher.FORCE_IMPORT_AND_RESOLVE_ON_REFRESH, Boolean.TRUE);
+        try {
+          Document doc = FileDocumentManager.getInstance().getDocument(v);
+          if (doc != null) {
+            PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(doc);
+            FileDocumentManager.getInstance().saveDocument(doc);
           }
-          finally {
-            pom.putUserData(MavenProjectsManagerWatcher.FORCE_IMPORT_AND_RESOLVE_ON_REFRESH, null);
-          }
+        }
+        finally {
+          v.putUserData(MavenProjectsManagerWatcher.FORCE_IMPORT_AND_RESOLVE_ON_REFRESH, null);
         }
       }
-    }.execute();
+    });
   }
 
   private static PsiFile getPsiFile(Project project, VirtualFile pom) {

@@ -35,9 +35,9 @@ import java.awt.geom.Path2D;
 */
 class WizardArrowUI extends BasicButtonUI {
   private final AbstractButton myButton;
-  private static Rectangle viewRect = new Rectangle();
-  private static Rectangle textRect = new Rectangle();
-  private static Rectangle iconRect = new Rectangle();
+  private static final Rectangle viewRect = new Rectangle();
+  private static final Rectangle textRect = new Rectangle();
+  private static final Rectangle iconRect = new Rectangle();
 
 
   public WizardArrowUI(AbstractButton b, boolean valid) {

@@ -31,8 +31,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -43,7 +43,6 @@ import com.intellij.psi.injection.ReferenceInjector;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.components.JBList;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
@@ -57,15 +56,17 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class InjectLanguageAction implements IntentionAction, LowPriorityAction {
   @NonNls private static final String INJECT_LANGUAGE_FAMILY = "Inject language or reference";
   public static final String LAST_INJECTED_LANGUAGE = "LAST_INJECTED_LANGUAGE";
   public static final Key<Processor<PsiLanguageInjectionHost>> FIX_KEY = Key.create("inject fix key");
-  
-  private static FixPresenter DEFAULT_FIX_PRESENTER = (editor, range, pointer, text, handler) -> {
+
+  private static final FixPresenter DEFAULT_FIX_PRESENTER = (editor, range, pointer, text, handler) -> {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
@@ -145,7 +146,7 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
                                 @NotNull Injectable injectable) {
     invokeImpl(project, editor, file, injectable, DEFAULT_FIX_PRESENTER);
   }
-  
+
   public static void invokeImpl(@NotNull Project project,
                                 @NotNull Editor editor,
                                 @NotNull PsiFile file,
@@ -192,10 +193,8 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
     return Configuration.getProjectInstance(host.getProject()).setHostInjectionEnabled(host, Collections.singleton(id), true);
   }
 
-  public static void doChooseLanguageToInject(@NotNull Editor editor, @NotNull Processor<Injectable> onChosen) {
-    List<Injectable> injectables = getAllInjectables();
-    JBList<Injectable> list = new JBList<>(injectables);
-    list.setCellRenderer(new ColoredListCellRenderer<Injectable>() {
+  public static boolean doChooseLanguageToInject(Editor editor, final Processor<Injectable> onChosen) {
+    ColoredListCellRenderer<Injectable> renderer = new ColoredListCellRenderer<Injectable>() {
       @Override
       protected void customizeCellRenderer(@NotNull JList<? extends Injectable> list,
                                            Injectable language,
@@ -209,24 +208,32 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
           append(description, SimpleTextAttributes.GRAYED_ATTRIBUTES);
         }
       }
-    });
+    };
+
+    final List<Injectable> injectables = getAllInjectables();
+
+    final String lastInjectedId = PropertiesComponent.getInstance().getValue(LAST_INJECTED_LANGUAGE);
+    Injectable lastInjected = lastInjectedId != null ? ContainerUtil.find(injectables, injectable1 -> lastInjectedId.equals(lastInjectedId)) : null;
+
     Dimension minSize = new JLabel(PlainTextLanguage.INSTANCE.getDisplayName(), EmptyIcon.ICON_16, SwingConstants.LEFT).getMinimumSize();
     minSize.height *= 4;
-    list.setMinimumSize(minSize);
-    JBPopup popup = new PopupChooserBuilder(list).setItemChoosenCallback(() -> {
-      Injectable value = list.getSelectedValue();
-      if (value != null) {
-        onChosen.process(value);
-        PropertiesComponent.getInstance().setValue(LAST_INJECTED_LANGUAGE, value.getId());
-      }
-    }).setFilteringEnabled(language -> ((Injectable)language).getDisplayName())
-      .setMinSize(minSize).createPopup();
-    String lastInjected = PropertiesComponent.getInstance().getValue(LAST_INJECTED_LANGUAGE);
+
+    IPopupChooserBuilder<Injectable> builder = JBPopupFactory.getInstance()
+      .createPopupChooserBuilder(injectables)
+      .setRenderer(renderer)
+      .setItemChosenCallback(injectable -> {
+        onChosen.process(injectable);
+        PropertiesComponent.getInstance().setValue(LAST_INJECTED_LANGUAGE, injectable.getId());
+      })
+      .setMinSize(minSize)
+      .setNamerForFiltering(language -> language.getDisplayName())
+      .setSelectedValue(lastInjected, true);
     if (lastInjected != null) {
       Injectable injectable = ContainerUtil.find(injectables, o -> lastInjected.equals(o.getId()));
-      list.setSelectedValue(injectable, true);
+      builder = builder.setSelectedValue(injectable, true);
     }
-    popup.showInBestPositionFor(editor);
+    builder.createPopup().showInBestPositionFor(editor);
+    return true;
   }
 
   public boolean startInWriteAction() {

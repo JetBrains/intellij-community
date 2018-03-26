@@ -4,7 +4,7 @@ def f():
 
 
 def f():
-    if 0:
+    if b:
         return
     a = 1 # pass
 

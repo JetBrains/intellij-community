@@ -38,10 +38,9 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
   private static final Logger LOG = Logger.getInstance(CodeStyleSettingsManager.class);
 
   /**
-   * Use {@code get/setMainProjectCodeStyle()} instead
-   * @Deprecated
+   * Use {@link #setMainProjectCodeStyle(CodeStyleSettings)} or {@link #getMainProjectCodeStyle()} instead
    */
-  @SuppressWarnings("DeprecatedIsStillUsed") @Deprecated
+  @Deprecated
   @Nullable
   public volatile CodeStyleSettings PER_PROJECT_SETTINGS;
 
@@ -49,7 +48,10 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
   public volatile String PREFERRED_PROJECT_CODE_STYLE;
   private volatile CodeStyleSettings myTemporarySettings;
 
-  @SuppressWarnings("deprecation")
+  /**
+   * @deprecated see comments for {@link #getSettings(Project)}
+   */
+  @Deprecated
   public static CodeStyleSettingsManager getInstance(@Nullable Project project) {
     if (project == null || project.isDefault()) return getInstance();
     ProjectCodeStyleSettingsManager projectSettingsManager = ServiceManager.getService(project, ProjectCodeStyleSettingsManager.class);
@@ -65,9 +67,6 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
     return ServiceManager.getService(AppCodeStyleSettingsManager.class);
   }
 
-  @SuppressWarnings({"UnusedDeclaration"})
-  public CodeStyleSettingsManager(Project project) {
-  }
   public CodeStyleSettingsManager() {}
 
   /**
@@ -76,7 +75,10 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
    *   <li>{@link CodeStyle#getLanguageSettings(PsiFile, Language)} to get common settings for a language.</li>
    *   <li>{@link CodeStyle#getCustomSettings(PsiFile, Class)} to get custom settings.</li>
    * </ul>
-   * If {@code PsiFile} is not applicable, use {@link CodeStyle#getSettings(Project)}.
+   * If {@code PsiFile} is not applicable, use {@link CodeStyle#getSettings(Project)} but only in cases
+   * when using main project settings is <b>logically the only choice</b> in a given context. It shouldn't be used just because the existing
+   * code doesn't allow to easily retrieve a PsiFile. Otherwise the code will not catch up with proper file code style settings since the
+   * settings may differ for different files depending on their scope.
    */
   @NotNull
   @Deprecated

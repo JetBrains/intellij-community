@@ -53,7 +53,7 @@ import java.util.List;
 /**
  * @author max
  */
-public class EditorTextField extends NonOpaquePanel implements DocumentListener, TextComponent, DataProvider,
+public class EditorTextField extends NonOpaquePanel implements DocumentListener, TextComponent, DataProvider, TextAccessor,
                                                        DocumentBasedComponent, FocusListener, MouseListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.EditorTextField");
   public static final Key<Boolean> SUPPLEMENTARY_KEY = Key.create("Supplementary");
@@ -234,6 +234,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     }
   }
 
+  @Override
   public void setText(@Nullable final String text) {
     ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(getProject(), () -> {
       myDocument.replaceString(0, myDocument.getTextLength(), StringUtil.notNullize(text));

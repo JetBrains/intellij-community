@@ -41,7 +41,6 @@
     <spellchecker.bundledDictionaryProvider implementation="com.intellij.spellchecker.DefaultBundledDictionariesProvider"/>
 
     <projectService serviceImplementation="com.intellij.spellchecker.state.ProjectDictionaryState"/>
-    <projectService serviceImplementation="com.intellij.spellchecker.state.AggregatedDictionaryState"/>
     <applicationService serviceImplementation="com.intellij.spellchecker.state.CachedDictionaryState"/>
   </extensions>
 </idea-plugin>

@@ -484,8 +484,8 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
   }
 
   private static class MySaveTask implements Runnable {
-    private Project myProject;
-    private Collection<InternalExternalProjectInfo> myExternalProjects;
+    private final Project myProject;
+    private final Collection<InternalExternalProjectInfo> myExternalProjects;
 
     public MySaveTask(Project project, Collection<InternalExternalProjectInfo> externalProjects) {
       myProject = project;

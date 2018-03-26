@@ -83,6 +83,12 @@ public interface UsageView extends Disposable {
   @NotNull
   JComponent getComponent();
 
+  @NotNull
+  default JComponent getPreferredFocusableComponent() {
+    return getComponent();
+  }
+
+
   int getUsagesCount();
 
   /**

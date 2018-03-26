@@ -39,8 +39,8 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
   private static void checkInitPyDir(PsiElement elt, String dirname) {
     assertTrue(elt instanceof PyFile);
     PyFile f = (PyFile)elt;
-    assertEquals(f.getName(), "__init__.py");
-    assertEquals(f.getContainingDirectory().getName(), dirname);
+    assertEquals("__init__.py", f.getName());
+    assertEquals(dirname, f.getContainingDirectory().getName());
   }
 
   public void testSimple() {
@@ -303,6 +303,7 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
       myTestFileName = null;
     }
   }
+
   // PY-2813
   public void testFromNamespacePackageImport() {
     assertResolvesTo(PyFunction.class, "foo");
@@ -348,12 +349,12 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
 
   // PY-7156
   public void testPython33NamespacePackage() {
-    runWithLanguageLevel(LanguageLevel.PYTHON33, () -> assertResolvesTo(PsiDirectory.class, "p1"));
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> assertResolvesTo(PsiDirectory.class, "p1"));
   }
 
   // PY-7156
   public void testFromPython33NamespacePackageImport() {
-    runWithLanguageLevel(LanguageLevel.PYTHON33, () -> assertResolvesTo(PyFunction.class, "foo"));
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> assertResolvesTo(PyFunction.class, "foo"));
   }
 
   // PY-7775
@@ -392,7 +393,7 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
 
   // PY-7378
   public void testModuleInDeeplyNestedNamespacePackage() {
-    runWithLanguageLevel(LanguageLevel.PYTHON33, () -> assertResolvesTo(PyFile.class, "m1.py"));
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> assertResolvesTo(PyFile.class, "m1.py"));
   }
 
   public void testKeywordArgument() {
@@ -450,6 +451,34 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
     });
   }
 
+  // PY-28321
+  public void testImportManySourceRoots() {
+    myFixture.copyDirectoryToProject("importManySourceRoots", "");
+    withSourceRoots(Lists.newArrayList(myFixture.findFileInTempDir("root2"), myFixture.findFileInTempDir("root1")), () -> {
+      final PsiFile psiFile = myFixture.configureByFile("root1/pkg/a.py");
+      final PsiReference ref = PyResolveTestCase.findReferenceByMarker(psiFile);
+      assertInstanceOf(ref, PsiPolyVariantReference.class);
+      final List<PsiElement> elements = PyUtil.multiResolveTopPriority((PsiPolyVariantReference)ref);
+      assertEquals(1, elements.size());
+      final PsiElement element = elements.get(0);
+      assertInstanceOf(element, PyFile.class);
+      final VirtualFile file = ((PyFile)element).getVirtualFile();
+      assertEquals("m1.py", file.getName());
+    });
+  }
+
+  // PY-28321
+  public void testImportManySourceRootsReverseRootOrder() {
+    myFixture.copyDirectoryToProject("importManySourceRoots", "");
+    withSourceRoots(Lists.newArrayList(myFixture.findFileInTempDir("root1"), myFixture.findFileInTempDir("root2")), () -> {
+      final PsiFile psiFile = myFixture.configureByFile("root1/pkg/a.py");
+      final PsiReference ref = PyResolveTestCase.findReferenceByMarker(psiFile);
+      assertInstanceOf(ref, PsiPolyVariantReference.class);
+      final List<PsiElement> elements = PyUtil.multiResolveTopPriority((PsiPolyVariantReference)ref);
+      assertEquals(0, elements.size());
+    });
+  }
+
   // PY-22522
   public void testBothForeignAndSourceRootImportResultsReturned() {
     myFixture.copyDirectoryToProject("bothForeignAndSourceRootImportResultsReturned", "");
@@ -467,8 +496,8 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
       final List<PsiElement> elements = PyUtil.multiResolveTopPriority((PsiPolyVariantReference)ref);
       assertEquals(2, elements.size());
       final Set<String> parentNames = elements.stream()
-        .filter(e -> e instanceof PyFile)
-        .map(e -> ((PyFile)e).getVirtualFile().getParent().getName()).collect(Collectors.toSet());
+                                              .filter(e -> e instanceof PyFile)
+                                              .map(e -> ((PyFile)e).getVirtualFile().getParent().getName()).collect(Collectors.toSet());
       assertContainsElements(parentNames, "root", "ext");
     });
   }
@@ -515,10 +544,9 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
       fileSystemItems = Stream.of(PyPsiUtils.getFileSystemItem(reference.resolve()));
     }
     return fileSystemItems.map(f -> VfsUtilCore.getRelativeLocation(f.getVirtualFile(), root)).collect(Collectors.toList());
-    
   }
 
-  public void testCustomMemberTargetClass(){
+  public void testCustomMemberTargetClass() {
     prepareTestDirectory();
 
     final PyCustomMember customMember = new PyCustomMember("Clazz").resolvesToClass("pkg.mod1.Clazz");
@@ -530,7 +558,22 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
     final PsiElement resolved = customMember.resolve(context, resolveContext);
     assertInstanceOf(resolved, PyTypedElement.class);
 
-    final PyType type = typeEvalContext.getType((PyTypedElement) resolved);
+    final PyType type = typeEvalContext.getType((PyTypedElement)resolved);
     assertInstanceOf(type, PyClassType.class);
+  }
+
+  public void testImportAliasTargetReference() {
+    assertResolvesTo(PyTargetExpression.class, "bar");
+  }
+
+  //PY-28685
+  public void testImplicitImportSelf() {
+    prepareTestDirectory();
+    assertSameElements(doMultiResolveAndGetFileUrls("pkg1/pkg2/mod1.py"), "pkg1/pkg2/mod1.py");
+  }
+
+  public void testImportResolvesToPkgInit() {
+    prepareTestDirectory();
+    assertSameElements(doMultiResolveAndGetFileUrls("pkg1/pkg2/mod1.py"), "pkg1/pkg2/__init__.py");
   }
 }

@@ -42,15 +42,12 @@ public class PySmartEnterTest extends PyTestCase {
   public void doTest() {
     myFixture.configureByFile("codeInsight/smartEnter/" + getTestName(true) + ".py");
     final List<SmartEnterProcessor> processors = getSmartProcessors(PythonLanguage.getInstance());
-    new WriteCommandAction(myFixture.getProject()) {
-      @Override
-      protected void run(@NotNull Result result) {
-        final Editor editor = myFixture.getEditor();
-        for (SmartEnterProcessor processor : processors) {
-          processor.process(myFixture.getProject(), editor, myFixture.getFile());
-        }
+    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> {
+      final Editor editor = myFixture.getEditor();
+      for (SmartEnterProcessor processor : processors) {
+        processor.process(myFixture.getProject(), editor, myFixture.getFile());
       }
-    }.execute();
+    });
     myFixture.checkResultByFile("codeInsight/smartEnter/" + getTestName(true) + "_after.py", true);
   }
 
@@ -236,6 +233,6 @@ public class PySmartEnterTest extends PyTestCase {
 
   // PY-19279
   public void testColonAfterReturnTypeAnnotation() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTest);
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
   }
 }

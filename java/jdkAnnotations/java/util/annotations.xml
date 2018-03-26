@@ -337,6 +337,11 @@
   <item name="java.util.Arrays java.util.List&lt;T&gt; asList(T...) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name='java.util.Arrays java.util.stream.Stream&lt;T&gt; stream(T[])'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
   <item name="java.util.Arrays long[] copyOf(long[], int)">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
@@ -1426,6 +1431,9 @@
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.util.Formatter Formatter(java.lang.String, java.lang.String, java.util.Locale) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Formatter java.lang.String toString()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name="java.util.Formatter java.util.Formatter format(java.lang.String, java.lang.Object...) 0">

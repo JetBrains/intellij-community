@@ -191,7 +191,7 @@ public class JavaFindUsagesHelper {
       final PsiMethod psiMethod = (PsiMethod)element;
       boolean isAbstract = ReadAction.compute(() -> psiMethod.hasModifierProperty(PsiModifier.ABSTRACT));
       final JavaMethodFindUsagesOptions methodOptions = (JavaMethodFindUsagesOptions)options;
-      if (isAbstract && methodOptions.isImplementingMethods || methodOptions.isOverridingMethods) {
+      if (isAbstract && methodOptions.isImplementingMethods || !isAbstract && methodOptions.isOverridingMethods) {
         if (!processOverridingMethods(psiMethod, processor, methodOptions)) return false;
         FunctionalExpressionSearch.search(psiMethod, methodOptions.searchScope).forEach(new PsiElementProcessorAdapter<>(
           expression -> addResult(expression, options, processor)));

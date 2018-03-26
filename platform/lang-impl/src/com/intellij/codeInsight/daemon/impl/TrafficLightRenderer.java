@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.daemon.impl;
 
@@ -155,9 +141,8 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
   }
 
   private void incErrorCount(RangeHighlighter highlighter, int delta) {
-    Object o = highlighter.getErrorStripeTooltip();
-    if (!(o instanceof HighlightInfo)) return;
-    HighlightInfo info = (HighlightInfo)o;
+    HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
+    if (info == null) return;
     HighlightSeverity infoSeverity = info.getSeverity();
     if (infoSeverity.myVal <= HighlightSeverity.INFORMATION.myVal) return;
     final int severityIdx = mySeverityRegistrar.getSeverityIdx(infoSeverity);
@@ -170,8 +155,10 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     public boolean errorAnalyzingFinished; // all passes done
     List<ProgressableTextEditorHighlightingPass> passStati = Collections.emptyList();
     public int[] errorCount = ArrayUtil.EMPTY_INT_ARRAY;
-    String reasonWhyDisabled;
-    String reasonWhySuspended;
+    // Used in Rider
+    public String reasonWhyDisabled;
+    // Used in Rider
+    public String reasonWhySuspended;
 
     public DaemonCodeAnalyzerStatus() {
     }

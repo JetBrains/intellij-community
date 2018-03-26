@@ -187,11 +187,11 @@ public class ProgressPanelBuilder implements GridBagPanelBuilder, PanelBuilder {
     private boolean myServiceComment = false;
 
     private InplaceButton button;
-    private IconButton cancelIcon;
-    private IconButton resumeIcon;
-    private IconButton pauseIcon;
+    private final IconButton cancelIcon;
+    private final IconButton resumeIcon;
+    private final IconButton pauseIcon;
 
-    private SeparatorComponent mySeparatorComponent = new SeparatorComponent(SEPARATOR_COLOR, SeparatorOrientation.HORIZONTAL);
+    private final SeparatorComponent mySeparatorComponent = new SeparatorComponent(SEPARATOR_COLOR, SeparatorOrientation.HORIZONTAL);
 
     private State state = State.PLAYING;
 
@@ -277,7 +277,7 @@ public class ProgressPanelBuilder implements GridBagPanelBuilder, PanelBuilder {
       return state;
     }
 
-    void addToPanel(JPanel panel, GridBagConstraints gc) {
+    private void addToPanel(JPanel panel, GridBagConstraints gc) {
       gc.gridx = 0;
       gc.anchor = GridBagConstraints.LINE_START;
       gc.fill = GridBagConstraints.HORIZONTAL;
@@ -308,7 +308,7 @@ public class ProgressPanelBuilder implements GridBagPanelBuilder, PanelBuilder {
       panel.add(myProgressBar, gc);
       gc.gridx++;
 
-      myProgressBar.putClientProperty(LABELED_PANEL_PROPERTY, this);
+      myProgressBar.putClientProperty(DECORATED_PANEL_PROPERTY, this);
 
       gc.weightx = 0.0;
       gc.insets = JBUI.insets(labelAbove || topSeparatorEnabled || smallVariant ? 1 : 14,

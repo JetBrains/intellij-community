@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -36,11 +37,12 @@ class JrtHandler extends ArchiveHandler {
     synchronized (this) {
       FileSystem fs = SoftReference.dereference(myFileSystem);
       if (fs != null) {
+        myFileSystem = null;
         try {
           fs.close();
           ClassLoader loader = fs.getClass().getClassLoader();
-          if (loader instanceof URLClassLoader && ((URLClassLoader)loader).getURLs().length == 1) {
-            ((URLClassLoader)loader).close();
+          if (loader instanceof MyClassLoader) {
+            ((MyClassLoader)loader).close();
           }
         }
         catch (IOException e) {
@@ -61,9 +63,7 @@ class JrtHandler extends ArchiveHandler {
         else {
           File file = new File(path, "lib/jrt-fs.jar");
           if (!file.exists()) throw new IOException("Missing provider: " + file);
-          URL url = file.toURI().toURL();
-          ClassLoader loader = new URLClassLoader(new URL[]{url}, null);
-          fs = FileSystems.newFileSystem(ROOT_URI, Collections.emptyMap(), loader);
+          fs = FileSystems.newFileSystem(ROOT_URI, Collections.emptyMap(), new MyClassLoader(file));
         }
         myFileSystem = new SoftReference<>(fs);
       }
@@ -123,5 +123,11 @@ class JrtHandler extends ArchiveHandler {
     if (entry == null) throw new FileNotFoundException(getFile() + " : " + relativePath);
     Path path = getFileSystem().getPath("/modules/" + relativePath);
     return Files.readAllBytes(path);
+  }
+
+  private static class MyClassLoader extends URLClassLoader {
+    private MyClassLoader(File file) throws MalformedURLException {
+      super(new URL[]{file.toURI().toURL()}, null);
+    }
   }
 }

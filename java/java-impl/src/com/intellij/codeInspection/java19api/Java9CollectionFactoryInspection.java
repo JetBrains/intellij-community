@@ -193,7 +193,7 @@ public class Java9CollectionFactoryInspection extends BaseLocalInspectionTool {
       if (mapDefinition instanceof PsiNewExpression) {
         PsiAnonymousClass anonymousClass = ((PsiNewExpression)mapDefinition).getAnonymousClass();
         PsiExpressionList argumentList = ((PsiNewExpression)mapDefinition).getArgumentList();
-        if (anonymousClass != null && argumentList != null && argumentList.getExpressions().length == 0) {
+        if (anonymousClass != null && argumentList != null && argumentList.isEmpty()) {
           PsiJavaCodeReferenceElement baseClassReference = anonymousClass.getBaseClassReference();
           if (CommonClassNames.JAVA_UTIL_HASH_MAP.equals(baseClassReference.getQualifiedName())) {
             return fromInitializer(anonymousClass, "Map", MAP_PUT);
@@ -302,7 +302,7 @@ public class Java9CollectionFactoryInspection extends BaseLocalInspectionTool {
   }
 
   private static class ReplaceWithCollectionFactoryFix implements LocalQuickFix {
-    private String myMessage;
+    private final String myMessage;
 
     public ReplaceWithCollectionFactoryFix(String message) {
       myMessage = message;

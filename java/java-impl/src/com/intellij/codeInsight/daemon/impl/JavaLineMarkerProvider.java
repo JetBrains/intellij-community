@@ -227,7 +227,7 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
 
     Object lock = new Object();
     ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
-    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(tasks, indicator, true, computable -> {
+    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(tasks, indicator, computable -> {
       List<LineMarkerInfo> infos = computable.compute();
       synchronized (lock) {
         result.addAll(infos);
@@ -360,7 +360,7 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
 
   private static boolean isServiceProviderMethod(@NotNull PsiMethod method) {
     return "provider".equals(method.getName()) &&
-           method.getParameterList().getParametersCount() == 0 &&
+           method.getParameterList().isEmpty() &&
            method.hasModifierProperty(PsiModifier.PUBLIC) &&
            method.hasModifierProperty(PsiModifier.STATIC);
   }

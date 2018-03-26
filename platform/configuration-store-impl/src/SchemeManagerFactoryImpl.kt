@@ -51,7 +51,7 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
     val path = checkPath(directoryName)
     val manager = SchemeManagerImpl(path,
                                     processor,
-                                    streamProvider ?: (componentManager?.stateStore?.stateStorageManager as? StateStorageManagerImpl)?.compoundStreamProvider,
+                                    streamProvider ?: (componentManager?.stateStore?.storageManager as? StateStorageManagerImpl)?.compoundStreamProvider,
                                     directoryPath ?: pathToFile(path),
                                     roamingType,
                                     presentableName,
@@ -122,7 +122,7 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
       return path
     }
 
-    override fun pathToFile(path: String) = Paths.get(ApplicationManager.getApplication().stateStore.stateStorageManager.expandMacros(ROOT_CONFIG), path)!!
+    override fun pathToFile(path: String) = Paths.get(ApplicationManager.getApplication().stateStore.storageManager.expandMacros(ROOT_CONFIG), path)!!
   }
 
   @Suppress("unused")

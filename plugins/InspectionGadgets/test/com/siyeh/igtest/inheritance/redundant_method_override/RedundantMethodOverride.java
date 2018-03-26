@@ -199,3 +199,19 @@ class Declaration {
     }
   }
 }
+//////////////
+class DifferentAnonymous {
+
+  Object x() {
+    return new Object() {
+      int one;
+    };
+  }
+}
+class DifferentAnonymous2 extends DifferentAnonymous {
+
+  @Override
+  Object x() {
+    return new Object() {};
+  }
+}

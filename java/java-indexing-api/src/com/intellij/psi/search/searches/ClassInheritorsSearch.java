@@ -25,10 +25,10 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author max
@@ -38,12 +38,17 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
   public static final ClassInheritorsSearch INSTANCE = new ClassInheritorsSearch();
 
   public static class SearchParameters implements QueryParameters {
-    @NotNull private final PsiClass myClass;
-    @NotNull private final SearchScope myScope;
+    @NotNull
+    private final PsiClass myClass;
+    @NotNull
+    private final SearchScope myScope;
     private final boolean myCheckDeep;
     private final boolean myCheckInheritance;
     private final boolean myIncludeAnonymous;
-    @NotNull private final Condition<String> myNameCondition;
+    @NotNull
+    private final Condition<String> myNameCondition;
+    @NotNull
+    private final Project myProject;
 
     public SearchParameters(@NotNull final PsiClass aClass, @NotNull SearchScope scope, final boolean checkDeep, final boolean checkInheritance, boolean includeAnonymous) {
       this(aClass, scope, checkDeep, checkInheritance, includeAnonymous, Conditions.alwaysTrue());
@@ -58,6 +63,7 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
       assert checkInheritance;
       myIncludeAnonymous = includeAnonymous;
       myNameCondition = nameCondition;
+      myProject = PsiUtilCore.getProjectInReadAction(myClass);
     }
 
     @NotNull
@@ -65,10 +71,10 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
       return myClass;
     }
 
-    @Nullable
+    @NotNull
     @Override
     public Project getProject() {
-      return myClass.getProject();
+      return myProject;
     }
 
     @Override

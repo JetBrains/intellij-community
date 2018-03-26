@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.projectView.impl;
 
@@ -23,6 +21,7 @@ import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -67,8 +66,10 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
+import java.util.function.Predicate;
 
 public abstract class AbstractProjectViewPane implements DataProvider, Disposable, BusyObject {
+  private static final Logger LOG = Logger.getInstance(AbstractProjectViewPane.class);
   public static final ExtensionPointName<AbstractProjectViewPane> EP_NAME = ExtensionPointName.create("com.intellij.projectViewPane");
 
   @NotNull
@@ -146,6 +147,10 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     if (Comparing.strEqual(mySubId, subId)) return;
     saveExpandedPaths();
     mySubId = subId;
+    onSubIdChange();
+  }
+
+  protected void onSubIdChange() {
   }
 
   public boolean isInitiallyVisible() {
@@ -171,6 +176,11 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   @NotNull public String getPresentableSubIdName(@NotNull final String subId) {
     throw new IllegalStateException("should not call");
   }
+
+  public Icon getPresentableSubIdIcon(@NotNull String subId) {
+    return getIcon();
+  }
+
   public abstract JComponent createComponent();
   public JComponent getComponentToFocus() {
     return myTree;
@@ -328,6 +338,11 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     return userObject instanceof NodeDescriptor ? (NodeDescriptor)userObject : null;
   }
 
+  /**
+   * @see TreeUtil#getUserObject(Object)
+   * @deprecated AbstractProjectViewPane#getSelectedPath
+   */
+  @Deprecated
   public final DefaultMutableTreeNode getSelectedNode() {
     TreePath path = getSelectedPath();
     return path == null ? null : ObjectUtils.tryCast(path.getLastPathComponent(), DefaultMutableTreeNode.class);
@@ -567,17 +582,28 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       }
     }
     else {
-      final DefaultMutableTreeNode selectedNode = getSelectedNode();
-      if (selectedNode != null) {
-        return getSelectedDirectoriesInAmbiguousCase(selectedNode);
+      TreePath path = getSelectedPath();
+      if (path != null) {
+        Object component = path.getLastPathComponent();
+        if (component instanceof DefaultMutableTreeNode) {
+          //noinspection deprecation
+          return getSelectedDirectoriesInAmbiguousCase((DefaultMutableTreeNode)component);
+        }
+        return getSelectedDirectoriesInAmbiguousCase(component);
       }
     }
     return PsiDirectory.EMPTY_ARRAY;
   }
 
   @NotNull
+  @Deprecated
+  @SuppressWarnings("DeprecatedIsStillUsed")
   protected PsiDirectory[] getSelectedDirectoriesInAmbiguousCase(@NotNull final DefaultMutableTreeNode node) {
-    final Object userObject = node.getUserObject();
+    return getSelectedDirectoriesInAmbiguousCase(node.getUserObject());
+  }
+
+  @NotNull
+  protected PsiDirectory[] getSelectedDirectoriesInAmbiguousCase(Object userObject) {
     if (userObject instanceof AbstractModuleNode) {
       final Module module = ((AbstractModuleNode)userObject).getValue();
       if (module != null) {
@@ -780,12 +806,43 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       if (node == null) return Promises.rejectedPromise();
       return Promises.resolvedPromise(new TreePath(node.getPath()));
     }
-    TreeVisitor visitor = AsyncProjectViewSupport.createVisitor(element);
+    TreeVisitor visitor = createVisitor(element);
     if (visitor == null || myTree == null) return Promises.rejectedPromise();
     return TreeUtil.promiseVisit(myTree, visitor);
   }
 
   AsyncProjectViewSupport getAsyncSupport() {
+    return null;
+  }
+
+  @Nullable
+  public static TreeVisitor createVisitor(Object object) {
+    if (object instanceof VirtualFile) return createVisitor((VirtualFile)object);
+    if (object instanceof PsiElement) return createVisitor((PsiElement)object);
+    if (object != null) LOG.warn("unsupported object: " + object);
+    return null;
+  }
+
+  @Nullable
+  public static TreeVisitor createVisitor(VirtualFile file) {
+    return createVisitor(null, file);
+  }
+
+  @Nullable
+  public static TreeVisitor createVisitor(PsiElement element) {
+    return createVisitor(element, null);
+  }
+
+  @Nullable
+  public static TreeVisitor createVisitor(PsiElement element, VirtualFile file) {
+    return createVisitor(element, file, null);
+  }
+
+  @Nullable
+  static TreeVisitor createVisitor(PsiElement element, VirtualFile file, Predicate<TreePath> predicate) {
+    if (element != null && element.isValid()) return new ProjectViewNodeVisitor(element, file, predicate);
+    if (file != null) return new ProjectViewFileVisitor(file, predicate);
+    LOG.warn(element != null ? "element invalidated: " + element : "cannot create visitor without element and/or file");
     return null;
   }
 }

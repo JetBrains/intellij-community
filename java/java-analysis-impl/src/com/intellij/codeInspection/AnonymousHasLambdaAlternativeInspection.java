@@ -34,7 +34,7 @@ public class AnonymousHasLambdaAlternativeInspection extends AbstractBaseJavaLoc
     }
   }
 
-  private static AnonymousLambdaAlternative[] ALTERNATIVES = {
+  private static final AnonymousLambdaAlternative[] ALTERNATIVES = {
     new AnonymousLambdaAlternative("java.lang.ThreadLocal", "initialValue", "java.lang.ThreadLocal.withInitial($lambda$)",
                                    "ThreadLocal.withInitial()"),
     new AnonymousLambdaAlternative("java.lang.Thread", "run", "new java.lang.Thread($lambda$)",
@@ -53,8 +53,7 @@ public class AnonymousHasLambdaAlternativeInspection extends AbstractBaseJavaLoc
         super.visitAnonymousClass(aClass);
         PsiExpressionList argumentList = aClass.getArgumentList();
         if (AnonymousCanBeLambdaInspection.isLambdaForm(aClass, Collections.emptySet()) &&
-            argumentList != null &&
-            argumentList.getExpressions().length == 0) {
+            argumentList != null && argumentList.isEmpty()) {
           PsiMethod method = aClass.getMethods()[0];
           PsiClassType type = aClass.getBaseClassType();
           AnonymousLambdaAlternative alternative = getAlternative(type.resolve(), method);

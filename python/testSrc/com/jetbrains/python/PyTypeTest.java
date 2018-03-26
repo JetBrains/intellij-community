@@ -8,10 +8,7 @@ import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.types.PyClassLikeType;
-import com.jetbrains.python.psi.types.PyClassType;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -182,7 +179,7 @@ public class PyTypeTest extends PyTestCase {
 
   public void testTypeAnno() {
     runWithLanguageLevel(
-      LanguageLevel.PYTHON30,
+      LanguageLevel.PYTHON34,
       () -> doTest("str",
                    "def foo(x: str) -> list:\n" +
                    "    expr = x")
@@ -191,7 +188,7 @@ public class PyTypeTest extends PyTestCase {
 
   public void testReturnTypeAnno() {
     runWithLanguageLevel(
-      LanguageLevel.PYTHON30,
+      LanguageLevel.PYTHON34,
       () -> doTest("list",
                    "def foo(x) -> list:\n" +
                    "    return x\n" +
@@ -1226,6 +1223,368 @@ public class PyTypeTest extends PyTestCase {
     doTest("MyClass",
            expr,
            TypeEvalContext.userInitiated(expr.getProject(), expr.getContainingFile()));
+  }
+
+  // PY-1182
+  public void testListTypeByModifications() {
+    doTest("List[int]",
+           "def f():\n" +
+           "    expr = []\n" +
+           "    expr.append(42)\n" +
+           "    expr.append(0)"
+    );
+
+    doTest("List[Union[str, int]]",
+           "def f():\n" +
+           "    expr = []\n" +
+           "    expr.append('a')\n" +
+           "    expr.append(1)"
+    );
+
+    doTest("List[Union[Union[int, str], Any]]",
+           "expr = [3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4]\n" +
+           "expr.append('a')"
+    );
+
+    doTest("List[Union[int, str]]",
+           "expr = [1, 2]\n" +
+           "expr.append(42)\n" +
+           "expr.extend(['a']"
+    );
+
+    doTest("List[Union[int, str, None]]",
+           "expr = []\n" +
+           "expr.extend([1, 'a', None])"
+    );
+
+    doTest("List[int]",
+           "expr = []\n" +
+           "expr.index(42)");
+
+    doTest("List[int]",
+           "expr = [1, 2, 3]\n");
+
+    doTest("List[Union[int, Any]]",
+           "expr = [1, 2, 3]\n" +
+           "expr.append(var)\n");
+
+    doTest("List[Union[int, str]]",
+           "expr = [1, 2, 3]\n" +
+           "expr[0] = 'a'\n" +
+           "expr[1] = 'b'\n");
+
+    doTest("List[Union[int, str]]",
+           "expr = [1, 2, 3]\n" +
+           "expr[0] = 'a'\n" +
+           "expr[1] = 'b'\n");
+
+    doTest("List[Union[int, str]]",
+           "expr = [1, 2]\n" +
+           "t, expr[1] = 23, 'b'\n");
+
+    doTest("List[Union[int, str]]",
+           "def f():\n" +
+           "    expr, b = [1, 2, 3], 'abc'\n" +
+           "    expr.append('a')\n"
+    );
+
+    doTest("List[int]",
+           "def f():" +
+           "    expr = [1, 2, 3]\n" +
+           "    def inner():\n" +
+           "        expr.append('a')\n"
+    );
+  }
+
+  // PY-1182
+  public void testListTypeByModificationsConstructor() {
+    doTest("List[str]",
+           "expr = list()\n" +
+           "expr.append('a')\n"
+    );
+
+    doTest("List[Union[str, int]]",
+           "expr = list()\n" +
+           "expr.append('a')\n" +
+           "expr.append(1)\n"
+    );
+
+    doTest("List[Union[int, str]]",
+           "a = list([1, 2, 3])\n" +
+           "a.append('a')\n" +
+           "expr = a\n"
+    );
+
+    doTest("List[Union[str, Any]]",
+           "expr = list()\n" +
+           "expr.append('a')\n" +
+           "expr.append(var)\n"
+    );
+
+    doTest("List[Union[int, str]]",
+           "expr = list([1, 2])\n" +
+           "t, expr[1] = 23, 'b'\n");
+
+    doTest("List[Union[str, Any]]",
+           "expr = list(var)\n" +
+           "expr[0] = 'abc'\n");
+
+    doTest("List[Union[int, str]]",
+           "b, expr = 1, list([1, 2, 3])\n" +
+           "expr.append('a')\n"
+    );
+
+    doTest("List[int]",
+           "def f():" +
+           "    expr = list([1, 2, 3])\n" +
+           "    def inner():\n" +
+           "        expr.append('a')\n"
+    );
+  }
+
+  // PY-1182
+  public void testDictTypeByModifications() {
+    doTest("Dict[str, Union[int, str]]",
+           "def f():\n" +
+           "    expr = {'a': 3}\n" +
+           "    expr['b'] = \"s\""
+    );
+
+    doTest("Dict[str, Union[int, str]]",
+           "def f():\n" +
+           "    expr = {'a': 3}\n" +
+           "    expr['b'] = \"s\""
+    );
+
+    doTest("Dict[str, Union[int, List[int]]]",
+           "def f():\n" +
+           "    expr = {}\n" +
+           "    expr['a'] = 0\n" +
+           "    expr['c'] = [1, 2]"
+    );
+
+    doTest("Dict[str, Union[int, Any]]",
+           "def f():\n" +
+           "    expr = {'b': D()}\n" +
+           "    expr['a'] = 2\n"
+    );
+
+    doTest("Dict[str, Union[int, str]]",
+           "def f():\n" +
+           "    expr = {'a': 3}\n" +
+           "    expr['b'], t = \"s\", 12"
+    );
+
+    doTest("Dict[str, Union[int, Any]]",
+           "def f():\n" +
+           "    expr = {'a': 3}\n" +
+           "    expr['a'] = var\n"
+    );
+
+    doTest("Dict[str, int]",
+           "def f():\n" +
+           "    expr = {'a': 3, 'b': 4}\n"
+    );
+
+    doTest("Dict[str, Union[int, str]]",
+           "def f():\n" +
+           "    expr = {'a': 3}\n" +
+           "    expr.update({'a': 'str'})\n"
+    );
+
+    doTest("Dict[str, Union[int, Any]]",
+           "def f():\n" +
+           "    expr = {'a': 3}\n" +
+           "    expr.update({'b': var})\n"
+    );
+
+    doTest("Dict[str, int]",
+           "def f():\n" +
+           "    expr = {}\n" +
+           "    expr.update(a=1, b=2)"
+    );
+
+    doTest("Dict[Union[int, str], Union[int, str]]",
+           "def f():\n" +
+           "    expr = {1: '3'}\n" +
+           "    expr.update(a=1, b=2)"
+    );
+
+    doTest("Dict[str, Union[int, str]]",
+           "def f():\n" +
+           "    expr = {}\n" +
+           "    expr['a'] = 23\n" +
+           "    expr.update(a='m', b='n')"
+    );
+
+    doTest("Dict[str, Union[int, str]]",
+           "def f():\n" +
+           "    b, expr = 23, {'a': 3}\n" +
+           "    expr['b'] = 'l'"
+    );
+
+    doTest("Dict[str, int]",
+           "def f():" +
+           "    expr = {'a': 1}\n" +
+           "    def inner():\n" +
+           "        expr['b'] = 'a'\n"
+    );
+  }
+
+  // PY-1182
+  public void testDictTypeByModificationConstructor() {
+    doTest("Dict[str, int]",
+           "expr = dict()\n" +
+           "expr['d'] = 12\n"
+    );
+
+    doTest("Dict[str, Union[int, str]]",
+           "expr = dict({'a': 1, 'b': 2})\n" +
+           "expr['a'] = '12'\n"
+    );
+
+    doTest("Dict[str, Union[int, str]]",
+           "expr = dict(zip(['a', 'b', 'c'], [1, 2, 3]))\n" +
+           "expr['d'] = '12'\n"
+    );
+
+    doTest("Dict[str, Union[int, str]]",
+           "expr = dict(zip(['a', 'b', 'c'], [1, 2, 3]))\n" +
+           "expr['d'] = '12'\n"
+    );
+
+    doTest("Dict[str, Union[int, str]]",
+           "expr = dict([('two', 2), ('one', 1), ('three', 3)])\n" +
+           "expr['d'] = '12'\n"
+    );
+
+    doTest("Dict[str, Union[int, Any]]",
+           "expr = dict({'a': 1, 'b': 2})\n" +
+           "expr['a'] = var\n"
+    );
+
+    doTest("Dict[Union[str, Any], Union[int, Any]]",
+           "expr = dict(var)\n" +
+           "expr.update({'c': 12})\n"
+    );
+
+    doTest("Dict[str, Union[int, str]]",
+           "a, expr = 23, dict({'a': 1})\n" +
+           "expr.update({'c': '34'})\n"
+    );
+
+    doTest("Dict[str, int]",
+           "def f():" +
+           "    expr = dict({'a': 1})\n" +
+           "    def inner():\n" +
+           "        expr['b'] = 'a'\n"
+    );
+  }
+
+  // PY-1182
+  public void testSetTypeByModifications() {
+    doTest("Set[Union[str, int]]",
+           "def f():\n" +
+           "    expr = {'abc'}\n" +
+           "    expr.add(1)"
+    );
+
+    doTest("Set[Union[int, str]]",
+           "def f():\n" +
+           "    expr = {1, 2}\n" +
+           "    b = {'abc'}\n" +
+           "    expr.update(b)"
+    );
+
+    doTest("Set[Union[int, str]]",
+           "def f():\n" +
+           "    expr = {1, 2}\n" +
+           "    b = {2, 3}\n" +
+           "    expr.update(b, ['a', 'b'], {1, 2})"
+    );
+
+    doTest("Set[str]",
+           "def f():\n" +
+           "    expr = {'m', 'n'}\n" +
+           "    expr.update({'a': 1, 'b': 2})"
+    );
+
+    doTest("Set[Union[Union[int, str], Any]]",
+           "def f():\n" +
+           "    expr = {1, 2}\n" +
+           "    b = {'a', 'b'}\n" +
+           "    expr.update(b, var)"
+    );
+
+    doTest("Set[str]",
+           "def f():\n" +
+           "    expr, var = {'a', 'b'}, 'lala'\n" +
+           "    expr.add('b')"
+    );
+
+    doTest("Set[int]",
+           "def f():" +
+           "    expr = {1, 2, 3}\n" +
+           "    def inner():\n" +
+           "        expr.add('a')\n"
+    );
+  }
+
+  // PY-1182
+  public void testSetTypeByModificationsConstructor() {
+    doTest("Set[int]",
+           "def f():\n" +
+           "    expr = set()\n" +
+           "    expr.add(1)"
+    );
+
+    doTest("Set[Union[int, str]]",
+           "def f():\n" +
+           "    expr = set({1, 2})\n" +
+           "    expr.add('abc')"
+    );
+
+    doTest("Set[Union[int, str]]",
+           "def f():\n" +
+           "    expr = set({1, 2})\n" +
+           "    b = {'abc'}\n" +
+           "    expr.update(b)"
+    );
+
+    doTest("Set[Union[int, str]]",
+           "def f():\n" +
+           "    expr = set({1, 2})\n" +
+           "    b = {2, 3}\n" +
+           "    expr.update(b, ['a', 'b'], {1, 2})"
+    );
+
+    doTest("Set[Union[str, Any]]",
+           "def f():\n" +
+           "    expr = set()\n" +
+           "    b = {'a', 'b'}\n" +
+           "    expr.update(b, var)"
+    );
+
+    doTest("Set[Union[str, Any]]",
+           "def f():\n" +
+           "    expr = set(var)\n" +
+           "    b = {'a', 'b'}\n" +
+           "    expr.update(b)"
+    );
+
+    doTest("Set[Union[int, str]]",
+           "def f():\n" +
+           "    expr, var = set([1, 2, 3]), 'lala'\n" +
+           "    expr.add('b')"
+    );
+
+    doTest("Set[int]",
+           "def f():\n" +
+           "    expr = set()\n" +
+           "    expr.add(1)\n" +
+           "    def inner():\n" +
+           "        expr.add('a')\n"
+    );
   }
 
   // PY-20063
@@ -2318,7 +2677,7 @@ public class PyTypeTest extends PyTestCase {
   // PY-24240
   public void testImplicitSuper() {
     runWithLanguageLevel(
-      LanguageLevel.PYTHON30,
+      LanguageLevel.PYTHON34,
       () -> {
         final PyExpression expression = parseExpr("class A:\n" +
                                                   "    pass\n" +
@@ -2348,9 +2707,20 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
+  // PY-27913
+  public void testDunderClassGetItemFirstParameter() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () -> doTest("Type[Foo]",
+                   "class Foo:\n" +
+                   "    def __class_getitem__(cls, item):\n" +
+                   "        expr = cls")
+    );
+  }
+
   public void testNoneLiteral() {
     runWithLanguageLevel(
-      LanguageLevel.PYTHON30,
+      LanguageLevel.PYTHON34,
       () -> doTest("None",
                    "expr = None")
     );
@@ -2358,7 +2728,7 @@ public class PyTypeTest extends PyTestCase {
 
   public void testEllipsis() {
     runWithLanguageLevel(
-      LanguageLevel.PYTHON30,
+      LanguageLevel.PYTHON34,
       () -> doTest("Any",
                    "expr = ...")
     );
@@ -2428,7 +2798,7 @@ public class PyTypeTest extends PyTestCase {
   // PY-26643
   public void testReplaceSelfInGenerator() {
     runWithLanguageLevel(
-      LanguageLevel.PYTHON33,
+      LanguageLevel.PYTHON34,
       () -> doTest("Generator[B, Any, B]",
                    "class A:\n" +
                    "    def foo(self):\n" +
@@ -2705,6 +3075,92 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
+  // PY-21302
+  public void testNewTypeReferenceTarget() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> {
+        final PyExpression definition = parseExpr("from typing import NewType\n" +
+                                                  "UserId = NewType('UserId', int)\n" +
+                                                  "expr = UserId");
+
+        for (TypeEvalContext context : getTypeEvalContexts(definition)) {
+          assertInstanceOf(context.getType(definition), PyTypingNewType.class);
+        }
+
+        final PyExpression instance = parseExpr("from typing import NewType\n" +
+                                                "UserId = NewType('UserId', int)\n" +
+                                                "expr = UserId(12)");
+
+        for (TypeEvalContext context : getTypeEvalContexts(instance)) {
+          assertInstanceOf(context.getType(instance), PyTypingNewType.class);
+        }
+      }
+    );
+  }
+
+  // PY-21302
+  public void testNewType() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTest("UserId",
+                   "from typing import NewType\n" +
+                   "UserId = NewType('UserId', int)\n" +
+                   "expr = UserId(12)")
+    );
+
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTest("Type[UserId]",
+                   "from typing import Dict, NewType\n" +
+                   "UserId = NewType('UserId', Dict[int, str])\n" +
+                   "expr = UserId\n")
+    );
+
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTest("(a: UserId) -> str",
+                   "from typing import Dict, NewType\n" +
+                   "UserId = NewType('UserId', int)\n" +
+                   "def foo(a: UserId) -> str\n" +
+                   "    pass\n" +
+                   "expr = foo\n")
+    );
+
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTest("UserId",
+                   "from typing import NewType as nt\n" +
+                   "UserId = nt('UserId', int)\n" +
+                   "expr = UserId(12)\n")
+    );
+
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTest("UserId",
+                   "import typing\n" +
+                   "UserId = typing.NewType('UserId', int)\n" +
+                   "expr = UserId(12)\n")
+    );
+
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTest("UserId",
+                   "import typing as t\n" +
+                   "UserId = t.NewType('UserId', int)\n" +
+                   "expr = UserId(12)\n")
+    );
+
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTest("SuperId",
+                   "from typing import NewType\n" +
+                   "UserId = NewType('UserId', int)\n" +
+                   "SuperId = NewType('SuperId', UserId)\n" +
+                   "expr = SuperId(UserId(12))\n")
+    );
+  }
+
   // PY-26992
   public void testImportedOrderedDict() {
     doTest("OrderedDict[str, str]",
@@ -2717,6 +3173,33 @@ public class PyTypeTest extends PyTestCase {
     doTest("OrderedDict[str, str]",
            "import collections\n" +
            "expr = collections.OrderedDict((('name', 'value'), ('another_name', 'another_value')))");
+  }
+
+  // PY-26628
+  public void testGenericTypingProtocolExt() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () -> doMultiFileTest("int",
+                            "from typing_extensions import Protocol\n" +
+                            "from typing import TypeVar\n" +
+                            "T = TypeVar(\"T\")\n" +
+                            "class MyProto1(Protocol[T]):\n" +
+                            "    def func(self) -> T:\n" +
+                            "        pass\n" +
+                            "class MyClass1(MyProto1[int]):\n" +
+                            "    pass\n" +
+                            "expr = MyClass1().func()")
+    );
+  }
+
+  // PY-9634
+  public void testAfterIsInstanceAndAttributeUsage() {
+    doTest("Union[int, {bar}]",
+           "def bar(y):\n" +
+           "    if isinstance(y, int):\n" +
+           "        pass\n" +
+           "    print(y.bar)" +
+           "    expr = y");
   }
 
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {

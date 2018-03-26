@@ -8,6 +8,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Transient;
@@ -47,8 +48,10 @@ public class GeneralSettings implements PersistentStateComponent<GeneralSettings
   private boolean myUseDefaultBrowser = true;
   private boolean mySearchInBackground;
   private boolean myConfirmExit = true;
+  private boolean myShowWelcomeScreen = !PlatformUtils.isDatabaseIDE();
   private int myConfirmOpenNewProject = OPEN_PROJECT_ASK;
   private ProcessCloseConfirmation myProcessCloseConfirmation = ProcessCloseConfirmation.ASK;
+  private String myDefaultProjectDirectory = "";
 
   public static GeneralSettings getInstance(){
     return ServiceManager.getService(GeneralSettings.class);
@@ -229,6 +232,14 @@ public class GeneralSettings implements PersistentStateComponent<GeneralSettings
     myConfirmExit = confirmExit;
   }
 
+  public boolean isShowWelcomeScreen() {
+    return myShowWelcomeScreen;
+  }
+
+  public void setShowWelcomeScreen(boolean show) {
+    myShowWelcomeScreen = show;
+  }
+
   @MagicConstant(intValues = {OPEN_PROJECT_ASK, OPEN_PROJECT_NEW_WINDOW, OPEN_PROJECT_SAME_WINDOW})
   @interface OpenNewProjectOption {}
   /**
@@ -255,5 +266,13 @@ public class GeneralSettings implements PersistentStateComponent<GeneralSettings
 
   public void setSearchInBackground(final boolean searchInBackground) {
     mySearchInBackground = searchInBackground;
+  }
+
+  public String getDefaultProjectDirectory() {
+    return myDefaultProjectDirectory;
+  }
+
+  public void setDefaultProjectDirectory(String defaultProjectDirectory) {
+    myDefaultProjectDirectory = defaultProjectDirectory;
   }
 }

@@ -26,14 +26,14 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.containers.ConcurrentFactoryMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
@@ -42,7 +42,8 @@ import java.util.stream.Collectors;
  */
 public abstract class DummyCachingFileSystem<T extends VirtualFile> extends DummyFileSystem {
   private final String myProtocol;
-  private final ConcurrentMap<String, T> myCachedFiles = ConcurrentFactoryMap.createMap(this::findFileByPathInner);
+  private final ConcurrentMap<String, T> myCachedFiles = ConcurrentFactoryMap.createMap(
+    this::findFileByPathInner, ContainerUtil::createConcurrentWeakValueMap);
 
   public DummyCachingFileSystem(String protocol) {
     myProtocol = protocol;
@@ -76,12 +77,7 @@ public abstract class DummyCachingFileSystem<T extends VirtualFile> extends Dumm
 
   @Override
   public final T findFileByPath(@NotNull String path) {
-    T file = myCachedFiles.get(path);
-    if (file != null && !file.isValid()) {
-      myCachedFiles.remove(path);
-      file = myCachedFiles.get(path);
-    }
-    return file;
+    return myCachedFiles.get(path);
   }
 
   @Override
@@ -107,16 +103,6 @@ public abstract class DummyCachingFileSystem<T extends VirtualFile> extends Dumm
     if (ApplicationManager.getApplication().isUnitTestMode() && project != null) {
       registerDisposeCallback(project);
       DISPOSE_CALLBACK.set(project, Boolean.TRUE);
-    }
-    return project;
-  }
-
-  @NotNull
-  public Project getProjectOrFail(String projectId) {
-    Project project = getProject(projectId);
-    if (project == null) {
-      throw new AssertionError(String.format("'%s' project not found among %s", projectId,
-                                             StringUtil.join(ProjectManager.getInstance().getOpenProjects(), p -> p.getLocationHash(), ", ")));
     }
     return project;
   }
@@ -161,14 +147,18 @@ public abstract class DummyCachingFileSystem<T extends VirtualFile> extends Dumm
   }
 
   protected void clearCache() {
-    clearInvalidFiles();
+    clearInvalidFiles(null);
   }
 
-  protected void clearInvalidFiles() {
-    for (Map.Entry<String, T> entry : myCachedFiles.entrySet()) {
+  protected void clearInvalidFiles(@Nullable List<VFileEvent> events) {
+    Iterator<Map.Entry<String, T>> it = myCachedFiles.entrySet().iterator();
+    while (it.hasNext()) {
+      Map.Entry<String, T> entry = it.next();
       T t = entry.getValue();
-      if (t == null || !t.isValid()) {
-        myCachedFiles.remove(entry.getKey());
+      if (t != null && t.isValid()) continue;
+      it.remove();
+      if (events != null && t != null) {
+        events.add(new VFileDeleteEvent(this, t, false));
       }
     }
   }
@@ -178,7 +168,7 @@ public abstract class DummyCachingFileSystem<T extends VirtualFile> extends Dumm
   }
 
   @Override
-  public void renameFile(Object requestor, @NotNull VirtualFile vFile, @NotNull String newName) throws IOException {
+  public void renameFile(Object requestor, @NotNull VirtualFile vFile, @NotNull String newName) {
     String oldName = vFile.getName();
     beforeFileRename(vFile, requestor, oldName, newName);
     try {

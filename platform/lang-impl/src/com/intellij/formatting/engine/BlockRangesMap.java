@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class BlockRangesMap {
   private final LeafBlockWrapper myLastBlock;
-  private TIntObjectHashMap<LeafBlockWrapper> myTextRangeToWrapper;
+  private final TIntObjectHashMap<LeafBlockWrapper> myTextRangeToWrapper;
 
   public BlockRangesMap(LeafBlockWrapper first, LeafBlockWrapper last) {
     myLastBlock = last;

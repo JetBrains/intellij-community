@@ -4,12 +4,16 @@
 package org.jetbrains.yaml.meta.model;
 
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.yaml.YAMLBundle;
 import org.jetbrains.yaml.psi.*;
 
+import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
 
@@ -26,6 +30,12 @@ public abstract class YamlScalarType extends YamlMetaType {
     return null;
   }
 
+  @NotNull
+  @Override
+  public Icon getIcon() {
+    return PlatformIcons.PROPERTY_ICON;
+  }
+
   @Override
   public void validateKeyValue(@NotNull YAMLKeyValue keyValue, @NotNull ProblemsHolder problemsHolder) {
     YAMLValue value = keyValue.getValue();
@@ -34,15 +44,17 @@ public abstract class YamlScalarType extends YamlMetaType {
     }
     if (value instanceof YAMLScalar) {
       validateScalarValue((YAMLScalar)value, problemsHolder);
-      return;
     }
-    if (value instanceof YAMLSequence) {
+    else if (value instanceof YAMLSequence) {
       for (YAMLSequenceItem nextItem : ((YAMLSequence)value).getItems()) {
         YAMLValue nextValue = nextItem.getValue();
         if (nextValue instanceof YAMLScalar) {
           validateScalarValue((YAMLScalar)nextValue, problemsHolder);
         }
       }
+    }
+    else if (value instanceof YAMLCompoundValue) {
+      problemsHolder.registerProblem(value, YAMLBundle.message("YamlScalarType.error.scalar.value"), ProblemHighlightType.ERROR);
     }
   }
 

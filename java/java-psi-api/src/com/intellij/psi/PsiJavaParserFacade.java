@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.pom.java.LanguageLevel;
@@ -246,7 +246,4 @@ public interface PsiJavaParserFacade {
   default PsiJavaModuleReferenceElement createModuleReferenceFromText(@NotNull String text) throws IncorrectOperationException {
     return createModuleFromText("module " + text + " {}").getNameIdentifier();
   }
-
-  /** @deprecated use {@link PsiType#annotate(TypeAnnotationProvider)} (to be removed in IDEA 18) */
-  PsiType createPrimitiveType(@NotNull String text, @NotNull PsiAnnotation[] annotations) throws IncorrectOperationException;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,11 +44,8 @@ public final class ImportUtils {
         return;
       }
     }
-    else if (PsiTreeUtil.isAncestor(outerClass, context, true)) {
-      final PsiElement brace = outerClass.getLBrace();
-      if (brace != null && brace.getTextOffset() < context.getTextOffset()) {
-        return;
-      }
+    else if (PsiTreeUtil.isAncestor(outerClass, context, true) && outerClass.getTextOffset() < context.getTextOffset()) {
+      return;
     }
     final String qualifiedName = aClass.getQualifiedName();
     if (qualifiedName == null) {
@@ -72,10 +69,7 @@ public final class ImportUtils {
     if (hasExactImportConflict(qualifiedName, javaFile)) {
       return;
     }
-    final Project project = importList.getProject();
-    final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-    final PsiElementFactory elementFactory = psiFacade.getElementFactory();
-    final PsiImportStatement importStatement = elementFactory.createImportStatement(aClass);
+    final PsiImportStatement importStatement = JavaPsiFacade.getElementFactory(importList.getProject()).createImportStatement(aClass);
     importList.add(importStatement);
   }
 
@@ -328,7 +322,7 @@ public final class ImportUtils {
    */
   public static boolean addStaticImport(@NotNull String qualifierClass, @NonNls @NotNull String memberName, @NotNull PsiElement context) {
     final PsiClass containingClass = PsiTreeUtil.getParentOfType(context, PsiClass.class);
-    if (containingClass != null) {
+    if (containingClass != null && containingClass.getTextOffset() < context.getTextOffset()) {
       if (InheritanceUtil.isInheritor(containingClass, qualifierClass)) {
         return true;
       }

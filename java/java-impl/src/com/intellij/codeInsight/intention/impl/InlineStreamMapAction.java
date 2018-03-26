@@ -60,7 +60,7 @@ public class InlineStreamMapAction extends PsiElementBaseIntentionAction {
     if (!isMapCall(curCall)) return false;
     PsiMethodCallExpression nextCall = getNextExpressionToMerge(curCall);
     if(nextCall == null) return false;
-    String key = curCall.getArgumentList().getExpressions().length == 0 || nextCall.getArgumentList().getExpressions().length == 0 ?
+    String key = curCall.getArgumentList().isEmpty() || nextCall.getArgumentList().isEmpty() ?
                  "intention.inline.map.merge.text" : "intention.inline.map.inline.text";
     setText(CodeInsightBundle.message(key, element.getText(), nextCall.getMethodExpression().getReferenceName()));
     return true;

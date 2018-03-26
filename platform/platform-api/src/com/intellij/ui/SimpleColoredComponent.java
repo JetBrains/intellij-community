@@ -59,7 +59,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   private Font myLayoutFont;
   private final List<SimpleTextAttributes> myAttributes;
   private List<Object> myFragmentTags = null;
-  private TIntIntHashMap myFragmentAlignment;
+  private final TIntIntHashMap myFragmentAlignment;
 
   /**
    * Component's icon. It can be {@code null}.
@@ -830,7 +830,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
       if (!secondPass) {
         if (shouldDrawMacShadow()) {
-          g.setColor(SHADOW_COLOR);
+          g.setColor(ColorUtil.srcOver(SHADOW_COLOR, getBackground()));
           doDrawString(g, i, offset, textBaseline + 1);
         }
 

@@ -115,7 +115,7 @@ private fun parseMap(reader: JsonReaderEx,
         encodedMappings = reader.nextString()
       }
       "file" -> {
-        file = reader.nextString()
+        file = reader.nextNullableString()
       }
       "sourcesContent" -> {
         reader.beginArray()

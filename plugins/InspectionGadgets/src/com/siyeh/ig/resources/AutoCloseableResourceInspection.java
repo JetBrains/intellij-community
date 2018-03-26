@@ -33,6 +33,10 @@ import java.util.Arrays;
  */
 public class AutoCloseableResourceInspection extends AutoCloseableResourceInspectionBase {
 
+
+  /**
+   * Warning! This class have to manually save settings to xml using {@code readSettings()} and {@code writeSettings()} of its parent class
+   **/
   @NotNull
   @Override
   public JComponent createOptionsPanel() {

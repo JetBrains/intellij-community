@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -113,7 +111,7 @@ public class InvalidPropertyKeyInspection extends AbstractBaseJavaLocalInspectio
     UnresolvedPropertyVisitor visitor = new UnresolvedPropertyVisitor(manager, onTheFly);
     element.accept(visitor);
     Map<PsiElement, ProblemDescriptor> problems = visitor.getProblems();
-    return problems.isEmpty() ? null : problems.values().toArray(new ProblemDescriptor[problems.size()]);
+    return problems.isEmpty() ? null : problems.values().toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
   private static class UnresolvedPropertyVisitor extends JavaRecursiveElementWalkingVisitor {
@@ -122,7 +120,7 @@ public class InvalidPropertyKeyInspection extends AbstractBaseJavaLocalInspectio
     private final boolean onTheFly;
 
 
-    public UnresolvedPropertyVisitor(final InspectionManager manager, boolean onTheFly) {
+    UnresolvedPropertyVisitor(final InspectionManager manager, boolean onTheFly) {
       myManager = manager;
       this.onTheFly = onTheFly;
     }
@@ -162,14 +160,14 @@ public class InvalidPropertyKeyInspection extends AbstractBaseJavaLocalInspectio
         final PsiExpression initializer = field.getInitializer();
         String key = computeStringValue(initializer);
         visitPropertyKeyAnnotationParameter(expression, key,
-                                            (field.getContainingFile() == expression.getContainingFile()) ? initializer : expression);
+                                            field.getContainingFile() == expression.getContainingFile() ? initializer : expression);
       }
       else if (resolvedExpression instanceof PsiLocalVariable) {
         checkLocalVariable((PsiLocalVariable)resolvedExpression, expression);
       }
     }
 
-    private void checkLocalVariable(PsiLocalVariable variable, PsiReferenceExpression expression) {
+    private void checkLocalVariable(@NotNull PsiLocalVariable variable, PsiReferenceExpression expression) {
       PsiCodeBlock block = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
       final PsiElement[] defs = DefUseUtil.getDefs(block, variable, expression);
       for (PsiElement def : defs) {
@@ -239,7 +237,7 @@ public class InvalidPropertyKeyInspection extends AbstractBaseJavaLocalInspectio
         if (!JavaI18nUtil.mustBePropertyKey(expression, annotationParams)) return;
 
         final SortedSet<Integer> paramsCount = JavaI18nUtil.getPropertyValueParamsCount(highlightedExpression, resourceBundleName.get());
-        if (paramsCount.isEmpty() || (paramsCount.size() != 1 && resourceBundleName.get() == null)) {
+        if (paramsCount.isEmpty() || paramsCount.size() != 1 && resourceBundleName.get() == null) {
           return;
         }
 
@@ -317,9 +315,9 @@ public class InvalidPropertyKeyInspection extends AbstractBaseJavaLocalInspectio
       PsiElement parent = expression.getParent();
       while (true) {
         if (parent instanceof PsiParenthesizedExpression ||
-            (parent instanceof PsiConditionalExpression &&
+            parent instanceof PsiConditionalExpression &&
              (expression == ((PsiConditionalExpression)parent).getThenExpression() ||
-              expression == ((PsiConditionalExpression)parent).getElseExpression()))) {
+              expression == ((PsiConditionalExpression)parent).getElseExpression())) {
           expression = (PsiExpression)parent;
           parent = expression.getParent();
         }

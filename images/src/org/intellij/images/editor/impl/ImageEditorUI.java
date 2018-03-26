@@ -33,6 +33,8 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.Magnificator;
+import com.intellij.util.LazyInitializer;
+import com.intellij.util.LazyInitializer.MutableNotNullValue;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.images.ImagesBundle;
@@ -269,9 +271,15 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
     document.setFormat(format);
 
     if (previousImage == null || !zoomModel.isZoomLevelChanged()) {
-      zoomModel.setZoomFactor(1.0d);
+      Options options = OptionsManager.getInstance().getOptions();
+      ZoomOptions zoomOptions = options.getEditorOptions().getZoomOptions();
 
-      updateZoomFactor();
+      if (zoomOptions.isSmartZooming()) {
+        updateZoomFactor();
+      }
+      else {
+        zoomModel.setZoomFactor(1.0);
+      }
     }
   }
 
@@ -370,26 +378,29 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
   }
 
   private class ImageZoomModelImpl implements ImageZoomModel {
-    private boolean myZoomLevelChanged = false;
+    private boolean myZoomLevelChanged;
+    private final MutableNotNullValue<Double> zoomFactor = new MutableNotNullValue<Double>() {
+      @NotNull
+      @Override
+      public Double initialize() {
+        Dimension size = imageComponent.getCanvasSize();
+        BufferedImage image = imageComponent.getDocument().getValue();
+        return image != null ? size.getWidth() / (double)image.getWidth() : 1.0d;
+      }
+    };
 
     public double getZoomFactor() {
-      Dimension size = imageComponent.getCanvasSize();
-      BufferedImage image = imageComponent.getDocument().getValue();
-      return image != null ? size.getWidth() / (double)image.getWidth() : 1.0d;
+      return zoomFactor.get();
     }
 
     public void setZoomFactor(double zoomFactor) {
       double oldZoomFactor = getZoomFactor();
 
       if (Double.compare(oldZoomFactor, zoomFactor) == 0) return;
+      this.zoomFactor.set(zoomFactor);
 
       // Change current size
-      Dimension size = imageComponent.getCanvasSize();
-      BufferedImage image = imageComponent.getDocument().getValue();
-      if (image != null) {
-        size.setSize((double)image.getWidth() * zoomFactor, (double)image.getHeight() * zoomFactor);
-        imageComponent.setCanvasSize(size);
-      }
+      updateImageComponentSize();
 
       revalidate();
       repaint();
@@ -414,6 +425,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
       else {
         zoomModel.setZoomFactor(1.0d);
       }
+      myZoomLevelChanged = false;
     }
 
     public void zoomOut() {
@@ -462,6 +474,11 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
       return zoomFactor < MACRO_ZOOM_LIMIT;
     }
 
+    @Override
+    public void setZoomLevelChanged(boolean value) {
+      myZoomLevelChanged = value;
+    }
+
     public boolean isZoomLevelChanged() {
       return myZoomLevelChanged;
     }
@@ -469,24 +486,11 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
 
   @Nullable
   private Double getSmartZoomFactor(@NotNull ZoomOptions zoomOptions) {
-    Dimension canvasSize = myScrollPane.getViewport().getExtentSize();
-    canvasSize.height -= ImageComponent.IMAGE_INSETS * 2;
-    canvasSize.width -= ImageComponent.IMAGE_INSETS * 2;
-    if (canvasSize.width <= 0 || canvasSize.height <= 0) return null;
-
     BufferedImage image = imageComponent.getDocument().getValue();
     if (image == null) return null;
-
-    if (canvasSize.width < image.getWidth() ||
-        canvasSize.height < image.getHeight()) {
-      return Math.min((double)canvasSize.height / image.getHeight(),
-                      (double)canvasSize.width / image.getWidth());
-    }
+    if (image.getWidth() == 0 || image.getHeight() == 0) return null;
 
     Dimension preferredMinimumSize = zoomOptions.getPrefferedSize();
-    preferredMinimumSize.width = Math.min(preferredMinimumSize.width, canvasSize.width);
-    preferredMinimumSize.height = Math.min(preferredMinimumSize.height, canvasSize.height);
-
     if (image.getWidth() < preferredMinimumSize.width &&
         image.getHeight() < preferredMinimumSize.height) {
       double factor = (preferredMinimumSize.getWidth() / (double)image.getWidth() +
@@ -494,11 +498,32 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
       return Math.ceil(factor);
     }
 
+    Dimension canvasSize = myScrollPane.getViewport().getExtentSize();
+    canvasSize.height -= ImageComponent.IMAGE_INSETS * 2;
+    canvasSize.width -= ImageComponent.IMAGE_INSETS * 2;
+    if (canvasSize.width <= 0 || canvasSize.height <= 0) return null;
+
+    if (canvasSize.width < image.getWidth() ||
+        canvasSize.height < image.getHeight()) {
+      return Math.min((double)canvasSize.height / image.getHeight(),
+                      (double)canvasSize.width / image.getWidth());
+    }
+
     return 1.0d;
+  }
+
+  private void updateImageComponentSize() {
+    BufferedImage image = imageComponent.getDocument().getValue();
+    if (image != null) {
+      final double zoom = getZoomModel().getZoomFactor();
+      imageComponent.setCanvasSize((int)Math.ceil(image.getWidth() * zoom), (int)Math.ceil(image.getHeight() * zoom));
+    }
   }
 
   private class DocumentChangeListener implements ChangeListener {
     public void stateChanged(@NotNull ChangeEvent e) {
+      updateImageComponentSize();
+
       ImageDocument document = imageComponent.getDocument();
       BufferedImage value = document.getValue();
 

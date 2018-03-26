@@ -18,7 +18,7 @@
 
   <application-components>
     <component>
-      <implementation-class>com.intellij.internal.statistic.updater.SendStatisticsComponent</implementation-class>
+      <implementation-class>com.intellij.internal.statistic.updater.StatisticsJobsScheduler</implementation-class>
     </component>
   </application-components>
 

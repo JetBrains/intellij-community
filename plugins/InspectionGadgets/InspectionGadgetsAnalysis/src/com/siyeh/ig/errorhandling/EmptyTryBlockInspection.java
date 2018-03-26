@@ -18,10 +18,10 @@ package com.siyeh.ig.errorhandling;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiTryStatement;
+import com.intellij.psi.util.FileTypeUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.intellij.psi.util.FileTypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class EmptyTryBlockInspection extends BaseInspection {
@@ -64,7 +64,7 @@ public class EmptyTryBlockInspection extends BaseInspection {
       if (finallyBlock == null) {
         return;
       }
-      if (finallyBlock.getStatements().length != 0) {
+      if (!finallyBlock.isEmpty()) {
         return;
       }
       registerStatementError(statement);

@@ -30,7 +30,7 @@ import javax.swing.*;
  * @author oleg
  */
 public class PyUnusedLocalInspection extends PyInspection {
-  private static Key<PyUnusedLocalInspectionVisitor> KEY = Key.create("PyUnusedLocal.Visitor");
+  private static final Key<PyUnusedLocalInspectionVisitor> KEY = Key.create("PyUnusedLocal.Visitor");
 
   public boolean ignoreTupleUnpacking = true;
   public boolean ignoreLambdaParameters = true;

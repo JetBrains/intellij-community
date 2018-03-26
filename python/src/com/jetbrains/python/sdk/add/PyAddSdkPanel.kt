@@ -19,9 +19,10 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.text.StringUtil
-import com.jetbrains.python.packaging.PyCondaPackageService
+import com.jetbrains.python.sdk.add.PyAddSdkDialogFlowAction.OK
 import com.jetbrains.python.sdk.isNotEmptyDirectory
 import icons.PythonIcons
+import java.awt.Component
 import java.io.File
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -30,39 +31,52 @@ import javax.swing.JPanel
 /**
  * @author vlan
  */
-abstract class PyAddSdkPanel : JPanel() {
-  abstract val panelName: String
-  open val icon: Icon = PythonIcons.Python.Python
+abstract class PyAddSdkPanel : JPanel(), PyAddSdkView {
+  override val actions: Map<PyAddSdkDialogFlowAction, Boolean>
+    get() = mapOf(OK.enabled())
+
+  override val component: Component
+    get() = this
+
+  /**
+   * [component] is permanent. [PyAddSdkStateListener.onComponentChanged] won't
+   * be called anyway.
+   */
+  override fun addStateListener(stateListener: PyAddSdkStateListener) = Unit
+
+  override fun previous() = throw UnsupportedOperationException()
+
+  override fun next() = throw UnsupportedOperationException()
+
+  override fun complete() = Unit
+
+  override abstract val panelName: String
+  override val icon: Icon = PythonIcons.Python.Python
   open val sdk: Sdk? = null
   open val nameExtensionComponent: JComponent? = null
   open var newProjectPath: String? = null
 
-  open fun getOrCreateSdk(): Sdk? = sdk
+  override fun getOrCreateSdk(): Sdk? = sdk
 
-  open fun validateAll(): List<ValidationInfo> = emptyList()
+  override fun onSelected() = Unit
+
+  override fun validateAll(): List<ValidationInfo> = emptyList()
 
   open fun addChangeListener(listener: Runnable) {}
 
   companion object {
     @JvmStatic
-    protected fun validateEmptyOrNonExistingDirectoryLocation(field: TextFieldWithBrowseButton): ValidationInfo? {
+    protected fun validateEnvironmentDirectoryLocation(field: TextFieldWithBrowseButton): ValidationInfo? {
       val text = field.text
       val file = File(text)
       val message = when {
-        StringUtil.isEmptyOrSpaces(text) -> "Location field is empty"
-        file.exists() && !file.isDirectory -> "Location field path is not a directory"
-        file.isNotEmptyDirectory -> "Location directory is not empty"
+        StringUtil.isEmptyOrSpaces(text) -> "Environment location field is empty"
+        file.exists() && !file.isDirectory -> "Environment location field path is not a directory"
+        file.isNotEmptyDirectory -> "Environment location directory is not empty"
         else -> return null
       }
       return ValidationInfo(message, field)
     }
-
-    @JvmStatic protected fun validateAnacondaPresense(component: JComponent?): ValidationInfo? =
-      when {
-        PyCondaPackageService.getSystemCondaExecutable() == null ->
-          ValidationInfo("Anaconda installation is not found", component)
-        else -> null
-      }
 
     @JvmStatic
     protected fun validateSdkComboBox(field: PySdkPathChoosingComboBox): ValidationInfo? =

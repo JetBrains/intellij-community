@@ -125,7 +125,7 @@ public class DuringChangeListManagerUpdateTestScheme {
   }
 
   public static void checkFilesAreInList(final String listName, final ChangeListManager manager, final VirtualFile... files) {
-    assert manager.findChangeList(listName) != null;
+    assert manager.findChangeList(listName) != null : manager.getChangeLists();
     final LocalChangeList list = manager.findChangeList(listName);
     final Collection<Change> changes = list.getChanges();
     assert changes.size() == files.length : "size: " + changes.size() + " " + debugRealListContent(list);

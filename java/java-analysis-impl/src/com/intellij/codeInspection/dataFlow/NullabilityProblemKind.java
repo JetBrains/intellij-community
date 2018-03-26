@@ -63,6 +63,11 @@ public class NullabilityProblemKind<T extends PsiElement> {
     new NullabilityProblemKind<>("passingNullableToNotNullParameter");
   public static final NullabilityProblemKind<PsiElement> passingNullableArgumentToNonAnnotatedParameter =
     new NullabilityProblemKind<>("passingNullableArgumentToNonAnnotatedParameter");
+  public static final NullabilityProblemKind<PsiElement> assigningNullableValueToNonAnnotatedField =
+    new NullabilityProblemKind<>("assigningNullableValueToNonAnnotatedField");
+  // assumeNotNull problem is not reported, just used to force the argument to be not null
+  public static final NullabilityProblemKind<PsiExpression> assumeNotNull =
+    new NullabilityProblemKind<>("assumeNotNull");
 
   /**
    * Creates a new {@link NullabilityProblem} of this kind using given anchor

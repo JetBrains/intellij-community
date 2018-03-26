@@ -304,5 +304,5 @@ fun createOrLoadProject(tempDirManager: TemporaryDirectory, projectCreator: ((Vi
 }
 
 fun ComponentManager.saveStore() {
-  stateStore.save(SmartList())
+  stateStore.save(SmartList(), true)
 }

@@ -570,7 +570,7 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
     public void processNames(final Processor<String> nameProcessor, boolean checkBoxState) {
       if (myFastMode) {
         myFastMode = myInheritorsProvider.searchForInheritorsOfBaseClass().forEach(new Processor<T>() {
-          private long start = System.currentTimeMillis();
+          private final long start = System.currentTimeMillis();
 
           @Override
           public boolean process(T aClass) {

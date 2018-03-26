@@ -60,7 +60,7 @@ public class JUnitReferenceContributor extends PsiReferenceContributor {
     }
 
     public boolean isAcceptable(Object element, PsiElement context) {
-      PsiNameValuePair pair = PsiTreeUtil.getParentOfType(context, PsiNameValuePair.class, false, PsiMember.class, PsiStatement.class);
+      PsiNameValuePair pair = PsiTreeUtil.getParentOfType(context, PsiNameValuePair.class, false, PsiMember.class, PsiStatement.class, PsiCall.class);
       if (pair == null) return false;
       String name = ObjectUtils.notNull(pair.getName(), PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
       if (!myParameterName.equals(name)) return false;

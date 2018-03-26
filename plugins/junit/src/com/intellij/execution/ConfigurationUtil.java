@@ -18,7 +18,6 @@ package com.intellij.execution;
 
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.junit.TestClassFilter;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ReadActionProcessor;
@@ -97,22 +96,20 @@ public class ConfigurationUtil {
       GlobalSearchScope allScope = module == null ? GlobalSearchScope.allScope(project)
                                                   : module.getModuleRuntimeScope(true);
       ClassesWithAnnotatedMembersSearch.search(testAnnotation, allScope).forEach(annotated -> {
-        AccessToken token = ReadAction.start();
-        try {
+        boolean success = ReadAction.compute(()-> {
           if (!processed.add(annotated)) { // don't process the same class twice regardless of it being in the scope
-            return true;
+            return false;
           }
           final VirtualFile file = PsiUtilCore.getVirtualFile(annotated);
           if (file != null && scope.contains(file) && testClassFilter.isAccepted(annotated)) {
             if (!found.add(annotated)) {
-              return true;
+              return false;
             }
             isJUnit4.set(Boolean.TRUE);
           }
-        }
-        finally {
-          token.finish();
-        }
+          return true;
+        });
+        if (!success) return true;
         ClassInheritorsSearch.search(annotated, scope, true, true, false).forEach(new ReadActionProcessor<PsiClass>() {
           @Override
           public boolean processInReadAction(PsiClass aClass) {

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.module.impl;
 
 import com.intellij.ProjectTopics;
@@ -40,7 +38,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashMap;
 import com.intellij.util.containers.StringInterner;
 import com.intellij.util.graph.*;
 import com.intellij.util.messages.MessageBus;
@@ -280,7 +277,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     List<ModuleLoadingErrorDescription> errors = Collections.synchronizedList(new ArrayList<>());
     ModuleGroupInterner groupInterner = new ModuleGroupInterner();
 
-    ExecutorService service = AppExecutorUtil.createBoundedApplicationPoolExecutor("modules loader", JobSchedulerImpl.getCPUCoresCount());
+    ExecutorService service = AppExecutorUtil.createBoundedApplicationPoolExecutor("ModuleManager Loader", JobSchedulerImpl.getCPUCoresCount());
     List<Pair<Future<Module>, ModulePath>> tasks = new ArrayList<>();
     Set<String> paths = new THashSet<>();
     boolean parallel = Registry.is("parallel.modules.loading") && !ApplicationManager.getApplication().isDispatchThread();
@@ -726,6 +723,12 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
       return myModuleToNewName.get(module);
     }
 
+    @NotNull
+    @Override
+    public String getActualName(@NotNull Module module) {
+      return ObjectUtils.notNull(getNewName(module), module.getName());
+    }
+
     @Override
     @NotNull
     public Module newModule(@NotNull String filePath, @NotNull final String moduleTypeId) {
@@ -900,7 +903,9 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
       if (!myIsWritable) {
         return false;
       }
-      return !myModules.equals(myManager.myModuleModel.myModules) || !Comparing.equal(myManager.myModuleModel.myModuleGroupPath, myModuleGroupPath);
+      return !myModules.equals(myManager.myModuleModel.myModules)
+             || !Comparing.equal(myManager.myModuleModel.myModuleGroupPath, myModuleGroupPath)
+             || !myModuleToNewName.isEmpty();
     }
 
     private void disposeModel() {
@@ -1059,9 +1064,16 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     return myUnloadedModules.get(moduleName);
   }
 
+  @NotNull
+  @Override
+  public ModuleGrouper getModuleGrouper(@Nullable ModifiableModuleModel model) {
+    return ModuleGroupersKt.createGrouper(myProject, model);
+  }
+
   @Override
   public void setUnloadedModules(@NotNull List<String> unloadedModuleNames) {
-    if (myUnloadedModules.keySet().equals(unloadedModuleNames)) {
+    if (myUnloadedModules.keySet().equals(new HashSet<>(unloadedModuleNames))) {
+      //optimization
       return;
     }
 
@@ -1083,7 +1095,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
           VirtualFilePointerManager pointerManager = VirtualFilePointerManager.getInstance();
           List<VirtualFilePointer> contentRoots = ContainerUtil.map(ModuleRootManager.getInstance(module).getContentRootUrls(), url -> pointerManager.create(url, this, null));
           UnloadedModuleDescriptionImpl unloadedModuleDescription = new UnloadedModuleDescriptionImpl(modulePath, description.getDependencyModuleNames(), contentRoots);
-          ServiceKt.getStateStore(module).save(new ArrayList<>());//we need to save module configuration before unloading, otherwise its settings will be lost
+          ServiceKt.getStateStore(module).save(new SmartList<>(), false);//we need to save module configuration before unloading, otherwise its settings will be lost
           model.disposeModule(module);
           myUnloadedModules.put(name, unloadedModuleDescription);
         }

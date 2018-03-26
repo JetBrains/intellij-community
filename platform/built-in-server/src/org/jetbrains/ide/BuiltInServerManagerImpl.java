@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.ide;
 
 import com.intellij.idea.StartupUtil;
@@ -13,7 +14,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Url;
-import com.intellij.util.UrlImpl;
+import com.intellij.util.Urls;
 import com.intellij.util.net.NetUtils;
 import io.netty.channel.oio.OioEventLoopGroup;
 import org.jetbrains.annotations.NonNls;
@@ -28,6 +29,8 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.URLConnection;
+import java.util.Collections;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -133,7 +136,8 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager implements Ap
       // built-in server url contains query only if token specified
       return url;
     }
-    return new UrlImpl(url.getScheme(), url.getAuthority(), url.getPath(), "?" + BuiltInWebServerKt.TOKEN_PARAM_NAME + "=" + BuiltInWebServerKt.acquireToken());
+    return Urls.newUrl(Objects.requireNonNull(url.getScheme()), Objects.requireNonNull(url.getAuthority()), url.getPath(),
+                       Collections.singletonMap(BuiltInWebServerKt.TOKEN_PARAM_NAME, BuiltInWebServerKt.acquireToken()));
   }
 
   @Override

@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
  * }
  * }</pre>
  * </p>
+ *
  * @author Kirill Likhodedov
  */
 public enum GitVersionSpecialty {
@@ -154,6 +155,7 @@ public enum GitVersionSpecialty {
   },
 
   FULL_HISTORY_SIMPLIFY_MERGES_WORKS_CORRECTLY { // for some reason, even with "simplify-merges", it used to show a lot of merges in history
+
     @Override
     public boolean existsIn(@NotNull GitVersion version) {
       return version.isLaterOrEqual(new GitVersion(1, 9, 0, 0));
@@ -168,6 +170,7 @@ public enum GitVersionSpecialty {
   },
 
   KNOWS_SET_UPSTREAM_TO { // in Git 1.8.0 --set-upstream-to was introduced as a replacement of --set-upstream which became deprecated
+
     @Override
     public boolean existsIn(@NotNull GitVersion version) {
       return version.isLaterOrEqual(new GitVersion(1, 8, 0, 0));
@@ -191,11 +194,32 @@ public enum GitVersionSpecialty {
     }
   },
 
+  INCOMING_OUTGOING_BRANCH_INFO {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(2, 9, 0, 0));
+    }
+  },
+
   LF_SEPARATORS_IN_STDIN {
     @Override
     public boolean existsIn(@NotNull GitVersion version) {
       // before 2.8.0 git for windows expects to have LF symbol as line separator in standard input instead of CRLF
       return SystemInfo.isWindows && !version.isLaterOrEqual(new GitVersion(2, 8, 0, 0));
+    }
+  },
+
+  ENV_GIT_TRACE_PACK_ACCESS_ALLOWED {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(2, 1, 0, 0));
+    }
+  },
+
+  CACHEINFO_SUPPORTS_SINGLE_PARAMETER_FORM {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(2, 0, 0, 0));
     }
   };
 

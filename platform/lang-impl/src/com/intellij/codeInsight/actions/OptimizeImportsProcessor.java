@@ -41,7 +41,7 @@ import static com.intellij.codeInsight.actions.OptimizeImportsProcessor.Notifica
 public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
   private static final String PROGRESS_TEXT = CodeInsightBundle.message("progress.text.optimizing.imports");
   public static final String COMMAND_NAME = CodeInsightBundle.message("process.optimize.imports");
-  private List<NotificationInfo> myOptimizerNotifications = ContainerUtil.newSmartList();
+  private final List<NotificationInfo> myOptimizerNotifications = ContainerUtil.newSmartList();
 
   public OptimizeImportsProcessor(Project project) {
     super(project, COMMAND_NAME, PROGRESS_TEXT, false);

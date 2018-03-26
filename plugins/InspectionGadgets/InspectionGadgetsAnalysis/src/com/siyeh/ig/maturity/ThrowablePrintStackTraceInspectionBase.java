@@ -59,7 +59,7 @@ public class ThrowablePrintStackTraceInspectionBase extends BaseInspection {
         return;
       }
       final PsiExpressionList argumentList = expression.getArgumentList();
-      if (argumentList.getExpressions().length != 0) {
+      if (!argumentList.isEmpty()) {
         return;
       }
       final PsiMethod method = expression.resolveMethod();

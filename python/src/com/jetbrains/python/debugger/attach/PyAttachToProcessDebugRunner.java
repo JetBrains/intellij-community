@@ -35,9 +35,9 @@ import java.net.ServerSocket;
  * @author traff
  */
 public class PyAttachToProcessDebugRunner extends PyDebugRunner {
-  private Project myProject;
+  private final Project myProject;
   private final int myPid;
-  private String mySdkPath;
+  private final String mySdkPath;
   private static final int CONNECTION_TIMEOUT = 20000;
 
 

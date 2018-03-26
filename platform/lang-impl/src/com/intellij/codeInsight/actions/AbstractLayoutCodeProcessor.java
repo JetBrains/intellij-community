@@ -328,7 +328,7 @@ public abstract class AbstractLayoutCodeProcessor {
 
     final Ref<FutureTask<Boolean>> writeActionRunnable = new Ref<>();
     Runnable readAction = () -> {
-      if (!checkFileWritable(file)) return;
+      if (!file.isValid() || !checkFileWritable(file)) return;
       try{
         FutureTask<Boolean> writeTask = preprocessFile(file, myProcessChangedTextOnly);
         writeActionRunnable.set(writeTask);
@@ -387,6 +387,7 @@ public abstract class AbstractLayoutCodeProcessor {
   }
 
   private static boolean canBeFormatted(PsiFile file) {
+    if (!file.isValid()) return false;
     if (LanguageFormatting.INSTANCE.forContext(file) == null) {
       return false;
     }

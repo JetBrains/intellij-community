@@ -20,38 +20,33 @@ import com.intellij.diff.comparison.iterables.DiffIterableUtil.fair
 import com.intellij.diff.tools.util.text.LineOffsetsUtil
 import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.Side
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vcs.changes.LocalChangeListImpl
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.openapi.vcs.ex.*
 import com.intellij.openapi.vcs.ex.LineStatusTracker.Mode
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.LightPlatformTestCase.assertOrderedEquals
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.containers.ContainerUtil
 import java.util.*
 
-private typealias DiffRange = com.intellij.diff.util.Range
-
-abstract class BaseLineStatusTrackerTestCase : LightPlatformTestCase() {
+abstract class BaseLineStatusTrackerTestCase : BaseLineStatusTrackerManagerTest() {
   protected fun test(text: String, task: Test.() -> Unit) {
     test(text, text, false, task)
   }
 
   protected fun test(text: String, vcsText: String, smart: Boolean = false, task: Test.() -> Unit) {
-    val mode = if (smart) Mode.SMART else Mode.DEFAULT
-    doTest(text, vcsText,
-           { document, file -> SimpleLocalLineStatusTracker.createTracker(getProject(), document, file, mode) },
-           { tracker -> Test(tracker) },
-           task)
+    resetTestState()
+    VcsApplicationSettings.getInstance().SHOW_WHITESPACES_IN_LST = smart
+    arePartialChangelistsSupported = false
+
+    doTest(text, vcsText, { tracker -> Test(tracker as SimpleLocalLineStatusTracker) }, task)
   }
 
   protected fun testPartial(text: String, task: PartialTest.() -> Unit) {
@@ -59,30 +54,42 @@ abstract class BaseLineStatusTrackerTestCase : LightPlatformTestCase() {
   }
 
   protected fun testPartial(text: String, vcsText: String, task: PartialTest.() -> Unit) {
-    doTest(text, vcsText,
-           { document, file -> PartialLocalLineStatusTracker.createTracker(getProject(), document, file, Mode.SMART) },
-           { tracker -> PartialTest(tracker) },
-           task)
+    resetTestState()
+
+    doTest(text, vcsText, { tracker -> PartialTest(tracker as PartialLocalLineStatusTracker) }, task)
   }
 
-  protected fun <Tracker : LineStatusTracker<*>, TestHelper : Test> doTest(text: String, vcsText: String,
-                                                                           createTracker: (Document, VirtualFile) -> Tracker,
-                                                                           createTestHelper: (Tracker) -> TestHelper,
-                                                                           task: TestHelper.() -> Unit) {
+  private fun <TestHelper : Test> doTest(text: String, vcsText: String,
+                                         createTestHelper: (LineStatusTracker<*>) -> TestHelper,
+                                         task: TestHelper.() -> Unit) {
+    val fileName = "file.txt"
+    val file = addLocalFile(fileName, parseInput(text))
+    setBaseVersion(fileName, parseInput(vcsText))
+    refreshCLM()
+
+    file.withOpenedEditor {
+      lstm.waitUntilBaseContentsLoaded()
+
+      val testHelper = createTestHelper(file.tracker!!)
+      testHelper.verify()
+      task(testHelper)
+      testHelper.verify()
+    }
+  }
+
+  protected fun lightTest(text: String, vcsText: String, smart: Boolean = false, task: Test.() -> Unit) {
     val file = LightVirtualFile("LSTTestFile", PlainTextFileType.INSTANCE, parseInput(text))
     val document = FileDocumentManager.getInstance().getDocument(file)!!
     val tracker = runWriteAction {
-      val tracker = createTracker(document, file)
+      val tracker = SimpleLocalLineStatusTracker.createTracker(getProject(), document, file, if (smart) Mode.SMART else Mode.DEFAULT)
       tracker.setBaseRevision(parseInput(vcsText))
       tracker
     }
 
     try {
-      val testHelper = createTestHelper(tracker)
+      val testHelper = Test(tracker)
       testHelper.verify()
-
       task(testHelper)
-
       testHelper.verify()
     }
     finally {
@@ -91,12 +98,11 @@ abstract class BaseLineStatusTrackerTestCase : LightPlatformTestCase() {
   }
 
 
-  protected open class Test(val tracker: LineStatusTracker<*>) {
+  protected open inner class Test(val tracker: LineStatusTracker<*>) {
     val file: VirtualFile = tracker.virtualFile
     val document: Document = tracker.document
     val vcsDocument: Document = tracker.vcsDocument
     private val documentTracker = tracker.getDocumentTrackerInTestMode()
-
 
     fun assertHelperContentIs(expected: String, helper: PartialLocalLineStatusTracker.PartialCommitHelper) {
       assertEquals(parseInput(expected), helper.content)
@@ -125,36 +131,33 @@ abstract class BaseLineStatusTrackerTestCase : LightPlatformTestCase() {
     }
 
 
-    fun runCommand(task: () -> Unit) {
-      CommandProcessor.getInstance().executeCommand(getProject(), {
-        ApplicationManager.getApplication().runWriteAction(task)
-      }, "", null)
-
+    fun runCommandVerify(task: () -> Unit) {
+      this@BaseLineStatusTrackerTestCase.runCommand(task)
       verify()
     }
 
     fun insertAtStart(text: String) {
-      runCommand { document.insertString(0, parseInput(text)) }
+      runCommandVerify { document.insertString(0, parseInput(text)) }
     }
 
     fun TestRange.insertBefore(text: String) {
-      runCommand { document.insertString(this.start, parseInput(text)) }
+      runCommandVerify { document.insertString(this.start, parseInput(text)) }
     }
 
     fun TestRange.insertAfter(text: String) {
-      runCommand { document.insertString(this.end, parseInput(text)) }
+      runCommandVerify { document.insertString(this.end, parseInput(text)) }
     }
 
     fun TestRange.delete() {
-      runCommand { document.deleteString(this.start, this.end) }
+      runCommandVerify { document.deleteString(this.start, this.end) }
     }
 
     fun TestRange.replace(text: String) {
-      runCommand { document.replaceString(this.start, this.end, parseInput(text)) }
+      runCommandVerify { document.replaceString(this.start, this.end, parseInput(text)) }
     }
 
     fun replaceWholeText(text: String) {
-      runCommand { document.replaceString(0, document.textLength, parseInput(text)) }
+      runCommandVerify { document.replaceString(0, document.textLength, parseInput(text)) }
     }
 
     fun stripTrailingSpaces() {
@@ -167,7 +170,7 @@ abstract class BaseLineStatusTrackerTestCase : LightPlatformTestCase() {
     }
 
     fun rollbackLines(lines: BitSet) {
-      runCommand { tracker.rollbackChanges(lines) }
+      runCommandVerify { tracker.rollbackChanges(lines) }
     }
 
 
@@ -194,7 +197,7 @@ abstract class BaseLineStatusTrackerTestCase : LightPlatformTestCase() {
 
     operator fun Int.not(): Helper = Helper(this)
     operator fun Helper.minus(end: Int): TestRange = TestRange(this.start, end)
-    class Helper(val start: Int)
+    inner class Helper(val start: Int)
 
     infix fun String.at(range: TestRange): TestRange {
       assertEquals(parseInput(this), range.text)
@@ -269,7 +272,7 @@ abstract class BaseLineStatusTrackerTestCase : LightPlatformTestCase() {
     }
 
     fun Range.rollback() {
-      runCommand {
+      runCommandVerify {
         tracker.rollbackChanges(this)
       }
     }
@@ -369,64 +372,33 @@ abstract class BaseLineStatusTrackerTestCase : LightPlatformTestCase() {
     private fun getCurrentLines(range: Range): List<String> = DiffUtil.getLines(document, range.line1, range.line2)
   }
 
-  protected class PartialTest(val partialTracker: PartialLocalLineStatusTracker) : Test(partialTracker) {
-    var defaultList: String = "Default"
-    val changelists = mutableSetOf(defaultList)
+  protected inner class PartialTest(val partialTracker: PartialLocalLineStatusTracker) : Test(partialTracker) {
+    private val clm = ChangeListManagerImpl.getInstanceImpl(getProject())
 
-    init {
-      partialTracker.initChangeTracking(defaultList, changelists.toList())
+
+    fun assertAffectedChangeLists(vararg expected: String) {
+      partialTracker.assertAffectedChangeLists(*expected)
+    }
+
+    fun createChangeList_SetDefault(list: String) {
+      clm.addChangeList(list, null)
+      clm.setDefaultChangeList(list)
     }
 
 
-    fun assertAffectedChangelists(vararg expected: String) {
-      assertSameElements(partialTracker.affectedChangeListsIds, expected.toList())
-    }
-
-    fun Range.assertChangelist(list: String) {
-      val localRange = this as PartialLocalLineStatusTracker.LocalRange
-      assertEquals(localRange.changelistId, list)
-    }
-
-
-    fun createChangelist(list: String) {
-      assertDoesntContain(changelists, list)
-      changelists.add(list)
-    }
-
-    fun removeChangelist(list: String) {
-      assertFalse(defaultList == list)
-      assertContainsElements(changelists, list)
-      partialTracker.changeListRemoved(list)
-      changelists.remove(list)
-    }
-
-    fun setDefaultChangelist(list: String) {
-      changelists.add(list)
-      partialTracker.defaultListChanged(defaultList, list)
-      defaultList = list
-    }
-
-
-    fun moveChanges(fromList: String, toList: String) {
-      assertContainsElements(changelists, fromList)
-      assertContainsElements(changelists, toList)
-      partialTracker.moveChanges(fromList, toList)
-    }
-
-    fun moveAllChangesTo(toList: String) {
-      assertContainsElements(changelists, toList)
-      partialTracker.moveChangesTo(toList)
+    fun handlePartialCommit(side: Side, list: String): PartialLocalLineStatusTracker.PartialCommitHelper {
+      return partialTracker.handlePartialCommit(side, listOf(list.asListNameToId()))
     }
 
 
     fun Range.moveTo(list: String) {
-      val fakeChangelist = LocalChangeListImpl.createEmptyChangeListImpl(getProject(), list, list)
-      partialTracker.moveToChangelist(this, fakeChangelist)
+      val changeList = clm.addChangeList(list, null)
+      partialTracker.moveToChangelist(this, changeList)
     }
 
     fun moveChangesTo(lines: BitSet, list: String) {
-      val fakeChangelist = LocalChangeListImpl.createEmptyChangeListImpl(getProject(), list, list)
-      partialTracker.moveToChangelist(lines, fakeChangelist)
+      val changeList = clm.addChangeList(list, null)
+      partialTracker.moveToChangelist(lines, changeList)
     }
   }
 

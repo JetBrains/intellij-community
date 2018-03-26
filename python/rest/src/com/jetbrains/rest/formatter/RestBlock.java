@@ -30,11 +30,11 @@ import java.util.Collections;
 import java.util.List;
 
 public class RestBlock implements ASTBlock {
-  private RestBlock myParent;
-  private ASTNode myNode;
+  private final RestBlock myParent;
+  private final ASTNode myNode;
   private final Alignment myAlignment;
   private final Indent myIndent;
-  private Wrap myWrap;
+  private final Wrap myWrap;
   private List<RestBlock> mySubBlocks = null;
 
   public RestBlock(RestBlock parent, ASTNode node, final Alignment alignment, Indent indent, Wrap wrap) {

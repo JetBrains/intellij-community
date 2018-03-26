@@ -16,14 +16,15 @@
 
 package com.intellij.codeInspection.dataFlow.value;
 
+import com.intellij.codeInspection.dataFlow.DfaFactType;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.tree.IElementType;
-import java.util.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class DfaRelationValue extends DfaValue {
@@ -32,9 +33,9 @@ public class DfaRelationValue extends DfaValue {
     return myFactory.getRelationFactory().createCanonicalRelation(myLeftOperand, myRelation.getNegated(), myRightOperand);
   }
 
-  private @NotNull DfaValue myLeftOperand;
-  private @NotNull DfaValue myRightOperand;
-  private @NotNull RelationType myRelation;
+  private @NotNull final DfaValue myLeftOperand;
+  private @NotNull final DfaValue myRightOperand;
+  private @NotNull final RelationType myRelation;
 
   public enum RelationType {
     LE("<="), LT("<"), GE(">="), GT(">"), EQ("=="), NE("!="),
@@ -189,12 +190,20 @@ public class DfaRelationValue extends DfaValue {
         return createCanonicalRelation(dfaLeft, relationType, dfaRight);
       }
       if (dfaLeft instanceof DfaFactMapValue && dfaRight instanceof DfaConstValue) {
-        return createCanonicalRelation(DfaUnknownValue.getInstance(), relationType, dfaRight);
+        return createConstBasedRelation((DfaFactMapValue)dfaLeft, relationType, (DfaConstValue)dfaRight);
       }
       else if (dfaRight instanceof DfaFactMapValue && dfaLeft instanceof DfaConstValue) {
-        return createCanonicalRelation(DfaUnknownValue.getInstance(), relationType, dfaLeft);
+        return createConstBasedRelation((DfaFactMapValue)dfaRight, relationType, (DfaConstValue)dfaLeft);
       }
       return null;
+    }
+
+    @NotNull
+    private DfaRelationValue createConstBasedRelation(DfaFactMapValue dfaLeft, RelationType relationType, DfaConstValue dfaRight) {
+      if (dfaRight.getValue() == null && Boolean.TRUE.equals(dfaLeft.get(DfaFactType.CAN_BE_NULL))) {
+        return createCanonicalRelation(myFactory.getFactValue(DfaFactType.CAN_BE_NULL, Boolean.TRUE), relationType, dfaRight);
+      }
+      return createCanonicalRelation(DfaUnknownValue.getInstance(), relationType, dfaRight);
     }
 
     @NotNull

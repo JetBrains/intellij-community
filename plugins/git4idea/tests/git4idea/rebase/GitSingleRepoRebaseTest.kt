@@ -31,12 +31,11 @@ import git4idea.test.*
 import org.junit.Assume
 import org.mockito.Mockito
 import org.mockito.Mockito.`when`
-import kotlin.properties.Delegates
 import kotlin.test.assertFailsWith
 
 class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
-  private var repo: GitRepository by Delegates.notNull()
+  private lateinit var repo: GitRepository
 
   override fun setUp() {
     super.setUp()

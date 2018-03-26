@@ -31,7 +31,7 @@
 package com.intellij.openapi.util
 
 /**
- * Put here extension functions and variables for classes from util/util-rt modules
+ * Put here extension functions and variables for classes from util/util.rt modules
  */
 
 operator fun <A, B> Pair<A, B>.component1() = this.first

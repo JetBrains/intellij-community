@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 public class VersionCommand extends AbstractCommand {
 
   private final String myVersion;
-  private String myPycharmOS;
+  private final String myPycharmOS;
   private String myRemoteVersion = null;
 
   public VersionCommand(final RemoteDebugger debugger, final String version, String pycharmOS) {

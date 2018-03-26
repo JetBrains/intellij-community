@@ -1,12 +1,10 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.PowerSaveMode;
+import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.internal.statistic.customUsageCollectors.actions.ActionsCollector;
 import com.intellij.notification.EventLog;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -41,6 +39,7 @@ import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -132,14 +131,25 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
 
     restoreEmptyStatus();
 
-    runOnPowerSaveChange(this::updateProgressIcon, this);
+    runOnProgressRelatedChange(this::updateProgressIcon, this);
   }
 
-  private void runOnPowerSaveChange(@NotNull Runnable runnable, Disposable parentDisposable) {
+  private void runOnProgressRelatedChange(@NotNull Runnable runnable, Disposable parentDisposable) {
     synchronized (myOriginals) {
       if (!myDisposed) {
-        ApplicationManager.getApplication().getMessageBus().connect(parentDisposable)
-          .subscribe(PowerSaveMode.TOPIC, () -> UIUtil.invokeLaterIfNeeded(runnable));
+        MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(parentDisposable);
+        connection.subscribe(PowerSaveMode.TOPIC, () -> UIUtil.invokeLaterIfNeeded(runnable));
+        connection.subscribe(ProgressSuspender.TOPIC, new ProgressSuspender.SuspenderListener() {
+          @Override
+          public void suspendableProgressAppeared(@NotNull ProgressSuspender suspender) {
+            UIUtil.invokeLaterIfNeeded(runnable);
+          }
+
+          @Override
+          public void suspendedStatusChanged(@NotNull ProgressSuspender suspender) {
+            UIUtil.invokeLaterIfNeeded(runnable);
+          }
+        });
       }
     }
   }
@@ -620,7 +630,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
 
   private void updateProgressIcon() {
     if (myOriginals.isEmpty() || PowerSaveMode.isEnabled() ||
-        myOriginals.stream().map(ProgressSuspender::getSuspender).filter(Objects::nonNull).anyMatch(ProgressSuspender::isSuspended)) {
+        myOriginals.stream().map(ProgressSuspender::getSuspender).allMatch(s -> s != null && s.isSuspended())) {
       myProgressIcon.suspend();
     } else {
       myProgressIcon.resume();
@@ -670,7 +680,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
           updateProgress();
         }
       });
-      runOnPowerSaveChange(this::queueProgressUpdate, this);
+      runOnProgressRelatedChange(this::queueProgressUpdate, this);
     }
 
     @Override
@@ -688,8 +698,11 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
     private ProgressButton createSuspendButton() {
       InplaceButton suspendButton = new InplaceButton("", AllIcons.Actions.Pause, e -> {
         ProgressSuspender suspender = Objects.requireNonNull(getSuspender());
-        suspender.setSuspended(!suspender.isSuspended());
-        updateProgressNow();
+        if (suspender.isSuspended()) {
+          suspender.resumeProcess();
+        } else {
+          suspender.suspendProcess(null);
+        }
         ActionsCollector.getInstance().record(suspender.isSuspended() ? "Progress Paused" : "Progress Resumed");
       }).setFillBg(false);
       suspendButton.setVisible(false);

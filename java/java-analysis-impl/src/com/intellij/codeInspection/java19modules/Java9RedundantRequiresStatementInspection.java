@@ -109,8 +109,8 @@ public class Java9RedundantRequiresStatementInspection extends GlobalJavaBatchIn
   }
 
   private static class DeleteRedundantRequiresStatementFix implements LocalQuickFix {
-    private String myRequiredModuleName;
-    private Set<String> myImportedPackages;
+    private final String myRequiredModuleName;
+    private final Set<String> myImportedPackages;
 
     public DeleteRedundantRequiresStatementFix(String requiredModuleName, Set<String> importedPackages) {
       myRequiredModuleName = requiredModuleName;

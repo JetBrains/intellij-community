@@ -62,7 +62,7 @@ public class PyFileElementType extends IStubFileElementType<PyFileStub> {
   @Override
   public int getStubVersion() {
     // Don't forget to update versions of indexes that use the updated stub-based elements
-    return 68;
+    return 69;
   }
 
   @Nullable
@@ -206,7 +206,7 @@ public class PyFileElementType extends IStubFileElementType<PyFileStub> {
       int size = dataStream.readVarInt();
       names = new ArrayList<>(size);
       for (int i = 0; i < size; i++) {
-        names.add(dataStream.readName().getString());
+        names.add(dataStream.readNameString());
       }
     }
     return names;

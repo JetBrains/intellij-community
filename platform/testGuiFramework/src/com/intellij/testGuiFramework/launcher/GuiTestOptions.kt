@@ -30,7 +30,7 @@ object GuiTestOptions {
   fun useAppleScreenMenuBar(): Boolean = getSystemProperty("apple.laf.useScreenMenuBar", false)
 
   fun getDebugPort(): Int = getSystemProperty("idea.gui.test.debug.port", 5009)
-  fun getBootClasspath(): String = getSystemProperty("idea.gui.test.bootclasspath", "../out/classes/production/boot")
+  fun getBootClasspath(): String = getSystemProperty("idea.gui.test.bootclasspath", "../out/classes/production/intellij.platform.boot")
   fun getEncoding(): String = getSystemProperty("idea.gui.test.encoding", "UTF-8")
   fun getXmxSize(): Int = getSystemProperty("idea.gui.test.xmx", 512)
   //used for restarted and resumed test to qualify from what point to start

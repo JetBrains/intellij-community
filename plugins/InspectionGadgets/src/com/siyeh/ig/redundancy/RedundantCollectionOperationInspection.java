@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.redundancy;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
@@ -49,6 +49,9 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
     instanceCall(CommonClassNames.JAVA_UTIL_LIST, "remove").parameterTypes("int");
   private static final CallMatcher INDEX_OF =
     instanceCall(CommonClassNames.JAVA_UTIL_LIST, "indexOf").parameterTypes(CommonClassNames.JAVA_LANG_OBJECT);
+  private static final CallMatcher COLLECTIONS_SORT = staticCall(CommonClassNames.JAVA_UTIL_COLLECTIONS, "sort");
+  private static final CallMatcher LIST_SORT = instanceCall(CommonClassNames.JAVA_UTIL_LIST, "sort").parameterTypes(
+    CommonClassNames.JAVA_UTIL_COMPARATOR);
 
   private static final CallMapper<RedundantCollectionOperationHandler> HANDLERS =
     new CallMapper<RedundantCollectionOperationHandler>()
@@ -57,7 +60,8 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
       .register(CONTAINS, SingletonContainsHandler::handler)
       .register(anyOf(CONTAINS, CONTAINS_KEY), ContainsBeforeAddRemoveHandler::handler)
       .register(REMOVE_BY_INDEX, RedundantIndexOfHandler::handler)
-      .register(AS_LIST, RedundantAsListForIterationHandler::handler);
+      .register(AS_LIST, RedundantAsListForIterationHandler::handler)
+      .register(AS_LIST, RedundantSortAsListHandler::handler);
 
   @NotNull
   @Override
@@ -409,14 +413,17 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
       if (parent instanceof PsiLocalVariable) {
         PsiTypeElement typeElement = ((PsiLocalVariable)parent).getTypeElement();
         if (!typeElement.isInferredType()) {
-          PsiType type = args[0].getType();
-          if (type == null) return;
-          if(type instanceof PsiEllipsisType) {
-            type = ((PsiEllipsisType)type).toArrayType();
+          PsiType varType = ((PsiLocalVariable)parent).getType();
+          PsiType elementType = PsiUtil.substituteTypeParameter(varType, CommonClassNames.JAVA_LANG_ITERABLE, 0, false);
+          if (elementType == null) {
+            PsiType type = args[0].getType();
+            if (!(type instanceof PsiArrayType)) return;
+            elementType = ((PsiArrayType)type).getComponentType();
           }
-          if (!typeElement.isInferredType()) {
-            typeElement.replace(JavaPsiFacade.getElementFactory(project).createTypeElement(type));
+          if (elementType instanceof PsiWildcardType) {
+            elementType = ((PsiWildcardType)elementType).getExtendsBound();
           }
+          typeElement.replace(JavaPsiFacade.getElementFactory(project).createTypeElement(elementType.createArrayType()));
         }
       }
       ct.replaceAndRestoreComments(call, ct.markUnchanged(args[0]));
@@ -454,6 +461,64 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
       PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
       return parent instanceof PsiForeachStatement &&
              PsiTreeUtil.isAncestor(((PsiForeachStatement)parent).getIteratedValue(), expression, false);
+    }
+  }
+
+  private static class RedundantSortAsListHandler implements RedundantCollectionOperationHandler {
+    private final boolean myCollectionsSort;
+
+    public RedundantSortAsListHandler(boolean collectionsSort) {
+      myCollectionsSort = collectionsSort;
+    }
+
+    @Override
+    public void performFix(@NotNull Project project, @NotNull PsiMethodCallExpression call) {
+      PsiExpression[] args = call.getArgumentList().getExpressions();
+      if (args.length != 1) return;
+      PsiExpression array = args[0];
+      String sortMethod = CommonClassNames.JAVA_UTIL_ARRAYS + ".sort";
+      if (myCollectionsSort) {
+        PsiMethodCallExpression outerCall = PsiTreeUtil.getParentOfType(call, PsiMethodCallExpression.class);
+        if (outerCall == null) return;
+        CommentTracker ct = new CommentTracker();
+        ct.replaceAndRestoreComments(call, ct.markUnchanged(array));
+        ct = new CommentTracker();
+        ct.replaceAndRestoreComments(outerCall, sortMethod + ct.text(outerCall.getArgumentList()));
+      }
+      else {
+        PsiMethodCallExpression chainedCall = ExpressionUtils.getCallForQualifier(call);
+        if (chainedCall == null) return;
+        PsiExpression[] chainedCallArgs = chainedCall.getArgumentList().getExpressions();
+        if (chainedCallArgs.length != 1) return;
+        PsiExpression comparator = chainedCallArgs[0];
+        CommentTracker ct = new CommentTracker();
+        ct.replaceAndRestoreComments(chainedCall, sortMethod + "(" + ct.text(array) + "," + ct.text(comparator) + ")");
+      }
+    }
+
+    @NotNull
+    @Override
+    public String getReplacement() {
+      return "Arrays.sort()";
+    }
+
+    static RedundantSortAsListHandler handler(PsiMethodCallExpression call) {
+      if (MethodCallUtils.isVarArgCall(call)) return null;
+      PsiExpression arg = call.getArgumentList().getExpressions()[0];
+      if (!(arg.getType() instanceof PsiArrayType)) return null;
+      PsiExpressionList parent = tryCast(PsiUtil.skipParenthesizedExprUp(call.getParent()), PsiExpressionList.class);
+      if (parent != null) {
+        PsiMethodCallExpression outerCall = tryCast(parent.getParent(), PsiMethodCallExpression.class);
+        if (COLLECTIONS_SORT.test(outerCall) && PsiTreeUtil.isAncestor(parent.getExpressions()[0], call, false)) {
+          return new RedundantSortAsListHandler(true);
+        }
+      } else {
+        PsiMethodCallExpression chainedCall = ExpressionUtils.getCallForQualifier(call);
+        if (LIST_SORT.test(chainedCall)) {
+          return new RedundantSortAsListHandler(false);
+        }
+      }
+      return null;
     }
   }
 

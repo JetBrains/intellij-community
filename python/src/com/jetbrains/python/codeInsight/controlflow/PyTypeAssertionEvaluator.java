@@ -6,8 +6,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyConstantExpressionEvaluator;
+import com.jetbrains.python.psi.impl.PyEvaluator;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,7 +23,7 @@ import java.util.function.Function;
  * @author traff
  */
 public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
-  private Stack<Assertion> myStack = new Stack<>();
+  private final Stack<Assertion> myStack = new Stack<>();
   private boolean myPositive;
 
   public PyTypeAssertionEvaluator() {
@@ -65,7 +66,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
       if (args.length == 1 && args[0] instanceof PyReferenceExpression) {
         final PyReferenceExpression target = (PyReferenceExpression)args[0];
 
-        pushAssertion(target, myPositive, false, context -> new PyCallableTypeImpl(null, null));
+        pushAssertion(target, myPositive, false, context -> PyTypingTypeProvider.createTypingCallableType(node));
       }
     }
     else if (node.isCalleeText(PyNames.ISSUBCLASS)) {
@@ -119,8 +120,8 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
       }
     }
 
-    final Object leftValue = PyConstantExpressionEvaluator.evaluate(lhs);
-    final Object rightValue = PyConstantExpressionEvaluator.evaluate(rhs);
+    final Object leftValue = PyEvaluator.evaluateNoResolve(lhs, Object.class);
+    final Object rightValue = PyEvaluator.evaluateNoResolve(rhs, Object.class);
 
     if (leftValue instanceof Boolean && rightValue instanceof Boolean) {
       return;
@@ -156,7 +157,9 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
     else if (initial instanceof PyUnionType) {
       return Ref.create(((PyUnionType)initial).exclude(transformedType, context));
     }
-    else if (initial != null && PyTypeChecker.match(transformedType, initial, context)) {
+    else if (!(initial instanceof PyStructuralType) &&
+             !PyTypeChecker.isUnknown(initial, context) &&
+             PyTypeChecker.match(transformedType, initial, context)) {
       return null;
     }
     return Ref.create(initial);

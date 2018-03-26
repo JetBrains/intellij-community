@@ -15,15 +15,14 @@
  */
 package com.intellij.ide.fileTemplates.impl;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -286,7 +285,7 @@ public class FTManager {
     }
 
     if (!allNames.isEmpty()) {
-      final String lineSeparator = CodeStyleSettingsManager.getSettings(ProjectManagerEx.getInstanceEx().getDefaultProject()).getLineSeparator();
+      final String lineSeparator = CodeStyle.getDefaultSettings().getLineSeparator();
       for (String name : allNames) {
         final File customizedTemplateFile = templatesOnDisk.get(name);
         final FileTemplateBase templateToSave = templatesToSave.get(name);

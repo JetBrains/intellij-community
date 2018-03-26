@@ -636,7 +636,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   public void visitImportList(PsiImportList list) {
     if (ElementType.IMPORT_STATEMENT_BASE_BIT_SET.contains(myChild1.getElementType()) &&
         ElementType.IMPORT_STATEMENT_BASE_BIT_SET.contains(myChild2.getElementType())) {
-      if (myImportHelper == null) myImportHelper = new ImportHelper(mySettings.getRootSettings());
+      if (myImportHelper == null) myImportHelper = new ImportHelper(myJavaSettings);
       int emptyLines = myImportHelper.getEmptyLinesBetween(
         SourceTreeToPsiMap.treeToPsiNotNull(myChild1),
         SourceTreeToPsiMap.treeToPsiNotNull(myChild2)
@@ -1212,7 +1212,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
     else if (myRole2 == ChildRole.RPARENTH) {
       boolean space = myRole1 == ChildRole.COMMA || mySettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES;
-      if (mySettings.CALL_PARAMETERS_RPAREN_ON_NEXT_LINE && list.getExpressions().length > 1) {
+      if (mySettings.CALL_PARAMETERS_RPAREN_ON_NEXT_LINE && list.getExpressionCount() > 1) {
         createSpaceWithLinefeedIfListWrapped(list, space);
         return;
       }
@@ -1220,7 +1220,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
     else if (myRole1 == ChildRole.LPARENTH) {
       boolean space = mySettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES;
-      if (mySettings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE && list.getExpressions().length > 1) {
+      if (mySettings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE && list.getExpressionCount() > 1) {
         createSpaceWithLinefeedIfListWrapped(list, space);
         return;
       }

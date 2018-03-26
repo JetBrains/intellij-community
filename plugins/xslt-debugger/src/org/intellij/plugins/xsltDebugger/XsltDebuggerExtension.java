@@ -139,7 +139,7 @@ public class XsltDebuggerExtension extends XsltRunnerExtension {
       assert descriptor != null;
       pluginPath = descriptor.getPath();
     } else {
-      // -Dxslt-debugger.plugin.path=C:\work\java\intellij/ultimate\out\classes\production\xslt-debugger-engine
+      // -Dxslt-debugger.plugin.path=C:\work\java\intellij/ultimate\out\classes\production\intellij.xslt.debugger.engine
       pluginPath = new File(System.getProperty("xslt-debugger.plugin.path"));
     }
 
@@ -158,7 +158,7 @@ public class XsltDebuggerExtension extends XsltRunnerExtension {
       if (!(rtClasspath = new File(pluginPath, "classes")).exists()) {
         if (ApplicationManagerEx.getApplicationEx().isInternal() && new File(pluginPath, "org").exists()) {
           rtClasspath = pluginPath;
-          final File engineImplInternal = new File(pluginPath, ".." + c + "xslt-debugger-engine-impl");
+          final File engineImplInternal = new File(pluginPath, ".." + c + "intellij.xslt.debugger.engine.impl");
           assert engineImplInternal.exists() : engineImplInternal.getAbsolutePath();
           parameters.getClassPath().addTail(engineImplInternal.getAbsolutePath());
         } else {
@@ -283,7 +283,7 @@ public class XsltDebuggerExtension extends XsltRunnerExtension {
     File transformerFile = new File(pluginPath, "lib" + c + "rt" + c + jarFile);
     if (!transformerFile.exists()) {
       if (!(transformerFile = new File(pluginPath, "lib" + c + jarFile)).exists()) {
-        if (!(transformerFile = new File(new File(pluginPath, ".." + c + "xslt-debugger-engine-impl"), jarFile)).exists()) {
+        if (!(transformerFile = new File(new File(pluginPath, ".." + c + "intellij.xslt.debugger.engine.impl"), jarFile)).exists()) {
           transformerFile = new File(pluginPath, jarFile);
           assert transformerFile.exists() : transformerFile.getAbsolutePath();
         }

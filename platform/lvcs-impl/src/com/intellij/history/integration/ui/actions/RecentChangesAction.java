@@ -28,7 +28,7 @@ import static com.intellij.util.ObjectUtils.notNull;
 public class RecentChangesAction extends LocalHistoryAction {
   @Override
   protected void actionPerformed(@NotNull Project p, @NotNull IdeaGateway gw, @NotNull AnActionEvent e) {
-    new RecentChangesPopup(p, gw, notNull(getVcs())).show();
+    RecentChangesPopup.show(p, gw, notNull(getVcs()));
   }
 
   @Override

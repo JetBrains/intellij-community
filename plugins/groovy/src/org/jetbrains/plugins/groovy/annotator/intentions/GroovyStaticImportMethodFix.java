@@ -24,14 +24,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
-import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,7 +42,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -177,18 +175,17 @@ public class GroovyStaticImportMethodFix extends Intention {
   }
 
   private void chooseAndImport(Editor editor) {
-    final JList list = new JBList(getCandidates().toArray(PsiMethod.EMPTY_ARRAY));
-    list.setCellRenderer(new MethodCellRenderer(true));
-    new PopupChooserBuilder(list).
-      setTitle(QuickFixBundle.message("static.import.method.choose.method.to.import")).
-      setMovable(true).
-      setItemChoosenCallback(() -> {
-        PsiMethod selectedValue = (PsiMethod)list.getSelectedValue();
-        if (selectedValue == null) return;
+    JBPopupFactory.getInstance()
+      .createPopupChooserBuilder(getCandidates())
+      .setRenderer(new MethodCellRenderer(true))
+      .setTitle(QuickFixBundle.message("static.import.method.choose.method.to.import"))
+      .setMovable(true)
+      .setItemChosenCallback((selectedValue) -> {
         LOG.assertTrue(selectedValue.isValid());
         doImport(selectedValue);
-      }).createPopup().
-      showInBestPositionFor(editor);
+      })
+      .createPopup()
+      .showInBestPositionFor(editor);
   }
 
   @NotNull

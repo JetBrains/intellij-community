@@ -20,29 +20,16 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jetCheck.Generator;
 
-public class InsertString extends ActionOnRange {
-  private final String myToInsert;
+public class InsertString extends ActionOnFile {
 
-  InsertString(PsiFile file, int offset, String toInsert) {
-    super(file, offset, offset);
-    myToInsert = toInsert;
-  }
-
-  public static Generator<InsertString> asciiInsertions(@NotNull PsiFile psiFile) {
-    return Generator.zipWith(Generator.integers(0, psiFile.getTextLength()).noShrink(), 
-                             Generator.stringsOf(Generator.asciiPrintableChars()),
-                             (offset, toInsert) -> new InsertString(psiFile, offset, toInsert));
+  public InsertString(PsiFile file) {
+    super(file);
   }
 
   @Override
-  public String toString() {
-    return "InsertString{" + getVirtualFile().getPath() + " " + getCurrentStartOffset() + " '" + myToInsert + "', raw=" + myInitialStart + "}";
-  }
-
-  public void performAction() {
-    int offset = getFinalStartOffset();
-    if (offset < 0) return;
-
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> getDocument().insertString(offset, myToInsert));
+  public void performCommand(@NotNull Environment env) {
+    int offset = generateDocOffset(env, null);
+    String toInsert = env.generateValue(Generator.stringsOf(Generator.asciiPrintableChars()), "Insert '%s' at " + offset);
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> getDocument().insertString(offset, toInsert));
   }
 }

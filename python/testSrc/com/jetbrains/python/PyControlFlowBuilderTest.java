@@ -171,7 +171,7 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
   }
   
   public void testTypeAnnotations() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTest);
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
   }
 
   public void testQualifiedSelfReference() {
@@ -251,6 +251,26 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
   // PY-14840
   // PY-22003
   public void testPositiveIteration() {
+    doTest();
+  }
+
+  // PY-24750
+  public void testIfFalse() {
+    doTest();
+  }
+
+  // PY-24750
+  public void testIfTrue() {
+    doTest();
+  }
+
+  // PY-24750
+  public void testIfElifTrue() {
+    doTest();
+  }
+
+  // PY-24750
+  public void testIfElifFalse() {
     doTest();
   }
 

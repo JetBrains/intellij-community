@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -58,7 +44,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   private ActionMap myActionMap;
   private InputMap myInputMap;
   private String myAdText;
-  private MergingUpdateQueue myRepaintQueue = new MergingUpdateQueue("ChooseByNamePopup repaint", 50, true, myList);
+  private final MergingUpdateQueue myRepaintQueue = new MergingUpdateQueue("ChooseByNamePopup repaint", 50, true, myList);
 
   protected ChooseByNamePopup(@Nullable final Project project,
                               @NotNull ChooseByNameModel model,
@@ -142,16 +128,15 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   protected void showList() {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
 
+    ListModel<Object> model = myList.getModel();
+    if (model == null || model.getSize() == 0) return;
+
     final JLayeredPane layeredPane = myTextField.getRootPane().getLayeredPane();
 
-    Rectangle bounds = new Rectangle(layeredPane.getLocationOnScreen(), myTextField.getSize());
-    bounds.y += layeredPane.getHeight();
+    Point location = layeredPane.getLocationOnScreen();
+    location.y += layeredPane.getHeight();
 
     final Dimension preferredScrollPaneSize = myListScrollPane.getPreferredSize();
-    int lastVisibleRow = Math.min(myList.getVisibleRowCount(), myList.getModel().getSize()) - 1;
-    Rectangle visibleBounds = lastVisibleRow < 0 ? null : myList.getCellBounds(0, lastVisibleRow);
-    preferredScrollPaneSize.height = visibleBounds != null ? visibleBounds.height : UIManager.getFont("Label.font").getSize();
-
     preferredScrollPaneSize.width = Math.max(myTextFieldPanel.getWidth(), preferredScrollPaneSize.width);
 
     // in 'focus follows mouse' mode, to avoid focus escaping to editor, don't reduce popup size when list size is reduced
@@ -161,27 +146,26 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
       if (preferredScrollPaneSize.height < currentSize.height) preferredScrollPaneSize.height = currentSize.height;
     }
 
-    Rectangle preferredBounds = new Rectangle(bounds.x, bounds.y, preferredScrollPaneSize.width, preferredScrollPaneSize.height);
-    Rectangle original = new Rectangle(preferredBounds);
+    // calculate maximal size for the popup window
+    Rectangle screen = ScreenUtil.getScreenRectangle(location);
+    screen.width -= location.x - screen.x;
+    screen.height -= location.y - screen.y;
 
-    ScreenUtil.fitToScreen(preferredBounds);
-    JScrollBar hsb = myListScrollPane.getHorizontalScrollBar();
-    if (original.width > preferredBounds.width && (!SystemInfo.isMac || hsb.isOpaque())) {
-      int height = hsb.getPreferredSize().height;
-      preferredBounds.y -= height;
-      preferredBounds.height += height;
+    if (preferredScrollPaneSize.width > screen.width) {
+      preferredScrollPaneSize.width = screen.width;
+      if (model.getSize() <= myList.getVisibleRowCount()) {
+        JScrollBar hsb = myListScrollPane.getHorizontalScrollBar();
+        if (hsb != null && (!SystemInfo.isMac || hsb.isOpaque())) {
+          Dimension size = hsb.getPreferredSize();
+          if (size != null) preferredScrollPaneSize.height += size.height;
+        }
+      }
     }
-    if (original.y > preferredBounds.y) {
-      int height = original.y - preferredBounds.y;
-      preferredBounds.y += height;
-      preferredBounds.height -= height;
-    }
+    if (preferredScrollPaneSize.height > screen.height) preferredScrollPaneSize.height = screen.height;
 
-    myListScrollPane.setVisible(true);
-    myListScrollPane.setBorder(null);
     String adText = getAdText();
     if (myDropdownPopup == null) {
-      ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(myListScrollPane, myListScrollPane);
+      ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(myListScrollPane, myList);
       builder.setFocusable(false)
         .setLocateWithinScreenBounds(false)
         .setRequestFocus(false)
@@ -193,13 +177,12 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
         .setMayBeParent(true);
       builder.setCancelCallback(() -> Boolean.TRUE);
       myDropdownPopup = builder.createPopup();
-      myDropdownPopup.setLocation(preferredBounds.getLocation());
-      myDropdownPopup.setSize(preferredBounds.getSize());
-      myDropdownPopup.show(layeredPane);
+      myDropdownPopup.setSize(preferredScrollPaneSize);
+      myDropdownPopup.showInScreenCoordinates(layeredPane, location);
     }
     else {
-      myDropdownPopup.setLocation(preferredBounds.getLocation());
-      myDropdownPopup.setSize(preferredBounds.getSize());
+      myDropdownPopup.setLocation(location);
+      myDropdownPopup.setSize(preferredScrollPaneSize);
     }
   }
 
@@ -217,26 +200,20 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
       return;
     }
 
+    myModel.saveInitialCheckBoxState(myCheckBox.isSelected());
     if (isOk) {
-      myModel.saveInitialCheckBoxState(myCheckBox.isSelected());
-
       final List<Object> chosenElements = getChosenElements();
-      if (chosenElements != null) {
-        if (myActionListener instanceof MultiElementsCallback) {
-          ((MultiElementsCallback)myActionListener).elementsChosen(chosenElements);
-        }
-        else {
-          for (Object element : chosenElements) {
-            myActionListener.elementChosen(element);
-            String text = myModel.getFullName(element);
-            if (text != null) {
-              StatisticsManager.getInstance().incUseCount(new StatisticsInfo(statisticsContext(), text));
-            }
-          }
-        }
+      if (myActionListener instanceof MultiElementsCallback) {
+        ((MultiElementsCallback)myActionListener).elementsChosen(chosenElements);
       }
       else {
-        return;
+        for (Object element : chosenElements) {
+          myActionListener.elementChosen(element);
+          String text = myModel.getFullName(element);
+          if (text != null) {
+            StatisticsManager.getInstance().incUseCount(new StatisticsInfo(statisticsContext(), text));
+          }
+        }
       }
 
       if (!chosenElements.isEmpty()) {
@@ -255,9 +232,6 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
             }
           }
         }
-      }
-      else {
-        return;
       }
     }
     Disposer.dispose(this);

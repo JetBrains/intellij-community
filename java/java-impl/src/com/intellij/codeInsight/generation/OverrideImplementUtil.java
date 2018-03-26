@@ -121,8 +121,8 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
     if (results.isEmpty()) {
       PsiMethod method1 = GenerateMembersUtil.substituteGenericMethod(method, substitutor, aClass);
 
-      PsiElementFactory factory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
-      PsiMethod result = (PsiMethod)factory.createClass("Dummy").add(method1);
+      PsiElement copyClass = copyClass(aClass);
+      PsiMethod result = (PsiMethod)copyClass.add(method1);
       if (PsiUtil.isAnnotationMethod(result)) {
         PsiAnnotationMemberValue defaultValue = ((PsiAnnotationMethod)result).getDefaultValue();
         if (defaultValue != null) {
@@ -146,6 +146,15 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
     }
 
     return results;
+  }
+
+  private static PsiElement copyClass(PsiClass aClass) {
+    Object marker = new Object();
+    PsiTreeUtil.mark(aClass, marker);
+    PsiElement copy = aClass.getContainingFile().copy();
+    PsiElement copyClass = PsiTreeUtil.releaseMark(copy, marker);
+    LOG.assertTrue(copyClass != null);
+    return copyClass;
   }
 
   public static Consumer<PsiMethod> createDefaultDecorator(final PsiClass aClass,
@@ -409,12 +418,10 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
     if (selectedElements == null || selectedElements.isEmpty()) return;
 
     LOG.assertTrue(aClass.isValid());
-    new WriteCommandAction(project, aClass.getContainingFile()) {
-      @Override
-      protected void run(@NotNull final Result result) throws Throwable {
-        overrideOrImplementMethodsInRightPlace(editor, aClass, selectedElements, chooser.isCopyJavadoc(), chooser.isInsertOverrideAnnotation());
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(project, aClass.getContainingFile()).run(() -> {
+      overrideOrImplementMethodsInRightPlace(editor, aClass, selectedElements, chooser.isCopyJavadoc(),
+                                             chooser.isInsertOverrideAnnotation());
+    });
   }
 
   /**

@@ -264,3 +264,22 @@ class ParentRecorder {
     parents[e] = g;
   }
 }
+class Example {
+  private final int[] reducedToFull;
+  Example() {
+    reducedToFull = new int[]{1, 2, 4};
+    reducedToFull[2] = 3;
+  }
+  void method(String[] fullOrders, String[] reducedOrders) {
+    for (int j = 0; j < reducedOrders.length; j++) {
+      fullOrders[reducedToFull[j]] = reducedOrders[j];
+    }
+  }
+}
+class Example2 {
+  private final int[] <warning descr="Contents of array 'is' are written to, but never read">is</warning>;
+  Example2() {
+    is = new int[] {36, 42, 12};
+    is[1] = 27;
+  }
+}

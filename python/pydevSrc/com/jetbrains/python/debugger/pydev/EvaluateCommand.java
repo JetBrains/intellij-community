@@ -13,7 +13,7 @@ public class EvaluateCommand extends AbstractFrameCommand {
   private final IPyDebugProcess myDebugProcess;
   private final boolean myTrimResult;
   private PyDebugValue myValue = null;
-  private String myTempName;
+  private final String myTempName;
 
 
   public EvaluateCommand(final RemoteDebugger debugger, final String threadId, final String frameId, final String expression,

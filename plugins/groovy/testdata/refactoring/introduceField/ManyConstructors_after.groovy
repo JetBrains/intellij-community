@@ -3,7 +3,7 @@ class Bar {
 
     def Bar() {
       super()
-    f = "bar"
+        f = "bar"
     }
 
     def Bar(int i) {
@@ -12,10 +12,10 @@ class Bar {
 
     def Bar(int x, int y) {
         x = 5
-    f = "bar"
+        f = "bar"
     }
 
     def foo() {
-        print f<caret>
+        print f
     }
 }

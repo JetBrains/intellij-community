@@ -38,8 +38,8 @@ public class DnDSupport implements DnDTarget, DnDSource, Disposable {
   private final Runnable myDropEndedCallback;
   private final DnDDropActionHandler myDropActionHandler;
   private final Runnable myCleanUpCallback;
-  private boolean myAsTarget;
-  private boolean myAsSource;
+  private final boolean myAsTarget;
+  private final boolean myAsSource;
 
   private DnDSupport(JComponent component,
                      Function<DnDActionInfo, DnDDragStartBean> beanProvider,

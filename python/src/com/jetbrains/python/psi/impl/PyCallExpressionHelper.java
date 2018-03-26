@@ -469,10 +469,7 @@ public class PyCallExpressionHelper {
           return PyUnionType.union(members);
         }
       }
-      if (callee == null) {
-        return null;
-      }
-      else {
+      if (callee != null) {
         final PyType type = context.getType(callee);
         if (type instanceof PyCallableType) {
           final PyCallableType callableType = (PyCallableType)type;
@@ -481,8 +478,8 @@ public class PyCallExpressionHelper {
         if (type instanceof PyUnionType) {
           return getCallResultTypeFromUnion(call, context, (PyUnionType)type);
         }
-        return null;
       }
+      return null;
     }
     finally {
       TypeEvalStack.evaluated(call);

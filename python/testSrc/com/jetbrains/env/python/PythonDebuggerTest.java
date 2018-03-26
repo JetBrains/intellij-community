@@ -28,6 +28,7 @@ import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.tools.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.Assume;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -39,9 +40,9 @@ import static org.junit.Assert.*;
 /**
  * @author traff
  */
-
+@Staging //Thread leak breaks all other tests
 public class PythonDebuggerTest extends PyEnvTestCase {
-  private class BreakpointStopAndEvalTask extends PyDebuggerTask {
+  private static class BreakpointStopAndEvalTask extends PyDebuggerTask {
     public BreakpointStopAndEvalTask(String scriptName) {
       super("/debug", scriptName);
     }
@@ -144,6 +145,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
+  @Staging // thread leak
   public void testConditionalBreakpoint() {
     runPythonTest(new PyDebuggerTask("/debug", "test1.py") {
       @Override
@@ -350,7 +352,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @Override
       public void testing() throws Exception {
         waitForPause();
-        toggleBreakpoint(getFilePath(getScriptName()), 18);
+        removeBreakpoint(getFilePath(getScriptName()), 18);
         smartStepInto("foo");
         waitForPause();
         eval("a.z").hasValue("1");
@@ -646,7 +648,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         toggleBreakpointInEgg(egg, "adder/adder.py", 2);
         PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(getRunConfiguration().getSdkHome());
         if (flavor != null) {
-          flavor.initPythonPath(Lists.newArrayList(egg), getRunConfiguration().getEnvs());
+          flavor.initPythonPath(Lists.newArrayList(egg), true, getRunConfiguration().getEnvs());
         }
         else {
           getRunConfiguration().getEnvs().put("PYTHONPATH", egg);
@@ -671,9 +673,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
   @Test
   public void testWinEggDebug() {
-    if (UsefulTestCase.IS_UNDER_TEAMCITY && !SystemInfo.isWindows) {
-      return; // Only needs to run on windows
-    }
+    Assume.assumeFalse("Only needs to run on windows", UsefulTestCase.IS_UNDER_TEAMCITY && !SystemInfo.isWindows);
     runPythonTest(new PyDebuggerTask("/debug", "test_winegg.py") {
       @Override
       public void before() {
@@ -683,7 +683,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
         PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(getRunConfiguration().getSdkHome());
         if (flavor != null) {
-          flavor.initPythonPath(Lists.newArrayList(egg), getRunConfiguration().getEnvs());
+          flavor.initPythonPath(Lists.newArrayList(egg), true, getRunConfiguration().getEnvs());
         }
         else {
           getRunConfiguration().getEnvs().put("PYTHONPATH", egg);
@@ -822,9 +822,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
   @Test
   public void testPyQtQThreadInheritor() {
-    if (UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows) {
-      return; //Don't run under Windows
-    }
+    Assume.assumeFalse("Don't run under Windows",UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows);
 
     runPythonTest(new PyDebuggerTask("/debug", "test_pyqt1.py") {
       @Override
@@ -863,9 +861,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
   @Test
   public void testPyQtMoveToThread() {
-    if (UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows) {
-      return; //Don't run under Windows
-    }
+    Assume.assumeFalse("Don't run under Windows", UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows);
 
     runPythonTest(new PyDebuggerTask("/debug", "test_pyqt2.py") {
       @Override
@@ -905,9 +901,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
   @Test
   public void testPyQtQRunnableInheritor() {
-    if (UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows) {
-      return; //Don't run under Windows
-    }
+    Assume.assumeFalse("Don't run under Windows", UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows);
 
     runPythonTest(new PyDebuggerTask("/debug", "test_pyqt3.py") {
       @Override
@@ -1266,14 +1260,14 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         waitForPause();
         eval("i").hasValue("0");
         // remove break on line 2
-        toggleBreakpoint(getScriptName(), 2);
+        removeBreakpoint(getScriptName(), 2);
         resume();
         // add break on line 2
         toggleBreakpoint(getScriptName(), 2);
         // check if break on line 2 works
         waitForPause();
         // remove break on line 2 again
-        toggleBreakpoint(getScriptName(), 2);
+        removeBreakpoint(getScriptName(), 2);
         // add break on line 3
         toggleBreakpoint(getScriptName(), 3);
         resume();
@@ -1301,20 +1295,23 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         Pair<Boolean, String> pair = setNextStatement(7);
         waitForPause();
         assertTrue(pair.first);
-        eval("x").hasValue("1");
+        eval("x").hasValue("0");
         // try to jump into a loop
         pair = setNextStatement(9);
         // do not wait for pause here, because we don't refresh suspension for incorrect jumps
         assertFalse(pair.first);
         assertTrue(pair.second.startsWith("Error:"));
+        stepOver();
+        waitForPause();
+        eval("x").hasValue("2");
         resume();
         waitForPause();
-        eval("a").hasValue("3");
+        eval("a").hasValue("2");
         // jump inside a function
         pair = setNextStatement(2);
         waitForPause();
         assertTrue(pair.first);
-        eval("a").hasValue("6");
+        eval("a").hasValue("2");
         resume();
       }
     });

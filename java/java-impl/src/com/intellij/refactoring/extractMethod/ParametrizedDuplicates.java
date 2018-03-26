@@ -77,7 +77,7 @@ public class ParametrizedDuplicates {
 
   private static PsiElement[] copyElements(@NotNull PsiElement[] pattern) {
     Project project = pattern[0].getProject();
-    return IntroduceParameterHandler.getElementsInCopy(project, pattern[0].getContainingFile(), pattern);
+    return IntroduceParameterHandler.getElementsInCopy(project, pattern[0].getContainingFile(), pattern, false);
   }
 
   @Nullable
@@ -420,7 +420,7 @@ public class ParametrizedDuplicates {
         JavaCodeStyleManager.getInstance(project).suggestVariableName(VariableKind.PARAMETER, null, initializer, null);
       final String parameterName = generator.generateUniqueName(info.names.length > 0 ? info.names[0] : "p");
 
-      String declarationText = parameter.myType.getCanonicalText() + " " + parameterName + " = " + initializerText + ";";
+      String declarationText = parameter.getLocalVariableTypeText() + " " + parameterName + " = " + initializerText + ";";
       PsiDeclarationStatement paramDeclaration = (PsiDeclarationStatement)factory.createStatementFromText(declarationText, parent);
       paramDeclaration = (PsiDeclarationStatement)parent.addBefore(paramDeclaration, statement);
       PsiLocalVariable localVariable = (PsiLocalVariable)paramDeclaration.getDeclaredElements()[0];

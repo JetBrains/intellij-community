@@ -59,6 +59,7 @@ import java.util.Set;
  */
 
 public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPanel {
+  @SuppressWarnings("unused")
   private static final Logger LOG = Logger.getInstance(TabbedLanguageCodeStylePanel.class);
 
   private CodeStyleAbstractPanel myActiveTab;
@@ -355,16 +356,14 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
         result.add(codeStyle);
       }
     }
-    return result.toArray(new PredefinedCodeStyle[0]);
+    return result.toArray(PredefinedCodeStyle.EMPTY_ARRAY);
   }
 
 
   private void applyLanguageSettings(Language lang) {
     final Project currProject = ProjectUtil.guessCurrentProject(getPanel());
-    CodeStyleSettings rootSettings = CodeStyleSettingsManager.getSettings(currProject);
+    CodeStyleSettings rootSettings = CodeStyle.getSettings(currProject);
     CodeStyleSettings targetSettings = getSettings();
-    if (rootSettings.getCommonSettings(lang) == null || targetSettings.getCommonSettings(getDefaultLanguage()) == null) 
-      return;
 
     applyLanguageSettings(lang, rootSettings, targetSettings);
     reset(targetSettings);
@@ -374,7 +373,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
   protected void applyLanguageSettings(Language lang, CodeStyleSettings rootSettings, CodeStyleSettings targetSettings) {
     CommonCodeStyleSettings sourceCommonSettings = rootSettings.getCommonSettings(lang);
     CommonCodeStyleSettings targetCommonSettings = targetSettings.getCommonSettings(getDefaultLanguage());
-    CommonCodeStyleSettingsManager.copy(sourceCommonSettings, targetCommonSettings);
+    targetCommonSettings.copyFrom(sourceCommonSettings);
   }
 
   private void applyPredefinedStyle(String styleName) {

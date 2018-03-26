@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.impl
 
 import com.intellij.diff.util.Range
@@ -24,14 +10,13 @@ import com.intellij.openapi.vcs.changes.InvokeAfterUpdateMode
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker.RangeState
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.xml.util.XmlStringUtil
 import org.jdom.Element
 
-typealias TrackerState = PartialLocalLineStatusTracker.State
+private typealias TrackerState = PartialLocalLineStatusTracker.State
+private typealias FullTrackerState = PartialLocalLineStatusTracker.FullState
 
-@State(
-  name = "LineStatusTrackerManager",
-  storages = arrayOf(Storage(value = StoragePathMacros.WORKSPACE_FILE))
-)
+@State(name = "LineStatusTrackerManager", storages = [(Storage(value = StoragePathMacros.WORKSPACE_FILE))])
 class PartialLineStatusTrackerManagerState(
   private val project: Project,
   private val lineStatusTracker: LineStatusTrackerManager
@@ -54,24 +39,22 @@ class PartialLineStatusTrackerManagerState(
 
   override fun getState(): Element {
     val element = Element("state")
-    if (Registry.`is`("vcs.enable.partial.changelists.persist")) {
-      val fileStates = lineStatusTracker.collectPartiallyChangedFilesStates()
-      for (state in fileStates) {
-        element.addContent(writePartialFileState(state))
-      }
+    val fileStates = lineStatusTracker.collectPartiallyChangedFilesStates()
+    for (state in fileStates) {
+      element.addContent(writePartialFileState(state))
     }
 
     return element
   }
 
   override fun loadState(element: Element) {
-    if (Registry.`is`("vcs.enable.partial.changelists.persist")) {
-      val fileStates = mutableListOf<TrackerState>()
-      for (node in element.getChildren(NODE_PARTIAL_FILE)) {
-        val state = readPartialFileState(node)
-        if (state != null) fileStates.add(state)
-      }
+    val fileStates = mutableListOf<TrackerState>()
+    for (node in element.getChildren(NODE_PARTIAL_FILE)) {
+      val state = readPartialFileState(node)
+      if (state != null) fileStates.add(state)
+    }
 
+    if (fileStates.isNotEmpty()) {
       ChangeListManager.getInstance(project).invokeAfterUpdate(
         {
           lineStatusTracker.restoreTrackersForPartiallyChangedFiles(fileStates)
@@ -79,12 +62,15 @@ class PartialLineStatusTrackerManagerState(
     }
   }
 
-  private fun writePartialFileState(state: TrackerState): Element {
+  private fun writePartialFileState(state: FullTrackerState): Element {
     val element = Element(NODE_PARTIAL_FILE)
     element.setAttribute(ATT_PATH, state.virtualFile.path)
 
-    element.addContent(Element(NODE_VCS).setAttribute(ATT_CONTENT, state.vcsContent))
-    element.addContent(Element(NODE_CURRENT).setAttribute(ATT_CONTENT, state.currentContent))
+    if (Registry.`is`("vcs.enable.partial.changelists.persist.file.contents")) {
+      // TODO: should not be stored in workspace.xml; Project.getProjectCachePath ?
+      element.addContent(Element(NODE_VCS).setAttribute(ATT_CONTENT, XmlStringUtil.escapeIllegalXmlChars(state.vcsContent)))
+      element.addContent(Element(NODE_CURRENT).setAttribute(ATT_CONTENT, XmlStringUtil.escapeIllegalXmlChars(state.currentContent)))
+    }
 
     val rangesNode = Element(NODE_RANGES)
     for (it in state.ranges) {
@@ -99,8 +85,8 @@ class PartialLineStatusTrackerManagerState(
     val path = element.getAttributeValue(ATT_PATH) ?: return null
     val virtualFile = LocalFileSystem.getInstance().findFileByPath(path) ?: return null
 
-    val vcsContent = element.getChild(NODE_VCS)?.getAttributeValue(ATT_CONTENT) ?: return null
-    val currentContent = element.getChild(NODE_CURRENT)?.getAttributeValue(ATT_CONTENT) ?: return null
+    val vcsContent = element.getChild(NODE_VCS)?.getAttributeValue(ATT_CONTENT)
+    val currentContent = element.getChild(NODE_CURRENT)?.getAttributeValue(ATT_CONTENT)
 
     val rangeStates = mutableListOf<RangeState>()
 
@@ -110,7 +96,14 @@ class PartialLineStatusTrackerManagerState(
       rangeStates.add(rangeState)
     }
 
-    return TrackerState(virtualFile, vcsContent, currentContent, rangeStates)
+    if (vcsContent != null && currentContent != null) {
+      return FullTrackerState(virtualFile, rangeStates,
+                              XmlStringUtil.unescapeIllegalXmlChars(vcsContent),
+                              XmlStringUtil.unescapeIllegalXmlChars(currentContent))
+    }
+    else {
+      return TrackerState(virtualFile, rangeStates)
+    }
   }
 
   private fun writeRangeState(range: RangeState): Element {

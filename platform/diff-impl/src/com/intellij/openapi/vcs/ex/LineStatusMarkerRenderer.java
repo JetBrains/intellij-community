@@ -166,6 +166,27 @@ public abstract class LineStatusMarkerRenderer {
     }
   }
 
+  public static void paintIgnoredRange(@NotNull Graphics g,
+                                       @NotNull Editor editor,
+                                       @NotNull Range range) {
+    Color borderColor = getGutterBorderColor(editor);
+    Color ignoredBorderColor = getIgnoredGutterBorderColor(range, editor);
+    Color color = borderColor != null ? borderColor : ignoredBorderColor;
+
+    Rectangle area = getMarkerArea(editor, range.getLine1(), range.getLine2());
+    final int x = area.x;
+    final int endX = area.x + area.width;
+    final int y = area.y;
+    final int endY = area.y + area.height;
+
+    if (area.height == 0) {
+      paintTriangle(g, null, color, x, endX, y);
+    }
+    else {
+      paintRect(g, null, color, x, y, endX, endY);
+    }
+  }
+
   public static void paintSimpleRange(Graphics g, Editor editor, int line1, int line2, @Nullable Color color) {
     Rectangle area = getMarkerArea(editor, line1, line2);
     Color borderColor = getGutterBorderColor(editor);
@@ -198,6 +219,7 @@ public abstract class LineStatusMarkerRenderer {
       g.fillRect(x1, y1, x2 - x1, y2 - y1);
     }
     if (borderColor != null) {
+      ((Graphics2D)g).setStroke(new BasicStroke(JBUI.scale(1)));
       g.setColor(borderColor);
       UIUtil.drawLine(g, x1, y1, x2 - 1, y1);
       UIUtil.drawLine(g, x1, y1, x1, y2 - 1);
@@ -216,6 +238,7 @@ public abstract class LineStatusMarkerRenderer {
       g.fillPolygon(xPoints, yPoints, xPoints.length);
     }
     if (borderColor != null) {
+      ((Graphics2D)g).setStroke(new BasicStroke(JBUI.scale(1)));
       g.setColor(borderColor);
       g.drawPolygon(xPoints, yPoints, xPoints.length);
     }
@@ -265,6 +288,22 @@ public abstract class LineStatusMarkerRenderer {
         return scheme.getColor(EditorColors.DELETED_LINES_COLOR);
       case Range.MODIFIED:
         return scheme.getColor(EditorColors.MODIFIED_LINES_COLOR);
+      default:
+        assert false;
+        return null;
+    }
+  }
+
+  @Nullable
+  private static Color getIgnoredGutterBorderColor(@NotNull Range range, @Nullable Editor editor) {
+    final EditorColorsScheme scheme = getColorScheme(editor);
+    switch (range.getType()) {
+      case Range.INSERTED:
+        return scheme.getColor(EditorColors.IGNORED_ADDED_LINES_BORDER_COLOR);
+      case Range.DELETED:
+        return scheme.getColor(EditorColors.IGNORED_DELETED_LINES_BORDER_COLOR);
+      case Range.MODIFIED:
+        return scheme.getColor(EditorColors.IGNORED_MODIFIED_LINES_BORDER_COLOR);
       default:
         assert false;
         return null;

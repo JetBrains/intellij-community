@@ -12,6 +12,13 @@ import java.nio.file.Paths;
  */
 public class PyPackageCacheTest extends PyTestCase {
 
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    // Preceding tests might have initialized it to an empty state as recovery from IO errors
+    PyPIPackageCache.reset();
+  }
+
   // PY-28016
   public void testCaseInsensitivePackageNameMatching() {
     final PyPIPackageCache cache = PyPIPackageCache.getInstance(Paths.get(getTestDataPath(), "pypi-cache.json"));

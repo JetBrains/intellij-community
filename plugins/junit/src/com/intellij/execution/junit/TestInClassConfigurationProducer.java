@@ -23,7 +23,7 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 public class TestInClassConfigurationProducer extends JUnitConfigurationProducer {
-  private JUnitInClassConfigurationProducerDelegate myDelegate = new JUnitInClassConfigurationProducerDelegate();
+  private final JUnitInClassConfigurationProducerDelegate myDelegate = new JUnitInClassConfigurationProducerDelegate();
   public TestInClassConfigurationProducer() {
     super(JUnitConfigurationType.getInstance());
   }

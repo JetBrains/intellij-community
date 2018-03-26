@@ -54,6 +54,9 @@ public class ExpressionUtils {
     CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_COLLECTIONS, "emptyList", "emptySet", "emptyIterator", "emptyMap", "emptySortedMap",
                            "emptySortedSet", "emptyListIterator").parameterCount(0);
 
+  private static final CallMatcher GET_OR_DEFAULT =
+    CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_MAP, "getOrDefault").parameterCount(2);
+
   private ExpressionUtils() {}
 
   @Nullable
@@ -185,7 +188,8 @@ public class ExpressionUtils {
         return false;
       }
       final PsiType type = castType.getType();
-      return TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_STRING, type);
+      return TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_STRING, type) &&
+        isEvaluatedAtCompileTime(typeCastExpression.getOperand());
     }
     return false;
   }
@@ -228,8 +232,7 @@ public class ExpressionUtils {
 
   /**
    * Returns stream of sub-expressions of supplied expression which could be equal (by ==) to resulting
-   * value of the expression. The expressions in returned stream are guaranteed not to be each other ancestors.
-   * Also the expression value is guaranteed to be equal to one of returned sub-expressions.
+   * value of the expression. The expression value is guaranteed to be equal to one of returned sub-expressions.
    *
    * <p>
    * E.g. for {@code ((a) ? (Foo)b : (c))} the stream will contain b and c.
@@ -260,6 +263,12 @@ public class ExpressionUtils {
           }
         }
         return e;
+      })
+      .flatMap(e -> {
+        if(e instanceof PsiMethodCallExpression && GET_OR_DEFAULT.matches(e)) {
+          return StreamEx.of(e, ((PsiMethodCallExpression)e).getArgumentList().getExpressions()[1]);
+        }
+        return StreamEx.of(e);
       });
   }
 
@@ -737,18 +746,20 @@ public class ExpressionUtils {
   /**
    * Returns true if the expression can be moved to earlier point in program order without possible semantic change or
    * notable performance handicap. Examples of simple expressions are:
-   * - literal (number, char, string, class literal, true, false, null)
-   * - compile-time constant
-   * - this
-   * - variable/parameter read
-   * - static field read
-   * - instance field read having 'this' as qualifier
+   * <ul>
+   * <li>literal (number, char, string, class literal, true, false, null)</li>
+   * <li>compile-time constant</li>
+   * <li>this</li>
+   * <li>variable/parameter read</li>
+   * <li>final field read (either static or this-qualified)</li>
+   * <li>some static method calls known to return final static field (like {@code Collections.emptyList()})</li>
+   * </ul>
    *
    * @param expression an expression to test (must be valid expression)
    * @return true if the supplied expression is simple
    */
   @Contract("null -> false")
-  public static boolean isSimpleExpression(@Nullable PsiExpression expression) {
+  public static boolean isSafelyRecomputableExpression(@Nullable PsiExpression expression) {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (expression instanceof PsiLiteralExpression ||
         expression instanceof PsiThisExpression ||
@@ -757,11 +768,14 @@ public class ExpressionUtils {
       return true;
     }
     if(expression instanceof PsiReferenceExpression) {
+      PsiElement target = ((PsiReferenceExpression)expression).resolve();
+      if (target instanceof PsiLocalVariable || target instanceof PsiParameter) return true;
       PsiExpression qualifier = ((PsiReferenceExpression)expression).getQualifierExpression();
-      if(qualifier == null || qualifier instanceof PsiThisExpression) return true;
-      if(qualifier instanceof PsiReferenceExpression) {
-        PsiElement resolvedQualifier = ((PsiReferenceExpression)qualifier).resolve();
-        if(resolvedQualifier instanceof PsiClass) return true;
+      if (target == null && qualifier == null) return true;
+      if (target instanceof PsiField) {
+        PsiField field = (PsiField)target;
+        if (!field.hasModifierProperty(PsiModifier.FINAL)) return false;
+        return qualifier == null || qualifier instanceof PsiThisExpression || field.hasModifierProperty(PsiModifier.STATIC);
       }
     }
     if (expression instanceof PsiMethodCallExpression) {
@@ -1168,17 +1182,31 @@ public class ExpressionUtils {
   @Nullable
   public static PsiExpression getConstantArrayElement(PsiVariable array, int index) {
     if (index < 0) return null;
+    PsiExpression[] elements = getConstantArrayElements(array);
+    if (elements == null || index >= elements.length) return null;
+    return elements[index];
+  }
+
+  /**
+   * Returns an array of expressions which represent all array elements if array is known to be never modified
+   * after initialization.
+   *
+   * @param array an array variable
+   * @return an array or null if array could be modified after initialization
+   * (empty array means that the initializer is known to be an empty array).
+   */
+  @Nullable
+  public static PsiExpression[] getConstantArrayElements(PsiVariable array) {
     PsiExpression initializer = array.getInitializer();
     if (initializer instanceof PsiNewExpression) initializer = ((PsiNewExpression)initializer).getArrayInitializer();
     if (!(initializer instanceof PsiArrayInitializerExpression)) return null;
     PsiExpression[] initializers = ((PsiArrayInitializerExpression)initializer).getInitializers();
-    if (index >= initializers.length) return null;
     if (array instanceof PsiField && !(array.hasModifierProperty(PsiModifier.PRIVATE) && array.hasModifierProperty(PsiModifier.STATIC))) {
       return null;
     }
     Boolean isConstantArray = CachedValuesManager.<Boolean>getCachedValue(array, () -> CachedValueProvider.Result
       .create(isConstantArray(array), PsiModificationTracker.MODIFICATION_COUNT));
-    return Boolean.TRUE.equals(isConstantArray) ? initializers[index] : null;
+    return Boolean.TRUE.equals(isConstantArray) ? initializers : null;
   }
 
   private static boolean isConstantArray(PsiVariable array) {

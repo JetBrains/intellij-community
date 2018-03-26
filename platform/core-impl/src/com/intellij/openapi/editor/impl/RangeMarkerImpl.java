@@ -21,10 +21,9 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
-import com.intellij.openapi.util.ProperTextRange;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.UnfairTextRange;
-import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.util.*;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +31,8 @@ import org.jetbrains.annotations.Nullable;
 public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.RangeMarkerImpl");
 
-  private final DocumentEx myDocument;
+  @NotNull
+  private final Object myDocumentOrFile; // either VirtualFile (if any) or DocumentEx if no file associated
   RangeMarkerTree.RMNode<RangeMarkerEx> myNode;
 
   private final long myId;
@@ -52,7 +52,9 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
       throw new IllegalArgumentException("start > end: start=" + start+"; end="+end);
     }
 
-    myDocument = document;
+    FileDocumentManager manager = FileDocumentManager.getInstance();
+    VirtualFile file = manager.getFile(document);
+    myDocumentOrFile = file == null ? document : file;
     myId = counter.next();
     if (register) {
       registerInTree(start, end, greedyToLeft, greedyToRight, 0);
@@ -60,14 +62,14 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   }
 
   protected void registerInTree(int start, int end, boolean greedyToLeft, boolean greedyToRight, int layer) {
-    myDocument.registerRangeMarker(this, start, end, greedyToLeft, greedyToRight, layer);
+    getDocument().registerRangeMarker(this, start, end, greedyToLeft, greedyToRight, layer);
   }
 
   protected boolean unregisterInTree() {
     if (!isValid()) return false;
     IntervalTreeImpl tree = myNode.getTree();
     tree.checkMax(true);
-    boolean b = myDocument.removeRangeMarker(this);
+    boolean b = getDocument().removeRangeMarker(this);
     tree.checkMax(true);
     return b;
   }
@@ -108,8 +110,9 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
 
   @Override
   @NotNull
-  public DocumentEx getDocument() {
-    return myDocument;
+  public final DocumentEx getDocument() {
+    Object file = myDocumentOrFile;
+    return file instanceof VirtualFile ? (DocumentEx)FileDocumentManager.getInstance().getDocument((VirtualFile)file) : (DocumentEx)file;
   }
 
   // fake method to simplify setGreedyToLeft/right methods. overridden in RangeHighlighter
@@ -156,7 +159,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   public final void documentChanged(@NotNull DocumentEvent e) {
     int oldStart = intervalStart();
     int oldEnd = intervalEnd();
-    int docLength = myDocument.getTextLength();
+    int docLength = getDocument().getTextLength();
     if (!isValid()) {
       LOG.error("Invalid range marker "+ (isGreedyToLeft() ? "[" : "(") + oldStart + ", " + oldEnd + (isGreedyToRight() ? "]" : ")") +
                 ". Event = " + e + ". Doc length=" + docLength + "; "+getClass());
@@ -171,7 +174,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     changedUpdateImpl(e);
     if (isValid() && (intervalStart() > intervalEnd() || intervalStart() < 0 || intervalEnd() > docLength)) {
       LOG.error("Update failed. Event = " + e + ". " +
-                "old doc length=" + docLength + "; real doc length = "+myDocument.getTextLength()+
+                "old doc length=" + docLength + "; real doc length = "+getDocument().getTextLength()+
                 "; "+getClass()+"." +
                 " After update: '"+this+"'");
       invalidate(e);

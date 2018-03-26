@@ -78,7 +78,7 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
   @NotNull
   public CodeStyleSettings getCloneSettings(final CodeStyleScheme scheme) {
     if (!mySettingsToClone.containsKey(scheme)) {
-      mySettingsToClone.put(scheme, scheme.getCodeStyleSettings().clone());
+      mySettingsToClone.put(scheme, ModelSettings.createFrom(scheme.getCodeStyleSettings()));
     }
     return mySettingsToClone.get(scheme);
   }
@@ -314,5 +314,25 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
 
   public boolean isUiEventsEnabled() {
     return myUiEventsEnabled;
+  }
+
+  public static class ModelSettings extends CodeStyleSettings {
+    private volatile boolean myLocked;
+
+    public static ModelSettings createFrom(@NotNull CodeStyleSettings settings) {
+      ModelSettings modelSettings = new ModelSettings();
+      modelSettings.copyFrom(settings);
+      return modelSettings;
+    }
+
+    public void doWithLockedSettings(@NotNull Runnable runnable) {
+      myLocked = true;
+      runnable.run();
+      myLocked = false;
+    }
+
+    public boolean isLocked() {
+      return myLocked;
+    }
   }
 }

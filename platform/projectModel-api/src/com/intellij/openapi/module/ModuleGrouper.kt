@@ -17,9 +17,7 @@ package com.intellij.openapi.module
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
 
 /**
  * Use this class to determine how modules show by organized in a tree. It supports the both ways of module grouping: the old one where
@@ -44,7 +42,22 @@ abstract class ModuleGrouper {
    */
   abstract fun getShortenedName(module: Module): String
 
+  /**
+   * Returns name which should be used for a module when it's shown under its ancestor group which qualified name is [parentGroupName].
+   * If [parentGroupName] is `null` returns the full module name.
+   */
+  abstract fun getShortenedName(module: Module, parentGroupName: String?): String
+
+  /**
+   * Returns name which should be used for a module with name [name] when it's shown under its group
+   */
   abstract fun getShortenedNameByFullModuleName(name: String): String
+
+  /**
+   * Returns name which should be used for a module with name [name] when it's shown under its ancestor group which qualified name is [parentGroupName].
+   * If [parentGroupName] is `null` returns the full module name.
+   */
+  abstract fun getShortenedNameByFullModuleName(name: String, parentGroupName: String?): String
 
   abstract fun getGroupPathByModuleName(name: String): List<String>
 
@@ -60,63 +73,32 @@ abstract class ModuleGrouper {
 
   abstract fun getAllModules(): Array<Module>
 
+  /**
+   * Determines whether module group nodes containing single child should be joined with the child nodes. E.g. the modules `foo.bar.baz`
+   * and `foo.bar.baz2` will form the following tree if [compactGroupNodes] is `false`
+   * ```
+   * foo
+   *  bar
+   *   baz
+   *   baz2
+   * ```
+   * and the following tree if [compactGroupNodes] is `true`:
+   * ```
+   * foo.bar
+   *  baz
+   *  baz2
+   * ```
+   */
+  abstract val compactGroupNodes: Boolean
+
   companion object {
     @JvmStatic
     @JvmOverloads
     fun instanceFor(project: Project, moduleModel: ModifiableModuleModel? = null): ModuleGrouper {
-      val hasGroups = moduleModel?.hasModuleGroups() ?: ModuleManager.getInstance(project).hasModuleGroups()
-      if (!isQualifiedModuleNamesEnabled(project) || hasGroups) {
-        return ExplicitModuleGrouper(project, moduleModel)
-      }
-      return QualifiedNameGrouper(project, moduleModel)
+      return ModuleManager.getInstance(project).getModuleGrouper(moduleModel)
     }
   }
 }
 
 fun isQualifiedModuleNamesEnabled(project: Project) = Registry.`is`("project.qualified.module.names") &&
                                                       !ModuleManager.getInstance(project).hasModuleGroups()
-
-private abstract class ModuleGrouperBase(protected val project: Project, protected val model: ModifiableModuleModel?) : ModuleGrouper() {
-  override fun getAllModules(): Array<Module> = model?.modules ?: ModuleManager.getInstance(project).modules
-
-  protected fun getModuleName(module: Module) = model?.getNewName(module) ?: module.name
-
-  override fun getShortenedName(module: Module) = getShortenedNameByFullModuleName(getModuleName(module))
-}
-
-private class QualifiedNameGrouper(project: Project, model: ModifiableModuleModel?) : ModuleGrouperBase(project, model) {
-  override fun getGroupPath(module: Module): List<String> {
-    return getGroupPathByModuleName(getModuleName(module))
-  }
-
-  override fun getGroupPath(description: ModuleDescription) = getGroupPathByModuleName(description.name)
-
-  override fun getShortenedNameByFullModuleName(name: String) = StringUtil.getShortName(name)
-
-  override fun getGroupPathByModuleName(name: String) = name.split('.').dropLast(1)
-
-  override fun getModuleAsGroupPath(module: Module) = getModuleName(module).split('.')
-
-  override fun getModuleAsGroupPath(description: ModuleDescription) = description.name.split('.')
-}
-
-private class ExplicitModuleGrouper(project: Project, model: ModifiableModuleModel?): ModuleGrouperBase(project, model) {
-  override fun getGroupPath(module: Module): List<String> {
-    val path = if (model != null) model.getModuleGroupPath(module) else ModuleManager.getInstance(project).getModuleGroupPath(module)
-    return if (path != null) Arrays.asList(*path) else emptyList()
-  }
-
-  override fun getGroupPath(description: ModuleDescription) = when (description) {
-    is LoadedModuleDescription -> getGroupPath(description.module)
-    is UnloadedModuleDescription -> description.groupPath
-    else -> throw IllegalArgumentException(description.javaClass.name)
-  }
-
-  override fun getShortenedNameByFullModuleName(name: String) = name
-
-  override fun getGroupPathByModuleName(name: String): List<String> = emptyList()
-
-  override fun getModuleAsGroupPath(module: Module) = null
-  
-  override fun getModuleAsGroupPath(description: ModuleDescription) = null
-}

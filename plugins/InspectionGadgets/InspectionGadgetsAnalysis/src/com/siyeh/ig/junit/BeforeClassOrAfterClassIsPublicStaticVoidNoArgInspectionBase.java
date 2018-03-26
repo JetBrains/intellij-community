@@ -72,7 +72,7 @@ public class BeforeClassOrAfterClassIsPublicStaticVoidNoArgInspectionBase extend
 
       final PsiParameterList parameterList = method.getParameterList();
       boolean junit4Annotation = isJunit4Annotation(annotation);
-      if (junit4Annotation && (parameterList.getParametersCount() != 0 || !method.hasModifierProperty(PsiModifier.PUBLIC)) ||
+      if (junit4Annotation && (!parameterList.isEmpty() || !method.hasModifierProperty(PsiModifier.PUBLIC)) ||
           !returnType.equals(PsiType.VOID) ||
           !method.hasModifierProperty(PsiModifier.STATIC) && (junit4Annotation || !TestUtils.testInstancePerClass(targetClass))) {
         registerMethodError(method, method, annotation);

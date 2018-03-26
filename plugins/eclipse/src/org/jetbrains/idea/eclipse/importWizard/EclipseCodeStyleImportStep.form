@@ -8,7 +8,7 @@
     <properties/>
     <border type="none"/>
     <children>
-      <grid id="4c8b7" binding="myTitlePanel" layout-manager="GridLayoutManager" row-count="7" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+      <grid id="4c8b7" binding="myTitlePanel" layout-manager="GridLayoutManager" row-count="8" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
@@ -46,7 +46,7 @@
           </component>
           <vspacer id="4cd58">
             <constraints>
-              <grid row="6" column="1" row-span="1" col-span="2" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+              <grid row="7" column="1" row-span="1" col-span="2" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
             </constraints>
           </vspacer>
           <scrollpane id="f7505" class="com.intellij.ui.components.JBScrollPane">
@@ -56,7 +56,7 @@
             <properties/>
             <border type="none"/>
             <children>
-              <component id="764eb" class="com.intellij.ui.components.JBList" binding="myProjectList">
+              <component id="764eb" class="com.intellij.ui.components.JBList" binding="myCodeStylesList">
                 <constraints/>
                 <properties>
                   <model/>
@@ -93,6 +93,14 @@
               </grid>
             </constraints>
           </vspacer>
+          <component id="b0588" class="javax.swing.JCheckBox" binding="myOrganizeImportsCheckBox">
+            <constraints>
+              <grid row="6" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text resource-bundle="EclipseBundle" key="eclipse.import.code.style.organize.imports.box"/>
+            </properties>
+          </component>
         </children>
       </grid>
     </children>

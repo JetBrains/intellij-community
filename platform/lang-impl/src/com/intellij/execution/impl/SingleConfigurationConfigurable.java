@@ -29,6 +29,7 @@ import com.intellij.openapi.options.SettingsEditorListener;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,7 +48,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     extends BaseRCSettingsConfigurable {
   private static final Logger LOG = Logger.getInstance(SingleConfigurationConfigurable.class);
   private final PlainDocument myNameDocument = new PlainDocument();
-  @Nullable private Executor myExecutor;
+  @Nullable private final Executor myExecutor;
 
   private ValidationResult myLastValidationResult = null;
   private boolean myValidationResultValid = false;
@@ -323,7 +324,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     private JTextField myNameText;
     private JComponent myWholePanel;
     private JPanel myComponentPlace;
-    private JLabel myWarningLabel;
+    private JBLabel myWarningLabel;
     private JButton myFixButton;
     private JSeparator mySeparator;
     private JCheckBox myCbStoreProjectConfiguration;
@@ -337,7 +338,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       myNameText.setDocument(myNameDocument);
 
       getEditor().addSettingsEditorListener(settingsEditor -> updateWarning());
-
+      myWarningLabel.setCopyable(true);
       myWarningLabel.setIcon(AllIcons.RunConfigurations.ConfigurationWarning);
 
       myComponentPlace.setLayout(new GridBagLayout());

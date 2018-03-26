@@ -89,7 +89,7 @@ public class ClassWithoutNoArgConstructorInspection extends BaseInspection {
       for (final PsiMethod constructor : constructors) {
         final PsiParameterList parameterList =
           constructor.getParameterList();
-        if (parameterList.getParametersCount() == 0) {
+        if (parameterList.isEmpty()) {
           return true;
         }
       }

@@ -7,6 +7,7 @@ import org.jetbrains.intellij.build.*
 import org.jetbrains.jps.model.artifact.JpsArtifactService
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
+import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
 
@@ -14,6 +15,7 @@ import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.Callable
+import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
 import java.util.function.Function
@@ -81,7 +83,8 @@ class BuildTasksImpl extends BuildTasks {
    */
   void buildProvidedModulesList(String targetFilePath, List<String> modules) {
     buildContext.executeStep("Build provided modules list", BuildOptions.PROVIDED_MODULES_LIST_STEP, {
-      buildContext.messages.progress("Building provided modules list for modules $modules")
+      buildContext.messages.progress("Building provided modules list for ${modules.size()} modules")
+      buildContext.messages.debug("Building provided modules list for the following modules: $modules")
       FileUtil.delete(new File(targetFilePath))
       // Start the product in headless mode using com.intellij.ide.plugins.BundledPluginsLister.
       runApplicationStarter("$buildContext.paths.temp/builtinModules", modules, ['listBundledPlugins', targetFilePath])
@@ -110,7 +113,7 @@ class BuildTasksImpl extends BuildTasks {
   }
 
   private void runApplicationStarter(String tempDir, List<String> modules, List<String> arguments) {
-    def javaRuntimeClasses = "${buildContext.getModuleOutputPath(buildContext.findModule("java-runtime"))}"
+    def javaRuntimeClasses = "${buildContext.getModuleOutputPath(buildContext.findModule("intellij.java.rt"))}"
     if (!new File(javaRuntimeClasses).exists()) {
       buildContext.messages.error("Cannot run application starter ${arguments}, 'java-runtime' module isn't compiled ($javaRuntimeClasses doesn't exist)")
     }
@@ -127,7 +130,6 @@ class BuildTasksImpl extends BuildTasks {
 
     buildContext.ant.java(classname: "com.intellij.rt.execution.CommandLineWrapper", fork: true, failonerror: true) {
       jvmarg(line: "-ea -Xmx500m")
-      jvmarg(value: "-Xbootclasspath/a:${buildContext.getModuleOutputPath(buildContext.findModule("boot"))}")
       sysproperty(key: "java.awt.headless", value: true)
       sysproperty(key: "idea.home.path", value: buildContext.paths.projectHome)
       sysproperty(key: "idea.system.path", value: systemPath)
@@ -298,6 +300,15 @@ idea.fatal.error.notification=disabled
 
     def patchedApplicationInfo = patchApplicationInfo()
     def distributionJARsBuilder = compileModulesForDistribution(patchedApplicationInfo)
+    def mavenArtifacts = buildContext.productProperties.mavenArtifacts
+    if (mavenArtifacts.forIdeModules || !mavenArtifacts.additionalModules.isEmpty()) {
+      buildContext.executeStep("Generate Maven artifacts", BuildOptions.MAVEN_ARTIFACTS_STEP) {
+        def bundledPlugins = buildContext.productProperties.productLayout.bundledPluginModules as Set<String>
+        def moduleNames = distributionJARsBuilder.platformModules + buildContext.productProperties.productLayout.getIncludedPluginModules(bundledPlugins)
+        new MavenArtifactsBuilder(buildContext).generateMavenArtifacts(moduleNames)
+      }
+    }
+
     buildContext.messages.block("Build platform and plugin JARs") {
       if (buildContext.shouldBuildDistributions()) {
         distributionJARsBuilder.buildJARs()
@@ -393,6 +404,8 @@ idea.fatal.error.notification=disabled
       checkMandatoryPath(macCustomizer.dmgImagePath, "productProperties.macCustomizer.dmgImagePath")
       checkPaths([macCustomizer.dmgImagePathForEAP], "productProperties.macCustomizer.dmgImagePathForEAP")
     }
+
+    checkModules(properties.mavenArtifacts.additionalModules, "productProperties.mavenArtifacts.additionalModules")
   }
 
   private void checkProductLayout() {
@@ -438,7 +451,7 @@ idea.fatal.error.notification=disabled
     nonTrivialPlugins.findAll {layout.bundledPluginModules.contains(it.mainModule)}.each { plugin ->
       checkModules(plugin.moduleJars.values() - plugin.optionalModules, "'$plugin.mainModule' plugin")
       checkModules(plugin.moduleExcludes.keySet(), "'$plugin.mainModule' plugin")
-      checkProjectLibraries(plugin.includedProjectLibraries, "'$plugin.mainModule' plugin")
+      checkProjectLibraries(plugin.includedProjectLibraries.collect {it.libraryName}, "'$plugin.mainModule' plugin")
       checkArtifacts(plugin.includedArtifacts.keySet(), "'$plugin.mainModule' plugin")
     }
   }
@@ -532,6 +545,9 @@ idea.fatal.error.notification=disabled
         futures.collect { it.get() }
       }
     }
+    catch (ExecutionException e) {
+      throw e.cause
+    }
     finally {
       buildContext.messages.onAllForksFinished()
     }
@@ -542,7 +558,23 @@ idea.fatal.error.notification=disabled
   void buildUpdaterJar() {
     new LayoutBuilder(buildContext, false).layout(buildContext.paths.artifacts) {
       jar("updater.jar") {
-        module("updater")
+        module("intellij.platform.updater")
+      }
+    }
+  }
+
+  @Override
+  void buildFullUpdaterJar() {
+    String updaterModule = "intellij.platform.updater"
+    def libraryFiles = JpsJavaExtensionService.dependencies(buildContext.findRequiredModule(updaterModule)).productionOnly().runtimeOnly().libraries.collectMany {
+      it.getFiles(JpsOrderRootType.COMPILED)
+    }
+    new LayoutBuilder(buildContext, false).layout(buildContext.paths.artifacts) {
+      jar("updater-full.jar") {
+        module(updaterModule)
+        libraryFiles.each { file ->
+          ant.zipfileset(src: file.absolutePath)
+        }
       }
     }
   }

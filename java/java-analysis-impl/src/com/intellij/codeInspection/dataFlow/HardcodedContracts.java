@@ -118,7 +118,9 @@ public class HardcodedContracts {
     // All these methods take array as 1st parameter, from index as 2nd and to index as 3rd
     // thus ARRAY_RANGE_CONTRACTS are applicable to them
     .register(staticCall(JAVA_UTIL_ARRAYS, "binarySearch", "fill", "parallelPrefix", "parallelSort", "sort", "spliterator", "stream"),
-              (call, cnt) -> cnt >= 3 ? ARRAY_RANGE_CONTRACTS : null);
+              (call, cnt) -> cnt >= 3 ? ARRAY_RANGE_CONTRACTS : null)
+    .register(staticCall("org.mockito.ArgumentMatchers", "argThat").parameterCount(1),
+              ContractProvider.single(() -> new StandardMethodContract(new MethodContract.ValueConstraint[] {ANY_VALUE}, ANY_VALUE)));
 
   public static List<MethodContract> getHardcodedContracts(@NotNull PsiMethod method, @Nullable PsiMethodCallExpression call) {
     PsiClass owner = method.getContainingClass();
@@ -274,7 +276,7 @@ public class HardcodedContracts {
       constraints[checkedParam] = NOT_NULL_VALUE;
       return Collections.singletonList(new StandardMethodContract(constraints, THROW_EXCEPTION));
     }
-    if ("assertNotNull".equals(methodName) || "assumeNotNull".equals(methodName)) {
+    if ("assertNotNull".equals(methodName)) {
       return failIfNull(checkedParam, paramCount);
     }
     return Collections.emptyList();

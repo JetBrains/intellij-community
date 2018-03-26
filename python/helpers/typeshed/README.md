@@ -127,7 +127,7 @@ invoking:
 (Note that flake8 only works with Python 3.6 or higher.)
 
 To run the pytype tests, you need a separate virtual environment with
-Python 2.7. Run:
+Python 2.7, and a Python 3.6 interpreter somewhere you can point to. Run:
 ```
 $ virtualenv --python=python2.7 .venv2
 $ source .venv2/bin/activate
@@ -136,7 +136,7 @@ $ source .venv2/bin/activate
 This will install pytype from its GitHub repo. You can then run pytype
 tests by running:
 ```
-(.venv2)$ python tests/pytype_test.py
+(.venv2)$ python tests/pytype_test.py --python36-exe=/path/to/python3.6
 ```
 
 For mypy, if you are in the typeshed repo that is submodule of the

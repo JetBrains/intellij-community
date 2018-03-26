@@ -47,19 +47,22 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.List;
 
-class FindPopupDirectoryChooser extends JPanel {
+@SuppressWarnings("WeakerAccess")
+public class FindPopupDirectoryChooser extends JPanel {
   @NotNull private final FindUIHelper myHelper;
   @NotNull private final Project myProject;
   @NotNull private final FindPopupPanel myFindPopupPanel;
   @NotNull private final ComboBox<String> myDirectoryComboBox;
 
-  FindPopupDirectoryChooser(@NotNull FindPopupPanel panel) {
+  @SuppressWarnings("WeakerAccess")
+  public FindPopupDirectoryChooser(@NotNull FindPopupPanel panel) {
     super(new BorderLayout());
 
     myHelper = panel.getHelper();
     myProject = panel.getProject();
     myFindPopupPanel = panel;
     myDirectoryComboBox = new ComboBox<>(200);
+    myDirectoryComboBox.setEditable(true);
 
     Component editorComponent = myDirectoryComboBox.getEditor().getEditorComponent();
     if (editorComponent instanceof JTextField) {
@@ -72,7 +75,6 @@ class FindPopupDirectoryChooser extends JPanel {
       });
       field.setColumns(40);
     }
-    myDirectoryComboBox.setEditable(true);
     myDirectoryComboBox.setMaximumRowCount(8);
 
     ActionListener restartSearchListener = e -> myFindPopupPanel.scheduleResultsUpdate();
@@ -86,7 +88,7 @@ class FindPopupDirectoryChooser extends JPanel {
       FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
       descriptor.setForcedToUseIdeaFileChooser(true);
       myFindPopupPanel.getCanClose().set(false);
-      FileChooser.chooseFiles(descriptor, myProject, myFindPopupPanel, null,
+      FileChooser.chooseFiles(descriptor, myProject, null, null,
                               new FileChooser.FileChooserConsumer() {
         @Override
         public void consume(List<VirtualFile> files) {
@@ -119,7 +121,8 @@ class FindPopupDirectoryChooser extends JPanel {
     add(buttonsPanel, BorderLayout.EAST);
   }
 
-  void initByModel(@NotNull FindModel findModel) {
+  @SuppressWarnings("WeakerAccess")
+  public void initByModel(@NotNull FindModel findModel) {
     final String directoryName = findModel.getDirectoryName();
     java.util.List<String> strings = FindInProjectSettings.getInstance(myProject).getRecentDirectories();
 

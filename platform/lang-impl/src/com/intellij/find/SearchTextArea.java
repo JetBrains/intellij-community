@@ -23,7 +23,6 @@ import com.intellij.ide.IdeTooltip;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI;
-import com.intellij.ide.ui.laf.intellij.MacIntelliJIconCache;
 import com.intellij.ide.ui.laf.intellij.MacIntelliJTextBorder;
 import com.intellij.ide.ui.laf.intellij.WinIntelliJTextFieldUI;
 import com.intellij.openapi.actionSystem.*;
@@ -47,10 +46,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ui.JBDimension;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
 
@@ -81,9 +77,9 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
   private final boolean myInfoMode;
   private final JLabel myInfoLabel;
   private JPanel myIconsPanel = null;
-  private ActionButton myNewLineButton;
-  private ActionButton myClearButton;
-  private JBScrollPane myScrollPane;
+  private final ActionButton myNewLineButton;
+  private final ActionButton myClearButton;
+  private final JBScrollPane myScrollPane;
   private final ActionButton myHistoryPopupButton;
   private final LafHelper myHelper;
   private boolean myMultilineEnabled = true;
@@ -130,7 +126,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
       @Override
       public void insertString(int offs, String str, AttributeSet a) throws BadLocationException {
         if (getProperty("filterNewlines") == Boolean.TRUE && str.indexOf('\n')>=0) {
-          str = StringUtil.replace(str, "\n", "");
+          str = StringUtil.replace(str, "\n", " ");
         }
         if (!StringUtil.isEmpty(str)) super.insertString(offs, str, a);
       }
@@ -339,8 +335,8 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
     myInfoLabel.setText(info);
   }
 
-  private static Color enabledBorderColor = new JBColor(Gray._196, Gray._100);
-  private static Color disabledBorderColor = Gray._83;
+  private static final Color enabledBorderColor = new JBColor(Gray._196, Gray._100);
+  private static final Color disabledBorderColor = Gray._83;
 
   @Override
   public void paint(Graphics graphics) {
@@ -487,7 +483,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
 
     @Override
     Icon getShowHistoryIcon() {
-      return MacIntelliJIconCache.getIcon("searchFieldWithHistory");
+      return IconCache.getIcon("searchFieldWithHistory");
     }
 
     @Override

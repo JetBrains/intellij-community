@@ -142,7 +142,7 @@ fun Project.guessProjectDir() : VirtualFile {
   return this.baseDir!!
 }
 
-private fun Project.getProjectCacheFileName(forceNameUse: Boolean, hashSeparator: String): String {
+fun Project.getProjectCacheFileName(forceNameUse: Boolean, hashSeparator: String): String {
   val presentableUrl = presentableUrl
   var name = if (forceNameUse || presentableUrl == null) {
     name

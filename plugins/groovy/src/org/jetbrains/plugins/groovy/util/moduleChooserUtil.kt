@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("ModuleChooserUtil")
 
 package org.jetbrains.plugins.groovy.util
@@ -23,44 +9,40 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ui.configuration.ModulesAlphaComparator
-import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.ui.popup.ListPopupStep
 import com.intellij.openapi.util.Condition
+import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.util.Consumer
 import com.intellij.util.Function
-import java.util.*
 
-private val GROOVY_LAST_MODULE = "Groovy.Last.Module.Chosen"
+private const val GROOVY_LAST_MODULE = "Groovy.Last.Module.Chosen"
 
 fun selectModule(project: Project,
                  modules: List<Module>,
-                 titleProvider: Function<Module, String>,
+                 version: Function<Module, String>,
                  consumer: Consumer<Module>) {
   modules.singleOrNull()?.let {
     consumer.consume(it)
     return
   }
-  Collections.sort(modules, ModulesAlphaComparator.INSTANCE)
-  createSelectModulePopup(project, modules, { titleProvider.`fun`(it) }, { consumer.consume(it) }).showCenteredInCurrentWindow(project)
+  createSelectModulePopup(project, modules, version::`fun`, consumer::consume).showCenteredInCurrentWindow(project)
 }
 
 fun createSelectModulePopup(project: Project,
                             modules: List<Module>,
-                            titleProvider: (Module) -> String,
+                            version: (Module) -> String,
                             consumer: (Module) -> Unit): ListPopup {
-  val step = createSelectModulePopupStep(project, modules, titleProvider, consumer)
-  return JBPopupFactory.getInstance().createListPopup(step)
+  val step = createSelectModulePopupStep(project, modules.sortedWith(ModulesAlphaComparator.INSTANCE), consumer)
+  return object : ListPopupImpl(step) {
+    override fun getListElementRenderer() = RightTextCellRenderer(super.getListElementRenderer(), version)
+  }
 }
 
-
-fun createSelectModulePopupStep(project: Project,
-                                modules: List<Module>,
-                                titleProvider: (Module) -> String,
-                                consumer: (Module) -> Unit): ListPopupStep<Module> {
+private fun createSelectModulePopupStep(project: Project, modules: List<Module>, consumer: (Module) -> Unit): ListPopupStep<Module> {
   val propertiesComponent = PropertiesComponent.getInstance(project)
 
-  val step = GroovySelectModuleStep(modules, titleProvider) {
+  val step = GroovySelectModuleStep(modules) {
     propertiesComponent.setValue(GROOVY_LAST_MODULE, it.name)
     consumer(it)
   }

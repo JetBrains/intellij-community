@@ -23,7 +23,6 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.impl.FileStatusProvider;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.JBColor;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,11 +32,11 @@ import org.jetbrains.annotations.Nullable;
  */
 public class ChangelistConflictFileStatusProvider implements FileStatusProvider {
 
-  private static final FileStatus MODIFIED_OUTSIDE =
+  public static final FileStatus MODIFIED_OUTSIDE =
     FileStatusFactory.getInstance().createFileStatus("modifiedOutside", "Modified in not active changelist");
-  private static final FileStatus ADDED_OUTSIDE =
+  public static final FileStatus ADDED_OUTSIDE =
     FileStatusFactory.getInstance().createFileStatus("addedOutside", "Added in not active changelist");
-  private static final FileStatus CHANGELIST_CONFLICT =
+  public static final FileStatus CHANGELIST_CONFLICT =
     FileStatusFactory.getInstance().createFileStatus("changelistConflict", "Changelist conflict");
 
   private final ChangelistConflictTracker myConflictTracker;

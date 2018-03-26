@@ -29,7 +29,7 @@ import java.util.Properties;
  * @author Rustam Vishnyakov
  */
 public class EclipseImportMap {
-  private Properties myProperties;
+  private final Properties myProperties;
   private final static String MAP_PROPERTIES = "EclipseImportMap.properties";
   private static final Logger LOG = Logger.getInstance(EclipseImportMap.class);
 
@@ -74,10 +74,10 @@ public class EclipseImportMap {
   }
   
   public static class ImportDescriptor {
-    private String myLanguage;
-    private String myFieldName;
-    private boolean myIndentOptions;
-    private boolean myIsCustomField;
+    private final String myLanguage;
+    private final String myFieldName;
+    private final boolean myIndentOptions;
+    private final boolean myIsCustomField;
 
     public ImportDescriptor(String language, String fieldName, boolean indentOptions) {
       myLanguage = language;

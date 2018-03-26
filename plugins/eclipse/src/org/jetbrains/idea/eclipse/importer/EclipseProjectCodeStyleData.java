@@ -18,13 +18,13 @@ import java.util.Properties;
 
 public class EclipseProjectCodeStyleData extends EclipseCodeStylePropertiesImporter {
 
-  private static Logger LOG = Logger.getInstance(EclipseProjectCodeStyleData.class);
+  private static final Logger LOG = Logger.getInstance(EclipseProjectCodeStyleData.class);
 
   public final static String CORE_PREFS_FILE_NAME = "org.eclipse.jdt.core.prefs";
   public final static String UI_PREFS_FILE_NAME = "org.eclipse.jdt.ui.prefs";
   public final static String ECLIPSE_SETTINGS_SUBDIR = ".settings";
 
-  private final static String ECLIPSE_FORMATTER_PROFILE_PROPERTY = "formatter_profile";
+  private boolean myImportOrganizeImportsConfig;
 
   private final static Map<String, String> PREDEFINED_ECLIPSE_PROFILES = ContainerUtil.newHashMap();
   static {
@@ -36,7 +36,7 @@ public class EclipseProjectCodeStyleData extends EclipseCodeStylePropertiesImpor
   private final @NotNull String myProjectPath;
   private @Nullable Properties myCorePreferences;
   private @Nullable Properties myUiPreferences;
-  private String myProjectName;
+  private final String myProjectName;
 
   public EclipseProjectCodeStyleData(@NotNull String projectName, @NotNull String projectPath) {
     myProjectName = projectName;
@@ -47,6 +47,7 @@ public class EclipseProjectCodeStyleData extends EclipseCodeStylePropertiesImpor
     try {
       myCorePreferences = loadProperties(CORE_PREFS_FILE_NAME);
       myUiPreferences = loadProperties(UI_PREFS_FILE_NAME);
+      myImportOrganizeImportsConfig = isEclipseImportsConfigAvailable();
       return myCorePreferences != null && formatterOptionsExist(myCorePreferences) && myUiPreferences != null;
     }
     catch (IOException e) {
@@ -88,12 +89,12 @@ public class EclipseProjectCodeStyleData extends EclipseCodeStylePropertiesImpor
   @Override
   public String toString() {
     String profileName = getFormatterProfileName();
-    return myProjectName + (profileName != null ? "[" + profileName + "]" : "");
+    return myProjectName + (profileName != null ? ": " + profileName : "");
   }
 
   @Nullable
   private String getFormatterProfileName() {
-    String rawName = myUiPreferences != null ? myUiPreferences.getProperty(ECLIPSE_FORMATTER_PROFILE_PROPERTY) : null;
+    String rawName = myUiPreferences != null ? myUiPreferences.getProperty(OPTION_FORMATTER_PROFILE) : null;
     if (rawName != null) {
       if (PREDEFINED_ECLIPSE_PROFILES.containsKey(rawName)) {
         return PREDEFINED_ECLIPSE_PROFILES.get(rawName);
@@ -108,8 +109,23 @@ public class EclipseProjectCodeStyleData extends EclipseCodeStylePropertiesImpor
     if (myCorePreferences != null) {
       CodeStyleSettings settings = new CodeStyleSettings();
       importProperties(myCorePreferences, settings);
+      if (myUiPreferences != null && myImportOrganizeImportsConfig) {
+        importOptimizeImportsSettings(myUiPreferences, settings);
+      }
       return settings;
     }
     return null;
+  }
+
+  public boolean isEclipseImportsConfigAvailable() {
+    return myUiPreferences != null && myUiPreferences.getProperty(OPTION_IMPORT_ORDER) != null;
+  }
+
+  public boolean isImportOrganizeImportsConfig() {
+    return isEclipseImportsConfigAvailable() && myImportOrganizeImportsConfig;
+  }
+
+  public void setImportOrganizeImportsConfig(boolean importOrganizeImportsConfig) {
+    myImportOrganizeImportsConfig = importOrganizeImportsConfig;
   }
 }

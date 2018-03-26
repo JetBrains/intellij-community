@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.documentation;
 
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
@@ -34,6 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.io.HttpRequests;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
@@ -52,9 +39,6 @@ import com.jetbrains.python.pyi.PyiFile;
 import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.toolbox.ChainIterable;
 import one.util.streamex.StreamEx;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.methods.HeadMethod;
-import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jsoup.Jsoup;
@@ -244,6 +228,14 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   @NotNull
   public static String getTypeName(@Nullable PyType type, @NotNull TypeEvalContext context) {
     return buildTypeModel(type, context).asString();
+  }
+
+  /**
+   * Returns the provided type in PEP 484 compliant format.
+   */
+  @NotNull
+  public static String getTypeHint(@Nullable PyType type, @NotNull TypeEvalContext context) {
+    return buildTypeModel(type, context).asPep484TypeHint();
   }
 
   /**
@@ -488,17 +480,11 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     if (new File(url).exists()) {
       return true;
     }
-    final HttpClient client = new HttpClient();
-    final HttpConnectionManagerParams params = client.getHttpConnectionManager().getParams();
-    params.setSoTimeout(5 * 1000);
-    params.setConnectionTimeout(5 * 1000);
-
     try {
-      final HeadMethod method = new HeadMethod(url);
-      final int rc = client.executeMethod(method);
-      if (rc == 404) {
-        return false;
-      }
+      HttpRequests.head(url).tryConnect();
+    }
+    catch (HttpRequests.HttpStatusException e) {
+      return false;
     }
     catch (IllegalArgumentException e) {
       return false;

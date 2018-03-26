@@ -32,7 +32,7 @@ public class Py3MethodOverridingInspectionTest extends PyInspectionTestCase {
 
   // PY-17828
   public void testDunderPrepare() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTest);
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
   }
 
   @NotNull

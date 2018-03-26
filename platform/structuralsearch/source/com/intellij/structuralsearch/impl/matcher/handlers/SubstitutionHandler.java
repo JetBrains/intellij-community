@@ -1,9 +1,10 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.handlers;
 
 import com.intellij.dupLocator.iterators.FilteringNodeIterator;
 import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.dupLocator.util.NodeFilter;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.StructuralSearchProfile;
@@ -17,6 +18,7 @@ import com.intellij.structuralsearch.impl.matcher.predicates.NotPredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.util.SmartPsiPointer;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
@@ -116,7 +118,9 @@ public class SubstitutionHandler extends MatchingHandler {
         return matchContext.getMatcher().match(match, result.getMatch());
       }
       else {
-        return StructuralSearchUtil.getProfileByPsiElement(match).getText(match, start, end).equals(result.getMatchImage());
+        final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(match);
+        assert profile != null;
+        return profile.getText(match, start, end).equals(result.getMatchImage());
       }
     }
     else {
@@ -134,10 +138,10 @@ public class SubstitutionHandler extends MatchingHandler {
       return false;
     }
 
-    MatchResult result = context.hasResult() ? context.getResult().findSon(name) : null;
+    MatchResult result = context.hasResult() ? context.getResult().findChild(name) : null;
 
     if (result == null && context.getPreviousResult() != null) {
-      result = context.getPreviousResult().findSon(name);
+      result = context.getPreviousResult().findChild(name);
     }
 
     if (result != null) {
@@ -146,12 +150,13 @@ public class SubstitutionHandler extends MatchingHandler {
         return validateOneMatch(match, start, end, result,context);
       } else if (maxOccurs > 1 && totalMatchedOccurs != -1) {
         if (result.isMultipleMatch()) {
-          final int size = result.getAllSons().size();
+          final List<MatchResult> children = result.getChildren();
+          final int size = children.size();
           if (matchedOccurs >= size) {
             return false;
           }
           if (size != 0) {
-            result = result.getAllSons().get(matchedOccurs);
+            result = children.get(matchedOccurs);
           }
         }
         // check if they are the same
@@ -175,15 +180,15 @@ public class SubstitutionHandler extends MatchingHandler {
     return handle(match,0,-1,context);
   }
 
-  public void addResult(PsiElement match, int start, int end, MatchContext context) {
+  public void addResult(@NotNull PsiElement match, int start, int end, MatchContext context) {
     if (totalMatchedOccurs == -1) {
       final MatchResultImpl matchResult = context.getResult();
-      final MatchResultImpl substitution = matchResult.findSon(name);
+      final MatchResultImpl substitution = matchResult.findChild(name);
 
       if (substitution == null) {
-        matchResult.addSon( createMatch(match,start,end) );
+        matchResult.addChild(createMatch(match, start, end) );
       } else if (maxOccurs > 1) {
-        final MatchResultImpl result = createMatch(match,start,end);
+        final MatchResultImpl result = createMatch(match, start, end);
   
         if (!substitution.isMultipleMatch()) {
           // adding intermediate node to contain all multiple matches
@@ -203,14 +208,16 @@ public class SubstitutionHandler extends MatchingHandler {
           if (substitution.isScopeMatch()) {
             substitution.setScopeMatch(false);
             sonresult.setScopeMatch(true);
-            for(MatchResult r:substitution.getAllSons()) sonresult.addSon((MatchResultImpl)r);
-            substitution.clearMatches();
+            for (MatchResult r : substitution.getChildren()) {
+              sonresult.addChild(r);
+            }
+            substitution.removeChildren();
           }
 
-          substitution.addSon( sonresult);
+          substitution.addChild(sonresult);
         } 
   
-        substitution.addSon( result );
+        substitution.addChild(result);
       }
     }
   }
@@ -232,8 +239,10 @@ public class SubstitutionHandler extends MatchingHandler {
     return true;
   }
 
-  private MatchResultImpl createMatch(final PsiElement match, int start, int end) {
-    final String image = match == null ? null : StructuralSearchUtil.getProfileByPsiElement(match).getText(match, start, end);
+  private MatchResultImpl createMatch(@NotNull final PsiElement match, int start, int end) {
+    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(match);
+    assert profile != null;
+    final String image = profile.getText(match, start, end);
     final SmartPsiPointer ref = new SmartPsiPointer(match);
 
     final MatchResultImpl result = myNestedResult == null ? new MatchResultImpl(
@@ -259,12 +268,12 @@ public class SubstitutionHandler extends MatchingHandler {
   }
 
   boolean validate(MatchContext context, Class elementContext) {
-    MatchResult substitution = context.hasResult() ? context.getResult().findSon(name) : null;
+    final MatchResult substitution = context.hasResult() ? context.getResult().findChild(name) : null;
 
     if (minOccurs >= 1 &&
         (substitution == null || StructuralSearchUtil.getElementContextByPsi(substitution.getMatch()) != elementContext)) {
       return false;
-    } else if (maxOccurs <= 1 && substitution!=null && substitution.hasSons()) {
+    } else if (maxOccurs <= 1 && substitution != null && substitution.hasChildren()) {
       return false;
     } else if (maxOccurs==0 && totalMatchedOccurs!=-1) {
       return false;
@@ -282,25 +291,23 @@ public class SubstitutionHandler extends MatchingHandler {
 
   private void removeLastResults(int numberOfResults, MatchContext context) {
     if (numberOfResults == 0) return;
-    final MatchResultImpl substitution = context.getResult().findSon(name);
+    final MatchResultImpl substitution = context.getResult().findChild(name);
 
-    if (substitution!=null) {
+    if (substitution != null) {
       final List<PsiElement> matchedNodes = context.getMatchedNodes();
 
-      if (substitution.hasSons()) {
-        final List<MatchResult> sons = substitution.getMatches();
-
-        while(numberOfResults > 0) {
+      if (substitution.hasChildren()) {
+        while (numberOfResults > 0) {
           --numberOfResults;
-          final MatchResult matchResult = sons.remove(sons.size() - 1);
+          final MatchResult matchResult = substitution.removeLastChild();
           if (matchedNodes != null) matchedNodes.remove(matchResult.getMatch());
         }
-
-        if (sons.isEmpty()) {
-          context.getResult().removeSon(name);
+        if (!substitution.hasChildren()) {
+          context.getResult().removeChild(name);
         }
       } else {
-        final MatchResultImpl matchResult = context.getResult().removeSon(name);
+        final MatchResult matchResult = context.getResult().removeChild(name);
+        assert matchResult != null;
         if (matchedNodes != null) matchedNodes.remove(matchResult.getMatch());
       }
     }
@@ -355,8 +362,8 @@ public class SubstitutionHandler extends MatchingHandler {
           if (startMatching == matchedNodes.current()) {
             final boolean result = validateSatisfactionOfHandlers(patternNodes, context) &&
                                    matchedOccurs >= minOccurs && matchedOccurs <= maxOccurs;
-            if (result && matchedElements != null && context.getMatchedElementsListener() != null) {
-              context.getMatchedElementsListener().matchedElements(matchedElements);
+            if (result && matchedElements != null) {
+              context.notifyMatchedElements(matchedElements);
             }
             return result;
           }
@@ -368,14 +375,17 @@ public class SubstitutionHandler extends MatchingHandler {
       }
 
       final boolean result = validateSatisfactionOfHandlers(patternNodes, context);
-      if (result && matchedElements != null && context.getMatchedElementsListener() != null) {
-        context.getMatchedElementsListener().matchedElements(matchedElements);
+      if (result && matchedElements != null) {
+        context.notifyMatchedElements(matchedElements);
       }
       return result;
     } finally {
       if (saveResult!=null) {
         if (context.hasResult()) {
-          saveResult.getMatches().addAll(context.getResult().getMatches());
+          final List<MatchResult> children = context.getResult().getChildren();
+          for (MatchResult child : children) {
+            saveResult.addChild(child);
+          }
         }
         context.setResult(saveResult);
       }
@@ -383,80 +393,78 @@ public class SubstitutionHandler extends MatchingHandler {
   }
 
   @Override
-  public boolean matchSequentially(NodeIterator nodes, NodeIterator nodes2, MatchContext context) {
-    return doMatchSequentially(nodes, nodes2, context);
+  public boolean matchSequentially(NodeIterator patternNodes, NodeIterator matchNodes, MatchContext context) {
+    return doMatchSequentially(patternNodes, matchNodes, context);
   }
 
-  protected boolean doMatchSequentiallyBySimpleHandler(NodeIterator nodes, NodeIterator nodes2, MatchContext context) {
+  protected boolean doMatchSequentiallyBySimpleHandler(NodeIterator patternNodes, NodeIterator matchNodes, MatchContext context) {
     final boolean oldValue = context.shouldRecursivelyMatch();
     context.setShouldRecursivelyMatch(false);
-    final boolean result = super.matchSequentially(nodes, nodes2, context);
+    final boolean result = super.matchSequentially(patternNodes, matchNodes, context);
     context.setShouldRecursivelyMatch(oldValue);
     return result;
   }
 
-  protected boolean doMatchSequentially(NodeIterator nodes, NodeIterator nodes2, MatchContext context) {
+  protected boolean doMatchSequentially(NodeIterator patternNodes, NodeIterator matchNodes, MatchContext context) {
     final int previousMatchedOccurs = matchedOccurs;
-
-    FilteringNodeIterator fNodes2 = new FilteringNodeIterator(nodes2, VARS_DELIM_FILTER);
+    FilteringNodeIterator fNodes = new FilteringNodeIterator(matchNodes, VARS_DELIM_FILTER);
 
     try {
-      MatchingHandler handler = context.getPattern().getHandler(nodes.current());
+      MatchingHandler handler = context.getPattern().getHandler(patternNodes.current());
       matchedOccurs = 0;
 
       boolean flag = false;
 
-      while(fNodes2.hasNext() && matchedOccurs < minOccurs) {
-        if (handler.match(nodes.current(), nodes2.current(), context)) {
+      while(fNodes.hasNext() && matchedOccurs < minOccurs) {
+        if (handler.match(patternNodes.current(), matchNodes.current(), context)) {
           ++matchedOccurs;
-        } else {
+        } else if (patternNodes.current() instanceof PsiComment || !(matchNodes.current() instanceof PsiComment)) {
           break;
         }
-        fNodes2.advance();
-        flag = true;
+        fNodes.advance();
+        flag = true;;
       }
 
-      if (matchedOccurs!=minOccurs) {
+      if (matchedOccurs != minOccurs) {
         // failed even for min occurs
         removeLastResults(matchedOccurs, context);
-        fNodes2.rewind(matchedOccurs);
+        fNodes.rewind(matchedOccurs);
         return false;
       }
 
       if (greedy)  {
         // go greedily to maxOccurs
 
-        while(fNodes2.hasNext() && matchedOccurs < maxOccurs) {
-          if (handler.match(nodes.current(), nodes2.current(), context)) {
+        while(fNodes.hasNext() && matchedOccurs < maxOccurs) {
+          if (handler.match(patternNodes.current(), matchNodes.current(), context)) {
             ++matchedOccurs;
-          } else {
-            // no more matches could take!
+          } else if (patternNodes.current() instanceof PsiComment || !(matchNodes.current() instanceof PsiComment)) {
             break;
           }
-          fNodes2.advance();
+          fNodes.advance();
           flag = true;
         }
 
         if (flag) {
-          fNodes2.rewind();
-          nodes2.advance();
+          fNodes.rewind();
+          matchNodes.advance();
         }
 
-        nodes.advance();
+        patternNodes.advance();
 
-        if (nodes.hasNext()) {
-          final MatchingHandler nextHandler = context.getPattern().getHandler(nodes.current());
+        if (patternNodes.hasNext()) {
+          final MatchingHandler nextHandler = context.getPattern().getHandler(patternNodes.current());
 
           while(matchedOccurs >= minOccurs) {
-            if (nextHandler.matchSequentially(nodes, nodes2, context)) {
+            if (nextHandler.matchSequentially(patternNodes, matchNodes, context)) {
               totalMatchedOccurs = matchedOccurs;
               // match found
               return true;
             }
 
             if (matchedOccurs > 0) {
-              nodes2.rewind();
-              removeLastResults(1,context);
+              matchNodes.rewind();
+              removeLastResults(1, context);
             }
             --matchedOccurs;
           }
@@ -464,52 +472,52 @@ public class SubstitutionHandler extends MatchingHandler {
           if (matchedOccurs > 0) {
             removeLastResults(matchedOccurs, context);
           }
-          nodes.rewind();
+          patternNodes.rewind();
           return false;
         } else {
           // match found
-          if (handler.isMatchSequentiallySucceeded(nodes2)) {
+          if (handler.isMatchSequentiallySucceeded(matchNodes)) {
             return checkSameOccurrencesConstraint();
           }
           removeLastResults(matchedOccurs, context);
           return false;
         }
       } else {
-        nodes.advance();
+        patternNodes.advance();
 
         if (flag) {
-          fNodes2.rewind();
-          nodes2.advance();
+          fNodes.rewind();
+          matchNodes.advance();
         }
 
-        if (nodes.hasNext()) {
-          final MatchingHandler nextHandler = context.getPattern().getHandler(nodes.current());
+        if (patternNodes.hasNext()) {
+          final MatchingHandler nextHandler = context.getPattern().getHandler(patternNodes.current());
 
           flag = false;
 
-          while(nodes2.hasNext() && matchedOccurs <= maxOccurs) {
-            if (nextHandler.matchSequentially(nodes, nodes2, context)) {
+          while(matchNodes.hasNext() && matchedOccurs <= maxOccurs) {
+            if (nextHandler.matchSequentially(patternNodes, matchNodes, context)) {
               return checkSameOccurrencesConstraint();
             }
 
             if (flag) {
-              nodes2.rewind();
-              fNodes2.advance();
+              matchNodes.rewind();
+              fNodes.advance();
             }
 
-            if (handler.match(nodes.current(), nodes2.current(), context)) {
+            if (handler.match(patternNodes.current(), matchNodes.current(), context)) {
               matchedOccurs++;
             } else {
-              nodes.rewind();
-              removeLastResults(matchedOccurs,context);
+              patternNodes.rewind();
+              removeLastResults(matchedOccurs, context);
               return false;
             }
-            nodes2.advance();
+            matchNodes.advance();
             flag = true;
           }
 
-          nodes.rewind();
-          removeLastResults(matchedOccurs,context);
+          patternNodes.rewind();
+          removeLastResults(matchedOccurs, context);
           return false;
         } else {
           return checkSameOccurrencesConstraint();

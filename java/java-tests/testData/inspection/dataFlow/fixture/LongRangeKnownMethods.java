@@ -10,6 +10,13 @@ public class LongRangeKnownMethods {
     }
   }
 
+  void testIndexOf2(String s) {
+    int idx = s.indexOf("foo")+3;
+    if(<warning descr="Condition 'idx == -1' is always 'false'">idx == -1</warning>) {
+      System.out.println("Bug");
+    }
+  }
+
   void testExternalAnnotations(int i, long l) {
     if(<warning descr="Condition 'Integer.bitCount(i) == -1' is always 'false'">Integer.bitCount(i) == -1</warning>) {
       System.out.println("Impossible");

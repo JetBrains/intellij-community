@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -30,6 +30,7 @@ import com.intellij.structuralsearch.plugin.ui.SearchContext;
 import com.intellij.structuralsearch.plugin.ui.UIUtil;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -124,12 +125,12 @@ public abstract class StructuralSearchProfile {
     return null;
   }
 
-  @Nullable
+  @NotNull
   public abstract Class<? extends TemplateContextType> getTemplateContextTypeClass();
 
   public final TemplateContextType getTemplateContextType() {
     final Class<? extends TemplateContextType> clazz = getTemplateContextTypeClass();
-    return clazz != null ? ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), clazz) : null;
+    return ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), clazz);
   }
 
   @Nullable
@@ -210,11 +211,11 @@ public abstract class StructuralSearchProfile {
     if (info.getName().equals(match.getName())) {
       String replacementString = match.getMatchImage();
       boolean removeSemicolon = false;
-      if (match.hasSons() && !match.isScopeMatch()) {
+      if (match.hasChildren() && !match.isScopeMatch()) {
         // compound matches
         StringBuilder buf = new StringBuilder();
 
-        for (final MatchResult matchResult : match.getAllSons()) {
+        for (final MatchResult matchResult : match.getChildren()) {
           final PsiElement currentElement = matchResult.getMatch();
 
           if (buf.length() > 0) {
@@ -259,6 +260,7 @@ public abstract class StructuralSearchProfile {
     return offset;
   }
 
+  @Contract("null -> false")
   public boolean isIdentifier(PsiElement element) {
     return false;
   }
@@ -272,7 +274,7 @@ public abstract class StructuralSearchProfile {
     return false;
   }
 
-  @NotNull
+  @Contract("!null -> !null")
   public PsiElement getPresentableElement(PsiElement element) {
     return isIdentifier(element) ? element.getParent() : element;
   }

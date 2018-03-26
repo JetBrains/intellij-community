@@ -147,7 +147,7 @@ public class LoggerInitializedWithForeignClassInspectionBase extends BaseInspect
         }
         final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
         final PsiExpressionList list = methodCallExpression.getArgumentList();
-        if (list.getExpressions().length != 0) {
+        if (!list.isEmpty()) {
           return;
         }
         parent = methodCallExpression.getParent();

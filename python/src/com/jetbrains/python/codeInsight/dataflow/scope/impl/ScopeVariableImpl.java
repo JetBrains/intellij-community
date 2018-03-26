@@ -26,9 +26,9 @@ import java.util.Collections;
  * @author oleg
  */
 public class ScopeVariableImpl implements ScopeVariable {
-  private String myName;
+  private final String myName;
   private final Collection<PsiElement> myDeclarations;
-  private boolean isParameter;
+  private final boolean isParameter;
 
   public ScopeVariableImpl(final String name, final boolean parameter, final Collection<PsiElement> declarations) {
     myName = name;

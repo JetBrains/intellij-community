@@ -231,14 +231,11 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
     final VirtualFile dir = VfsUtil.createDirectories(rootPath + "/" + PathUtil.getParentPath(relativePath));
 
     final VirtualFile[] virtualFile = new VirtualFile[1];
-    new WriteCommandAction.Simple(getProject()) {
-      @Override
-      protected void run() throws Throwable {
-        virtualFile[0] = dir.createChildData(this, StringUtil.getShortName(relativePath, '/'));
-        VfsUtil.saveText(virtualFile[0], fileText);
-        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> {
+      virtualFile[0] = dir.createChildData(this, StringUtil.getShortName(relativePath, '/'));
+      VfsUtil.saveText(virtualFile[0], fileText);
+      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    });
     return ReadAction.compute(() -> PsiManager.getInstance(getProject()).findFile(virtualFile[0]));
   }
 }

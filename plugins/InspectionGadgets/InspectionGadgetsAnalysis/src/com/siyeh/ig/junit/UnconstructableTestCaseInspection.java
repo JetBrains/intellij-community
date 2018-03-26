@@ -71,7 +71,7 @@ public class UnconstructableTestCaseInspection extends BaseInspection {
         if (constructors.length == 1) {
           final PsiMethod constructor = constructors[0];
           final PsiParameterList parameterList = constructor.getParameterList();
-          if (constructor.hasModifierProperty(PsiModifier.PUBLIC) && parameterList.getParametersCount() == 0) {
+          if (constructor.hasModifierProperty(PsiModifier.PUBLIC) && parameterList.isEmpty()) {
             return;
           }
         }

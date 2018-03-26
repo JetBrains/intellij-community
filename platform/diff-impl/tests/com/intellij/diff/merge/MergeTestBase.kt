@@ -342,9 +342,9 @@ abstract class MergeTestBase : HeavyDiffTestCase() {
   private class MockMergeContext(private val myProject: Project?) : MergeContext() {
     override fun getProject(): Project? = myProject
 
-    override fun isFocused(): Boolean = false
+    override fun isFocusedInWindow(): Boolean = false
 
-    override fun requestFocus() {
+    override fun requestFocusInWindow() {
     }
 
     override fun finishMerge(result: MergeResult) {

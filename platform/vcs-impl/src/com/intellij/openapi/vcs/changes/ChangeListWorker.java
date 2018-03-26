@@ -85,7 +85,9 @@ public class ChangeListWorker {
       myChangeMappings.put(change, newList);
     });
 
-    myPartialChangeTrackers.putAll(worker.myPartialChangeTrackers);
+    for (Map.Entry<FilePath, PartialChangeTracker> entry : worker.myPartialChangeTrackers.entrySet()) {
+      myPartialChangeTrackers.put(entry.getKey(), new PartialChangeTrackerDump(entry.getValue(), myDefault));
+    }
   }
 
   @NotNull
@@ -158,30 +160,60 @@ public class ChangeListWorker {
 
     myPartialChangeTrackers.put(filePath, tracker);
 
-    tracker.initChangeTracking(myDefault.id, ContainerUtil.map(myLists, list -> list.id));
-
+    ListData oldList = null;
     Change change = getChangeForAfterPath(filePath);
     if (change != null) {
-      removeChangeMapping(change);
+      oldList = removeChangeMapping(change);
+    }
+
+    tracker.initChangeTracking(myDefault.id, ContainerUtil.map(myLists, list -> list.id), oldList != null ? oldList.id : null);
+
+    List<String> oldIds = oldList != null ? Collections.singletonList(oldList.id) : Collections.emptyList();
+    notifyChangelistsChanged(filePath, oldIds, tracker.getAffectedChangeListsIds());
+
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(String.format("[registerChangeTracker] path: %s, old list: %s", filePath, oldList != null ? oldList.id : "null"));
     }
   }
 
   public void unregisterChangeTracker(@NotNull FilePath filePath, @NotNull PartialChangeTracker tracker) {
-    PartialChangeTracker oldTracker = myPartialChangeTrackers.remove(filePath);
-    if (!Comparing.equal(oldTracker, tracker)) {
-      LOG.error(String.format("Wrong tracker removed: %s; expected: %s; passed: %s", filePath, oldTracker, tracker));
-    }
+    boolean trackerRemoved = myPartialChangeTrackers.remove(filePath, tracker);
+    if (trackerRemoved) {
+      ListData newList = null;
+      Change change = getChangeForAfterPath(filePath);
+      if (change != null) {
+        newList = getMainList(tracker);
+        putChangeMapping(change, newList);
+      }
 
-    Change change = getChangeForAfterPath(filePath);
-    if (change != null) {
-      putChangeMapping(change, getMainList(oldTracker));
+      List<String> newIds = newList != null ? Collections.singletonList(newList.id) : Collections.emptyList();
+      notifyChangelistsChanged(filePath, tracker.getAffectedChangeListsIds(), newIds);
+
+      if (LOG.isDebugEnabled()) {
+        LOG.debug(String.format("[unregisterChangeTracker] path: %s, new list: %s, tracker lists: %s",
+                                filePath, newList != null ? newList.id : "null", tracker.getAffectedChangeListsIds()));
+      }
+    }
+    else {
+      Map.Entry<FilePath, PartialChangeTracker> entry = ContainerUtil.find(myPartialChangeTrackers.entrySet(), it -> {
+        return Comparing.equal(it.getValue(), tracker);
+      });
+
+      if (entry != null) {
+        LOG.error(String.format("Unregistered tracker with wrong path: tracker: %s", tracker));
+
+        FilePath actualFilePath = entry.getKey();
+        unregisterChangeTracker(actualFilePath, tracker);
+      }
+      else {
+        LOG.error(String.format("Tracker is not registered: tracker: %s", tracker));
+      }
     }
   }
 
   @NotNull
-  private ListData getMainList(@Nullable PartialChangeTracker oldTracker) {
-    if (oldTracker == null) return myDefault;
-    List<String> changelistIds = oldTracker.getAffectedChangeListsIds();
+  private ListData getMainList(@NotNull PartialChangeTracker tracker) {
+    List<String> changelistIds = tracker.getAffectedChangeListsIds();
     if (changelistIds.size() == 1) {
       ListData list = getDataByIdVerify(changelistIds.get(0));
       if (list != null) return list;
@@ -320,7 +352,14 @@ public class ChangeListWorker {
       ListData list = myChangeMappings.get(change);
       if (list != null) {
         Set<Change> listChanges = map.computeIfAbsent(list, key -> new HashSet<>());
-        listChanges.add(change);
+
+        AbstractVcs vcs = myIdx.getVcsFor(change);
+        if (vcs != null && vcs.arePartialChangelistsSupported()) {
+          listChanges.add(toChangeListChange(change, list));
+        }
+        else {
+          listChanges.add(change);
+        }
       }
       else {
         PartialChangeTracker tracker = getChangeTrackerFor(change);
@@ -368,7 +407,7 @@ public class ChangeListWorker {
   }
 
   @Nullable
-  public VcsKey getVcsFor(@NotNull Change change) {
+  public AbstractVcs getVcsFor(@NotNull Change change) {
     return myIdx.getVcsFor(change);
   }
 
@@ -383,7 +422,7 @@ public class ChangeListWorker {
   }
 
 
-  public boolean setDefaultList(String name) {
+  public boolean setDefaultList(@NotNull String name) {
     ListData newDefault = getDataByName(name);
     if (newDefault == null || newDefault.isDefault) return false;
 
@@ -394,18 +433,19 @@ public class ChangeListWorker {
     myDefault = newDefault;
 
     fireDefaultListChanged(oldDefault.id, newDefault.id);
-    fireChangeListsChanged();
+
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(String.format("[setDefaultList %s] name: %s id: %s", myMainWorker ? "" : "- updater", name, newDefault.id));
+    }
 
     return true;
   }
 
-  public boolean setReadOnly(String name, boolean value) {
+  public boolean setReadOnly(@NotNull String name, boolean value) {
     ListData list = getDataByName(name);
     if (list == null || list.isReadOnly) return false;
 
     list.isReadOnly = value;
-
-    fireChangeListsChanged();
 
     return true;
   }
@@ -419,8 +459,6 @@ public class ChangeListWorker {
 
     list.name = toName;
 
-    fireChangeListsChanged();
-
     return true;
   }
 
@@ -433,8 +471,6 @@ public class ChangeListWorker {
     if (!Comparing.equal(oldComment, newComment)) {
       list.comment = newComment;
     }
-
-    fireChangeListsChanged();
 
     return oldComment;
   }
@@ -455,7 +491,9 @@ public class ChangeListWorker {
 
     list = putNewListData(list);
 
-    fireChangeListsChanged();
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(String.format("[addChangeList %s] name: %s id: %s", myMainWorker ? "" : "- updater", name, list.id));
+    }
 
     return toChangeList(list);
   }
@@ -469,22 +507,33 @@ public class ChangeListWorker {
       return false;
     }
 
+    List<Change> movedChanges = new ArrayList<>();
     myChangeMappings.replaceAll((change, list) -> {
-      if (list == removedList) return myDefault;
+      if (list == removedList) {
+        movedChanges.add(change);
+        return myDefault;
+      }
       return list;
     });
 
+    fireChangeListRemoved(removedList.id);
+    myReadOnlyChangesCache = null;
+
+    if (myMainWorker && !movedChanges.isEmpty()) {
+      myDelayedNotificator.changesMoved(movedChanges, toChangeList(removedList), toChangeList(myDefault));
+    }
+
     myLists.remove(removedList);
 
-    fireChangeListRemoved(removedList.id);
-    fireChangeListsChanged();
-    myReadOnlyChangesCache = null;
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(String.format("[removeChangeList %s] name: %s id: %s", myMainWorker ? "" : "- updater", name, removedList.id));
+    }
 
     return true;
   }
 
   @Nullable
-  public MultiMap<LocalChangeList, Change> moveChangesTo(@NotNull String name, @NotNull Change[] changes) {
+  public MultiMap<LocalChangeList, Change> moveChangesTo(@NotNull String name, @NotNull List<Change> changes) {
     final ListData targetList = getDataByName(name);
     if (targetList == null) return null;
 
@@ -507,9 +556,7 @@ public class ChangeListWorker {
             ListData fromList = getDataById(fromListId);
 
             if (fromList != null && fromList != targetList) {
-              if (myMainWorker) {
-                tracker.moveChanges(fromList.id, targetList.id);
-              }
+              tracker.moveChanges(fromList.id, targetList.id);
 
               result.putValue(fromList, change);
             }
@@ -519,9 +566,7 @@ public class ChangeListWorker {
             fromLists.remove(targetList);
 
             if (!fromLists.isEmpty()) {
-              if (myMainWorker) {
-                tracker.moveChangesTo(targetList.id);
-              }
+              tracker.moveChangesTo(targetList.id);
 
               for (ListData fromList : fromLists) {
                 result.putValue(fromList, change);
@@ -532,28 +577,45 @@ public class ChangeListWorker {
       }
     }
 
-    fireChangeListsChanged();
     myReadOnlyChangesCache = null;
 
     MultiMap<LocalChangeList, Change> notifications = new MultiMap<>();
     for (Map.Entry<ListData, Collection<Change>> entry : result.entrySet()) {
       notifications.put(toChangeList(entry.getKey()), entry.getValue());
     }
+
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(String.format("[moveChangesTo %s] name: %s id: %s, changes: %s",
+                              myMainWorker ? "" : "- updater", targetList.name, targetList.id, changes));
+    }
+
     return notifications;
   }
 
   /**
    * Called without external lock
    */
-  public void notifyChangelistsChanged() {
-    if (myReadOnlyChangesCacheInvalidated.compareAndSet(false, true)) {
-      fireChangeListsChanged();
+  public void notifyChangelistsChanged(@NotNull FilePath path,
+                                       @NotNull List<String> beforeChangeListsIds,
+                                       @NotNull List<String> afterChangeListsIds) {
+    myReadOnlyChangesCacheInvalidated.set(true);
+
+    HashSet<String> removed = new HashSet<>(beforeChangeListsIds);
+    removed.removeAll(afterChangeListsIds);
+    HashSet<String> added = new HashSet<>(afterChangeListsIds);
+    added.removeAll(beforeChangeListsIds);
+
+    if (!removed.isEmpty() || !added.isEmpty()) {
+      // We can't take CLM.LOCK here, so LocalChangeList will be created in delayed notificator itself
+      myDelayedNotificator.changeListsForFileChanged(path, removed, added);
     }
   }
 
 
   public void applyChangesFromUpdate(@NotNull ChangeListWorker updatedWorker,
                                      @NotNull PlusMinusModify<BaseRevision> deltaListener) {
+    HashMap<Change, ListData> oldChangeMappings = new HashMap<>(myChangeMappings);
+
     boolean somethingChanged = notifyPathsChanged(myIdx, updatedWorker.myIdx, deltaListener);
 
     myIdx.copyFrom(updatedWorker.myIdx);
@@ -565,7 +627,27 @@ public class ChangeListWorker {
       PartialChangeTracker tracker = getChangeTrackerFor(change);
       if (tracker == null) {
         ListData oldList = updatedWorker.myChangeMappings.get(change);
-        ListData newList = notNullList(listMapping.get(oldList));
+
+        ListData newList = null;
+        if (oldList == null) {
+          if (updatedWorker.myPartialChangeTrackers.isEmpty()) {
+            LOG.error("Change mapping not found");
+          }
+        }
+        else {
+          newList = listMapping.get(oldList);
+
+          if (newList == null) {
+            LOG.error("List mapping not found");
+          }
+        }
+
+        if (newList == null) {
+          ListData oldMappedList = oldChangeMappings.get(change);
+          if (oldMappedList != null) newList = getDataById(oldMappedList.id);
+        }
+        if (newList == null) newList = myDefault;
+
         myChangeMappings.put(change, newList);
       }
     }
@@ -574,7 +656,13 @@ public class ChangeListWorker {
       FileStatusManager.getInstance(myProject).fileStatusesChanged();
     }
 
-    fireChangeListsChanged();
+    if (myMainWorker) {
+      myDelayedNotificator.allChangeListsMappingsChanged();
+    }
+
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(String.format("[applyChangesFromUpdate] %s", this));
+    }
   }
 
   private static boolean notifyPathsChanged(@NotNull ChangeListsIndexes was, @NotNull ChangeListsIndexes became,
@@ -617,29 +705,21 @@ public class ChangeListWorker {
       }
     }
 
-    fireChangeListsChanged();
+    if (myMainWorker) {
+      myDelayedNotificator.allChangeListsMappingsChanged();
+    }
   }
 
 
   private void fireDefaultListChanged(@NotNull String oldDefaultId, @NotNull String newDefaultId) {
-    if (myMainWorker) {
-      for (PartialChangeTracker tracker : myPartialChangeTrackers.values()) {
-        tracker.defaultListChanged(oldDefaultId, newDefaultId);
-      }
+    for (PartialChangeTracker tracker : myPartialChangeTrackers.values()) {
+      tracker.defaultListChanged(oldDefaultId, newDefaultId);
     }
   }
 
   private void fireChangeListRemoved(@NotNull String listId) {
-    if (myMainWorker) {
-      for (PartialChangeTracker tracker : myPartialChangeTrackers.values()) {
-        tracker.changeListRemoved(listId);
-      }
-    }
-  }
-
-  private void fireChangeListsChanged() {
-    if (myMainWorker) {
-      myDelayedNotificator.changeListsChanged();
+    for (PartialChangeTracker tracker : myPartialChangeTrackers.values()) {
+      tracker.changeListRemoved(listId);
     }
   }
 
@@ -647,14 +727,12 @@ public class ChangeListWorker {
   @Nullable
   private ListData removeChangeMapping(@NotNull Change change) {
     ListData oldList = myChangeMappings.remove(change);
-    fireChangeListsChanged();
     myReadOnlyChangesCache = null;
     return oldList;
   }
 
   private void putChangeMapping(@NotNull Change change, @NotNull ListData list) {
     myChangeMappings.put(change, list);
-    fireChangeListsChanged();
     myReadOnlyChangesCache = null;
   }
 
@@ -713,7 +791,11 @@ public class ChangeListWorker {
   private HashSet<ListData> getAffectedLists(@NotNull PartialChangeTracker tracker) {
     HashSet<ListData> data = new HashSet<>();
     for (String listId : tracker.getAffectedChangeListsIds()) {
-      ListData partialList = getDataByIdVerify(listId);
+      ListData partialList = getDataById(listId);
+      if (myMainWorker && partialList == null) {
+        LOG.error(String.format("Unknown changelist %s", listId));
+        tracker.initChangeTracking(myDefault.id, ContainerUtil.map(myLists, list -> list.id), null);
+      }
       data.add(partialList != null ? partialList : myDefault);
     }
     return data;
@@ -784,9 +866,11 @@ public class ChangeListWorker {
 
   @Override
   public String toString() {
-    return String.format("ChangeListWorker{myMap=%s}", StringUtil.join(myLists, list -> {
-      return String.format("list: %s changes: %s", list.name, StringUtil.join(getChangesIn(list), ", "));
-    }, "\n"));
+    String lists = StringUtil.join(myLists, list -> {
+      return String.format("list: %s (%s) changes: %s", list.name, list.id, StringUtil.join(getChangesIn(list), ", "));
+    }, "\n");
+    String trackers = StringUtil.join(myPartialChangeTrackers.keySet(), ",");
+    return String.format("ChangeListWorker{ default = %s, lists = {\n%s }\ntrackers = %s\n}", myDefault.id, lists, trackers);
   }
 
 
@@ -869,10 +953,10 @@ public class ChangeListWorker {
       for (ChangeListWorker.ListData list : myWorker.myLists) {
         final List<Change> removed = new ArrayList<>();
         final List<Change> added = new ArrayList<>();
-        boolean wasChanged = doneProcessingChanges(list, removed, added);
+        doneProcessingChanges(list, removed, added);
 
         LocalChangeListImpl changeList = myWorker.toChangeList(list);
-        if (wasChanged) {
+        if (!removed.isEmpty() || !added.isEmpty()) {
           changedLists.add(changeList);
         }
         if (!removed.isEmpty()) {
@@ -903,9 +987,9 @@ public class ChangeListWorker {
       myChangesBeforeUpdateMap.clear();
     }
 
-    private boolean doneProcessingChanges(@NotNull ChangeListWorker.ListData list,
-                                          @NotNull List<Change> removedChanges,
-                                          @NotNull List<Change> addedChanges) {
+    private void doneProcessingChanges(@NotNull ChangeListWorker.ListData list,
+                                       @NotNull List<Change> removedChanges,
+                                       @NotNull List<Change> addedChanges) {
       OpenTHashSet<Change> changesBeforeUpdate = myChangesBeforeUpdateMap.get(list.id);
 
       Set<Change> listChanges = new HashSet<>();
@@ -922,10 +1006,6 @@ public class ChangeListWorker {
 
       removedChanges.addAll(changesBeforeUpdate);
       removedChanges.removeAll(listChanges);
-
-      return listChanges.size() != changesBeforeUpdate.size() ||
-             !addedChanges.isEmpty() ||
-             !removedChanges.isEmpty();
     }
 
     @Nullable
@@ -974,10 +1054,10 @@ public class ChangeListWorker {
           final Change oldChange = copies.get(i);
           final Change newChange = new Change(null, oldChange.getAfterRevision());
 
-          final VcsKey key = myWorker.myIdx.getVcsFor(oldChange);
+          final AbstractVcs vcs = myWorker.myIdx.getVcsFor(oldChange);
 
           myWorker.myIdx.changeRemoved(oldChange);
-          myWorker.myIdx.changeAdded(newChange, key);
+          myWorker.myIdx.changeAdded(newChange, vcs);
 
           ListData list = myWorker.removeChangeMapping(oldChange);
           myWorker.putChangeMapping(newChange, myWorker.notNullList(list));
@@ -992,19 +1072,19 @@ public class ChangeListWorker {
     };
 
 
-    public void addChangeToList(@NotNull String name, @NotNull Change change, VcsKey vcsKey) {
+    public void addChangeToList(@NotNull String name, @NotNull Change change, AbstractVcs vcs) {
       if (LOG.isDebugEnabled()) {
         LOG.debug(String.format("[addChangeToList] name: %s change: %s vcs: %s", name, ChangesUtil.getFilePath(change).getPath(),
-                                vcsKey == null ? null : vcsKey.getName()));
+                                vcs == null ? null : vcs.getName()));
       }
 
       ListData list = myWorker.getDataByName(name);
       if (list == null) return;
 
-      addChangeToList(list, change, vcsKey);
+      addChangeToList(list, change, vcs);
     }
 
-    public void addChangeToCorrespondingList(@NotNull Change change, VcsKey vcsKey) {
+    public void addChangeToCorrespondingList(@NotNull Change change, AbstractVcs vcs) {
       if (LOG.isDebugEnabled()) {
         final String path = ChangesUtil.getFilePath(change).getPath();
         LOG.debug("[addChangeToCorrespondingList] for change " + path + " type: " + change.getType() +
@@ -1017,7 +1097,7 @@ public class ChangeListWorker {
           if (LOG.isDebugEnabled()) {
             LOG.debug("[addChangeToCorrespondingList] matched: " + list.name);
           }
-          addChangeToList(list, change, vcsKey);
+          addChangeToList(list, change, vcs);
           return;
         }
       }
@@ -1025,16 +1105,16 @@ public class ChangeListWorker {
       if (LOG.isDebugEnabled()) {
         LOG.debug("[addChangeToCorrespondingList] added to default list");
       }
-      addChangeToList(myWorker.myDefault, change, vcsKey);
+      addChangeToList(myWorker.myDefault, change, vcs);
     }
 
-    private void addChangeToList(@NotNull ListData list, @NotNull Change change, VcsKey vcsKey) {
+    private void addChangeToList(@NotNull ListData list, @NotNull Change change, AbstractVcs vcs) {
       if (myWorker.myIdx.getChanges().contains(change)) {
         LOG.warn(String.format("Multiple equal changes added: %s", change));
         return;
       }
 
-      myWorker.myIdx.changeAdded(change, vcsKey);
+      myWorker.myIdx.changeAdded(change, vcs);
       myWorker.putChangeMapping(change, list);
     }
 
@@ -1111,11 +1191,57 @@ public class ChangeListWorker {
   }
 
 
+  private static class PartialChangeTrackerDump implements PartialChangeTracker {
+    @NotNull private final Set<String> myChangeListsIds;
+    @NotNull private String myDefaultId;
+
+    public PartialChangeTrackerDump(@NotNull PartialChangeTracker tracker,
+                                    @NotNull ListData defaultList) {
+      myChangeListsIds = new HashSet<>(tracker.getAffectedChangeListsIds());
+      myDefaultId = defaultList.id;
+    }
+
+    @NotNull
+    @Override
+    public List<String> getAffectedChangeListsIds() {
+      return new ArrayList<>(myChangeListsIds);
+    }
+
+    @Override
+    public void initChangeTracking(@NotNull String defaultId, @NotNull List<String> changelistsId, @Nullable String fileChangelistIds) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void defaultListChanged(@NotNull String oldListId, @NotNull String newListId) {
+      myDefaultId = newListId;
+    }
+
+    @Override
+    public void changeListRemoved(@NotNull String listId) {
+      myChangeListsIds.remove(listId);
+      if (myChangeListsIds.isEmpty()) myChangeListsIds.add(myDefaultId);
+    }
+
+    @Override
+    public void moveChanges(@NotNull String fromListId, @NotNull String toListId) {
+      if (myChangeListsIds.remove(fromListId)) {
+        myChangeListsIds.add(toListId);
+      }
+    }
+
+    @Override
+    public void moveChangesTo(@NotNull String toListId) {
+      myChangeListsIds.clear();
+      myChangeListsIds.add(toListId);
+    }
+  }
+
   public interface PartialChangeTracker {
     @NotNull
     List<String> getAffectedChangeListsIds();
 
-    void initChangeTracking(@NotNull String defaultId, @NotNull List<String> changelistsIds);
+    void initChangeTracking(@NotNull String defaultId, @NotNull List<String> changelistsIds, @Nullable String fileChangelistId);
 
     void defaultListChanged(@NotNull String oldListId, @NotNull String newListId);
 

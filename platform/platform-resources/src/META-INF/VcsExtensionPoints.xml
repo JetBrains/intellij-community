@@ -33,6 +33,10 @@
       <with attribute="predicateClassName" implements="com.intellij.util.NotNullFunction"/>
     </extensionPoint>
 
+    <extensionPoint name="changesGroupingPolicy" beanClass="com.intellij.openapi.extensions.KeyedFactoryEPBean">
+      <with attribute="implementationClass" implements="com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory"/>
+    </extensionPoint>
+
     <extensionPoint name="vcs.commitMessageProvider" interface="com.intellij.openapi.vcs.changes.ui.CommitMessageProvider"/>
 
     <extensionPoint name="editChangelistSupport"

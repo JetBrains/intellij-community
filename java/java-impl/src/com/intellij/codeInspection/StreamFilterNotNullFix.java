@@ -96,7 +96,7 @@ public class StreamFilterNotNullFix implements LocalQuickFix, HighPriorityAction
     PsiFunctionalExpression fn = findFunction(reference);
     if (fn == null) return null;
     PsiExpressionList args = tryCast(PsiUtil.skipParenthesizedExprUp(fn.getParent()), PsiExpressionList.class);
-    if (args == null || args.getExpressions().length != 1) return null;
+    if (args == null || args.getExpressionCount() != 1) return null;
     PsiMethodCallExpression call = tryCast(args.getParent(), PsiMethodCallExpression.class);
     if (call == null) return null;
     PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();

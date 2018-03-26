@@ -23,8 +23,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 
 /**
  * @author Sergey Karashevich
@@ -34,17 +34,16 @@ public class ExecutableHelper {
   private static final Logger LOG = Logger.getInstance(ExecutableHelper.class);
 
   private static final String GIT_EXECUTABLE_ENV = "IDEA_TEST_GIT_EXECUTABLE";
-  private static final String TEAMCITY_GIT_EXECUTABLE_ENV = "TEAMCITY_GIT_PATH";
 
   public static String findGitExecutable() {
-    return findExecutable("Git", "git", "git.exe", Arrays.asList(GIT_EXECUTABLE_ENV, TEAMCITY_GIT_EXECUTABLE_ENV));
+    return findExecutable("Git", "git", "git.exe", Collections.singletonList(GIT_EXECUTABLE_ENV));
   }
 
   @NotNull
   public static String findExecutable(@NotNull String programName,
-                                         @NotNull String unixExec,
-                                         @NotNull String winExec,
-                                         @NotNull Collection<String> envs) {
+                                      @NotNull String unixExec,
+                                      @NotNull String winExec,
+                                      @NotNull Collection<String> envs) {
     String exec = findEnvValue(programName, envs);
     if (exec != null) {
       return exec;
@@ -78,5 +77,4 @@ public class ExecutableHelper {
       LOG.info(msg);
     }
   }
-
 }

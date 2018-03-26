@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.IdeBundle;
@@ -30,10 +16,8 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.JdkListConfigurab
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.MultiLineLabelUI;
-import com.intellij.util.Consumer;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -48,7 +32,7 @@ import java.awt.event.ActionListener;
  */
 public class ProjectJdkForModuleStep extends ModuleWizardStep {
   private final JdkChooserPanel myJdkChooser;
-  @NotNull private final JPanel myPanel;
+  private final JPanel myPanel;
   private final WizardContext myContext;
   private final SdkType myType;
   private boolean myInitialized = false;
@@ -67,9 +51,9 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
     myPanel.add(label, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST,
                                               GridBagConstraints.HORIZONTAL, JBUI.insets(8, 10), 0, 0));
 
-    final JLabel jdklabel = new JLabel(IdeBundle.message("label.project.jdk"));
-    jdklabel.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
-    myPanel.add(jdklabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST,
+    final JLabel jdkLabel = new JLabel(IdeBundle.message("label.project.jdk"));
+    jdkLabel.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
+    myPanel.add(jdkLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST,
                                                  GridBagConstraints.NONE, JBUI.insets(8, 10, 0, 10), 0, 0));
 
     myPanel.add(myJdkChooser, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 2, 1.0, 1.0, GridBagConstraints.NORTHWEST,
@@ -111,7 +95,7 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
     mySetAsDefaultButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        
+
         final Sdk jdk = getJdk();
         final Runnable runnable = () -> ProjectRootManagerEx.getInstanceEx(defaultProject).setProjectSdk(jdk);
         ApplicationManager.getApplication().runWriteAction(runnable);
@@ -136,27 +120,31 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
     return project;
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myJdkChooser.getPreferredFocusedComponent();
   }
 
+  @Override
   public String getHelpId() {
     return "project.new.page2";
   }
 
+  @Override
   public JComponent getComponent() {
     return myPanel;
   }
 
+  @Override
   public void updateDataModel() {
     myContext.setProjectJdk(getJdk());
   }
 
-
+  @Override
   public void updateStep() {
     if (!myInitialized) { //lazy default project initialization
       myJdkChooser.fillList(myType, null);
-      final Sdk defaultJdk = getDefaultJdk(myContext);
+      Sdk defaultJdk = getDefaultJdk(myContext);
       if (defaultJdk != null) {
         myJdkChooser.selectJdk(defaultJdk);
       }
@@ -173,6 +161,7 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
     return myJdkChooser.getAllJdks();
   }
 
+  @Override
   public Icon getIcon() {
     return myContext.getStepIcon();
   }
@@ -180,14 +169,14 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
   @Nullable
   private static Sdk getDefaultJdk(WizardContext context) {
     Project defaultProject = ProjectManagerEx.getInstanceEx().getDefaultProject();
-    final Sdk sdk = ProjectRootManagerEx.getInstanceEx(defaultProject).getProjectSdk();
+    Sdk sdk = ProjectRootManagerEx.getInstanceEx(defaultProject).getProjectSdk();
     if (sdk == null) {
-      return AddModuleWizard.getMostRecentSuitableSdk(context);
+      sdk = AddModuleWizard.getMostRecentSuitableSdk(context);
     }
     return sdk;
   }
 
-
+  @Override
   public boolean validate() {
     final Sdk jdk = myJdkChooser.getChosenJdk();
     if (jdk == null) {
@@ -199,6 +188,4 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
     }
     return true;
   }
-
-
 }

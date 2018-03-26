@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.components;
 
+import com.intellij.ui.TextAccessor;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.StatusText;
@@ -26,7 +27,7 @@ import javax.swing.plaf.TextUI;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
-public class JBTextField extends JTextField implements ComponentWithEmptyText {
+public class JBTextField extends JTextField implements ComponentWithEmptyText, TextAccessor {
   private TextComponentEmptyText myEmptyText;
 
   public JBTextField() {
@@ -50,7 +51,16 @@ public class JBTextField extends JTextField implements ComponentWithEmptyText {
 
   private void init() {
     UIUtil.addUndoRedoActions(this);
-    myEmptyText = new TextComponentEmptyText(this);
+    myEmptyText = new TextComponentEmptyText(this) {
+      @Override
+      protected Rectangle getTextComponentBound() {
+        return getEmptyTextComponentBounds(super.getTextComponentBound());
+      }
+    };
+  }
+
+  protected Rectangle getEmptyTextComponentBounds(Rectangle bounds) {
+    return bounds;
   }
 
   public void setTextToTriggerEmptyTextStatus(String t) {

@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ActivityTracker;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -21,7 +22,6 @@ import com.intellij.util.CatchingConsumer;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashSet;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -50,7 +50,7 @@ public class InstalledPackagesPanel extends JPanel {
   private final AnActionButton myUninstallButton;
 
   protected final JBTable myPackagesTable;
-  private DefaultTableModel myPackagesTableModel;
+  private final DefaultTableModel myPackagesTableModel;
   // can be accessed from any thread
   protected volatile PackageManagementService myPackageManagementService;
   protected final Project myProject;
@@ -98,12 +98,14 @@ public class InstalledPackagesPanel extends JPanel {
         }
       }
     };
+    myInstallButton.setShortcut(CommonShortcuts.getNew());
     myUninstallButton = new AnActionButton("Uninstall", IconUtil.getRemoveIcon()) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         uninstallAction();
       }
     };
+    myUninstallButton.setShortcut(CommonShortcuts.getDelete());
     ToolbarDecorator decorator =
       ToolbarDecorator.createDecorator(myPackagesTable).disableUpDownActions().disableAddAction().disableRemoveAction()
         .addExtraAction(myInstallButton)

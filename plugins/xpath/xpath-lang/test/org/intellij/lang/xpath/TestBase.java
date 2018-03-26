@@ -43,7 +43,7 @@ public abstract class TestBase extends UsefulTestCase {
   }
 
   public static String getTestDataPath(String subPath) {
-    // path logic taken from RegExpSupport tests
+    // path logic taken from intellij.regexp tests
     final String def = PluginPathManager.getPluginHomePath("xpath") + "/xpath-lang/testData";
     return System.getProperty("idea.xpath.testdata-path", def) + "/" + subPath;
   }

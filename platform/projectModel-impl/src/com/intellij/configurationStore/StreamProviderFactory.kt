@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.*
@@ -21,5 +21,5 @@ interface StreamProviderFactory {
    * `storages` are preprocessed by component store - not raw from state spec.
    * @return null if not applicable
    */
-  fun customizeStorageSpecs(component: PersistentStateComponent<*>, componentManager: ComponentManager, stateSpec: State, storages: List<Storage>, operation: StateStorageOperation): List<Storage>? = null
+  fun customizeStorageSpecs(component: PersistentStateComponent<*>, storageManager: StateStorageManager, stateSpec: State, storages: List<Storage>, operation: StateStorageOperation): List<Storage>? = null
 }

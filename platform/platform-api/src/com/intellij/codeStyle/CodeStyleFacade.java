@@ -74,8 +74,14 @@ public abstract class CodeStyleFacade {
     return getLineIndent(editor.getDocument(), offset);
   }
 
+  /**
+   * @deprecated Use CodeStyle.getIndentSize(psiFile) instead.
+   */
   public abstract int getIndentSize(FileType fileType);
 
+  /**
+   * @deprecated
+   */
   public abstract boolean isSmartTabs(final FileType fileType);
 
   public abstract int getRightMargin(Language language);

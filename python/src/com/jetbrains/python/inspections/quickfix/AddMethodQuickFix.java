@@ -52,7 +52,7 @@ public class AddMethodQuickFix implements LocalQuickFix {
 
   private final String myClassName;
   private final boolean myReplaceUsage;
-  private String myIdentifier;
+  private final String myIdentifier;
 
   public AddMethodQuickFix(String identifier, String className,
                            boolean replaceUsage) {

@@ -265,7 +265,7 @@ public class JavaFxPsiUtil {
     for (PsiMethod getter : getters) {
       if (getter.hasModifierProperty(PsiModifier.PUBLIC) &&
           !getter.hasModifierProperty(PsiModifier.STATIC) &&
-          getter.getParameterList().getParametersCount() == 0 &&
+          getter.getParameterList().isEmpty() &&
           InheritanceUtil.isInheritor(getter.getReturnType(), JavaFxCommonNames.JAVAFX_BEANS_VALUE_OBSERVABLE_VALUE)) {
         return getter;
       }
@@ -519,7 +519,7 @@ public class JavaFxPsiUtil {
                                                                                  GlobalSearchScope.allScope(project));
       if (builderClass != null) {
         final PsiMethod[] buildMethods = builderClass.findMethodsByName("build", false);
-        if (buildMethods.length == 1 && buildMethods[0].getParameterList().getParametersCount() == 0) {
+        if (buildMethods.length == 1 && buildMethods[0].getParameterList().isEmpty()) {
           if (ClassInheritorsSearch.search(builderClass).forEach(aClass -> {
             PsiType returnType = null;
             final PsiMethod method = MethodSignatureUtil.findMethodBySuperMethod(aClass, buildMethods[0], false);
@@ -707,7 +707,7 @@ public class JavaFxPsiUtil {
     }
     if (declaration instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod)declaration;
-      if (method.getParameterList().getParametersCount() != 0) {
+      if (!method.getParameterList().isEmpty()) {
         return getSetterArgumentType(method);
       }
       final String propertyName = PropertyUtilBase.getPropertyName(method);
@@ -752,7 +752,7 @@ public class JavaFxPsiUtil {
     }
     if (declaration instanceof PsiMethod) {
       PsiMethod psiMethod = (PsiMethod)declaration;
-      if (psiMethod.getParameterList().getParametersCount() == 0 &&
+      if (psiMethod.getParameterList().isEmpty() &&
           !psiMethod.hasModifierProperty(PsiModifier.STATIC)) {
         return getGetterReturnType(psiMethod);
       }
@@ -1110,7 +1110,7 @@ public class JavaFxPsiUtil {
     if (psiClass == null || factoryMethodName == null) return null;
     final PsiMethod[] methods = psiClass.findMethodsByName(factoryMethodName, true);
     for (PsiMethod method : methods) {
-      if (method.getParameterList().getParametersCount() == 0 &&
+      if (method.getParameterList().isEmpty() &&
           method.hasModifierProperty(PsiModifier.STATIC)) {
         return PsiUtil.resolveClassInClassTypeOnly(method.getReturnType());
       }

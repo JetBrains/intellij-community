@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.fixes;
 
+import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
@@ -26,7 +27,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.BlockUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.psiutils.HighlightUtil;
@@ -79,11 +79,15 @@ public class ExtractParameterAsLocalVariableFix extends InspectionGadgetsFix {
     assert parameterName != null;
     final JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(project);
     final String variableName = javaCodeStyleManager.suggestUniqueVariableName(parameterName, body, true);
-    CommentTracker tracker = new CommentTracker();
+    final CommentTracker tracker = new CommentTracker();
     final String initializerText = (rhs == null) ? parameterName : tracker.text(rhs);
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+    final PsiType type = parameter.getType();
+    if (type instanceof PsiLambdaParameterType) {
+      return;
+    }
     PsiDeclarationStatement newStatement = (PsiDeclarationStatement)
-      factory.createStatementFromText(parameter.getType().getCanonicalText() + ' ' + variableName + '=' + initializerText + ';', body);
+      factory.createStatementFromText(type.getCanonicalText() + ' ' + variableName + '=' + initializerText + ';', body);
     final CollectFilteredElements<PsiReferenceExpression> collector = new CollectFilteredElements<>(
       e -> e instanceof PsiReferenceExpression && ((PsiReferenceExpression)e).resolve() == parameter);
     final PsiCodeBlock codeBlock = (PsiCodeBlock)body;

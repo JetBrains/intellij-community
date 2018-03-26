@@ -15,6 +15,7 @@ import com.intellij.ide.errorTreeView.impl.ErrorTreeViewConfiguration;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.compiler.CompilerMessage;
@@ -134,11 +135,6 @@ public class CompilerTask extends Task.Backgroundable {
       }
     }
     onClose.run();
-  }
-
-  @Override
-  public String getProcessId() {
-    return "compilation";
   }
 
   @Override
@@ -335,7 +331,7 @@ public class CompilerTask extends Task.Backgroundable {
     }
     else if (CompilerMessageCategory.ERROR.equals(messageCategory)) {
       myErrorCount += 1;
-      informWolf(message);
+      ReadAction.run(() -> informWolf(message));
     }
 
     if (ApplicationManager.getApplication().isDispatchThread()) {

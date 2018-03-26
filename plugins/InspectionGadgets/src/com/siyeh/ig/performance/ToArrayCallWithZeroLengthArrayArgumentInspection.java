@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.performance;
 
-import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.VerticalFlowLayout;
@@ -34,8 +33,6 @@ import org.jetbrains.annotations.*;
 import javax.swing.*;
 
 public class ToArrayCallWithZeroLengthArrayArgumentInspection extends BaseInspection {
-  private static final CallMatcher COLLECTION_SIZE =
-    CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_COLLECTION, "size").parameterCount(0);
   private static final CallMatcher COLLECTION_TO_ARRAY =
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_COLLECTION, "toArray").parameterCount(1);
 
@@ -63,6 +60,7 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection extends BaseInspec
   }
 
   @NotNull
+  @SuppressWarnings("PublicField")
   public PreferEmptyArray myMode = DEFAULT_MODE;
 
   @Nullable
@@ -143,13 +141,7 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection extends BaseInspec
     if (newExpression == null) return false;
     PsiExpression[] dimensions = newExpression.getArrayDimensions();
     if (dimensions.length != 1) return false;
-    PsiMethodCallExpression maybeSizeCall =
-      ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(dimensions[0]), PsiMethodCallExpression.class);
-    if (COLLECTION_SIZE.test(maybeSizeCall)) {
-      PsiExpression sizeQualifier = maybeSizeCall.getMethodExpression().getQualifierExpression();
-      return sizeQualifier != null && PsiEquivalenceUtil.areElementsEquivalent(sizeQualifier, qualifier);
-    }
-    return false;
+    return CollectionUtils.isCollectionOrMapSize(dimensions[0], qualifier);
   }
 
   private static class ToArrayCallWithZeroLengthArrayArgumentFix extends InspectionGadgetsFix {
@@ -197,7 +189,7 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection extends BaseInspec
       final String typeText = componentType.getCanonicalText();
 
 
-      if (myEmptyPreferred || ExpressionUtils.isSimpleExpression(qualifier)) {
+      if (myEmptyPreferred || ExpressionUtils.isSafelyRecomputableExpression(qualifier)) {
         CommentTracker ct = new CommentTracker();
         String sizeClause = myEmptyPreferred ? "0" : collectionText + ".size()";
         @NonNls final String replacementText = "new " + typeText + '[' + sizeClause + "]";

@@ -38,7 +38,7 @@ public class PyParameterCompletionContributor extends CompletionContributor {
   }
 
   private static class ParameterCompletionProvider extends CompletionProvider<CompletionParameters> {
-    private String myName;
+    private final String myName;
 
     private ParameterCompletionProvider(String name) {
       myName = name;

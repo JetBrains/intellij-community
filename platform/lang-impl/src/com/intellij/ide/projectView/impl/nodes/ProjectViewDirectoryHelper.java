@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.projectView.impl.nodes;
 
@@ -326,6 +324,7 @@ public class ProjectViewDirectoryHelper {
   }
 
   private boolean shouldBeShown(VirtualFile dir, ViewSettings settings) {
+    if (!dir.isValid()) return false;
     DirectoryInfo directoryInfo = myIndex.getInfoForFile(dir);
     return directoryInfo.isInProject(dir) || shouldShowExcludedFiles(settings) && directoryInfo.isExcluded(dir);
   }

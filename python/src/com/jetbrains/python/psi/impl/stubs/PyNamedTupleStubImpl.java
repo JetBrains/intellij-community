@@ -22,7 +22,6 @@ import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.io.StringRef;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
@@ -78,7 +77,7 @@ public class PyNamedTupleStubImpl implements PyNamedTupleStub {
     final Pair<QualifiedName, NamedTupleModule> calleeNameAndModule = getCalleeNameAndNTModule(calleeReference);
 
     if (calleeNameAndModule != null) {
-      final String name = resolveTupleName(expression);
+      final String name = PyResolveUtil.resolveFirstStrArgument(expression);
 
       if (name == null) {
         return null;
@@ -98,8 +97,8 @@ public class PyNamedTupleStubImpl implements PyNamedTupleStub {
 
   @Nullable
   public static PyNamedTupleStub deserialize(@NotNull StubInputStream stream) throws IOException {
-    final StringRef calleeName = stream.readName();
-    final StringRef name = stream.readName();
+    String calleeName = stream.readNameString();
+    String name = stream.readNameString();
     final LinkedHashMap<String, Optional<String>> fields = deserializeFields(stream, stream.readVarInt());
 
     if (calleeName == null || name == null) {
@@ -107,8 +106,8 @@ public class PyNamedTupleStubImpl implements PyNamedTupleStub {
     }
 
     return new PyNamedTupleStubImpl(
-      QualifiedName.fromDottedString(calleeName.getString()),
-      name.getString(),
+      QualifiedName.fromDottedString(calleeName),
+      name,
       fields
     );
   }
@@ -161,33 +160,6 @@ public class PyNamedTupleStubImpl implements PyNamedTupleStub {
   }
 
   @Nullable
-  private static String resolveTupleName(@NotNull PyCallExpression callExpression) {
-    // SUPPORTED CASES:
-
-    // name = "Point"
-    // Point = namedtuple(name, ...)
-
-    // Point = namedtuple("Point", ...)
-
-    // Point = namedtuple(("Point"), ...)
-
-    // name = "Point"
-    // Point = NamedTuple(name, ...)
-
-    // Point = NamedTuple("Point", ...)
-
-    // Point = NamedTuple(("Point"), ...)
-
-    final PyExpression nameExpression = PyPsiUtils.flattenParens(callExpression.getArgument(0, PyExpression.class));
-
-    if (nameExpression instanceof PyReferenceExpression) {
-      return PyPsiUtils.strValue(fullResolveLocally((PyReferenceExpression)nameExpression));
-    }
-
-    return PyPsiUtils.strValue(nameExpression);
-  }
-
-  @Nullable
   private static LinkedHashMap<String, Optional<String>> resolveTupleFields(@NotNull PyCallExpression callExpression, @NotNull NamedTupleModule module) {
     switch (module) {
       case TYPING:
@@ -204,8 +176,8 @@ public class PyNamedTupleStubImpl implements PyNamedTupleStub {
     final LinkedHashMap<String, Optional<String>> fields = new LinkedHashMap<>(fieldsSize);
 
     for (int i = 0; i < fieldsSize; i++) {
-      final String name = StringRef.toString(stream.readName());
-      final String type = StringRef.toString(stream.readName());
+      final String name = stream.readNameString();
+      final String type = stream.readNameString();
 
       if (name != null) {
         fields.put(name, Optional.ofNullable(type));
@@ -316,23 +288,6 @@ public class PyNamedTupleStubImpl implements PyNamedTupleStub {
   }
 
   @Nullable
-  private static PyExpression fullResolveLocally(@NotNull PyReferenceExpression referenceExpression) {
-    for (PsiElement element : PyResolveUtil.resolveLocally(referenceExpression)) {
-      if (element instanceof PyTargetExpression) {
-        final PyExpression assignedValue = ((PyTargetExpression)element).findAssignedValue();
-
-        if (assignedValue instanceof PyReferenceExpression) {
-          return fullResolveLocally((PyReferenceExpression)assignedValue);
-        }
-
-        return assignedValue;
-      }
-    }
-
-    return null;
-  }
-
-  @Nullable
   private static LinkedHashMap<String, Optional<String>> resolveCollectionsNTFields(@NotNull PyCallExpression callExpression) {
     // SUPPORTED CASES:
 
@@ -350,7 +305,7 @@ public class PyNamedTupleStubImpl implements PyNamedTupleStub {
     final PyExpression fields = PyPsiUtils.flattenParens(callExpression.getArgument(1, PyExpression.class));
 
     final PyExpression resolvedFields = fields instanceof PyReferenceExpression
-                                        ? fullResolveLocally((PyReferenceExpression)fields)
+                                        ? PyResolveUtil.fullResolveLocally((PyReferenceExpression)fields)
                                         : fields;
 
     final Collector<String, ?, LinkedHashMap<String, Optional<String>>> toFieldsOfUnknownType =
@@ -385,7 +340,7 @@ public class PyNamedTupleStubImpl implements PyNamedTupleStub {
       return getTypingNTFieldsFromKwArguments(Arrays.asList(arguments).subList(1, arguments.length));
     } else {
       final PyExpression resolvedFields = secondArgument instanceof PyReferenceExpression
-                                          ? fullResolveLocally((PyReferenceExpression)secondArgument)
+                                          ? PyResolveUtil.fullResolveLocally((PyReferenceExpression)secondArgument)
                                           : secondArgument;
       if (!(resolvedFields instanceof PySequenceExpression)) return null;
 

@@ -108,13 +108,13 @@ public class MergeUtil {
     }
 
     @Override
-    public boolean isFocused() {
-      return myMergeContext.isFocused();
+    public boolean isFocusedInWindow() {
+      return myMergeContext.isFocusedInWindow();
     }
 
     @Override
-    public void requestFocus() {
-      myMergeContext.requestFocus();
+    public void requestFocusInWindow() {
+      myMergeContext.requestFocusInWindow();
     }
 
     @Nullable

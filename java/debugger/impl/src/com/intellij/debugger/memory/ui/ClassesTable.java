@@ -212,6 +212,11 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
   }
 
+  void exitClickableMode() {
+    releaseMouseListener();
+    getEmptyText().setText(DEFAULT_EMPTY_TEXT);
+  }
+
   private void releaseMouseListener() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (isInClickableMode()) {

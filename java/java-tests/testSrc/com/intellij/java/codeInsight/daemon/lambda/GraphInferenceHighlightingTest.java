@@ -181,6 +181,8 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
   //public void _testAssignabilityOfStandaloneExpressionsDuringApplicabilityCheck() { doTest(); }
   public void testRecursiveTypeWithCapture() { doTest(); }
   public void testFreshVariablesDuringApplicabilityCheck() { doTest(); }
+  public void testPostponeConditionalExpressionErrorToMethodLevel() { doTest(); }
+  public void testNestedCallsWithFreshVariables() { doTest(); }
 
   public void testPertinentToApplicabilityCheckForBlockLambda() { doTest(); }
   public void testCheckGlbConflictsAfterIntersectionTypeCreated() { doTest(); }
@@ -188,6 +190,7 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
   public void testIntersectionWithSameInterfaceButDifferentTypeArgument() { doTest(); }
   public void testVarargsMethodPreferred() { doTest(); }
   public void testSameNamedFreshVariables() { doTest(); }
+  public void testEnsureOrderOfFreshVariablesWhenCaptureNonProperTypes() { doTest(); }
 
   public void testApplicabilityCheckFailsExpressionTypeCheckPasses() {
     doTest();

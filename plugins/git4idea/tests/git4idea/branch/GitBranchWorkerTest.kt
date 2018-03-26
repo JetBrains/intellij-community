@@ -664,7 +664,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
       repository.git("branch todelete")
     }
     git.onBranchDelete {
-      if (second == it) GitCommandResult(false, 1, false, listOf("Couldn't remove branch"), listOf())
+      if (second == it) GitCommandResult(false, 1, listOf("Couldn't remove branch"), listOf())
       else null
     }
   }

@@ -9,7 +9,6 @@ import com.intellij.openapi.util.Conditions;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
@@ -260,8 +259,7 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
                                           checkQualifier(((PsiMethodCallExpression)expression).getMethodExpression().getQualifier()), true);
     }
 
-    JavaCodeStyleSettings javaSettings =
-      CodeStyleSettingsManager.getSettings(expression.getProject()).getCustomSettings(JavaCodeStyleSettings.class);
+    JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(expression.getContainingFile());
     if (expression instanceof PsiInstanceOfExpression) {
       return new MethodReferenceCandidate(expression, true,
                                           javaSettings.REPLACE_INSTANCEOF);
@@ -554,7 +552,7 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
   }
 
   private static class ReplaceWithMethodRefFix implements LocalQuickFix {
-    private String mySuffix;
+    private final String mySuffix;
 
     public ReplaceWithMethodRefFix(String suffix) {
       mySuffix = suffix;

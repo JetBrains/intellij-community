@@ -91,7 +91,7 @@ public class ByteCodeViewerManager extends DockablePopupManager<ByteCodeViewerCo
 
   @Override
   protected ByteCodeViewerComponent createComponent() {
-    return new ByteCodeViewerComponent(myProject, createActions());
+    return new ByteCodeViewerComponent(myProject);
   }
 
   @Nullable
