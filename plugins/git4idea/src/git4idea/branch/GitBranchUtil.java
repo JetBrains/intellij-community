@@ -49,9 +49,6 @@ import java.util.HashMap;
 
 import static com.intellij.util.ObjectUtils.assertNotNull;
 
-/**
- * @author Kirill Likhodedov
- */
 public class GitBranchUtil {
 
   private static final Logger LOG = Logger.getInstance(GitBranchUtil.class);
