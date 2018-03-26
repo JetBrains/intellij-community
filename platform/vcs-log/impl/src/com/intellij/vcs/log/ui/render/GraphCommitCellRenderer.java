@@ -212,7 +212,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
 
       append(""); // appendTextPadding wont work without this
       if (myReferencePainter.isLeftAligned()) {
-        myReferencePainter.customizePainter(this, refs, getBackground(), baseForeground, isSelected,
+        myReferencePainter.customizePainter(myGraphTable, refs, getBackground(), baseForeground, isSelected,
                                             getAvailableWidth(column, myGraphImage.getWidth()));
 
         appendTextPadding(myGraphImage.getWidth() + myReferencePainter.getSize().width + LabelPainter.RIGHT_PADDING);
@@ -221,7 +221,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
       else {
         appendTextPadding(myGraphImage.getWidth());
         appendText(cell, style, isSelected);
-        myReferencePainter.customizePainter(this, refs, getBackground(), baseForeground, isSelected,
+        myReferencePainter.customizePainter(myGraphTable, refs, getBackground(), baseForeground, isSelected,
                                             getAvailableWidth(column, myGraphImage.getWidth()));
       }
     }
@@ -245,7 +245,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     }
 
     private int calculateHeight() {
-      return Math.max(myReferencePainter.getSize().height, getFontMetrics(myFont).getHeight() + VERTICAL_PADDING);
+      return Math.max(myReferencePainter.getSize().height, myGraphTable.getFontMetrics(myFont).getHeight() + VERTICAL_PADDING);
     }
 
     public int getPreferredHeight() {
