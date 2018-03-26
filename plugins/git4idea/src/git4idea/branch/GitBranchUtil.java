@@ -135,14 +135,6 @@ public class GitBranchUtil {
   }
 
   /**
-   * Get tracked remote for the branch
-   */
-  @Nullable
-  public static String getTrackedRemoteName(Project project, VirtualFile root, String branchName) throws VcsException {
-    return GitConfigUtil.getValue(project, root, trackedRemoteKey(branchName));
-  }
-
-  /**
    * Get tracked branch of the given branch
    */
   @Nullable
