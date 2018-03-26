@@ -8,21 +8,31 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionAction {
   private final PsiElement myErrorElement;
@@ -31,25 +41,48 @@ public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionActio
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    PsiTryStatement tryStatement = PsiTreeUtil.getParentOfType(element, PsiTryStatement.class);
-    if (tryStatement == null) return;
-    PsiCatchSection[] catchSections = tryStatement.getCatchSections();
-    if (catchSections.length == 0) return;
-    List<PsiClassType> unhandledExceptions = new ArrayList<>(ExceptionUtil.getOwnUnhandledExceptions(myErrorElement));
-    if (unhandledExceptions.size() != 1) return;
-    List<String> catchTexts = getAvailableCatchSections(catchSections)
-      .map(s -> s.getCatchType())
-      .filter(Objects::nonNull)
-      .map(type -> type.getPresentableText())
-      .collect(Collectors.toList());
+    Context context = Context.from(myErrorElement);
+    if (context == null) return;
+
+    List<PsiCatchSection> catchSections = context.myCatches;
+    List<PsiClassType> unhandledExceptions = context.myExceptions;
+    List<String> catchTexts = catchSections.stream()
+                                           .map(s -> s.getCatchType()).filter(Objects::nonNull)
+                                           .map(type -> type.getPresentableText())
+                                           .collect(Collectors.toList());
+
+    setText(context.getMessage());
 
     Application application = ApplicationManager.getApplication();
-    if (catchSections.length == 1 || application.isUnitTestMode()) {
-      PsiCatchSection selectedSection = catchSections[0];
-      addTypeToCatch(unhandledExceptions.get(0), selectedSection);
+
+    if (catchSections.size() == 1 || application.isUnitTestMode()) {
+      PsiCatchSection selectedSection = catchSections.get(0);
+      addTypeToCatch(unhandledExceptions, selectedSection);
     }
     else {
       JBList<String> list = new JBList<>(catchTexts);
+      AtomicReference<RangeHighlighter> rangeHighlighter = new AtomicReference<>(); // to change in lambda
+      MarkupModel markupModel = editor.getMarkupModel();
+
+      list.addListSelectionListener(e -> {
+        dropHighlight(rangeHighlighter);
+        int selectedIndex = list.getSelectedIndex();
+        if (selectedIndex < 0) return;
+        PsiParameter elementToHighlight = catchSections.get(selectedIndex).getParameter();
+        assert elementToHighlight != null;
+        TextRange range = elementToHighlight.getTextRange();
+
+        final LogicalPosition logicalPosition = editor.offsetToLogicalPosition(range.getStartOffset());
+        editor.getScrollingModel().scrollTo(logicalPosition, ScrollType.MAKE_VISIBLE);
+
+        TextAttributes attributes =
+          EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
+        RangeHighlighter highlighter = markupModel.addRangeHighlighter(range.getStartOffset(), range.getEndOffset(),
+                                                                       HighlighterLayer.SELECTION - 1, attributes,
+                                                                       HighlighterTargetArea.EXACT_RANGE);
+        rangeHighlighter.set(highlighter);
+      });
+
       JBPopupFactory.getInstance().createListPopupBuilder(list)
                     .setTitle("Select catch block")
                     .setMovable(false)
@@ -57,59 +90,60 @@ public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionActio
                     .setRequestFocus(true)
                     .setItemChoosenCallback(() -> {
                       int selectedIndex = list.getSelectedIndex();
-                      PsiCatchSection selectedSection = catchSections[selectedIndex];
-                      addTypeToCatch(unhandledExceptions.get(0), selectedSection);
+                      PsiCatchSection selectedSection = catchSections.get(selectedIndex);
+                      addTypeToCatch(unhandledExceptions, selectedSection);
+                    })
+                    .addListener(new JBPopupAdapter() {
+                      @Override
+                      public void onClosed(LightweightWindowEvent event) {
+                        dropHighlight(rangeHighlighter);
+                      }
                     })
                     .createPopup()
                     .showInBestPositionFor(editor);
     }
   }
 
-  @NotNull
-  private static Stream<PsiCatchSection> getAvailableCatchSections(PsiCatchSection[] catchSections) {
-    return Arrays.stream(catchSections)
-                 .filter(catchSection -> {
-                   PsiParameter parameter = catchSection.getParameter();
-                   if (parameter == null) return false;
-                   return parameter.getTypeElement() != null;
-                 });
+  private static void dropHighlight(AtomicReference<RangeHighlighter> rangeHighlighter) {
+    RangeHighlighter old = rangeHighlighter.get();
+    if (old != null) {
+      old.dispose();
+    }
   }
 
-  private static void addTypeToCatch(@NotNull PsiClassType exceptionToAdd, @NotNull PsiCatchSection catchSection) {
+
+  private static void addTypeToCatch(@NotNull List<PsiClassType> exceptionsToAdd, @NotNull PsiCatchSection catchSection) {
     WriteCommandAction.runWriteCommandAction(catchSection.getProject(), () -> {
-      if (!catchSection.isValid() || !exceptionToAdd.isValid()) return;
+      if (!catchSection.isValid() || !exceptionsToAdd.stream().allMatch(type -> type.isValid())) return;
       PsiParameter parameter = catchSection.getParameter();
       if (parameter == null) return;
       PsiTypeElement typeElement = parameter.getTypeElement();
       if (typeElement == null) return;
       PsiType parameterType = parameter.getType();
-      boolean needReplace = exceptionToAdd.isAssignableFrom(parameterType);
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(catchSection.getProject());
-      String typeText = needReplace ? exceptionToAdd.getCanonicalText()
-                                    : parameterType.getCanonicalText() + " | " + exceptionToAdd.getCanonicalText();
-      typeElement.replace(factory.createTypeElementFromText(typeText, parameter));
+      String flattenText = getTypeText(exceptionsToAdd, parameter, parameterType, factory);
+      typeElement.replace(factory.createTypeElementFromText(flattenText, parameter));
     });
+  }
+
+  private static String getTypeText(@NotNull List<PsiClassType> exceptionsToAdd,
+                                    PsiParameter parameter,
+                                    PsiType parameterType,
+                                    PsiElementFactory factory) {
+    String typeText = parameterType.getCanonicalText() + " | " + exceptionsToAdd.stream()
+                                                                                .map(type -> type.getCanonicalText())
+                                                                                .collect(Collectors.joining(" | "));
+    PsiTypeElement element = factory.createTypeElementFromText(typeText, parameter);
+    List<PsiType> flatten = PsiDisjunctionType.flattenAndRemoveDuplicates(((PsiDisjunctionType)element.getType()).getDisjunctions());
+    return flatten.stream()
+                  .map(type -> type.getCanonicalText())
+                  .collect(Collectors.joining(" | "));
   }
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    PsiTryStatement tryStatement = PsiTreeUtil.getParentOfType(element, PsiTryStatement.class);
-    if (tryStatement == null) return false;
-    PsiCatchSection[] catchSections = tryStatement.getCatchSections();
-    if (catchSections.length == 0) return false;
-    if (notFinishedCatches(catchSections)) return false;
-    PsiElement parent = PsiTreeUtil.getParentOfType(element, PsiCallExpression.class, PsiThrowStatement.class);
-    if (parent == null) return false;
-    List<PsiClassType> unhandledExceptions = new ArrayList<>(ExceptionUtil.getOwnUnhandledExceptions(myErrorElement));
-    return unhandledExceptions.size() == 1;
+    return Context.from(myErrorElement) != null;
   }
-
-  private static boolean notFinishedCatches(PsiCatchSection[] catchSections) {
-    return getAvailableCatchSections(catchSections)
-      .map(catchSection -> catchSection.getParameter())
-      .noneMatch(parameter -> parameter != null && parameter.getTypeElement() != null);
-  }
-
 
   @Nls
   @NotNull
@@ -122,5 +156,68 @@ public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionActio
   @Override
   public String getText() {
     return getFamilyName();
+  }
+
+  private static class Context {
+    private final List<PsiCatchSection> myCatches;
+    private final List<PsiClassType> myExceptions;
+
+
+    private Context(List<PsiCatchSection> catches, List<PsiClassType> exceptions) {
+      myCatches = catches;
+      myExceptions = exceptions;
+    }
+
+    @Nullable
+    static Context from(@NotNull PsiElement element) {
+      if (!PsiUtil.isLanguageLevel7OrHigher(element)) {
+        return null;
+      }
+      List<PsiClassType> unhandledExceptions = new ArrayList<>(ExceptionUtil.getOwnUnhandledExceptions(element));
+      if (unhandledExceptions.isEmpty()) return null;
+      List<PsiTryStatement> tryStatements =
+        PsiTreeUtil.collectParentsOfType(element, PsiTryStatement.class, PsiLambdaExpression.class, PsiClass.class);
+      List<PsiCatchSection> sections =
+        tryStatements.stream()
+                     .flatMap(stmt -> Arrays.stream(stmt.getCatchSections()))
+                     .filter(catchSection -> {
+                       PsiParameter parameter = catchSection.getParameter();
+                       if (parameter == null) return false;
+                       return parameter.getTypeElement() != null;
+                     })
+                     .collect(Collectors.toList());
+      if (sections.isEmpty()) return null;
+      return new Context(sections, unhandledExceptions);
+    }
+
+    private String getMessage() {
+      if (myCatches.size() == 1 && myExceptions.size() == 1) {
+        PsiClassType exceptionType = myExceptions.get(0);
+        PsiCatchSection catchSection = myCatches.get(0);
+        PsiParameter parameter = catchSection.getParameter();
+        assert parameter != null;
+        PsiType catchType = parameter.getType();
+        if (replacementNeeded(exceptionType, catchType)) {
+          return QuickFixBundle.message("add.exception.to.existing.catch.replacement", catchType.getPresentableText(), exceptionType.getPresentableText());
+        }
+        else {
+          return QuickFixBundle.message("add.exception.to.existing.catch.no.replacement", catchType.getPresentableText(), exceptionType.getPresentableText());
+        }
+      }
+      return QuickFixBundle.message("add.exception.to.existing.catch.generic");
+    }
+  }
+
+  private static boolean replacementNeeded(@NotNull PsiClassType newException, @NotNull PsiType catchType) {
+    if (catchType instanceof PsiDisjunctionType) {
+      PsiDisjunctionType disjunction = (PsiDisjunctionType)catchType;
+      for (PsiType type : disjunction.getDisjunctions()) {
+        if (type.isAssignableFrom(newException)) {
+          return true;
+        }
+      }
+      return false;
+    }
+    return catchType.isAssignableFrom(newException);
   }
 }
