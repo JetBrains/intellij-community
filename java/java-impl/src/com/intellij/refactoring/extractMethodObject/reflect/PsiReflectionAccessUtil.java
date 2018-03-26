@@ -17,6 +17,10 @@ class PsiReflectionAccessUtil {
     return classMember.hasModifierProperty(PsiModifier.PUBLIC) && isAccessible(classMember.getContainingClass());
   }
 
+  /**
+   * Since we use new classloader for each "Evaluate expression" with compilation, the generated code has no
+   * access to all members excluding public
+   */
   @Contract("null -> false")
   public static boolean isAccessible(@Nullable PsiClass psiClass) {
     if (psiClass == null) return false;
