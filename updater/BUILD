@@ -22,6 +22,7 @@ iml_module(
     test_srcs = ["testSrc"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],
+    runtime_deps = ["//tools/idea/.idea/libraries:fastutil-7.2.1"],
     # do not sort: must match IML order
     deps = [
         "//tools/idea/.idea/libraries:Log4J",
@@ -29,6 +30,6 @@ iml_module(
         "//tools/idea/platform/testFramework[module, test]",
         "//tools/idea/.idea/libraries:JUnit4[test]",
         "//tools/idea/.idea/libraries:assertJ[test]",
-        "//tools/idea/lib:javaxdelta-2.0.1",
+        "//tools/idea/.idea/libraries:javaxdelta-2.0.1",
     ],
 )
