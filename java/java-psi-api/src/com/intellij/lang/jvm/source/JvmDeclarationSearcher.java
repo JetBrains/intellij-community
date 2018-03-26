@@ -33,6 +33,7 @@ public interface JvmDeclarationSearcher {
   @Nullable
   default PsiElement findDeclaringElement(@NotNull PsiElement identifierElement) {
     final PsiElement parent = identifierElement.getParent();
+    if (parent == null) return null;
     return isDeclaringElement(identifierElement, parent) ? parent : null;
   }
 
