@@ -28,14 +28,14 @@ internal class MigLayoutBuilder(val horizontalGap: Int, val verticalGap: Int, va
     return rootRow.createChildRow(label = label, buttonGroup = buttonGroup, separated = separated)
   }
 
-  override fun noteRow(text: String) {
+  override fun noteRow(text: String, linkHandler: ((url: String) -> Unit)?) {
     val cc = CC()
     cc.vertical.gapBefore = gapToBoundSize(if (rootRow.subRows == null) verticalGap else largeVerticalGap, false)
     cc.vertical.gapAfter = gapToBoundSize(horizontalGap, false)
 
     val row = rootRow.createChildRow(label = null, noGrid = true)
     row.apply {
-      val noteComponent = noteComponent(text)
+      val noteComponent = noteComponent(text, linkHandler)
       componentConstraints.put(noteComponent, cc)
       noteComponent()
     }

@@ -20,5 +20,5 @@ interface LayoutBuilderImpl {
 
   fun build(container: Container, layoutConstraints: Array<out LCFlags>)
 
-  fun noteRow(text: String)
+  fun noteRow(text: String, linkHandler: ((url: String) -> Unit)? = null)
 }
