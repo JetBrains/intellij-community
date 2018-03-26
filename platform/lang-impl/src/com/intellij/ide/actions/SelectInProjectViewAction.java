@@ -16,45 +16,28 @@ import static com.intellij.openapi.wm.ToolWindowId.PROJECT_VIEW;
  * @author Konstantin Bulenkov
  */
 public class SelectInProjectViewAction extends DumbAwareAction {
+  private static PsiDocumentManager getDocumentManager(Project project) {
+    return project == null || project.isDisposed() ? null : PsiDocumentManager.getInstance(project);
+  }
+
   @Override
   public void beforeActionPerformedUpdate(@NotNull AnActionEvent event) {
-    PsiDocumentManager manager = getPsiDocumentManager(event.getProject());
+    PsiDocumentManager manager = getDocumentManager(event.getProject());
     if (manager != null) manager.commitAllDocuments();
     super.beforeActionPerformedUpdate(event);
   }
 
   @Override
   public void update(@NotNull AnActionEvent event) {
-    SelectInTarget target = findSelectInProjectView(event.getProject());
+    SelectInTarget target = SelectInManager.findSelectInTarget(PROJECT_VIEW, event.getProject());
     SelectInContext context = target == null ? null : SelectInContextImpl.createContext(event);
     event.getPresentation().setEnabled(context != null && target.canSelect(context));
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
-    SelectInTarget target = findSelectInProjectView(event.getProject());
+    SelectInTarget target = SelectInManager.findSelectInTarget(PROJECT_VIEW, event.getProject());
     SelectInContext context = target == null ? null : SelectInContextImpl.createContext(event);
     if (context != null) target.selectIn(context, true);
-  }
-
-  private static PsiDocumentManager getPsiDocumentManager(Project project) {
-    return project == null || project.isDisposed() ? null : PsiDocumentManager.getInstance(project);
-  }
-
-  private static SelectInManager getSelectInManager(Project project) {
-    return project == null || project.isDisposed() ? null : SelectInManager.getInstance(project);
-  }
-
-  private static SelectInTarget findSelectInProjectView(Project project) {
-    SelectInManager manager = getSelectInManager(project);
-    SelectInTarget[] targets = manager == null ? null : manager.getTargets();
-    if (targets != null) {
-      for (SelectInTarget target : targets) {
-        if (target != null && PROJECT_VIEW.equals(target.getToolWindowId())) {
-          return target;
-        }
-      }
-    }
-    return null;
   }
 }
