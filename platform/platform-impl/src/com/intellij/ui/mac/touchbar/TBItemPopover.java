@@ -6,8 +6,8 @@ import com.intellij.ui.mac.foundation.ID;
 import javax.swing.*;
 
 public class TBItemPopover extends TBItem {
-  private final Icon myIcon;
-  private final String myText;
+  private Icon myIcon;
+  private String myText;
   private final int myWidthPix;
   private TouchBar myExpandTB;
   private TouchBar myTapAndHoldTB;
@@ -19,11 +19,24 @@ public class TBItemPopover extends TBItem {
     myWidthPix = widthInPix;
   }
 
+  public void update(Icon icon, String text) {
+    myIcon = icon;
+    myText = text;
+    TouchBarManager.getNSTLibrary().updatePopover(
+      myNativePeer, myText, NSTLibrary.getRasterFromIcon(myIcon),
+      myIcon == null ? 0 : myIcon.getIconWidth(), myIcon == null ? 0 : myIcon.getIconHeight()
+    );
+  }
+
+  public void dismiss() {
+    TouchBarManager.getNSTLibrary().dismissPopover(myNativePeer);
+  }
+
   @Override
   protected ID _register(ID tb) {
     return TouchBarManager.getNSTLibrary().registerPopover(
       tb, myText, NSTLibrary.getRasterFromIcon(myIcon),
-      myIcon.getIconWidth(), myIcon.getIconHeight(), myWidthPix
+      myIcon == null ? 0 : myIcon.getIconWidth(), myIcon == null ? 0 : myIcon.getIconHeight(), myWidthPix
     );
   }
 

@@ -18,6 +18,8 @@ public interface NSTLibrary extends Library {
   ID registerButtonImg(ID tbObj, byte[] raster4ByteRGBA, int w, int h, Action action);
   ID registerButtonImgText(ID tbObj, String text, byte[] raster4ByteRGBA, int w, int h, Action action);
   ID registerPopover(ID tbObj, String text, byte[] raster4ByteRGBA, int w, int h, int popW);
+  void updatePopover(ID popoverobj, String text, byte[] raster4ByteRGBA, int w, int h);
+  void dismissPopover(ID popoverobj);
   void setPopoverExpandTouchBar(ID popoverObj, ID expandTbObj);
   void setPopoverTapAndHoldTouchBar(ID popoverObj, ID tapHoldTbObj);
 
@@ -32,6 +34,9 @@ public interface NSTLibrary extends Library {
   }
 
   static byte[] getRasterFromIcon(Icon icon) {
+    if (icon == null)
+      return null;
+
     final int w = icon.getIconWidth();
     final int h = icon.getIconHeight();
     final WritableRaster raster = Raster.createInterleavedRaster(new DataBufferByte(w * h * 4), w, h, 4 * w, 4, new int[]{0, 1, 2, 3}, (Point) null);

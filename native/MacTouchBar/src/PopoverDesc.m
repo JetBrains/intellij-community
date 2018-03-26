@@ -9,6 +9,7 @@
 @property (retain, nonatomic) NSString * text;
 @property (retain, nonatomic) TouchBar * expandBar;
 @property (retain, nonatomic) TouchBar * tapHoldBar;
+@property (retain) NSPopoverTouchBarItem * nsItem;
 @end
 
 @implementation PopoverDesc
@@ -36,10 +37,12 @@
     popoverTouchBarItem.showsCloseButton = YES;
     popoverTouchBarItem.popoverTouchBar = self.expandBar.touchBar;
     popoverTouchBarItem.pressAndHoldTouchBar = self.tapHoldBar.touchBar;
+
+    self.nsItem = popoverTouchBarItem;
     return popoverTouchBarItem;
 }
 
-@synthesize img, text, expandBar, tapHoldBar;
+@synthesize img, text, expandBar, tapHoldBar, nsItem;
 @end
 
 void setPopoverExpandTouchBar(id popoverobj, id expandTB) {
@@ -52,4 +55,21 @@ void setPopoverTapAndHoldTouchBar(id popoverobj, id tapHoldTB) {
     PopoverDesc * pdesc = (PopoverDesc *) popoverobj;
     pdesc.tapHoldBar = tapHoldTB;
     nstrace(@"set tapHoldTB to popover [%@], text='%@', tb='%@'", pdesc.uid, pdesc.text, pdesc.tapHoldBar);
+}
+
+void updatePopover(id popoverobj, char* text, char* raster4ByteRGBA, int w, int h) {
+    PopoverDesc * pdesc = (PopoverDesc *) popoverobj;
+    if (pdesc.nsItem != nil) {
+        nstrace(@"updatePopover [%@]", pdesc.uid);
+        pdesc.nsItem.collapsedRepresentationLabel = text == NULL ? nil : [NSString stringWithUTF8String:text];
+        pdesc.nsItem.collapsedRepresentationImage = raster4ByteRGBA == NULL ? nil : createImgFrom4ByteRGBA(raster4ByteRGBA, w, h);
+    }
+}
+
+void dismissPopover(id popoverobj) {
+    PopoverDesc * pdesc = (PopoverDesc *) popoverobj;
+    if (pdesc.nsItem != nil) {
+        nstrace(@"dusmiccPopover [%@]", pdesc.uid);
+        [pdesc.nsItem dismissPopover:nil];
+    }
 }

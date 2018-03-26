@@ -102,7 +102,11 @@ public class TouchBarManager {
               List<RunnerAndConfigurationSettings> allRunCongigs = rm.getAllSettings();
               for (RunnerAndConfigurationSettings rc : allRunCongigs) {
                 final Icon iconRc = rc.getConfiguration().getIcon();
-                scrubber.addItem(iconRc, rc.getName(), () -> rm.setSelectedConfiguration(rc));
+                scrubber.addItem(iconRc, rc.getName(), () -> {
+                  rm.setSelectedConfiguration(rc);
+                  popover.update(iconRc, rc.getName());
+                  popover.dismiss();
+                });
               }
               expandTB.addItem(new TBItemSpacing(TBItemSpacing.TYPE.flexible));
               expandTB.selectAllItemsToShow();
