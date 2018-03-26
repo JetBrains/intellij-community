@@ -697,6 +697,19 @@ public class PsiTreeUtil {
     return aClass.cast(element);
   }
 
+  public static <T extends PsiElement> List<T> collectParentsOfType(PsiElement element, Class<T> parent, Class<? extends PsiElement>... stopClasses) {
+    element = element.getParent();
+    List<T> parents = new SmartList<>();
+    while (element != null) {
+      if (instanceOf(element, stopClasses)) break;
+      if (parent.isInstance(element)) {
+        parents.add(parent.cast(element));
+      }
+      element = element.getParent();
+    }
+    return parents;
+  }
+
   @Nullable
   public static PsiElement findSiblingForward(@NotNull final PsiElement element,
                                               @NotNull final IElementType elementType,
