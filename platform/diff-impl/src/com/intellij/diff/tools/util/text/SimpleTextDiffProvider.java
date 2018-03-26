@@ -98,10 +98,16 @@ public class SimpleTextDiffProvider extends TwosideTextDiffProviderBase implemen
     }
 
     ComparisonManagerImpl comparisonManager = ComparisonManagerImpl.getInstanceImpl();
-    if (diffComputer != null || linesRanges == null) {
-      List<LineFragment> fragments = comparisonManager.compareLinesInner(text1, text2, lineOffsets1, lineOffsets2,
-                                                                         policy, innerFragments, indicator);
-      return Collections.singletonList(fragments);
+    if (linesRanges == null) {
+      if (diffComputer != null) {
+        List<LineFragment> fragments = diffComputer.compute(text1, text2, policy, innerFragments, indicator);
+        return Collections.singletonList(fragments);
+      }
+      else {
+        List<LineFragment> fragments = comparisonManager.compareLinesInner(text1, text2, lineOffsets1, lineOffsets2,
+                                                                           policy, innerFragments, indicator);
+        return Collections.singletonList(fragments);
+      }
     }
     else {
       List<List<LineFragment>> result = new ArrayList<>();
