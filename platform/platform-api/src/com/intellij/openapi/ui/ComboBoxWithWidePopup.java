@@ -69,12 +69,15 @@ public class ComboBoxWithWidePopup<E> extends JComboBox<E> {
   }
 
   /**
-   * @return original preferred size of JComboBox. E.g. its width naturally sets minimum
-   *         width of a wide popup as it's calculated as max of all pref sizes of combobox's items.
-   *         See {@link javax.swing.plaf.basic.BasicComboBoxUI#getDisplaySize()}.
+   * @return minimum width of a popup that is wide enough to show all the combobox's items horizontally
    */
-  public Dimension getOriginalPreferredSize() {
-    return super.getPreferredSize();
+  public int getMinimumPopupWidth() {
+    // Original preferred size of JComboBox is calculated as max of all pref sizes of combobox's items.
+    // See javax.swing.plaf.basic.BasicComboBoxUI#getDisplaySize()
+    //
+    // Please note that "getPreferredSize().width" cannot be used as getPreferredSize might be overridden
+    // to return a value different to "max of all pref sizes of comboBox's items".
+    return super.getPreferredSize().width;
   }
 
   private class AdjustingListCellRenderer implements ListCellRenderer<E> {

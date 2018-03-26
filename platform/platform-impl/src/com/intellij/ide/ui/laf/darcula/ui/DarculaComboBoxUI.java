@@ -514,12 +514,10 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     public void show(Component invoker, int x, int y) {
       if (comboBox instanceof ComboBoxWithWidePopup) {
         Dimension popupSize = comboBox.getSize();
-        // Can't use simply comboBox.getPreferredSize() as it can be overridden and implemented differently.
-        // Here we need max of all pref sizes of comboBox's items.
-        Dimension prefSize = ((ComboBoxWithWidePopup)comboBox).getOriginalPreferredSize();
+        int minPopupWidth = ((ComboBoxWithWidePopup)comboBox).getMinimumPopupWidth();
         Insets insets = getInsets();
 
-        popupSize.width = Math.max(popupSize.width, prefSize.width);
+        popupSize.width = Math.max(popupSize.width, minPopupWidth);
         popupSize.setSize(popupSize.width - (insets.right + insets.left), getPopupHeightForRowCount(comboBox.getMaximumRowCount()));
 
         scroller.setMaximumSize(popupSize);
