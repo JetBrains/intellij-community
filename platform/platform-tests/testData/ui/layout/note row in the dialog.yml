@@ -19,9 +19,8 @@ rowConstraints:
     noGrid: true
   - {}
   - {}
-  - {}
   - {noGrid: true}
-  count: 5
+  count: 4
 columnConstraints:
   constraints:
   - {}
@@ -32,7 +31,7 @@ componentConstrains:
     spanX: 2097051
     vertical:
       gapAfter:
-        min: &id003 {horizontal: false, operation: 100, unit: 0, unitString: px, value: 8.0}
+        min: &id003 {horizontal: false, operation: 100, unit: 0, unitString: px, value: 10.0}
         preferred: *id003
       gapBefore:
         min: &id004 {horizontal: false, operation: 100, unit: 0, unitString: px, value: 4.0}
@@ -46,15 +45,15 @@ componentConstrains:
         preferred: *id005
   'JPasswordField #2': {spanX: 2097051, wrap: true}
   !!binary "G1JlbWVtYmVy": {skip: 1, spanX: 2097051, wrap: true}
-  Should be an empty row above as a gap:
+  'SimpleColoredComponent #4':
     spanX: 2097051
     vertical:
       gapAfter:
-        min: &id006 {horizontal: false, operation: 100, unit: 0, unitString: px, value: 8.0}
+        min: &id006 {horizontal: false, operation: 100, unit: 0, unitString: px, value: 10.0}
         preferred: *id006
       gapBefore:
         min: &id007 {horizontal: false, operation: 100, unit: 0, unitString: px, value: 12.0}
         preferred: *id007
     wrap: true
-rectangles: '[0, 0, 512, 44], [0, 48, 99, 26], [119, 48, 393, 26], [119, 78, 393,
-  23], [0, 105, 512, 36]'
+rectangles: '[0, 0, 512, 46], [0, 50, 99, 26], [119, 50, 393, 26], [119, 80, 393,
+  23], [0, 107, 512, 42]'

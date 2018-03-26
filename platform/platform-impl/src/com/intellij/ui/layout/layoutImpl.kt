@@ -2,6 +2,7 @@
 package com.intellij.ui.layout
 
 import com.intellij.ui.layout.migLayout.*
+import com.intellij.util.ui.UIUtil
 import java.awt.Container
 import javax.swing.ButtonGroup
 import javax.swing.JLabel
@@ -10,7 +11,9 @@ import javax.swing.JLabel
 // https://docs.google.com/document/d/1DKnLkO-7_onA7_NCw669aeMH5ltNvw-QMiQHnXu8k_Y/edit
 
 @PublishedApi
-internal fun createLayoutBuilder() = LayoutBuilder(MigLayoutBuilder())
+internal fun createLayoutBuilder() = LayoutBuilder(MigLayoutBuilder(horizontalGap = UIUtil.DEFAULT_HGAP,
+                                                                    verticalGap = UIUtil.DEFAULT_VGAP,
+                                                                    largeVerticalGap = UIUtil.LARGE_VGAP))
 
 interface LayoutBuilderImpl {
   fun newRow(label: JLabel? = null, buttonGroup: ButtonGroup? = null, separated: Boolean = false): Row

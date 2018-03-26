@@ -5,25 +5,22 @@ import com.intellij.ide.ui.laf.IntelliJLaf
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.ui.components.dialog
 import com.intellij.util.io.write
-import net.miginfocom.layout.LayoutUtil
 import net.miginfocom.swing.MigLayout
 import java.awt.Dimension
 import java.nio.file.Paths
 import javax.swing.UIManager
+import javax.swing.plaf.metal.MetalLookAndFeel
 
 object MigLayoutTestApp {
   @JvmStatic
   fun main(args: Array<String>) {
-    LayoutUtil.setGlobalDebugMillis(1000)
+//    LayoutUtil.setGlobalDebugMillis(1000)
 
     runInEdtAndWait {
-      try {
-        UIManager.setLookAndFeel(IntelliJLaf())
-      }
-      catch (ignored: Exception) {
-      }
+      UIManager.setLookAndFeel(MetalLookAndFeel())
+      UIManager.setLookAndFeel(IntelliJLaf())
 
-      val panel = cellPanel()
+      val panel = noteRowInTheDialog()
       val dialog = dialog(
         title = "",
         panel = panel,

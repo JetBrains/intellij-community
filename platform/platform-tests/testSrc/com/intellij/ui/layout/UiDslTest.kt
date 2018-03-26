@@ -31,6 +31,7 @@ import javax.imageio.ImageIO
 import javax.swing.JFrame
 import javax.swing.JPanel
 import javax.swing.UIManager
+import javax.swing.plaf.metal.MetalLookAndFeel
 import kotlin.properties.Delegates
 
 /**
@@ -45,6 +46,7 @@ class UiDslTest {
     @BeforeClass
     fun setUpOnce() {
       FailOnThreadViolationRepaintManager.install()
+      UIManager.setLookAndFeel(MetalLookAndFeel())
       UIManager.setLookAndFeel(IntelliJLaf())
     }
 
