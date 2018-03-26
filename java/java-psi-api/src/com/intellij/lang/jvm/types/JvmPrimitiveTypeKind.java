@@ -30,7 +30,7 @@ public final class JvmPrimitiveTypeKind {
   private final String myName;
   private final String myBoxedFqn;
 
-  JvmPrimitiveTypeKind(String name, String boxedFqn) {
+  private JvmPrimitiveTypeKind(String name, String boxedFqn) {
     myName = name;
     myBoxedFqn = boxedFqn;
   }
