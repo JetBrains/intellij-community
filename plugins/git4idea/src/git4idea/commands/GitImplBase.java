@@ -256,7 +256,7 @@ abstract class GitImplBase implements Git {
               vcsConsoleWriter.showMessage(line);
             }
             else if (outputType == ProcessOutputTypes.STDERR && !handler.isStderrSuppressed()) {
-              vcsConsoleWriter.showErrorMessage(line);
+              if (!looksLikeProgress(line)) vcsConsoleWriter.showErrorMessage(line);
             }
           }
         }
@@ -283,6 +283,21 @@ abstract class GitImplBase implements Git {
     }
     return AccessToken.EMPTY_ACCESS_TOKEN;
   }
+
+  private static boolean looksLikeProgress(@NotNull String line) {
+    String trimmed = StringUtil.trimStart(line, REMOTE_PROGRESS_PREFIX);
+    return ContainerUtil.exists(PROGRESS_INDICATORS, indicator -> StringUtil.startsWith(trimmed, indicator));
+  }
+
+  public static final String REMOTE_PROGRESS_PREFIX = "remote: ";
+
+  public static final String[] PROGRESS_INDICATORS = {
+    "Counting objects:",
+    "Compressing objects:",
+    "Writing objects:",
+    "Receiving objects:",
+    "Resolving deltas:"
+  };
 
   private static boolean looksLikeError(@NotNull final String text) {
     return ContainerUtil.exists(ERROR_INDICATORS, indicator -> StringUtil.startsWithIgnoreCase(text.trim(), indicator));

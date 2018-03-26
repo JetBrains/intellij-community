@@ -416,10 +416,11 @@ public class AppUIUtil {
     };
     ui.reset(consents);
     dialog.setModal(true);
-    dialog.setTitle("Analytics");
+    dialog.setTitle("Data Sharing");
     dialog.pack();
-    dialog.setSize(JBUI.scale(600), dialog.getWindow().getHeight() * 4 / 3);
-    //dialog.setSize(JBUI.scale(600), JBUI.scale(400));
+    if (consents.size() < 2) {
+      dialog.setSize(dialog.getWindow().getWidth(), dialog.getWindow().getHeight() + JBUI.scale(75));
+    }
     dialog.show();
 
     int exitCode = dialog.getExitCode();

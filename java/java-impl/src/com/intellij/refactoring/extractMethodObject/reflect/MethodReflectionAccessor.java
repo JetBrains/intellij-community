@@ -35,7 +35,8 @@ public class MethodReflectionAccessor extends ReflectionAccessorBase<MethodRefle
       public void visitMethodCallExpression(PsiMethodCallExpression expression) {
         super.visitMethodCallExpression(expression);
         PsiMethod method = expression.resolveMethod();
-        if (method != null && !Objects.equals(method.getContainingClass(), getOuterClass()) && needReplace(method)) {
+        if (method != null && !Objects.equals(method.getContainingClass(), getOuterClass()) &&
+            needReplace(method, expression.getMethodExpression())) {
           result.add(new MethodCallDescriptor(expression, method));
         }
       }
@@ -47,7 +48,7 @@ public class MethodReflectionAccessor extends ReflectionAccessorBase<MethodRefle
   @Override
   protected void grantAccess(@NotNull MethodCallDescriptor descriptor) {
     PsiClass outerClass = getOuterClass();
-    String returnType = PsiReflectionAccessUtil.getAccessibleReturnType(descriptor.method.getReturnType());
+    String returnType = PsiReflectionAccessUtil.getAccessibleReturnType(resolveMethodReturnType(descriptor));
     PsiClass containingClass = descriptor.method.getContainingClass();
     String containingClassName = containingClass == null ? null : ClassUtil.getJVMClassName(containingClass);
     String name = descriptor.method.getName();
@@ -81,8 +82,15 @@ public class MethodReflectionAccessor extends ReflectionAccessorBase<MethodRefle
     descriptor.callExpression.replace(getElementFactory().createExpressionFromText(newMethodCallExpression, descriptor.callExpression));
   }
 
-  private static boolean needReplace(@NotNull PsiMethod method) {
-    return !PsiReflectionAccessUtil.isAccessibleMember(method);
+  private static boolean needReplace(@NotNull PsiMethod method, @NotNull PsiReferenceExpression referenceExpression) {
+    return !PsiReflectionAccessUtil.isAccessibleMember(method) ||
+           !PsiReflectionAccessUtil.isQualifierAccessible(referenceExpression.getQualifierExpression());
+  }
+
+  @Nullable
+  private static PsiType resolveMethodReturnType(@NotNull MethodCallDescriptor descriptor) {
+    PsiSubstitutor substitutor = descriptor.callExpression.resolveMethodGenerics().getSubstitutor();
+    return substitutor.substitute(descriptor.method.getReturnType());
   }
 
   @Nullable

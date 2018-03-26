@@ -344,6 +344,9 @@ public class NotificationsManagerImpl extends NotificationsManager {
         if (layoutData.showMinSize) {
           Point location = getCollapsedTextEndLocation(this, layoutData);
           if (location != null) {
+            if (g instanceof Graphics2D) {
+              ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+            }
             g.setColor(getForeground());
             g.drawString("...", location.x, location.y + g.getFontMetrics().getAscent());
           }

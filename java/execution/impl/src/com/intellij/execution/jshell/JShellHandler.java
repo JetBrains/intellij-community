@@ -38,6 +38,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JavaSdkVersionUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEnumerator;
@@ -50,7 +51,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.ide.PooledThreadExecutor;
 
 import javax.swing.*;
 import java.awt.*;
@@ -81,7 +81,7 @@ public class JShellHandler {
   private final OSProcessHandler myProcess;
   private final MessageReader<Response> myMessageReader;
   private final MessageWriter<Request> myMessageWriter;
-  private final ExecutorService myTaskQueue = new SequentialTaskExecutor("JShell Command Queue", PooledThreadExecutor.INSTANCE);
+  private final ExecutorService myTaskQueue = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("JShell Command Queue");
   private final AtomicReference<Collection<String>> myEvalClasspathRef = new AtomicReference<>(null);
 
   private JShellHandler(@NotNull Project project,
@@ -212,15 +212,14 @@ public class JShellHandler {
         (module != null? " for module " + module.getName() : " for project " + project.getName())
       );
     }
-    final JavaSdkType javaSdkType = (JavaSdkType)sdk.getSdkType();
-    final String ver = sdk.getVersionString();
-    final JavaSdkVersion sdkVersion = ver == null? null : JavaSdkVersion.fromVersionString(ver);
+    final JavaSdkVersion sdkVersion = JavaSdkVersionUtil.getJavaSdkVersion(sdk);
     if (sdkVersion == null) {
       throw new ExecException("Cannot determine version for JDK " + sdk.getName() + ". Please re-configure the JDK.");
     }
     if (!sdkVersion.isAtLeast(JavaSdkVersion.JDK_1_9)) {
       throw new ExecException("JDK version is " + sdkVersion.getDescription() + ". JDK 9 or higher is needed to run JShell.");
     }
+    final JavaSdkType javaSdkType = (JavaSdkType)sdk.getSdkType();
     final String vmExePath = javaSdkType.getVMExecutablePath(sdk);
     if (vmExePath == null) {
       throw new ExecException("Cannot determine path to VM executable for JDK " + sdk.getName() + ". Please re-configure the JDK.");

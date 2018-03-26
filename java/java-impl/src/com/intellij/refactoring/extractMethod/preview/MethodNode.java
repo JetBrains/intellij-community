@@ -23,7 +23,7 @@ class MethodNode extends FragmentNode {
   private final Icon myIcon;
 
   public MethodNode(@NotNull PsiMethod method) {
-    super(method, method);
+    super(method, method, new ExtractableFragment(PsiElement.EMPTY_ARRAY));
     myIcon = method.getIcon(0);
     setAllowsChildren(false);
   }

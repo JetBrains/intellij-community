@@ -17,7 +17,12 @@ public abstract class RequestBuilder {
   public abstract RequestBuilder connectTimeout(int value);
   public abstract RequestBuilder readTimeout(int value);
   public abstract RequestBuilder redirectLimit(int redirectLimit);
+
+  /**
+   * Whether gzip encoding supported. Defaults to {@code true}.
+   */
   public abstract RequestBuilder gzip(boolean value);
+
   public abstract RequestBuilder forceHttps(boolean forceHttps);
   public abstract RequestBuilder useProxy(boolean useProxy);
   public abstract RequestBuilder hostNameVerifier(@Nullable HostnameVerifier hostnameVerifier);
@@ -25,6 +30,12 @@ public abstract class RequestBuilder {
   public abstract RequestBuilder productNameAsUserAgent();
   public abstract RequestBuilder accept(@Nullable String mimeType);
   public abstract RequestBuilder tuner(@Nullable HttpRequests.ConnectionTuner tuner);
+
+  /**
+   * Whether to read server response on error. Error message available as {@link HttpRequests.HttpStatusException#getMessage()}.
+   * Defaults to false.
+   */
+  public abstract RequestBuilder isReadResponseOnError(boolean isReadResponseOnError);
 
   // Used in Rider
   @SuppressWarnings("unused")
@@ -79,5 +90,19 @@ public abstract class RequestBuilder {
   @NotNull
   public CharSequence readChars() throws IOException {
     return readChars(null);
+  }
+
+  public void write(@NotNull String data) throws IOException {
+    connect(request -> {
+      request.write(data);
+      return null;
+    });
+  }
+
+  public void write(@NotNull byte[] data) throws IOException {
+    connect(request -> {
+      request.write(data);
+      return null;
+    });
   }
 }

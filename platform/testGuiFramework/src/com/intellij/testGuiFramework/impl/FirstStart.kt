@@ -148,7 +148,7 @@ abstract class FirstStart(val ideType: IdeType) {
         }
       }
       catch (e: WaitTimedOutError) {
-        LOG.error("'$policyAgreementTitle' dialog hasn't been shown. Check registry...")
+        LOG.warn("'$policyAgreementTitle' dialog hasn't been shown. Check registry...")
       }
     }
   }

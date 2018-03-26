@@ -46,12 +46,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 
-import static com.intellij.util.ui.JBUI.ScaleType.*;
+import static com.intellij.util.ui.JBUI.ScaleType.PIX_SCALE;
+import static com.intellij.util.ui.JBUI.ScaleType.SYS_SCALE;
 
 public class ImageLoader implements Serializable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.ImageLoader");
 
-  public static final int CACHED_IMAGE_MAX_SIZE = (int)Math.round(Registry.doubleValue("ide.cached.image.max.size") * 1024 * 1024);
+  public static final long CACHED_IMAGE_MAX_SIZE = (long)(Registry.doubleValue("ide.cached.image.max.size") * 1024 * 1024);
   private static final ConcurrentMap<String, Image> ourCache = ContainerUtil.createConcurrentSoftValueMap();
 
   @SuppressWarnings({"UnusedDeclaration"}) // set from com.intellij.internal.IconsLoadTime
@@ -219,6 +220,7 @@ public class ImageLoader implements Serializable {
         }
 
         if (dark && retina) {
+          vars.add(new ImageDesc(name + "_dark@2x." + ext, cls, 2d, ImageDesc.Type.PNG));
           vars.add(new ImageDesc(name + "@2x_dark." + ext, cls, 2d, ImageDesc.Type.PNG));
         }
 

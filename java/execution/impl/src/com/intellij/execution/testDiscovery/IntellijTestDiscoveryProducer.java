@@ -31,8 +31,10 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
       return MultiMap.emptyInstance();
     }
     String methodFqn = classFQName + "." + methodName;
-    RequestBuilder r = HttpRequests.request(INTELLIJ_TEST_DISCOVERY_HOST + "/search/tests/by-method/" + methodFqn);
+    String url = INTELLIJ_TEST_DISCOVERY_HOST + "/search/tests/by-method/" + methodFqn;
+    LOG.debug(url);
 
+    RequestBuilder r = HttpRequests.request(url);
     try {
       return r.connect(request -> {
         MultiMap<String, String> map = new MultiMap<>();
@@ -97,6 +99,11 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
       return found;
     }
 
+    public TestsSearchResult setFound(int found) {
+      this.found = found;
+      return this;
+    }
+
     @NotNull
     public Map<String, List<String>> getTests() {
       return tests;
@@ -104,7 +111,6 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
 
     public TestsSearchResult setTests(@NotNull Map<String, List<String>> tests) {
       this.tests = tests;
-      this.found = tests.values().stream().mapToInt(List::size).sum();
       return this;
     }
 

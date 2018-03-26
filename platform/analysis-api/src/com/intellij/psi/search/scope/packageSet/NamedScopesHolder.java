@@ -130,7 +130,7 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
     return setElement;
   }
 
-  private static NamedScope readScope(Element setElement) {
+  private NamedScope readScope(Element setElement) {
     String name = setElement.getAttributeValue(NAME_ATT);
     PackageSet set;
     String attributeValue = setElement.getAttributeValue(PATTERN_ATT);
@@ -140,7 +140,7 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
     catch (ParsingException e) {
       set = new InvalidPackageSet(attributeValue);
     }
-    return new NamedScope(name, set);
+    return createScope(name, set);
   }
 
   @Override
@@ -185,5 +185,10 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
   @NotNull
   public Project getProject() {
     return myProject;
+  }
+
+  @NotNull
+  public final NamedScope createScope(@NotNull String name, @Nullable PackageSet value) {
+    return new NamedScope(name, getIcon(), value);
   }
 }

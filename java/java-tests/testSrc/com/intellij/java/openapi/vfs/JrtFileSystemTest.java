@@ -2,6 +2,8 @@
 package com.intellij.java.openapi.vfs;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -10,9 +12,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.jrt.JrtFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -32,6 +37,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class JrtFileSystemTest extends BareTestFixtureTestCase {
   @Rule public TempDirectory myTempDir = new TempDirectory();
 
+  private final Disposable myDisposable = Disposer.newDisposable();
   private Path myTestData;
   private Path myTempPath;
   private VirtualFile myRoot;
@@ -40,15 +46,25 @@ public class JrtFileSystemTest extends BareTestFixtureTestCase {
   public void setUp() throws IOException {
     myTestData = Paths.get(JavaTestUtil.getJavaTestDataPath(), "jrt");
     myTempPath = myTempDir.newFolder("jrt").toPath();
+
+    setupJrtFileSystem();
+    myRoot = findRoot(myTempPath.toString());
+    assertThat(myRoot).isNotNull();
+    assertThat(JrtFileSystem.isRoot(myRoot)).isTrue();
+  }
+
+  @After
+  public void tearDown() {
+    Disposer.dispose(myDisposable);
+  }
+
+  private void setupJrtFileSystem() throws IOException {
+    Files.createDirectories(myTempPath);
     Files.write(myTempPath.resolve("release"), "JAVA_VERSION=9\n".getBytes(CharsetToolkit.UTF8_CHARSET));
     Path lib = Files.createDirectory(myTempPath.resolve("lib"));
     Files.copy(myTestData.resolve("jrt-fs.jar"), lib.resolve("jrt-fs.jar"));
     Files.copy(myTestData.resolve("image1"), lib.resolve("modules"));
-    LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myTempDir.getRoot());
-
-    myRoot = findRoot(myTempPath.toString());
-    assertThat(myRoot).isNotNull();
-    assertThat(JrtFileSystem.isRoot(myRoot)).isTrue();
+    LocalFileSystem.getInstance().refreshAndFindFileByPath(myTempPath.toString());
   }
 
   @Test
@@ -94,6 +110,31 @@ public class JrtFileSystemTest extends BareTestFixtureTestCase {
     }
   }
 
+  @Test
+  public void filePointers() throws IOException {
+    VirtualFile vTemp = LocalFileSystem.getInstance().refreshAndFindFileByPath(myTempPath.toString());
+    assertThat(vTemp).isNotNull();
+    VirtualFilePointerManager manager = VirtualFilePointerManager.getInstance();
+    VirtualFilePointer[] pointers = {manager.create(vTemp, myDisposable, null), manager.create(myRoot, myDisposable, null)};
+    assertPointers(pointers, true);
+
+    if (SystemInfo.isUnix) {
+      VirtualFile testRoot = vTemp.getParent();
+
+      assertThat(FileUtil.delete(myTempPath.toFile())).isTrue();
+      testRoot.refresh(false, true);
+      assertPointers(pointers, false);
+
+      setupJrtFileSystem();
+      testRoot.refresh(false, true);
+      assertPointers(pointers, true);
+
+      assertThat(FileUtil.delete(myTempPath.toFile())).isTrue();
+      testRoot.refresh(false, true);
+      assertPointers(pointers, false);
+    }
+  }
+
   private static VirtualFile findRoot(String path) {
     String url = VirtualFileManager.constructUrl(JrtFileSystem.PROTOCOL, path + JrtFileSystem.SEPARATOR);
     return VirtualFileManager.getInstance().findFileByUrl(url);
@@ -101,5 +142,10 @@ public class JrtFileSystemTest extends BareTestFixtureTestCase {
 
   private static List<String> childNames(VirtualFile dir) {
     return Stream.of(dir.getChildren()).map(VirtualFile::getName).collect(Collectors.toList());
+  }
+
+  private static void assertPointers(VirtualFilePointer[] pointers, boolean valid) {
+    assertThat(pointers).allMatch(p -> p.isValid() == valid);
+    assertThat(pointers).allMatch(p -> p.getFile() == null || p.getFile().isValid());
   }
 }

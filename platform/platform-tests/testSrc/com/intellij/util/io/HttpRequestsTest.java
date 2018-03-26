@@ -2,6 +2,8 @@
 package com.intellij.util.io;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.util.TimeoutUtil;
 import com.sun.net.httpserver.HttpServer;
 import org.junit.After;
@@ -12,6 +14,8 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.SocketTimeoutException;
+import java.nio.charset.StandardCharsets;
+import java.util.zip.GZIPOutputStream;
 
 import static java.net.HttpURLConnection.*;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -66,6 +70,31 @@ public class HttpRequestsTest {
     assertThat(HttpRequests.request(myUrl).readString()).isEqualTo("hello кодировочки");
   }
 
+  @Test(timeout = 5000)
+  public void readGzippedString() throws IOException {
+    createServerForGzippedRead();
+    assertThat(HttpRequests.request(myUrl).readString()).isEqualTo("hello кодировочки");
+  }
+
+  private void createServerForGzippedRead() {
+    myServer.createContext("/", ex -> {
+      ex.getResponseHeaders().add("Content-Type", "text/plain; charset=koi8-r");
+      ex.getResponseHeaders().add("Content-Encoding", "gzip");
+      ex.sendResponseHeaders(200, 0);
+
+      try (GZIPOutputStream gzipOutputStream = new GZIPOutputStream(ex.getResponseBody())) {
+        gzipOutputStream.write("hello кодировочки".getBytes("koi8-r"));
+      }
+      ex.close();
+    });
+  }
+
+  @Test(timeout = 5000)
+  public void gzippedStringIfSupportDisbled() throws IOException {
+    createServerForGzippedRead();
+    assertThat(HttpRequests.request(myUrl).gzip(false).readString()).isNotEqualTo("hello кодировочки");
+  }
+
   private void createServerForDataReadTest() {
     myServer.createContext("/", ex -> {
       ex.getResponseHeaders().add("Content-Type", "text/plain; charset=koi8-r");
@@ -101,11 +130,60 @@ public class HttpRequestsTest {
     fail();
   }
 
-  @Test(expected = AssertionError.class)
-  public void testPostNotAllowed() throws IOException {
-    HttpRequests.request(myUrl)
-                .tuner((c) -> ((HttpURLConnection)c).setRequestMethod("POST"))
-                .tryConnect();
+  @Test
+  public void post() throws IOException {
+    Ref<String> receivedData = Ref.create();
+    myServer.createContext("/", ex -> {
+      receivedData.set(StreamUtil.readText(ex.getRequestBody(), StandardCharsets.UTF_8));
+      ex.sendResponseHeaders(HTTP_OK, -1);
+      ex.close();
+    });
+
+    HttpRequests.post(myUrl, null).write("hello");
+    assertThat(receivedData.get()).isEqualTo("hello");
+  }
+
+  @Test
+  public void postNotFound() throws IOException {
+    myServer.createContext("/", ex -> {
+      ex.sendResponseHeaders(HTTP_NOT_FOUND, -1);
+      ex.close();
+    });
+
+    try {
+      HttpRequests
+        .post(myUrl, null)
+        .write("hello");
+    }
+    catch (HttpRequests.HttpStatusException e) {
+      assertThat(e.getMessage()).isEqualTo("Request failed with status code 404");
+      return;
+    }
+
+    fail();
+  }
+
+  @Test
+  public void postNotFoundWithResponse() throws IOException {
+    String serverErrorText = "use another url";
+    myServer.createContext("/", ex -> {
+      byte[] bytes = serverErrorText.getBytes(StandardCharsets.UTF_8);
+      ex.sendResponseHeaders(503, bytes.length);
+      ex.getResponseBody().write(bytes);
+      ex.close();
+    });
+
+    try {
+      HttpRequests
+        .post(myUrl, null)
+        .isReadResponseOnError(true)
+        .write("hello");
+    }
+    catch (HttpRequests.HttpStatusException e) {
+      assertThat(e.getMessage()).isEqualTo(serverErrorText);
+      return;
+    }
+
     fail();
   }
 
@@ -117,5 +195,12 @@ public class HttpRequestsTest {
     });
 
     assertEquals(0, HttpRequests.request(myUrl).readBytes(null).length);
+  }
+
+  @Test(expected = HttpRequests.HttpStatusException.class)
+  public void permissionDenied() throws IOException {
+    HttpRequests.request("https://httpbin.org/basic-auth/username/passwd")
+                .productNameAsUserAgent()
+                .readString();
   }
 }

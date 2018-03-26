@@ -14,7 +14,7 @@ import org.junit.Test
 class TypeAheadTest : GuiTestCase() {
 
   @Test
-  fun testProjectCreate() {
+  fun testTypeAhead() {
     CommunityProjectCreator.createCommandLineProject("type-ahead-problem")
     ideFrame {
       waitForBackgroundTasksToFinish()
@@ -24,7 +24,7 @@ class TypeAheadTest : GuiTestCase() {
       dialog("Run/Debug Configurations") {
         addJUnitConfiguration()
         for (i in 0..20) {
-          combobox("Test kind:").selectItem("Category")
+          combobox("Test kind:").selectItem("Pattern")
           pause(2000)
           combobox("Test kind:").selectItem("Class")
           pause(2000)

@@ -1080,7 +1080,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
     @Override
     public void visitLiteralExpression(PsiLiteralExpression expression) {
-      final HighlightInfo parsingError = HighlightUtil.checkLiteralExpressionParsingError(expression, null, null);
+      final HighlightInfo parsingError = HighlightUtil.checkLiteralExpressionParsingError(expression, PsiUtil.getLanguageLevel(expression), null);
       if (parsingError != null) {
         throwEvaluateException(parsingError.getDescription());
         return;

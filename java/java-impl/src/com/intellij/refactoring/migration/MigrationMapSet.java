@@ -16,6 +16,7 @@
  */
 package com.intellij.refactoring.migration;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -24,7 +25,6 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -302,7 +302,7 @@ public class MigrationMapSet {
       documents[i] = saveMap(map);
     }
 
-    JDOMUtil.updateFileSet(files, filePaths, documents, CodeStyleSettingsManager.getSettings(null).getLineSeparator());
+    JDOMUtil.updateFileSet(files, filePaths, documents, CodeStyle.getDefaultSettings().getLineSeparator());
 
     if (!myDeletedMaps.isEmpty()) {
       FileUtil.writeToFile(new File(dir, "deleted.txt"), StringUtil.join(myDeletedMaps, "\n"));

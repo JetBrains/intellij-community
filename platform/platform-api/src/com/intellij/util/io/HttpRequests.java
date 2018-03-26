@@ -20,7 +20,6 @@ import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.net.ssl.CertificateManager;
 import com.intellij.util.net.ssl.UntrustedCertificateStrategy;
-import io.netty.handler.codec.http.HttpResponseStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,34 +34,29 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Handy class for reading data from HTTP connections with built-in support for HTTP redirects and gzipped content and automatic cleanup.
+ *
  * Usage: <pre>{@code
- * int firstByte = HttpRequests.request(url).connect(new HttpRequests.RequestProcessor<Integer>() {
- *   public Integer process(@NotNull Request request) throws IOException {
- *     return request.getInputStream().read();
- *   }
- * });
+ * int firstByte = HttpRequests.request(url).connect(request -> request.getInputStream().read());
  * }</pre>
  * @see URLUtil
+ * @see <a href="https://github.com/JetBrains/intellij-community/tree/master/platform/platform-api/src/com/intellij/util/io#httprequests">docs</a>
  */
 public final class HttpRequests {
   private static final Logger LOG = Logger.getInstance(HttpRequests.class);
 
-  private static final int BLOCK_SIZE = 16 * 1024;
-  private static final Pattern CHARSET_PATTERN = Pattern.compile("charset=([^;]+)");
+  public static final String JSON_CONTENT_TYPE = "application/json; charset=utf-8";
 
   private static final int[] REDIRECTS = {
     // temporary redirects
-    HttpResponseStatus.FOUND.code(), HttpResponseStatus.TEMPORARY_REDIRECT.code(),
+    HttpURLConnection.HTTP_MOVED_TEMP, 307 /* temporary redirect */,
     // permanent redirects
-    HttpResponseStatus.MOVED_PERMANENTLY.code(), HttpResponseStatus.SEE_OTHER.code(), HttpResponseStatus.PERMANENT_REDIRECT.code()
+    HttpURLConnection.HTTP_MOVED_PERM, HttpURLConnection.HTTP_SEE_OTHER, 308 /* permanent redirect */
   };
 
-  private static final int PERMANENT_IDX = ArrayUtil.indexOf(REDIRECTS, HttpResponseStatus.MOVED_PERMANENTLY.code());
+  private static final int PERMANENT_IDX = ArrayUtil.indexOf(REDIRECTS, HttpURLConnection.HTTP_MOVED_PERM);
 
   private HttpRequests() { }
 
@@ -96,7 +90,24 @@ public final class HttpRequests {
     String readString(@Nullable ProgressIndicator indicator) throws IOException;
 
     @NotNull
+    default String readString() throws IOException {
+      return readString(null);
+    }
+
+    @NotNull
     CharSequence readChars(@Nullable ProgressIndicator indicator) throws IOException;
+
+    default void write(@NotNull String data) throws IOException {
+      write(data.getBytes(StandardCharsets.UTF_8));
+    }
+
+    default void write(@NotNull byte[] data) throws IOException {
+      HttpURLConnection connection = (HttpURLConnection)getConnection();
+      connection.setFixedLengthStreamingMode(data.length);
+      try (OutputStream stream = connection.getOutputStream()) {
+        stream.write(data);
+      }
+    }
   }
 
   public interface RequestProcessor<T> {
@@ -127,11 +138,6 @@ public final class HttpRequests {
     }
 
     @Override
-    public String getMessage() {
-      return "Status: " + myStatusCode;
-    }
-
-    @Override
     public String toString() {
       return super.toString() + ". Status=" + myStatusCode + ", Url=" + myUrl;
     }
@@ -144,7 +150,24 @@ public final class HttpRequests {
 
   @NotNull
   public static RequestBuilder request(@NotNull String url) {
-    return new RequestBuilderImpl(url);
+    return new RequestBuilderImpl(url, null);
+  }
+
+  @NotNull
+  public static RequestBuilder head(@NotNull String url) {
+    return new RequestBuilderImpl(url, connection -> ((HttpURLConnection)connection).setRequestMethod("HEAD"));
+  }
+
+  @NotNull
+  public static RequestBuilder post(@NotNull String url, @Nullable String contentType) {
+    return new RequestBuilderImpl(url, rawConnection -> {
+      HttpURLConnection connection = (HttpURLConnection)rawConnection;
+      connection.setRequestMethod("POST");
+      connection.setDoOutput(true);
+      if (contentType != null) {
+        connection.setRequestProperty("Content-Type", contentType);
+      }
+    });
   }
 
   @NotNull
@@ -168,7 +191,6 @@ public final class HttpRequests {
     return builder.toString();
   }
 
-
   private static class RequestBuilderImpl extends RequestBuilder {
     private final String myUrl;
     private int myConnectTimeout = HttpConfigurable.CONNECTION_TIMEOUT;
@@ -177,14 +199,17 @@ public final class HttpRequests {
     private boolean myGzip = true;
     private boolean myForceHttps;
     private boolean myUseProxy = true;
+    private boolean myIsReadResponseOnError;
     private HostnameVerifier myHostnameVerifier;
     private String myUserAgent;
     private String myAccept;
     private ConnectionTuner myTuner;
+    private final ConnectionTuner myInternalTuner;
     private UntrustedCertificateStrategy myUntrustedCertificateStrategy = null;
 
-    private RequestBuilderImpl(@NotNull String url) {
+    private RequestBuilderImpl(@NotNull String url, @Nullable ConnectionTuner internalTuner) {
       myUrl = url;
+      myInternalTuner = internalTuner;
     }
 
     @Override
@@ -220,6 +245,12 @@ public final class HttpRequests {
     @Override
     public RequestBuilder useProxy(boolean useProxy) {
       myUseProxy = useProxy;
+      return this;
+    }
+
+    @Override
+    public RequestBuilder isReadResponseOnError(boolean isReadResponseOnError) {
+      myIsReadResponseOnError = isReadResponseOnError;
       return this;
     }
 
@@ -330,9 +361,14 @@ public final class HttpRequests {
             inputStream = new ProgressMonitorInputStream(indicator, inputStream, contentLength);
           }
         }
-        myReader = new BufferedReader(new InputStreamReader(inputStream, getCharset(this)));
+        myReader = new BufferedReader(new InputStreamReader(inputStream, getCharset()));
       }
       return myReader;
+    }
+
+    @NotNull
+    private Charset getCharset() throws IOException {
+      return HttpUrlConnectionUtil.getCharset(getConnection());
     }
 
     @Override
@@ -349,22 +385,13 @@ public final class HttpRequests {
 
     @NotNull
     private BufferExposingByteArrayOutputStream doReadBytes(@Nullable ProgressIndicator indicator) throws IOException {
-      int contentLength = getConnection().getContentLength();
-      BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream(contentLength > 0 ? contentLength : BLOCK_SIZE);
-      NetUtils.copyStreamContent(indicator, getInputStream(), out, contentLength);
-      return out;
+      return HttpUrlConnectionUtil.readBytes(getInputStream(), getConnection(), indicator);
     }
 
     @NotNull
     @Override
     public String readString(@Nullable ProgressIndicator indicator) throws IOException {
-      BufferExposingByteArrayOutputStream byteStream = doReadBytes(indicator);
-      if (byteStream.size() == 0) {
-        return "";
-      }
-      else {
-        return new String(byteStream.getInternalBuffer(), 0, byteStream.size(), getCharset(this));
-      }
+      return HttpUrlConnectionUtil.readString(getInputStream(), getConnection(), indicator);
     }
 
     @NotNull
@@ -375,7 +402,7 @@ public final class HttpRequests {
         return ArrayUtil.EMPTY_CHAR_SEQUENCE;
       }
       else {
-        return getCharset(this).decode(ByteBuffer.wrap(byteStream.getInternalBuffer(), 0, byteStream.size()));
+        return getCharset().decode(ByteBuffer.wrap(byteStream.getInternalBuffer(), 0, byteStream.size()));
       }
     }
 
@@ -441,37 +468,30 @@ public final class HttpRequests {
   private static <T> T doProcess(RequestBuilderImpl builder, RequestProcessor<T> processor) throws IOException {
     CertificateManager manager = builder.myUntrustedCertificateStrategy == null || ApplicationManager.getApplication() == null ? null : CertificateManager.getInstance();
     try (RequestImpl request = new RequestImpl(builder)) {
+      T result;
       if (manager != null) {
-        return manager.runWithUntrustedCertificateStrategy(() -> processor.process(request), builder.myUntrustedCertificateStrategy);
+        result = manager.runWithUntrustedCertificateStrategy(() -> processor.process(request), builder.myUntrustedCertificateStrategy);
       }
       else {
-        return processor.process(request);
+        result = processor.process(request);
       }
-    }
-  }
 
-  @NotNull
-  private static Charset getCharset(@NotNull Request request) throws IOException {
-    String contentType = request.getConnection().getContentType();
-    if (!StringUtil.isEmptyOrSpaces(contentType)) {
-      Matcher m = CHARSET_PATTERN.matcher(contentType);
-      if (m.find()) {
-        try {
-          return Charset.forName(StringUtil.unquoteString(m.group(1)));
-        }
-        catch (IllegalArgumentException e) {
-          throw new IOException("unknown charset (" + contentType + ")", e);
+      URLConnection connection = request.myConnection;
+      if (connection instanceof HttpURLConnection && ((HttpURLConnection)connection).getRequestMethod().equals("POST")) {
+        // getResponseCode is not checked on connect for POST, because write must be performed before read
+        HttpURLConnection urlConnection = (HttpURLConnection)connection;
+        int responseCode = urlConnection.getResponseCode();
+        if (responseCode >= 400) {
+          throwHttpStatusError(urlConnection, request, builder, responseCode);
         }
       }
+      return result;
     }
-
-    return StandardCharsets.UTF_8;
   }
 
   private static URLConnection openConnection(RequestBuilderImpl builder, RequestImpl request) throws IOException {
-    String url = request.myUrl;
-
     for (int i = 0; i < builder.myRedirectLimit; i++) {
+      String url = request.myUrl;
       if (builder.myForceHttps && StringUtil.startsWith(url, "http:")) {
         request.myUrl = url = "https:" + url.substring(5);
       }
@@ -488,25 +508,9 @@ public final class HttpRequests {
       }
 
       if (connection instanceof HttpsURLConnection) {
-        if (ApplicationManager.getApplication() != null) {
-          try {
-            final SSLContext context = CertificateManager.getInstance().getSslContext();
-            final SSLSocketFactory factory = context.getSocketFactory();
-            if (factory != null) {
-              ((HttpsURLConnection)connection).setSSLSocketFactory(factory);
-            }
-            else {
-              LOG.info("SSLSocketFactory is not defined by IDE CertificateManager; Using default SSL configuration to connect to " + url);
-            }
-          }
-          catch (Throwable e) {
-            LOG.info("Problems configuring SSL connection to " + url , e);
-          }
-        }
-        else {
-          LOG.info("Application is not initialized yet; Using default SSL configuration to connect to " + url);
-        }
+        configureSslConnection(url, (HttpsURLConnection)connection);
       }
+
       connection.setConnectTimeout(builder.myConnectTimeout);
       connection.setReadTimeout(builder.myTimeout);
 
@@ -528,45 +532,87 @@ public final class HttpRequests {
 
       connection.setUseCaches(false);
 
+      if (builder.myInternalTuner != null) {
+        builder.myInternalTuner.tune(connection);
+      }
+
       if (builder.myTuner != null) {
         builder.myTuner.tune(connection);
       }
 
       checkRequestHeadersForNulBytes(connection);
 
-      if (connection instanceof HttpURLConnection) {
-        HttpURLConnection httpURLConnection = (HttpURLConnection)connection;
-        String method = httpURLConnection.getRequestMethod();
-        LOG.assertTrue(method.equals("GET") || method.equals("HEAD"), "'" + method + "' not supported; please use GET or HEAD");
+      if (!(connection instanceof HttpURLConnection)) {
+        return connection;
+      }
 
-        if (LOG.isDebugEnabled()) LOG.debug("connecting to " + url);
-        int responseCode = httpURLConnection.getResponseCode();
-        if (LOG.isDebugEnabled()) LOG.debug("response: " + responseCode);
+      HttpURLConnection httpURLConnection = (HttpURLConnection)connection;
+      String method = httpURLConnection.getRequestMethod();
+      if (method.equals("POST")) {
+        return connection;
+      }
 
-        if (responseCode < 200 || responseCode >= 300 && responseCode != HttpResponseStatus.NOT_MODIFIED.code()) {
+      LOG.assertTrue(method.equals("GET") || method.equals("HEAD"), "'" + method + "' not supported; please use GET, HEAD or POST");
+
+      if (LOG.isDebugEnabled()) LOG.debug("connecting to " + url);
+      int responseCode = httpURLConnection.getResponseCode();
+      if (LOG.isDebugEnabled()) LOG.debug("response: " + responseCode);
+
+      if (responseCode < 200 || responseCode >= 300 && responseCode != HttpURLConnection.HTTP_NOT_MODIFIED) {
+        int idx = ArrayUtil.indexOf(REDIRECTS, responseCode);
+        if (idx >= 0) {
           httpURLConnection.disconnect();
-
-          int idx = ArrayUtil.indexOf(REDIRECTS, responseCode);
-          if (idx >= 0) {
-            url = connection.getHeaderField("Location");
-            if (url != null) {
-              if (idx >= PERMANENT_IDX) {
-                LOG.error("HTTP response " + responseCode + " for '" + request.myUrl + "'; should be updated to '" + url + "'");
-              }
-              request.myUrl = url;
-              continue;
+          url = connection.getHeaderField("Location");
+          if (url != null) {
+            if (idx >= PERMANENT_IDX) {
+              LOG.error("HTTP response " + responseCode + " for '" + request.myUrl + "'; should be updated to '" + url + "'");
             }
+            request.myUrl = url;
+            continue;
           }
-
-          String message = IdeBundle.message("error.connection.failed.with.http.code.N", responseCode);
-          throw new HttpStatusException(message, responseCode, StringUtil.notNullize(url, "Empty URL"));
         }
+
+        return throwHttpStatusError(httpURLConnection, request, builder, responseCode);
       }
 
       return connection;
     }
 
     throw new IOException(IdeBundle.message("error.connection.failed.redirects"));
+  }
+
+  private static URLConnection throwHttpStatusError(@NotNull HttpURLConnection connection, @NotNull RequestImpl request, @NotNull RequestBuilderImpl builder, int responseCode) throws IOException {
+    String message = null;
+    if (builder.myIsReadResponseOnError) {
+      message = HttpUrlConnectionUtil.readString(connection.getErrorStream(), connection);
+    }
+
+    if (StringUtil.isEmpty(message)) {
+      message = "Request failed with status code " + responseCode;
+    }
+    connection.disconnect();
+    throw new HttpStatusException(message, responseCode, StringUtil.notNullize(request.myUrl, "Empty URL"));
+  }
+
+  private static void configureSslConnection(@NotNull String url, @NotNull HttpsURLConnection connection) {
+    if (ApplicationManager.getApplication() == null) {
+      LOG.info("Application is not initialized yet; Using default SSL configuration to connect to " + url);
+      return;
+    }
+
+    try {
+      final SSLContext context = CertificateManager.getInstance().getSslContext();
+      final SSLSocketFactory factory = context.getSocketFactory();
+      if (factory == null) {
+        LOG.info("SSLSocketFactory is not defined by IDE CertificateManager; Using default SSL configuration to connect to " + url);
+      }
+      else {
+        connection.setSSLSocketFactory(factory);
+      }
+    }
+    catch (Throwable e) {
+      LOG.info("Problems configuring SSL connection to " + url, e);
+    }
   }
 
   /**

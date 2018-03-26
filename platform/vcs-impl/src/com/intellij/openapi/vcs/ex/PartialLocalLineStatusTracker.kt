@@ -16,7 +16,6 @@
 package com.intellij.openapi.vcs.ex
 
 import com.intellij.diff.util.Side
-import com.intellij.ide.file.BatchFileChangeListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Separator
@@ -48,13 +47,13 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.WeakList
 import com.intellij.util.ui.JBUI
+import com.intellij.vcsUtil.VcsUtil
 import org.jetbrains.annotations.CalledInAwt
 import java.awt.BorderLayout
 import java.awt.Graphics
 import java.awt.Point
 import java.lang.ref.WeakReference
 import java.util.*
-import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.JComponent
 import javax.swing.JPanel
 import kotlin.collections.HashSet
@@ -77,7 +76,6 @@ class PartialLocalLineStatusTracker(project: Project,
   private var lastKnownTrackerChangeListId: String? = null
   private val affectedChangeLists = HashSet<String>()
 
-  private val batchChangeTaskCounter: AtomicInteger = AtomicInteger()
   private var hasUndoInCommand: Boolean = false
 
   private var shouldInitializeWithExcludedFromCommit: Boolean = false
@@ -87,9 +85,6 @@ class PartialLocalLineStatusTracker(project: Project,
   init {
     defaultMarker = ChangeListMarker(changeListManager.defaultChangeList)
     affectedChangeLists.add(defaultMarker.changelistId)
-
-    val connection = application.messageBus.connect(disposable)
-    connection.subscribe(BatchFileChangeListener.TOPIC, MyBatchFileChangeListener())
 
     document.addDocumentListener(MyUndoDocumentListener(), disposable)
     CommandProcessor.getInstance().addCommandListener(MyUndoCommandListener(), disposable)
@@ -137,7 +132,7 @@ class PartialLocalLineStatusTracker(project: Project,
     if (oldIds != newIds) {
       if (notifyChangeListManager) {
         // It's OK to call this under documentTracker.writeLock, as this method will not grab CLM lock.
-        changeListManager.notifyChangelistsChanged()
+        changeListManager.notifyChangelistsChanged(VcsUtil.getFilePath(virtualFile), oldIds.toList(), newIds.toList())
       }
 
       eventDispatcher.multicaster.onChangeListsChange(this)
@@ -163,6 +158,10 @@ class PartialLocalLineStatusTracker(project: Project,
           }
         }
       }
+    }
+
+    documentTracker.writeLock {
+      updateAffectedChangeLists()
     }
 
     dropExistingUndoActions()
@@ -298,27 +297,6 @@ class PartialLocalLineStatusTracker(project: Project,
     val action = MyUndoableAction(project, document, undoState, undo)
     undoManager.undoableActionPerformed(action)
     undoableActions.add(action)
-  }
-
-  private inner class MyBatchFileChangeListener : BatchFileChangeListener {
-    override fun batchChangeStarted(eventProject: Project, activityName: String?) {
-      if (eventProject != project) return
-      if (batchChangeTaskCounter.getAndIncrement() == 0) {
-        documentTracker.freeze(Side.LEFT)
-        documentTracker.freeze(Side.RIGHT)
-      }
-    }
-
-    override fun batchChangeCompleted(eventProject: Project) {
-      if (eventProject != project) return
-      application.invokeLater(
-        {
-          if (batchChangeTaskCounter.decrementAndGet() == 0) {
-            documentTracker.unfreeze(Side.LEFT)
-            documentTracker.unfreeze(Side.RIGHT)
-          }
-        }, ModalityState.any())
-    }
   }
 
   private inner class PartialDocumentTrackerHandler : LineStatusTrackerBase<LocalRange>.MyDocumentTrackerHandler() {

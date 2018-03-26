@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packageDependencies.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -91,7 +77,8 @@ public class RefactoringScopeElementListenerProvider implements RefactoringEleme
                                         RefactoringElementListenerComposite result,
                                         OldScopeDescriptor descriptor,
                                         String oldQualifiedName, ReferenceKind referenceKind) {
-    PackageSet oldSet = descriptor.getOldScope().getValue();
+    NamedScope oldScope = descriptor.getOldScope();
+    PackageSet oldSet = oldScope.getValue();
     if (oldSet != null && packageSet.anyMatches(set -> set instanceof PatternBasedPackageSet && ((PatternBasedPackageSet)set).isOn(oldQualifiedName))) {
       result.addListener(new RefactoringElementAdapter() {
         @Override
@@ -101,7 +88,7 @@ public class RefactoringScopeElementListenerProvider implements RefactoringEleme
           if (newName != null) {
             PackageSet newSet = oldSet.map(set -> updateNameInPattern(set, oldQualifiedName, newName));
             if (newSet != oldSet) {
-              descriptor.replaceScope(new NamedScope(descriptor.getOldScope().getName(), newSet));
+              descriptor.replaceScope(new NamedScope(oldScope.getName(), oldScope.getIcon(), newSet));
             }
           }
         }
@@ -109,7 +96,7 @@ public class RefactoringScopeElementListenerProvider implements RefactoringEleme
         @Override
         public void undoElementMovedOrRenamed(@NotNull PsiElement newElement, @NotNull String oldQualifiedName) {
           LOG.assertTrue(newElement instanceof PsiQualifiedNamedElement || newElement instanceof PsiDirectory);
-          descriptor.replaceScope(descriptor.getOldScope());
+          descriptor.replaceScope(oldScope);
         }
       });
     }

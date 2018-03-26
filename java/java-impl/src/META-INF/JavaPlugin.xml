@@ -20,7 +20,6 @@
       <interface-class>com.intellij.openapi.vfs.jrt.JrtFileSystem</interface-class>
       <implementation-class>com.intellij.openapi.vfs.impl.jrt.JrtFileSystemImpl</implementation-class>
     </component>
-
     <component>
       <implementation-class>com.intellij.util.xml.impl.JavaDomApplicationComponent</implementation-class>
     </component>
@@ -33,6 +32,9 @@
     </component>
     <component>
       <implementation-class>com.intellij.codeInsight.hints.AnnotationHintsPassFactory</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.intellij.lang.java.JavaModuleRenameListener</implementation-class>
     </component>
   </project-components>
 
@@ -408,6 +410,7 @@
                                  bundle="messages.JavadocBundle"/>
     <editorAppearanceConfigurable instance="com.intellij.codeInsight.hints.AnnotationHintsConfigurable"/>
 
+    <wordBoundaryFilter language="JAVA" implementationClass="com.intellij.codeInsight.editorActions.JavaWordBoundaryFilter"/>
     <editorActionHandler action="PrevParameter" implementationClass="com.intellij.codeInsight.editorActions.JavaVarArgPrevParameterHandler"/>
     <editorActionHandler action="NextParameter" implementationClass="com.intellij.codeInsight.editorActions.JavaVarArgNextParameterHandler"/>
     <editorActionHandler action="EditorLineStart" implementationClass="com.intellij.codeInsight.editorActions.JavadocLineStartHandler"/>
@@ -472,7 +475,6 @@
     <lang.psiElementExternalizer language="JAVA" implementationClass="com.intellij.lang.java.JavaPsiElementExternalizer"/>
     <lang.importOptimizer language="JAVA" implementationClass="com.intellij.lang.java.JavaImportOptimizer"/>
     <lang.documentationFixer language="JAVA" implementationClass="com.intellij.codeInsight.documentation.JavaDocCommentFixer"/>
-    <documentationProvider implementation="com.intellij.lang.java.FileDocumentationProvider" order="last"/>
     <lang.documentationProvider language="JAVA" implementationClass="com.intellij.lang.java.JavaDocumentationProvider"/>
     <lang.formatting.extractor language="JAVA" implementationClass="com.intellij.psi.codeStyle.extractor.differ.JavaExtractor"/>
     <lang.rearranger language="JAVA" implementationClass="com.intellij.psi.codeStyle.arrangement.JavaRearranger"/>
@@ -762,6 +764,11 @@
                      enabledByDefault="true" level="WARNING"
                      key="inspection.redundant.comparator.comparing.display.name" bundle="messages.InspectionsBundle"
                      implementationClass="com.intellij.codeInspection.RedundantComparatorComparingInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="SuspiciousListRemoveInLoop"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs"
+                     enabledByDefault="true" level="WARNING"
+                     key="inspection.suspicious.list.remove.display.name" bundle="messages.InspectionsBundle"
+                     implementationClass="com.intellij.codeInspection.SuspiciousListRemoveInLoopInspection"/>
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="FoldExpressionIntoStream"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.language.level.specific.issues.and.migration.aids8"
                      enabledByDefault="true" level="INFORMATION"

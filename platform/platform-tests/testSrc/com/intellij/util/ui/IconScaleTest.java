@@ -3,13 +3,10 @@ package com.intellij.util.ui;
 
 import com.intellij.openapi.util.IconLoader.CachedImageIcon;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.JBUI.ScaleContext;
 import junit.framework.TestCase;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -26,25 +23,11 @@ import static com.intellij.util.ui.JBUI.ScaleType.USR_SCALE;
  * @author tav
  */
 public class IconScaleTest extends TestScaleHelper {
-
-  private static boolean initialSvgProp;
-
   @Before
   @Override
   public void setState() {
     super.setState();
-
-    RegistryValue rv = Registry.get("ide.svg.icon");
-    initialSvgProp = rv.asBoolean();
-    rv.setValue(true);
-  }
-
-  @After
-  @Override
-  public void restoreState() {
-    super.restoreState();
-
-    Registry.get("ide.svg.icon").setValue(initialSvgProp);
+    setRegistryProperty("ide.svg.icon", "true");
   }
 
   @Test

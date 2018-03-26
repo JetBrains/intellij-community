@@ -558,6 +558,7 @@
         <action id="EditCustomProperties" class="com.intellij.ide.actions.EditCustomPropertiesAction"/>
         <action id="EditCustomVmOptions" class="com.intellij.ide.actions.EditCustomVmOptionsAction"/>
         <action id="LogDebugConfigure" class="com.intellij.ide.actions.DebugLogConfigureAction"/>
+        <action id="DataSharingOptions" class="com.intellij.ide.actions.DataSharingOptionsAction" internal="true"/>
         <separator/>
         <action id="CheckForUpdate" class="com.intellij.openapi.updateSettings.impl.CheckForUpdateAction"/>
         <action id="About" class="com.intellij.ide.actions.AboutAction"/>
@@ -815,7 +816,8 @@
         <action id="ShowSouthPanelTestDialogAction" internal="true" class="com.intellij.openapi.wm.impl.status.ShowSouthPanelTestDialogAction" text="Test DialogWrapper South Panel"/>
         <action id="TestTextFieldAction" internal="true" class="com.intellij.ui.components.TestTextFieldAction" text="Test Text Fields"/>
         <separator/>
-        <action id="DebugMigLayoutAction" internal="true" class="com.intellij.ui.layout.DebugMigLayoutAction" text="MigLayout Debug Mode" />
+        <action id="DebugMigLayoutAction" internal="true" class="com.intellij.ui.layout.migLayout.DebugMigLayoutAction" text="UI DSL Debug Mode" />
+        <action id="ShowcaseUiDslAction" internal="true" class="com.intellij.ui.layout.ShowcaseUiDslAction" text="UI DSL Showcase" />
       </group>
       <group id="TopAnomalies" internal="true" class="com.intellij.internal.anomalies.TopAnomaliesAction" text="Top Anomalies" popup="true"/>
       <action id="ImageDuplicates" internal="true" class="com.intellij.internal.ShowImageDuplicatesAction" text="Find Image Duplicates"/>
@@ -827,7 +829,6 @@
       <action internal="true" id="SendStatistics" class="com.intellij.internal.statistic.actions.SendStatisticsAction" text="OLD: Collect And Send Statistics"/>
       <action internal="true" id="SendFUStatistics" class="com.intellij.internal.statistic.actions.SendFUStatisticsAction" text="NEW: Collect And Send Statistics"/>
       <action internal="true" id="SendEventLogStatistics" class="com.intellij.internal.statistic.actions.SendEventLogAction" text="Send Feature Usage Event Log"/>
-      <action internal="true" id="PersistFUStatisticsSessionAction" class="com.intellij.internal.statistic.actions.PersistFUStatisticsSessionAction" text="Persist statistics session (for QA)"/>
 
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>

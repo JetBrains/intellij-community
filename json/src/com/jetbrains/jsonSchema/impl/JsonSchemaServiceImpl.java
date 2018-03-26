@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -42,15 +40,12 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
   @NotNull
   private final Project myProject;
   private final MyState myState;
-  private final AtomicLong myModificationCount = new AtomicLong(0);
   private final AtomicLong myAnyChangeCount = new AtomicLong(0);
-  private final ModificationTracker myModificationTracker;
   private final ModificationTracker myAnySchemaChangeTracker;
 
   public JsonSchemaServiceImpl(@NotNull Project project) {
     myProject = project;
     myState = new MyState(() -> getProvidersFromFactories());
-    myModificationTracker = () -> myModificationCount.get();
     myAnySchemaChangeTracker = () -> myAnyChangeCount.get();
     project.getMessageBus().connect().subscribe(JsonSchemaVfsListener.JSON_SCHEMA_CHANGED, myAnyChangeCount::incrementAndGet);
     JsonSchemaVfsListener.startListening(project, this);
@@ -87,8 +82,8 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
 
   @Override
   public void reset() {
-    myAnyChangeCount.incrementAndGet();
     myState.reset();
+    myAnyChangeCount.incrementAndGet();
     DaemonCodeAnalyzer.getInstance(myProject).restart();
   }
 
@@ -146,7 +141,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
     final CachedValueProvider<JsonSchemaObject> provider = () -> {
       final JsonObject topLevelValue = ObjectUtils.tryCast(((JsonFile)psiFile).getTopLevelValue(), JsonObject.class);
       final JsonSchemaObject object = topLevelValue == null ? null : new JsonSchemaReader().read(topLevelValue);
-      return CachedValueProvider.Result.create(object, psiFile, myModificationTracker);
+      return CachedValueProvider.Result.create(object, psiFile);
     };
     return ReadAction.compute(() -> CachedValuesManager.getCachedValue(psiFile, provider));
   }

@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInspection.dataFlow.instructions.ArrayAccessInstruction;
+import com.intellij.codeInspection.dataFlow.instructions.BinopInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.PushInstruction;
 import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
@@ -61,6 +63,18 @@ public class CommonDataflow {
       DfaFactMap map = this.myFacts.get(expression);
       return map == null ? null : map.get(type);
     }
+
+    /**
+     * Returns the fact map which represents all the facts known for given expression
+     *
+     * @param expression an expression to check
+     * @return the fact map which represents all the facts known for given expression; empty map if the expression was
+     * analyzed, but no particular facts were inferred; null if the expression was not analyzed.
+     */
+    @Nullable
+    public DfaFactMap getAllFacts(PsiExpression expression) {
+      return this.myFacts.get(expression);
+    }
   }
 
   @Contract("null -> null")
@@ -79,6 +93,30 @@ public class CommonDataflow {
           for (DfaInstructionState state : states) {
             DfaMemoryState afterState = state.getMemoryState();
             dfr.add(place, (DfaMemoryStateImpl)afterState, instruction.getValue());
+          }
+        }
+        return states;
+      }
+
+      @Override
+      public DfaInstructionState[] visitArrayAccess(ArrayAccessInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+        DfaInstructionState[] states = super.visitArrayAccess(instruction, runner, memState);
+        PsiArrayAccessExpression anchor = instruction.getExpression();
+        for (DfaInstructionState state : states) {
+          DfaMemoryState afterState = state.getMemoryState();
+          dfr.add(anchor, (DfaMemoryStateImpl)afterState, afterState.peek());
+        }
+        return states;
+      }
+
+      @Override
+      public DfaInstructionState[] visitBinop(BinopInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+        DfaInstructionState[] states = super.visitBinop(instruction, runner, memState);
+        PsiElement anchor = instruction.getPsiAnchor();
+        if(anchor instanceof PsiExpression) {
+          for (DfaInstructionState state : states) {
+            DfaMemoryState afterState = state.getMemoryState();
+            dfr.add((PsiExpression)anchor, (DfaMemoryStateImpl)afterState, afterState.peek());
           }
         }
         return states;
@@ -113,7 +151,7 @@ public class CommonDataflow {
           for (DfaInstructionState state : states) {
             DfaValue value = state.getMemoryState().peek();
             if(value != fail) {
-              dfr.add(context, (DfaMemoryStateImpl)state.getMemoryState(), state.getMemoryState().peek());
+              dfr.add(context, (DfaMemoryStateImpl)state.getMemoryState(), value);
             }
           }
         }

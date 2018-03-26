@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -23,6 +24,14 @@ public interface IdeaPluginDescriptor extends PluginDescriptor {
   String getChangeNotes();
 
   String getName();
+
+  @Nullable
+  String getProductCode();
+
+  @Nullable
+  Date getReleaseDate();
+
+  int getReleaseVersion();
 
   @NotNull
   PluginId[] getDependentPluginIds();

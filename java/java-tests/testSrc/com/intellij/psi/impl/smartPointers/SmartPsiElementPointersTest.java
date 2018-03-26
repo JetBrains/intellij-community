@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.event.EditorEventMulticaster;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.impl.FrozenDocument;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -1087,7 +1088,7 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
 
     GCUtil.tryGcSoftlyReachableObjects();
     SmartPointerTracker.processQueue();
-    LeakHunter.checkLeak(LeakHunter.allRoots(), Document.class, d -> d.getUserData(key) != null);
+    LeakHunter.checkLeak(LeakHunter.allRoots(), Document.class, d -> !(d instanceof FrozenDocument) && d.getUserData(key) != null);
   }
 
 }

@@ -112,6 +112,18 @@ public class PsiReplacementUtil {
     return styleManager.reformat(javaStyleManager.shortenClassReferences(newStatement));
   }
 
+  public static void replaceExpressionWithReferenceTo(@NotNull PsiExpression expression, @NotNull PsiMember target) {
+    final Project project = expression.getProject();
+    final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+    final PsiElementFactory factory = psiFacade.getElementFactory();
+    final PsiReferenceExpression newExpression = (PsiReferenceExpression)factory.createExpressionFromText("xxx", expression);
+    CommentTracker tracker = new CommentTracker();
+    final PsiReferenceExpression replacementExpression = (PsiReferenceExpression)tracker.replaceAndRestoreComments(expression, newExpression);
+    final PsiElement element = replacementExpression.bindToElement(target);
+    final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
+    styleManager.shortenClassReferences(element);
+  }
+
   @NotNull
   public static String getElementText(@NotNull PsiElement element, @Nullable PsiElement elementToReplace, @Nullable String replacement) {
     final StringBuilder out = new StringBuilder();

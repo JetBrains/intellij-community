@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff.impl.dir;
 
 import com.google.common.collect.BiMap;
@@ -622,7 +608,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
       if (source instanceof AsyncDiffElement) {
         ((AsyncDiffElement)source).copyToAsync(myTarget, element.getTarget(), path)
           .rejected(error -> reportException(error == null ? null : error.getMessage()))
-          .done(newElement -> {
+          .onSuccess(newElement -> {
             ApplicationManager.getApplication().assertIsDispatchThread();
             if (myDisposed) return;
             if (newElement == null && element.getTarget() != null) {
@@ -667,7 +653,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
       if (target instanceof AsyncDiffElement) {
         ((AsyncDiffElement)target).copyToAsync(mySource, element.getSource(), path)
           .rejected(error -> reportException(error == null ? null : error.getMessage()))
-          .done(newElement -> {
+          .onSuccess(newElement -> {
             if (myDisposed) return;
             ApplicationManager.getApplication().assertIsDispatchThread();
             refreshElementAfterCopyFrom(element, newElement);
@@ -730,7 +716,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     if (source instanceof AsyncDiffElement || target instanceof AsyncDiffElement) {
       ((AsyncDiffElement)(source != null ? source : target)).deleteAsync()
         .rejected(error -> reportException(error != null ? error.getMessage() : null))
-        .done(result -> {
+        .onSuccess(result -> {
           if (!myDisposed && myElements.indexOf(element) != -1) {
             removeElement(element, true);
           }

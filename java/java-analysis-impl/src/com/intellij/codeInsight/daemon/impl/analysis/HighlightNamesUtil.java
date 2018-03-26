@@ -204,7 +204,7 @@ public class HighlightNamesUtil {
   }
 
   @Nullable
-  private static HighlightInfoType getVariableNameHighlightType(@NotNull PsiVariable var, PsiElement elementToHighlight) {
+  private static HighlightInfoType getVariableNameHighlightType(@NotNull PsiVariable var, @NotNull PsiElement elementToHighlight) {
     if (var instanceof PsiLocalVariable
         || var instanceof PsiParameter && ((PsiParameter)var).getDeclarationScope() instanceof PsiForeachStatement) {
       return JavaHighlightInfoTypes.LOCAL_VARIABLE;
@@ -231,7 +231,7 @@ public class HighlightNamesUtil {
   }
 
   @NotNull
-  private static HighlightInfoType getClassNameHighlightType(@Nullable PsiClass aClass, @Nullable PsiElement element) {
+  private static HighlightInfoType getClassNameHighlightType(@Nullable PsiClass aClass, @NotNull PsiElement element) {
     if (element instanceof PsiJavaCodeReferenceElement && element.getParent() instanceof PsiAnonymousClass) {
       return JavaHighlightInfoTypes.ANONYMOUS_CLASS_NAME;
     }

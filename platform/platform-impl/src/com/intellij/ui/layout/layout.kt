@@ -2,19 +2,19 @@
 package com.intellij.ui.layout
 
 import com.intellij.ui.components.Panel
-import com.intellij.ui.layout.LCFlags.*
 import javax.swing.JPanel
 
 /**
  * Claims all available space in the container for the columns ([LCFlags.fillX], if `constraints` is passed, `fillX` will be not applied - add it explicitly if need).
- * At least one component need to have a [CCFlags.grow] constraint for it to fill the container.
+ * At least one component need to have a [Row.grow] constraint for it to fill the container.
  *
- * See [docs](https://github.com/JetBrains/intellij-community/tree/master/platform/platform-impl/src/com/intellij/ui/layout)
+ * See [docs](https://github.com/JetBrains/intellij-community/tree/master/platform/platform-impl/src/com/intellij/ui/layout).
  *
- * Check `Tools -> Internal Actions -> UI -> MigLayout Debug Mode` to turn on debug painting.
+ * Check `Tools -> Internal Actions -> UI -> UI DSL Debug Mode` to turn on debug painting.
  *
- * JTextComponent component automatically has [CCFlags.growX].
- * ToolbarDecorator component automatically has [CCFlags.grow] and [CCFlags.push].
+ * `JTextComponent`, `TextFieldWithHistory` (use [Row.textFieldWithBrowseButton]), `SeparatorComponent` and `ComponentWithBrowseButton` components automatically have [Row.growX].
+ *
+ * `ToolbarDecorator` and `JBScrollPane` (use [Row.scrollPane]) components automatically have [Row.grow] and [Row.push].
  */
 inline fun panel(vararg constraints: LCFlags, title: String? = null, init: LayoutBuilder.() -> Unit): JPanel {
   val builder = createLayoutBuilder()
@@ -23,8 +23,4 @@ inline fun panel(vararg constraints: LCFlags, title: String? = null, init: Layou
   val panel = Panel(title, layout = null)
   builder.builder.build(panel, constraints)
   return panel
-}
-
-inline fun verticalPanel(init: Row.() -> Unit) = panel(noGrid, flowY, fillX) {
-  row(init = init)
 }

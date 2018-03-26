@@ -2,10 +2,8 @@
 package com.intellij.codeInsight.navigation.actions;
 
 import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiIdentifier;
-import com.intellij.psi.PsiTypeElement;
-import com.intellij.psi.PsiVariable;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Nullable;
 
 public class GotoVarTypeHandler extends GotoDeclarationHandlerBase {
@@ -21,7 +19,12 @@ public class GotoVarTypeHandler extends GotoDeclarationHandlerBase {
         }
       }
     }
-
+    else if (elementAt instanceof PsiKeyword && PsiKeyword.VAR.equals(elementAt.getText())) {
+      PsiElement parent = elementAt.getParent();
+      if (parent instanceof PsiTypeElement && ((PsiTypeElement)parent).isInferredType()) {
+        return PsiUtil.resolveClassInClassTypeOnly(((PsiTypeElement)parent).getType());
+      }
+    }
     return null;
   }
 }

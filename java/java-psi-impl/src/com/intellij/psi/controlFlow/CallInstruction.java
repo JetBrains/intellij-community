@@ -20,8 +20,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class CallInstruction extends GoToInstruction {
   public final ControlFlowStack stack;
-  public int procBegin;
-  public int procEnd;
+  int procBegin;
+  int procEnd;
 
   public CallInstruction(int procBegin, int procEnd, @NotNull ControlFlowStack stack) {
     super(procBegin);
@@ -41,7 +41,7 @@ public class CallInstruction extends GoToInstruction {
   }
 
   @Override
-  public void accept(ControlFlowInstructionVisitor visitor, int offset, int nextOffset) {
+  public void accept(@NotNull ControlFlowInstructionVisitor visitor, int offset, int nextOffset) {
     visitor.visitCallInstruction(this, offset, nextOffset);
   }
 }

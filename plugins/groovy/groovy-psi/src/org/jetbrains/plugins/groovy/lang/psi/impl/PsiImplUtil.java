@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
@@ -92,6 +78,7 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.checkPrecedence;
@@ -131,7 +118,7 @@ public class PsiImplUtil {
     PsiElement oldParent = oldExpr.getParent();
     if (oldParent == null) throw new PsiInvalidElementAccessException(oldExpr);
 
-    if (!(oldExpr instanceof GrApplicationStatement)) {
+    if (convertToMethodCall(oldExpr)) {
       newExpr = ApplicationStatementUtil.convertToMethodCallExpression(newExpr);
     }
 
@@ -246,6 +233,13 @@ public class PsiImplUtil {
     return newExpr;
   }
 
+  private static boolean convertToMethodCall(GrExpression position) {
+    if (position instanceof GrApplicationStatement) return false;
+    final PsiElement parent = position.getParent();
+    if (parent instanceof GrVariable && ((GrVariable)parent).getInitializerGroovy() == position) return false;
+    return true;
+  }
+
   private static boolean isFirstChild(PsiElement element) {
     return PsiUtil.skipWhitespacesAndComments(element.getParent().getFirstChild(), true) == element;
   }
@@ -339,6 +333,11 @@ public class PsiImplUtil {
     if (results.length != 1) return null;
     final PsiElement element = results[0].getElement();
     return element instanceof PsiMethod ? (PsiMethod) element : null;
+  }
+
+  @NotNull
+  public static GroovyResolveResult extractUniqueResult(@NotNull Collection<? extends GroovyResolveResult> results) {
+    return results.size() == 1 ? results.iterator().next() : EmptyGroovyResolveResult.INSTANCE;
   }
 
   @NotNull
@@ -704,17 +703,8 @@ public class PsiImplUtil {
     return false;
   }
 
-  public static boolean hasClosureArguments(@Nullable GrCall call) {
-    if (call == null) return false;
-
-    for (PsiElement child = call.getFirstChild(); child != null; child = child.getNextSibling()) {
-      if (child instanceof GrClosableBlock) return true;
-    }
-    return false;
-  }
-
   public static boolean hasArguments(@NotNull GrCall call) {
-    if (hasClosureArguments(call)) return true;
+    if (call.hasClosureArguments()) return true;
     GrArgumentList list = call.getArgumentList();
     return hasExpressionArguments(list) || hasNamedArguments(list);
   }

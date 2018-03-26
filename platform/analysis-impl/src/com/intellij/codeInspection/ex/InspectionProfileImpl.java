@@ -341,11 +341,19 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     });
   }
 
+  /**
+   * Warning: Usage of this method is discouraged as if separate tool options are defined for different scopes, it just returns
+   * the options for the first scope which may lead to unexpected results. Consider using {@link #getInspectionTool(String, PsiElement)} instead.
+   *
+   * @param shortName an inspection short name
+   * @param project   a project
+   * @return an InspectionToolWrapper associated with this tool.
+   */
   @Override
   @Nullable
   public InspectionToolWrapper getInspectionTool(@NotNull String shortName, Project project) {
     final ToolsImpl tools = getToolsOrNull(shortName, project);
-    return tools != null? tools.getTool() : null;
+    return tools != null ? tools.getTool() : null;
   }
 
   public InspectionToolWrapper getToolById(@NotNull String id, @NotNull PsiElement element) {

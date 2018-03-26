@@ -22,7 +22,7 @@ abstract class InstructionClientVisitor<T> extends ControlFlowInstructionVisitor
     return offset == processedInstructions.length;
   }
 
-  protected boolean[] processedInstructions;
+  boolean[] processedInstructions;
 
   public void procedureEntered(int startOffset, int endOffset) {
   }

@@ -1,16 +1,15 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.touchbar;
 
-import org.jetbrains.annotations.NotNull;
+import com.intellij.ui.mac.foundation.ID;
 
 abstract class TBItem {
-  protected String myItemID; // used as unique item's name inside native code
+  protected ID myNativePeer;
 
-  String getItemId() { return myItemID; }
-  void register(@NotNull String uid) {
-    myItemID = uid;
-    _register();
+  void register(ID touchBar) {
+    myNativePeer = _register(touchBar);
   }
 
-  protected abstract void _register();
+  // NOTE: creates native peer and returns it's id
+  protected abstract ID _register(ID tbOwner);
 }

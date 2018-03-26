@@ -6,7 +6,7 @@
       <xy x="20" y="20" width="500" height="400"/>
     </constraints>
     <properties/>
-    <border type="none" title-resource-bundle="messages/ApplicationBundle" title-key="title.naming.comment.code"/>
+    <border type="none"/>
     <children>
       <component id="e86e0" class="com.intellij.ui.components.JBCheckBox" binding="myLineCommentAtFirstColumnCb">
         <constraints>

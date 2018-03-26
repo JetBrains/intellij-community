@@ -6,7 +6,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Condition
 import com.intellij.ui.ColoredListCellRenderer
-import com.intellij.ui.components.JBList
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.connectRetrying
 import com.intellij.util.io.socketConnection.ConnectionStatus
 import io.netty.bootstrap.Bootstrap
@@ -123,30 +123,24 @@ fun <T> chooseDebuggee(targets: Collection<T>, selectedIndex: Int, renderer: (T,
 
   val result = org.jetbrains.concurrency.AsyncPromise<T>()
   ApplicationManager.getApplication().invokeLater {
-    val list = JBList(targets)
-    list.cellRenderer = object : ColoredListCellRenderer<T>() {
-      override fun customizeCellRenderer(list: JList<out T>, value: T, index: Int, selected: Boolean, hasFocus: Boolean) {
-        renderer(value, this)
-      }
-    }
-    if (selectedIndex != -1) {
-      list.selectedIndex = selectedIndex
-    }
-
-    JBPopupFactory.getInstance()
-      .createListPopupBuilder(list)
+    val model = ContainerUtil.newArrayList(targets)
+    val builder = JBPopupFactory.getInstance()
+      .createPopupChooserBuilder(model)
+      .setRenderer(
+        object : ColoredListCellRenderer<T>() {
+          override fun customizeCellRenderer(list: JList<out T>, value: T, index: Int, selected: Boolean, hasFocus: Boolean) {
+            renderer(value, this)
+          }
+        })
       .setTitle("Choose Page to Debug")
       .setCancelOnWindowDeactivation(false)
-      .setItemChoosenCallback {
-        @Suppress("UNCHECKED_CAST")
-        val value = list.selectedValue
-        if (value == null) {
-          result.setError("No target to inspect")
-        }
-        else {
-          result.setResult(value)
-        }
+      .setItemChosenCallback { value ->
+        result.setResult(value)
       }
+    if (selectedIndex != -1) {
+      builder.setSelectedValue(model[selectedIndex], false)
+    }
+    builder
       .createPopup()
       .showInFocusCenter()
   }

@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema;
 
 import com.intellij.json.JsonBundle;
@@ -101,10 +102,10 @@ public class JsonSchemaMappingsView implements Disposable {
     final FormBuilder builder = FormBuilder.createFormBuilder();
     final JBLabel label = new JBLabel("JSON schema file:");
     builder.addLabeledComponent(label, mySchemaField);
-    label.setBorder(JBUI.Borders.empty(0,10,0,10));
-    mySchemaField.setBorder(JBUI.Borders.empty(0, 0, 0, 10));
+    label.setBorder(JBUI.Borders.empty(0, 10));
+    mySchemaField.setBorder(JBUI.Borders.emptyRight(10));
     final JPanel wrapper = new JPanel(new BorderLayout());
-    wrapper.setBorder(JBUI.Borders.empty(0, 10, 0, 10));
+    wrapper.setBorder(JBUI.Borders.empty(0, 10));
     myErrorIcon = new JBLabel(UIUtil.getBalloonWarningIcon());
     wrapper.add(myErrorIcon, BorderLayout.WEST);
     wrapper.add(myError, BorderLayout.CENTER);

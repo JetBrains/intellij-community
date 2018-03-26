@@ -726,8 +726,11 @@ public class InferenceSession {
       InferenceVariable[] variables = initBounds(null, restParamSubstitution, capturedParams.toArray(PsiTypeParameter.EMPTY_ARRAY));
       int idx = 0;
       for (PsiType parameter : parameters) {
-        if (parameter instanceof PsiCapturedWildcardType && isProperType(((PsiCapturedWildcardType)parameter).getWildcard())) {
-          variables[idx++].putUserData(ORIGINAL_CAPTURE, (PsiCapturedWildcardType)parameter);
+        if (parameter instanceof PsiCapturedWildcardType) {
+          InferenceVariable variable = variables[idx++];
+          if (isProperType(((PsiCapturedWildcardType)parameter).getWildcard())) {
+            variable.putUserData(ORIGINAL_CAPTURE, (PsiCapturedWildcardType)parameter);
+          }
         }
       }
       return variables;
@@ -1926,22 +1929,7 @@ public class InferenceSession {
 
   public static boolean wasUncheckedConversionPerformed(PsiElement call) {
     final Boolean erased = call.getUserData(ERASED);
-    if (erased != null && erased.booleanValue()) {
-      return true;
-    }
-
-    if (call instanceof PsiCallExpression) {
-      PsiExpressionList args = ((PsiCallExpression)call).getArgumentList();
-      if (args != null) {
-        for (PsiExpression expression : args.getExpressions()) {
-          if (expression instanceof PsiNewExpression && !PsiDiamondType.hasDiamond((PsiNewExpression)expression)) {
-            continue;
-          }
-          if (wasUncheckedConversionPerformed(expression)) return true;
-        }
-      }
-    }
-    return false;
+    return erased != null && erased.booleanValue();
   }
 
   public PsiElement getContext() {

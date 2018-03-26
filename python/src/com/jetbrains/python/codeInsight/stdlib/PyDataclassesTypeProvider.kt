@@ -15,7 +15,7 @@ import com.jetbrains.python.psi.types.*
 class PyDataclassesTypeProvider : PyTypeProviderBase() {
 
   override fun getReferenceExpressionType(referenceExpression: PyReferenceExpression, context: TypeEvalContext): PyType? {
-    return getDataclassTypeForCallee(referenceExpression, context)
+    return getDataclassTypeForCallee(referenceExpression, context) ?: getDataclassesReplaceType(referenceExpression, context)
   }
 
   override fun getParameterType(param: PyNamedParameter, func: PyFunction, context: TypeEvalContext): Ref<PyType>? {
@@ -55,13 +55,46 @@ class PyDataclassesTypeProvider : PyTypeProviderBase() {
       .firstOrNull { it != null }
   }
 
+  private fun getDataclassesReplaceType(referenceExpression: PyReferenceExpression, context: TypeEvalContext): PyCallableType? {
+    val call = PyCallExpressionNavigator.getPyCallExpressionByCallee(referenceExpression) ?: return null
+    val callee = call.callee as? PyReferenceExpression ?: return null
+
+    val resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context)
+    val resolvedCallee = PyUtil.multiResolveTopPriority(callee.getReference(resolveContext)).singleOrNull()
+
+    if (resolvedCallee is PyCallable && resolvedCallee.qualifiedName == "dataclasses.replace") {
+      val obj = call.getArgument(0, "obj", PyTypedElement::class.java) ?: return null
+      val objType = context.getType(obj) as? PyClassType ?: return null
+      if (objType.isDefinition) return null
+
+      val dataclassType = getDataclassTypeForClass(objType.pyClass, context) ?: return null
+      val dataclassParameters = dataclassType.getParameters(context) ?: return null
+
+      val parameters = mutableListOf<PyCallableParameter>()
+      val elementGenerator = PyElementGenerator.getInstance(referenceExpression.project)
+
+      parameters.add(PyCallableParameterImpl.nonPsi("obj", objType))
+      parameters.add(PyCallableParameterImpl.psi(elementGenerator.createSingleStarParameter()))
+
+      val ellipsis = elementGenerator.createEllipsis()
+
+      dataclassParameters.forEach {
+        parameters.add(PyCallableParameterImpl.nonPsi(it.name, it.getType(context), it.defaultValue ?: ellipsis))
+      }
+
+      return PyCallableTypeImpl(parameters, dataclassType.getReturnType(context))
+    }
+
+    return null
+  }
+
   private fun getDataclassTypeForClass(cls: PyClass, context: TypeEvalContext): PyCallableType? {
     val dataclassParameters = parseDataclassParameters(cls, context)
     if (dataclassParameters == null || !dataclassParameters.init) {
       return null
     }
 
-    val parameters = ArrayList<PyCallableParameter>()
+    val parameters = mutableListOf<PyCallableParameter>()
     val ellipsis = PyElementGenerator.getInstance(cls.project).createEllipsis()
 
     cls.processClassLevelDeclarations { element, _ ->
@@ -101,7 +134,7 @@ class PyDataclassesTypeProvider : PyTypeProviderBase() {
 
   private fun getTypeForParameter(element: PyTargetExpression, context: TypeEvalContext): PyType? {
     val type = context.getType(element)
-    if (type is PyCollectionType && type is PyClassType && type.classQName == DATACLASSES_INITVAR_TYPE) {
+    if (type is PyCollectionType && type.classQName == DATACLASSES_INITVAR_TYPE) {
       return type.elementTypes.firstOrNull()
     }
     return type

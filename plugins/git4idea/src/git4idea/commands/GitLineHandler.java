@@ -177,7 +177,7 @@ public class GitLineHandler extends GitTextHandler {
 
   /**
    * Will not react to {@link com.intellij.util.io.BaseOutputReader.Options}
-   * other then {@link com.intellij.util.io.BaseOutputReader.Options#policy()} because we do not negotiate with terrorists
+   * other than {@link com.intellij.util.io.BaseOutputReader.Options#policy()} because we do not negotiate with terrorists
    */
   private static class LineReader extends BaseDataReader {
     @NotNull private final Reader myReader;
@@ -207,19 +207,14 @@ public class GitLineHandler extends GitTextHandler {
 
     private boolean read(boolean checkReaderReady) throws IOException {
       boolean read = false;
-      try {
-        int n;
-        while (true) {
-          if (checkReaderReady && !myReader.ready()) break;
-          if ((n = myReader.read(myInputBuffer)) < 0) break;
-          if (n > 0) {
-            read = true;
-            myOutputProcessor.process(myInputBuffer, n);
-          }
+      while (true) {
+        if (checkReaderReady && !myReader.ready()) break;
+        int n = myReader.read(myInputBuffer);
+        if (n < 0) break;
+        if (n > 0) {
+          read = true;
+          myOutputProcessor.process(myInputBuffer, n);
         }
-      }
-      finally {
-        myOutputProcessor.flush();
       }
       return read;
     }
@@ -233,7 +228,12 @@ public class GitLineHandler extends GitTextHandler {
 
     @Override
     protected void close() throws IOException {
-      myReader.close();
+      try {
+        myReader.close();
+      }
+      finally {
+        myOutputProcessor.flush();
+      }
     }
   }
 }

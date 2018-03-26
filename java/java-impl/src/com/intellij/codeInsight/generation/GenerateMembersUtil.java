@@ -18,6 +18,7 @@ package com.intellij.codeInsight.generation;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
+import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -40,7 +41,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
-import java.util.HashMap;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -603,7 +603,7 @@ public class GenerateMembersUtil {
       if (qualifiedName == null || ArrayUtil.contains(qualifiedName, skipAnnotations) || target.findAnnotation(qualifiedName) != null) {
         continue;
       }
-      target.add(annotation);
+      AddAnnotationPsiFix.addPhysicalAnnotation(qualifiedName, annotation.getParameterList().getAttributes(), target);
     }
   }
 

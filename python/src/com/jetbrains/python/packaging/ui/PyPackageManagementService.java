@@ -63,7 +63,7 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
     myProject = project;
     mySdk = sdk;
     // Dumb heuristic for the size of IO-bound tasks pool: safer than unlimited, snappier than a single thread
-    myExecutorService = AppExecutorUtil.createBoundedApplicationPoolExecutor("PyPackageManagementService pool", 4);
+    myExecutorService = AppExecutorUtil.createBoundedApplicationPoolExecutor("PyPackageManagementService Pool", 4);
   }
 
   @NotNull

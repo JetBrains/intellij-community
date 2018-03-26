@@ -85,7 +85,7 @@ def process_net_command(py_db, cmd_id, seq, text):
             elif cmd_id == CMD_THREAD_SUSPEND:
                 # Yes, thread suspend is still done at this point, not through an internal command!
                 t = pydevd_find_thread_by_id(text)
-                if t and not hasattr(t, 'pydev_do_not_trace'):
+                if t and not getattr(t, 'pydev_do_not_trace', None):
                     additional_info = None
                     try:
                         additional_info = t.additional_info

@@ -17,7 +17,6 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -31,7 +30,6 @@ import org.jetbrains.annotations.Nullable;
  * @author anet, peter
  */
 public class DfaOptionalSupport {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.DfaOptionalSupport");
   public static final String GUAVA_OPTIONAL = "com.google.common.base.Optional";
 
   public static final CallMatcher JDK_OPTIONAL_OF_NULLABLE = CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_OPTIONAL, "ofNullable").parameterCount(1);

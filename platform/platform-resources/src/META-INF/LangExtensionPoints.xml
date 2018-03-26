@@ -54,6 +54,11 @@
     <extensionPoint name="codeInsight.unresolvedReferenceQuickFixProvider"
                     interface="com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider"/>
 
+    <extensionPoint name="wordBoundaryFilter"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.openapi.editor.actions.WordBoundaryFilter"/>
+    </extensionPoint>
+
     <extensionPoint name="bidiRegionsSeparator"
                     beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.openapi.editor.bidi.BidiRegionsSeparator"/>

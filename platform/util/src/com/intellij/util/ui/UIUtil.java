@@ -11,6 +11,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.ui.*;
+import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -980,6 +981,10 @@ public class UIUtil {
     return UIManager.getColor("Label.disabledText");
   }
 
+  public static Color getContextHelpForeground() {
+    return Gray.x78;
+  }
+
   @NotNull
   public static String removeMnemonic(@NotNull String s) {
     if (s.indexOf('&') != -1) {
@@ -1516,6 +1521,17 @@ public class UIUtil {
     return SystemInfo.isXWindow && UIManager.getLookAndFeel().getName().contains("GTK");
   }
 
+  public static boolean isGraphite() {
+    if (!SystemInfo.isMac) return false;
+    try {
+      // https://developer.apple.com/library/mac/documentation/Cocoa/Reference/ApplicationKit/Classes/NSCell_Class/index.html#//apple_ref/doc/c_ref/NSGraphiteControlTint
+      // NSGraphiteControlTint = 6
+      return Foundation.invoke("NSColor", "currentControlTint").intValue() == 6;
+    } catch (Exception e) {
+      return false;
+    }
+  }
+
   public static final Color GTK_AMBIANCE_TEXT_COLOR = new Color(223, 219, 210);
   public static final Color GTK_AMBIANCE_BACKGROUND_COLOR = new Color(67, 66, 63);
 
@@ -1597,8 +1613,7 @@ public class UIUtil {
   }
 
   public static Insets getListViewportPadding() {
-    return isUnderNativeMacLookAndFeel() ? JBUI.insets(1, 0) :
-           isUnderWin10LookAndFeel() ? JBUI.emptyInsets() : JBUI.insets(5);
+    return isUnderNativeMacLookAndFeel() ? JBUI.insets(1, 0) : JBUI.emptyInsets();
   }
 
   public static boolean isToUseDottedCellBorder() {
@@ -3025,9 +3040,11 @@ public class UIUtil {
 
     // With JB Linux JDK the label font comes properly scaled based on Xft.dpi settings.
     Font font = getLabelFont();
+    verbose("Label font: %s, %d", font.getFontName(), font.getSize());
 
     if (SystemInfo.isLinux) {
       Object value = Toolkit.getDefaultToolkit().getDesktopProperty("gnome.Xft/DPI");
+      verbose("gnome.Xft/DPI: %s", value);
       if (value instanceof Integer) { // defined by JB JDK when the resource is available in the system
         // If the property is defined, then:
         // 1) it provides correct system scale
@@ -3036,10 +3053,13 @@ public class UIUtil {
         if (dpi < 50) dpi = 50;
         float scale = JBUI.discreteScale(dpi / 96f);
         DEF_SYSTEM_FONT_SIZE = font.getSize() / scale; // derive actual system base font size
+        verbose("DEF_SYSTEM_FONT_SIZE: %.2f, %d", DEF_SYSTEM_FONT_SIZE, dpi);
       }
       else if (!SystemInfo.isJetBrainsJvm) {
         // With Oracle JDK: derive scale from X server DPI, do not change DEF_SYSTEM_FONT_SIZE
-        font = font.deriveFont(DEF_SYSTEM_FONT_SIZE * getScreenScale());
+        float size = DEF_SYSTEM_FONT_SIZE * getScreenScale();
+        font = font.deriveFont(size);
+        verbose("(Not-JB JRE) reset font size: %.2f", size);
       }
     }
     else if (SystemInfo.isWindows) {
@@ -3047,9 +3067,15 @@ public class UIUtil {
       Font winFont = (Font)Toolkit.getDefaultToolkit().getDesktopProperty("win.messagebox.font");
       if (winFont != null) {
         font = winFont; // comes scaled
+        verbose("Windows sys font: %s, %d", winFont.getFontName(), winFont.getSize());
       }
     }
     ourSystemFontData = Pair.create(font.getName(), font.getSize());
+    verbose("ourSystemFontData: %s, %d", ourSystemFontData.first, ourSystemFontData.second);
+  }
+
+  private static void verbose(String msg, Object... args) {
+    if (JBUI.SCALE_VERBOSE) LOG.info(String.format(msg, args));
   }
 
   @Nullable

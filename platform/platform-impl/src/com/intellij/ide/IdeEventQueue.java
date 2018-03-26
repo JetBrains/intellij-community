@@ -229,6 +229,8 @@ public class IdeEventQueue extends EventQueue {
     addDispatcher(new EditingCanceller(), null);
 
     abracadabraDaberBoreh();
+
+    IdeKeyEventDispatcher.addDumbModeWarningListener(() -> flushDelayedKeyEvents());
   }
 
   private void abracadabraDaberBoreh() {
@@ -1386,7 +1388,7 @@ public class IdeEventQueue extends EventQueue {
     return true;
   }
 
-  private void flushDelayedKeyEvents() {
+  public void flushDelayedKeyEvents() {
     delayKeyEvents.set(false);
     int size = myDelayedKeyEvents.size();
     for (int keyEventIndex = 0; keyEventIndex < size; keyEventIndex++) {

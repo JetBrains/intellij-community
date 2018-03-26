@@ -16,6 +16,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -285,8 +286,8 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
   private static List<QualifiedName> getImportedQNames(@NotNull PyImportElement element) {
     final List<QualifiedName> importedQNames = new ArrayList<>();
     final PyStatement stmt = element.getContainingImportStatement();
-    if (stmt instanceof PyFromImportStatement) {
-      final PyFromImportStatement fromImportStatement = (PyFromImportStatement)stmt;
+    final PyFromImportStatement fromImportStatement = ObjectUtils.tryCast(stmt, PyFromImportStatement.class);
+    if (fromImportStatement != null) {
       final QualifiedName importedQName = fromImportStatement.getImportSourceQName();
       final String visibleName = element.getVisibleName();
       if (importedQName != null) {
@@ -316,7 +317,8 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
         importedQNames.add(importedQName);
       }
     }
-    if (!ResolveImportUtil.isAbsoluteImportEnabledFor(element)) {
+    if (!ResolveImportUtil.isAbsoluteImportEnabledFor(element) ||
+        (fromImportStatement != null && fromImportStatement.getRelativeLevel() == 1)) {
       PsiFile file = element.getContainingFile();
       if (file != null) {
         file = file.getOriginalFile();

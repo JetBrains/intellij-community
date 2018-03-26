@@ -12,7 +12,7 @@ import org.jetbrains.uast.UastUtils;
 
 import java.util.Collection;
 
-public abstract class DevkitRelatedClassLineMarkerProviderBase extends DevkitRelatedLineMarkerProviderBase {
+abstract class DevkitRelatedClassLineMarkerProviderBase extends DevkitRelatedLineMarkerProviderBase {
   @Override
   protected final void collectNavigationMarkers(@NotNull PsiElement element, @NotNull Collection<? super RelatedItemLineMarkerInfo> result) {
     // UAST is used for getting the class identifier to work for all UAST languages (not possible in plain PSI)

@@ -79,6 +79,13 @@ public interface DfaMemoryState {
   <T> T getValueFact(@NotNull DfaValue value, @NotNull DfaFactType<T> factType);
 
   /**
+   * Forgets given fact if it was known for the supplied value
+   * @param value a value to drop fact for
+   * @param factType a type of the fact to drop
+   */
+  void dropFact(@NotNull DfaValue value, @NotNull DfaFactType<?> factType);
+
+  /**
    * Updates value fact if it's compatible with current value state. Depending on value passed and memory state implementation
    * the new fact may or may not be memoized.
    *

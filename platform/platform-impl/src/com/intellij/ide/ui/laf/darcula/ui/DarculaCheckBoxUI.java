@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.ui.laf.darcula.ui;
 
-import com.intellij.ide.ui.laf.IconCache;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.*;
 import sun.swing.SwingUtilities2;
@@ -48,7 +47,11 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
 
   @Override public void installDefaults(AbstractButton b) {
     super.installDefaults(b);
-    b.setIconTextGap(JBUI.scale(4));
+    b.setIconTextGap(textIconGap());
+  }
+
+  protected int textIconGap() {
+    return JBUI.scale(5);
   }
 
   @Override

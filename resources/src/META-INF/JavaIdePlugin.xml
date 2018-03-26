@@ -112,9 +112,6 @@
     <extensionPoint name="debugger.sourcePositionProvider"
                     interface="com.intellij.debugger.engine.SourcePositionProvider"/>
 
-    <extensionPoint name="debugger.simpleGetterProvider"
-                    interface="com.intellij.debugger.engine.SimpleGetterProvider"/>
-
     <extensionPoint name="debugger.simplePropertyGetterProvider"
                     interface="com.intellij.debugger.engine.SimplePropertyGetterProvider"/>
 
@@ -404,10 +401,8 @@
       <keyboard-shortcut first-keystroke="control shift SEMICOLON" keymap="$default"/>
     </action>
 
-    <action class="com.intellij.execution.testDiscovery.actions.ShowDiscoveredTestsAction" id="ShowDiscoveredTests" text="Show Discovered Tests" internal="true">
-      <add-to-group group-id="Internal" anchor="last"/>
-    </action>
-    <action class="com.intellij.execution.testDiscovery.actions.ShowDiscoveredTestsFromChangesAction" id="ShowDiscoveredTestsFromChangeList" text="Show Discovered Tests">
+    <action class="com.intellij.execution.testDiscovery.actions.ShowDiscoveredTestsAction" id="ShowDiscoveredTests" text="Show Discovered Tests">
+      <add-to-group group-id="RunMenu" anchor="before" relative-to-action="DebugMainMenu"/>
       <add-to-group group-id="ChangesViewPopupMenu" anchor="last"/>
     </action>
 

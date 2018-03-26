@@ -4,7 +4,6 @@ package com.intellij.xdebugger.impl.evaluate;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.editor.impl.SettingsImpl;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.components.JBLabel;
@@ -45,7 +44,7 @@ public class ExpressionInputComponent extends EvaluationInputComponent {
         Font font = EditorUtil.getEditorFont();
         editor.getColorsScheme().setEditorFontName(font.getFontName());
         editor.getColorsScheme().setEditorFontSize(font.getSize());
-        editor.getSettings().setLineCursorWidth(new SettingsImpl().getLineCursorWidth());
+        editor.getSettings().setLineCursorWidth(EditorUtil.getDefaultCaretWidth());
       }
     };
     myExpressionEditor.setExpression(expression);

@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 
@@ -69,5 +70,18 @@ public class DfaPsiType {
 
   public int getID() {
     return myID;
+  }
+
+  @NotNull
+  public static PsiType normalizeType(@NotNull PsiType psiType) {
+    int dimensions = psiType.getArrayDimensions();
+    psiType = psiType.getDeepComponentType();
+    if (psiType instanceof PsiClassType) {
+      psiType = ((PsiClassType)psiType).rawType();
+    }
+    while (dimensions-- > 0) {
+      psiType = psiType.createArrayType();
+    }
+    return psiType;
   }
 }

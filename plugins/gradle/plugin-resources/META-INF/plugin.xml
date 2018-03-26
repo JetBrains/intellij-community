@@ -22,6 +22,8 @@
 
   <depends>com.intellij.modules.lang</depends>
   <depends optional="true" config-file="gradle-java-integration.xml">com.intellij.modules.java</depends>
+  <depends optional="true" config-file="gradle-maven-integration.xml">org.jetbrains.idea.maven</depends>
+  <depends optional="true" config-file="gradle-coverage-integration.xml">com.intellij.modules.coverage</depends>
   <depends optional="true" config-file="gradle-groovy-integration.xml">org.intellij.groovy</depends>
 
   <resource-bundle>i18n.GradleBundle</resource-bundle>
@@ -111,6 +113,9 @@
   </extensions>
 
   <actions>
+    <group id="Gradle.GenerateGroup">
+      <add-to-group group-id="GenerateGroup" anchor="first"/>
+    </group>
 
     <action id="Gradle.ExecuteTask" class="org.jetbrains.plugins.gradle.action.GradleExecuteTaskAction" text="Execute Gradle Task"
             icon="GradleIcons.Gradle">

@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModel;
+import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
@@ -31,14 +32,6 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
   @NotNull
   private final ProjectSdksModel myJdksTreeModel;
   private final SdkModel.Listener myListener = new SdkModel.Listener() {
-    @Override
-    public void sdkAdded(Sdk sdk) {
-    }
-
-    @Override
-    public void beforeSdkRemove(Sdk sdk) {
-    }
-
     @Override
     public void sdkChanged(Sdk sdk, String previousName) {
       updateName();
@@ -171,7 +164,8 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
       @Override
       public AnAction[] getChildren(@Nullable final AnActionEvent e) {
         DefaultActionGroup group = new DefaultActionGroup(ProjectBundle.message("add.new.jdk.text"), true);
-        myJdksTreeModel.createAddActions(group, myTree, projectJdk -> addJdkNode(projectJdk, true));
+        myJdksTreeModel.createAddActions(group, myTree, projectJdk -> addJdkNode(projectJdk, true),
+                                         sdkTypeId -> !(sdkTypeId instanceof SimpleJavaSdkType));
         return group.getChildren(null);
       }
     };

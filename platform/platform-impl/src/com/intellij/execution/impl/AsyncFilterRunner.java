@@ -26,7 +26,7 @@ import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.util.TimeoutUtil;
-import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.SequentialTaskExecutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +41,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 class AsyncFilterRunner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.impl.FilterRunner");
-  private static final ExecutorService ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("console filters", 1);
+  private static final ExecutorService ourExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Console Filters");
   private final EditorHyperlinkSupport myHyperlinks;
   private final Editor myEditor;
   private final Queue<HighlighterJob> myQueue = new ConcurrentLinkedQueue<>();

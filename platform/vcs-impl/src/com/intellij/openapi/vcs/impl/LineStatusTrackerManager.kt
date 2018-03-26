@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.impl
 import com.google.common.collect.HashMultiset
 import com.google.common.collect.Multiset
 import com.intellij.icons.AllIcons
+import com.intellij.ide.file.BatchFileChangeListener
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
@@ -61,10 +62,10 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.concurrency.Semaphore
+import com.intellij.util.ui.UIUtil
 import com.intellij.vcsUtil.VcsUtil
-import org.jetbrains.annotations.CalledInAny
-import org.jetbrains.annotations.CalledInAwt
-import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.*
 import java.nio.charset.Charset
 import java.util.*
 
@@ -89,6 +90,7 @@ class LineStatusTrackerManager(
 
   private var partialChangeListsEnabled = VcsApplicationSettings.getInstance().ENABLE_PARTIAL_CHANGELISTS && Registry.`is`("vcs.enable.partial.changelists")
   private val documentsInDefaultChangeList = HashSet<Document>()
+  private var batchChangeTaskCounter: Int = 0
 
   private val filesWithDamagedInactiveRanges = HashSet<VirtualFile>()
   private val fileStatesAwaitingRefresh = HashMap<VirtualFile, PartialLocalLineStatusTracker.State>()
@@ -115,8 +117,11 @@ class LineStatusTrackerManager(
 
       application.addApplicationListener(MyApplicationListener(), disposable)
 
-      val busConnection = project.messageBus.connect(disposable)
-      busConnection.subscribe(LineStatusTrackerSettingListener.TOPIC, MyLineStatusTrackerSettingListener())
+      val projectConnection = project.messageBus.connect(disposable)
+      projectConnection.subscribe(LineStatusTrackerSettingListener.TOPIC, MyLineStatusTrackerSettingListener())
+
+      val appConnection = application.messageBus.connect(disposable)
+      appConnection.subscribe(BatchFileChangeListener.TOPIC, MyBatchFileChangeListener())
 
       val fsManager = FileStatusManager.getInstance(project)
       fsManager.addFileStatusListener(MyFileStatusListener(), disposable)
@@ -152,7 +157,7 @@ class LineStatusTrackerManager(
       }
       trackers.clear()
 
-      loader.clear()
+      loader.dispose()
     }
   }
 
@@ -417,6 +422,10 @@ class LineStatusTrackerManager(
       refreshTracker(tracker)
       eventDispatcher.multicaster.onTrackerAdded(tracker)
 
+      if (batchChangeTaskCounter > 0) {
+        tracker.freeze()
+      }
+
       log("Tracker installed", virtualFile)
       return tracker
     }
@@ -476,7 +485,7 @@ class LineStatusTrackerManager(
     }
   }
 
-  private inner class MyBaseRevisionLoader() : SingleThreadLoader<RefreshRequest, RefreshData>(project) {
+  private inner class MyBaseRevisionLoader : SingleThreadLoader<RefreshRequest, RefreshData>() {
     override fun loadRequest(request: RefreshRequest): Result<RefreshData> {
       if (isDisposed) return Result.Canceled()
       val document = request.document
@@ -527,69 +536,66 @@ class LineStatusTrackerManager(
       return Result.Success(RefreshData(converted, newContentInfo))
     }
 
+    @CalledInAwt
     override fun handleResult(request: RefreshRequest, result: Result<RefreshData>) {
       val document = request.document
       when (result) {
         is Result.Canceled -> {
-          synchronized(LOCK) {
-            val virtualFile = fileDocumentManager.getFile(document)
-            if (virtualFile == null) return
+          val virtualFile = fileDocumentManager.getFile(document) ?: return
 
-            val state = fileStatesAwaitingRefresh.remove(virtualFile)
-            if (state == null) return
-
-            runInEdt(ModalityState.any()) {
-              val tracker = getLineStatusTracker(document)
-              if (tracker is PartialLocalLineStatusTracker) {
-                tracker.restoreState(state)
-                log("Loading canceled: state restored", virtualFile)
-              }
-            }
+          val state = synchronized(LOCK) {
+            fileStatesAwaitingRefresh.remove(virtualFile) ?: return
           }
+
+          val tracker = getLineStatusTracker(document)
+          if (tracker is PartialLocalLineStatusTracker) {
+            tracker.restoreState(state)
+            log("Loading canceled: state restored", virtualFile)
+          }
+
+          checkIfTrackerCanBeReleased(document)
         }
         is Result.Error -> {
-          runInEdt(ModalityState.any()) {
-            synchronized(LOCK) {
-              val data = trackers[document] ?: return@runInEdt
+          synchronized(LOCK) {
+            val data = trackers[document] ?: return
 
-              data.tracker.dropBaseRevision()
-              data.contentInfo = null
+            data.tracker.dropBaseRevision()
+            data.contentInfo = null
 
-              checkIfTrackerCanBeReleased(document)
-            }
+            checkIfTrackerCanBeReleased(document)
           }
         }
         is Result.Success -> {
-          runInEdt(ModalityState.any()) {
-            val virtualFile = fileDocumentManager.getFile(document)!!
-            val refreshData = result.data
+          val virtualFile = fileDocumentManager.getFile(document)!!
+          val refreshData = result.data
 
-            synchronized(LOCK) {
-              val data = trackers[document]
-              if (data == null) {
-                log("Loading finished: tracker already released", virtualFile)
-                return@runInEdt
-              }
-              if (!shouldBeUpdated(data.contentInfo, refreshData.info)) {
-                log("Loading finished: no need to update", virtualFile)
-                return@runInEdt
-              }
-
-              data.contentInfo = refreshData.info
+          synchronized(LOCK) {
+            val data = trackers[document]
+            if (data == null) {
+              log("Loading finished: tracker already released", virtualFile)
+              return
+            }
+            if (!shouldBeUpdated(data.contentInfo, refreshData.info)) {
+              log("Loading finished: no need to update", virtualFile)
+              return
             }
 
-            val tracker = getLineStatusTracker(document)!!
-            tracker.setBaseRevision(refreshData.text)
-            log("Loading finished: success", virtualFile)
+            data.contentInfo = refreshData.info
+          }
 
-            if (tracker is PartialLocalLineStatusTracker) {
-              val state = fileStatesAwaitingRefresh.remove(tracker.virtualFile)
-              if (state != null) {
-                tracker.restoreState(state)
-                log("Loading finished: state restored", virtualFile)
-              }
+          val tracker = getLineStatusTracker(document)!!
+          tracker.setBaseRevision(refreshData.text)
+          log("Loading finished: success", virtualFile)
+
+          if (tracker is PartialLocalLineStatusTracker) {
+            val state = fileStatesAwaitingRefresh.remove(tracker.virtualFile)
+            if (state != null) {
+              tracker.restoreState(state)
+              log("Loading finished: state restored", virtualFile)
             }
           }
+
+          checkIfTrackerCanBeReleased(document)
         }
       }
     }
@@ -749,6 +755,46 @@ class LineStatusTrackerManager(
         override fun checkinFailed(exception: MutableList<VcsException>?) {
           runInEdt {
             getInstanceImpl(panel.project).resetExcludedFromCommitMarkers()
+          }
+        }
+      }
+    }
+  }
+
+  private inner class MyBatchFileChangeListener : BatchFileChangeListener {
+    override fun batchChangeStarted(eventProject: Project, activityName: String?) {
+      if (eventProject != project) return
+      runReadAction {
+        synchronized(LOCK) {
+          if (batchChangeTaskCounter == 0) {
+            for (data in trackers.values) {
+              try {
+                data.tracker.freeze()
+              }
+              catch (e: Throwable) {
+                LOG.error(e)
+              }
+            }
+          }
+          batchChangeTaskCounter++
+        }
+      }
+    }
+
+    override fun batchChangeCompleted(eventProject: Project) {
+      if (eventProject != project) return
+      runInEdt(ModalityState.any()) {
+        synchronized(LOCK) {
+          batchChangeTaskCounter--
+          if (batchChangeTaskCounter == 0) {
+            for (data in trackers.values) {
+              try {
+                data.tracker.unfreeze()
+              }
+              catch (e: Throwable) {
+                LOG.error(e)
+              }
+            }
           }
         }
       }
@@ -962,6 +1008,43 @@ class LineStatusTrackerManager(
       })
     }
   }
+
+
+  @TestOnly
+  fun waitUntilBaseContentsLoaded() {
+    val semaphore = Semaphore()
+    semaphore.down()
+
+    loader.addAfterUpdateRunnable(Runnable {
+      semaphore.up()
+    })
+
+    val start = System.currentTimeMillis()
+    while (true) {
+      if (ApplicationManager.getApplication().isDispatchThread) {
+        UIUtil.dispatchAllInvocationEvents()
+      }
+      if (semaphore.waitFor(10)) {
+        return
+      }
+      if (System.currentTimeMillis() - start > 2000) {
+        throw IllegalStateException("Couldn't await base contents")
+      }
+    }
+  }
+
+  @TestOnly
+  fun releaseAllTrackers() {
+    synchronized(LOCK) {
+      forcedDocuments.clear()
+
+      for (data in trackers.values) {
+        unregisterTrackerInCLM(data)
+        data.tracker.release()
+      }
+      trackers.clear()
+    }
+  }
 }
 
 
@@ -971,11 +1054,11 @@ class LineStatusTrackerManager(
  * - Allows to check whether request is scheduled or is waiting for completion.
  * - Notifies callbacks when queue is exhausted.
  */
-private abstract class SingleThreadLoader<Request, T>(private val project: Project) {
+private abstract class SingleThreadLoader<Request, T> {
   private val LOG = Logger.getInstance(SingleThreadLoader::class.java)
   private val LOCK: Any = Any()
 
-  private val executor = AppExecutorUtil.createBoundedScheduledExecutorService("LineStatusTrackerManager pool", 1)
+  private val executor = AppExecutorUtil.createBoundedScheduledExecutorService("LineStatusTrackerManager Pool", 1)
 
   private val taskQueue = ArrayDeque<Request>()
   private val waitingForRefresh = HashSet<Request>()
@@ -983,15 +1066,19 @@ private abstract class SingleThreadLoader<Request, T>(private val project: Proje
   private val callbacksWaitingUpdateCompletion = ArrayList<Runnable>()
 
   private var isScheduled: Boolean = false
+  private var isDisposed: Boolean = false
 
 
+  @CalledInBackground
   protected abstract fun loadRequest(request: Request): Result<T>
+
+  @CalledInAwt
   protected abstract fun handleResult(request: Request, result: Result<T>)
 
 
   @CalledInAwt
   fun scheduleRefresh(request: Request) {
-    if (isDisposed()) return
+    if (isDisposed) return
 
     synchronized(LOCK) {
       if (taskQueue.contains(request)) return
@@ -1002,9 +1089,10 @@ private abstract class SingleThreadLoader<Request, T>(private val project: Proje
   }
 
   @CalledInAwt
-  fun clear() {
+  fun dispose() {
     val callbacks = mutableListOf<Runnable>()
     synchronized(LOCK) {
+      isDisposed = true
       taskQueue.clear()
       waitingForRefresh.clear()
 
@@ -1050,7 +1138,7 @@ private abstract class SingleThreadLoader<Request, T>(private val project: Proje
 
 
   private fun schedule() {
-    if (isDisposed()) return
+    if (isDisposed) return
 
     synchronized(LOCK) {
       if (isScheduled) return
@@ -1068,7 +1156,7 @@ private abstract class SingleThreadLoader<Request, T>(private val project: Proje
       val request = synchronized(LOCK) {
         val request = taskQueue.poll()
 
-        if (isDisposed() || request == null) {
+        if (isDisposed || request == null) {
           isScheduled = false
           return
         }
@@ -1091,14 +1179,18 @@ private abstract class SingleThreadLoader<Request, T>(private val project: Proje
     }
 
     runInEdt(ModalityState.any()) {
-      handleResult(request, result)
-      notifyTrackerRefreshed(request)
+      try {
+        handleResult(request, result)
+      }
+      finally {
+        notifyTrackerRefreshed(request)
+      }
     }
   }
 
   @CalledInAwt
   private fun notifyTrackerRefreshed(request: Request) {
-    if (isDisposed()) return
+    if (isDisposed) return
 
     val callbacks = mutableListOf<Runnable>()
     synchronized(LOCK) {
@@ -1124,8 +1216,6 @@ private abstract class SingleThreadLoader<Request, T>(private val project: Proje
       }
     }
   }
-
-  private fun isDisposed() = project.isDisposed
 }
 
 private sealed class Result<T> {

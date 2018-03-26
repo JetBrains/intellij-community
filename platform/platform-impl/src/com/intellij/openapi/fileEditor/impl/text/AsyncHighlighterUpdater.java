@@ -39,7 +39,7 @@ import java.util.concurrent.*;
  * @author peter
  */
 public class AsyncHighlighterUpdater extends ReadTask {
-  private static final ExecutorService ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("AsyncEditorLoader pool", 2);
+  private static final ExecutorService ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("AsyncEditorLoader Pool", 2);
   private static final Map<Editor, Future<?>> ourHighlighterFutures = ContainerUtil.newConcurrentMap();
   private final Project myProject;
   private final Editor myEditor;
