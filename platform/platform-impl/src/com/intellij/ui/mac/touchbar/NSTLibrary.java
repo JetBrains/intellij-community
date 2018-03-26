@@ -16,6 +16,7 @@ public interface NSTLibrary extends Library {
   ID registerSpacing(ID tbObj, String type); // allowed types: 'small', 'large', 'flexible'
   ID registerButtonText(ID tbObj, String text, Action action);
   ID registerButtonImg(ID tbObj, byte[] raster4ByteRGBA, int w, int h, Action action);
+  ID registerButtonImgText(ID tbObj, String text, byte[] raster4ByteRGBA, int w, int h, Action action);
   ID registerPopover(ID tbObj, String text, byte[] raster4ByteRGBA, int w, int h, int popW);
   void setPopoverExpandTouchBar(ID popoverObj, ID expandTbObj);
   void setPopoverTapAndHoldTouchBar(ID popoverObj, ID tapHoldTbObj);

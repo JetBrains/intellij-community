@@ -13,3 +13,7 @@
 @interface ButtonTextDesc : ButtonDesc
 - (id)init:(NSString*)text act:(execute)act;
 @end
+
+@interface ButtonImgTextDesc : ButtonDesc
+- (id)init:(NSImage *)img text:(NSString*)text act:(execute)act;
+@end

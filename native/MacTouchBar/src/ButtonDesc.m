@@ -14,6 +14,11 @@
 @property (retain, nonatomic) NSString * text;
 @end
 
+@interface ButtonImgTextDesc()
+@property (retain, nonatomic) NSImage * img;
+@property (retain, nonatomic) NSString * text;
+@end
+
 @implementation ButtonDesc
 - (id)init:(execute)act {
     self = [super init];
@@ -59,5 +64,33 @@
     return customItemForButton;
 }
 @synthesize text;
+@end
+
+
+@implementation ButtonImgTextDesc
+- (id)init:(NSImage *)img text:(NSString*)text act:(execute)act {
+    self = [super init:act];
+    if (self) {
+        self.text = text;
+        self.img = img;
+    }
+    return self;
+}
+- (nullable __kindof NSTouchBarItem *)create {
+    nstrace(@"create button.imgAndText [%@]", self.uid);
+
+    NSButton *button = [[[NSButton alloc] init] autorelease];
+    [button setImagePosition:NSImageLeft];
+    [button setImage:self.img];
+    [button setTitle:self.text];
+    [button setTarget:self];
+    [button setAction:@selector(doAction)];
+    [button setBezelStyle:NSRoundedBezelStyle];
+
+    NSCustomTouchBarItem *customItemForButton = [[[NSCustomTouchBarItem alloc] initWithIdentifier:self.uid] autorelease];
+    customItemForButton.view = button; // NOTE: view is strong
+    return customItemForButton;
+}
+@synthesize img, text;
 @end
 

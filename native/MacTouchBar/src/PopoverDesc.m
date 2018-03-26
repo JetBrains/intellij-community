@@ -25,28 +25,15 @@
 - (nullable __kindof NSTouchBarItem *)create {
     nstrace(@"create popover [%@]", self.uid);
     NSPopoverTouchBarItem * popoverTouchBarItem = [[[NSPopoverTouchBarItem alloc] initWithIdentifier:self.uid] autorelease];
+
+    if (self.img != nil)
+        popoverTouchBarItem.collapsedRepresentationImage = self.img;
+    if (self.text != nil)
+        popoverTouchBarItem.collapsedRepresentationLabel = self.text;
+    if (_width > 0) // Otherwise: create 'flexible' view
+        [popoverTouchBarItem.collapsedRepresentation.widthAnchor constraintEqualToConstant:_width].active = YES;
+
     popoverTouchBarItem.showsCloseButton = YES;
-
-    if (_width <= 0) {
-        // create 'flexible' view
-        if (self.img != nil)
-            popoverTouchBarItem.collapsedRepresentationImage = self.img;
-        if (self.text != nil)
-            popoverTouchBarItem.collapsedRepresentationLabel = self.text;
-    } else {
-        // create fixed width view
-        NSButton *button = [[[NSButton alloc] init] autorelease];
-        [button setImagePosition:NSImageLeft];
-        [button setImage:self.img];
-        [button setTitle:self.text];
-        [button setTarget:popoverTouchBarItem];
-        [button setAction:@selector(showPopover:)];
-        [button setBezelStyle:NSRoundedBezelStyle];
-        [button.widthAnchor constraintEqualToConstant:_width].active = YES;
-
-        popoverTouchBarItem.collapsedRepresentation = button; // strong
-    }
-
     popoverTouchBarItem.popoverTouchBar = self.expandBar.touchBar;
     popoverTouchBarItem.pressAndHoldTouchBar = self.tapHoldBar.touchBar;
     return popoverTouchBarItem;

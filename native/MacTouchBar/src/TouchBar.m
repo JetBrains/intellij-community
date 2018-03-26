@@ -110,6 +110,16 @@ id registerButtonImg(id tbobj, char* raster4ByteRGBA, int w, int h, execute acti
     return bdesc;
 }
 
+id registerButtonImgText(id tbobj, char* text, char* raster4ByteRGBA, int w, int h, execute action) {
+    if (w <= 0 || h <= 0) {
+        nserror(@"incorrect image sizes");
+        return nil;
+    }
+    ButtonDesc * bdesc = [[[ButtonImgTextDesc alloc] init:createImgFrom4ByteRGBA((unsigned char *)raster4ByteRGBA, w, h) text:[NSString stringWithUTF8String:text] act:action] autorelease];
+    [(TouchBar *)tbobj registerItem:bdesc];
+    return bdesc;
+}
+
 id registerSpacing(id tbobj, char* type) {
     SpacingDesc * spdesc = [[[SpacingDesc alloc] init:[NSString stringWithUTF8String:type]] autorelease];
     [(TouchBar *)tbobj registerItem:spdesc];
