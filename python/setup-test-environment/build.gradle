@@ -108,6 +108,16 @@ envs {
   }
 
   createPython("django_latest", "3.5.3", ["django"], "python3.5\ndjango", true)
+
+  ironpython "ironpython"
+
+  project.tasks.create("Misc for ironpython") {
+    shouldRunAfter 'build_envs'
+
+    doLast {
+      new File("ironpython", "tags.txt").write("iron")
+    }
+  }
 }
 
 /**
