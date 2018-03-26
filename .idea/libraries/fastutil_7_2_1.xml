@@ -1,7 +1,8 @@
 <component name="libraryTable">
-  <library name="fastutil-7.2.1">
+  <library name="fastutil-7.2.1" type="repository">
+    <properties maven-id="it.unimi.dsi:fastutil:7.2.1" />
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/fastutil-7.2.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/it/unimi/dsi/fastutil/7.2.1/fastutil-7.2.1.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

@@ -1224,14 +1224,14 @@ java_library(
     name = "javaxdelta-2.0.1",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/lib:javaxdelta-2.0.1"],
-    runtime_deps = ["//tools/idea/lib:javaxdelta-2.0.1"],
+    exports = ["//prebuilts/tools/common/m2/repository/com/nothome/javaxdelta/2.0.1:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/nothome/javaxdelta/2.0.1:jar"],
 )
 
 java_library(
     name = "fastutil-7.2.1",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/lib:fastutil-7.2.1"],
-    runtime_deps = ["//tools/idea/lib:fastutil-7.2.1"],
+    exports = ["//prebuilts/tools/common/m2/repository/it/unimi/dsi/fastutil/7.2.1:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/it/unimi/dsi/fastutil/7.2.1:jar"],
 )
