@@ -66,7 +66,7 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
       );
     }
     if (!myPreferencesMode) {
-      JLabel hintLabel = new JBLabel("You can always change this behavior in " + ShowSettingsUtil.getSettingsMenuName() + " | Appearance & Behavior | System Settings | Analytics.");
+      JLabel hintLabel = new JBLabel("You can always change this behavior in " + ShowSettingsUtil.getSettingsMenuName() + " | Appearance & Behavior | System Settings | Data Sharing.");
       hintLabel.setForeground(UIUtil.getContextHelpForeground());
       hintLabel.setVerticalAlignment(SwingConstants.TOP);
       hintLabel.setFont(JBUI.Fonts.smallFont());
