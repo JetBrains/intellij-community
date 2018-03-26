@@ -248,7 +248,9 @@ public abstract class PyEnvTestCase {
     catch (final NoSuchMethodException e) {
       throw new AssertionError("No such method", e);
     }
-    Assume.assumeFalse("Test skipped on this os", Arrays.stream(classAnnotation.skipOnOSes()).anyMatch(TestEnv::isThisOs));
+    if (classAnnotation != null) {
+      Assume.assumeFalse("Test skipped on this os", Arrays.stream(classAnnotation.skipOnOSes()).anyMatch(TestEnv::isThisOs));
+    }
 
     final String[] classTags = getTags(classAnnotation);
     final String[] methodTags = getTags(methodAnnotation);
