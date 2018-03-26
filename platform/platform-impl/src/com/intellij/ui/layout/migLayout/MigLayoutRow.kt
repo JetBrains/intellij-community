@@ -9,6 +9,7 @@ import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.components.Label
 import com.intellij.ui.layout.*
 import com.intellij.util.SmartList
+import com.intellij.util.ui.UIUtil
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.ConstraintParser
 import java.awt.Component
@@ -186,9 +187,10 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
 
     // JScrollPane doesn't have visual insets (not set by layout, but part of component implementation) as TextField, Combobox and other such components,
     // but it looks ugly, so, if not other components in the row and row is labeled - add left/right insets
-    if (component is JScrollPane && labeled && components.size == 2) {
-      cc.value.horizontal.gapBefore = gapToBoundSize(4, true)
-      cc.value.horizontal.gapAfter = gapToBoundSize(4, true)
+    if (component is JScrollPane && labeled && components.size == 2 && !UIUtil.isUnderWin10LookAndFeel()) {
+      val scrollPaneHGap = gapToBoundSize(4, true)
+      cc.value.horizontal.gapBefore = scrollPaneHGap
+      cc.value.horizontal.gapAfter = scrollPaneHGap
     }
 
     if (!noGrid && indent > 0 && components.size == 1) {
