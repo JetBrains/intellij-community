@@ -9,7 +9,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.testFramework.UsefulTestCase;
@@ -105,9 +104,7 @@ public abstract class PyEnvTestCase {
       }
       else {
         for (StagingOn so : description.getTestClass().getMethod(description.getMethodName()).getAnnotationsByType(StagingOn.class)) {
-          if (so.os() == TestEnv.WINDOWS && SystemInfo.isWindows ||
-              so.os() == TestEnv.LINUX && SystemInfo.isLinux ||
-              so.os() == TestEnv.MAC && SystemInfo.isMac) {
+          if (so.os().isThisOs()) {
             return true;
           }
         }
@@ -251,6 +248,8 @@ public abstract class PyEnvTestCase {
     catch (final NoSuchMethodException e) {
       throw new AssertionError("No such method", e);
     }
+    Assume.assumeFalse("Test skipped on this os", Arrays.stream(classAnnotation.skipOnOSes()).anyMatch(TestEnv::isThisOs));
+
     final String[] classTags = getTags(classAnnotation);
     final String[] methodTags = getTags(methodAnnotation);
 
