@@ -140,6 +140,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     @NotNull protected GraphImage myGraphImage = new GraphImage(UIUtil.createImage(1, 1, BufferedImage.TYPE_INT_ARGB), 0);
     @NotNull private Font myFont;
     private int myHeight;
+    private GraphicsConfiguration myConfiguration;
 
     public MyComponent(@NotNull VcsLogData data,
                        @NotNull GraphCellPainter painter,
@@ -154,6 +155,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
 
       myIssueLinkRenderer = new IssueLinkRenderer(myLogData.getProject(), this);
       myFont = RectanglePainter.getFont();
+      myConfiguration = myGraphTable.getGraphicsConfiguration();
       myHeight = calculateHeight();
     }
 
@@ -236,8 +238,10 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
 
     public int getPreferredHeight() {
       Font font = RectanglePainter.getFont();
-      if (myFont != font) {
+      GraphicsConfiguration configuration = myGraphTable.getGraphicsConfiguration();
+      if (myFont != font || myConfiguration != configuration) {
         myFont = font;
+        myConfiguration = configuration;
         myHeight = calculateHeight();
       }
       return myHeight;
