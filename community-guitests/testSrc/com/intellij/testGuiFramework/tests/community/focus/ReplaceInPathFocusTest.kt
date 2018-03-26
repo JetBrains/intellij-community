@@ -47,9 +47,7 @@ class ReplaceInPathFocusTest : GuiTestCase() {
       shortcut(Key.TAB)
       typeText("test")
       button("Replace All").click()
-      message("Replace All") {
-        button("Replace").click()
-      }
+      message("Replace All").click("Replace")
       Pause.pause(1000)
       val editorCode = editor.getCurrentFileContents(false) ?: throw Exception("Unable to get editor's content")
       Assert.assertTrue("Editor shouldn't contain 'main' after replacement in path: Editor's content \n $editorCode", !editorCode.contains("main"))
