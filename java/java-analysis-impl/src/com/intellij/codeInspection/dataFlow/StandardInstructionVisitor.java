@@ -28,6 +28,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.MethodUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import gnu.trove.THashSet;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -603,8 +604,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       }
     }
     DfaValue result = null;
-    PsiElement expr = instruction.getPsiAnchor();
-    PsiType type = expr instanceof PsiExpression ? ((PsiExpression)expr).getType() : null;
+    PsiType type = instruction.getResultType();
     if (PsiType.INT.equals(type) || PsiType.LONG.equals(type)) {
       LongRangeSet left = memState.getValueFact(dfaLeft, DfaFactType.RANGE);
       LongRangeSet right = memState.getValueFact(dfaRight, DfaFactType.RANGE);
@@ -616,8 +616,8 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       }
     }
     if (result == null) {
-      if (JavaTokenType.PLUS == opSign && !(type instanceof PsiPrimitiveType)) {
-        result = instruction.getNonNullStringValue(runner.getFactory());
+      if (JavaTokenType.PLUS == opSign && TypeUtils.isJavaLangString(type)) {
+        result = runner.getFactory().createTypeValue(type, Nullness.NOT_NULL);
       }
       else if (instruction instanceof InstanceofInstruction) {
         handleInstanceof((InstanceofInstruction)instruction, dfaRight, dfaLeft);

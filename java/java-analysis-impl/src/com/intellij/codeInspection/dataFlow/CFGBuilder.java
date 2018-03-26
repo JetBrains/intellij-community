@@ -210,7 +210,7 @@ public class CFGBuilder {
    * @return this builder
    */
   private CFGBuilder compare(IElementType relation) {
-    myAnalyzer.addInstruction(new BinopInstruction(relation, null, myAnalyzer.getContext().getProject()));
+    myAnalyzer.addInstruction(new BinopInstruction(relation, null, PsiType.BOOLEAN));
     return this;
   }
 
@@ -556,7 +556,7 @@ public class CFGBuilder {
     if (qualifier == null) return false;
     PsiType type = qualifier.getOperand().getType();
     push(getFactory().createTypeValue(type, Nullness.NOT_NULL));
-    myAnalyzer.addInstruction(new InstanceofInstruction(methodRef, methodRef.getProject(), null, type));
+    myAnalyzer.addInstruction(new InstanceofInstruction(methodRef, null, type));
     return true;
   }
 
