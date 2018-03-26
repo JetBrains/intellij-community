@@ -9,14 +9,17 @@ import org.jetbrains.annotations.NotNull;
 
 public final class ChangeListScope extends FilteredNamedScope {
   public static final String NAME = IdeBundle.message("scope.modified.files");
+  private final boolean all; // TODO: use different icons instead
 
   public ChangeListScope(@NotNull ChangeListManager manager) {
     super(NAME, AllIcons.Toolwindows.ToolWindowChanges, 0, manager::isFileAffected);
+    all = true;
   }
 
   public ChangeListScope(@NotNull ChangeListManager manager, @NotNull String name) {
     super(name, AllIcons.Toolwindows.ToolWindowChanges, 0,
           file -> manager.getChangeLists(file).stream().anyMatch(list -> list.getName().equals(name)));
+    all = false;
   }
 
   @Override
@@ -29,8 +32,15 @@ public final class ChangeListScope extends FilteredNamedScope {
     if (object == this) return true;
     if (object instanceof ChangeListScope) {
       ChangeListScope scope = (ChangeListScope)object;
-      return getName().equals(scope.getName());
+      return scope.all == all && scope.getName().equals(getName());
     }
     return false;
+  }
+
+  @Override
+  public String toString() {
+    String string = super.toString();
+    if (all) string += "; ALL";
+    return string;
   }
 }
