@@ -27,14 +27,7 @@
         <xs:element type="feedbackType" name="feedback" minOccurs="0"/>
         <xs:element type="urlType" name="whatsnew" minOccurs="0"/>
         <xs:element type="keymapType" name="keymap" minOccurs="0"/>
-        <xs:element type="urlType" name="third-party" minOccurs="0">
-          <xs:annotation>
-            <xs:documentation>
-              Deprecated. This value isn't used anymore, because now file containing information about third-party libraries is bundled and
-              shown inside IDE.
-            </xs:documentation>
-          </xs:annotation>
-        </xs:element>
+        <xs:element type="urlType" name="third-party" minOccurs="0"/>
         <xs:element type="urlType" name="jetbrains-tv" minOccurs="0"/>
         <xs:element type="subscriptionsType" name="subscriptions" minOccurs="0"/>
         <xs:element type="statisticsType" name="statistics" minOccurs="0"/>

@@ -79,14 +79,10 @@ class LibraryLicensesListGenerator {
     licenses.entrySet().each {
       LibraryLicense lib = it.key
       String moduleName = it.value
-
-      String libKey = (lib.name + "_" + lib.version ?: "").replace(" ", "_")
-      // id here is needed because of a bug IDEA-188262
-      String name = lib.url != null ? "<a id=\"${libKey}_lib_url\" href=\"$lib.url\">$lib.name</a>" : lib.name
-      String license = lib.libraryLicenseUrl != null ? "<a id=\"${libKey}_license_url\" href=\"$lib.libraryLicenseUrl\">$lib.license</a>" : lib.license
-
+      def name = lib.url != null ? "[$lib.name|$lib.url]" : lib.name
+      def license = lib.libraryLicenseUrl != null ? "[$lib.license|$lib.libraryLicenseUrl]" : lib.license
       messages.info(" $lib.name (in module $moduleName)")
-      lines << "<tr><td>$name</td><td>${lib.version ?: ""}</td><td>$license</td></tr>".toString()
+      lines << "|$name| ${lib.version ?: ""}|$license|".toString()
     }
     //projectBuilder.info("Unused libraries:")
     //licensesList.findAll {!licenses.containsKey(it)}.each {LibraryLicense lib ->
@@ -98,12 +94,10 @@ class LibraryLicensesListGenerator {
     file.parentFile.mkdirs()
     FileWriter out = new FileWriter(file)
     try {
-      out.println("<table>")
-      out.println("<tr><th>Software</th><th>Version</th><th>License</th></tr>")
+      out.println("|| Software || Version || License ||")
       lines.each {
         out.println(it)
       }
-      out.println("</table>")
     }
     finally {
       out.close()
