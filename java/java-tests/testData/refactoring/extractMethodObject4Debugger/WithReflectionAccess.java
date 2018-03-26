@@ -25,4 +25,7 @@ public class WithReflectionAccess {
     public static void apply(Runnable runnable) {
         runnable.run();
     }
+
+    private static class Inner {
+    }
 }

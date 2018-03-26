@@ -46,6 +46,10 @@ public class ExtractMethodObject4DebuggerReflectionTest extends LightRefactoring
     doTest("instance.method(42)");
   }
 
+  public void testCallDefaultConstructor() throws PrepareFailedException {
+    doTest("new Inner()");
+  }
+
   @NotNull
   @Override
   protected String getTestDataPath() {
