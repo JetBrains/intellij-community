@@ -12,6 +12,7 @@ applyKotlinJVM()
 
 dependencies {
     compile project(':app:app-state')
+    compile project(':app:app-state:app-state-jvm')
 
     compile "io.ktor:ktor-server-core:$ktor_version"
     compile "io.ktor:ktor-server-jetty:$ktor_version"
