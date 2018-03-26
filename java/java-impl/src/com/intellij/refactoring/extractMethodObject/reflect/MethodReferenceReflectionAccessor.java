@@ -3,7 +3,6 @@ package com.intellij.refactoring.extractMethodObject.reflect;
 
 import com.intellij.psi.*;
 import com.intellij.refactoring.extractMethodObject.ItemToReplaceDescriptor;
-import com.intellij.refactoring.extractMethodObject.PsiReflectionAccessUtil;
 import com.intellij.refactoring.extractMethodObject.reflect.ConstructorReflectionAccessor.ConstructorDescriptor;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
