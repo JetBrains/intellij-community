@@ -1221,7 +1221,7 @@ java_library(
 )
 
 java_library(
-    name = "javaxdelta-2.0.1",
+    name = "javaxdelta",
     tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/com/nothome/javaxdelta/2.0.1:jar"],
@@ -1229,7 +1229,7 @@ java_library(
 )
 
 java_library(
-    name = "fastutil-7.2.1",
+    name = "fastutil",
     tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/it/unimi/dsi/fastutil/7.2.1:jar"],

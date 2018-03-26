@@ -13,7 +13,7 @@
     <orderEntry type="module" module-name="testFramework" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
-    <orderEntry type="library" name="javaxdelta-2.0.1" level="project" />
-    <orderEntry type="library" scope="RUNTIME" name="fastutil-7.2.1" level="project" />
+    <orderEntry type="library" name="javaxdelta" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="fastutil" level="project" />
   </component>
 </module>

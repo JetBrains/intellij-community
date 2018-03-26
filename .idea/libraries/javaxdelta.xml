@@ -1,5 +1,5 @@
 <component name="libraryTable">
-  <library name="javaxdelta-2.0.1" type="repository">
+  <library name="javaxdelta" type="repository">
     <properties maven-id="com.nothome:javaxdelta:2.0.1" />
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/com/nothome/javaxdelta/2.0.1/javaxdelta-2.0.1.jar!/" />
