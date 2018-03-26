@@ -87,8 +87,9 @@ public class ConstructorReflectionAccessor extends ReflectionAccessorBase<Constr
       }
       else {
         PsiJavaCodeReferenceElement classReference = expression.getClassReference();
-        if (classReference instanceof PsiClass && !PsiReflectionAccessUtil.isAccessible((PsiClass)classReference)) {
-          return new ConstructorDescriptor(expression, null, (PsiClass)classReference);
+        PsiElement referent = classReference != null ? classReference.resolve() : null;
+        if (referent instanceof PsiClass && !PsiReflectionAccessUtil.isAccessible((PsiClass)referent)) {
+          return new ConstructorDescriptor(expression, null, (PsiClass)referent);
         }
       }
 
