@@ -16,6 +16,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.LoggingRule;
 import com.jetbrains.TestEnv;
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.*;
@@ -248,14 +249,24 @@ public abstract class PyEnvTestCase {
     catch (final NoSuchMethodException e) {
       throw new AssertionError("No such method", e);
     }
-    if (classAnnotation != null) {
-      Assume.assumeFalse("Test skipped on this os", Arrays.stream(classAnnotation.skipOnOSes()).anyMatch(TestEnv::isThisOs));
+    final Class<? extends PythonSdkFlavor>[] skipOnFlavors;
+
+
+    final EnvTestTagsRequired firstAnnotation = (methodAnnotation != null ? methodAnnotation : classAnnotation);
+
+
+    if (firstAnnotation != null) {
+      Assume.assumeFalse("Test skipped on this os", Arrays.stream(firstAnnotation.skipOnOSes()).anyMatch(TestEnv::isThisOs));
+      skipOnFlavors = firstAnnotation.skipOnFlavors();
+    }
+    else {
+      skipOnFlavors = null;
     }
 
     final String[] classTags = getTags(classAnnotation);
     final String[] methodTags = getTags(methodAnnotation);
 
-    taskRunner.runTask(testTask, testName, ArrayUtil.mergeArrays(methodTags, classTags));
+    taskRunner.runTask(testTask, testName, skipOnFlavors, ArrayUtil.mergeArrays(methodTags, classTags));
   }
 
   @NotNull
