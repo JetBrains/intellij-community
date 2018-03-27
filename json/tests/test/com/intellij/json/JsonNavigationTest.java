@@ -15,6 +15,6 @@ public class JsonNavigationTest extends JsonTestCase {
     final PsiElement element = myFixture.getElementAtCaret();
     assertInstanceOf(element, JsonProperty.class);
     final String qualifiedName = CopyReferenceAction.elementToFqn(element);
-    assertEquals("foo.bar.baz", qualifiedName);
+    assertEquals("foo.bar[0][0].baz", qualifiedName);
   }
 }
