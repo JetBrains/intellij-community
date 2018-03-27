@@ -3,14 +3,11 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.*;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
@@ -22,7 +19,7 @@ import static com.intellij.codeInspection.dataFlow.MethodContract.ValueConstrain
  *
  * @author Tagir Valeev
  */
-public enum SpecialField {
+public enum SpecialField implements DfaVariableSource {
   ARRAY_LENGTH(null, "length", true, LongRangeSet.indexRange()) {
     @Override
     public boolean isMyAccessor(PsiModifierListOwner accessor) {
@@ -50,20 +47,6 @@ public enum SpecialField {
         }
       }
       return null;
-    }
-
-    @Nullable
-    @Override
-    PsiModifierListOwner getCanonicalOwner(@Nullable PsiModifierListOwner qualifier, @Nullable PsiClass psiClass) {
-      if (qualifier == null) return null;
-      PsiClass arrayClass = JavaPsiFacade.getElementFactory(qualifier.getProject())
-        .getArrayClass(PsiUtil.getLanguageLevel(qualifier));
-      return arrayClass.findFieldByName("length", false);
-    }
-
-    @Override
-    public String toString() {
-      return "Array.length";
     }
   },
   STRING_LENGTH(CommonClassNames.JAVA_LANG_STRING, "length", true, LongRangeSet.indexRange()) {
@@ -96,7 +79,8 @@ public enum SpecialField {
     myRange = range;
   }
 
-  public boolean isFinal() {
+  @Override
+  public boolean isStable() {
     return myFinal;
   }
 
@@ -118,23 +102,17 @@ public enum SpecialField {
     return accessor instanceof PsiMethod && MethodUtils.methodMatches((PsiMethod)accessor, myClassName, null, myMethodName);
   }
 
-  /**
-   * Returns a canonical accessor which can be used to read this special field
-   *
-   * @param qualifier a qualifier accessor (if known)
-   * @param psiClass a class for which the canonical method should be resolved
-   * @return a canonical accessor representing this special field or null if cannot be determined.
-   */
-  @Nullable
-  PsiModifierListOwner getCanonicalOwner(@Nullable PsiModifierListOwner qualifier, @Nullable PsiClass psiClass) {
-    if (psiClass == null) return null;
-    if (!myClassName.equals(psiClass.getQualifiedName())) {
-      PsiClass myClass = JavaPsiFacade.getInstance(psiClass.getProject()).findClass(myClassName, psiClass.getResolveScope());
-      if (!InheritanceUtil.isInheritorOrSelf(psiClass, myClass, true)) return null;
-      psiClass = myClass;
+  public static DfaValue tryCreateValue(DfaValue qualifier, PsiElement element) {
+    if (qualifier == null) return null;
+    DfaValueFactory factory = qualifier.getFactory();
+    if (factory == null) return null;
+    if (!(element instanceof PsiVariable) && !(element instanceof PsiMethod)) return null;
+    for (SpecialField field : values()) {
+      if (field.isMyAccessor((PsiModifierListOwner)element)) {
+        return field.createValue(factory, qualifier);
+      }
     }
-    PsiMethod[] methods = psiClass.findMethodsByName(myMethodName, false);
-    return methods.length == 1 ? methods[0] : null;
+    return null;
   }
 
   /**
@@ -160,11 +138,7 @@ public enum SpecialField {
           }
         }
       }
-      PsiModifierListOwner owner =
-        getCanonicalOwner(psiVariable, PsiUtil.resolveClassInClassTypeOnly(variableValue.getVariableType()));
-      if (owner != null) {
-        return factory.getVarFactory().createVariableValue(owner, PsiType.INT, false, variableValue);
-      }
+      return factory.getVarFactory().createVariableValue(this, PsiType.INT, variableValue);
     }
     if(qualifier instanceof DfaConstValue) {
       Object obj = ((DfaConstValue)qualifier).getValue();
@@ -205,6 +179,6 @@ public enum SpecialField {
 
   @Override
   public String toString() {
-    return StringUtil.getShortName(myClassName)+"."+myMethodName+"()";
+    return myMethodName;
   }
 }

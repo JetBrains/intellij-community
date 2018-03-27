@@ -320,14 +320,12 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (!(dfaValue instanceof DfaVariableValue)) return classIndex;
     DfaVariableValue variableValue = (DfaVariableValue)dfaValue;
     DfaVariableValue qualifier = variableValue.getQualifier();
-    PsiModifierListOwner variable = variableValue.getPsiVariable();
     if (qualifier == null) return classIndex;
     Integer index = getOrCreateEqClassIndex(qualifier);
     if (index == null) return classIndex;
     for (DfaValue eqQualifier : myEqClasses.get(index).getMemberValues()) {
       if (eqQualifier != qualifier && eqQualifier instanceof DfaVariableValue) {
-        DfaVariableValue eqValue = getFactory().getVarFactory()
-          .createVariableValue(variable, variableValue.getVariableType(), variableValue.isNegated(), (DfaVariableValue)eqQualifier);
+        DfaVariableValue eqValue = variableValue.withQualifier((DfaVariableValue)eqQualifier);
         int i = getEqClassIndex(eqValue);
         if (i != -1) {
           uniteClasses(i, classIndex);
@@ -639,7 +637,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       getConstantValue(var) == null &&
       StreamEx.of(getEquivalentValues(var)).without(var).select(DfaVariableValue.class).findFirst().isPresent();
     List<DfaVariableValue> values = StreamEx.ofKeys(myVariableStates)
-      .filter(var -> ControlFlowAnalyzer.isTempVariable(var.getPsiVariable()))
+      .filter(ControlFlowAnalyzer::isTempVariable)
       .remove(sharesState)
       .toList();
     values.forEach(this::flushVariable);
@@ -876,16 +874,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
           setVariableState(dfaVar, getVariableState(dfaVar).withFact(DfaFactType.CAN_BE_NULL, true));
           return;
         }
-        PsiType psiType;
-        if (constValue instanceof PsiVariable) {
-          psiType = ((PsiVariable)constValue).getType();
-        }
-        else {
-          PsiModifierListOwner context = dfaVar.getPsiVariable();
-          psiType = JavaPsiFacade.getElementFactory(context.getProject())
-            .createTypeByFQClassName(constValue.getClass().getName(), context.getResolveScope());
-        }
-        DfaPsiType dfaType = myFactory.createDfaType(psiType);
+        DfaPsiType dfaType = myFactory.createDfaType(((DfaConstValue)value).getType());
         DfaVariableState state = getVariableState(dfaVar).withInstanceofValue(dfaType);
         if (state != null) {
           setVariableState(dfaVar, state);
@@ -1136,10 +1125,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
     DfaVariableValue qualifier = var.getQualifier();
     if (qualifier != null) {
-      return StreamEx.of(SpecialField.values())
-            .filter(sf -> sf.isMyAccessor(var.getPsiVariable()))
-            .map(sf -> sf.createValue(myFactory, qualifier))
-            .nonNull().findFirst().orElse(var);
+      DfaValue value = SpecialField.tryCreateValue(qualifier, var.getPsiVariable());
+      if (value != null) {
+        return value;
+      }
     }
     return var;
   }
@@ -1184,8 +1173,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (qualifierIndex == -1) return StreamEx.empty();
     return StreamEx.of(myEqClasses.get(qualifierIndex).getMemberValues())
       .without(qualifier).select(DfaVariableValue.class)
-      .map(eqQualifier -> getFactory().getVarFactory()
-        .createVariableValue(var.getPsiVariable(), var.getVariableType(), var.isNegated(), eqQualifier));
+      .map(var::withQualifier);
   }
 
   private DfaVariableState findVariableState(DfaVariableValue var) {

@@ -130,8 +130,8 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
         @Override
         protected DfaMemoryState createMemoryState() {
           DfaMemoryState state = super.createMemoryState();
-          DfaVariableValue var1 = getFactory().getVarFactory().createVariableValue(parameters[0], false);
-          DfaVariableValue var2 = getFactory().getVarFactory().createVariableValue(parameters[1], false);
+          DfaVariableValue var1 = getFactory().getVarFactory().createVariableValue(parameters[0]);
+          DfaVariableValue var2 = getFactory().getVarFactory().createVariableValue(parameters[1]);
           DfaValue condition = getFactory().createCondition(var1, DfaRelationValue.RelationType.EQ, var2);
           state.applyCondition(condition);
           return state;

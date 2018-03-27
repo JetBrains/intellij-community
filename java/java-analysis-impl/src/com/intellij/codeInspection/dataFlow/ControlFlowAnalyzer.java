@@ -24,7 +24,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.light.LightVariableBuilder;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
@@ -282,7 +281,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
     else if (!field.hasModifierProperty(PsiModifier.FINAL)) {
       // initialize with default value
-      DfaVariableValue dfaVariable = myFactory.getVarFactory().createVariableValue(field, false);
+      DfaVariableValue dfaVariable = myFactory.getVarFactory().createVariableValue(field);
       addInstruction(new PushInstruction(dfaVariable, null, true));
       addInstruction(new PushInstruction(myFactory.getConstFactory().createDefault(field.getType()), null));
       addInstruction(new AssignInstruction(null, dfaVariable));
@@ -297,7 +296,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   private void initializeVariable(PsiVariable variable, PsiExpression initializer) {
     if (DfaUtil.ignoreInitializer(variable)) return;
-    DfaVariableValue dfaVariable = myFactory.getVarFactory().createVariableValue(variable, false);
+    DfaVariableValue dfaVariable = myFactory.getVarFactory().createVariableValue(variable);
     addInstruction(new PushInstruction(dfaVariable, initializer, true));
     initializer.accept(this);
     generateBoxingUnboxingInstructionFor(initializer, variable.getType());
@@ -403,7 +402,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   @NotNull
   private List<DfaVariableValue> getVariablesInside(PsiElement exitedStatement) {
     return ContainerUtil.map(PsiTreeUtil.findChildrenOfType(exitedStatement, PsiVariable.class),
-                             var -> myFactory.getVarFactory().createVariableValue(var, false));
+                             myFactory.getVarFactory()::createVariableValue);
   }
 
   @Override public void visitContinueStatement(PsiContinueStatement statement) {
@@ -492,7 +491,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
 
     ControlFlow.ControlFlowOffset offset = myCurrentFlow.getNextOffset();
-    DfaVariableValue dfaVariable = myFactory.getVarFactory().createVariableValue(parameter, false);
+    DfaVariableValue dfaVariable = myFactory.getVarFactory().createVariableValue(parameter);
     addInstruction(new FlushVariableInstruction(dfaVariable));
 
     if (!hasSizeCheck) {
@@ -606,22 +605,23 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       if (end == null || end == Long.MAX_VALUE || end == Integer.MAX_VALUE) return false;
     }
     PsiExpression initializer = loop.getInitializer();
-    if (!PsiType.INT.equals(initializer.getType()) && !PsiType.LONG.equals(initializer.getType())) return false;
+    PsiType type = initializer.getType();
+    if (!PsiType.INT.equals(type) && !PsiType.LONG.equals(type)) return false;
     DfaValue origin = null;
     Object initialValue = ExpressionUtils.computeConstantExpression(initializer);
     if (initialValue instanceof Number) {
-      origin = myFactory.getConstFactory().createFromValue(initialValue, initializer.getType(), null);
+      origin = myFactory.getConstFactory().createFromValue(initialValue, type, null);
     }
     else if (initializer instanceof PsiReferenceExpression) {
       PsiVariable initialVariable = ObjectUtils.tryCast(((PsiReferenceExpression)initializer).resolve(), PsiVariable.class);
       if ((initialVariable instanceof PsiLocalVariable || initialVariable instanceof PsiParameter)
         && !VariableAccessUtils.variableIsAssigned(initialVariable, statement.getBody())) {
-        origin = myFactory.getVarFactory().createVariableValue(initialVariable, false);
+        origin = myFactory.getVarFactory().createVariableValue(initialVariable);
       }
     }
     if (origin == null) return false;
     long diff = start == null || end == null ? -1 : end - start;
-    DfaVariableValue loopVar = myFactory.getVarFactory().createVariableValue(counter, false);
+    DfaVariableValue loopVar = myFactory.getVarFactory().createVariableValue(counter);
     addInstruction(new PushInstruction(loopVar, null, true));
     if(diff >= 0 && diff <= MAX_UNROLL_SIZE) {
       // Unroll small loops
@@ -718,7 +718,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     if (myInlinedBlockContext != null) {
       if (returnValue != null) {
-        DfaVariableValue var = myFactory.getVarFactory().createVariableValue(myInlinedBlockContext.myTarget, false);
+        DfaVariableValue var = myInlinedBlockContext.myTarget;
         addInstruction(new PushInstruction(var, null, true));
         returnValue.accept(this);
         generateBoxingUnboxingInstructionFor(returnValue, var.getVariableType());
@@ -1085,7 +1085,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
     if (parent instanceof PsiVariable) {
       // initialization
-      return getFactory().getVarFactory().createVariableValue((PsiVariable)parent, false);
+      return getFactory().getVarFactory().createVariableValue((PsiVariable)parent);
     }
     if (parent instanceof PsiAssignmentExpression) {
       PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
@@ -1113,13 +1113,14 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     DfaVariableValue var = getTargetVariable(expression);
     DfaVariableValue arrayWriteTarget = var;
     if (var == null) {
-      var = getFactory().getVarFactory().createVariableValue(createTempVariable(type), false);
+      var = createTempVariable(type);
     }
     PsiExpression[] initializers = expression.getInitializers();
     DfaExpressionFactory expressionFactory = myFactory.getExpressionFactory();
     if (arrayWriteTarget != null) {
       PsiVariable arrayVariable = (PsiVariable)arrayWriteTarget.getPsiVariable();
-      if ((arrayVariable instanceof PsiField && !arrayVariable.hasModifierProperty(PsiModifier.FINAL)) ||
+      if (arrayWriteTarget.isFlushableByCalls() ||
+          arrayVariable == null ||
           VariableAccessUtils.variableIsUsed(arrayVariable, expression) ||
           ExpressionUtils.getConstantArrayElements(arrayVariable) != null ||
           !(expressionFactory.getArrayElementValue(arrayWriteTarget, 0) instanceof DfaVariableValue)) {
@@ -1675,7 +1676,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       }
       DfaVariableValue var = getTargetVariable(expression);
       if (var == null) {
-        var = getFactory().getVarFactory().createVariableValue(createTempVariable(type), false);
+        var = createTempVariable(type);
       }
       DfaValue length = SpecialField.ARRAY_LENGTH.createValue(getFactory(), var);
       addInstruction(new PushInstruction(length, null, true));
@@ -1913,7 +1914,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
    * @param resultNullness desired nullness returned by block return statement
    * @param target a variable to store the block result (returned via {@code return} statement)
    */
-  void inlineBlock(@NotNull PsiCodeBlock block, @NotNull Nullness resultNullness, @NotNull PsiVariable target) {
+  void inlineBlock(@NotNull PsiCodeBlock block, @NotNull Nullness resultNullness, @NotNull DfaVariableValue target) {
     InlinedBlockContext oldBlock = myInlinedBlockContext;
     // Transfer value is pushed to avoid emptying stack beyond this point
     addInstruction(new PushInstruction(myFactory.controlTransfer(ReturnTransfer.INSTANCE, this.myTrapStack), null));
@@ -1931,17 +1932,17 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   /**
-   * Create a temporary {@link PsiVariable} (not declared in the original code) to be used within this control flow.
+   * Create a synthetic variable (not declared in the original code) to be used within this control flow.
    *
    * @param type a type of variable to create
    * @return newly created variable
    */
   @NotNull
-  PsiVariable createTempVariable(@Nullable PsiType type) {
+  DfaVariableValue createTempVariable(@Nullable PsiType type) {
     if(type == null) {
       type = PsiType.VOID;
     }
-    return new TempVariable(getInstructionCount(), type, getContext());
+    return getFactory().getVarFactory().createVariableValue(new Synthetic(getInstructionCount()), type);
   }
 
   /**
@@ -1950,22 +1951,35 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
    * @param variable to check
    * @return true if supplied variable is a temp variable.
    */
-  public static boolean isTempVariable(PsiModifierListOwner variable) {
-    return variable instanceof TempVariable;
+  public static boolean isTempVariable(@NotNull DfaVariableValue variable) {
+    return variable.getSource() instanceof Synthetic;
   }
 
-  private static class TempVariable extends LightVariableBuilder<TempVariable> {
-    TempVariable(int index, @NotNull PsiType type, @NotNull PsiElement navigationElement) {
-      super("tmp$" + index, type, navigationElement);
+  private static final class Synthetic implements DfaVariableSource {
+    private final int myLocation;
+
+    public Synthetic(int location) {
+      myLocation = location;
+    }
+
+    @NotNull
+    @Override
+    public String toString() {
+      return "tmp$" + myLocation;
+    }
+
+    @Override
+    public boolean isStable() {
+      return true;
     }
   }
 
   public static class InlinedBlockContext {
     final PsiCodeBlock myCodeBlock;
     final boolean myForceNonNullBlockResult;
-    final PsiVariable myTarget;
+    final DfaVariableValue myTarget;
 
-    public InlinedBlockContext(PsiCodeBlock codeBlock, boolean forceNonNullBlockResult, PsiVariable target) {
+    public InlinedBlockContext(PsiCodeBlock codeBlock, boolean forceNonNullBlockResult, DfaVariableValue target) {
       myCodeBlock = codeBlock;
       myForceNonNullBlockResult = forceNonNullBlockResult;
       myTarget = target;

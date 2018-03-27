@@ -20,6 +20,7 @@ import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.DfaUnknownValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
@@ -41,7 +42,7 @@ import java.util.function.Consumer;
 public class CFGBuilder {
   private final ControlFlowAnalyzer myAnalyzer;
   private final Deque<JumpInstruction> myBranches = new ArrayDeque<>();
-  private final Map<PsiExpression, PsiVariable> myMethodRefQualifiers = new HashMap<>();
+  private final Map<PsiExpression, DfaVariableValue> myMethodRefQualifiers = new HashMap<>();
 
   CFGBuilder(ControlFlowAnalyzer analyzer) {
     myAnalyzer = analyzer;
@@ -91,7 +92,7 @@ public class CFGBuilder {
   }
 
   /**
-   * Generate instructions to push given variable on stack for subsequent write.
+   * Generate instructions to push given variable value on stack for subsequent write.
    * <p>
    * Stack before: ...
    * <p>
@@ -100,9 +101,8 @@ public class CFGBuilder {
    * @param variable to push
    * @return this builder
    */
-  public CFGBuilder pushVariable(PsiVariable variable) {
-    myAnalyzer.addInstruction(
-      new PushInstruction(getFactory().getVarFactory().createVariableValue(variable, false), null, true));
+  public CFGBuilder pushForWrite(DfaVariableValue variable) {
+    myAnalyzer.addInstruction(new PushInstruction(variable, null, true));
     return this;
   }
 
@@ -394,7 +394,7 @@ public class CFGBuilder {
 
   /**
    * Generate instructions to assign top stack value to the second stack value
-   * (usually pushed via {@link #pushVariable(PsiVariable)}).
+   * (usually pushed via {@link #pushForWrite(DfaVariableValue)}).
    * <p>
    * Stack before: ... variable_for_write value
    * <p>
@@ -417,7 +417,20 @@ public class CFGBuilder {
    * @return this builder
    */
   public CFGBuilder assignTo(PsiVariable var) {
-    return pushVariable(var).swap().assign();
+    return pushForWrite(getFactory().getVarFactory().createVariableValue(var)).swap().assign();
+  }
+
+  /**
+   * Generate instructions to assign top stack value to the specified variable
+   * <p>
+   * Stack before: ... value
+   * <p>
+   * Stack after: ... variable
+   *
+   * @return this builder
+   */
+  public CFGBuilder assignTo(DfaVariableValue var) {
+    return pushForWrite(var).swap().assign();
   }
 
   /**
@@ -445,8 +458,8 @@ public class CFGBuilder {
       PsiMethodReferenceExpression methodRef = (PsiMethodReferenceExpression)stripped;
       PsiExpression qualifier = methodRef.getQualifierExpression();
       if (qualifier != null && !PsiMethodReferenceUtil.isStaticallyReferenced(methodRef)) {
-        PsiVariable qualifierBinding = createTempVariable(qualifier.getType());
-        pushVariable(qualifierBinding)
+        DfaVariableValue qualifierBinding = createTempVariable(qualifier.getType());
+        pushForWrite(qualifierBinding)
           .pushExpression(qualifier)
           .checkNotNull(qualifier, NullabilityProblemKind.fieldAccessNPE)
           .assign()
@@ -509,10 +522,8 @@ public class CFGBuilder {
         }
         if (argCount == expectedArgCount) {
           if (pushQualifier) {
-            PsiVariable qualifierVar = myMethodRefQualifiers.remove(methodRef);
-            DfaValue qualifierValue = qualifierVar == null ? DfaUnknownValue.getInstance() :
-                                      getFactory().getVarFactory().createVariableValue(qualifierVar, false);
-            push(qualifierValue);
+            DfaValue qualifierValue = myMethodRefQualifiers.remove(methodRef);
+            push(qualifierValue == null ? DfaUnknownValue.getInstance() : qualifierValue);
             moveTopValue(argCount);
           }
           myAnalyzer.addBareCall(null, methodRef);
@@ -600,9 +611,9 @@ public class CFGBuilder {
         checkNotNull(expression, NullabilityProblemKind.nullableFunctionReturn);
       }
     } else if(body instanceof PsiCodeBlock) {
-      PsiVariable variable = createTempVariable(LambdaUtil.getFunctionalInterfaceReturnType(lambda));
+      DfaVariableValue variable = createTempVariable(LambdaUtil.getFunctionalInterfaceReturnType(lambda));
       myAnalyzer.inlineBlock((PsiCodeBlock)body, resultNullness, variable);
-      push(getFactory().getVarFactory().createVariableValue(variable, false));
+      push(variable);
     } else {
       pushUnknown();
     }
@@ -610,13 +621,13 @@ public class CFGBuilder {
   }
 
   /**
-   * Create a temporary {@link PsiVariable} (not declared in the original code) to be used within this control flow.
+   * Create a synthetic variable (not declared in the original code) to be used within this control flow.
    *
    * @param type a type of variable to create
    * @return newly created variable
    */
   @NotNull
-  public PsiVariable createTempVariable(@Nullable PsiType type) {
+  public DfaVariableValue createTempVariable(@Nullable PsiType type) {
     return myAnalyzer.createTempVariable(type);
   }
 
