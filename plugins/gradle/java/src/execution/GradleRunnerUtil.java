@@ -75,16 +75,6 @@ public class GradleRunnerUtil {
     return null;
   }
 
-  /**
-   * @deprecated to be removed in 2018.2
-   */
-  @NotNull
-  public static String getTestLocationUrl(@Nullable String testName, @NotNull String fqClassName) {
-    return testName == null
-           ? JavaTestLocator.TEST_PROTOCOL + SCHEME_SEPARATOR + fqClassName
-           : JavaTestLocator.TEST_PROTOCOL + SCHEME_SEPARATOR + StringUtil.getQualifiedName(fqClassName, testName);
-  }
-
   public static Object getData(@NotNull Project project, @NonNls String dataId, @NotNull ExecutionInfo executionInfo) {
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       final Location location = getLocation(project, executionInfo);
