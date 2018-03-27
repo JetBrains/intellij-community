@@ -557,7 +557,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
           if (PyUtil.isClassAttribute(myElement) &&
               expr instanceof PyTargetExpression &&
-              (PyUtil.isClassAttribute(expr) || PyUtil.isInstanceAttribute((PyTargetExpression)expr, context))) {
+              PyUtil.isAttribute((PyTargetExpression)expr, context)) {
             final PyClass c1 = PsiTreeUtil.getParentOfType(element, PyClass.class);
             final PyClass c2 = PsiTreeUtil.getParentOfType(myElement, PyClass.class);
             if (c1 != null && c2 != null && (c1.isSubclass(c2, context) || c2.isSubclass(c1, context))) {

@@ -291,7 +291,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
         typeName = targetDocString.getParamType(name);
       }
     }
-    if (typeName == null && PyUtil.isAttribute(this)) {
+    if (typeName == null && PyUtil.isAttribute(this, null)) {
       final PyClass cls = getContainingClass();
       if (cls != null) {
         final StructuredDocString classDocString = cls.getStructuredDocString();

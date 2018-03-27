@@ -96,14 +96,14 @@ public class PyDocumentationBuilder {
     final PsiElement elementDefinition = resolveToDocStringOwner(context);
     final boolean isProperty = buildFromProperty(elementDefinition, outerElement, context);
 
-    if (myProlog.isEmpty() && !isProperty && !isAttribute()) {
+    if (myProlog.isEmpty() && !isProperty && !isAttribute(context)) {
       myProlog.add(myReassignmentChain);
     }
 
     if (elementDefinition instanceof PyDocStringOwner) {
       buildFromDocstring(elementDefinition, isProperty);
     }
-    else if (isAttribute()) {
+    else if (isAttribute(context)) {
       buildFromAttributeDoc(context);
     }
     else if (elementDefinition instanceof PyNamedParameter) {
@@ -317,8 +317,8 @@ public class PyDocumentationBuilder {
     }
   }
 
-  private boolean isAttribute() {
-    return myElement instanceof PyTargetExpression && PyUtil.isAttribute((PyTargetExpression)myElement);
+  private boolean isAttribute(@NotNull TypeEvalContext context) {
+    return myElement instanceof PyTargetExpression && PyUtil.isAttribute((PyTargetExpression)myElement, context);
   }
 
   @Nullable

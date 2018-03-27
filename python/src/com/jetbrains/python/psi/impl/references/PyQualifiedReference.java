@@ -491,14 +491,17 @@ public class PyQualifiedReference extends PyReferenceImpl {
     if (resolveResult == element) {
       return true;
     }
-    if (resolveResult instanceof PyTargetExpression && PyUtil.isAttribute((PyTargetExpression)resolveResult) &&
-        element instanceof PyTargetExpression && PyUtil.isAttribute((PyTargetExpression)element) && Comparing.equal(
-      ((PyTargetExpression)resolveResult).getReferencedName(),
-      ((PyTargetExpression)element).getReferencedName())) {
-      PyClass aClass = PsiTreeUtil.getParentOfType(resolveResult, PyClass.class);
-      PyClass bClass = PsiTreeUtil.getParentOfType(element, PyClass.class);
 
-      if (aClass != null && bClass != null && bClass.isSubclass(aClass, myContext.getTypeEvalContext())) {
+    final TypeEvalContext context = myContext.getTypeEvalContext();
+    if (resolveResult instanceof PyTargetExpression &&
+        PyUtil.isAttribute((PyTargetExpression)resolveResult, context) &&
+        element instanceof PyTargetExpression &&
+        PyUtil.isAttribute((PyTargetExpression)element, context) &&
+        Comparing.equal(((PyTargetExpression)resolveResult).getReferencedName(), ((PyTargetExpression)element).getReferencedName())) {
+      final PyClass aClass = PsiTreeUtil.getParentOfType(resolveResult, PyClass.class);
+      final PyClass bClass = PsiTreeUtil.getParentOfType(element, PyClass.class);
+
+      if (aClass != null && bClass != null && bClass.isSubclass(aClass, context)) {
         return true;
       }
     }

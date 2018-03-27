@@ -301,8 +301,22 @@ public class PyUtil {
     if (!thing) throw new IncorrectOperationException();
   }
 
+  /**
+   * @deprecated Use {@link PyUtil#isAttribute(PyTargetExpression, TypeEvalContext)} instead.
+   * This method will be removed in 2018.3.
+   */
+  @Deprecated
   public static boolean isAttribute(PyTargetExpression ex) {
-    return isInstanceAttribute(ex, null) || isClassAttribute(ex);
+    return ex != null && isAttribute(ex, null);
+  }
+
+  /**
+   * @return true if {@link PyUtil#isInstanceAttribute(PyTargetExpression, TypeEvalContext)} or {@link PyUtil#isClassAttribute(PsiElement)} returns true.
+   * @see PyUtil#isInstanceAttribute(PyTargetExpression, TypeEvalContext)
+   * @see PyUtil#isClassAttribute(PsiElement)
+   */
+  public static boolean isAttribute(@NotNull PyTargetExpression target, @Nullable TypeEvalContext context) {
+    return isInstanceAttribute(target, context) || isClassAttribute(target);
   }
 
   /**
