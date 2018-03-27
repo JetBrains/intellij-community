@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.chainsSearch.context;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -25,6 +11,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.backwardRefs.SignatureData;
 
 import java.util.Set;
+
+import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
 
 public class ChainSearchTarget {
   private static final Set<String> EXCLUDED_PACKAGES = ContainerUtil.set("java.lang", "java.util.function");
@@ -106,9 +94,15 @@ public class ChainSearchTarget {
       if (resolvedClass == null) return null;
       iteratorKind = SignatureData.ITERATOR_ONE_DIM;
     }
-    if (resolvedClass.hasTypeParameters() || resolvedClass instanceof PsiTypeParameter || AnnotationUtil.isAnnotated(resolvedClass, CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE, false, false)) return null;
+    if (resolvedClass.hasTypeParameters() ||
+        resolvedClass instanceof PsiTypeParameter ||
+        AnnotationUtil.isAnnotated(resolvedClass, CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE, CHECK_EXTERNAL)) {
+      return null;
+    }
     String packageName = JavaHierarchyUtil.getPackageName(resolvedClass);
-    if (packageName == null || EXCLUDED_PACKAGES.contains(packageName)) return null;
+    if (packageName == null || EXCLUDED_PACKAGES.contains(packageName)) {
+      return null;
+    }
 
     String classQName = resolvedClass.getQualifiedName();
     if (classQName == null) {

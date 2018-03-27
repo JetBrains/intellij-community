@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source.codeStyle;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.formatting.CoreFormatterUtil;
 import com.intellij.formatting.FormattingMode;
 import com.intellij.formatting.FormattingModel;
@@ -27,7 +28,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.DocumentBasedFormattingModel;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -94,7 +94,7 @@ abstract class CodeStyleManagerRunnable<T> {
     final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(file);
     FormattingModelBuilder elementBuilder = element != null ? LanguageFormatting.INSTANCE.forContext(element) : builder;
     if (builder != null && elementBuilder != null) {
-      mySettings = CodeStyleSettingsManager.getSettings(myCodeStyleManager.getProject());
+      mySettings = CodeStyle.getSettings(file);
 
       mySignificantRange = offset != -1 ? getSignificantRange(file, offset) : null;
       myIndentOptions = mySettings.getIndentOptionsByFile(file, mySignificantRange);

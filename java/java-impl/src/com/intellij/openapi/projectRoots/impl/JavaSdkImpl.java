@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.icons.AllIcons;
@@ -16,24 +18,23 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.jrt.JrtFileSystem;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.lang.JavaVersion;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.jps.model.java.JdkVersionDetector;
 import org.jetbrains.jps.model.java.impl.JavaSdkUtil;
 
 import javax.swing.*;
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 /**
@@ -46,12 +47,9 @@ public class JavaSdkImpl extends JavaSdk {
   public static final DataKey<Boolean> KEY = DataKey.create("JavaSdk");
 
   private static final String VM_EXE_NAME = "java";   // do not use JavaW.exe for Windows because of issues with encoding
-  private static final Pattern VERSION_STRING_PATTERN = Pattern.compile("^(.*)java version \"([1234567890_.]*)\"(.*)$");
-  private static final String JAVA_VERSION_PREFIX = "java version ";
-  private static final String OPENJDK_VERSION_PREFIX = "openjdk version ";
 
   private final Map<String, String> myCachedSdkHomeToVersionString = new ConcurrentHashMap<>();
-  private final Map<String, JavaSdkVersion> myCachedVersionStringToJavaVersion = new ConcurrentHashMap<>();
+  private final Map<String, JavaSdkVersion> myCachedVersionStringToJdkVersion = new ConcurrentHashMap<>();
 
   public JavaSdkImpl(final VirtualFileManager fileManager, final FileTypeManager fileTypeManager) {
     super("JavaSDK");
@@ -73,11 +71,10 @@ public class JavaSdkImpl extends JavaSdk {
       }
 
       private void updateCache(VirtualFileEvent event) {
-        final VirtualFile file = event.getFile();
         if (FileTypes.ARCHIVE.equals(fileTypeManager.getFileTypeByFileName(event.getFileName()))) {
-          final String filePath = file.getPath();
+          String filePath = event.getFile().getPath();
           if (myCachedSdkHomeToVersionString.keySet().removeIf(sdkHome -> FileUtil.isAncestor(sdkHome, filePath, false))) {
-            myCachedVersionStringToJavaVersion.clear();
+            myCachedVersionStringToJdkVersion.clear();
           }
         }
       }
@@ -111,11 +108,17 @@ public class JavaSdkImpl extends JavaSdk {
   @Nullable
   public String getDefaultDocumentationUrl(@NotNull Sdk sdk) {
     JavaSdkVersion version = getVersion(sdk);
-    if (version == JavaSdkVersion.JDK_1_5) return "http://docs.oracle.com/javase/1.5.0/docs/api/";
-    if (version == JavaSdkVersion.JDK_1_6) return "http://docs.oracle.com/javase/6/docs/api/";
-    if (version == JavaSdkVersion.JDK_1_7) return "http://docs.oracle.com/javase/7/docs/api/";
-    if (version == JavaSdkVersion.JDK_1_8) return "http://docs.oracle.com/javase/8/docs/api/";
-    if (version == JavaSdkVersion.JDK_1_9) return "http://docs.oracle.com/javase/9/docs/api/";
+    if (version != null) {
+      if (version == JavaSdkVersion.JDK_1_5) {
+        return "https://docs.oracle.com/javase/1.5.0/docs/api/";
+      }
+      if (version == JavaSdkVersion.JDK_10) {
+        return "https://download.java.net/java/jdk10/docs/api/";
+      }
+      if (version.isAtLeast(JavaSdkVersion.JDK_1_6)) {
+        return "https://docs.oracle.com/javase/" + version.ordinal() + "/docs/api/";
+      }
+    }
     return null;
   }
 
@@ -201,50 +204,14 @@ public class JavaSdkImpl extends JavaSdk {
 
   @Override
   public String suggestSdkName(String currentSdkName, String sdkHome) {
-    final String suggestedName;
-    if (currentSdkName != null && !currentSdkName.isEmpty()) {
-      final Matcher matcher = VERSION_STRING_PATTERN.matcher(currentSdkName);
-      final boolean replaceNameWithVersion = matcher.matches();
-      if (replaceNameWithVersion){
-        // user did not change name -> set it automatically
-        final String versionString = getVersionString(sdkHome);
-        suggestedName = versionString == null ? currentSdkName : matcher.replaceFirst("$1" + versionString + "$3");
-      }
-      else {
-        suggestedName = currentSdkName;
-      }
-    }
-    else {
-      String versionString = getVersionString(sdkHome);
-      suggestedName = versionString == null ? ProjectBundle.message("sdk.java.unknown.name") : getVersionNumber(versionString);
-    }
-    return suggestedName;
-  }
+    JavaVersion version = JavaVersion.tryParse(getVersionString(sdkHome));
+    if (version == null) return currentSdkName;
 
-  @NotNull
-  private static String getVersionNumber(@NotNull String versionString) {
-    if (versionString.startsWith(JAVA_VERSION_PREFIX) || versionString.startsWith(OPENJDK_VERSION_PREFIX)) {
-      boolean openJdk = versionString.startsWith(OPENJDK_VERSION_PREFIX);
-      versionString = versionString.substring(openJdk ? OPENJDK_VERSION_PREFIX.length() : JAVA_VERSION_PREFIX.length());
-      if (versionString.startsWith("\"") && versionString.endsWith("\"")) {
-        versionString = versionString.substring(1, versionString.length() - 1);
-      }
-      int dotIdx = versionString.indexOf('.');
-      if (dotIdx > 0) {
-        try {
-          int major = Integer.parseInt(versionString.substring(0, dotIdx));
-          int minorDot = versionString.indexOf('.', dotIdx + 1);
-          if (minorDot > 0) {
-            int minor = Integer.parseInt(versionString.substring(dotIdx + 1, minorDot));
-            versionString = major + "." + minor;
-          }
-        }
-        catch (NumberFormatException e) {
-          // Do nothing. Use original version string if failed to parse according to major.minor pattern.
-        }
-      }
-    }
-    return versionString;
+    StringBuilder suggested = new StringBuilder();
+    if (version.feature < 9) suggested.append("1.");
+    suggested.append(version.feature);
+    if (version.ea) suggested.append("-ea");
+    return suggested.toString();
   }
 
   @Override
@@ -324,21 +291,17 @@ public class JavaSdkImpl extends JavaSdk {
 
   @Override
   public final String getVersionString(String sdkHome) {
-    String versionString = myCachedSdkHomeToVersionString.get(sdkHome);
-    if (versionString == null) {
-      versionString = SdkVersionUtil.detectJdkVersion(sdkHome);
-      if (!StringUtil.isEmpty(versionString)) {
-        myCachedSdkHomeToVersionString.put(sdkHome, versionString);
-      }
-    }
-    return versionString;
+    return myCachedSdkHomeToVersionString.computeIfAbsent(sdkHome, k -> {
+      JdkVersionDetector.JdkVersionInfo jdkInfo = SdkVersionUtil.getJdkVersionInfo(k);
+      return jdkInfo != null ? JdkVersionDetector.formatVersionString(jdkInfo.version) : null;
+    });
   }
 
   @Override
   public JavaSdkVersion getVersion(@NotNull Sdk sdk) {
     String versionString = sdk.getVersionString();
     return versionString == null ? null :
-           myCachedVersionStringToJavaVersion.computeIfAbsent(versionString, JavaSdkVersion::fromVersionString);
+           myCachedVersionStringToJdkVersion.computeIfAbsent(versionString, JavaSdkVersion::fromVersionString);
   }
 
   @Override

@@ -82,8 +82,6 @@ public class NavBarItem extends SimpleColoredComponent implements DataProvider, 
       setMyBorder(null);
       setBorder(null);
       setPaintFocusBorder(false);
-
-      // Android Studio: added by Change Ic9d9c9a0 / commit bb3b09b
       if (myPanel.allowNavItemsFocus()) {
         // Take ownership of Tab/Shift-Tab navigation (to move focus out of nav bar panel), as
         // navigation between items is handled by the Left/Right cursor keys. This is similar
@@ -194,8 +192,6 @@ public class NavBarItem extends SimpleColoredComponent implements DataProvider, 
   }
 
   public boolean isFocused() {
-
-    // Android Studio: modified by Change Ic9d9c9a0 / commit bb3b09b
     if (myPanel.allowNavItemsFocus()) {
       return UIUtil.isFocusAncestor(myPanel) && !myPanel.isNodePopupActive();
     } else {
@@ -236,7 +232,6 @@ public class NavBarItem extends SimpleColoredComponent implements DataProvider, 
     return myPanel.getDataImpl(dataId, () -> JBIterable.of(myObject));
   }
 
-  // Android Studio: added by Change Ic9d9c9a0 / commit bb3b09b
   @Override
   public AccessibleContext getAccessibleContext() {
     if (accessibleContext == null) {

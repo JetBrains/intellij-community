@@ -64,6 +64,9 @@ class IgnoreResultOfCallInspectionTest extends LightInspectionTestCase {
       "    When when() default When.ALWAYS;\n" +
       "}",
 
+      "package a;\n" +
+      " public @interface CheckReturnValue {}",
+
       "package com.google.errorprone.annotations;" +
       "import java.lang.annotation.ElementType;\n" +
       "import java.lang.annotation.Retention;\n" +
@@ -89,6 +92,19 @@ class IgnoreResultOfCallInspectionTest extends LightInspectionTestCase {
            "  void run() {\n" +
            "    /*Result of 'Test.lookAtMe()' is ignored*/lookAtMe/**/(); // Bad!  This line should produce a warning.\n" +
            "    ignoreMe(); // OK.  This line should *not* produce a warning.\n" +
+           "  }\n" +
+           "}")
+  }
+
+  void testCustomCheckReturnValue() {
+    doTest("import a.CheckReturnValue;\n" +
+           "\n" +
+           "class Test {\n" +
+           "  @CheckReturnValue\n" +
+           "  int lookAtMe() { return 1; }\n" +
+           "\n" +
+           "  void run() {\n" +
+           "    /*Result of 'Test.lookAtMe()' is ignored*/lookAtMe/**/();\n" +
            "  }\n" +
            "}")
   }
@@ -247,6 +263,49 @@ class Test {
     // violates stream principles, but quite widely used (IDEA-164501);
     // this inspection should not warn here; probably some other inspection should suggest better option 
     Stream.of("a", "b", "c").collect(Collectors.toCollection(() -> result));
+  }
+}"""
+  }
+
+  void testPattern() {
+    doTest """
+import java.util.regex.Pattern;
+import java.util.Set;
+
+class Test {
+  void test(Set<String> names) {
+    names.forEach(Pattern::/*Result of 'Pattern.compile()' is ignored*/compile/**/);
+  }
+}
+"""
+  }
+
+  void testPatternCaught() {
+    doTest """
+import java.util.regex.*;
+import java.util.Set;
+
+class Test {
+  void test(Set<String> names) {
+    try {
+      names.forEach(Pattern::compile);
+    }
+    catch (PatternSyntaxException e) {
+      throw new RuntimeException("Pattern error", e);
+    }
+  }
+}
+"""
+  }
+
+  void testOptionalOrElseThrow() {
+    doTest """
+import java.util.Optional;
+
+@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+class Test {
+  void test(Optional<String> opt) {
+    opt.orElseThrow(RuntimeException::new);
   }
 }"""
   }

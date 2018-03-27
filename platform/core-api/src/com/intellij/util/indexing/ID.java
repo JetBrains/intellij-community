@@ -17,10 +17,9 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.PathManager;
-import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.IntObjectMap;
 import gnu.trove.TObjectIntHashMap;
-import gnu.trove.TObjectIntProcedure;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,11 +28,10 @@ import java.io.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Feb 12, 2008
  */
 public class ID<K, V> extends IndexId<K,V> {
-  private static final ConcurrentIntObjectMap<ID> ourRegistry = ContainerUtil.createConcurrentIntObjectMap();
-  private static final TObjectIntHashMap<String> ourNameToIdRegistry = new TObjectIntHashMap<String>();
+  private static final IntObjectMap<ID> ourRegistry = ContainerUtil.createConcurrentIntObjectMap();
+  private static final TObjectIntHashMap<String> ourNameToIdRegistry = new TObjectIntHashMap<>();
   static final int MAX_NUMBER_OF_INDICES = Short.MAX_VALUE;
 
   private final short myUniqueId;
@@ -41,30 +39,23 @@ public class ID<K, V> extends IndexId<K,V> {
   static {
     final File indices = getEnumFile();
     try {
-      final BufferedReader reader = new BufferedReader(new FileReader(indices));
-      TObjectIntHashMap<String> nameToIdRegistry = new TObjectIntHashMap<String>();
-      try {
+      TObjectIntHashMap<String> nameToIdRegistry = new TObjectIntHashMap<>();
+      try (BufferedReader reader = new BufferedReader(new FileReader(indices))) {
         int cnt = 0;
         do {
-            cnt++;
-            final String name = reader.readLine();
-            if (name == null) break;
-            nameToIdRegistry.put(name, cnt);
-          }
-          while (true);
-      }
-      finally {
-        reader.close();
+          cnt++;
+          final String name = reader.readLine();
+          if (name == null) break;
+          nameToIdRegistry.put(name, cnt);
+        }
+        while (true);
       }
 
       synchronized (ourNameToIdRegistry) {
         ourNameToIdRegistry.ensureCapacity(nameToIdRegistry.size());
-        nameToIdRegistry.forEachEntry(new TObjectIntProcedure<String>() {
-          @Override
-          public boolean execute(String name, int index) {
-            ourNameToIdRegistry.put(name, index);
-            return true;
-          }
+        nameToIdRegistry.forEachEntry((name, index) -> {
+          ourNameToIdRegistry.put(name, index);
+          return true;
         });
       }
     }
@@ -113,25 +104,18 @@ public class ID<K, V> extends IndexId<K,V> {
   private static void writeEnumFile() {
     try {
       final File f = getEnumFile();
-      final BufferedWriter w = new BufferedWriter(new FileWriter(f));
-      try {
+      try (BufferedWriter w = new BufferedWriter(new FileWriter(f))) {
         final String[] names = new String[ourNameToIdRegistry.size()];
 
-        ourNameToIdRegistry.forEachEntry(new TObjectIntProcedure<String>() {
-            @Override
-            public boolean execute(final String key, final int value) {
-              names[value - 1] = key;
-              return true;
-            }
-          });
+        ourNameToIdRegistry.forEachEntry((key, value) -> {
+          names[value - 1] = key;
+          return true;
+        });
 
         for (String name : names) {
-            w.write(name);
-            w.newLine();
-          }
-      }
-      finally {
-        w.close();
+          w.write(name);
+          w.newLine();
+        }
       }
     }
     catch (IOException e) {
@@ -142,7 +126,7 @@ public class ID<K, V> extends IndexId<K,V> {
   @NotNull
   public static <K, V> ID<K, V> create(@NonNls @NotNull String name) {
     final ID<K, V> found = findByName(name);
-    return found != null ? found : new ID<K, V>(name);
+    return found != null ? found : new ID<>(name);
   }
 
   @Nullable

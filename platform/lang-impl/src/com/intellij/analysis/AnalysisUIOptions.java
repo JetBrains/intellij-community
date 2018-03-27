@@ -40,6 +40,7 @@ public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOpt
   public volatile boolean GROUP_BY_SEVERITY = false;
   public volatile boolean FILTER_RESOLVED_ITEMS = true;
   public boolean ANALYZE_TEST_SOURCES = true;
+  @AnalysisScope.Type
   public int SCOPE_TYPE = AnalysisScope.PROJECT;
   public String CUSTOM_SCOPE_NAME = "";
   private final AutoScrollToSourceHandler myAutoScrollToSourceHandler;

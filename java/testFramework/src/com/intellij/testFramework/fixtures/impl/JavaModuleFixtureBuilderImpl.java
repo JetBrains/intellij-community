@@ -40,7 +40,6 @@ import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.ModuleFixture;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;

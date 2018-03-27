@@ -1,3 +1,4 @@
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.logging;
 
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -149,6 +150,16 @@ public class PlaceholderCountMatchesArgumentCountInspectionTest extends LightIns
            "  Logger LOG = LoggerFactory.getLogger( X.class );" +
            "  void m(String a, int b, Object c) {" +
            "    LOG.info(\"schnizzle {} for blurb {} in quark {}\", new Object[] {a, b, c});" +
+           "  }" +
+           "}");
+  }
+
+  public void testArrayWithException() {
+    doTest("import org.slf4j.*;" +
+           "class X {" +
+           "  void z(int i) {" +
+           "    RuntimeException e = new RuntimeException();" +
+           "    LoggerFactory.getLogger(X.class).info(\"Freak mulching accident {} : {}\", new Object[] {i, e.getMessage(), e});" +
            "  }" +
            "}");
   }

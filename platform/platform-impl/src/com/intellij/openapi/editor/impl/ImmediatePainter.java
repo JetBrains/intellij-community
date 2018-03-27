@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.openapi.editor.impl;
 
@@ -94,9 +82,10 @@ class ImmediatePainter {
     final Caret caret = caretModel.getPrimaryCaret();
     final Document document = editor.getDocument();
 
-    return !(editor.getComponent().getParent() instanceof EditorTextField) &&
-           document instanceof DocumentImpl &&
+    return document instanceof DocumentImpl &&
            editor.getHighlighter() instanceof LexerEditorHighlighter &&
+           !(editor.getComponent().getParent() instanceof EditorTextField) &&
+           editor.myView.getTopOverhang() <= 0 && editor.myView.getBottomOverhang() <= 0 &&
            !editor.getSelectionModel().hasSelection() &&
            caretModel.getCaretCount() == 1 &&
            !isInVirtualSpace(editor, caret) &&
@@ -156,13 +145,14 @@ class ImmediatePainter {
                                          : JBUI.scale(caret.getVisualAttributes().getWidth(settings.getLineCursorWidth()));
     final float caretShift = isBlockCursor ? 0 : caretWidth == 1 ? 0 : 1 / JBUI.sysScale((Graphics2D)g);
     final Rectangle2D caretRectangle = new Rectangle2D.Float((int)(p2x + width2) - caretShift, p2y - topOverhang,
-                                                             caretWidth, lineHeight + topOverhang + bottomOverhang + (isBlockCursor ? -1 : 0));
+                                                             caretWidth, lineHeight + topOverhang + bottomOverhang);
 
     final Rectangle rectangle1 = new Rectangle((int)(p2x - width1), p2y, width1i, lineHeight);
     final Rectangle rectangle2 = new Rectangle((int)p2x, p2y, (int)(width2i + caretWidth - caretShift), lineHeight);
 
     final Consumer<Graphics> painter = graphics -> {
       EditorUIUtil.setupAntialiasing(graphics);
+      ((Graphics2D)graphics).setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, editor.myFractionalMetricsHintValue);
 
       fillRect(graphics, rectangle2, attributes2.getBackgroundColor());
       drawChar(graphics, c2, p2x, p2y + ascent, font2, attributes2.getForegroundColor());

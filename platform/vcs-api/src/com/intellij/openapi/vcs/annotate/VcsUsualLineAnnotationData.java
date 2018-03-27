@@ -19,8 +19,6 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 
 /**
  * @author irengrig
- *         Date: 3/10/11
- *         Time: 4:14 PM
  */
 public class VcsUsualLineAnnotationData implements VcsLineAnnotationData {
   private final VcsRevisionNumber[] myData;

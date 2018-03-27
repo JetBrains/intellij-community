@@ -135,7 +135,7 @@ public class SvnResolveTreeAcceptVariantsTest extends Svn17TestCase {
       Assert.assertTrue(change instanceof ConflictedSvnChange);
       final SvnRevisionNumber committedRevision =
         change.getBeforeRevision() != null ? (SvnRevisionNumber)change.getBeforeRevision().getRevisionNumber() : null;
-      //SvnRevisionNumber committedRevision = new SvnRevisionNumber(SVNRevision.create(cnt * 2 + 1));
+      //SvnRevisionNumber committedRevision = new SvnRevisionNumber(Revision.of(cnt * 2 + 1));
       final SvnTreeConflictResolver resolver = new SvnTreeConflictResolver(myVcs, filePath, null);
 
       resolver.resolveSelectMineFull();
@@ -249,7 +249,7 @@ public class SvnResolveTreeAcceptVariantsTest extends Svn17TestCase {
       if (change.isMoved() || change.isRenamed()) {
         beforePath = change.getBeforeRevision().getFile();
       }
-      //SvnRevisionNumber committedRevision = new SvnRevisionNumber(SVNRevision.create(cnt * 2 + 1));
+      //SvnRevisionNumber committedRevision = new SvnRevisionNumber(Revision.of(cnt * 2 + 1));
       final SvnTreeConflictResolver resolver = new SvnTreeConflictResolver(myVcs, filePath, beforePath);
 
       resolver.resolveSelectTheirsFull();

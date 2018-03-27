@@ -60,7 +60,7 @@ public class GenerateConstructorTest extends LightCodeInsightFixtureTestCase {
   public void testSubstitution() { doTest(true); }
 
   public void testImmediatelyAfterRBrace() {    // IDEADEV-28811
-    CodeStyleSettingsManager.getInstance(getProject()).getCurrentSettings().CLASS_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
+    CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE).CLASS_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
     doTest();
   }
 
@@ -91,6 +91,8 @@ public class GenerateConstructorTest extends LightCodeInsightFixtureTestCase {
     Disposer.register(myFixture.getTestRootDisposable(), manager::setNotNulls);
     doTest();
   }
+
+  public void testNullableField() { doTest(); }
 
   private void doTest() {
     doTest(false);

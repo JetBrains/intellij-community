@@ -109,7 +109,7 @@ public class IntroComponentProperty extends IntrospectedProperty<String> {
     catch (Exception e) {
       return;
     }
-    if (value != null && value instanceof JComponent) {
+    if (value instanceof JComponent) {
       context.registerComponentProperty(component, getName(), (JComponent) value);
     }
   }

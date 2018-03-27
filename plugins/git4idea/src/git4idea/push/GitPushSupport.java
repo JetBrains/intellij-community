@@ -46,7 +46,7 @@ public class GitPushSupport extends PushSupport<GitRepository, GitPushSource, Gi
   @SuppressWarnings("UnusedDeclaration")
   private GitPushSupport(@NotNull Project project, @NotNull GitRepositoryManager repositoryManager) {
     myRepositoryManager = repositoryManager;
-    myVcs = ObjectUtils.assertNotNull(GitVcs.getInstance(project));
+    myVcs = GitVcs.getInstance(project);
     mySettings = GitVcsSettings.getInstance(project);
     myPusher = new GitPusher(project, mySettings, this);
     myOutgoingCommitsProvider = new GitOutgoingCommitsProvider(project);
@@ -159,11 +159,6 @@ public class GitPushSupport extends PushSupport<GitRepository, GitPushSource, Gi
   public boolean isForcePushAllowed(@NotNull GitRepository repo, @NotNull GitPushTarget target) {
     final String targetBranch = target.getBranch().getNameForRemoteOperations();
     return !mySharedSettings.isBranchProtected(targetBranch);
-  }
-
-  @Override
-  public boolean isForcePushEnabled() {
-    return mySettings.isForcePushAllowed();
   }
 
   @Nullable

@@ -31,6 +31,7 @@ import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
+import java.awt.geom.AffineTransform;
 import java.awt.image.ImageObserver;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -40,7 +41,6 @@ import java.util.EnumMap;
 import java.util.List;
 
 import static com.intellij.util.ui.JBUI.ScaleType.*;
-import static java.lang.Math.round;
 
 /**
  * @author Konstantin Bulenkov
@@ -397,12 +397,14 @@ public class JBUI {
 
     scale = discreteScale(scale);
 
-    if (SystemInfo.isLinux) {
-      //Default UI font size for Unity and Gnome is 15. Scaling factor 1.25f works badly on Linux
-      if (scale == 1.25f) scale = 1f;
+    // Downgrading user scale below 1.0 may be uncomfortable (tiny icons),
+    // whereas some users prefer font size slightly below normal which is ok.
+    if (scale < 1 && sysScale() >= 1) scale = 1;
 
-      // [tav] temp for 2017.3
-      else if (scale > 2f) scale = 2f;
+    // Ignore the correction when UIUtil.DEF_SYSTEM_FONT_SIZE is overridden, see UIUtil.initSystemFontData.
+    if (SystemInfo.isLinux && scale == 1.25f && UIUtil.DEF_SYSTEM_FONT_SIZE == 12) {
+      //Default UI font size for Unity and Gnome is 15. Scaling factor 1.25f works badly on Linux
+      scale = 1f;
     }
     if (userScaleFactor == scale) {
       return;
@@ -410,7 +412,7 @@ public class JBUI {
     setUserScaleFactorProperty(scale);
   }
 
-  private static float discreteScale(float scale) {
+  static float discreteScale(float scale) {
     return Math.round(scale / DISCRETE_SCALE_RESOLUTION) * DISCRETE_SCALE_RESOLUTION;
   }
 
@@ -425,7 +427,7 @@ public class JBUI {
    * @return 'i' scaled by the user scale factor
    */
   public static int scale(int i) {
-    return round(userScaleFactor * i);
+    return Math.round(userScaleFactor * i);
   }
 
   public static int scaleFontSize(float fontSize) {
@@ -435,7 +437,6 @@ public class JBUI {
   }
 
   /**
-   * @param fontSize
    * @return the scale factor of {@code fontSize} relative to the standard font size (currently 12pt)
    */
   public static float getFontScale(float fontSize) {
@@ -497,15 +498,18 @@ public class JBUI {
     return scale(EmptyIcon.create(size));
   }
 
-  public static <T extends JBIcon> T scale(T icon) {
+  @NotNull
+  public static <T extends JBIcon> T scale(@NotNull T icon) {
     return (T)icon.withIconPreScaled(false);
   }
 
+  @NotNull
   public static JBDimension emptySize() {
     return new JBDimension(0, 0);
   }
 
-  public static JBInsets insets(Insets insets) {
+  @NotNull
+  public static JBInsets insets(@NotNull Insets insets) {
     return JBInsets.create(insets);
   }
 
@@ -556,23 +560,68 @@ public class JBUI {
     return scale > 1f;
   }
 
+  /**
+   * Aligns the x or/and y translate of the graphics to the integer coordinate grid if the graphics has fractional scale transform,
+   * otherwise does nothing. This is used to avoid the rounding problem, see JRE-502.
+   *
+   * @param g the graphics to align
+   * @param alignX should the x-translate be aligned
+   * @param alignY should the y-translate be aligned
+   * @return the original graphics transform when aligned, otherwise null
+   */
+  public static AffineTransform alignToIntGrid(@NotNull Graphics2D g, boolean alignX, boolean alignY) {
+    try {
+      AffineTransform tx = g.getTransform();
+      if (isFractionalScale(tx)) {
+        double scaleX = tx.getScaleX();
+        double scaleY = tx.getScaleY();
+        AffineTransform alignedTx = new AffineTransform();
+        double trX = alignX ? (int)Math.ceil(tx.getTranslateX() - 0.5) : tx.getTranslateX();
+        double trY = alignY ? (int)Math.ceil(tx.getTranslateY() - 0.5) : tx.getTranslateY();
+        alignedTx.translate(trX, trY);
+        alignedTx.scale(scaleX, scaleY);
+        assert tx.getShearX() == 0 && tx.getShearY() == 0; // the shear is ignored
+        g.setTransform(alignedTx);
+        return tx;
+      }
+    }
+    catch (Exception e) {
+      LOG.trace(e);
+    }
+    return null;
+  }
+
+  /**
+   * Returns true if the transform matrix contains fractional scale element.
+   */
+  public static boolean isFractionalScale(AffineTransform tx) {
+    double scaleX = tx.getScaleX();
+    double scaleY = tx.getScaleY();
+    return scaleX != (int)scaleX || scaleY != (int)scaleY;
+  }
+
   public static class Fonts {
+    @NotNull
     public static JBFont label() {
       return JBFont.create(UIManager.getFont("Label.font"), false);
     }
 
+    @NotNull
     public static JBFont label(float size) {
       return label().deriveFont(scale(size));
     }
 
+    @NotNull
     public static JBFont smallFont() {
       return label().deriveFont(UIUtil.getFontSize(UIUtil.FontSize.SMALL));
     }
 
+    @NotNull
     public static JBFont miniFont() {
       return label().deriveFont(UIUtil.getFontSize(UIUtil.FontSize.MINI));
     }
 
+    @NotNull
     public static JBFont create(String fontFamily, int size) {
       return JBFont.create(new Font(fontFamily, Font.PLAIN, size));
     }
@@ -649,7 +698,7 @@ public class JBUI {
    * in which its initial size is either pre-scaled (according to {@link #currentScale()})
    * or not (given in a standard resolution, e.g. 16x16 for an icon).
    */
-  public static abstract class Scaler {
+  public abstract static class Scaler {
     protected double initialScale = currentScale();
 
     private double alignedScale() {
@@ -856,7 +905,8 @@ public class JBUI {
   public static class ScaleContext extends BaseScaleContext {
     protected Scale sysScale = SYS_SCALE.of(sysScale());
 
-    private @Nullable WeakReference<Component> compRef;
+    @Nullable
+    private WeakReference<Component> compRef;
 
     private ScaleContext() {
       update(pixScale, derivePixScale());
@@ -1033,19 +1083,16 @@ public class JBUI {
   }
 
   public static class ScaleContextSupport<T extends BaseScaleContext> implements ScaleContextAware<T> {
+    @NotNull
     private final T myScaleContext;
 
-    private ScaleContextSupport() {
-      myScaleContext = null;
-      assert false;
-    }
-
-    public ScaleContextSupport(T ctx) {
+    public ScaleContextSupport(@NotNull T ctx) {
       myScaleContext = ctx;
     }
 
+    @NotNull
     @Override
-    public @NotNull T getScaleContext() {
+    public T getScaleContext() {
       return myScaleContext;
     }
 
@@ -1099,6 +1146,7 @@ public class JBUI {
       myScaler.setPreScaled(preScaled);
     }
 
+    @NotNull
     public JBIcon withIconPreScaled(boolean preScaled) {
       setIconPreScaled(preScaled);
       return this;
@@ -1183,7 +1231,7 @@ public class JBUI {
    * @author Aleksey Pivovarov
    */
   public abstract static class CachingScalableJBIcon<T extends CachingScalableJBIcon> extends ScalableJBIcon {
-    private CachingScalableJBIcon myScaledIconCache = null;
+    private CachingScalableJBIcon myScaledIconCache;
 
     protected CachingScalableJBIcon() {}
 

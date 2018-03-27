@@ -28,6 +28,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -76,7 +77,8 @@ public class AddThisQualifierFix extends InspectionGadgetsFix {
       return;
     }
     final PsiExpression thisQualifier = ExpressionUtils.getQualifierOrThis(expression);
-    @NonNls final String newExpression = thisQualifier.getText() + "." + expression.getText();
-    PsiReplacementUtil.replaceExpressionAndShorten(expression, newExpression);
+    CommentTracker commentTracker = new CommentTracker();
+    @NonNls final String newExpression = commentTracker.markUnchanged(thisQualifier).getText() + "." + commentTracker.markUnchanged(expression).getText();
+    PsiReplacementUtil.replaceExpressionAndShorten(expression, newExpression, commentTracker);
   }
 }

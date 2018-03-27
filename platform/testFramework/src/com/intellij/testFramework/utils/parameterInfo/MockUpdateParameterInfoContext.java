@@ -18,6 +18,7 @@ package com.intellij.testFramework.utils.parameterInfo;
 import com.intellij.lang.parameterInfo.UpdateParameterInfoContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
@@ -102,6 +103,11 @@ public class MockUpdateParameterInfoContext implements UpdateParameterInfoContex
   @Override
   public boolean isInnermostContext() {
     return false;
+  }
+
+  @Override
+  public UserDataHolderEx getCustomContext() {
+    throw new UnsupportedOperationException();
   }
 
   public Project getProject() {

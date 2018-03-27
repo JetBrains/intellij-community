@@ -30,13 +30,13 @@ import com.intellij.pom.tree.TreeAspectEvent;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.impl.source.text.BlockSupportImpl;
 import com.intellij.psi.impl.source.text.DiffLog;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.ForeignLeafPsiElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
@@ -312,8 +312,7 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
   public void run() {
     while (!isDisposed) {
       try {
-        boolean polled = pollQueue();
-        if (!polled) break;
+        if (!pollQueue()) break;
       }
       catch(Throwable e) {
         LOG.error(e);
@@ -433,9 +432,9 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
       // synchronized to ensure no new similar tasks can start before we hold the document's lock
       task = createNewTaskAndCancelSimilar(project, document, allFileNodes, SYNC_COMMIT_REASON, TransactionGuard.getInstance().getContextTransaction(),
                                            PsiDocumentManager.getInstance(project).getLastCommittedText(document));
-      documentLock.lock();
     }
 
+    documentLock.lock();
     try {
       assert !task.indicator.isCanceled();
       Pair<Runnable, Object> result = commitUnderProgress(task, true);
@@ -489,7 +488,9 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
     final Document document = task.getDocument();
     final Project project = task.project;
     final PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(project);
-    final List<Processor<Document>> finishProcessors = new SmartList<>();
+    final List<BooleanRunnable> finishProcessors = new SmartList<>();
+    List<BooleanRunnable> reparseInjectedProcessors = new SmartList<>();
+    Ref<ProperTextRange> changedRange = new Ref<>();
     Runnable runnable = () -> {
       myApplication.assertReadAccessAllowed();
       if (project.isDisposed()) return;
@@ -519,9 +520,11 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
           PsiFileImpl file = pair.first;
           if (file.isValid()) {
             FileASTNode oldFileNode = pair.second;
-            Processor<Document> finishProcessor = doCommit(task, file, oldFileNode);
-            if (finishProcessor != null) {
-              finishProcessors.add(finishProcessor);
+            ProperTextRange changedPsiRange = getChangedPsiRange(file, task, document.getImmutableCharSequence());
+            if (changedPsiRange != null) {
+              BooleanRunnable finishProcessor = doCommit(task, file, oldFileNode, changedPsiRange, reparseInjectedProcessors);
+              ContainerUtil.addIfNotNull(finishProcessors, finishProcessor);
+              changedRange.set(changedRange.get() == null ? changedPsiRange : changedRange.get().union(changedPsiRange));
             }
           }
           else {
@@ -541,10 +544,7 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
         }
       }
     };
-    if (synchronously) {
-      runnable.run();
-    }
-    else if (!myApplication.tryRunReadAction(runnable)) {
+    if (!myApplication.tryRunReadAction(runnable)) {
       log(project, "Could not start read action", task, myApplication.isReadAccessAllowed(), Thread.currentThread());
       return new Pair<>(null, "Could not start read action");
     }
@@ -555,14 +555,17 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
       return new Pair<>(null, "Indicator was canceled");
     }
 
-    Runnable result = createEdtRunnable(task, synchronously, finishProcessors);
+    ProperTextRange range = changedRange.isNull() ? ProperTextRange.create(0, document.getTextLength()) : changedRange.get();
+    Runnable result = createFinishCommitInEDTRunnable(task, synchronously, finishProcessors, reparseInjectedProcessors, range);
     return Pair.create(result, null);
   }
 
   @NotNull
-  private Runnable createEdtRunnable(@NotNull final CommitTask task,
-                                     final boolean synchronously,
-                                     @NotNull final List<Processor<Document>> finishProcessors) {
+  private Runnable createFinishCommitInEDTRunnable(@NotNull final CommitTask task,
+                                                   final boolean synchronously,
+                                                   @NotNull List<BooleanRunnable> finishProcessors,
+                                                   @NotNull List<BooleanRunnable> reparseInjectedProcessors,
+                                                   @NotNull ProperTextRange changedRange) {
     return () -> {
       myApplication.assertIsDispatchThread();
       Document document = task.getDocument();
@@ -578,7 +581,7 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
       }
 
       boolean changeStillValid = task.isStillValid();
-      boolean success = changeStillValid && documentManager.finishCommit(document, finishProcessors, synchronously, task.reason);
+      boolean success = changeStillValid && documentManager.finishCommit(document, finishProcessors, reparseInjectedProcessors, changedRange, synchronously, task.reason);
       if (synchronously) {
         assert success;
       }
@@ -600,10 +603,11 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
   }
 
   @NotNull
-  private Processor<Document> handleCommitWithoutPsi(@NotNull final PsiDocumentManagerBase documentManager,
+  private BooleanRunnable handleCommitWithoutPsi(@NotNull final PsiDocumentManagerBase documentManager,
                                                      @NotNull final CommitTask task) {
-    return document -> {
+    return () -> {
       log(task.project, "Finishing without PSI", task);
+      Document document = task.getDocument();
       if (!task.isStillValid() || documentManager.getCachedViewProvider(document) != null) {
         return false;
       }
@@ -719,17 +723,15 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
     }
   }
 
-  // public for Upsource
-  @Nullable("returns runnable to execute under write action in AWT to finish the commit")
-  public Processor<Document> doCommit(@NotNull final CommitTask task,
-                                      @NotNull final PsiFile file,
-                                      @NotNull final FileASTNode oldFileNode) {
+  // returns runnable to execute under write action in AWT to finish the commit, updates "outChangedRange"
+  @Nullable
+  public BooleanRunnable doCommit(@NotNull final CommitTask task,
+                                  @NotNull final PsiFile file,
+                                  @NotNull final FileASTNode oldFileNode,
+                                  @NotNull ProperTextRange changedPsiRange,
+                                  @NotNull List<BooleanRunnable> outReparseInjectedProcessors) {
     Document document = task.getDocument();
     final CharSequence newDocumentText = document.getImmutableCharSequence();
-    final TextRange changedPsiRange = getChangedPsiRange(file, task, newDocumentText);
-    if (changedPsiRange == null) {
-      return null;
-    }
 
     final Boolean data = document.getUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY);
     if (data != null) {
@@ -737,11 +739,22 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
       file.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY, data);
     }
 
-    BlockSupport blockSupport = BlockSupport.getInstance(file.getProject());
-    final DiffLog diffLog = blockSupport.reparseRange(file, oldFileNode, changedPsiRange, newDocumentText, task.indicator, task.myLastCommittedText);
+    BlockSupportImpl blockSupport = (BlockSupportImpl)BlockSupport.getInstance(file.getProject());
+    Trinity<DiffLog, ASTNode, ASTNode> result =
+      BlockSupportImpl.reparse(file, oldFileNode, changedPsiRange, newDocumentText, task.indicator, task.myLastCommittedText);
+    DiffLog diffLog = result.getFirst();
+    ASTNode oldRoot = result.getSecond();
+    ASTNode newRoot = result.getThird();
 
-    return document1 -> {
+    PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(task.project);
+
+    List<BooleanRunnable> injectedRunnables =
+      documentManager.reparseChangedInjectedFragments(document, file, changedPsiRange, task.indicator, oldRoot, newRoot);
+    outReparseInjectedProcessors.addAll(injectedRunnables);
+
+    return () -> {
       FileViewProvider viewProvider = file.getViewProvider();
+      Document document1 = task.getDocument();
       if (!task.isStillValid() ||
           ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(file.getProject())).getCachedViewProvider(document1) != viewProvider) {
         return false; // optimistic locking failed
@@ -823,16 +836,17 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
   }
 
   @Nullable
-  private static TextRange getChangedPsiRange(@NotNull PsiFile file,
-                                              @NotNull CommitTask task,
-                                              @NotNull CharSequence newDocumentText) {
+  private static ProperTextRange getChangedPsiRange(@NotNull PsiFile file,
+                                                    @NotNull CommitTask task,
+                                                    @NotNull CharSequence newDocumentText) {
     CharSequence oldDocumentText = task.myLastCommittedText;
     int psiLength = oldDocumentText.length();
     if (!file.getViewProvider().supportsIncrementalReparse(file.getLanguage())) {
-      return new TextRange(0, psiLength);
+      return new ProperTextRange(0, psiLength);
     }
-    List<DocumentEvent> events = ((PsiDocumentManagerBase)PsiDocumentManagerBase.getInstance(file.getProject())).getEventsSinceCommit(task.document);
-    int prefix = Integer.MAX_VALUE, suffix = Integer.MAX_VALUE;
+    List<DocumentEvent> events = ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(file.getProject())).getEventsSinceCommit(task.document);
+    int prefix = Integer.MAX_VALUE;
+    int suffix = Integer.MAX_VALUE;
     int lengthBeforeEvent = psiLength;
     for (DocumentEvent event : events) {
       prefix = Math.min(prefix, event.getOffset());
@@ -845,15 +859,19 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
     //Important! delete+insert sequence can give some of same chars back, lets grow affixes to include them.
     int shortestLength = Math.min(psiLength, newDocumentText.length());
     while (prefix < shortestLength &&
-           oldDocumentText.charAt(prefix) == newDocumentText.charAt(prefix)) { prefix++; }
+           oldDocumentText.charAt(prefix) == newDocumentText.charAt(prefix)) {
+      prefix++;
+    }
     while (suffix < shortestLength - prefix &&
-           oldDocumentText.charAt(psiLength - suffix - 1) == newDocumentText.charAt(newDocumentText.length() - suffix - 1)) { suffix++; }
+           oldDocumentText.charAt(psiLength - suffix - 1) == newDocumentText.charAt(newDocumentText.length() - suffix - 1)) {
+      suffix++;
+    }
     int end = Math.max(prefix, psiLength - suffix);
     if (end == prefix && newDocumentText.length() == oldDocumentText.length()) return null;
-    return TextRange.create(prefix, end);
+    return ProperTextRange.create(prefix, end);
   }
 
-  public static void doActualPsiChange(@NotNull final PsiFile file, @NotNull final DiffLog diffLog) {
+  public static void doActualPsiChange(@NotNull PsiFile file, @NotNull DiffLog diffLog) {
     CodeStyleManager.getInstance(file.getProject()).performActionWithFormatterDisabled((Runnable)() -> {
       FileViewProvider viewProvider = file.getViewProvider();
       synchronized (((AbstractFileViewProvider)viewProvider).getFilePsiLock()) {

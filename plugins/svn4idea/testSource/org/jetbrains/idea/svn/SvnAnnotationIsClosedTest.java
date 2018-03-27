@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,6 @@
  */
 package org.jetbrains.idea.svn;
 
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
@@ -28,9 +24,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsAnnotationLocalChangesListener;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
-import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.history.VcsRevisionDescription;
-import com.intellij.openapi.vcs.update.CommonUpdateProjectAction;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import junit.framework.Assert;
@@ -117,20 +111,7 @@ public class SvnAnnotationIsClosedTest extends Svn17TestCase {
     myDirtyScopeManager.markEverythingDirty();
     myChangeListManager.ensureUpToDate(false);
 
-    ProjectLevelVcsManagerEx.getInstanceEx(myProject).getOptions(VcsConfiguration.StandardOption.UPDATE).setValue(false);
-    final CommonUpdateProjectAction action = new CommonUpdateProjectAction();
-    action.getTemplatePresentation().setText("1");
-    action.actionPerformed(new AnActionEvent(null,
-                                             dataId -> {
-                                               if (CommonDataKeys.PROJECT.is(dataId)) {
-                                                 return myProject;
-                                               }
-                                               return null;
-                                             }, "test", new Presentation(), ActionManager.getInstance(), 0));
-
-    myChangeListManager.ensureUpToDate(false);
-    myChangeListManager.ensureUpToDate(false);  // wait for after-events like annotations recalculation
-    sleep(100); // zipper updater
+    imitUpdate(myProject);
     Assert.assertTrue(myIsClosed);
   }
 
@@ -157,20 +138,7 @@ public class SvnAnnotationIsClosedTest extends Svn17TestCase {
     myChangeListManager.ensureUpToDate(false);
     Assert.assertFalse(myIsClosed);
 
-    ProjectLevelVcsManagerEx.getInstanceEx(myProject).getOptions(VcsConfiguration.StandardOption.UPDATE).setValue(false);
-    final CommonUpdateProjectAction action = new CommonUpdateProjectAction();
-    action.getTemplatePresentation().setText("1");
-    action.actionPerformed(new AnActionEvent(null,
-                                             dataId -> {
-                                               if (CommonDataKeys.PROJECT.is(dataId)) {
-                                                 return myProject;
-                                               }
-                                               return null;
-                                             }, "test", new Presentation(), ActionManager.getInstance(), 0));
-
-    myChangeListManager.ensureUpToDate(false);
-    myChangeListManager.ensureUpToDate(false);  // wait for after-events like annotations recalculation
-    sleep(100); // zipper updater
+    imitUpdate(myProject);
     Assert.assertTrue(myIsClosed);
   }
 

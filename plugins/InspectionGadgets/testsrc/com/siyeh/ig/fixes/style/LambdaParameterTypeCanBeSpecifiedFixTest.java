@@ -33,6 +33,10 @@ public class LambdaParameterTypeCanBeSpecifiedFixTest extends IGQuickFixesTestCa
     doTest("Expand lambda to (File o) -> {...}");
   }
 
+  public void testFileOutOfFixRange() {
+    assertQuickfixNotAvailable("Expand lambda to (File o) -> {...}");
+  }
+
   public void testTwoParams() {
     doTest("Expand lambda to (String o1, String o2) -> {...}");
   }

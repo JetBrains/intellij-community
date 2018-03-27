@@ -15,22 +15,15 @@
  */
 package com.intellij.testGuiFramework.fixtures;
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
-import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.components.JBList;
 import org.fest.swing.core.GenericTypeMatcher;
 import org.fest.swing.core.MouseButton;
 import org.fest.swing.core.Robot;
@@ -52,13 +45,13 @@ import java.text.AttributedCharacterIterator;
 import java.text.AttributedString;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-import static com.intellij.testGuiFramework.framework.GuiTestUtil.*;
+import static com.intellij.testGuiFramework.framework.GuiTestUtil.SHORT_TIMEOUT;
 import static org.fest.assertions.Assertions.assertThat;
-import static org.fest.reflect.core.Reflection.method;
 import static org.fest.swing.edt.GuiActionRunner.execute;
 import static org.fest.swing.timing.Pause.pause;
-import static org.fest.util.Strings.quote;
 import static org.junit.Assert.*;
 
 /**
@@ -80,52 +73,16 @@ public class EditorFixture {
   public final Robot robot;
   private final IdeFrameFixture myFrame;
   private final EditorTabsFixture tabs;
+  private Editor myEditor;
 
   /**
    * Constructs a new editor fixture, tied to the given project
    */
-  public EditorFixture(Robot robot, IdeFrameFixture frame) {
+  public EditorFixture(Robot robot, Editor editor) {
     this.robot = robot;
-    myFrame = frame;
-    tabs = new EditorTabsFixture(robot, frame);
-  }
-
-  /**
-   * Returns the current file being shown in the editor, if there is a current
-   * editor open and it's a file editor
-   *
-   * @return the currently edited file or null
-   */
-  @Nullable
-  public VirtualFile getCurrentFile() {
-    FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
-    VirtualFile[] selectedFiles = manager.getSelectedFiles();
-    if (selectedFiles.length > 0) {
-
-      // we should be sure that EditorComponent is already showing
-      VirtualFile selectedFile = selectedFiles[0];
-      if (manager.getEditors(selectedFile).length == 0) {
-        return null;
-      }
-      else {
-        FileEditor editor = manager.getEditors(selectedFile)[0];
-        return editor.getComponent().isShowing() ? selectedFile : null;
-      }
-    }
-
-    return null;
-  }
-
-  /**
-   * Returns the name of the current file, if any. Convenience method
-   * for {@link #getCurrentFile()}.getName().
-   *
-   * @return the current file name, or null
-   */
-  @Nullable
-  public String getCurrentFileName() {
-    VirtualFile currentFile = getCurrentFile();
-    return currentFile != null ? currentFile.getName() : null;
+    myEditor = editor;
+    myFrame = null;
+    tabs = null;
   }
 
   /**
@@ -138,9 +95,8 @@ public class EditorFixture {
     return execute(new GuiQuery<Integer>() {
       @Override
       @Nullable
-      protected Integer executeInEDT() throws Throwable {
-        FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
-        Editor editor = manager.getSelectedTextEditor();
+      protected Integer executeInEDT() {
+        Editor editor = getEditor();
         if (editor != null) {
           CaretModel caretModel = editor.getCaretModel();
           Caret primaryCaret = caretModel.getPrimaryCaret();
@@ -195,9 +151,8 @@ public class EditorFixture {
     return execute(new GuiQuery<String>() {
       @Override
       @Nullable
-      protected String executeInEDT() throws Throwable {
-        FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
-        Editor editor = manager.getSelectedTextEditor();
+      protected String executeInEDT() {
+        Editor editor = getEditor();
         if (editor != null) {
           CaretModel caretModel = editor.getCaretModel();
           Caret primaryCaret = caretModel.getPrimaryCaret();
@@ -251,6 +206,15 @@ public class EditorFixture {
     });
   }
 
+  private Editor getEditor() {
+    return myEditor;
+  }
+
+  public void setEditor(Editor editor) {
+    myEditor = editor;
+  }
+
+
   /**
    * Returns the contents of the current file, or null if there is no
    * file open. The caret position is indicated by {@code ^}, and
@@ -285,9 +249,8 @@ public class EditorFixture {
     return execute(new GuiQuery<String>() {
       @Override
       @Nullable
-      protected String executeInEDT() throws Throwable {
-        FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
-        Editor editor = manager.getSelectedTextEditor();
+      protected String executeInEDT() {
+        Editor editor = getEditor();
         if (editor != null) {
           CaretModel caretModel = editor.getCaretModel();
           Caret primaryCaret = caretModel.getPrimaryCaret();
@@ -324,6 +287,28 @@ public class EditorFixture {
   }
 
   /**
+   * Returns content of the current editor's document with a given range.
+   *
+   * @param startOffset the content which starting right after this offset
+   * @param endOffset   the end of content, symbol on the endOffset will be not included
+   * @return
+   */
+  public String getCurrentFileContents(int startOffset, int endOffset) {
+    return execute(new GuiQuery<String>() {
+      @Override
+      @Nullable
+      protected String executeInEDT() {
+        Editor editor = getEditor();
+        if (editor != null) {
+          Document document = editor.getDocument();
+          return document.getText(new TextRange(startOffset, endOffset));
+        }
+        return null;
+      }
+    });
+  }
+
+  /**
    * Type the given text into the editor
    *
    * @param text the text to type at the current editor position
@@ -348,7 +333,7 @@ public class EditorFixture {
     if (component != null && !text.isEmpty()) {
       execute(new GuiTask() {
         @Override
-        protected void executeInEDT() throws Throwable {
+        protected void executeInEDT() {
           // Simulate editing by sending the same IME events that we observe arriving from a real input method
           int characterCount = text.length();
           TextHitInfo caret = TextHitInfo.afterOffset(characterCount - 1);
@@ -421,15 +406,7 @@ public class EditorFixture {
    */
   @Nullable
   private JComponent getFocusedEditor() {
-    Editor editor = execute(new GuiQuery<Editor>() {
-      @Override
-      @Nullable
-      protected Editor executeInEDT() throws Throwable {
-        FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
-        return manager.getSelectedTextEditor(); // Must be called from the EDT
-      }
-    });
-
+    Editor editor = getEditor();
     //wait when TextEditor ContentComponent will showing
     pause(new Condition("Waiting for showing focused textEditor") {
       @Override
@@ -485,9 +462,8 @@ public class EditorFixture {
     assertThat(offset).isGreaterThanOrEqualTo(0);
     execute(new GuiTask() {
       @Override
-      protected void executeInEDT() throws Throwable {
-        FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
-        Editor editor = manager.getSelectedTextEditor();
+      protected void executeInEDT() {
+        Editor editor = getEditor();
         assert editor != null;
         VisualPosition visualPosition = editor.offsetToVisualPosition(offset);
         Point point = editor.visualPositionToXY(visualPosition);
@@ -521,10 +497,9 @@ public class EditorFixture {
   public EditorFixture select(final int firstOffset, final int secondOffset) {
     execute(new GuiTask() {
       @Override
-      protected void executeInEDT() throws Throwable {
+      protected void executeInEDT() {
         // TODO: Do this via mouse drags!
-        FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
-        Editor editor = manager.getSelectedTextEditor();
+        Editor editor = getEditor();
         if (editor != null) {
           editor.getCaretModel().getPrimaryCaret().setSelection(firstOffset, secondOffset);
           editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
@@ -545,8 +520,7 @@ public class EditorFixture {
     return execute(new GuiQuery<List<Pair<Integer, Integer>>>() {
       @Override
       protected List<Pair<Integer, Integer>> executeInEDT() throws Throwable {
-        FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
-        Editor editor = manager.getSelectedTextEditor();
+        Editor editor = getEditor();
         if (editor != null) {
           int[] starts = editor.getSelectionModel().getBlockSelectionStarts();
           int[] ends = editor.getSelectionModel().getBlockSelectionEnds();
@@ -585,9 +559,8 @@ public class EditorFixture {
     return execute(new GuiQuery<Integer>() {
       @Override
       @Nullable
-      protected Integer executeInEDT() throws Throwable {
-        FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
-        Editor editor = manager.getSelectedTextEditor();
+      protected Integer executeInEDT() {
+        Editor editor = getEditor();
         if (editor != null) {
           CaretModel caretModel = editor.getCaretModel();
           Caret primaryCaret = caretModel.getPrimaryCaret();
@@ -596,6 +569,37 @@ public class EditorFixture {
           String target = (prefix != null ? prefix : "") + (suffix != null ? suffix : "");
           int targetIndex = contents.indexOf(target, searchFromTop ? 0 : primaryCaret.getOffset());
           return targetIndex != -1 ? targetIndex + (prefix != null ? prefix.length() : 0) : -1;
+        }
+        return -1;
+      }
+    });
+  }
+
+  /**
+   * Finds the start position (if {@code returnStartIndex} is true or end position if {@code returnStartIndex} is false) in current editor's
+   * document by regex.
+   *
+   * @param regex
+   * @param returnStartIndex a flag that determines which index of found region should be returned: start index if it is true and end index if
+   *                         it is false
+   * @return the 0-based offset in the document, or -1 if not found.
+   */
+  public int findOffsetByRegex(@NotNull String regex, boolean returnStartIndex) {
+    return execute(new GuiQuery<Integer>() {
+      @Override
+      protected Integer executeInEDT() {
+        Editor editor = getEditor();
+        if (editor != null) {
+          String contents = editor.getDocument().getCharsSequence().toString();
+          Matcher matcher = Pattern.compile(regex).matcher(contents);
+          if (matcher.find()) {
+            if (returnStartIndex) {
+              return matcher.start();
+            }
+            else {
+              return matcher.end();
+            }
+          }
         }
         return -1;
       }
@@ -629,46 +633,6 @@ public class EditorFixture {
     return findOffset(prefix, suffix, true);
   }
 
-  /**
-   * Closes the current editor
-   */
-  public EditorFixture close() {
-    execute(new GuiTask() {
-      @Override
-      protected void executeInEDT() throws Throwable {
-        VirtualFile currentFile = getCurrentFile();
-        if (currentFile != null) {
-          FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
-          manager.closeFile(currentFile);
-        }
-      }
-    });
-    return this;
-  }
-
-  /**
-   * Selects the given tab in the current editor. Used to switch between
-   * design mode and editor mode for example.
-   *
-   * @param tab the tab to switch to
-   */
-  public EditorFixture selectEditorView(@NotNull final Tab tab) {
-    switch (tab) {
-      case EDITOR:
-        selectEditorView("Text");
-        break;
-      case DESIGN:
-        selectEditorView("Design");
-        break;
-      case DEFAULT:
-        selectEditorView((String)null);
-        break;
-      default:
-        fail("Unknown tab " + tab);
-    }
-    return this;
-  }
-
 
   /**
    * Selects the editor with a given tab name.
@@ -690,109 +654,6 @@ public class EditorFixture {
     return tabs.hasTab(tabName);
   }
 
-  /**
-   * Selects the given tab in the current editor. Used to switch between
-   * design mode and editor mode for example.
-   *
-   * @param tabName the label in the editor, or null for the default (first) tab
-   */
-  public EditorFixture selectEditorView(@Nullable final String tabName) {
-    execute(new GuiTask() {
-      @Override
-      protected void executeInEDT() throws Throwable {
-        VirtualFile currentFile = getCurrentFile();
-        assertNotNull("Can't switch to tab " + tabName + " when no file is open in the editor", currentFile);
-        FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
-        FileEditor[] editors = manager.getAllEditors(currentFile);
-        FileEditor target = null;
-        for (FileEditor editor : editors) {
-          if (tabName == null || tabName.equals(editor.getName())) {
-            target = editor;
-            break;
-          }
-        }
-        if (target != null) {
-          // Have to use reflection
-          //FileEditorManagerImpl#setSelectedEditor(final FileEditor editor)
-          method("setSelectedEditor").withParameterTypes(FileEditor.class).in(manager).invoke(target);
-          return;
-        }
-        List<String> tabNames = new ArrayList<String>();
-        for (FileEditor editor : editors) {
-          tabNames.add(editor.getName());
-        }
-        fail("Could not find editor tab \"" + (tabName != null ? tabName : "<default>") + "\": Available tabs = " + tabNames);
-      }
-    });
-    return this;
-  }
-
-  /**
-   * Opens up a different file. This will run through the "Open File..." dialog to
-   * find and select the given file.
-   *
-   * @param file the file to open
-   * @param tab  which tab to open initially, if there are multiple editors
-   */
-  public EditorFixture open(@NotNull final VirtualFile file, @NotNull final Tab tab) {
-    execute(new GuiTask() {
-      @Override
-      protected void executeInEDT() throws Throwable {
-        // TODO: Use UI to navigate to the file instead
-        Project project = myFrame.getProject();
-        FileEditorManager manager = FileEditorManager.getInstance(project);
-        if (tab == Tab.EDITOR) {
-          manager.openTextEditor(new OpenFileDescriptor(project, file), true);
-        }
-        else {
-          manager.openFile(file, true);
-        }
-      }
-    });
-
-    pause(new Condition("File " + quote(file.getPath()) + " to be opened") {
-      @Override
-      public boolean test() {
-        //noinspection ConstantConditions
-        return execute(new GuiQuery<Boolean>() {
-          @Override
-          protected Boolean executeInEDT() throws Throwable {
-            FileEditor[] editors = FileEditorManager.getInstance(myFrame.getProject()).getEditors(file);
-            if (editors.length == 0) return false;
-            return editors[0].getComponent().isShowing();
-          }
-        });
-      }
-    }, SHORT_TIMEOUT);
-
-    // TODO: Maybe find a better way to keep Documents in sync with their VirtualFiles.
-    invokeActionViaKeystroke("Synchronize");
-
-    return this;
-  }
-
-  /**
-   * Opens up a different file. This will run through the "Open File..." dialog to
-   * find and select the given file.
-   *
-   * @param file the project-relative path (with /, not File.separator, as the path separator)
-   * @param tab  which tab to open initially, if there are multiple editors
-   */
-  public EditorFixture open(@NotNull final String relativePath, @NotNull Tab tab) {
-    assertFalse("Should use '/' in test relative paths, not File.separator", relativePath.contains("\\"));
-    VirtualFile file = myFrame.findFileByRelativePath(relativePath, true);
-    return open(file, tab);
-  }
-
-  /**
-   * Like {@link #open(String, com.android.tools.idea.tests.gui.framework.fixture.EditorFixture.Tab)} but
-   * always uses the default tab
-   *
-   * @param file the project-relative path (with /, not File.separator, as the path separator)
-   */
-  public EditorFixture open(@NotNull final String relativePath) {
-    return open(relativePath, Tab.DEFAULT);
-  }
 
   /**
    * Invokes the given action. This will look up the corresponding action's key bindings, if any, and invoke
@@ -909,7 +770,7 @@ public class EditorFixture {
     return this;
   }
 
-  private void invokeActionViaKeystroke(@NotNull String actionId) {
+  protected void invokeActionViaKeystroke(@NotNull String actionId) {
     AnAction action = ActionManager.getInstance().getAction(actionId);
     assertNotNull(actionId, action);
     assertTrue(actionId + " is not enabled", action.getTemplatePresentation().isEnabled());
@@ -946,84 +807,6 @@ public class EditorFixture {
     }
   }
 
-  /**
-   * Checks that the editor has a given number of issues. This is a convenience wrapper
-   * for {@link FileFixture#requireCodeAnalysisHighlightCount(HighlightSeverity, int)}
-   *
-   * @param severity the severity of the issues you want to count
-   * @param expected the expected count
-   * @return this
-   */
-  @NotNull
-  public EditorFixture requireCodeAnalysisHighlightCount(@NotNull HighlightSeverity severity, int expected) {
-    FileFixture file = getCurrentFileFixture();
-    file.requireCodeAnalysisHighlightCount(severity, expected);
-    return this;
-  }
-
-  @NotNull
-  public EditorFixture requireHighlights(HighlightSeverity severity, String... highlights) {
-    List<String> infos = new ArrayList<>();
-    for (HighlightInfo info : getCurrentFileFixture().getHighlightInfos(severity)) {
-      infos.add(info.getDescription());
-    }
-    assertThat(infos).containsOnly(highlights);
-    return this;
-  }
-
-  /**
-   * Waits until the editor has the given number of errors at the given severity.
-   * Typically used when you want to invoke an intention action, but need to wait until
-   * the code analyzer has found an error it needs to resolve first.
-   *
-   * @param severity the severity of the issues you want to count
-   * @param expected the expected count
-   * @return this
-   */
-  @NotNull
-  public EditorFixture waitForCodeAnalysisHighlightCount(@NotNull final HighlightSeverity severity, int expected) {
-    FileFixture file = getCurrentFileFixture();
-    file.waitForCodeAnalysisHighlightCount(severity, expected);
-    return this;
-  }
-
-  @NotNull
-  public EditorFixture waitUntilErrorAnalysisFinishes() {
-    FileFixture file = getCurrentFileFixture();
-    file.waitUntilErrorAnalysisFinishes();
-    return this;
-  }
-
-  /**
-   * An Editor could load files async, sometimes we should wait a bit when the virtual
-   * file for a current editor will be set.
-   *
-   * @return FileFixture for loaded virtual file
-   */
-  @NotNull
-  public FileFixture waitUntilFileIsLoaded() {
-    Ref<VirtualFile> virtualFileReference = new Ref<>();
-    pause(new Condition("Wait when virtual file is created...") {
-      @Override
-      public boolean test() {
-        virtualFileReference.set(execute(new GuiQuery<VirtualFile>() {
-          @Override
-          protected VirtualFile executeInEDT() throws Throwable {
-            return getCurrentFile();
-          }
-        }));
-        return virtualFileReference.get() != null;
-      }
-    }, THIRTY_SEC_TIMEOUT);
-    return new FileFixture(myFrame.getProject(), virtualFileReference.get());
-  }
-
-  @NotNull
-  private FileFixture getCurrentFileFixture() {
-    VirtualFile currentFile = getCurrentFile();
-    assertNotNull("Expected a file to be open", currentFile);
-    return new FileFixture(myFrame.getProject(), currentFile);
-  }
 
   /**
    * Invokes the show intentions action, waits for the actions to be displayed and then picks the
@@ -1035,8 +818,7 @@ public class EditorFixture {
   @NotNull
   public EditorFixture invokeIntentionAction(@NotNull String labelPrefix) {
     invokeAction(EditorFixture.EditorAction.SHOW_INTENTION_ACTIONS);
-    JBList popup = waitForPopup(robot);
-    clickPopupMenuItem(labelPrefix, popup, robot);
+    JBListPopupFixture.clickPopupMenuItem(labelPrefix, true, null, robot, SHORT_TIMEOUT);
     return this;
   }
 
@@ -1137,44 +919,6 @@ public class EditorFixture {
   //
   //  return new ThemeEditorFixture(robot, themeEditorComponent);
   //}
-
-  /**
-   * Requires the source editor's current file name to be the given name (or if null, for there
-   * to be no current file)
-   */
-  public void requireName(@Nullable String name) {
-    VirtualFile currentFile = getCurrentFile();
-    if (name == null) {
-      assertNull("Expected editor to not have an open file, but is showing " + currentFile, currentFile);
-    }
-    else if (currentFile == null) {
-      fail("Expected file " + name + " to be showing, but the editor is not showing anything");
-    }
-    else {
-      assertEquals(name, currentFile.getName());
-    }
-  }
-
-  /**
-   * Requires the source editor's current file to be in the given folder (or if null, for there
-   * to be no current file)
-   */
-  public void requireFolderName(@Nullable String name) {
-    VirtualFile currentFile = getCurrentFile();
-    if (name == null) {
-      assertNull("Expected editor to not have an open file, but is showing " + currentFile, currentFile);
-    }
-    else if (currentFile == null) {
-      fail("Expected file " + name + " to be showing, but the editor is not showing anything");
-    }
-    else {
-      VirtualFile parent = currentFile.getParent();
-      assertNotNull("File " + currentFile.getName() + " does not have a parent", parent);
-      assertEquals(name, parent.getName());
-    }
-  }
-
-
   public EditorNotificationPanelFixture notificationPanel() {
     return EditorNotificationPanelFixture.Companion.findEditorNotificationPanel(robot, 30);
   }

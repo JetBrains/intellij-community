@@ -36,7 +36,6 @@ import static com.intellij.openapi.components.StorageScheme.DIRECTORY_BASED;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jan 21, 2004
  */
 public class ProjectNameStep extends ModuleWizardStep {
   private final NamePathComponent myNamePathComponent;

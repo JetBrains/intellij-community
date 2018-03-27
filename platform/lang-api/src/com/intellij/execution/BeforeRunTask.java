@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: May 18, 2009
  */
 public abstract class BeforeRunTask<T extends BeforeRunTask> implements Cloneable {
   @NotNull

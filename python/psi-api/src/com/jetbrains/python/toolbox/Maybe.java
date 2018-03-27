@@ -25,7 +25,6 @@ import java.util.NoSuchElementException;
  * Instances are immutable.
  * <br/>
  * User: dcheryasov
- * Date: Jun 5, 2010 3:52:59 PM
  */
 public class Maybe<T> {
   private final boolean myIsDefined;

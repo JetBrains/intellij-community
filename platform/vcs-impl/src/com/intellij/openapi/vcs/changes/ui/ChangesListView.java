@@ -46,10 +46,9 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.Enumeration;
-import java.util.Iterator;
+import java.util.*;
 import java.util.List;
-import java.util.Objects;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import static com.intellij.openapi.vcs.changes.ChangesUtil.getAfterRevisionsFiles;
@@ -292,7 +291,8 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
       .map(file -> toHijackedChange(project, file))
       .filter(Objects::nonNull);
 
-    return Stream.concat(changes, hijackedChanges).distinct();
+    return Stream.concat(changes, hijackedChanges)
+      .filter(new DistinctChangePredicate());
   }
 
   @Nullable
@@ -345,7 +345,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
       .filter(node -> node instanceof ChangesBrowserChangeNode)
       .map(ChangesBrowserChangeNode.class::cast)
       .map(ChangesBrowserChangeNode::getUserObject)
-      .distinct();
+      .filter(new DistinctChangePredicate());
   }
 
   @NotNull
@@ -412,5 +412,14 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
   @Override
   public void dropSelectionButUnderPoint(final Point point) {
     TreeUtil.dropSelectionButUnderPoint(this, point);
+  }
+
+  private static class DistinctChangePredicate implements Predicate<Change> {
+    private final Set<Object> seen = ContainerUtil.newTroveSet(ChangeListChange.HASHING_STRATEGY);
+
+    @Override
+    public boolean test(Change change) {
+      return seen.add(change);
+    }
   }
 }

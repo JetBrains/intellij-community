@@ -48,16 +48,17 @@ public final class ShortcutTextField extends JTextField {
            && e.getExtendedKeyCode() == 0;
   }
 
-  @Override
   protected void processKeyEvent(KeyEvent e) {
     if (e.getID() == KeyEvent.KEY_PRESSED) {
       int keyCode = e.getKeyCode();
+
       if (keyCode != KeyEvent.VK_SHIFT &&
           keyCode != KeyEvent.VK_ALT &&
           keyCode != KeyEvent.VK_CONTROL &&
           keyCode != KeyEvent.VK_ALT_GRAPH &&
           keyCode != KeyEvent.VK_META &&
-          !absolutelyUnknownKey(e)) {
+          !absolutelyUnknownKey(e))
+      {
         setKeyStroke(KeyStrokeAdapter.getDefaultKeyStroke(e));
       }
     }

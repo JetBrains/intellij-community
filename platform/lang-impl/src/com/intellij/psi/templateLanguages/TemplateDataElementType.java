@@ -72,7 +72,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
   }
 
   @Override
-  public ASTNode parseContents(ASTNode chameleon) {
+  public ASTNode parseContents(@NotNull ASTNode chameleon) {
     final CharTable charTable = SharedImplUtil.findCharTableByTree(chameleon);
     final FileElement fileElement = TreeUtil.getFileElement((TreeElement)chameleon);
     final PsiFile psiFile = (PsiFile)fileElement.getPsi();

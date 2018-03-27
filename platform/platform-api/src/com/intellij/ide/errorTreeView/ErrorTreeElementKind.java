@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Nov 12, 2004
  */
 public enum ErrorTreeElementKind {
   INFO ("INFO", IdeBundle.message("errortree.information")),

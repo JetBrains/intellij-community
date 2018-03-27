@@ -326,6 +326,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
 
     new Task.Modal(myProject, message("message.processing.revisions"), false) {
       public void run(@NotNull final ProgressIndicator i) {
+        i.setIndeterminate(false);
         ApplicationManager.getApplication().runReadAction(() -> {
           RevisionProcessingProgressAdapter p = new RevisionProcessingProgressAdapter(i);
           p.processingLeftRevision();

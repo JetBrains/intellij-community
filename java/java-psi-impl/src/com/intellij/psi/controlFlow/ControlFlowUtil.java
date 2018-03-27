@@ -16,6 +16,7 @@
 package com.intellij.psi.controlFlow;
 
 import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.DummyHolder;
@@ -1226,7 +1227,7 @@ public class ControlFlowUtil {
 
   private static PsiReferenceExpression findReferenceTo(PsiElement element, PsiVariable variable) {
     if (element instanceof PsiReferenceExpression
-        && isUnqualified((PsiReferenceExpression)element)
+        && ExpressionUtil.isEffectivelyUnqualified((PsiReferenceExpression)element)
         && ((PsiReferenceExpression)element).resolve() == variable) {
       return (PsiReferenceExpression)element;
     }
@@ -1236,14 +1237,6 @@ public class ControlFlowUtil {
       if (reference != null) return reference;
     }
     return null;
-  }
-
-  private static boolean isUnqualified(PsiReferenceExpression element) {
-    if (element.isQualified()) {
-      final PsiExpression qualifierExpression = element.getQualifierExpression();
-      return qualifierExpression instanceof PsiThisExpression && ((PsiThisExpression)qualifierExpression).getQualifier() == null;
-    }
-    return true;
   }
 
 

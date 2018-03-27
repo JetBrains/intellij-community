@@ -32,7 +32,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
 * @author Dmitry Avdeev
-*         Date: 16.08.13
 */
 public class XmlEnumeratedValueReference extends PsiReferenceBase<XmlElement> implements EmptyResolveMessageProvider, ResolvingHint {
   private final XmlEnumerationDescriptor myDescriptor;

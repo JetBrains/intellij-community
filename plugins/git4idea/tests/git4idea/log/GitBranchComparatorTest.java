@@ -77,7 +77,7 @@ public class GitBranchComparatorTest extends GitRefManagerTest {
 
   @NotNull
   private VcsRef getTheMostPowerfulRef(@NotNull Collection<VcsRef> givenBranches) {
-    Comparator<VcsRef> comparator = new GitRefManager(myGitRepositoryManager).getBranchLayoutComparator();
+    Comparator<VcsRef> comparator = new GitRefManager(repositoryManager).getBranchLayoutComparator();
     return ContainerUtil.sorted(givenBranches, comparator).get(0);
   }
 }

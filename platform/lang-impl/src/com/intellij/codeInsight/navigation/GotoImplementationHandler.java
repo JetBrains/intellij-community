@@ -71,8 +71,8 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     GotoData gotoData = new GotoData(source, targets, Collections.emptyList());
     gotoData.listUpdaterTask = new ImplementationsUpdaterTask(gotoData, editor, offset, reference) {
       @Override
-      public void onFinished() {
-        super.onFinished();
+      public void onSuccess() {
+        super.onSuccess();
         PsiElement oneElement = getTheOnlyOneElement();
         if (oneElement != null && navigateToElement(oneElement)) {
           myPopup.cancel();

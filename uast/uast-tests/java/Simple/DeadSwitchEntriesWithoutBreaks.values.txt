@@ -1,11 +1,11 @@
 UFile (package = ) [public final enum DeadSwitchEntriesWithoutBreaks {...]
     UClass (name = DeadSwitchEntriesWithoutBreaks) [public final enum DeadSwitchEntriesWithoutBreaks {...}]
         UEnumConstant (name = FIRST) [FIRST] = NON-EVALUATED
-            USimpleNameReferenceExpression (identifier = DeadSwitchEntriesWithoutBreaks) [DeadSwitchEntriesWithoutBreaks] = NON-EVALUATED
+            USimpleNameReferenceExpression (identifier = DeadSwitchEntriesWithoutBreaks) [DeadSwitchEntriesWithoutBreaks] = external DeadSwitchEntriesWithoutBreaks()
         UEnumConstant (name = SECOND) [SECOND] = NON-EVALUATED
-            USimpleNameReferenceExpression (identifier = DeadSwitchEntriesWithoutBreaks) [DeadSwitchEntriesWithoutBreaks] = NON-EVALUATED
+            USimpleNameReferenceExpression (identifier = DeadSwitchEntriesWithoutBreaks) [DeadSwitchEntriesWithoutBreaks] = external DeadSwitchEntriesWithoutBreaks()
         UEnumConstant (name = THIRD) [THIRD] = NON-EVALUATED
-            USimpleNameReferenceExpression (identifier = DeadSwitchEntriesWithoutBreaks) [DeadSwitchEntriesWithoutBreaks] = NON-EVALUATED
+            USimpleNameReferenceExpression (identifier = DeadSwitchEntriesWithoutBreaks) [DeadSwitchEntriesWithoutBreaks] = external DeadSwitchEntriesWithoutBreaks()
         UMethod (name = bar) [public static fun bar() : int {...}]
             UBlockExpression [{...}] = Nothing
                 UDeclarationsExpression [var key: DeadSwitchEntriesWithoutBreaks = SECOND] = Undetermined
@@ -36,7 +36,7 @@ UFile (package = ) [public final enum DeadSwitchEntriesWithoutBreaks {...]
                                     USimpleNameReferenceExpression (identifier = result) [result] = (var result = Undetermined)
                                     ULiteralExpression (value = 13) [13] = 13
                         USwitchClauseExpressionWithBody [else -> {...] = Undetermined
-                            UDefaultCaseExpression [else] = NON-EVALUATED
+                            UDefaultCaseExpression [else] = Undetermined
                             UExpressionList (switch_entry) [{...] = Undetermined
                                 UBinaryExpression (operator = =) [result = 66] = 66
                                     USimpleNameReferenceExpression (identifier = result) [result] = (var result = Undetermined)

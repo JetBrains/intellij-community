@@ -22,8 +22,7 @@ import com.intellij.util.xml.GenericAttributeValue;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Aug 10, 2010
- * TODO: very basic implementation for now; it can be augmented if needed 
+ * TODO: very basic implementation for now; it can be augmented if needed
  */
 public abstract class AntDomLengthTask extends AntDomPropertyDefiningTask {
 

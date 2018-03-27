@@ -20,7 +20,6 @@ import com.intellij.util.xml.GenericAttributeValue;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Aug 5, 2010
  */
 public abstract class AntDomCustomClasspathComponent extends AntDomClasspathComponent {
   @Attribute("uri")

@@ -71,6 +71,8 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
       final PsiFile containingFile = mySubstituted.getContainingFile();
       if (!notSameFile(containingFile.getVirtualFile(), containingFile)) {
         mySubstitutedRange = myEditor.getDocument().createRangeMarker(mySubstituted.getTextRange());
+        mySubstitutedRange.setGreedyToLeft(true);
+        mySubstitutedRange.setGreedyToRight(true);
       }
     }
     else {

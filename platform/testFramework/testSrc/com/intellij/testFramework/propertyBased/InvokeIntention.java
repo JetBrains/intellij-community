@@ -25,18 +25,23 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.containers.ContainerUtil;
-import jetCheck.Generator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jetCheck.Generator;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class InvokeIntention extends ActionOnRange {
   private static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.propertyBased.InvokeIntention");
@@ -85,6 +90,11 @@ public class InvokeIntention extends ActionOnRange {
     myInvocationLog += ", invoked '" + intention.getText() + "'";
     String intentionString = intention.toString();
 
+    boolean checkComments = myPolicy.checkComments(intention) && PsiTreeUtil.getParentOfType(file.findElementAt(offset), PsiComment.class, false) == null;
+    Collection<String> comments = checkComments
+                                  ? extractCommentsReformattedToSingleWhitespace(file)
+                                  : Collections.emptyList();
+
     boolean mayBreakCode = myPolicy.mayBreakCode(intention, editor, file);
     Document changedDocument = getDocumentToBeChanged(intention);
     String textBefore = changedDocument == null ? null : changedDocument.getText();
@@ -116,11 +126,26 @@ public class InvokeIntention extends ActionOnRange {
       if (!mayBreakCode && !hasErrors) {
         checkNoNewErrors(project, editor, intentionString);
       }
+
+      if (checkComments) {
+        List<String> fileComments = extractCommentsReformattedToSingleWhitespace(file);
+        for (String comment : comments) {
+          if (!fileComments.contains(comment)) {
+            throw new AssertionError("Lost comment '" + comment + "' during " + intentionString);
+          }
+        }
+      }
     }
     catch (Throwable error) {
       LOG.debug("Error occurred in " + this + ", text before:\n" + textBefore);
       throw error;
     }
+  }
+
+  protected List<String> extractCommentsReformattedToSingleWhitespace(PsiFile file) {
+    return PsiTreeUtil.findChildrenOfType(file, PsiComment.class)
+      .stream()
+      .filter(comment -> myPolicy.trackComment(comment)).map(comment -> comment.getText().replaceAll("[\\s*]+", " ")).collect(Collectors.toList());
   }
 
   private static void checkNoNewErrors(Project project, Editor editor, String intentionString) {

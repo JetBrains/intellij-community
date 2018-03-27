@@ -34,7 +34,6 @@ import java.awt.*;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 9/26/12
  */
 public class ProjectSettingsStep extends ModuleWizardStep implements SettingsStep {
 
@@ -191,8 +190,9 @@ public class ProjectSettingsStep extends ModuleWizardStep implements SettingsSte
   static void addField(String label, JComponent field, JPanel panel) {
     JLabel jLabel = new JBLabel(label);
     jLabel.setLabelFor(field);
+    jLabel.setVerticalAlignment(SwingConstants.TOP);
     panel.add(jLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.WEST,
-                                             GridBagConstraints.NONE, JBUI.insetsBottom(5), 4, 0));
+                                             GridBagConstraints.VERTICAL, JBUI.insets(5, 0, 5, 0), 4, 0));
     panel.add(field, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0, GridBagConstraints.CENTER,
                                             GridBagConstraints.HORIZONTAL, JBUI.insetsBottom(5), 0, 0));
   }

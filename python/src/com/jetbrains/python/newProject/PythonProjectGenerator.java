@@ -320,6 +320,11 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
     return errorDescription;
   }
 
+  @Nullable
+  public String getPreferredEnvironmentType() {
+    return null;
+  }
+
   /**
    * To be thrown if project can't be created on this sdk
    *

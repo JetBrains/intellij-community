@@ -29,6 +29,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.ChangeModifierFix;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -107,7 +108,9 @@ public class ClassInitializerInspection extends BaseInspection {
       for (PsiMethod constructor : constructors) {
         addCodeToMethod(initializer, constructor);
       }
-      initializer.delete();
+      CommentTracker tracker = new CommentTracker();
+      tracker.markUnchanged(initializer.getBody());
+      tracker.deleteAndRestoreComments(initializer);
     }
 
     private static void addCodeToMethod(PsiClassInitializer initializer, PsiMethod constructor) {

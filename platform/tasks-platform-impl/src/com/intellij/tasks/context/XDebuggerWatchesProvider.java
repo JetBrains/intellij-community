@@ -17,20 +17,20 @@ package com.intellij.tasks.context;
 
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.util.xmlb.Accessor;
-import com.intellij.util.xmlb.SerializationFilter;
-import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.impl.WatchesManagerState;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.XDebuggerWatchesManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.configurationStore.XmlSerializer.deserialize;
+import static com.intellij.configurationStore.XmlSerializer.serialize;
+
 /**
  * @author Dmitry Avdeev
  */
 public class XDebuggerWatchesProvider extends WorkingContextProvider {
-
   private final XDebuggerWatchesManager myWatchesManager;
 
   public XDebuggerWatchesProvider(XDebuggerManager xDebuggerManager) {
@@ -51,26 +51,23 @@ public class XDebuggerWatchesProvider extends WorkingContextProvider {
 
   @Override
   public void saveContext(Element toElement) throws WriteExternalException {
-    XDebuggerWatchesManager.WatchesManagerState state = myWatchesManager.getState();
-    Element serialize = XmlSerializer.serialize(state, new SerializationFilter() {
-      @Override
-      public boolean accepts(@NotNull Accessor accessor, @NotNull Object bean) {
-        return accessor.read(bean) != null;
-      }
-    });
-    toElement.addContent(serialize.removeContent());
+    WatchesManagerState state = new WatchesManagerState();
+    myWatchesManager.saveState(state);
+    Element serialize = serialize(state);
+    if (serialize != null) {
+      toElement.addContent(serialize.removeContent());
+    }
   }
 
   @Override
   public void loadContext(Element fromElement) throws InvalidDataException {
-    XDebuggerWatchesManager.WatchesManagerState state =
-      XmlSerializer.deserialize(fromElement, XDebuggerWatchesManager.WatchesManagerState.class);
+    WatchesManagerState state = deserialize(fromElement, WatchesManagerState.class);
     myWatchesManager.loadState(state);
 
   }
 
   @Override
   public void clearContext() {
-    myWatchesManager.loadState(null);
+    myWatchesManager.clearContext();
   }
 }

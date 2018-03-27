@@ -19,7 +19,6 @@ package com.intellij.psi.search.scope.packageSet;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -30,38 +29,19 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.regex.Pattern;
 
 public class FilePatternPackageSet extends PatternBasedPackageSet {
   @NonNls public static final String SCOPE_FILE = "file";
-  private Pattern myModulePattern;
-  private Pattern myModuleGroupPattern;
   private final String myPathPattern;
   private final Pattern myFilePattern;
-  private final String myModulePatternText;
   private static final Logger LOG = Logger.getInstance("com.intellij.psi.search.scope.packageSet.FilePatternPackageSet");
 
   public FilePatternPackageSet(@NonNls String modulePattern,
                                @NonNls String filePattern) {
+    super(modulePattern);
     myPathPattern = filePattern;
-    myModulePatternText = modulePattern;
-    if (modulePattern == null || modulePattern.isEmpty()) {
-      myModulePattern = null;
-    }
-    else {
-      if (modulePattern.startsWith("group:")) {
-        int idx = modulePattern.indexOf(':', 6);
-        if (idx == -1) idx = modulePattern.length();
-        myModuleGroupPattern = Pattern.compile(StringUtil.replace(escapeToRegexp(modulePattern.substring(6, idx)), "*", ".*"));
-        if (idx < modulePattern.length() - 1) {
-          myModulePattern = Pattern.compile(StringUtil.replace(escapeToRegexp(modulePattern.substring(idx + 1)), "*", ".*"));
-        }
-      } else {
-        myModulePattern = Pattern.compile(StringUtil.replace(escapeToRegexp(modulePattern), "*", ".*"));
-      }
-    }
     myFilePattern = filePattern != null ? Pattern.compile(convertToRegexp(filePattern, '/')) : null;
   }
 
@@ -73,8 +53,8 @@ public class FilePatternPackageSet extends PatternBasedPackageSet {
   @Override
   public boolean contains(VirtualFile file, @NotNull Project project, @Nullable NamedScopesHolder holder) {
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    return file != null && fileMatcher(file, fileIndex, holder != null ? holder.getProjectBaseDir() : project.getBaseDir()) &&
-           matchesModule(myModuleGroupPattern, myModulePattern, file, fileIndex);
+    return file != null && fileMatcher(file, fileIndex, holder != null ? holder.getProjectBaseDir() : project.getBaseDir())
+           && matchesModule(file, fileIndex);
   }
 
   private boolean fileMatcher(@NotNull VirtualFile virtualFile, ProjectFileIndex fileIndex, VirtualFile projectBaseDir){
@@ -91,43 +71,7 @@ public class FilePatternPackageSet extends PatternBasedPackageSet {
     return myFilePattern.matcher(relativePath).matches();
   }
 
-  public static boolean matchesModule(final Pattern moduleGroupPattern,
-                                      final Pattern modulePattern,
-                                      final VirtualFile file,
-                                      final ProjectFileIndex fileIndex) {
-    final Module module = fileIndex.getModuleForFile(file);
-    if (module != null) {
-      if (modulePattern != null && modulePattern.matcher(module.getName()).matches()) return true;
-      if (moduleGroupPattern != null) {
-        final String[] groupPath = ModuleManager.getInstance(module.getProject()).getModuleGroupPath(module);
-        if (groupPath != null) {
-          for (String node : groupPath) {
-            if (moduleGroupPattern.matcher(node).matches()) return true;
-          }
-        }
-      }
-    }
-    return modulePattern == null && moduleGroupPattern == null;
-  }
-
-  @NotNull
-  private static String escapeToRegexp(@NotNull CharSequence text) {
-    StringBuilder builder = new StringBuilder(text.length());
-    for (int i = 0; i < text.length(); i++) {
-      final char c = text.charAt(i);
-      if (c == ' ' || Character.isLetter(c) || Character.isDigit(c) || c == '_' || c == '*') {
-        builder.append(c);
-      }
-      else {
-        builder.append('\\').append(c);
-      }
-    }
-
-    return builder.toString();
-  }
-
-  @TestOnly
-  public static String convertToRegexp(String aspectsntx, char separator) {
+  static String convertToRegexp(String aspectsntx, char separator) {
     StringBuilder buf = new StringBuilder(aspectsntx.length());
     int cur = 0;
     boolean isAfterSeparator = false;
@@ -135,7 +79,7 @@ public class FilePatternPackageSet extends PatternBasedPackageSet {
     while (cur < aspectsntx.length()) {
       char curChar = aspectsntx.charAt(cur);
       if (curChar != separator && isAfterSeparator) {
-        buf.append("\\" + separator);
+        buf.append("\\").append(separator);
         isAfterSeparator = false;
       }
 
@@ -148,13 +92,13 @@ public class FilePatternPackageSet extends PatternBasedPackageSet {
         if (!isAfterAsterix){
           isAfterAsterix = true;
         } else {
-          buf.append("[^\\" + separator + "]*");
+          buf.append("[^\\").append(separator).append("]*");
           isAfterAsterix = false;
         }
       }
       else if (curChar == separator) {
         if (isAfterSeparator) {
-          buf.append("\\" +separator+ "(.*\\" + separator + ")?");
+          buf.append("\\").append(separator).append("(.*\\").append(separator).append(")?");
           isAfterSeparator = false;
         }
         else {
@@ -170,7 +114,7 @@ public class FilePatternPackageSet extends PatternBasedPackageSet {
       cur++;
     }
     if (isAfterAsterix){
-      buf.append("[^\\" + separator + "]*");
+      buf.append("[^\\").append(separator).append("]*");
     }
 
     return buf.toString();
@@ -190,7 +134,7 @@ public class FilePatternPackageSet extends PatternBasedPackageSet {
   @Override
   @NotNull
   public String getText() {
-    @NonNls StringBuffer buf = new StringBuffer("file");
+    @NonNls StringBuilder buf = new StringBuilder("file");
 
     if (myModulePattern != null || myModuleGroupPattern != null) {
       buf.append("[").append(myModulePatternText).append("]");
@@ -210,15 +154,22 @@ public class FilePatternPackageSet extends PatternBasedPackageSet {
   }
 
   @Override
-  public String getModulePattern() {
-    return myModulePatternText;
-  }
-
-  @Override
   public boolean isOn(String oldQName) {
     return Comparing.strEqual(myPathPattern, oldQName) ||
            Comparing.strEqual(oldQName + "//*", myPathPattern) ||
            Comparing.strEqual(oldQName + "/*", myPathPattern);
+  }
+
+  @NotNull
+  @Override
+  public PatternBasedPackageSet updatePattern(@NotNull String oldName, @NotNull String newName) {
+    return new FilePatternPackageSet(myModulePatternText, myPathPattern.replace(oldName, newName));
+  }
+
+  @NotNull
+  @Override
+  public PatternBasedPackageSet updateModulePattern(@NotNull String oldName, @NotNull String newName) {
+    return new FilePatternPackageSet(myModulePatternText.replace(oldName, newName), myPathPattern);
   }
 
   @Nullable

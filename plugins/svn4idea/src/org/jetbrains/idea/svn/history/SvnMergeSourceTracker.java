@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,19 +17,20 @@ package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.ThrowableConsumer;
-import org.tmatesoft.svn.core.SVNException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 
-public class SvnMergeSourceTracker {
+public class SvnMergeSourceTracker implements ThrowableConsumer<LogEntry, SvnBindException> {
   private int myMergeLevel;
   // -1 - not merge source; 0 - direct merge source
-  private ThrowableConsumer<Pair<LogEntry, Integer>, SVNException> myConsumer;
+  private ThrowableConsumer<Pair<LogEntry, Integer>, SvnBindException> myConsumer;
 
-  public SvnMergeSourceTracker(final ThrowableConsumer<Pair<LogEntry, Integer>, SVNException> consumer) {
+  public SvnMergeSourceTracker(@NotNull ThrowableConsumer<Pair<LogEntry, Integer>, SvnBindException> consumer) {
     myConsumer = consumer;
     myMergeLevel = -1;
   }
 
-  public void consume(final LogEntry logEntry) throws SVNException {
+  public void consume(@NotNull LogEntry logEntry) throws SvnBindException {
     if (logEntry.getRevision() < 0) {
       -- myMergeLevel;
       return;

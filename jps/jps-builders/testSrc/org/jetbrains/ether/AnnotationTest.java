@@ -17,7 +17,6 @@ package org.jetbrains.ether;
 
 /**
  * @author: db
- * Date: 26.07.11
  */
 public class AnnotationTest extends IncrementalTestCase {
   public AnnotationTest() {

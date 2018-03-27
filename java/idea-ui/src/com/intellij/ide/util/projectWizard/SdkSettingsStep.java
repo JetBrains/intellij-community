@@ -46,7 +46,6 @@ import static java.awt.GridBagConstraints.*;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 10/26/12
  */
 public class SdkSettingsStep extends ModuleWizardStep {
   protected final JdkComboBox myJdkComboBox;
@@ -118,7 +117,7 @@ public class SdkSettingsStep extends ModuleWizardStep {
       if (type != null && type.getDownloadSdkUrl() != null) {
         HyperlinkLabel label = new HyperlinkLabel("Download " + type.getPresentableName());
         label.setHyperlinkTarget(type.getDownloadSdkUrl());
-        myJdkPanel.add(label, new GridBagConstraints(0, 1, 1, 1, 0, 0, WEST, NONE, JBUI.emptyInsets(), 0, 0));
+        myJdkPanel.add(label, new GridBagConstraints(0, 1, 1, 1, 0, 0, WEST, NONE, JBUI.insetsTop(4), 0, 0));
       }
     }
   }

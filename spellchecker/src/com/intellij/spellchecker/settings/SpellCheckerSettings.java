@@ -17,10 +17,14 @@ package com.intellij.spellchecker.settings;
 
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.spellchecker.util.SPFileUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+
+import static com.intellij.openapi.util.io.FileUtilRt.extensionEquals;
+import static com.intellij.openapi.util.text.StringUtil.parseInt;
 
 @State(name = "SpellCheckerSettings", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class SpellCheckerSettings implements PersistentStateComponent<Element> {
@@ -29,6 +33,8 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
 
   private static final String FOLDERS_ATTR_NAME = "Folders";
   private static final String FOLDER_ATTR_NAME = "Folder";
+  private static final String CUSTOM_DICTIONARIES_ATTR_NAME = "CustomDictionaries";
+  private static final String CUSTOM_DICTIONARY_ATTR_NAME = "CustomDictionary";
   private static final String DICTIONARIES_ATTR_NAME = "Dictionaries";
   private static final String DICTIONARY_ATTR_NAME = "Dictionary";
 
@@ -36,7 +42,8 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
   private static final String BUNDLED_DICTIONARY_ATTR_NAME = "BundledDictionary";
 
   // Paths
-  private List<String> myDictionaryFoldersPaths = new ArrayList<>();
+  private List<String> myOldDictionaryFoldersPaths = new ArrayList<>();
+  private List<String> myCustomDictionariesPaths = new ArrayList<>();
   private Set<String> myDisabledDictionariesPaths = new HashSet<>();
 
   private Set<String> myBundledDisabledDictionariesPaths = new HashSet<>();
@@ -45,12 +52,12 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
     return ServiceManager.getService(project, SpellCheckerSettings.class);
   }
 
-  public List<String> getDictionaryFoldersPaths() {
-    return myDictionaryFoldersPaths;
+  public List<String> getCustomDictionariesPaths() {
+    return myCustomDictionariesPaths;
   }
 
-  public void setDictionaryFoldersPaths(List<String> dictionaryFoldersPaths) {
-    myDictionaryFoldersPaths = dictionaryFoldersPaths;
+  public void setCustomDictionariesPaths(List<String> customDictionariesPaths) {
+    myCustomDictionariesPaths = customDictionariesPaths;
   }
 
   public Set<String> getDisabledDictionariesPaths() {
@@ -75,7 +82,8 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
   @SuppressWarnings({"ConstantConditions"})
   public Element getState() {
     if (myBundledDisabledDictionariesPaths.isEmpty() &&
-        myDictionaryFoldersPaths.isEmpty() &&
+        myOldDictionaryFoldersPaths.isEmpty() &&
+        myCustomDictionariesPaths.isEmpty() &&
         myDisabledDictionariesPaths.isEmpty()) {
       return null;
     }
@@ -90,9 +98,15 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
       i++;
     }
     // user
-    element.setAttribute(FOLDERS_ATTR_NAME, String.valueOf(myDictionaryFoldersPaths.size()));
-    for (int j = 0; j < myDictionaryFoldersPaths.size(); j++) {
-      element.setAttribute(FOLDER_ATTR_NAME + j, myDictionaryFoldersPaths.get(j));
+    // remove old dictionary folder settings
+    element.removeAttribute(FOLDERS_ATTR_NAME);
+    for (int j = 0; j < myOldDictionaryFoldersPaths.size(); j++) {
+      element.removeAttribute(FOLDER_ATTR_NAME + j);
+    }
+    // store new dictionaries settings instead
+    element.setAttribute(CUSTOM_DICTIONARIES_ATTR_NAME, String.valueOf(myCustomDictionariesPaths.size()));
+    for (int j = 0; j < myCustomDictionariesPaths.size(); j++) {
+      element.setAttribute(CUSTOM_DICTIONARY_ATTR_NAME + j, myCustomDictionariesPaths.get(j));
     }
     element.setAttribute(DICTIONARIES_ATTR_NAME, String.valueOf(myDisabledDictionariesPaths.size()));
     iterator = myDisabledDictionariesPaths.iterator();
@@ -109,20 +123,32 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
   @Override
   public void loadState(@NotNull final Element element) {
     myBundledDisabledDictionariesPaths.clear();
-    myDictionaryFoldersPaths.clear();
+    myCustomDictionariesPaths.clear();
+    myOldDictionaryFoldersPaths.clear();
     myDisabledDictionariesPaths.clear();
     try {
       // bundled
-      final int bundledDictionariesSize = Integer.valueOf(element.getAttributeValue(BUNDLED_DICTIONARIES_ATTR_NAME));
+      final int bundledDictionariesSize = parseInt(element.getAttributeValue(BUNDLED_DICTIONARIES_ATTR_NAME), 0);
       for (int i = 0; i < bundledDictionariesSize; i++) {
         myBundledDisabledDictionariesPaths.add(element.getAttributeValue(BUNDLED_DICTIONARY_ATTR_NAME + i));
       }
       // user
-      final int foldersSize = Integer.valueOf(element.getAttributeValue(FOLDERS_ATTR_NAME));
+      // cover old dictionary folders settings
+      final int foldersSize = parseInt(element.getAttributeValue(FOLDERS_ATTR_NAME), 0);
       for (int i = 0; i < foldersSize; i++) {
-        myDictionaryFoldersPaths.add(element.getAttributeValue(FOLDER_ATTR_NAME + i));
+        myOldDictionaryFoldersPaths.add(element.getAttributeValue(FOLDER_ATTR_NAME + i));
       }
-      final int scriptsSize = Integer.valueOf(element.getAttributeValue(DICTIONARIES_ATTR_NAME));
+      myOldDictionaryFoldersPaths.forEach(folder -> SPFileUtil.processFilesRecursively(folder, file -> {
+        if(extensionEquals(file, "dic")){
+          myCustomDictionariesPaths.add(file);
+        }
+      }));
+      // cover new dictionaries settings
+      final int customDictSize = parseInt(element.getAttributeValue(CUSTOM_DICTIONARIES_ATTR_NAME), 0);
+      for (int i = 0; i < customDictSize; i++) {
+        myCustomDictionariesPaths.add(element.getAttributeValue(CUSTOM_DICTIONARY_ATTR_NAME + i));
+      }
+      final int scriptsSize = parseInt(element.getAttributeValue(DICTIONARIES_ATTR_NAME), 0);
       for (int i = 0; i < scriptsSize; i++) {
         myDisabledDictionariesPaths.add(element.getAttributeValue(DICTIONARY_ATTR_NAME + i));
       }

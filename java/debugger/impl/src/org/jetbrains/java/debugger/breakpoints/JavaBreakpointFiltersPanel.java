@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package org.jetbrains.java.debugger.breakpoints;
 
 import com.intellij.debugger.InstanceFilter;
@@ -12,7 +14,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.ui.FieldPanel;
 import com.intellij.ui.MultiLineTooltipUI;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
@@ -90,10 +91,10 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
 
     insert(myInstanceFiltersFieldPanel, myInstanceFiltersField);
 
-    myCatchClassFilters.setBorder(JBUI.Borders.emptyLeft(UIUtil.getCheckBoxTextHorizontalOffset(myCatchCheckBox)));
-    myInstanceFiltersField.setBorder(JBUI.Borders.emptyLeft(UIUtil.getCheckBoxTextHorizontalOffset(myInstanceFiltersCheckBox)));
-    myClassFiltersField.setBorder(JBUI.Borders.emptyLeft(UIUtil.getCheckBoxTextHorizontalOffset(myClassFiltersCheckBox)));
-    myPassCountFieldPanel.setBorder(JBUI.Borders.emptyLeft(UIUtil.getCheckBoxTextHorizontalOffset(myPassCountCheckbox)));
+    myCatchClassFilters.setBorder(JBUI.Borders.emptyLeft(myCatchCheckBox.getInsets().left));
+    myInstanceFiltersField.setBorder(JBUI.Borders.emptyLeft(myInstanceFiltersCheckBox.getInsets().left));
+    myClassFiltersField.setBorder(JBUI.Borders.emptyLeft(myClassFiltersCheckBox.getInsets().left));
+    myPassCountFieldPanel.setBorder(JBUI.Borders.emptyLeft(myPassCountCheckbox.getInsets().left));
 
     DebuggerUIUtil.focusEditorOnCheck(myPassCountCheckbox, myPassCountField);
     DebuggerUIUtil.focusEditorOnCheck(myInstanceFiltersCheckBox, myInstanceFiltersField.getTextField());
@@ -202,12 +203,7 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
   }
 
   private void updateInstanceFilterEditor(boolean updateText) {
-    List<String> filters = new ArrayList<>();
-    for (InstanceFilter instanceFilter : myInstanceFilters) {
-      if (instanceFilter.isEnabled()) {
-        filters.add(Long.toString(instanceFilter.getId()));
-      }
-    }
+    List<String> filters = StreamEx.of(myInstanceFilters).filter(InstanceFilter::isEnabled).map(f -> Long.toString(f.getId())).toList();
     if (updateText) {
       myInstanceFiltersField.setText(StringUtil.join(filters, " "));
     }

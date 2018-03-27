@@ -17,7 +17,6 @@ package com.intellij.util.io;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 11/24/10
  */
 public class MappingFailedException extends RuntimeException{
   public MappingFailedException(String message) {

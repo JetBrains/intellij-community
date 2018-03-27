@@ -18,8 +18,9 @@ package com.jetbrains.python.codeInsight.controlflow;
 import com.google.common.collect.Lists;
 import com.intellij.codeInsight.controlflow.ControlFlowBuilder;
 import com.intellij.codeInsight.controlflow.Instruction;
-import com.jetbrains.python.psi.PyReferenceExpression;
 import com.intellij.psi.util.QualifiedName;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -30,9 +31,11 @@ public class InstructionBuilder {
   private InstructionBuilder() {
   }
 
-  public static List<Instruction> buildInstructions(ControlFlowBuilder builder, List<PyTypeAssertionEvaluator.Assertion> assertions) {
-    List<Instruction> result = Lists.newArrayList();
-    for (PyTypeAssertionEvaluator.Assertion def: assertions) {
+  @NotNull
+  public static List<Instruction> buildInstructions(@NotNull ControlFlowBuilder builder,
+                                                    @NotNull List<PyTypeAssertionEvaluator.Assertion> assertions) {
+    final List<Instruction> result = Lists.newArrayList();
+    for (PyTypeAssertionEvaluator.Assertion def : assertions) {
       final PyReferenceExpression e = def.getElement();
       final QualifiedName qname = e.asQualifiedName();
       final String name = qname != null ? qname.toString() : e.getName();
@@ -41,9 +44,13 @@ public class InstructionBuilder {
     return result;
   }
 
-  public static void addAssertInstructions(ControlFlowBuilder builder, PyTypeAssertionEvaluator assertionEvaluator) {
-    for (Instruction instr : buildInstructions(builder, assertionEvaluator.getDefinitions())) {
+  @NotNull
+  public static List<Instruction> addAssertInstructions(@NotNull ControlFlowBuilder builder,
+                                                        @NotNull PyTypeAssertionEvaluator assertionEvaluator) {
+    final List<Instruction> instructions = buildInstructions(builder, assertionEvaluator.getDefinitions());
+    for (Instruction instr : instructions) {
       builder.addNode(instr);
     }
+    return instructions;
   }
 }

@@ -17,7 +17,6 @@ package org.jetbrains.jps.api;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 1/24/12
  */
 public interface GlobalOptions {
   String USE_MEMORY_TEMP_CACHE_OPTION = "use.memory.temp.cache";

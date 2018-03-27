@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.CommonBundle;
@@ -65,6 +51,10 @@ abstract class UndoRedo {
     return myUndoableGroup.isTransparent();
   }
 
+  boolean isTemporary() {
+    return myUndoableGroup.isTemporary();
+  }
+
   boolean hasMoreActions() {
     return getStackHolder().canBeUndoneOrRedone(getDecRefs());
   }
@@ -103,7 +93,7 @@ abstract class UndoRedo {
     }
 
 
-    if (!isInsideStartFinishGroup && myUndoableGroup.shouldAskConfirmation(isRedo())) {
+    if (!isInsideStartFinishGroup && myUndoableGroup.shouldAskConfirmation(isRedo()) && !UndoManagerImpl.ourNeverAskUser) {
       if (!askUser()) return false;
     }
     else {
@@ -211,22 +201,7 @@ abstract class UndoRedo {
 
   private boolean restore(EditorAndState pair, boolean onlyIfDiffers) {
     // editor can be invalid if underlying file is deleted during undo (e.g. after undoing scratch file creation)
-    if (pair == null || myEditor == null || !myEditor.isValid()) return false;
-
-    FileEditor editor = pair.getEditor();
-    if (editor == null) return false;
-
-    // we cannot simply compare editors here because of the following scenario:
-    // 1. make changes in editor for file A
-    // 2. move caret
-    // 3. close editor
-    // 4. re-open editor for A via Ctrl-E
-    // 5. undo -> position is not affected, because instance created in step 4 is not the same!!!
-    if (!myEditor.getClass().equals(editor.getClass())) return false;
-
-    VirtualFile myFile = myEditor.getFile();
-    VirtualFile file = editor.getFile();
-    if (myFile != null && file != null && !myFile.equals(file)) return false;
+    if (pair == null || myEditor == null || !myEditor.isValid() || !pair.canBeAppliedTo(myEditor)) return false;
     
     // If current editor state isn't equals to remembered state then
     // we have to try to restore previous state. But sometime it's

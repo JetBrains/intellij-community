@@ -1,36 +1,20 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package git4idea.config;
 
 import com.intellij.dvcs.branch.DvcsBranchInfo;
 import com.intellij.dvcs.branch.DvcsBranchSettings;
 import com.intellij.dvcs.branch.DvcsSyncSettings;
-import com.intellij.lifecycle.PeriodicalTasksCloser;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.XCollection;
 import git4idea.GitRemoteBranch;
 import git4idea.GitUtil;
 import git4idea.push.GitPushTagMode;
@@ -64,6 +48,8 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
   }
 
   public static class State {
+    public String PATH_TO_GIT = null;
+
     // The previously entered authors of the commit (up to {@value #PREVIOUS_COMMIT_AUTHORS_LIMIT})
     public List<String> PREVIOUS_COMMIT_AUTHORS = new ArrayList<>();
     public GitVcsApplicationSettings.SshExecutable SSH_EXECUTABLE = GitVcsApplicationSettings.SshExecutable.IDEA_SSH;
@@ -81,13 +67,12 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     public boolean WARN_ABOUT_CRLF = true;
     public boolean WARN_ABOUT_DETACHED_HEAD = true;
     public GitResetMode RESET_MODE = null;
-    public boolean FORCE_PUSH_ALLOWED = true;
     public GitPushTagMode PUSH_TAGS = null;
     public boolean SIGN_OFF_COMMIT = false;
     public boolean SET_USER_NAME_GLOBALLY = true;
     public boolean SWAP_SIDES_IN_COMPARE_BRANCHES = false;
 
-    @AbstractCollection(surroundWithTag = false)
+    @XCollection
     @Tag("push-targets")
     public List<PushTargetInfo> PUSH_TARGETS = ContainerUtil.newArrayList();
 
@@ -104,7 +89,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
   }
 
   public static GitVcsSettings getInstance(Project project) {
-    return PeriodicalTasksCloser.getInstance().safeGetService(project, GitVcsSettings.class);
+    return ServiceManager.getService(project, GitVcsSettings.class);
   }
 
   @NotNull
@@ -148,6 +133,15 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
 
   public void loadState(State state) {
     myState = state;
+  }
+
+  @Nullable
+  public String getPathToGit() {
+    return myState.PATH_TO_GIT;
+  }
+
+  public void setPathToGit(@Nullable String pathToGit) {
+    myState.PATH_TO_GIT = pathToGit;
   }
 
   public boolean autoUpdateIfPushRejected() {
@@ -241,14 +235,6 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
 
   public void setResetMode(@NotNull GitResetMode mode) {
     myState.RESET_MODE = mode;
-  }
-
-  public boolean isForcePushAllowed() {
-    return myState.FORCE_PUSH_ALLOWED;
-  }
-
-  public void setForcePushAllowed(boolean allowed) {
-    myState.FORCE_PUSH_ALLOWED = allowed;
   }
 
   @Nullable

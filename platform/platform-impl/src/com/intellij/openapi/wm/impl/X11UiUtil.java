@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.openapi.wm.impl;
 
@@ -155,8 +143,6 @@ public class X11UiUtil {
 
     @Nullable
     private <T> T getWindowProperty(long window, long name, long type, long expectedFormat) throws Exception {
-      T property = null;
-
       long data = unsafe.allocateMemory(64);
       awtLock.invoke(null);
       try {
@@ -173,14 +159,16 @@ public class X11UiUtil {
             if (format == FORMAT_BYTE) {
               byte[] bytes = new byte[length];
               for (int i = 0; i < length; i++) bytes[i] = unsafe.getByte(pointer + i);
-              property = (T)bytes;
+              @SuppressWarnings("unchecked") T t = (T)bytes;
+              return t;
             }
             else if (format == FORMAT_LONG) {
               long[] values = newLongArray(length);
               for (int i = 0; i < length; i++) {
                 values[i] = SystemInfo.is64Bit ? unsafe.getLong(pointer + 8 * i) : unsafe.getInt(pointer + 4 * i);
               }
-              property = (T)values;
+              @SuppressWarnings("unchecked") T t = (T)values;
+              return t;
             }
             else if (format != None) {
               LOG.info("unexpected format: " + format);
@@ -196,7 +184,7 @@ public class X11UiUtil {
         unsafe.freeMemory(data);
       }
 
-      return property;
+      return null;
     }
 
     private void sendClientMessage(long target, long window, long type, long... data) throws Exception {
@@ -337,12 +325,14 @@ public class X11UiUtil {
   private static boolean hasWindowProperty(JFrame frame, long name, long expected) {
     if (X11 == null) return false;
     try {
-      ComponentPeer peer = frame.getPeer();
-      long window = (Long)X11.getWindow.invoke(peer);
-      long[] values = X11.getLongArrayProperty(window, name, XA_ATOM);
-      if (values != null) {
-        for (long value : values) {
-          if (value == expected) return true;
+      @SuppressWarnings("deprecation") ComponentPeer peer = frame.getPeer();
+      if (peer != null) {
+        long window = (Long)X11.getWindow.invoke(peer);
+        long[] values = X11.getLongArrayProperty(window, name, XA_ATOM);
+        if (values != null) {
+          for (long value : values) {
+            if (value == expected) return true;
+          }
         }
       }
       return false;
@@ -357,7 +347,8 @@ public class X11UiUtil {
     if (X11 == null) return;
 
     try {
-      ComponentPeer peer = frame.getPeer();
+      @SuppressWarnings("deprecation") ComponentPeer peer = frame.getPeer();
+      if (peer == null) throw new IllegalStateException(frame + " has no peer");
       long window = (Long)X11.getWindow.invoke(peer);
       long screen = (Long)X11.getScreenNumber.invoke(peer);
       long rootWindow = X11.getRootWindow(screen);

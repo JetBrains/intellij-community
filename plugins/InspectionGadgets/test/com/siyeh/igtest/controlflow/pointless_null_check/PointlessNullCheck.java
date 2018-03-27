@@ -87,4 +87,14 @@ public class PointlessNullCheck {
             System.out.println("no warning");
         }
     }
+
+    void testQualified(Object obj) {
+        if(<warning descr="Unnecessary 'null' check before 'check()' call">obj != null</warning> && check(obj)) System.out.println(1);
+        if(<warning descr="Unnecessary 'null' check before 'check()' call">obj != null</warning> && this.check(obj)) System.out.println(1);
+        // ctor called only if obj is non-null: removing it may change the semantics
+        if(obj != null && new PointlessNullCheck().check(obj)) System.out.println(1);
+        if(<warning descr="Unnecessary 'null' check before 'check2()' call">obj != null</warning> && check2(null, obj)) System.out.println(1);
+        // argument side effect
+        if(obj != null && check2(new PointlessNullCheck(), obj)) System.out.println(1);
+    }
 }

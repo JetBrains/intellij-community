@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class ToggleWholeWordsOnlyAction extends EditorHeaderToggleAction {
   public ToggleWholeWordsOnlyAction() {
-    super("Wo&rds");
+    super("W&ords");
   }
 
   @Override

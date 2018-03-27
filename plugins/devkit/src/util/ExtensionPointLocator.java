@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.SmartHashSet;
@@ -66,7 +67,7 @@ public class ExtensionPointLocator {
   }
 
   private static void findExtensionPointCandidates(PsiClass psiClass, Set<ExtensionPointCandidate> candidates) {
-    String name = psiClass.getQualifiedName();
+    String name = ClassUtil.getJVMClassName(psiClass);
     if (name == null) return;
 
     Project project = psiClass.getProject();

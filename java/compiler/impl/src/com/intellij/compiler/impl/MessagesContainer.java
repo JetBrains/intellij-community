@@ -35,7 +35,6 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 27-Jan-16
  */
 public class MessagesContainer {
 

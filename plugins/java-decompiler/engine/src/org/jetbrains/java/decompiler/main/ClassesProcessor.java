@@ -1,23 +1,10 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package org.jetbrains.java.decompiler.main;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeSourceMapper;
-import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
 import org.jetbrains.java.decompiler.main.collectors.ImportCollector;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
@@ -34,6 +21,7 @@ import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.struct.attr.StructInnerClassesAttribute;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
+import org.jetbrains.java.decompiler.util.TextBuffer;
 
 import java.io.IOException;
 import java.util.*;
@@ -42,6 +30,7 @@ import java.util.Map.Entry;
 public class ClassesProcessor {
   public static final int AVERAGE_CLASS_SIZE = 16 * 1024;
 
+  private final StructContext context;
   private final Map<String, ClassNode> mapRootClasses = new HashMap<>();
 
   private static class Inner {
@@ -55,6 +44,10 @@ public class ClassesProcessor {
   }
 
   public ClassesProcessor(StructContext context) {
+    this.context = context;
+  }
+
+  public void loadClasses(IIdentifierRenamer renamer) {
     Map<String, Inner> mapInnerClasses = new HashMap<>();
     Map<String, Set<String>> mapNestedClassReferences = new HashMap<>();
     Map<String, Set<String>> mapEnclosingClassReferences = new HashMap<>();
@@ -78,55 +71,42 @@ public class ClassesProcessor {
               if (savedName != null) {
                 simpleName = savedName;
               }
-              else if (simpleName != null && DecompilerContext.getOption(IFernflowerPreferences.RENAME_ENTITIES)) {
-                IIdentifierRenamer renamer = DecompilerContext.getPoolInterceptor().getHelper();
-                if (renamer.toBeRenamed(IIdentifierRenamer.Type.ELEMENT_CLASS, simpleName, null, null)) {
-                  simpleName = renamer.getNextClassName(innerName, simpleName);
-                  mapNewSimpleNames.put(innerName, simpleName);
-                }
+              else if (simpleName != null &&
+                       renamer != null &&
+                       renamer.toBeRenamed(IIdentifierRenamer.Type.ELEMENT_CLASS, simpleName, null, null)) {
+                simpleName = renamer.getNextClassName(innerName, simpleName);
+                mapNewSimpleNames.put(innerName, simpleName);
               }
 
               Inner rec = new Inner();
               rec.simpleName = simpleName;
-              rec.type = entry.outerNameIdx != 0 ? ClassNode.CLASS_MEMBER : entry.simpleNameIdx != 0 ? ClassNode.CLASS_LOCAL : ClassNode.CLASS_ANONYMOUS;
+              rec.type = entry.simpleNameIdx == 0 ? ClassNode.CLASS_ANONYMOUS : entry.outerNameIdx == 0 ? ClassNode.CLASS_LOCAL : ClassNode.CLASS_MEMBER;
               rec.accessFlags = entry.accessFlags;
 
               // enclosing class
-              String enclClassName;
-              if (entry.outerNameIdx != 0) {
-                enclClassName = entry.enclosingName;
+              String enclClassName = entry.outerNameIdx != 0 ? entry.enclosingName : cl.qualifiedName;
+              if (enclClassName == null || innerName.equals(enclClassName)) {
+                continue;  // invalid name or self reference
               }
-              else {
-                enclClassName = cl.qualifiedName;
+              if (rec.type == ClassNode.CLASS_MEMBER && !innerName.equals(enclClassName + '$' + entry.simpleName)) {
+                continue;  // not a real inner class
               }
 
-              if (!innerName.equals(enclClassName)) {  // self reference
-                StructClass enclosing_class = context.getClasses().get(enclClassName);
-                if (enclosing_class != null && enclosing_class.isOwn()) { // own classes only
-
-                  Inner existingRec = mapInnerClasses.get(innerName);
-                  if (existingRec == null) {
-                    mapInnerClasses.put(innerName, rec);
-                  }
-                  else if (!Inner.equal(existingRec, rec)) {
-                    String message = "Inconsistent inner class entries for " + innerName + "!";
-                    DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
-                  }
-
-                  // reference to the nested class
-                  Set<String> set = mapNestedClassReferences.get(enclClassName);
-                  if (set == null) {
-                    mapNestedClassReferences.put(enclClassName, set = new HashSet<>());
-                  }
-                  set.add(innerName);
-
-                  // reference to the enclosing class
-                  set = mapEnclosingClassReferences.get(innerName);
-                  if (set == null) {
-                    mapEnclosingClassReferences.put(innerName, set = new HashSet<>());
-                  }
-                  set.add(enclClassName);
+              StructClass enclosingClass = context.getClasses().get(enclClassName);
+              if (enclosingClass != null && enclosingClass.isOwn()) { // own classes only
+                Inner existingRec = mapInnerClasses.get(innerName);
+                if (existingRec == null) {
+                  mapInnerClasses.put(innerName, rec);
                 }
+                else if (!Inner.equal(existingRec, rec)) {
+                  String message = "Inconsistent inner class entries for " + innerName + "!";
+                  DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
+                }
+
+                // reference to the nested class
+                mapNestedClassReferences.computeIfAbsent(enclClassName, k -> new HashSet<>()).add(innerName);
+                // reference to the enclosing class
+                mapEnclosingClassReferences.computeIfAbsent(innerName, k -> new HashSet<>()).add(enclClassName);
               }
             }
           }
@@ -155,7 +135,6 @@ public class ClassesProcessor {
 
             Set<String> setNestedClasses = mapNestedClassReferences.get(superClass);
             if (setNestedClasses != null) {
-
               StructClass scl = superNode.classStruct;
               StructInnerClassesAttribute inner = (StructInnerClassesAttribute)scl.getAttribute("InnerClasses");
 
@@ -237,9 +216,7 @@ public class ClassesProcessor {
     DecompilerContext.getLogger().startReadingClass(cl.qualifiedName);
     try {
       ImportCollector importCollector = new ImportCollector(root);
-      DecompilerContext.setImportCollector(importCollector);
-      DecompilerContext.setCounterContainer(new CounterContainer());
-      DecompilerContext.setBytecodeSourceMapper(new BytecodeSourceMapper());
+      DecompilerContext.startClass(importCollector);
 
       new LambdaProcessor().processClass(root);
 
@@ -294,7 +271,7 @@ public class ClassesProcessor {
     }
   }
 
-  private static void initWrappers(ClassNode node) throws IOException {
+  private static void initWrappers(ClassNode node) {
     if (node.type == ClassNode.CLASS_LAMBDA) {
       return;
     }
@@ -353,7 +330,6 @@ public class ClassesProcessor {
     public final Set<String> enclosingClasses = new HashSet<>();
     public ClassNode parent;
     public LambdaInformation lambdaInformation;
-    public boolean namelessConstructorStub = false;
 
     public ClassNode(String content_class_name,
                      String content_method_name,
@@ -368,7 +344,6 @@ public class ClassesProcessor {
 
       lambdaInformation = new LambdaInformation();
 
-      lambdaInformation.class_name = lambda_class_name;
       lambdaInformation.method_name = lambda_method_name;
       lambdaInformation.method_descriptor = lambda_method_descriptor;
 
@@ -418,7 +393,6 @@ public class ClassesProcessor {
     }
 
     public static class LambdaInformation {
-      public String class_name;
       public String method_name;
       public String method_descriptor;
 

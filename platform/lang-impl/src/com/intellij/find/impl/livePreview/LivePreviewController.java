@@ -118,7 +118,8 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
       if (myDisposed) return;
       Project project = mySearchResults.getProject();
       if (project != null && project.isDisposed()) return;
-      mySearchResults.updateThreadSafe(copy, allowedToChangedEditorSelection, null, stamp);
+      mySearchResults.updateThreadSafe(copy, allowedToChangedEditorSelection, null, stamp)
+        .doWhenRejected(() -> updateInBackground(findModel, allowedToChangedEditorSelection));
     };
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       request.run();

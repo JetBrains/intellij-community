@@ -39,7 +39,7 @@ private fun LinearGraph.redNodes(vararg redNode: Int = IntArray(0)): FragmentGen
   }
 }
 
-private val Int?.s: String get() = if (this == null) "n" else toString()
+private val Int?.s: String get() = this?.toString() ?: "n"
 
 private infix fun FragmentGenerator.GreenFragment.assert(s: String)
     = assertEquals(s, "${upRedNode.s}|${downRedNode.s}|${middleGreenNodes.sorted().joinToString(",")}")

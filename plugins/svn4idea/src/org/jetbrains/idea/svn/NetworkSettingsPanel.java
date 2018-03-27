@@ -18,7 +18,6 @@ package org.jetbrains.idea.svn;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.options.ConfigurableUi;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
@@ -28,7 +27,6 @@ import com.intellij.util.net.HttpProxyConfigurable;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.config.SvnConfigureProxiesDialog;
-import org.jetbrains.idea.svn.svnkit.SvnKitManager;
 
 import javax.swing.*;
 
@@ -72,24 +70,15 @@ public class NetworkSettingsPanel implements ConfigurableUi<SvnConfiguration> {
     bg.add(mySSLv3RadioButton);
     bg.add(myTLSv1RadioButton);
     bg.add(myAllRadioButton);
-    if (SvnKitManager.isSSLProtocolExplicitlySet()) {
-      mySSLv3RadioButton.setEnabled(false);
-      myTLSv1RadioButton.setEnabled(false);
-      myAllRadioButton.setEnabled(false);
+    mySSLv3RadioButton.setEnabled(true);
+    myTLSv1RadioButton.setEnabled(true);
+    myAllRadioButton.setEnabled(true);
+    mySSLExplicitly.setVisible(false);
+    final String version = SystemInfo.JAVA_RUNTIME_VERSION;
+    final boolean jdkBugFixed = version.startsWith("1.7") || version.startsWith("1.8");
+    if (!jdkBugFixed) {
       mySSLExplicitly.setVisible(true);
-      mySSLExplicitly.setText("Set explicitly to: " + SvnKitManager.getExplicitlySetSslProtocols());
-    }
-    else {
-      mySSLv3RadioButton.setEnabled(true);
-      myTLSv1RadioButton.setEnabled(true);
-      myAllRadioButton.setEnabled(true);
-      mySSLExplicitly.setVisible(false);
-      final String version = SystemInfo.JAVA_RUNTIME_VERSION;
-      final boolean jdkBugFixed = version.startsWith("1.7") || version.startsWith("1.8");
-      if (!jdkBugFixed) {
-        mySSLExplicitly.setVisible(true);
-        mySSLExplicitly.setText("Setting 'All' value in this JDK version (" + version + ") is not recommended.");
-      }
+      mySSLExplicitly.setText("Setting 'All' value in this JDK version (" + version + ") is not recommended.");
     }
   }
 
@@ -142,7 +131,6 @@ public class NetworkSettingsPanel implements ConfigurableUi<SvnConfiguration> {
     configuration.setSshReadTimeout(((SpinnerNumberModel)mySSHReadTimeout.getModel()).getNumber().longValue() * 1000);
     configuration.setHttpTimeout(((SpinnerNumberModel)myHttpTimeout.getModel()).getNumber().longValue() * 1000);
     configuration.setSslProtocols(getSelectedSSL());
-    SvnVcs.getInstance(myProject).getSvnKitManager().refreshSSLProperty();
   }
 
   private SvnConfiguration.SSLProtocols getSelectedSSL() {

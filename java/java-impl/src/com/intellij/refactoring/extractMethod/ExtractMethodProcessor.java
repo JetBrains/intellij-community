@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.codeInsight.*;
@@ -79,6 +65,8 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
+
+import static com.intellij.codeInsight.AnnotationUtil.CHECK_TYPE;
 
 public class ExtractMethodProcessor implements MatchProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.extractMethod.ExtractMethodProcessor");
@@ -436,8 +424,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       public DfaInstructionState[] visitCheckReturnValue(CheckReturnValueInstruction instruction,
                                                          DataFlowRunner runner,
                                                          DfaMemoryState memState) {
-        PsiElement aReturn = instruction.getReturn();
-        if (aReturn instanceof PsiExpression && returnedExpressions.contains(aReturn)) {
+        if (returnedExpressions.contains(instruction.getReturn())) {
           myResult &= nullsExpected ? memState.isNull(memState.peek()) : memState.isNotNull(memState.peek());
         }
         return super.visitCheckReturnValue(instruction, runner, memState);
@@ -929,12 +916,7 @@ public class ExtractMethodProcessor implements MatchProvider {
           ifStatement = (PsiIfStatement)myElementFactory.createStatementFromText("if (" + varName + "==null) return null;", null);
         }
         else if (myGenerateConditionalExit) {
-          if (myFirstExitStatementCopy instanceof PsiReturnStatement && ((PsiReturnStatement)myFirstExitStatementCopy).getReturnValue() != null) {
-            ifStatement = (PsiIfStatement)myElementFactory.createStatementFromText("if (" + varName + "==null) return null;", null);
-          }
-          else {
-            ifStatement = (PsiIfStatement)myElementFactory.createStatementFromText("if (" + varName + "==null) " + myFirstExitStatementCopy.getText(), null);
-          }
+          ifStatement = generateConditionalExitStatement(varName);
         }
         else {
           ifStatement = (PsiIfStatement)myElementFactory.createStatementFromText("if (" + varName + "==null) return;", null);
@@ -945,7 +927,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       else if (myNotNullConditionalCheck) {
         String varName = myOutputVariable != null ? myOutputVariable.getName() : "x";
         varName = declareVariableAtMethodCallLocation(varName, myReturnType instanceof PsiPrimitiveType ? ((PsiPrimitiveType)myReturnType).getBoxedType(myCodeFragmentMember) : myReturnType);
-        addToMethodCallLocation(myElementFactory.createStatementFromText("if (" + varName + " != null) return " + varName + ";", null));
+        addToMethodCallLocation(generateNotNullConditionalStatement(varName));
         declareVariableReusedAfterCall(myOutputVariable);
       }
       else if (myGenerateConditionalExit) {
@@ -1053,6 +1035,19 @@ public class ExtractMethodProcessor implements MatchProvider {
         RefactoringChangeUtil.qualifyReference(methodExpression, myExtractedMethod, PsiUtil.getEnclosingStaticElement(methodExpression, myTargetClass) != null ? myTargetClass : null);
       }
     }
+  }
+
+  @NotNull
+  private PsiIfStatement generateConditionalExitStatement(String varName) {
+    if (myFirstExitStatementCopy instanceof PsiReturnStatement && ((PsiReturnStatement)myFirstExitStatementCopy).getReturnValue() != null) {
+      return (PsiIfStatement)myElementFactory.createStatementFromText("if (" + varName + "==null) return null;", null);
+    }
+    return (PsiIfStatement)myElementFactory.createStatementFromText("if (" + varName + "==null) " + myFirstExitStatementCopy.getText(), null);
+  }
+
+  @NotNull
+  private PsiStatement generateNotNullConditionalStatement(String varName) {
+    return myElementFactory.createStatementFromText("if (" + varName + " != null) return " + varName + ";", null);
   }
 
   protected PsiExpression expressionToReplace(PsiExpression expression) {
@@ -1313,16 +1308,16 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private void addNotNullConditionalCheck(Match match, PsiElement replacedMatch) {
-    if (myNotNullConditionalCheck && myOutputVariable != null) {
+    if ((myNotNullConditionalCheck || myGenerateConditionalExit) && myOutputVariable != null) {
       ReturnValue returnValue = match.getOutputVariableValue(myOutputVariable);
       if (returnValue instanceof VariableReturnValue) {
         String varName = ((VariableReturnValue)returnValue).getVariable().getName();
         LOG.assertTrue(varName != null, "returned variable name is null");
         PsiStatement statement = PsiTreeUtil.getParentOfType(replacedMatch, PsiStatement.class, false);
         if (statement != null) {
-          PsiStatement conditionalReturn =
-            myElementFactory.createStatementFromText("if (" + varName + " != null) return " + varName + ";", null);
-          statement.getParent().addAfter(conditionalReturn, statement);
+          PsiStatement conditionalExit = myNotNullConditionalCheck ?
+                                         generateNotNullConditionalStatement(varName) : generateConditionalExitStatement(varName);
+          statement.getParent().addAfter(conditionalExit, statement);
         }
       }
     }
@@ -1558,17 +1553,16 @@ public class ExtractMethodProcessor implements MatchProvider {
     final List<String> notNullAnnotations = nullabilityManager.getNotNulls();
     final List<String> nullableAnnotations = nullabilityManager.getNullables();
 
-    if (AnnotationUtil.isAnnotated(variable, nullableAnnotations) ||
-        AnnotationUtil.isAnnotated(variable, notNullAnnotations) ||
+    if (AnnotationUtil.isAnnotated(variable, nullableAnnotations, CHECK_TYPE) ||
+        AnnotationUtil.isAnnotated(variable, notNullAnnotations, CHECK_TYPE) ||
         PropertiesComponent.getInstance(myProject).getBoolean(ExtractMethodDialog.EXTRACT_METHOD_GENERATE_ANNOTATIONS, false)) {
-
       final Boolean isNotNull = isNotNullAt(variable, myElements[0]);
       if (isNotNull != null) {
         final List<String> toKeep = isNotNull ? notNullAnnotations : nullableAnnotations;
         final String[] toRemove = (!isNotNull ? notNullAnnotations : nullableAnnotations).toArray(ArrayUtil.EMPTY_STRING_ARRAY);
 
         AddAnnotationPsiFix.removePhysicalAnnotations(parm, toRemove);
-        if (!AnnotationUtil.isAnnotated(parm, toKeep)) {
+        if (!AnnotationUtil.isAnnotated(parm, toKeep, CHECK_TYPE)) {
           final String toAdd = isNotNull ? nullabilityManager.getDefaultNotNull() : nullabilityManager.getDefaultNullable();
           final PsiAnnotation added =
             AddAnnotationPsiFix.addPhysicalAnnotation(toAdd, PsiNameValuePair.EMPTY_ARRAY, parm.getModifierList());

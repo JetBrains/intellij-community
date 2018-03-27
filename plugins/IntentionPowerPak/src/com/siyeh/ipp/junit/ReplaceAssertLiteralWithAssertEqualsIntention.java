@@ -21,6 +21,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ImportUtils;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -88,8 +89,9 @@ public class ReplaceAssertLiteralWithAssertEqualsIntention extends MutablyNamedI
     final String literal = postfix.toLowerCase();
     final PsiExpressionList argumentList = call.getArgumentList();
     final PsiExpression[] arguments = argumentList.getExpressions();
+    CommentTracker commentTracker = new CommentTracker();
     if (arguments.length > 1) {
-      newExpression.append(arguments[0].getText()).append(", ");
+      newExpression.append(commentTracker.markUnchanged(arguments[0]).getText()).append(", ");
     }
     final PsiExpression lastArgument = arguments[arguments.length - 1];
     if (lastArgument instanceof PsiBinaryExpression) {
@@ -98,20 +100,21 @@ public class ReplaceAssertLiteralWithAssertEqualsIntention extends MutablyNamedI
       if (("assertTrue".equals(methodName) && JavaTokenType.EQEQ.equals(tokenType)) ||
           ("assertFalse".equals(methodName) && JavaTokenType.NE.equals(tokenType))) {
         final PsiExpression lhs = binaryExpression.getLOperand();
-        newExpression.append(lhs.getText()).append(", ");
+        newExpression.append(commentTracker.markUnchanged(lhs).getText()).append(", ");
         final PsiExpression rhs = binaryExpression.getROperand();
         if (rhs != null) {
-          newExpression.append(rhs.getText());
+          newExpression.append(commentTracker.markUnchanged(rhs).getText());
         }
       }
       else {
-        newExpression.append(literal).append(", ").append(lastArgument.getText());
+        newExpression.append(literal).append(", ").append(commentTracker.markUnchanged(lastArgument).getText());
       }
     }
     else {
-      newExpression.append(literal).append(", ").append(lastArgument.getText());
+      newExpression.append(literal).append(", ").append(commentTracker.markUnchanged(lastArgument).getText());
     }
     newExpression.append(')');
-    PsiReplacementUtil.replaceExpression(call, newExpression.toString());
+
+    PsiReplacementUtil.replaceExpression(call, newExpression.toString(), commentTracker);
   }
 }

@@ -21,7 +21,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.testGuiFramework.impl.GuiTestStarter
 import com.intellij.testGuiFramework.launcher.classpath.ClassPathBuilder
-import com.intellij.testGuiFramework.launcher.classpath.ClassPathBuilder.Companion.isWin
 import com.intellij.testGuiFramework.launcher.classpath.PathUtils
 import com.intellij.testGuiFramework.launcher.ide.CommunityIde
 import com.intellij.testGuiFramework.launcher.ide.Ide
@@ -45,7 +44,6 @@ import java.util.concurrent.TimeUnit
 import java.util.jar.JarInputStream
 import java.util.stream.Collectors
 import kotlin.concurrent.thread
-
 
 
 /**
@@ -84,9 +82,9 @@ object GuiTestLocalLauncher {
     }
   }
 
-  fun runIdeLocally(ide: Ide = Ide(CommunityIde(), 0, 0), port: Int = 0) {
+  fun runIdeLocally(ide: Ide = Ide(CommunityIde(), 0, 0), port: Int = 0, testClassNames: List<String> = emptyList()) {
     //todo: check that we are going to run test locally
-    val args = createArgs(ide = ide, port = port)
+    val args = createArgs(ide = ide, port = port, testClassNames = testClassNames)
     return startIde(ide = ide, args = args)
   }
 
@@ -107,6 +105,8 @@ object GuiTestLocalLauncher {
                        timeOutUnit: TimeUnit = TimeUnit.SECONDS,
                        args: List<String>) {
     LOG.info("Running $ide locally \n with args: $args")
+    //do not limit IDE starting if we are using debug mode to not miss the debug listening period
+    val conditionalTimeout = if (GuiTestOptions.isDebug()) 0 else timeOut
     val startLatch = CountDownLatch(1)
     thread(start = true, name = "IdeaTestThread") {
       val ideaStartTest = ProcessBuilder().inheritIO().command(args)
@@ -115,8 +115,8 @@ object GuiTestLocalLauncher {
     }
     if (needToWait) {
       startLatch.await()
-      if (timeOut != 0L)
-        process!!.waitFor(timeOut, timeOutUnit)
+      if (conditionalTimeout != 0L)
+        process!!.waitFor(conditionalTimeout, timeOutUnit)
       else
         process!!.waitFor()
       try {
@@ -145,31 +145,38 @@ object GuiTestLocalLauncher {
     = startIde(ide = ide, needToWait = true, timeOut = 180, args = args)
 
 
-  private fun createArgs(ide: Ide, mainClass: String = "com.intellij.idea.Main", port: Int = 0): List<String>
+  private fun createArgs(ide: Ide, mainClass: String = "com.intellij.idea.Main", port: Int = 0, testClassNames: List<String>): List<String>
     = createArgsBase(ide = ide,
                      mainClass = mainClass,
                      commandName = GuiTestStarter.COMMAND_NAME,
-                     port = port)
+                     port = port,
+                     testClassNames = testClassNames)
 
   private fun createArgsForFirstStart(ide: Ide, firstStartClassName: String = "undefined", port: Int = 0): List<String>
     = createArgsBase(ide = ide,
                      mainClass = "com.intellij.testGuiFramework.impl.FirstStarterKt",
                      firstStartClassName = firstStartClassName,
                      commandName = null,
-                     port = port)
+                     port = port,
+                     testClassNames = emptyList())
 
   /**
    * customVmOptions should contain a full VM options formatted items like: customVmOptions = listOf("-Dapple.laf.useScreenMenuBar=true", "-Dide.mac.file.chooser.native=false").
    * GuiTestLocalLauncher passed all VM options from test, that starts with "-Dpass."
    */
-  private fun createArgsBase(ide: Ide, mainClass: String, commandName: String?, firstStartClassName: String = "undefined", port: Int): List<String> {
+  private fun createArgsBase(ide: Ide,
+                             mainClass: String,
+                             commandName: String?,
+                             firstStartClassName: String = "undefined",
+                             port: Int,
+                             testClassNames: List<String>): List<String> {
     val customVmOptions = getCustomPassedOptions()
     var resultingArgs = listOf<String>()
       .plus(getCurrentJavaExec())
       .plus(getDefaultAndCustomVmOptions(ide, customVmOptions))
       .plus("-Didea.gui.test.first.start.class=$firstStartClassName")
       .plus("-classpath")
-      .plus(getOsSpecificClasspath(ide.ideType.mainModule))
+      .plus(getOsSpecificClasspath(ide.ideType.mainModule, testClassNames))
       .plus(mainClass)
 
     if (commandName != null) resultingArgs = resultingArgs.plus(commandName)
@@ -222,6 +229,7 @@ object GuiTestLocalLauncher {
       .plus("-Dapple.laf.useScreenMenuBar=${GuiTestOptions.useAppleScreenMenuBar()}")
       .plus("-Didea.is.internal=${GuiTestOptions.isInternal()}")
       .plus("-Didea.debug.mode=true")
+      .plus("-Dnative.mac.file.chooser.enabled=false")
       .plus("-Didea.config.path=${GuiTestOptions.getConfigPath()}")
       .plus("-Didea.system.path=${GuiTestOptions.getSystemPath()}")
       .plus("-Dfile.encoding=${GuiTestOptions.getEncoding()}")
@@ -236,27 +244,69 @@ object GuiTestLocalLauncher {
     return PathUtils.getJreBinPath()
   }
 
-  private fun getOsSpecificClasspath(moduleName: String): String = ClassPathBuilder.buildOsSpecific(
-    getFullClasspath(moduleName).map { it.path })
+  private fun getOsSpecificClasspath(moduleName: String, testClassNames: List<String>): String = ClassPathBuilder.buildOsSpecific(
+    getFullClasspath(moduleName, testClassNames).map { it.path })
 
 
   /**
    * return union of classpaths for current test (get from classloader) and classpaths of main and testGuiFramework modules*
    */
-  private fun getFullClasspath(moduleName: String): List<File> {
-    val classpath = getExtendedClasspath(moduleName)
-    classpath.addAll(getTestClasspath())
+  private fun getFullClasspath(moduleName: String, testClassNames: List<String>): List<File> {
+    val classpath: MutableSet<File> = substituteAllMacro(getExtendedClasspath(moduleName))
+    classpath.addAll(getTestClasspath(testClassNames))
+    classpath.add(getToolsJarFile())
     return classpath.toList()
   }
 
-  private fun getTestClasspath(): List<File> {
+  private fun getToolsJarFile(): File {
+    val toolsJarUrl = getUrlPathsFromClassloader().firstOrNull {
+      it.endsWith("/tools.jar") or it.endsWith("\\tools.jar")
+    } ?: throw Exception("Unable to find tools.jar URL in the classloader URLs of ${GuiTestLocalLauncher::class.java.name} class")
+    return File(toolsJarUrl)
+  }
+
+  /**
+   * Finds in a current classpath that built from a test module dependencies resolved macro path
+   * macroName = "\$MAVEN_REPOSITORY\$"
+   */
+  private fun resolveMacro(classpath: MutableSet<File>, macroName: String): String {
+    val pathWithMacro = classpath.firstOrNull { it.startsWith(macroName) }?.path ?: throw Exception(
+      "Unable to find file in a classpath starting with next macro: '$macroName'")
+    val tailOfPathWithMacro = pathWithMacro.substring(macroName.length)
+    val urlPaths = getUrlPathsFromClassloader()
+    val fullPathWithResolvedMacro = urlPaths.firstOrNull { it.endsWith(tailOfPathWithMacro) } ?: throw Exception(
+      "Unable to find in classpath URL with the next tail: $tailOfPathWithMacro")
+    return fullPathWithResolvedMacro.substring(0..(fullPathWithResolvedMacro.length - tailOfPathWithMacro.length))
+  }
+
+  private fun substituteAllMacro(classpath: MutableSet<File>): MutableSet<File> {
+    val macroList = listOf("\$MAVEN_REPOSITORY\$", "\$KOTLIN_BUNDLED\$")
+    val macroMap = mutableMapOf<String, String>()
+    macroList.forEach { macroMap.put(it, resolveMacro(classpath, it)) }
+    val mutableClasspath = mutableListOf<File>()
+    classpath.forEach { file ->
+      val macro = file.path.findStartsWith(macroList)
+      if (macro != null) {
+        val resolvedMacro = macroMap.get(macro)
+        val newPath = resolvedMacro + file.path.substring(macro.length + 1)
+        mutableClasspath.add(File(newPath))
+      } else mutableClasspath.add(file)
+    }
+    return mutableClasspath.toMutableSet()
+  }
+
+  private fun String.findStartsWith(list: List<String>): String? {
+    return list.find { this.startsWith(it) }
+  }
+
+  private fun getUrlPathsFromClassloader(): List<String> {
     val classLoader = this.javaClass.classLoader
     val urlClassLoaderClass = classLoader.javaClass
     val getUrlsMethod = urlClassLoaderClass.methods.firstOrNull { it.name.toLowerCase() == "geturls" }!!
     @Suppress("UNCHECKED_CAST")
     val urlsListOrArray = getUrlsMethod.invoke(classLoader)
     var urls = (urlsListOrArray as? List<*> ?: (urlsListOrArray as Array<*>).toList()).filterIsInstance(URL::class.java)
-    if (isWin()) {
+    if (SystemInfo.isWin()) {
       val classPathUrl = urls.find { it.toString().contains(Regex("classpath[\\d]*.jar")) }
       if (classPathUrl != null) {
         val jarStream = JarInputStream(File(classPathUrl.path).inputStream())
@@ -264,7 +314,37 @@ object GuiTestLocalLauncher {
         urls = mf.mainAttributes.getValue("Class-Path").split(" ").map { URL(it) }
       }
     }
-    return urls.map { Paths.get(it.toURI()).toFile() }
+    return urls.map { Paths.get(it.toURI()).toFile().path }
+  }
+
+  private fun getTestClasspath(testClassNames: List<String>): List<File> {
+    if (testClassNames.isEmpty()) return emptyList()
+    val fileSet = mutableSetOf<File>()
+    testClassNames.forEach {
+      fileSet.add(getClassFile(it))
+    }
+    return fileSet.toList()
+  }
+
+
+  /**
+   * returns a file (directory or a jar) containing class loaded by a class loader with a given name
+   */
+  private fun getClassFile(className: String): File {
+    val classLoader = this.javaClass.classLoader
+    val cls = classLoader.loadClass(className) ?: throw Exception(
+      "Unable to load class ($className) with a given classloader. Check the path to class or a classloader URLs.")
+    val name = "${cls.simpleName}.class"
+    val packagePath = cls.`package`.name.replace(".", "/")
+    val fullPath = "$packagePath/$name"
+    val resourceUrl = classLoader.getResource(fullPath) ?: throw Exception(
+      "Unable to get resource path to a \"$fullPath\". Check the path to class or a classloader URLs.")
+    val correctPath = resourceUrl.correctPath()
+    var cutPath = correctPath.substring(0, correctPath.length - fullPath.length)
+    if (cutPath.endsWith("!") or cutPath.endsWith("!/")) cutPath = cutPath.substring(0..(cutPath.length - 3)) // in case of it is a jar
+    val file = File(cutPath)
+    if (!file.exists()) throw Exception("File for a class '$className' doesn't exist by path: $cutPath")
+    return file
   }
 
 
@@ -277,15 +357,19 @@ object GuiTestLocalLauncher {
     val resultSet = LinkedHashSet<File>()
     val module = modulesList.module(moduleName) ?: throw Exception("Unable to find module with name: $moduleName")
     resultSet.addAll(module.getClasspath())
-    resultSet.addAll(testGuiFrameworkModule.getClasspath())
     return resultSet
   }
 
   private fun List<JpsModule>.module(moduleName: String): JpsModule? =
     this.firstOrNull { it.name == moduleName }
 
-  private fun JpsModule.getClasspath(): MutableCollection<File> =
-    JpsJavaExtensionService.dependencies(this).productionOnly().runtimeOnly().recursively().classes().roots
+  //get production dependencies and test root of the current module
+  private fun JpsModule.getClasspath(): MutableCollection<File> {
+    val result = JpsJavaExtensionService.dependencies(
+      this).productionOnly().runtimeOnly().recursively().classes().roots.toMutableSet()
+    result.addAll(JpsJavaExtensionService.dependencies(this).withoutDepModules().withoutLibraries().withoutSdk().classes().roots)
+    return result.toMutableList()
+  }
 
 
   private fun getOutputRootFromClassloader(): File {
@@ -310,6 +394,10 @@ object GuiTestLocalLauncher {
       val projectExtension = JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(this)
       projectExtension.outputUrl = VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(getOutputRootFromClassloader().path))
     }
+  }
+
+  private fun URL.correctPath(): String {
+    return Paths.get(this.toURI()).toFile().path
   }
 
 }

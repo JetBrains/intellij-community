@@ -21,7 +21,6 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +31,12 @@ public class ResizeableMappedFile implements Forceable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.ResizeableMappedFile");
 
   private long myLogicalSize;
+  private long myLastWrittenLogicalSize;
   private final PagedFileStorage myStorage;
+  private final int myInitialSize;
+
+  static final int DEFAULT_ALLOCATION_ROUND_FACTOR = 4096;
+  private int myRoundFactor = DEFAULT_ALLOCATION_ROUND_FACTOR;
 
   public ResizeableMappedFile(@NotNull File file, int initialSize, @Nullable PagedFileStorage.StorageLockContext lockContext, int pageSize,
                               boolean valuesAreBufferAligned) throws IOException {
@@ -46,23 +50,8 @@ public class ResizeableMappedFile implements Forceable {
                               boolean valuesAreBufferAligned,
                               boolean nativeBytesOrder) throws IOException {
     myStorage = new PagedFileStorage(file, lockContext, pageSize, valuesAreBufferAligned, nativeBytesOrder);
-    boolean exists = file.exists();
-    if (!exists || file.length() == 0) {
-      if (!exists) FileUtil.createParentDirs(file);
-      writeLength(0);
-    }
-
-    myLogicalSize = readLength();
-    if (myLogicalSize == 0) {
-      try {
-        getPagedFileStorage().lock();
-        // use direct call to storage.resize() so that IOException is not masked with RuntimeException
-        myStorage.resize(initialSize);
-      }
-      finally {
-        getPagedFileStorage().unlock();
-      }
-    }
+    myInitialSize = initialSize;
+    myLastWrittenLogicalSize = myLogicalSize = readLength();
   }
 
   public ResizeableMappedFile(final File file, int initialSize, PagedFileStorage.StorageLock lock, int pageSize, boolean valuesAreBufferAligned) throws IOException {
@@ -81,40 +70,47 @@ public class ResizeableMappedFile implements Forceable {
     return myStorage.length();
   }
 
-  private void resize(final long size) {
-    try {
-      myStorage.resize(size);
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
   void ensureSize(final long pos) {
     myLogicalSize = Math.max(pos, myLogicalSize);
     expand(pos);
   }
 
+  public void setRoundFactor(int roundFactor) {
+    myRoundFactor = roundFactor;
+  }
+
   private void expand(final long max) {
     long realSize = realSize();
     if (max <= realSize) return;
-    long suggestedSize = Math.max(realSize + 1, 2); // suggestedSize should increase with int multiplication on 1.625 factor
+    long suggestedSize;
 
-    while (max > suggestedSize) {
-      long newSuggestedSize = (suggestedSize * 13) >> 3;
-      if (newSuggestedSize >= Integer.MAX_VALUE) {
-        suggestedSize += suggestedSize / 5;
-      } else {
-        suggestedSize = newSuggestedSize;
+    if (realSize == 0) {
+      suggestedSize = myInitialSize;
+    } else {
+      suggestedSize = Math.max(realSize + 1, 2); // suggestedSize should increase with int multiplication on 1.625 factor
+
+      while (max > suggestedSize) {
+        long newSuggestedSize = (suggestedSize * 13) >> 3;
+        if (newSuggestedSize >= Integer.MAX_VALUE) {
+          suggestedSize += suggestedSize / 5;
+        }
+        else {
+          suggestedSize = newSuggestedSize;
+        }
+      }
+
+      int roundFactor = myRoundFactor;
+      if (suggestedSize % roundFactor != 0) {
+        suggestedSize = ((suggestedSize / roundFactor) + 1) * roundFactor;
       }
     }
 
-    int roundFactor = PersistentBTreeEnumerator.PAGE_SIZE;
-    if (suggestedSize % roundFactor != 0) {
-      suggestedSize = ((suggestedSize / roundFactor) + 1) * roundFactor;
+    try {
+      myStorage.resize(suggestedSize);
     }
-
-    resize(suggestedSize);
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private File getLengthFile() {
@@ -174,7 +170,10 @@ public class ResizeableMappedFile implements Forceable {
   @Override
   public void force() {
     if (isDirty()) {
-      writeLength(myLogicalSize);
+      if (myLastWrittenLogicalSize != myLogicalSize) {
+        writeLength(myLogicalSize);
+        myLastWrittenLogicalSize = myLogicalSize;
+      }
     }
     myStorage.force();
   }
@@ -185,10 +184,13 @@ public class ResizeableMappedFile implements Forceable {
     try {
       stream = new DataInputStream(new FileInputStream(lengthFile));
       return stream.readLong();
+    } catch (FileNotFoundException ignore) {
+      return 0;
     }
     catch (IOException e) {
-      writeLength(realSize());
-      return realSize();
+      long realSize = realSize();
+      writeLength(realSize);
+      return realSize;
     }
     finally {
       if (stream != null) {

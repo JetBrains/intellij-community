@@ -1,21 +1,10 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.testFramework;
 
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.mock.MockApplication;
 import com.intellij.openapi.Disposable;
@@ -48,6 +37,7 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.ui.UIUtil;
+import gnu.trove.Equality;
 import gnu.trove.THashSet;
 import junit.framework.AssertionFailedError;
 import junit.framework.Test;
@@ -85,6 +75,7 @@ public abstract class UsefulTestCase extends TestCase {
   private static final Map<String, Long> TOTAL_TEARDOWN_COST_MILLIS = new HashMap<>();
 
   static {
+    IdeaForkJoinWorkerThreadFactory.setupPoisonFactory();
     Logger.setFactory(TestLoggerFactory.class);
   }
   protected static final Logger LOG = Logger.getInstance(UsefulTestCase.class);
@@ -133,6 +124,8 @@ public abstract class UsefulTestCase extends TestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
+      // don't use method references here to make stack trace reading easier
+      //noinspection Convert2MethodRef
       new RunAll(
         () -> disposeRootDisposable(),
         () -> cleanupSwingDataStructures(),
@@ -281,6 +274,8 @@ public abstract class UsefulTestCase extends TestCase {
   public static void checkForInsightSettingsDamage(@NotNull CodeInsightSettings oldCodeInsightSettings,
                                                    @NotNull CodeInsightSettings currentCodeInsightSettings) {
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
+    // don't use method references here to make stack trace reading easier
+    //noinspection Convert2MethodRef
     new RunAll()
       .append(() -> {
         try {
@@ -373,7 +368,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   protected boolean shouldRunTest() {
-    return PlatformTestUtil.canRunTest(getClass());
+    return TestFrameworkUtil.canRunTest(getClass());
   }
 
   protected void invokeTestRunnable(@NotNull Runnable runnable) throws Exception {
@@ -518,23 +513,39 @@ public abstract class UsefulTestCase extends TestCase {
     assertOrderedEquals(errorMsg, actual, Arrays.asList(expected));
   }
 
-  public static <T> void assertOrderedEquals(@NotNull Iterable<? extends T> actual, @NotNull Collection<? extends T> expected) {
+  public static <T> void assertOrderedEquals(@NotNull Iterable<? extends T> actual, @NotNull Iterable<? extends T> expected) {
     assertOrderedEquals(null, actual, expected);
   }
 
   public static <T> void assertOrderedEquals(String errorMsg,
                                              @NotNull Iterable<? extends T> actual,
-                                             @NotNull Collection<? extends T> expected) {
-    List<T> list = new ArrayList<>();
-    for (T t : actual) {
-      list.add(t);
-    }
-    if (!list.equals(new ArrayList<T>(expected))) {
+                                             @NotNull Iterable<? extends T> expected) {
+    //noinspection unchecked
+    assertOrderedEquals(errorMsg, actual, expected, Equality.CANONICAL);
+  }
+
+  public static <T> void assertOrderedEquals(String errorMsg,
+                                             @NotNull Iterable<? extends T> actual,
+                                             @NotNull Iterable<? extends T> expected,
+                                             @NotNull Equality<? super T> comparator) {
+    if (!equals(actual, expected, comparator)) {
       String expectedString = toString(expected);
       String actualString = toString(actual);
       Assert.assertEquals(errorMsg, expectedString, actualString);
       Assert.fail("Warning! 'toString' does not reflect the difference.\nExpected: " + expectedString + "\nActual: " + actualString);
     }
+  }
+
+  private static <T> boolean equals(@NotNull Iterable<? extends T> a1,
+                                    @NotNull Iterable<? extends T> a2,
+                                    @NotNull Equality<? super T> comparator) {
+    Iterator<? extends T> it1 = a1.iterator();
+    Iterator<? extends T> it2 = a2.iterator();
+    while (it1.hasNext() || it2.hasNext()) {
+      if (!it1.hasNext() || !it2.hasNext()) return false;
+      if (!comparator.equals(it1.next(), it2.next())) return false;
+    }
+    return true;
   }
 
   @SafeVarargs
@@ -853,12 +864,7 @@ public abstract class UsefulTestCase extends TestCase {
   public boolean isPerformanceTest() {
     String testName = getName();
     String className = getClass().getName();
-    return isPerformanceTest(testName, className);
-  }
-
-  public static boolean isPerformanceTest(@Nullable String testName, @Nullable String className) {
-    return testName != null && StringUtil.containsIgnoreCase(testName, "performance") ||
-           className != null && StringUtil.containsIgnoreCase(className, "performance");
+    return TestFrameworkUtil.isPerformanceTest(testName, className);
   }
 
   /**
@@ -872,7 +878,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   private static boolean isStressTest(String testName, String className) {
-    return isPerformanceTest(testName, className) ||
+    return TestFrameworkUtil.isPerformanceTest(testName, className) ||
            containsStressWords(testName) ||
            containsStressWords(className);
   }

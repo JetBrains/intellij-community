@@ -17,10 +17,10 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.value.DfaPsiType;
-import com.intellij.codeInspection.dataFlow.value.DfaTypeValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.PsiPrimitiveType;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,17 +44,13 @@ class DfaVariableState {
   }
 
   @Nullable
-  DfaVariableState withInstanceofValue(@NotNull DfaTypeValue dfaType) {
-    if (dfaType.getDfaType().getPsiType() instanceof PsiPrimitiveType) return this;
-    TypeConstraint typeConstraint = getTypeConstraint();
-    TypeConstraint newTypeConstraint = typeConstraint.withInstanceofValue(dfaType);
-    if (newTypeConstraint == null) return null;
-    DfaVariableState result = dfaType.isNullable() ? withFact(DfaFactType.CAN_BE_NULL, true) : this;
-    return result.withFact(DfaFactType.TYPE_CONSTRAINT, newTypeConstraint);
+  DfaVariableState withInstanceofValue(@NotNull DfaPsiType dfaType) {
+    if (dfaType.getPsiType() instanceof PsiPrimitiveType) return this;
+    return withFacts(TypeConstraint.withInstanceOf(myFactMap, dfaType));
   }
 
   @Nullable
-  DfaVariableState withNotInstanceofValue(@NotNull DfaTypeValue dfaType) {
+  DfaVariableState withNotInstanceofValue(@NotNull DfaPsiType dfaType) {
     TypeConstraint typeConstraint = getTypeConstraint();
     TypeConstraint newTypeConstraint = typeConstraint.withNotInstanceofValue(dfaType);
     return newTypeConstraint == null ? null : withFact(DfaFactType.TYPE_CONSTRAINT, newTypeConstraint);
@@ -101,8 +97,7 @@ class DfaVariableState {
 
   @NotNull
   <T> DfaVariableState withFact(DfaFactType<T> type, T value) {
-    DfaFactMap factMap = myFactMap.with(type, value);
-    return myFactMap.equals(factMap) ? this : createCopy(factMap);
+    return withFacts(myFactMap.with(type, value));
   }
 
   <T> DfaVariableState withoutFact(DfaFactType<T> type) {
@@ -111,8 +106,17 @@ class DfaVariableState {
 
   @Nullable
   <T> DfaVariableState intersectFact(DfaFactType<T> type, T value) {
-    DfaFactMap factMap = myFactMap.intersect(type, value);
-    return factMap == null ? null : myFactMap.equals(factMap) ? this : createCopy(factMap);
+    return withFacts(myFactMap.intersect(type, value));
+  }
+
+  @Nullable
+  DfaVariableState intersectMap(DfaFactMap map) {
+    return withFacts(myFactMap.intersect(map));
+  }
+
+  @Contract("null -> null;!null -> !null")
+  public DfaVariableState withFacts(@Nullable DfaFactMap facts) {
+    return facts == null ? null : facts.equals(myFactMap) ? this : createCopy(facts);
   }
 
   @NotNull

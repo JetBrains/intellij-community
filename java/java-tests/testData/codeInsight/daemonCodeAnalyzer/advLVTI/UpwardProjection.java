@@ -57,3 +57,11 @@ class X<T extends S, S> {
     T get() {return null;}
     void add(T t) {}
 }
+
+class RecursiveBound {
+    class C<T extends Comparable<T>> { }
+
+    void test(C<? super Integer> c) {
+        var x = c;
+    }
+}

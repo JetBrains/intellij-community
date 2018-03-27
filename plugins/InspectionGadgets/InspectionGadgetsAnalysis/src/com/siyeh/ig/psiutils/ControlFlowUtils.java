@@ -127,6 +127,25 @@ public class ControlFlowUtils {
     }
   }
 
+  @Contract(value = "null -> false", pure = true)
+  public static boolean isEndlessLoop(@Nullable PsiLoopStatement loopStatement) {
+    if(loopStatement == null) return false;
+    if (loopStatement instanceof PsiWhileStatement) {
+      return BoolUtils.isTrue(((PsiWhileStatement)loopStatement).getCondition());
+    }
+    if (loopStatement instanceof PsiDoWhileStatement) {
+      return BoolUtils.isTrue(((PsiDoWhileStatement)loopStatement).getCondition());
+    }
+    if (loopStatement instanceof PsiForStatement) {
+      PsiForStatement forStatement = (PsiForStatement)loopStatement;
+      PsiExpression condition = forStatement.getCondition();
+      if(condition != null && !BoolUtils.isTrue(condition)) return false;
+      return (forStatement.getInitialization() == null || forStatement.getInitialization() instanceof PsiEmptyStatement)
+             && (forStatement.getUpdate() == null || forStatement.getUpdate() instanceof PsiEmptyStatement);
+    }
+    return false;
+  }
+
   private static boolean doWhileStatementMayCompleteNormally(@NotNull PsiDoWhileStatement loopStatement) {
     final PsiExpression condition = loopStatement.getCondition();
     final Object value = ExpressionUtils.computeConstantExpression(condition);
@@ -981,6 +1000,47 @@ public class ControlFlowUtils {
       return true;
     }
     return ControlFlowUtil.isInstructionReachable(flow, flow.getStartOffset(statement), 0);
+  }
+
+  /**
+   * Returns true if given element is an empty statement
+   *
+   * @param element element to check
+   * @param ignoreComments if true, empty statement containing comments is still considered empty
+   * @param emptyBlocks if true, empty block (or nested empty block like {@code {{}}}) is considered an empty statement
+   * @return true if given element is an empty statement
+   */
+  public static boolean isEmpty(PsiElement element, boolean ignoreComments, boolean emptyBlocks) {
+    if (!ignoreComments && element instanceof PsiComment) {
+      return true;
+    }
+    else if (element instanceof PsiEmptyStatement) {
+      return !ignoreComments ||
+             PsiTreeUtil.getChildOfType(element, PsiComment.class) == null &&
+             !(PsiTreeUtil.skipWhitespacesBackward(element) instanceof PsiComment);
+    }
+    else if (element instanceof PsiWhiteSpace) {
+      return true;
+    }
+    else if (element instanceof PsiBlockStatement) {
+      final PsiBlockStatement block = (PsiBlockStatement)element;
+      return isEmpty(block.getCodeBlock(), ignoreComments, emptyBlocks);
+    }
+    else if (emptyBlocks && element instanceof PsiCodeBlock) {
+      final PsiCodeBlock codeBlock = (PsiCodeBlock)element;
+      final PsiElement[] children = codeBlock.getChildren();
+      if (children.length == 2) {
+        return true;
+      }
+      for (int i = 1; i < children.length - 1; i++) {
+        final PsiElement child = children[i];
+        if (!isEmpty(child, ignoreComments, true)) {
+          return false;
+        }
+      }
+      return true;
+    }
+    return false;
   }
 
   public enum InitializerUsageStatus {

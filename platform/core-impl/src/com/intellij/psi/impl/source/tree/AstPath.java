@@ -40,6 +40,7 @@ import java.util.List;
  * @author peter
  */
 public abstract class AstPath extends SubstrateRef {
+  @SuppressWarnings("ConstantForZeroLengthArrayAllocation") // need a different instance to distinguish removed children for diagnostics
   private static final CompositeElement[] REMOVED_PATH_CHILDREN = new CompositeElement[0];
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.AstPath");
   private static final Key<CompositeElement[]> PATH_CHILDREN = Key.create("PATH_CHILDREN");
@@ -95,8 +96,7 @@ public abstract class AstPath extends SubstrateRef {
     return node.getUserData(NODE_PATH);
   }
 
-  static void cacheNodePaths(@NotNull final LazyParseableElement parent) {
-    final AstPath parentPath = getNodePath(parent);
+  static void cacheNodePaths(@NotNull LazyParseableElement parent, @Nullable TreeElement child, @Nullable AstPath parentPath) {
     if (parentPath == null) {
       return;
     }
@@ -104,19 +104,32 @@ public abstract class AstPath extends SubstrateRef {
     final int depth = parentPath.getDepth() + 1;
 
     final List<CompositeElement> children = ContainerUtil.newArrayList();
-    parent.acceptTree(new RecursiveTreeElementWalkingVisitor(false) {
-      @Override
-      public void visitComposite(CompositeElement composite) {
-        if (composite != parent && (composite instanceof LazyParseableElement || composite.getElementType() instanceof IStubElementType)) {
-          int index = children.size();
-          composite.putUserData(NODE_PATH, depth % 4 == 0 ? new MilestoneChildPath(parentPath, index, depth) : new ChildPath(parentPath, index));
-          children.add(composite);
-        }
+    while (child != null) {
+      child.acceptTree(new RecursiveTreeElementWalkingVisitor(false) {
+        @Override
+        public void visitComposite(CompositeElement composite) {
+          boolean lazy = composite instanceof LazyParseableElement;
+          if (lazy || composite.getElementType() instanceof IStubElementType) {
+            int index = children.size();
+            composite.putUserData(NODE_PATH, depth % 4 == 0 ? new MilestoneChildPath(parentPath, index, depth) : new ChildPath(parentPath, index));
+            children.add(composite);
+          }
 
-        super.visitComposite(composite);
-      }
-    });
+          if (!lazy) {
+            super.visitComposite(composite);
+          }
+        }
+      });
+      child = child.getTreeNext();
+    }
+
     parent.putUserData(PATH_CHILDREN, children.isEmpty() ? CompositeElement.EMPTY_ARRAY : children.toArray(CompositeElement.EMPTY_ARRAY));
+
+    for (CompositeElement each : children) {
+      if (each instanceof LazyParseableElement && ((LazyParseableElement)each).isParsed()) {
+        cacheNodePaths((LazyParseableElement)each, each.getFirstChildNode(), getNodePath(each));
+      }
+    }
   }
 
   public static void invalidatePaths(@NotNull LazyParseableElement scope) {

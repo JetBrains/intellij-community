@@ -1,18 +1,16 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.application.Result;
@@ -220,30 +218,6 @@ public class VfsUtil extends VfsUtilCore {
    * @return correct URL, must be used only for external communication
    */
   @NotNull
-  public static URI toUri(@NotNull VirtualFile file) {
-    String path = file.getPath();
-    try {
-      String protocol = file.getFileSystem().getProtocol();
-      if (file.isInLocalFileSystem()) {
-        if (SystemInfo.isWindows && path.charAt(0) != '/') {
-          path = '/' + path;
-        }
-        return new URI(protocol, "", path, null, null);
-      }
-      if (URLUtil.HTTP_PROTOCOL.equals(protocol)) {
-        return new URI(URLUtil.HTTP_PROTOCOL + URLUtil.SCHEME_SEPARATOR + path);
-      }
-      return new URI(protocol, path, null);
-    }
-    catch (URISyntaxException e) {
-      throw new IllegalArgumentException(e);
-    }
-  }
-
-  /**
-   * @return correct URL, must be used only for external communication
-   */
-  @NotNull
   public static URI toUri(@NotNull File file) {
     String path = file.toURI().getPath();
     try {
@@ -300,33 +274,6 @@ public class VfsUtil extends VfsUtilCore {
         return null;
       }
     }
-  }
-
-  /**
-   * Returns the relative path from one virtual file to another.
-   *
-   * @param src           the file from which the relative path is built.
-   * @param dst           the file to which the path is built.
-   * @param separatorChar the separator for the path components.
-   * @return the relative path, or null if the files have no common ancestor.
-   * @since 5.0.2
-   */
-  @Nullable
-  public static String getPath(@NotNull VirtualFile src, @NotNull VirtualFile dst, char separatorChar) {
-    final VirtualFile commonAncestor = getCommonAncestor(src, dst);
-    if (commonAncestor != null) {
-      StringBuilder buffer = new StringBuilder();
-      if (!Comparing.equal(src, commonAncestor)) {
-        while (!Comparing.equal(src.getParent(), commonAncestor)) {
-          buffer.append("..").append(separatorChar);
-          src = src.getParent();
-        }
-      }
-      buffer.append(getRelativePath(dst, commonAncestor, separatorChar));
-      return buffer.toString();
-    }
-
-    return null;
   }
 
   public static String getUrlForLibraryRoot(@NotNull File libraryRoot) {
@@ -635,6 +582,47 @@ public class VfsUtil extends VfsUtilCore {
       else {
         return copyFile(requestor, file, curDir, token);
       }
+    }
+  }
+
+  /** @deprecated incorrect when {@code src} is a directory; use {@link #findRelativePath(VirtualFile, VirtualFile, char)} instead */
+  @Nullable
+  public static String getPath(@NotNull VirtualFile src, @NotNull VirtualFile dst, char separatorChar) {
+    final VirtualFile commonAncestor = getCommonAncestor(src, dst);
+    if (commonAncestor != null) {
+      StringBuilder buffer = new StringBuilder();
+      if (!Comparing.equal(src, commonAncestor)) {
+        while (!Comparing.equal(src.getParent(), commonAncestor)) {
+          buffer.append("..").append(separatorChar);
+          src = src.getParent();
+        }
+      }
+      buffer.append(getRelativePath(dst, commonAncestor, separatorChar));
+      return buffer.toString();
+    }
+
+    return null;
+  }
+
+  /** @deprecated incorrect, use {@link #toUri(String)} if needed (to be removed in IDEA 2019 */
+  @NotNull
+  public static URI toUri(@NotNull VirtualFile file) {
+    String path = file.getPath();
+    try {
+      String protocol = file.getFileSystem().getProtocol();
+      if (file.isInLocalFileSystem()) {
+        if (SystemInfo.isWindows && path.charAt(0) != '/') {
+          path = '/' + path;
+        }
+        return new URI(protocol, "", path, null, null);
+      }
+      if (URLUtil.HTTP_PROTOCOL.equals(protocol)) {
+        return new URI(URLUtil.HTTP_PROTOCOL + URLUtil.SCHEME_SEPARATOR + path);
+      }
+      return new URI(protocol, path, null);
+    }
+    catch (URISyntaxException e) {
+      throw new IllegalArgumentException(e);
     }
   }
   //</editor-fold>

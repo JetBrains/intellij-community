@@ -39,7 +39,6 @@ import java.util.List;
 /**
  * A silly configurable to add buildout facet configurator to PyCharm
  * User: dcheryasov
- * Date: Jul 28, 2010 4:34:58 PM
  */
 public class BuildoutConfigurable implements Configurable, NonDefaultProjectConfigurable {
 

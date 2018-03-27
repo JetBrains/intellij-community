@@ -31,8 +31,6 @@ import static com.jetbrains.python.psi.PyUtil.sure;
 /**
  * Created by IntelliJ IDEA.
  * Author: Alexey.Ivanov
- * Date:   16.04.2010
- * Time:   18:41:08
  */
 public class PyClassFixer extends PyFixer<PyClass> {
   public PyClassFixer() {

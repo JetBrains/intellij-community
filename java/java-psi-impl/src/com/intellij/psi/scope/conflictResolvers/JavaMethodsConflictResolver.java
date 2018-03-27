@@ -214,7 +214,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       final PsiClass containingClass = method.getContainingClass();
       final boolean isInterface = containingClass != null && containingClass.isInterface();
       for (HierarchicalMethodSignature methodSignature : method.getHierarchicalMethodSignature().getSuperSignatures()) {
-        final PsiMethod superMethod = methodSignature.getMethod();
+        PsiMethod superMethod = PsiSuperMethodUtil.correctMethodByScope(methodSignature.getMethod(), myArgumentsList.getResolveScope());
         if (!isInterface) {
           superMethods.add(superMethod);
         }
@@ -302,6 +302,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
             qualifierClass = getQualifiedClass(method);
             if (qualifierClass == null) return;
           }
+
           if (!containingClass.getManager().areElementsEquivalent(containingClass, qualifierClass)) {
             iterator.remove();
           }
@@ -321,7 +322,10 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
         }
       }
       else if (expression == null && !ImportsUtil.hasStaticImportOn(parent, method, true)) {
-        return PsiTreeUtil.getParentOfType(parent, PsiClass.class);
+        PsiClass qualifierClass = PsiTreeUtil.getParentOfType(parent, PsiClass.class);
+        if (qualifierClass != null && !PsiTreeUtil.isAncestor(method.getContainingClass(), qualifierClass, false)) {
+          return qualifierClass;
+        }
       }
 
       if (expression != null) {
@@ -583,7 +587,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       }
     }
 
-    if (class1 != class2) {
+    if (class1 != class2 && (method1.hasModifierProperty(PsiModifier.STATIC) || method2.hasModifierProperty(PsiModifier.STATIC))) {
       if (class2.isInheritor(class1, true)) {
         if (MethodSignatureUtil.isSubsignature(method1.getSignature(classSubstitutor1), method2.getSignature(classSubstitutor2))) {
           return Specifics.SECOND;

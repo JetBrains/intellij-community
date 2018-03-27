@@ -115,6 +115,7 @@ public class ProjectCodeStyleSettingsManager extends CodeStyleSettingsManager {
   }
 
   private void initDefaults() {
+    @SuppressWarnings("deprecation")
     CodeStyleSettingsManager appCodeStyleSettingsManager = CodeStyleSettingsManager.getInstance();
     if (appCodeStyleSettingsManager != null) {
       CodeStyleSettings defaultProjectSettings = appCodeStyleSettingsManager.getMainProjectCodeStyle();
@@ -126,7 +127,7 @@ public class ProjectCodeStyleSettingsManager extends CodeStyleSettingsManager {
   }
 
   @Override
-  public void loadState(Element state) {
+  public void loadState(@NotNull Element state) {
     super.loadState(state);
     updateFromOldProjectSettings();
     for (Element subStyle : state.getChildren(CODE_STYLE_TAG_NAME)) {

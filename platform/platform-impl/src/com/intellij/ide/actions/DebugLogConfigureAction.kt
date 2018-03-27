@@ -2,6 +2,7 @@
 package com.intellij.ide.actions
 
 import com.intellij.diagnostic.DebugLogManager
+import com.intellij.diagnostic.DebugLogManager.DebugLogLevel
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.DumbAwareAction
@@ -12,7 +13,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.components.JBLabel
 import com.intellij.xml.util.XmlStringUtil
-import javax.swing.JComponent
 import javax.swing.JTextArea
 
 class DebugLogConfigureAction : DumbAwareAction() {
@@ -31,42 +31,39 @@ class DebugLogConfigureAction : DumbAwareAction() {
 }
 
 private val TRACE_SUFFIX = ":trace"
-private val ALL_POSSIBLE_SEPARATORS = "(\n|,|;)+".toRegex()
+private val ALL_POSSIBLE_SEPARATORS = "[\n,;]+".toRegex()
 
-private class DebugLogConfigureDialog(project: Project, categories: List<Pair<String, DebugLogManager.DebugLogLevel>>) : DialogWrapper(project, false) {
+private class DebugLogConfigureDialog(project: Project, categories: List<Pair<String, DebugLogLevel>>) : DialogWrapper(project, false) {
   private val myTextArea: JTextArea
 
   init {
     myTextArea = JTextArea(10, 30)
     myTextArea.text = categories.joinToString("\n") {
       when (it.second) {
-        DebugLogManager.DebugLogLevel.DEBUG -> it.first
-        DebugLogManager.DebugLogLevel.TRACE -> "${it.first}$TRACE_SUFFIX"
+        DebugLogLevel.DEBUG -> it.first
+        DebugLogLevel.TRACE -> "${it.first}$TRACE_SUFFIX"
       }
     }
     title = "Custom Debug Log Configuration"
     init()
   }
 
-  override fun getDimensionServiceKey(): String? {
-    return "#com.intellij.ide.actions.DebugLogConfigureAction"
-  }
+  override fun getDimensionServiceKey() = "#com.intellij.ide.actions.DebugLogConfigureAction"
 
-  override fun createNorthPanel(): JComponent? {
-    return JBLabel(XmlStringUtil.wrapInHtml("Enable DEBUG level for log categories (one per line).<br>Append '$TRACE_SUFFIX' suffix to a category to enable TRACE level."))
-  }
+  override fun createNorthPanel() = JBLabel(XmlStringUtil.wrapInHtml(
+    "Enable DEBUG level for log categories (one per line).<br>Append '$TRACE_SUFFIX' suffix to a category to enable TRACE level."))
 
   override fun createCenterPanel() = ScrollPaneFactory.createScrollPane(myTextArea)
 
   override fun getPreferredFocusedComponent() = myTextArea
 
   fun getLogCategories() =
-      myTextArea.text
-          .split(ALL_POSSIBLE_SEPARATORS)
-          .filter { !StringUtil.isEmptyOrSpaces(it) }
-          .map { it.trim() }
-          .map {
-            if (it.endsWith(TRACE_SUFFIX, ignoreCase = true)) Pair(it.dropLast(TRACE_SUFFIX.length), DebugLogManager.DebugLogLevel.TRACE)
-            else Pair(it, DebugLogManager.DebugLogLevel.DEBUG)
-          }
+    myTextArea.text
+      .split(ALL_POSSIBLE_SEPARATORS)
+      .filter { !StringUtil.isEmptyOrSpaces(it) }
+      .map { it.trim() }
+      .map {
+        if (it.endsWith(TRACE_SUFFIX, ignoreCase = true)) it.dropLast(TRACE_SUFFIX.length) to DebugLogLevel.TRACE
+        else it to DebugLogLevel.DEBUG
+      }
 }

@@ -1,13 +1,10 @@
 public class MyLanguage extends com.intellij.lang.Language {
-  public static final com.intellij.lang.Language ANONYMOUS_LANUAGE = new MySubLanguage("MyAnonymousLanguageID", "MyDisplayName") {
-  };
+  
+  public static final com.intellij.lang.Language ANONYMOUS_LANGUAGE =
+    new MySubLanguage("MyAnonymousLanguageID", "MyDisplayName") {};
 
   public MyLanguage() {
     super("MyLanguageID");
-  }
-
-  public MyLanguage(String ID) {
-    super(ID);
   }
 
   private static class MySubLanguage extends com.intellij.lang.Language {
@@ -22,4 +19,12 @@ public class MyLanguage extends com.intellij.lang.Language {
       return myName;
     }
   }
+
+
+  public static class AbstractLanguage extends Language {
+    protected AbstractLanguage() {
+      super("AbstractLanguageIDMustNotBeVisible");
+    }
+  }
+
 }

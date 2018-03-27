@@ -17,6 +17,9 @@ class CovariantReturn {
     String baz();
   }
 
+  public interface Derived2 extends Base {
+  }
+
   public interface BaseGeneric<T> {
     T get(@Nullable T t);
   }
@@ -46,10 +49,30 @@ class CovariantReturn {
   }
 
   boolean testType(Base base) {
-    return base instanceof Derived && <warning descr="Condition 'base.baz() instanceof String' is redundant and can be replaced with '!= null'">base.baz() instanceof String</warning>;
+    return base instanceof Derived && <warning descr="Condition 'base.baz() instanceof String' is redundant and can be replaced with a null check">base.baz() instanceof String</warning>;
+  }
+
+  boolean testType2(Base base) {
+    return base instanceof Derived && base instanceof Derived2 &&
+      <warning descr="Condition 'base.baz() instanceof String' is redundant and can be replaced with a null check">base.baz() instanceof String</warning>;
   }
 
   boolean testTypeGeneric(BaseGeneric<?> base) {
-    return base instanceof DerivedGenericImpl && <warning descr="Condition 'base.get(null) instanceof Integer' is redundant and can be replaced with '!= null'">base.get(null) instanceof Integer</warning>;
+    return base instanceof DerivedGenericImpl && <warning descr="Condition 'base.get(null) instanceof Integer' is redundant and can be replaced with a null check">base.get(null) instanceof Integer</warning>;
+  }
+
+  interface Super {
+    Object get();
+  }
+
+  interface Sub extends Super {
+    String get();
+  }
+
+  void testCast(Super s) {
+    if(s instanceof Sub) {
+      Integer i = (<warning descr="Casting 's.get()' to 'Integer' may produce 'java.lang.ClassCastException'">Integer</warning>)s.get();
+      System.out.println(i);
+    }
   }
 }

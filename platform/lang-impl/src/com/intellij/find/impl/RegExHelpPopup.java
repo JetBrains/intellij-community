@@ -46,7 +46,7 @@ public class RegExHelpPopup extends JPanel {
   private final JEditorPane myEditorPane;
   private final JScrollPane myScrollPane;
 
-  public RegExHelpPopup() throws BadLocationException {
+  public RegExHelpPopup() {
     setLayout(new BorderLayout());
 
     myEditorPane = new JEditorPane();
@@ -358,11 +358,15 @@ public class RegExHelpPopup extends JPanel {
 
       @Override
       public void run() {
-        try {
           if (helpPopup != null && !helpPopup.isDisposed() && helpPopup.isVisible()) {
             return;
           }
-          helpPopup = createRegExHelpPopup();
+        RegExHelpPopup content = new RegExHelpPopup();
+        final ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(content, content);
+          helpPopup = builder.setCancelOnClickOutside(false).setBelongsToGlobalPopupStack(true).setFocusable(true).setRequestFocus(true)
+            .setMovable(true).setResizable(true)
+            .setCancelOnOtherWindowOpen(false).setCancelButton(new MinimizeButton("Hide"))
+            .setTitle("Regular expressions syntax").setDimensionServiceKey(null, "RegExHelpPopup", true).createPopup();
           Disposer.register(helpPopup, new Disposable() {
             @Override
             public void dispose() {
@@ -375,10 +379,6 @@ public class RegExHelpPopup extends JPanel {
           else {
             helpPopup.showInFocusCenter();
           }
-        }
-        catch (BadLocationException ex) {
-          if (logger != null) logger.info(ex);
-        }
       }
 
       private void destroyPopup() {
@@ -390,13 +390,6 @@ public class RegExHelpPopup extends JPanel {
   @Override
   public Dimension getPreferredSize() {
     return JBUI.size(600, 300);
-  }
-
-  public static JBPopup createRegExHelpPopup() throws BadLocationException {
-    final ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(new RegExHelpPopup(), null);
-    return builder.setCancelOnClickOutside(false).setBelongsToGlobalPopupStack(true).setFocusable(true).setRequestFocus(true).setMovable(true).setResizable(true)
-      .setCancelOnOtherWindowOpen(false).setCancelButton(new MinimizeButton("Hide"))
-      .setTitle("Regular expressions syntax").setDimensionServiceKey(null, "RegExHelpPopup", true).createPopup();
   }
 
   private static String toHTMLColor(Color color) {

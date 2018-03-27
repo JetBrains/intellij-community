@@ -30,9 +30,6 @@
   <item name="com.intellij.openapi.util.ThrowableNotNullFunction">
     <annotation name="java.lang.FunctionalInterface"/>
   </item>
-  <item name="com.intellij.openapi.util.Transform">
-    <annotation name="java.lang.FunctionalInterface"/>
-  </item>
   <item name="com.intellij.openapi.util.text.CharFilter">
     <annotation name="java.lang.FunctionalInterface"/>
   </item>

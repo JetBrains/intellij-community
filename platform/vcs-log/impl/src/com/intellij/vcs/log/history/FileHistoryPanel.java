@@ -29,7 +29,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.CommonUiProperties;
-import com.intellij.vcs.log.impl.VcsLogUtil;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.ui.frame.DetailsPanel;
@@ -66,6 +66,11 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
       @Override
       protected boolean isSpeedSearchEnabled() {
         return true;
+      }
+
+      @Override
+      protected void updateEmptyText() {
+        getEmptyText().setText("File history");
       }
     };
     myGraphTable.setCompactReferencesView(true);

@@ -8,6 +8,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
@@ -19,50 +20,58 @@ public class LocalChangeListImpl extends LocalChangeList {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangeList");
 
   @NotNull private final Project myProject;
-  @NotNull private final Set<Change> myChanges;
-  private Set<Change> myReadChangesCache = null;
   @NotNull private final String myId;
   @NotNull private final String myName;
-  @NotNull private String myComment = "";
-  @Nullable private Object myData;
+  @NotNull private final String myComment;
+  @NotNull private final Set<Change> myChanges;
+  @Nullable private final ChangeListData myData;
 
-  private boolean myIsDefault = false;
-  private boolean myIsReadOnly = false;
+  private final boolean myIsDefault;
+  private final boolean myIsReadOnly;
 
   @NotNull
   public static LocalChangeListImpl createEmptyChangeListImpl(@NotNull Project project, @NotNull String name, @Nullable String id) {
-    return new LocalChangeListImpl(project, name, id);
+    return new Builder(project, name).setId(id).build();
   }
 
-  private LocalChangeListImpl(@NotNull Project project, @NotNull String name, @Nullable String id) {
+  @NotNull
+  public static String generateChangelistId() {
+    return UUID.randomUUID().toString();
+  }
+
+  private LocalChangeListImpl(@NotNull Project project,
+                              @NotNull String id,
+                              @NotNull String name,
+                              @NotNull String comment,
+                              @NotNull Set<Change> changes,
+                              @Nullable ChangeListData data,
+                              boolean isDefault,
+                              boolean isReadOnly) {
     myProject = project;
-    myId = id != null ? id : UUID.randomUUID().toString();
-    myName = validateName(name);
-
-    myChanges = ContainerUtil.newHashSet();
+    myId = id;
+    myName = name;
+    myComment = comment;
+    myChanges = changes;
+    myData = data;
+    myIsDefault = isDefault;
+    myIsReadOnly = isReadOnly;
   }
 
-  private LocalChangeListImpl(@NotNull LocalChangeListImpl origin, @NotNull String name) {
-    myId = origin.getId();
+  private LocalChangeListImpl(@NotNull LocalChangeListImpl origin) {
     myProject = origin.myProject;
-    myName = validateName(name);
-
+    myId = origin.myId;
+    myName = origin.myName;
     myComment = origin.myComment;
+    myChanges = origin.myChanges;
+    myData = origin.myData;
     myIsDefault = origin.myIsDefault;
     myIsReadOnly = origin.myIsReadOnly;
-    myData = origin.myData;
-
-    myChanges = ContainerUtil.newHashSet(origin.myChanges);
-    myReadChangesCache = origin.myReadChangesCache;
   }
 
   @NotNull
   @Override
   public Set<Change> getChanges() {
-    if (myReadChangesCache == null) {
-      myReadChangesCache = Collections.unmodifiableSet(ContainerUtil.newHashSet(myChanges));
-    }
-    return myReadChangesCache;
+    return Collections.unmodifiableSet(myChanges);
   }
 
   @NotNull
@@ -78,21 +87,9 @@ public class LocalChangeListImpl extends LocalChangeList {
   }
 
   @NotNull
-  private static String validateName(@NotNull String name) {
-    if (StringUtil.isEmptyOrSpaces(name) && Registry.is("vcs.log.empty.change.list.creation")) {
-      LOG.info("Creating a changelist with empty name");
-    }
-    return name;
-  }
-
-  @NotNull
   @Override
   public String getComment() {
     return myComment;
-  }
-
-  public void setCommentImpl(@Nullable String comment) {
-    myComment = comment != null ? comment : "";
   }
 
   @Override
@@ -100,47 +97,15 @@ public class LocalChangeListImpl extends LocalChangeList {
     return myIsDefault;
   }
 
-  void setDefault(final boolean isDefault) {
-    myIsDefault = isDefault;
-  }
-
   @Override
   public boolean isReadOnly() {
     return myIsReadOnly;
   }
 
-  public void setReadOnlyImpl(final boolean isReadOnly) {
-    myIsReadOnly = isReadOnly;
-  }
-
-  void setData(@Nullable ChangeListData data) {
-    myData = data;
-  }
-
   @Nullable
   @Override
-  public Object getData() {
+  public ChangeListData getData() {
     return myData;
-  }
-
-  void addChange(Change change) {
-    myReadChangesCache = null;
-    myChanges.add(change);
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("List: " + myName + ". addChange: " + change);
-    }
-  }
-
-  @Nullable
-  Change removeChange(@Nullable Change change) {
-    if (myChanges.remove(change)) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("List: " + myName + ". removeChange: " + change);
-      }
-      myReadChangesCache = null;
-      return change;
-    }
-    return null;
   }
 
   public boolean equals(final Object o) {
@@ -161,11 +126,7 @@ public class LocalChangeListImpl extends LocalChangeList {
 
   @Override
   public LocalChangeListImpl copy() {
-    return new LocalChangeListImpl(this, myName);
-  }
-
-  public LocalChangeListImpl copy(@NotNull String newName) {
-    return new LocalChangeListImpl(this, newName);
+    return this;
   }
 
 
@@ -182,5 +143,80 @@ public class LocalChangeListImpl extends LocalChangeList {
   @Override
   public void setReadOnly(boolean isReadOnly) {
     ChangeListManager.getInstance(myProject).setReadOnly(myName, isReadOnly);
+  }
+
+
+  public static class Builder {
+    @NotNull private final Project myProject;
+    @NotNull private final String myName;
+
+    @Nullable private String myId;
+    @NotNull private String myComment = "";
+    @NotNull private Set<Change> myChanges = ContainerUtil.newHashSet();
+    @Nullable private ChangeListData myData = null;
+    private boolean myIsDefault = false;
+    private boolean myIsReadOnly = false;
+
+    public Builder(@NotNull Project project, @NotNull String name) {
+      if (StringUtil.isEmptyOrSpaces(name) && Registry.is("vcs.log.empty.change.list.creation")) {
+        LOG.info("Creating a changelist with empty name");
+      }
+
+      myProject = project;
+      myName = name;
+    }
+
+    public Builder(@NotNull LocalChangeListImpl list) {
+      myProject = list.myProject;
+      myId = list.myId;
+      myName = list.myName;
+      myComment = list.myComment;
+      myChanges = list.myChanges;
+      myData = list.myData;
+      myIsDefault = list.myIsDefault;
+      myIsReadOnly = list.myIsReadOnly;
+    }
+
+    public Builder setId(@Nullable String value) {
+      myId = value;
+      return this;
+    }
+
+    public Builder setComment(@NotNull String value) {
+      myComment = value;
+      return this;
+    }
+
+    public Builder setChanges(@NotNull Collection<Change> changes) {
+      myChanges.clear();
+      myChanges.addAll(changes);
+      return this;
+    }
+
+    public Builder setChangesCollection(@NotNull Set<Change> changes) {
+      myChanges = changes;
+      return this;
+    }
+
+    public Builder setData(@Nullable ChangeListData value) {
+      myData = value;
+      return this;
+    }
+
+    public Builder setDefault(boolean value) {
+      myIsDefault = value;
+      return this;
+    }
+
+    public Builder setReadOnly(boolean value) {
+      myIsReadOnly = value;
+      return this;
+    }
+
+    @NotNull
+    public LocalChangeListImpl build() {
+      String id = myId != null ? myId : generateChangelistId();
+      return new LocalChangeListImpl(myProject, id, myName, myComment, myChanges, myData, myIsDefault, myIsReadOnly);
+    }
   }
 }

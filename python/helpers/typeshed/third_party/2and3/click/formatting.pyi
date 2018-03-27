@@ -17,10 +17,10 @@ def iter_rows(
 
 def wrap_text(
     text: str,
-    width: int = 78,
-    initial_indent: str = '',
-    subsequent_indent: str = '',
-    preserve_paragraphs: bool = False
+    width: int = ...,
+    initial_indent: str = ...,
+    subsequent_indent: str = ...,
+    preserve_paragraphs: bool = ...
 ) -> str:
     ...
 
@@ -33,9 +33,9 @@ class HelpFormatter:
 
     def __init__(
         self,
-        indent_increment: int = 2,
-        width: Optional[int] = None,
-        max_width: Optional[int] = None,
+        indent_increment: int = ...,
+        width: Optional[int] = ...,
+        max_width: Optional[int] = ...,
     ) -> None:
         ...
 
@@ -51,8 +51,8 @@ class HelpFormatter:
     def write_usage(
         self,
         prog: str,
-        args: str = '',
-        prefix: str = 'Usage: ',
+        args: str = ...,
+        prefix: str = ...,
     ):
         ...
 
@@ -68,8 +68,8 @@ class HelpFormatter:
     def write_dl(
         self,
         rows: Iterable[Iterable[str]],
-        col_max: int = 30,
-        col_spacing: int = 2,
+        col_max: int = ...,
+        col_spacing: int = ...,
     ) -> None:
         ...
 

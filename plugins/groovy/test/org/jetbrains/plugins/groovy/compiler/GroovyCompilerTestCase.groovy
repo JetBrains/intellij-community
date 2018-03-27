@@ -34,15 +34,17 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.*
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
+import com.intellij.util.SystemProperties
 import com.intellij.util.io.PathKt
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
@@ -79,8 +81,9 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
 
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
-    moduleBuilder.setLanguageLevel(LanguageLevel.JDK_1_6)
-    moduleBuilder.addJdk(IdeaTestUtil.getMockJdk17Path().getPath())
+    moduleBuilder.setLanguageLevel(JavaSdkVersion.fromVersionString(SystemProperties.javaVersion).maxLanguageLevel)
+    def javaHome = FileUtil.toSystemIndependentName(SystemProperties.javaHome)
+    moduleBuilder.addJdk(StringUtil.trimEnd(StringUtil.trimEnd(javaHome, '/'), '/jre'))
     super.tuneFixture(moduleBuilder)
   }
 
@@ -219,7 +222,12 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
       }
     }, ProgramRunner.PROGRAM_RUNNER_EP.findExtension(DefaultJavaProgramRunner.class))
     process.waitFor()
-    assertEquals(expected.trim(), StringUtil.convertLineSeparators(sb.toString().trim()))
+    def output = StringUtil.convertLineSeparators(sb.toString().trim()).readLines()
+    output = output.findAll { line -> 
+      !StringUtil.containsIgnoreCase(line, "illegal") && 
+      !line.contains("consider reporting this to the maintainers of org.codehaus.groovy.reflection.CachedClass") 
+    }
+    assertEquals(expected.trim(), output.join("\n"))
   }
 
   protected ProcessHandler runProcess(String className,

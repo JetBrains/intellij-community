@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Bas Leijdekkers
+ * Copyright 2011-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,10 +58,10 @@ public class AmbiguousFieldAccessInspection extends BaseInspection {
   @Override
   @Nullable
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new AmbiguousMethodCallFix();
+    return new AmbiguousFieldAccessFix();
   }
 
-  private static class AmbiguousMethodCallFix extends InspectionGadgetsFix {
+  private static class AmbiguousFieldAccessFix extends InspectionGadgetsFix {
 
     @Override
     @NotNull

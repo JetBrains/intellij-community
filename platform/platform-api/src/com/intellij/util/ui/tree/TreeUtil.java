@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SimpleColoredComponent;
@@ -218,11 +219,17 @@ public final class TreeUtil {
 
   @Nullable
   public static DefaultMutableTreeNode findNodeWithObject(@NotNull final DefaultMutableTreeNode aRoot, final Object aObject) {
-    if (Comparing.equal(aRoot.getUserObject(), aObject)) {
+    return findNode(aRoot, node -> Comparing.equal(node.getUserObject(), aObject));
+  }
+
+  @Nullable
+  public static DefaultMutableTreeNode findNode(@NotNull final DefaultMutableTreeNode aRoot,
+                                                @NotNull final Condition<DefaultMutableTreeNode> condition) {
+    if (condition.value(aRoot)) {
       return aRoot;
     } else {
       for (int i = 0; i < aRoot.getChildCount(); i++) {
-        final DefaultMutableTreeNode candidate = findNodeWithObject((DefaultMutableTreeNode) aRoot.getChildAt(i), aObject);
+        final DefaultMutableTreeNode candidate = findNode((DefaultMutableTreeNode)aRoot.getChildAt(i), condition);
         if (null != candidate) {
           return candidate;
         }

@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.*
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod
 import org.jetbrains.plugins.groovy.util.TestUtils
@@ -113,7 +100,7 @@ class ResolveClassTest extends GroovyResolveTestCase {
 
   void testInnerClassUsageInsideOuterSubclass() throws Throwable { doTest() }
 
-  void testInnerClassOfInterface() { assertNull(resolve()) }
+  void testInnerClassOfInterface() { doTest() }
 
   void testInnerClassOfClassInSubClass1() { assertNull(resolve()) }
 
@@ -211,6 +198,9 @@ interface Super {
     assertInstanceOf resolve("A.groovy"), PsiClass
   }
 
+  /**
+   * https://issues.apache.org/jira/browse/GROOVY-8364
+   */
   void testPreferImportsToInheritance() {
     myFixture.addClass("package java.util; public class MyMap { static interface Entry<K,V> {} } ")
     myFixture.addClass("package java.util; public class MainMap { static interface Entry<K,V> {} } ")
@@ -223,7 +213,7 @@ public class Test extends MyMap {
 }
 """)
     def target = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset).resolve()
-    assert assertInstanceOf(target, PsiClass).qualifiedName == 'java.util.MainMap.Entry'
+    assert assertInstanceOf(target, PsiClass).qualifiedName == 'java.util.MyMap.Entry'
   }
 
   void testPreferLastImportedAlias() {
@@ -604,7 +594,8 @@ new Ba<caret>r() {}
     assert resolved.qualifiedName == 'foo.Foo'
   }
 
-  void 'test prefer alias over class in the same file'() {
+  // https://issues.apache.org/jira/browse/GROOVY-8254
+  void 'test prefer class in the same file over alias'() {
     myFixture.addClass '''\
 package foo;
 interface Foo {}
@@ -618,7 +609,7 @@ new B<caret>ar() {}
     myFixture.configureFromExistingVirtualFile file.containingFile.virtualFile
     def resolved = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset).resolve()
     assert resolved instanceof PsiClass
-    assert resolved.qualifiedName == 'foo.Foo'
+    assert resolved.qualifiedName == 'test.Bar'
   }
 
   private void doTest(String fileName = getTestName(false) + ".groovy") { resolve(fileName, PsiClass) }

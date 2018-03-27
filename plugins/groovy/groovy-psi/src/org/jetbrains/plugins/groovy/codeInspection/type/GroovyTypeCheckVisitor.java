@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package org.jetbrains.plugins.groovy.codeInspection.type;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -6,7 +8,6 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSubstitutorImpl;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,7 +21,6 @@ import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentUtilKt;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -201,7 +201,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
     }
 
     final Object result = GroovyConstantExpressionEvaluator.evaluate(expression);
-    if (result == null || !(result instanceof String)) {
+    if (!(result instanceof String)) {
       registerError(
         elementToHighlight,
         ProblemHighlightType.WEAK_WARNING,
@@ -765,11 +765,10 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
   public void visitAssignmentExpression(@NotNull GrAssignmentExpression assignment) {
     super.visitAssignmentExpression(assignment);
 
+    if (assignment.isOperatorAssignment()) return;
+
     final GrExpression lValue = assignment.getLValue();
     if (!PsiUtil.mightBeLValue(lValue)) return;
-
-    final IElementType opToken = assignment.getOperationTokenType();
-    if (opToken != GroovyTokenTypes.mASSIGN) return;
 
     final GrExpression rValue = assignment.getRValue();
     if (rValue == null) return;

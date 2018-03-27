@@ -30,6 +30,8 @@ public class BareTestFixtureImpl extends BaseFixture implements BareTestFixture 
 
   @Override
   public void tearDown() throws Exception {
+    // don't use method references here to make stack trace reading easier
+    //noinspection Convert2MethodRef
     new RunAll(
       () -> EdtTestUtil.runInEdtAndWait(() -> PlatformTestCase.cleanupApplicationCaches(null)),
       () -> super.tearDown()

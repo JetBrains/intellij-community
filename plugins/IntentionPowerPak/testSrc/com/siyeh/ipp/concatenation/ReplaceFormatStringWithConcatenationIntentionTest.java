@@ -80,4 +80,18 @@ public class ReplaceFormatStringWithConcatenationIntentionTest extends IPPTestCa
            "  }" +
            "}");
   }
+
+  public void testNewline() {
+    doTest("class Z {" +
+           "  String m(boolean b) {" +
+           "    return String.format/*_Replace 'String.format()' with concatenation*/(\"b:\\n %s\", b);" +
+           "  }" +
+           "}",
+
+           "class Z {" +
+           "  String m(boolean b) {" +
+           "    return \"b:\\n \" + b;" +
+           "  }" +
+           "}");
+  }
 }

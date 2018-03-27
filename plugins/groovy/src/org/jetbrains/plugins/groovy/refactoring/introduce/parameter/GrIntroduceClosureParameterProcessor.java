@@ -593,6 +593,7 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
     });
   }
 
+  @NotNull
   @Override
   protected String getCommandName() {
     return RefactoringBundle.message("introduce.parameter.command", DescriptiveNameUtil.getDescriptiveName(mySettings.getToReplaceIn()));

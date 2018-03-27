@@ -4,6 +4,7 @@ package com.jetbrains.python.inspections;
 import com.google.common.collect.Lists;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
@@ -201,13 +202,14 @@ public class PyArgumentListInspection extends PyInspection {
       final Set<String> duplicateKeywords = getDuplicateKeywordArguments(node);
 
       final PyCallExpression.PyArgumentsMapping mapping = mappings.get(0);
-      if (!mapping.getUnmappedArguments().isEmpty() && mapping.getUnmappedParameters().isEmpty()) {
+      if (holder.isOnTheFly() && !mapping.getUnmappedArguments().isEmpty() && mapping.getUnmappedParameters().isEmpty()) {
         final PyCallExpression.PyMarkedCallee markedCallee = mapping.getMarkedCallee();
         if (markedCallee != null) {
           final PyCallable callable = markedCallee.getElement();
           final Project project = node.getProject();
           if (callable instanceof PyFunction && !PyChangeSignatureHandler.isNotUnderSourceRoot(project, callable.getContainingFile())) {
-            holder.registerProblem(node, PyBundle.message("INSP.unexpected.arg(s)"), PyChangeSignatureQuickFix.forMismatchedCall(mapping));
+            final String message = PyBundle.message("INSP.unexpected.arg(s)");
+            holder.registerProblem(node, message, ProblemHighlightType.INFORMATION, PyChangeSignatureQuickFix.forMismatchedCall(mapping));
           }
         }
       }

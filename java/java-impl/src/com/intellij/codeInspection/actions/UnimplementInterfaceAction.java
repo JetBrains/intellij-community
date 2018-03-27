@@ -65,7 +65,7 @@ public class UnimplementInterfaceAction implements IntentionAction {
     if (referenceElement == null) return false;
 
     final PsiElement target = referenceElement.resolve();
-    if (target == null || !(target instanceof PsiClass)) return false;
+    if (!(target instanceof PsiClass)) return false;
 
     PsiClass targetClass = (PsiClass)target;
     if (targetClass.isInterface()) {
@@ -107,7 +107,7 @@ public class UnimplementInterfaceAction implements IntentionAction {
     if (element == null) return;
 
     final PsiElement target = element.resolve();
-    if (target == null || !(target instanceof PsiClass)) return;
+    if (!(target instanceof PsiClass)) return;
 
     PsiClass targetClass = (PsiClass)target;
 

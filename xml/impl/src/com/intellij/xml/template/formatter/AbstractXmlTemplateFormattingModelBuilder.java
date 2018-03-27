@@ -89,7 +89,7 @@ public abstract class AbstractXmlTemplateFormattingModelBuilder extends SimpleTe
   }
 
   @NotNull
-  protected DocumentBasedFormattingModel createDummyModel(Block rootBlock, CodeStyleSettings settings, PsiFile psiFile) {
+  protected DocumentBasedFormattingModel createDummyModel(Block rootBlock, CodeStyleSettings settings, @NotNull PsiFile psiFile) {
     return new DocumentBasedFormattingModel(rootBlock, psiFile.getProject(), settings, psiFile.getFileType(), psiFile);
   }
 
@@ -125,7 +125,7 @@ public abstract class AbstractXmlTemplateFormattingModelBuilder extends SimpleTe
   }
 
   @Nullable
-  private FormattingModel createTemplateFormattingModelInternal(PsiFile file,
+  private FormattingModel createTemplateFormattingModelInternal(@NotNull PsiFile file,
                                                                 CodeStyleSettings settings,
                                                                 XmlFormattingPolicy xmlFormattingPolicy,
                                                                 List<PsiElement> elements,
@@ -172,7 +172,7 @@ public abstract class AbstractXmlTemplateFormattingModelBuilder extends SimpleTe
   private FormattingModel createDataLanguageFormattingModel(PsiElement dataElement,
                                                            Language language,
                                                            CodeStyleSettings settings,
-                                                           PsiFile psiFile,
+                                                           @NotNull PsiFile psiFile,
                                                            @Nullable Indent indent) {
     Block block = createDataLanguageRootBlock(dataElement, language, settings, getPolicy(settings, psiFile), psiFile, indent);
     return new DocumentBasedFormattingModel(block, psiFile.getProject(), settings, psiFile.getFileType(), psiFile);
@@ -182,7 +182,7 @@ public abstract class AbstractXmlTemplateFormattingModelBuilder extends SimpleTe
                                             Language language,
                                             CodeStyleSettings settings,
                                             XmlFormattingPolicy xmlFormattingPolicy,
-                                            PsiFile psiFile,
+                                            @NotNull PsiFile psiFile,
                                             Indent indent) {
     Block block;
     if (dataElement instanceof XmlTag) {

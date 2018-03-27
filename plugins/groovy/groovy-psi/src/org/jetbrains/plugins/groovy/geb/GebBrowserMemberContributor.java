@@ -39,7 +39,7 @@ public class GebBrowserMemberContributor extends NonCodeMembersContributor {
     PsiClass pageClass = JavaPsiFacade.getInstance(aClass.getProject()).findClass("geb.Page", place.getResolveScope());
 
     if (pageClass != null) {
-      if (!pageClass.processDeclarations(processor, state, null, place)) return;
+      pageClass.processDeclarations(processor, state, null, place);
     }
   }
 

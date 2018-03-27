@@ -25,8 +25,6 @@ import java.util.List;
 
 /**
  * @author Maxim.Mossienko
-*         Date: 22.01.2009
-*         Time: 0:28:45
 */
 public interface QuickFixTestCase {
   String getBasePath();

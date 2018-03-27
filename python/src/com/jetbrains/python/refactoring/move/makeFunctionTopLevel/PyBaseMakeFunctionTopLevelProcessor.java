@@ -95,6 +95,7 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
     return ArrayUtil.toObjectArray(PyRefactoringUtil.findUsages(myFunction, false), UsageInfo.class);
   }
 
+  @NotNull
   @Override
   protected final String getCommandName() {
     return getRefactoringName();

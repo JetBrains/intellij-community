@@ -309,6 +309,7 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
   }
 
 
+  @NotNull
   protected String getCommandName() {
     if (myConstructor != null) {
       return RefactoringBundle.message("replace.constructor.0.with.a.factory.method",

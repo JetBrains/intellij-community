@@ -6,7 +6,6 @@ import org.jetbrains.jps.service.JpsServiceManager;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 11/29/12
  */
 public abstract class JpsIntelliLangExtensionService {
   public static JpsIntelliLangExtensionService getInstance() {

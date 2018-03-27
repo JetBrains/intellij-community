@@ -33,6 +33,7 @@ import com.intellij.util.QueryExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -65,7 +66,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
 
     SearchScope scope;
     SearchScope useScope;
-    CompilerDirectHierarchyInfo info = performSearchUsingCompilerIndices(parameters, parameters.getScope(), project);
+    CompilerDirectHierarchyInfo info = performSearchUsingCompilerIndices(parameters, project);
     if (info == null) {
       scope = parameters.getScope();
       useScope = ReadAction.compute(baseClass::getUseScope);
@@ -270,14 +271,15 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     return ReadAction.compute(() -> PsiUtil.getJarFile(aClass));
   }
 
+  @Nullable
   private static CompilerDirectHierarchyInfo performSearchUsingCompilerIndices(@NotNull DirectClassInheritorsSearch.SearchParameters parameters,
-                                                                               @NotNull SearchScope useScope,
                                                                                @NotNull Project project) {
-    if (!(useScope instanceof GlobalSearchScope)) return null;
     SearchScope scope = parameters.getScope();
     if (!(scope instanceof GlobalSearchScope)) return null;
 
     CompilerReferenceService compilerReferenceService = CompilerReferenceService.getInstance(project);
+    if (compilerReferenceService == null) return null; //This is possible in CLion, where Java compiler is not defined
+
     return compilerReferenceService.getDirectInheritors(getClassToSearch(parameters),
                                                         (GlobalSearchScope)scope,
                                                         JavaFileType.INSTANCE);

@@ -33,7 +33,6 @@ import java.util.regex.Pattern;
  * Is immutable.
  * <br/>
  * User: dcheryasov
- * Date: 2/23/11 5:32 PM
  */
 public class SkeletonVersionChecker {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.sdk.PythonSdkType.SkeletonVersionChecker");

@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.siyeh.ig.psiutils;
 
@@ -44,10 +32,8 @@ public class BlockUtils {
       return (PsiStatement)oldStatement.replace(newStatements[0]);
     }
     if (!(parent instanceof PsiCodeBlock)) {
-      final PsiBlockStatement block = expandSingleStatementToBlockStatement(oldStatement);
-      final PsiCodeBlock codeBlock = (PsiCodeBlock)block.getFirstChild();
-      parent = codeBlock;
-      oldStatement = codeBlock.getStatements()[0];
+      oldStatement = expandSingleStatementToBlockStatement(oldStatement);
+      parent = oldStatement.getParent();
     }
     PsiElement result = null;
     for (PsiStatement statement : newStatements) {
@@ -71,29 +57,34 @@ public class BlockUtils {
       parent = oldStatement.getParent();
     }
     if (!(parent instanceof PsiCodeBlock)) {
-      final PsiBlockStatement block = expandSingleStatementToBlockStatement(oldStatement);
-      final PsiCodeBlock codeBlock = (PsiCodeBlock)block.getFirstChild();
-      parent = codeBlock;
-      oldStatement = codeBlock.getStatements()[0];
+      oldStatement = expandSingleStatementToBlockStatement(oldStatement);
+      parent = oldStatement.getParent();
     }
     return (PsiStatement)parent.addAfter(newStatement, oldStatement);
   }
 
-  public static PsiBlockStatement expandSingleStatementToBlockStatement(@NotNull PsiStatement body) {
-    if (body instanceof PsiBlockStatement) {
-      return (PsiBlockStatement)body;
+  /**
+   * Replaces a statement with a block statement with the statement inside it. As usual the block statement contains a code block, which
+   * will contain the specified statement.
+   *
+   * @param statement  the statement to replace
+   * @return a new statement equivalent to the argument, but inside a block
+   */
+  public static <T extends PsiStatement> T expandSingleStatementToBlockStatement(@NotNull T statement) {
+    if (statement instanceof PsiBlockStatement) {
+      return statement;
     }
     final PsiBlockStatement blockStatement = (PsiBlockStatement)
-      JavaPsiFacade.getElementFactory(body.getProject()).createStatementFromText("{}", body);
-    if (!(body instanceof PsiEmptyStatement)) {
-      blockStatement.getFirstChild().add(body);
-    }
-    final PsiBlockStatement result = (PsiBlockStatement)body.replace(blockStatement);
+      JavaPsiFacade.getElementFactory(statement.getProject()).createStatementFromText("{}", statement);
+    blockStatement.getCodeBlock().add(statement);
+    final PsiBlockStatement result = (PsiBlockStatement)statement.replace(blockStatement);
+
     final PsiElement sibling = result.getNextSibling();
     if (sibling instanceof PsiWhiteSpace && PsiUtil.isJavaToken(sibling.getNextSibling(), JavaTokenType.ELSE_KEYWORD)) {
       sibling.delete();
     }
-    return result;
+    //noinspection unchecked
+    return (T)result.getCodeBlock().getStatements()[0];
   }
 
   @Nullable

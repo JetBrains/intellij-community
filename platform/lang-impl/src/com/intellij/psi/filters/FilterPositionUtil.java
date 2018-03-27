@@ -20,6 +20,7 @@ import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -37,7 +38,8 @@ public class FilterPositionUtil {
     ASTNode leftNeighbour = TreeUtil.prevLeaf(element.getNode());
     if (!strict) {
       while (leftNeighbour != null &&
-             (leftNeighbour.getElementType() == TokenType.WHITE_SPACE || leftNeighbour.getPsi() instanceof PsiComment)) {
+             (leftNeighbour.getElementType() == TokenType.WHITE_SPACE || 
+              PsiTreeUtil.getNonStrictParentOfType(leftNeighbour.getPsi(), PsiComment.class) != null)) {
         leftNeighbour = TreeUtil.prevLeaf(leftNeighbour);
       }
     }

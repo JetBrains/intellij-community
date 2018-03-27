@@ -524,7 +524,7 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
 
   public void selectTool(final String actionId) {
     Object root = myTree.getModel().getRoot();
-    if (root == null || !(root instanceof CheckedTreeNode)) {
+    if (!(root instanceof CheckedTreeNode)) {
       return;
     }
     final List<CheckedTreeNode> nodes = new ArrayList<>();

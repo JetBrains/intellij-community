@@ -15,12 +15,10 @@
  */
 package git4idea;
 
-import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.notification.BrowseNotificationAction;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -33,6 +31,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
@@ -48,6 +47,7 @@ import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.AnnotationProviderEx;
 import com.intellij.vcs.log.VcsUserRegistry;
@@ -59,6 +59,7 @@ import git4idea.checkin.GitCheckinEnvironment;
 import git4idea.checkin.GitCommitAndPushExecutor;
 import git4idea.checkout.GitCheckoutProvider;
 import git4idea.commands.Git;
+import git4idea.util.GitVcsConsoleWriter;
 import git4idea.config.*;
 import git4idea.diff.GitDiffProvider;
 import git4idea.history.GitHistoryProvider;
@@ -75,7 +76,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -106,7 +106,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   private final DiffProvider myDiffProvider;
   private final GitHistoryProvider myHistoryProvider;
   @NotNull private final Git myGit;
-  private final ProjectLevelVcsManager myVcsManager;
+  private final GitVcsConsoleWriter myVcsConsoleWriter;
   private final GitVcsApplicationSettings myAppSettings;
   private final Configurable myConfigurable;
   private final RevisionSelector myRevSelector;
@@ -116,33 +116,31 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
 
   private final ReadWriteLock myCommandLock = new ReentrantReadWriteLock(true); // The command read/write lock
   @Nullable private final GitCommitAndPushExecutor myCommitAndPushExecutor;
+  private final GitExecutableManager myGitExecutableManager;
   private final GitExecutableValidator myExecutableValidator;
   private GitBranchWidget myBranchWidget;
 
   private GitVersion myVersion = GitVersion.NULL; // version of Git which this plugin uses.
-  private static final int MAX_CONSOLE_OUTPUT_SIZE = 10000;
   private GitRepositoryForAnnotationsListener myRepositoryForAnnotationsListener;
 
-  @Nullable
-  public static GitVcs getInstance(Project project) {
-    if (project == null || project.isDisposed()) {
-      return null;
-    }
-    return (GitVcs) ProjectLevelVcsManager.getInstance(project).findVcsByName(NAME);
+  @NotNull
+  public static GitVcs getInstance(@NotNull Project project) {
+    return ObjectUtils.notNull((GitVcs)ProjectLevelVcsManager.getInstance(project).findVcsByName(NAME));
   }
 
   public GitVcs(@NotNull Project project, @NotNull Git git,
-                @NotNull final ProjectLevelVcsManager gitVcsManager,
+                @NotNull GitVcsConsoleWriter vcsConsoleWriter,
                 @NotNull final GitAnnotationProvider gitAnnotationProvider,
                 @NotNull final GitDiffProvider gitDiffProvider,
                 @NotNull final GitHistoryProvider gitHistoryProvider,
                 @NotNull final GitRollbackEnvironment gitRollbackEnvironment,
                 @NotNull final GitVcsApplicationSettings gitSettings,
                 @NotNull final GitVcsSettings gitProjectSettings,
-                @NotNull GitSharedSettings sharedSettings) {
+                @NotNull GitSharedSettings sharedSettings,
+                @NotNull GitExecutableManager gitExecutableManager) {
     super(project, NAME);
     myGit = git;
-    myVcsManager = gitVcsManager;
+    myVcsConsoleWriter = vcsConsoleWriter;
     myAppSettings = gitSettings;
     myChangeProvider = project.isDefault() ? null : ServiceManager.getService(project, GitChangeProvider.class);
     myCheckinEnvironment = project.isDefault() ? null : ServiceManager.getService(project, GitCheckinEnvironment.class);
@@ -150,8 +148,9 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     myDiffProvider = gitDiffProvider;
     myHistoryProvider = gitHistoryProvider;
     myRollbackEnvironment = gitRollbackEnvironment;
+    myGitExecutableManager = gitExecutableManager;
     myRevSelector = new GitRevisionSelector();
-    myConfigurable = new GitVcsConfigurable(myProject, gitProjectSettings, sharedSettings);
+    myConfigurable = new GitVcsConfigurable(gitSettings, myProject, gitProjectSettings, sharedSettings);
     myUpdateEnvironment = new GitUpdateEnvironment(myProject, gitProjectSettings);
     myCommittedChangeListProvider = new GitCommittedChangeListProvider(myProject);
     myOutgoingChangesProvider = new GitOutgoingChangesProvider(myProject);
@@ -166,6 +165,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
 
   /**
    * Run task in background using the common queue (per project)
+   *
    * @param task the task to run
    */
   public static void runInBackground(Task.Backgroundable task) {
@@ -263,7 +263,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
       }
     }
     return new GitRevisionNumber(revision);
-
   }
 
   @Override
@@ -290,7 +289,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     checkExecutableAndVersion();
 
     if (myVFSListener == null) {
-      myVFSListener = new GitVFSListener(myProject, this, myGit);
+      myVFSListener = new GitVFSListener(myProject, this, myGit, myVcsConsoleWriter);
     }
     ServiceManager.getService(myProject, VcsUserRegistry.class); // make sure to read the registry before opening commit dialog
 
@@ -306,7 +305,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
 
   private void checkExecutableAndVersion() {
     boolean executableIsAlreadyCheckedAndFine = false;
-    String pathToGit = myAppSettings.getPathToGit();
+    String pathToGit = myGitExecutableManager.getPathToGit(myProject);
     if (!pathToGit.contains(File.separator)) { // no path, just sole executable, with a hope that it is in path
       // subject to redetect the path if executable validator fails
       if (!myExecutableValidator.isExecutableValid()) {
@@ -367,32 +366,12 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   /**
-   * Shows a plain message in the Version Control Console.
-   */
-  public void showMessages(@NotNull String message) {
-    if (message.length() == 0) return;
-    showMessage(message, ConsoleViewContentType.NORMAL_OUTPUT);
-  }
-
-  /**
-   * Show message in the Version Control Console
-   * @param message a message to show
-   * @param contentType a style to use
-   */
-  private void showMessage(@NotNull String message, @NotNull ConsoleViewContentType contentType) {
-    if (message.length() > MAX_CONSOLE_OUTPUT_SIZE) {
-      message = message.substring(0, MAX_CONSOLE_OUTPUT_SIZE);
-    }
-    myVcsManager.addMessageToConsoleWindow(message, contentType);
-  }
-
-  /**
    * Checks Git version and updates the myVersion variable.
    * In the case of exception or unsupported version reports the problem.
    * Note that unsupported version is also applied - some functionality might not work (we warn about that), but no need to disable at all.
    */
   public void checkVersion() {
-    final String executable = myAppSettings.getPathToGit();
+    final String executable = myGitExecutableManager.getPathToGit(myProject);
     try {
       myVersion = GitVersion.identifyVersion(executable);
       LOG.info("Git version: " + myVersion);
@@ -401,12 +380,8 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
         String message = String.format("At least %s is required.",GitVersion.MIN.getPresentation());
         Notification notification = STANDARD_NOTIFICATION.createNotification(title, message, NotificationType.ERROR, null);
         notification.addAction(new BrowseNotificationAction("Download...", "http://git-scm.com/download"));
-        notification.addAction(new NotificationAction("Configure...") {
-          @Override
-          public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-            ShowSettingsUtil.getInstance().showSettingsDialog(myProject, getConfigurable().getDisplayName());
-          }
-        });
+        notification.addAction(NotificationAction.createSimple("Configure...", () ->
+          ShowSettingsUtil.getInstance().showSettingsDialog(myProject, getConfigurable().getDisplayName())));
         VcsNotifier.getInstance(myProject).notify(notification);
       }
     }
@@ -415,9 +390,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
       if (getExecutableValidator().checkExecutableAndNotifyIfNeeded()) { // check executable before notifying error
         final String reason = (e.getCause() != null ? e.getCause() : e).getMessage();
         String message = GitBundle.message("vcs.unable.to.run.git", executable, reason);
-        if (!myProject.isDefault()) {
-          showMessage(message, ConsoleViewContentType.SYSTEM_OUTPUT);
-        }
         VcsBalloonProblemNotifier.showOverVersionControlView(myProject, message, MessageType.ERROR);
       }
     }
@@ -433,17 +405,11 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
 
   /**
    * Shows a command line message in the Version Control Console
+   * @deprecated use {@link GitVcsConsoleWriter}
    */
+  @Deprecated
   public void showCommandLine(final String cmdLine) {
-    SimpleDateFormat f = new SimpleDateFormat("HH:mm:ss.SSS");
-    showMessage(f.format(new Date()) + ": " + cmdLine, ConsoleViewContentType.SYSTEM_OUTPUT);
-  }
-
-  /**
-   * Shows error message in the Version Control Console
-   */
-  public void showErrorMessages(final String line) {
-    showMessage(line, ConsoleViewContentType.ERROR_OUTPUT);
+    myVcsConsoleWriter.showCommandLine(cmdLine);
   }
 
   @Override
@@ -535,5 +501,10 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   @Override
   public CheckoutProvider getCheckoutProvider() {
     return new GitCheckoutProvider(Git.getInstance());
+  }
+
+  @Override
+  public boolean arePartialChangelistsSupported() {
+    return Registry.is("vcs.enable.partial.changelists");
   }
 }

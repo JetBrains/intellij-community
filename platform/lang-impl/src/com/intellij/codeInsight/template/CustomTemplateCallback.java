@@ -59,7 +59,7 @@ public class CustomTemplateCallback {
     myTemplateManager = TemplateManager.getInstance(myProject);
 
     myOffset = getOffset(editor);
-    PsiElement element = InjectedLanguageUtil.findInjectedElementNoCommit(file, myOffset);
+    PsiElement element = InjectedLanguageManager.getInstance(file.getProject()).findInjectedElementAt(file, myOffset);
     myFile = element != null ? element.getContainingFile() : file;
 
     myInInjectedFragment = InjectedLanguageManager.getInstance(myProject).isInjectedFragment(myFile);
@@ -171,7 +171,7 @@ public class CustomTemplateCallback {
                      AttachmentFactory.createAttachment(file.getVirtualFile()));
       }
       else {
-        element = InjectedLanguageUtil.findInjectedElementNoCommit(file, offset);
+        element = InjectedLanguageManager.getInstance(file.getProject()).findInjectedElementAt(file, offset);
       }
     }
     if (element == null) {

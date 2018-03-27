@@ -91,25 +91,28 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
       }
       final PsiExpression unboxedExpression = arguments[0];
       final Object value = ExpressionUtils.computeConstantExpression(unboxedExpression);
+      CommentTracker commentTracker = new CommentTracker();
       if (value != null) {
         if (value == Boolean.TRUE) {
-          PsiReplacementUtil.replaceExpression(expression, "java.lang.Boolean.TRUE");
+          PsiReplacementUtil.replaceExpression(expression, "java.lang.Boolean.TRUE", commentTracker);
           return;
         }
         else if (value == Boolean.FALSE) {
-          PsiReplacementUtil.replaceExpression(expression, "java.lang.Boolean.FALSE");
+          PsiReplacementUtil.replaceExpression(expression, "java.lang.Boolean.FALSE", commentTracker);
           return;
         }
       }
-      final String replacementText = getUnboxedExpressionText(unboxedExpression, expression);
+      final String replacementText = getUnboxedExpressionText(unboxedExpression, expression, commentTracker);
       if (replacementText == null) {
         return;
       }
-      PsiReplacementUtil.replaceExpression(expression, replacementText);
+      PsiReplacementUtil.replaceExpression(expression, replacementText, commentTracker);
     }
 
     @Nullable
-    private static String getUnboxedExpressionText(@NotNull PsiExpression unboxedExpression, @NotNull PsiExpression boxedExpression) {
+    private static String getUnboxedExpressionText(@NotNull PsiExpression unboxedExpression,
+                                                   @NotNull PsiExpression boxedExpression,
+                                                   CommentTracker commentTracker) {
       final PsiType boxedType = boxedExpression.getType();
       if (boxedType == null) {
         return null;
@@ -122,7 +125,7 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
       if (unboxedType == null) {
         return null;
       }
-      final String text = unboxedExpression.getText();
+      final String text = commentTracker.markUnchanged(unboxedExpression).getText();
       if (expressionType.equals(unboxedType)) {
         final PsiElement parent = boxedExpression.getParent();
         if (parent instanceof PsiExpression && ParenthesesUtils.areParenthesesNeeded(unboxedExpression, (PsiExpression) parent, false)) {
@@ -271,7 +274,8 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
         final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
         return isPossibleObjectComparison(boxingExpression, polyadicExpression);
       }
-      return MethodCallUtils.isNecessaryForSurroundingMethodCall(boxingExpression, boxedExpression);
+      return MethodCallUtils.isNecessaryForSurroundingMethodCall(boxingExpression, boxedExpression) ||
+             !LambdaUtil.isSafeLambdaReturnValueReplacement(boxingExpression, boxedExpression);
     }
 
     private boolean isPossibleObjectComparison(PsiExpression expression, PsiPolyadicExpression polyadicExpression) {

@@ -22,7 +22,6 @@ import java.io.File;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 9/22/11
  */
 public class DummyConversionService extends ConversionService {
 

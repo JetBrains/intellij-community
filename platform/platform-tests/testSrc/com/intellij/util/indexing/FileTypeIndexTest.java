@@ -26,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 7/24/12
  */
 public class FileTypeIndexTest extends LightPlatformCodeInsightFixtureTestCase {
 

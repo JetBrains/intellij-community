@@ -49,6 +49,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.util.*;
@@ -143,9 +144,9 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
     }
   }
 
-  public void editDescription(@NotNull Bookmark bookmark) {
+  public void editDescription(@NotNull Bookmark bookmark, JComponent popup) {
     String description = Messages
-      .showInputDialog(myProject, IdeBundle.message("action.bookmark.edit.description.dialog.message"),
+      .showInputDialog(popup, IdeBundle.message("action.bookmark.edit.description.dialog.message"),
                        IdeBundle.message("action.bookmark.edit.description.dialog.title"), Messages.getQuestionIcon(),
                        bookmark.getDescription(), new InputValidator() {
           @Override

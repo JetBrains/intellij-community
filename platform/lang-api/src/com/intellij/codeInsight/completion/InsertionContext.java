@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
@@ -22,7 +23,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
@@ -139,6 +139,6 @@ public class InsertionContext {
 
   public CommonCodeStyleSettings getCodeStyleSettings() {
     Language lang = PsiUtilCore.getLanguageAtOffset(getFile(), getTailOffset());
-    return CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(lang);
+    return CodeStyle.getLanguageSettings(getFile(), lang);
   }
 }

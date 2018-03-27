@@ -34,10 +34,8 @@ import com.intellij.ui.components.GradientViewport;
 import com.intellij.ui.treeStructure.*;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
@@ -67,6 +65,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.IdentityHashMap;
 import java.util.List;
 
@@ -113,20 +112,13 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     myTree.setShowsRootHandles(false);
     myTree.setExpandableItemsEnabled(false);
     RelativeFont.BOLD.install(myTree);
+    setComponentPopupMenuTo(myTree);
 
     myTree.setTransferHandler(new TransferHandler() {
       @Nullable
       @Override
       protected Transferable createTransferable(JComponent c) {
-        MyNode node = extractNode(myTree.getPathForRow(myTree.getLeadSelectionRow()));
-        if (node != null) {
-          StringBuilder sb = new StringBuilder("File | Settings");
-          for (String name : getPathNames(node)) {
-            sb.append(" | ").append(name);
-          }
-          return new TextTransferable(sb.toString());
-        }
-        return null;
+        return SettingsTreeView.createTransferable(myTree.getSelectionPath());
       }
 
       @Override
@@ -208,12 +200,40 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     Disposer.register(this, myBuilder);
   }
 
+  private static void setComponentPopupMenuTo(JTree tree) {
+    tree.setComponentPopupMenu(new JPopupMenu() {
+      private Transferable transferable;
+
+      @Override
+      public void show(Component invoker, int x, int y) {
+        if (invoker != tree) return;
+        TreePath path = tree.getClosestPathForLocation(x, y);
+        transferable = createTransferable(path);
+        if (transferable == null) return;
+        Rectangle bounds = tree.getPathBounds(path);
+        if (bounds == null || bounds.y > y) return;
+        bounds.y += bounds.height;
+        if (bounds.y < y) return;
+        super.show(invoker, x, bounds.y);
+      }
+
+      {
+        add(new CopyAction(() -> transferable));
+      }
+    });
+  }
+
+  private static Transferable createTransferable(TreePath path) {
+    MyNode node = path == null ? null : extractNode(path);
+    return node == null ? null : CopyAction.createTransferable(getPathNames(node));
+  }
+
   @NotNull
-  String[] getPathNames(Configurable configurable) {
+  Collection<String> getPathNames(Configurable configurable) {
     return getPathNames(findNode(configurable));
   }
 
-  private static String[] getPathNames(MyNode node) {
+  private static Collection<String> getPathNames(MyNode node) {
     ArrayDeque<String> path = new ArrayDeque<>();
     while (node != null) {
       path.push(node.myDisplayName);
@@ -222,7 +242,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
              ? (MyNode)parent
              : null;
     }
-    return ArrayUtil.toStringArray(path);
+    return path;
   }
 
   static Configurable getConfigurable(SimpleNode node) {

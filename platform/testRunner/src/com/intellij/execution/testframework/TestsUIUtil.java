@@ -280,30 +280,34 @@ public class TestsUIUtil {
 
         if (failedCount > 0) {
           myTitle = ExecutionBundle.message("junit.runing.info.tests.failed.label");
+          myBalloonText = "Tests failed: " + failedCount + ", passed: " + passedCount +
+                          (ignoredCount > 0 ? ", ignored: " + ignoredCount : notStartedCount > 0 ? ", not started: " + notStartedCount : "");
           String notStartedMessage = ignoredCount > 0 ? ", " + ignoredCount + " ignored"
                                                       : notStartedCount > 0 ? ", " + notStartedCount + " not started" : "";
-          myText = passedCount + " passed, " + failedCount + " failed" + notStartedMessage;
+          myText = failedCount + " failed, " + passedCount + " passed" + notStartedMessage;
           myType = MessageType.ERROR;
         }
         else if (ignoredCount > 0) {
           myTitle = "Tests Ignored";
-          myText = passedCount + " passed, " + ignoredCount + " ignored";
+          myBalloonText = "Tests ignored: " + ignoredCount + ", passed: " + passedCount;
+          myText = ignoredCount + " ignored, " + passedCount + " passed";
           myType = MessageType.WARNING;
         }
         else if (notStartedCount > 0) {
           myTitle = ExecutionBundle.message("junit.running.info.failed.to.start.error.message");
-          myText = passedCount + " passed, " + notStartedCount + " not started";
+          myBalloonText = "Failed to start: " + notStartedCount + ", passed: " + passedCount;
+          myText = notStartedCount + " not started, " + passedCount + " passed";
           myType = MessageType.ERROR;
         }
         else {
           myTitle = ExecutionBundle.message("junit.runing.info.tests.passed.label");
+          myBalloonText = "Tests passed: " + passedCount;
           myText = passedCount + " passed";
           myType = MessageType.INFO;
         }
         if (myComment != null) {
           myText += " " + myComment;
         }
-        myBalloonText = myTitle + ": " + myText;
       }
       return this;
     }

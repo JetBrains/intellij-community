@@ -8,8 +8,6 @@ import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Maxim.Mossienko
- * Date: Mar 19, 2004
- * Time: 5:36:32 PM
  */
 public class MatchVariableConstraint extends NamedScriptableDefinition {
   private String regExp = "";
@@ -63,6 +61,37 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
 
   public MatchVariableConstraint() { this(false); }
   public MatchVariableConstraint(boolean _artificial) { artificial = _artificial; }
+
+  MatchVariableConstraint(MatchVariableConstraint constraint) {
+    super(constraint);
+    regExp = constraint.regExp;
+    invertRegExp = constraint.invertRegExp;
+    withinHierarchy = constraint.withinHierarchy;
+    strictlyWithinHierarchy = constraint.strictlyWithinHierarchy;
+    wholeWordsOnly = constraint.wholeWordsOnly;
+    minCount = constraint.minCount;
+    maxCount = constraint.maxCount;
+    greedy = constraint.greedy;
+    invertReference = constraint.invertReference;
+    referenceConstraint = constraint.referenceConstraint;
+    partOfSearchResults = constraint.partOfSearchResults;
+    nameOfExprType = constraint.nameOfExprType;
+    invertExprType = constraint.invertExprType;
+    exprTypeWithinHierarchy = constraint.exprTypeWithinHierarchy;
+    nameOfFormalArgType = constraint.nameOfFormalArgType;
+    invertFormalType = constraint.invertFormalType;
+    formalArgTypeWithinHierarchy = constraint.formalArgTypeWithinHierarchy;
+    withinConstraint = constraint.withinConstraint;
+    containsConstraint = constraint.containsConstraint;
+    invertContainsConstraint = constraint.invertContainsConstraint;
+    invertWithinConstraint = constraint.invertWithinConstraint;
+    artificial = constraint.artificial;
+  }
+
+  @Override
+  public MatchVariableConstraint copy() {
+    return new MatchVariableConstraint(this);
+  }
 
   public boolean isGreedy() {
     return greedy;

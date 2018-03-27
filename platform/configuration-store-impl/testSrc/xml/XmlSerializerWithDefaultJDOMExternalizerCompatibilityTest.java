@@ -1,11 +1,10 @@
 package com.intellij.configurationStore.xml;
 
 import com.intellij.configurationStore.XmlSerializer;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.annotations.Transient;
 import junit.framework.TestCase;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
@@ -16,17 +15,11 @@ public class XmlSerializerWithDefaultJDOMExternalizerCompatibilityTest extends T
   }
 
   private static void assertCompatibleSerialization(final Object data) {
-    assertThat(serializeWithJDom(data)).isEqualTo(serializeWithXmlSerializer(data));
+    assertThat(serializeWithJDom(data)).isEqualTo(serialize(data));
   }
 
-  private static String serializeWithXmlSerializer(final Object data) {
-    Element element = serialize(data);
-    return StringUtil.trimStart(JDOMUtil.writeElement(element), "<?xml version=\"1.0\" encoding=\"UTF-8\"?>").trim();
-  }
-
-  private static String serializeWithJDom(final Object data) {
+  private static Element serializeWithJDom(@NotNull Object data) {
     final Element jDomRoot = new Element("MyBean");
-
     if (data instanceof com.intellij.openapi.util.JDOMExternalizable) {
       ((com.intellij.openapi.util.JDOMExternalizable)data).writeExternal(jDomRoot);
     }
@@ -34,7 +27,7 @@ public class XmlSerializerWithDefaultJDOMExternalizerCompatibilityTest extends T
       com.intellij.openapi.util.DefaultJDOMExternalizer.writeExternal(data, jDomRoot);
     }
 
-    return JDOMUtil.writeElement(jDomRoot).trim();
+    return jDomRoot;
   }
 
   private static Element serialize(Object bean) {

@@ -62,6 +62,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.ReferenceRange;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.LightweightHint;
+import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
@@ -99,11 +100,12 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private final CompletionLookupArranger myArranger;
   private OffsetsInFile myHostOffsets;
   private final LookupImpl myLookup;
+  private final Alarm mySuppressTimeoutAlarm = new Alarm(this);
   private final MergingUpdateQueue myQueue;
   private final Update myUpdate = new Update("update") {
     @Override
     public void run() {
-      updateLookup();
+      updateLookup(myIsUpdateSuppressed);
       myQueue.setMergingTimeSpan(ourShowPopupGroupingTime);
     }
   };
@@ -186,7 +188,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myHandler.lookupItemSelected(this, lookupItem, completionChar, myLookup.getItems());
   }
 
-  OffsetMap getOffsetMap() {
+  public OffsetMap getOffsetMap() {
     return myOffsetMap;
   }
 
@@ -229,12 +231,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       }
     }
 
-    for (CompletionContributor contributor : CompletionContributor.forLanguage(initContext.getPositionLanguage())) {
+    for (CompletionContributor contributor : CompletionContributor.forLanguageHonorDumbness(initContext.getPositionLanguage(), initContext.getProject())) {
       ProgressManager.checkCanceled();
-      if (DumbService.getInstance(initContext.getProject()).isDumb() && !DumbService.isDumbAware(contributor)) {
-        continue;
-      }
-
       contributor.duringCompletion(initContext);
     }
     if (document instanceof DocumentWindow) {
@@ -340,7 +338,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   public boolean showLookup() {
-    return updateLookup();
+    return updateLookup(myIsUpdateSuppressed);
   }
 
   public CompletionParameters getParameters() {
@@ -365,9 +363,9 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     }
   }
 
-  private boolean updateLookup() {
+  private boolean updateLookup(boolean isUpdateSuppressed) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (isOutdated() || !shouldShowLookup() || myIsUpdateSuppressed) return false;
+    if (isOutdated() || !shouldShowLookup() || isUpdateSuppressed) return false;
 
     while (true) {
       Runnable action = myAdvertiserChanges.poll();
@@ -589,7 +587,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       }
       else {
         CompletionServiceImpl.setCompletionPhase(new CompletionPhase.ItemsCalculated(this));
-        updateLookup();
+        updateLookup(myIsUpdateSuppressed);
       }
     }, myQueue.getModalityState());
   }
@@ -863,6 +861,19 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   public static void setAutopopupTriggerTime(int timeSpan) {
     ourShowPopupGroupingTime = timeSpan;
     ourShowPopupAfterFirstItemGroupingTime = timeSpan;
+  }
+
+  public void makeSureLookupIsShown(int timeout) {
+    mySuppressTimeoutAlarm.addRequest(this::showIfSuppressed, timeout);
+  }
+
+  private void showIfSuppressed() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
+    if(myLookup.isShown())
+      return;
+
+    updateLookup(false);
   }
 
   private static class ModifierTracker extends KeyAdapter {

@@ -16,6 +16,7 @@ abstract class ObviousNullCheck {
     Objects.requireNonNull(<warning descr="Useless null-check: literal is never null">"xyz"</warning>, "xyz");
     Objects.requireNonNull((<warning descr="Useless null-check: concatenation is never null">getFoo() + getBar()</warning>));
     Objects.requireNonNull(<warning descr="Useless null-check: newly created object is never null">new ArrayList()</warning>, "new returned null");
+    Objects.requireNonNull(<warning descr="Useless null-check: this object is never null">this</warning>);
 
     String s = Objects.requireNonNull(<warning descr="Useless null-check: literal is never null">" x "</warning>);
     String s1 = trim(" x ");

@@ -291,6 +291,7 @@ public class GradleProjectResolverUtil {
                                             @Nullable final File libFile,
                                             @NotNull final LibraryData library,
                                             @NotNull final ProjectResolverContext resolverCtx) {
+    if (libFile == null || !libFile.getName().startsWith("gradle-")) return;
     final BuildScriptClasspathModel buildScriptClasspathModel =
       resolverCtx.getExtraProject(gradleModule, BuildScriptClasspathModel.class);
     if (buildScriptClasspathModel == null) return;

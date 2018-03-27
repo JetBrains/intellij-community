@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.folding.CodeFoldingManager;
@@ -16,6 +18,7 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.EditorTestUtil;
+import com.intellij.testFramework.fixtures.EditorMouseFixture;
 import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -508,10 +511,61 @@ public class EditorImplTest extends AbstractEditorTest {
     checkResultByText("a<selection><caret>b</selection>");
   }
 
+  public void testDocumentUpdateAtCaretInVirtualSpace() {
+    initText("ab\ncd");
+    myEditor.getSettings().setVirtualSpace(true);
+    mouse().clickAt(0, 4);
+    executeAction(IdeActions.ACTION_EDITOR_DELETE_TO_WORD_END);
+    checkResultByText("ab<caret>cd");
+    assertEquals(new LogicalPosition(0, 2), myEditor.getCaretModel().getLogicalPosition());
+    assertEquals(new VisualPosition(0, 2), myEditor.getCaretModel().getVisualPosition());
+  }
+
   public void testTypingInOverwriteModeWithMultilineSelection() {
     initText("a<selection>b\nc<caret></selection>d");
     ((EditorEx)myEditor).setInsertMode(false);
     type(' ');
     checkResultByText("a <caret>");
+  }
+
+  public void testSettingPromptDoesNotCreateSoftWraps() {
+    initText(StringUtil.repeat("a ", 1000));
+    ((EditorEx)myEditor).setPrefixTextAndAttributes(">", new TextAttributes());
+    runWriteCommand(() -> myEditor.getDocument().deleteString(0, myEditor.getDocument().getTextLength()));
+    assertEquals(0, ((EditorImpl)myEditor).getVisibleLineCount());
+  }
+
+  public void testDragInsideSelectionWithDndDisabled() {
+    initText("abcdef");
+    EditorTestUtil.setEditorVisibleSize(myEditor, 100, 100);
+    myEditor.getSettings().setDndEnabled(false);
+    EditorMouseFixture mouse = mouse();
+    mouse.pressAt(0, 0).dragTo(0, 3).release();
+    checkResultByText("<selection>abc<caret></selection>def");
+    mouse.pressAt(0, 1);
+    checkResultByText("a<caret>bcdef");
+    mouse.dragTo(0, 4);
+    checkResultByText("a<selection>bcd<caret></selection>ef");
+    mouse.release();
+    checkResultByText("a<selection>bcd<caret></selection>ef");
+  }
+
+  public void testCreateRectangularSelectionWithDndDisabled() {
+    initText("ab\ncd<caret>");
+    myEditor.getSettings().setDndEnabled(false);
+    mouse().alt().shift().middle().clickAt(0, 0);
+    checkResultByText("<selection><caret>ab</selection>\n<selection><caret>cd</selection>");
+  }
+
+  public void testActionsFromPopupMenuCanBeInvokedForSelection() {
+    initText("abcd");
+    EditorTestUtil.setEditorVisibleSize(myEditor, 100, 100);
+    myEditor.getSettings().setDndEnabled(false);
+    EditorMouseFixture mouse = mouse();
+    
+    mouse.pressAt(0, 1).dragTo(0, 3).release();
+    mouse.right().pressAt(0, 2);
+    checkResultByText("a<selection>bc</selection>d");
+    mouse.release();
   }
 }

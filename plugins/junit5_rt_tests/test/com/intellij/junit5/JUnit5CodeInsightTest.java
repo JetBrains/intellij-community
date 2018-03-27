@@ -23,7 +23,7 @@ import com.intellij.util.ThrowableRunnable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
-class JUnit5CodeInsightTest {
+abstract class JUnit5CodeInsightTest {
   protected JavaCodeInsightTestFixture myFixture;
 
   @BeforeEach

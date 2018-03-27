@@ -15,18 +15,19 @@
  */
 package com.intellij.java.codeInsight.completion
 
-import com.intellij.JavaTestUtil
-import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
+import com.intellij.testFramework.LightProjectDescriptor
+import org.jetbrains.annotations.NotNull
 
 /**
  * @author peter
  */
-class NormalCompletionDfaTest extends LightFixtureCompletionTestCase {
+class NormalCompletionDfaTest extends NormalCompletionTestCase {
+  @NotNull
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/normal/"
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_8
   }
-  
+
   void testCastInstanceofedQualifier() { doTest() }
   void testCastInstanceofedQualifierInForeach() { doTest() }
   void testCastComplexInstanceofedQualifier() { doTest() }
@@ -42,7 +43,22 @@ class NormalCompletionDfaTest extends LightFixtureCompletionTestCase {
   void testQualifierCastingBeforeLt() { doTest() }
   void testCastQualifierForPrivateFieldReference() { doTest() }
   void testOrAssignmentDfa() { doTest() }
+  void testAssignmentPreciseTypeDfa() { doTest() }
+  void testDeclarationPreciseTypeDfa() { doTest() }
+  void testInstanceOfAssignmentDfa() { doTest() }
+  void testStreamDfa() { doTest() }
+  void testStreamIncompleteDfa() { doTest() }
+  void testOptionalDfa() { doTest() }
   void testFieldWithCastingCaret() { doTest() }
+  void testCastWhenMethodComesFromDfaSuperType() { doTest() }
+  void testGenericTypeDfa() { doTest() }
+  void testNoUnnecessaryCastDfa() { doTest() }
+  void testNoUnnecessaryCastRawDfa() { doTest() }
+  void testInstanceOfAfterFunction() { doTest() }
+  void testComplexInstanceOfDfa() {
+    configureByTestName()
+    myFixture.assertPreferredCompletionItems 0, 'methodFromX', 'methodFromX2', 'methodFromY', 'methodFromY2'
+  }
 
   void testCastTwice() {
     configureByTestName()
@@ -66,16 +82,19 @@ public class FooImpl extends Foo {
     doTest()
   }
 
-  private void doTest() throws Exception {
-    configureByTestName()
-    checkResultByFile(getTestName(false) + "_after.java")
-  }
-
   void testCastInstanceofedQualifierInLambda() { doTest() }
 
   void testCastInstanceofedQualifierInLambda2() { doTest() }
 
   void testCastInstanceofedQualifierInExpressionLambda() { doTest() }
+  
+  void testCastQualifierInstanceofedTwice() {
+    configureByTestName()
+    myFixture.assertPreferredCompletionItems 0, 'boo', 'foo', 'moo'
+    myFixture.lookup.currentItem = myFixture.lookupElements[1]
+    myFixture.type('\n')
+    checkResultByFile(getTestName(false) + "_after.java")
+  }
 
   void testPreferCastExpressionSuperTypes() {
     myFixture.addClass('package nonImported; public interface SzNameInTheEnd {}')

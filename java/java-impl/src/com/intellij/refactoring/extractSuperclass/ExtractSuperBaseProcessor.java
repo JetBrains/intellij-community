@@ -163,6 +163,7 @@ public abstract class ExtractSuperBaseProcessor extends TurnRefsToSuperProcessor
 
   protected abstract PsiClass extractSuper(String superClassName) throws IncorrectOperationException;
 
+  @Override
   protected void refreshElements(@NotNull PsiElement[] elements) {
     myClass = (PsiClass)elements[0];
     myTargetDirectory = (PsiDirectory)elements[1];
@@ -172,6 +173,7 @@ public abstract class ExtractSuperBaseProcessor extends TurnRefsToSuperProcessor
     }
   }
 
+  @NotNull
   protected String getCommandName() {
     return RefactoringBundle.message("extract.subclass.command");
   }

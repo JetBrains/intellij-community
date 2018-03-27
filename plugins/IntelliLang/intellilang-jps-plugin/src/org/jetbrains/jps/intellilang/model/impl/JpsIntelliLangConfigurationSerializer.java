@@ -11,7 +11,6 @@ import org.jetbrains.jps.model.serialization.JpsGlobalExtensionSerializer;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 11/29/12
  */
 public class JpsIntelliLangConfigurationSerializer extends JpsGlobalExtensionSerializer {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.intellilang.model.impl.JpsIntelliLangConfigurationSerializer");

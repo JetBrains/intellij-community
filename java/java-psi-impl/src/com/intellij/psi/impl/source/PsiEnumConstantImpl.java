@@ -29,6 +29,9 @@ import com.intellij.psi.impl.java.stubs.PsiFieldStub;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -148,21 +151,19 @@ public class PsiEnumConstantImpl extends JavaStubPsiElement<PsiFieldStub> implem
 
   @Override
   public PsiMethod resolveMethod() {
-    PsiClass containingClass = getContainingClass();
-    LOG.assertTrue(containingClass != null);
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
-    JavaResolveResult resolveResult = facade.getResolveHelper()
-      .resolveConstructor(facade.getElementFactory().createType(containingClass), getArgumentList(), this);
-    return (PsiMethod)resolveResult.getElement();
+    return (PsiMethod)resolveMethodGenerics().getElement();
   }
 
   @Override
   @NotNull
   public JavaResolveResult resolveMethodGenerics() {
-    PsiClass containingClass = getContainingClass();
-    LOG.assertTrue(containingClass != null);
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
-    return facade.getResolveHelper().resolveConstructor(facade.getElementFactory().createType(containingClass), getArgumentList(), this);
+    return CachedValuesManager.getCachedValue(this, () -> {
+      PsiClass containingClass = getContainingClass();
+      LOG.assertTrue(containingClass != null);
+      final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+      return new CachedValueProvider.Result<>(facade.getResolveHelper().resolveConstructor(facade.getElementFactory().createType(containingClass), getArgumentList(), this),
+                                              PsiModificationTracker.MODIFICATION_COUNT);
+    });
   }
 
   @Override

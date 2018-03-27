@@ -28,6 +28,7 @@ import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
@@ -164,6 +165,8 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   private void actionPerformed(final AnActionEvent event) {
+    HelpTooltip.hide(this);
+
     if (myAction instanceof ActionGroup &&
         !(myAction instanceof CustomComponentAction) &&
         ((ActionGroup)myAction).isPopup() &&
@@ -180,10 +183,6 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       });
       popupMenu.setDataContextProvider(() -> this.getDataContext());
 
-      if (Registry.is("ide.helptooltip.enabled")) {
-        HelpTooltip.onShowMasterPopup(this, popupMenu.getComponent());
-      }
-
       if (event.isFromActionToolbar()) {
         popupMenu.getComponent().show(this, 0, getHeight());
       }
@@ -197,6 +196,9 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   public void removeNotify() {
+    if (myRollover) {
+      onMousePresenceChanged(false);
+    }
     if (myPresentationListener != null) {
       myPresentation.removePropertyChangeListener(myPresentationListener);
       myPresentationListener = null;
@@ -230,6 +232,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     if (myLook != null) {
       myLook.updateUI();
     }
+    updateToolTipText();
   }
 
   @Override public Dimension getPreferredSize() {
@@ -284,8 +287,15 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     String text = myPresentation.getText();
     String description = myPresentation.getDescription();
     if (Registry.is("ide.helptooltip.enabled")) {
+      HelpTooltip.dispose(this);
       String shortcut = KeymapUtil.getFirstKeyboardShortcutText(myAction);
-      new HelpTooltip().setTitle(text).setDescription(description).setShortcut(shortcut).setLocation(getTooltipLocation()).installOn(this);
+      if (StringUtil.isNotEmpty(text) || StringUtil.isNotEmpty(description)) {
+        HelpTooltip ht = new HelpTooltip().setTitle(text).setShortcut(shortcut).setLocation(getTooltipLocation());
+        if (!StringUtil.equals(text, description)) {
+          ht.setDescription(description);
+        }
+        ht.installOn(this);
+      }
     } else {
       setToolTipText(text == null ? description : text);
     }
@@ -307,7 +317,9 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
 
   protected void paintButtonLook(Graphics g) {
     ActionButtonLook look = getButtonLook();
-    look.paintBackground(g, this);
+    if (isEnabled() || !UIUtil.isUnderDarcula()) {
+      look.paintBackground(g, this);
+    }
     look.paintIcon(g, this, getIcon());
     look.paintBorder(g, this);
   }
@@ -329,7 +341,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   protected void processMouseEvent(MouseEvent e) {
     super.processMouseEvent(e);
     if (e.isConsumed()) return;
-    boolean skipPress = e.isMetaDown() || e.getButton() != MouseEvent.BUTTON1;
+    boolean skipPress = checkSkipPressForEvent(e);
     switch (e.getID()) {
       case MouseEvent.MOUSE_PRESSED:
         if (skipPress || !isButtonEnabled()) return;
@@ -362,6 +374,10 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
         onMousePresenceChanged(false);
         break;
     }
+  }
+
+  protected boolean checkSkipPressForEvent(@NotNull MouseEvent e) {
+    return e.isMetaDown() || e.getButton() != MouseEvent.BUTTON1;
   }
 
   private int getPopState(boolean isPushed) {
@@ -451,7 +467,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       Icon icon = ActionButton.this.getIcon();
       if (icon instanceof Accessible) {
         AccessibleContext context = ((Accessible)icon).getAccessibleContext();
-        if (context != null && context instanceof AccessibleIcon) {
+        if (context instanceof AccessibleIcon) {
           return new AccessibleIcon[]{(AccessibleIcon)context};
         }
       }

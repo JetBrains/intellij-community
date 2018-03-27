@@ -30,17 +30,17 @@ class GitResetTest : GitSingleRepoTest() {
   fun `test file is refreshed on hard reset`() {
     val (oldHash, vf) = prepare()
 
-    GitResetOperation(myProject, mapOf(myRepo to oldHash), GitResetMode.HARD, EmptyProgressIndicator()).execute()
+    GitResetOperation(project, mapOf(repo to oldHash), GitResetMode.HARD, EmptyProgressIndicator()).execute()
 
     assertSuccessfulNotification("Reset successful")
     assertEquals("Branch is on incorrect point", oldHash.asString(), last())
-    assertEquals("VirtualFile wasn't refreshed", "initial\n", String(vf.contentsToByteArray()))
+    assertEquals("VirtualFile wasn't refreshed", "initial" + System.lineSeparator(), String(vf.contentsToByteArray()))
   }
 
   fun `test file status is refreshed on soft reset`() {
     val (oldHash, vf) = prepare()
 
-    GitResetOperation(myProject, mapOf(myRepo to oldHash), GitResetMode.SOFT, EmptyProgressIndicator()).execute()
+    GitResetOperation(project, mapOf(repo to oldHash), GitResetMode.SOFT, EmptyProgressIndicator()).execute()
 
     assertSuccessfulNotification("Reset successful")
     assertEquals("Branch is on incorrect point", oldHash.asString(), last())
@@ -49,9 +49,9 @@ class GitResetTest : GitSingleRepoTest() {
   }
 
   private fun prepare(): Pair<Hash, VirtualFile> {
-    val file = file("f.txt").create().write("initial\n")
+    val file = file("f.txt").create().write("initial" + System.lineSeparator())
     val prevHash = HashImpl.build(file.addCommit("created").hash())
-    file.append("more\n")
+    file.append("more" + System.lineSeparator())
     file.addCommit("Added more")
     val vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file.file)!!
     return Pair(prevHash, vf)

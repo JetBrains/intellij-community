@@ -61,7 +61,7 @@ public class ArrayCreationWithoutNewKeywordInspection extends BaseInspection {
     public void visitArrayInitializerExpression(PsiArrayInitializerExpression expression) {
       super.visitArrayInitializerExpression(expression);
       final PsiType type = expression.getType();
-      if (type == null || !(type instanceof PsiArrayType)) {
+      if (!(type instanceof PsiArrayType)) {
         return;
       }
       final PsiElement parent = expression.getParent();

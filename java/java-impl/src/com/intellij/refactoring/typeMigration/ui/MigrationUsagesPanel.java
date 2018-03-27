@@ -29,7 +29,6 @@ import java.util.Set;
 
 /**
  * @author anna
- * Date: 26-Mar-2008
  */
 public class MigrationUsagesPanel extends UsagesPanel {
   public MigrationUsagesPanel(Project project) {

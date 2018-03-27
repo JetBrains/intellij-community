@@ -1,22 +1,11 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.PsiCopyPasteManager;
 import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.dnd.*;
@@ -76,8 +65,8 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.*;
 import java.util.List;
-import java.util.function.BooleanSupplier;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BooleanSupplier;
 
 public abstract class AbstractProjectViewPane implements DataProvider, Disposable, BusyObject {
   public static final ExtensionPointName<AbstractProjectViewPane> EP_NAME = ExtensionPointName.create("com.intellij.projectViewPane");
@@ -142,9 +131,14 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   }
 
   public abstract String getTitle();
+
   public abstract Icon getIcon();
-  @NotNull public abstract String getId();
-  @Nullable public final String getSubId(){
+
+  @NotNull
+  public abstract String getId();
+
+  @Nullable
+  public final String getSubId() {
     return mySubId;
   }
 
@@ -160,6 +154,10 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
   public boolean supportsManualOrder() {
     return false;
+  }
+  
+  protected String getManualOrderOptionText() {
+    return IdeBundle.message("action.manual.order");
   }
 
   /**
@@ -457,7 +455,11 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     return myTreeBuilder;
   }
 
-  public void readExternal(Element element) throws InvalidDataException {
+  public AbstractTreeStructure getTreeStructure() {
+    return myTreeStructure;
+  }
+
+  public void readExternal(@NotNull Element element)  {
     List<Element> subPanes = element.getChildren(ELEMENT_SUBPANE);
     for (Element subPane : subPanes) {
       String subId = subPane.getAttributeValue(ATTRIBUTE_SUBID);
@@ -468,7 +470,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     }
   }
 
-  public void writeExternal(Element element) throws WriteExternalException {
+  public void writeExternal(Element element) {
     saveExpandedPaths();
     for (String subId : myReadTreeState.keySet()) {
       TreeState treeState = myReadTreeState.get(subId);

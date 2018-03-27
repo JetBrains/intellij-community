@@ -11,7 +11,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 22.08.13
  */
 public abstract class XmlEnumerationDescriptor<T extends XmlElement> {
 

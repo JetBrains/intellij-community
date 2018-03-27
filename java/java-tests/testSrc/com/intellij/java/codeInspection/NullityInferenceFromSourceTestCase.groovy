@@ -17,9 +17,13 @@ package com.intellij.java.codeInspection
 import com.intellij.codeInsight.InferredAnnotationsManager
 import com.intellij.codeInsight.NullableNotNullManager
 import com.intellij.codeInspection.dataFlow.DfaUtil
+import com.intellij.codeInspection.dataFlow.NullityInference
 import com.intellij.codeInspection.dataFlow.Nullness
+import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.impl.source.PsiFileImpl
+import com.intellij.psi.impl.source.PsiMethodImpl
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.annotations.Contract
 
@@ -125,6 +129,18 @@ Object foo(Object o) { if (o == null) return o.hashCode(); return 2; }
 ''')) == NOT_NULL
   }
 
+  void "test returning instanceof-ed variable via statement"() {
+    assert inferNullity(parse('''
+    String foo(Object o) { 
+      if (o instanceof String) return ((String)o); 
+      return "abc"; 
+    }''')) == NOT_NULL
+  }
+
+  void "test returning instanceof-ed variable via ternary"() {
+    assert inferNullity(parse('String foo(Object o) { return o instanceof String ? (String)o : "abc"; }')) == NOT_NULL
+  }
+  
   protected abstract Nullness inferNullity(PsiMethod method)
 
   protected PsiMethod parse(String method) {
@@ -133,9 +149,18 @@ Object foo(Object o) { if (o == null) return o.hashCode(); return 2; }
 
   static class LightInferenceTest extends NullityInferenceFromSourceTestCase {
     Nullness inferNullity(PsiMethod method) {
-      assert !((PsiFileImpl) method.containingFile).contentsLoaded
+      def file = (PsiFileImpl)method.containingFile
+      assert !file.contentsLoaded
       def result = NullableNotNullManager.isNotNull(method) ? NOT_NULL : NullableNotNullManager.isNullable(method) ? NULLABLE : UNKNOWN
-      assert !((PsiFileImpl) method.containingFile).contentsLoaded
+      assert !file.contentsLoaded
+
+      // check inference works same on both light and real AST
+      WriteCommandAction.runWriteCommandAction(project) {
+        file.viewProvider.document.insertString(0, ' ')
+        PsiDocumentManager.getInstance(project).commitAllDocuments()
+      }
+      assert method.node
+      assert result == NullityInference.inferNullity(method as PsiMethodImpl)
       return result
     }
 

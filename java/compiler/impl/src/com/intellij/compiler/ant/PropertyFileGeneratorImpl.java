@@ -36,7 +36,6 @@ import java.util.Set;
  * Generator for property files.
  *
  * @author Eugene Zhuravlev
- *         Date: Nov 27, 2004
  */
 public class PropertyFileGeneratorImpl extends PropertyFileGenerator {
   /**

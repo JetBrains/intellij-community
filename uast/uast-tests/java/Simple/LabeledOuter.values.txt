@@ -29,7 +29,7 @@ UFile (package = ) [public class LabeledOuter {...]
                                             USimpleNameReferenceExpression (identifier = first) [first] = (var first = 1)
                                             ULiteralExpression (value = 0) [0] = 0
                                         UBreakExpression (label = labeled) [break@labeled] = Nothing(break)
-                                        UastEmptyExpression [UastEmptyExpression] = NON-EVALUATED
+                                        UastEmptyExpression [UastEmptyExpression] = Undetermined
                             UBinaryExpression (operator = =) [second = 4] = 4
                                 USimpleNameReferenceExpression (identifier = second) [second] = Undetermined
                                 ULiteralExpression (value = 4) [4] = 4

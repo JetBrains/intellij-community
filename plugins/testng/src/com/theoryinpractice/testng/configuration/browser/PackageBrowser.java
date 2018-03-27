@@ -22,8 +22,6 @@ import com.intellij.ide.util.PackageChooserDialog;
 
 /**
  * @author Hani Suleiman
- *         Date: Jul 21, 2005
- *         Time: 12:56:02 PM
  */
 public class PackageBrowser extends BrowseModuleValueActionListener
 {

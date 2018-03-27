@@ -1,24 +1,12 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package org.jetbrains.java.decompiler.modules.decompiler.stats;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.code.InstructionSequence;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
-import org.jetbrains.java.decompiler.main.TextBuffer;
+import org.jetbrains.java.decompiler.util.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
@@ -34,9 +22,8 @@ import java.util.*;
 import java.util.Map.Entry;
 
 public class Statement implements IMatchable {
-
-  public static final int STATEDGE_ALL = 1 << 31;
-  public static final int STATEDGE_DIRECT_ALL = 1 << 30;
+  public static final int STATEDGE_ALL = 0x80000000;
+  public static final int STATEDGE_DIRECT_ALL = 0x40000000;
 
   public static final int DIRECTION_BACKWARD = 0;
   public static final int DIRECTION_FORWARD = 1;
@@ -47,14 +34,13 @@ public class Statement implements IMatchable {
   public static final int TYPE_SWITCH = 6;
   public static final int TYPE_TRYCATCH = 7;
   public static final int TYPE_BASICBLOCK = 8;
-  public static final int TYPE_FINALLY = 9;
+  //public static final int TYPE_FINALLY = 9;
   public static final int TYPE_SYNCRONIZED = 10;
   public static final int TYPE_PLACEHOLDER = 11;
   public static final int TYPE_CATCHALL = 12;
   public static final int TYPE_ROOT = 13;
   public static final int TYPE_DUMMYEXIT = 14;
   public static final int TYPE_SEQUENCE = 15;
-
 
   public static final int LASTBASICTYPE_IF = 0;
   public static final int LASTBASICTYPE_SWITCH = 1;
@@ -254,25 +240,15 @@ public class Statement implements IMatchable {
   }
 
   private void addEdgeDirectInternal(int direction, StatEdge edge, int edgetype) {
-
     Map<Integer, List<StatEdge>> mapEdges = direction == DIRECTION_BACKWARD ? mapPredEdges : mapSuccEdges;
     Map<Integer, List<Statement>> mapStates = direction == DIRECTION_BACKWARD ? mapPredStates : mapSuccStates;
 
-    List<StatEdge> lst = mapEdges.get(edgetype);
-    if (lst == null) {
-      mapEdges.put(edgetype, lst = new ArrayList<>());
-    }
-    lst.add(edge);
+    mapEdges.computeIfAbsent(edgetype, k -> new ArrayList<>()).add(edge);
 
-    List<Statement> lstStates = mapStates.get(edgetype);
-    if (lstStates == null) {
-      mapStates.put(edgetype, lstStates = new ArrayList<>());
-    }
-    lstStates.add(direction == DIRECTION_BACKWARD ? edge.getSource() : edge.getDestination());
+    mapStates.computeIfAbsent(edgetype, k -> new ArrayList<>()).add(direction == DIRECTION_BACKWARD ? edge.getSource() : edge.getDestination());
   }
 
   private void addEdgeInternal(int direction, StatEdge edge) {
-
     int type = edge.getType();
 
     int[] arrtypes;
@@ -480,13 +456,12 @@ public class Statement implements IMatchable {
   }
 
   public boolean containsStatementStrict(Statement stat) {
-
     if (stats.contains(stat)) {
       return true;
     }
 
-    for (int i = 0; i < stats.size(); i++) {
-      if (stats.get(i).containsStatementStrict(stat)) {
+    for (Statement st : stats) {
+      if (st.containsStatementStrict(stat)) {
         return true;
       }
     }
@@ -770,10 +745,6 @@ public class Statement implements IMatchable {
     return post;
   }
 
-  public void setPost(Statement post) {
-    this.post = post;
-  }
-
   public VBStyleCollection<Statement, Integer> getStats() {
     return stats;
   }
@@ -859,31 +830,34 @@ public class Statement implements IMatchable {
   public String toString() {
     return id.toString();
   }
-  
+
   // *****************************************************************************
   // IMatchable implementation
   // *****************************************************************************
-  
+
+  @Override
   public IMatchable findObject(MatchNode matchNode, int index) {
-    
     int node_type = matchNode.getType();
-    
+
     if (node_type == MatchNode.MATCHNODE_STATEMENT && !this.stats.isEmpty()) {
       String position = (String)matchNode.getRuleValue(MatchProperties.STATEMENT_POSITION);
-      if(position != null) {
-        if(position.matches("-?\\d+")) {
+      if (position != null) {
+        if (position.matches("-?\\d+")) {
           return this.stats.get((this.stats.size() + Integer.parseInt(position)) % this.stats.size()); // care for negative positions
         }
-      } else if(index < this.stats.size()) { // use 'index' parameter
+      }
+      else if (index < this.stats.size()) { // use 'index' parameter
         return this.stats.get(index);
       }
-    } else if(node_type == MatchNode.MATCHNODE_EXPRENT && this.exprents != null && !this.exprents.isEmpty()) {
+    }
+    else if (node_type == MatchNode.MATCHNODE_EXPRENT && this.exprents != null && !this.exprents.isEmpty()) {
       String position = (String)matchNode.getRuleValue(MatchProperties.EXPRENT_POSITION);
-      if(position != null) {
-        if(position.matches("-?\\d+")) {
+      if (position != null) {
+        if (position.matches("-?\\d+")) {
           return this.exprents.get((this.exprents.size() + Integer.parseInt(position)) % this.exprents.size()); // care for negative positions
         }
-      } else if(index < this.exprents.size()) { // use 'index' parameter
+      }
+      else if (index < this.exprents.size()) { // use 'index' parameter
         return this.exprents.get(index);
       }
     }
@@ -891,46 +865,45 @@ public class Statement implements IMatchable {
     return null;
   }
 
+  @Override
   public boolean match(MatchNode matchNode, MatchEngine engine) {
-    
-    if(matchNode.getType() != MatchNode.MATCHNODE_STATEMENT) {
+    if (matchNode.getType() != MatchNode.MATCHNODE_STATEMENT) {
       return false;
     }
-    
-    for(Entry<MatchProperties, RuleValue> rule : matchNode.getRules().entrySet()) {
-      switch(rule.getKey()) {
-      case STATEMENT_TYPE:
-        if(this.type != ((Integer)rule.getValue().value).intValue()) {
-          return false;
-        }
-        break;
-      case STATEMENT_STATSIZE:
-        if(this.stats.size() != ((Integer)rule.getValue().value).intValue()) {
-          return false;
-        }
-        break;
-      case STATEMENT_EXPRSIZE:
-        int exprsize = ((Integer)rule.getValue().value).intValue();
-        if(exprsize == -1) {
-          if(this.exprents != null) {
+
+    for (Entry<MatchProperties, RuleValue> rule : matchNode.getRules().entrySet()) {
+      switch (rule.getKey()) {
+        case STATEMENT_TYPE:
+          if (this.type != (Integer)rule.getValue().value) {
             return false;
           }
-        } else {
-          if(this.exprents == null || this.exprents.size() != exprsize) {
+          break;
+        case STATEMENT_STATSIZE:
+          if (this.stats.size() != (Integer)rule.getValue().value) {
             return false;
           }
-        }
-        break;
-      case STATEMENT_RET:
-        if(!engine.checkAndSetVariableValue((String)rule.getValue().value, this)) {
-          return false;
-        }
-        break;
+          break;
+        case STATEMENT_EXPRSIZE:
+          int exprsize = (Integer)rule.getValue().value;
+          if (exprsize == -1) {
+            if (this.exprents != null) {
+              return false;
+            }
+          }
+          else {
+            if (this.exprents == null || this.exprents.size() != exprsize) {
+              return false;
+            }
+          }
+          break;
+        case STATEMENT_RET:
+          if (!engine.checkAndSetVariableValue((String)rule.getValue().value, this)) {
+            return false;
+          }
+          break;
       }
-      
     }
-    
+
     return true;
   }
-  
 }

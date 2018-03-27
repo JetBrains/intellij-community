@@ -27,7 +27,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author anna
- * Date: 08-Aug-2008
  */
 public abstract class TypeConversionRule {
   public static final ExtensionPointName<TypeConversionRule> EP_NAME = ExtensionPointName.create("com.intellij.conversion.rule");

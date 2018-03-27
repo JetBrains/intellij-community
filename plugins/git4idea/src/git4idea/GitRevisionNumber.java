@@ -23,8 +23,7 @@ import com.intellij.openapi.vcs.changes.patch.BlobIndexUtil;
 import com.intellij.openapi.vcs.history.ShortVcsRevisionNumber;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.commands.GitCommand;
-import git4idea.commands.GitSimpleHandler;
+import git4idea.commands.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -212,16 +211,16 @@ public class GitRevisionNumber implements ShortVcsRevisionNumber {
    */
   @NotNull
   public static GitRevisionNumber resolve(Project project, VirtualFile vcsRoot, @NonNls String rev) throws VcsException {
-    GitSimpleHandler h = new GitSimpleHandler(project, vcsRoot, GitCommand.REV_LIST);
+    GitLineHandler h = new GitLineHandler(project, vcsRoot, GitCommand.REV_LIST);
     h.setSilent(true);
     h.addParameters("--timestamp", "--max-count=1", rev);
     h.endOptions();
-    final String output = h.run();
+    final String output = Git.getInstance().runCommand(h).getOutputOrThrow();
     return parseRevlistOutputAsRevisionNumber(h, output);
   }
 
   @NotNull
-  public static GitRevisionNumber parseRevlistOutputAsRevisionNumber(@NotNull GitSimpleHandler h, @NotNull String output)
+  public static GitRevisionNumber parseRevlistOutputAsRevisionNumber(@NotNull GitHandler h, @NotNull String output)
     throws VcsException
   {
     try {

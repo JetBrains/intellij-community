@@ -33,6 +33,7 @@ import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -123,7 +124,7 @@ public class NavBarPopup extends LightweightHint implements Disposable{
       final JBList list = getList();
       AccessibleContextUtil.setName(list, item.getText());
       if (0 <= myIndex && myIndex < list.getItemsCount()) {
-       ScrollingUtil.selectItem(list, myIndex);
+        ScrollingUtil.selectItem(list, myIndex);
       }
     }
     if (myPanel.isInFloatingMode()) {

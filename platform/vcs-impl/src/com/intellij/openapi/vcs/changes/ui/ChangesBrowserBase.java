@@ -78,7 +78,7 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
     setFocusable(false);
 
     JPanel topPanel = new JPanel(new BorderLayout());
-    topPanel.add(myToolbar.getComponent(), BorderLayout.CENTER);
+    topPanel.add(createToolbarComponent(), BorderLayout.CENTER);
 
     JComponent headerPanel = createHeaderPanel();
     if (headerPanel != null) topPanel.add(headerPanel, BorderLayout.EAST);
@@ -92,6 +92,10 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
     myShowDiffAction.registerCustomShortcutSet(this, null);
   }
 
+  @NotNull
+  protected JComponent createToolbarComponent() {
+    return myToolbar.getComponent();
+  }
 
   @NotNull
   protected abstract DefaultTreeModel buildTreeModel(boolean showFlatten);
@@ -210,7 +214,7 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      showDiff();
+      if (canShowDiff()) showDiff();
     }
   }
 

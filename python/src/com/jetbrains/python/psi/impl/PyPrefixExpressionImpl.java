@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -124,6 +125,18 @@ public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExp
   public ASTNode getNameElement() {
     final PsiElement op = getPsiOperator();
     return op != null ? op.getNode() : null;
+  }
+
+  @Nullable
+  @Override
+  public PyExpression getReceiver(@Nullable PyCallable resolvedCallee) {
+    return getOperand();
+  }
+
+  @NotNull
+  @Override
+  public List<PyExpression> getArguments(@Nullable PyCallable resolvedCallee) {
+    return Collections.emptyList();
   }
 
   @Nullable

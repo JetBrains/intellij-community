@@ -17,20 +17,29 @@ package com.intellij.diff.tools.util.text;
 
 import com.intellij.diff.comparison.ComparisonManager;
 import com.intellij.diff.comparison.ComparisonPolicy;
+import com.intellij.diff.comparison.ComparisonUtil;
 import com.intellij.diff.fragments.LineFragment;
+import com.intellij.diff.fragments.LineFragmentImpl;
 import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.base.IgnorePolicy;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
 import com.intellij.diff.util.DiffUserDataKeysEx.DiffComputer;
+import com.intellij.diff.util.DiffUtil;
+import com.intellij.diff.util.Range;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.diff.tools.util.base.HighlightPolicy.*;
 import static com.intellij.diff.tools.util.base.IgnorePolicy.*;
+import static java.util.Collections.singletonList;
 
 public class SimpleTextDiffProvider extends TwosideTextDiffProviderBase implements TwosideTextDiffProvider {
   static final DiffComputer DEFAULT_COMPUTER = (text1, text2, policy, innerChanges, indicator) -> {
@@ -72,15 +81,78 @@ public class SimpleTextDiffProvider extends TwosideTextDiffProviderBase implemen
 
   @NotNull
   @Override
-  protected List<LineFragment> doCompare(@NotNull CharSequence text1,
-                                         @NotNull CharSequence text2,
-                                         @NotNull IgnorePolicy ignorePolicy,
-                                         boolean innerFragments,
-                                         @NotNull ProgressIndicator indicator) {
-    ComparisonPolicy policy = ignorePolicy.getComparisonPolicy();
-    return myDiffComputer.compute(text1, text2, policy, innerFragments, indicator);
+  protected List<List<LineFragment>> doCompare(@NotNull CharSequence text1,
+                                               @NotNull CharSequence text2,
+                                               @NotNull LineOffsets lineOffsets1,
+                                               @NotNull LineOffsets lineOffsets2,
+                                               @NotNull List<Range> linesRanges,
+                                               @NotNull IgnorePolicy ignorePolicy,
+                                               boolean innerFragments,
+                                               @NotNull ProgressIndicator indicator) {
+    return compareRange(myDiffComputer, text1, text2, lineOffsets1, lineOffsets2, linesRanges, ignorePolicy, innerFragments, indicator);
   }
 
+  @NotNull
+  public static List<List<LineFragment>> compareRange(@NotNull DiffComputer diffComputer,
+                                                      @NotNull CharSequence text1,
+                                                      @NotNull CharSequence text2,
+                                                      @NotNull LineOffsets lineOffsets1,
+                                                      @NotNull LineOffsets lineOffsets2,
+                                                      @NotNull List<Range> linesRanges,
+                                                      @NotNull IgnorePolicy ignorePolicy,
+                                                      boolean innerFragments,
+                                                      @NotNull ProgressIndicator indicator) {
+    ComparisonPolicy policy = ignorePolicy.getComparisonPolicy();
+
+    List<List<LineFragment>> result = new ArrayList<>();
+    for (Range range : linesRanges) {
+      CharSequence content1 = DiffUtil.getLinesContent(text1, lineOffsets1, range.start1, range.end1, true);
+      CharSequence content2 = DiffUtil.getLinesContent(text2, lineOffsets2, range.start2, range.end2, true);
+
+      if (range.start1 == range.end1 || range.start2 == range.end2) {
+        boolean isEquals = ComparisonUtil.isEquals(content1, content2, policy);
+        result.add(singletonList(createSimpleFragment(range, lineOffsets1, lineOffsets2, isEquals)));
+      }
+      else {
+        List<LineFragment> fragments = diffComputer.compute(content1, content2, policy, innerFragments, indicator);
+
+        int startOffset1 = lineOffsets1.getLineStart(range.start1);
+        int startOffset2 = lineOffsets2.getLineStart(range.start2);
+        result.add(ContainerUtil.map(fragments, fragment -> {
+          return transferFragment(fragment, range.start1, range.start2, startOffset1, startOffset2);
+        }));
+      }
+    }
+
+    return result;
+  }
+
+  @NotNull
+  public static LineFragment createSimpleFragment(@NotNull Range linesRange,
+                                                  @NotNull LineOffsets lineOffsets1,
+                                                  @NotNull LineOffsets lineOffsets2,
+                                                  boolean isEquals) {
+    TextRange textRange1 = DiffUtil.getLinesRange(lineOffsets1, linesRange.start1, linesRange.end1, true);
+    TextRange textRange2 = DiffUtil.getLinesRange(lineOffsets2, linesRange.start2, linesRange.end2, true);
+
+    return new LineFragmentImpl(linesRange.start1, linesRange.end1,
+                                linesRange.start2, linesRange.end2,
+                                textRange1.getStartOffset(), textRange1.getEndOffset(),
+                                textRange2.getStartOffset(), textRange2.getEndOffset(),
+                                isEquals ? Collections.emptyList() : null);
+  }
+
+  @NotNull
+  public static LineFragment transferFragment(@NotNull LineFragment fragment,
+                                              int startLine1, int startLine2,
+                                              int startOffset1, int startOffset2) {
+    if (startLine1 == 0 && startLine2 == 0 && startOffset1 == 0 && startOffset2 == 0) return fragment;
+    return new LineFragmentImpl(fragment.getStartLine1() + startLine1, fragment.getEndLine1() + startLine1,
+                                fragment.getStartLine2() + startLine2, fragment.getEndLine2() + startLine2,
+                                fragment.getStartOffset1() + startOffset1, fragment.getEndOffset1() + startOffset1,
+                                fragment.getStartOffset2() + startOffset2, fragment.getEndOffset2() + startOffset2,
+                                fragment.getInnerFragments());
+  }
 
   public static class NoIgnore extends SimpleTextDiffProvider implements TwosideTextDiffProvider.NoIgnore {
     public NoIgnore(@NotNull TextDiffSettings settings, @NotNull Runnable rediff, @NotNull Disposable disposable) {
@@ -93,9 +165,21 @@ public class SimpleTextDiffProvider extends TwosideTextDiffProviderBase implemen
 
     @NotNull
     @Override
-    public List<LineFragment> compare(@NotNull CharSequence text1, @NotNull CharSequence text2, @NotNull ProgressIndicator indicator) {
+    public List<LineFragment> compare(@NotNull CharSequence text1,
+                                      @NotNull CharSequence text2,
+                                      @NotNull ProgressIndicator indicator) {
       //noinspection ConstantConditions
       return super.compare(text1, text2, indicator);
+    }
+
+    @NotNull
+    @Override
+    public List<List<LineFragment>> compare(@NotNull CharSequence text1,
+                                            @NotNull CharSequence text2,
+                                            @NotNull List<Range> linesRanges,
+                                            @NotNull ProgressIndicator indicator) {
+      //noinspection ConstantConditions
+      return super.compare(text1, text2, linesRanges, indicator);
     }
   }
 }

@@ -72,11 +72,17 @@ class JavaCompletionPolicy extends CompletionPolicy {
   private static boolean shouldSuggestJavaTarget(PsiJavaCodeReferenceElement ref, @NotNull PsiElement target) {
     if (PsiTreeUtil.getParentOfType(ref, PsiPackageStatement.class) != null) return false;
 
+    PsiAnnotation anno = PsiTreeUtil.getParentOfType(ref, PsiAnnotation.class);
     if (!ref.isQualified() && target instanceof PsiPackage) return false;
     if (target instanceof PsiClass) {
       if (isCyclicInheritance(ref, target)) return false;
-      if (ref.getParent() instanceof PsiAnnotation && !((PsiClass)target).isAnnotationType()) {
-        return false; // red code
+      if (anno != null && !((PsiClass)target).isAnnotationType()) {
+        if (ref.getParent() == anno) {
+          return false; // red code
+        }
+        if (PsiTreeUtil.isAncestor(anno.getNameReferenceElement(), ref, true)) {
+          return false; // inner annotation
+        }
       }
     }
     if (target instanceof PsiVariable && PsiTreeUtil.isAncestor(target, ref, false)) {
@@ -87,7 +93,7 @@ class JavaCompletionPolicy extends CompletionPolicy {
       // https://youtrack.jetbrains.com/issue/IDEA-174744 on red code
       return false;
     }
-    if (PsiTreeUtil.getParentOfType(ref, PsiAnnotation.class) != null) {
+    if (anno != null) {
       if (target instanceof PsiMethod || target instanceof PsiField && !ExpressionUtils.isConstant((PsiField)target)) {
         return false; // red code;
       }
@@ -138,6 +144,12 @@ class JavaCompletionPolicy extends CompletionPolicy {
       PsiJavaCodeReferenceElement reference = ((PsiNewExpression)parent).getClassOrAnonymousClassReference();
       if (reference == null || reference.resolve() == null) {
         return false; // this.new Foo isn't completed when there's no "Foo"
+      }
+    }
+    if (leaf.textMatches(PsiKeyword.IMPLEMENTS)) {
+      PsiClass cls = PsiTreeUtil.getParentOfType(leaf, PsiClass.class);
+      if (cls == null || cls.isInterface()) {
+        return false;
       }
     }
     return true;

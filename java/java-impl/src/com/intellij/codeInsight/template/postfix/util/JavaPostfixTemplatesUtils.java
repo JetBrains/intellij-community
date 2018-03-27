@@ -1,21 +1,6 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.postfix.util;
 
-import com.intellij.codeInsight.CodeInsightServicesUtil;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateExpressionSelector;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateExpressionSelectorBase;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplatePsiInfo;
@@ -23,6 +8,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
@@ -31,6 +17,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.BoolUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,16 +32,21 @@ public abstract class JavaPostfixTemplatesUtils {
   }
 
   public static PostfixTemplateExpressionSelector atLeastJava8Selector(final PostfixTemplateExpressionSelector selector) {
+    return minimalLanguageLevelSelector(selector, LanguageLevel.JDK_1_8);
+  }
+
+  public static PostfixTemplateExpressionSelector minimalLanguageLevelSelector(@NotNull PostfixTemplateExpressionSelector selector,
+                                                                               @NotNull LanguageLevel minimalLevel) {
     return new PostfixTemplateExpressionSelector() {
       @Override
       public boolean hasExpression(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
-        return PsiUtil.isLanguageLevel8OrHigher(context) && selector.hasExpression(context, copyDocument, newOffset);
+        return PsiUtil.getLanguageLevel(context).isAtLeast(minimalLevel) && selector.hasExpression(context, copyDocument, newOffset);
       }
 
       @NotNull
       @Override
       public List<PsiElement> getExpressions(@NotNull PsiElement context, @NotNull Document document, int offset) {
-        return PsiUtil.isLanguageLevel8OrHigher(context)
+        return PsiUtil.getLanguageLevel(context).isAtLeast(minimalLevel)
                ? selector.getExpressions(context, document, offset)
                : Collections.emptyList();
       }
@@ -66,7 +58,7 @@ public abstract class JavaPostfixTemplatesUtils {
       }
     };
   }
-  
+
   public static PostfixTemplateExpressionSelector selectorTopmost() {
     return selectorTopmost(Conditions.alwaysTrue());
   }
@@ -136,7 +128,8 @@ public abstract class JavaPostfixTemplatesUtils {
     @Override
     public PsiExpression getNegatedExpression(@NotNull PsiElement element) {
       assert element instanceof PsiExpression;
-      return CodeInsightServicesUtil.invertCondition((PsiExpression)element);
+      String negatedExpressionText = BoolUtils.getNegatedExpressionText((PsiExpression)element);
+      return JavaPsiFacade.getElementFactory(element.getProject()).createExpressionFromText(negatedExpressionText, element);
     }
   };
 
@@ -190,7 +183,7 @@ public abstract class JavaPostfixTemplatesUtils {
 
   @Contract("null -> false")
   public static boolean isArray(@Nullable PsiType type) {
-    return type != null && type instanceof PsiArrayType;
+    return type instanceof PsiArrayType;
   }
 
   @Contract("null -> false")

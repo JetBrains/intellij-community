@@ -16,6 +16,7 @@
 package com.intellij.java.codeInsight
 
 import com.intellij.JavaTestUtil
+import com.intellij.codeInsight.generation.OverrideImplementExploreUtil
 import com.intellij.codeInsight.generation.OverrideImplementUtil
 import com.intellij.codeInsight.generation.OverrideImplementsAnnotationsHandler
 import com.intellij.idea.ActionsBundle
@@ -50,6 +51,12 @@ class OverrideImplementTest extends LightCodeInsightFixtureTestCase {
   void testOverrideInInterface() { doTest(false) }
 
   void testMultipleInheritanceWithThrowables() { doTest(true) }
+
+  void testBrokenMethodDeclaration() {
+    myFixture.addClass("interface A { m();}")
+    def psiClass = myFixture.addClass("class B implements A {<caret>}")
+    assertEmpty(OverrideImplementExploreUtil.getMethodSignaturesToImplement(psiClass))
+  }
 
   void testImplementInInterface() {
     myFixture.addClass """\

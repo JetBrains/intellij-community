@@ -120,10 +120,15 @@ public class JpsModuleRootModelSerializer {
       else if (LIBRARY_TYPE.equals(type)) {
         String name = orderEntry.getAttributeValue(NAME_ATTRIBUTE);
         String level = orderEntry.getAttributeValue(LEVEL_ATTRIBUTE);
-        final JpsLibraryDependency dependency =
-          dependenciesList.addLibraryDependency(elementFactory.createLibraryReference(name, JpsLibraryTableSerializer
-            .createLibraryTableReference(level)));
-        loadModuleDependencyProperties(dependency, orderEntry);
+        if (name != null && level != null) {
+          JpsElementReference<? extends JpsCompositeElement> ref = JpsLibraryTableSerializer.createLibraryTableReference(level);
+          final JpsLibraryDependency dependency = dependenciesList.addLibraryDependency(elementFactory.createLibraryReference(name, ref));
+          loadModuleDependencyProperties(dependency, orderEntry);
+        }
+        else {
+          String missing = name == null ? NAME_ATTRIBUTE : LEVEL_ATTRIBUTE;
+          LOG.warn("Incorrect '" + LIBRARY_TYPE + "' entry in '" + module.getName() + "' module: '" + missing + "' attribute isn't specified");
+        }
       }
       else if (MODULE_LIBRARY_TYPE.equals(type)) {
         final Element moduleLibraryElement = orderEntry.getChild(LIBRARY_TAG);

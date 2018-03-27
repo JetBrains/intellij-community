@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.griffon;
 
 import com.intellij.lang.properties.IProperty;
@@ -33,17 +19,20 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.resolve.GrImportContributorBase;
+import org.jetbrains.plugins.groovy.lang.resolve.imports.GrImportContributor;
+import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyImport;
+import org.jetbrains.plugins.groovy.lang.resolve.imports.StarImport;
 import org.jetbrains.plugins.groovy.mvc.MvcFramework;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author peter
  */
-public class GriffonDefaultImportContributor extends GrImportContributorBase {
+public class GriffonDefaultImportContributor implements GrImportContributor {
 
   private static Couple<List<String>> getDefaultImports(@NotNull final Module module) {
     return CachedValuesManager.getManager(module.getProject()).getCachedValue(module, new CachedValueProvider<Couple<List<String>>>() {
@@ -82,8 +71,7 @@ public class GriffonDefaultImportContributor extends GrImportContributorBase {
   }
 
   @NotNull
-  @Override
-  public List<String> appendImplicitlyImportedPackages(@NotNull GroovyFile file) {
+  private static List<String> getImplicitlyImportedPackages(@NotNull GroovyFile file) {
     Module module = ModuleUtilCore.findModuleForPsiElement(file);
     MvcFramework framework = MvcFramework.getInstance(module);
     if (framework instanceof GriffonFramework) {
@@ -111,5 +99,11 @@ public class GriffonDefaultImportContributor extends GrImportContributorBase {
     }
 
     return Collections.emptyList();
+  }
+
+  @NotNull
+  @Override
+  public List<GroovyImport> getFileImports(@NotNull GroovyFile file) {
+    return getImplicitlyImportedPackages(file).stream().map(StarImport::new).collect(Collectors.toList());
   }
 }

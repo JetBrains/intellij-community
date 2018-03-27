@@ -114,3 +114,7 @@ interface UCallExpression : UExpression, UResolvable {
     return ref + "(" + valueArguments.joinToString { it.asRenderString() } + ")"
   }
 }
+
+interface UCallExpressionEx : UCallExpression {
+  fun getArgumentForParameter(i: Int): UExpression?
+}

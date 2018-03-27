@@ -18,8 +18,6 @@ package hg4idea.test;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.test.VcsPlatformTest;
 import org.jetbrains.annotations.NotNull;
@@ -58,30 +56,25 @@ public abstract class HgPlatformTest extends VcsPlatformTest {
   public void setUp() throws Exception {
     super.setUp();
 
-    cd(myProjectRoot);
+    cd(projectRoot);
     myVcs = HgVcs.getInstance(myProject);
     assertNotNull(myVcs);
     myVcs.getGlobalSettings().setHgExecutable(HgExecutor.getHgExecutable());
     myVcs.getProjectSettings().setCheckIncomingOutgoing(false);
     myVcs.checkVersion();
     hg("version");
-    createRepository(myProjectRoot);
-    myRepository = myProjectRoot;
+    createRepository(projectRoot);
+    myRepository = projectRoot;
     setUpHgrc(myRepository);
   }
 
   @Override
   protected void tearDown() throws Exception {
     try {
-      ((ChangeListManagerImpl)ChangeListManager.getInstance(myProject)).waitEverythingDoneInTestMode();
+      myVcs.getGlobalSettings().setHgExecutable(null);
     }
     finally {
-      try {
-        myVcs.getGlobalSettings().setHgExecutable(null);
-      }
-      finally {
-        super.tearDown();
-      }
+      super.tearDown();
     }
   }
 

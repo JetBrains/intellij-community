@@ -29,7 +29,10 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.NoSuchElementException;
+import java.util.Objects;
 
 import static com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.*;
 import static com.intellij.util.ObjectUtils.tryCast;
@@ -460,16 +463,17 @@ class TerminalBlock {
   /**
    * Converts this TerminalBlock to PsiElement (either PsiStatement or PsiCodeBlock)
    *
+   * @param ct CommentTracker to mark statements as unchanged
    * @param factory factory to use to create new element if necessary
    * @return the PsiElement
    */
-  PsiElement convertToElement(PsiElementFactory factory) {
+  PsiElement convertToElement(CommentTracker ct, PsiElementFactory factory) {
     if (myStatements.length == 1) {
       return myStatements[0];
     }
     PsiCodeBlock block = factory.createCodeBlock();
     for (PsiStatement statement : myStatements) {
-      block.add(statement);
+      block.add(ct.markUnchanged(statement));
     }
     return block;
   }
@@ -492,15 +496,15 @@ class TerminalBlock {
     }
   }
 
-  String generate() {
-    return generate(false);
+  String generate(CommentTracker ct) {
+    return generate(ct, false);
   }
 
-  String generate(boolean noStreamForEmpty) {
+  String generate(CommentTracker ct, boolean noStreamForEmpty) {
     if(noStreamForEmpty && myOperations.length == 1 && myOperations[0] instanceof CollectionStream) {
       return ParenthesesUtils.getText(myOperations[0].getExpression(), ParenthesesUtils.POSTFIX_PRECEDENCE);
     }
-    return StreamEx.of(myOperations).map(Operation::createReplacement).joining();
+    return StreamEx.of(myOperations).map(operation -> operation.createReplacement(ct)).joining();
   }
 
   @NotNull

@@ -66,7 +66,7 @@ public class CpuTimings {
         return timings;
       }
       if (i == maxIterations) {
-        System.out.printf("CPU Timings: %d, sd=%.2f; not stable enough, giving up", timings.average, timings.stdDev);
+        System.out.printf("CPU Timings: %d, sd=%.2f; not stable enough, giving up%n", timings.average, timings.stdDev);
         return timings;
       }
       if (i > 3) {

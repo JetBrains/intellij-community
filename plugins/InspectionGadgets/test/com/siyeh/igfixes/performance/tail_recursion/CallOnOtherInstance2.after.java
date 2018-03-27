@@ -3,7 +3,8 @@ class CallOnOtherInstance2 {
   private Something something;
   private CallOnOtherInstance2 original;
 
-    public Something foo() {
+    public Something foo() //comment
+    {
         CallOnOtherInstance2 other = this;
         while (true) {
             if (!other.duplicate) {

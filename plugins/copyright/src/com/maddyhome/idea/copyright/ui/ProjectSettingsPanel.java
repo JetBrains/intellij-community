@@ -139,10 +139,11 @@ public class ProjectSettingsPanel {
 
       @Override
       public boolean canCreateElement() {
-        return !myProfilesModel.getAllProfiles().isEmpty();
+        return true;
       }
     };
-    ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myScopeMappingTable, producer);
+    ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myScopeMappingTable, producer)
+                                                 .setAddActionUpdater(e -> !myProfilesModel.getAllProfiles().isEmpty());
     return JBUI.Panels.simplePanel(0, 10)
       .addToTop(component)
       .addToCenter(decorator.createPanel())

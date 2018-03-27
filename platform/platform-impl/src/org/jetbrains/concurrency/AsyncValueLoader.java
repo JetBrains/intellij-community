@@ -161,7 +161,7 @@ public abstract class AsyncValueLoader<T> {
 
   public final void set(@NotNull T result) {
     Promise<T> oldValue = ref.getAndSet(Promise.resolve(result));
-    if (oldValue != null && oldValue instanceof AsyncPromise) {
+    if (oldValue instanceof AsyncPromise) {
       rejectAndDispose((AsyncPromise<T>)oldValue);
     }
   }

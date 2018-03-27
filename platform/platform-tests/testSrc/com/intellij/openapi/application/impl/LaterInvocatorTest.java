@@ -660,4 +660,35 @@ public class LaterInvocatorTest extends PlatformTestCase {
     }).assertTiming();
 
   }
+
+  private final JDialog myModalDialog = new JDialog((Dialog)null, true);
+
+  public void testModalityStateForNonDisplayedDialogGetsActualizedWhenItIsDisplayed() {
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      ModalityState state = ModalityState.stateForComponent(myModalDialog);
+      AtomicBoolean invoked = new AtomicBoolean();
+      ApplicationManager.getApplication().invokeLater(() -> invoked.set(true), state);
+      
+      LaterInvocator.enterModal("some object");
+
+      UIUtil.dispatchAllInvocationEvents();
+      assertFalse(invoked.get());
+      
+      LaterInvocator.enterModal(myModalDialog);
+
+      UIUtil.dispatchAllInvocationEvents();
+      assertTrue(invoked.get());
+    });
+  }
+
+  public void testModalityStateWorksImmediately() {
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      ModalityState state = ModalityState.stateForComponent(myModalDialog);
+      AtomicBoolean invoked = new AtomicBoolean();
+      ApplicationManager.getApplication().invokeLater(() -> invoked.set(true), state);
+      
+      UIUtil.dispatchAllInvocationEvents();
+      assertTrue(invoked.get());
+    });
+  }
 }

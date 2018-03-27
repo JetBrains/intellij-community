@@ -1,11 +1,13 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
-import com.intellij.openapi.util.io.ByteSequence;
+import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.CommonClassNames;
@@ -30,7 +32,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.*;
-import org.jetbrains.plugins.groovy.lang.psi.stubs.index.ByteSequenceExternalizer;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.index.ByteArraySequenceExternalizer;
 
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
@@ -42,15 +44,15 @@ import static com.intellij.psi.impl.compiled.ClsFileImpl.EMPTY_ATTRIBUTES;
 import static org.jetbrains.org.objectweb.asm.Opcodes.ACC_STATIC;
 import static org.jetbrains.org.objectweb.asm.Opcodes.ACC_SYNTHETIC;
 
-public class GroovyTraitMethodsFileIndex extends SingleEntryFileBasedIndexExtension<ByteSequence> {
+public class GroovyTraitMethodsFileIndex extends SingleEntryFileBasedIndexExtension<ByteArraySequence> {
 
   private static final Logger LOG = Logger.getInstance(GroovyTraitMethodsFileIndex.class);
 
-  private static final ID<Integer, ByteSequence> INDEX_ID = ID.create("groovy.trait.methods");
+  private static final ID<Integer, ByteArraySequence> INDEX_ID = ID.create("groovy.trait.methods");
   private static final String HELPER_SUFFIX = "$Trait$Helper.class";
 
   private final InputFilter myFilter;
-  private final SingleEntryIndexer<ByteSequence> myIndexer;
+  private final SingleEntryIndexer<ByteArraySequence> myIndexer;
 
   public GroovyTraitMethodsFileIndex() {
     myFilter = new DefaultFileTypeSpecificInputFilter(JavaClassFileType.INSTANCE) {
@@ -59,9 +61,9 @@ public class GroovyTraitMethodsFileIndex extends SingleEntryFileBasedIndexExtens
         return StringUtil.endsWith(file.getNameSequence(), HELPER_SUFFIX);
       }
     };
-    myIndexer = new SingleEntryIndexer<ByteSequence>(false) {
+    myIndexer = new SingleEntryIndexer<ByteArraySequence>(false) {
       @Override
-      protected ByteSequence computeValue(@NotNull FileContent inputData) {
+      protected ByteArraySequence computeValue(@NotNull FileContent inputData) {
         return serialize(index(inputData.getFile(), inputData.getContent()));
       }
     };
@@ -69,7 +71,7 @@ public class GroovyTraitMethodsFileIndex extends SingleEntryFileBasedIndexExtens
 
   @NotNull
   @Override
-  public ID<Integer, ByteSequence> getName() {
+  public ID<Integer, ByteArraySequence> getName() {
     return INDEX_ID;
   }
 
@@ -86,22 +88,22 @@ public class GroovyTraitMethodsFileIndex extends SingleEntryFileBasedIndexExtens
 
   @NotNull
   @Override
-  public SingleEntryIndexer<ByteSequence> getIndexer() {
+  public SingleEntryIndexer<ByteArraySequence> getIndexer() {
     return myIndexer;
   }
 
   @NotNull
   @Override
-  public DataExternalizer<ByteSequence> getValueExternalizer() {
-    return ByteSequenceExternalizer.INSTANCE;
+  public DataExternalizer<ByteArraySequence> getValueExternalizer() {
+    return ByteArraySequenceExternalizer.INSTANCE;
   }
 
   @Contract("null -> null")
-  private static ByteSequence serialize(@Nullable PsiJavaFileStub stub) {
+  private static ByteArraySequence serialize(@Nullable PsiJavaFileStub stub) {
     if (stub == null) return null;
     BufferExposingByteArrayOutputStream buffer = new BufferExposingByteArrayOutputStream();
     ApplicationManager.getApplication().runReadAction(() -> SerializationManagerEx.getInstanceEx().serialize(stub, buffer));
-    return new ByteSequence(buffer.getInternalBuffer(), 0, buffer.size());
+    return new ByteArraySequence(buffer.getInternalBuffer(), 0, buffer.size());
   }
 
   @Nullable
@@ -178,12 +180,12 @@ public class GroovyTraitMethodsFileIndex extends SingleEntryFileBasedIndexExtens
 
     int key = FileBasedIndex.getFileId(helperFile);
 
-    List<ByteSequence> byteSequences = FileBasedIndex.getInstance().getValues(INDEX_ID, key, trait.getResolveScope());
+    List<ByteArraySequence> byteSequences = FileBasedIndex.getInstance().getValues(INDEX_ID, key, trait.getResolveScope());
     if (byteSequences.isEmpty()) return Collections.emptyList();
 
     SerializationManagerEx manager = SerializationManagerEx.getInstanceEx();
     List<PsiMethod> result = new ArrayList<>();
-    for (ByteSequence byteSequence : byteSequences) {
+    for (ByteArraySequence byteSequence : byteSequences) {
       Stub root;
       try {
         root = manager.deserialize(new ByteArrayInputStream(byteSequence.getBytes()));

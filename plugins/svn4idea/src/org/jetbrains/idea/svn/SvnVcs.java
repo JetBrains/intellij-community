@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 
 package org.jetbrains.idea.svn;
@@ -29,8 +15,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
@@ -80,19 +64,13 @@ import org.jetbrains.idea.svn.properties.PropertyValue;
 import org.jetbrains.idea.svn.rollback.SvnRollbackEnvironment;
 import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusType;
-import org.jetbrains.idea.svn.svnkit.SvnKitManager;
 import org.jetbrains.idea.svn.update.SvnIntegrateEnvironment;
 import org.jetbrains.idea.svn.update.SvnUpdateEnvironment;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.function.Function;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
@@ -111,8 +89,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   private static final VcsKey ourKey = createKey(VCS_NAME);
   public static final Topic<Runnable> WC_CONVERTED = new Topic<>("WC_CONVERTED", Runnable.class);
-  private final Map<String, Map<String, Pair<PropertyValue, Trinity<Long, Long, Long>>>> myPropertyCache =
-    createSoftMap();
 
   @NotNull private final SvnConfiguration myConfiguration;
   private final SvnEntriesFileListener myEntriesFileListener;
@@ -153,8 +129,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   private SvnCheckoutProvider myCheckoutProvider;
 
   @NotNull private final ClientFactory cmdClientFactory;
-  @NotNull private final ClientFactory svnKitClientFactory;
-  @NotNull private final SvnKitManager svnKitManager;
 
   private final boolean myLogExceptions;
 
@@ -167,8 +141,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     myAuthNotifier = new SvnAuthenticationNotifier(this);
 
     cmdClientFactory = new CmdClientFactory(this);
-    svnKitClientFactory = new SvnKitClientFactory(this);
-    svnKitManager = new SvnKitManager(this);
 
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
     myAddConfirmation = vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.ADD, this);
@@ -332,8 +304,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
     myAuthNotifier.init();
     mySvnBranchPointsCalculator = new SvnBranchPointsCalculator(this);
-
-    svnKitManager.activate();
 
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       checkCommandLineVersion();
@@ -507,46 +477,13 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     return mySvnDiffProvider;
   }
 
-  private static Trinity<Long, Long, Long> getTimestampForPropertiesChange(final File ioFile, final boolean isDir) {
-    final File dir = isDir ? ioFile : ioFile.getParentFile();
-    final String relPath = SVNAdminUtil.getPropPath(ioFile.getName(), isDir ? SVNNodeKind.DIR : SVNNodeKind.FILE, false);
-    final String relPathBase = SVNAdminUtil.getPropBasePath(ioFile.getName(), isDir ? SVNNodeKind.DIR : SVNNodeKind.FILE, false);
-    final String relPathRevert = SVNAdminUtil.getPropRevertPath(ioFile.getName(), isDir ? SVNNodeKind.DIR : SVNNodeKind.FILE, false);
-    return new Trinity<>(new File(dir, relPath).lastModified(), new File(dir, relPathBase).lastModified(),
-                         new File(dir, relPathRevert).lastModified());
-  }
-
-  private static boolean trinitiesEqual(final Trinity<Long, Long, Long> t1, final Trinity<Long, Long, Long> t2) {
-    if (t2.first == 0 && t2.second == 0 && t2.third == 0) return false;
-    return t1.equals(t2);
-  }
-
   @Nullable
-  public PropertyValue getPropertyWithCaching(final VirtualFile file, final String propName) throws VcsException {
-    Map<String, Pair<PropertyValue, Trinity<Long, Long, Long>>> cachedMap = myPropertyCache.get(keyForVf(file));
-    final Pair<PropertyValue, Trinity<Long, Long, Long>> cachedValue = cachedMap == null ? null : cachedMap.get(propName);
-
-    final File ioFile = virtualToIoFile(file);
-    final Trinity<Long, Long, Long> tsTrinity = getTimestampForPropertiesChange(ioFile, file.isDirectory());
-
-    if (cachedValue != null) {
-      // zero means that a file was not found
-      if (trinitiesEqual(cachedValue.getSecond(), tsTrinity)) {
-        return cachedValue.getFirst();
-      }
-    }
-
+  public PropertyValue getPropertyWithCaching(@NotNull VirtualFile file, @NotNull String propName) throws VcsException {
+    // TODO Method is called in EDT - fix
+    File ioFile = virtualToIoFile(file);
     PropertyClient client = getFactory(ioFile).createPropertyClient();
-    final PropertyValue value = client.getProperty(SvnTarget.fromFile(ioFile, SVNRevision.WORKING), propName, false, SVNRevision.WORKING);
 
-    if (cachedMap == null) {
-      cachedMap = new HashMap<>();
-      myPropertyCache.put(keyForVf(file), cachedMap);
-    }
-
-    cachedMap.put(propName, Pair.create(value, tsTrinity));
-
-    return value;
+    return client.getProperty(Target.on(ioFile, Revision.WORKING), propName, false, Revision.WORKING);
   }
 
   @Override
@@ -573,13 +510,13 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   @Nullable
-  public Info getInfo(@NotNull SVNURL url, SVNRevision pegRevision, SVNRevision revision) throws SvnBindException {
-    return getFactory().createInfoClient().doInfo(SvnTarget.fromURL(url, pegRevision), revision);
+  public Info getInfo(@NotNull Url url, Revision pegRevision, Revision revision) throws SvnBindException {
+    return getFactory().createInfoClient().doInfo(Target.on(url, pegRevision), revision);
   }
 
   @Nullable
-  public Info getInfo(@NotNull SVNURL url, SVNRevision revision) throws SvnBindException {
-    return getInfo(url, SVNRevision.UNDEFINED, revision);
+  public Info getInfo(@NotNull Url url, Revision revision) throws SvnBindException {
+    return getInfo(url, Revision.UNDEFINED, revision);
   }
 
   @Nullable
@@ -594,7 +531,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   @Nullable
   public Info getInfo(@NotNull File ioFile) {
-    return getInfo(ioFile, SVNRevision.UNDEFINED);
+    return getInfo(ioFile, Revision.UNDEFINED);
   }
 
   public void collectInfo(@NotNull Collection<File> files, @Nullable InfoConsumer handler) {
@@ -618,9 +555,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
           }
         }
       }
-      catch (SVNException e) {
-        handleInfoException(new SvnBindException(e));
-      }
       catch (SvnBindException e) {
         handleInfoException(e);
       }
@@ -628,7 +562,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   @Nullable
-  public Info getInfo(@NotNull File ioFile, @NotNull SVNRevision revision) {
+  public Info getInfo(@NotNull File ioFile, @NotNull Revision revision) {
     Info result = null;
 
     try {
@@ -645,8 +579,8 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     if (!myLogExceptions ||
         SvnUtil.isUnversionedOrNotFound(e) ||
         // do not log working copy format vs client version inconsistencies as errors
-        e.contains(SVNErrorCode.WC_UNSUPPORTED_FORMAT) ||
-        e.contains(SVNErrorCode.WC_UPGRADE_REQUIRED)) {
+        e.contains(ErrorCode.WC_UNSUPPORTED_FORMAT) ||
+        e.contains(ErrorCode.WC_UPGRADE_REQUIRED)) {
       LOG.debug(e);
     }
     else {
@@ -701,8 +635,8 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   @Nullable
   @Override
   public VcsRevisionNumber parseRevisionNumber(final String revisionNumberString) {
-    final SVNRevision revision = SVNRevision.parse(revisionNumberString);
-    if (revision.equals(SVNRevision.UNDEFINED)) {
+    final Revision revision = Revision.parse(revisionNumberString);
+    if (revision.equals(Revision.UNDEFINED)) {
       return null;
     }
     return new SvnRevisionNumber(revision);
@@ -767,10 +701,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     return myMergeProvider;
   }
 
-  private static String keyForVf(final VirtualFile vf) {
-    return vf.getUrl();
-  }
-
   @Override
   public boolean allowsNestedRoots() {
     return true;
@@ -788,7 +718,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
       if (vf == null) continue;
 
       File ioFile = virtualToIoFile(vf);
-      SVNURL url = getSvnFileUrlMapping().getUrlForFile(ioFile);
+      Url url = getSvnFileUrlMapping().getUrlForFile(ioFile);
       if (url == null) {
         url = SvnUtil.getUrl(this, ioFile);
         if (url == null) {
@@ -807,10 +737,10 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   private static class MyPair<T> implements RootUrlPair {
     @NotNull private final VirtualFile myFile;
-    @NotNull private final SVNURL myUrl;
+    @NotNull private final Url myUrl;
     private final T mySrc;
 
-    private MyPair(@NotNull VirtualFile file, @NotNull SVNURL url, T src) {
+    private MyPair(@NotNull VirtualFile file, @NotNull Url url, T src) {
       myFile = file;
       myUrl = url;
       mySrc = src;
@@ -828,7 +758,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
     @NotNull
     @Override
-    public SVNURL getUrl() {
+    public Url getUrl() {
       return myUrl;
     }
   }
@@ -879,18 +809,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     return myCheckoutProvider;
   }
 
-  @NotNull
-  public SvnKitManager getSvnKitManager() {
-    return svnKitManager;
-  }
-
-  @NotNull
-  private WorkingCopyFormat getProjectRootFormat() {
-    VirtualFile baseDir = myProject.getBaseDir();
-
-    return baseDir != null ? getWorkingCopyFormat(virtualToIoFile(baseDir)) : WorkingCopyFormat.UNKNOWN;
-  }
-
   /**
    * Detects appropriate client factory based on project root directory working copy format.
    * <p>
@@ -904,64 +822,40 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
    */
   @NotNull
   public ClientFactory getFactory() {
-    return getFactory(getProjectRootFormat(), false);
+    return cmdClientFactory;
   }
 
+  @SuppressWarnings("unused")
   @NotNull
   public ClientFactory getFactory(@NotNull WorkingCopyFormat format) {
-    return getFactory(format, false);
+    return cmdClientFactory;
   }
 
+  @SuppressWarnings("unused")
   @NotNull
   public ClientFactory getFactory(@NotNull File file) {
-    return getFactory(file, true);
+    return cmdClientFactory;
   }
 
+  @SuppressWarnings("unused")
   @NotNull
   public ClientFactory getFactory(@NotNull File file, boolean useMapping) {
-    return getFactory(getWorkingCopyFormat(file, useMapping), true);
+    return cmdClientFactory;
   }
 
   @NotNull
-  private ClientFactory getFactory(@NotNull WorkingCopyFormat format, boolean useProjectRootForUnknown) {
-    boolean is18OrGreater = format.isOrGreater(WorkingCopyFormat.ONE_DOT_EIGHT);
-    boolean isUnknown = WorkingCopyFormat.UNKNOWN.equals(format);
-
-    return is18OrGreater
-           ? cmdClientFactory
-           : (!isUnknown && !isSupportedByCommandLine(format)
-              ? svnKitClientFactory
-              : (useProjectRootForUnknown && isUnknown ? getFactory() : getFactoryFromSettings()));
-  }
-
-  @NotNull
-  public ClientFactory getFactory(@NotNull SvnTarget target) {
+  public ClientFactory getFactory(@NotNull Target target) {
     return target.isFile() ? getFactory(target.getFile()) : getFactory();
   }
 
   @NotNull
   public ClientFactory getFactoryFromSettings() {
-    return myConfiguration.isCommandLine() ? cmdClientFactory : svnKitClientFactory;
-  }
-
-  @NotNull
-  public ClientFactory getOtherFactory() {
-    return myConfiguration.isCommandLine() ? svnKitClientFactory : cmdClientFactory;
-  }
-
-  @NotNull
-  public ClientFactory getOtherFactory(@NotNull ClientFactory factory) {
-    return factory.equals(cmdClientFactory) ? svnKitClientFactory : cmdClientFactory;
+    return cmdClientFactory;
   }
 
   @NotNull
   public ClientFactory getCommandLineFactory() {
     return cmdClientFactory;
-  }
-
-  @NotNull
-  public ClientFactory getSvnKitFactory() {
-    return svnKitClientFactory;
   }
 
   @NotNull

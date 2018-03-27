@@ -150,7 +150,8 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
     public Collection<? extends AbstractTreeNode> getChildren() {
       List<AbstractTreeNode<?>> result = new ArrayList<>();
       result.addAll(myContribution.createServerNodes(doGetProject()));
-      result.addAll(ContainerUtil.map(myContribution.getRemoteServers(), (Function<RemoteServer<?>, AbstractTreeNode<?>>)server -> new RemoteServerNode(server)));
+      result.addAll(ContainerUtil.map(myContribution.getRemoteServers(),
+                                      (Function<RemoteServer<?>, AbstractTreeNode<?>>)server -> new RemoteServerNode(server)));
       return result;
     }
 
@@ -229,7 +230,9 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
 
       if (canCreate) {
         runConfigsAndTypes.addAll(server.getType().getSingletonDeploymentSourceTypes());
-        runConfigsAndTypes.add(null);
+        if (server.getType().mayHaveProjectSpecificDeploymentSources()) {
+          runConfigsAndTypes.add(null);
+        }
       }
 
       ListPopup popup =
@@ -403,7 +406,7 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
 
     @Nullable
     protected DeploymentLogManagerImpl getLogManager() {
-      return (DeploymentLogManagerImpl)myConnection.getLogManager(getDeployment());
+      return (DeploymentLogManagerImpl)myConnection.getLogManager(myProject, getDeployment());
     }
 
     public String getId() {
@@ -443,7 +446,7 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
       if (connection == null) {
         return;
       }
-      DeploymentLogManagerImpl logManager = (DeploymentLogManagerImpl)connection.getLogManager(getDeployment());
+      DeploymentLogManagerImpl logManager = (DeploymentLogManagerImpl)connection.getLogManager(myProject, getDeployment());
       if (logManager != null) {
         for (LoggingHandlerBase loggingComponent : logManager.getAdditionalLoggingHandlers()) {
           children.add(new DeploymentLogNode(loggingComponent, this));

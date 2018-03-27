@@ -9,7 +9,6 @@ import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
@@ -49,7 +48,7 @@ public class SameParameterValueInspectionBase extends GlobalJavaBatchInspectionT
         if (value != null) {
           if (!globalContext.shouldCheck(refParameter, this)) continue;
           if (problems == null) problems = new ArrayList<>(1);
-          problems.add(registerProblem(manager, refParameter.getElement(), value));
+          problems.add(registerProblem(manager, refParameter.getElement(), value, refParameter.isUsedForWriting()));
         }
       }
     }
@@ -164,17 +163,14 @@ public class SameParameterValueInspectionBase extends GlobalJavaBatchInspectionT
                                           boolean isOnTheFly,
                                           @NotNull LocalInspectionToolSession session) {
       return new JavaElementVisitor() {
-        private final UnusedDeclarationInspectionBase myDeadCodeTool;
-
-        {
-          InspectionProfile profile = InspectionProjectProfileManager.getInstance(holder.getProject()).getCurrentProfile();
-          UnusedDeclarationInspectionBase deadCodeTool = (UnusedDeclarationInspectionBase)profile.getUnwrappedTool(UnusedDeclarationInspectionBase.SHORT_NAME, holder.getFile());
-          myDeadCodeTool = deadCodeTool == null ? new UnusedDeclarationInspectionBase() : deadCodeTool;
-        }
+        private final UnusedDeclarationInspectionBase myDeadCodeTool = UnusedDeclarationInspectionBase.findUnusedDeclarationInspection(holder.getFile());
 
         @Override
         public void visitMethod(PsiMethod method) {
           if (method.isConstructor() || VisibilityUtil.compare(VisibilityUtil.getVisibilityModifier(method.getModifierList()), highestModifier) < 0) return;
+
+          if (method.hasModifierProperty(PsiModifier.NATIVE)) return;
+
           PsiParameter[] parameters = method.getParameterList().getParameters();
           if (parameters.length == 0) return;
 
@@ -228,7 +224,7 @@ public class SameParameterValueInspectionBase extends GlobalJavaBatchInspectionT
             for (int i = 0, length = paramValues.length; i < length; i++) {
               String value = paramValues[i];
               if (value != null && value != NOT_CONST) {
-                holder.registerProblem(registerProblem(holder.getManager(), parameters[i], value));
+                holder.registerProblem(registerProblem(holder.getManager(), parameters[i], value, false));
               }
             }
           }
@@ -243,13 +239,14 @@ public class SameParameterValueInspectionBase extends GlobalJavaBatchInspectionT
 
   private ProblemDescriptor registerProblem(@NotNull InspectionManager manager,
                                             PsiParameter parameter,
-                                            String value) {
+                                            String value,
+                                            boolean usedForWriting) {
     final String name = parameter.getName();
     return manager.createProblemDescriptor(ObjectUtils.notNull(parameter.getNameIdentifier(), parameter),
                                            InspectionsBundle.message("inspection.same.parameter.problem.descriptor",
                                                                      "<code>" + name + "</code>",
                                                                      "<code>" + StringUtil.unquoteString(value) + "</code>"),
-                                           createFix(name, value),
+                                           usedForWriting ? null : createFix(name, value),
                                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false);
   }
 }

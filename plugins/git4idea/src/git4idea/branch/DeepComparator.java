@@ -31,10 +31,11 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.HashImpl;
-import com.intellij.vcs.log.impl.VcsLogUtil;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.ui.highlighters.MergeCommitsHighlighter;
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
 import git4idea.GitBranch;
+import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
 import git4idea.commands.GitLineHandlerAdapter;
@@ -140,8 +141,7 @@ public class DeepComparator implements VcsLogHighlighter, Disposable {
     }
 
     String comparedBranch = myTask.myComparedBranch;
-    VcsLogBranchFilter branchFilter = dataPack.getFilters().getBranchFilter();
-    if (branchFilter == null || !myTask.myComparedBranch.equals(VcsLogUtil.getSingleFilteredBranch(branchFilter, dataPack.getRefs()))) {
+    if (!myTask.myComparedBranch.equals(VcsLogUtil.getSingleFilteredBranch(dataPack.getFilters(), dataPack.getRefs()))) {
       stopAndUnhighlight();
       return;
     }
@@ -278,7 +278,7 @@ public class DeepComparator implements VcsLogHighlighter, Disposable {
           }
         }
       });
-      handler.runInCurrentThread(null);
+      Git.getInstance().runCommandWithoutCollectingOutput(handler);
       return pickedCommits;
     }
   }

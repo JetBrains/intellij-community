@@ -17,7 +17,6 @@ package org.jetbrains.ether;
 
 /**
  * @author: db
- * Date: 26.09.11
  */
 public class GenericTest extends IncrementalTestCase {
   public GenericTest() {

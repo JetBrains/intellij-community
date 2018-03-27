@@ -34,7 +34,6 @@ import javax.swing.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Nov 13, 2004
  */
 @SuppressWarnings({"HardCodedStringLiteral"})
 public abstract class TestErrorViewAction extends AnAction{

@@ -122,8 +122,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
 
       final String[] availableProfileNames = profileManager.getAvailableProfileNames();
       if (availableProfileNames.length == 0) {
-        //can't be
-        return null;
+        throw new IllegalStateException("There should be at least one inspection profile");
       }
       profile = profileManager.getProfile(availableProfileNames[0], true);
     }
@@ -266,6 +265,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     if (myProgressIndicator == null) {
       throw new IllegalStateException("Inspections must be run under progress");
     }
+    myProgressIndicator.setIndeterminate(false);
     final PsiManager psiManager = PsiManager.getInstance(myProject);
     //init manager in read action
     RefManagerImpl refManager = (RefManagerImpl)getRefManager();

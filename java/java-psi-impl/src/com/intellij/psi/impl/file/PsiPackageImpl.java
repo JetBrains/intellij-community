@@ -83,7 +83,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
 
   @NotNull
   private CachedValue<Collection<PsiDirectory>> createCachedDirectories(final boolean includeLibrarySources) {
-    return CachedValuesManager.getManager(myManager.getProject()).createCachedValue(() -> {
+    return CachedValuesManager.getManager(getProject()).createCachedValue(() -> {
       Collection<PsiDirectory> result = new ArrayList<>();
       Processor<PsiDirectory> processor = Processors.cancelableCollectProcessor(result);
       getFacade().processPackageDirectories(this, allScope(), processor, includeLibrarySources);
@@ -114,7 +114,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
 
   @Override
   protected PsiPackageImpl createInstance(PsiManager manager, String qName) {
-    return new PsiPackageImpl(myManager, qName);
+    return new PsiPackageImpl(getManager(), qName);
   }
 
   @Override
@@ -125,7 +125,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
 
   @Override
   public boolean isValid() {
-    return !myManager.getProject().isDisposed() &&
+    return !getProject().isDisposed() &&
            (PsiPackageImplementationHelper.getInstance().packagePrefixExists(this) ||
             !getAllDirectories(true).isEmpty());
   }
@@ -172,7 +172,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   @Nullable
   public PsiModifierList getAnnotationList() {
     if (myAnnotationList == null) {
-      myAnnotationList = CachedValuesManager.getManager(myManager.getProject()).createCachedValue(new PackageAnnotationValueProvider(), false);
+      myAnnotationList = CachedValuesManager.getManager(getProject()).createCachedValue(new PackageAnnotationValueProvider(), false);
     }
     return myAnnotationList.getValue();
   }
@@ -190,7 +190,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   }
 
   private JavaPsiFacadeImpl getFacade() {
-    return (JavaPsiFacadeImpl)JavaPsiFacade.getInstance(myManager.getProject());
+    return (JavaPsiFacadeImpl)JavaPsiFacade.getInstance(getProject());
   }
 
   @NotNull
@@ -326,7 +326,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
         for (PsiPackage pack : packs) {
           final String packageName = pack.getName();
           if (packageName == null) continue;
-          if (!PsiNameHelper.getInstance(myManager.getProject()).isIdentifier(packageName, PsiUtil.getLanguageLevel(this))) {
+          if (!PsiNameHelper.getInstance(getProject()).isIdentifier(packageName, PsiUtil.getLanguageLevel(this))) {
             continue;
           }
           if (!processor.execute(pack, state)) {

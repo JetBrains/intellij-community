@@ -177,6 +177,7 @@ public class PushDownProcessor<MemberInfo extends MemberInfoBase<Member>,
     }
   }
 
+  @NotNull
   @Override
   protected String getCommandName() {
     return RefactoringBundle.message("push.members.down.title");

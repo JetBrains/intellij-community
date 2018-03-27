@@ -1,7 +1,10 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.java.codeInsight.daemon
 
 import com.intellij.codeInsight.daemon.impl.JavaHighlightInfoTypes
+import com.intellij.codeInsight.intention.IntentionActionDelegate
 import com.intellij.codeInspection.deprecation.DeprecationInspection
 import com.intellij.codeInspection.deprecation.MarkedForRemovalInspection
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
@@ -12,6 +15,7 @@ import org.assertj.core.api.Assertions.assertThat
 class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   override fun setUp() {
     super.setUp()
+
     addFile("module-info.java", "module M2 { }", M2)
     addFile("module-info.java", "module M3 { }", M3)
   }
@@ -21,7 +25,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     highlight("""
         <error descr="A module file should not have 'package' statement">package pkg;</error>
         module M { }""".trimIndent())
-    fixes("<caret>package pkg;\nmodule M { }", "DeleteElementFix")
+    fixes("<caret>package pkg;\nmodule M { }", arrayOf("DeleteElementFix"))
   }
 
   fun testSoftKeywords() {
@@ -204,21 +208,25 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     addFile("module-info.java", "module M8 { exports pkg.m8; }", M8)
     addFile("pkg/m8/C8.java", "package pkg.m8;\npublic class C8 { }", M8)
 
-    fixes("module M { requires <caret>M.missing; }")
+    fixes("module M { requires <caret>M.missing; }", arrayOf())
     fixes("module M { requires <caret>M3; }", arrayOf("AddModuleDependencyFix"))
-    fixes("module M { exports pkg.main.impl to <caret>M3; }")
-
-    fixes("module M { exports <caret>pkg.missing; }")
-    fixes("module M { exports <caret>pkg.m3; }")
-
-    fixes("module M { uses <caret>pkg.m3.C3; }", arrayOf("AddModuleDependencyFix"))
-
-    fixes("pkg/main/C.java", "package pkg.main;\nimport <caret>pkg.m2.C2;", arrayOf("AddRequiredModuleFix"))
+    fixes("module M { exports pkg.main.impl to <caret>M3; }", arrayOf())
+    fixes("module M { exports <caret>pkg.missing; }", arrayOf("CreateClassInPackageInModuleFix"))
+    fixes("module M { exports <caret>pkg.m3; }", arrayOf())
+    fixes("module M { uses pkg.m3.<caret>C3; }", arrayOf("AddModuleDependencyFix"))
+    fixes("pkg/main/C.java", "package pkg.main;\nimport <caret>pkg.m2.C2;", arrayOf("AddRequiresDirectiveFix"))
 
     addFile("module-info.java", "module M { requires M6; }")
     addFile("pkg/main/Util.java", "package pkg.main;\nclass Util {\n static <T> void sink(T t) { }\n}")
-    fixes("pkg/main/C.java", "package pkg.main;\nimport pkg.m6.*;class C {{ new C6().m(<caret>Util::sink); }}", arrayOf("AddRequiredModuleFix"))
-    fixes("pkg/main/C.java", "package pkg.main;\nimport pkg.m6.*;class C {{ new C6().m(<caret>t -> Util.sink(t)); }}", arrayOf("AddRequiredModuleFix"))
+    fixes("pkg/main/C.java", "package pkg.main;\nimport pkg.m6.*;class C {{ new C6().m(<caret>Util::sink); }}", arrayOf("AddRequiresDirectiveFix"))
+    fixes("pkg/main/C.java", "package pkg.main;\nimport pkg.m6.*;class C {{ new C6().m(<caret>t -> Util.sink(t)); }}", arrayOf("AddRequiresDirectiveFix"))
+
+    addFile("module-info.java", "module M2 { }", M2)
+    fixes("module M { requires M2; uses <caret>pkg.m2.C2; }", arrayOf("AddExportsDirectiveFix"))
+    fixes("pkg/main/C.java", "package pkg.main;\nimport <caret>pkg.m2.C2;", arrayOf("AddExportsDirectiveFix"))
+
+    addFile("pkg/main/S.java", "package pkg.main;\npublic class S { }")
+    fixes("module M { provides pkg.main.<caret>S with pkg.main.S; }", arrayOf("AddExportsDirectiveFix", "AddUsesDirectiveFix"))
   }
 
   fun testPackageAccessibility() = doTestPackageAccessibility(moduleFileInTests = false, checkFileInTests = false)
@@ -264,6 +272,8 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
 
         import java.util.List;
         import java.util.function.Supplier;
+
+        import <error descr="Package 'pkg.libInvalid' is declared in module with an invalid name ('lib.invalid.1.2')">pkg.libInvalid</error>.LCInv;
 
         /** See also {@link C2Impl#I} and {@link C2Impl#make} */
         class C {{
@@ -398,11 +408,13 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     myFixture.checkHighlighting()
   }
 
-  private fun fixes(text: String, fixes: Array<String> = arrayOf()) = fixes("module-info.java", text, fixes)
+  private fun fixes(text: String, fixes: Array<String>) = fixes("module-info.java", text, fixes)
 
-  private fun fixes(path: String, text: String, fixes: Array<String> = arrayOf()) {
+  private fun fixes(path: String, text: String, fixes: Array<String>) {
     myFixture.configureFromExistingVirtualFile(addFile(path, text))
-    val available = myFixture.getAllQuickFixes().filter { it.isAvailable(project, editor, file) }.map { it::class.simpleName }
+    val available = myFixture.availableIntentions
+      .map { (if (it is IntentionActionDelegate) it.delegate else it)::class.simpleName }
+      .filter { it != "GutterIntentionAction" }
     assertThat(available).containsExactlyInAnyOrder(*fixes)
   }
   //</editor-fold>

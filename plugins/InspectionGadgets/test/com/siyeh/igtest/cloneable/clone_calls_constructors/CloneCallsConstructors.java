@@ -1,5 +1,7 @@
 package com.siyeh.igtest.cloneable.clone_calls_constructors;
 
+import java.util.*;
+
 class CloneCallsConstructors implements Cloneable {
 
   @Override
@@ -24,4 +26,34 @@ class Three implements Cloneable {
   public final Object clone() throws CloneNotSupportedException {
     return new Three();
   }
+}
+class Four implements Cloneable {
+  private String[] s = {"four"};
+
+  @Override
+  public Four clone() {
+    try {
+      Four clone = (Four)super.clone();
+      clone.s = new <warning descr="'clone()' creates new String[] array">String</warning>[1];
+      return clone;
+    } catch (CloneNotSupportedException e) {
+      throw new AssertionError();
+    }
+  }
+}
+class Five implements Cloneable {
+  private NonCloneable x = new NonCloneable();
+
+  @Override
+  public Five clone() {
+    try {
+      Five clone = (Five)super.clone();
+      clone.x = new NonCloneable();
+      return clone;
+    } catch (CloneNotSupportedException e) {
+      throw new AssertionError();
+    }
+  }
+
+  class NonCloneable {}
 }

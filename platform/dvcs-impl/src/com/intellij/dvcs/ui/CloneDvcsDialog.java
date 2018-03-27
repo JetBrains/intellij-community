@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.EditorComboBox;
@@ -42,6 +43,7 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -324,6 +326,14 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
     rememberedInputs.setCloneParentDir(getParentDirectory());
   }
 
+  private static String safeUrlDecode(String encoded) {
+    try {
+      return URLDecoder.decode(encoded, CharsetToolkit.UTF8);
+    } catch(Exception e) {
+      return encoded;
+    }
+  }
+
   /**
    * Get default name for checked out directory
    *
@@ -348,7 +358,10 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
     if (i == -1 && File.separatorChar != '/') {
       i = nonSystemName.lastIndexOf(File.separatorChar);
     }
-    return i >= 0 ? nonSystemName.substring(i + 1) : "";
+    if (i < 0) {
+      return "";
+    }
+    return safeUrlDecode(nonSystemName.substring(i + 1));
   }
 
   @Nullable

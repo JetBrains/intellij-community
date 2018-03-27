@@ -48,7 +48,7 @@ public class VcsLogTabsProperties implements PersistentStateComponent<VcsLogTabs
 
   public MainVcsLogUiProperties createProperties(@NotNull final String id) {
     myState.TAB_STATES.putIfAbsent(id, new VcsLogUiPropertiesImpl.State());
-    VcsLogUiPropertiesImpl properties = new VcsLogUiPropertiesImpl(myAppSettings) {
+    return new VcsLogUiPropertiesImpl(myAppSettings) {
       @NotNull
       @Override
       public State getState() {
@@ -65,15 +65,6 @@ public class VcsLogTabsProperties implements PersistentStateComponent<VcsLogTabs
         myState.TAB_STATES.put(id, state);
       }
     };
-    if (MAIN_LOG_ID.equals(id)) {
-      // migrate reference presentation settings from per-tab settings to app settings
-      // this is not ideal since we have many projects and settings for them can be different
-      // but ideal in this case is unachievable
-      // to remove after 2017.3 release
-      myAppSettings.migrateFrom(properties.getState().COMPACT_REFERENCES_VIEW,
-                                properties.getState().SHOW_TAG_NAMES);
-    }
-    return properties;
   }
 
   public static class State {

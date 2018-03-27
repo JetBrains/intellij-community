@@ -28,7 +28,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Aug 13, 2010
  */
 public abstract class AntDomReferenceBase extends PsiReferenceBase<PsiElement> implements AntDomReference{
   private boolean myShouldBeSkippedByAnnotator;

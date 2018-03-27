@@ -6,6 +6,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
+import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -92,7 +93,7 @@ public class ParameterCanBeLocalInspectionBase extends AbstractBaseJavaLocalInsp
   public ProblemDescriptor[] checkMethod(@NotNull PsiMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
     final Collection<PsiParameter> parameters = filterFinal(method.getParameterList().getParameters());
     final PsiCodeBlock body = method.getBody();
-    if (body == null || parameters.isEmpty() || isOverrides(method)) {
+    if (body == null || parameters.isEmpty() || isOverrides(method) || MethodUtils.isOverridden(method)) {
       return ProblemDescriptor.EMPTY_ARRAY;
     }
 

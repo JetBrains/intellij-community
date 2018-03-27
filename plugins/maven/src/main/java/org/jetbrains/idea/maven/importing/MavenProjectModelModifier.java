@@ -109,6 +109,7 @@ public class MavenProjectModelModifier extends JavaProjectModelModifier {
 
         if (managedDependency == null || StringUtil.isEmpty(managedDependency.getVersion().getStringValue())) {
           version = selectVersion(mavenId, minVersion, maxVersion);
+          scopeToSet = mavenScope;
         }
       }
 

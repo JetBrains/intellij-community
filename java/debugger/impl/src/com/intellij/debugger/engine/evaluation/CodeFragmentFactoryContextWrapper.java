@@ -43,7 +43,6 @@ import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Aug 30, 2010
  */
 public class CodeFragmentFactoryContextWrapper extends CodeFragmentFactory {
   public static final Key<Value> LABEL_VARIABLE_VALUE_KEY = Key.create("_label_variable_value_key_");

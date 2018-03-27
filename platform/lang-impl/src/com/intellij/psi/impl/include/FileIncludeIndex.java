@@ -46,8 +46,9 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
 
   private static final int BASE_VERSION = 5;
 
-  public static List<FileIncludeInfoImpl> getIncludes(VirtualFile file, GlobalSearchScope scope) {
-    final List<FileIncludeInfoImpl> result = new ArrayList<>();
+  @NotNull
+  public static List<FileIncludeInfo> getIncludes(@NotNull VirtualFile file, @NotNull GlobalSearchScope scope) {
+    final List<FileIncludeInfo> result = new ArrayList<>();
     FileBasedIndex.getInstance().processValues(INDEX_ID, new FileKey(file), file, (file1, value) -> {
       result.addAll(value);
       return true;
@@ -55,7 +56,8 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
     return result;
   }
 
-  public static MultiMap<VirtualFile, FileIncludeInfoImpl> getIncludingFileCandidates(String fileName, GlobalSearchScope scope) {
+  @NotNull
+  public static MultiMap<VirtualFile, FileIncludeInfoImpl> getIncludingFileCandidates(String fileName, @NotNull GlobalSearchScope scope) {
     final MultiMap<VirtualFile, FileIncludeInfoImpl> result = new MultiMap<>();
     FileBasedIndex.getInstance().processValues(INDEX_ID, new IncludeKey(fileName), null, (file, value) -> {
       result.put(file, value);

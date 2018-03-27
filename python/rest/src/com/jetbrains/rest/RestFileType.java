@@ -46,6 +46,7 @@ public class RestFileType extends LanguageFileType {
     return "reStructuredText files";
   }
 
+  @Override
   @NotNull
   public String getDefaultExtension() {
     return DEFAULT_EXTENSION;

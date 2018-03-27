@@ -45,12 +45,12 @@ public class LeakHunter {
   private static final Condition<Object> SHOULD_EXAMINE_VALUE = o -> !MOCKING_SUPPORT_CLASSES.contains(o.getClass().getName());
 
   @TestOnly
-  public static void checkProjectLeak() throws Exception {
+  public static void checkProjectLeak() {
     checkLeak(allRoots(), ProjectImpl.class, project -> !project.isDefault() && !project.isLight());
   }
 
   @TestOnly
-  public static void checkNonDefaultProjectLeak() throws Exception {
+  public static void checkNonDefaultProjectLeak() {
     checkLeak(allRoots(), ProjectImpl.class, project -> !project.isDefault());
   }
 
@@ -73,6 +73,7 @@ public class LeakHunter {
                       backLink;
       System.out.println(message);
       System.out.println(";-----");
+      UsefulTestCase.printThreadDump();
 
       throw new AssertionError(message);
     });
@@ -93,6 +94,7 @@ public class LeakHunter {
       UIUtil.pump();
     }
     PersistentEnumeratorBase.clearCacheForTests();
+    LaterInvocator.purgeExpiredItems();
     ApplicationManager.getApplication().runReadAction(() -> {
       DebugReflectionUtil.walkObjects(10000, rootsSupplier.get(), suspectClass, SHOULD_EXAMINE_VALUE, (value, backLink) -> {
         @SuppressWarnings("unchecked")

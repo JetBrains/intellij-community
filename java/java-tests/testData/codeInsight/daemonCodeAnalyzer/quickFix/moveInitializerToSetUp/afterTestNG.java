@@ -3,7 +3,7 @@ public class X {
   <caret>int i;
 
     @org.testng.annotations.BeforeMethod
-    public void setUp() throws Exception {
+    public void setUp() {
         i = 7;
     }
 

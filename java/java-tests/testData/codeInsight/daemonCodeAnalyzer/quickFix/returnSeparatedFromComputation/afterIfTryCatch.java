@@ -1,7 +1,6 @@
 // "Move 'return' closer to computation of the value of 'n'" "true"
 class T {
     int f(boolean b, boolean c) {
-        int n = -1;
         if (b) {
             try {
                 return g();
@@ -13,7 +12,7 @@ class T {
         else {
             return 2;
         }
-        return n;
+        return -1;
     }
 
     int g() {

@@ -228,10 +228,7 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
     final T value = pusher.getImmediateValue(project, dir);
     if (value != null) return value;
     if (moduleValue != null) return moduleValue;
-    final VirtualFile parent = dir.getParent();
-    if (parent != null) return findPusherValuesUpwards(project, parent, pusher);
-    T projectValue = pusher.getImmediateValue(project, null);
-    return projectValue != null? projectValue : pusher.getDefaultValue();
+    return findPusherValuesFromParent(project, dir, pusher);
   }
 
   private static <T> T findPusherValuesUpwards(Project project, VirtualFile dir, FilePropertyPusher<T> pusher) {
@@ -239,8 +236,12 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
     if (userValue != null) return userValue;
     final T value = pusher.getImmediateValue(project, dir);
     if (value != null) return value;
+    return findPusherValuesFromParent(project, dir, pusher);
+  }
+
+  private static <T> T findPusherValuesFromParent(Project project, VirtualFile dir, FilePropertyPusher<T> pusher) {
     final VirtualFile parent = dir.getParent();
-    if (parent != null) return findPusherValuesUpwards(project, parent, pusher);
+    if (parent != null && ProjectFileIndex.getInstance(project).isInContent(parent)) return findPusherValuesUpwards(project, parent, pusher);
     T projectValue = pusher.getImmediateValue(project, null);
     return projectValue != null ? projectValue : pusher.getDefaultValue();
   }

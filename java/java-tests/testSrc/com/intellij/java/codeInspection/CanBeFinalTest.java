@@ -47,6 +47,14 @@ public class CanBeFinalTest extends InspectionTestCase {
     doTest();
   }
 
+  public void testassignedFromLambda() {
+    doTest();
+  }
+  
+  public void testassignedFromLambdaInClassInitializer() {
+    doTest();
+  }
+
   public void testsimpleClassInheritance() {
     doTest();
   }

@@ -257,7 +257,7 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
         return;
       }
       final ModuleDependenciesAnalyzer.OrderPathElement element = e.getData(ORDER_PATH_ELEMENT_KEY);
-      if (element != null && element instanceof ModuleDependenciesAnalyzer.OrderEntryPathElement) {
+      if (element instanceof ModuleDependenciesAnalyzer.OrderEntryPathElement) {
         final ModuleDependenciesAnalyzer.OrderEntryPathElement o = (ModuleDependenciesAnalyzer.OrderEntryPathElement)element;
         final OrderEntry entry = o.entry();
         final Module m = entry.getOwnerModule();

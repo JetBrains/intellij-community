@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
- * Date: 26-Jul-17
  */
 public class JShellCompletionContributor extends CompletionContributor {
   @Override

@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.codeInspection.deadCode;
 
@@ -41,7 +29,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
@@ -68,7 +55,6 @@ import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
-import javax.swing.tree.TreePath;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
@@ -212,28 +198,10 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
 
   @NotNull
   @Override
-  public QuickFixAction[] getQuickFixes(@NotNull final RefEntity[] refElements, @Nullable InspectionTree tree) {
-    boolean showFixes = false;
-    for (RefEntity element : refElements) {
-      if (!myFixedElements.containsKey(element) && element.isValid()) {
-        showFixes = true;
-        break;
-      }
-    }
-
-    if (showFixes) {
-      final TreePath[] paths = tree != null ? tree.getSelectionPaths() : null;
-      if (paths != null) {
-        long count = Arrays.stream(paths).map(TreePath::getLastPathComponent)
-          .filter(component -> component instanceof ProblemDescriptionNode).count();
-        if (count > 0) {
-          final QuickFixAction[] fixes = super.getQuickFixes(refElements, tree);
-          return count == paths.length ? fixes : ArrayUtil.mergeArrays(fixes, myQuickFixActions);
-        }
-      }
-      return myQuickFixActions;
-    }
-    return QuickFixAction.EMPTY;
+  public QuickFixAction[] getQuickFixes(@NotNull RefEntity... refElements) {
+    return Arrays.stream(refElements).anyMatch(element -> element instanceof RefJavaElement && getFilter().accepts((RefJavaElement)element) && !myFixedElements.containsKey(element) && element.isValid())
+           ? myQuickFixActions
+           : QuickFixAction.EMPTY;
   }
 
   final QuickFixAction[] myQuickFixActions;
@@ -564,7 +532,15 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
         final PsiElement psiElement = ReadAction.compute(() -> ((RefElement)refEntity).getElement());
         List<CommonProblemDescriptor> foreignDescriptors = new ArrayList<>();
         for (CommonProblemDescriptor descriptor : descriptors) {
-          if (descriptor instanceof ProblemDescriptor && ReadAction.compute(() -> ((ProblemDescriptor)descriptor).getPsiElement()) == psiElement) continue;
+          if (descriptor instanceof ProblemDescriptor) {
+            PsiElement problemElement = ReadAction.compute(() -> {
+              PsiElement element = ((ProblemDescriptor)descriptor).getPsiElement();
+              if (element instanceof PsiIdentifier) element = element.getParent();
+              return element;
+            });
+            if (problemElement == psiElement ||
+                problemElement instanceof PsiParameter && ((PsiParameter)problemElement).getDeclarationScope() == psiElement) continue;
+          }
           foreignDescriptors.add(descriptor);
         }
         if (foreignDescriptors.size() == descriptors.length) return;

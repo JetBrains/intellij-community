@@ -22,7 +22,6 @@ import java.util.EventListener;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 5/21/12
  */
 public interface BuildListener extends EventListener{
 

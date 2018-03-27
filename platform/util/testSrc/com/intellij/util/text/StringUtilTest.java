@@ -1,29 +1,15 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
-import jetCheck.Generator;
-import jetCheck.PropertyChecker;
+import org.jetbrains.jetCheck.Generator;
+import org.jetbrains.jetCheck.PropertyChecker;
 import org.jdom.Verifier;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
@@ -33,6 +19,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.testFramework.assertions.Assertions.assertThat;
 import static org.junit.Assert.*;
 
 /**
@@ -382,13 +369,24 @@ public class StringUtilTest {
   @Test
   public void testReplaceReturnReplacementIfTextEqualsToReplacedText() {
     String newS = "/tmp";
-    assertSame(newS,
-               StringUtil.replace("$PROJECT_FILE$", "$PROJECT_FILE$".toLowerCase().toUpperCase() /* ensure new String instance */, newS));
+    assertThat(newS).isSameAs(StringUtil.replace("$PROJECT_FILE$", "$PROJECT_FILE$".toLowerCase().toUpperCase() /* ensure new String instance */, newS));
   }
 
   @Test
   public void testReplace() {
-    assertEquals("/tmp/filename", StringUtil.replace("$PROJECT_FILE$/filename", "$PROJECT_FILE$", "/tmp"));
+    assertThat("/tmp/filename").isEqualTo(StringUtil.replace("$PROJECT_FILE$/filename", "$PROJECT_FILE$", "/tmp"));
+  }
+
+  @Test
+  public void testReplaceListOfChars() {
+    assertThat("/tmp/filename").isEqualTo(StringUtil.replace("$PROJECT_FILE$/filename", Collections.singletonList("$PROJECT_FILE$"), Collections.singletonList("/tmp")));
+    assertThat("/someTextBefore/tmp/filename").isEqualTo(StringUtil.replace("/someTextBefore/$PROJECT_FILE$/filename", Collections.singletonList("$PROJECT_FILE$"), Collections.singletonList("tmp")));
+  }
+
+  @Test
+  public void testReplaceReturnTheSameStringIfNothingToReplace() {
+    String s = "/tmp/filename";
+    assertThat(StringUtil.replace(s, "$PROJECT_FILE$/filename", "$PROJECT_FILE$")).isSameAs(s);
   }
 
   @Test
@@ -618,5 +616,39 @@ public class StringUtilTest {
     assertEquals("", StringUtil.substringAfterLast("abc", ""));
     assertNull(StringUtil.substringAfterLast("abc", "1"));
     assertNull(StringUtil.substringAfterLast("", "1"));
+  }
+
+  @Test
+  public void testGetWordIndicesIn() {
+    assertEquals(ContainerUtil.list(new TextRange(0, 5), new TextRange(6, 12)), StringUtil.getWordIndicesIn("first second"));
+    assertEquals(ContainerUtil.list(new TextRange(1, 6), new TextRange(7, 13)), StringUtil.getWordIndicesIn(" first second"));
+    assertEquals(ContainerUtil.list(new TextRange(1, 6), new TextRange(7, 13)), StringUtil.getWordIndicesIn(" first second    "));
+    assertEquals(ContainerUtil.list(new TextRange(0, 5), new TextRange(6, 12)), StringUtil.getWordIndicesIn("first:second"));
+    assertEquals(ContainerUtil.list(new TextRange(0, 5), new TextRange(6, 12)), StringUtil.getWordIndicesIn("first-second"));
+    assertEquals(ContainerUtil.list(new TextRange(0, 12)), StringUtil.getWordIndicesIn("first-second", ContainerUtil.set(' ', '_', '.')));
+    assertEquals(ContainerUtil.list(new TextRange(0, 5), new TextRange(6, 12)),
+                 StringUtil.getWordIndicesIn("first-second", ContainerUtil.set('-')));
+  }
+
+  @Test
+  public void testIsLatinAlphanumeric() {
+    assertTrue(StringUtil.isLatinAlphanumeric("1234567890"));
+    assertTrue(StringUtil.isLatinAlphanumeric("123abc593"));
+    assertTrue(StringUtil.isLatinAlphanumeric("gwengioewn"));
+    assertTrue(StringUtil.isLatinAlphanumeric("FiwnFWinfs"));
+    assertTrue(StringUtil.isLatinAlphanumeric("b"));
+    assertTrue(StringUtil.isLatinAlphanumeric("1"));
+
+    assertFalse(StringUtil.isLatinAlphanumeric("йцукен"));
+    assertFalse(StringUtil.isLatinAlphanumeric("ЙцуTYuio"));
+    assertFalse(StringUtil.isLatinAlphanumeric("йцу626кен"));
+    assertFalse(StringUtil.isLatinAlphanumeric("12 12"));
+    assertFalse(StringUtil.isLatinAlphanumeric("."));
+    assertFalse(StringUtil.isLatinAlphanumeric("_"));
+    assertFalse(StringUtil.isLatinAlphanumeric("-"));
+    assertFalse(StringUtil.isLatinAlphanumeric("fhu384 "));
+    assertFalse(StringUtil.isLatinAlphanumeric(""));
+    assertFalse(StringUtil.isLatinAlphanumeric(null));
+    assertFalse(StringUtil.isLatinAlphanumeric("'"));
   }
 }

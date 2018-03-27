@@ -300,15 +300,6 @@ public class MultiMap<K, V> implements Serializable {
     };
   }
 
-  /**
-   * @deprecated Use {@link #createSmart()}
-   */
-  @Deprecated
-  @NotNull
-  public static <K, V> MultiMap<K, V> createSmartList() {
-    return createSmart();
-  }
-
   @NotNull
   public static <K, V> MultiMap<K, V> createSmart() {
     return new MultiMap<K, V>() {
@@ -322,7 +313,7 @@ public class MultiMap<K, V> implements Serializable {
 
   @NotNull
   public static <K, V> MultiMap<K, V> createConcurrentSet() {
-    return new MultiMap<K, V>() {
+    return new ConcurrentMultiMap<K, V>() {
       @NotNull
       @Override
       protected Collection<V> createCollection() {
@@ -334,22 +325,16 @@ public class MultiMap<K, V> implements Serializable {
       protected Collection<V> createEmptyCollection() {
         return Collections.emptySet();
       }
-
-      @NotNull
-      @Override
-      protected Map<K, Collection<V>> createMap() {
-        return ContainerUtil.newConcurrentMap();
-      }
     };
   }
 
   @NotNull
   public static <K, V> MultiMap<K, V> createSet() {
-    return createSet(TObjectHashingStrategy.CANONICAL);
+    return createSet(ContainerUtil.<K>canonicalStrategy());
   }
 
   @NotNull
-  public static <K, V> MultiMap<K, V> createSet(final TObjectHashingStrategy strategy) {
+  public static <K, V> MultiMap<K, V> createSet(@NotNull final TObjectHashingStrategy<K> strategy) {
     return new MultiMap<K, V>() {
       @NotNull
       @Override
@@ -388,9 +373,7 @@ public class MultiMap<K, V> implements Serializable {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (!(o instanceof MultiMap)) return false;
-    return myMap.equals(((MultiMap)o).myMap);
+    return this == o || o instanceof MultiMap && myMap.equals(((MultiMap)o).myMap);
   }
 
   @Override
@@ -400,11 +383,14 @@ public class MultiMap<K, V> implements Serializable {
 
   @Override
   public String toString() {
-    return myMap.toString();
+    return new java.util.HashMap<K, Collection<V>>(myMap).toString();
   }
 
-  @SuppressWarnings("unchecked")
+  /**
+   * @return immutable empty multi-map
+   */
   public static <K, V> MultiMap<K, V> empty() {
+    //noinspection unchecked
     return EMPTY;
   }
 
@@ -413,6 +399,37 @@ public class MultiMap<K, V> implements Serializable {
     @Override
     protected Map createMap() {
       return Collections.emptyMap();
+    }
+
+    @Override
+    public void putValues(Object key, @NotNull Collection values) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void putValue(@Nullable Object key, Object value) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void put(Object key, Collection values) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean remove(Object key, Object value) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void clear() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Nullable
+    @Override
+    public Collection remove(Object key) {
+      throw new UnsupportedOperationException();
     }
   }
 }

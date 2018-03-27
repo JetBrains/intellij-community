@@ -19,7 +19,6 @@ import com.intellij.util.containers.StringInterner;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jun 19, 2006
  */
 public class TreeBasedPathsSet {
   private final TreeBasedMap<Object> myMap;

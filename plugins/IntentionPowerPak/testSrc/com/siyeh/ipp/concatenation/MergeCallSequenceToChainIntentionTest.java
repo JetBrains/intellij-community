@@ -27,6 +27,7 @@ public class MergeCallSequenceToChainIntentionTest extends IPPTestCase {
   public void testAppend() { doTest(); }
   public void testParentheses() { doTest(); }
   public void testParentheses2() { doTest(); }
+  public void testComments() { doTest(); }
 
   @Override
   protected String getIntentionName() {

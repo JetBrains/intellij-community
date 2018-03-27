@@ -16,8 +16,6 @@
 
 /*
  * @author: Eugene Zhuravlev
- * Date: Jul 23, 2002
- * Time: 11:10:11 AM
  */
 package com.intellij.debugger.engine;
 

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.application.ReadAction;
@@ -22,7 +8,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.NotNullFactory;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
@@ -30,23 +15,21 @@ import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.actions.CleanupWorker;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.commandLine.SvnExceptionWrapper;
 import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusType;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.ISVNStatusFileProvider;
 
 import java.io.File;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import static com.intellij.util.ObjectUtils.notNull;
@@ -60,8 +43,6 @@ import static org.jetbrains.idea.svn.SvnUtil.isAncestor;
 public class SvnChangeProvider implements ChangeProvider {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnChangeProvider");
   public static final String PROPERTY_LAYER = "Property";
-
-  private static final NotNullFactory<Map<String, File>> NAME_TO_FILE_MAP_FACTORY = () -> ContainerUtil.newHashMap();
 
   @NotNull private final SvnVcs myVcs;
   @NotNull private final VcsContextFactory myFactory;
@@ -78,8 +59,7 @@ public class SvnChangeProvider implements ChangeProvider {
     final SvnScopeZipper zipper = new SvnScopeZipper(dirtyScope);
     zipper.run();
 
-    final Map<String, SvnScopeZipper.MyDirNonRecursive> nonRecursiveMap = zipper.getNonRecursiveDirs();
-    final ISVNStatusFileProvider fileProvider = createFileProvider(nonRecursiveMap);
+    final MultiMap<FilePath, FilePath> nonRecursiveMap = zipper.getNonRecursiveDirs();
 
     try {
       final SvnChangeProviderContext context = new SvnChangeProviderContext(myVcs, builder, progress);
@@ -94,9 +74,9 @@ public class SvnChangeProvider implements ChangeProvider {
         walker.go(path, Depth.INFINITY);
       }
 
-      walker.setFileProvider(fileProvider);
-      for (SvnScopeZipper.MyDirNonRecursive item : nonRecursiveMap.values()) {
-        walker.go(item.getDir(), Depth.IMMEDIATES);
+      walker.setNonRecursiveScope(nonRecursiveMap);
+      for (FilePath path : nonRecursiveMap.keySet()) {
+        walker.go(path, Depth.IMMEDIATES);
       }
 
       statusReceiver.getMulticaster().finish();
@@ -127,31 +107,6 @@ public class SvnChangeProvider implements ChangeProvider {
     }
   }
 
-  @NotNull
-  private static ISVNStatusFileProvider createFileProvider(@NotNull Map<String, SvnScopeZipper.MyDirNonRecursive> nonRecursiveMap) {
-    final Map<String, Map<String, File>> result = ContainerUtil.newHashMap();
-
-    for (SvnScopeZipper.MyDirNonRecursive item : nonRecursiveMap.values()) {
-      File file = item.getDir().getIOFile();
-
-      Map<String, File> fileMap = ContainerUtil.getOrCreate(result, file.getAbsolutePath(), NAME_TO_FILE_MAP_FACTORY);
-      for (FilePath path : item.getChildrenList()) {
-        fileMap.put(path.getName(), path.getIOFile());
-      }
-
-      // also add currently processed file to the map of its parent, as there are cases when SVNKit calls ISVNStatusFileProvider with file
-      // parent (and not file that was passed to doStatus()), gets null result and does not provide any status
-      // see http://issues.tmatesoft.com/issue/SVNKIT-567 for details
-      if (file.getParentFile() != null) {
-        Map<String, File> parentMap = ContainerUtil.getOrCreate(result, file.getParentFile().getAbsolutePath(), NAME_TO_FILE_MAP_FACTORY);
-
-        parentMap.put(file.getName(), file);
-      }
-    }
-
-    return parent -> result.get(parent.getAbsolutePath());
-  }
-
   private void processCopiedAndDeleted(@NotNull SvnChangeProviderContext context, @Nullable VcsDirtyScope dirtyScope)
     throws SvnBindException {
     for(SvnChangedFile copiedFile: context.getCopiedFiles()) {
@@ -176,7 +131,7 @@ public class SvnChangeProvider implements ChangeProvider {
                                  @Nullable VcsDirtyScope dirtyScope) throws SvnBindException {
     boolean foundRename = false;
     final Status copiedStatus = copiedFile.getStatus();
-    SVNURL copyFromURL = notNull(copiedFile.getCopyFromURL());
+    Url copyFromURL = notNull(copiedFile.getCopyFromURL());
     final Set<SvnChangedFile> deletedToDelete = new HashSet<>();
 
     for (SvnChangedFile deletedFile : context.getDeletedFiles()) {
@@ -186,7 +141,7 @@ public class SvnChangeProvider implements ChangeProvider {
         applyMovedChange(context, copiedFile.getFilePath(), dirtyScope, deletedToDelete, deletedFile, copiedStatus, clName);
         for (SvnChangedFile deletedChild : context.getDeletedFiles()) {
           final Status childStatus = deletedChild.getStatus();
-          final SVNURL childUrl = childStatus.getURL();
+          final Url childUrl = childStatus.getURL();
           if (childUrl == null) {
             continue;
           }

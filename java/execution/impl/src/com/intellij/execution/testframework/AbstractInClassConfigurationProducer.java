@@ -26,6 +26,7 @@ import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.junit.InheritorChooser;
 import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.execution.junit2.info.MethodLocation;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -36,6 +37,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public abstract class AbstractInClassConfigurationProducer<T extends JavaTestConfigurationBase> extends AbstractJavaTestConfigurationProducer<T> {
+  private static final Logger LOG = Logger.getInstance(AbstractInClassConfigurationProducer.class);
 
   protected AbstractInClassConfigurationProducer(ConfigurationType configurationType) {
     super(configurationType);
@@ -144,6 +146,7 @@ public abstract class AbstractInClassConfigurationProducer<T extends JavaTestCon
     }
 
     configuration.restoreOriginalModule(originalModule);
+    LOG.assertTrue(configuration.getConfigurationModule().getModule() != null);
     settings.setName(configuration.getName());
     sourceElement.set(psiElement);
     return true;

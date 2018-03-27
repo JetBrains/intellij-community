@@ -20,7 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 13-Jun-16
  */
 public class RepositoryLibraryDescriptor {
   private final String myMavenId;

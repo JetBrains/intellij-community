@@ -155,7 +155,7 @@ public class ActionUtil {
         presentation.setEnabled(false);
       }
     }
-    
+
     return false;
   }
 
@@ -316,11 +316,7 @@ public class ActionUtil {
     return a1;
   }
 
-  public static void invokeAction(@NotNull AnAction action,
-                                  @Nullable InputEvent inputEvent,
-                                  @NotNull Component component,
-                                  @NotNull String place,
-                                  @Nullable Runnable onDone) {
+  public static void invokeAction(@NotNull AnAction action, @Nullable InputEvent inputEvent, @NotNull Component component, @NotNull String place, @Nullable Runnable onDone) {
     Presentation presentation = action.getTemplatePresentation().clone();
     AnActionEvent event = new AnActionEvent(inputEvent, DataManager.getInstance().getDataContext(component),
                                             place,

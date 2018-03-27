@@ -52,8 +52,6 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
     public Deque<UserGroup> RECENTLY_FILTERED_BRANCH_GROUPS = new ArrayDeque<>();
     public Map<String, Boolean> HIGHLIGHTERS = ContainerUtil.newTreeMap();
     public Map<String, List<String>> FILTERS = ContainerUtil.newTreeMap();
-    @Deprecated public boolean COMPACT_REFERENCES_VIEW = true;
-    @Deprecated public boolean SHOW_TAG_NAMES = false;
     public TextFilterSettings TEXT_FILTER_SETTINGS = new TextFilterSettings();
     public Map<Integer, Integer> COLUMN_WIDTH = ContainerUtil.newHashMap();
     public List<Integer> COLUMN_ORDER = ContainerUtil.newArrayList();

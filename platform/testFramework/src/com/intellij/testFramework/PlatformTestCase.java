@@ -15,6 +15,7 @@
  */
 package com.intellij.testFramework;
 
+import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
@@ -46,7 +47,6 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.project.impl.TooManyProjectLeakedException;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.startup.StartupManager;
@@ -58,14 +58,12 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker;
 import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -157,21 +155,15 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   private static final String[] PREFIX_CANDIDATES = {"AndroidStudio", "Idea"};
   /*
   private static final String[] PREFIX_CANDIDATES = {
-    "Rider",
+    "Rider", "GoLand",
     null,
     "AppCode", "CLion", "CidrCommon",
     "DataGrip",
     "Python", "PyCharmCore",
     "Ruby",
+    "PhpStorm",
     "UltimateLangXml", "Idea", "PlatformLangXml" };
   */
-
-  /**
-   * @deprecated calling this method is no longer necessary
-   */
-  public static void autodetectPlatformPrefix() {
-    doAutodetectPlatformPrefix();
-  }
 
   public static void doAutodetectPlatformPrefix() {
     // Android Studio: allow -Didea.platform.prefix to override auto-detection mechanism
@@ -402,7 +394,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     myFilesToDelete.add(moduleFile);
     return new WriteAction<Module>() {
       @Override
-      protected void run(@NotNull Result<Module> result) throws Throwable {
+      protected void run(@NotNull Result<Module> result) {
         VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(moduleFile);
         assertNotNull(virtualFile);
         Module module = ModuleManager.getInstance(project).newModule(virtualFile.getPath(), moduleType.getId());
@@ -491,17 +483,21 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   @Override
   protected void tearDown() throws Exception {
     Project project = myProject;
-
+    if (project != null && !project.isDisposed()) {
+      AutoPopupController.getInstance(project).cancelAllRequests(); // clear "show param info" delayed requests leaking project
+    }
+    // don't use method references here to make stack trace reading easier
+    //noinspection Convert2MethodRef
     new RunAll()
-      .append(this::disposeRootDisposable)
+      .append(() -> disposeRootDisposable())
       .append(() -> {
         if (project != null) {
           LightPlatformTestCase.doTearDown(project, ourApplication);
         }
       })
-      .append(this::disposeProject)
+      .append(() -> disposeProject())
       .append(() -> UIUtil.dispatchAllInvocationEvents())
-      .append(this::checkForSettingsDamage)
+      .append(() -> checkForSettingsDamage())
       .append(() -> {
         if (project != null) {
           InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project);
@@ -533,7 +529,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
           myThreadTracker.checkLeak();
         }
       })
-      .append(LightPlatformTestCase::checkEditorsReleased)
+      .append(() -> LightPlatformTestCase.checkEditorsReleased())
       .append(() -> myOldSdks.checkForJdkTableLeaks())
       .append(() -> myVirtualFilePointerTracker.assertPointersAreDisposed())
       .append(() -> {
@@ -819,40 +815,6 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   @Nullable
   protected PsiFile getPsiFile(final Document document) {
     return PsiDocumentManager.getInstance(getProject()).getPsiFile(document);
-  }
-
-  /**
-   * @deprecated calling this method is no longer necessary
-   */
-  public static void initPlatformLangPrefix() {
-  }
-
-  /**
-   * This is the main point to set up your platform prefix. This allows you to use some sub-set of
-   * core plugin descriptors to make initialization faster (e.g. for running tests in classpath of the module where the test is located).
-   * It is calculated by some marker class presence in classpath.
-   * Note that it applies NEGATIVE logic for detection: prefix will be set if only marker class
-   * is NOT present in classpath.
-   * Also, only the very FIRST call to this method will take effect.
-   *
-   * @param classToTest marker class qualified name
-   * @param prefix platform prefix to be set up if marker class not found in classpath.
-   * @deprecated calling this method is no longer necessary
-   */
-  public static void initPlatformPrefix(String classToTest, String prefix) {
-    if (!ourPlatformPrefixInitialized) {
-      ourPlatformPrefixInitialized = true;
-      boolean isUltimate = true;
-      try {
-        PlatformTestCase.class.getClassLoader().loadClass(classToTest);
-      }
-      catch (ClassNotFoundException e) {
-        isUltimate = false;
-      }
-      if (!isUltimate) {
-        setPlatformPrefix(prefix);
-      }
-    }
   }
 
   private static void setPlatformPrefix(String prefix) {

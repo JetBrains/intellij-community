@@ -9,7 +9,6 @@ import com.intellij.lang.properties.projectView.ResourceBundleGrouper;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.projectView.TestProjectTreeStructure;
-import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 
@@ -154,12 +153,13 @@ public class PropertiesProjectViewTest extends LightPlatformCodeInsightFixtureTe
   private AbstractProjectViewPSIPane setupPane(final boolean sortByType) {
     myStructure.setProviders(new ResourceBundleGrouper(getProject()));
     final AbstractProjectViewPSIPane pane = myStructure.createPane();
-    pane.getTreeBuilder().setNodeDescriptorComparator(new GroupByTypeComparator(sortByType));
-    // there should be xxx.properties in all test data
+    pane.installComparator(new GroupByTypeComparator(sortByType));
     PropertiesReferenceManager.getInstance(getProject()).processAllPropertiesFiles((baseName, propertiesFile) -> {
       pane.select(propertiesFile, propertiesFile.getVirtualFile(), sortByType);
       return true;
     });
+
+    PlatformTestUtil.waitWhileBusy(pane.getTree());
     return pane;
   }
 }

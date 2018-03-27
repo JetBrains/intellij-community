@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.vcs.VcsException;
@@ -5,13 +20,12 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
+import org.jetbrains.idea.svn.api.Revision;
+import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.commandLine.CommandExecutor;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.annotation.XmlElement;
@@ -19,15 +33,12 @@ import javax.xml.bind.annotation.XmlRootElement;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class CmdHistoryClient extends BaseSvnClient implements HistoryClient {
 
   @Override
-  public void doLog(@NotNull SvnTarget target,
-                    @NotNull SVNRevision startRevision,
-                    @NotNull SVNRevision endRevision,
+  public void doLog(@NotNull Target target,
+                    @NotNull Revision startRevision,
+                    @NotNull Revision endRevision,
                     boolean stopOnCopy,
                     boolean discoverChangedPaths,
                     boolean includeMergedRevisions,
@@ -39,19 +50,13 @@ public class CmdHistoryClient extends BaseSvnClient implements HistoryClient {
     List<String> parameters =
       prepareCommand(target, startRevision, endRevision, stopOnCopy, discoverChangedPaths, includeMergedRevisions, limit);
 
-    try {
-      CommandExecutor command = execute(myVcs, target, SvnCommandName.log, parameters, null);
-      // TODO: handler should be called in parallel with command execution, but this will be in other thread
-      // TODO: check if that is ok for current handler implementation
-      parseOutput(command, handler);
-    }
-    catch (SVNException e) {
-      throw new SvnBindException(e);
-    }
+    CommandExecutor command = execute(myVcs, target, SvnCommandName.log, parameters, null);
+    // TODO: handler should be called in parallel with command execution, but this will be in other thread
+    // TODO: check if that is ok for current handler implementation
+    parseOutput(command, handler);
   }
 
-  private static void parseOutput(@NotNull CommandExecutor command, @Nullable LogEntryConsumer handler)
-    throws VcsException, SVNException {
+  private static void parseOutput(@NotNull CommandExecutor command, @Nullable LogEntryConsumer handler) throws VcsException {
     try {
       LogInfo log = CommandUtil.parse(command.getOutput(), LogInfo.class);
 
@@ -66,7 +71,7 @@ public class CmdHistoryClient extends BaseSvnClient implements HistoryClient {
     }
   }
 
-  private static void iterateRecursively(@NotNull LogEntry.Builder entry, @NotNull LogEntryConsumer handler) throws SVNException {
+  private static void iterateRecursively(@NotNull LogEntry.Builder entry, @NotNull LogEntryConsumer handler) throws SvnBindException {
     handler.consume(entry.build());
 
     for (LogEntry.Builder childEntry : entry.getChildEntries()) {
@@ -79,9 +84,9 @@ public class CmdHistoryClient extends BaseSvnClient implements HistoryClient {
     }
   }
 
-  private static List<String> prepareCommand(@NotNull SvnTarget target,
-                                             @NotNull SVNRevision startRevision,
-                                             @NotNull SVNRevision endRevision,
+  private static List<String> prepareCommand(@NotNull Target target,
+                                             @NotNull Revision startRevision,
+                                             @NotNull Revision endRevision,
                                              boolean stopOnCopy, boolean discoverChangedPaths, boolean includeMergedRevisions, long limit) {
     List<String> parameters = new ArrayList<>();
 

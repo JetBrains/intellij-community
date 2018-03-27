@@ -25,10 +25,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
-import com.siyeh.ig.psiutils.ExpectedTypeUtils;
-import com.siyeh.ig.psiutils.InstanceOfUtils;
-import com.siyeh.ig.psiutils.MethodCallUtils;
-import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -89,9 +86,10 @@ public class OverlyStrongTypeCastInspection extends BaseInspection {
       if (operand == null) {
         return;
       }
+      CommentTracker commentTracker = new CommentTracker();
       @NonNls
-      final String newExpression = '(' + expectedType.getCanonicalText() + ')' + operand.getText();
-      PsiReplacementUtil.replaceExpressionAndShorten(expression, newExpression);
+      final String newExpression = '(' + expectedType.getCanonicalText() + ')' + commentTracker.markUnchanged(operand).getText();
+      PsiReplacementUtil.replaceExpressionAndShorten(expression, newExpression, commentTracker);
     }
   }
 

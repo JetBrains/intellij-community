@@ -142,7 +142,7 @@ public final class ZipLong implements Cloneable {
    * @since 1.1
    */
   public boolean equals(Object o) {
-    if (o == null || !(o instanceof ZipLong)) {
+    if (!(o instanceof ZipLong)) {
       return false;
     }
     return value == ((ZipLong)o).getValue();

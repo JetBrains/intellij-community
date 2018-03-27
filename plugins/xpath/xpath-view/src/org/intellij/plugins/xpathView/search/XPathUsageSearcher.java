@@ -68,6 +68,7 @@ class XPathUsageSearcher implements UsageSearcher {
         myManager = PsiManager.getInstance(myProject);
     }
 
+    @Override
     public void generate(@NotNull final Processor<Usage> processor) {
         Runnable runnable = () -> {
             myIndicator.setIndeterminate(true);

@@ -125,6 +125,8 @@ class ReturnOfCollectionFieldFix extends InspectionGadgetsFix {
     final PsiElement replacement = returnTypeElement.replace(newTypeElement);
     final JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(project);
     javaCodeStyleManager.shortenClassReferences(replacement);
-    HighlightUtils.highlightElement(replacement);
+    if (isOnTheFly()) {
+      HighlightUtils.highlightElement(replacement);
+    }
   }
 }

@@ -18,7 +18,6 @@ package com.intellij.uiDesigner.compiler;
 /**
  * Marker interface for all UI Designer exceptions
  * @author Eugene Zhuravlev
- *         Date: 11/5/12
  */
 public abstract class UIDesignerException extends Exception {
 

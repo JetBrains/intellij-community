@@ -846,30 +846,32 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testAsyncGeneratorAnnotation() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> {
-      doTest("AsyncGenerator[int, str]",
-             "from typing import AsyncGenerator\n" +
-             "\n" +
-             "async def g() -> AsyncGenerator[int, str]:\n" +
-             "    s = (yield 42)\n" +
-             "    \n" +
-             "expr = g()");
-    });
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTest("AsyncGenerator[int, str]",
+                   "from typing import AsyncGenerator\n" +
+                   "\n" +
+                   "async def g() -> AsyncGenerator[int, str]:\n" +
+                   "    s = (yield 42)\n" +
+                   "    \n" +
+                   "expr = g()")
+    );
   }
 
   public void testCoroutineReturnsGenerator() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> {
-      doTest("Coroutine[Any, Any, Generator[int, Any, Any]]",
-             "from typing import Generator\n" +
-             "\n" +
-             "async def coroutine() -> Generator[int, Any, Any]:\n" +
-             "    def gen():\n" +
-             "        yield 42\n" +
-             "    \n" +
-             "    return gen()\n" +
-             "    \n" +
-             "expr = coroutine()");
-    });
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTest("Coroutine[Any, Any, Generator[int, Any, Any]]",
+                   "from typing import Generator\n" +
+                   "\n" +
+                   "async def coroutine() -> Generator[int, Any, Any]:\n" +
+                   "    def gen():\n" +
+                   "        yield 42\n" +
+                   "    \n" +
+                   "    return gen()\n" +
+                   "    \n" +
+                   "expr = coroutine()")
+    );
   }
 
   public void testGenericRenamedParameter() {
@@ -1329,7 +1331,6 @@ public class PyTypingTest extends PyTestCase {
   }
 
   private void doTest(@NotNull String expectedType, @NotNull String text) {
-    myFixture.copyDirectoryToProject("typing", "");
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
     final TypeEvalContext codeAnalysis = TypeEvalContext.codeAnalysis(expr.getProject(), expr.getContainingFile());
@@ -1340,7 +1341,6 @@ public class PyTypingTest extends PyTestCase {
 
   private void doMultiFileStubAwareTest(@NotNull final String expectedType, @NotNull final String text) {
     myFixture.copyDirectoryToProject("types/" + getTestName(false), "");
-    myFixture.copyDirectoryToProject("typing", "");
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
 

@@ -24,6 +24,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlText;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
@@ -107,8 +108,11 @@ public class MavenPropertyInParentInspection extends XmlSuppressableInspectionTo
           }
         };
       }
-      problems.add(manager.createProblemDescriptor(domValue.getXmlTag(), MavenDomBundle.message("inspection.property.in.parent.description"),
-                                                   fix, ProblemHighlightType.GENERIC_ERROR, isOnTheFly));
+      XmlText[] textElements = domValue.getXmlTag().getValue().getTextElements();
+      if (textElements.length > 0) {
+        problems.add(manager.createProblemDescriptor(textElements[0], MavenDomBundle.message("inspection.property.in.parent.description"),
+                                                     fix, ProblemHighlightType.GENERIC_ERROR, isOnTheFly));
+      }
     }
   }
 
@@ -120,7 +124,7 @@ public class MavenPropertyInParentInspection extends XmlSuppressableInspectionTo
     if (psiReference == null) return null;
 
     PsiElement resolvedElement = psiReference.resolve();
-    if (resolvedElement == null || !(resolvedElement instanceof MavenPsiElementWrapper)) return null;
+    if (!(resolvedElement instanceof MavenPsiElementWrapper)) return null;
 
     PsiElement xmlTag = ((MavenPsiElementWrapper)resolvedElement).getWrappee();
     if (!(xmlTag instanceof XmlTag)) return null;

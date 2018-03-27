@@ -40,7 +40,6 @@ import java.lang.ref.Reference;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 7/27/12
  */
 public class PsiNameValuePairImpl extends JavaStubPsiElement<PsiNameValuePairStub> implements PsiNameValuePair {
 

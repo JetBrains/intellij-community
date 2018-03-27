@@ -23,7 +23,6 @@ import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: May 4, 2007
  */
 public interface AntFilesProvider {
   

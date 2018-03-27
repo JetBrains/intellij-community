@@ -17,7 +17,7 @@ package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.ControlFlowUtils.InitializerUsageStatus;
 import org.jetbrains.annotations.NotNull;
@@ -53,74 +53,59 @@ abstract class BaseStreamApiMigration {
                                          PsiVariable var,
                                          String streamText,
                                          PsiType expressionType,
-                                         OperationReductionMigration.ReductionOperation reductionOperation) {
-    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(loopStatement.getProject());
-    restoreComments(loopStatement, loopStatement instanceof PsiLoopStatement? ((PsiLoopStatement)loopStatement).getBody(): loopStatement);
+                                         OperationReductionMigration.ReductionOperation reductionOperation,
+                                         CommentTracker ct) {
     InitializerUsageStatus status = ControlFlowUtils.getInitializerUsageStatus(var, loopStatement);
     if (status != InitializerUsageStatus.UNKNOWN) {
       PsiExpression initializer = var.getInitializer();
       if (initializer != null && reductionOperation.getInitializerExpressionRestriction().test(initializer)) {
         PsiType type = var.getType();
         String replacement = (type.isAssignableFrom(expressionType) ? "" : "(" + type.getCanonicalText() + ") ") + streamText;
-        return replaceInitializer(loopStatement, var, initializer, replacement, status);
+        return replaceInitializer(loopStatement, var, initializer, replacement, status, ct);
       }
     }
-    return loopStatement
-      .replace(elementFactory.createStatementFromText(var.getName() + reductionOperation.getOperation() + "=" + streamText + ";",
-                                                      loopStatement));
+    return ct.replaceAndRestoreComments(loopStatement, var.getName() + reductionOperation.getOperation() + "=" + streamText + ";");
   }
 
   static PsiElement replaceInitializer(PsiStatement loopStatement,
                                        PsiVariable var,
                                        PsiExpression initializer,
                                        String replacement,
-                                       InitializerUsageStatus status) {
-    Project project = loopStatement.getProject();
-    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
+                                       InitializerUsageStatus status,
+                                       CommentTracker ct) {
     if (status == ControlFlowUtils.InitializerUsageStatus.DECLARED_JUST_BEFORE) {
-      initializer.replace(elementFactory.createExpressionFromText(replacement, loopStatement));
-      removeLoop(loopStatement);
+      ct.replace(initializer, replacement);
+      removeLoop(ct, loopStatement);
       return var;
     }
     else {
       if (status == ControlFlowUtils.InitializerUsageStatus.AT_WANTED_PLACE_ONLY) {
-        initializer.delete();
+        ct.delete(initializer);
       }
-      return
-        loopStatement.replace(elementFactory.createStatementFromText(var.getName() + " = " + replacement + ";", loopStatement));
+      return ct.replaceAndRestoreComments(loopStatement, var.getName() + " = " + replacement + ";");
     }
   }
 
 
   @Nullable
-  static PsiElement replaceWithFindExtremum(@NotNull PsiStatement loopStatement,
+  static PsiElement replaceWithFindExtremum(@NotNull CommentTracker ct, @NotNull PsiStatement loopStatement,
                                             @NotNull PsiVariable extremumHolder,
                                             @NotNull String streamText,
                                             @Nullable PsiVariable keyExtremum) {
-    restoreComments(loopStatement, loopStatement instanceof PsiLoopStatement? ((PsiLoopStatement)loopStatement).getBody(): loopStatement);
     if(keyExtremum != null) {
-      keyExtremum.delete();
+      ct.delete(keyExtremum);
     }
     InitializerUsageStatus status = ControlFlowUtils.getInitializerUsageStatus(extremumHolder, loopStatement);
-    return replaceInitializer(loopStatement, extremumHolder, extremumHolder.getInitializer(), streamText, status);
+    return replaceInitializer(loopStatement, extremumHolder, extremumHolder.getInitializer(), streamText, status, ct);
   }
 
-  static void restoreComments(PsiStatement statement, PsiElement body) {
-    if(statement instanceof PsiLoopStatement || statement instanceof PsiExpressionStatement) {
-      final PsiElement parent = statement.getParent();
-      for (PsiElement comment : PsiTreeUtil.findChildrenOfType(body, PsiComment.class)) {
-        parent.addBefore(comment, statement);
-      }
-    }
-  }
-
-  static void removeLoop(@NotNull PsiStatement statement) {
+  static void removeLoop(CommentTracker ct, @NotNull PsiStatement statement) {
     PsiElement parent = statement.getParent();
     if (parent instanceof PsiLabeledStatement) {
-      parent.delete();
+      ct.deleteAndRestoreComments(parent);
     }
     else {
-      statement.delete();
+      ct.deleteAndRestoreComments(statement);
     }
   }
 }

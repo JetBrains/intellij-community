@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,11 @@
  */
 package com.siyeh.ig.threading;
 
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.util.PsiUtil;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.fixes.IgnoreClassFix;
 import com.siyeh.ig.ui.UiUtils;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,5 +31,17 @@ public class AccessToStaticFieldLockedOnInstanceInspection extends AccessToStati
   @Override
   public JComponent createOptionsPanel() {
     return UiUtils.createTreeClassChooserList(ignoredClasses, "Ignored Classes", "Choose class to ignore");
+  }
+
+  @Nullable
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    final PsiExpression expression = (PsiExpression)infos[0];
+    final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(expression.getType());
+    if (aClass == null) {
+      return null;
+    }
+    final String name = aClass.getQualifiedName();
+    return new IgnoreClassFix(name, ignoredClasses, "Ignore static fields with type '" + name + "'");
   }
 }

@@ -139,11 +139,11 @@ public class SimplifiableIfStatementInspection extends BaseInspection {
       return joinConditions(condition, elseValue, false);
     }
     else if (BoolUtils.isFalse(thenValue)) {
-      return BoolUtils.getNegatedExpressionText(condition, ParenthesesUtils.AND_PRECEDENCE) + " && " +
+      return BoolUtils.getNegatedExpressionText(condition, ParenthesesUtils.AND_PRECEDENCE, new CommentTracker()) + " && " +
              buildExpressionText(elseValue, ParenthesesUtils.AND_PRECEDENCE);
     }
     if (BoolUtils.isTrue(elseValue)) {
-      return BoolUtils.getNegatedExpressionText(condition, ParenthesesUtils.OR_PRECEDENCE) + " || " +
+      return BoolUtils.getNegatedExpressionText(condition, ParenthesesUtils.OR_PRECEDENCE, new CommentTracker()) + " || " +
              buildExpressionText(thenValue, ParenthesesUtils.OR_PRECEDENCE);
     }
     else {

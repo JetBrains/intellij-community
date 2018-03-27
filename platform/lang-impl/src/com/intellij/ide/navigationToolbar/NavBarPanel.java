@@ -343,9 +343,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     myUpdateQueue.queueSelect(() -> {
       if (!myList.isEmpty()) {
         myModel.setSelectedIndex(myList.size() - 1);
-        if (requestFocus) {
-          requestSelectedItemFocus();
-        }
+        requestSelectedItemFocus();
       }
     });
 
@@ -500,7 +498,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
           e.consume();
         }
         else if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1) {
-          requestSelectedItemFocus();  // Android Studio: modified by Change Ic9d9c9a0 / commit bb3b09b
+          requestSelectedItemFocus();
           doubleClick(index);
           e.consume();
         }
@@ -595,10 +593,10 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
 
       final int selectedIndex = index < myModel.size() - 1 ? objects.indexOf(myModel.getElement(index + 1)) : 0;
       myNodePopup = new NavBarPopup(this, siblings, selectedIndex);
-      if (item != null && item.isShowing()) {
+     // if (item != null && item.isShowing()) {
         myNodePopup.show(item);
         item.update();
-      }
+     // }
     }
   }
 

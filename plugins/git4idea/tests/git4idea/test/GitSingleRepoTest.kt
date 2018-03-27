@@ -32,25 +32,25 @@ import java.nio.file.Paths
 
 abstract class GitSingleRepoTest : GitPlatformTest() {
 
-  protected lateinit var myRepo: GitRepository
+  protected lateinit var repo: GitRepository
 
   @Throws(Exception::class)
   override fun setUp() {
     super.setUp()
-    myRepo = createRepository(myProject, myProjectPath, makeInitialCommit())
-    cd(myProjectPath)
+    repo = createRepository(project, projectPath, makeInitialCommit())
+    cd(projectPath)
   }
 
   protected open fun makeInitialCommit() = true
 
   protected fun VcsConfiguration.StandardConfirmation.doSilently() =
-    AbstractVcsTestCase.setStandardConfirmation(myProject, GitVcs.NAME, this, DO_ACTION_SILENTLY)
+    AbstractVcsTestCase.setStandardConfirmation(project, GitVcs.NAME, this, DO_ACTION_SILENTLY)
 
   protected fun VcsConfiguration.StandardConfirmation.doNothing() =
-    AbstractVcsTestCase.setStandardConfirmation(myProject, GitVcs.NAME, this, DO_NOTHING_SILENTLY)
+    AbstractVcsTestCase.setStandardConfirmation(project, GitVcs.NAME, this, DO_NOTHING_SILENTLY)
 
   protected fun prepareUnversionedFile(filePath: String): VirtualFile {
-    val path = Paths.get(myProjectPath, filePath)
+    val path = Paths.get(projectPath, filePath)
     Files.createDirectories(path.parent)
     Files.createFile(path)
 
@@ -62,20 +62,25 @@ abstract class GitSingleRepoTest : GitPlatformTest() {
     return file
   }
 
-  protected fun VirtualFile.createDir(dir: String) = VcsTestUtil.findOrCreateDir(myProject, this, dir)!!
+  protected fun VirtualFile.createDir(dir: String) = VcsTestUtil.findOrCreateDir(project, this, dir)!!
 
   protected fun VirtualFile.createFile(fileName: String, content: String = Math.random().toString()) =
-    VcsTestUtil.createFile(myProject, this, fileName, content)!!
+    VcsTestUtil.createFile(project, this, fileName, content)!!
 
   protected fun renameFile(file: VirtualFile, newName: String) {
-    VcsTestUtil.renameFileInCommand(myProject, file, newName)
+    VcsTestUtil.renameFileInCommand(project, file, newName)
     updateChangeListManager()
   }
 
-  protected fun build(f: RepoBuilder.() -> Unit) = build(myRepo, f)
+  protected fun build(f: RepoBuilder.() -> Unit) = build(repo, f)
 
   protected fun assertUnversioned(file: VirtualFile) {
-    assertTrue("File should be unversioned! All changes: " + GitUtil.getLogString(myProjectPath, changeListManager.allChanges),
+    assertTrue("File should be unversioned! All changes: " + GitUtil.getLogString(projectPath, changeListManager.allChanges),
                changeListManager.isUnversioned(file))
   }
+
+  @JvmOverloads
+  protected fun git(command: String, ignoreExitCode: Boolean = false) = repo.git(command, ignoreExitCode)
+
+  internal fun file(path: String) = repo.file(path)
 }

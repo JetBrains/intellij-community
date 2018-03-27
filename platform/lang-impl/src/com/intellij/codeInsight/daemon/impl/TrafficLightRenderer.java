@@ -170,8 +170,8 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     public boolean errorAnalyzingFinished; // all passes done
     List<ProgressableTextEditorHighlightingPass> passStati = Collections.emptyList();
     public int[] errorCount = ArrayUtil.EMPTY_INT_ARRAY;
-    public String reasonWhyDisabled;
-    public String reasonWhySuspended;
+    String reasonWhyDisabled;
+    String reasonWhySuspended;
 
     public DaemonCodeAnalyzerStatus() {
     }
@@ -207,7 +207,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
         status.errorAnalyzingFinished = true;
         return status;
       }
-      else if (myFile instanceof PsiCompiledElement) {
+      if (myFile instanceof PsiCompiledElement) {
         status.reasonWhyDisabled = "File is decompiled";
         status.errorAnalyzingFinished = true;
         return status;

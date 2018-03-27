@@ -18,9 +18,11 @@ package git4idea.update
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.vcs.Executor.cd
 import com.intellij.openapi.vcs.update.UpdatedFiles
+import git4idea.config.GitVersionSpecialty
 import git4idea.config.UpdateMethod
 import git4idea.repo.GitRepository
 import git4idea.test.*
+import org.junit.Assume.assumeTrue
 import java.io.File
 
 class GitMultiRepoUpdateTest : GitUpdateBaseTest() {
@@ -33,11 +35,11 @@ class GitMultiRepoUpdateTest : GitUpdateBaseTest() {
   override fun setUp() {
     super.setUp()
 
-    val mainRepo = setupRepositories(myProjectPath, "parent", "bro")
+    val mainRepo = setupRepositories(projectPath, "parent", "bro")
     repository = mainRepo.projectRepo
     bro = mainRepo.bro
 
-    val communityDir = File(myProjectPath, "community")
+    val communityDir = File(projectPath, "community")
     assertTrue(communityDir.mkdir())
     val enclosingRepo = setupRepositories(communityDir.path, "community_parent", "community_bro")
     community = enclosingRepo.projectRepo
@@ -53,7 +55,7 @@ class GitMultiRepoUpdateTest : GitUpdateBaseTest() {
     val hash = last()
 
     val updatedRepos = mutableListOf<GitRepository>()
-    myGit.mergeListener = {
+    git.mergeListener = {
       updatedRepos.add(it)
     }
 
@@ -65,6 +67,9 @@ class GitMultiRepoUpdateTest : GitUpdateBaseTest() {
   }
 
   fun `test update fails if branch is deleted in one of repositories`() {
+    assumeTrue("Not tested: fetch --prune doesn't work in Git ${vcs.version}",
+               GitVersionSpecialty.SUPPORTS_FETCH_PRUNE.existsIn(vcs.version))
+
     listOf(bro, bromunity).forEach {
       cd(it)
       git("checkout -b feature")
@@ -85,7 +90,7 @@ class GitMultiRepoUpdateTest : GitUpdateBaseTest() {
     cd(bromunity)
     git("push origin :feature")
 
-    val updateProcess = GitUpdateProcess(myProject, EmptyProgressIndicator(), repositories(), UpdatedFiles.create(), false, true)
+    val updateProcess = GitUpdateProcess(project, EmptyProgressIndicator(), repositories(), UpdatedFiles.create(), false, true)
     val result = updateProcess.update(UpdateMethod.MERGE)
 
     assertEquals("Update result is incorrect", GitUpdateResult.NOT_READY, result)
@@ -93,7 +98,7 @@ class GitMultiRepoUpdateTest : GitUpdateBaseTest() {
   }
 
   private fun updateWithMerge(): GitUpdateResult {
-    return GitUpdateProcess(myProject, EmptyProgressIndicator(), repositories(), UpdatedFiles.create(), false, true).update(UpdateMethod.MERGE)
+    return GitUpdateProcess(project, EmptyProgressIndicator(), repositories(), UpdatedFiles.create(), false, true).update(UpdateMethod.MERGE)
   }
 
   private fun repositories() = listOf(repository, community)

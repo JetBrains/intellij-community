@@ -1,0 +1,20 @@
+<html>
+<body>
+This inspection suggests to replace null check with Objects/Stream static method.
+<!-- tooltip end -->
+Example:
+<pre><code>
+if (message == null) {
+  application.messageStorage().save(new EmptyMessage());
+} else {
+  application.messageStorage().save(message);
+}
+</code></pre>
+<p>can be replaced with</p>
+<pre><code>
+  application.messageStorage()
+    .save(Objects.requireNonNullElseGet(message, () -> new EmptyMessage()));
+</code></pre>
+<p><small>New in 2017.3</small></p>
+</body>
+</html>

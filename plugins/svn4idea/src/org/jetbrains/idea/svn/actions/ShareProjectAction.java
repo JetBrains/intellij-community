@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -27,14 +13,13 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.*;
-import org.jetbrains.idea.svn.api.ClientFactory;
-import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.SvnStatusUtil;
+import org.jetbrains.idea.svn.SvnUtil;
+import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.WorkingCopyFormat;
+import org.jetbrains.idea.svn.api.*;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.jetbrains.idea.svn.dialogs.ShareDialog;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import static com.intellij.openapi.progress.ProgressManager.progress;
 import static com.intellij.openapi.ui.Messages.*;
@@ -108,18 +93,16 @@ public class ShareProjectAction extends BasicAction {
       ExclusiveBackgroundVcsAction.run(vcs.getProject(), () ->
         ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
           try {
-            SvnWorkingCopyFormatHolder.setPresetFormat(format);
-
-            SvnTarget checkoutTarget =
+            Target checkoutTarget =
               createFolderStructure(vcs, file, shareTarget, shareDialog.createStandardStructure(), createUrl(parent),
                                     shareDialog.getCommitText());
 
-            progress(message("share.directory.checkout.back.progress.text", checkoutTarget.getPathOrUrlString()));
+            progress(message("share.directory.checkout.back.progress.text", checkoutTarget.getPath()));
 
-            ClientFactory factory = SvnCheckoutProvider.getFactory(vcs, format);
+            ClientFactory factory = SvnCheckoutProvider.getFactory(vcs);
 
             factory.createCheckoutClient()
-              .checkout(SvnTarget.fromURL(checkoutTarget.getURL()), virtualToIoFile(file), checkoutTarget.getPegRevision(), Depth.INFINITY,
+              .checkout(Target.on(checkoutTarget.getUrl()), virtualToIoFile(file), checkoutTarget.getPegRevision(), Depth.INFINITY,
                         false, false, format, null);
             addRecursively(vcs, factory, file);
           }
@@ -128,7 +111,6 @@ public class ShareProjectAction extends BasicAction {
           }
           finally {
             vcs.invokeRefreshSvnRoots();
-            SvnWorkingCopyFormatHolder.setPresetFormat(null);
           }
         }, message("share.directory.title"), true, vcs.getProject()));
 
@@ -144,24 +126,24 @@ public class ShareProjectAction extends BasicAction {
   }
 
   @NotNull
-  private static SvnTarget createFolderStructure(@NotNull SvnVcs vcs,
-                                                 @NotNull VirtualFile file,
-                                                 @NotNull ShareDialog.ShareTarget shareTarget,
-                                                 boolean createStandardStructure,
-                                                 @NotNull SVNURL parentUrl,
-                                                 @NotNull String commitText) throws VcsException {
+  private static Target createFolderStructure(@NotNull SvnVcs vcs,
+                                              @NotNull VirtualFile file,
+                                              @NotNull ShareDialog.ShareTarget shareTarget,
+                                              boolean createStandardStructure,
+                                              @NotNull Url parentUrl,
+                                              @NotNull String commitText) throws VcsException {
     switch (shareTarget) {
       case useSelected:
-        return SvnTarget.fromURL(parentUrl, SVNRevision.HEAD);
+        return Target.on(parentUrl, Revision.HEAD);
       case useProjectName:
         return createRemoteFolder(vcs, parentUrl, file.getName(), commitText);
       default:
-        SvnTarget projectRoot = createRemoteFolder(vcs, parentUrl, file.getName(), commitText);
-        SvnTarget trunk = createRemoteFolder(vcs, projectRoot.getURL(), "trunk", commitText);
+        Target projectRoot = createRemoteFolder(vcs, parentUrl, file.getName(), commitText);
+        Target trunk = createRemoteFolder(vcs, projectRoot.getUrl(), "trunk", commitText);
 
         if (createStandardStructure) {
-          createRemoteFolder(vcs, projectRoot.getURL(), "branches", commitText);
-          createRemoteFolder(vcs, projectRoot.getURL(), "tags", commitText);
+          createRemoteFolder(vcs, projectRoot.getUrl(), "branches", commitText);
+          createRemoteFolder(vcs, projectRoot.getUrl(), "tags", commitText);
         }
         return trunk;
     }
@@ -173,19 +155,19 @@ public class ShareProjectAction extends BasicAction {
   }
 
   @NotNull
-  private static SvnTarget createRemoteFolder(@NotNull SvnVcs vcs,
-                                              @NotNull SVNURL parent,
-                                              @NotNull String folderName,
-                                              @NotNull String commitText) throws VcsException {
-    SVNURL url = append(parent, folderName);
+  private static Target createRemoteFolder(@NotNull SvnVcs vcs,
+                                           @NotNull Url parent,
+                                           @NotNull String folderName,
+                                           @NotNull String commitText) throws VcsException {
+    Url url = append(parent, folderName);
     String message =
       message("share.directory.commit.message", folderName, ApplicationNamesInfo.getInstance().getFullProductName(), commitText);
-    SvnTarget target = SvnTarget.fromURL(url);
+    Target target = Target.on(url);
 
     progress(message("share.directory.create.dir.progress.text", url.toDecodedString()));
 
     long revision = vcs.getFactoryFromSettings().createBrowseClient().createDirectory(target, message, false);
-    return SvnTarget.fromURL(url, SVNRevision.create(revision));
+    return Target.on(url, Revision.of(revision));
   }
 
   @Override

@@ -25,7 +25,6 @@ import java.util.regex.Matcher;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Sep 14, 2005
  */
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class JavacOutputParserTest extends TestCase {

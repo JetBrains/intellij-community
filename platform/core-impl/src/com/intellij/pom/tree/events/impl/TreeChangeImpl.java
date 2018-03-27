@@ -17,453 +17,180 @@
 package com.intellij.pom.tree.events.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Pair;
 import com.intellij.pom.tree.events.ChangeInfo;
-import com.intellij.pom.tree.events.ReplaceChangeInfo;
 import com.intellij.pom.tree.events.TreeChange;
-import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
-import gnu.trove.THashMap;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class TreeChangeImpl implements TreeChange {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.events.impl.TreeChangeImpl");
-  private final Map<ASTNode, ChangeInfo> myChanges = new THashMap<>();
-  private final List<Pair<ASTNode,Integer>> mySortedChanges = new ArrayList<>(); // change, oldoffset
-  private final ASTNode myParent;
+public class TreeChangeImpl implements TreeChange, Comparable<TreeChangeImpl> {
+  private final CompositeElement myParent;
+  private final List<CompositeElement> mySuperParents;
+  private final LinkedHashSet<TreeElement> myInitialChildren = new LinkedHashSet<>();
+  private final Map<TreeElement, Integer> myInitialLengths = new HashMap<>();
+  private final Set<TreeElement> myContentChangeChildren = new HashSet<>();
+  private Map<TreeElement, ChangeInfoImpl> myChanges;
 
-  public TreeChangeImpl(ASTNode parent) {
+  public TreeChangeImpl(@NotNull CompositeElement parent) {
     myParent = parent;
+    assert myParent.getPsi() != null;
+    mySuperParents = JBIterable.generate(parent.getTreeParent(), TreeElement::getTreeParent).toList();
+    for (TreeElement child : getCurrentChildren()) {
+      myInitialChildren.add(child);
+      myInitialLengths.put(child, child.getTextLength());
+    }
+  }
+
+  List<CompositeElement> getSuperParents() {
+    return mySuperParents;
+  }
+
+  @NotNull
+  private JBIterable<TreeElement> getCurrentChildren() {
+    return JBIterable.generate(myParent.getFirstChildNode(), TreeElement::getTreeNext);
   }
 
   @Override
-  public void addChange(ASTNode child, @NotNull ChangeInfo changeInfo) {
-    LOG.assertTrue(child.getTreeParent() == myParent);
+  public int compareTo(@NotNull TreeChangeImpl o) {
+    List<CompositeElement> thisParents = ContainerUtil.reverse(getSuperParents());
+    List<CompositeElement> thatParents = ContainerUtil.reverse(o.getSuperParents());
+    for (int i = 1; i <= thisParents.size() && i <= thatParents.size(); i++) {
+      CompositeElement thisParent = i < thisParents.size() ? thisParents.get(i) : myParent;
+      CompositeElement thatParent = i < thatParents.size() ? thatParents.get(i) : o.myParent;
+      int result = compareNodePositions(thisParent, thatParent);
+      if (result != 0) return result;
+    }
+    return 0;
+  }
 
-    final ChangeInfo current = myChanges.get(child);
+  private static int compareNodePositions(CompositeElement node1, CompositeElement node2) {
+    if (node1 == node2) return 0;
+    
+    int o1 = node1.getStartOffsetInParent();
+    int o2 = node2.getStartOffsetInParent();
+    return o1 != o2 ? Integer.compare(o1, o2) : Integer.compare(getChildIndex(node1), getChildIndex(node2));
+  }
 
-    if(current != null && changeInfo.getChangeType() == ChangeInfo.CONTENTS_CHANGED){
-      return;
+  private static int getChildIndex(CompositeElement e) {
+    return ArrayUtil.indexOf(e.getTreeParent().getChildren(null), e);
+  }
+
+  int getLengthDelta() {
+    return getAllChanges().values().stream().mapToInt(ChangeInfoImpl::getLengthDelta).sum();
+  }
+
+  void clearCache() {
+    myChanges = null;
+  }
+
+  private Map<TreeElement, ChangeInfoImpl> getAllChanges() {
+    if (myChanges == null) {
+      myChanges = new ChildrenDiff().calcChanges();
+    }
+    return myChanges;
+  }
+  
+  private class ChildrenDiff {
+    LinkedHashSet<TreeElement> currentChildren = getCurrentChildren().addAllTo(new LinkedHashSet<>());
+    Iterator<TreeElement> itOld = myInitialChildren.iterator();
+    Iterator<TreeElement> itNew = currentChildren.iterator();
+    TreeElement oldChild, newChild;
+    int oldOffset = 0;
+    LinkedHashMap<TreeElement, ChangeInfoImpl> result = new LinkedHashMap<>();
+
+    void advanceOld() {
+      oldOffset += oldChild == null ? 0 : myInitialLengths.get(oldChild);
+      oldChild = itOld.hasNext() ? itOld.next() : null;
     }
 
-    if(changeInfo.getChangeType() == ChangeInfo.REPLACE){
-      final ReplaceChangeInfoImpl replaceChangeInfo = (ReplaceChangeInfoImpl)changeInfo;
-      final ASTNode replaced = replaceChangeInfo.getReplaced();
-      final ChangeInfo replacedInfo = myChanges.get(replaced);
+    void advanceNew() {
+      newChild = itNew.hasNext() ? itNew.next() : null;
+    }
+    
+    Map<TreeElement, ChangeInfoImpl> calcChanges() {
+      advanceOld(); advanceNew();
 
-      if(replacedInfo == null){
-        addChangeInternal(child, changeInfo);
-      }
-      else{
-        switch(replacedInfo.getChangeType()){
-          case ChangeInfo.REPLACE:
-            replaceChangeInfo.setOldLength(replacedInfo.getOldLength());
-            replaceChangeInfo.setReplaced(((ReplaceChangeInfo)replacedInfo).getReplaced());
-            break;
-          case ChangeInfo.ADD:
-            changeInfo = ChangeInfoImpl.create(ChangeInfo.ADD, replaced);
-            removeChangeInternal(replaced);
-            break;
+      while (oldChild != null || newChild != null) {
+        if (oldChild == newChild) {
+          if (myContentChangeChildren.contains(oldChild)) {
+            addChange(new ChangeInfoImpl(oldChild, oldChild, oldOffset, myInitialLengths.get(oldChild)));
+          }
+          advanceOld(); advanceNew();
+        } else {
+          boolean oldDisappeared = oldChild != null && !currentChildren.contains(oldChild);
+          boolean newAppeared = newChild != null && !myInitialChildren.contains(newChild);
+          addChange(new ChangeInfoImpl(oldDisappeared ? oldChild : null, newAppeared ? newChild : null,
+                                       oldOffset,
+                                       oldDisappeared ? myInitialLengths.get(oldChild) : 0));
+          if (oldDisappeared) {
+            advanceOld();
+          }
+          if (newAppeared) {
+            advanceNew();
+          }
         }
-        addChangeInternal(child, changeInfo);
       }
+
+      return result;
+    }
+
+    private void addChange(ChangeInfoImpl change) {
+      result.put(change.getAffectedChild(), change);
+      oldOffset += change.getLengthDelta();
+    }
+  }
+
+  @NotNull
+  public CompositeElement getChangedParent() {
+    return myParent;
+  }
+
+  void fireEvents(PsiFile file) {
+    int start = myParent.getStartOffset();
+    Collection<ChangeInfoImpl> changes = getAllChanges().values();
+    if (ContainerUtil.exists(changes, c -> c.hasNoPsi())) {
+      ChangeInfoImpl.childrenChanged(ChangeInfoImpl.createEvent(file, start), myParent, myParent.getTextLength() - getLengthDelta());
       return;
     }
-
-    if(current != null && current.getChangeType() == ChangeInfo.REMOVED){
-      if(changeInfo.getChangeType() == ChangeInfo.ADD){
-        if (!(child instanceof LeafElement)) {
-          // remove/add -> changed
-          changeInfo = ChangeInfoImpl.create(ChangeInfo.CONTENTS_CHANGED, child);
-          ((ChangeInfoImpl)changeInfo).setOldLength(current.getOldLength());
-          myChanges.put(child, changeInfo);
-        }
-        else {
-          removeChangeInternal(child);
-        }
-
-      }
-      return;
+    
+    for (ChangeInfoImpl change : changes) {
+      change.fireEvent(start, file, myParent);
     }
-
-    // add + remove == no op
-    if(current != null && current.getChangeType() == ChangeInfo.ADD){
-      if(changeInfo.getChangeType() == ChangeInfo.REMOVED){
-        removeChangeInternal(child);
-      }
-      return;
-    }
-
-    if(changeInfo.getChangeType() == ChangeInfo.REMOVED){
-      if(child instanceof LeafElement){
-        final CharSequence charTabIndex = child.getChars();
-        if(checkLeaf(child.getTreeNext(), charTabIndex) || checkLeaf(child.getTreePrev(), charTabIndex)) return;
-      }
-      addChangeInternal(child, changeInfo);
-      if (current != null) {
-        ((ChangeInfoImpl)changeInfo).setOldLength(current.getOldLength());
-      }
-      return;
-    }
-
-    if(current == null){
-      addChangeInternal(child, changeInfo);
-    }
-  }
-
-  private void addChangeInternal(ASTNode child, ChangeInfo info){
-    if(!myChanges.containsKey(child)){
-      final int nodeOffset = getNodeOldOffset(child, info);
-      addChangeAtOffset(child, nodeOffset);
-    }
-    myChanges.put(child, info);
-  }
-
-  private void addChangeAtOffset(final ASTNode child, final int nodeOffset) {
-    Pair<ASTNode, Integer> element = Pair.create(child, Integer.valueOf(nodeOffset));
-
-    if (mySortedChanges.size() > 0) { // check adding at end
-      Pair<ASTNode, Integer> pair = mySortedChanges.get(mySortedChanges.size() - 1);
-      if (pair.getFirst() == child.getTreePrev() && pair.getSecond() <= nodeOffset) {
-        mySortedChanges.add(element);
-        return;
-      }
-    }
-
-    int index = 0;
-
-    for (Pair<ASTNode, Integer> pair : mySortedChanges) {
-      if(child == pair.getFirst()) return;
-      if(nodeOffset < pair.getSecond().intValue() || nodeOffset == pair.getSecond().intValue() && isAfter(pair.getFirst(), child)){
-        break;
-      }
-      index++;
-    }
-
-    if (index == mySortedChanges.size()) mySortedChanges.add(element);
-    else mySortedChanges.add(index, element);
-  }
-
-  private static boolean isAfter(final ASTNode what, final ASTNode afterWhat) {
-    ASTNode previous = afterWhat;
-    ASTNode current = previous.getTreeNext();
-
-    while(current != null){
-      if(current == what) {
-        // afterWhat can be replaced during reparse and in old tree it can reference 'what' so check they are in same tree
-        return what.getTreePrev() == previous;
-      }
-      previous = current;
-      current = previous.getTreeNext();
-      if(current != null && current.getTextLength() != 0) break;
-    }
-    return false;
-  }
-
-  private void removeChangeInternal(ASTNode child){
-    myChanges.remove(child);
-    for(int i = 0, n = mySortedChanges.size(); i < n; i++){
-      if(child ==  mySortedChanges.get(i).getFirst()){
-        mySortedChanges.remove(i);
-        break;
-      }
-    }
-  }
-
-
-  private boolean checkLeaf(final ASTNode treeNext, final CharSequence charTabIndex) {
-    if(!(treeNext instanceof LeafElement)) return false;
-    final ChangeInfo right = myChanges.get(treeNext);
-    if(right != null && right.getChangeType() == ChangeInfo.ADD){
-      if(charTabIndex == treeNext.getChars()){
-        removeChangeInternal(treeNext);
-        return true;
-      }
-    }
-    return false;
   }
 
   @Override
   @NotNull
   public TreeElement[] getAffectedChildren() {
-    final TreeElement[] treeElements = new TreeElement[myChanges.size()];
-    int index = 0;
-    for (final Pair<ASTNode, Integer> pair : mySortedChanges) {
-      treeElements[index++] = (TreeElement)pair.getFirst();
-    }
-    return treeElements;
+    return getAllChanges().keySet().toArray(TreeElement.EMPTY_ARRAY);
   }
 
   @Override
   public ChangeInfo getChangeByChild(ASTNode child) {
-    return myChanges.get(child);
-  }
-
-  @Override
-  public int getChildOffsetInNewTree(@NotNull ASTNode child) {
-    return myParent.getStartOffset() + getNewOffset(child);
+    return getAllChanges().get((TreeElement)child);
   }
 
 
-  @Override
-  public void composite(@NotNull TreeChange treeChange) {
-    final TreeChangeImpl change = (TreeChangeImpl)treeChange;
-    final Set<Map.Entry<ASTNode,ChangeInfo>> entries = change.myChanges.entrySet();
-    for (final Map.Entry<ASTNode, ChangeInfo> entry : entries) {
-      addChange(entry.getKey(), entry.getValue());
+  public String toString() {
+    return myParent + ": " + getAllChanges().values();
+  }
+
+  void appendChanges(@NotNull TreeChangeImpl next) {
+    myContentChangeChildren.addAll(next.myContentChangeChildren);
+    clearCache();
+  }
+
+  public void markChildChanged(@NotNull TreeElement child, int lengthDelta) {
+    myContentChangeChildren.add(child);
+    Integer oldLength = myInitialLengths.get(child);
+    if (oldLength != null && lengthDelta != 0) {
+      myInitialLengths.put(child, oldLength - lengthDelta);
     }
-  }
-
-  @Override
-  public boolean isEmpty() {
-    return false;
-  }
-
-  @Override
-  public void removeChange(ASTNode beforeEqualDepth) {
-    removeChangeInternal(beforeEqualDepth);
-  }
-
-  @Override
-  public void add(@NotNull final TreeChange value) {
-    final TreeChangeImpl impl = (TreeChangeImpl)value;
-    LOG.assertTrue(impl.myParent == myParent);
-
-    for (final Pair<ASTNode, Integer> pair : impl.mySortedChanges) {
-      final ASTNode child = pair.getFirst();
-      ChangeInfo change = impl.myChanges.get(child);
-
-      if (change.getChangeType() == ChangeInfo.REMOVED) {
-        final ChangeInfo oldChange = myChanges.get(child);
-        if (oldChange != null) {
-          switch (oldChange.getChangeType()) {
-            case ChangeInfo.ADD:
-              removeChangeInternal(child);
-              break;
-            case ChangeInfo.REPLACE:
-              final ASTNode replaced = ((ReplaceChangeInfo)oldChange).getReplaced();
-              removeChangeInternal(child);
-              myChanges.put(replaced, ChangeInfoImpl.create(ChangeInfo.REMOVED, replaced));
-              addChangeAtOffset(replaced, getOldOffset(pair.getSecond().intValue()));
-              break;
-            case ChangeInfo.CONTENTS_CHANGED:
-              ((ChangeInfoImpl)change).setOldLength(oldChange.getOldLength());
-              myChanges.put(child, change);
-              break;
-          }
-        }
-        else {
-          myChanges.put(child, change);
-          addChangeAtOffset(child, getOldOffset(pair.getSecond().intValue()));
-        }
-      }
-      else if (change.getChangeType() == ChangeInfo.REPLACE) {
-        ReplaceChangeInfo replaceChangeInfo = (ReplaceChangeInfo)change;
-        final ASTNode replaced = replaceChangeInfo.getReplaced();
-        final ChangeInfo oldChange = myChanges.get(replaced);
-        if (oldChange != null) {
-          switch (oldChange.getChangeType()) {
-            case ChangeInfo.ADD:
-              change = ChangeInfoImpl.create(ChangeInfo.ADD, child);
-              break;
-            case ChangeInfo.CONTENTS_CHANGED:
-              ((ChangeInfoImpl)change).setOldLength(oldChange.getOldLength());
-              break;
-            case ChangeInfo.REPLACE:
-              final ASTNode oldReplaced = ((ReplaceChangeInfo)oldChange).getReplaced();
-              ReplaceChangeInfoImpl rep = new ReplaceChangeInfoImpl(child);
-              rep.setReplaced(oldReplaced);
-              change = rep;
-
-              break;
-          }
-          removeChangeInternal(replaced);
-        }
-        addChange(child, change);
-      }
-      else {
-        addChange(child, change);
-      }
-    }
-  }
-
-  @Override
-  public int getOldLength() {
-    int oldLength = ((TreeElement)myParent).getNotCachedLength();
-    for (final Map.Entry<ASTNode, ChangeInfo> entry : myChanges.entrySet()) {
-      final ASTNode key = entry.getKey();
-      final ChangeInfo change = entry.getValue();
-      final int length = ((TreeElement)key).getNotCachedLength();
-      switch (change.getChangeType()) {
-        case ChangeInfo.ADD:
-          oldLength -= length;
-          break;
-        case ChangeInfo.REMOVED:
-          oldLength += length;
-          break;
-        case ChangeInfo.REPLACE:
-        case ChangeInfo.CONTENTS_CHANGED:
-          oldLength += change.getOldLength() - length;
-          break;
-      }
-    }
-    return oldLength;
-  }
-
-  private static int getNewLength(ChangeInfo change, ASTNode node){
-    if(change.getChangeType() == ChangeInfo.REMOVED) return 0;
-    return node.getTextLength();
-  }
-
-  private static final int haveNotCalculated = -1;
-
-  private int getOptimizedNodeOldOffset(ASTNode child, ChangeInfo changeInfo) {
-    // we usually add / remove ranges so old offset can be tried to calculate from change with previous sibling
-    ASTNode prevSibling = child.getTreePrev();
-    if (prevSibling != null) {
-      if (mySortedChanges.size() > 0) {
-        Pair<ASTNode, Integer> pair = mySortedChanges.get(mySortedChanges.size() - 1);
-
-        if (pair.getFirst() == prevSibling) {
-          ChangeInfo prevSiblingChange = myChanges.get(prevSibling);
-          if ((prevSiblingChange.getChangeType() == ChangeInfo.REMOVED &&
-               changeInfo.getChangeType() == ChangeInfo.REMOVED
-              ) ||
-              (prevSiblingChange.getChangeType() == ChangeInfo.ADD &&
-               changeInfo.getChangeType() == ChangeInfo.ADD
-              )
-             ) {
-            return pair.getSecond() + prevSiblingChange.getOldLength();
-          }
-        }
-      }
-    }
-    return haveNotCalculated;
-  }
-
-  private int getNodeOldOffset(ASTNode child, ChangeInfo changeInfo){
-    LOG.assertTrue(child.getTreeParent() == myParent);
-
-    int oldOffsetInParent = getOptimizedNodeOldOffset(child, changeInfo);
-
-    if (oldOffsetInParent == haveNotCalculated) {
-      oldOffsetInParent = calculateOldOffsetLinearly(child);
-    }
-
-    return oldOffsetInParent;
-  }
-
-  private int calculateOldOffsetLinearly(ASTNode child) {
-    int oldOffsetInParent = 0;
-    // find last changed element before child
-    ASTNode current = myParent.getFirstChildNode();
-    // calculate not changed elements
-    while(current != child) {
-      if (!myChanges.containsKey(current)) {
-        oldOffsetInParent += current.getTextLength();
-      }
-      current = current.getTreeNext();
-    }
-
-    for (Pair<ASTNode, Integer> offset : mySortedChanges) {
-      if(offset.getSecond() > oldOffsetInParent) break;
-
-      final ChangeInfo change = myChanges.get(offset.getFirst());
-      oldOffsetInParent += change.getOldLength();
-    }
-
-    return oldOffsetInParent;
-  }
-
-  private int getOldOffset(int offset){
-    for (Pair<ASTNode, Integer> pair : mySortedChanges) {
-      if(pair.getSecond() > offset) break;
-
-      final ChangeInfo change = myChanges.get(pair.getFirst());
-      offset += change.getOldLength() - getNewLength(change, pair.getFirst());
-    }
-
-    return offset;
-  }
-
-  private int myLastOffsetInNewTree;
-  private ASTNode myLastNode;
-
-  private int getNewOffset(ASTNode node){
-    ASTNode prev = node.getTreePrev();
-    if (myLastNode == prev) {
-      ChangeInfo prevChangeInfo = myChanges.get(prev);
-      ChangeInfo changeInfo = myChanges.get(node);
-
-      // newoffset of removed element is the same of removed previous sibling
-      if (prevChangeInfo != null &&
-          changeInfo != null &&
-          prevChangeInfo.getChangeType() == ChangeInfo.REMOVED &&
-          changeInfo.getChangeType() == ChangeInfo.REMOVED
-         ) {
-        myLastNode = node;
-        return myLastOffsetInNewTree;
-      }
-    }
-
-    int currentOffsetInNewTree = 0;
-    ASTNode current = myParent.getFirstChildNode();
-    int i = 0;
-    Pair<ASTNode, Integer> currentChange = i < mySortedChanges.size() ? mySortedChanges.get(i) : null;
-    int currentOldOffset = 0;
-
-    while(current != null) {
-      boolean counted = false;
-
-      while(currentChange != null && currentOldOffset == currentChange.getSecond().intValue()){
-        if(currentChange.getFirst() == node) {
-          myLastNode = node;
-          myLastOffsetInNewTree = currentOffsetInNewTree;
-          return currentOffsetInNewTree;
-        }
-        if(current == currentChange.getFirst()){
-          final int textLength = current.getTextLength();
-          counted = true;
-          current = current.getTreeNext();
-          currentOffsetInNewTree += textLength;
-        }
-        final ChangeInfo changeInfo = myChanges.get(currentChange.getFirst());
-        currentOldOffset += changeInfo.getOldLength();
-        ++i;
-        currentChange = i < mySortedChanges.size() ? mySortedChanges.get(i) : null;
-      }
-
-      if(current == null) break;
-
-      if(!counted){
-        final int textLength = current.getTextLength();
-        currentOldOffset += textLength;
-        current = current.getTreeNext();
-        currentOffsetInNewTree += textLength;
-      }
-    }
-
-    return currentOffsetInNewTree;
-  }
-
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public String toString(){
-    final StringBuilder buffer = new StringBuilder();
-    final Iterator<Pair<ASTNode, Integer>> iterator = mySortedChanges.iterator();
-    while (iterator.hasNext()) {
-      final Pair<ASTNode, Integer> pair = iterator.next();
-      final ASTNode node = pair.getFirst();
-      buffer.append("(");
-      buffer.append(node.getElementType().toString());
-      buffer.append(" at ").append(pair.getSecond()).append(", ");
-      ChangeInfo child = getChangeByChild(node);
-      buffer.append(child != null ? child.toString():"null");
-      buffer.append(")");
-      if(iterator.hasNext()) buffer.append(", ");
-    }
-    return buffer.toString();
+    clearCache();
   }
 }

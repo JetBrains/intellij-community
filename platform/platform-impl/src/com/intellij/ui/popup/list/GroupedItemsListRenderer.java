@@ -44,7 +44,7 @@ public class GroupedItemsListRenderer<E> extends GroupedElementsRenderer.List im
     boolean hasSeparator = myDescriptor.hasSeparatorAboveOf(value);
     if (index == 0 && StringUtil.isEmptyOrSpaces(caption)) hasSeparator = false;
 
-    Icon icon = myDescriptor.getIconFor(value);
+    Icon icon = isSelected ? myDescriptor.getSelectedIconFor(value) : myDescriptor.getIconFor(value);
     final JComponent result = configureComponent(myDescriptor.getTextFor(value), myDescriptor.getTooltipFor(value),
                                                  icon, icon, isSelected, hasSeparator,
                                                  caption, -1);

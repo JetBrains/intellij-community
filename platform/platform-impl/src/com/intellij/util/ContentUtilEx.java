@@ -106,7 +106,7 @@ public class ContentUtilEx extends ContentsUtil {
     }
     else {
       Object disposableByKey = contentComponent.getClientProperty(DISPOSABLE_KEY);
-      if (disposableByKey != null && disposableByKey instanceof Disposable) {
+      if (disposableByKey instanceof Disposable) {
         Disposer.register(content, (Disposable)disposableByKey);
       }
     }

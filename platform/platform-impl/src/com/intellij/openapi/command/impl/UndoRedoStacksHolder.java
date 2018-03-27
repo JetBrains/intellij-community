@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.openapi.command.impl;
 
@@ -101,7 +89,7 @@ class UndoRedoStacksHolder {
     if (refs.isEmpty()) return myGlobalStack.getLast();
 
     UndoableGroup mostRecentAction = null;
-    int mostRecentDocTimestamp = myUndo ? -1 : Integer.MAX_VALUE;
+    int mostRecentDocTimestamp = 0;
 
     for (DocumentReference each : refs) {
       LinkedList<UndoableGroup> stack = getStack(each);
@@ -110,7 +98,9 @@ class UndoRedoStacksHolder {
       UndoableGroup lastAction = stack.getLast();
 
       int timestamp = lastAction.getCommandTimestamp();
-      if (myUndo ? timestamp > mostRecentDocTimestamp : timestamp < mostRecentDocTimestamp) {
+      if (mostRecentAction == null || lastAction.isTemporary() && !mostRecentAction.isTemporary() || 
+          lastAction.isTemporary() == mostRecentAction.isTemporary() && 
+          (myUndo ? timestamp > mostRecentDocTimestamp : timestamp < mostRecentDocTimestamp)) {
         mostRecentAction = lastAction;
         mostRecentDocTimestamp = timestamp;
       }
@@ -125,15 +115,15 @@ class UndoRedoStacksHolder {
     Set<DocumentReference> result = new THashSet<>();
 
     for (DocumentReference each : group.getAffectedDocuments()) {
-      UndoableGroup last = getStack(each).getLast();
-      if (last != group) {
+      UndoableGroup last = getStack(each).peekLast();
+      if (last != null && last != group) {
         result.addAll(last.getAffectedDocuments());
       }
     }
 
     if (group.isGlobal()) {
-      UndoableGroup last = myGlobalStack.getLast();
-      if (last != group) {
+      UndoableGroup last = myGlobalStack.peekLast();
+      if (last != null && last != group) {
         result.addAll(last.getAffectedDocuments());
       }
     }
@@ -175,6 +165,16 @@ class UndoRedoStacksHolder {
 
     cleanWeaklyTrackedEmptyStacks(myDocumentsWithStacks);
     cleanWeaklyTrackedEmptyStacks(myNonlocalVirtualFilesWithStacks);
+  }
+
+  void convertTemporaryActionsToPermanent(boolean global, @NotNull Set<DocumentReference> affectedRefs) {
+    for (LinkedList<UndoableGroup> stack : getAffectedStacks(global, affectedRefs)) {
+      for (int i = stack.size() - 1; i >= 0; i--) {
+        UndoableGroup group = stack.get(i);
+        if (!group.isTemporary()) break;
+        group.makePermanent();
+      }
+    }
   }
 
   private <T extends UserDataHolder> void cleanWeaklyTrackedEmptyStacks(@NotNull Collection<T> stackHolders) {

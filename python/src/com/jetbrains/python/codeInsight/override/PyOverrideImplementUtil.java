@@ -203,6 +203,9 @@ public class PyOverrideImplementUtil {
     if (anno != null && level.isAtLeast(LanguageLevel.PYTHON30)) {
       pyFunctionBuilder.annotation(anno.getText());
     }
+    if (baseFunction.isAsync()) {
+      pyFunctionBuilder.makeAsync();
+    }
     final TypeEvalContext context = TypeEvalContext.userInitiated(baseFunction.getProject(), baseFunction.getContainingFile());
     final List<PyCallableParameter> baseParams = baseFunction.getParameters(context);
     for (PyCallableParameter parameter : baseParams) {

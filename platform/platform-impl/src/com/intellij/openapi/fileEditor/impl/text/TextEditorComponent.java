@@ -18,7 +18,6 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -80,6 +79,7 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider, Dispos
     myDocument.addDocumentListener(new MyDocumentListener(), this);
 
     myEditor = createEditor();
+    myEditor.getComponent().setFocusable(false);
     add(myEditor.getComponent(), BorderLayout.CENTER);
     myModified = isModifiedImpl();
     myValid = isEditorValidImpl();
@@ -112,12 +112,7 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider, Dispos
   @Override
   public void dispose(){
     disposeEditor();
-
     myDisposed = true;
-    //myFocusWatcher.deinstall(this);
-    //removePropertyChangeListener(mySplitterPropertyChangeListener);
-
-    //super.dispose();
   }
 
   public boolean isDisposed() {

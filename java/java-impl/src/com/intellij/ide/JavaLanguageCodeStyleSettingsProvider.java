@@ -15,6 +15,7 @@
  */
 package com.intellij.ide;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.application.options.IndentOptionsEditor;
 import com.intellij.application.options.JavaIndentOptionsEditor;
 import com.intellij.lang.Language;
@@ -280,7 +281,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     if (file.isValid()) {
       return new DocCommentSettings() {
         private final JavaCodeStyleSettings mySettings =
-          CodeStyleSettingsManager.getSettings(file.getProject()).getCustomSettings(JavaCodeStyleSettings.class);
+          CodeStyle.getCustomSettings(file, JavaCodeStyleSettings.class);
 
         @Override
         public boolean isDocFormattingEnabled() {

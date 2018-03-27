@@ -17,7 +17,6 @@ package org.jetbrains.ether;
 
 /**
  * @author: db
- * Date: 04.10.11
  */
 public class PackageInfoTest extends IncrementalTestCase {
   public PackageInfoTest() {

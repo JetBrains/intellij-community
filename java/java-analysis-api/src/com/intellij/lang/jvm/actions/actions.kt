@@ -26,15 +26,15 @@ fun createMethodActions(target: JvmClass, request: CreateMethodRequest): List<In
   }
 }
 
-fun createModifierActions(target: JvmModifiersOwner, request: MemberRequest.Modifier): List<IntentionAction> {
+fun createConstructorActions(target: JvmClass, request: CreateConstructorRequest): List<IntentionAction> {
   return createActions {
-    it.createChangeModifierActions(target, request)
+    it.createAddConstructorActions(target, request)
   }
 }
 
-fun createConstructorActions(target: JvmClass, request: MemberRequest.Constructor): List<IntentionAction> {
+fun createModifierActions(target: JvmModifiersOwner, request: MemberRequest.Modifier): List<IntentionAction> {
   return createActions {
-    it.createAddConstructorActions(target, request)
+    it.createChangeModifierActions(target, request)
   }
 }
 

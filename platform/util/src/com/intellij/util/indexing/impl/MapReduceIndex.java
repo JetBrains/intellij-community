@@ -317,8 +317,8 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     try {
       try {
         ValueContainerImpl.ourDebugIndexInfo.set(myIndexId);
-        updateData.iterateKeys(myAddedKeyProcessor, myUpdatedKeyProcessor, myRemovedKeyProcessor);
-        updateData.updateForwardIndex();
+        boolean hasDifference = updateData.iterateKeys(myAddedKeyProcessor, myUpdatedKeyProcessor, myRemovedKeyProcessor);
+        if (hasDifference) updateData.updateForwardIndex();
       }
       catch (ProcessCanceledException e) {
         throw e;

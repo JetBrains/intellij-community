@@ -15,8 +15,6 @@
  */
 package org.jetbrains.idea.devkit.actions.service;
 
-import com.intellij.CommonBundle;
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.actions.CreateInDirectoryActionBase;
 import com.intellij.ide.actions.ElementCreator;
@@ -31,9 +29,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.DocumentAdapter;
@@ -52,6 +52,9 @@ import org.jetbrains.idea.devkit.util.DescriptorUtil;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.Callable;
 
 /**
@@ -108,6 +111,7 @@ abstract class NewServiceActionBase extends CreateInDirectoryActionBase implemen
 
 
   private class NewServiceDialog extends DialogWrapper {
+    private final Project myProject;
     private final ServiceCreator myServiceCreator;
     private final PsiDirectory myDirectory;
 
@@ -123,15 +127,15 @@ abstract class NewServiceActionBase extends CreateInDirectoryActionBase implemen
 
     NewServiceDialog(@Nullable Project project, ServiceCreator serviceCreator, PsiDirectory directory) {
       super(project);
+      myProject = project;
 
-      setOKActionEnabled(false);
       setTitle(getDialogTitle());
 
       myServiceCreator = serviceCreator;
       myDirectory = directory;
 
       mySeparateServiceInterfaceCheckbox.addActionListener(e -> {
-        if (mySeparateServiceInterfaceCheckbox.isSelected()) {
+        if (isSeparateMode()) {
           myServiceImplementationTextField.setEnabled(true);
           myServiceNameLabel.setText(DevKitBundle.message("new.service.dialog.interface"));
         } else {
@@ -144,7 +148,6 @@ abstract class NewServiceActionBase extends CreateInDirectoryActionBase implemen
       myServiceNameTextField.getDocument().addDocumentListener(new DocumentAdapter() {
         @Override
         protected void textChanged(DocumentEvent e) {
-          setOKActionEnabled(myServiceNameTextField.getText().length() > 0);
           adjustServiceImplementationTextField();
         }
       });
@@ -160,8 +163,50 @@ abstract class NewServiceActionBase extends CreateInDirectoryActionBase implemen
       init();
     }
 
+    @NotNull
+    @Override
+    protected List<ValidationInfo> doValidateAll() {
+      boolean nameValid = isServiceNameValid();
+      if (!isSeparateMode()) {
+        if (nameValid) {
+          return Collections.emptyList();
+        }
+        return Collections.singletonList(
+          new ValidationInfo(DevKitBundle.message("new.service.dialog.invalid.name"), myServiceNameTextField));
+      }
+
+      // separate mode
+      boolean implementationValid = isServiceImplementationValid();
+      if (nameValid && implementationValid) {
+        return Collections.emptyList();
+      }
+      List<ValidationInfo> result = new ArrayList<>();
+      if (!nameValid) {
+        result.add(new ValidationInfo(
+          DevKitBundle.message("new.service.dialog.invalid.interface"), myServiceNameTextField));
+      }
+      if (!implementationValid) {
+        result.add(new ValidationInfo(
+          DevKitBundle.message("new.service.dialog.invalid.implementation"), myServiceImplementationTextField));
+      }
+      return result;
+    }
+
+    private boolean isServiceImplementationValid() {
+      return validateNameField(myServiceImplementationTextField);
+    }
+
+    private boolean isServiceNameValid() {
+      return validateNameField(myServiceNameTextField);
+    }
+
+    private boolean validateNameField(JTextField field) {
+      String text = field.getText();
+      return text.length() > 0 && PsiNameHelper.getInstance(myProject).isQualifiedName(text);
+    }
+
     private void adjustServiceImplementationTextField() {
-      if (!mySeparateServiceInterfaceCheckbox.isSelected()) {
+      if (!isSeparateMode()) {
         myAdjusting = true;
         myServiceImplementationTextField.setText("");
         myAdjusting = false;
@@ -172,6 +217,10 @@ abstract class NewServiceActionBase extends CreateInDirectoryActionBase implemen
       }
     }
 
+    private boolean isSeparateMode() {
+      return mySeparateServiceInterfaceCheckbox.isSelected();
+    }
+
     @Nullable
     @Override
     public JComponent getPreferredFocusedComponent() {
@@ -180,38 +229,28 @@ abstract class NewServiceActionBase extends CreateInDirectoryActionBase implemen
 
     @Override
     protected void doOKAction() {
+      if (!getOKAction().isEnabled()) {
+        return;
+      }
+
       XmlFile pluginDescriptorToPatch = DevkitActionsUtil.choosePluginModuleDescriptor(myDirectory);
       if (pluginDescriptorToPatch == null) {
         return; // canceled
       }
 
-      if (mySeparateServiceInterfaceCheckbox.isSelected()) {
-        // separated interface and implementation
+      if (isSeparateMode()) {
         String serviceInterface = myServiceNameTextField.getText().trim();
         String serviceImplementation = myServiceImplementationTextField.getText().trim();
-
-        if (checkInput(serviceInterface) && checkInput(serviceImplementation) &&
-            myServiceCreator.createInterfaceAndImplementation(serviceInterface, serviceImplementation, pluginDescriptorToPatch)) {
+        if (myServiceCreator.createInterfaceAndImplementation(serviceInterface, serviceImplementation, pluginDescriptorToPatch)) {
           close(OK_EXIT_CODE);
         }
-      } else {
-        // only implementation
+      }
+      else {
         String serviceOnlyImplementation = myServiceNameTextField.getText().trim();
-
-        if (checkInput(serviceOnlyImplementation) &&
-            myServiceCreator.createOnlyImplementation(serviceOnlyImplementation, pluginDescriptorToPatch)) {
+        if (myServiceCreator.createOnlyImplementation(serviceOnlyImplementation, pluginDescriptorToPatch)) {
           close(OK_EXIT_CODE);
         }
       }
-    }
-
-    private boolean checkInput(String input) {
-      if (StringUtil.isEmpty(input)) {
-        Messages.showMessageDialog(getContentPane(), IdeBundle.message("error.name.should.be.specified"),
-                                   CommonBundle.getErrorTitle(), Messages.getErrorIcon());
-        return false;
-      }
-      return true;
     }
 
     @Nullable
@@ -325,7 +364,7 @@ abstract class NewServiceActionBase extends CreateInDirectoryActionBase implemen
 
       IdeaPlugin ideaPlugin = fileElement.getRootElement();
       Extensions targetExtensions = ideaPlugin.getExtensions().stream()
-        .filter(extensions -> !(extensions instanceof IncludedXmlTag))
+        .filter(extensions -> !(extensions.getXmlTag() instanceof IncludedXmlTag))
         .filter(extensions -> Extensions.DEFAULT_PREFIX.equals(extensions.getDefaultExtensionNs().getStringValue()))
         .findAny()
         .orElseGet(() -> ideaPlugin.addExtensions());

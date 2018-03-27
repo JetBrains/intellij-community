@@ -25,14 +25,13 @@ import junit.framework.Assert;
 import junit.framework.TestCase;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.NodeKind;
+import org.jetbrains.idea.svn.api.Revision;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.info.SvnInfoHandler;
 import org.jetbrains.idea.svn.status.CmdStatusClient;
 import org.jetbrains.idea.svn.status.PortableStatus;
 import org.jetbrains.idea.svn.status.SvnStatusHandler;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -42,6 +41,8 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
+
+import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
 public class SvnParseCommandLineParseTest extends TestCase {
 
@@ -579,8 +580,7 @@ public class SvnParseCommandLineParseTest extends TestCase {
       try {
         return createStubInfo(basePath + "1", "http://a.b.c");
       }
-      catch (SVNException e) {
-        //
+      catch (SvnBindException e) {
         throw new RuntimeException(e);
       }
     });
@@ -598,9 +598,9 @@ public class SvnParseCommandLineParseTest extends TestCase {
     return StringUtil.replace(s, "C:/", LINUX_ROOT);
   }
 
-  private Info createStubInfo(final String basePath, final String baseUrl) throws SVNException {
-    return new Info(basePath, SVNURL.parseURIEncoded(baseUrl), SVNRevision.HEAD, NodeKind.FILE, "",
-                           SVNURL.parseURIEncoded("http://a.b.c"), 1, new Date(), "me", null, Depth.EMPTY);
+  private Info createStubInfo(final String basePath, final String baseUrl) throws SvnBindException {
+    return new Info(basePath, createUrl(baseUrl), Revision.HEAD, NodeKind.FILE, "",
+                    createUrl("http://a.b.c"), 1, new Date(), "me", null, Depth.EMPTY);
   }
 
   public void testStatusInExternalMove() throws Exception {
@@ -672,7 +672,7 @@ public class SvnParseCommandLineParseTest extends TestCase {
         }
         return createStubInfo(o.getPath(), "http://12345");
       }
-      catch (SVNException e) {
+      catch (SvnBindException e) {
         throw new RuntimeException(e);
       }
     }));
@@ -752,8 +752,7 @@ public class SvnParseCommandLineParseTest extends TestCase {
       try {
         return createStubInfo(basePath + "1", "http://a.b.c");
       }
-      catch (SVNException e) {
-        //
+      catch (SvnBindException e) {
         throw new RuntimeException(e);
       }
     });
@@ -839,8 +838,7 @@ public class SvnParseCommandLineParseTest extends TestCase {
       try {
         return createStubInfo(basePath + "1", "http://a.b.c");
       }
-      catch (SVNException e) {
-        //
+      catch (SvnBindException e) {
         throw new RuntimeException(e);
       }
     });

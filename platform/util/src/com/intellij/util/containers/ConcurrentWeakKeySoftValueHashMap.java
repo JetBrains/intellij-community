@@ -228,15 +228,12 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
 
   @Override
   public boolean containsKey(Object key) {
-    HardKey<K,V> hardKey = createHardKey(key);
-    boolean result = myMap.containsKey(hardKey);
-    hardKey.clear();
-    return result;
+    throw RefValueHashMap.pointlessContainsKey();
   }
 
   @Override
   public boolean containsValue(Object value) {
-    throw new UnsupportedOperationException();
+    throw RefValueHashMap.pointlessContainsValue();
   }
 
   @Override

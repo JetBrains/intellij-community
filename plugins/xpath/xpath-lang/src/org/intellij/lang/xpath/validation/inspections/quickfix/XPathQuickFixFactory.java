@@ -47,14 +47,6 @@ public interface XPathQuickFixFactory {
     }
 
     @Override
-    public boolean isAvailable(@NotNull Project project,
-                               @NotNull PsiFile file,
-                               @NotNull PsiElement startElement,
-                               @NotNull PsiElement endElement) {
-      return startElement.isValid() && startElement.getParent().isValid();
-    }
-
-    @Override
     public void invoke(@NotNull Project project,
                        @NotNull PsiFile file,
                        Editor editor, @NotNull PsiElement startElement,

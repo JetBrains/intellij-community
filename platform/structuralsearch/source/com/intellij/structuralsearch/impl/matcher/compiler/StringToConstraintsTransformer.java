@@ -12,8 +12,6 @@ import java.util.regex.PatternSyntaxException;
 
 /**
  * @author maxim
- * Date: 17.11.2004
- * Time: 19:29:05
  */
 public class StringToConstraintsTransformer {
   @NonNls private static final String REF = "ref";

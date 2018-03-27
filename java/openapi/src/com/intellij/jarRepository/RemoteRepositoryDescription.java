@@ -22,7 +22,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 21-Feb-17
  */
 public class RemoteRepositoryDescription {
   public static final RemoteRepositoryDescription MAVEN_CENTRAL = new RemoteRepositoryDescription(

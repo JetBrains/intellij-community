@@ -29,7 +29,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
@@ -103,7 +102,7 @@ public class PsiAwareFileEditorManagerImpl extends FileEditorManagerImpl {
       tooltipText.append(module.getName());
       tooltipText.append("] ");
     }
-    tooltipText.append(FileUtil.getLocationRelativeToUserHome(file.getPresentableUrl()));
+    tooltipText.append(super.getFileTooltipText(file));
     return tooltipText.toString();
   }
 

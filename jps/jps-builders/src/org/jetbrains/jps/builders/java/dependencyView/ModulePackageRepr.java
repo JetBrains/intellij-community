@@ -14,7 +14,6 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- * Date: 02-Oct-17
  */
 public class ModulePackageRepr extends Proto {
   private static final DataExternalizer<Integer> INT_EXTERNALIZER = new DataExternalizer<Integer>() {

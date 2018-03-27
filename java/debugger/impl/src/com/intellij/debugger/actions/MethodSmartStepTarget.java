@@ -28,7 +28,6 @@ import javax.swing.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 10/25/13
  */
 public class MethodSmartStepTarget extends SmartStepTarget {
   private final PsiMethod myMethod;

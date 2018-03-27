@@ -31,7 +31,6 @@ import org.jetbrains.git4idea.util.ScriptGenerator;
 import org.jetbrains.ide.BuiltInServerManager;
 
 import java.io.IOException;
-import java.security.SecureRandom;
 import java.util.Map;
 import java.util.UUID;
 
@@ -155,10 +154,11 @@ public class GitRebaseEditorService {
    * @param editorNo the editor number
    */
   public void configureHandler(GitLineHandler h, @NotNull UUID editorNo) {
-    h.setEnvironment(GitCommand.GIT_EDITOR_ENV, getEditorCommand());
-    h.setEnvironment(GitRebaseEditorMain.IDEA_REBASE_HANDER_NO, editorNo.toString());
+    h.addCustomEnvironmentVariable(GitCommand.GIT_EDITOR_ENV, getEditorCommand());
+    h.addCustomEnvironmentVariable(GitRebaseEditorMain.IDEA_REBASE_HANDER_NO, editorNo.toString());
+    // Android Studio: added by Change I0fac87f4 / commit b02fa7b
     try {
-      h.setEnvironment(GitRebaseEditorMain.GIT_REBASE_TOKEN_ENV,
+      h.addCustomEnvironmentVariable(GitRebaseEditorMain.GIT_REBASE_TOKEN_ENV,
           BuiltinWebServerAccess.getUserAuthenticationToken());
     } catch (IOException e) {
       throw new IllegalStateException("Unable to set authentication for git rebase action", e);

@@ -45,7 +45,6 @@ import java.io.File;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Dec 30, 2003
  */
 public class NamePathComponent extends JPanel{
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.projectWizard.NamePathComponent");

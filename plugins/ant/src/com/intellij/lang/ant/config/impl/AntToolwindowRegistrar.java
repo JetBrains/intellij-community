@@ -37,7 +37,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Apr 24, 2007
  */
 public class AntToolwindowRegistrar extends AbstractProjectComponent {
   public AntToolwindowRegistrar(Project project) {

@@ -17,6 +17,7 @@ package com.intellij.psi.util;
 
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import gnu.trove.TObjectIntHashMap;
@@ -269,5 +270,42 @@ public class ClassUtil {
 
     PsiFile parentFile = aClass.getContainingFile();
     return parentFile != null && parentFile.getLanguage() == JavaLanguage.INSTANCE;  // do not select JspClass
+  }
+
+  public static String getVMParametersMethodSignature(PsiMethod method) {
+    return StringUtil.join(method.getParameterList().getParameters(),
+                           param -> {
+                             PsiType type = TypeConversionUtil.erasure(param.getType());
+                             return type != null ? type.accept(createSignatureVisitor()) : "";
+                           },
+                           ",");
+  }
+
+  private static PsiTypeVisitor<String> createSignatureVisitor() {
+    return new PsiTypeVisitor<String>() {
+      @Override
+      public String visitPrimitiveType(PsiPrimitiveType primitiveType) {
+        return primitiveType.getCanonicalText();
+      }
+
+      @Override
+      public String visitClassType(PsiClassType classType) {
+        PsiClass aClass = classType.resolve();
+        if (aClass == null) {
+          return "";
+        }
+        return getJVMClassName(aClass);
+      }
+
+      @Override
+      public String visitArrayType(PsiArrayType arrayType) {
+        PsiType componentType = arrayType.getComponentType();
+        String typePresentation = componentType.accept(this);
+        if (componentType instanceof PsiClassType) {
+          typePresentation = "L" + typePresentation + ";";
+        }
+        return "[" + typePresentation;
+      }
+    };
   }
 }

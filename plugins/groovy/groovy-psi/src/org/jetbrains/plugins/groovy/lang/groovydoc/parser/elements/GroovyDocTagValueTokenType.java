@@ -63,7 +63,7 @@ public class GroovyDocTagValueTokenType extends GroovyDocChameleonElementType im
   }
 
   @Override
-  public ASTNode parseContents(ASTNode chameleon) {
+  public ASTNode parseContents(@NotNull ASTNode chameleon) {
     ASTNode parent = chameleon.getTreeParent();
     if (isReferenceElement(parent, chameleon)) {
       return parseImpl(chameleon);

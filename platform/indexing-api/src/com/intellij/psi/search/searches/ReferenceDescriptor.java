@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.search.searches;
 
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -30,7 +31,9 @@ public class ReferenceDescriptor {
   public static final Function<PsiReference, ReferenceDescriptor> MAPPER = psiReference -> {
     final PsiElement element = psiReference.getElement();
     final PsiFile file1 = element.getContainingFile();
-    return new ReferenceDescriptor(file1.getViewProvider().getVirtualFile(), element.getTextRange().getStartOffset() + psiReference.getRangeInElement().getStartOffset());
+    TextRange textRange = element.getTextRange();
+    int startOffset = textRange != null ? textRange.getStartOffset() : 0;
+    return new ReferenceDescriptor(file1.getViewProvider().getVirtualFile(), startOffset + psiReference.getRangeInElement().getStartOffset());
   };
   private final VirtualFile file;
   private final int offset;

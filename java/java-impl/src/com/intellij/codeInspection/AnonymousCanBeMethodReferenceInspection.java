@@ -85,15 +85,17 @@ public class AnonymousCanBeMethodReferenceInspection extends AbstractBaseJavaLoc
                   final PsiElement lBrace = aClass.getLBrace();
                   LOG.assertTrue(lBrace != null);
                   final TextRange rangeInElement = new TextRange(0, aClass.getStartOffsetInParent() + lBrace.getStartOffsetInParent());
-                  ProblemHighlightType type = methodReferenceCandidate.mySafeQualifier && methodReferenceCandidate.myConformsCodeStyle
-                                              ? ProblemHighlightType.LIKE_UNUSED_SYMBOL
-                                              : ProblemHighlightType.INFORMATION;
-                  ProblemDescriptorBase descriptor = new ProblemDescriptorBase(parent, parent,
-                          "Anonymous #ref #loc can be replaced with method reference",
-                                            new LocalQuickFix[]{new ReplaceWithMethodRefFix()},
-                                            type, false, rangeInElement,
-                                            type != ProblemHighlightType.INFORMATION, true);
-                  holder.registerProblem(descriptor);
+                  ProblemHighlightType type;
+                  if (methodReferenceCandidate.mySafeQualifier && methodReferenceCandidate.myConformsCodeStyle) {
+                    type = ProblemHighlightType.LIKE_UNUSED_SYMBOL;
+                  }
+                  else {
+                    if (!isOnTheFly) return;
+                    type = ProblemHighlightType.INFORMATION;
+                  }
+                  holder.registerProblem(parent,
+                                         "Anonymous #ref #loc can be replaced with method reference",
+                                         type, rangeInElement, new ReplaceWithMethodRefFix());
                 }
               }
             }

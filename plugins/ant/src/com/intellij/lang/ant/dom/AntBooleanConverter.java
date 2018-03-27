@@ -23,7 +23,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Aug 3, 2010
  */
 public class AntBooleanConverter extends Converter<Boolean> {
   public final Boolean DEFAULT_VALUE;

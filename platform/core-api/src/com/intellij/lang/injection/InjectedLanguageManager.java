@@ -20,12 +20,12 @@ import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
@@ -37,16 +37,15 @@ import java.util.List;
 
 public abstract class InjectedLanguageManager {
 
-  /** @see com.intellij.lang.injection.MultiHostInjector#MULTIHOST_INJECTOR_EP_NAME */
-  @Deprecated
-  public static final ExtensionPointName<MultiHostInjector> MULTIHOST_INJECTOR_EP_NAME = MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME;
-
-  protected static final NotNullLazyKey<InjectedLanguageManager, Project> INSTANCE_CACHE = ServiceManager.createLazyKey(InjectedLanguageManager.class);
-  public static final Key<Boolean> FRANKENSTEIN_INJECTION = Key.create("FRANKENSTEIN_INJECTION");
-
   public static InjectedLanguageManager getInstance(Project project) {
     return INSTANCE_CACHE.getValue(project);
   }
+
+  protected static final NotNullLazyKey<InjectedLanguageManager, Project> INSTANCE_CACHE = ServiceManager.createLazyKey(InjectedLanguageManager.class);
+
+  public static final Key<Boolean> FRANKENSTEIN_INJECTION = Key.create("FRANKENSTEIN_INJECTION");
+
+  public abstract PsiLanguageInjectionHost getInjectionHost(@NotNull FileViewProvider provider);
 
   @Nullable
   public abstract PsiLanguageInjectionHost getInjectionHost(@NotNull PsiElement element);
@@ -56,7 +55,7 @@ public abstract class InjectedLanguageManager {
   public abstract int injectedToHost(@NotNull PsiElement injectedContext, int injectedOffset);
 
   /**
-   * @deprecated use {@link com.intellij.lang.injection.MultiHostInjector#MULTIHOST_INJECTOR_EP_NAME extension point} for production and
+   * @deprecated use {@link MultiHostInjector#MULTIHOST_INJECTOR_EP_NAME extension point} for production and
    * {@link #registerMultiHostInjector(MultiHostInjector, Disposable)} for tests
    */
   @Deprecated
@@ -65,13 +64,6 @@ public abstract class InjectedLanguageManager {
   @TestOnly
   public abstract void registerMultiHostInjector(@NotNull MultiHostInjector injector, @NotNull Disposable parentDisposable);
 
-  /**
-   * @deprecated use {@link com.intellij.lang.injection.MultiHostInjector#MULTIHOST_INJECTOR_EP_NAME extension point} for production and
-   * {@link #registerMultiHostInjector(MultiHostInjector, Disposable)} for tests
-   */
-  @Deprecated
-  public abstract boolean unregisterMultiHostInjector(@NotNull MultiHostInjector injector);
-
   public abstract String getUnescapedText(@NotNull PsiElement injectedNode);
 
   @NotNull
@@ -79,6 +71,12 @@ public abstract class InjectedLanguageManager {
 
   public abstract boolean isInjectedFragment(@NotNull PsiFile file);
 
+  /**
+   * Finds PSI element in injected fragment (if any) at the given offset in the host file.<p/>
+   * E.g. if you injected XML {@code "<xxx/>"} into Java string literal {@code "String s = "<xxx/>";"} and the caret is at {@code "xxx"} then
+   * this method will return XmlToken(XML_TAG_START) with the text {@code "xxx"}.<br/>
+   * Invocation of this method on uncommitted {@code hostFile} can lead to unexpected results, including throwing an exception!
+   */
   @Nullable
   public abstract PsiElement findInjectedElementAt(@NotNull PsiFile hostFile, int hostDocumentOffset);
 
@@ -90,9 +88,11 @@ public abstract class InjectedLanguageManager {
   public abstract PsiFile getTopLevelFile(@NotNull PsiElement element);
 
   @NotNull
-  public abstract List<DocumentWindow> getCachedInjectedDocuments(@NotNull PsiFile hostPsiFile);
+  public abstract List<DocumentWindow> getCachedInjectedDocumentsInRange(@NotNull PsiFile hostPsiFile, @NotNull TextRange range);
 
-  public abstract void startRunInjectors(@NotNull Document hostDocument, boolean synchronously);
+  public abstract void startRunInjectorsInRange(@NotNull Document hostDocument,
+                                                @NotNull TextRange range,
+                                                boolean synchronously);
 
   public abstract void enumerate(@NotNull PsiElement host, @NotNull PsiLanguageInjectionHost.InjectedPsiVisitor visitor);
   public abstract void enumerateEx(@NotNull PsiElement host, @NotNull PsiFile containingFile, boolean probeUp, @NotNull PsiLanguageInjectionHost.InjectedPsiVisitor visitor);
@@ -108,4 +108,6 @@ public abstract class InjectedLanguageManager {
    * (which don't work for uncommitted document).
    */
   public abstract boolean mightHaveInjectedFragmentAtOffset(@NotNull Document hostDocument, int hostOffset);
+  @NotNull
+  public abstract DocumentWindow freezeWindow(@NotNull DocumentWindow document);
 }

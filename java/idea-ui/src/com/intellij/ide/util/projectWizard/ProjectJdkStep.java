@@ -33,7 +33,6 @@ import java.awt.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jan 21, 2004
  */
 public class ProjectJdkStep extends ModuleWizardStep {
   private final WizardContext myContext;

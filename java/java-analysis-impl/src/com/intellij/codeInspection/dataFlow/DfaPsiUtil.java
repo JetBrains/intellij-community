@@ -106,7 +106,7 @@ public class DfaPsiUtil {
       return Nullness.NOT_NULL;
     }
 
-    if (owner instanceof PsiMethod && isMapGet((PsiMethod)owner)) {
+    if (owner instanceof PsiMethod && isMapMethodWithUnknownNullity((PsiMethod)owner)) {
       return Nullness.UNKNOWN;
     }
 
@@ -127,10 +127,11 @@ public class DfaPsiUtil {
     return Nullness.UNKNOWN;
   }
 
-  private static boolean isMapGet(@NotNull PsiMethod method) {
-    if (!"get".equals(method.getName())) return false;
+  private static boolean isMapMethodWithUnknownNullity(@NotNull PsiMethod method) {
+    String name = method.getName();
+    if (!"get".equals(name) && !"remove".equals(name)) return false;
     PsiMethod superMethod = DeepestSuperMethodsSearch.search(method).findFirst();
-    return "java.util.Map.get".equals(PsiUtil.getMemberQualifiedName(superMethod != null ? superMethod : method));
+    return ("java.util.Map." + name).equals(PsiUtil.getMemberQualifiedName(superMethod != null ? superMethod : method));
   }
 
   @NotNull
@@ -399,8 +400,7 @@ public class DfaPsiUtil {
 
   private static MultiMap<PsiField, PsiExpression> getAllConstructorFieldInitializers(final PsiClass psiClass) {
     if (psiClass instanceof PsiCompiledElement) {
-      //noinspection unchecked
-      return MultiMap.EMPTY;
+      return MultiMap.empty();
     }
 
     return CachedValuesManager.getCachedValue(psiClass, new CachedValueProvider<MultiMap<PsiField, PsiExpression>>() {

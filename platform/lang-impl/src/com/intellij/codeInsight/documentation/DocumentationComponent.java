@@ -42,11 +42,12 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.util.Consumer;
+import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.*;
+import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -148,7 +149,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private final JPanel myControlPanel;
   private boolean myControlPanelVisible;
   private final ExternalDocAction myExternalDocAction;
-  private Consumer<PsiElement> myNavigateCallback;
   private int myHighlightedLink = -1;
   private Object myHighlightingTag;
 
@@ -407,9 +407,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       for (final AnAction action : additionalActions) {
         actions.add(action);
         ShortcutSet shortcutSet = action.getShortcutSet();
-        if (shortcutSet != null) {
-          action.registerCustomShortcutSet(shortcutSet, this);
-        }
+        action.registerCustomShortcutSet(shortcutSet, this);
       }
     }
 
@@ -546,15 +544,10 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     myIsEmpty = true;
   }
 
-  private void setControlPanelVisible(boolean visible) {
-    if (visible == myControlPanelVisible) return;
-    if (visible) {
-      add(myControlPanel, BorderLayout.NORTH);
-    }
-    else {
-      remove(myControlPanel);
-    }
-    myControlPanelVisible = visible;
+  private void setControlPanelVisible() {
+    if (myControlPanelVisible) return;
+    add(myControlPanel, BorderLayout.NORTH);
+    myControlPanelVisible = true;
   }
 
   public void setHint(JBPopup hint) {
@@ -585,10 +578,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private long getCurrentModificationCount() {
     return myElement != null ? PsiModificationTracker.SERVICE.getInstance(myElement.getProject()).getModificationCount() : -1;
-  }
-
-  public void setNavigateCallback(Consumer<PsiElement> navigateCallback) {
-    myNavigateCallback = navigateCallback;
   }
 
   public void setText(String text, @Nullable PsiElement element, boolean clearHistory) {
@@ -662,6 +651,14 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
     myText = text;
 
+    PsiElement e = element == null ? null : element.getElement();
+    if (e != null) {
+      String title = DocumentationManager.getTitle(e, false);
+      if (myHint instanceof AbstractPopup) ((AbstractPopup)myHint).setCaption(title);
+      // Set panel name so that it is announced by readers when it gets the focus
+      AccessibleContextUtil.setName(this, title);
+    }
+
     //noinspection SSBasedInspection
     SwingUtilities.invokeLater(() -> {
       myEditorPane.scrollRectToVisible(viewRect); // if ref is defined but is not found in document, this provides a default location
@@ -709,19 +706,13 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private void restoreContext(Context context) {
     setDataInternal(context.element, context.text, context.viewRect, null);
     myEffectiveExternalUrl = context.externalUrl;
-    if (myNavigateCallback != null) {
-      final PsiElement element = context.element.getElement();
-      if (element != null) {
-        myNavigateCallback.consume(element);
-      }
-    }
     highlightLink(context.highlightedLink);
   }
 
   private void updateControlState() {
     ElementLocationUtil.customizeElementLabel(myElement != null ? myElement.getElement() : null, myElementLabel);
     myToolBar.updateActionsImmediately(); // update faster
-    setControlPanelVisible(true);//(!myBackStack.isEmpty() || !myForwardStack.isEmpty());
+    setControlPanelVisible();
   }
 
   private class BackAction extends AnAction implements HintManagerImpl.ActionToIgnore {
@@ -938,7 +929,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     myElement = null;
     myManager = null;
     myHint = null;
-    myNavigateCallback = null;
   }
 
   private int getLinkCount() {

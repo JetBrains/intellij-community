@@ -31,8 +31,6 @@ import static com.jetbrains.python.psi.PyUtil.as;
 /**
  * Created by IntelliJ IDEA.
  * Author: Alexey.Ivanov
- * Date:   16.04.2010
- * Time:   17:25:46
  */
 public class PyParameterListFixer extends PyFixer<PyParameterList> {
   public PyParameterListFixer() {

@@ -63,11 +63,11 @@ public abstract class PsiAwareLineWrapPositionStrategy implements LineWrapPositi
                                    int endOffset,
                                    int maxPreferredOffset,
                                    boolean allowToBeyondMaxPreferredOffset,
-                                   boolean virtual) {
-    if (virtual && myNonVirtualOnly) {
+                                   boolean isSoftWrap) {
+    if (isSoftWrap && myNonVirtualOnly) {
       LineWrapPositionStrategy implementation = LanguageLineWrapPositionStrategy.INSTANCE.getDefaultImplementation();
       return implementation.calculateWrapPosition(
-        document, project, startOffset, endOffset, maxPreferredOffset, allowToBeyondMaxPreferredOffset, virtual
+        document, project, startOffset, endOffset, maxPreferredOffset, allowToBeyondMaxPreferredOffset, isSoftWrap
       );
     }
 
@@ -96,7 +96,7 @@ public abstract class PsiAwareLineWrapPositionStrategy implements LineWrapPositi
         TextRange textRange = element.getTextRange();
         int start = Math.max(textRange.getStartOffset(), startOffset);
         int end = Math.min(textRange.getEndOffset(), endOffset);
-        int result = doCalculateWrapPosition(document, project, start, end, maxPreferredOffset, false, virtual);
+        int result = doCalculateWrapPosition(document, project, start, end, maxPreferredOffset, false, isSoftWrap);
         if (result >= 0) {
           return result;
         }

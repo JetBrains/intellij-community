@@ -6,6 +6,6 @@ def foo() {
     testMethod()
 }
 
-private List testMethod() {
+private List<Object> testMethod() {
     return [].collect { it }
 }

@@ -34,10 +34,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.platform.DirectoryProjectGenerator;
-import com.intellij.platform.PlatformProjectOpenProcessor;
-import com.intellij.platform.ProjectGeneratorPeer;
-import com.intellij.platform.ProjectTemplate;
+import com.intellij.platform.*;
 import com.intellij.platform.templates.ArchivedTemplatesFactory;
 import com.intellij.platform.templates.LocalArchivedTemplate;
 import com.intellij.platform.templates.TemplateProjectDirectoryGenerator;
@@ -136,7 +133,7 @@ public class AbstractNewProjectStep<T> extends DefaultActionGroup implements Dum
     }
 
     protected boolean shouldIgnore(@NotNull DirectoryProjectGenerator generator) {
-      return false;
+      return generator instanceof HideableProjectGenerator && ((HideableProjectGenerator)generator).isHidden();
     }
 
     @NotNull
@@ -153,6 +150,7 @@ public class AbstractNewProjectStep<T> extends DefaultActionGroup implements Dum
   }
 
   public static class AbstractCallback<T> implements PairConsumer<ProjectSettingsStepBase<T>, ProjectGeneratorPeer<T>> {
+    @Override
     public void consume(@Nullable final ProjectSettingsStepBase<T> settings, @NotNull final ProjectGeneratorPeer<T> projectGeneratorPeer) {
       if (settings == null) return;
 

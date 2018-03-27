@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.intellij.openapi.editor.impl;
@@ -439,7 +427,6 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   private void paintAnnotationLine(Graphics g, TextAnnotationGutterProvider gutterProvider, int line, int x, int y, int width, int height) {
     String s = gutterProvider.getLineText(line, myEditor);
-    final EditorFontType style = gutterProvider.getStyle(line, myEditor);
     final Color bg = gutterProvider.getBgColor(line, myEditor);
     if (bg != null) {
       g.setColor(bg);
@@ -447,13 +434,19 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
     if (!StringUtil.isEmpty(s)) {
       g.setColor(myEditor.getColorsScheme().getColor(gutterProvider.getColor(line, myEditor)));
-      Font font = myEditor.getColorsScheme().getFont(style);
-      if (font.canDisplayUpTo(s) != -1) {
-        font = UIUtil.getFontWithFallback(font);
-      }
+      EditorFontType style = gutterProvider.getStyle(line, myEditor);
+      Font font = getFontForText(s, style);
       g.setFont(font);
       g.drawString(s, GAP_BETWEEN_ANNOTATIONS / 2 + x, y + myEditor.getAscent());
     }
+  }
+
+  private Font getFontForText(String text, EditorFontType style) {
+    Font font = myEditor.getColorsScheme().getFont(style);
+    if (font.canDisplayUpTo(text) != -1) {
+      font = UIUtil.getFontWithFallback(font);
+    }
+    return font;
   }
 
   private void paintFoldingTree(Graphics g, Rectangle clip, int firstVisibleOffset, int lastVisibleOffset) {
@@ -701,7 +694,6 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   private void calcAnnotationsSize() {
     myTextAnnotationGuttersSize = 0;
-    final FontMetrics fontMetrics = myEditor.getFontMetrics(Font.PLAIN);
     final int lineCount = Math.max(myEditor.getDocument().getLineCount(), 1);
     for (int j = 0; j < myTextAnnotationGutters.size(); j++) {
       TextAnnotationGutterProvider gutterProvider = myTextAnnotationGutters.get(j);
@@ -709,6 +701,9 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       for (int i = 0; i < lineCount; i++) {
         String lineText = gutterProvider.getLineText(i, myEditor);
         if (!StringUtil.isEmpty(lineText)) {
+          EditorFontType style = gutterProvider.getStyle(i, myEditor);
+          Font font = getFontForText(lineText, style);
+          FontMetrics fontMetrics = getFontMetrics(font);
           gutterSize = Math.max(gutterSize, fontMetrics.stringWidth(lineText));
         }
       }
@@ -1073,13 +1068,15 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   private void paintFoldingLines(final Graphics2D g, final Rectangle clip) {
-    if (!isFoldingOutlineShown()) return;
+    boolean shown = isFoldingOutlineShown();
 
-    if (myPaintBackground) {
+    if ((shown || (myEditor.isInDistractionFreeMode() && Registry.is("editor.distraction.gutter.separator"))) && myPaintBackground) {
       g.setColor(getOutlineColor(false));
       int x = getWhitespaceSeparatorOffset();
       UIUtil.drawLine(g, x, clip.y, x, clip.y + clip.height);
     }
+
+    if (!shown) return;
 
     final int anchorX = getFoldingAreaOffset();
     final int width = getFoldingAnchorWidth();
@@ -1753,13 +1750,13 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   @Override
-  public void setLineNumberConvertor(@NotNull TIntFunction lineNumberConvertor) {
+  public void setLineNumberConvertor(@Nullable TIntFunction lineNumberConvertor) {
     setLineNumberConvertor(lineNumberConvertor, null);
   }
 
   @Override
-  public void setLineNumberConvertor(@NotNull TIntFunction lineNumberConvertor1, @Nullable TIntFunction lineNumberConvertor2) {
-    myLineNumberConvertor = lineNumberConvertor1;
+  public void setLineNumberConvertor(@Nullable TIntFunction lineNumberConvertor1, @Nullable TIntFunction lineNumberConvertor2) {
+    myLineNumberConvertor = lineNumberConvertor1 != null ? lineNumberConvertor1 : value -> value;
     myAdditionalLineNumberConvertor = lineNumberConvertor2;
   }
 

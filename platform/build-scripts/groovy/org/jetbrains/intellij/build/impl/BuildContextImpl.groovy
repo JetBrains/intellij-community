@@ -166,6 +166,11 @@ class BuildContextImpl extends BuildContext {
   }
 
   @Override
+  String getOldModuleName(String newName) {
+    return compilationContext.getOldModuleName(newName)
+  }
+
+  @Override
   String getModuleOutputPath(JpsModule module) {
     return compilationContext.getModuleOutputPath(module)
   }
@@ -293,7 +298,7 @@ class BuildContextImpl extends BuildContext {
 
   private boolean isJavaSupportedInProduct() {
     def productLayout = productProperties.productLayout
-    return productLayout.includedPlatformModules.contains("execution-impl")
+    return DistributionJARsBuilder.getIncludedPlatformModules(productLayout).contains("execution-impl")
   }
 
   @CompileDynamic

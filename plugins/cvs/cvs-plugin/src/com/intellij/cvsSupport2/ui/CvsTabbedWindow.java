@@ -20,10 +20,10 @@ import com.intellij.cvsSupport2.config.ui.ConfigureCvsGlobalSettingsDialog;
 import com.intellij.cvsSupport2.config.ui.CvsConfigurationsListEditor;
 import com.intellij.cvsSupport2.errorHandling.CvsException;
 import com.intellij.icons.AllIcons;
-import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.EditorSettings;
@@ -97,7 +97,7 @@ public class CvsTabbedWindow implements Disposable {
   }
 
   public static CvsTabbedWindow getInstance(Project project) {
-    return PeriodicalTasksCloser.getInstance().safeGetService(project, CvsTabbedWindow.class);
+    return ServiceManager.getService(project, CvsTabbedWindow.class);
   }
 
   public interface DeactivateListener {

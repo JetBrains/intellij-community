@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package org.jetbrains.plugins.gradle.service.project.wizard;
 
 import com.intellij.ide.fileTemplates.FileTemplate;
@@ -346,8 +348,7 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
                                                     @NotNull VirtualFile modelContentRootDir,
                                                     String projectName,
                                                     String moduleName,
-                                                    boolean renderNewFile)
-    throws ConfigurationException {
+                                                    boolean renderNewFile) throws ConfigurationException {
     final VirtualFile file = getOrCreateExternalProjectConfigFile(rootProjectPath, GradleConstants.SETTINGS_FILE_NAME);
     if (file == null) return null;
 
@@ -362,7 +363,7 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
     }
     else {
       char separatorChar = file.getParent() == null || !VfsUtilCore.isAncestor(file.getParent(), modelContentRootDir, true) ? '/' : ':';
-      String modulePath = VfsUtil.getPath(file, modelContentRootDir, separatorChar);
+      String modulePath = VfsUtilCore.findRelativePath(file, modelContentRootDir, separatorChar);
 
       Map<String, String> attributes = ContainerUtil.newHashMap();
       attributes.put(TEMPLATE_ATTRIBUTE_MODULE_NAME, moduleName);

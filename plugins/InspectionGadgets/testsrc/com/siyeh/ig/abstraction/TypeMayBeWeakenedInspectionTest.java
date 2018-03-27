@@ -53,6 +53,7 @@ public class TypeMayBeWeakenedInspectionTest extends LightInspectionTestCase {
   protected InspectionProfileEntry getInspection() {
     final TypeMayBeWeakenedInspection inspection = new TypeMayBeWeakenedInspection();
     inspection.doNotWeakenToJavaLangObject = false;
+    inspection.doNotWeakenReturnType = false;
     inspection.onlyWeakentoInterface = false;
     return inspection;
   }

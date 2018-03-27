@@ -19,6 +19,7 @@
     <postStartupActivity implementation="com.intellij.copyright.CopyrightManagerPostStartupActivity"/>
 
     <projectService serviceImplementation="com.intellij.copyright.CopyrightManager"/>
+    <externalSystemConfigurationHandler implementation="com.maddyhome.idea.copyright.import.CopyrightConfigurationHandler"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.copyright">

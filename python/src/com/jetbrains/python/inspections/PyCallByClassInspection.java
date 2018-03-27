@@ -32,7 +32,6 @@ import static com.jetbrains.python.psi.PyFunction.Modifier.STATICMETHOD;
  * </pre>
  * <br/>
  * User: dcheryasov
- * Date: Sep 22, 2010 12:21:44 PM
  */
 public class PyCallByClassInspection extends PyInspection {
   @Nls

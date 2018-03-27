@@ -524,6 +524,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     return "";
   }
 
+  @NotNull
   protected String getCommandName() {
     return REFACTORING_NAME;
   }

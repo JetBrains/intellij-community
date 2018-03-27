@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.checkout;
 
+import com.intellij.internal.statistic.customUsageCollectors.actions.ActionIdProvider;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -22,12 +23,14 @@ import com.intellij.openapi.project.*;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 
-public class CheckoutAction extends AnAction implements DumbAware {
+public class CheckoutAction extends AnAction implements DumbAware, ActionIdProvider {
   private final CheckoutProvider myProvider;
+  private final String myIdPrefix;
 
-  public CheckoutAction(final CheckoutProvider provider) {
+  public CheckoutAction(CheckoutProvider provider, String idPrefix) {
     super(provider.getVcsName());
     myProvider = provider;
+    myIdPrefix = idPrefix;
   }
 
   public void actionPerformed(final AnActionEvent e) {
@@ -38,5 +41,10 @@ public class CheckoutAction extends AnAction implements DumbAware {
 
   protected CheckoutProvider.Listener getListener(Project project) {
     return ProjectLevelVcsManager.getInstance(project).getCompositeCheckoutListener();
+  }
+
+  @Override
+  public String getId() {
+    return myIdPrefix + "." + myProvider.getVcsName().replaceAll("_", "");
   }
 }

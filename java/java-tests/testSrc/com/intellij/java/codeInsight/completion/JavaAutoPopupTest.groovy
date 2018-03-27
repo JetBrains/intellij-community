@@ -1774,7 +1774,12 @@ class Foo {
   void "test autopopup after package completion"() {
     myFixture.addClass("package foo.bar.goo; class Foo {}")
     myFixture.configureByText "a.java", "class Foo { { foo.b<caret> } }"
-    assert myFixture.completeBasic() == null
+    def items = myFixture.completeBasic()
+    joinCompletion()
+    if (items != null) { // completion took a bit longer, and the single item wasn't inserted automatically 
+      assert myFixture.lookupElementStrings == ['bar']
+      myFixture.type('\n')
+    }
     assert myFixture.editor.document.text.contains('foo.bar. ')
     joinAutopopup()
     joinCompletion()

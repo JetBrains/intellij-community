@@ -96,7 +96,6 @@ public class AddMethodFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     final PsiClass myClass = (PsiClass)startElement;
 
     return myMethodPrototype.isValid() &&
-           myClass.isValid() &&
            myClass.getManager().isInProject(myClass) &&
            myText != null &&
            MethodSignatureUtil.findMethodBySignature(myClass, myMethodPrototype, false) == null

@@ -27,7 +27,6 @@ import java.util.List;
  * A composite generator
  *
  * @author Eugene Zhuravlev
- *         Date: Mar 25, 2004
  */
 public class CompositeGenerator extends Generator {
   /**

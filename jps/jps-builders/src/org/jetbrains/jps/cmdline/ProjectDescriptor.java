@@ -39,7 +39,6 @@ import java.util.Set;
 
 /**
 * @author Eugene Zhuravlev
-*         Date: 1/8/12
 */
 public final class ProjectDescriptor {
   private final JpsProject myProject;

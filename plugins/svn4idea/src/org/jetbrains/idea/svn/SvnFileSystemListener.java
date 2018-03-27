@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 
 package org.jetbrains.idea.svn;
@@ -48,15 +34,12 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.ErrorCode;
 import org.jetbrains.idea.svn.api.NodeKind;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusType;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.wc.SVNMoveClient;
 
 import java.io.File;
 import java.io.IOException;
@@ -120,7 +103,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
     CommandProcessor.getInstance().removeCommandListener(this);
   }
 
-  private void addToMoveExceptions(@NotNull final Project project, @NotNull final Exception e) {
+  private void addToMoveExceptions(@NotNull Project project, @NotNull VcsException e) {
     List<VcsException> exceptionList = myMoveExceptions.get(project);
     if (exceptionList == null) {
       exceptionList = new ArrayList<>();
@@ -129,19 +112,9 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
     exceptionList.add(handleMoveException(e));
   }
 
-  private static VcsException handleMoveException(@NotNull Exception e) {
-    VcsException vcsException;
-    if (e instanceof SVNException && SVNErrorCode.ENTRY_EXISTS.equals(((SVNException)e).getErrorMessage().getErrorCode()) ||
-        e instanceof SvnBindException && ((SvnBindException)e).contains(SVNErrorCode.ENTRY_EXISTS)) {
-      vcsException = createMoveTargetExistsError(e);
-    }
-    else if (e instanceof VcsException) {
-      vcsException = (VcsException)e;
-    }
-    else {
-      vcsException = new VcsException(e);
-    }
-    return vcsException;
+  @NotNull
+  private static VcsException handleMoveException(@NotNull VcsException e) {
+    return e instanceof SvnBindException && ((SvnBindException)e).contains(ErrorCode.ENTRY_EXISTS) ? createMoveTargetExistsError(e) : e;
   }
 
   private static VcsException createMoveTargetExistsError(@NotNull Exception e) {
@@ -295,7 +268,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
           return false;
         }
       } else {
-        if (for16move(vcs, src, dst, isUndo)) return false;
+        if (for16move(dst, isUndo)) return false;
       }
 
       if (! isUndo && list != null) {
@@ -389,32 +362,14 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
            srcStatus.is(StatusType.STATUS_UNVERSIONED, StatusType.STATUS_OBSTRUCTED, StatusType.STATUS_MISSING, StatusType.STATUS_EXTERNAL);
   }
 
-  private boolean for16move(SvnVcs vcs, final File src, final File dst, final boolean undo) throws VcsException {
-    final SVNMoveClient mover = vcs.getSvnKitManager().createMoveClient();
+  private boolean for16move(final File dst, final boolean undo) {
     if (undo) {
       myUndoingMove = true;
       restoreFromUndoStorage(dst);
     }
-    else if (doUsualMove(vcs, src)) return true;
 
-    new RepeatSvnActionThroughBusy() {
-      @Override
-      protected void executeImpl() throws VcsException {
-        try {
-          if (undo) {
-            mover.undoMove(src, dst);
-          }
-          else {
-            mover.doMove(src, dst);
-          }
-        }
-        catch (SVNException e) {
-          throw new SvnBindException(e);
-        }
-      }
-    }.execute();
-
-    return false;
+    // TODO: Implement svn 1.6 support for command line.
+    return true;
   }
 
   private void restoreFromUndoStorage(final File dst) {
@@ -622,7 +577,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
         return false;
       }
       catch (VcsException e) {
-        SVNFileUtil.deleteAll(targetFile, true);
+        FileUtil.delete(targetFile);
         return false;
       }
     }

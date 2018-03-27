@@ -77,3 +77,32 @@ class test {
         new_times.put(l.longValue(), new Long(2l));
     }
 }
+
+class PassedToUnfriendlyLambdaOverloadedMethod {
+    interface GetInt { int get(); }
+    interface GetInteger { Integer get(); }
+
+    private void m(GetInt getter) {
+        System.out.println(getter);
+    }
+
+    private void m(GetInteger getter) {
+        System.out.println(getter);
+    }
+
+    void test(boolean cond) {
+        m(() -> {
+            if (cond)
+                return 42;
+            else
+                return new Integer(42).intValue();
+        });
+        m(() -> cond ? new Integer(42).intValue() : foo());
+        m(() -> new Integer(42).intValue());
+        m(() -> new Integer(42));
+    }
+
+    private <T> T foo() {
+        return null;
+    }
+}

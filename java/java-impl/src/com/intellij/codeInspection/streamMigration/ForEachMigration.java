@@ -22,9 +22,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,6 +48,7 @@ class ForEachMigration extends BaseStreamApiMigration {
     if(args.length != 1) return null;
     PsiExpression arg = args[0];
     if(ExpressionUtils.isReferenceTo(arg, tb.getVariable())) return null;
+    if(PsiType.VOID.equals(arg.getType())) return null;
     PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
     if(tb.dependsOn(qualifier) ||
        VariableAccessUtils.variableIsUsed(tb.getVariable(), qualifier) ||
@@ -59,7 +60,7 @@ class ForEachMigration extends BaseStreamApiMigration {
   @Override
   PsiElement migrate(@NotNull Project project, @NotNull PsiElement body, @NotNull TerminalBlock tb) {
     PsiStatement loopStatement = tb.getStreamSourceStatement();
-    restoreComments(loopStatement, body);
+    CommentTracker ct = new CommentTracker();
 
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
 
@@ -72,27 +73,26 @@ class ForEachMigration extends BaseStreamApiMigration {
       if (addedType == null) addedType = call.getType();
       JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
       SuggestedNameInfo suggestedNameInfo =
-        codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, addedType, false);
+        codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, addedType, true);
       if (suggestedNameInfo.names.length == 0) {
-        suggestedNameInfo = codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, "item", null, null, false);
+        suggestedNameInfo = codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, "item", null, null, true);
       }
       String varName = codeStyleManager.suggestUniqueVariableName(suggestedNameInfo, call, false).names[0];
 
-      String streamText = tb.add(new StreamApiMigrationInspection.MapOp(mapExpression, tb.getVariable(), addedType)).generate();
-      String forEachBody = varName + "->" + call.getMethodExpression().getText() + "(" + varName + ")";
+      String streamText = tb.add(new StreamApiMigrationInspection.MapOp(mapExpression, tb.getVariable(), addedType)).generate(ct);
+      String forEachBody = varName + "->" + ct.text(call.getMethodExpression()) + "(" + varName + ")";
       String callText = streamText + "." + getReplacement() + "(" + forEachBody + ");";
-      return loopStatement.replace(factory.createStatementFromText(callText, loopStatement));
+      return ct.replaceAndRestoreComments(loopStatement, callText);
     }
 
     tb.replaceContinueWithReturn(factory);
 
-    String stream = tb.generate(true) + "." + getReplacement() + "(";
-    PsiElement block = tb.convertToElement(factory);
+    String stream = tb.generate(ct, true) + "." + getReplacement() + "(";
+    PsiElement block = tb.convertToElement(ct, factory);
 
-    final String functionalExpressionText = tb.getVariable().getName() + " -> " + wrapInBlock(block);
-    PsiExpressionStatement callStatement = (PsiExpressionStatement)factory
-      .createStatementFromText(stream + functionalExpressionText + ");", loopStatement);
-    callStatement = (PsiExpressionStatement)loopStatement.replace(callStatement);
+    final String functionalExpressionText = tb.getVariable().getName() + " -> " + wrapInBlock(ct, block);
+    PsiExpressionStatement callStatement =
+      (PsiExpressionStatement)ct.replaceAndRestoreComments(loopStatement, stream + functionalExpressionText + ");");
 
     final PsiExpressionList argumentList = ((PsiCallExpression)callStatement.getExpression()).getArgumentList();
     LOG.assertTrue(argumentList != null, callStatement.getText());
@@ -104,21 +104,22 @@ class ForEachMigration extends BaseStreamApiMigration {
       PsiTypeElement typeElement = tb.getVariable().getTypeElement();
       if (typeElement != null) {
         String typedVariable = typeElement.getText() + " " + tb.getVariable().getName();
-        callStatement = (PsiExpressionStatement)callStatement.replace(factory.createStatementFromText(
-          stream + "(" + typedVariable + ") -> " + wrapInBlock(block) + ");", callStatement));
+        ct = new CommentTracker();
+        callStatement = (PsiExpressionStatement)ct
+          .replaceAndRestoreComments(callStatement, stream + "(" + typedVariable + ") -> " + wrapInBlock(ct, block) + ");");
       }
     }
     return callStatement;
   }
 
-  @Contract("null -> !null")
-  private static String wrapInBlock(PsiElement block) {
+  @NotNull
+  private static String wrapInBlock(@NotNull CommentTracker ct, @NotNull PsiElement block) {
     if (block instanceof PsiExpressionStatement) {
-      return ((PsiExpressionStatement)block).getExpression().getText();
+      return ct.text(((PsiExpressionStatement)block).getExpression());
     }
     if (block instanceof PsiCodeBlock) {
-      return block.getText();
+      return ct.text(block);
     }
-    return "{" + block.getText() + "}";
+    return "{" + ct.text(block) + "}";
   }
 }

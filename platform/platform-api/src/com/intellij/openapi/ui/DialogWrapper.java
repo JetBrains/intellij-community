@@ -23,7 +23,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -1401,17 +1400,11 @@ public abstract class DialogWrapper {
 
     if (getValidationThreadToUse() == Alarm.ThreadToUse.SWING_THREAD) {
       // null if headless
-      Application app = ApplicationManager.getApplication();
-      if (app == null) {
-        myValidationAlarm.addRequest(validateRequest, myValidationDelay, null);
-      }
-      else {
-        app.invokeLater(() -> {
-          JRootPane rootPane = getRootPane();
-          myValidationAlarm.addRequest(validateRequest, myValidationDelay,
-                                       rootPane == null ? ModalityState.current() : ModalityState.stateForComponent(rootPane));
-        }, ModalityState.any(), __ -> myDisposed);
-      }
+      JRootPane rootPane = getRootPane();
+      myValidationAlarm.addRequest(validateRequest, myValidationDelay,
+                                   ApplicationManager.getApplication() == null
+                                   ? null
+                                   : rootPane == null ? ModalityState.current() : ModalityState.stateForComponent(rootPane));
     }
     else {
       myValidationAlarm.addRequest(validateRequest, myValidationDelay);

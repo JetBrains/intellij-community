@@ -21,6 +21,9 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+import java.util.Objects;
+
 /**
  * An immutable collection of facts which are known for some value. Each fact is identified by {@link DfaFactType} and fact value.
  * A null value for some fact type means that the value is not restricted by given fact type or given fact type is not
@@ -63,7 +66,7 @@ public final class DfaFactMap {
    */
   @NotNull
   public <T> DfaFactMap with(@NotNull DfaFactType<T> type, @Nullable T value) {
-    KeyFMap newMap = value == null ? myMap.minus(type) : myMap.plus(type, value);
+    KeyFMap newMap = value == null || type.isUnknown(value) ? myMap.minus(type) : myMap.plus(type, value);
     return newMap == myMap ? this : new DfaFactMap(newMap);
   }
 
@@ -110,6 +113,21 @@ public final class DfaFactMap {
     return newFact == null ? null : with(type, newFact);
   }
 
+  private <TT> DfaFactMap intersect(@NotNull DfaFactMap otherMap, @NotNull DfaFactType<TT> type) {
+    return intersect(type, otherMap.get(type));
+  }
+
+  @Nullable
+  public DfaFactMap intersect(@NotNull DfaFactMap other) {
+    DfaFactMap result = this;
+    List<DfaFactType<?>> types = DfaFactType.getTypes();
+    for (DfaFactType<?> type : types) {
+      result = result.intersect(other, type);
+      if (result == null) return null;
+    }
+    return result;
+  }
+
   /**
    * Returns a fact map which additionally allows having supplied value for the supplied fact
    *
@@ -151,7 +169,9 @@ public final class DfaFactMap {
   @SuppressWarnings("unchecked")
   @Override
   public String toString() {
-    return StreamEx.of(myMap.getKeys()).map(key -> ((DfaFactType<Object>)key).toString(myMap.get(key))).joining(", ");
+    return StreamEx.of(myMap.getKeys())
+      .map(key -> ((DfaFactType<Object>)key).toString(Objects.requireNonNull(myMap.get(key))))
+      .joining(", ");
   }
 
   /**

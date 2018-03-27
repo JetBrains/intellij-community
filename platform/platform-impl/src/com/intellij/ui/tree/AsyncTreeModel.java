@@ -279,7 +279,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
 
   private boolean isValidThread() {
     if (processor.foreground.isValidThread()) return true;
-    LOG.warn("AsyncTreeModel is used from unexpected thread");
+    LOG.warn(new IllegalStateException("AsyncTreeModel is used from unexpected thread"));
     return false;
   }
 
@@ -569,7 +569,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
           LOG.warn("ignore null child at " + i);
         }
         else if (!set.add(child)) {
-          LOG.warn("ignore duplicated child at " + i);
+          LOG.warn("ignore duplicated child at " + i + ": " + child);
         }
         else {
           if (isObsolete()) return null;

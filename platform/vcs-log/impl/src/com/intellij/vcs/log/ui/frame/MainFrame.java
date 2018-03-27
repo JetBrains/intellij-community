@@ -10,7 +10,10 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.*;
+import com.intellij.ui.OnePixelSplitter;
+import com.intellij.ui.PopupHandler;
+import com.intellij.ui.SearchTextField;
+import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.ArrayUtil;
@@ -25,7 +28,7 @@ import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
-import com.intellij.vcs.log.impl.VcsLogUtil;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
@@ -88,8 +91,8 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     PopupHandler.installPopupHandler(myGraphTable, VcsLogActionPlaces.POPUP_ACTION_GROUP, VcsLogActionPlaces.VCS_LOG_TABLE_PLACE);
     myDetailsPanel = new DetailsPanel(logData, ui.getColorManager(), this);
 
-    myChangesBrowser = new VcsLogChangesBrowser(project, myUiProperties, (hash, root) -> {
-      int index = myLogData.getCommitIndex(hash, root);
+    myChangesBrowser = new VcsLogChangesBrowser(project, myUiProperties, (commitId) -> {
+      int index = myLogData.getCommitIndex(commitId.getHash(), commitId.getRoot());
       return myLogData.getMiniDetailsGetter().getCommitData(index, Collections.singleton(index));
     }, this);
     myChangesBrowser.getDiffAction().registerCustomShortcutSet(myChangesBrowser.getDiffAction().getShortcutSet(), getGraphTable());
@@ -106,6 +109,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
     myTextFilter = myFilterUi.createTextFilter();
     myToolbar = createActionsToolbar();
+    myChangesBrowser.setToolbarHeightReferent(myToolbar);
 
     JComponent toolbars = new JPanel(new BorderLayout());
     toolbars.add(myToolbar, BorderLayout.NORTH);
@@ -282,6 +286,12 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     @Override
     protected void stopLoading() {
       myChangesLoadingPane.stopLoading();
+    }
+
+    @Override
+    protected void onError(@NotNull Throwable error) {
+      myChangesBrowser.setSelectedDetails(Collections.emptyList());
+      myChangesBrowser.getViewer().setEmptyText("Error loading commits");
     }
   }
 

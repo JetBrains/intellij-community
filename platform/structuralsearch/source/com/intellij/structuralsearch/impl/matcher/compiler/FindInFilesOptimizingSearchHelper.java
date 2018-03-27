@@ -9,7 +9,9 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.util.Processor;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -23,6 +25,8 @@ class FindInFilesOptimizingSearchHelper extends OptimizingSearchHelperBase {
   private final Project myProject;
   private final SearchScope myScope;
   private final boolean myCaseSensitive;
+
+  private boolean myTransactionStarted = false;
 
   FindInFilesOptimizingSearchHelper(SearchScope scope, boolean caseSensitive, Project project) {
     myScope = scope;
@@ -52,32 +56,38 @@ class FindInFilesOptimizingSearchHelper extends OptimizingSearchHelperBase {
   }
 
   @Override
-  protected void doAddSearchWordInCode(final String refname) {
-    CacheManager.SERVICE.getInstance(myProject).processFilesWithWord(myFileProcessor, refname,
+  protected void doAddSearchWordInCode(@NotNull String word) {
+    myTransactionStarted = true;
+    CacheManager.SERVICE.getInstance(myProject).processFilesWithWord(myFileProcessor, word,
                                                                      (short)(UsageSearchContext.IN_CODE | UsageSearchContext.IN_PLAIN_TEXT),
                                                                      (GlobalSearchScope)myScope, myCaseSensitive);
   }
 
   @Override
-  protected void doAddSearchWordInText(final String refname) {
-    CacheManager.SERVICE.getInstance(myProject).processFilesWithWord(myFileProcessor, refname, UsageSearchContext.IN_PLAIN_TEXT,
+  protected void doAddSearchWordInText(@NotNull String word) {
+    myTransactionStarted = true;
+    CacheManager.SERVICE.getInstance(myProject).processFilesWithWord(myFileProcessor, word, UsageSearchContext.IN_PLAIN_TEXT,
                                                                      (GlobalSearchScope)myScope, myCaseSensitive);
   }
 
   @Override
-  protected void doAddSearchWordInComments(final String refname) {
-    CacheManager.SERVICE.getInstance(myProject).processFilesWithWord(myFileProcessor, refname, UsageSearchContext.IN_COMMENTS,
+  protected void doAddSearchWordInComments(@NotNull String word) {
+    myTransactionStarted = true;
+    CacheManager.SERVICE.getInstance(myProject).processFilesWithWord(myFileProcessor, word, UsageSearchContext.IN_COMMENTS,
                                                                      (GlobalSearchScope)myScope, myCaseSensitive);
   }
 
   @Override
-  protected void doAddSearchWordInLiterals(final String refname) {
-    CacheManager.SERVICE.getInstance(myProject).processFilesWithWord(myFileProcessor, refname, UsageSearchContext.IN_STRINGS,
+  protected void doAddSearchWordInLiterals(@NotNull String word) {
+    myTransactionStarted = true;
+    CacheManager.SERVICE.getInstance(myProject).processFilesWithWord(myFileProcessor, word, UsageSearchContext.IN_STRINGS,
                                                                      (GlobalSearchScope)myScope, myCaseSensitive);
   }
 
   @Override
   public void endTransaction() {
+    if (!myTransactionStarted) return;
+    myTransactionStarted = false;
     super.endTransaction();
     final THashSet<PsiFile> map = filesToScan;
     if (!map.isEmpty()) map.clear();
@@ -85,8 +95,13 @@ class FindInFilesOptimizingSearchHelper extends OptimizingSearchHelperBase {
     filesToScan2 = map;
   }
 
+  @NotNull
   @Override
   public Set<PsiFile> getFilesSetToScan() {
+    assert !myTransactionStarted;
+    if (filesToScan == null) {
+      return Collections.emptySet();
+    }
     return filesToScan;
   }
 

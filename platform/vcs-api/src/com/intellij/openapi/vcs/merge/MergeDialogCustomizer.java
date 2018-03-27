@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.merge;
 
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -50,7 +51,7 @@ public class MergeDialogCustomizer {
    * @return title that is shown above the left panel in the 3-way merge dialog. "Local changes" by default.
    */
   @Nullable public String getLeftPanelTitle(@NotNull VirtualFile file) {
-    return VcsBundle.message("merge.version.title.local.changes");
+    return DiffBundle.message("merge.version.title.our");
   }
 
   /**
@@ -58,7 +59,7 @@ public class MergeDialogCustomizer {
    * @return title that is shown above the center panel in the 3-way merge dialog. "Merge result" by default.
    */
   @Nullable public String getCenterPanelTitle(@NotNull VirtualFile file) {
-    return VcsBundle.message("merge.version.title.base.version");
+    return DiffBundle.message("merge.version.title.base");
   }
 
   /**
@@ -68,9 +69,9 @@ public class MergeDialogCustomizer {
    */
   @Nullable public String getRightPanelTitle(@NotNull VirtualFile file, @Nullable VcsRevisionNumber revisionNumber) {
     if (revisionNumber != null) {
-      return VcsBundle.message("merge.version.title.last.version.number", revisionNumber.asString());
+      return DiffBundle.message("merge.version.title.their.with.revision", revisionNumber.asString());
     } else {
-      return VcsBundle.message("merge.version.title.last.version");
+      return DiffBundle.message("merge.version.title.their");
     }
   }
 

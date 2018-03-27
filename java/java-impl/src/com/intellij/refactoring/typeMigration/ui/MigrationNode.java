@@ -30,7 +30,6 @@ import java.util.*;
 
 /**
  * @author anna
- * Date: 25-Mar-2008
  */
 public class MigrationNode extends AbstractTreeNode<TypeMigrationUsageInfo> implements DuplicateNodeRenderer.DuplicatableNode<MigrationNode> {
   private final TypeMigrationUsageInfo myInfo;

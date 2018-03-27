@@ -229,6 +229,7 @@ public class GroovyInlineLocalProcessor extends BaseRefactoringProcessor {
   }
 
 
+  @NotNull
   @Override
   protected String getCommandName() {
     return RefactoringBundle.message("inline.command", myLocal.getName());

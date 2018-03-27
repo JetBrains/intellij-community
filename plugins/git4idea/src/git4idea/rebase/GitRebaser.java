@@ -293,10 +293,10 @@ public class GitRebaser {
   }
 
   private void stageEverything(@NotNull VirtualFile root) throws VcsException {
-    GitSimpleHandler handler = new GitSimpleHandler(myProject, root, GitCommand.ADD);
+    GitLineHandler handler = new GitLineHandler(myProject, root, GitCommand.ADD);
     handler.setSilent(false);
     handler.addParameters("--update");
-    handler.run();
+    myGit.runCommand(handler).getOutputOrThrow();
   }
 
   private static GitConflictResolver.Params makeParamsForRebaseConflict() {

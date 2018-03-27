@@ -76,6 +76,7 @@ public class SmartListTest {
     assertThat(l.get(2)).isEqualTo(3);
   }
 
+  @SuppressWarnings("CollectionAddedToSelf")
   @Test
   public void testFourElement() {
     SmartList<Integer> l = new SmartList<>();

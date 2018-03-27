@@ -17,7 +17,6 @@
 package com.maddyhome.idea.copyright.ui;
 
 import com.intellij.copyright.CopyrightManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.options.ConfigurationException;
@@ -69,8 +68,7 @@ public class CopyrightConfigurable extends NamedConfigurable<CopyrightProfile> {
     ContainerUtil.addIfNotNull(features, SpellCheckingEditorCustomizationProvider.getInstance().getEnabledCustomization());
     features.add(SoftWrapsEditorCustomization.ENABLED);
     features.add(AdditionalPageAtBottomEditorCustomization.DISABLED);
-    EditorTextFieldProvider service = ServiceManager.getService(project, EditorTextFieldProvider.class);
-    myEditor = service.getEditorField(FileTypes.PLAIN_TEXT.getLanguage(), project, features);
+    myEditor = EditorTextFieldProvider.getInstance().getEditorField(FileTypes.PLAIN_TEXT.getLanguage(), project, features);
     myEditorPanel.add(myEditor.getComponent(), BorderLayout.CENTER);
   }
 

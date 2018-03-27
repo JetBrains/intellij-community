@@ -26,8 +26,10 @@ import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.TrailingSpacesStripper;
@@ -35,8 +37,10 @@ import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -332,8 +336,9 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
       waitForCommit(document, i);
       WriteCommandAction.runWriteCommandAction(null, () -> document.deleteString(0, "/**/".length()));
       waitTenSecondsForCommit(document);
+      String dumpBefore = ThreadDumper.dumpThreadsToString();
       if (!getPsiDocumentManager().isCommitted(document)) {
-        printThreadDump();
+        System.err.println("Thread dump1:\n"+dumpBefore+"\n;Thread dump2:\n"+ThreadDumper.dumpThreadsToString());
         fail("Still not committed: " + document);
       }
     }
@@ -628,7 +633,8 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     waitForCommit(document, 10000);
   }
 
-  private void waitForCommit(Document document, int millis) {
+  private void waitForCommit(@NotNull Document document, int millis) {
+    assertFalse(ApplicationManager.getApplication().isWriteAccessAllowed());
     long start = System.currentTimeMillis();
     while (System.currentTimeMillis() - start < millis && !getPsiDocumentManager().isCommitted(document)) {
       UIUtil.dispatchAllInvocationEvents();
@@ -805,7 +811,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     Document document = file.getViewProvider().getDocument();
 
     Semaphore semaphore = new Semaphore(1);
-    TransactionGuard.submitTransaction(getTestRootDisposable(), () -> {
+    TransactionGuard.submitTransaction(getTestRootDisposable(), () ->
       WriteCommandAction.runWriteCommandAction(myProject, () -> {
         document.insertString(0, "x");
 
@@ -815,8 +821,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
             getPsiDocumentManager().commitAndRunReadAction(() -> semaphore.up());
           }
         }, new ProgressWindow(false, myProject));
-      });
-    });
+      }));
     int iteration = 0;
     while (!semaphore.waitFor(10)) {
       UIUtil.dispatchAllInvocationEvents();
@@ -825,6 +830,30 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
         fail("Couldn't wait for commit");
       }
     }
+  }
+
+  public void testNoLeaksAfterPCEInListener() {
+    PsiFile file = PsiFileFactory.getInstance(myProject).createFileFromText("a.txt", PlainTextFileType.INSTANCE, "");
+    Document document = file.getViewProvider().getDocument();
+    document.addDocumentListener(new PrioritizedDocumentListener() {
+      @Override
+      public int getPriority() {
+        return 0;
+      }
+
+      @Override
+      public void beforeDocumentChange(DocumentEvent event) {
+        throw new ProcessCanceledException();
+      }
+    });
+    try {
+      document.insertString(0, "a");
+      fail("PCE expected");
+    }
+    catch (ProcessCanceledException ignored) {
+    }
+    waitTenSecondsForCommit(document);
+    LeakHunter.checkLeak(getPsiDocumentManager(), Document.class, d -> d == document);
   }
 
   private static void assertLargeFileContentLimited(@NotNull String content, @NotNull VirtualFile vFile, @NotNull Document document) {

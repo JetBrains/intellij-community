@@ -34,7 +34,7 @@ import com.intellij.vcs.log.graph.actions.GraphAction;
 import com.intellij.vcs.log.graph.actions.GraphAnswer;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
-import com.intellij.vcs.log.impl.VcsLogUtil;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.paint.GraphCellPainter;
 import com.intellij.vcs.log.paint.PositionUtil;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
@@ -252,6 +252,7 @@ public class GraphTableController {
   private class MyMouseAdapter extends MouseAdapter {
     private static final int BORDER_THICKNESS = 3;
     @NotNull private final TableLinkMouseListener myLinkListener = new SimpleColoredComponentLinkMouseListener();
+    @Nullable private Cursor myLastCursor = null;
 
     @Override
     public void mouseClicked(MouseEvent e) {
@@ -312,7 +313,7 @@ public class GraphTableController {
       myTable.getExpandableItemsHandler().setEnabled(true);
 
       if (myLinkListener.getTagAt(e) != null) {
-        myTable.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        swapCursor(Cursor.HAND_CURSOR);
         return;
       }
 
@@ -320,11 +321,12 @@ public class GraphTableController {
       if (row >= 0 && row < myTable.getRowCount()) {
         int column = myTable.convertColumnIndexToModel(myTable.columnAtPoint(e.getPoint()));
         if (column == ROOT_COLUMN) {
-          myTable.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+          swapCursor(Cursor.HAND_CURSOR);
           return;
         }
         else if (column == COMMIT_COLUMN) {
           PrintElement printElement = findPrintElement(row, e);
+          if (printElement == null) restoreCursor(Cursor.HAND_CURSOR);
           performGraphAction(printElement, e,
                              GraphAction.Type.MOUSE_OVER); // if printElement is null, still need to unselect whatever was selected in a graph
           if (printElement == null) {
@@ -334,7 +336,22 @@ public class GraphTableController {
         }
       }
 
-      myTable.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+      restoreCursor(Cursor.HAND_CURSOR);
+    }
+
+    private void swapCursor(int newCursorType) {
+      if (myTable.getCursor().getType() != newCursorType && myLastCursor == null) {
+        Cursor newCursor = Cursor.getPredefinedCursor(newCursorType);
+        myLastCursor = myTable.getCursor();
+        myTable.setCursor(newCursor);
+      }
+    }
+
+    private void restoreCursor(int newCursorType) {
+      if (myLastCursor != null && myTable.getCursor().getType() == newCursorType) {
+        myTable.setCursor(myLastCursor);
+        myLastCursor = null;
+      }
     }
 
     @Override

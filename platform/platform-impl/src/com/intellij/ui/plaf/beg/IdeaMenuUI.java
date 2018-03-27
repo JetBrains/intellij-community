@@ -210,13 +210,13 @@ public class IdeaMenuUI extends BasicMenuUI{
 
   public MenuElement[] getPath() {
     MenuSelectionManager menuselectionmanager = MenuSelectionManager.defaultManager();
-    MenuElement amenuelement[] = menuselectionmanager.getSelectedPath();
+    MenuElement[] amenuelement = menuselectionmanager.getSelectedPath();
     int i1 = amenuelement.length;
     if (i1 == 0){
       return new MenuElement[0];
     }
     Container container = menuItem.getParent();
-    MenuElement amenuelement1[];
+    MenuElement[] amenuelement1;
     if (amenuelement[i1 - 1].getComponent() == container){
       amenuelement1 = new MenuElement[i1 + 1];
       System.arraycopy(amenuelement, 0, amenuelement1, 0, i1);

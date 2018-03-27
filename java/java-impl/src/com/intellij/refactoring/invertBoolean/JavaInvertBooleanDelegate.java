@@ -15,7 +15,6 @@
  */
 package com.intellij.refactoring.invertBoolean;
 
-import com.intellij.codeInsight.CodeInsightServicesUtil;
 import com.intellij.codeInsight.daemon.impl.RecursiveCallLineMarkerProvider;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.lang.java.JavaLanguage;
@@ -33,6 +32,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Query;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
+import com.siyeh.ig.psiutils.BoolUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -110,14 +110,20 @@ public class JavaInvertBooleanDelegate extends InvertBooleanDelegate {
 
     for (PsiReference ref : refs) {
       final PsiElement element = ref.getElement();
-      PsiElement refElement = getElementToInvert(namedElement, element);
-      if (refElement == null) {
-        refElement = getForeignElementToInvert(namedElement, element, JavaLanguage.INSTANCE);
-      }
-      if (refElement != null) {
-        elementsToInvert.add(refElement);
+      if (!collectElementsToInvert(namedElement, element, elementsToInvert)) {
+        collectForeignElementsToInvert(namedElement, element, JavaLanguage.INSTANCE, elementsToInvert);
       }
     }
+  }
+
+  @Override
+  public boolean collectElementsToInvert(PsiElement namedElement, PsiElement expression, Collection<PsiElement> elementsToInvert) {
+    boolean toInvert = super.collectElementsToInvert(namedElement, expression, elementsToInvert);
+    PsiElement parent = expression.getParent();
+    if (parent instanceof PsiAssignmentExpression && !(parent.getParent() instanceof PsiExpressionStatement)) {
+      elementsToInvert.add(parent);
+    }
+    return toInvert;
   }
 
   public PsiElement getElementToInvert(PsiElement namedElement, PsiElement element) {
@@ -172,11 +178,15 @@ public class JavaInvertBooleanDelegate extends InvertBooleanDelegate {
     if (expression instanceof PsiMethodReferenceExpression) {
       final PsiExpression callExpression = LambdaRefactoringUtil.convertToMethodCallInLambdaBody((PsiMethodReferenceExpression)expression);
       if (callExpression instanceof PsiCallExpression) {
-        callExpression.replace(CodeInsightServicesUtil.invertCondition(callExpression));
+        PsiExpression negatedExpression = JavaPsiFacade.getElementFactory(callExpression.getProject())
+          .createExpressionFromText(BoolUtils.getNegatedExpressionText(callExpression), callExpression);
+        callExpression.replace(negatedExpression);
       }
     }
     else if (!(expression.getParent() instanceof PsiExpressionStatement)) {
-      expression.replace(CodeInsightServicesUtil.invertCondition((PsiExpression)expression));
+      PsiExpression negatedExpression = JavaPsiFacade.getElementFactory(expression.getProject())
+          .createExpressionFromText(BoolUtils.getNegatedExpressionText((PsiExpression)expression), expression);
+      expression.replace(negatedExpression);
     }
   }
 

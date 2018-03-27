@@ -22,7 +22,6 @@ import java.util.UUID;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 4/25/12
  */
 public interface BuilderMessageHandler {
   BuilderMessageHandler DEAF = new BuilderMessageHandler() {

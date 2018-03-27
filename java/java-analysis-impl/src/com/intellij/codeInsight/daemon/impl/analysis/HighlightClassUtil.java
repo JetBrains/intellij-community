@@ -17,7 +17,6 @@
 /*
  * Checks and Highlights problems with classes
  * User: cdr
- * Date: Aug 19, 2002
  */
 package com.intellij.codeInsight.daemon.impl.analysis;
 
@@ -104,7 +103,8 @@ public class HighlightClassUtil {
         QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createModifierListFix(anyMethodToImplement, PsiModifier.PUBLIC, true, true));
       }
     }
-    if (!(aClass instanceof PsiAnonymousClass)
+    if (!(aClass instanceof PsiAnonymousClass) && 
+        !aClass.isEnum()
         && HighlightUtil.getIncompatibleModifier(PsiModifier.ABSTRACT, aClass.getModifierList()) == null) {
       QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createModifierListFix(aClass, PsiModifier.ABSTRACT, true, false));
     }
@@ -113,7 +113,7 @@ public class HighlightClassUtil {
 
   @Nullable
   static HighlightInfo checkClassMustBeAbstract(final PsiClass aClass, final TextRange textRange) {
-    if (aClass.hasModifierProperty(PsiModifier.ABSTRACT) || aClass.getRBrace() == null || aClass.isEnum() && hasEnumConstants(aClass)) {
+    if (aClass.hasModifierProperty(PsiModifier.ABSTRACT) || aClass.getRBrace() == null || aClass.isEnum() && hasEnumConstantsWithInitializer(aClass)) {
       return null;
     }
     return checkClassWithAbstractMethods(aClass, textRange);
@@ -140,12 +140,17 @@ public class HighlightClassUtil {
     return errorResult;
   }
 
-  private static boolean hasEnumConstants(PsiClass aClass) {
-    PsiField[] fields = aClass.getFields();
-    for (PsiField field : fields) {
-      if (field instanceof PsiEnumConstant) return true;
-    }
-    return false;
+  public static boolean hasEnumConstantsWithInitializer(@NotNull PsiClass aClass) {
+    return CachedValuesManager.getCachedValue(aClass, () -> {
+      PsiField[] fields = aClass.getFields();
+      for (PsiField field : fields) {
+        if (field instanceof PsiEnumConstant && ((PsiEnumConstant)field).getInitializingClass() != null) {
+          return new CachedValueProvider.Result<>(true, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+        }
+      }
+      return new CachedValueProvider.Result<>(false, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+    });
+
   }
 
   @Nullable
@@ -480,7 +485,7 @@ public class HighlightClassUtil {
   static HighlightInfo checkCannotInheritFromFinal(PsiClass superClass, PsiElement elementToHighlight) {
     HighlightInfo errorResult = null;
     if (superClass.hasModifierProperty(PsiModifier.FINAL) || superClass.isEnum()) {
-      String message = JavaErrorMessages.message("inheritance.from.final.class", superClass.getQualifiedName());
+      String message = JavaErrorMessages.message("inheritance.from.final.class", superClass.getQualifiedName(), superClass.isEnum() ? PsiKeyword.ENUM : PsiKeyword.FINAL);
       errorResult =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(elementToHighlight).descriptionAndTooltip(message).create();
       QuickFixAction.registerQuickFixAction(errorResult,

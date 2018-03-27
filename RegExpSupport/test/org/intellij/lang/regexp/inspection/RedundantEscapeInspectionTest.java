@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
+@SuppressWarnings("RegExpRedundantEscape")
 public class RedundantEscapeInspectionTest extends RegExpInspectionTestCase {
 
   public void testSimple() {

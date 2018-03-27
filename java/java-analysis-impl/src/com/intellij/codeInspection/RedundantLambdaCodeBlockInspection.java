@@ -71,24 +71,9 @@ public class RedundantLambdaCodeBlockInspection extends AbstractBaseJavaLocalIns
     if (body instanceof PsiCodeBlock) {
       PsiExpression psiExpression = LambdaUtil.extractSingleExpressionFromBody(body);
       if (psiExpression != null && !findCommentsOutsideExpression(body, psiExpression)) {
-        if (LambdaUtil.isExpressionStatementExpression(psiExpression)) {
-          final PsiCall call = LambdaUtil.treeWalkUp(body);
-          PsiMethod oldTarget;
-          if (call != null && (oldTarget = call.resolveMethod()) != null) {
-            final int offsetInTopCall = body.getTextRange().getStartOffset() - call.getTextRange().getStartOffset();
-            PsiCall copyCall = LambdaUtil.copyTopLevelCall(call);
-            if (copyCall == null) return null;
-            final PsiCodeBlock codeBlock = PsiTreeUtil.getParentOfType(copyCall.findElementAt(offsetInTopCall), PsiCodeBlock.class);
-            if (codeBlock != null) {
-              final PsiElement parent = codeBlock.getParent();
-              if (parent instanceof PsiLambdaExpression) {
-                codeBlock.replace(psiExpression);
-                if (copyCall.resolveMethod() != oldTarget || ((PsiLambdaExpression)parent).getFunctionalInterfaceType() == null) {
-                  return null;
-                }
-              }
-            }
-          }
+        if (LambdaUtil.isExpressionStatementExpression(psiExpression) &&
+            !LambdaUtil.isSafeLambdaBodyReplacement((PsiLambdaExpression)body.getParent(), () -> psiExpression)) {
+          return null;
         }
         return psiExpression;
       }

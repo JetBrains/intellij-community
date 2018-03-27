@@ -94,14 +94,17 @@ public class Java8MapForEachInspection extends AbstractBaseJavaLocalInspectionTo
           TextRange range;
           PsiJavaToken rParenth = loop.getRParenth();
           PsiElement firstChild = loop.getFirstChild();
+          PsiElement toHighlight;
           if (wholeStatement && rParenth != null) {
-            range = new TextRange(0, rParenth.getStartOffsetInParent() + 1);
+            toHighlight = loop;
+            range = new TextRange(firstChild.getStartOffsetInParent(), rParenth.getStartOffsetInParent() + 1);
           }
           else {
+            toHighlight = firstChild;
             range = new TextRange(0, firstChild.getTextLength());
           }
-          holder.registerProblem(new ProblemDescriptorBase(firstChild, firstChild, InspectionsBundle.message("inspection.map.foreach.message"),
-                                 new LocalQuickFix[]{new ReplaceWithMapForEachFix()}, type, false, range, type != ProblemHighlightType.INFORMATION, holder.isOnTheFly()));
+          holder.registerProblem(toHighlight, InspectionsBundle.message("inspection.map.foreach.message"),
+                                 type, range, new ReplaceWithMapForEachFix());
         }
       }
     };
@@ -118,8 +121,9 @@ public class Java8MapForEachInspection extends AbstractBaseJavaLocalInspectionTo
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getStartElement();
-      if (element.getParent() instanceof PsiForeachStatement) {
-        fixInForeach((PsiForeachStatement)element.getParent());
+      PsiElement foreach = element instanceof PsiForeachStatement ? element : element.getParent();
+      if (foreach instanceof PsiForeachStatement) {
+        fixInForeach((PsiForeachStatement)foreach);
         return;
       }
       PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
@@ -198,7 +202,7 @@ public class Java8MapForEachInspection extends AbstractBaseJavaLocalInspectionTo
       final PsiType myType;
       String myName;
 
-      public ParameterCandidate(PsiType entryType, boolean isKey) {
+      ParameterCandidate(PsiType entryType, boolean isKey) {
         myName = isKey ? "key" : "value";
         myType = GenericsUtil
           .getVariableTypeByExpressionType(PsiUtil.substituteTypeParameter(entryType, JAVA_UTIL_MAP_ENTRY, isKey ? 0 : 1, true));

@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.intellij.codeInspection.offlineViewer;
@@ -27,13 +15,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.HashSet;
-import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.tree.TreeNode;
-import javax.swing.tree.TreePath;
 import java.util.*;
 import java.util.function.Function;
 
@@ -62,41 +47,10 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
 
   @NotNull
   @Override
-  public QuickFixAction[] getQuickFixes(@NotNull final InspectionToolWrapper toolWrapper, @NotNull final InspectionTree tree) {
-    final TreePath[] treePaths = tree.getSelectionPaths();
-    if (treePaths == null) return QuickFixAction.EMPTY; 
-    final List<RefEntity> selectedElements = new ArrayList<>();
-    final Map<RefEntity, CommonProblemDescriptor[]> actions = new HashMap<>();
-    for (TreePath selectionPath : treePaths) {
-      TreeUtil.traverseDepth((TreeNode)selectionPath.getLastPathComponent(), node -> {
-        if (!((InspectionTreeNode)node).isValid()) return true;
-        if (node instanceof OfflineProblemDescriptorNode) {
-          if (((OfflineProblemDescriptorNode)node).isQuickFixAppliedFromView()) return true;
-          final OfflineProblemDescriptorNode descriptorNode = (OfflineProblemDescriptorNode)node;
-          final RefEntity element = descriptorNode.getElement();
-          selectedElements.add(element);
-          CommonProblemDescriptor[] descriptors = actions.get(element);
-          final CommonProblemDescriptor descriptor = descriptorNode.getDescriptor();
-          final CommonProblemDescriptor[] descriptorAsArray = descriptor == null ? CommonProblemDescriptor.EMPTY_ARRAY
-                                                                                 : new CommonProblemDescriptor[]{descriptor};
-          actions.put(element, descriptors == null ?
-                               descriptorAsArray :
-                               DefaultInspectionToolPresentation.mergeDescriptors(descriptors, descriptorAsArray));
-        }
-        else if (node instanceof RefElementNode) {
-          selectedElements.add(((RefElementNode)node).getElement());
-        }
-        return true;
-      });
-    }
-
-    if (selectedElements.isEmpty()) return QuickFixAction.EMPTY;
-
-    final RefEntity[] selectedRefElements = selectedElements.toArray(new RefEntity[selectedElements.size()]);
-
+  public QuickFixAction[] getCommonQuickFixes(@NotNull final InspectionToolWrapper toolWrapper, @NotNull final InspectionTree tree) {
     GlobalInspectionContextImpl context = tree.getContext();
     InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
-    return presentation.extractActiveFixes(selectedRefElements, actions::get, tree.getSelectedDescriptors());
+    return getCommonFixes(presentation, tree.getSelectedDescriptors());
   }
 
   @Override
@@ -193,7 +147,14 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
     for (OfflineProblemDescriptor descriptor : ((RefEntityContainer<OfflineProblemDescriptor>)container).getDescriptors()) {
       final OfflineDescriptorResolveResult resolveResult = myResolvedDescriptor.get(toolWrapper.getShortName())
         .computeIfAbsent(descriptor, d -> OfflineDescriptorResolveResult.resolve(d, toolWrapper, presentation));
-      elemNode.insertByOrder(ReadAction.compute(() -> OfflineProblemDescriptorNode.create(descriptor, resolveResult, presentation)), true);
+      RefEntity resolvedEntity = resolveResult.getResolvedEntity();
+      CommonProblemDescriptor resolvedDescriptor = resolveResult.getResolvedDescriptor();
+      if (resolvedEntity != null && resolvedDescriptor != null) {
+        presentation.getProblemElements().put(resolvedEntity, resolvedDescriptor);
+        elemNode.insertByOrder(ReadAction.compute(() -> new ProblemDescriptionNode(resolvedEntity, resolvedDescriptor, presentation)), true);
+      } else {
+        elemNode.insertByOrder(ReadAction.compute(() -> OfflineProblemDescriptorNode.create(descriptor, resolveResult, presentation)), true);
+      }
     }
   }
 }

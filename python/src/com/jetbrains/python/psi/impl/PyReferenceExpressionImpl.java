@@ -410,7 +410,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   private static PyType getTypeFromTarget(@NotNull PsiElement target,
                                           @NotNull TypeEvalContext context,
                                           @NotNull PyReferenceExpression anchor) {
-    final PyType type = dropSelfForInstanceMethod(getGenericTypeFromTarget(target, context, anchor), context, anchor);
+    final PyType type = dropSelfForQualifiedMethod(getGenericTypeFromTarget(target, context, anchor), context, anchor);
 
     if (context.maySwitchToAST(anchor)) {
       final PyExpression qualifier = anchor.getQualifier();
@@ -501,16 +501,11 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   }
 
   @Nullable
-  private static PyType dropSelfForInstanceMethod(@Nullable PyType type,
-                                                  @NotNull TypeEvalContext context,
-                                                  @NotNull PyReferenceExpression anchor) {
-    if (type instanceof PyFunctionType && context.maySwitchToAST(anchor)) {
-      final PyExpression qualifier = anchor.getQualifier();
-      final PyFunctionType functionType = (PyFunctionType)type;
-
-      if (qualifier != null && PyCallExpressionHelper.isQualifiedByInstance(functionType.getCallable(), qualifier, context)) {
-         return functionType.dropSelf(context);
-      }
+  private static PyType dropSelfForQualifiedMethod(@Nullable PyType type,
+                                                   @NotNull TypeEvalContext context,
+                                                   @NotNull PyReferenceExpression anchor) {
+    if (type instanceof PyFunctionType && context.maySwitchToAST(anchor) && anchor.getQualifier() != null) {
+       return ((PyFunctionType)type).dropSelf(context);
     }
 
     return type;

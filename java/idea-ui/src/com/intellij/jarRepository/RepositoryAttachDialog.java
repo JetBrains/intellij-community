@@ -91,6 +91,8 @@ public class RepositoryAttachDialog extends DialogWrapper {
   private JBLabel myCaptionLabel;
   private JPanel myDownloadOptionsPanel;
   private JBCheckBox myIncludeTransitiveDepsCheckBox;
+  private JPanel mySearchOptionsPanel;
+  private JBCheckBox myIncludeTransitiveDependenciesForSearchCheckBox;
 
   private final JComboBox myCombobox;
 
@@ -182,6 +184,7 @@ public class RepositoryAttachDialog extends DialogWrapper {
                                              descriptor);
     updateInfoLabel();
     myDownloadOptionsPanel.setVisible(mode == Mode.DOWNLOAD);
+    mySearchOptionsPanel.setVisible(mode == Mode.SEARCH);
     init();
   }
 
@@ -218,7 +221,7 @@ public class RepositoryAttachDialog extends DialogWrapper {
   }
 
   public boolean getIncludeTransitiveDependencies() {
-    return myIncludeTransitiveDepsCheckBox.isSelected();
+    return myMode == Mode.DOWNLOAD ? myIncludeTransitiveDepsCheckBox.isSelected() : myIncludeTransitiveDependenciesForSearchCheckBox.isSelected();
   }
 
   @Nullable

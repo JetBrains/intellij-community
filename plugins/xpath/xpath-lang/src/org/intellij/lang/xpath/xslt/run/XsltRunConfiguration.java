@@ -218,7 +218,7 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
 
     @Override
     @SuppressWarnings({ "unchecked" })
-    public void readExternal(Element element) throws InvalidDataException {
+    public void readExternal(@NotNull Element element) throws InvalidDataException {
         super.readExternal(element);
         DefaultJDOMExternalizer.readExternal(this, element);
 
@@ -281,7 +281,7 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
     }
 
     @Override
-    public void writeExternal(Element element) throws WriteExternalException {
+    public void writeExternal(@NotNull Element element) throws WriteExternalException {
         super.writeExternal(element);
         DefaultJDOMExternalizer.writeExternal(this, element);
 

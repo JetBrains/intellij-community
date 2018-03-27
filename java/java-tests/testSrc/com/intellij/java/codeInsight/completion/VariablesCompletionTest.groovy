@@ -168,6 +168,20 @@ class VariablesCompletionTest extends LightFixtureCompletionTestCase {
     doTest("ArrayMethodName.java", "ArrayMethodName-result.java")
   }
 
+  void "test suggest fields that could be initialized by super constructor"() {
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+class Foo extends java.util.ArrayList {
+  int field;
+  int field2;
+  Foo() {
+    super();
+    field2 = f<caret>; 
+  } 
+}""")
+    complete()
+    myFixture.assertPreferredCompletionItems 0, 'field', 'float'
+  }
+
   void testInitializerMatters() throws Exception {
     myFixture.configureByText(JavaFileType.INSTANCE, "class Foo {{ String f<caret>x = getFoo(); }; String getFoo() {}; }")
     complete()

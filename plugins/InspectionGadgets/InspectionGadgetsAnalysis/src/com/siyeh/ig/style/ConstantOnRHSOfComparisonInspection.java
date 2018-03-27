@@ -26,6 +26,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
@@ -80,9 +81,10 @@ public class ConstantOnRHSOfComparisonInspection extends BaseInspection {
         return;
       }
       final PsiExpression lhs = expression.getLOperand();
-      final String rhsText = rhs.getText();
-      final String lhsText = lhs.getText();
-      PsiReplacementUtil.replaceExpression(expression, rhsText + ' ' + flippedComparison + ' ' + lhsText);
+      CommentTracker commentTracker = new CommentTracker();
+      final String rhsText = commentTracker.markUnchanged(rhs).getText();
+      final String lhsText = commentTracker.markUnchanged(lhs).getText();
+      PsiReplacementUtil.replaceExpression(expression, rhsText + ' ' + flippedComparison + ' ' + lhsText, commentTracker);
     }
   }
 

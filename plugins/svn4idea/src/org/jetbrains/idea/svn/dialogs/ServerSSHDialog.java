@@ -22,29 +22,18 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
-import org.tmatesoft.svn.core.internal.util.SVNSSLUtil;
+import org.jetbrains.idea.svn.auth.AcceptResult;
 
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * @author irengrig
- *         Date: 1/31/11
- *         Time: 5:48 PM
- */
 public class ServerSSHDialog extends DialogWrapper {
-  private int myResult;
+  private AcceptResult myResult;
   private String myFingerprints;
   private JCheckBox myJCheckBox;
   private final boolean myStore;
   private final String myHost;
   private final String myAlgorithm;
-
-  public ServerSSHDialog(Project project, boolean store, @NotNull final String host, @Nullable final String algorithm,
-                         @NotNull final byte[] fingerprints) {
-    this(project, store, host, algorithm, SVNSSLUtil.getFingerprint(fingerprints, "SHA1"));
-  }
 
   public ServerSSHDialog(Project project,
                          boolean store,
@@ -57,7 +46,7 @@ public class ServerSSHDialog extends DialogWrapper {
     myAlgorithm = StringUtil.notNullize(algorithm);
     // todo ?
     myFingerprints = fingerprints;
-    myResult = ISVNAuthenticationProvider.REJECTED;
+    myResult = AcceptResult.REJECTED;
     setOKButtonText(SvnBundle.message("button.text.ssh.accept"));
     setCancelButtonText(SvnBundle.message("button.text.ssh.reject"));
     setTitle(SvnBundle.message("dialog.title.ssh.examine.server.fingerprints"));
@@ -75,16 +64,16 @@ public class ServerSSHDialog extends DialogWrapper {
   }
 
   protected void doOKAction() {
-    myResult = myJCheckBox.isSelected() ? ISVNAuthenticationProvider.ACCEPTED : ISVNAuthenticationProvider.ACCEPTED_TEMPORARY;
+    myResult = myJCheckBox.isSelected() ? AcceptResult.ACCEPTED_PERMANENTLY : AcceptResult.ACCEPTED_TEMPORARILY;
     super.doOKAction();
   }
 
   public void doCancelAction() {
-    myResult = ISVNAuthenticationProvider.REJECTED;
+    myResult = AcceptResult.REJECTED;
     super.doCancelAction();
   }
 
-  public int getResult() {
+  public AcceptResult getResult() {
     return myResult;
   }
 

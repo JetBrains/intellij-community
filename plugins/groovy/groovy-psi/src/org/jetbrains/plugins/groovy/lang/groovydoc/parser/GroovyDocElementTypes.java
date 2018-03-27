@@ -44,7 +44,7 @@ public interface GroovyDocElementTypes {
     }
 
     @Override
-    public ASTNode parseContents(ASTNode chameleon) {
+    public ASTNode parseContents(@NotNull ASTNode chameleon) {
       final PsiElement parentElement = chameleon.getTreeParent().getPsi();
       final Project project = JavaPsiFacade.getInstance(parentElement.getProject()).getProject();
 

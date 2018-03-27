@@ -900,13 +900,13 @@ public class ArrayUtil extends ArrayUtilRt {
   }
 
   @Nullable
-  @Contract(pure=true)
+  @Contract(value = "null -> null", pure=true)
   public static <T> T getFirstElement(@Nullable T[] array) {
     return array != null && array.length > 0 ? array[0] : null;
   }
 
   @Nullable
-  @Contract(pure=true)
+  @Contract(value = "null -> null", pure=true)
   public static <T> T getLastElement(@Nullable T[] array) {
     return array != null && array.length > 0 ? array[array.length - 1] : null;
   }

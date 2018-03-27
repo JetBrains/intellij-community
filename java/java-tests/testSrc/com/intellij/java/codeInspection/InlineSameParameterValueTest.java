@@ -25,10 +25,13 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.sameParameterValue.SameParameterValueInspection;
 import com.intellij.psi.PsiElement;
+import com.intellij.refactoring.BaseRefactoringProcessor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class InlineSameParameterValueTest extends LightQuickFixParameterizedTestCase {
+  private static final String CONFLICT_SUFFIX = "Conflict.java";
+
   @NotNull
   @Override
   protected String getTestDataPath() {
@@ -48,7 +51,17 @@ public class InlineSameParameterValueTest extends LightQuickFixParameterizedTest
     assert psiElement != null;
     final ProblemDescriptor descriptor = InspectionManager.getInstance(getProject())
       .createProblemDescriptor(psiElement, "", fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, true);
-    fix.applyFix(getProject(), descriptor);
+    try {
+      fix.applyFix(getProject(), descriptor);
+      if (testName.endsWith(CONFLICT_SUFFIX)) {
+        fail("Conflict expected");
+      }
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      if (testName.endsWith(CONFLICT_SUFFIX)) {
+        return;
+      }
+    }
     final String expectedFilePath = getBasePath() + "/after" + testName;
     checkResultByFile("In file :" + expectedFilePath, expectedFilePath, false);
   }

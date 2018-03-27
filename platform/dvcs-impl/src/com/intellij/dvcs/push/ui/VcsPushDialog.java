@@ -1,27 +1,12 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.dvcs.push.ui;
 
 import com.intellij.dvcs.push.*;
 import com.intellij.dvcs.repo.Repository;
-import com.intellij.ide.actions.ShowSettingsUtilImpl;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
@@ -30,10 +15,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.OptionAction;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.components.BorderLayoutPanel;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
@@ -79,34 +62,9 @@ public class VcsPushDialog extends DialogWrapper {
       optionsPanel.add(panel);
     }
     optionsPanel.setBorder(JBUI.Borders.emptyTop(6));
-    BorderLayoutPanel panel = JBUI.Panels.simplePanel(optionsPanel);
-    if (!myController.isForcePushEnabled()) {
-      panel.addToTop(createForcePushInfoLabel());
-    }
     return JBUI.Panels.simplePanel(0, 2)
       .addToCenter(myListPanel)
-      .addToBottom(panel);
-  }
-
-  @NotNull
-  private JComponent createForcePushInfoLabel() {
-    JPanel text = new JPanel();
-    text.setLayout(new BoxLayout(text, BoxLayout.X_AXIS));
-    JLabel label = new JLabel("You can enable and configure Force Push in " + ShowSettingsUtil.getSettingsMenuName() + ".");
-    label.setEnabled(false);
-    label.setFont(JBUI.Fonts.smallFont());
-    text.add(label);
-    ActionLink here = new ActionLink("Configure", new AnAction() {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        Project project = myController.getProject();
-        VcsPushDialog.this.doCancelAction(e.getInputEvent());
-        ShowSettingsUtilImpl.showSettingsDialog(project, "vcs.Git", "force push");
-      }
-    });
-    here.setFont(JBUI.Fonts.smallFont());
-    text.add(here);
-    return JBUI.Panels.simplePanel().addToRight(text).withBorder(JBUI.Borders.emptyBottom(4));
+      .addToBottom(optionsPanel);
   }
 
   @Override
@@ -138,12 +96,7 @@ public class VcsPushDialog extends DialogWrapper {
     myForcePushAction = new ForcePushAction();
     myForcePushAction.setEnabled(canForcePush());
     myForcePushAction.putValue(Action.NAME, "&Force Push");
-    if (myController.isForcePushEnabled()) {
-      myPushAction = new ComplexPushAction(myForcePushAction);
-    } else {
-      myPushAction = new OkAction() {};
-      myPushAction.putValue(Action.NAME, "&Push");
-    }
+    myPushAction = new ComplexPushAction(myForcePushAction);
     myPushAction.putValue(DEFAULT_ACTION, Boolean.TRUE);
     actions.add(myPushAction);
     actions.add(getCancelAction());
@@ -156,7 +109,7 @@ public class VcsPushDialog extends DialogWrapper {
   }
 
   private boolean canForcePush() {
-    return myController.isForcePushEnabled() && myController.getProhibitedTarget() == null && myController.isPushAllowed();
+    return myController.getProhibitedTarget() == null && myController.isPushAllowed();
   }
 
   @Nullable
@@ -208,11 +161,29 @@ public class VcsPushDialog extends DialogWrapper {
       @Override
       public void onThrowable(@NotNull Throwable error) {
         if (error instanceof PushController.HandlerException) {
-          super.onThrowable(error.getCause());
+          PushController.HandlerException handlerException = (PushController.HandlerException)error;
+          Throwable cause = handlerException.getCause();
 
-          String handlerName = ((PushController.HandlerException)error).getHandlerName();
-          suggestToSkipOrPush(handlerName + " has failed. See log for more details.\n" +
-                              "Would you like to skip pre-push checking and continue or cancel push completely?");
+          String failedHandler = handlerException.getFailedHandlerName();
+          List<String> skippedHandlers = handlerException.getSkippedHandlers();
+
+          String suggestionMessage;
+          if (cause instanceof ProcessCanceledException) {
+            suggestionMessage = failedHandler + " has been cancelled.\n";
+          }
+          else {
+            super.onThrowable(cause);
+            suggestionMessage = failedHandler + " has failed. See log for more details.\n";
+          }
+
+          if (skippedHandlers.isEmpty()) {
+            suggestionMessage += "Would you like to push anyway or cancel the push completely?";
+          }
+          else {
+            suggestionMessage += "Would you like to skip all remaining pre-push steps and push, or cancel the push completely?";
+          }
+
+          suggestToSkipOrPush(suggestionMessage);
         } else {
           super.onThrowable(error);
         }
@@ -221,7 +192,7 @@ public class VcsPushDialog extends DialogWrapper {
       @Override
       public void onCancel() {
         super.onCancel();
-        suggestToSkipOrPush("Would you like to skip pre-push checking and continue or cancel push completely?");
+        suggestToSkipOrPush("Would you like to skip all pre-push steps and push, or cancel the push completely?");
       }
 
       private void suggestToSkipOrPush(@NotNull String message) {
@@ -243,11 +214,9 @@ public class VcsPushDialog extends DialogWrapper {
       boolean canForcePush = canForcePush();
       myForcePushAction.setEnabled(canForcePush);
       String tooltip = null;
-      if (!canForcePush) {
-        PushTarget target = myController.getProhibitedTarget();
-        tooltip = myController.isForcePushEnabled() && target != null
-                  ? "Force push to <b>" + target.getPresentation() + "</b> is prohibited"
-                  : "<b>Force Push</b> can be enabled in the Settings";
+      PushTarget target = myController.getProhibitedTarget();
+      if (!canForcePush && target != null) {
+        tooltip = "Force push to <b>" + target.getPresentation() + "</b> is prohibited";
       }
       myForcePushAction.putValue(Action.SHORT_DESCRIPTION, tooltip);
     }

@@ -52,8 +52,7 @@ public class PsiJavaModuleReference extends PsiReferenceBase.Poly<PsiJavaModuleR
     if (element instanceof PsiCompiledElement) {
       throw new IncorrectOperationException(JavaCoreBundle.message("psi.error.attempt.to.edit.class.file", element.getContainingFile()));
     }
-    PsiElementFactory factory = PsiElementFactory.SERVICE.getInstance(element.getProject());
-    PsiJavaModuleReferenceElement newElement = factory.createModuleFromText("module " + newName + " {}").getNameIdentifier();
+    PsiElement newElement = PsiElementFactory.SERVICE.getInstance(element.getProject()).createModuleReferenceFromText(newName);
     return element.replace(newElement);
   }
 

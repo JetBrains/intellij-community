@@ -25,6 +25,7 @@ import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class SimplifyBooleanExpressionAction implements IntentionAction{
   private String myText = getFamilyName();
@@ -52,7 +53,8 @@ public class SimplifyBooleanExpressionAction implements IntentionAction{
     return false;
   }
 
-  private static PsiExpression getExpressionToSimplify(final Editor editor, final PsiFile file) {
+  @Nullable
+  private static PsiExpression getExpressionToSimplify(@NotNull final Editor editor, @NotNull final PsiFile file) {
     int offset = editor.getCaretModel().getOffset();
     PsiElement element = file.findElementAt(offset);
     if (element == null) return null;
@@ -68,7 +70,9 @@ public class SimplifyBooleanExpressionAction implements IntentionAction{
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PsiExpression expression = getExpressionToSimplify(editor, file);
-    SimplifyBooleanExpressionFix.simplifyExpression(expression);
+    if (expression != null) {
+      SimplifyBooleanExpressionFix.simplifyExpression(expression);
+    }
   }
 
   @Override

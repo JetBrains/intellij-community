@@ -49,6 +49,8 @@ class CompilationContextImpl implements CompilationContext {
   final JpsGlobal global
   final JpsModel projectModel
   final JpsGantProjectBuilder projectBuilder
+  final Map<String, String> oldToNewModuleName
+  final Map<String, String> newToOldModuleName
   JpsCompilationData compilationData
 
   @SuppressWarnings("GrUnresolvedAccess")
@@ -89,10 +91,25 @@ class CompilationContextImpl implements CompilationContext {
     gradle = new GradleRunner(dependenciesProjectDir, messages, jdk8Home)
 
     def model = loadProject(projectHome, jdk8Home, kotlinHome, messages, ant)
-    def context = new CompilationContextImpl(ant, gradle, model, communityHome, projectHome, jdk8Home, kotlinHome, messages,
+    def oldToNewModuleName = loadModuleRenamingHistory(projectHome, messages) + loadModuleRenamingHistory(communityHome, messages)
+    def context = new CompilationContextImpl(ant, gradle, model, communityHome, projectHome, jdk8Home, kotlinHome, messages, oldToNewModuleName,
                                              buildOutputRootEvaluator, options)
     context.prepareForBuild()
     return context
+  }
+
+  @SuppressWarnings(["GrUnresolvedAccess", "GroovyAssignabilityCheck"])
+  @CompileDynamic
+  static Map<String, String> loadModuleRenamingHistory(String projectHome, BuildMessages messages) {
+    def modulesXml = new File(projectHome, ".idea/modules.xml")
+    if (!modulesXml.exists()) {
+      messages.error("Incorrect project home: $modulesXml doesn't exist")
+    }
+    def root = new XmlParser().parse(modulesXml)
+    def renamingHistoryTag = root.component.find { it.@name == "ModuleRenamingHistory"}
+    def mapping = new LinkedHashMap<String, String>()
+    renamingHistoryTag?.module?.each { mapping[it.'@old-name'] = it.'@new-name' }
+    return mapping
   }
 
   // A cache for the output of modules
@@ -103,6 +120,7 @@ class CompilationContextImpl implements CompilationContext {
 
   private CompilationContextImpl(AntBuilder ant, GradleRunner gradle, JpsModel model, String communityHome,
                                  String projectHome, String jdk8Home, String kotlinHome, BuildMessages messages,
+                                 Map<String, String> oldToNewModuleName,
                                  BiFunction<JpsProject, BuildMessages, String> buildOutputRootEvaluator, BuildOptions options) {
     this.ant = ant
     this.gradle = gradle
@@ -112,6 +130,8 @@ class CompilationContextImpl implements CompilationContext {
     this.options = options
     this.projectBuilder = new JpsGantProjectBuilder(ant.project, projectModel)
     this.messages = messages
+    this.oldToNewModuleName = oldToNewModuleName
+    this.newToOldModuleName = oldToNewModuleName.collectEntries { oldName, newName -> [newName, oldName] } as Map<String, String>
     String buildOutputRoot = options.outputRootPath ?: buildOutputRootEvaluator.apply(project, messages)
     this.paths = new BuildPathsImpl(communityHome, projectHome, buildOutputRoot, jdk8Home, kotlinHome)
   }
@@ -119,7 +139,7 @@ class CompilationContextImpl implements CompilationContext {
   CompilationContextImpl createCopy(AntBuilder ant, BuildMessages messages, BuildOptions options,
                                     BiFunction<JpsProject, BuildMessages, String> buildOutputRootEvaluator) {
     return new CompilationContextImpl(ant, gradle, projectModel, paths.communityHome, paths.projectHome, paths.jdkHome,
-                                      paths.kotlinHome, messages, buildOutputRootEvaluator, options)
+                                      paths.kotlinHome, messages, oldToNewModuleName, buildOutputRootEvaluator, options)
   }
 
   private static JpsModel loadProject(String projectHome, String jdkHome, String kotlinHome, BuildMessages messages, AntBuilder ant) {
@@ -241,7 +261,9 @@ class CompilationContextImpl implements CompilationContext {
   void exportModuleOutputProperties() {
     for (JpsModule module : project.modules) {
       for (boolean test : [true, false]) {
-        ant.project.setProperty("module.${module.name}.output.${test ? "test" : "main"}", getOutputPath(module, test))
+        [module.name, getOldModuleName(module.name)].findAll { it != null}.each {
+          ant.project.setProperty("module.${it}.output.${test ? "test" : "main"}", getOutputPath(module, test))
+        }
       }
     }
   }
@@ -321,7 +343,20 @@ class CompilationContextImpl implements CompilationContext {
   }
 
   JpsModule findModule(String name) {
-    project.modules.find { it.name == name }
+    String actualName
+    if (oldToNewModuleName.containsKey(name)) {
+      actualName = oldToNewModuleName[name]
+      messages.warning("Old module name '$name' is used in the build scripts; use the new name '$actualName' instead")
+    }
+    else {
+      actualName = name
+    }
+    project.modules.find { it.name == actualName }
+  }
+
+  @Override
+  String getOldModuleName(String newName) {
+    return newToOldModuleName[newName]
   }
 
   @Override

@@ -223,25 +223,31 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   }
 
   @Nullable
-  private static ObjectReference getTargetExceptionWithStackTraceFilled(EvaluationContextImpl evaluationContext,
+  protected static Value invokeExceptionGetStackTrace(ObjectReference exceptionObj, EvaluationContextImpl evaluationContext)
+    throws EvaluateException {
+    Method method = ((ClassType)exceptionObj.referenceType()).concreteMethodByName("getStackTrace", "()[Ljava/lang/StackTraceElement;");
+    if (method != null) {
+      return evaluationContext.getDebugProcess().invokeMethod(evaluationContext, exceptionObj, method, Collections.emptyList());
+    }
+    return null;
+  }
+
+  @Nullable
+  private static ObjectReference getTargetExceptionWithStackTraceFilled(@Nullable EvaluationContextImpl evaluationContext,
                                                                         EvaluateException ex,
                                                                         boolean printToConsole) {
     final ObjectReference exceptionObj = ex.getExceptionFromTargetVM();
     if (exceptionObj != null && evaluationContext != null) {
       try {
-        ClassType refType = (ClassType)exceptionObj.referenceType();
-        Method method = refType.concreteMethodByName("getStackTrace", "()[Ljava/lang/StackTraceElement;");
-        if (method != null) {
-          final DebugProcessImpl process = evaluationContext.getDebugProcess();
-          Value trace = process.invokeMethod(evaluationContext, exceptionObj, method, Collections.emptyList());
+        Value trace = invokeExceptionGetStackTrace(exceptionObj, evaluationContext);
 
-          // print to console as well
-          if (printToConsole && trace instanceof ArrayReference) {
-            ArrayReference traceArray = (ArrayReference)trace;
-            process.printToConsole(DebuggerUtils.getValueAsString(evaluationContext, exceptionObj) + "\n");
-            for (Value stackElement : traceArray.getValues()) {
-              process.printToConsole("\tat " + DebuggerUtils.getValueAsString(evaluationContext, stackElement) + "\n");
-            }
+        // print to console as well
+        if (printToConsole && trace instanceof ArrayReference) {
+          DebugProcessImpl process = evaluationContext.getDebugProcess();
+          ArrayReference traceArray = (ArrayReference)trace;
+          process.printToConsole(DebuggerUtils.getValueAsString(evaluationContext, exceptionObj) + "\n");
+          for (Value stackElement : traceArray.getValues()) {
+            process.printToConsole("\tat " + DebuggerUtils.getValueAsString(evaluationContext, stackElement) + "\n");
           }
         }
       }

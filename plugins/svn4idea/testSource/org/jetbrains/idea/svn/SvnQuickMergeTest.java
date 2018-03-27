@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -27,19 +13,20 @@ import com.intellij.util.SmartList;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.SvnTestCase;
+import org.jetbrains.idea.svn.api.Target;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.branchConfig.InfoReliability;
 import org.jetbrains.idea.svn.branchConfig.InfoStorage;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationManager;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
 import org.jetbrains.idea.svn.dialogs.WCInfo;
+import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.integrate.MergeContext;
 import org.jetbrains.idea.svn.integrate.QuickMerge;
 import org.jetbrains.idea.svn.integrate.QuickMergeContentsVariants;
+import org.jetbrains.idea.svn.properties.PropertyValue;
 import org.junit.Before;
 import org.junit.Test;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.wc.SVNInfo;
-import org.tmatesoft.svn.core.wc.SVNPropertyData;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -49,9 +36,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static java.util.stream.Collectors.toList;
+import static org.jetbrains.idea.svn.SvnPropertyKeys.MERGE_INFO;
 import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
-import static org.tmatesoft.svn.core.wc.SVNRevision.UNDEFINED;
-import static org.tmatesoft.svn.core.wc.SVNRevision.WORKING;
+import static org.jetbrains.idea.svn.api.Revision.WORKING;
 
 public class SvnQuickMergeTest extends Svn17TestCase {
   private SvnVcs myVcs;
@@ -129,8 +116,7 @@ public class SvnQuickMergeTest extends Svn17TestCase {
 
   @Test
   public void testSelectRevisionsWithQuickSelectCheckForLocalChanges() throws Exception {
-    // get revision #
-    final SVNInfo info = myVcs.getSvnKitManager().createWCClient().doInfo(virtualToIoFile(myBranchTree.myS1File), WORKING);
+    Info info = myVcs.getInfo(virtualToIoFile(myBranchTree.myS1File), WORKING);
     Assert.assertNotNull(info);
 
     final long numberBefore = info.getRevision().getNumber();
@@ -171,18 +157,17 @@ public class SvnQuickMergeTest extends Svn17TestCase {
     Assert.assertNotNull(dirChange);
     Assert.assertEquals(FileStatus.MODIFIED, dirChange.getFileStatus());
 
-    final SVNPropertyData data = myVcs.getSvnKitManager().createWCClient()
-      .doGetProperty(virtualToIoFile(myWorkingCopyDir), "svn:mergeinfo", UNDEFINED, WORKING);
-    System.out.println(data.getValue().getString());
-    Assert.assertEquals("/branches/b1:" + (numberBefore + 1), data.getValue().getString());
+    File file = virtualToIoFile(myWorkingCopyDir);
+    PropertyValue value = myVcs.getFactory(file).createPropertyClient().getProperty(Target.on(file), MERGE_INFO, false, WORKING);
+    System.out.println(value.toString());
+    Assert.assertEquals("/branches/b1:" + (numberBefore + 1), value.toString());
   }
 
   // this test is mainly to check revisions selection. at the moment we are not sure whether we support
   // trunk->b1->b2 merges between trunk and b2
   @Test
   public void testSelectRevisionsWithQuickSelect() throws Exception {
-    // get revision #
-    final SVNInfo info = myVcs.getSvnKitManager().createWCClient().doInfo(virtualToIoFile(myBranchTree.myS1File), WORKING);
+    Info info = myVcs.getInfo(virtualToIoFile(myBranchTree.myS1File), WORKING);
     Assert.assertNotNull(info);
 
     final long numberBefore = info.getRevision().getNumber();
@@ -197,7 +182,7 @@ public class SvnQuickMergeTest extends Svn17TestCase {
     }
 
     // before copy
-    final SVNInfo info2 = myVcs.getSvnKitManager().createWCClient().doInfo(virtualToIoFile(myBranchTree.myS1File), WORKING);
+    Info info2 = myVcs.getInfo(virtualToIoFile(myBranchTree.myS1File), WORKING);
     Assert.assertNotNull(info2);
     final long numberBeforeCopy = info2.getRevision().getNumber();
 
@@ -238,16 +223,15 @@ public class SvnQuickMergeTest extends Svn17TestCase {
     Assert.assertNotNull(dirChange);
     Assert.assertEquals(FileStatus.MODIFIED, dirChange.getFileStatus());
 
-    final SVNPropertyData data = myVcs.getSvnKitManager().createWCClient()
-      .doGetProperty(virtualToIoFile(myWorkingCopyDir), "svn:mergeinfo", UNDEFINED, WORKING);
-    System.out.println(data.getValue().getString());
-    Assert.assertEquals("/branches/b2:" + (numberBeforeCopy + 2), data.getValue().getString());
+    File file = virtualToIoFile(myWorkingCopyDir);
+    PropertyValue value = myVcs.getFactory(file).createPropertyClient().getProperty(Target.on(file), MERGE_INFO, false, WORKING);
+    System.out.println(value.toString());
+    Assert.assertEquals("/branches/b2:" + (numberBeforeCopy + 2), value.toString());
   }
 
   @Test
   public void testSelectRevisions() throws Exception {
-    // get revision #
-    final SVNInfo info = myVcs.getSvnKitManager().createWCClient().doInfo(virtualToIoFile(myBranchTree.myS1File), WORKING);
+    Info info = myVcs.getInfo(virtualToIoFile(myBranchTree.myS1File), WORKING);
     Assert.assertNotNull(info);
 
     final long numberBefore = info.getRevision().getNumber();
@@ -279,10 +263,10 @@ public class SvnQuickMergeTest extends Svn17TestCase {
     Assert.assertNotNull(dirChange);
     Assert.assertEquals(FileStatus.MODIFIED, dirChange.getFileStatus());
 
-    final SVNPropertyData data = myVcs.getSvnKitManager().createWCClient()
-      .doGetProperty(virtualToIoFile(myWorkingCopyDir), "svn:mergeinfo", UNDEFINED, WORKING);
-    System.out.println(data.getValue().getString());
-    Assert.assertEquals("/branches/b1:" + (numberBefore + 1) + "-" + (numberBefore + 2), data.getValue().getString());
+    File file = virtualToIoFile(myWorkingCopyDir);
+    PropertyValue value = myVcs.getFactory(file).createPropertyClient().getProperty(Target.on(file), MERGE_INFO, false, WORKING);
+    System.out.println(value.toString());
+    Assert.assertEquals("/branches/b1:" + (numberBefore + 1) + "-" + (numberBefore + 2), value.toString());
   }
 
   private WCInfo getWcInfo() {
@@ -329,8 +313,7 @@ public class SvnQuickMergeTest extends Svn17TestCase {
   }
 
   private void waitQuickMerge(@NotNull String sourceUrl, @NotNull QuickMergeTestInteraction interaction) throws Exception {
-    MergeContext mergeContext =
-      new MergeContext(myVcs, parseUrl(sourceUrl, false), getWcInfo(), SVNPathUtil.tail(sourceUrl), myWorkingCopyDir);
+    MergeContext mergeContext = new MergeContext(myVcs, parseUrl(sourceUrl, false), getWcInfo(), Url.tail(sourceUrl), myWorkingCopyDir);
     QuickMerge quickMerge = new QuickMerge(mergeContext, interaction);
 
     getApplication().invokeAndWait(quickMerge::execute);

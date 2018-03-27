@@ -1,11 +1,11 @@
 UFile (package = ) [public final enum DeadSwitchEntries {...]
     UClass (name = DeadSwitchEntries) [public final enum DeadSwitchEntries {...}]
         UEnumConstant (name = FIRST) [FIRST] = NON-EVALUATED
-            USimpleNameReferenceExpression (identifier = DeadSwitchEntries) [DeadSwitchEntries] = NON-EVALUATED
+            USimpleNameReferenceExpression (identifier = DeadSwitchEntries) [DeadSwitchEntries] = external DeadSwitchEntries()
         UEnumConstant (name = SECOND) [SECOND] = NON-EVALUATED
-            USimpleNameReferenceExpression (identifier = DeadSwitchEntries) [DeadSwitchEntries] = NON-EVALUATED
+            USimpleNameReferenceExpression (identifier = DeadSwitchEntries) [DeadSwitchEntries] = external DeadSwitchEntries()
         UEnumConstant (name = THIRD) [THIRD] = NON-EVALUATED
-            USimpleNameReferenceExpression (identifier = DeadSwitchEntries) [DeadSwitchEntries] = NON-EVALUATED
+            USimpleNameReferenceExpression (identifier = DeadSwitchEntries) [DeadSwitchEntries] = external DeadSwitchEntries()
         UMethod (name = bar) [public static fun bar() : int {...}]
             UBlockExpression [{...}] = Nothing
                 UDeclarationsExpression [var key: DeadSwitchEntries = THIRD] = Undetermined
@@ -38,7 +38,7 @@ UFile (package = ) [public final enum DeadSwitchEntries {...]
                                     ULiteralExpression (value = 13) [13] = 13
                                 UBreakExpression (label = null) [break] = Nothing(break)
                         USwitchClauseExpressionWithBody [else -> {...] = Undetermined
-                            UDefaultCaseExpression [else] = NON-EVALUATED
+                            UDefaultCaseExpression [else] = Undetermined
                             UExpressionList (switch_entry) [{...] = Undetermined
                                 UBinaryExpression (operator = =) [result = 66] = 66
                                     USimpleNameReferenceExpression (identifier = result) [result] = Undetermined

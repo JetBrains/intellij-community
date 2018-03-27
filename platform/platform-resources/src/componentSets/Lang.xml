@@ -86,6 +86,10 @@
     </component>
 
     <component>
+      <implementation-class>com.intellij.psi.search.scope.packageSet.UpdatingScopeOnProjectStructureChangeListener</implementation-class>
+    </component>
+
+    <component>
       <interface-class>com.intellij.execution.impl.ProjectRunConfigurationInitializer</interface-class>
       <implementation-class>com.intellij.execution.impl.ProjectRunConfigurationInitializer</implementation-class>
     </component>

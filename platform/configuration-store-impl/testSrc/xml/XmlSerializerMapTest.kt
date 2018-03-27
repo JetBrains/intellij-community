@@ -32,7 +32,7 @@ internal class XmlSerializerMapTest {
     }
 
     val bean = BeanWithMapWithBeanValue2()
-    doSerializerTest("<bean />", bean, SkipDefaultsSerializationFilter())
+    testSerializer("<bean />", bean, SkipDefaultsSerializationFilter())
   }
 
   @Test fun mapAtTopLevel() {
@@ -48,7 +48,7 @@ internal class XmlSerializerMapTest {
     val bean = BeanWithMapAtTopLevel()
     bean.map.put("a", "b")
     bean.option = "xxx"
-    doSerializerTest("""
+    testSerializer("""
     <bean>
       <option name="option" value="xxx" />
       <entry key="a" value="b" />
@@ -69,7 +69,7 @@ internal class XmlSerializerMapTest {
     bean.MAP.put(BeanWithPublicFields(3, "c"), BeanWithTextAnnotation(4, "d"))
     bean.MAP.put(BeanWithPublicFields(5, "e"), BeanWithTextAnnotation(6, "f"))
 
-    doSerializerTest("""
+    testSerializer("""
     <bean>
       <map>
         <pair>
@@ -118,7 +118,7 @@ internal class XmlSerializerMapTest {
     bean.myValues.put("a", LinkedHashSet(Arrays.asList("first1", "second1")))
     bean.myValues.put("b", LinkedHashSet(Arrays.asList("first2", "second2")))
 
-    doSerializerTest("""
+    testSerializer("""
     <bean>
       <option name="myValues">
         <entry-tag key-attr="a">
@@ -153,13 +153,13 @@ internal class XmlSerializerMapTest {
 
   @Test fun serialization() {
     val bean = BeanWithMap()
-    doSerializerTest("<BeanWithMap>\n  <option name=\"VALUES\">\n    <map>\n      <entry key=\"a\" value=\"1\" />\n      <entry key=\"b\" value=\"2\" />\n      <entry key=\"c\" value=\"3\" />\n    </map>\n  </option>\n</BeanWithMap>", bean)
+    testSerializer("<BeanWithMap>\n  <option name=\"VALUES\">\n    <map>\n      <entry key=\"a\" value=\"1\" />\n      <entry key=\"b\" value=\"2\" />\n      <entry key=\"c\" value=\"3\" />\n    </map>\n  </option>\n</BeanWithMap>", bean)
     bean.VALUES.clear()
     bean.VALUES.put("1", "a")
     bean.VALUES.put("2", "b")
     bean.VALUES.put("3", "c")
 
-    doSerializerTest("<BeanWithMap>\n  <option name=\"VALUES\">\n    <map>\n      <entry key=\"1\" value=\"a\" />\n      <entry key=\"2\" value=\"b\" />\n      <entry key=\"3\" value=\"c\" />\n    </map>\n  </option>\n</BeanWithMap>", bean)
+    testSerializer("<BeanWithMap>\n  <option name=\"VALUES\">\n    <map>\n      <entry key=\"1\" value=\"a\" />\n      <entry key=\"2\" value=\"b\" />\n      <entry key=\"3\" value=\"c\" />\n    </map>\n  </option>\n</BeanWithMap>", bean)
   }
 
   private class BeanWithMapWithAnnotations {
@@ -176,13 +176,13 @@ internal class XmlSerializerMapTest {
 
   @Test fun serializationWithAnnotations() {
     val bean = BeanWithMapWithAnnotations()
-    doSerializerTest("<BeanWithMapWithAnnotations>\n  <option name=\"a\" value=\"1\" />\n  <option name=\"b\" value=\"2\" />\n  <option name=\"c\" value=\"3\" />\n</BeanWithMapWithAnnotations>", bean)
+    testSerializer("<BeanWithMapWithAnnotations>\n  <option name=\"a\" value=\"1\" />\n  <option name=\"b\" value=\"2\" />\n  <option name=\"c\" value=\"3\" />\n</BeanWithMapWithAnnotations>", bean)
     bean.VALUES.clear()
     bean.VALUES.put("1", "a")
     bean.VALUES.put("2", "b")
     bean.VALUES.put("3", "c")
 
-    doSerializerTest("<BeanWithMapWithAnnotations>\n  <option name=\"1\" value=\"a\" />\n  <option name=\"2\" value=\"b\" />\n  <option name=\"3\" value=\"c\" />\n</BeanWithMapWithAnnotations>", bean)
+    testSerializer("<BeanWithMapWithAnnotations>\n  <option name=\"1\" value=\"a\" />\n  <option name=\"2\" value=\"b\" />\n  <option name=\"3\" value=\"c\" />\n</BeanWithMapWithAnnotations>", bean)
   }
 
   private class BeanWithMapWithBeanValue {
@@ -196,7 +196,7 @@ internal class XmlSerializerMapTest {
     bean.VALUES.put("b", BeanWithProperty("Bond"))
     bean.VALUES.put("c", BeanWithProperty("Bill"))
 
-    doSerializerTest("<BeanWithMapWithBeanValue>\n  <option name=\"VALUES\">\n    <map>\n      <entry key=\"a\">\n        <value>\n          <BeanWithProperty>\n            <option name=\"name\" value=\"James\" />\n          </BeanWithProperty>\n        </value>\n      </entry>\n      <entry key=\"b\">\n        <value>\n          <BeanWithProperty>\n            <option name=\"name\" value=\"Bond\" />\n          </BeanWithProperty>\n        </value>\n      </entry>\n      <entry key=\"c\">\n        <value>\n          <BeanWithProperty>\n            <option name=\"name\" value=\"Bill\" />\n          </BeanWithProperty>\n        </value>\n      </entry>\n    </map>\n  </option>\n</BeanWithMapWithBeanValue>", bean)
+    testSerializer("<BeanWithMapWithBeanValue>\n  <option name=\"VALUES\">\n    <map>\n      <entry key=\"a\">\n        <value>\n          <BeanWithProperty>\n            <option name=\"name\" value=\"James\" />\n          </BeanWithProperty>\n        </value>\n      </entry>\n      <entry key=\"b\">\n        <value>\n          <BeanWithProperty>\n            <option name=\"name\" value=\"Bond\" />\n          </BeanWithProperty>\n        </value>\n      </entry>\n      <entry key=\"c\">\n        <value>\n          <BeanWithProperty>\n            <option name=\"name\" value=\"Bill\" />\n          </BeanWithProperty>\n        </value>\n      </entry>\n    </map>\n  </option>\n</BeanWithMapWithBeanValue>", bean)
   }
 
   @Test fun setKeysInMap() {
@@ -209,7 +209,7 @@ internal class XmlSerializerMapTest {
     bean.myMap.put(LinkedHashSet(Arrays.asList("a", "b", "c")), "letters")
     bean.myMap.put(LinkedHashSet(Arrays.asList("1", "2", "3")), "numbers")
 
-    val bb = doSerializerTest("<bean>\n  <option name=\"myMap\">\n    <map>\n      <entry value=\"letters\">\n        <key>\n          <set>\n            <option value=\"a\" />\n            <option value=\"b\" />\n            <option value=\"c\" />\n          </set>\n        </key>\n      </entry>\n      <entry value=\"numbers\">\n        <key>\n          <set>\n            <option value=\"1\" />\n            <option value=\"2\" />\n            <option value=\"3\" />\n          </set>\n        </key>\n      </entry>\n    </map>\n  </option>\n</bean>", bean)
+    val bb = testSerializer("<bean>\n  <option name=\"myMap\">\n    <map>\n      <entry value=\"letters\">\n        <key>\n          <set>\n            <option value=\"a\" />\n            <option value=\"b\" />\n            <option value=\"c\" />\n          </set>\n        </key>\n      </entry>\n      <entry value=\"numbers\">\n        <key>\n          <set>\n            <option value=\"1\" />\n            <option value=\"2\" />\n            <option value=\"3\" />\n          </set>\n        </key>\n      </entry>\n    </map>\n  </option>\n</bean>", bean)
 
     for (collection in bb.myMap.keys) {
       Assertions.assertThat(collection).isInstanceOf(Set::class.java)

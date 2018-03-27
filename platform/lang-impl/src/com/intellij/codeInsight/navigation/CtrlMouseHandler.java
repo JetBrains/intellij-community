@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.intellij.codeInsight.navigation;
@@ -20,6 +8,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
+import com.intellij.codeInsight.documentation.QuickDocUtil;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
@@ -33,7 +22,6 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -99,9 +87,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EventObject;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class CtrlMouseHandler extends AbstractProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.navigation.CtrlMouseHandler");
+  private static long DOC_GENERATION_TIMEOUT_MS = 5000;
+  private static long DOC_GENERATION_RETRY_DELAY_MS = 100;
   private static final AbstractDocumentationTooltipAction[] ourTooltipActions = {new ShowQuickDocAtPinnedWindowFromTooltipAction()};
   private final EditorColorsManager myEditorColorsManager;
 
@@ -112,6 +103,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
   private final DocumentationManager myDocumentationManager;
   @Nullable private Point myPrevMouseLocation;
   private LightweightHint myHint;
+  private final AtomicReference<ProgressIndicator> myCurrentRequestProgress = new AtomicReference<>();
 
   public enum BrowseMode {None, Declaration, TypeDeclaration, Implementation}
 
@@ -649,11 +641,12 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
                               @NotNull final Consumer<String> newTextConsumer,
                               @NotNull final LightweightHint hint)
   {
-    myDocAlarm.cancelAllRequests();
+    ProgressIndicatorBase progress = new ProgressIndicatorBase();
+    myCurrentRequestProgress.set(progress);
     myDocAlarm.addRequest(() -> {
       final Ref<String> fullTextRef = new Ref<>();
       final Ref<String> qualifiedNameRef = new Ref<>();
-      ApplicationManager.getApplication().runReadAction(() -> {
+      QuickDocUtil.runInReadActionWithWriteActionPriorityWithRetries(() -> {
         if (anchorElement.isValid() && originalElement.isValid()) {
           try {
             fullTextRef.set(provider.generateDoc(anchorElement, originalElement));
@@ -665,7 +658,8 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
             qualifiedNameRef.set(((PsiQualifiedNamedElement)anchorElement).getQualifiedName());
           }
         }
-      });
+      }, DOC_GENERATION_TIMEOUT_MS, DOC_GENERATION_RETRY_DELAY_MS, progress);
+      myCurrentRequestProgress.compareAndSet(progress, null);
       String fullText = fullTextRef.get();
       if (fullText == null) {
         return;
@@ -927,6 +921,8 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
         }
       });
       myDocAlarm.cancelAllRequests();
+      ProgressIndicator currentIndicator = myCurrentRequestProgress.getAndSet(null);
+      if (currentIndicator != null) currentIndicator.cancel(); 
       if (newTextConsumer != null && docInfo.docProvider != null && docInfo.documentationAnchor != null) {
         fulfillDocInfo(docInfo.text, docInfo.docProvider, info.myElementAtPointer, docInfo.documentationAnchor, newTextConsumer, hint);
       }
@@ -1045,7 +1041,14 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       for (AbstractDocumentationTooltipAction action : ourTooltipActions) {
         Icon icon = action.getTemplatePresentation().getIcon();
         Dimension minSize = new Dimension(icon.getIconWidth(), icon.getIconHeight());
-        myButtons.add(new ActionButton(action, presentationFactory.getPresentation(action), IdeTooltipManager.IDE_TOOLTIP_PLACE, minSize));
+        ActionButton actionButton =
+          new ActionButton(action, presentationFactory.getPresentation(action), IdeTooltipManager.IDE_TOOLTIP_PLACE, minSize) {
+            @Override
+            protected boolean checkSkipPressForEvent(@NotNull MouseEvent e) {
+              return e.getButton() != MouseEvent.BUTTON1;
+            }
+          };
+        myButtons.add(actionButton);
         action.setDocInfo(documentationAnchor, elementUnderMouse);
       }
       Collections.reverse(myButtons);

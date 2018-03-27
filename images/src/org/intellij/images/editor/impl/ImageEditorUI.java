@@ -136,7 +136,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
     view.addMouseListener(new EditorMouseAdapter());
     view.addMouseListener(new FocusRequester());
 
-    myScrollPane = ScrollPaneFactory.createScrollPane(view);
+    myScrollPane = ScrollPaneFactory.createScrollPane(view, true);
     myScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
     myScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
@@ -227,6 +227,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
   @Override
   public void setTransparencyChessboardVisible(boolean visible) {
     imageComponent.setTransparencyChessboardVisible(visible);
+    repaint();
   }
 
   @Override
@@ -244,6 +245,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
   @Override
   public void setGridVisible(boolean visible) {
     imageComponent.setGridVisible(visible);
+    repaint();
   }
 
   @Override

@@ -123,7 +123,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
           final boolean activated = myIsTrackersActivated.get();
           managerThread.schedule(new DebuggerCommandImpl() {
             @Override
-            protected void action() throws Exception {
+            protected void action() {
               trackClass(debugSession, ref, type, activated);
             }
           });
@@ -156,7 +156,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
         debugProcess.removeDebugProcessListener(this);
         managerThread.invoke(new DebuggerCommandImpl() {
           @Override
-          protected void action() throws Exception {
+          protected void action() {
             final boolean activated = myIsTrackersActivated.get();
             final VirtualMachineProxyImpl proxy = debugProcess.getVirtualMachineProxy();
             tracker.getTrackedClasses().forEach((className, type) -> {
@@ -275,9 +275,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
       @Override
       public void invokePopup(Component comp, int x, int y) {
         ActionPopupMenu menu = createContextMenu();
-        if (menu != null) {
-          menu.getComponent().show(comp, x, y);
-        }
+        menu.getComponent().show(comp, x, y);
       }
     });
 
@@ -381,7 +379,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
 
     managerThread.schedule(new DebuggerCommandImpl() {
       @Override
-      protected void action() throws Exception {
+      protected void action() {
         if (active) {
           doActivate();
         }
@@ -422,7 +420,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
     }
 
     @Override
-    public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
+    public void contextAction(@NotNull SuspendContextImpl suspendContext) {
       handleTrackers();
 
       final List<ReferenceType> classes = suspendContext.getDebugProcess().getVirtualMachineProxy().allClasses();

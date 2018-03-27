@@ -56,8 +56,13 @@ public interface Component extends DomElement {
   }
 
   interface Project extends Component {
+    /**
+     * @deprecated project components aren't loaded in the default project by default so there is not need to use this tag;
+     * add 'loadForDefaultProject' if your really need to have your component in the default project.
+     */
     @NotNull
     @SubTag(value = "skipForDefaultProject", indicator = true)
+    @Deprecated
     GenericDomValue<Boolean> getSkipForDefaultProject();
 
     @NotNull

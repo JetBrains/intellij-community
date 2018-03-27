@@ -35,7 +35,6 @@ import java.util.stream.Stream;
 /**
  * Functions common to different implementors of PyCallExpression, with different base classes.
  * User: dcheryasov
- * Date: Dec 23, 2008 10:31:38 AM
  */
 public class PyCallExpressionHelper {
   private PyCallExpressionHelper() {
@@ -370,9 +369,9 @@ public class PyCallExpressionHelper {
     return false;
   }
 
-  public static boolean isQualifiedByInstance(@Nullable PyCallable resolved,
-                                              @NotNull PyExpression qualifier,
-                                              @NotNull TypeEvalContext context) {
+  private static boolean isQualifiedByInstance(@Nullable PyCallable resolved,
+                                               @NotNull PyExpression qualifier,
+                                               @NotNull TypeEvalContext context) {
     if (isQualifiedByClass(resolved, qualifier, context)) {
       return false;
     }

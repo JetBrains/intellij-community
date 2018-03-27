@@ -44,8 +44,6 @@ import java.util.List;
 
 /**
  * @author Maxim.Mossienko
- * Date: Mar 4, 2004
- * Time: 9:19:34 PM
  */
 public class Replacer {
   private final Project project;
@@ -91,9 +89,7 @@ public class Replacer {
     matchOptions.clearVariableConstraints();
     matchOptions.fillSearchCriteria(what);
 
-    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(matchOptions.getFileType());
-    assert profile != null;
-    profile.checkSearchPattern(project, matchOptions);
+    Matcher.validate(project, matchOptions);
     checkSupportedReplacementPattern(project, options);
 
     Matcher matcher = new Matcher(project);
@@ -169,13 +165,12 @@ public class Replacer {
       }
     }
 
-    ((ApplicationImpl)ApplicationManager.getApplication()).runWriteActionWithProgressInDispatchThread(
+    ((ApplicationImpl)ApplicationManager.getApplication()).runWriteActionWithCancellableProgressInDispatchThread(
       SSRBundle.message("structural.replace.title"),
       project,
       null,
-      "Stop",
       indicator -> {
-
+        indicator.setIndeterminate(false);
         try {
           final int size = infos.size();
           VirtualFile lastFile = null;

@@ -38,6 +38,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
+import com.intellij.util.MemoryDumpHelper;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ui.UIUtil;
@@ -662,7 +663,10 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
 
     List<Future> futures = new ArrayList<>();
     for (VirtualFile file : files) {
-      assertNull(fdm.getCachedDocument(file));
+      if (fdm.getCachedDocument(file) != null) {
+        MemoryDumpHelper.captureMemoryDumpZipped("fileDocTest.hprof.zip");
+        fail("Document not gc-ed: " + file);
+      }
       for (int i = 0; i < 2; i++) {
         futures.add(ApplicationManager.getApplication().executeOnPooledThread(() -> ReadAction.run(() -> {
           Document document = fdm.getDocument(file);

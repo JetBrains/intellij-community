@@ -3,7 +3,9 @@ package com.jetbrains.python.packaging;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.InstanceCreator;
 import com.google.gson.annotations.SerializedName;
+import com.google.gson.reflect.TypeToken;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -26,10 +28,15 @@ import java.util.TreeMap;
  */
 public abstract class PyAbstractPackageCache {
   private static final Logger LOG = Logger.getInstance(PyPIPackageCache.class);
-  private static final Gson ourGson = new GsonBuilder().create();
+
+  private static final Gson ourGson = new GsonBuilder()
+      // Otherwise, GSON uses natural order comparator even for a final TreeMap field
+    .registerTypeAdapter(new TypeToken<TreeMap<String, PackageInfo>>() { }.getType(),
+                         (InstanceCreator)type -> new TreeMap<>(String.CASE_INSENSITIVE_ORDER))
+    .create();
 
   @SerializedName("packages")
-  protected TreeMap<String, PackageInfo> myPackages = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+  protected final TreeMap<String, PackageInfo> myPackages = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
   protected PyAbstractPackageCache() {
   }
@@ -38,21 +45,21 @@ public abstract class PyAbstractPackageCache {
   @NotNull
   protected static <T extends PyAbstractPackageCache> T load(@NotNull Class<T> classToken,
                                                              @NotNull T fallbackValue,
-                                                             @NotNull String cacheFileName) {
+                                                             @NotNull Path cacheFilePath) {
     T cache = fallbackValue;
-    try (Reader reader = Files.newBufferedReader(getCachePath(cacheFileName), StandardCharsets.UTF_8)) {
+    try (Reader reader = Files.newBufferedReader(cacheFilePath, StandardCharsets.UTF_8)) {
       cache = ourGson.fromJson(reader, classToken);
-      LOG.info("Loaded " + cache.getPackageNames().size() + " packages from " + getCachePath(cacheFileName));
+      LOG.info("Loaded " + cache.getPackageNames().size() + " packages from " + cacheFilePath);
     }
     catch (IOException exception) {
-      LOG.warn("Cannot load " + cacheFileName + " package cache from the filesystem", exception);
+      LOG.warn("Cannot load " + cacheFilePath + " package cache from the filesystem", exception);
     }
     return cache;
   }
 
   protected static void store(@NotNull PyAbstractPackageCache newValue, @NotNull String cacheFileName) {
     try {
-      final Path cacheFilePath = getCachePath(cacheFileName);
+      final Path cacheFilePath = getDefaultCachePath(cacheFileName);
       Files.createDirectories(cacheFilePath.getParent());
       try (Writer writer = Files.newBufferedWriter(cacheFilePath, StandardCharsets.UTF_8)) {
         ourGson.toJson(newValue, writer);
@@ -64,7 +71,7 @@ public abstract class PyAbstractPackageCache {
   }
 
   @NotNull
-  private static Path getCachePath(@NotNull String cacheFileName) {
+  protected static Path getDefaultCachePath(@NotNull String cacheFileName) {
     return Paths.get(PathManager.getSystemPath(), "python_packages", cacheFileName);
   }
 
@@ -80,7 +87,7 @@ public abstract class PyAbstractPackageCache {
    * Checks that the given name is among those available in the repository <em>case-insensitively</em>.
    * <p>
    * Note that if the cache hasn't been initialized yet or there was an error during its loading,
-   * {@link #load(Class, PyAbstractPackageCache, String)} returns an empty sentinel value, and, therefore, this method will return {@code false}.
+   * {@link #load(Class, PyAbstractPackageCache, Path)} returns an empty sentinel value, and, therefore, this method will return {@code false}.
    * It's worth writing code analysis so that this value doesn't lead to false positives in the editor
    * when the cache is merely not ready.
    *

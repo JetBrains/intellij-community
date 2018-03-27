@@ -218,8 +218,8 @@ public class PyDataViewerPanel extends JPanel {
   private PyDebugValue getDebugValue(String expression) {
     try {
       PyDebugValue value = myFrameAccessor.evaluate(expression, false, true);
-      if (value.isErrorOnEval()) {
-        setError(value.getValue());
+      if (value == null || value.isErrorOnEval()) {
+        setError(value != null ? value.getValue() : "Failed to evaluate expression " + expression);
         return null;
       }
       return value;

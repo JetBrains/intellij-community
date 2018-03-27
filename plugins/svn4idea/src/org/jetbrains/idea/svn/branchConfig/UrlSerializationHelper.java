@@ -1,30 +1,17 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.branchConfig;
 
 import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
+import org.jetbrains.idea.svn.api.Url;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
 /**
 * @author Konstantin Kolosovsky.
@@ -77,34 +64,32 @@ public class UrlSerializationHelper {
       return url;
     }
     try {
-      final SVNURL svnurl = SVNURL.parseURIEncoded(url);
+      final Url svnurl = createUrl(url);
       if (withUserInfo.isNull()) {
         final String userInfo = svnurl.getUserInfo();
         withUserInfo.set((userInfo != null) && (userInfo.length() > 0));
       }
       if (withUserInfo.get()) {
-        return SVNURL.create(svnurl.getProtocol(), null, svnurl.getHost(), SvnUtil.resolvePort(svnurl), svnurl.getURIEncodedPath(), true)
-          .toString();
+        return svnurl.setUserInfo(null).toString();
       }
     }
-    catch (SVNException e) {
-      //
+    catch (SvnBindException ignored) {
     }
     return url;
   }
 
   @Nullable
   private String getUserInfo(final String path) {
-    final SVNURL svnurl = myVcs.getSvnFileUrlMapping().getUrlForFile(new File(path));
+    final Url svnurl = myVcs.getSvnFileUrlMapping().getUrlForFile(new File(path));
     return svnurl != null ? svnurl.getUserInfo() : null;
   }
 
   private static String deserializeUrl(final String url, final String userInfo) {
     try {
-      final SVNURL svnurl = SVNURL.parseURIEncoded(url);
-      return SVNURL.create(svnurl.getProtocol(), userInfo, svnurl.getHost(), SvnUtil.resolvePort(svnurl), svnurl.getURIEncodedPath(),
-                           true).toString();
-    } catch (SVNException e) {
+      final Url svnurl = createUrl(url);
+      return svnurl.setUserInfo(userInfo).toString();
+    }
+    catch (SvnBindException e) {
       return url;
     }
   }

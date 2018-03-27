@@ -43,6 +43,10 @@ public class RenameClassTest extends MultiFileTestCase {
     doTest("pack1.MyList", "List");
   }
 
+  public void testPackageClassConflict() {
+    doTest("Fabric.AFabric", "MetaFabric");
+  }
+
   public void testInnerClass() {
     doTest("pack1.OuterClass.InnerClass", "NewInnerClass");
   }

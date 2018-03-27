@@ -26,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
  * This is <i>not</i> a node of PSI tree.
  * <br/>
  * User: dcheryasov
- * Date: May 31, 2010 5:18:10 PM
  */
 public interface Property {
   String getName();

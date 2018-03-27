@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.execution.application;
 
@@ -19,7 +7,6 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.*;
-import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.ArgumentFileFilter;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
@@ -37,7 +24,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaModule;
@@ -49,25 +35,21 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunConfigurationModule>
   implements CommonJavaRunConfigurationParameters, ConfigurationWithCommandLineShortener, SingleClassConfiguration, RefactoringListenerProvider {
 
-  public String MAIN_CLASS_NAME;
-  public String VM_PARAMETERS;
-  public String PROGRAM_PARAMETERS;
-  public String WORKING_DIRECTORY;
-  public boolean ALTERNATIVE_JRE_PATH_ENABLED;
-  public String ALTERNATIVE_JRE_PATH;
-  public boolean ENABLE_SWING_INSPECTOR;
+  /* deprecated, but 3rd-party used variables */
+  @Deprecated public String MAIN_CLASS_NAME;
+  @Deprecated public String PROGRAM_PARAMETERS;
+  @Deprecated public String WORKING_DIRECTORY;
+  @Deprecated public boolean ALTERNATIVE_JRE_PATH_ENABLED;
+  @Deprecated public String ALTERNATIVE_JRE_PATH;
+  @Deprecated public boolean ENABLE_SWING_INSPECTOR;
+  /* */
 
   private ShortenCommandLine myShortenCommandLine = null;
-
-  public String ENV_VARIABLES;
-  private final Map<String,String> myEnvs = new LinkedHashMap<>();
-  public boolean PASS_PARENT_ENVS = true;
 
   public ApplicationConfiguration(final String name, final Project project, ApplicationConfigurationType applicationConfigurationType) {
     this(name, project, applicationConfigurationType.getConfigurationFactories()[0]);
@@ -77,8 +59,21 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     super(name, new JavaRunConfigurationModule(project, true), factory);
   }
 
+  /**
+   * Because we have to keep backward compatibility, never use `getOptions()` to get or set values - use only designated getters/setters.
+   */
   @Override
-  public void setMainClass(final PsiClass psiClass) {
+  protected ApplicationConfigurationOptions getOptions() {
+    return (ApplicationConfigurationOptions)super.getOptions();
+  }
+
+  @Override
+  protected Class<? extends ModuleBasedConfigurationOptions> getOptionsClass() {
+    return ApplicationConfigurationOptions.class;
+  }
+
+  @Override
+  public void setMainClass(@NotNull PsiClass psiClass) {
     final Module originalModule = getConfigurationModule().getModule();
     setMainClassName(JavaExecutionUtil.getRuntimeQualifiedName(psiClass));
     setModule(JavaExecutionUtil.findModule(psiClass));
@@ -113,99 +108,113 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   @Override
   @Nullable
   public PsiClass getMainClass() {
-    return getConfigurationModule().findClass(MAIN_CLASS_NAME);
+    return getConfigurationModule().findClass(getMainClassName());
+  }
+
+  @Nullable
+  public String getMainClassName() {
+    //noinspection deprecation
+    return MAIN_CLASS_NAME;
   }
 
   @Override
   @Nullable
   public String suggestedName() {
-    if (MAIN_CLASS_NAME == null) {
+    if (getMainClassName() == null) {
       return null;
     }
-    return JavaExecutionUtil.getPresentableClassName(MAIN_CLASS_NAME);
+    return JavaExecutionUtil.getPresentableClassName(getMainClassName());
   }
 
   @Override
   public String getActionName() {
-    if (MAIN_CLASS_NAME == null || MAIN_CLASS_NAME.length() == 0) {
+    if (getMainClassName() == null) {
       return null;
     }
-    return ProgramRunnerUtil.shortenName(JavaExecutionUtil.getShortClassName(MAIN_CLASS_NAME), 6) + ".main()";
+    return ProgramRunnerUtil.shortenName(JavaExecutionUtil.getShortClassName(getMainClassName()), 6) + ".main()";
   }
 
   @Override
-  public void setMainClassName(final String qualifiedName) {
+  public void setMainClassName(@Nullable String qualifiedName) {
+    //noinspection deprecation
     MAIN_CLASS_NAME = qualifiedName;
+    getOptions().setMainClassName(qualifiedName);
   }
 
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
     JavaParametersUtil.checkAlternativeJRE(this);
     final JavaRunConfigurationModule configurationModule = getConfigurationModule();
-    final PsiClass psiClass = configurationModule.checkModuleAndClassName(MAIN_CLASS_NAME, ExecutionBundle.message("no.main.class.specified.error.text"));
+    final PsiClass psiClass = configurationModule.checkModuleAndClassName(getMainClassName(), ExecutionBundle.message("no.main.class.specified.error.text"));
     if (!PsiMethodUtil.hasMainMethod(psiClass)) {
-      throw new RuntimeConfigurationWarning(ExecutionBundle.message("main.method.not.found.in.class.error.message", MAIN_CLASS_NAME));
+      throw new RuntimeConfigurationWarning(ExecutionBundle.message("main.method.not.found.in.class.error.message", getMainClassName()));
     }
     ProgramParametersUtil.checkWorkingDirectoryExist(this, getProject(), configurationModule.getModule());
     JavaRunConfigurationExtensionManager.checkConfigurationIsValid(this);
   }
 
   @Override
-  public void setVMParameters(String value) {
-    VM_PARAMETERS = value;
+  public void setVMParameters(@Nullable String value) {
+    getOptions().setVmParameters(value);
   }
 
   @Override
   public String getVMParameters() {
-    return VM_PARAMETERS;
+    return getOptions().getVmParameters();
   }
 
   @Override
-  public void setProgramParameters(String value) {
+  public void setProgramParameters(@Nullable String value) {
+    //noinspection deprecation
     PROGRAM_PARAMETERS = value;
+    getOptions().setProgramParameters(value);
   }
 
   @Override
   public String getProgramParameters() {
+    //noinspection deprecation
     return PROGRAM_PARAMETERS;
   }
 
   @Override
-  public void setWorkingDirectory(String value) {
-    WORKING_DIRECTORY = ExternalizablePath.urlValue(value);
+  public void setWorkingDirectory(@Nullable String value) {
+    String normalizedValue = ExternalizablePath.urlValue(value);
+    //noinspection deprecation
+    WORKING_DIRECTORY = normalizedValue;
+    getOptions().setWorkingDirectory(normalizedValue);
   }
 
   @Override
   public String getWorkingDirectory() {
+    //noinspection deprecation
     return ExternalizablePath.localPathValue(WORKING_DIRECTORY);
   }
 
   @Override
-  public void setPassParentEnvs(boolean passParentEnvs) {
-    PASS_PARENT_ENVS = passParentEnvs;
+  public void setPassParentEnvs(boolean value) {
+    getOptions().setPassParentEnv(value);
   }
 
   @Override
   @NotNull
   public Map<String, String> getEnvs() {
-    return myEnvs;
+    return getOptions().getEnv();
   }
 
   @Override
-  public void setEnvs(@NotNull final Map<String, String> envs) {
-    myEnvs.clear();
-    myEnvs.putAll(envs);
+  public void setEnvs(@NotNull Map<String, String> envs) {
+    getOptions().setEnv(envs);
   }
 
   @Override
   public boolean isPassParentEnvs() {
-    return PASS_PARENT_ENVS;
+    return getOptions().isPassParentEnv();
   }
 
   @Override
   @Nullable
   public String getRunClass() {
-    return MAIN_CLASS_NAME;
+    return getMainClassName();
   }
 
   @Override
@@ -216,37 +225,58 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
 
   @Override
   public boolean isAlternativeJrePathEnabled() {
+    //noinspection deprecation
     return ALTERNATIVE_JRE_PATH_ENABLED;
   }
 
   @Override
   public void setAlternativeJrePathEnabled(boolean enabled) {
+    //noinspection deprecation
     ALTERNATIVE_JRE_PATH_ENABLED = enabled;
+    getOptions().setAlternativeJrePathEnabled(enabled);
   }
 
   @Nullable
   @Override
   public String getAlternativeJrePath() {
+    //noinspection deprecation
     return ALTERNATIVE_JRE_PATH;
   }
 
   @Override
-  public void setAlternativeJrePath(String path) {
+  public void setAlternativeJrePath(@Nullable String path) {
+    //noinspection deprecation
     ALTERNATIVE_JRE_PATH = path;
+    getOptions().setAlternativeJrePath(path);
+  }
+
+  public boolean isProvidedScopeIncluded() {
+    return getOptions().getIncludeProvidedScope();
+  }
+
+  public void setIncludeProvidedScope(boolean value) {
+    getOptions().setIncludeProvidedScope(value);
   }
 
   @Override
   public Collection<Module> getValidModules() {
-    return JavaRunConfigurationModule.getModulesForClass(getProject(), MAIN_CLASS_NAME);
+    return JavaRunConfigurationModule.getModulesForClass(getProject(), getMainClassName());
   }
 
+  @SuppressWarnings("deprecation")
   @Override
-  public void readExternal(final Element element) {
+  public void readExternal(@NotNull final Element element) {
     super.readExternal(element);
+
+    ApplicationConfigurationOptions options = getOptions();
+    MAIN_CLASS_NAME = options.getMainClassName();
+    PROGRAM_PARAMETERS = options.getProgramParameters();
+    WORKING_DIRECTORY = options.getWorkingDirectory();
+    ALTERNATIVE_JRE_PATH = options.getAlternativeJrePath();
+    ALTERNATIVE_JRE_PATH_ENABLED = options.isAlternativeJrePathEnabled();
+    ENABLE_SWING_INSPECTOR = options.isSwingInspectorEnabled();
+
     JavaRunConfigurationExtensionManager.getInstance().readExternal(this, element);
-    DefaultJDOMExternalizer.readExternal(this, element);
-    readModule(element);
-    EnvironmentVariablesComponent.readExternal(element, getEnvs());
     setShortenCommandLine(ShortenCommandLine.readShortenClasspathMethod(element));
   }
 
@@ -255,14 +285,6 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     super.writeExternal(element);
 
     JavaRunConfigurationExtensionManager.getInstance().writeExternal(this, element);
-    DefaultJDOMExternalizer.writeExternal(this, element);
-    writeModule(element);
-
-    Map<String, String> envs = getEnvs();
-    //if (!envs.isEmpty()) {
-      EnvironmentVariablesComponent.writeExternal(element, envs);
-    //}
-
     ShortenCommandLine.writeShortenClasspathMethod(element, myShortenCommandLine);
   }
 
@@ -277,6 +299,17 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     myShortenCommandLine = mode;
   }
 
+  public boolean isSwingInspectorEnabled() {
+    //noinspection deprecation
+    return ENABLE_SWING_INSPECTOR;
+  }
+
+  public void setSwingInspectorEnabled(boolean value) {
+    //noinspection deprecation
+    ENABLE_SWING_INSPECTOR = value;
+    getOptions().setSwingInspectorEnabled(value);
+  }
+
   public static class JavaApplicationCommandLineState<T extends ApplicationConfiguration> extends BaseJavaApplicationCommandLineState<T> {
     public JavaApplicationCommandLineState(@NotNull final T configuration, final ExecutionEnvironment environment) {
       super(environment, configuration);
@@ -289,10 +322,10 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
       params.setShortenCommandLine(configuration.getShortenCommandLine(), configuration.getProject());
 
       final JavaRunConfigurationModule module = myConfiguration.getConfigurationModule();
-      final String jreHome = myConfiguration.ALTERNATIVE_JRE_PATH_ENABLED ? myConfiguration.ALTERNATIVE_JRE_PATH : null;
+      final String jreHome = myConfiguration.isAlternativeJrePathEnabled() ? myConfiguration.getAlternativeJrePath() : null;
       if (module.getModule() != null) {
         DumbService.getInstance(module.getProject()).runWithAlternativeResolveEnabled(() -> {
-          int classPathType = JavaParametersUtil.getClasspathType(module, myConfiguration.MAIN_CLASS_NAME, false);
+          int classPathType = JavaParametersUtil.getClasspathType(module, myConfiguration.getMainClassName(), false, myConfiguration.isProvidedScopeIncluded());
           JavaParametersUtil.configureModule(module, params, classPathType, jreHome);
         });
       }
@@ -300,7 +333,7 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
         JavaParametersUtil.configureProject(module.getProject(), params, JavaParameters.JDK_AND_CLASSES_AND_TESTS, jreHome);
       }
 
-      params.setMainClass(myConfiguration.MAIN_CLASS_NAME);
+      params.setMainClass(myConfiguration.getMainClassName());
 
       setupJavaParameters(params);
 

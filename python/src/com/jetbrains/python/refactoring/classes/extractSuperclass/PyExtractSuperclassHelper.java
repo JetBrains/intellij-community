@@ -117,7 +117,7 @@ public final class PyExtractSuperclassHelper {
    * If class explicitly extends object we shall move it even in Py3K
    */
   private static boolean isObjectParentDeclaredExplicitly(@NotNull final PyClass clazz) {
-    return Arrays.stream(clazz.getSuperClassExpressions()).filter(o -> PyNames.OBJECT.equals(o.getName())).findFirst().isPresent();
+    return Arrays.stream(clazz.getSuperClassExpressions()).anyMatch(o -> PyNames.OBJECT.equals(o.getName()));
   }
 
   private static PyClass placeNewClass(final Project project, PyClass newClass, @NotNull final PyClass clazz, final String targetFile) {
@@ -158,10 +158,10 @@ public final class PyExtractSuperclassHelper {
     LOG.assertTrue(psiFile != null);
     if (psiFile.getLastChild() != null) {
       // TODO: make the number of newlines depend on style setting
-      psiFile.add(PyElementGenerator.getInstance(project).createFromText(LanguageLevel.PYTHON24, PsiWhiteSpace.class, "\n\n"));
+      psiFile.add(PyElementGenerator.getInstance(project).createFromText(LanguageLevel.PYTHON27, PsiWhiteSpace.class, "\n\n"));
     }
     newClass = (PyClass)psiFile.add(newClass);
-    PyClassRefactoringUtil.insertImport(clazz, Collections.singleton((PsiNamedElement)newClass));
+    PyClassRefactoringUtil.insertImport(clazz, Collections.singleton(newClass));
     return newClass;
   }
 

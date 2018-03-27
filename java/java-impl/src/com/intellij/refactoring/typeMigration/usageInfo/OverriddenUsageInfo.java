@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author anna
- * Date: 27-Mar-2008
  */
 public class OverriddenUsageInfo extends TypeMigrationUsageInfo {
   private volatile String myMigrateMethodName;

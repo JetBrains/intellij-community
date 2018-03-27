@@ -65,8 +65,8 @@ public class PyDataView implements DumbAware {
     myProject = project;
   }
 
-  public void show(@NotNull PyDebugValue value, boolean inToolwindow) {
-    if (inToolwindow) {
+  public void show(@NotNull PyDebugValue value) {
+    if (ToolWindowManager.getInstance(myProject).getToolWindow(DATA_VIEWER_ID) != null) {
       showInToolwindow(value);
     }
     else {

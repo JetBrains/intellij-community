@@ -24,7 +24,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
@@ -89,8 +88,7 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
         refreshView();
       }
     };
-    ChangeListManager.getInstance(myProject).addChangeListListener(changeListListener);
-    Disposer.register(myDisposable, () -> ChangeListManager.getInstance(myProject).removeChangeListListener(changeListListener));
+    ChangeListManager.getInstance(myProject).addChangeListListener(changeListListener, myDisposable);
   }
 
 

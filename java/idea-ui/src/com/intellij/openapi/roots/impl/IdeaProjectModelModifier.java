@@ -81,7 +81,7 @@ public class IdeaProjectModelModifier extends JavaProjectModelModifier {
 
       RepositoryLibraryProperties libraryProperties = new RepositoryLibraryProperties(dialog.getCoordinateText(), true);
       Collection<OrderRoot> roots =
-        JarRepositoryManager.loadDependenciesModal(myProject, libraryProperties, dialog.getAttachSources(), dialog.getAttachJavaDoc(), null, null);
+        JarRepositoryManager.loadDependenciesModal(myProject, libraryProperties, dialog.getAttachSources(), dialog.getAttachJavaDoc(), dialog.getDirectoryPath(), null);
       if (roots.isEmpty()) {
         Messages.showErrorDialog(myProject, descriptor.getPresentableName() + " was not loaded.", "Failed to Download Library");
         return Promises.rejectedPromise();

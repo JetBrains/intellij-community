@@ -2,7 +2,6 @@ package org.jetbrains.maven.embedder;
 
 /**
  * @author Sergey.Anchipolevsky
- *         Date: 27.01.2010
  */
 public interface MavenEmbedderLogger {
   void debug(CharSequence msg);

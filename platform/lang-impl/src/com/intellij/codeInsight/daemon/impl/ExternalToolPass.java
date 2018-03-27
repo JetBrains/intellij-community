@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -130,7 +132,7 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
     }
     if (myMainHighlightingPass) {
       doAnnotate();
-      applyRelevant();
+      doApply();
       return getHighlights();
     }
     return super.getInfos();
@@ -138,7 +140,7 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
 
   @Override
   protected void applyInformationWithProgress() {
-    final long modificationStampBefore = myDocument.getModificationStamp();
+    long modificationStampBefore = myDocument.getModificationStamp();
 
     Update update = new Update(myFile) {
       @Override
@@ -149,18 +151,15 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
 
       @Override
       public void run() {
-        if (documentChanged(modificationStampBefore) || myProject.isDisposed()) {
-          return;
+        if (!documentChanged(modificationStampBefore) && !myProject.isDisposed()) {
+          doAnnotate();
+          ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> {
+            if (!documentChanged(modificationStampBefore) && !myProject.isDisposed()) {
+              doApply();
+              doFinish(getHighlights(), modificationStampBefore);
+            }
+          });
         }
-        doAnnotate();
-
-        ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> {
-          if (documentChanged(modificationStampBefore) || myProject.isDisposed()) {
-            return;
-          }
-          applyRelevant();
-          doFinish(getHighlights(), modificationStampBefore);
-        });
       }
     };
 
@@ -169,40 +168,6 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
 
   private boolean documentChanged(long modificationStampBefore) {
     return myDocument.getModificationStamp() != modificationStampBefore;
-  }
-
-  @NotNull
-  private List<HighlightInfo> getHighlights() {
-    List<HighlightInfo> infos = new ArrayList<>(myAnnotationHolder.size());
-    for (Annotation annotation : myAnnotationHolder) {
-      infos.add(HighlightInfo.fromAnnotation(annotation));
-    }
-    return infos;
-  }
-
-  @SuppressWarnings("unchecked")
-  private void applyRelevant() {
-    for (MyData data : myAnnotationData) {
-      if (data.annotationResult != null && data.psiRoot != null && data.psiRoot.isValid()) {
-        try {
-          data.annotator.apply(data.psiRoot, data.annotationResult, myAnnotationHolder);
-        }
-        catch (Throwable t) {
-          process(t, data.annotator, data.psiRoot);
-        }
-      }
-    }
-  }
-
-  private void doFinish(@NotNull final List<HighlightInfo> highlights, final long modificationStampBefore) {
-    ApplicationManager.getApplication().invokeLater(() -> {
-      if (documentChanged(modificationStampBefore) || myProject.isDisposed()) {
-        return;
-      }
-      int start = myRestrictRange.getStartOffset(), end = myRestrictRange.getEndOffset();
-      UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, start, end, highlights, getColorsScheme(), getId());
-      DaemonCodeAnalyzerEx.getInstanceEx(myProject).getFileStatusMap().markFileUpToDate(myDocument, getId());
-    }, ModalityState.stateForComponent(getEditor().getComponent()));
   }
 
   @SuppressWarnings("unchecked")
@@ -220,11 +185,44 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
     }
   }
 
+  @SuppressWarnings("unchecked")
+  private void doApply() {
+    for (MyData data : myAnnotationData) {
+      if (data.annotationResult != null && data.psiRoot != null && data.psiRoot.isValid()) {
+        try {
+          data.annotator.apply(data.psiRoot, data.annotationResult, myAnnotationHolder);
+        }
+        catch (Throwable t) {
+          process(t, data.annotator, data.psiRoot);
+        }
+      }
+    }
+  }
+
+  private List<HighlightInfo> getHighlights() {
+    List<HighlightInfo> infos = new ArrayList<>(myAnnotationHolder.size());
+    for (Annotation annotation : myAnnotationHolder) {
+      infos.add(HighlightInfo.fromAnnotation(annotation));
+    }
+    return infos;
+  }
+
+  private void doFinish(List<HighlightInfo> highlights, long modificationStampBefore) {
+    Editor editor = getEditor();
+    assert editor != null;
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (!documentChanged(modificationStampBefore) && !myProject.isDisposed()) {
+        int start = myRestrictRange.getStartOffset(), end = myRestrictRange.getEndOffset();
+        UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, start, end, highlights, getColorsScheme(), getId());
+        DaemonCodeAnalyzerEx.getInstanceEx(myProject).getFileStatusMap().markFileUpToDate(myDocument, getId());
+      }
+    }, ModalityState.stateForComponent(editor.getComponent()));
+  }
+
   private static void process(Throwable t, ExternalAnnotator annotator, PsiFile root) {
     if (t instanceof ProcessCanceledException) throw (ProcessCanceledException)t;
     VirtualFile file = root.getVirtualFile();
-    LOG.error("annotator: " + annotator + " (" + annotator.getClass() + ")",
-              new Attachment("root_path.txt", file != null ? file.getPath() : root.getName()),
-              new Attachment("stack", t));
+    String path = file != null ? file.getPath() : root.getName();
+    LOG.error("annotator: " + annotator + " (" + annotator.getClass() + ")", t, new Attachment("root_path.txt", path));
   }
 }

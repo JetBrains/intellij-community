@@ -15,16 +15,13 @@
  */
 package git4idea.cherrypick
 
-import git4idea.test.branch
-import git4idea.test.checkout
-import git4idea.test.checkoutNew
-import git4idea.test.file
+import git4idea.test.*
 
 class GitCherryPickAutoCommitTest : GitCherryPickTest() {
 
   override fun setUp() {
     super.setUp()
-    myGitSettings.isAutoCommitOnCherryPick = true
+    settings.isAutoCommitOnCherryPick = true
   }
 
   fun `test simple cherry-pick`() {
@@ -36,7 +33,7 @@ class GitCherryPickAutoCommitTest : GitCherryPickTest() {
 
     assertSuccessfulNotification("Cherry-pick successful", "${shortHash(commit)} fix #1")
     assertLastMessage("fix #1\n\n(cherry picked from commit ${commit})")
-    assertOnlyDefaultChangelist()
+    changeListManager.assertOnlyDefaultChangelist()
   }
 
   fun `test dirty tree conflicting with commit`() {
@@ -52,13 +49,13 @@ class GitCherryPickAutoCommitTest : GitCherryPickTest() {
   }
 
   fun `test unresolved conflict with cherry-picked commit should produce a changelist`() {
-    val commit = prepareConflict()
+    val commit = repo.prepareConflict()
     `do nothing on merge`()
 
     cherryPick(commit)
 
     `assert merge dialog was shown`()
-    assertChangelistCreated("on_master (cherry picked from commit ${shortHash(commit)})")
+    changeListManager.assertChangeListExists("on_master\n\n(cherry picked from commit ${shortHash(commit)})")
     assertWarningNotification("Cherry-picked with conflicts", """
       ${shortHash(commit)} on_master
       Unresolved conflicts remain in the working tree. <a href='resolve'>Resolve them.<a/>
@@ -70,18 +67,19 @@ class GitCherryPickAutoCommitTest : GitCherryPickTest() {
   }
 
   fun `test resolve conflicts but cancel commit`() {
-    val commit = prepareConflict()
+    val commit = repo.prepareConflict()
     `mark as resolved on merge`()
-    vcsHelper.onCommit { msg -> false }
+    vcsHelper.onCommit { false }
 
     cherryPick(commit)
 
     `assert merge dialog was shown`()
-    assertChangelistCreated("on_master (cherry picked from commit ${shortHash(commit)})")
+    `assert commit dialog was shown`()
+    changeListManager.assertChangeListExists("on_master\n\n(cherry picked from commit ${shortHash(commit)})")
     assertNoNotification()
   }
 
-  fun `test cherry-pick 2 commit`() {
+  fun `test cherry-pick 2 commits`() {
     branch("feature")
     val commit1 = file("one.txt").create().addCommit("fix #1").hash()
     val commit2 = file("two.txt").create().addCommit("fix #2").hash()
@@ -143,7 +141,7 @@ class GitCherryPickAutoCommitTest : GitCherryPickTest() {
   // IDEA-73548
   fun `test nothing to commit`() {
     val commit = file("c.txt").create().addCommit("fix #1").hash()
-    checkoutNew("feature")
+    repo.checkoutNew("feature")
 
     cherryPick(commit)
 
@@ -154,7 +152,7 @@ class GitCherryPickAutoCommitTest : GitCherryPickTest() {
   // IDEA-73548
   fun `test several commits one of which have already been applied`() {
     file("common.txt").create("common content\n").addCommit("common file")
-    checkoutNew("feature")
+    repo.checkoutNew("feature")
     val commit1 = file("a.txt").create("initial\n").addCommit("fix #1").hash()
     val emptyCommit = file("common.txt").append("more to common\n").addCommit("to common").hash()
     val commit3 = file("a.txt").append("more\n").addCommit("fix #2").hash()

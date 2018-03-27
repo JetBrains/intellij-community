@@ -22,7 +22,6 @@ import javax.swing.*;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 10/23/12
  */
 public interface SettingsStep {
 

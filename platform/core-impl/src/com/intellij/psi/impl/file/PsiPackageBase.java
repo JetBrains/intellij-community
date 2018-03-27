@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.psi.impl.file;
 
@@ -41,7 +29,7 @@ import java.util.Map;
 public abstract class PsiPackageBase extends PsiElementBase implements PsiDirectoryContainer, Queryable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.PsiPackageBase");
 
-  final PsiManager myManager;
+  private final PsiManager myManager;
   private final String myQualifiedName;
 
   protected Collection<PsiDirectory> getAllDirectories() {
@@ -154,7 +142,7 @@ public abstract class PsiPackageBase extends PsiElementBase implements PsiDirect
   @Override
   @NotNull
   public PsiElement[] getChildren() {
-    LOG.error("method not implemented");
+    LOG.error("method not implemented in " + getClass());
     return PsiElement.EMPTY_ARRAY;
   }
 
@@ -220,7 +208,7 @@ public abstract class PsiPackageBase extends PsiElementBase implements PsiDirect
 
   @Override
   public PsiElement copy() {
-    LOG.error("method not implemented");
+    LOG.error("method not implemented in " + getClass());
     return null;
   }
 

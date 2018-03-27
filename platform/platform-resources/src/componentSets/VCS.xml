@@ -36,6 +36,10 @@
       <skipForDefaultProject/>
     </component>
     <component>
+      <implementation-class>com.intellij.openapi.vcs.impl.PartialLineStatusTrackerManagerState</implementation-class>
+      <option name="workspace" value="true"/>
+    </component>
+    <component>
       <implementation-class>com.intellij.openapi.vcs.update.RestoreUpdateTree</implementation-class>
       <skipForDefaultProject/>
     </component>

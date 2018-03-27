@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 
 
 
@@ -18,14 +20,9 @@ abstract class BaseIdeaProperties extends ProductProperties {
     "debugger-openapi",
     "dom-openapi",
     "execution-openapi",
-    "java-analysis-api",
-    "java-indexing-api",
-    "java-psi-api",
-    "jsp-openapi",
-    "jsp-base-openapi",
-    "openapi",
     "remote-servers-java-api",
-    "testFramework-java"
+    "testFramework-java",
+    "testFramework.core"
   ]
   protected static final List<String> JAVA_IMPLEMENTATION_MODULES = [
     "compiler-impl",
@@ -34,19 +31,12 @@ abstract class BaseIdeaProperties extends ProductProperties {
     "execution-impl",
     "external-system-impl",
     "idea-ui",
-    "java-analysis-impl",
-    "java-indexing-impl",
-    "java-impl",
-    "java-psi-impl",
     "java-structure-view",
-    "jsp-spi",
     "manifest",
     "remote-servers-java-impl",
     "testFramework",
     "tests_bootstrap",
-    "ui-designer-core",
-    "ui-designer-jps-plugin",
-    "uast-java"
+    "ui-designer-core"
   ]
   protected static final List<String> BUNDLED_PLUGIN_MODULES = [
     "copyright",
@@ -76,7 +66,8 @@ abstract class BaseIdeaProperties extends ProductProperties {
     "IntelliLang-java",
     "IntelliLang-xml",
     "intellilang-jps-plugin",
-    "stream-debugger"
+    "stream-debugger",
+    "smali"
     /* Disabled in Android Studio
     "ant",
     "ByteCodeViewer",
@@ -100,7 +91,6 @@ abstract class BaseIdeaProperties extends ProductProperties {
     productLayout.additionalPlatformJars.put("jps-builders-6.jar", "jps-builders-6")
     productLayout.additionalPlatformJars.put("aether-dependency-resolver.jar", "aether-dependency-resolver")
     productLayout.additionalPlatformJars.put("jshell-protocol.jar", "jshell-protocol")
-    productLayout.additionalPlatformJars.putAll("jps-model.jar", ["jps-model-impl", "jps-model-serialization"])
     productLayout.additionalPlatformJars.putAll("resources.jar", ["resources", "resources-en"])
     productLayout.additionalPlatformJars.
       putAll("javac2.jar", ["javac2", "forms-compiler", "forms_rt", "instrumentation-util", "instrumentation-util-8", "javac-ref-scanner-8"])
@@ -108,9 +98,30 @@ abstract class BaseIdeaProperties extends ProductProperties {
     productLayout.additionalPlatformJars.putAll("annotations-java8.jar", ["annotations-common", "annotations-java8"])
     */
 
+    def JAVA_API_JAR = "java-api.jar"
+    def JAVA_IMPL_JAR = "java-impl.jar"
+    productLayout.additionalPlatformJars.putAll(JAVA_API_JAR, [])
+    productLayout.additionalPlatformJars.putAll(JAVA_IMPL_JAR, [])
+
     productLayout.platformLayoutCustomizer = { PlatformLayout layout ->
       layout.customize {
-        withModule("java-runtime", "idea_rt.jar", false)
+        def JAVA_RESOURCES_JAR = "java_resources_en.jar"
+        withModule("java-analysis-api", JAVA_API_JAR, JAVA_RESOURCES_JAR)
+        withModule("java-indexing-api", JAVA_API_JAR, JAVA_RESOURCES_JAR)
+        withModule("java-psi-api", JAVA_API_JAR, JAVA_RESOURCES_JAR)
+        withModule("openapi", JAVA_API_JAR, JAVA_RESOURCES_JAR)
+        withModule("jsp-base-openapi", JAVA_API_JAR, JAVA_RESOURCES_JAR)
+        withModule("jsp-openapi", JAVA_API_JAR, JAVA_RESOURCES_JAR)
+        withModule("uast-common", JAVA_API_JAR, JAVA_RESOURCES_JAR)
+
+        withModule("java-analysis-impl", JAVA_IMPL_JAR, JAVA_RESOURCES_JAR)
+        withModule("java-indexing-impl", JAVA_IMPL_JAR, JAVA_RESOURCES_JAR)
+        withModule("java-psi-impl", JAVA_IMPL_JAR, JAVA_RESOURCES_JAR)
+        withModule("java-impl", JAVA_IMPL_JAR, JAVA_RESOURCES_JAR)
+        withModule("jsp-spi", JAVA_IMPL_JAR, JAVA_RESOURCES_JAR)
+        withModule("uast-java", JAVA_IMPL_JAR, JAVA_RESOURCES_JAR)
+
+        withModule("java-runtime", "idea_rt.jar", null)
         withArtifact("debugger-agent", "rt")
         withArtifact("debugger-agent-storage", "rt")
         withProjectLibrary("Eclipse")

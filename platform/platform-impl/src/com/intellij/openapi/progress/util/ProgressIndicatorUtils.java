@@ -33,7 +33,6 @@ import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
-import java.util.function.BiConsumer;
 
 /**
  * Methods in this class are used to equip long background processes which take read actions with a special listener
@@ -177,7 +176,7 @@ public class ProgressIndicatorUtils {
         }
       };
       application.addApplicationListener(listener);
-      future.whenComplete((BiConsumer<Object, Throwable>)(o, throwable) -> application.removeApplicationListener(listener));
+      future.whenComplete((__, ___) -> application.removeApplicationListener(listener));
       try {
         executor.execute(new Runnable() {
           @Override

@@ -47,6 +47,7 @@ import com.intellij.util.net.NetUtils;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.builders.impl.java.JavacCompilerTool;
 import org.jetbrains.jps.incremental.BinaryContent;
@@ -118,12 +119,15 @@ public class CompilerManagerImpl extends CompilerManager {
   }
 
   // returns true if all javacs terminated
+  @TestOnly
   public boolean waitForExternalJavacToTerminate(long time, @NotNull TimeUnit unit) {
     ExternalJavacManager externalJavacManager = myExternalJavacManager;
-    if (externalJavacManager != null) {
-      if (!externalJavacManager.waitForAllProcessHandlers(time, unit)) return false;
-    }
-    return true;
+    return externalJavacManager == null || externalJavacManager.waitForAllProcessHandlers(time, unit);
+  }
+  @TestOnly
+  public boolean awaitNettyThreadPoolTermination(long time, @NotNull TimeUnit unit) {
+    ExternalJavacManager externalJavacManager = myExternalJavacManager;
+    return externalJavacManager == null || externalJavacManager.awaitNettyThreadPoolTermination(time, unit);
   }
 
   public Semaphore getCompilationSemaphore() {

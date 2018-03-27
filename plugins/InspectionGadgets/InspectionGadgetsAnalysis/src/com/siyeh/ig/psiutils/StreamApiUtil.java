@@ -16,8 +16,14 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Predicate;
+
+import static com.siyeh.ig.psiutils.ExpressionUtils.getCallForQualifier;
 
 /**
  * @author Tagir Valeev
@@ -79,5 +85,30 @@ public class StreamApiUtil {
       return type.equals(PsiType.INT) || type.equals(PsiType.LONG) || type.equals(PsiType.DOUBLE);
     }
     return true;
+  }
+
+  /**
+   * Returns call from call chain which name satisfies isWantedCall predicate.
+   * Also checks that all calls between start call and wanted call satisfies isAllowedIntermediateCall
+   * @param call call chain
+   * @param isWantedCall predicate on the name of wanted call
+   * @param isAllowedIntermediateCall predicate on the name of any other call between start call and wanted call
+   * @return call that satisfies isWantedCall predicate or null otherwise
+   */
+  @Nullable
+  public static PsiMethodCallExpression findSubsequentCall(PsiMethodCallExpression call,
+                                                           Predicate<String> isWantedCall,
+                                                           Predicate<String> isAllowedIntermediateCall) {
+    for (PsiMethodCallExpression chainCall = getCallForQualifier(call); chainCall != null;
+         chainCall = getCallForQualifier(chainCall)) {
+      String name = chainCall.getMethodExpression().getReferenceName();
+      if (name == null) return null;
+      if (isWantedCall.test(name)) return chainCall;
+      if (!isAllowedIntermediateCall.test(name) ||
+          !InheritanceUtil.isInheritor(chainCall.getType(), CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM)) {
+        return null;
+      }
+    }
+    return null;
   }
 }

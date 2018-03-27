@@ -65,11 +65,11 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.reference.SoftReference;
-import com.intellij.ui.FocusTrackback;
 import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.impl.DockManagerImpl;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
@@ -375,6 +375,15 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   @NotNull
   public String getFileTooltipText(@NotNull VirtualFile file) {
+    EditorTabTitleProvider[] allExtensions = Extensions.getExtensions(EditorTabTitleProvider.EP_NAME);
+    List<EditorTabTitleProvider> availableProviders = DumbService.getInstance(myProject).filterByDumbAwareness(allExtensions);
+
+    for (EditorTabTitleProvider provider : availableProviders) {
+      String text = provider.getEditorTabTooltipText(myProject, file);
+      if (text != null) {
+        return text;
+      }
+    }
     return FileUtil.getLocationRelativeToUserHome(file.getPresentableUrl());
   }
 
@@ -966,7 +975,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   @Nullable
   private EditorWithProviderComposite createComposite(@NotNull VirtualFile file,
                                                       @NotNull FileEditor[] editors, @NotNull FileEditorProvider[] providers) {
-    if (NullUtils.hasNull(editors) || NullUtils.hasNull(providers)) {
+    if (ArrayUtil.contains(null, editors) || ArrayUtil.contains(null, providers)) {
       List<FileEditor> editorList = new ArrayList<>(editors.length);
       List<FileEditorProvider> providerList = new ArrayList<>(providers.length);
       for (int i = 0; i < editors.length; i++) {
@@ -1647,13 +1656,11 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     public void beforeFileDeletion(@NotNull VirtualFileEvent e) {
       assertDispatchThread();
 
-      boolean moveFocus = moveFocusOnDelete();
-
       final VirtualFile file = e.getFile();
       final VirtualFile[] openFiles = getOpenFiles();
       for (int i = openFiles.length - 1; i >= 0; i--) {
         if (VfsUtilCore.isAncestor(file, openFiles[i], false)) {
-          closeFile(openFiles[i], moveFocus, true);
+          closeFile(openFiles[i],true, true);
         }
       }
     }
@@ -1699,18 +1706,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
         }
       }
     }
-  }
-
-  private static boolean moveFocusOnDelete() {
-    final Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
-    if (window != null) {
-      final Component component = FocusTrackback.getFocusFor(window);
-      if (component != null) {
-        return component instanceof EditorComponentImpl;
-      }
-      return window instanceof IdeFrameImpl;
-    }
-    return true;
   }
 
   @Override

@@ -1,11 +1,16 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.Consumer;
+import com.intellij.util.Processor;
+import com.intellij.util.Processors;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
@@ -16,6 +21,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Target;
 import java.lang.reflect.Proxy;
 import java.util.*;
 
@@ -96,6 +103,7 @@ public class AnnotationUtil {
       listOwner,
       () -> {
         Map<Collection<String>, PsiAnnotation> value = ConcurrentFactoryMap.createMap(annotationNames1-> {
+            PsiUtilCore.ensureValid(listOwner);
             final Project project = listOwner.getProject();
             final ExternalAnnotationsManager annotationsManager = ExternalAnnotationsManager.getInstance(project);
             for (String annotationName : annotationNames1) {
@@ -224,56 +232,17 @@ public class AnnotationUtil {
     }
   }
 
-  public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, @NotNull Collection<String> annotations) {
-    return isAnnotated(listOwner, annotations, false);
-  }
-
-  public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner,
-                                    @NotNull Collection<String> annotations,
-                                    boolean checkHierarchy) {
-    return isAnnotated(listOwner, annotations, checkHierarchy, true);
-  }
-
-  public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner,
-                                    @NotNull Collection<String> annotations,
-                                    boolean checkHierarchy,
-                                    boolean skipExternal) {
-    return annotations.stream().anyMatch(annotation -> isAnnotated(listOwner, annotation, checkHierarchy, skipExternal));
-  }
-
-  public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN, boolean checkHierarchy) {
-    return isAnnotated(listOwner, annotationFQN, checkHierarchy, true, true);
-  }
-
-  public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner,
-                                    @NotNull String annotationFQN,
-                                    boolean checkHierarchy,
-                                    boolean skipExternal) {
-    return isAnnotated(listOwner, annotationFQN, checkHierarchy, skipExternal, skipExternal);
-  }
-
-  public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner,
-                                    @NotNull String annotationFQN,
-                                    boolean checkHierarchy,
-                                    boolean skipExternal,
-                                    boolean skipInferred) {
-    int flags = CHECK_TYPE;
-    if (checkHierarchy) flags |= CHECK_HIERARCHY;
-    if (!skipExternal) flags |= CHECK_EXTERNAL;
-    if (!skipInferred) flags |= CHECK_INFERRED;
-    return isAnnotated(listOwner, annotationFQN, flags, null);
-  }
-
   public static final int CHECK_HIERARCHY = 0x01;
   public static final int CHECK_EXTERNAL = 0x02;
   public static final int CHECK_INFERRED = 0x04;
   public static final int CHECK_TYPE = 0x08;
 
   @MagicConstant(flags = {CHECK_HIERARCHY, CHECK_EXTERNAL, CHECK_INFERRED, CHECK_TYPE})
-  public @interface Flags { }
+  @Target({ElementType.PARAMETER, ElementType.METHOD})
+  private @interface Flags { }
 
   public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, @NotNull Collection<String> annotations, @Flags int flags) {
-    return annotations.stream().anyMatch(annotation -> isAnnotated(listOwner, annotation, flags));
+    return annotations.stream().anyMatch(annotation -> isAnnotated(listOwner, annotation, flags, null));
   }
 
   public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFqn, @Flags int flags) {
@@ -368,7 +337,7 @@ public class AnnotationUtil {
     List<String> fqns = null;
     for (String fqn : annotations) {
       boolean isPattern = fqn.endsWith("*");
-      if (!isPattern && isAnnotated(owner, fqn, false)) {
+      if (!isPattern && isAnnotated(owner, fqn, 0)) {
         return true;
       }
       else if (isPattern) {
@@ -522,6 +491,13 @@ public class AnnotationUtil {
   }
 
   @Nullable
+  public static Long getLongAttributeValue(@NotNull PsiAnnotation anno, @Nullable final String attributeName) {
+    PsiAnnotationMemberValue attrValue = anno.findAttributeValue(attributeName);
+    Object constValue = JavaPsiFacade.getInstance(anno.getProject()).getConstantEvaluationHelper().computeConstantExpression(attrValue);
+    return constValue instanceof Number ? ((Number)constValue).longValue() : null;
+  }
+
+  @Nullable
   public static String getDeclaredStringAttributeValue(@NotNull PsiAnnotation anno, @Nullable final String attributeName) {
     PsiAnnotationMemberValue attrValue = anno.findDeclaredAttributeValue(attributeName);
     Object constValue = JavaPsiFacade.getInstance(anno.getProject()).getConstantEvaluationHelper().computeConstantExpression(attrValue);
@@ -658,6 +634,56 @@ public class AnnotationUtil {
   /** @deprecated wrong; do not use (to be removed in IDEA 2018) */
   public static boolean isJetbrainsAnnotation(@NotNull String simpleName) {
     return ArrayUtil.find(SIMPLE_NAMES, simpleName) != -1;
+  }
+
+  /** @deprecated use {@link #isAnnotated(PsiModifierListOwner, Collection, int)} (to be removed in IDEA 2019) */
+  public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, @NotNull Collection<String> annotations) {
+    return isAnnotated(listOwner, annotations, CHECK_TYPE);
+  }
+
+  /** @deprecated use {@link #isAnnotated(PsiModifierListOwner, Collection, int)} (to be removed in IDEA 2019) */
+  public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner,
+                                    @NotNull Collection<String> annotations,
+                                    boolean checkHierarchy) {
+    return isAnnotated(listOwner, annotations, flags(checkHierarchy, true, true));
+  }
+
+  /** @deprecated use {@link #isAnnotated(PsiModifierListOwner, Collection, int)} (to be removed in IDEA 2019) */
+  public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner,
+                                    @NotNull Collection<String> annotations,
+                                    boolean checkHierarchy,
+                                    boolean skipExternal) {
+    return isAnnotated(listOwner, annotations, flags(checkHierarchy, skipExternal, skipExternal));
+  }
+
+  /** @deprecated use {@link #isAnnotated(PsiModifierListOwner, String, int)} (to be removed in IDEA 2019) */
+  public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN, boolean checkHierarchy) {
+    return isAnnotated(listOwner, annotationFQN, flags(checkHierarchy, true, true));
+  }
+
+  /** @deprecated use {@link #isAnnotated(PsiModifierListOwner, String, int)} (to be removed in IDEA 2019) */
+  public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner,
+                                    @NotNull String annotationFQN,
+                                    boolean checkHierarchy,
+                                    boolean skipExternal) {
+    return isAnnotated(listOwner, annotationFQN, flags(checkHierarchy, skipExternal, skipExternal));
+  }
+
+  /** @deprecated use {@link #isAnnotated(PsiModifierListOwner, String, int)} (to be removed in IDEA 2019) */
+  public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner,
+                                    @NotNull String annotationFQN,
+                                    boolean checkHierarchy,
+                                    boolean skipExternal,
+                                    boolean skipInferred) {
+    return isAnnotated(listOwner, annotationFQN, flags(checkHierarchy, skipExternal, skipInferred));
+  }
+
+  private static @Flags int flags(boolean checkHierarchy, boolean skipExternal, boolean skipInferred) {
+    int flags = CHECK_TYPE;
+    if (checkHierarchy) flags |= CHECK_HIERARCHY;
+    if (!skipExternal) flags |= CHECK_EXTERNAL;
+    if (!skipInferred) flags |= CHECK_INFERRED;
+    return flags;
   }
   //</editor-fold>
 }

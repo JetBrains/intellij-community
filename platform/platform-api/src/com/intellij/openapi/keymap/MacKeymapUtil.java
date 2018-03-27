@@ -17,6 +17,7 @@ package com.intellij.openapi.keymap;
 
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -58,7 +59,8 @@ public class MacKeymapUtil {
   public static final String POWER3	 = "\u233D";
   public static final String NUM_PAD     = "\u2328";
 
-  public static String getModifiersText(@JdkConstants.InputEventMask int modifiers) {
+  @NotNull
+  static String getModifiersText(@JdkConstants.InputEventMask int modifiers) {
     StringBuilder buf = new StringBuilder();
     if ((modifiers & InputEvent.CTRL_MASK) != 0) buf.append(get(CONTROL, "Ctrl+"));
     if ((modifiers & InputEvent.ALT_MASK) != 0) buf.append(get(OPTION, "Alt+"));
@@ -70,6 +72,7 @@ public class MacKeymapUtil {
 
   }
 
+  @NotNull
   public static String getKeyText(int code) {
     switch (code) {
       case KeyEvent.VK_BACK_SPACE:     return get(BACKSPACE, "Backspace");
@@ -88,13 +91,12 @@ public class MacKeymapUtil {
       case KeyEvent.VK_RIGHT:          return get(RIGHT, "Right Arrow");
       case KeyEvent.VK_NUM_LOCK:       return get(NUMBER_LOCK, "Num Lock");
       case KeyEvent.VK_ENTER:          return get(RETURN, "Return");
-      case KeyEvent.VK_BACK_QUOTE:     return "`";
       case KeyEvent.VK_NUMBER_SIGN:    return get(NUM_PAD, "NumPad");
       case KeyEvent.VK_MULTIPLY:       return get(NUM_PAD, "NumPad") + " *";
-      case KeyEvent.VK_ADD:            return "+";
-      case KeyEvent.VK_SEPARATOR:      return ",";
       case KeyEvent.VK_SUBTRACT:       return "-";
-      case KeyEvent.VK_DECIMAL:        return ".";
+      case KeyEvent.VK_ADD:            return "+";
+      case KeyEvent.VK_MINUS:          return "-";
+      case KeyEvent.VK_PLUS:           return "+";
       case KeyEvent.VK_DIVIDE:         return "NumPad /";
       case KeyEvent.VK_NUMPAD0:        return "0";
       case KeyEvent.VK_NUMPAD1:        return "1";
@@ -106,27 +108,20 @@ public class MacKeymapUtil {
       case KeyEvent.VK_NUMPAD7:        return "7";
       case KeyEvent.VK_NUMPAD8:        return "8";
       case KeyEvent.VK_NUMPAD9:        return "9";
-      case KeyEvent.VK_SLASH:          return "/";
-      case KeyEvent.VK_BACK_SLASH:     return "\\";
-      case KeyEvent.VK_PERIOD:         return ".";
-      case KeyEvent.VK_SEMICOLON:      return ";";
-      case KeyEvent.VK_CLOSE_BRACKET:  return "]";
-      case KeyEvent.VK_OPEN_BRACKET:   return "[";
-      case KeyEvent.VK_EQUALS:         return "=";
-      case KeyEvent.VK_MINUS:          return "-";
-      case KeyEvent.VK_PLUS:           return "+";
       case 0:                          return "fn";
     }
     return KeyEvent.getKeyText(code);
   }
 
-  public static String getKeyStrokeText(KeyStroke keyStroke) {
+  @NotNull
+  public static String getKeyStrokeText(@NotNull KeyStroke keyStroke) {
     final String modifiers = getModifiersText(keyStroke.getModifiers());
-    final String key = getKeyText(keyStroke.getKeyCode());
+    final String key = KeymapUtil.getKeyText(keyStroke.getKeyCode());
     return modifiers + key;
   }
 
-  private static String get(String value, String replacement) {
+  @NotNull
+  private static String get(@NotNull String value, @NotNull String replacement) {
     Font font = UIUtil.getLabelFont();
     return font == null || font.canDisplayUpTo(value) == -1 ? value : replacement;
   }

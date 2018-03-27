@@ -1,4 +1,4 @@
-// "Merge filter's chain" "true"
+// "Merge filter chain" "true"
 
 import java.util.stream.Stream;
 class Test {

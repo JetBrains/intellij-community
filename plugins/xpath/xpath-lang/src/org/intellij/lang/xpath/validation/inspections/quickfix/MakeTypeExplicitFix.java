@@ -44,6 +44,7 @@ public class MakeTypeExplicitFix extends ReplaceElementFix<XPathExpression> {
         return "ImplicitTypeConversion";
     }
 
+    @Override
     public void invokeImpl(Project project, PsiFile file) throws IncorrectOperationException {
       XPathExpression myElement = (XPathExpression)getStartElement();
       if (myType == XPathType.BOOLEAN) {

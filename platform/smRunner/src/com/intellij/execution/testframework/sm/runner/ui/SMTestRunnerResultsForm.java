@@ -41,6 +41,7 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -55,7 +56,9 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.SideBorder;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -66,6 +69,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.CompoundBorder;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.xml.transform.OutputKeys;
@@ -261,6 +265,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
     // update status text
     updateStatusLabel(false);
+    myStatusLine.setIndeterminate(isUndefined());
 
     fireOnTestingStarted();
   }
@@ -642,15 +647,6 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
       myStatusLine.setStatusColor(ColorProgressBar.RED);
     }
 
-    if (testingFinished) {
-      if (myTotalTestCount == 0) {
-        myStatusLine.setStatusColor(myTestsRootNode.wasLaunched() || !myTestsRootNode.isTestsReporterAttached()
-                                    ? JBColor.LIGHT_GRAY
-                                    : ColorProgressBar.RED);
-      }
-      // else color will be according failed/passed tests
-    }
-
     // launchedAndFinished - is launched and not in progress. If we remove "launched' that onTestingStarted() before
     // initializing will be "launchedAndFinished"
     final boolean launchedAndFinished = myTestsRootNode.wasLaunched() && !myTestsRootNode.isInProgress();
@@ -662,6 +658,17 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
                                                                         myTotalTestCount, myFinishedTestCount,
                                                                         myFailedTestCount, myMentionedCategories,
                                                                         launchedAndFinished));
+    }
+
+    if (testingFinished) {
+      boolean noTestsWereRun = myTotalTestCount == 0 && (myTestsRootNode.wasLaunched() || !myTestsRootNode.isTestsReporterAttached());
+      myStatusLine.onTestsDone(noTestsWereRun ? null : myTestsRootNode.getMagnitudeInfo());
+      final Color editorBackground = EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground();
+      myConsole.setBorder(new CompoundBorder(IdeBorderFactory.createBorder(SideBorder.RIGHT | SideBorder.TOP),
+                                             new SideBorder(editorBackground, SideBorder.LEFT)));
+      revalidate();
+      repaint();
+      // else color will be according failed/passed tests
     }
   }
 

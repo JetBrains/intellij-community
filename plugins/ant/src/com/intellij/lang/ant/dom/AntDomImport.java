@@ -17,7 +17,6 @@ package com.intellij.lang.ant.dom;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Apr 23, 2010
  */
 public abstract class AntDomImport extends AntDomIncludingDirective {
 

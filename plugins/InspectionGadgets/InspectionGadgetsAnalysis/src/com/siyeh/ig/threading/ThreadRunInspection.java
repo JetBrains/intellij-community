@@ -15,18 +15,14 @@
  */
 package com.siyeh.ig.threading;
 
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.PsiReplacementUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class ThreadRunInspection extends BaseInspection {
@@ -54,7 +50,7 @@ public class ThreadRunInspection extends BaseInspection {
     return new ThreadRunFix();
   }
 
-  private static class ThreadRunFix extends InspectionGadgetsFix {
+  private static class ThreadRunFix extends AbstractReplaceWithAnotherMethodCallFix {
 
     @Override
     @NotNull
@@ -64,21 +60,8 @@ public class ThreadRunInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(@NotNull Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
-      final PsiElement methodNameIdentifier = descriptor.getPsiElement();
-      final PsiReferenceExpression methodExpression =
-        (PsiReferenceExpression)methodNameIdentifier.getParent();
-      assert methodExpression != null;
-      final PsiExpression qualifier =
-        methodExpression.getQualifierExpression();
-      if (qualifier == null) {
-        PsiReplacementUtil.replaceExpression(methodExpression, "start");
-      }
-      else {
-        final String qualifierText = qualifier.getText();
-        PsiReplacementUtil.replaceExpression(methodExpression, qualifierText + ".start");
-      }
+    protected String getMethodName() {
+      return "start";
     }
   }
 

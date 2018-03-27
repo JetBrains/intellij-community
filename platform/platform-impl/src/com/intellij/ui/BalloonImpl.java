@@ -489,7 +489,6 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
         public void run() {
           IdeEventQueue.getInstance().disableInputMethods(BalloonImpl.this);
           originalFocusOwner.set(myFocusManager.getFocusOwner());
-          focusRequestor.set(myFocusManager.getFurtherRequestor());
         }
       });
     }
@@ -507,7 +506,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
           // Set the accessible parent so that screen readers don't announce
           // a window context change -- the tooltip is "logically" hosted
           // inside the component (e.g. editor) it appears on top of.
-          AccessibleContextUtil.setParent(myContent, myOriginalFocusOwner);
+          AccessibleContextUtil.setParent((Component)myContent, myOriginalFocusOwner);
 
           // Set the focus to "myContent"
           myFocusManager.requestFocus(getContentToFocus(), true);
@@ -518,6 +517,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     myLayeredPane.addComponentListener(myComponentListener);
 
     myTargetPoint = myPosition.getShiftedPoint(myTracker.recalculateLocation(this).getPoint(myLayeredPane), myCalloutShift);
+    if (myDisposed) return; //tracker may dispose the balloon
 
     int positionChangeFix = 0;
     if (myShowPointer) {

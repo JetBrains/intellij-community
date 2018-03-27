@@ -113,6 +113,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     return new EncapsulateFieldsViewDescriptor(fields);
   }
 
+  @NotNull
   protected String getCommandName() {
     return RefactoringBundle.message("encapsulate.fields.command.name", DescriptiveNameUtil.getDescriptiveName(myClass));
   }
@@ -261,6 +262,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     return UsageViewUtil.removeDuplicatedUsages(usageInfos);
   }
 
+  @Override
   protected void refreshElements(@NotNull PsiElement[] elements) {
     LOG.assertTrue(elements.length == myFieldDescriptors.length);
 

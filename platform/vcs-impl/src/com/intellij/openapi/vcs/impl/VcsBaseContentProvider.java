@@ -23,8 +23,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author irengrig
- *         Date: 2/28/11
- *         Time: 1:12 PM
  */
 public interface VcsBaseContentProvider {
   ExtensionPointName<VcsBaseContentProvider> EP_NAME = ExtensionPointName.create("com.intellij.vcs.baseContentProvider");

@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightServicesUtil;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -29,6 +28,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.BoolUtils;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -92,7 +93,9 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
 
     ifStatement = setupBranches(ifStatement, controlFlow);
     if (condition != null) {
-      Objects.requireNonNull(ifStatement.getCondition()).replace(CodeInsightServicesUtil.invertCondition(condition));
+      PsiExpression negatedExpression =
+        JavaPsiFacade.getElementFactory(project).createExpressionFromText(BoolUtils.getNegatedExpressionText(condition), condition);
+      Objects.requireNonNull(ifStatement.getCondition()).replace(negatedExpression);
     }
 
     formatIf(ifStatement);
@@ -312,7 +315,7 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
       else if (thenBranch instanceof PsiBlockStatement) {
         PsiStatement[] statements = ((PsiBlockStatement) thenBranch).getCodeBlock().getStatements();
         if (statements.length > 0 && statements[statements.length - 1] instanceof PsiContinueStatement) {
-          statements[statements.length - 1].delete();
+          new CommentTracker().deleteAndRestoreComments(statements[statements.length - 1]);
         }
       }
     }

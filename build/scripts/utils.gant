@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 
@@ -103,7 +91,7 @@ binding.setVariable("guessHome", {
 binding.setVariable("loadProject", {
   defineJdk("IDEA jdk", setupJdkPath("jdkHome", "$home/build/jdk/1.6", "JDK_16_x64"))
   defineJdk("1.8", setupJdkPath("jdk8Home", "$home/build/jdk/1.8", "JDK_18_x64"))
-  
+
   setupKotlin()
   def bundledKotlinPath = "$home/build/dependencies/build/kotlin/Kotlin/kotlinc"
   if (!new File(bundledKotlinPath, "lib/kotlin-runtime.jar").exists()) {
@@ -154,17 +142,23 @@ private boolean ensureKotlinCompilerAddedToClassPath() {
     return true
   }
 
-  def kotlinPluginLibPath = "$home/build/dependencies/build/kotlin/Kotlin/lib"
-  if (!new File(kotlinPluginLibPath).exists()) {
-    kotlinPluginLibPath = "$home/community/build/dependencies/build/kotlin/Kotlin/lib"
+  def kotlinHomePath = "$home/build/dependencies/build/kotlin/Kotlin"
+  if (!new File(kotlinHomePath).exists()) {
+    kotlinHomePath = "$home/community/build/dependencies/build/kotlin/Kotlin"
   }
-  if (!new File(kotlinPluginLibPath, "kotlin-runtime.jar").exists()) {
-    projectBuilder.error("Could not find Kotlin JARs at $kotlinPluginLibPath: run `./gradlew setupKotlinPlugin` in dependencies module " +
-                         "to download Kotlin JARs")
-    return false
+  def kotlinPluginLibPath = "$kotlinHomePath/lib"
+  def kotlincLibPath = "$kotlinHomePath/kotlinc/lib"
+  if (new File(kotlinPluginLibPath).exists() && new File(kotlincLibPath).exists()) {
+    ["jps/kotlin-jps-plugin.jar", "kotlin-plugin.jar", "kotlin-reflect.jar"].each {
+      BuildUtils.addToJpsClassPath("$kotlinPluginLibPath/$it", ant)
+    }
+    ["kotlin-runtime.jar"].each {
+      BuildUtils.addToJpsClassPath("$kotlincLibPath/$it", ant)
+    }
   }
-  ["jps/kotlin-jps-plugin.jar", "kotlin-plugin.jar", "kotlin-runtime.jar", "kotlin-reflect.jar"].each {
-    BuildUtils.addToJpsClassPath("$kotlinPluginLibPath/$it", ant)
+  else {
+    projectBuilder.error(
+      "Could not find Kotlin JARs at $kotlinPluginLibPath and $kotlincLibPath: run `./gradlew setupKotlinPlugin` in dependencies module to download Kotlin JARs")
   }
   return true
 }
@@ -189,9 +183,10 @@ private String setupJdkPath(String propertyName, String defaultDir, String envVa
       }
       else {
         jdk = guessJdk()
-        def version = JdkVersionDetector.instance.detectJdkVersion(jdk)
-        if (propertyName.contains("8") && !version.contains("1.8.")) {
-          projectBuilder.error("JDK 1.8 is required to compile the project, but '$propertyName' property and '$envVarName' environment variable aren't defined and default JDK $jdk ($version) cannot be used as JDK 1.8")
+        def jdkInfo = JdkVersionDetector.instance.detectJdkVersionInfo(jdk)
+        if (propertyName.contains("8") && jdkInfo.version.contains("1.8.")) {
+          projectBuilder.error("JDK 1.8 is required to compile the project, but '$propertyName' property and '$envVarName' environment variable" +
+                               " aren't defined and default JDK $jdk ($jdkInfo) cannot be used as JDK 1.8")
           return null
         }
         projectBuilder.info("'$envVarName' isn't defined and '$defaultDir' doesn't exist, $propertyName set to $jdk")

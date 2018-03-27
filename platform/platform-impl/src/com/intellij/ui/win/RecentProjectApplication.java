@@ -16,7 +16,7 @@
 package com.intellij.ui.win;
 
 import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.openapi.diff.ApplicationStarterBase;
+import com.intellij.openapi.application.ApplicationStarterBase;
 import org.jetbrains.annotations.Nullable;
 
 

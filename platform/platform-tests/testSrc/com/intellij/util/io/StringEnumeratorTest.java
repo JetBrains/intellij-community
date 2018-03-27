@@ -19,6 +19,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.containers.IntObjectCache;
 import junit.framework.TestCase;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -179,6 +180,11 @@ public class StringEnumeratorTest extends TestCase {
   private static final Random random = new Random();
 
   static String createRandomString() {
+    return createRandomString(random);
+  }
+
+  @NotNull
+  static String createRandomString(Random random) {
     builder.setLength(0);
     int len = random.nextInt(40) + 10;
     for (int i = 0; i < len; ++i) {

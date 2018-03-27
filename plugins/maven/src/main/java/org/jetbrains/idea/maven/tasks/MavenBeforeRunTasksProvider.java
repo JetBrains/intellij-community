@@ -30,6 +30,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.PathUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.execution.ParametersListUtil;
 import icons.MavenIcons;
@@ -38,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.execution.MavenEditGoalDialog;
 import org.jetbrains.idea.maven.execution.MavenRunner;
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
+import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -91,6 +93,11 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
     String pomXmlPath = task.getProjectPath();
     if (StringUtil.isEmpty(pomXmlPath)) return null;
 
+    String pomFileName = getPomFileName(task.getGoal());
+    if (!pomFileName.equals(PathUtil.getFileName(pomXmlPath))) { // fix corrupted configuration
+      pomXmlPath = PathUtil.getParentPath(pomXmlPath) + "/" + pomFileName;
+    }
+
     VirtualFile file = LocalFileSystem.getInstance().findFileByPath(pomXmlPath);
     if (file == null) return null;
 
@@ -136,7 +143,7 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
       return false;
     }
 
-    task.setProjectPath(dialog.getWorkDirectory() + "/pom.xml");
+    task.setProjectPath(dialog.getWorkDirectory() + "/" + getPomFileName(dialog.getGoals()));
     task.setGoal(dialog.getGoals());
     return true;
   }
@@ -171,6 +178,7 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
               MavenRunnerParameters params = new MavenRunnerParameters(
                 true,
                 mavenProject.getDirectory(),
+                mavenProject.getFile().getName(),
                 ParametersListUtil.parse(task.getGoal()),
                 explicitProfiles.getEnabledProfiles(),
                 explicitProfiles.getDisabledProfiles());
@@ -204,5 +212,17 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
     }
     targetDone.waitFor();
     return result[0];
+  }
+
+  @NotNull
+  private static String getPomFileName(@Nullable String goals) {
+    if (goals != null) {
+      List<String> commandLine = ParametersListUtil.parse(goals);
+      int pomFileNameIndex = 1 + commandLine.indexOf("-f");
+      if (pomFileNameIndex != 0 && pomFileNameIndex < commandLine.size()) {
+        return commandLine.get(pomFileNameIndex);
+      }
+    }
+    return MavenConstants.POM_XML;
   }
 }

@@ -4,8 +4,6 @@ import com.intellij.openapi.util.registry.Registry;
 
 /**
  * @author irengrig
- *         Date: 5/28/11
- *         Time: 10:30 PM
  */
 public class FilesTooBigForDiffException extends Exception {
   public static final int DELTA_THRESHOLD_SIZE = Registry.intValue("diff.delta.threshold.size");

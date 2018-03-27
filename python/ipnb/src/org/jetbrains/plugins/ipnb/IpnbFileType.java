@@ -41,6 +41,7 @@ public class IpnbFileType implements FileType {
     return "Jupyter Notebook";
   }
 
+  @Override
   @NotNull
   public String getDefaultExtension() {
     return DEFAULT_EXTENSION;
@@ -50,14 +51,17 @@ public class IpnbFileType implements FileType {
     return PythonIcons.Python.IpythonNotebook;
   }
 
+  @Override
   public boolean isBinary() {
     return false;
   }
 
+  @Override
   public boolean isReadOnly() {
     return false;
   }
 
+  @Override
   public String getCharset(@NotNull VirtualFile file, @NotNull final byte[] content) {
     return CharsetToolkit.UTF8;
   }

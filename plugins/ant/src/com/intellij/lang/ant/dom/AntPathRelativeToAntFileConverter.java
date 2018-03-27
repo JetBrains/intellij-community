@@ -21,7 +21,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Apr 26, 2010
  */
 public class AntPathRelativeToAntFileConverter extends AntPathConverter {
   protected AntDomProject getEffectiveAntProject(GenericAttributeValue attribValue) {

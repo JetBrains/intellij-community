@@ -120,6 +120,8 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
   }
 
   public boolean equals(Object object) {
+    if (object == this) return true;
+    if (object == null || !object.getClass().equals(getClass())) return false;
     // we should not change this behaviour if value is set to null
     return object instanceof AbstractTreeNode && Comparing.equal(myValue, ((AbstractTreeNode)object).myValue);
   }

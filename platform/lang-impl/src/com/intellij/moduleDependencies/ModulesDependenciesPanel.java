@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.moduleDependencies;
 
@@ -21,7 +9,6 @@ import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
-import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -68,7 +55,7 @@ import java.util.List;
  * @since Feb 10, 2005
  */
 public class ModulesDependenciesPanel extends JPanel implements Disposable {
-  private static final String HELP_ID = "module.dependencies.tool.window";
+  public static final String HELP_ID = "module.dependencies.tool.window";
 
   private static final Comparator<DefaultMutableTreeNode> NODE_COMPARATOR = (o1, o2) -> {
     if (!(o1.getUserObject() instanceof MyUserObject)) return 1;
@@ -309,8 +296,6 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
         updateLeftTree();
       }
     });
-
-    group.add(new ContextHelpAction(HELP_ID));
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("ModulesDependencies", group, true);
     JPanel panel = new JPanel(new BorderLayout());

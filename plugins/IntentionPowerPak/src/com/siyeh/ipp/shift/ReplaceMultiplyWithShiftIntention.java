@@ -20,6 +20,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -90,9 +91,10 @@ public class ReplaceMultiplyWithShiftIntention extends MutablyNamedIntention {
     else {
       assignString = ">>=";
     }
+    CommentTracker commentTracker = new CommentTracker();
     final String expString =
-      lhs.getText() + assignString + ShiftUtils.getLogBase2(rhs);
-    PsiReplacementUtil.replaceExpression(expression, expString);
+      commentTracker.markUnchanged(lhs).getText() + assignString + ShiftUtils.getLogBase2(rhs);
+    PsiReplacementUtil.replaceExpression(expression, expString, commentTracker);
   }
 
   private static void replaceMultiplyOrDivideWithShift(
@@ -126,6 +128,8 @@ public class ReplaceMultiplyWithShiftIntention extends MutablyNamedIntention {
         expString = '(' + expString + ')';
       }
     }
-    PsiReplacementUtil.replaceExpression(expression, expString);
+    CommentTracker commentTracker = new CommentTracker();
+    commentTracker.markUnchanged(lhs);
+    PsiReplacementUtil.replaceExpression(expression, expString, commentTracker);
   }
 }

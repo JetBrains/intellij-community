@@ -21,7 +21,6 @@ import org.jetbrains.concurrency.Promise;
 
 /**
  * @author lene
- *         Date: 18.10.11
  */
 public interface AsyncDiffElement {
 

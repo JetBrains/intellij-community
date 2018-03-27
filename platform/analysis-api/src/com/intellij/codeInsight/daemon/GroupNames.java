@@ -19,7 +19,6 @@ import com.intellij.codeInspection.InspectionsBundle;
 
 /**
  * @author anna
- * Date: Jun 22, 2005
  */
 public interface GroupNames {
   String ABSTRACTION_GROUP_NAME = InspectionsBundle.message("group.names.abstraction.issues");

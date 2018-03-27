@@ -46,11 +46,19 @@ public class Extensions {
     return rootArea;
   }
 
+  /**
+   * @return instance containing application-level extensions
+   */
   @NotNull
   public static ExtensionsArea getRootArea() {
     return ourRootArea;
   }
 
+  /**
+   * If {@code areaInstance} is a project returns instance containing project-level extensions for that project
+   * if {@code areaInstance} is a module returns instance containing module-level extensions for that module,
+   * if {@code areaInstance} is {@code null} returns instance containing application-level extensions.
+   */
   @NotNull
   public static ExtensionsArea getArea(@Nullable("null means root") AreaInstance areaInstance) {
     if (areaInstance == null) {
@@ -68,12 +76,12 @@ public class Extensions {
     final ExtensionsAreaImpl oldRootArea = (ExtensionsAreaImpl)getRootArea();
     final ExtensionsAreaImpl newArea = createRootArea();
     ourRootArea = newArea;
-    oldRootArea.notifyAreaReplaced();
+    oldRootArea.notifyAreaReplaced(newArea);
     Disposer.register(parentDisposable, new Disposable() {
       @Override
       public void dispose() {
         ourRootArea = oldRootArea;
-        newArea.notifyAreaReplaced();
+        newArea.notifyAreaReplaced(oldRootArea);
       }
     });
   }
@@ -84,15 +92,13 @@ public class Extensions {
   }
 
   @NotNull
-  @SuppressWarnings("unchecked")
   public static <T> T[] getExtensions(@NotNull ExtensionPointName<T> extensionPointName) {
-    return (T[])getExtensions(extensionPointName.getName(), null);
+    return getExtensions(extensionPointName, null);
   }
 
   @NotNull
-  public static <T> T[] getExtensions(@NotNull ExtensionPointName<T> extensionPointName, AreaInstance areaInstance) {
-    // keep it until 1.7 JDK
-    return Extensions.getExtensions(extensionPointName.getName(), areaInstance);
+  public static <T> T[] getExtensions(@NotNull ExtensionPointName<T> extensionPointName, @Nullable AreaInstance areaInstance) {
+    return getExtensions(extensionPointName.getName(), areaInstance);
   }
 
   @NotNull

@@ -51,6 +51,11 @@ public class JUnit3Framework extends JavaTestFramework {
   }
 
   @Override
+  public boolean isSuiteClass(PsiClass psiClass) {
+    return JUnitUtil.findSuiteMethod(psiClass) != null;
+  }
+
+  @Override
   public boolean isTestMethod(PsiMethod method, PsiClass myClass) {
     return JUnitUtil.isTestMethod(MethodLocation.elementInClass(method, myClass));
   }

@@ -36,7 +36,7 @@ public class UnsupportedFeaturesUtil {
       Logger log = Logger.getInstance(UnsupportedFeaturesUtil.class.getName());
       log.error("Cannot find \"versions.xml\". " + e.getMessage());
     }
-    for (LanguageLevel level : LanguageLevel.ALL_LEVELS) {
+    for (LanguageLevel level : LanguageLevel.SUPPORTED_LEVELS) {
       ALL_LANGUAGE_LEVELS.add(level.toString());
     }
   }

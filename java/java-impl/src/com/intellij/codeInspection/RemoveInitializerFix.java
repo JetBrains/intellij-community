@@ -92,6 +92,12 @@ public class RemoveInitializerFix implements LocalQuickFix {
         }
         else {
           elementToDelete.delete();
+          if (declaration instanceof PsiClass) {
+            PsiClassInitializer initializer = factory.createClassInitializer();
+            initializer = (PsiClassInitializer)declaration.addAfter(initializer, variable);
+            initializer.getBody().add(statementFromText);
+            return;
+          }
           PsiElement grandParent = declaration.getParent();
           BlockUtils.addBefore(((PsiStatement) (grandParent instanceof PsiForStatement ? grandParent : declaration)), statementFromText);
         }

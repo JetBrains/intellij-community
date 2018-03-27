@@ -24,8 +24,6 @@ import java.awt.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Oct 4, 2003
- *         Time: 6:54:57 PM
  */
 public class ContentEntriesEditor extends JavaContentEntriesEditor {
   private LanguageLevelConfigurable myLanguageLevelConfigurable;

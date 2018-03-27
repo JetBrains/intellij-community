@@ -31,7 +31,10 @@ import org.jetbrains.annotations.TestOnly;
 import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.PicoContainer;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 
 @SuppressWarnings("HardCodedStringLiteral")
 public class ExtensionsAreaImpl implements ExtensionsArea {
@@ -50,10 +53,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   private final Throwable myCreationTrace;
   private final Map<String, ExtensionPointImpl> myExtensionPoints = ContainerUtil.newConcurrentMap();
   private final Map<String,Throwable> myEPTraces = DEBUG_REGISTRATION ? new THashMap<>() : null;
-  private final MultiMap<String, ExtensionPointAvailabilityListener> myAvailabilityListeners = MultiMap.createSmart();
-  private final List<Runnable> mySuspendedListenerActions = new ArrayList<>();
-  private boolean myAvailabilityNotificationsActive = true;
-
+  private final MultiMap<String, ExtensionPointAvailabilityListener> myAvailabilityListeners = MultiMap.createSmart(); // guarded by myAvailabilityListeners
   private final AreaInstance myAreaInstance;
   private final String myAreaClass;
 
@@ -72,11 +72,25 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   @TestOnly
-  public final void notifyAreaReplaced() {
+  public final void notifyAreaReplaced(@NotNull ExtensionsAreaImpl newArea) {
     for (final ExtensionPointImpl point : myExtensionPoints.values()) {
       point.notifyAreaReplaced(this);
     }
+    //this code is required because we have a lot of static extensions e.g. LanguageExtension that are initialized only once
+    //for the extensions AvailabilityListeners will be broken if the initialization happened in "fake" area which doesn't have required EP
+    for (Map.Entry<String, Collection<ExtensionPointAvailabilityListener>> entry : myAvailabilityListeners.entrySet()) {
+      String key = entry.getKey();
+      if (!myExtensionPoints.containsKey(key)) {
+        //if listeners are "detached" for any EP we have to transfer them to the new area (otherwise it will affect area searching)
+        for (ExtensionPointAvailabilityListener listener : entry.getValue()) {
+          if (!newArea.hasAvailabilityListener(key, listener)) {
+            newArea.addAvailabilityListener(key, listener);
+          }
+        }
+      }
+    }
   }
+
 
   @NotNull
   @Override
@@ -133,29 +147,9 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   @Override
-  public void registerExtension(@NotNull final PluginDescriptor pluginDescriptor, @NotNull final Element extensionElement, String ns) {
-    final PluginId pluginId = pluginDescriptor.getPluginId();
-
-    if (!Extensions.isComponentSuitableForOs(extensionElement.getAttributeValue("os"))) {
-      return;
-    }
-
-    String epName = extractEPName(extensionElement, ns);
-
-    ExtensionComponentAdapter adapter;
-    final ExtensionPointImpl extensionPoint = getExtensionPoint(epName);
-    if (extensionPoint.getKind() == ExtensionPoint.Kind.INTERFACE) {
-      String implClass = extensionElement.getAttributeValue("implementation");
-      if (implClass == null) {
-        throw new RuntimeException("'implementation' attribute not specified for '" + epName + "' extension in '" + pluginId.getIdString() + "' plugin");
-      }
-      adapter = new ExtensionComponentAdapter(implClass, extensionElement, myPicoContainer, pluginDescriptor, shouldDeserializeInstance(extensionElement));
-    }
-    else {
-      adapter = new ExtensionComponentAdapter(extensionPoint.getClassName(), extensionElement, myPicoContainer, pluginDescriptor, true);
-    }
-    myPicoContainer.registerComponent(adapter);
-    extensionPoint.registerExtensionAdapter(adapter);
+  public void registerExtension(@NotNull final PluginDescriptor pluginDescriptor, @NotNull final Element extensionElement, String extensionNs) {
+    String epName = extractEPName(extensionElement, extensionNs);
+    registerExtension(getExtensionPoint(epName), pluginDescriptor, extensionElement);
   }
 
   // Used in Upsource
@@ -169,8 +163,8 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     if (extensionPoint.getKind() == ExtensionPoint.Kind.INTERFACE) {
       String implClass = extensionElement.getAttributeValue("implementation");
       if (implClass == null) {
-        throw new RuntimeException("'implementation' attribute not specified for '" + extensionPoint.getName() + "' extension in '" + pluginDescriptor.getPluginId()
-          .getIdString() + "' plugin");
+        throw new RuntimeException("'implementation' attribute not specified for '" + extensionPoint.getName() + "' extension in '"
+                                   + pluginDescriptor.getPluginId().getIdString() + "' plugin");
       }
       adapter = new ExtensionComponentAdapter(implClass, extensionElement, myPicoContainer, pluginDescriptor, shouldDeserializeInstance(extensionElement));
     }
@@ -225,12 +219,14 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
       @Override
       public void extensionRemoved(@NotNull Object extension, final PluginDescriptor pluginDescriptor) {
         EPAvailabilityListenerExtension epListenerExtension = (EPAvailabilityListenerExtension) extension;
-        Collection<ExtensionPointAvailabilityListener> listeners = myAvailabilityListeners.get(epListenerExtension.getExtensionPointName());
-        for (Iterator<ExtensionPointAvailabilityListener> iterator = listeners.iterator(); iterator.hasNext();) {
-          ExtensionPointAvailabilityListener listener = iterator.next();
-          if (listener.getClass().getName().equals(epListenerExtension.getListenerClass())) {
-            iterator.remove();
-            return;
+        synchronized (myAvailabilityListeners) {
+          Collection<ExtensionPointAvailabilityListener> listeners = myAvailabilityListeners.get(epListenerExtension.getExtensionPointName());
+          for (Iterator<ExtensionPointAvailabilityListener> iterator = listeners.iterator(); iterator.hasNext();) {
+            ExtensionPointAvailabilityListener listener = iterator.next();
+            if (listener.getClass().getName().equals(epListenerExtension.getListenerClass())) {
+              iterator.remove();
+              return;
+            }
           }
         }
         myLogger.warn("Failed to find EP availability listener: " + epListenerExtension.getListenerClass());
@@ -266,10 +262,20 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
 
   @Override
   public void addAvailabilityListener(@NotNull String extensionPointName, @NotNull ExtensionPointAvailabilityListener listener) {
-    myAvailabilityListeners.putValue(extensionPointName, listener);
-    if (hasExtensionPoint(extensionPointName)) {
-      notifyAvailableListener(listener, myExtensionPoints.get(extensionPointName));
+    synchronized (myAvailabilityListeners) {
+
+      
+      myAvailabilityListeners.putValue(extensionPointName, listener);
     }
+    ExtensionPointImpl<?> ep = myExtensionPoints.get(extensionPointName);
+    if (ep != null) {
+      listener.extensionPointRegistered(ep);
+    }
+  }
+  
+  public boolean hasAvailabilityListener(@NotNull String extensionPointName, @NotNull ExtensionPointAvailabilityListener listener) {
+    Collection<ExtensionPointAvailabilityListener> listeners = myAvailabilityListeners.get(extensionPointName);
+    return ContainerUtil.containsIdentity(listeners, listener);
   }
 
   @Override
@@ -310,23 +316,13 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     }
   }
 
-  private void notifyEPRegistered(final ExtensionPoint extensionPoint) {
-    Collection<ExtensionPointAvailabilityListener> listeners = myAvailabilityListeners.get(extensionPoint.getName());
+  private void notifyEPRegistered(@NotNull ExtensionPoint extensionPoint) {
+    Collection<ExtensionPointAvailabilityListener> listeners;
+    synchronized (myAvailabilityListeners) {
+      listeners = myAvailabilityListeners.get(extensionPoint.getName());
+    }
     for (final ExtensionPointAvailabilityListener listener : listeners) {
-      notifyAvailableListener(listener, extensionPoint);
-    }
-  }
-
-  private void notifyAvailableListener(final ExtensionPointAvailabilityListener listener, final ExtensionPoint extensionPoint) {
-    queueNotificationAction(() -> listener.extensionPointRegistered(extensionPoint));
-  }
-
-  private void queueNotificationAction(final Runnable action) {
-    if (myAvailabilityNotificationsActive) {
-      action.run();
-    }
-    else {
-      mySuspendedListenerActions.add(action);
+      listener.extensionPointRegistered(extensionPoint);
     }
   }
 
@@ -364,14 +360,13 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   private void notifyEPRemoved(@NotNull ExtensionPoint extensionPoint) {
-    Collection<ExtensionPointAvailabilityListener> listeners = myAvailabilityListeners.get(extensionPoint.getName());
-    for (final ExtensionPointAvailabilityListener listener : listeners) {
-      notifyUnavailableListener(extensionPoint, listener);
+    Collection<ExtensionPointAvailabilityListener> listeners;
+    synchronized (myAvailabilityListeners) {
+      listeners = myAvailabilityListeners.get(extensionPoint.getName());
     }
-  }
-
-  private void notifyUnavailableListener(final ExtensionPoint extensionPoint, final ExtensionPointAvailabilityListener listener) {
-    queueNotificationAction(() -> listener.extensionPointRemoved(extensionPoint));
+    for (final ExtensionPointAvailabilityListener listener : listeners) {
+      listener.extensionPointRemoved(extensionPoint);
+    }
   }
 
   @Override
@@ -379,32 +374,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     return myExtensionPoints.containsKey(extensionPointName);
   }
 
-  public void suspendInteractions() {
-    myAvailabilityNotificationsActive = false;
-  }
-
-  public void resumeInteractions() {
-    myAvailabilityNotificationsActive = true;
-    ExtensionPoint[] extensionPoints = getExtensionPoints();
-    for (ExtensionPoint extensionPoint : extensionPoints) {
-      extensionPoint.getExtensions(); // creates extensions from ComponentAdapters
-    }
-    for (Runnable action : mySuspendedListenerActions) {
-      try {
-        action.run();
-      }
-      catch (Exception e) {
-        myLogger.error(e);
-      }
-    }
-    mySuspendedListenerActions.clear();
-  }
-
-  public void killPendingInteractions() {
-    mySuspendedListenerActions.clear();
-  }
-
-  void removeAllComponents(final Set<ExtensionComponentAdapter> extensionAdapters) {
+  void removeAllComponents(@NotNull Set<ExtensionComponentAdapter> extensionAdapters) {
     for (final Object extensionAdapter : extensionAdapters) {
       ExtensionComponentAdapter componentAdapter = (ExtensionComponentAdapter)extensionAdapter;
       internalGetPluginContainer().unregisterComponent(componentAdapter.getComponentKey());

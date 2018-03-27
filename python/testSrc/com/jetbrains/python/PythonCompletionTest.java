@@ -1194,6 +1194,11 @@ public class PythonCompletionTest extends PyTestCase {
     assertDoesntContain(variants, "bar=");
   }
 
+  // PY-27146
+  public void testPrivateMemberOwnerResolvedToStub() {
+    doMultiFileTest();
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/completion";

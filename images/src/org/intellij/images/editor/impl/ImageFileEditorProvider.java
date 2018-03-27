@@ -48,7 +48,7 @@ final class ImageFileEditorProvider implements FileEditorProvider, DumbAware {
   public FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
     ImageFileEditorImpl viewer = new ImageFileEditorImpl(project, file);
     if ("svg".equalsIgnoreCase(file.getExtension())) {
-      return new TextEditorWithPreview((TextEditor)TextEditorProvider.getInstance().createEditor(project, file), viewer);
+      return new TextEditorWithPreview((TextEditor)TextEditorProvider.getInstance().createEditor(project, file), viewer, "SvgEditor");
     }
     return viewer;
   }

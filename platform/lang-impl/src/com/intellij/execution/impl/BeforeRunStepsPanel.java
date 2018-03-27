@@ -9,6 +9,7 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.UnknownRunConfiguration;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.extensions.Extensions;
@@ -139,6 +140,10 @@ class BeforeRunStepsPanel extends JPanel {
     });
 
     myPanel = myDecorator.createPanel();
+    myDecorator.getActionsPanel().setCustomShortcuts(CommonActionsPanel.Buttons.EDIT,
+                                                     CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.EDIT),
+                                                     CommonShortcuts.DOUBLE_CLICK_1);
+
 
     setLayout(new BorderLayout());
     add(myPanel, BorderLayout.CENTER);

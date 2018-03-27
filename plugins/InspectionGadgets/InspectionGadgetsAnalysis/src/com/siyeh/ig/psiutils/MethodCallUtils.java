@@ -16,12 +16,15 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.siyeh.HardcodedMethodConstants;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -274,6 +277,7 @@ public class MethodCallUtils {
       final PsiExpression expression = expressions[i];
       if (expression == target) {
         index = i;
+        break;
       }
     }
     if (index < 0) {
@@ -407,6 +411,59 @@ public class MethodCallUtils {
   public static PsiMethodCallExpression getQualifierMethodCall(@NotNull PsiMethodCallExpression methodCall) {
     return
       tryCast(PsiUtil.skipParenthesizedExprDown(methodCall.getMethodExpression().getQualifierExpression()), PsiMethodCallExpression.class);
+  }
+
+  public static boolean isUsedAsSuperConstructorCallArgument(@NotNull PsiParameter parameter, boolean superMustBeLibrary) {
+    final PsiElement scope = parameter.getDeclarationScope();
+    if (!(scope instanceof PsiMethod)) {
+      return false;
+    }
+    PsiMethod method = (PsiMethod)scope;
+    final Set<PsiMethod> checked = new THashSet<>();
+
+    while (true) {
+      ProgressManager.checkCanceled();
+      if (!checked.add(method)) {
+        // we've already seen this method -> circular call chain
+        return false;
+      }
+      final PsiMethodCallExpression call = MethodUtils.findSuperOrThisCall(method);
+      if (call == null) {
+        return false;
+      }
+      final int index = getParameterReferenceIndex(call, parameter);
+      if (index < 0) {
+        return false;
+      }
+      final JavaResolveResult resolveResult = call.resolveMethodGenerics();
+      if (!resolveResult.isValidResult()) {
+        return false;
+      }
+      method = (PsiMethod)resolveResult.getElement();
+      if (method == null) {
+        return false;
+      }
+      if (RefactoringChangeUtil.isSuperMethodCall(call) && (!superMustBeLibrary || method instanceof PsiCompiledElement)) {
+        return true;
+      }
+      parameter = method.getParameterList().getParameters()[index];
+    }
+  }
+
+  private static int getParameterReferenceIndex(PsiMethodCallExpression call, PsiParameter parameter) {
+    final PsiExpressionList argumentList = call.getArgumentList();
+    final PsiExpression[] arguments = argumentList.getExpressions();
+    for (int i = 0; i < arguments.length; i++) {
+      PsiExpression argument = arguments[i];
+      argument = ParenthesesUtils.stripParentheses(argument);
+      if (argument instanceof PsiReferenceExpression) {
+        final PsiElement target = ((PsiReferenceExpression)argument).resolve();
+        if (target == parameter) {
+          return i;
+        }
+      }
+    }
+    return -1;
   }
 
   private static class SuperCallVisitor extends JavaRecursiveElementWalkingVisitor {

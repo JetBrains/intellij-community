@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.editor.actions;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -106,8 +107,7 @@ public class IndentSelectionAction extends EditorAction {
       endIndex = document.getLineCount() - 1;
     }
     
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
-    int blockIndent = CodeStyleSettingsManager.getSettings(project).getIndentOptionsByFile(file).INDENT_SIZE;
+    int blockIndent = CodeStyle.getIndentOptions(project, document).INDENT_SIZE;
     doIndent(endIndex, startIndex, document, project, editor, blockIndent);
   }
 

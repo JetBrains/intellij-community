@@ -15,6 +15,7 @@
  */
 package com.intellij.java.propertyBased;
 
+import com.intellij.java.psi.formatter.java.AbstractJavaFormatterTest;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.psi.PsiFile;
@@ -22,8 +23,8 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.testFramework.propertyBased.*;
-import jetCheck.Generator;
-import jetCheck.PropertyChecker;
+import org.jetbrains.jetCheck.Generator;
+import org.jetbrains.jetCheck.PropertyChecker;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
@@ -55,6 +56,21 @@ public class JavaCodeInsightSanityTest extends LightCodeInsightFixtureTestCase {
                       Generator.constant(new StripTestDataMarkup(file)),
                       DeleteRange.psiRangeDeletions(file));
     PropertyChecker.forAll(actionsOnJavaFiles(fileActions)).shouldHold(FileWithActions::runActions);
+  }
+
+  public void testPreserveComments() {
+    boolean oldSettings = AbstractJavaFormatterTest.getJavaSettings().ENABLE_JAVADOC_FORMATTING;
+    try {
+      AbstractJavaFormatterTest.getJavaSettings().ENABLE_JAVADOC_FORMATTING = false;
+      MadTestingUtil.enableAllInspections(getProject(), getTestRootDisposable());
+      Function<PsiFile, Generator<? extends MadTestingAction>> fileActions = file ->
+        Generator.anyOf(InvokeIntention.randomIntentions(file, new JavaCommentingStrategy()),
+                        InsertLineComment.insertComment(file, "//simple end comment"));
+      PropertyChecker.forAll(actionsOnJavaFiles(fileActions)).shouldHold(FileWithActions::runActions);
+    }
+    finally {
+      AbstractJavaFormatterTest.getJavaSettings().ENABLE_JAVADOC_FORMATTING = oldSettings;
+    }
   }
 
   @NotNull

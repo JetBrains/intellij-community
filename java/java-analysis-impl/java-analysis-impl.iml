@@ -21,5 +21,6 @@
     <orderEntry type="library" exported="" name="ASM" level="project" />
     <orderEntry type="library" name="StreamEx" level="project" />
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
+    <orderEntry type="module" module-name="openapi" />
   </component>
 </module>

@@ -43,7 +43,7 @@ public abstract class BranchActionGroup extends ActionGroup implements DumbAware
     myIcon = new LayeredIcon(favorite, notFavorite);
     myHoveredIcon = new LayeredIcon(favoriteOnHover, notFavoriteOnHover);
     getTemplatePresentation().setIcon(myIcon);
-    getTemplatePresentation().setHoveredIcon(myHoveredIcon);
+    getTemplatePresentation().setSelectedIcon(myHoveredIcon);
     updateIcons();
   }
 

@@ -16,6 +16,9 @@
 package com.intellij.execution.impl;
 
 import com.intellij.concurrency.JobScheduler;
+import com.intellij.execution.ConsoleFolding;
+import com.intellij.execution.filters.ConsoleInputFilterProvider;
+import com.intellij.execution.filters.InputFilter;
 import com.intellij.execution.process.AnsiEscapeDecoderTest;
 import com.intellij.execution.process.NopProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
@@ -33,8 +36,11 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.*;
@@ -46,9 +52,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayOutputStream;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -227,7 +231,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
   }
 
   public void testPerformance() {
-    withCycleConsole(100, console ->
+    withCycleConsoleNoFolding(100, console ->
       PlatformTestUtil.startPerformanceTest("console print", 15000, () -> {
         console.clear();
         for (int i=0; i<10_000_000; i++) {
@@ -241,7 +245,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
   }
 
   public void testLargeConsolePerformance() {
-    withCycleConsole(UISettings.getInstance().getConsoleCycleBufferSizeKb(), console ->
+    withCycleConsoleNoFolding(UISettings.getInstance().getConsoleCycleBufferSizeKb(), console ->
       PlatformTestUtil.startPerformanceTest("console print", 9000, () -> {
         console.clear();
         for (int i=0; i<10_000_000; i++) {
@@ -253,7 +257,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
   }
 
   public void testPerformanceOfMergeableTokens() {
-    withCycleConsole(1000, console ->
+    withCycleConsoleNoFolding(1000, console ->
       PlatformTestUtil.startPerformanceTest("console print with mergeable tokens", 3500, () -> {
         console.clear();
         for (int i=0; i<10_000_000; i++) {
@@ -267,7 +271,13 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
       }).assertTiming());
   }
 
-  private static void withCycleConsole(int capacityKB, Consumer<ConsoleViewImpl> runnable) {
+  private static void withCycleConsoleNoFolding(int capacityKB, Consumer<ConsoleViewImpl> runnable) {
+    ExtensionPoint<ConsoleFolding> point = Extensions.getRootArea().getExtensionPoint(ConsoleFolding.EP_NAME);
+    ConsoleFolding[] extensions = point.getExtensions();
+    for (ConsoleFolding extension : extensions) {
+      point.unregisterExtension(extension);
+    }
+
     boolean oldUse = UISettings.getInstance().getOverrideConsoleCycleBufferSize();
     int oldSize = UISettings.getInstance().getConsoleCycleBufferSizeKb();
 
@@ -282,12 +292,16 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
       Disposer.dispose(console);
       UISettings.getInstance().setOverrideConsoleCycleBufferSize(oldUse);
       UISettings.getInstance().setConsoleCycleBufferSizeKb(oldSize);
-    }
 
+
+      for (ConsoleFolding extension : extensions) {
+        point.registerExtension(extension);
+      }
+    }
   }
 
   public void testBigOutputDoesntMemoryOverflow() {
-    withCycleConsole(100, console -> {
+    withCycleConsoleNoFolding(100, console -> {
       for (int i=0;i<10_000_000; i++) {
         console.print("---- "+i+"----", ConsoleViewContentType.NORMAL_OUTPUT);
       }
@@ -308,7 +322,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     ByteArrayOutputStream outputStream = (ByteArrayOutputStream)testProcess.getOutputStream();
 
     AnsiEscapeDecoderTest.withProcessHandlerFrom(testProcess, handler ->
-      withCycleConsole(100, console -> {
+      withCycleConsoleNoFolding(100, console -> {
         console.attachToProcess(handler);
         outputStream.reset();
         console.print("I", ConsoleViewContentType.USER_INPUT);
@@ -328,7 +342,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     ByteArrayOutputStream outputStream = (ByteArrayOutputStream)testProcess.getOutputStream();
 
     AnsiEscapeDecoderTest.withProcessHandlerFrom(testProcess, handler ->
-      withCycleConsole(100, console -> {
+      withCycleConsoleNoFolding(100, console -> {
         console.attachToProcess(handler);
         outputStream.reset();
         Editor editor = console.getEditor();
@@ -396,5 +410,38 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     myConsole.flushDeferredText();
     myConsole.waitAllRequests();
     assertEquals("24", myConsole.getText());
+  }
+
+  public void testInputFilter() {
+    Disposer.dispose(myConsole); // have to re-init extensions
+    List<Pair<String, ConsoleViewContentType>> registered = new ArrayList<>();
+    ConsoleInputFilterProvider crazyProvider = project -> new InputFilter[]{
+      (text, contentType) -> {
+        registered.add(Pair.create(text, contentType));
+        return Collections.singletonList(Pair.create("+!" + text + "-!", contentType));
+      }
+    };
+    PlatformTestUtil.registerExtension(ConsoleInputFilterProvider.INPUT_FILTER_PROVIDERS, crazyProvider, getTestRootDisposable());
+    myConsole = createConsole();
+    StringBuilder expectedText = new StringBuilder();
+    List<Pair<String, ConsoleViewContentType>> expectedRegisteredTokens = new ArrayList<>();
+    for (int i=0;i<25;i++) {
+      String chunk = i + "";
+      myConsole.print(chunk, ConsoleViewContentType.USER_INPUT);
+      expectedText.append("+!" + i + "-!");
+      expectedRegisteredTokens.add(Pair.create(chunk, ConsoleViewContentType.USER_INPUT));
+
+      for (int j = 0; j < chunk.length(); j++) {
+        typeIn(myConsole.getEditor(), chunk.charAt(j));
+      }
+      chunk.chars().forEach(c->{
+        expectedText.append("+!" + (char)c + "-!");
+        expectedRegisteredTokens.add(Pair.create(String.valueOf((char)c), ConsoleViewContentType.USER_INPUT));
+      });
+    }
+    myConsole.flushDeferredText();
+    myConsole.waitAllRequests();
+    assertEquals(expectedText.toString(), myConsole.getText());
+    assertEquals(expectedRegisteredTokens, registered);
   }
 }

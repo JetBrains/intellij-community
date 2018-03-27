@@ -22,18 +22,19 @@ import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.editor.Editor;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public class XmlCDATAContentSelectioner extends ExtendWordSelectionHandlerBase {
   @Override
-  public boolean canSelect(PsiElement e) {
+  public boolean canSelect(@NotNull PsiElement e) {
     return e instanceof CompositePsiElement &&
            ((CompositePsiElement)e).getElementType() == XmlElementType.XML_CDATA;
   }
 
   @Override
-  public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
+  public List<TextRange> select(@NotNull PsiElement e, @NotNull CharSequence editorText, int cursorOffset, @NotNull Editor editor) {
     List<TextRange> result = super.select(e, editorText, cursorOffset, editor);
     PsiElement[] children = e.getChildren();
 

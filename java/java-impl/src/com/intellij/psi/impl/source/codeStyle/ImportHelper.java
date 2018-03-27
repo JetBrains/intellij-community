@@ -449,7 +449,7 @@ public class ImportHelper{
       }
       // check conflicts
       if (useOnDemand){
-        PsiElement[] onDemandRefs = file.getOnDemandImports(false, true);
+        PsiElement[] onDemandRefs = file.getOnDemandImports(true, true);
         List<String> refTexts = new ArrayList<>(onDemandRefs.length);
         for (PsiElement ref : onDemandRefs) {
           String refName = ref instanceof PsiClass ? ((PsiClass)ref).getQualifiedName() : ((PsiPackage)ref).getQualifiedName();

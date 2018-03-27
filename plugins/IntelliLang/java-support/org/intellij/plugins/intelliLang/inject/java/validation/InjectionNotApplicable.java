@@ -28,8 +28,9 @@ import org.intellij.plugins.intelliLang.util.RemoveAnnotationFix;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class InjectionNotApplicable extends LocalInspectionTool {
+import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
 
+public class InjectionNotApplicable extends LocalInspectionTool {
   @NotNull
   public HighlightDisplayLevel getDefaultLevel() {
     return HighlightDisplayLevel.ERROR;
@@ -62,7 +63,7 @@ public class InjectionNotApplicable extends LocalInspectionTool {
         }
         else if (name != null) {
           final PsiClass psiClass = JavaPsiFacade.getInstance(annotation.getProject()).findClass(name, annotation.getResolveScope());
-          if (psiClass != null && AnnotationUtil.isAnnotated(psiClass, annotationName, false, false)) {
+          if (psiClass != null && AnnotationUtil.isAnnotated(psiClass, annotationName, CHECK_EXTERNAL)) {
             checkAnnotation(annotation, holder);
           }
         }

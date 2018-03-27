@@ -18,12 +18,10 @@ package com.intellij.ide.todo;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListAdapter;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.Disposable;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.content.Content;
 import com.intellij.util.Alarm;
@@ -35,15 +33,7 @@ public abstract class ChangeListTodosPanel extends TodoPanel{
 
   public ChangeListTodosPanel(Project project,TodoPanelSettings settings, Content content){
     super(project,settings,false,content);
-    ChangeListManager changeListManager = ChangeListManager.getInstance(project);
-    final MyChangeListManagerListener myChangeListManagerListener = new MyChangeListManagerListener();
-    changeListManager.addChangeListListener(myChangeListManagerListener);
-    Disposer.register(this, new Disposable() {
-      @Override
-      public void dispose() {
-        ChangeListManager.getInstance(myProject).removeChangeListListener(myChangeListManagerListener);
-      }
-    });
+    ChangeListManager.getInstance(project).addChangeListListener(new MyChangeListManagerListener(), this);
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
   }
 

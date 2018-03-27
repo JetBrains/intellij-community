@@ -27,6 +27,16 @@ import java.util.List;
  */
 public interface PyCallSiteExpression extends PyExpression {
 
+  /**
+   * Returns an expression that is treated as a receiver for this explicit or implicit (read, operator) call.
+   * <p>
+   * For most operator expressions it returns the result of {@code getOperator()} since it naturally represents
+   * the object on which a special magic method is called. However for binary expressions that additionally
+   * can be reversible such as {@code __add__} and {@code __radd__} it also takes into account name of the
+   * actual callee method and chained comparisons order if any.
+   *
+   * @param resolvedCallee optional callee corresponding to the call. Without it the receiver is deduced purely syntactically.
+   */
   @Nullable
   PyExpression getReceiver(@Nullable PyCallable resolvedCallee);
 

@@ -18,6 +18,7 @@ package com.intellij.testFramework.rules;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
+import org.jetbrains.annotations.NotNull;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
@@ -32,11 +33,12 @@ import static org.junit.Assert.assertTrue;
  * and more convenient {@linkplain #newFile(String)} / {@linkplain #newFolder(String)} methods.
  */
 public class TempDirectory extends TemporaryFolder {
-  private String myName = null;
-  private File myRoot = null;
+  private String myName;
+  private File myRoot;
 
+  @NotNull
   @Override
-  public Statement apply(Statement base, Description description) {
+  public Statement apply(@NotNull Statement base, @NotNull Description description) {
     myName = PlatformTestUtil.lowercaseFirstLetter(FileUtil.sanitizeFileName(description.getMethodName(), false), true);
     return super.apply(base, description);
   }
@@ -85,8 +87,9 @@ public class TempDirectory extends TemporaryFolder {
   /** Allows subdirectories in a file name (i.e. "dir1/dir2/target"); does not fail if these intermediates already exist. */
   @Override
   public File newFile(String fileName) throws IOException {
-    File file = new File(getRoot(), fileName), parent = file.getParentFile();
+    File file = new File(getRoot(), fileName);
     if (file.exists()) throw new IOException("Already exists: " + file);
+    File parent = file.getParentFile();
     if (!(parent.isDirectory() || parent.mkdirs()) || !file.createNewFile()) throw new IOException("Cannot create: " + file);
     return file;
   }

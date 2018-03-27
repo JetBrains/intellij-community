@@ -22,7 +22,6 @@ import org.jetbrains.jps.model.module.JpsModule;
 
 /**
  * @author: db
- * Date: 04.10.11
  */
 public class MarkDirtyTest extends IncrementalTestCase {
   public MarkDirtyTest() {

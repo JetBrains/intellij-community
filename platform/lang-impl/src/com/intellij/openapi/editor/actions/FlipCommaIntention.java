@@ -19,7 +19,9 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.*;
 import com.intellij.lang.parser.GeneratedParserUtilBase;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -71,10 +73,24 @@ public class FlipCommaIntention implements IntentionAction {
       if (Flipper.tryFlip(prev, next)) {
         return;
       }
-      PsiElement copy = prev.copy();
-      prev.replace(next);
-      next.replace(copy);
+      swapViaDocument(comma, prev, next);
     }
+  }
+
+  // not via PSI because such language-unaware change can lead to PSI-text inconsistencies
+  private static void swapViaDocument(@NotNull PsiElement comma, PsiElement prev, PsiElement next) {
+    DocumentEx document = (DocumentEx)comma.getContainingFile().getViewProvider().getDocument();
+    if (document == null) return;
+
+    String prevText = prev.getText();
+    String nextText = next.getText();
+
+    TextRange prevRange = prev.getTextRange();
+    TextRange nextRange = next.getTextRange();
+
+    document.replaceString(prevRange.getStartOffset(), prevRange.getEndOffset(), nextText);
+    nextRange = nextRange.shiftRight(nextText.length() - prevText.length());
+    document.replaceString(nextRange.getStartOffset(), nextRange.getEndOffset(), prevText);
   }
 
   public interface Flipper {

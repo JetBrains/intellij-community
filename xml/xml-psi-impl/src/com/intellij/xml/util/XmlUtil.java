@@ -352,6 +352,10 @@ public class XmlUtil {
     catch (NumberFormatException e) {
       return 0;
     }
+    catch (NullPointerException e) {
+      LOG.error("Cannot parse ref: '" + text + "'", e);
+      return 0;
+    }
   }
 
   public static boolean attributeFromTemplateFramework(@NonNls final String name, final XmlTag tag) {

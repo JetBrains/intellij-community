@@ -24,6 +24,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.NotNull;
@@ -64,12 +65,13 @@ public class BigDecimalEqualsInspection extends BaseInspection {
       if (qualifier == null) {
         return;
       }
-      final String qualifierText = qualifier.getText();
+      CommentTracker commentTracker = new CommentTracker();
+      final String qualifierText = commentTracker.markUnchanged(qualifier).getText();
       assert call != null;
       final PsiExpressionList argumentList = call.getArgumentList();
       final PsiExpression[] args = argumentList.getExpressions();
-      final String argText = args[0].getText();
-      PsiReplacementUtil.replaceExpression(call, qualifierText + ".compareTo(" + argText + ")==0");
+      final String argText = commentTracker.markUnchanged(args[0]).getText();
+      PsiReplacementUtil.replaceExpression(call, qualifierText + ".compareTo(" + argText + ")==0", commentTracker);
     }
   }
 

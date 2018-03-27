@@ -52,26 +52,26 @@ public interface RemoteExternalSystemProjectResolver<S extends ExternalSystemExe
     }
 
     @Override
-    public void setSettings(@NotNull ExternalSystemExecutionSettings settings) throws RemoteException {
+    public void setSettings(@NotNull ExternalSystemExecutionSettings settings) {
     }
 
     @Override
-    public void setNotificationListener(@NotNull ExternalSystemTaskNotificationListener notificationListener) throws RemoteException {
+    public void setNotificationListener(@NotNull ExternalSystemTaskNotificationListener notificationListener) {
     }
 
     @Override
-    public boolean isTaskInProgress(@NotNull ExternalSystemTaskId id) throws RemoteException {
+    public boolean isTaskInProgress(@NotNull ExternalSystemTaskId id) {
       return false;
     }
 
     @Override
-    public boolean cancelTask(@NotNull ExternalSystemTaskId id) throws RemoteException {
+    public boolean cancelTask(@NotNull ExternalSystemTaskId id) {
       return false;
     }
 
     @NotNull
     @Override
-    public Map<ExternalSystemTaskType, Set<ExternalSystemTaskId>> getTasksInProgress() throws RemoteException {
+    public Map<ExternalSystemTaskType, Set<ExternalSystemTaskId>> getTasksInProgress() {
       return Collections.emptyMap();
     }
   };

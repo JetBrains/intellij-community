@@ -30,7 +30,6 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 1/23/12
  */
 public class JavacProtoUtil {
 

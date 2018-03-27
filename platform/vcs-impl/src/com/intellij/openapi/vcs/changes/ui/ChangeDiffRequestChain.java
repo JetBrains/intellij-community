@@ -16,29 +16,35 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.diff.actions.impl.GoToChangePopupBuilder;
-import com.intellij.diff.chains.DiffRequestChain;
+import com.intellij.diff.chains.DiffRequestChainBase;
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeGoToChangePopupAction;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultTreeModel;
 import java.util.List;
+import java.util.Objects;
 
-public class ChangeDiffRequestChain extends UserDataHolderBase implements DiffRequestChain, GoToChangePopupBuilder.Chain {
+public class ChangeDiffRequestChain extends DiffRequestChainBase implements GoToChangePopupBuilder.Chain {
+  private static final Logger LOG = Logger.getInstance(ChangeDiffRequestChain.class);
   @NotNull private final List<? extends Producer> myProducers;
-  private int myIndex;
 
   public ChangeDiffRequestChain(@NotNull List<? extends Producer> producers, int index) {
+    super(index);
+    if (ContainerUtil.exists(producers, Objects::isNull)) {
+      producers = ContainerUtil.skipNulls(producers);
+      LOG.error("Producers must not be null");
+    }
     myProducers = producers;
-    myIndex = index;
   }
 
   @Override
@@ -47,21 +53,10 @@ public class ChangeDiffRequestChain extends UserDataHolderBase implements DiffRe
     return myProducers;
   }
 
-  @Override
-  public int getIndex() {
-    return myIndex;
-  }
-
-  @Override
-  public void setIndex(int index) {
-    assert index >= 0 && index < myProducers.size();
-    myIndex = index;
-  }
-
   @NotNull
   @Override
   public AnAction createGoToChangeAction(@NotNull Consumer<Integer> onSelected) {
-    return new ChangeGoToChangePopupAction<ChangeDiffRequestChain>(this, myIndex) {
+    return new ChangeGoToChangePopupAction<ChangeDiffRequestChain>(this, getIndex()) {
       @NotNull
       @Override
       protected DefaultTreeModel buildTreeModel(@NotNull Project project, boolean showFlatten) {

@@ -47,7 +47,7 @@ class MyTest1 {
     }
 
     {
-        Bar1 b1 = MyTest2 :: <error descr="Cannot resolve method 'foo'">foo</error>;
+        Bar1 b1 = MyTest2 :: <error descr="Incompatible types: String is not convertible to int">foo</error>;
         bar(MyTest1 :: foo);
     }
 }
@@ -73,7 +73,7 @@ class MyTest2 {
     }*/
 
     {
-        Bar1 b1 = MyTest2 :: <error descr="Cannot resolve method 'foo'">foo</error>;
+        Bar1 b1 = MyTest2 :: <error descr="Incompatible types: String is not convertible to int">foo</error>;
         bar(MyTest2 :: foo);
     }
 }
@@ -99,8 +99,8 @@ class MyTest3 {
     }
 
     {
-        Bar1 b1 = MyTest2 :: <error descr="Cannot resolve method 'foo'">foo</error>;
-        bar(MyTest3 :: <error descr="Cannot resolve method 'foo'">foo</error>);
+        Bar1 b1 = MyTest2 :: <error descr="Incompatible types: String is not convertible to int">foo</error>;
+        bar(MyTest3 :: <error descr="Incompatible types: int is not convertible to String">foo</error>);
     }
 }
 

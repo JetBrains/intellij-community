@@ -1,0 +1,13 @@
+REGEXP_FILE
+  RegExpPatternImpl: <([\^])>
+    RegExpBranchImpl: <([\^])>
+      RegExpGroupImpl: <([\^])>
+        PsiElement(GROUP_BEGIN)('(')
+        RegExpPatternImpl: <[\^]>
+          RegExpBranchImpl: <[\^]>
+            RegExpClassImpl: <[\^]>
+              PsiElement(CLASS_BEGIN)('[')
+              RegExpCharImpl: <\^>
+                PsiElement(ESC_CHARACTER)('\^')
+              PsiElement(CLASS_END)(']')
+        PsiElement(GROUP_END)(')')

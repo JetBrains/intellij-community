@@ -17,7 +17,6 @@ package com.intellij.util.xml;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 21.08.13
  */
 public interface NonExhaustiveEnum {
 }

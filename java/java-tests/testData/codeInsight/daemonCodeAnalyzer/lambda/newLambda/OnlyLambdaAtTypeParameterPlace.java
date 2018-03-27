@@ -7,7 +7,7 @@ class Test {
   <T extends Runnable> void call1(T t) {}
 
   {
-    call(<error descr="Object is not a functional interface">() -> {}</error>); 
+    call(<error descr="Target type of a lambda conversion must be an interface">() -> {}</error>);
     call1(() -> {}); 
   }
 }

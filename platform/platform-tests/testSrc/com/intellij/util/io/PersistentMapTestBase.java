@@ -24,7 +24,6 @@ import java.io.IOException;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Dec 19, 2007
  */
 abstract class PersistentMapTestBase extends TestCase {
   protected static final Logger LOG = Logger.getInstance(PersistentMapTestBase.class);

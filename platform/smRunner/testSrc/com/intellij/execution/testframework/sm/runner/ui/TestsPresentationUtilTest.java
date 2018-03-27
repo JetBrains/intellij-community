@@ -60,7 +60,7 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
     assertEquals("Running: 10 of 1  ",
                  TestsPresentationUtil.getProgressStatus_Text(0, 0, 1, 10, 0, null, true));
     //here number format is platform-dependent
-    assertEquals("Done: 10 of 1  (0ms)  ",
+    assertEquals("Done: 10 of 1  (0\u2009ms)  ",
                  TestsPresentationUtil.getProgressStatus_Text(5, 5, 1, 10, 0, null, false));
   }
 
@@ -74,7 +74,7 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
     assertEquals("Running: 10 of <...>  Failed: 1  ",
                  TestsPresentationUtil.getProgressStatus_Text(0, 0, 0, 10, 1, null, false));
     //here number format is platform-dependent
-    assertEquals("Done: 10 of <...>  Failed: 1  (5ms)  ",
+    assertEquals("Done: 10 of <...>  Failed: 1  (5\u2009ms)  ",
                  TestsPresentationUtil.getProgressStatus_Text(0, 5, 0, 10, 1, null, false));
   }
 
@@ -608,6 +608,23 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
     assertEquals(PoolOfTestIcons.FAILED_ICON, myRenderer.getIcon());
     assertOneElement(myFragContainer.getFragments());
     assertEquals("Test Results", myFragContainer.getTextAt(0));
+    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myFragContainer.getAttribsAt(0));
+  }
+
+  public void testFormatRootNodeIgnored() {
+    mySMRootTestProxy.setTestsReporterAttached();
+    // See [PY-2434] Unittest: Do not show "No test were found" notification before completing test suite
+    mySMRootTestProxy.addChild(mySimpleTest);
+    mySMRootTestProxy.setStarted();
+    mySimpleTest.setStarted();
+    mySimpleTest.setTestIgnored(null, null);
+    mySimpleTest.setFinished();
+    mySMRootTestProxy.setFinished();
+    TestsPresentationUtil.formatRootNodeWithoutChildren(mySMRootTestProxy, myRenderer);
+
+    assertEquals(PoolOfTestIcons.IGNORED_ICON, myRenderer.getIcon());
+    assertOneElement(myFragContainer.getFragments());
+    assertEquals("All Tests Passed (except ignored)", myFragContainer.getTextAt(0));
     assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myFragContainer.getAttribsAt(0));
   }
 

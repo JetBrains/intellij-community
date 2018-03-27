@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.codeStyle.javadoc;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaLanguage;
@@ -10,7 +11,6 @@ import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -29,10 +29,20 @@ public class CommentFormatter {
   private final JDParser myParser;
   private final Project myProject;
 
+  /**
+   * @deprecated Use {@link ##CommentFormatter(PsiFile)} instead.
+   */
+  @Deprecated
   public CommentFormatter(@NotNull Project project) {
-    mySettings = CodeStyleSettingsManager.getSettings(project);
+    mySettings = CodeStyle.getSettings(project);
     myParser = new JDParser(mySettings);
     myProject = project;
+  }
+
+  public CommentFormatter(@NotNull PsiFile file) {
+    mySettings = CodeStyle.getSettings(file);
+    myParser = new JDParser(mySettings);
+    myProject = file.getProject();
   }
 
   public JavaCodeStyleSettings getSettings() {

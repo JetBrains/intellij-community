@@ -26,7 +26,6 @@ import java.util.*;
 
 /**
  * @author: db
- * Date: 03.11.11
  */
 abstract class ObjectObjectMultiMaplet<K, V> implements Streamable, CloseableMaplet {
   abstract boolean containsKey(final K key);

@@ -139,9 +139,7 @@ public class RightMarginForm {
     myRightMarginField.validateContent();
     myVisualGuidesField.validateContent();
     CommonCodeStyleSettings langSettings = settings.getCommonSettings(myLanguage);
-    if (langSettings != settings) {
-      langSettings.RIGHT_MARGIN = myRightMarginField.getValue();
-    }
+    langSettings.RIGHT_MARGIN = myRightMarginField.getValue();
     langSettings.WRAP_ON_TYPING = getSelectedWrapOnTypingValue();
     settings.setSoftMargins(myLanguage, myVisualGuidesField.getValue());
   }

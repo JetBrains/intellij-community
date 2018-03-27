@@ -22,7 +22,10 @@ import com.intellij.psi.controlFlow.AnalysisCanceledException;
 import com.intellij.psi.controlFlow.ControlFlow;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.OverriderUsageInfo;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
@@ -36,7 +39,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 
 public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement implements HighPriorityAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.MethodReturnBooleanFix");
@@ -75,32 +77,14 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     final PsiMethod myMethod = (PsiMethod)startElement;
 
     final PsiType myReturnType = myReturnTypePointer.getType();
-    if (myMethod.isValid() &&
-        myMethod.getManager().isInProject(myMethod) &&
+    if (myMethod.getManager().isInProject(myMethod) &&
         myReturnType != null &&
         myReturnType.isValid() &&
         !TypeConversionUtil.isNullType(myReturnType)) {
       final PsiType returnType = myMethod.getReturnType();
       if (returnType != null && returnType.isValid() && !Comparing.equal(myReturnType, returnType)) {
-        return allTypeParametersResolved(myMethod, myReturnType);
+        return PsiTypesUtil.allTypeParametersResolved(myMethod, myReturnType);
       }
-    }
-    return false;
-  }
-
-  private static boolean allTypeParametersResolved(PsiMethod myMethod, PsiType myReturnType) {
-    PsiTypesUtil.TypeParameterSearcher searcher = new PsiTypesUtil.TypeParameterSearcher();
-    myReturnType.accept(searcher);
-    Set<PsiTypeParameter> parameters = searcher.getTypeParameters();
-    return parameters.stream().allMatch(parameter -> isAccessibleAt(parameter, myMethod));
-  }
-
-  private static boolean isAccessibleAt(PsiTypeParameter parameter, PsiMethod method) {
-    PsiTypeParameterListOwner owner = parameter.getOwner();
-    if(owner == method) return true;
-    if(owner instanceof PsiClass) {
-      return PsiTreeUtil.isAncestor(owner, method, true) &&
-             InheritanceUtil.hasEnclosingInstanceInScope((PsiClass)owner, method, false, false);
     }
     return false;
   }

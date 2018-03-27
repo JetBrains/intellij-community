@@ -18,7 +18,10 @@ package com.intellij.java.propertyBased;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiImportList;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.propertyBased.IntentionPolicy;
 import org.jetbrains.annotations.NotNull;
 
@@ -49,14 +52,57 @@ class JavaIntentionPolicy extends IntentionPolicy {
   protected static boolean mayBreakCompilation(String actionText) {
     return actionText.startsWith("Flip") || // doesn't care about compilability
            actionText.startsWith("Convert to string literal") || // can produce uncompilable code by design
+           actionText.startsWith("Replace string literal with character") || // can produce uncompilable code by design
            actionText.startsWith("Detail exceptions") || // can produce uncompilable code if 'catch' section contains 'instanceof's
            actionText.startsWith("Insert call to super method") || // super method can declare checked exceptions, unexpected at this point
            actionText.startsWith("Cast to ") || // produces uncompilable code by design
            actionText.startsWith("Unwrap 'else' branch (changes semantics)") || // might produce code with final variables are initialized several times
            actionText.startsWith("Create missing 'switch' branches") || // if all existing branches do 'return something', we don't automatically generate compilable code for new branches
+           actionText.matches("Make .* default") || // can make interface non-functional and its lambdas incorrect
            actionText.startsWith("Unimplement"); // e.g. leaves red references to the former superclass methods
   }
 
+}
+
+class JavaCommentingStrategy extends JavaIntentionPolicy {
+  @Override
+  public boolean checkComments(IntentionAction intention) {
+    String intentionText = intention.getText();
+    boolean commentChangingActions = intentionText.startsWith("Replace with end-of-line comment") ||
+                                     intentionText.startsWith("Replace with block comment") ||
+                                     intentionText.startsWith("Remove //noinspection") ||
+                                     intentionText.startsWith("Unwrap 'if' statement") || //remove ifs content
+                                     intentionText.startsWith("Remove 'if' statement") || //remove content of the if with everything inside
+                                     intentionText.startsWith("Unimplement Class") || intentionText.startsWith("Unimplement Interface") || //remove methods in batch
+                                     intentionText.startsWith("Suppress with 'NON-NLS' comment") ||
+                                     intentionText.startsWith("Move comment to separate line") || //merge comments on same line
+                                     intentionText.startsWith("Remove redundant arguments to call") || //removes arg with all comments inside
+                                     intentionText.startsWith("Convert to 'enum'") || //removes constructor with javadoc?
+                                     intentionText.startsWith("Replace 'switch' with 'if'") || //todo IDEA-113518
+                                     intentionText.startsWith("Remove redundant constructor") ||
+                                     intentionText.startsWith("Remove block marker comments") ||
+                                     intentionText.startsWith("Remove redundant method") ||
+                                     intentionText.startsWith("Delete unnecessary import") ||
+                                     intentionText.startsWith("Replace with 'throws Exception'") ||
+                                     intentionText.startsWith("Replace unicode escape with character") ||
+                                     intentionText.startsWith("Remove 'serialVersionUID' field") ||
+                                     intentionText.startsWith("Remove unnecessary") ||
+                                     intentionText.contains("'ordering inconsistent with equals'") || //javadoc will be changed
+                                     intentionText.matches("Simplify '.*' to .*") ||
+                                     intentionText.matches("Move '.*' to Javadoc ''@throws'' tag")
+      ;
+    return !commentChangingActions;
+  }
+
+  @Override
+  public boolean trackComment(PsiComment comment) {
+    return PsiTreeUtil.getParentOfType(comment, PsiImportList.class) == null;
+  }
+
+  @Override
+  public boolean mayBreakCode(@NotNull IntentionAction action, @NotNull Editor editor, @NotNull PsiFile file) {
+    return true;
+  }
 }
 
 class JavaGreenIntentionPolicy extends JavaIntentionPolicy {

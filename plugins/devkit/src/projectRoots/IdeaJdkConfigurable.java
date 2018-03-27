@@ -42,7 +42,6 @@ import java.awt.event.ItemEvent;
 
 /**
  * @author anna
- * Date: Nov 22, 2004
  */
 public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
   private final JLabel mySandboxHomeLabel = new JLabel(DevKitBundle.message("sandbox.home.label"));

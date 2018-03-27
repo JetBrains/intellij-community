@@ -23,7 +23,6 @@ import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.wm.FocusCommand;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowId;
 import org.jetbrains.annotations.NotNull;
@@ -64,24 +63,9 @@ public class ProjectViewSelectInGroupTarget implements CompositeSelectInTarget, 
       }
     }
     targetsToCheck.addAll(targets);
-    for (final SelectInTarget target : targetsToCheck) {
-      if (target.canSelect(context)) {
-        if (requestFocus) {
-          IdeFocusManager.getInstance(context.getProject()).requestFocus(new FocusCommand() {
-            @NotNull
-            @Override
-            public ActionCallback run() {
-              target.selectIn(context, requestFocus);
-              return ActionCallback.DONE;
-            }
-          }, true);
-        }
-        else {
-          target.selectIn(context, requestFocus);
-        }
-        break;
-      }
-    }
+    targetsToCheck.stream().filter(t -> t.canSelect(context)).findFirst().ifPresent(target -> {
+      target.selectIn(context, requestFocus);
+    });
   }
 
   @Override

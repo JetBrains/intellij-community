@@ -16,24 +16,17 @@
 
 package com.intellij.codeInspection.dataFlow.instructions;
 
-import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.codeInspection.dataFlow.DataFlowRunner;
+import com.intellij.codeInspection.dataFlow.DfaInstructionState;
+import com.intellij.codeInspection.dataFlow.DfaMemoryState;
+import com.intellij.codeInspection.dataFlow.InstructionVisitor;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 
 public class FlushVariableInstruction extends Instruction {
   private final DfaVariableValue myVariable;
-  private final boolean myDependentsOnly;
 
   public FlushVariableInstruction(DfaVariableValue expr) {
-    this(expr, false);
-  }
-
-  public FlushVariableInstruction(DfaVariableValue variable, boolean dependentsOnly) {
-    myVariable = variable;
-    myDependentsOnly = dependentsOnly;
-  }
-
-  public boolean isDependentsOnly() {
-    return myDependentsOnly;
+    myVariable = expr;
   }
 
   public DfaVariableValue getVariable() {

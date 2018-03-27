@@ -18,6 +18,7 @@ package com.intellij.codeInsight.editorActions.smartEnter;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -31,8 +32,8 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
@@ -289,6 +290,7 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
                                                               PsiStatement.class,
                                                               PsiCodeBlock.class,
                                                               PsiMember.class,
+                                                              PsiAnnotation.class,
                                                               PsiComment.class,
                                                               PsiImportStatementBase.class,
                                                               PsiPackageStatement.class
@@ -304,6 +306,7 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
 
     return statementAtCaret instanceof PsiStatement ||
            statementAtCaret instanceof PsiMember ||
+           statementAtCaret instanceof PsiAnnotation ||
            statementAtCaret instanceof PsiImportStatementBase ||
            statementAtCaret instanceof PsiPackageStatement
            ? statementAtCaret
@@ -326,7 +329,7 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
     if (CharArrayUtil.regionMatches(chars, caretOffset - "{}".length(), "{}") ||
         CharArrayUtil.regionMatches(chars, caretOffset - "{\n}".length(), "{\n}")) {
       commit(editor);
-      final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(file.getProject());
+      final CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(file.getProject()).getCommonSettings(JavaLanguage.INSTANCE);
       final boolean old = settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE;
       settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = false;
       PsiElement leaf = file.findElementAt(caretOffset - 1);
@@ -337,6 +340,16 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
       reformat(elt);
       settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = old;
       editor.getCaretModel().moveToOffset(caretOffset - 1);
+
+      reformatBlockParentIfNeeded(editor, file);
+    }
+  }
+
+  private void reformatBlockParentIfNeeded(@NotNull Editor editor, @NotNull PsiFile file) {
+    commit(editor);
+    PsiCodeBlock block = PsiTreeUtil.findElementOfClassAtOffset(file, editor.getCaretModel().getOffset(), PsiCodeBlock.class, false);
+    if (block != null && psiElement().withParents(PsiBlockStatement.class, PsiForStatement.class).accepts(block)) {
+      reformat(block.getParent().getParent());
     }
   }
 

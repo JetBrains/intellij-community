@@ -48,12 +48,12 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
 
     void registerProblem(@NotNull ProblemsHolder holder, @NotNull PsiExpression condition, OptionalIsPresentCase scenario) {
       if(this != NONE) {
-        holder.registerProblem(holder.getManager().createProblemDescriptor(condition,
-                                                                           "Can be replaced with single expression in functional style",
-                                                                           this != INFO,
-                                                                           this == INFO ? ProblemHighlightType.INFORMATION : ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                                                           true,
-                                                                           new OptionalIsPresentFix(scenario)));
+        if (this == INFO && !holder.isOnTheFly()) {
+          return; //don't register fixes in batch mode
+        }
+        holder.registerProblem(condition, "Can be replaced with single expression in functional style",
+                               this == INFO ? ProblemHighlightType.INFORMATION : ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                               new OptionalIsPresentFix(scenario));
       }
     }
   }
@@ -186,9 +186,12 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
     if (!hasNoBadRefs) return ProblemType.NONE;
     if (!hasOptionalReference.get() || !(lambdaCandidate instanceof PsiExpression)) return ProblemType.INFO;
     PsiExpression expression = (PsiExpression)lambdaCandidate;
-    if (falseExpression != null && NullnessUtil.getExpressionNullness(expression) != Nullness.NOT_NULL) {
+    if (falseExpression != null &&
+        !ExpressionUtils.isNullLiteral(falseExpression) &&
+        NullnessUtil.getExpressionNullness(expression, true) != Nullness.NOT_NULL) {
       // falseExpression == null is "consumer" case (to be replaced with ifPresent()),
       // in this case we don't care about expression nullness
+      // if falseExpression is null literal, then semantics is preserved
       return ProblemType.INFO;
     }
     return ProblemType.WARNING;

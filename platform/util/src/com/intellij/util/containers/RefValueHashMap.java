@@ -15,6 +15,9 @@
  */
 package com.intellij.util.containers;
 
+import com.intellij.openapi.util.Getter;
+import com.intellij.reference.SoftReference;
+import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
@@ -26,9 +29,19 @@ abstract class RefValueHashMap<K,V> implements Map<K,V>{
   private final Map<K,MyReference<K,V>> myMap;
   private final ReferenceQueue<V> myQueue = new ReferenceQueue<V>();
 
-  protected interface MyReference<K,T> {
+  @NotNull
+  static IncorrectOperationException pointlessContainsKey() {
+    return new IncorrectOperationException("containsKey() makes no sense for weak/soft map because GC can clear the value any moment now");
+  }
+
+  @NotNull
+  static IncorrectOperationException pointlessContainsValue() {
+    return new IncorrectOperationException("containsValue() makes no sense for weak/soft map because GC can clear the key any moment now");
+  }
+
+  protected interface MyReference<K,T> extends Getter<T> {
+    @NotNull
     K getKey();
-    T get();
   }
 
   RefValueHashMap() {
@@ -58,8 +71,7 @@ abstract class RefValueHashMap<K,V> implements Map<K,V>{
   @Override
   public V get(Object key) {
     MyReference<K,V> ref = myMap.get(key);
-    if (ref == null) return null;
-    return ref.get();
+    return SoftReference.deref(ref);
   }
 
   @Override
@@ -67,14 +79,14 @@ abstract class RefValueHashMap<K,V> implements Map<K,V>{
     processQueue();
     MyReference<K, V> reference = createReference(key, value, myQueue);
     MyReference<K,V> oldRef = myMap.put(key, reference);
-    return oldRef != null ? oldRef.get() : null;
+    return SoftReference.deref(oldRef);
   }
 
   @Override
   public V remove(Object key) {
     processQueue();
     MyReference<K,V> ref = myMap.remove(key);
-    return ref != null ? ref.get() : null;
+    return SoftReference.deref(ref);
   }
 
   @Override
@@ -99,7 +111,7 @@ abstract class RefValueHashMap<K,V> implements Map<K,V>{
 
   @Override
   public boolean containsKey(Object key) {
-    return get(key) != null;
+    throw pointlessContainsKey();
   }
 
   @Override

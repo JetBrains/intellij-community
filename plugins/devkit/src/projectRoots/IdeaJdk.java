@@ -126,16 +126,16 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
       return true;
     }
     File home = new File(path);
-    return home.exists() && getBuildNumber(path) != null && getOpenApiJar(path) != null;
+    return home.exists() && getBuildNumber(path) != null && getPlatformApiJar(path) != null;
   }
 
   @Nullable
-  private static File getOpenApiJar(String home) {
-    @NonNls final String openapiJar = "openapi.jar";
+  private static File getPlatformApiJar(String home) {
     final File libDir = new File(home, LIB_DIR_NAME);
-    File f = new File(libDir, openapiJar);
+    File f = new File(libDir, "platform-api.jar");
     if (f.exists()) return f;
-    f = new File(libDir, "platform-api.jar");
+    //in 173.* and earlier builds all IDEs included platform modules into openapi.jar (see org.jetbrains.intellij.build.ProductModulesLayout.platformApiModules)
+    f = new File(libDir, "openapi.jar");
     if (f.exists()) return f;
     return null;
   }
@@ -297,7 +297,7 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
   @Nullable
   private static JavaSdkVersion getRequiredJdkVersion(Sdk ideaSdk) {
     if (isFromIDEAProject(ideaSdk.getHomePath())) return JavaSdkVersion.JDK_1_8;
-    File apiJar = getOpenApiJar(ideaSdk.getHomePath());
+    File apiJar = getPlatformApiJar(ideaSdk.getHomePath());
     int classFileVersion = apiJar == null ? -1 : getIdeaClassFileVersion(apiJar);
     LanguageLevel languageLevel = classFileVersion <= 0? null : ClsParsingUtil.getLanguageLevelByVersion(classFileVersion);
     return languageLevel != null ? JavaSdkVersion.fromLanguageLevel(languageLevel) : null;

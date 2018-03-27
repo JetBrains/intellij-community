@@ -20,9 +20,6 @@ import com.intellij.facet.ui.FacetEditorContext;
 import com.intellij.facet.ui.FacetEditorTab;
 import com.intellij.facet.ui.FacetValidatorsManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
-import org.jdom.Element;
 import org.jetbrains.jps.appengine.model.PersistenceApi;
 import org.jetbrains.jps.appengine.model.impl.AppEngineModuleExtensionProperties;
 
@@ -38,12 +35,6 @@ public class AppEngineFacetConfiguration implements FacetConfiguration, Persiste
     return new FacetEditorTab[] {
        new AppEngineFacetEditor(this, editorContext, validatorsManager)
     };
-  }
-
-  public void readExternal(Element element) throws InvalidDataException {
-  }
-
-  public void writeExternal(Element element) throws WriteExternalException {
   }
 
   public AppEngineModuleExtensionProperties getState() {

@@ -80,6 +80,9 @@
       <val name="flagsFromClass" val="java.awt.event.InputEvent.class" />
     </annotation>
   </item>
+  <item name='java.awt.event.KeyEvent java.lang.String getKeyText(int)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name="java.awt.event.KeyEvent void setModifiers(int) 0">
     <annotation name="org.intellij.lang.annotations.MagicConstant">
       <val name="flagsFromClass" val="java.awt.event.InputEvent.class" />

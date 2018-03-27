@@ -22,6 +22,7 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -35,7 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
-public class CompositePrintable implements Printable, Disposable {
+public class CompositePrintable extends UserDataHolderBase implements Printable, Disposable {
   public static final String NEW_LINE = "\n";
 
   protected final List<Printable> myNestedPrintables = new ArrayList<>();
@@ -82,14 +83,15 @@ public class CompositePrintable implements Printable, Disposable {
   }
 
   public void printOwnPrintablesOn(final Printer printer) {
-    final ArrayList<Printable> printables = new ArrayList<>();
+    printOwnPrintablesOn(printer, true);
+  }
+
+  public void printOwnPrintablesOn(@NotNull Printer printer, boolean skipFileContent) {
+    List<Printable> printables;
     synchronized (myNestedPrintables) {
-      for (Printable printable : myNestedPrintables) {
-        if (printable instanceof AbstractTestProxy) continue;
-        printables.add(printable);
-      }
+      printables = ContainerUtil.filter(myNestedPrintables, printable -> !(printable instanceof AbstractTestProxy));
     }
-    myWrapper.printOn(printer, printables, true);
+    myWrapper.printOn(printer, printables, skipFileContent);
   }
 
   public void addLast(@NotNull final Printable printable) {

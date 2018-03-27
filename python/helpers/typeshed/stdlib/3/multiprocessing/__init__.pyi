@@ -2,34 +2,39 @@
 
 from typing import (
     Any, Callable, ContextManager, Iterable, Mapping, Optional, Dict, List,
-    Union, TypeVar,
+    Union, TypeVar, Sequence, Tuple
 )
 
 from logging import Logger
-from multiprocessing import pool
-from multiprocessing.context import BaseContext
+from multiprocessing import connection, pool, synchronize
+from multiprocessing.context import (
+    BaseContext,
+    ProcessError, BufferTooShort, TimeoutError, AuthenticationError)
 from multiprocessing.managers import SyncManager
-from multiprocessing.pool import AsyncResult
 from multiprocessing.process import current_process as current_process
-import sys
 import queue
+import sys
 
 _T = TypeVar('_T')
 
-class Lock(ContextManager[Lock]):
-    def acquire(self, block: bool = ..., timeout: int = ...) -> None: ...
-    def release(self) -> None: ...
+# N.B. The functions below are generated at runtime by partially applying
+# multiprocessing.context.BaseContext's methods, so the two signatures should
+# be identical (modulo self).
 
-class Event(object):
-    def __init__(self, *, ctx: BaseContext) -> None: ...
-    def is_set(self) -> bool: ...
-    def set(self) -> None: ...
-    def clear(self) -> None: ...
-    def wait(self, timeout: Optional[int] = ...) -> bool: ...
+# Sychronization primitives
+_LockLike = Union[synchronize.Lock, synchronize.RLock]
+def Barrier(parties: int,
+            action: Optional[Callable] = ...,
+            timeout: Optional[float] = ...) -> synchronize.Barrier: ...
+def BoundedSemaphore(value: int = ...) -> synchronize.BoundedSemaphore: ...
+def Condition(lock: Optional[_LockLike] = ...) -> synchronize.Condition: ...
+def Event(lock: Optional[_LockLike] = ...) -> synchronize.Event: ...
+def Lock() -> synchronize.Lock: ...
+def RLock() -> synchronize.RLock: ...
+def Semaphore(value: int = ...) -> synchronize.Semaphore: ...
 
-# N.B. This is generated at runtime by partially applying
-# multiprocessing.context.BaseContext.Pool, so the two signatures should be
-# identical (modulo self).
+def Pipe(duplex: bool = ...) -> Tuple[connection.Connection, connection.Connection]: ...
+
 def Pool(processes: Optional[int] = ...,
          initializer: Optional[Callable[..., Any]] = ...,
          initargs: Iterable[Any] = ...,

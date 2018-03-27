@@ -26,7 +26,6 @@ import java.util.Collection;
 
 /**
  * @author: db
- * Date: 29.01.11
  */
 public class RW {
   private RW() {

@@ -30,7 +30,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Aug 12, 2010
  */
 public abstract class AntDomPropertyDefiningElement extends AntDomElement implements PropertiesProvider {
 

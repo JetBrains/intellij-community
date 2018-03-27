@@ -33,7 +33,6 @@ import java.util.concurrent.Executor;
 
 /**
 * @author Eugene Zhuravlev
-*         Date: 1/22/12
 */
 @ChannelHandler.Sharable
 final class ProtobufClientMessageHandler<T extends ProtobufResponseHandler> extends SimpleChannelInboundHandler<MessageLite> {

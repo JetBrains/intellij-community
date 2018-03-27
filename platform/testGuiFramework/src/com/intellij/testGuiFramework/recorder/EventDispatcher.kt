@@ -19,7 +19,6 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.testGuiFramework.recorder.ui.GuiScriptEditorFrame
 import java.awt.Component
 import java.awt.Container
 import java.awt.KeyboardFocusManager
@@ -112,7 +111,7 @@ object EventDispatcher {
   }
 
   private fun isMainFrame(component: Component?): Boolean {
-    return component is JFrame && component.title == GuiScriptEditorFrame.GUI_SCRIPT_FRAME_TITLE
+    return component is JFrame && component.title == "GUI Script Editor"
   }
 
   private fun isMacNativeAction(keyEvent: KeyEvent): Boolean{

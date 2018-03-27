@@ -28,7 +28,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static com.intellij.util.ui.JBUI.ScaleType.PIX_SCALE;
-import static java.lang.Math.ceil;
 
 /**
  * @author max
@@ -116,6 +115,7 @@ public class EmptyIcon extends JBUI.CachingScalableJBIcon<EmptyIcon> {
     return new EmptyIcon(this);
   }
 
+  @NotNull
   @Override
   public EmptyIcon withIconPreScaled(boolean preScaled) {
     if (myUseCache && isIconPreScaled() != preScaled) {
@@ -144,12 +144,12 @@ public class EmptyIcon extends JBUI.CachingScalableJBIcon<EmptyIcon> {
 
   @Override
   public int getIconWidth() {
-    return (int)ceil(scaleVal(width));
+    return (int)Math.ceil(scaleVal(width));
   }
 
   @Override
   public int getIconHeight() {
-    return (int)ceil(scaleVal(height));
+    return (int)Math.ceil(scaleVal(height));
   }
 
   @Override

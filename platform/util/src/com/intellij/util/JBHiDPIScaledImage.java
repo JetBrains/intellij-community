@@ -25,7 +25,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.ImageObserver;
 
-import static java.lang.Math.ceil;
+import static java.lang.Math.round;
 
 /**
 * @author Konstantin Bulenkov
@@ -152,7 +152,7 @@ public class JBHiDPIScaledImage extends BufferedImage {
     }
     JBHiDPIScaledImage newImg = new JBHiDPIScaledImage(newUserWidth, newUserHeight, getType());
     Graphics2D g = newImg.createGraphics();
-    g.drawImage(scaled, 0, 0, (int)ceil(newUserWidth), (int)ceil(newUserHeight),
+    g.drawImage(scaled, 0, 0, (int)round(newUserWidth), (int)round(newUserHeight),
                 0, 0, scaled.getWidth(null), scaled.getHeight(null), null);
     g.dispose();
     return newImg;
@@ -213,7 +213,7 @@ public class JBHiDPIScaledImage extends BufferedImage {
    * @return the width
    */
   public int getUserWidth(ImageObserver observer) {
-    return myImage != null ? (int)ceil(myUserWidth) : (int)ceil(super.getWidth(observer) / myScale);
+    return myImage != null ? (int)round(myUserWidth) : (int)round(super.getWidth(observer) / myScale);
   }
 
   /**
@@ -223,7 +223,7 @@ public class JBHiDPIScaledImage extends BufferedImage {
    * @return the height
    */
   public int getUserHeight(ImageObserver observer) {
-    return myImage != null ? (int)ceil(myUserHeight) : (int)ceil(super.getHeight(observer) / myScale);
+    return myImage != null ? (int)round(myUserHeight) : (int)round(super.getHeight(observer) / myScale);
   }
 
   /**

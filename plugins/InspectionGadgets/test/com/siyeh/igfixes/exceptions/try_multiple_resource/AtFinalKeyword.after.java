@@ -1,9 +1,11 @@
 import java.io.*;
 class AtFinalKeyword {
     void foo(File file1, File file2) throws IOException {
-        try (final FileInputStream in = new FileInputStream(file1)) {
-            try (FileOutputStream out = new FileOutputStream(file2)) {
-                System.out.println(in + ", " + out);
+        //after first resource var
+        //after end
+        try (final FileInputStream in = /*comment in first*/new FileInputStream(file1)) {
+            try (FileOutputStream out /*comment in out*/ = new FileOutputStream(file2)) {//comment
+                System.out.println(in + ", " /*inside statement*/ + out); //commnt at sout
             }
         }
     }

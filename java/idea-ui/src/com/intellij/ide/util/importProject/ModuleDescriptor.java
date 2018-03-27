@@ -35,7 +35,6 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
-*         Date: Jul 13, 2007
 */
 public class ModuleDescriptor {
   private String myName;

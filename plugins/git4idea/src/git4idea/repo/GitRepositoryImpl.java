@@ -54,7 +54,7 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
                             @NotNull Disposable parentDisposable,
                             final boolean light) {
     super(project, rootDir, parentDisposable);
-    myVcs = assertNotNull(GitVcs.getInstance(project));
+    myVcs = GitVcs.getInstance(project);
     myGitDir = gitDir;
     myRepositoryFiles = GitRepositoryFiles.getInstance(gitDir);
     myReader = new GitRepositoryReader(myRepositoryFiles);

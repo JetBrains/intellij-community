@@ -24,7 +24,6 @@ import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 1/20/12
  */
 public abstract class ExtensionsImpl implements Extensions {
 

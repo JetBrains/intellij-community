@@ -18,17 +18,13 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Expirable;
 import com.intellij.openapi.util.ExpirableRunnable;
-import com.intellij.openapi.wm.FocusCommand;
-import com.intellij.openapi.wm.FocusRequestor;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyEvent;
 
 public class IdeFocusManagerHeadless extends IdeFocusManager {
 
@@ -37,12 +33,6 @@ public class IdeFocusManagerHeadless extends IdeFocusManager {
   @Override
   @NotNull
   public ActionCallback requestFocus(@NotNull final Component c, final boolean forced) {
-    return ActionCallback.DONE;
-  }
-
-  @Override
-  @NotNull
-  public ActionCallback requestFocus(@NotNull final FocusCommand command, final boolean forced) {
     return ActionCallback.DONE;
   }
 
@@ -74,16 +64,6 @@ public class IdeFocusManagerHeadless extends IdeFocusManager {
   }
 
   @Override
-  public boolean dispatch(@NotNull KeyEvent e) {
-    return false;
-  }
-
-  @Override
-  public boolean isFocusBeingTransferred() {
-    return false;
-  }
-
-  @Override
   @NotNull
   public ActionCallback requestDefaultFocus(boolean forced) {
     return ActionCallback.DONE;
@@ -92,27 +72,6 @@ public class IdeFocusManagerHeadless extends IdeFocusManager {
   @Override
   public boolean isFocusTransferEnabled() {
     return true;
-  }
-
-  @NotNull
-  @Override
-  public Expirable getTimestamp(boolean trackOnlyForcedCommands) {
-    return new Expirable() {
-      @Override
-      public boolean isExpired() {
-        return false;
-      }
-    };
-  }
-
-  @NotNull
-  @Override
-  public FocusRequestor getFurtherRequestor() {
-    return this;
-  }
-
-  @Override
-  public void revalidateFocus(@NotNull ExpirableRunnable runnable) {
   }
 
   @Override

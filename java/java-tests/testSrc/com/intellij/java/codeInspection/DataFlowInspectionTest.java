@@ -488,9 +488,24 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
     checkIntentionResult("Remove 'for' statement");
   }
 
+  public void testSideEffectReturn() {
+    doTest();
+    checkIntentionResult("Simplify 'Test.valueOf(...) != null' to true extracting side effects");
+  }
+
+  public void testSideEffectNoBrace() {
+    doTest();
+    checkIntentionResult("Simplify 'Test.valueOf(...) != null' to true extracting side effects");
+  }
+
   public void testSimplifyConcatWithParentheses() {
     doTest();
     checkIntentionResult("Simplify 'f' to false");
+  }
+
+  public void testSideEffectWhile() {
+    doTest();
+    checkIntentionResult("Remove 'while' statement extracting side effects");
   }
 
   public void testUsingInterfaceConstant() { doTest();}
@@ -554,8 +569,20 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testGetterOfNullableFieldIsNotAnnotated() { doTest(); }
 
   public void testGetterOfNullableFieldIsNotNull() { doTest(); }
+
+  public void testArrayStoreProblems() { doTest(); }
+
+  public void testNestedScopeComplexity() { doTest(); }
+
+  public void testNullableReturn() { doTest(); }
   public void testManyBooleans() { doTest(); }
+  public void testPureNoArgMethodAsVariable() { doTest(); }
+  public void testRedundantAssignment() { doTest(); }
+  public void testXorNullity() { doTest(); }
   public void testPrimitiveNull() { doTest(); }
+  public void testLessThanRelations() { doTest(); }
+  public void testAdvancedArrayAccess() { doTest(); }
   public void testNullableGetterInLoop() { doTest(); }
   public void testNullabilityBasics() { doTest(); }
+  public void testReassignedVarInLoop() { doTest(); }
 }

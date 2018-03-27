@@ -1,11 +1,15 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.compiler;
 
 import com.intellij.CommonBundle;
 import com.intellij.ProjectTopics;
 import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
 import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompiler;
+import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompilerConfiguration;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacCompiler;
+import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -37,6 +41,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.impl.artifacts.ArtifactBySourceFileFinder;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.xmlb.Accessor;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
@@ -47,21 +54,26 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.compiler.JavaCompilers;
+import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import org.jetbrains.jps.model.java.impl.compiler.ProcessorConfigProfileImpl;
+import org.jetbrains.jps.model.java.impl.compiler.ResourcePatterns;
 import org.jetbrains.jps.model.serialization.java.compiler.AnnotationProcessorProfileSerializer;
 import org.jetbrains.jps.model.serialization.java.compiler.JpsJavaCompilerConfigurationSerializer;
 
 import java.io.File;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.intellij.compiler.ExternalCompilerConfigurationStorageKt.*;
 import static com.intellij.util.JdomKt.element;
+import static org.jetbrains.jps.model.java.impl.compiler.ResourcePatterns.normalizeWildcards;
 import static org.jetbrains.jps.model.serialization.java.compiler.JpsJavaCompilerConfigurationSerializer.DEFAULT_WILDCARD_PATTERNS;
 
 @State(name = "CompilerConfiguration", storages = @Storage("compiler.xml"))
 public class CompilerConfigurationImpl extends CompilerConfiguration implements PersistentStateComponent<Element>, ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.CompilerConfiguration");
+
   public static final String TESTS_EXTERNAL_COMPILER_HOME_PROPERTY_NAME = "tests.external.compiler.home";
   public static final int DEFAULT_BUILD_PROCESS_HEAP_SIZE = 700;
 
@@ -111,6 +123,13 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       public void moduleAdded(@NotNull Project project, @NotNull Module module) {
         myProcessorsProfilesMap = null; // clear cache
       }
+
+      @Override
+      public void modulesRenamed(@NotNull Project project,
+                                 @NotNull List<Module> modules,
+                                 @NotNull Function<Module, String> oldNameProvider) {
+        updateModuleNames(modules.stream().collect(Collectors.toMap(oldNameProvider::fun, Module::getName)));
+      }
     });
   }
 
@@ -147,6 +166,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
 
   @Override
   public Element getState() {
+
     Element state = new Element("state");
     XmlSerializer.serializeInto(myState, state, new SkipDefaultValuesSerializationFilters() {
       @Override
@@ -236,6 +256,39 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     myState.BUILD_PROCESS_ADDITIONAL_VM_OPTIONS = options == null? "" : options.trim();
   }
 
+  private void updateModuleNames(Map<String, String> moduleNameMap) {
+    JpsJavaCompilerOptions settings = getCompilerSettings();
+    boolean updated = false;
+    for (Map.Entry<String, String> entry : moduleNameMap.entrySet()) {
+      String targetLevel = myModuleBytecodeTarget.remove(entry.getKey());
+      if (targetLevel != null) {
+        myModuleBytecodeTarget.put(entry.getValue(), targetLevel);
+        updated = true;
+      }
+      if (settings != null) {
+        String options = settings.ADDITIONAL_OPTIONS_OVERRIDE.remove(entry.getKey());
+        if (options != null) {
+          settings.ADDITIONAL_OPTIONS_OVERRIDE.put(entry.getValue(), options);
+          updated = true;
+        }
+      }
+    }
+
+    for (ProcessorConfigProfile profile : myModuleProcessorProfiles) {
+      Set<String> names = profile.getModuleNames();
+      Collection<String> updatedNames = ContainerUtil.intersection(names, moduleNameMap.keySet());
+      if (!updatedNames.isEmpty()) {
+        profile.removeModuleNames(updatedNames);
+        profile.addModuleNames(ContainerUtil.map(updatedNames, moduleNameMap::get));
+        updated = true;
+      }
+    }
+
+    if (updated) {
+      BuildManager.getInstance().clearState(myProject);
+    }
+  }
+
   @Override
   public void setProjectBytecodeTarget(@Nullable String level) {
     final String previous = myBytecodeTargetLevel;
@@ -303,6 +356,47 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     catch (MalformedPatternException e) {
       LOG.error(e);
     }
+  }
+
+  @NotNull
+  @Override
+  public List<String> getAdditionalOptions(@NotNull Module module) {
+    JpsJavaCompilerOptions settings = getCompilerSettings();
+    if (settings != null) {
+      String options = settings.ADDITIONAL_OPTIONS_OVERRIDE.getOrDefault(module.getName(), settings.ADDITIONAL_OPTIONS_STRING);
+      if (!StringUtil.isEmptyOrSpaces(options)) {
+        return ParametersListUtil.parse(options);
+      }
+    }
+    return Collections.emptyList();
+  }
+
+  @Override
+  public void setAdditionalOptions(@NotNull Module module, @NotNull List<String> options) {
+    JpsJavaCompilerOptions settings = getCompilerSettings();
+    if (settings != null) {
+      String previous = settings.ADDITIONAL_OPTIONS_OVERRIDE.getOrDefault(module.getName(), settings.ADDITIONAL_OPTIONS_STRING);
+      String newValue = ParametersListUtil.join(options);
+      if (!newValue.equals(previous)) {
+        settings.ADDITIONAL_OPTIONS_OVERRIDE.put(module.getName(), newValue);
+        BuildManager.getInstance().clearState(myProject);
+      }
+    }
+  }
+
+  private JpsJavaCompilerOptions getCompilerSettings() {
+    BackendCompiler compiler = getDefaultCompiler();
+    if (compiler != null) {
+      String id = compiler.getId();
+      if (id == JavaCompilers.JAVAC_ID) {
+        return JavacConfiguration.getOptions(myProject, JavacConfiguration.class);
+      }
+      else if (JavaCompilers.ECLIPSE_ID == id) {
+        return EclipseCompilerConfiguration.getOptions(myProject, EclipseCompilerConfiguration.class);
+      }
+    }
+
+    return null;
   }
 
   public static String getTestsExternalCompilerHome() {
@@ -559,17 +653,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     if (slash >= 0) {
       dirPattern = wildcardPattern.substring(0, slash + 1);
       wildcardPattern = wildcardPattern.substring(slash + 1);
-      if (!dirPattern.startsWith("/")) {
-        dirPattern = "/" + dirPattern;
-      }
-      //now dirPattern starts and ends with '/'
-
-      dirPattern = normalizeWildcards(dirPattern);
-
-      dirPattern = StringUtil.replace(dirPattern, "/.*.*/", "(/.*)?/");
-      dirPattern = StringUtil.trimEnd(dirPattern, "/");
-
-      dirPattern = optimize(dirPattern);
+      dirPattern = ResourcePatterns.optimizeDirPattern(dirPattern);
     }
 
     wildcardPattern = normalizeWildcards(wildcardPattern);
@@ -582,16 +666,6 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
 
   private static String optimize(String wildcardPattern) {
     return wildcardPattern.replaceAll("(?:\\.\\*)+", ".*");
-  }
-
-  private static String normalizeWildcards(String wildcardPattern) {
-    wildcardPattern = StringUtil.replace(wildcardPattern, "\\!", "!");
-    wildcardPattern = StringUtil.replace(wildcardPattern, ".", "\\.");
-    wildcardPattern = StringUtil.replace(wildcardPattern, "*?", ".+");
-    wildcardPattern = StringUtil.replace(wildcardPattern, "?*", ".+");
-    wildcardPattern = StringUtil.replace(wildcardPattern, "*", ".*");
-    wildcardPattern = StringUtil.replace(wildcardPattern, "?", ".");
-    return wildcardPattern;
   }
 
   public static boolean isPatternNegated(String wildcardPattern) {

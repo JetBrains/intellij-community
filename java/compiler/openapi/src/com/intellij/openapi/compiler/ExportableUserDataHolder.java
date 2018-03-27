@@ -23,7 +23,6 @@ import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 2/21/12
  */
 public interface ExportableUserDataHolder extends UserDataHolder{
 

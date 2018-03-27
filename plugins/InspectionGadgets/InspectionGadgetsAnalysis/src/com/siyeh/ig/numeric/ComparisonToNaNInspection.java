@@ -25,6 +25,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
@@ -93,7 +94,8 @@ public class ComparisonToNaNInspection extends BaseInspection {
         operand = lhs;
       }
       assert operand != null;
-      final String operandText = operand.getText();
+      CommentTracker commentTracker = new CommentTracker();
+      final String operandText = commentTracker.markUnchanged(operand).getText();
       final IElementType tokenType = comparison.getOperationTokenType();
       final String negationText;
       if (tokenType.equals(JavaTokenType.EQEQ)) {
@@ -103,7 +105,8 @@ public class ComparisonToNaNInspection extends BaseInspection {
         negationText = "!";
       }
       @NonNls final String newExpressionText = negationText + typeText + ".isNaN(" + operandText + ')';
-      PsiReplacementUtil.replaceExpression(comparison, newExpressionText);
+
+      PsiReplacementUtil.replaceExpression(comparison, newExpressionText, commentTracker);
     }
   }
 

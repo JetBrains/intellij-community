@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.junit;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -20,6 +6,7 @@ import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.codeInsight.intention.impl.AddOnDemandStaticImportAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.actions.CleanupInspectionIntention;
+import com.intellij.codeInspection.actions.CleanupInspectionUtil;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -53,6 +40,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static com.intellij.codeInsight.AnnotationUtil.CHECK_HIERARCHY;
 
 public class JUnit5ConverterInspection extends BaseInspection {
   private static final List<String> ruleAnnotations = Arrays.asList(JUnitCommonClassNames.ORG_JUNIT_RULE, JUnitCommonClassNames.ORG_JUNIT_CLASS_RULE);
@@ -104,18 +93,18 @@ public class JUnit5ConverterInspection extends BaseInspection {
   }
 
   protected static boolean canBeConvertedToJUnit5(PsiClass aClass) {
-    if (AnnotationUtil.isAnnotated(aClass, TestUtils.RUN_WITH, true)) {
+    if (AnnotationUtil.isAnnotated(aClass, TestUtils.RUN_WITH, CHECK_HIERARCHY)) {
       return false;
     }
 
     for (PsiField field : aClass.getAllFields()) {
-      if (AnnotationUtil.isAnnotated(field, ruleAnnotations)) {
+      if (AnnotationUtil.isAnnotated(field, ruleAnnotations, 0)) {
         return false;
       }
     }
 
     for (PsiMethod method : aClass.getMethods()) {
-      if (AnnotationUtil.isAnnotated(method, ruleAnnotations)) {
+      if (AnnotationUtil.isAnnotated(method, ruleAnnotations, 0)) {
         return false;
       }
 
@@ -238,7 +227,7 @@ public class JUnit5ConverterInspection extends BaseInspection {
           }
         }
         super.performRefactoring(migrateUsages.toArray(new UsageInfo[migrateUsages.size()]));
-        CleanupInspectionIntention.applyFixes(myProject, "Convert Assertions", descriptions, JUnit5AssertionsConverterInspection.ReplaceObsoleteAssertsFix.class, false);
+        CleanupInspectionUtil.getInstance().applyFixes(myProject, "Convert Assertions", descriptions, JUnit5AssertionsConverterInspection.ReplaceObsoleteAssertsFix.class, false);
       }
 
       @Override
@@ -282,7 +271,7 @@ public class JUnit5ConverterInspection extends BaseInspection {
       }
     }
   }
-  
+
   private static class MyDescriptionBasedUsageInfo extends UsageInfo {
     private final ProblemDescriptor myDescriptor;
 

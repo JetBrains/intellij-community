@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.impl.PluginLayout
+import org.jetbrains.intellij.build.python.PythonCommunityPluginModules
 
 import static org.jetbrains.intellij.build.impl.PluginLayout.plugin
 
@@ -52,7 +39,6 @@ class CommunityRepositoryModules {
     "xml-openapi",
     "xml-psi-api",
     "xml-structure-view-api",
-    "uast-common",
   ]
 
   static List<String> PLATFORM_IMPLEMENTATION_MODULES = [
@@ -65,8 +51,6 @@ class CommunityRepositoryModules {
     "editor-ui-ex",
     "images",
     "indexing-impl",
-    "jps-model-impl",
-    "jps-model-serialization",
     "json",
     "lang-impl",
     "lvcs-impl",
@@ -112,12 +96,9 @@ class CommunityRepositoryModules {
       withModule("properties-psi-impl", "properties.jar")
     },
     plugin("git4idea") {
-      withModule("git4idea-rt", "git4idea-rt.jar", false)
+      withModule("git4idea-rt", "git4idea-rt.jar", null)
       withOptionalModule("remote-servers-git")
       withOptionalModule("remote-servers-git-java", "remote-servers-git.jar")
-    },
-    plugin("svn4idea") {
-      withResource("lib/licenses", "lib/licenses")
     },
     plugin("cvs-plugin") {
       directoryName = "cvsIntegration"
@@ -210,7 +191,7 @@ class CommunityRepositoryModules {
       withModule("devkit-jps-plugin")
     },
     plugin("eclipse") {
-      withModule("eclipse-jps-plugin", "eclipse-jps-plugin.jar", false)
+      withModule("eclipse-jps-plugin", "eclipse-jps-plugin.jar", null)
       withModule("common-eclipse-util")
     },
     plugin("coverage") {

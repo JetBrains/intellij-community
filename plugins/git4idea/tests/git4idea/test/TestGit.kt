@@ -35,7 +35,7 @@ import java.io.File
  */
 val UNKNOWN_ERROR_TEXT: String = "unknown error"
 
-val SUCCESS_RESULT = GitCommandResult(true, 0, emptyList(), emptyList(), null)
+val SUCCESS_RESULT = GitCommandResult(true, 0, false, emptyList(), emptyList())
 
 class TestGitImpl : GitImpl() {
   private val LOG = Logger.getInstance(TestGitImpl::class.java)
@@ -171,7 +171,7 @@ class TestGitImpl : GitImpl() {
     }
   }
 
-  private fun fatalResult() = GitCommandResult(false, 128, listOf("fatal: error: $UNKNOWN_ERROR_TEXT"), emptyList<String>(), null)
+  private fun fatalResult() = GitCommandResult(false, 128, false, listOf("fatal: error: $UNKNOWN_ERROR_TEXT"), emptyList<String>())
 }
 
 

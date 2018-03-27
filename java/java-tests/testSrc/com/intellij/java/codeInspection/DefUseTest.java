@@ -57,6 +57,12 @@ public class DefUseTest extends LightCodeInsightFixtureTestCase {
   public void testNestedTryFinallyInEndlessLoop() { doTest(); }
   public void testNestedTryFinallyInForLoop() { doTest(); }
   public void testFieldInitializer() { doTest(); }
+  public void testFieldIgnoringRedundantInitializer() {
+    DefUseInspection inspection = new DefUseInspection();
+    inspection.REPORT_REDUNDANT_INITIALIZER = false;
+    myFixture.enableInspections(inspection);
+    myFixture.testHighlighting(getTestName(false) + ".java");
+  }
 
   private void doTest() {
     myFixture.enableInspections(new DefUseInspection());

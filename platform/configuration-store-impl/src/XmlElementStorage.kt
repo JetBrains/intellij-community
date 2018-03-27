@@ -76,7 +76,7 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
 
   private fun loadState(element: Element): StateMap {
     beforeElementLoaded(element)
-    return StateMap.fromMap(FileStorageCoreUtil.load(element, pathMacroSubstitutor, true))
+    return StateMap.fromMap(FileStorageCoreUtil.load(element, pathMacroSubstitutor))
   }
 
   fun setDefaultState(element: Element) {
@@ -118,12 +118,12 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
     override fun createSaveSession() = if (copiedStates == null || storage.checkIsSavingDisabled()) null else this
 
     override fun setSerializedState(componentName: String, element: Element?) {
-      element?.normalizeRootName()
+      val normalized = element?.normalizeRootName()
       if (copiedStates == null) {
-        copiedStates = setStateAndCloneIfNeed(componentName, element, originalStates, newLiveStates)
+        copiedStates = setStateAndCloneIfNeed(componentName, normalized, originalStates, newLiveStates)
       }
       else {
-        updateState(copiedStates!!, componentName, element, newLiveStates)
+        updateState(copiedStates!!, componentName, normalized, newLiveStates)
       }
     }
 
@@ -213,7 +213,7 @@ private fun save(states: StateMap, rootElementName: String?, newLiveStates: Map<
   for (componentName in states.keys()) {
     val element: Element
     try {
-      element = states.getElement(componentName, newLiveStates) ?: continue
+      element = states.getElement(componentName, newLiveStates)?.clone() ?: continue
     }
     catch (e: Exception) {
       LOG.error("Cannot save \"$componentName\" data", e)
@@ -222,11 +222,11 @@ private fun save(states: StateMap, rootElementName: String?, newLiveStates: Map<
 
     // name attribute should be first
     val elementAttributes = element.attributes
-    if (elementAttributes.isEmpty()) {
-      element.setAttribute(FileStorageCoreUtil.NAME, componentName)
+    var nameAttribute = element.getAttribute(FileStorageCoreUtil.NAME)
+    if (nameAttribute != null && nameAttribute === elementAttributes.get(0) && componentName == nameAttribute.value) {
+      // all is OK
     }
     else {
-      var nameAttribute = element.getAttribute(FileStorageCoreUtil.NAME)
       if (nameAttribute == null) {
         nameAttribute = Attribute(FileStorageCoreUtil.NAME, componentName)
         elementAttributes.add(0, nameAttribute)
@@ -250,12 +250,24 @@ private fun save(states: StateMap, rootElementName: String?, newLiveStates: Map<
 }
 
 internal fun Element.normalizeRootName(): Element {
-  if (parent != null) {
-    LOG.warn("State element must not have parent ${JDOMUtil.writeElement(this)}")
-    detach()
+  if (org.jdom.JDOMInterner.isInterned(this)) {
+    if (FileStorageCoreUtil.COMPONENT == name) {
+      return this
+    }
+    else {
+      val clone = clone()
+      clone.name = FileStorageCoreUtil.COMPONENT
+      return clone
+    }
   }
-  name = FileStorageCoreUtil.COMPONENT
-  return this
+  else {
+    if (parent != null) {
+      LOG.warn("State element must not have parent ${JDOMUtil.writeElement(this)}")
+      detach()
+    }
+    name = FileStorageCoreUtil.COMPONENT
+    return this
+  }
 }
 
 // newStorageData - myStates contains only live (unarchived) states

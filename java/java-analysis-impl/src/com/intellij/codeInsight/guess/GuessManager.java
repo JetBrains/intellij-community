@@ -21,10 +21,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
+import java.util.List;
 
 public abstract class GuessManager {
   public static GuessManager getInstance(Project project) {
@@ -38,8 +38,8 @@ public abstract class GuessManager {
   public abstract PsiType[] guessTypeToCast(PsiExpression expr);
 
   @NotNull 
-  public abstract Map<PsiExpression, PsiType> getControlFlowExpressionTypes(@NotNull PsiExpression forPlace);
+  public abstract MultiMap<PsiExpression, PsiType> getControlFlowExpressionTypes(@NotNull PsiExpression forPlace);
 
-  @Nullable
-  public abstract PsiType getControlFlowExpressionType(@NotNull PsiExpression expr);
+  @NotNull
+  public abstract List<PsiType> getControlFlowExpressionTypeConjuncts(@NotNull PsiExpression expr);
 }

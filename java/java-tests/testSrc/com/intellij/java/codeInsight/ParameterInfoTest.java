@@ -14,10 +14,10 @@ import com.intellij.lang.parameterInfo.ParameterInfoUIContextEx;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.EditorHintFixture;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.testFramework.utils.parameterInfo.MockCreateParameterInfoContext;
@@ -32,10 +32,16 @@ public class ParameterInfoTest extends LightCodeInsightFixtureTestCase {
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/parameterInfo/";
   }
 
-  public void testPrivateMethodOfEnclosingClass() { doTest("param"); }
-  public void testNotAccessible() { doTest("param"); }
+  public void testPrivateMethodOfEnclosingClass() { doTest(); }
+  public void testNotAccessible() { doTest(); }
 
-  private void doTest(String paramsList) {
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_8;
+  }
+
+  private void doTest() {
     myFixture.configureByFile(getTestName(false) + ".java");
 
     MethodParameterInfoHandler handler = new MethodParameterInfoHandler();
@@ -45,10 +51,6 @@ public class ParameterInfoTest extends LightCodeInsightFixtureTestCase {
     Object[] itemsToShow = context.getItemsToShow();
     assertNotNull(itemsToShow);
     assertTrue(itemsToShow.length > 0);
-    Object[] params = handler.getParametersForDocumentation(itemsToShow[0], context);
-    assertNotNull(params);
-    String joined = StringUtil.join(params, o -> ((PsiParameter)o).getName(), ",");
-    assertEquals(paramsList, joined);
   }
 
   public void testParameterInfoDoesNotShowInternalJetbrainsAnnotations() {
@@ -112,6 +114,24 @@ public class ParameterInfoTest extends LightCodeInsightFixtureTestCase {
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_SHOW_PARAMETER_INFO);
     UIUtil.dispatchAllInvocationEvents();
     assertEquals("<html><b>String s</b>, int... p</html>", hintFixture.getCurrentHintText());
+  }
+
+  public void testPreselectionOfCandidatesInNestedMethod() {
+    myFixture.configureByFile(getTestName(false) + ".java");
+
+    MethodParameterInfoHandler handler = new MethodParameterInfoHandler();
+    CreateParameterInfoContext context = new MockCreateParameterInfoContext(getEditor(), getFile());
+    PsiExpressionList list = handler.findElementForParameterInfo(context);
+    assertNotNull(list);
+    Object[] itemsToShow = context.getItemsToShow();
+    assertNotNull(itemsToShow);
+    assertEquals(3, itemsToShow.length);
+    assertTrue(itemsToShow[0] instanceof MethodCandidateInfo);
+    ParameterInfoComponent.createContext(itemsToShow, getEditor(), handler, -1);
+    MockUpdateParameterInfoContext updateParameterInfoContext = updateParameterInfo(handler, list, itemsToShow);
+    assertTrue(updateParameterInfoContext.isUIComponentEnabled(0) ||
+                updateParameterInfoContext.isUIComponentEnabled(1) ||
+                updateParameterInfoContext.isUIComponentEnabled(2));
   }
 
   private void doTest2CandidatesWithPreselection() {
@@ -284,7 +304,7 @@ public class ParameterInfoTest extends LightCodeInsightFixtureTestCase {
                        "Bar(boolean a);" +
                        "Bar(String a);" +
                        "Bar(int a);" +
-                       "}; " +
+                       "} " +
                        "class Bar2 {}");
     myFixture.configureByText("a.java", "class Foo {{ new Bar<caret> }}");
     LookupElement[] elements = myFixture.completeBasic();
@@ -302,7 +322,13 @@ public class ParameterInfoTest extends LightCodeInsightFixtureTestCase {
 
   public void testNoStrikeoutForSingleDeprecatedMethod() {
     myFixture.configureByText(JavaFileType.INSTANCE, "class C { void m() { System.runFinalizersOnExit(true<caret>); } }");
-    assertEquals("<html>boolean value</html>", parameterPresentation(-1));
+    assertEquals("<html>boolean b</html>", parameterPresentation(-1));
+  }
+
+  public void testInferredWithVarargs() {
+    myFixture.configureByText(JavaFileType.INSTANCE, 
+                              "import java.util.*; class C { void m(Object objects[], List<Object> list) { Collections.addAll(<caret>list, objects);} }");
+    assertEquals("<html>Collection&lt;? super Object&gt; collection, @NotNull Object... ts</html>", parameterPresentation(-1));
   }
 
   private void checkHighlighted(int lineIndex) {
@@ -311,6 +337,28 @@ public class ParameterInfoTest extends LightCodeInsightFixtureTestCase {
     PsiExpressionList list = handler.findElementForParameterInfo(context);
     Object[] itemsToShow = context.getItemsToShow();
     assertEquals(itemsToShow[lineIndex], updateParameterInfo(handler, list, itemsToShow).getHighlightedParameter());
+  }
+
+  public void testTypeInvalidationByCompletion() {
+    myFixture.configureByFile(getTestName(false) + ".java");
+
+    MethodParameterInfoHandler handler = new MethodParameterInfoHandler();
+    CreateParameterInfoContext context = new MockCreateParameterInfoContext(getEditor(), getFile());
+    PsiExpressionList argList = handler.findElementForParameterInfo(context);
+    assertNotNull(argList);
+    Object[] items = context.getItemsToShow();
+    assertSize(2, items);
+    updateParameterInfo(handler, argList, items);
+    
+    myFixture.completeBasic();
+    myFixture.type('\n');
+
+    assertTrue(argList.isValid());
+    // items now contain references to invalid PSI
+    updateParameterInfo(handler, argList, items);
+    assertSize(2, context.getItemsToShow());
+    
+    myFixture.checkResultByFile(getTestName(false) + "_after.java");
   }
 
 }

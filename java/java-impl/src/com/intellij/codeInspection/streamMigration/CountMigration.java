@@ -17,6 +17,7 @@ package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.codeInspection.streamMigration.OperationReductionMigration.SUM_OPERATION;
@@ -41,6 +42,7 @@ class CountMigration extends BaseStreamApiMigration {
     PsiElement element = ((PsiReferenceExpression)operand).resolve();
     if (!(element instanceof PsiLocalVariable)) return null;
     PsiLocalVariable var = (PsiLocalVariable)element;
-    return replaceWithOperation(tb.getStreamSourceStatement(), var, tb.generate() + ".count()", PsiType.LONG, SUM_OPERATION);
+    CommentTracker ct = new CommentTracker();
+    return replaceWithOperation(tb.getStreamSourceStatement(), var, tb.generate(ct) + ".count()", PsiType.LONG, SUM_OPERATION, ct);
   }
 }

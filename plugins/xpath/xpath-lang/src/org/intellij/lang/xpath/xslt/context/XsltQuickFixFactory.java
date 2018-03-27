@@ -42,6 +42,7 @@ public class XsltQuickFixFactory implements XPathQuickFixFactory {
     private XsltQuickFixFactory() {
     }
 
+    @Override
     public Fix<XPathExpression>[] createImplicitTypeConversionFixes(XPathExpression expression, XPathType type, boolean explicit) {
         //noinspection unchecked
         return explicit ? new Fix[]{
@@ -53,6 +54,7 @@ public class XsltQuickFixFactory implements XPathQuickFixFactory {
     }
 
 
+    @Override
     public Fix<XPathExpression>[] createRedundantTypeConversionFixes(XPathExpression expression) {
         //noinspection unchecked
         return new Fix[]{
@@ -60,6 +62,7 @@ public class XsltQuickFixFactory implements XPathQuickFixFactory {
         };
     }
 
+    @Override
     public Fix<XPathNodeTest>[] createUnknownNodeTestFixes(XPathNodeTest test) {
         //noinspection unchecked
         return new Fix[]{
@@ -67,12 +70,14 @@ public class XsltQuickFixFactory implements XPathQuickFixFactory {
         };
     }
 
+    @Override
     @NotNull
     public SuppressIntentionAction[] getSuppressActions(XPathInspection inspection) {
         final List<SuppressIntentionAction> actions = InspectionUtil.getSuppressActions(inspection, true);
         return actions.toArray(new SuppressIntentionAction[actions.size()]);
     }
 
+    @Override
     public boolean isSuppressedFor(PsiElement element, XPathInspection inspection) {
         return InspectionUtil.isSuppressed(inspection, element);
     }
@@ -86,6 +91,7 @@ public class XsltQuickFixFactory implements XPathQuickFixFactory {
             return false;
         }
 
+        @Override
         protected void invokeImpl(final Project project, final PsiFile file) throws IncorrectOperationException {
             FileAssociationsConfigurable.editAssociations(project, PsiTreeUtil.getContextOfType(file, XmlFile.class, false));
         }

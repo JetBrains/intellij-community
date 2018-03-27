@@ -1,7 +1,14 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.debugger.settings;
 
+import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.jdi.DecompiledLocalVariable;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.psi.*;
+import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 
 import java.util.ArrayList;
@@ -92,19 +99,62 @@ public class CaptureSettingsProvider {
     IDE_INSERT_POINTS = StreamEx.of(INSERT_POINTS).map(p -> p.myInsertPoint).nonNull().toList();
   }
 
-  public static List<AgentPoint> getCapturePoints() {
-    return Collections.unmodifiableList(CAPTURE_POINTS);
-  }
-
-  public static List<AgentPoint> getInsertPoints() {
-    return Collections.unmodifiableList(INSERT_POINTS);
+  public static List<AgentPoint> getPoints() {
+    List<AgentPoint> res = ContainerUtil.concat(CAPTURE_POINTS, INSERT_POINTS);
+    if (Registry.is("debugger.capture.points.agent.annotations")) {
+      res = ContainerUtil.concat(res, getAnnotationPoints());
+    }
+    return res;
   }
 
   public static List<CapturePoint> getIdeInsertPoints() {
-    return Collections.unmodifiableList(IDE_INSERT_POINTS);
+    List<CapturePoint> res = Collections.unmodifiableList(IDE_INSERT_POINTS);
+    if (Registry.is("debugger.capture.points.agent.annotations")) {
+      res = ContainerUtil.concat(
+        res, StreamEx.of(getAnnotationPoints()).select(AgentInsertPoint.class).map(p -> p.myInsertPoint).nonNull().toList());
+    }
+    return res;
   }
 
-  public static class AgentPoint {
+  private static List<AgentPoint> getAnnotationPoints() {
+    return ReadAction.compute(() -> {
+      List<AgentPoint> annotationPoints = new ArrayList<>();
+      CaptureConfigurable.processCaptureAnnotations((capture, e) -> {
+        PsiMethod method;
+        KeyProvider keyProvider;
+        if (e instanceof PsiMethod) {
+          method = (PsiMethod)e;
+          keyProvider = THIS_KEY;
+        }
+        else if (e instanceof PsiParameter) {
+          PsiParameter psiParameter = (PsiParameter)e;
+          method = (PsiMethod)psiParameter.getDeclarationScope();
+          keyProvider = param(method.getParameterList().getParameterIndex(psiParameter));
+        }
+        else {
+          return;
+        }
+        PsiModifierList modifierList = e.getModifierList();
+        if (modifierList != null) {
+          PsiAnnotation annotation = modifierList.findAnnotation(CaptureConfigurable.getAnnotationName(capture));
+          if (annotation != null) {
+            PsiAnnotationMemberValue keyExpressionValue = annotation.findAttributeValue("keyExpression");
+            if (keyExpressionValue != null && !"\"\"".equals(keyExpressionValue.getText())) {
+              return; //skip for now
+            }
+          }
+        }
+        String className = JVMNameUtil.getNonAnonymousClassName(method.getContainingClass()).replaceAll("\\.", "/");
+        String methodName = JVMNameUtil.getJVMMethodName(method);
+        AgentPoint point =
+          capture ? new AgentCapturePoint(className, methodName, keyProvider) : new AgentInsertPoint(className, methodName, keyProvider);
+        annotationPoints.add(point);
+      });
+      return annotationPoints;
+    });
+  }
+
+  public static abstract class AgentPoint {
     public final String myClassName;
     public final String myMethodName;
     public final KeyProvider myKey;
@@ -112,15 +162,23 @@ public class CaptureSettingsProvider {
     public static final String SEPARATOR = " ";
 
     public AgentPoint(String className, String methodName, KeyProvider key) {
+      assert !className.contains(".") : "Classname should not contain . here";
       myClassName = className;
       myMethodName = methodName;
       myKey = key;
     }
+
+    public abstract boolean isCapture();
   }
 
   public static class AgentCapturePoint extends AgentPoint {
     public AgentCapturePoint(String className, String methodName, KeyProvider key) {
       super(className, methodName, key);
+    }
+
+    @Override
+    public boolean isCapture() {
+      return true;
     }
   }
 
@@ -144,6 +202,11 @@ public class CaptureSettingsProvider {
           myInsertPoint.myInsertKeyExpression = keyStr;
         }
       }
+    }
+
+    @Override
+    public boolean isCapture() {
+      return false;
     }
   }
 

@@ -15,6 +15,8 @@
  */
 package com.intellij.psi.codeStyle;
 
+import com.intellij.application.options.CodeStyle;
+import com.intellij.lang.Language;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -47,6 +49,7 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
   public volatile String PREFERRED_PROJECT_CODE_STYLE;
   private volatile CodeStyleSettings myTemporarySettings;
 
+  @SuppressWarnings("deprecation")
   public static CodeStyleSettingsManager getInstance(@Nullable Project project) {
     if (project == null || project.isDefault()) return getInstance();
     ProjectCodeStyleSettingsManager projectSettingsManager = ServiceManager.getService(project, ProjectCodeStyleSettingsManager.class);
@@ -54,6 +57,10 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
     return projectSettingsManager;
   }
 
+  /**
+   * @deprecated Use {@link CodeStyle#getDefaultSettings()} instead.
+   */
+  @Deprecated
   public static CodeStyleSettingsManager getInstance() {
     return ServiceManager.getService(AppCodeStyleSettingsManager.class);
   }
@@ -63,7 +70,16 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
   }
   public CodeStyleSettingsManager() {}
 
+  /**
+   * @deprecated Use one of the following methods:
+   * <ul>
+   *   <li>{@link CodeStyle#getLanguageSettings(PsiFile, Language)} to get common settings for a language.</li>
+   *   <li>{@link CodeStyle#getCustomSettings(PsiFile, Class)} to get custom settings.</li>
+   * </ul>
+   * If {@code PsiFile} is not applicable, use {@link CodeStyle#getSettings(Project)}.
+   */
   @NotNull
+  @Deprecated
   public static CodeStyleSettings getSettings(@Nullable final Project project) {
     return getInstance(project).getCurrentSettings();
   }
@@ -81,6 +97,7 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
   public Element getState() {
     Element result = new Element("state");
     try {
+      //noinspection deprecation
       DefaultJDOMExternalizer.writeExternal(this, result, new DifferenceFilter<CodeStyleSettingsManager>(this, new CodeStyleSettingsManager()){
         @Override
         public boolean isAccept(@NotNull Field field) {
@@ -99,8 +116,9 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
   }
 
   @Override
-  public void loadState(Element state) {
+  public void loadState(@NotNull Element state) {
     try {
+      //noinspection deprecation
       DefaultJDOMExternalizer.readExternal(this, state);
     }
     catch (InvalidDataException e) {
@@ -155,7 +173,7 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
       if (documentManager != null) {
         PsiFile file = documentManager.getPsiFile(document);
         if (file != null) {
-          CommonCodeStyleSettings.IndentOptions indentOptions = getSettings(project).getIndentOptionsByFile(file, null, true, null);
+          CommonCodeStyleSettings.IndentOptions indentOptions = CodeStyle.getSettings(file).getIndentOptionsByFile(file, null, true, null);
           indentOptions.associateWithDocument(document);
         }
       }

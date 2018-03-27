@@ -78,7 +78,7 @@ public class SliceManager implements PersistentStateComponent<SliceManager.Store
     String dialogTitle = getElementDescription((dataFlowToThis ? BACK_TOOLWINDOW_ID : FORTH_TOOLWINDOW_ID) + " ", element, null);
 
     dialogTitle = Pattern.compile("(<style>.*</style>)|<[^<>]*>", Pattern.DOTALL).matcher(dialogTitle).replaceAll("");
-    SliceAnalysisParams params = handler.askForParams(element, dataFlowToThis, myStoredSettings, dialogTitle);
+    SliceAnalysisParams params = handler.askForParams(element, dataFlowToThis, myStoredSettings, StringUtil.unescapeXml(dialogTitle));
     if (params == null) return;
 
     SliceRootNode rootNode = new SliceRootNode(myProject, new DuplicateMap(),

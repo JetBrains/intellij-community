@@ -22,7 +22,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 10/20/12
  */
 @Tag("resource")
 public class ResourceRootConfiguration extends FilePattern {

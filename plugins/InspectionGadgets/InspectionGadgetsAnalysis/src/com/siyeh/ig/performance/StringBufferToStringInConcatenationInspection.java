@@ -24,6 +24,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -70,8 +71,9 @@ public class StringBufferToStringInConcatenationInspection extends BaseInspectio
       final PsiReferenceExpression expression = methodCall.getMethodExpression();
       final PsiExpression qualifier = expression.getQualifierExpression();
       assert qualifier != null;
-      final String newExpression = qualifier.getText();
-      PsiReplacementUtil.replaceExpression(methodCall, newExpression);
+      CommentTracker commentTracker = new CommentTracker();
+      final String newExpression = commentTracker.markUnchanged(qualifier).getText();
+      PsiReplacementUtil.replaceExpression(methodCall, newExpression, commentTracker);
     }
   }
 

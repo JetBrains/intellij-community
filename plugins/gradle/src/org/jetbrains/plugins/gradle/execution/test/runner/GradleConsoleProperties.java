@@ -5,8 +5,10 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.Location;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.testframework.JavaAwareTestConsoleProperties;
+import com.intellij.execution.testframework.JavaTestLocator;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
+import com.intellij.execution.testframework.sm.runner.SMTestLocator;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
@@ -28,6 +30,8 @@ import java.io.File;
  */
 public class GradleConsoleProperties extends SMTRunnerConsoleProperties {
   public static final BooleanProperty SHOW_INTERNAL_TEST_NODES = new BooleanProperty("showInternalTestNodes", false);
+  public static final SMTestLocator GRADLE_TEST_LOCATOR = JavaTestLocator.INSTANCE;
+
   @Nullable private File gradleTestReport;
 
   public GradleConsoleProperties(final ExternalSystemRunConfiguration configuration, Executor executor) {
@@ -63,6 +67,12 @@ public class GradleConsoleProperties extends SMTRunnerConsoleProperties {
   @Override
   public Navigatable getErrorNavigatable(@NotNull Location<?> location, @NotNull String stacktrace) {
     return JavaAwareTestConsoleProperties.getStackTraceErrorNavigatable(location, stacktrace);
+  }
+
+  @Nullable
+  @Override
+  public SMTestLocator getTestLocator() {
+    return GRADLE_TEST_LOCATOR;
   }
 
   @NotNull

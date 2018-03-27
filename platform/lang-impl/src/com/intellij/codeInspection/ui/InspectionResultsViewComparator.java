@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.ui;
 
@@ -27,6 +13,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionsConfigTreeComparator;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
@@ -54,7 +41,7 @@ public class InspectionResultsViewComparator implements Comparator<InspectionTre
     if (node2 instanceof InspectionSeverityGroupNode) return 1;
 
     if (node1 instanceof InspectionGroupNode && node2 instanceof InspectionGroupNode) {
-      return ((InspectionGroupNode)node1).getGroupTitle().compareToIgnoreCase(((InspectionGroupNode)node2).getGroupTitle());
+      return ((InspectionGroupNode)node1).getSubGroup().compareTo(((InspectionGroupNode)node2).getSubGroup());
     }
     if (node1 instanceof InspectionGroupNode) return -1;
     if (node2 instanceof InspectionGroupNode) return 1;
@@ -159,45 +146,43 @@ public class InspectionResultsViewComparator implements Comparator<InspectionTre
   }
 
   private static int compareEntities(final RefEntity entity1, final RefEntity entity2) {
+    if (entity1 != null && entity2 != null) {
+      int cmp = compareEntitiesByName(entity1, entity2);
+      if (cmp != 0) return cmp;
+    }
+    if (entity1 instanceof RefFile && entity2 instanceof RefFile) {
+      VirtualFile file1 = ((RefFile)entity1).getPointer().getVirtualFile();
+      VirtualFile file2 = ((RefFile)entity2).getPointer().getVirtualFile();
+      if (file1 instanceof VirtualFileWithId && file2 instanceof VirtualFileWithId) {
+        return ((VirtualFileWithId)file1).getId() - ((VirtualFileWithId)file2).getId();
+      }
+      int cmp = file1.getName().compareToIgnoreCase(file2.getName());
+      if (cmp != 0) return cmp;
+      cmp = file1.getPath().compareToIgnoreCase(file2.getPath());
+      return cmp;
+    }
     if (entity1 instanceof RefElement && entity2 instanceof RefElement) {
       final SmartPsiElementPointer p1 = ((RefElement)entity1).getPointer();
       final SmartPsiElementPointer p2 = ((RefElement)entity2).getPointer();
       if (p1 != null && p2 != null) {
         final VirtualFile file1 = p1.getVirtualFile();
         final VirtualFile file2 = p2.getVirtualFile();
-        if (file1 != null && file2 != null && file1.isValid() && file2.isValid()) {
-          if (file1.equals(file2)) {
-            final int positionComparing = PsiUtilCore.compareElementsByPosition(((RefElement)entity1).getElement(), ((RefElement)entity2).getElement());
-            if (positionComparing != 0) {
-              return positionComparing;
-            }
-          } else {
-            return file1.hashCode() - file2.hashCode();
+
+        if (file1 != null && file1.isValid() && file2 != null && file2.isValid()) {
+          int cmp = PsiUtilCore.compareElementsByPosition(((RefElement)entity1).getElement(), ((RefElement)entity2).getElement());
+          if (cmp != 0) return cmp;
+          if (file1 instanceof VirtualFileWithId && file2 instanceof VirtualFileWithId) {
+            return ((VirtualFileWithId)file1).getId() - ((VirtualFileWithId)file2).getId();
           }
+          return file1.getPath().compareToIgnoreCase(file2.getPath());
         }
-        if (file1 != null && Comparing.equal(file1, file2) && file1.isValid()) {
-          final int positionComparing = PsiUtilCore.compareElementsByPosition(((RefElement)entity1).getElement(), ((RefElement)entity2).getElement());
-          if (positionComparing != 0) {
-            return positionComparing;
-          }
-        }
+        return 0;
       }
+      if (p1 != null) return -1;
+      if (p2 != null) return 1;
+      return 0;
     }
-    if (entity1 instanceof RefFile && entity2 instanceof RefFile) {
-      final VirtualFile file1 = ((RefFile)entity1).getPointer().getVirtualFile();
-      final VirtualFile file2 = ((RefFile)entity2).getPointer().getVirtualFile();
-      if (file1 != null && file2 != null) {
-        if (file1.equals(file2)) return 0;
-        final int cmp = compareEntitiesByName(entity1, entity2);
-        if (cmp != 0) return cmp;
-        return file1.hashCode() - file2.hashCode();
-      }
-    }
-    if (entity1 != null && entity2 != null) {
-      return compareEntitiesByName(entity1, entity2);
-    }
-    if (entity1 != null) return -1;
-    return entity2 != null ? 1 : 0;
+    return entity1 != null ? -1 : entity2 == null ? 0 : 1;
   }
 
   private static int compareEntitiesByName(RefEntity entity1, RefEntity entity2) {

@@ -59,8 +59,8 @@ abstract class AbstractJavaUClass(givenParent: UElement?) : JavaAbstractUElement
   override fun hashCode() = psi.hashCode()
 }
 
-class JavaUClass private constructor(psi: PsiClass, override val uastParent: UElement?) :
-  AbstractJavaUClass(uastParent), PsiClass by psi {
+class JavaUClass private constructor(psi: PsiClass, val givenParent: UElement?) :
+  AbstractJavaUClass(givenParent), PsiClass by psi {
 
   override val psi: PsiClass
     get() = javaPsi

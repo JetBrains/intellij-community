@@ -28,10 +28,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
-import com.siyeh.ig.psiutils.BoolUtils;
-import com.siyeh.ig.psiutils.EquivalenceChecker;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -149,7 +146,10 @@ public class StringEqualsEmptyStringInspection extends BaseInspection {
           newExpression.append(checkedExpression.getText()).append(".length()==0");
         }
       }
-      PsiReplacementUtil.replaceExpression(expressionToReplace, newExpression.toString());
+
+      CommentTracker commentTracker = new CommentTracker();
+      commentTracker.markUnchanged(checkedExpression);
+      PsiReplacementUtil.replaceExpression(expressionToReplace, newExpression.toString(), commentTracker);
     }
 
     private static boolean isCheckedForNull(PsiExpression expression) {

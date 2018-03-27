@@ -32,10 +32,10 @@ class MarginOptionsUtil {
   }
 
   static String getDefaultVisualGuidesText(@NotNull CodeStyleSettings settings) {
-    List<Integer> softMargins = settings.getSoftMargins();
+    List<Integer> softMargins = settings.getDefaultSoftMargins();
     return getDefaultValueText(
       (softMargins.size() > 0
-       ? CommaSeparatedIntegersValueEditor.intListToString(settings.getSoftMargins())
+       ? CommaSeparatedIntegersValueEditor.intListToString(settings.getDefaultSoftMargins())
        : ApplicationBundle.message("settings.soft.margins.empty.list")));
   }
 

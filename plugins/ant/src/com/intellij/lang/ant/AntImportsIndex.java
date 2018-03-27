@@ -28,7 +28,6 @@ import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Apr 28, 2008
  */
 public class AntImportsIndex extends ScalarIndexExtension<Integer>{
   public static final ID<Integer, Void> INDEX_NAME = ID.create("ant-imports");

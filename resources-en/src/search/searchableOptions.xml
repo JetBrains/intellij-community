@@ -453,6 +453,7 @@
     <option name="use" hit="Use &quot;safe write&quot; (save changes to a temporary file first)" />
     <option name="write" hit="Use &quot;safe write&quot; (save changes to a temporary file first)" />
     <option name="sec" hit="sec." />
+    <option name="accessibility" hit="Accessibility" />
   </configurable>
   <configurable id="reference.settings.ide.settings.file-colors" configurable_name="File Colors">
     <option name="colors" hit="Enable File Colors" />
@@ -2087,7 +2088,6 @@
     <option name="contents" path="ActionManager" hit="Clear the contents of the console" />
     <option name="of" path="ActionManager" hit="Clear the contents of the console" />
     <option name="the" path="ActionManager" hit="Clear the contents of the console" />
-    <option name="clearcase" path="ActionManager" hit="ClearCase" />
     <option name="cached" path="ActionManager" hit="Clears cached revisions" />
     <option name="clears" path="ActionManager" hit="Clears cached revisions" />
     <option name="revisions" path="ActionManager" hit="Clears cached revisions" />
@@ -25190,45 +25190,6 @@
     <option name="project" hit="When project or module file is merged with conflicts:" />
     <option name="when" hit="When project or module file is merged with conflicts:" />
     <option name="with" hit="When project or module file is merged with conflicts:" />
-  </configurable>
-  <configurable id="vcs.ClearCase" configurable_name="ClearCase">
-    <option name="automatically" hit="Check out automatically hijacked file on check in" />
-    <option name="check" hit="Check out automatically hijacked file on check in" />
-    <option name="file" hit="Check out automatically hijacked file on check in" />
-    <option name="hijacked" hit="Check out automatically hijacked file on check in" />
-    <option name="in" hit="Check out automatically hijacked file on check in" />
-    <option name="on" hit="Check out automatically hijacked file on check in" />
-    <option name="out" hit="Check out automatically hijacked file on check in" />
-    <option name="clearcase" hit="ClearCase" />
-    <option name="checkouts" hit="Reserved Checkouts" />
-    <option name="reserved" hit="Reserved Checkouts" />
-    <option name="history" hit="Restrict history records:" />
-    <option name="records" hit="Restrict history records:" />
-    <option name="restrict" hit="Restrict history records:" />
-    <option name="file" hit="SCR text file:" />
-    <option name="scr" hit="SCR text file:" />
-    <option name="text" hit="SCR text file:" />
-    <option name="activities" hit="Synchronize activities on refresh" />
-    <option name="on" hit="Synchronize activities on refresh" />
-    <option name="refresh" hit="Synchronize activities on refresh" />
-    <option name="synchronize" hit="Synchronize activities on refresh" />
-    <option name="-identical" hit="Use &quot;-identical&quot; switch during check in" />
-    <option name="check" hit="Use &quot;-identical&quot; switch during check in" />
-    <option name="during" hit="Use &quot;-identical&quot; switch during check in" />
-    <option name="in" hit="Use &quot;-identical&quot; switch during check in" />
-    <option name="switch" hit="Use &quot;-identical&quot; switch during check in" />
-    <option name="use" hit="Use &quot;-identical&quot; switch during check in" />
-    <option name="model" hit="Use UCM model" />
-    <option name="ucm" hit="Use UCM model" />
-    <option name="use" hit="Use UCM model" />
-    <option name="checkout" hit="Work Offline (on edit: hijack instead of checkout)" />
-    <option name="edit" hit="Work Offline (on edit: hijack instead of checkout)" />
-    <option name="hijack" hit="Work Offline (on edit: hijack instead of checkout)" />
-    <option name="instead" hit="Work Offline (on edit: hijack instead of checkout)" />
-    <option name="of" hit="Work Offline (on edit: hijack instead of checkout)" />
-    <option name="offline" hit="Work Offline (on edit: hijack instead of checkout)" />
-    <option name="on" hit="Work Offline (on edit: hijack instead of checkout)" />
-    <option name="work" hit="Work Offline (on edit: hijack instead of checkout)" />
   </configurable>
   <configurable id="vcs.Git" configurable_name="Git">
     <option name="" hit="" />

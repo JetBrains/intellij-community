@@ -26,7 +26,6 @@ import java.util.Stack;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jun 18, 2006
  */
 public class TreeBasedMap<T> {
   private Node<T> myRoot = new Node<T>();

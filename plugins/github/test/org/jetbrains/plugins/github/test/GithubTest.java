@@ -66,17 +66,22 @@ public abstract class GithubTest extends GitPlatformTest {
   @NotNull protected String myPassword;
 
   protected void createProjectFiles() {
-    VfsTestUtil.createFile(myProjectRoot, "file.txt", "file.txt content");
-    VfsTestUtil.createFile(myProjectRoot, "file", "file content");
-    VfsTestUtil.createFile(myProjectRoot, "folder/file1", "file1 content");
-    VfsTestUtil.createFile(myProjectRoot, "folder/file2", "file2 content");
-    VfsTestUtil.createFile(myProjectRoot, "folder/empty_file");
-    VfsTestUtil.createFile(myProjectRoot, "folder/dir/file3", "file3 content");
-    VfsTestUtil.createDir (myProjectRoot, "folder/empty_folder");
+    VfsTestUtil.createFile(projectRoot, "file.txt", "file.txt content");
+    VfsTestUtil.createFile(projectRoot, "file", "file content");
+    VfsTestUtil.createFile(projectRoot, "folder/file1", "file1 content");
+    VfsTestUtil.createFile(projectRoot, "folder/file2", "file2 content");
+    VfsTestUtil.createFile(projectRoot, "folder/empty_file");
+    VfsTestUtil.createFile(projectRoot, "folder/dir/file3", "file3 content");
+    VfsTestUtil.createDir (projectRoot, "folder/empty_folder");
+  }
+
+  @Override
+  protected boolean hasRemoteGitOperation() {
+    return true;
   }
 
   protected void checkNotification(@NotNull NotificationType type, @Nullable String title, @Nullable String content) {
-    Notification actualNotification = myVcsNotifier.getLastNotification();
+    Notification actualNotification = vcsNotifier.getLastNotification();
     assertNotNull("No notification was shown", actualNotification);
 
     if (title != null) {
@@ -130,7 +135,7 @@ public abstract class GithubTest extends GitPlatformTest {
   }
 
   protected void initGitChecks() {
-    myRepository = myGitRepositoryManager.getRepositoryForFile(myProjectRoot);
+    myRepository = repositoryManager.getRepositoryForFile(projectRoot);
   }
 
   protected void checkGitExists() {
@@ -210,5 +215,10 @@ public abstract class GithubTest extends GitPlatformTest {
   @Override
   protected boolean runInDispatchThread() {
     return true;
+  }
+
+
+  protected void git(@NotNull String command) {
+    GitExecutor.git(this, command, false);
   }
 }

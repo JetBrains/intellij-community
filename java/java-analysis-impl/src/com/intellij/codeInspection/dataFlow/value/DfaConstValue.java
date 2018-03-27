@@ -16,6 +16,7 @@
 
 package com.intellij.codeInspection.dataFlow.value;
 
+import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -56,6 +57,7 @@ public class DfaConstValue extends DfaValue {
 
     @Nullable
     public DfaValue create(PsiVariable variable) {
+      if (DfaUtil.ignoreInitializer(variable)) return null;
       Object value = variable.computeConstantValue();
       PsiType type = variable.getType();
       if (value == null) {

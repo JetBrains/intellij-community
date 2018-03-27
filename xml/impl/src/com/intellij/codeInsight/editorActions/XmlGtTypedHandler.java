@@ -43,6 +43,7 @@ import com.intellij.xml.XmlElementDescriptorWithCDataContent;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -50,8 +51,9 @@ import java.util.Collection;
 public class XmlGtTypedHandler extends TypedHandlerDelegate {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.TypedHandler");
 
+  @NotNull
   @Override
-  public Result beforeCharTyped(final char c, final Project project, Editor editor, PsiFile editedFile, final FileType fileType) {
+  public Result beforeCharTyped(final char c, @NotNull final Project project, @NotNull Editor editor, @NotNull PsiFile editedFile, @NotNull final FileType fileType) {
     final WebEditorOptions webEditorOptions = WebEditorOptions.getInstance();
     if (c == '>' && webEditorOptions != null && webEditorOptions.isAutomaticallyInsertClosingTag() && fileContainsXmlLanguage(editedFile)) {
       PsiDocumentManager.getInstance(project).commitAllDocuments();

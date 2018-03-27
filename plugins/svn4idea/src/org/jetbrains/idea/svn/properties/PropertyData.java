@@ -15,14 +15,9 @@
  */
 package org.jetbrains.idea.svn.properties;
 
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.tmatesoft.svn.core.wc.SVNPropertyData;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class PropertyData {
 
   @Nullable private final PropertyValue myValue;
@@ -43,16 +38,5 @@ public class PropertyData {
   @Nullable
   public PropertyValue getValue() {
     return myValue;
-  }
-
-  @Contract(value = "null -> null; !null -> !null", pure = true)
-  public static PropertyData create(@Nullable SVNPropertyData data) {
-    PropertyData result = null;
-
-    if (data != null) {
-      result = new PropertyData(data.getName(), PropertyValue.create(data.getValue()));
-    }
-
-    return result;
   }
 }

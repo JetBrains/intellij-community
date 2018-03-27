@@ -5,7 +5,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.scope.BaseScopeProcessor;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
@@ -66,7 +66,7 @@ public class PyDunderAllReference extends PsiPolyVariantReferenceBase<PyStringLi
       seenNames.addAll(dunderAll);
     }
 
-    containingFile.processDeclarations(new BaseScopeProcessor() {
+    containingFile.processDeclarations(new PsiScopeProcessor() {
       @Override
       public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
         if (element instanceof PsiNamedElement && !(element instanceof LightNamedElement)) {

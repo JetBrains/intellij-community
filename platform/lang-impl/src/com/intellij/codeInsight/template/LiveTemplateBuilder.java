@@ -42,7 +42,7 @@ public class LiveTemplateBuilder {
   private final int mySegmentLimit;
   private final boolean myAddEndVariableAtTheEndOfTemplate;
   private String myLastEndVarName;
-  private boolean myIsToReformat = false;
+  private boolean myIsToReformat;
 
 
   @SuppressWarnings("UnusedDeclaration")
@@ -133,15 +133,7 @@ public class LiveTemplateBuilder {
     }
 
     List<VarOccurence> variableOccurrences = getListWithLimit(myVariableOccurrences);
-    Collections.sort(variableOccurrences, (o1, o2) -> {
-      if (o1.myOffset < o2.myOffset) {
-        return -1;
-      }
-      if (o1.myOffset > o2.myOffset) {
-        return 1;
-      }
-      return 0;
-    });
+    Collections.sort(variableOccurrences, Comparator.comparingInt(o -> o.myOffset));
     int last = 0;
     for (VarOccurence occurence : variableOccurrences) {
       template.addTextSegment(myText.substring(last, occurence.myOffset));
@@ -161,7 +153,7 @@ public class LiveTemplateBuilder {
       return Collections.emptyList();
     }
     if (mySegmentLimit > 0 && list.size() > mySegmentLimit) {
-      LOGGER.warn("Template with more than " + mySegmentLimit + " segments had been build (" + list.size() + "). Text: " + myText);
+      warnTooManySegments(list.size());
       return list.subList(0, Math.min(list.size(), mySegmentLimit));
     }
     return list;
@@ -229,12 +221,12 @@ public class LiveTemplateBuilder {
 
     String text = template.getTemplateText();
     insertText(offset, text, false);
-    Map<String, String> newVarNames = new HashMap<>();
     Set<String> oldVarNames = new HashSet<>();
     for (int i = 0; i < template.getVariableCount(); i++) {
       String varName = template.getVariableNameAt(i);
       oldVarNames.add(varName);
     }
+    Map<String, String> newVarNames = new HashMap<>();
     for (int i = 0; i < template.getVariableCount(); i++) {
       String varName = template.getVariableNameAt(i);
       if (!TemplateImpl.INTERNAL_VARS_SET.contains(varName)) {
@@ -256,7 +248,7 @@ public class LiveTemplateBuilder {
         Variable var = new Variable(newVarName, template.getExpressionStringAt(i), template.getDefaultValueStringAt(i), template.isAlwaysStopAt(i));
         if (mySegmentLimit >= 0 && myVariables.size() >= mySegmentLimit) {
           if (mySegmentLimit > 0) {
-            LOGGER.warn("Template with more than " + mySegmentLimit + " segments had been build. Text: " + myText);
+            warnTooManySegments(myVariables.size());
           }
           break;
         }
@@ -298,6 +290,11 @@ public class LiveTemplateBuilder {
     return endOffset;
   }
 
+  private void warnTooManySegments(int size) {
+    LOGGER.warn("Too many (" + size + " with the limit of " + mySegmentLimit + ") segments were requested" +
+                " for the template with the text: " + myText);
+  }
+
   private void removeEndVarAtOffset(int offset) {
     for (Iterator<VarOccurence> it = myVariableOccurrences.iterator(); it.hasNext();) {
       VarOccurence occurence = it.next();
@@ -306,12 +303,7 @@ public class LiveTemplateBuilder {
       }
       if (occurence.myOffset == offset) {
         it.remove();
-        for (Iterator<Variable> it1 = myVariables.iterator(); it1.hasNext();) {
-          Variable variable = it1.next();
-          if (occurence.myName.equals(variable.getName())) {
-            it1.remove();
-          }
-        }
+        myVariables.removeIf(variable -> occurence.myName.equals(variable.getName()));
       }
     }
   }

@@ -18,13 +18,9 @@ package git4idea.rebase;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.TextCopyProvider;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonShortcuts;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -32,11 +28,11 @@ import com.intellij.ui.*;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ListWithSelection;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.table.ComboBoxTableCellEditor;
 import git4idea.GitUtil;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NonNls;
@@ -44,8 +40,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import java.util.Arrays;
@@ -73,18 +67,15 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
     setOKButtonText(GitBundle.getString("rebase.editor.button"));
 
     myTableModel = new MyTableModel(entries);
+    myTableModel.addTableModelListener(e -> validateFields());
+
     myCommitsTable = new JBTable(myTableModel);
     myCommitsTable.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
     myCommitsTable.setIntercellSpacing(JBUI.emptySize());
-
-    final JComboBox editorComboBox = new ComboBox();
-    for (Object option : GitRebaseEntry.Action.values()) {
-      editorComboBox.addItem(option);
-    }
-    TableColumn actionColumn = myCommitsTable.getColumnModel().getColumn(MyTableModel.ACTION_COLUMN);
-    actionColumn.setCellEditor(new DefaultCellEditor(editorComboBox));
-    actionColumn.setCellRenderer(ComboBoxTableCellRenderer.INSTANCE);
-
+    PopupHandler.installRowSelectionTablePopup(myCommitsTable,
+                                               generateSelectRebaseActionActionGroup(),
+                                               ActionPlaces.EDITOR_POPUP,
+                                               ActionManager.getInstance());
     myCommitsTable.setDefaultRenderer(String.class, new ColoredTableCellRenderer() {
       @Override
       protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
@@ -94,18 +85,15 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
         }
       }
     });
-
-    myTableModel.addTableModelListener(new TableModelListener() {
-      public void tableChanged(final TableModelEvent e) {
-        validateFields();
-      }
-    });
+    TableColumn actionColumn = myCommitsTable.getColumnModel().getColumn(MyTableModel.ACTION_COLUMN);
+    actionColumn.setCellEditor(ComboBoxTableCellEditor.INSTANCE);
+    actionColumn.setCellRenderer(ComboBoxTableCellRenderer.INSTANCE);
 
     installSpeedSearch();
     myCopyProvider = new MyCopyProvider();
 
-    adjustColumnWidth(0);
-    adjustColumnWidth(1);
+    adjustColumnWidth(MyTableModel.ACTION_COLUMN);
+    adjustColumnWidth(MyTableModel.HASH_COLUMN);
     init();
   }
 
@@ -159,6 +147,19 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
       .createPanel();
   }
 
+  @NotNull
+  private ActionGroup generateSelectRebaseActionActionGroup() {
+    return new DefaultActionGroup(ContainerUtil.map(GitRebaseEntry.Action.values(), action -> new AnAction(action.toString()) {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        int[] selectedRows = myCommitsTable.getSelectedRows();
+        for (int i : selectedRows) {
+          myTableModel.setValueAt(action, i, MyTableModel.ACTION_COLUMN);
+        }
+      }
+    }));
+  }
+
   @Override
   protected String getDimensionServiceKey() {
     return getClass().getName();
@@ -197,7 +198,7 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
 
     @Override
     public Class<?> getColumnClass(int columnIndex) {
-      return columnIndex == ACTION_COLUMN ? ListWithSelection.class : String.class;
+      return columnIndex == ACTION_COLUMN ? GitRebaseEntry.Action.class : String.class;
     }
 
     @Override
@@ -226,7 +227,7 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
       GitRebaseEntry e = myEntries.get(rowIndex);
       switch (columnIndex) {
         case ACTION_COLUMN:
-          return new ListWithSelection<>(Arrays.asList(GitRebaseEntry.Action.values()), e.getAction());
+          return e.getAction();
         case HASH_COLUMN:
           return e.getCommit();
         case SUBJECT_COLUMN:
@@ -343,27 +344,27 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
       return myMax == null ? UNSET_VALUE : myMax;
     }
 
-    public void track( int... entries ) {
+    public void track(int... entries) {
       for (int entry : entries) {
-        checkMax( entry );
-        checkMin( entry );
+        checkMax(entry);
+        checkMin(entry);
       }
     }
 
     private void checkMax(int entry) {
-      if ( null == myMax || entry > myMax ) {
+      if (null == myMax || entry > myMax) {
         myMax = entry;
       }
     }
 
     private void checkMin(int entry) {
-      if ( null == myMin || entry < myMin ) {
+      if (null == myMin || entry < myMin) {
         myMin = entry;
       }
     }
 
     public boolean hasValues() {
-      return ( null != myMin && null != myMax);
+      return (null != myMin && null != myMax);
     }
   }
 

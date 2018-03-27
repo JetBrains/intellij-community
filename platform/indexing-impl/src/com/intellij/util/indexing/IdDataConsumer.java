@@ -25,7 +25,6 @@ import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Feb 6, 2008
  */
 public class IdDataConsumer {
   private final TIntIntHashMap myResult = new TIntIntHashMap();

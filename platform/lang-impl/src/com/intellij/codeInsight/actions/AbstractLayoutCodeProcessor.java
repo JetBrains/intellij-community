@@ -375,6 +375,7 @@ public abstract class AbstractLayoutCodeProcessor {
   private void runProcessFiles(@NotNull final FileTreeIterator fileIterator) {
     boolean isSuccess = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+      indicator.setIndeterminate(false);
       ReformatFilesTask task = new ReformatFilesTask(fileIterator, indicator);
       while (!task.isDone()) {
         task.iteration();

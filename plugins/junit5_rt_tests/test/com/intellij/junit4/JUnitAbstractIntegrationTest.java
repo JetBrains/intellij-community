@@ -65,6 +65,7 @@ public abstract class JUnitAbstractIntegrationTest extends BaseConfigurationTest
     ExecutionEnvironment
       environment = new ExecutionEnvironment(executor, ProgramRunnerUtil.getRunner(DefaultRunExecutor.EXECUTOR_ID, settings), settings, project);
     TestObject state = ((JUnitConfiguration)configuration).getState(executor, environment);
+    state.appendRepeatMode();
 
     JavaParameters parameters = state.getJavaParameters();
     parameters.setUseDynamicClasspath(project);

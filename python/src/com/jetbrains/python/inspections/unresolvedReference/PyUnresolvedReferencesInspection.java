@@ -73,7 +73,6 @@ import static com.jetbrains.python.inspections.quickfix.AddIgnoredIdentifierQuic
 /**
  * Marks references that fail to resolve. Also tracks unused imports and provides "optimize imports" support.
  * User: dcheryasov
- * Date: Nov 15, 2008
  */
 public class PyUnresolvedReferencesInspection extends PyInspection {
   private static final Key<Visitor> KEY = Key.create("PyUnresolvedReferencesInspection.Visitor");
@@ -509,11 +508,6 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           if (PyUnreachableCodeInspection.hasAnyInterruptedControlFlowPaths(expr)) {
             return;
           }
-          if (LanguageLevel.forElement(node).isOlderThan(LanguageLevel.PYTHON26)) {
-            if ("with".equals(refName)) {
-              actions.add(new UnresolvedRefAddFutureImportQuickFix());
-            }
-          }
           if (refText.equals("true") || refText.equals("false")) {
             actions.add(new UnresolvedRefTrueFalseQuickFix(element));
           }
@@ -854,7 +848,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         }
       }
       else {
-        if (cls.getDecoratorList() != null) {
+        if (PyKnownDecoratorUtil.hasUnknownDecorator(cls, myTypeEvalContext)) {
           return true;
         }
         final String docString = cls.getDocStringValue();
@@ -933,7 +927,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
               PyExpression assignedValue = ((PyAssignmentStatement)statement).getAssignedValue();
               if (assignedValue instanceof PyCallExpression) {
                 PyType type = myTypeEvalContext.getType(assignedValue);
-                if (type != null && type instanceof PyClassTypeImpl) {
+                if (type instanceof PyClassTypeImpl) {
                   if (((PyCallExpression)assignedValue).isCalleeText(PyNames.PROPERTY)) {
                     actions.add(new UnresolvedReferenceAddSelfQuickFix(expr, qualifier));
                   }

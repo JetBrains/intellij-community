@@ -112,7 +112,7 @@ public class ColorDescriptor {
   }
 
   public boolean equals(Object obj) {
-    if (obj == null || !(obj instanceof ColorDescriptor)) {
+    if (!(obj instanceof ColorDescriptor)) {
       return false;
     }
     ColorDescriptor rhs = (ColorDescriptor) obj;

@@ -28,6 +28,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		(	common.attrs
 		&	(	common.attrs.aria.role.separator
 			|	common.attrs.aria.role.presentation
+			|	common.attrs.aria.role.doc-pagebreak
 			)?
 		)
 	hr.inner =
@@ -99,6 +100,8 @@ datatypes w = "http://whattf.org/datatype-draft"
 			|	common.attrs.aria.role.treeitem
 			|	common.attrs.aria.role.separator
 			|	common.attrs.aria.role.presentation
+			|	common.attrs.aria.role.doc-biblioentry
+			|	common.attrs.aria.role.doc-endnote
 			)?
 		)
 	li.inner =
@@ -186,6 +189,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	(	common.attrs.aria.implicit.list
 			|	common.attrs.aria.role.list
 			|	common.attrs.aria.role.presentation
+			|	common.attrs.aria.role.doc-glossary
 			)?
 		)
 	dl.inner =

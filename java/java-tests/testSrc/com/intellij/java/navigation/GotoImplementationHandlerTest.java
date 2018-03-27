@@ -16,10 +16,14 @@
 package com.intellij.java.navigation;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.navigation.GotoTargetHandler;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
@@ -59,6 +63,30 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
                                                           "    abstract void foo();\n" +
                                                           "\n" +
                                                           "    void test(Hello h) {\n" +
+                                                          "      if(h instanceof Hello1) h.fo<caret>o();\n" +
+                                                          "    }\n" +
+                                                          "    \n" +
+                                                          "    class Hello1 extends Hello {\n" +
+                                                          "        void foo() {}\n" +
+                                                          "    }\n" +
+                                                          "    class Hello2 extends Hello {\n" +
+                                                          "        void foo() {}\n" +
+                                                          "    }\n" +
+                                                          "}");
+    myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
+
+    final PsiElement[] impls = getTargets(file);
+    assertEquals(1, impls.length);
+    assertTrue(impls[0] instanceof PsiMethod);
+    assertEquals("Hello.Hello1", ((PsiMethod)impls[0]).getContainingClass().getQualifiedName());
+  }
+
+  public void testUnderInstanceOfComplexState() {
+    PsiFile file = myFixture.addFileToProject("Foo.java", "abstract class Hello {\n" +
+                                                          "    abstract void foo();\n" +
+                                                          "\n" +
+                                                          "    void test(Hello h) {\n" +
+                                                          "      if(h instanceof Cloneable) h.foo();\n" +
                                                           "      if(h instanceof Hello1) h.fo<caret>o();\n" +
                                                           "    }\n" +
                                                           "    \n" +
@@ -332,6 +360,16 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
     myFixture.getEditor().getCaretModel().moveToOffset(aClass.getTextOffset());
 
     assertSize(2, getTargets(file));
+  }
+
+  public void testScopeForPrivateMethod() {
+    PsiFile file = myFixture.configureByText(JavaFileType.INSTANCE, "class Foo {" +
+                                                                    " {f<caret>oo();}" +
+                                                                    " private void foo() {}" +
+                                                                    "}");
+    PsiClass inheritor = myFixture.addClass("class FooImpl extends Foo {}");
+    SearchScope scope = TargetElementUtil.getInstance().getSearchScope(myFixture.getEditor(), ((PsiJavaFile)file).getClasses()[0].getMethods()[0]);
+    assertFalse(scope.contains(PsiUtilCore.getVirtualFile(inheritor)));
   }
 
   public void testAnonymousAndLocalClassesInLibrary() {

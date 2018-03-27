@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.lang.properties.create;
 
@@ -33,6 +21,7 @@ import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -42,6 +31,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,11 +68,13 @@ public class CreateResourceBundleDialogComponent {
   private JPanel myResourceBundleNamePanel;
   private JCheckBox myUseXMLBasedPropertiesCheckBox;
   private CollectionListModel<Locale> myLocalesModel;
+  private final Map<Locale, String> myLocaleSuffixes; // java.util.Locale is case insensitive
 
-  public CreateResourceBundleDialogComponent(Project project, PsiDirectory directory, ResourceBundle resourceBundle) {
+  public CreateResourceBundleDialogComponent(@NotNull Project project, PsiDirectory directory, ResourceBundle resourceBundle) {
     myProject = project;
     myDirectory = directory;
     myResourceBundle = resourceBundle;
+    myLocaleSuffixes = new THashMap<>();
     if (resourceBundle != null) {
       myResourceBundleNamePanel.setVisible(false);
       myUseXMLBasedPropertiesCheckBox.setVisible(false);
@@ -99,12 +91,12 @@ public class CreateResourceBundleDialogComponent {
   }
 
   public static class Dialog extends DialogWrapper {
-    @Nullable private final Project myProject;
+    @NotNull private final Project myProject;
     @NotNull private final PsiDirectory myDirectory;
     private CreateResourceBundleDialogComponent myComponent;
     private PsiElement[] myCreatedFiles;
 
-    protected Dialog(@Nullable Project project, @Nullable PsiDirectory directory, @Nullable ResourceBundle resourceBundle) {
+    protected Dialog(@NotNull Project project, @Nullable PsiDirectory directory, @Nullable ResourceBundle resourceBundle) {
       super(project);
       if (directory == null) {
         LOG.assertTrue(resourceBundle != null && getResourceBundlePlacementDirectory(resourceBundle) != null);
@@ -114,7 +106,7 @@ public class CreateResourceBundleDialogComponent {
       myComponent = new CreateResourceBundleDialogComponent(myProject, myDirectory, resourceBundle);
       init();
       initValidation();
-      setTitle(resourceBundle == null ? "Create resource bundle" : String.format("Add locales to resource bundle \'%s\'", resourceBundle.getBaseName()));
+      setTitle(resourceBundle == null ? "Create Resource Bundle" : "Add Locales to Resource Bundle " + resourceBundle.getBaseName());
     }
 
     @Override
@@ -191,7 +183,8 @@ public class CreateResourceBundleDialogComponent {
     final String name = getBaseName();
     final String suffix = getPropertiesFileSuffix();
     return ContainerUtil.map2Set(myLocalesModel.getItems(),
-                                 locale -> name + (locale == PropertiesUtil.DEFAULT_LOCALE ? "" : ("_" + locale.toString())) + suffix);
+                                 locale -> name + (locale == PropertiesUtil.DEFAULT_LOCALE ? "" : ("_" + myLocaleSuffixes
+                                   .getOrDefault(locale, locale.toString()))) + suffix);
   }
 
   private void combineToResourceBundleIfNeed(Collection<PsiFile> files) {
@@ -271,21 +264,19 @@ public class CreateResourceBundleDialogComponent {
   }
 
   @Nullable
-  private static List<Locale> extractLocalesFromString(final String rawLocales) {
+  private static Map<Locale, String> extractLocalesFromString(final String rawLocales) {
     if (rawLocales.isEmpty()) {
-      return Collections.emptyList();
+      return Collections.emptyMap();
     }
     final String[] splitRawLocales = rawLocales.split(",");
-    final List<Locale> locales = new ArrayList<>(splitRawLocales.length);
+    final Map<Locale, String> locales = new THashMap<>(splitRawLocales.length);
 
     for (String rawLocale : splitRawLocales) {
-      final Locale locale = PropertiesUtil.getLocale("_" + rawLocale + ".properties");
-      if (locale == PropertiesUtil.DEFAULT_LOCALE) {
+      final Pair<Locale, String> localeAndSuffix = PropertiesUtil.getLocaleAndTrimmedSuffix("_" + rawLocale + ".properties");
+      if (localeAndSuffix.getFirst() == PropertiesUtil.DEFAULT_LOCALE) {
         return null;
       }
-      else if (!locales.contains(locale)) {
-        locales.add(locale);
-      }
+      locales.putIfAbsent(localeAndSuffix.getFirst(), localeAndSuffix.getSecond());
     }
     return locales;
   }
@@ -361,9 +352,10 @@ public class CreateResourceBundleDialogComponent {
             }
           });
         if (rawAddedLocales != null) {
-          final List<Locale> locales = extractLocalesFromString(rawAddedLocales);
+          final Map<Locale, String> locales = extractLocalesFromString(rawAddedLocales);
           LOG.assertTrue(locales != null);
-          myLocalesModel.add(locales);
+          myLocaleSuffixes.putAll(locales);
+          myLocalesModel.add(new ArrayList<>(locales.keySet()));
         }
       }
     }).setAddActionName("Add locales by suffix")
@@ -411,14 +403,14 @@ public class CreateResourceBundleDialogComponent {
   }
 
   @NotNull
-  private static ColoredListCellRenderer<Locale> getLocaleRenderer() {
+  private ColoredListCellRenderer<Locale> getLocaleRenderer() {
     return new ColoredListCellRenderer<Locale>() {
       @Override
       protected void customizeCellRenderer(@NotNull JList list, Locale locale, int index, boolean selected, boolean hasFocus) {
         if (PropertiesUtil.DEFAULT_LOCALE == locale) {
           append("Default locale");
         } else {
-          append(locale.toString());
+          append(myLocaleSuffixes.getOrDefault(locale, locale.toString()));
           append(PropertiesUtil.getPresentableLocale(locale), SimpleTextAttributes.GRAY_ATTRIBUTES);
         }
       }
@@ -431,16 +423,14 @@ public class CreateResourceBundleDialogComponent {
     private MyExistLocalesListModel() {
       myLocales = new ArrayList<>();
       myLocales.add(PropertiesUtil.DEFAULT_LOCALE);
-      PropertiesReferenceManager.getInstance(myProject).processPropertiesFiles(GlobalSearchScope.projectScope(myProject), new PropertiesFileProcessor() {
-        @Override
-        public boolean process(String baseName, PropertiesFile propertiesFile) {
-          final Locale locale = propertiesFile.getLocale();
-          if (locale != PropertiesUtil.DEFAULT_LOCALE && !myLocales.contains(locale)) {
-            myLocales.add(locale);
-          }
-          return true;
-        }
-      }, BundleNameEvaluator.DEFAULT);
+      PropertiesReferenceManager.getInstance(myProject).processPropertiesFiles(GlobalSearchScope.projectScope(myProject),
+                                                                               (baseName, propertiesFile) -> {
+                                                                                 final Locale locale = propertiesFile.getLocale();
+                                                                                 if (locale != PropertiesUtil.DEFAULT_LOCALE && !myLocales.contains(locale)) {
+                                                                                   myLocales.add(locale);
+                                                                                 }
+                                                                                 return true;
+                                                                               }, BundleNameEvaluator.DEFAULT);
       Collections.sort(myLocales, LOCALE_COMPARATOR);
     }
 

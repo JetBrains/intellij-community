@@ -1,5 +1,5 @@
 <?php
 echo "
 newword
-anotherword
+<TYPO descr="Typo: In word 'anotherword'">anotherword</TYPO>
 ";

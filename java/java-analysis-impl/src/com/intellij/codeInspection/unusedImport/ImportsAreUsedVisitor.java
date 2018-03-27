@@ -45,6 +45,11 @@ class ImportsAreUsedVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   @Override
+  public void visitImportList(PsiImportList list) {
+    //ignore imports
+  }
+
+  @Override
   public void visitElement(PsiElement element) {
     if (importStatements.isEmpty()) {
       return;

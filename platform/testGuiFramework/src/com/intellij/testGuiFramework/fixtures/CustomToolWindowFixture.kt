@@ -17,11 +17,14 @@ package com.intellij.testGuiFramework.fixtures
 
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
+import com.intellij.openapi.editor.impl.EditorComponentImpl
+import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt
 import com.intellij.ui.content.Content
 import com.intellij.util.ui.UIUtil.findComponentOfType
 import com.intellij.util.ui.UIUtil.findComponentsOfType
 import junit.framework.Assert.assertNotNull
+import org.fest.swing.core.GenericTypeMatcher
 import org.fest.swing.core.Robot
 import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.util.TextMatcher
@@ -41,6 +44,15 @@ class CustomToolWindowFixture(val toolWindowId: String, val ideFrame: IdeFrameFi
       }
 
     fun getContent() = myContent
+
+    fun editor(): EditorFixture {
+      val editor = GuiTestUtil.waitUntilFound(myRobot, myContent.component, object : GenericTypeMatcher<EditorComponentImpl>(EditorComponentImpl::class.java, true){
+        override fun isMatching(component: EditorComponentImpl): Boolean {
+          return true
+        }
+      })
+      return EditorFixture(myRobot,editor.editor)
+    }
   }
 
   private fun selectedContent() : ContentFixture {

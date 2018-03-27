@@ -1,9 +1,9 @@
 package com.intellij.xml.util;
 
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.html.HtmlTag;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.Processor;
@@ -70,7 +70,7 @@ public class HtmlLinkUtil {
       for (final XmlText text : texts) {
         for (PsiElement _element : text.getChildren()) {
           if (_element instanceof PsiLanguageInjectionHost) {
-            InjectedLanguageUtil.enumerate(_element, injectedPsiVisitor);
+            InjectedLanguageManager.getInstance(_element.getProject()).enumerate(_element, injectedPsiVisitor);
           }
         }
       }
@@ -80,7 +80,7 @@ public class HtmlLinkUtil {
     if (comments != null && comments.length > 0) {
       for (final XmlComment comment : comments) {
         if (comment instanceof PsiLanguageInjectionHost) {
-          InjectedLanguageUtil.enumerate(comment, injectedPsiVisitor);
+          InjectedLanguageManager.getInstance(comment.getProject()).enumerate(comment, injectedPsiVisitor);
         }
       }
     }

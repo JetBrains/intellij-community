@@ -17,20 +17,25 @@ package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.util.CachedValueImpl;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.*;
+import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.EnumeratorStringDescriptor;
+import com.intellij.util.io.PersistentEnumeratorBase;
+import com.intellij.util.io.PersistentHashMap;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.apache.lucene.search.Query;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.idea.maven.model.MavenArchetype;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
-import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
+import org.jetbrains.idea.maven.server.IndexedMavenId;
 import org.jetbrains.idea.maven.server.MavenIndexerWrapper;
 import org.jetbrains.idea.maven.server.MavenIndicesProcessor;
 import org.jetbrains.idea.maven.server.MavenServerIndexerException;
@@ -44,9 +49,10 @@ import java.net.URL;
 import java.util.*;
 
 import static com.intellij.openapi.util.text.StringUtil.*;
+import static com.intellij.util.containers.ContainerUtil.notNullize;
 
 public class MavenIndex {
-  private static final String CURRENT_VERSION = "4";
+  private static final String CURRENT_VERSION = "5";
 
   protected static final String INDEX_INFO_FILE = "index.properties";
 
@@ -63,6 +69,7 @@ public class MavenIndex {
 
   private static final String ARTIFACT_IDS_MAP_FILE = "artifactIds-map.dat";
   private static final String VERSIONS_MAP_FILE = "versions-map.dat";
+  private static final String ARCHETYPES_MAP_FILE = "archetypes-map.dat";
 
   public enum Kind {
     LOCAL, REMOTE
@@ -448,6 +455,7 @@ public class MavenIndex {
                                  MavenProgressIndicator progress) throws IOException, MavenServerIndexerException {
     final Map<String, Set<String>> groupToArtifactMap = new THashMap<>();
     final Map<String, Set<String>> groupWithArtifactToVersionMap = new THashMap<>();
+    final Map<String, Set<String>> archetypeIdToDescriptionMap = new THashMap<>();
 
     progress.pushState();
     progress.setIndeterminate(true);
@@ -455,18 +463,20 @@ public class MavenIndex {
     try {
       final StringBuilder builder = new StringBuilder();
       MavenIndicesProcessor mavenIndicesProcessor = artifacts -> {
-        for (MavenId each : artifacts) {
-          String groupId = each.getGroupId();
-          String artifactId = each.getArtifactId();
-          String version = each.getVersion();
-
+        for (IndexedMavenId id : artifacts) {
           builder.setLength(0);
 
-          builder.append(groupId).append(":").append(artifactId);
+          builder.append(id.groupId).append(":").append(id.artifactId);
           String ga = builder.toString();
 
-          getOrCreate(groupToArtifactMap, groupId).add(artifactId);
-          getOrCreate(groupWithArtifactToVersionMap, ga).add(version);
+          getOrCreate(groupToArtifactMap, id.groupId).add(id.artifactId);
+          getOrCreate(groupWithArtifactToVersionMap, ga).add(id.version);
+
+          if ("maven-archetype".equals(id.packaging)) {
+            builder.setLength(0);
+            builder.append(id.version).append(":").append(StringUtil.notNullize(id.description));
+            getOrCreate(archetypeIdToDescriptionMap, ga).add(builder.toString());
+          }
         }
       };
       if (myNotNexusIndexer != null) {
@@ -478,6 +488,7 @@ public class MavenIndex {
 
       persist(groupToArtifactMap, data.groupToArtifactMap);
       persist(groupWithArtifactToVersionMap, data.groupWithArtifactToVersionMap);
+      persist(archetypeIdToDescriptionMap, data.archetypeIdToDescriptionMap);
     }
     finally {
       progress.popState();
@@ -485,12 +496,7 @@ public class MavenIndex {
   }
 
   private static <T> Set<T> getOrCreate(Map<String, Set<T>> map, String key) {
-    Set<T> result = map.get(key);
-    if (result == null) {
-      result = new THashSet<>();
-      map.put(key, result);
-    }
-    return result;
+    return map.computeIfAbsent(key, k -> new THashSet<>());
   }
 
   private static <T> void persist(Map<String, T> map, PersistentHashMap<String, T> persistentMap) throws IOException {
@@ -524,27 +530,24 @@ public class MavenIndex {
   }
 
   public synchronized void addArtifact(final File artifactFile) {
-    doIndexTask(new IndexTask<Object>() {
-      public Object doTask() throws Exception {
-        MavenId id = myData.addArtifact(artifactFile);
+    doIndexTask(() -> {
+      IndexedMavenId id = myData.addArtifact(artifactFile);
 
-        String groupId = id.getGroupId();
-        String artifactId = id.getArtifactId();
-        String version = id.getVersion();
+      myData.hasGroupCache.put(id.groupId, true);
 
-        myData.hasGroupCache.put(groupId, true);
+      String groupWithArtifact = id.groupId + ":" + id.artifactId;
 
-        String groupWithArtifact = groupId + ":" + artifactId;
+      myData.hasArtifactCache.put(groupWithArtifact, true);
+      myData.hasVersionCache.put(groupWithArtifact + ':' + id.version, true);
 
-        myData.hasArtifactCache.put(groupWithArtifact, true);
-        myData.hasVersionCache.put(groupWithArtifact + ':' + version, true);
-
-        addToCache(myData.groupToArtifactMap, groupId, artifactId);
-        addToCache(myData.groupWithArtifactToVersionMap, groupWithArtifact, version);
-        myData.flush();
-
-        return null;
+      addToCache(myData.groupToArtifactMap, id.groupId, id.artifactId);
+      addToCache(myData.groupWithArtifactToVersionMap, groupWithArtifact, id.version);
+      if ("maven-archetype".equals(id.packaging)) {
+        addToCache(myData.archetypeIdToDescriptionMap, groupWithArtifact, id.version + ":" + StringUtil.notNullize(id.description));
       }
+      myData.flush();
+
+      return null;
     }, null);
   }
 
@@ -556,40 +559,25 @@ public class MavenIndex {
   }
 
   public synchronized Collection<String> getGroupIds() {
-    return doIndexTask(new IndexTask<Collection<String>>() {
-      public Collection<String> doTask() throws Exception {
-        return myData.groupToArtifactMap.getAllDataObjects(null);
-      }
-    }, Collections.emptySet());
+    return doIndexTask(() -> myData.groupToArtifactMap.getAllDataObjects(null), Collections.emptySet());
   }
 
   public synchronized Set<String> getArtifactIds(final String groupId) {
-    return doIndexTask(new IndexTask<Set<String>>() {
-      public Set<String> doTask() throws Exception {
-        Set<String> result = myData.groupToArtifactMap.get(groupId);
-        return result == null ? Collections.emptySet() : result;
-      }
-    }, Collections.emptySet());
+    return doIndexTask(() -> notNullize(myData.groupToArtifactMap.get(groupId)), Collections.emptySet());
   }
 
   @TestOnly
   public synchronized void printInfo() {
-    doIndexTask(new IndexTask<Set<String>>() {
-      public Set<String> doTask() throws Exception {
-        System.out.println("BaseFile: " + myData.groupToArtifactMap.getBaseFile());
-        System.out.println("All data objects: " + myData.groupToArtifactMap.getAllDataObjects(null));
-        return Collections.emptySet();
-      }
-    }, Collections.emptySet());
+    doIndexTask(() -> {
+      System.out.println("BaseFile: " + myData.groupToArtifactMap.getBaseFile());
+      System.out.println("All data objects: " + myData.groupToArtifactMap.getAllDataObjects(null));
+      return null;
+    }, null);
   }
 
   public synchronized Set<String> getVersions(final String groupId, final String artifactId) {
-    return doIndexTask(new IndexTask<Set<String>>() {
-      public Set<String> doTask() throws Exception {
-        Set<String> result = myData.groupWithArtifactToVersionMap.get(groupId + ":" + artifactId);
-        return result == null ? Collections.emptySet() : result;
-      }
-    }, Collections.emptySet());
+    String ga = groupId + ":" + artifactId;
+    return doIndexTask(() -> notNullize(myData.groupWithArtifactToVersionMap.get(ga)), Collections.emptySet());
   }
 
   public synchronized boolean hasGroupId(String groupId) {
@@ -608,46 +596,42 @@ public class MavenIndex {
     if (isBroken) return false;
 
     final String groupWithArtifactWithVersion = groupId + ":" + artifactId + ':' + version;
-
-    Boolean res = myData.hasVersionCache.get(groupWithArtifactWithVersion);
-    if (res == null) {
-      res = doIndexTask(new IndexTask<Boolean>() {
-        @Override
-        public Boolean doTask() throws Exception {
-          String groupWithVersion = groupWithArtifactWithVersion.substring(0, groupWithArtifactWithVersion.length() - version.length() - 1);
-          Set<String> set = myData.groupWithArtifactToVersionMap.get(groupWithVersion);
-          return set != null && set.contains(version);
-        }
-      }, false);
-
-      myData.hasVersionCache.put(groupWithArtifactWithVersion, res);
-    }
-
-    return res;
+    String groupWithArtifact = groupWithArtifactWithVersion.substring(0, groupWithArtifactWithVersion.length() - version.length() - 1);
+    return myData.hasVersionCache.computeIfAbsent(groupWithArtifactWithVersion, gav -> doIndexTask(
+      () -> notNullize(myData.groupWithArtifactToVersionMap.get(groupWithArtifact)).contains(version),
+      false));
   }
 
   private boolean hasValue(final PersistentHashMap<String, ?> map, Map<String, Boolean> cache, final String value) {
-    Boolean res = cache.get(value);
-    if (res == null) {
-      res = doIndexTask(new IndexTask<Boolean>() {
-        public Boolean doTask() throws Exception {
-          return map.tryEnumerate(value) != 0;
-        }
-      }, false).booleanValue();
-
-      cache.put(value, res);
-    }
-
-    return res;
+    return cache.computeIfAbsent(value, v -> doIndexTask(() -> map.tryEnumerate(v) != 0, false));
   }
 
   public synchronized Set<MavenArtifactInfo> search(final Query query, final int maxResult) {
     if (myNotNexusIndexer != null) return Collections.emptySet();
 
-    return doIndexTask(new IndexTask<Set<MavenArtifactInfo>>() {
-      public Set<MavenArtifactInfo> doTask() throws Exception {
-        return myData.search(query, maxResult);
+    return doIndexTask(() -> myData.search(query, maxResult), Collections.emptySet());
+  }
+
+  public synchronized Set<MavenArchetype> getArchetypes() {
+    return doIndexTask(() -> {
+      Set<MavenArchetype> archetypes = new THashSet<>();
+      for (String ga : myData.archetypeIdToDescriptionMap.getAllKeysWithExistingMapping()) {
+        List<String> gaParts = split(ga, ":");
+
+        String groupId = gaParts.get(0);
+        String artifactId = gaParts.get(1);
+
+        for (String vd : myData.archetypeIdToDescriptionMap.get(ga)) {
+          int index = vd.indexOf(':');
+          if (index == -1) continue;
+
+          String version = vd.substring(0, index);
+          String description = vd.substring(index + 1);
+
+          archetypes.add(new MavenArchetype(groupId, artifactId, version, myRepositoryPathOrUrl, description));
+        }
       }
+      return archetypes;
     }, Collections.emptySet());
   }
 
@@ -681,6 +665,7 @@ public class MavenIndex {
     isBroken = true;
   }
 
+  @FunctionalInterface
   private interface IndexTask<T> {
     T doTask() throws Exception;
   }
@@ -688,6 +673,7 @@ public class MavenIndex {
   private class IndexData {
     final PersistentHashMap<String, Set<String>> groupToArtifactMap;
     final PersistentHashMap<String, Set<String>> groupWithArtifactToVersionMap;
+    final PersistentHashMap<String, Set<String>> archetypeIdToDescriptionMap;
 
     final Map<String, Boolean> hasGroupCache = new THashMap<>();
     final Map<String, Boolean> hasArtifactCache = new THashMap<>();
@@ -699,6 +685,7 @@ public class MavenIndex {
       try {
         groupToArtifactMap = createPersistentMap(new File(dir, ARTIFACT_IDS_MAP_FILE));
         groupWithArtifactToVersionMap = createPersistentMap(new File(dir, VERSIONS_MAP_FILE));
+        archetypeIdToDescriptionMap = createPersistentMap(new File(dir, ARCHETYPES_MAP_FILE));
 
         indexId = createContext(getDataContextDir(dir), dir.getName());
       }
@@ -725,6 +712,7 @@ public class MavenIndex {
 
       safeClose(groupToArtifactMap, exceptions);
       safeClose(groupWithArtifactToVersionMap, exceptions);
+      safeClose(archetypeIdToDescriptionMap, exceptions);
 
       if (exceptions[0] != null) throw exceptions[0];
     }
@@ -742,9 +730,10 @@ public class MavenIndex {
     public void flush() throws IOException {
       groupToArtifactMap.force();
       groupWithArtifactToVersionMap.force();
+      archetypeIdToDescriptionMap.force();
     }
 
-    public MavenId addArtifact(File artifactFile) throws MavenServerIndexerException {
+    public IndexedMavenId addArtifact(File artifactFile) throws MavenServerIndexerException {
       return myNexusIndexer.addArtifact(indexId, artifactFile);
     }
 
@@ -779,12 +768,7 @@ public class MavenIndex {
     @Nullable
     @Override
     public Result<String> compute() {
-      return Result.create(join(myRegisteredRepositoryIds, ","), new ModificationTracker() {
-        @Override
-        public long getModificationCount() {
-          return myRegisteredRepositoryIds.hashCode();
-        }
-      });
+      return Result.create(join(myRegisteredRepositoryIds, ","), (ModificationTracker)myRegisteredRepositoryIds::hashCode);
     }
   }
 }

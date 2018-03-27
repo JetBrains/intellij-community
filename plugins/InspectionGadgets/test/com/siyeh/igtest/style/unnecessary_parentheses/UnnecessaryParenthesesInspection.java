@@ -120,4 +120,12 @@ public class UnnecessaryParenthesesInspection
     final int i = a * ((b + 2) / 3); // no warn
     final int j = a * ((b + 2) % 3); // no warn
   }
+
+  void lambda() {
+      Runnable r = (()->true) ? () -> {} : () -> {}; // no warn
+  }
+
+  public java.util.function.IntFunction context() {
+    return (a -> a)=1;
+  }
 }

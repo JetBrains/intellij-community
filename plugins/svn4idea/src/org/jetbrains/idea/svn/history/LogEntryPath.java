@@ -19,25 +19,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.api.BaseNodeDescription;
 import org.jetbrains.idea.svn.api.NodeKind;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
-import org.tmatesoft.svn.core.SVNLogEntryPath;
 
 import javax.xml.bind.annotation.*;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class LogEntryPath extends BaseNodeDescription {
 
   private final String myPath;
   private final char myType;
   private final String myCopyPath;
   private final long myCopyRevision;
-
-  @NotNull
-  public static LogEntryPath.Builder create(@NotNull SVNLogEntryPath path) {
-    return new LogEntryPath.Builder().setPath(path.getPath()).setType(path.getType()).setCopyFromPath(
-      path.getCopyPath()).setCopyFromRevision(path.getCopyRevision()).setKind(NodeKind.from(path.getKind()));
-  }
 
   public LogEntryPath(@NotNull LogEntryPath.Builder builder) {
     super(builder.kind);

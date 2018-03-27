@@ -16,8 +16,11 @@
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.ide.util.EditorHelper;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
@@ -83,8 +86,12 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     super(project);
     final Set<PsiElement> toMove = new LinkedHashSet<>();
     for (PsiElement element : elements) {
+      PsiUtilCore.ensureValid(element);
       if (element instanceof PsiClassOwner) {
-        Collections.addAll(toMove, ((PsiClassOwner)element).getClasses());
+        for (PsiClass aClass : ((PsiClassOwner)element).getClasses()) {
+          PsiUtilCore.ensureValid(aClass);
+          toMove.add(aClass);
+        }
       } else {
         toMove.add(element);
       }
@@ -432,11 +439,13 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     }
   }
 
+  @Override
   protected void refreshElements(@NotNull PsiElement[] elements) {
     LOG.assertTrue(elements.length == myElementsToMove.length);
     System.arraycopy(elements, 0, myElementsToMove, 0, elements.length);
   }
 
+  @Override
   protected boolean isPreviewUsages(@NotNull UsageInfo[] usages) {
     if (UsageViewUtil.reportNonRegularUsages(usages, myProject)) {
       return true;
@@ -448,11 +457,15 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
 
   protected void performRefactoring(@NotNull UsageInfo[] usages) {
     // If files are being moved then I need to collect some information to delete these
-    // filese from CVS. I need to know all common parents of the moved files and releative
+    // files from CVS. I need to know all common parents of the moved files and relative
     // paths.
 
     // Move files with correction of references.
 
+    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    if (indicator != null) {
+      indicator.setIndeterminate(false);
+    }
     try {
       final Map<PsiClass, Boolean> allClasses = new HashMap<>();
       for (PsiElement element : myElementsToMove) {
@@ -521,7 +534,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
       }
 
       if (myOpenInEditor) {
-        EditorHelper.openFilesInEditor(myElementsToMove);
+        ApplicationManager.getApplication().invokeLater(() -> EditorHelper.openFilesInEditor(Arrays.stream(myElementsToMove).filter(PsiElement::isValid).toArray(PsiElement[]::new)));
       }
     }
     catch (IncorrectOperationException e) {
@@ -530,6 +543,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     }
   }
 
+    @Override
     protected void performPsiSpoilingRefactoring() {
     RenameUtil.renameNonCodeUsages(myProject, myNonCodeUsages);
     if (myMoveCallback != null) {
@@ -540,6 +554,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     }
   }
 
+  @NotNull
   protected String getCommandName() {
     String elements = RefactoringUIUtil.calculatePsiElementDescriptionList(myElementsToMove);
     String target = myTargetPackage.getQualifiedName();

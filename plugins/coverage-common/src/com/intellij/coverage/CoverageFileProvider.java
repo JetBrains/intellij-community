@@ -17,7 +17,6 @@ package com.intellij.coverage;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jul 7, 2006
  */
 public interface CoverageFileProvider {
   

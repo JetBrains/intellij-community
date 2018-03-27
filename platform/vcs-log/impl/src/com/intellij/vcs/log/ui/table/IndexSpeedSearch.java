@@ -26,7 +26,7 @@ import com.intellij.vcs.log.VcsUserRegistry;
 import com.intellij.vcs.log.data.index.IndexDataGetter;
 import com.intellij.vcs.log.data.index.IndexedDetails;
 import com.intellij.vcs.log.data.index.VcsLogIndex;
-import com.intellij.vcs.log.impl.VcsLogUtil;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
 import org.jetbrains.annotations.NotNull;
@@ -75,8 +75,7 @@ public class IndexSpeedSearch extends VcsLogSpeedSearch {
     if (super.isSpeedSearchEnabled()) {
       VisiblePack visiblePack = myComponent.getModel().getVisiblePack();
       Set<VirtualFile> roots = visiblePack.getLogProviders().keySet();
-      Set<VirtualFile> visibleRoots = VcsLogUtil.getAllVisibleRoots(roots, visiblePack.getFilters().getRootFilter(),
-                                                                    visiblePack.getFilters().getStructureFilter());
+      Set<VirtualFile> visibleRoots = VcsLogUtil.getAllVisibleRoots(roots, visiblePack.getFilters());
       for (VirtualFile root : visibleRoots) {
         if (!myIndex.isIndexed(root)) return false;
       }

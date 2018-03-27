@@ -36,6 +36,7 @@ public class ConditionalExpressionFixTest extends IGQuickFixesTestCase {
   public void testArrayInitializer() { doTest(); }
   public void testCastNeeded() { doTest(); }
   public void testComment() { doTest(); }
+  public void testCommentWithDeclaration() { doTest(); }
   public void testConditionalAsArgument() { doTest(); }
   public void testConditionalInBinaryExpression() { doTest(); }
   public void testConditionalInIf() { doTest(); }

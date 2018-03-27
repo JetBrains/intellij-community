@@ -90,7 +90,7 @@ public class RemoteExternalSystemCommunicationManager implements ExternalSystemC
       }
 
       @Override
-      protected RunProfileState getRunProfileState(@NotNull Object o, @NotNull String configuration, @NotNull Executor executor) throws ExecutionException {
+      protected RunProfileState getRunProfileState(@NotNull Object o, @NotNull String configuration, @NotNull Executor executor) {
         return createRunProfileState(configuration);
       }
     };
@@ -226,7 +226,7 @@ public class RemoteExternalSystemCommunicationManager implements ExternalSystemC
   }
 
   @Override
-  public void release(@NotNull String id, @NotNull ProjectSystemId externalSystemId) throws Exception {
+  public void release(@NotNull String id, @NotNull ProjectSystemId externalSystemId) {
     mySupport.release(this, id);
   }
 

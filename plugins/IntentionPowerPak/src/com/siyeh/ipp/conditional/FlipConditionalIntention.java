@@ -20,6 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
@@ -41,8 +42,9 @@ public class FlipConditionalIntention extends Intention {
     final PsiExpression thenExpression = exp.getThenExpression();
     assert elseExpression != null;
     assert thenExpression != null;
-    final String newExpression = BoolUtils.getNegatedExpressionText(condition) + '?' +
-                                 elseExpression.getText() + ':' + thenExpression.getText();
-    PsiReplacementUtil.replaceExpression(exp, newExpression);
+    CommentTracker tracker = new CommentTracker();
+    final String newExpression = BoolUtils.getNegatedExpressionText(condition, tracker) + '?' +
+                                 tracker.markUnchanged(elseExpression).getText() + ':' + tracker.markUnchanged(thenExpression).getText();
+    PsiReplacementUtil.replaceExpression(exp, newExpression, tracker);
   }
 }

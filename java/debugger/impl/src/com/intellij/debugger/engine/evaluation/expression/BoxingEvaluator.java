@@ -27,7 +27,6 @@ import java.util.Collections;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Feb 8, 2010
  */
 public class BoxingEvaluator implements Evaluator{
   private final Evaluator myOperand;

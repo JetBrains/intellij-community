@@ -62,11 +62,8 @@ public class VcsLogStructureFilterImpl implements VcsLogDetailsFilter, VcsLogStr
           return true;
         }
       }
-      return false;
     }
-    else {
-      return false;
-    }
+    return false;
   }
 
   private boolean matches(@NotNull final String path) {

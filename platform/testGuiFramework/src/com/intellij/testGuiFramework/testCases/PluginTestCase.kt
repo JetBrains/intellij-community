@@ -25,14 +25,32 @@ import com.intellij.testGuiFramework.launcher.system.SystemInfo
 import com.intellij.testGuiFramework.remote.transport.MessageType
 import com.intellij.testGuiFramework.remote.transport.TransportMessage
 import org.fest.swing.exception.WaitTimedOutError
+import java.io.File
 import javax.swing.JDialog
 
 open class PluginTestCase : GuiTestCase() {
 
 
   private val MAC_PLUGIN_HOME = "/Users/jetbrains/Documents/plugins/"
-  private val WIN_PLUGIN_HOME = "/Users/jetbrains/Documents/plugins/"
+  private val WIN_PLUGIN_HOME = "C:\\WS-Plugins"
   private val LINUX_PLUGIN_HOME = "/Users/jetbrains/Documents/plugins/"
+
+  private fun getPluginHomePath(): String {
+    return when {
+      SystemInfo.isMac() -> MAC_PLUGIN_HOME
+      SystemInfo.isWin() -> WIN_PLUGIN_HOME
+      else -> {
+        LINUX_PLUGIN_HOME
+      }
+    }
+  }
+
+  fun findPlugin(pluginName: String): String {
+    val f = File(getPluginHomePath())
+    return f.listFiles { _, name ->
+      name.startsWith(pluginName)
+    }[0].toString()
+  }
 
   fun installPluginAndRestart(installPluginsFunction: () -> Unit) {
     val PLUGINS_INSTALLED = "PLUGINS_INSTALLED"
@@ -69,14 +87,7 @@ open class PluginTestCase : GuiTestCase() {
     }
   }
 
-  fun installPluginFromDisk(pluginDir: String, pluginName: String) {
-    var pluginPath: String = when {
-                               SystemInfo.isMac() -> MAC_PLUGIN_HOME
-                               SystemInfo.isWin() -> WIN_PLUGIN_HOME
-                               else -> {
-                                 LINUX_PLUGIN_HOME
-                               }
-                             } + pluginDir
+  fun installPluginFromDisk(pluginPath: String, pluginName: String) {
     welcomeFrame {
       actionLink("Configure").click()
       popupClick("Plugins")

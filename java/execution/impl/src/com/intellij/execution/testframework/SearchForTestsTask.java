@@ -31,6 +31,7 @@ import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -112,7 +113,7 @@ public abstract class SearchForTestsTask extends Task.Backgroundable {
           ex[0] = e;
         }
       };
-      if (findTestsInClasspath()) {
+      if (Registry.is("junit4.search.4.tests.in.classpath", false)) {
         runnable.run();
       }
       else {
@@ -183,16 +184,12 @@ public abstract class SearchForTestsTask extends Task.Backgroundable {
       }
       finish();
     };
-    if (findTestsInClasspath()) {
+    if (Registry.is("junit4.search.4.tests.in.classpath", false)) {
       runnable.run();
     }
     else {
       DumbService.getInstance(getProject()).runWhenSmart(runnable);
     }
-  }
-
-  protected boolean findTestsInClasspath() {
-    return false;
   }
 
   public void finish() {

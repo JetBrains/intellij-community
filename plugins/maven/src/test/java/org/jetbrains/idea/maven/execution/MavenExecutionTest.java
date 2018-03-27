@@ -123,7 +123,7 @@ public class MavenExecutionTest extends MavenImportingTestCase {
 
     assertFalse(new File(getProjectPath(), "target").exists());
 
-    execute(new MavenRunnerParameters(true, getProjectPath(), Arrays.asList("compile"), Collections.emptyList()));
+    execute(new MavenRunnerParameters(true, getProjectPath(), (String)null, Arrays.asList("compile"), Collections.emptyList()));
 
     assertTrue(new File(getProjectPath(), "target").exists());
   }
@@ -148,7 +148,7 @@ public class MavenExecutionTest extends MavenImportingTestCase {
     assertModules("project");
     assertExcludes("project", "target");
 
-    MavenRunnerParameters params = new MavenRunnerParameters(true, getProjectPath(), Arrays.asList("compile"), Collections.emptyList());
+    MavenRunnerParameters params = new MavenRunnerParameters(true, getProjectPath(), (String)null, Arrays.asList("compile"), Collections.emptyList());
     execute(params);
 
     SwingUtilities.invokeAndWait(() -> {

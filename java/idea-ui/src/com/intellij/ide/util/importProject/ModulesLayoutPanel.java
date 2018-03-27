@@ -25,7 +25,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jul 16, 2007
  */
 public class ModulesLayoutPanel extends ProjectLayoutPanel<ModuleDescriptor>{
   private final LibraryFilter myLibrariesFilter;

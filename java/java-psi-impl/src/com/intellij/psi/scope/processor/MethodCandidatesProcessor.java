@@ -30,7 +30,6 @@ import java.util.List;
 
 /**
  * @author ik
- * Date: 31.01.2003
  */
 public class MethodCandidatesProcessor extends MethodsProcessor{
   protected boolean myHasAccessibleStaticCorrectCandidate;

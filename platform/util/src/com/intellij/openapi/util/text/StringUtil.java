@@ -1,18 +1,16 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package com.intellij.openapi.util.text;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -1391,11 +1389,23 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static List<TextRange> getWordIndicesIn(@NotNull String text) {
+    return getWordIndicesIn(text, null);
+  }
+
+  /**
+   * @param text text to get word ranges in.
+   * @param separatorsSet if not null, only these characters will be considered as separators (i.e. not a part of word).
+   *                   Otherwise {@link Character#isJavaIdentifierPart(char)} will be used to determine whether a symbol is part of word.
+   * @return ranges ranges of words in passed text.
+   */
+  @NotNull
+  @Contract(pure = true)
+  public static List<TextRange> getWordIndicesIn(@NotNull String text, @Nullable Set<Character> separatorsSet) {
     List<TextRange> result = new SmartList<TextRange>();
     int start = -1;
     for (int i = 0; i < text.length(); i++) {
       char c = text.charAt(i);
-      boolean isIdentifierPart = Character.isJavaIdentifierPart(c);
+      boolean isIdentifierPart = separatorsSet == null ? Character.isJavaIdentifierPart(c) : !separatorsSet.contains(c);
       if (isIdentifierPart && start == -1) {
         start = i;
       }
@@ -1586,21 +1596,41 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static String formatFileSize(long fileSize) {
+    return formatFileSize(fileSize, null);
+  }
+
+  /**
+   * Formats the specified file size as a string.
+   *
+   * @param fileSize the size to format.
+   * @param spaceBeforeUnits space to be used between counts and measurement units
+   * @return the size formatted as a string.
+   * @since 5.0.1
+   */
+  @NotNull
+  @Contract(pure = true)
+  public static String formatFileSize(long fileSize, final String spaceBeforeUnits) {
     return formatValue(fileSize, null,
                        new String[]{"B", "K", "M", "G", "T", "P", "E"},
-                       new long[]{1000, 1000, 1000, 1000, 1000, 1000});
+                       new long[]{1000, 1000, 1000, 1000, 1000, 1000}, spaceBeforeUnits);
   }
 
   @NotNull
   @Contract(pure = true)
   public static String formatDuration(long duration) {
-    return formatValue(duration, " ",
-                       new String[]{"ms", "s", "m", "h", "d", "w", "mo", "yr", "c", "ml", "ep"},
-                       new long[]{1000, 60, 60, 24, 7, 4, 12, 100, 10, 10000});
+    return formatDuration(duration, null);
   }
 
   @NotNull
-  private static String formatValue(long value, String partSeparator, String[] units, long[] multipliers) {
+  @Contract(pure = true)
+  public static String formatDuration(long duration, final String spaceBeforeUnits) {
+    return formatValue(duration, " ",
+                       new String[]{"ms", "s", "m", "h", "d", "w", "mo", "yr", "c", "ml", "ep"},
+                       new long[]{1000, 60, 60, 24, 7, 4, 12, 100, 10, 10000}, spaceBeforeUnits);
+  }
+
+  @NotNull
+  private static String formatValue(long value, String partSeparator, String[] units, long[] multipliers, final String spaceBeforeUnits) {
     StringBuilder sb = new StringBuilder();
     long count = value;
     long remainder = 0;
@@ -1611,14 +1641,26 @@ public class StringUtil extends StringUtilRt {
       remainder = count % multiplier;
       count /= multiplier;
       if (partSeparator != null && (remainder != 0 || sb.length() > 0)) {
-        sb.insert(0, units[i]).insert(0, remainder).insert(0, partSeparator);
+        sb.insert(0, units[i]);
+        if (spaceBeforeUnits != null) {
+          sb.insert(0, spaceBeforeUnits);
+        }
+        sb.insert(0, remainder).insert(0, partSeparator);
       }
     }
     if (partSeparator != null || remainder == 0) {
-      sb.insert(0, units[i]).insert(0, count);
+      sb.insert(0, units[i]);
+      if (spaceBeforeUnits != null) {
+        sb.insert(0, spaceBeforeUnits);
+      }
+      sb.insert(0, count);
     }
     else if (remainder > 0) {
-      sb.append(String.format(Locale.US, "%.2f", count + (double)remainder / multipliers[i - 1])).append(units[i]);
+      sb.append(String.format(Locale.US, "%.2f", count + (double)remainder / multipliers[i - 1]));
+      if (spaceBeforeUnits != null) {
+        sb.append(spaceBeforeUnits);
+      }
+      sb.append(units[i]);
     }
     return sb.toString();
   }
@@ -2148,19 +2190,17 @@ public class StringUtil extends StringUtilRt {
     return '\"' + str + "\"";
   }
 
-  @NonNls private static final String[] REPLACES_REFS = {"&lt;", "&gt;", "&amp;", "&#39;", "&quot;"};
-  @NonNls private static final String[] REPLACES_DISP = {"<", ">", "&", "'", "\""};
+  @NonNls private static final List<String> REPLACES_REFS = Arrays.asList("&lt;", "&gt;", "&amp;", "&#39;", "&quot;");
+  @NonNls private static final List<String> REPLACES_DISP = Arrays.asList("<", ">", "&", "'", "\"");
 
   @Contract(value = "null -> null; !null -> !null",pure = true)
   public static String unescapeXml(@Nullable final String text) {
-    if (text == null) return null;
-    return replace(text, REPLACES_REFS, REPLACES_DISP);
+    return text == null ? null : replace(text, REPLACES_REFS, REPLACES_DISP);
   }
 
   @Contract(value = "null -> null; !null -> !null",pure = true)
   public static String escapeXml(@Nullable final String text) {
-    if (text == null) return null;
-    return replace(text, REPLACES_DISP, REPLACES_REFS);
+    return text == null ? null : replace(text, REPLACES_DISP, REPLACES_REFS);
   }
 
   public static String removeHtmlTags (@Nullable String htmlString) {
@@ -2174,13 +2214,12 @@ public class StringUtil extends StringUtilRt {
     return html2TextParser.getText();
   }
 
-  @NonNls private static final String[] MN_QUOTED = {"&&", "__"};
-  @NonNls private static final String[] MN_CHARS = {"&", "_"};
+  @NonNls private static final List<String> MN_QUOTED = Arrays.asList("&&", "__");
+  @NonNls private static final List<String> MN_CHARS = Arrays.asList("&", "_");
 
   @Contract(value = "null -> null; !null -> !null", pure = true)
   public static String escapeMnemonics(@Nullable String text) {
-    if (text == null) return null;
-    return replace(text, MN_CHARS, MN_QUOTED);
+    return text == null ? null : replace(text, MN_CHARS, MN_QUOTED);
   }
 
   @NotNull
@@ -2252,6 +2291,9 @@ public class StringUtil extends StringUtilRt {
     return escaped;
   }
 
+  /**
+   * @deprecated Use {@link #replace(String, List, List)}
+   */
   @NotNull
   @Contract(pure = true)
   public static String replace(@NotNull String text, @NotNull String[] from, @NotNull String[] to) {
@@ -2262,7 +2304,7 @@ public class StringUtil extends StringUtilRt {
   @Contract(pure = true)
   public static String replace(@NotNull String text, @NotNull List<String> from, @NotNull List<String> to) {
     assert from.size() == to.size();
-    final StringBuilder result = new StringBuilder(text.length());
+    StringBuilder result = null;
     replace:
     for (int i = 0; i < text.length(); i++) {
       for (int j = 0; j < from.size(); j += 1) {
@@ -2271,14 +2313,22 @@ public class StringUtil extends StringUtilRt {
 
         final int len = toReplace.length();
         if (text.regionMatches(i, toReplace, 0, len)) {
+          if (result == null) {
+            result = new StringBuilder(text.length());
+            result.append(text, 0, i);
+          }
           result.append(replaceWith);
+          //noinspection AssignmentToForLoopParameter
           i += len - 1;
           continue replace;
         }
       }
-      result.append(text.charAt(i));
+
+      if (result != null) {
+        result.append(text.charAt(i));
+      }
     }
-    return result.toString();
+    return result == null ? text : result.toString();
   }
 
   @NotNull
@@ -3242,5 +3292,24 @@ public class StringUtil extends StringUtilRt {
   /** @deprecated use {@link #startsWithConcatenation(String, String...)} (to remove in IDEA 15) */
   public static boolean startsWithConcatenationOf(@NotNull String string, @NotNull String firstPrefix, @NotNull String secondPrefix) {
     return startsWithConcatenation(string, firstPrefix, secondPrefix);
+  }
+
+  /**
+   * @return <code>true</code> if the passed string is not <code>null</code> and not empty
+   * and contains only latin upper- or lower-case characters and digits; <code>false</code> otherwise.
+   */
+  @Contract(pure = true)
+  public static boolean isLatinAlphanumeric(@Nullable CharSequence str) {
+    if (isEmpty(str)) {
+      return false;
+    }
+    for (int i = 0; i < str.length(); i++) {
+      char c = str.charAt(i);
+      if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || Character.isDigit(c)) {
+        continue;
+      }
+      return false;
+    }
+    return true;
   }
 }

@@ -22,5 +22,4 @@ public interface ChangeInfo {
   short CONTENTS_CHANGED = 3;
 
   int getChangeType();
-  int getOldLength();
 }

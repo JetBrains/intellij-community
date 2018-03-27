@@ -31,10 +31,7 @@ import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.impl.VcsStatusDescriptor.MergedStatusInfo;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -43,6 +40,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public abstract class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl implements VcsFullCommitDetails, VcsIndexableDetails {
   private static final Logger LOG = Logger.getInstance(VcsChangesLazilyParsedDetails.class);
+  protected static final Changes EMPTY_CHANGES = new EmptyChanges();
   @NotNull protected final AtomicReference<Changes> myChanges = new AtomicReference<>();
 
   public VcsChangesLazilyParsedDetails(@NotNull Hash hash, @NotNull List<Hash> parents, long commitTime, @NotNull VirtualFile root,
@@ -106,6 +104,32 @@ public abstract class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImp
     Collection<Couple<String>> getRenamedPaths(int parent);
   }
 
+  protected static class EmptyChanges implements Changes {
+    @NotNull
+    @Override
+    public Collection<Change> getMergedChanges() {
+      return ContainerUtil.emptyList();
+    }
+
+    @NotNull
+    @Override
+    public Collection<Change> getChanges(int parent) {
+      return ContainerUtil.emptyList();
+    }
+
+    @NotNull
+    @Override
+    public Collection<String> getModifiedPaths(int parent) {
+      return ContainerUtil.emptyList();
+    }
+
+    @NotNull
+    @Override
+    public Collection<Couple<String>> getRenamedPaths(int parent) {
+      return ContainerUtil.emptyList();
+    }
+  }
+
   protected abstract class UnparsedChanges<S> implements Changes {
     @NotNull protected final Project myProject;
     @NotNull protected final List<List<S>> myChangesOutput;
@@ -136,7 +160,7 @@ public abstract class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImp
       if (getParents().size() <= 1) return changes;
 
       // each merge change knows about all changes to parents
-      List<Change> wrappedChanges = ContainerUtil.newArrayList();
+      List<Change> wrappedChanges = new ArrayList<>(statuses.size());
       for (int i = 0; i < statuses.size(); i++) {
         wrappedChanges.add(new MyMergedChange(changes.get(i), statuses.get(i)));
       }
@@ -217,7 +241,7 @@ public abstract class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImp
       @NotNull private final MergedStatusInfo<S> myStatusInfo;
       @NotNull private final Supplier<List<Change>> mySourceChanges;
 
-      public MyMergedChange(@NotNull Change change, @NotNull MergedStatusInfo<S> statusInfo) {
+      MyMergedChange(@NotNull Change change, @NotNull MergedStatusInfo<S> statusInfo) {
         super(change);
         myStatusInfo = statusInfo;
         mySourceChanges = Suppliers.memoize(() -> {
@@ -245,8 +269,7 @@ public abstract class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImp
     @NotNull private final Collection<Change> myMergedChanges;
     @NotNull private final List<Collection<Change>> myChanges;
 
-    public ParsedChanges(@NotNull Collection<Change> mergedChanges,
-                         @NotNull List<Collection<Change>> changes) {
+    ParsedChanges(@NotNull Collection<Change> mergedChanges, @NotNull List<Collection<Change>> changes) {
       myMergedChanges = mergedChanges;
       myChanges = changes;
     }

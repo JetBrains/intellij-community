@@ -110,6 +110,7 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
     return showConflicts(getConflicts(usages), usages);
   }
 
+  @Override
   protected void refreshElements(@NotNull final PsiElement[] elements) {
     ApplicationManager.getApplication().runReadAction(() -> {
       final PsiClass[] classesToMove = new PsiClass[elements.length];
@@ -198,6 +199,7 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
     }
   }
 
+  @Override
   protected void performPsiSpoilingRefactoring() {
     if (myNonCodeUsages != null) {
       RenameUtil.renameNonCodeUsages(myProject, myNonCodeUsages);
@@ -210,12 +212,14 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
     }
   }
 
+  @NotNull
   protected String getCommandName() {
     return RefactoringBundle.message("move.class.to.inner.command.name",
                                      (myClassesToMove.length > 1 ? "classes " : "class ") + StringUtil.join(myClassesToMove, psiClass -> psiClass.getName(), ", "),
                                      myTargetClass.getQualifiedName());
   }
 
+  @Override
   @NotNull
   protected Collection<? extends PsiElement> getElementsToWrite(@NotNull final UsageViewDescriptor descriptor) {
     List<PsiElement> result = new ArrayList<>(super.getElementsToWrite(descriptor));

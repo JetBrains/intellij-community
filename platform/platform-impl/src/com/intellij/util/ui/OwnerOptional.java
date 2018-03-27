@@ -52,14 +52,16 @@ public class OwnerOptional {
 
     if (manager.isPopupWindow(owner)) {
 
-      manager.closeAllPopups();
+      //manager.closeAllPopups();
 
-      owner = owner.getOwner();
-
-      while (owner != null
-             && !(owner instanceof Dialog)
-             && !(owner instanceof Frame)) {
+      if (!owner.isFocused()) {
         owner = owner.getOwner();
+
+        while (owner != null
+               && !(owner instanceof Dialog)
+               && !(owner instanceof Frame)) {
+          owner = owner.getOwner();
+        }
       }
     }
 

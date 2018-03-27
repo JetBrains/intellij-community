@@ -30,8 +30,6 @@ import static com.jetbrains.python.psi.PyUtil.sure;
 /**
  * Created by IntelliJ IDEA.
  * Author: Alexey.Ivanov
- * Date:   22.04.2010
- * Time:   18:13:34
  */
 public class PyExceptFixer extends PyFixer<PyExceptPart> {
   public PyExceptFixer() {

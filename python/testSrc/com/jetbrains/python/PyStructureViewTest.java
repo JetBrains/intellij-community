@@ -3,6 +3,7 @@ package com.jetbrains.python;
 
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.structureView.PyStructureViewElement;
@@ -81,6 +82,7 @@ public class PyStructureViewTest extends PyTestCase {
            "  __reduce__(self)\n" +
            "  __reduce_ex__(self, protocol)\n" +
            "  __class__\n" +
+           "  __dict__\n" +
            "  __doc__\n" +
            "  __module__\n" +
            "  __slots__\n",
@@ -123,6 +125,7 @@ public class PyStructureViewTest extends PyTestCase {
            "  __reduce__(self)\n" +
            "  __reduce_ex__(self, protocol)\n" +
            "  __class__\n" +
+           "  __dict__\n" +
            "  __doc__\n" +
            "  __module__\n" +
            "  __slots__\n",
@@ -132,6 +135,7 @@ public class PyStructureViewTest extends PyTestCase {
   private void doTest(final String expected, final boolean inherited) {
     myFixture.testStructureView(component -> {
       component.setActionActive("SHOW_INHERITED", !inherited);
+      PlatformTestUtil.waitWhileBusy(component.getTree());
       assertTreeEqual(component.getTree(), expected);
     });
   }

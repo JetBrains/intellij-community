@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.spellchecker;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -35,9 +21,7 @@ import com.intellij.spellchecker.engine.SpellCheckerFactory;
 import com.intellij.spellchecker.engine.SuggestionProvider;
 import com.intellij.spellchecker.settings.SpellCheckerSettings;
 import com.intellij.spellchecker.state.AggregatedDictionaryState;
-import com.intellij.spellchecker.util.SPFileUtil;
 import com.intellij.spellchecker.util.Strings;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -105,19 +89,17 @@ public class SpellCheckerManager implements Disposable {
         }
       }
     }
-    if (settings != null && settings.getDictionaryFoldersPaths() != null) {
+    if (settings != null && settings.getCustomDictionariesPaths() != null) {
       final Set<String> disabledDictionaries = settings.getDisabledDictionariesPaths();
-      for (String folder : settings.getDictionaryFoldersPaths()) {
-        SPFileUtil.processFilesRecursively(folder, s -> {
-          boolean dictionaryShouldBeLoad =!disabledDictionaries.contains(s);
-          boolean dictionaryIsLoad = spellChecker.isDictionaryLoad(s);
-          if (dictionaryIsLoad && !dictionaryShouldBeLoad) {
-            spellChecker.removeDictionary(s);
-          }
-          else if (!dictionaryIsLoad && dictionaryShouldBeLoad) {
-            loadDictionary(s);
-          }
-        });
+      for (String dictionary : settings.getCustomDictionariesPaths()) {
+        boolean dictionaryShouldBeLoad =!disabledDictionaries.contains(dictionary);
+        boolean dictionaryIsLoad = spellChecker.isDictionaryLoad(dictionary);
+        if (dictionaryIsLoad && !dictionaryShouldBeLoad) {
+          spellChecker.removeDictionary(dictionary);
+        }
+        else if (!dictionaryIsLoad && dictionaryShouldBeLoad) {
+          loadDictionary(dictionary);
+        }
       }
     }
 
@@ -155,15 +137,12 @@ public class SpellCheckerManager implements Disposable {
         }
       }
     }
-    if (settings != null && settings.getDictionaryFoldersPaths() != null) {
+    if (settings != null && settings.getCustomDictionariesPaths() != null) {
       final Set<String> disabledDictionaries = settings.getDisabledDictionariesPaths();
-      for (String folder : settings.getDictionaryFoldersPaths()) {
-        SPFileUtil.processFilesRecursively(folder, s -> {
-          if (!disabledDictionaries.contains(s)) {
-            loadDictionary(s);
-          }
-        });
-
+      for (String dictionary : settings.getCustomDictionariesPaths()) {
+        if (!disabledDictionaries.contains(dictionary)) {
+          loadDictionary(dictionary);
+        }
       }
     }
     final AggregatedDictionaryState dictionaryState = ServiceManager.getService(project, AggregatedDictionaryState.class);
@@ -197,7 +176,7 @@ public class SpellCheckerManager implements Disposable {
     }
   }
 
-  public void updateUserDictionary(@Nullable Collection<String> words) {
+  public void updateUserDictionary(@NotNull Collection<String> words) {
     userDictionary.replaceAll(words);
     restartInspections();
   }
@@ -275,14 +254,14 @@ public class SpellCheckerManager implements Disposable {
 
     @Override
     public void fileMoved(@NotNull VirtualFileMoveEvent event) {
-      final String oldPath = event.getOldParent().getPath();
-      if (!locatedInDictFolders(oldPath)) {
+      final String oldPath = event.getOldParent().getPath() + File.separator + event.getFileName();
+      if (!affectCustomDicts(oldPath)) {
         loadCustomDictionaries(event.getFile());
       }
       else {
-        final String newPath = event.getNewParent().getPath();
-        if (!locatedInDictFolders(newPath)) {
-          removeCustomDictionaries(oldPath + File.separator + event.getFileName());
+        final String newPath = event.getNewParent().getPath() + File.separator + event.getFileName();
+        if (!affectCustomDicts(newPath)) {
+          removeCustomDictionaries(oldPath);
         }
       }
     }
@@ -318,50 +297,39 @@ public class SpellCheckerManager implements Disposable {
     }
 
     private void removeCustomDictionaries(@NotNull String path) {
-      path = toSystemDependentName(path);
-      if (spellChecker.isDictionaryLoad(path)) {
-        spellChecker.removeDictionary(path);
+      final String systemDependentPath = toSystemDependentName(path);
+      if (affectCustomDicts(path)) {
+        spellChecker.removeDictionariesRecursively(systemDependentPath);
+        mySettings.getCustomDictionariesPaths().removeIf(dict -> isAncestor(systemDependentPath, dict, false));
+        mySettings.getDisabledDictionariesPaths().removeIf(dict -> isAncestor(systemDependentPath, dict, false));
         restartInspections();
-      }
-      else if (locatedInDictFolders(path)) {
-        spellChecker.removeDictionariesRecursively(path);
-        restartInspections();
-      }
-      if (mySettings.getDictionaryFoldersPaths().contains(path)) {
-        mySettings.getDictionaryFoldersPaths().remove(path);
       }
     }
 
     private void loadCustomDictionaries(@NotNull VirtualFile file) {
       final String path = toSystemDependentName(file.getPath());
-      if (!locatedInDictFolders(path)) return;
+      if (!affectCustomDicts(path)) return;
 
-      if (file.isDirectory()) {
-        visitChildrenRecursively(file, new VirtualFileVisitor() {
-          @Override
-          public boolean visitFile(@NotNull VirtualFile file) {
-            final boolean isDirectory = file.isDirectory();
-            final String path = file.getPath();
-            if (!isDirectory && isDic(path)) {
-              loadDictionary(path);
-              restartInspections();
-            }
-            return isDirectory;
+      visitChildrenRecursively(file, new VirtualFileVisitor() {
+        @Override
+        public boolean visitFile(@NotNull VirtualFile file) {
+          final boolean isDirectory = file.isDirectory();
+          final String path = file.getPath();
+          if (!isDirectory && mySettings.getCustomDictionariesPaths().contains(path)) {
+            loadDictionary(path);
+            restartInspections();
           }
-        });
-      }
-      else if (isDic(path)) {
-        loadDictionary(path);
-        restartInspections();
-      }
+          return isDirectory;
+        }
+      });
     }
 
     private boolean isDic(String path) {
       return extensionEquals(path, "dic");
     }
-    
-    private boolean locatedInDictFolders(@NotNull String path) {
-      return mySettings.getDictionaryFoldersPaths().stream().anyMatch(dicFolderPath -> isAncestor(dicFolderPath, path, false));
+
+    private boolean affectCustomDicts(@NotNull String path) {
+      return mySettings.getCustomDictionariesPaths().stream().anyMatch(dicPath -> isAncestor(path, dicPath, false));
     }
   }
 }

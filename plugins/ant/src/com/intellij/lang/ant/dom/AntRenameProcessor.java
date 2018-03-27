@@ -31,7 +31,6 @@ import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Aug 11, 2010
  */
 public class AntRenameProcessor extends RenamePsiElementProcessor{
 

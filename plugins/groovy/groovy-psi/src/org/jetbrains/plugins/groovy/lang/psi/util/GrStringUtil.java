@@ -565,10 +565,10 @@ public class GrStringUtil {
     if (!(child.getNode().getElementType() == GroovyTokenTypes.mGSTRING_BEGIN)) return false;
 
     child = child.getNextSibling();
-    if (child == null || !(child instanceof GrStringContent)) return false;
+    if (!(child instanceof GrStringContent)) return false;
 
     child = child.getNextSibling();
-    if (child == null || !(child instanceof GrStringInjection)) return false;
+    if (!(child instanceof GrStringInjection)) return false;
 
     final PsiElement refExprCopy = ((GrStringInjection)child).getExpression();
     if (!(refExprCopy instanceof GrReferenceExpression)) return false;

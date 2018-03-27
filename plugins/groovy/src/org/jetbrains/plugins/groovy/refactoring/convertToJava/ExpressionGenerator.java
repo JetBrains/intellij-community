@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.intellij.lang.ASTNode;
@@ -406,7 +408,6 @@ public class ExpressionGenerator extends Generator {
   public void visitAssignmentExpression(@NotNull final GrAssignmentExpression expression) {
     final GrExpression lValue = expression.getLValue();
     final GrExpression rValue = expression.getRValue();
-    final IElementType token = expression.getOperationTokenType();
 
     PsiElement realLValue = PsiUtil.skipParentheses(lValue, false);
     if (realLValue instanceof GrReferenceExpression && rValue != null) {
@@ -456,7 +457,7 @@ public class ExpressionGenerator extends Generator {
 
     final PsiType lType = GenerationUtil.getDeclaredType(lValue, context);
 
-    if (token == GroovyTokenTypes.mASSIGN) {
+    if (!expression.isOperatorAssignment()) {
       //write simple assignment
       lValue.accept(this);
       builder.append(" = ");

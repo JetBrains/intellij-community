@@ -67,6 +67,7 @@ public class PythonFileType extends LanguageFileType {
     return "Python files";
   }
 
+  @Override
   @NotNull
   public String getDefaultExtension() {
     return "py";

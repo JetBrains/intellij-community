@@ -44,7 +44,7 @@ public class CachingConstructorInjectionComponentAdapter extends InstantiatingCo
   }
 
   public CachingConstructorInjectionComponentAdapter(@NotNull Object componentKey, @NotNull Class componentImplementation, Parameter[] parameters, boolean allowNonPublicClasses) throws AssignabilityRegistrationException, NotConcreteRegistrationException {
-    super(componentKey, componentImplementation, parameters, allowNonPublicClasses);
+    super(componentKey, componentImplementation, parameters, allowNonPublicClasses, DefaultPicoContainer.DEFAULT_DELEGATING_COMPONENT_MONITOR, DefaultPicoContainer.DEFAULT_LIFECYCLE_STRATEGY);
   }
 
   public CachingConstructorInjectionComponentAdapter(@NotNull Object componentKey, @NotNull Class componentImplementation, Parameter[] parameters) {

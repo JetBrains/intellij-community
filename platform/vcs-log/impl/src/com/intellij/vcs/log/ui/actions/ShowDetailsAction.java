@@ -21,12 +21,10 @@ import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-
 public class ShowDetailsAction extends BooleanPropertyToggleAction {
 
   public ShowDetailsAction() {
-    super("Show Details", "Display details panel", getIcon());
+    super("Show Details", "Display details panel", AllIcons.Actions.Preview);
   }
 
   @Override
@@ -41,10 +39,5 @@ public class ShowDetailsAction extends BooleanPropertyToggleAction {
     if (e.isFromContextMenu()) {
       e.getPresentation().setEnabledAndVisible(false);
     }
-  }
-
-  @NotNull
-  private static Icon getIcon() {
-    return AllIcons.Actions.Preview;
   }
 }

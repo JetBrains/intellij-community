@@ -24,10 +24,16 @@ public class UseOfObsoleteAssertInspectionTest extends IGQuickFixesTestCase {
   public void setUp() throws Exception {
     super.setUp();
 
-    myFixture.addClass("package junit.framework; public class Assert { public static void fail(){}}");
+    myFixture.addClass("package junit.framework; public class Assert { public static void fail(){}" +
+                       "public static void assertEquals(double d1, double d2, double d3) {}" +
+                       "public static void assertEquals(Object o1, Object o2) {}" +
+                       "}");
 
     myFixture.addClass("package junit.framework; public class TestCase extends Assert {}");
-    myFixture.addClass("package org.junit; public class Assert { public static void fail(){}}");
+    myFixture.addClass("package org.junit; public class Assert { " +
+                       "public static void fail(){}" +
+                       "@Deprecated public static void assertEquals(double d1, double d2) {}" +
+                       "            public static void assertEquals(double d1, double d2,  double d3) {}}");
 
     myFixture.enableInspections(new UseOfObsoleteAssertInspection());
   }
@@ -53,6 +59,10 @@ public class UseOfObsoleteAssertInspectionTest extends IGQuickFixesTestCase {
   }
 
   public void testSingleStaticImport() {
+    doFixTest();
+  }
+
+  public void testAddingDeltaToAvoidFailure() {
     doFixTest();
   }
 

@@ -132,6 +132,6 @@ public abstract class CheckinHandler {
    * @return true if handler should be skipped
    */
   public boolean acceptExecutor(CommitExecutor executor) {
-    return executor == null || !(executor instanceof LocalCommitExecutor);
+    return !(executor instanceof LocalCommitExecutor);
   }
 }

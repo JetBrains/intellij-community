@@ -25,10 +25,12 @@ buildscript {
   }
 }
 
-apply plugin: 'idea'
-idea {
-  module {
-    inheritOutputDirs true
+allprojects {
+  apply plugin: 'idea'
+  idea {
+    module {
+      inheritOutputDirs true
+    }
   }
 }
 
@@ -116,6 +118,5 @@ task dependenciesFile() {
 }
 
 task wrapper(type: Wrapper) {
-  // 2.14 is the latest version supports Java 6 (which is still present on TeamCity build agents)
-  gradleVersion = '2.14'
+  gradleVersion = '4.3.1'
 }

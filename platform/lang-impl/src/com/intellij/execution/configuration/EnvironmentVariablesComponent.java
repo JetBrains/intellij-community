@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.intellij.execution.configuration;
@@ -77,18 +65,19 @@ public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWit
   public static void readExternal(Element element, Map<String, String> envs) {
     final Element envsElement = element.getChild(ENVS);
     if (envsElement != null) {
-      for (Object o : envsElement.getChildren(ENV)) {
-        Element envElement = (Element)o;
+      for (Element envElement : envsElement.getChildren(ENV)) {
         final String envName = envElement.getAttributeValue(NAME);
         final String envValue = envElement.getAttributeValue(VALUE);
         if (envName != null && envValue != null) {
           envs.put(envName, envValue);
         }
       }
-    } else { //compatibility with prev version
-      for (Object o : element.getChildren(OPTION)) {
-        if (Comparing.strEqual(((Element)o).getAttributeValue(NAME), ENV_VARIABLES)) {
-          splitVars(envs, ((Element)o).getAttributeValue(VALUE));
+    }
+    else {
+      //compatibility with prev version
+      for (Element o : element.getChildren(OPTION)) {
+        if (Comparing.strEqual(o.getAttributeValue(NAME), ENV_VARIABLES)) {
+          splitVars(envs, o.getAttributeValue(VALUE));
           break;
         }
       }
@@ -111,6 +100,10 @@ public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWit
    * Consider using {@link EnvironmentVariablesData#writeExternal(Element)} instead for simplicity and better performance.
    */
   public static void writeExternal(@NotNull Element element, @NotNull Map<String, String> envs) {
+    if (envs.isEmpty()) {
+      return;
+    }
+
     final Element envsElement = new Element(ENVS);
     for (String envName : envs.keySet()) {
       final Element envElement = new Element(ENV);

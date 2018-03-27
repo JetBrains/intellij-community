@@ -47,18 +47,20 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
 
   /**
    * Runs given process synchronously (in calling thread).
+   *
+   * @param progress an indicator to use, {@code null} means reuse current progress
    */
-  public abstract void runProcess(@NotNull Runnable process, ProgressIndicator progress) throws ProcessCanceledException;
+  public abstract void runProcess(@NotNull Runnable process, @Nullable ProgressIndicator progress) throws ProcessCanceledException;
 
   /**
    * Runs given process synchronously (in calling thread).
+   *
+   * @param progress an indicator to use, {@code null} means reuse current progress
    */
-  public abstract <T> T runProcess(@NotNull Computable<T> process, ProgressIndicator progress) throws ProcessCanceledException;
+  public abstract <T> T runProcess(@NotNull Computable<T> process, @Nullable ProgressIndicator progress) throws ProcessCanceledException;
 
   @Override
-  public ProgressIndicator getProgressIndicator() {
-    return null;
-  }
+  public abstract ProgressIndicator getProgressIndicator();
 
   public static void progress(@NotNull String text) throws ProcessCanceledException {
     progress(text, "");

@@ -23,7 +23,7 @@ import org.jetbrains.intellij.build.ResourcesGenerator
 import java.util.function.Function
 
 /**
- * Described layout of a plugin in the product distribution
+ * Describes layout of a plugin in the product distribution
  *
  * @author nik
  */

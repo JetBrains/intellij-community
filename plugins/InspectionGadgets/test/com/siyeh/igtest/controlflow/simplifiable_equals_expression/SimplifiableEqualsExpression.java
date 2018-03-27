@@ -51,11 +51,11 @@ public class SimplifiableEqualsExpression {
     }
   }
   
-  private static final boolean DEBUG = true;
+  private static final int DEBUG_LEVEL = 1;
   private boolean xyz;
 
   {
-    String s1 = DEBUG ? "null" : null;
+    String s1 = DEBUG_LEVEL > 0 ? "null" : null;
     String s2 = xyz ? null : "null";
     String s = getString();
     
@@ -69,7 +69,7 @@ public class SimplifiableEqualsExpression {
   }
 
   private String s = getString();
-  private final String s1 = DEBUG ? "foo" : null;
+  private final String s1 = DEBUG_LEVEL > 0 ? "foo" : null;
   private boolean flag = <warning descr="Unnecessary 'null' check before 'equals()' call">s != null</warning> && s.equals(s1);
 
   void test(List<String> list) {

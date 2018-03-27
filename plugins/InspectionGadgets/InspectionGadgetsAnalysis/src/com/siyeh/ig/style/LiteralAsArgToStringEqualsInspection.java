@@ -25,6 +25,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
@@ -101,7 +102,10 @@ public class LiteralAsArgToStringEqualsInspection
         callString = strippedArg.getText() + '.' + methodName + '(' +
                      strippedTarget.getText() + ')';
       }
-      PsiReplacementUtil.replaceExpression(expression, callString);
+      CommentTracker tracker = new CommentTracker();
+      tracker.markUnchanged(strippedArg);
+      tracker.markUnchanged(strippedTarget);
+      PsiReplacementUtil.replaceExpression(expression, callString, tracker);
     }
   }
 

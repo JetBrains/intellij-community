@@ -190,6 +190,7 @@ public class InvertBooleanProcessor extends BaseRefactoringProcessor {
     myDelegate.invertElementInitializer(myElement);
   }
 
+  @NotNull
   @Override
   protected String getCommandName() {
     return InvertBooleanHandler.REFACTORING_NAME;

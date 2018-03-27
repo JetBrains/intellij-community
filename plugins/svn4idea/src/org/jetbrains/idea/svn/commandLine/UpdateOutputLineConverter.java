@@ -24,8 +24,6 @@ import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.api.EventAction;
 import org.jetbrains.idea.svn.api.ProgressEvent;
 import org.jetbrains.idea.svn.status.StatusType;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
 
 import java.io.File;
 import java.util.Arrays;
@@ -87,9 +85,7 @@ public class UpdateOutputLineConverter {
       return createEvent(parseForPath(line), EventAction.RESTORE);
     } else if (line.startsWith(SKIPPED)) {
       // called, for instance, when folder is not working copy
-      final String comment = parseComment(line);
-      return createEvent(parseForPath(line), -1, EventAction.SKIP,
-                         comment == null ? null : SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, comment));
+      return createEvent(parseForPath(line), -1, EventAction.SKIP, parseComment(line));
     } else if (line.startsWith(FETCHING_EXTERNAL)) {
       myRootsUnderProcessing.push(parseForPath(line));
       return createEvent(myRootsUnderProcessing.peek(), EventAction.UPDATE_EXTERNAL);
@@ -113,10 +109,7 @@ public class UpdateOutputLineConverter {
   }
 
   @NotNull
-  private static ProgressEvent createEvent(File file,
-                                           long revision,
-                                           @NotNull EventAction action,
-                                           @Nullable SVNErrorMessage error) {
+  private static ProgressEvent createEvent(File file, long revision, @NotNull EventAction action, @Nullable String error) {
     return new ProgressEvent(file, revision, null, null, action, error, null);
   }
 

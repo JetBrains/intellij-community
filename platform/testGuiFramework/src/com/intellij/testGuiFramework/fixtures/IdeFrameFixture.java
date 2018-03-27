@@ -84,7 +84,7 @@ import static org.junit.Assert.assertNull;
 public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameImpl> {
   @NotNull private final File myProjectPath;
 
-  private EditorFixture myEditor;
+  private FileEditorFixture myEditor;
   private MainToolbarFixture myToolbar;
   private NavigationBarFixture myNavBar;
 
@@ -217,9 +217,9 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
   }
 
   @NotNull
-  public EditorFixture getEditor() {
+  public FileEditorFixture getEditor() {
     if (myEditor == null) {
-      myEditor = new EditorFixture(robot(), this);
+      myEditor = new FileEditorFixture(robot(), this);
     }
 
     return myEditor;
@@ -531,6 +531,22 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
                     return !progressManager.hasModalProgressIndicator() &&
                            !progressManager.hasProgressIndicator() &&
                            !progressManager.hasUnsafeProgressIndicator();
+                  }
+                }
+      , GuiTestUtil.FIFTEEN_MIN_TIMEOUT);
+    robot().waitForIdle();
+    return this;
+  }
+
+  @NotNull
+  public IdeFrameFixture waitForStartingIndexing() {
+    Pause.pause(new Condition("Indexing to start") {
+                  @Override
+                  public boolean test() {
+                    ProgressManager progressManager = ProgressManager.getInstance();
+                    return progressManager.hasModalProgressIndicator() ||
+                           progressManager.hasProgressIndicator() ||
+                           progressManager.hasUnsafeProgressIndicator();
                   }
                 }
       , GuiTestUtil.FIFTEEN_MIN_TIMEOUT);

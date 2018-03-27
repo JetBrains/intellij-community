@@ -18,6 +18,8 @@ package com.siyeh.ig.style;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -58,7 +60,8 @@ public class LambdaParameterTypeCanBeSpecifiedInspection extends BaseInspection 
     @Override
     public void visitLambdaExpression(PsiLambdaExpression lambdaExpression) {
       super.visitLambdaExpression(lambdaExpression);
-      final PsiParameter[] parameters = lambdaExpression.getParameterList().getParameters();
+      PsiParameterList parameterList = lambdaExpression.getParameterList();
+      final PsiParameter[] parameters = parameterList.getParameters();
       if (parameters.length == 0) return;
       for (PsiParameter parameter : parameters) {
         if (parameter.getTypeElement() != null) {
@@ -71,7 +74,13 @@ public class LambdaParameterTypeCanBeSpecifiedInspection extends BaseInspection 
         final String inferredTypesText = LambdaRefactoringUtil.createLambdaParameterListWithFormalTypes(functionalInterfaceType, lambdaExpression,
                                                                                                         true);
         if (inferredTypesText != null) {
-          registerError(lambdaExpression, inferredTypesText);
+          PsiElement nextElement = PsiTreeUtil.skipWhitespacesAndCommentsForward(parameterList);
+          if (PsiUtil.isJavaToken(nextElement, JavaTokenType.ARROW)) {
+            registerErrorAtRange(parameterList, nextElement, inferredTypesText);
+          }
+          else {
+            registerError(parameterList, inferredTypesText);
+          }
         }
       }
     }

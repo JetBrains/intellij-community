@@ -17,7 +17,6 @@ package com.siyeh.ig.junit;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.siyeh.ig.LightInspectionTestCase;
-import junit.framework.TestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -64,8 +63,10 @@ public class SimplifiableJUnitAssertionInspectionTest extends LightInspectionTes
       "package org.junit;" +
       "public class Assert {" +
       "    public static public void assertTrue(boolean condition) {}" +
+      "    public static public void assertFalse(boolean condition) {}" +
       "    public static void assertEquals(boolean expected, boolean actual) {}" +
       "    public static void assertFalse(String message, boolean condition) {}" +
+      "    public static void assertNotEquals(long a, long b) {}" +
       "}",
 
       "package org.junit;" +
@@ -75,7 +76,14 @@ public class SimplifiableJUnitAssertionInspectionTest extends LightInspectionTes
       "import java.lang.annotation.Target;" +
       "@Retention(RetentionPolicy.RUNTIME)" +
       "@Target({ElementType.METHOD})" +
-      "public @interface Test {}"
+      "public @interface Test {}",
+
+      "package org.junit.jupiter.api;\n" +
+      "import java.util.function.Supplier;\n" +
+      "public final class Assertions {\n" +
+      "    public static void assertNotEquals(Object expected, Object actual) {}\n" +
+      "    public static void assertFalse(boolean expected) {}\n" +
+      "}"
     };
   }
 }

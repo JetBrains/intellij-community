@@ -728,27 +728,22 @@ Function GUIInit
 ; is the current version of IDEA installed?
   Call searchCurrentVersion
 
-; search old versions of IDEA
+; search old versions of IDEA installed from the user and admin.
+user:
   StrCpy $4 0
   StrCpy $0 "HKCU"
   StrCpy $1 "Software\${MANUFACTURER}\${MUI_PRODUCT}"
   StrCpy $5 "\bin\${PRODUCT_EXE_FILE}"
   StrCpy $2 ""
   Call getInstallationPath
-  StrCmp $3 "complete" all_users
-  IfFileExists $3\bin\${PRODUCT_EXE_FILE} old_version_located all_users
-all_users:
+  StrCmp $3 "complete" admin
+  IfFileExists $3\bin\${PRODUCT_EXE_FILE} collect_versions admin
+admin:
   StrCpy $4 0
   StrCpy $0 "HKLM"
   Call getInstallationPath
-  StrCmp $3 "complete" success
-  IfFileExists $3\bin\${PRODUCT_EXE_FILE} 0 success
-old_version_located:
-;  MessageBox MB_YESNO|MB_ICONQUESTION "$(previous_installations)" IDYES uninstall IDNO success
-;uninstall:
-;  Call uninstallOldVersions
 
-success:
+collect_versions:
   IntCmp ${SHOULD_SET_DEFAULT_INSTDIR} 0 end_enum_versions_hklm
   StrCpy $3 "0"        # latest build number
   StrCpy $0 "0"        # registry key index
@@ -917,24 +912,6 @@ next_association:
   IntOp $R2 $R2 + 1
   IntCmp $R1 $R2 get_user_choice done get_user_choice
 done:
-; registration application to be presented in Open With list
-  call ProductRegistration
-  !insertmacro MUI_STARTMENU_WRITE_BEGIN Application
-; $STARTMENU_FOLDER stores name of IDEA folder in Start Menu,
-; save it name in the "MenuFolder" RegValue
-  CreateDirectory "$SMPROGRAMS\$STARTMENU_FOLDER"
-
-  CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\${PRODUCT_FULL_NAME_WITH_VER}.lnk" \
-                 "$productLauncher" "" "" "" SW_SHOWNORMAL
-;  CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Uninstall ${PRODUCT_FULL_NAME_WITH_VER}.lnk" \
-;                 "$INSTDIR\bin\Uninstall.exe"
-  StrCpy $0 $baseRegKey
-  StrCpy $1 "Software\${MANUFACTURER}\${PRODUCT_REG_VER}"
-  StrCpy $2 "MenuFolder"
-  StrCpy $3 "$STARTMENU_FOLDER"
-  Call OMWriteRegStr
-!insertmacro MUI_STARTMENU_WRITE_END
-
   StrCmp ${IPR} "false" skip_ipr
 
 ; back up old value of .ipr
@@ -963,6 +940,27 @@ skip_ipr:
   SetOutPath $INSTDIR\bin
   File "${PRODUCT_PROPERTIES_FILE}"
   File "${PRODUCT_VM_OPTIONS_FILE}"
+
+; registration application to be presented in Open With list
+  call ProductRegistration
+!insertmacro MUI_STARTMENU_WRITE_BEGIN Application
+; $STARTMENU_FOLDER stores name of IDEA folder in Start Menu,
+; save it name in the "MenuFolder" RegValue
+  CreateDirectory "$SMPROGRAMS\$STARTMENU_FOLDER"
+  CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\${PRODUCT_FULL_NAME_WITH_VER}.lnk" \
+                 "$productLauncher" "" "" "" SW_SHOWNORMAL
+
+  StrCpy $7 "$SMPROGRAMS\$STARTMENU_FOLDER\${PRODUCT_FULL_NAME_WITH_VER}.lnk"
+  ShellLink::GetShortCutWorkingDirectory $7
+  Pop $0
+  DetailPrint "ShortCutWorkingDirectory: $0"
+
+  StrCpy $0 $baseRegKey
+  StrCpy $1 "Software\${MANUFACTURER}\${PRODUCT_REG_VER}"
+  StrCpy $2 "MenuFolder"
+  StrCpy $3 "$STARTMENU_FOLDER"
+  Call OMWriteRegStr
+!insertmacro MUI_STARTMENU_WRITE_END
 
   Call customPostInstallActions
   SetRegView 32
@@ -1047,11 +1045,17 @@ HKLM:
 cant_find_installation:
   ;admin perm. is required to uninstall?
   ${If} ${RunningX64}
+look_at_program_files_64:
     ${UnStrStr} $R0 $INSTDIR $PROGRAMFILES64
+    StrCmp $R0 $INSTDIR HKLM look_at_program_files_32
   ${Else}
+look_at_program_files_32:
     ${UnStrStr} $R0 $INSTDIR $PROGRAMFILES
+    StrCmp $R0 $INSTDIR HKCU uninstaller_relocated
   ${EndIf}
-  StrCmp $R0 $INSTDIR HKLM HKCU
+uninstaller_relocated:
+    MessageBox MB_OK|MB_ICONEXCLAMATION "$(uninstaller_relocated)"
+    Abort
 Done:
 FunctionEnd
 
@@ -1059,9 +1063,9 @@ FunctionEnd
 Function un.onInit
   SetRegView 32
   Call un.getRegKey
-  StrCmp $baseRegKey "HKLM" requred_admin_perm UAC_Done
+  StrCmp $baseRegKey "HKLM" required_admin_perm UAC_Done
 
-requred_admin_perm:
+required_admin_perm:
   ;the user has admin rights?
   UserInfo::GetAccountType
   Pop $R2
@@ -1265,6 +1269,21 @@ done:
 FunctionEnd
 
 
+Function un.validateStartMenuLinkToLauncher
+  ClearErrors
+  StrCpy $8 ""
+  ShellLink::GetShortCutWorkingDirectory $7
+  Pop $0
+  IfErrors done 0
+  StrCmp $0 "$productDir" 0 incorrect_link
+  StrCpy $8 $0
+  goto done
+incorrect_link:
+  DetailPrint "The link ($7) does not exist or incorrect."
+done:
+FunctionEnd
+
+
 Section "Uninstall"
   Call un.customUninstallActions
   SetRegView 32
@@ -1287,6 +1306,36 @@ check_if_IDE_in_use:
   StrCpy $productDir $INSTDIR
   StrCpy $INSTDIR $INSTDIR\..
 
+  ReadRegStr $R9 HKCU "Software\${MANUFACTURER}\${PRODUCT_REG_VER}" "MenuFolder"
+  StrCmp $R9 "" "" shortcuts
+  ReadRegStr $R9 HKLM "Software\${MANUFACTURER}\${PRODUCT_REG_VER}" "MenuFolder"
+  StrCmp $R9 "" delete_caches
+  StrCpy $5 "Software\${MANUFACTURER}"
+
+shortcuts:
+  ;user does not have the admin rights
+  SetShellVarContext current
+  StrCpy $7 "$SMPROGRAMS\$R9\${PRODUCT_FULL_NAME_WITH_VER}.lnk"
+  ;check is exists and compare with $INSTDIR
+  Call un.validateStartMenuLinkToLauncher
+  StrCmp $8 "" 0 keep_current_user
+  ;  IfFileExists "$SMPROGRAMS\$R9\${PRODUCT_FULL_NAME_WITH_VER}.lnk" keep_current_user
+
+  ;user has the admin rights
+  SetShellVarContext all
+  StrCpy $7 "$SMPROGRAMS\$R9\${PRODUCT_FULL_NAME_WITH_VER}.lnk"
+  DetailPrint "7, admin: $7"
+  Call un.validateStartMenuLinkToLauncher
+  StrCmp $8 "" 0 keep_current_user
+  DetailPrint "StartMenu: $7 is not point to valid launcher."
+  goto delete_caches
+
+keep_current_user:
+  Delete $7
+  ; Delete only if empty (last IDEA version is uninstalled)
+  RMDir  "$SMPROGRAMS\$R9"
+
+delete_caches:
   !insertmacro INSTALLOPTIONS_READ $R2 "DeleteSettings.ini" "Field 4" "State"
   DetailPrint "Data: $DOCUMENTS\..\${PRODUCT_SETTINGS_DIR}\"
   StrCmp $R2 1 "" skip_delete_caches
@@ -1311,10 +1360,10 @@ skip_delete_caches:
     StrCpy $config_path $2
     RmDir /r "$config_path"
 ;    RmDir /r $DOCUMENTS\..\${PRODUCT_SETTINGS_DIR}\config
-  Delete "$INSTDIR\bin\${PRODUCT_VM_OPTIONS_NAME}"
-  Delete "$INSTDIR\bin\idea.properties"
-  StrCmp $R2 1 "" skip_delete_settings
-  RmDir "$config_path\\.." ; remove parent of config dir if the dir is empty
+    Delete "$INSTDIR\bin\${PRODUCT_VM_OPTIONS_NAME}"
+    Delete "$INSTDIR\bin\idea.properties"
+    StrCmp $R2 1 "" skip_delete_settings
+    RmDir "$config_path\\.." ; remove parent of config dir if the dir is empty
 ;    RmDir $DOCUMENTS\..\${PRODUCT_SETTINGS_DIR}
 skip_delete_settings:
 
@@ -1335,27 +1384,15 @@ skip_delete_settings:
     RMDir "$INSTDIR"
   ${EndIf}
 
-  ReadRegStr $R9 HKCU "Software\${MANUFACTURER}\${PRODUCT_REG_VER}" "MenuFolder"
-  StrCmp $R9 "" "" shortcuts
-  ReadRegStr $R9 HKLM "Software\${MANUFACTURER}\${PRODUCT_REG_VER}" "MenuFolder"
-  StrCmp $R9 "" registry
-  StrCpy $5 "Software\${MANUFACTURER}"
-shortcuts:
-  ;user has the admin rights
-  SetShellVarContext current
-  IfFileExists "$SMPROGRAMS\$R9\${PRODUCT_FULL_NAME_WITH_VER}.lnk" keep_current_user
-  SetShellVarContext all
-keep_current_user:
-  DetailPrint "Desktop: $DESKTOP\${PRODUCT_FULL_NAME_WITH_VER}.lnk"
-  DetailPrint "Start Menu: $SMPROGRAMS\$R9\${PRODUCT_FULL_NAME_WITH_VER}"
-
-  Delete "$SMPROGRAMS\$R9\${PRODUCT_FULL_NAME_WITH_VER}.lnk"
-;  Delete "$SMPROGRAMS\$R9\Uninstall ${PRODUCT_FULL_NAME_WITH_VER}.lnk"
-; Delete only if empty (last IDEA version is uninstalled)
-  RMDir  "$SMPROGRAMS\$R9"
-
-  Delete "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER}.lnk"
-  Delete "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER} x64.lnk"
+; remove desktop shortcuts
+desktop_shortcut_launcher32:
+  IfFileExists "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER}.lnk" 0 desktop_shortcut_launcher64
+    DetailPrint "remove desktop shortcut to launcher32: $DESKTOP\${PRODUCT_FULL_NAME_WITH_VER}.lnk"
+    Delete "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER}.lnk"
+desktop_shortcut_launcher64:
+  IfFileExists "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER} x64.lnk" 0 registry
+    DetailPrint "remove desktop shortcut to launcher64: $DESKTOP\${PRODUCT_FULL_NAME_WITH_VER} x64.lnk"
+    Delete "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER} x64.lnk"
 
 registry:
   StrCpy $5 "Software\${MANUFACTURER}"

@@ -20,7 +20,6 @@ import com.intellij.util.xml.GenericAttributeValue;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 8/15/12
  */
 @Stubbed
 public interface Custom extends GenericAttributeValue<String> {

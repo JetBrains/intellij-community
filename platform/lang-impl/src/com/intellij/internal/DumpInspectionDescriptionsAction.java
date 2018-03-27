@@ -40,7 +40,6 @@ import java.util.Map;
 
 /**
  * @author stathik
- * Date: Nov 6, 2003
  */
 public class DumpInspectionDescriptionsAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.internal.DumpInspectionDescriptionsAction");

@@ -30,7 +30,6 @@ import java.util.Map;
 
 /**
 * @author Eugene Zhuravlev
-*         Date: 10/24/12
 */
 public class MavenResourcesTargetType extends ModuleBasedBuildTargetType<MavenResourcesTarget> {
   public static final MavenResourcesTargetType PRODUCTION = new MavenResourcesTargetType("maven-resources-production", false);

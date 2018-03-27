@@ -2,10 +2,14 @@
 
 from logging import Logger
 import multiprocessing
+from multiprocessing import synchronize
 import sys
 from typing import (
-    Any, Callable, Iterable, Optional, List, Mapping, Sequence, Tuple, Type, Union,
+    Any, Callable, Iterable, Optional, List, Mapping, Sequence, Tuple, Type,
+    Union,
 )
+
+_LockLike = Union[synchronize.Lock, synchronize.RLock]
 
 class ProcessError(Exception): ...
 
@@ -21,6 +25,9 @@ class BaseContext(object):
     TimeoutError = ...  # type: Type[Exception]
     AuthenticationError = ...  # type: Type[Exception]
 
+    # N.B. The methods below are applied at runtime to generate
+    # multiprocessing.*, so the signatures should be identical (modulo self).
+
     @staticmethod
     def current_process() -> multiprocessing.Process: ...
     @staticmethod
@@ -30,30 +37,26 @@ class BaseContext(object):
     def Manager(self) -> Any: ...
     # TODO: change return to Pipe once a stub exists in multiprocessing.connection
     def Pipe(self, duplex: bool) -> Any: ...
-    # TODO: change return to Lock once a stub exists in multiprocessing.synchronize
-    def Lock(self) -> Any: ...
-    # TODO: change return to RLock once a stub exists in multiprocessing.synchronize
-    def RLock(self) -> Any: ...
-    # TODO: change lock param to Optional[Union[Lock, RLock]] when stubs exists in multiprocessing.synchronize
-    # TODO: change return to Condition once a stub exists in multiprocessing.synchronize
-    def Condition(self, lock: Optional[Any] = ...) -> Any: ...
-    # TODO: change return to Semaphore once a stub exists in multiprocessing.synchronize
-    def Semaphore(self, value: int = ...) -> Any: ...
-    # TODO: change return to BoundedSemaphore once a stub exists in multiprocessing.synchronize
-    def BoundedSemaphore(self, value: int = ...) -> Any: ...
-    # TODO: change return to Event once a stub exists in multiprocessing.synchronize
-    def Event(self) -> Any: ...
-    # TODO: change return to Barrier once a stub exists in multiprocessing.synchronize
-    def Barrier(self, parties: int, action: Optional[Callable[..., Any]] = ..., timeout: Optional[int] = ...) -> Any: ...
+
+    def Barrier(self,
+                parties: int,
+                action: Optional[Callable] = ...,
+                timeout: Optional[float] = ...) -> synchronize.Barrier: ...
+    def BoundedSemaphore(self,
+                         value: int = ...) -> synchronize.BoundedSemaphore: ...
+    def Condition(self,
+                  lock: Optional[_LockLike] = ...) -> synchronize.Condition: ...
+    def Event(self, lock: Optional[_LockLike] = ...) -> synchronize.Event: ...
+    def Lock(self) -> synchronize.Lock: ...
+    def RLock(self) -> synchronize.RLock: ...
+    def Semaphore(self, value: int = ...) -> synchronize.Semaphore: ...
+
     # TODO: change return to Queue once a stub exists in multiprocessing.queues
     def Queue(self, maxsize: int = ...) -> Any: ...
     # TODO: change return to Queue once a stub exists in multiprocessing.queues
     def JoinableQueue(self, maxsize: int = ...) -> Any: ...
     # TODO: change return to SimpleQueue once a stub exists in multiprocessing.queues
     def SimpleQueue(self) -> Any: ...
-    # N.B. This method is partially applied at runtime to generate
-    # multiprocessing.Pool, so the two signatures should be identical (modulo
-    # self).
     def Pool(
         self,
         processes: Optional[int] = ...,

@@ -22,6 +22,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.util.ArrayUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import com.jetbrains.extensions.ModuleExtKt;
 import org.jetbrains.annotations.NotNull;
@@ -53,7 +54,10 @@ public final class NewFilesProcessor {
     assert sdk != null : String.format("Sdk can't be null on module %s", module);
     final PyProjectSynchronizer synchronizer = PythonRemoteInterpreterManager.getSynchronizerInstance(sdk);
 
-    final String[] fileNames = files.split(",");
+    final String[] fileNames = StringUtil.split(files, ",").toArray(ArrayUtil.EMPTY_STRING_ARRAY);
+    if (fileNames.length == 0) {
+      return "";
+    }
     if (synchronizer != null) { // We are on remote side, lets pull files from python first
       synchronizer.syncProject(module, PySyncDirection.REMOTE_TO_LOCAL, success -> {
         if (!success) {
@@ -72,7 +76,7 @@ public final class NewFilesProcessor {
     }
 
 
-    return (fileNames.length == 0 ? "" : String.format("Following files were affected \n %s", StringUtil.join(fileNames, "\n")));
+    return String.format("Following files were affected \n %s", StringUtil.join(fileNames, "\n"));
   }
 
   /**

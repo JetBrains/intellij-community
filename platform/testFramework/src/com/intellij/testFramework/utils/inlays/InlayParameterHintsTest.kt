@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.testFramework.utils.inlays
 
@@ -36,7 +24,7 @@ class InlayHintsChecker(private val myFixture: CodeInsightTestFixture) {
   private var isParamHintsEnabledBefore = false
 
   companion object {
-    val pattern: Pattern = Pattern.compile("(<caret>)|(<selection>)|(</selection>)|<(hint|HINT)\\s+text=\"([^\"\n\r]+)\"\\s*/>")
+    val pattern: Pattern = Pattern.compile("(<caret>)|(<selection>)|(</selection>)|<(hint|HINT|Hint|hINT)\\s+text=\"([^\"\n\r]+)\"\\s*/>")
 
     private val default = ParameterNameHintsSettings()
   }
@@ -66,20 +54,27 @@ class InlayHintsChecker(private val myFixture: CodeInsightTestFixture) {
   fun verifyInlaysAndCaretInfo(expectedInlaysAndCaret: CaretAndInlaysInfo, originalText: String) {
     val file = myFixture.file
     val document = myFixture.getDocument(file)
-    val actual: List<Triple<Int, String, Boolean>> = getActualInlays()
+    val actual: List<ParamHintInfo> = getActualInlays()
 
     val expected = expectedInlaysAndCaret.inlays
 
     if (expectedInlaysAndCaret.inlays.size != actual.size || actual.zip(expected).any { it.first != it.second }) {
       val entries: MutableList<Pair<Int, String>> = mutableListOf()
-      actual.forEach { entries.add(Pair(it.first, "<${if(it.third) "HINT" else "hint"} text=\"${it.second}\" />")) }
+      actual.forEach { entries.add(Pair(it.offset, buildString { 
+        append("<")
+        append((if (it.highlighted) "H" else "h"))
+        append((if (it.current) "INT" else "int"))
+        append(" text=\"")
+        append(it.text)
+        append("\"/>")
+      }))}
       if (expectedInlaysAndCaret.caretOffset != null) {
         val actualCaretOffset = myFixture.editor.caretModel.offset
         val actualInlaysBeforeCaret = myFixture.editor.caretModel.visualPosition.column - 
                                       myFixture.editor.offsetToVisualPosition(actualCaretOffset).column
         val first = entries.indexOfFirst { it.first == actualCaretOffset }
         val insertIndex = if (first == -1) -entries.binarySearch { it.first - actualCaretOffset } - 1 
-                              else first + actualInlaysBeforeCaret;
+                              else first + actualInlaysBeforeCaret
         entries.add(insertIndex, Pair(actualCaretOffset, "<caret>"))
       }
       val proposedText = StringBuilder(document.text)
@@ -104,22 +99,22 @@ class InlayHintsChecker(private val myFixture: CodeInsightTestFixture) {
     }
   }
 
-  private fun getActualInlays(): List<Triple<Int, String, Boolean>> {
+  private fun getActualInlays(): List<ParamHintInfo> {
     val editor = myFixture.editor
     val allInlays = editor.inlayModel.getInlineElementsInRange(0, editor.document.textLength)
 
     val hintManager = ParameterHintsPresentationManager.getInstance()
     return allInlays
       .filter { hintManager.isParameterHint(it) }
-      .map { Triple(it.offset, hintManager.getHintText(it), hintManager.isHighlighted(it))}
-      .sortedBy { it.first }
+      .map { ParamHintInfo(it.offset, hintManager.getHintText(it), hintManager.isHighlighted(it), hintManager.isCurrent(it))}
+      .sortedBy { it.offset }
   }
 
   fun extractInlaysAndCaretInfo(document: Document): CaretAndInlaysInfo {
     val text = document.text
     val matcher = pattern.matcher(text)
 
-    val inlays = mutableListOf<Triple<Int, String, Boolean>>()
+    val inlays = mutableListOf<ParamHintInfo>()
     var extractedLength = 0
     var caretOffset : Int? = null
     var inlaysBeforeCaret = 0
@@ -134,7 +129,7 @@ class InlayHintsChecker(private val myFixture: CodeInsightTestFixture) {
       if (matcher.group(1) != null) {
         caretOffset = realStartOffset
         inlays.asReversed()
-          .takeWhile { it.first == caretOffset }
+          .takeWhile { it.offset == caretOffset }
           .forEach { inlaysBeforeCaret++ }
       }
       else if (matcher.group(2) != null) {
@@ -144,7 +139,7 @@ class InlayHintsChecker(private val myFixture: CodeInsightTestFixture) {
         selectionEnd = realStartOffset
       }
       else {
-        inlays += Triple(realStartOffset, matcher.group(5), matcher.group(4) == "HINT")
+        inlays += ParamHintInfo(realStartOffset, matcher.group(5), matcher.group(4).startsWith("H"), matcher.group(4).endsWith("INT"))
       }
 
       removeText(document, realStartOffset, matchedLength)
@@ -166,4 +161,6 @@ class InlayHintsChecker(private val myFixture: CodeInsightTestFixture) {
 }
 
 class CaretAndInlaysInfo (val caretOffset: Int?, val inlaysBeforeCaret: Int, val selection: TextRange?, 
-                          val inlays: List<Triple<Int, String, Boolean>>)
+                          val inlays: List<ParamHintInfo>)
+
+data class ParamHintInfo (val offset: Int, val text: String, val highlighted: Boolean, val current: Boolean)

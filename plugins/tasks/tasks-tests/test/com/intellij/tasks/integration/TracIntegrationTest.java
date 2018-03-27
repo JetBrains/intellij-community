@@ -22,7 +22,6 @@ import com.intellij.tasks.trac.TracRepository;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 1/25/12
  */
 public class TracIntegrationTest extends TaskManagerTestCase {
 

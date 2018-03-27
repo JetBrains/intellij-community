@@ -17,6 +17,7 @@ package org.jetbrains.uast
 
 import com.intellij.psi.PsiAnnotationMethod
 import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiType
 import org.jetbrains.uast.internal.acceptList
 import org.jetbrains.uast.internal.log
 import org.jetbrains.uast.visitor.UastTypedVisitor
@@ -42,6 +43,12 @@ interface UMethod : UDeclaration, PsiMethod {
    * Returns true, if the method overrides a method of a super class.
    */
   val isOverride: Boolean
+
+  override fun getName(): String
+
+  override fun getReturnType(): PsiType?
+
+  override fun isConstructor(): Boolean
 
   @Deprecated("Use uastBody instead.", ReplaceWith("uastBody"))
   override fun getBody() = psi.body
@@ -75,7 +82,7 @@ interface UMethod : UDeclaration, PsiMethod {
     val body = uastBody
     append(when (body) {
              is UBlockExpression -> " " + body.asRenderString()
-             else -> " = " + ((body ?: UastEmptyExpression).asRenderString())
+             else -> " = " + ((body ?: UastEmptyExpression(this@UMethod)).asRenderString())
            })
   }
 

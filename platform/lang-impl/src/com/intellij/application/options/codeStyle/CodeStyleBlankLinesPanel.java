@@ -250,7 +250,7 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
     private int myCurrValue = Integer.MAX_VALUE;
 
     private IntOption(@NotNull String title, String fieldName) {
-      this(title, CodeStyleSettings.class, fieldName, false);
+      this(title, CommonCodeStyleSettings.class, fieldName, false);
     }
 
     private IntOption(@NotNull String title, Class<? extends CustomCodeStyleSettings> targetClass, String fieldName) {

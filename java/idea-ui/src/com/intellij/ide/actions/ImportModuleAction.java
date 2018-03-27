@@ -52,7 +52,6 @@ import static com.intellij.util.ArrayUtil.toObjectArray;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 10/31/12
  */
 public class ImportModuleAction extends AnAction {
 

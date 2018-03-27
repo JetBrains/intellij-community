@@ -18,28 +18,34 @@ package com.intellij.codeInspection.dataFlow.value;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
  */
 public class DfaInstanceofValue extends DfaValue {
-  private final PsiExpression myExpression;
-  private final PsiType myCastType;
+  private final @NotNull PsiExpression myExpression;
+  private final @NotNull PsiType myCastType;
   private final boolean myNegated;
+  private final @NotNull DfaValue myRelation;
 
-  public DfaInstanceofValue(DfaValueFactory factory, PsiExpression expression, PsiType castType) {
-    this(factory, expression, castType, false);
-  }
-
-  public DfaInstanceofValue(DfaValueFactory factory, PsiExpression expression, PsiType castType, boolean negated) {
+  public DfaInstanceofValue(DfaValueFactory factory,
+                            @NotNull PsiExpression expression,
+                            @NotNull PsiType castType,
+                            @NotNull DfaValue relation,
+                            boolean negated) {
     super(factory);
     myExpression = expression;
     myCastType = castType;
+    myRelation = relation;
     myNegated = negated;
   }
 
-  @Nullable
+  @NotNull
+  public DfaValue getRelation() {
+    return myRelation;
+  }
+
+  @NotNull
   public PsiExpression getExpression() {
     return myExpression;
   }
@@ -55,6 +61,6 @@ public class DfaInstanceofValue extends DfaValue {
 
   @Override
   public DfaValue createNegated() {
-    return new DfaInstanceofValue(myFactory, myExpression, myCastType, !myNegated);
+    return new DfaInstanceofValue(myFactory, myExpression, myCastType, myRelation.createNegated(), !myNegated);
   }
 }

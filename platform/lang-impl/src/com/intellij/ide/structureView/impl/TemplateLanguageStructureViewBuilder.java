@@ -15,25 +15,20 @@
  */
 package com.intellij.ide.structureView.impl;
 
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.impl.StructureViewWrapperImpl;
 import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewBuilder;
-import com.intellij.ide.structureView.StructureViewFactoryEx;
-import com.intellij.ide.structureView.StructureViewWrapper;
-import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
-import com.intellij.ide.util.treeView.TreeState;
+import com.intellij.ide.structureView.StructureViewModel;
+import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
+import com.intellij.ide.util.StructureViewCompositeModel;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageStructureViewBuilder;
+import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.PsiStructureViewFactory;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
@@ -41,179 +36,159 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
-import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.util.Alarm;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.PairFunction;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.tree.TreePath;
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author peter
  */
-public abstract class TemplateLanguageStructureViewBuilder implements StructureViewBuilder {
+public abstract class TemplateLanguageStructureViewBuilder extends TreeBasedStructureViewBuilder {
+
+  @NotNull
+  public static TemplateLanguageStructureViewBuilder create(@NotNull PsiFile psiFile, @Nullable PairFunction<PsiFile, Editor, StructureViewModel> modelFactory) {
+    return new TemplateLanguageStructureViewBuilder(psiFile) {
+      @Override
+      protected TreeBasedStructureViewBuilder createMainBuilder(@NotNull PsiFile psi) {
+        return modelFactory == null ? null : new TreeBasedStructureViewBuilder() {
+          @Override
+          public boolean isRootNodeShown() {
+            return false;
+          }
+
+          @NotNull
+          @Override
+          public StructureViewModel createStructureViewModel(@Nullable Editor editor) {
+            return modelFactory.fun(psi, editor);
+          }
+        };
+      }
+    };
+  }
+  
   private final VirtualFile myVirtualFile;
   private final Project myProject;
-  @Nullable private Language myTemplateDataLanguage;
-  private StructureViewComposite.StructureViewDescriptor myBaseStructureViewDescriptor;
-  private FileEditor myFileEditor;
-  private StructureViewComposite myStructureViewComposite;
-  private int myBaseLanguageViewDescriptorIndex;
 
   protected TemplateLanguageStructureViewBuilder(PsiElement psiElement) {
-    myVirtualFile = psiElement.getContainingFile().getVirtualFile();
     myProject = psiElement.getProject();
-    myTemplateDataLanguage = getTemplateDataLanguage();
+    myVirtualFile = psiElement.getContainingFile().getVirtualFile();
   }
 
-  private void updateAfterPsiChange() {
-    if (myProject.isDisposed()) return;
-    if (myBaseStructureViewDescriptor != null && ((StructureViewComponent)myBaseStructureViewDescriptor.structureView).isDisposed()) return;
-    ApplicationManager.getApplication().runReadAction(() -> {
-      if (!myVirtualFile.isValid() || getViewProvider() == null) return;
-
-      StructureViewWrapper structureViewWrapper = StructureViewFactoryEx.getInstanceEx(myProject).getStructureViewWrapper();
-      if (structureViewWrapper == null) return;
-
-      Language baseLanguage = getTemplateDataLanguage();
-      if (baseLanguage == myTemplateDataLanguage
-          && (myBaseStructureViewDescriptor == null || isPsiValid(myBaseStructureViewDescriptor))) {
-        updateBaseLanguageView();
-      }
-      else {
-        myTemplateDataLanguage = baseLanguage;
-        ((StructureViewWrapperImpl)structureViewWrapper).rebuild();
-      }
-    });
-  }
-
-  private static boolean isPsiValid(@NotNull StructureViewComposite.StructureViewDescriptor baseStructureViewDescriptor) {
-    StructureViewComponent view = (StructureViewComponent)baseStructureViewDescriptor.structureView;
-    if (view.isDisposed()) return false;
-    Object value = StructureViewComponent.unwrapValue(view.getTree().getModel().getRoot());
-    return !(value instanceof PsiElement && !((PsiElement)value).isValid());
-  }
-
-  @Nullable
-  private FileViewProvider getViewProvider() {
-    return PsiManager.getInstance(myProject).findViewProvider(myVirtualFile);
-  }
-
-  @Nullable
-  private Language getTemplateDataLanguage() {
-    FileViewProvider provider = getViewProvider();
-    return provider instanceof TemplateLanguageFileViewProvider
-           ? ((TemplateLanguageFileViewProvider)provider).getTemplateDataLanguage() : null;
-  }
-
-  private void updateBaseLanguageView() {
-    if (myBaseStructureViewDescriptor == null || !myProject.isOpen()) return;
-    final StructureViewComponent view = (StructureViewComponent)myBaseStructureViewDescriptor.structureView;
-    if (view.isDisposed()) return;
-
-    TreeState treeState = TreeState.createOn(view.getTree(), new TreePath(view.getTree().getModel().getRoot()));
-    updateTemplateDataFileView();
-
-    if (view.isDisposed()) return;
-    treeState.applyTo(view.getTree());
+  @Override
+  public boolean isRootNodeShown() {
+    return false;
   }
 
   @Override
   @NotNull
   public StructureView createStructureView(FileEditor fileEditor, @NotNull Project project) {
-    myFileEditor = fileEditor;
     List<StructureViewComposite.StructureViewDescriptor> viewDescriptors = new ArrayList<>();
-    final FileViewProvider provider = getViewProvider();
-    assert provider != null : myVirtualFile;
-
-    final StructureViewComposite.StructureViewDescriptor structureViewDescriptor = createMainView(fileEditor, provider.getPsi(provider.getBaseLanguage()));
-    if (structureViewDescriptor != null) viewDescriptors.add(structureViewDescriptor);
-
-    myBaseLanguageViewDescriptorIndex = -1;
-
-    updateTemplateDataFileView();
-    if (myBaseStructureViewDescriptor != null) {
-      viewDescriptors.add(myBaseStructureViewDescriptor);
-      myBaseLanguageViewDescriptorIndex = viewDescriptors.size() - 1;
+    VirtualFile file = fileEditor == null ? null : fileEditor.getFile();
+    PsiFile psiFile = file == null || !file.isValid()? null : PsiManager.getInstance(project).findFile(file);
+    List<Language> languages = getLanguages(psiFile).toList();
+    for (Language language : languages) {
+      StructureViewBuilder builder = getBuilder(ObjectUtils.notNull(psiFile), language);
+      if (builder == null) continue;
+      StructureView structureView = builder.createStructureView(fileEditor, project);
+      String title = language.getDisplayName();
+      Icon icon = ObjectUtils.notNull(LanguageUtil.getLanguageFileType(language), FileTypes.UNKNOWN).getIcon();
+      viewDescriptors.add(new StructureViewComposite.StructureViewDescriptor(title, structureView, icon));
     }
-
-    if (provider instanceof TemplateLanguageFileViewProvider) {
-      final Language dataLanguage = ((TemplateLanguageFileViewProvider)provider).getTemplateDataLanguage();
-      for (final Language language : provider.getLanguages()) {
-        if (language != dataLanguage && language != provider.getBaseLanguage()) {
-          ContainerUtil.addIfNotNull(viewDescriptors, createBaseLanguageStructureView(fileEditor, language));
-        }
-      }
-    }
-
     StructureViewComposite.StructureViewDescriptor[] array = viewDescriptors.toArray(new StructureViewComposite.StructureViewDescriptor[viewDescriptors.size()]);
-    myStructureViewComposite = new StructureViewComposite(array);
-    project.getMessageBus().connect(myStructureViewComposite).subscribe(PsiModificationTracker.TOPIC, new PsiModificationTracker.Listener() {
-      final Alarm alarm = new Alarm(myStructureViewComposite);
-
+    return new StructureViewComposite(array) {
       @Override
-      public void modificationCountChanged() {
-        alarm.cancelAllRequests();
-        alarm.addRequest(() -> updateAfterPsiChange(), 300, ModalityState.NON_MODAL);
+      public boolean isOutdated() {
+        VirtualFile file = fileEditor == null ? null : fileEditor.getFile();
+        PsiFile psiFile = file == null || !file.isValid() ? null : PsiManager.getInstance(project).findFile(file);
+        List<Language> newLanguages = getLanguages(psiFile).toList();
+        if (!Comparing.equal(languages, newLanguages)) return true;
+        if (psiFile == null) return true;
+        FileViewProvider viewProvider = psiFile.getViewProvider();
+        Language baseLanguage = viewProvider.getBaseLanguage();
+        StructureViewDescriptor[] views = getStructureViews();
+        boolean hasMainView = views.length > 0 && Comparing.equal(views[0].title, baseLanguage.getDisplayName());
+        JBIterable<Language> newAcceptedLanguages = JBIterable.from(newLanguages)
+          .filter(o -> o == baseLanguage && hasMainView ||
+                       o != baseLanguage && isAcceptableBaseLanguageFile(viewProvider.getPsi(o)));
+        return views.length != newAcceptedLanguages.size();
       }
-    });
-    return myStructureViewComposite;
+    };
+  }
+  
+  @NotNull
+  public StructureViewModel createStructureViewModel(@Nullable Editor editor) {
+    List<StructureViewComposite.StructureViewDescriptor> viewDescriptors = new ArrayList<>();
+    PsiFile psiFile = ObjectUtils.notNull(PsiManager.getInstance(myProject).findFile(myVirtualFile));
+    for (Language language : getLanguages(psiFile)) {
+      StructureViewBuilder builder = getBuilder(psiFile, language);
+      if (!(builder instanceof TreeBasedStructureViewBuilder)) continue;
+      StructureViewModel model = ((TreeBasedStructureViewBuilder)builder).createStructureViewModel(editor);
+      String title = language.getDisplayName();
+      Icon icon = ObjectUtils.notNull(LanguageUtil.getLanguageFileType(language), FileTypes.UNKNOWN).getIcon();
+      viewDescriptors.add(new StructureViewComposite.StructureViewDescriptor(title, model, icon));
+    }
+    return new StructureViewCompositeModel(psiFile, editor, viewDescriptors);
   }
 
-  protected abstract StructureViewComposite.StructureViewDescriptor createMainView(FileEditor fileEditor, PsiFile mainFile);
+  @NotNull
+  private static JBIterable<Language> getLanguages(@Nullable PsiFile psiFile) {
+    if (psiFile == null) return JBIterable.empty();
+    FileViewProvider provider = psiFile.getViewProvider();
+
+    Language baseLanguage = provider.getBaseLanguage();
+    Language dataLanguage = provider instanceof TemplateLanguageFileViewProvider
+                            ? ((TemplateLanguageFileViewProvider)provider).getTemplateDataLanguage() : null;
+    return JBIterable.of(baseLanguage)
+      .append(dataLanguage)
+      .append(JBIterable.from(provider.getLanguages()).filter(o -> o != baseLanguage && o != dataLanguage));
+  }
 
   @Nullable
-  private StructureViewComposite.StructureViewDescriptor createBaseLanguageStructureView(final FileEditor fileEditor, final Language language) {
-    if (!myVirtualFile.isValid()) return null;
-
-    final FileViewProvider viewProvider = getViewProvider();
-    if (viewProvider == null) return null;
-
-    final PsiFile dataFile = viewProvider.getPsi(language);
-    if (dataFile == null || !isAcceptableBaseLanguageFile(dataFile)) return null;
-
-    final PsiStructureViewFactory factory = LanguageStructureViewBuilder.INSTANCE.forLanguage(language);
-    if (factory == null) return null;
-
-    final StructureViewBuilder builder = factory.getStructureViewBuilder(dataFile);
-    if (builder == null) return null;
-
-    StructureView structureView = builder.createStructureView(fileEditor, myProject);
-    return new StructureViewComposite.StructureViewDescriptor(IdeBundle.message("tab.structureview.baselanguage.view", language.getDisplayName()), structureView, findFileType(language).getIcon());
+  private StructureViewBuilder getBuilder(@NotNull PsiFile psiFile, @NotNull Language language) {
+    FileViewProvider viewProvider = psiFile.getViewProvider();
+    Language baseLanguage = viewProvider.getBaseLanguage();
+    PsiFile psi = viewProvider.getPsi(language);
+    if (psi == null) return null;
+    if (language == baseLanguage) return createMainBuilder(psi);
+    if (!isAcceptableBaseLanguageFile(psi)) return null;
+    PsiStructureViewFactory factory = LanguageStructureViewBuilder.INSTANCE.forLanguage(language);
+    return factory == null ? null : factory.getStructureViewBuilder(psi);
   }
 
   protected boolean isAcceptableBaseLanguageFile(PsiFile dataFile) {
     return true;
   }
 
-  private void updateTemplateDataFileView() {
-    final Language newDataLanguage = getTemplateDataLanguage();
-
-    if (myBaseStructureViewDescriptor != null) {
-      if (myTemplateDataLanguage == newDataLanguage) return;
-
-      Disposer.dispose(myBaseStructureViewDescriptor.structureView);
-    }
-
-    if (newDataLanguage != null) {
-      myBaseStructureViewDescriptor = createBaseLanguageStructureView(myFileEditor, newDataLanguage);
-      if (myStructureViewComposite != null) {
-        myStructureViewComposite.setStructureView(myBaseLanguageViewDescriptorIndex, myBaseStructureViewDescriptor);
+  @Nullable
+  protected TreeBasedStructureViewBuilder createMainBuilder(@NotNull PsiFile psi) {
+    //noinspection deprecation
+    StructureViewComposite.StructureViewDescriptor descriptor = createMainView(null, psi);
+    if (descriptor == null) return null;
+    return new TreeBasedStructureViewBuilder() {
+      @NotNull
+      @Override
+      public StructureViewModel createStructureViewModel(@Nullable Editor editor) {
+        Disposer.register(descriptor.structureModel, descriptor.structureView);
+        return descriptor.structureModel;
       }
-    }
+
+      @NotNull
+      @Override
+      public StructureView createStructureView(FileEditor fileEditor, @NotNull Project project) {
+        return descriptor.structureView;
+      }
+    };
   }
 
-  @NotNull
-  private static FileType findFileType(final Language language) {
-    FileType[] registeredFileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
-    for (FileType fileType : registeredFileTypes) {
-      if (fileType instanceof LanguageFileType && ((LanguageFileType)fileType).getLanguage() == language) {
-        return fileType;
-      }
-    }
-    return FileTypes.UNKNOWN;
+  /** @deprecated override {@link #createMainBuilder(PsiFile)} instead */
+  @Deprecated
+  protected StructureViewComposite.StructureViewDescriptor createMainView(FileEditor fileEditor, PsiFile mainFile) {
+    throw new AssertionError();
   }
 }

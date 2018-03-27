@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.rollback;
 
 import com.intellij.openapi.util.Comparing;
@@ -28,10 +14,9 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.Revision;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.info.Info;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
 import java.util.Collection;
@@ -59,7 +44,7 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
                               @NotNull RollbackProgressListener listener) {
     listener.indeterminate();
 
-    for (Map.Entry<Pair<SVNURL, WorkingCopyFormat>, Collection<Change>> entry : SvnUtil.splitChangesIntoWc(mySvnVcs, changes).entrySet()) {
+    for (Map.Entry<Pair<Url, WorkingCopyFormat>, Collection<Change>> entry : SvnUtil.splitChangesIntoWc(mySvnVcs, changes).entrySet()) {
       // to be more sure about nested changes, being or being not reverted
       List<Change> sortedChanges = ContainerUtil.sorted(entry.getValue(), ChangesAfterPathComparator.getInstance());
 
@@ -101,13 +86,10 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
       catch (VcsException e) {
         exceptions.add(e);
       }
-      catch (SVNException e) {
-        exceptions.add(new VcsException(e));
-      }
     }
   }
 
-  private void revertFileOrDir(@NotNull FilePath filePath) throws SVNException, VcsException {
+  private void revertFileOrDir(@NotNull FilePath filePath) throws VcsException {
     File file = filePath.getIOFile();
     Info info = mySvnVcs.getInfo(file);
     if (info != null) {
@@ -119,7 +101,7 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
       }
       else {
         // do update to restore missing directory.
-        mySvnVcs.getSvnKitManager().createUpdateClient().doUpdate(file, SVNRevision.HEAD, true);
+        mySvnVcs.getFactory(file).createUpdateClient().doUpdate(file, Revision.HEAD, Depth.INFINITY, false, false);
       }
     }
     else {

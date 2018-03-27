@@ -1,18 +1,16 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package com.intellij.ui;
 
 import com.intellij.ui.treeStructure.Tree;
@@ -27,6 +25,8 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreeNode;
 import java.awt.*;
+
+import static com.intellij.util.ui.ThreeStateCheckBox.State;
 
 public class CheckboxTreeBase extends Tree {
   private final CheckboxTreeHelper myHelper;
@@ -124,9 +124,9 @@ public class CheckboxTreeBase extends Tree {
   protected void nodeStateWillChange(CheckedTreeNode node) {
   }
 
+  @SuppressWarnings("unused")
   @Deprecated
-  protected void adjustParents(final CheckedTreeNode node, final boolean checked) {
-  }
+  protected void adjustParents(final CheckedTreeNode node, final boolean checked) {}
 
   public static class CheckboxTreeCellRendererBase extends JPanel implements TreeCellRenderer {
     private final ColoredTreeCellRenderer myTextRenderer;
@@ -161,10 +161,11 @@ public class CheckboxTreeBase extends Tree {
       if (value instanceof CheckedTreeNode) {
         CheckedTreeNode node = (CheckedTreeNode)value;
 
-        NodeState state = getNodeStatus(node);
+        State state = getNodeStatus(node);
         myCheckbox.setVisible(true);
-        myCheckbox.setSelected(state != NodeState.CLEAR);
-        myCheckbox.setEnabled(node.isEnabled() && state != NodeState.PARTIAL);
+        myCheckbox.setEnabled(node.isEnabled());
+        myCheckbox.setSelected(state != State.NOT_SELECTED);
+        myCheckbox.setState(state);
         myCheckbox.setOpaque(false);
         myCheckbox.setBackground(null);
         setBackground(null);
@@ -186,36 +187,33 @@ public class CheckboxTreeBase extends Tree {
         final Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
         UIUtil.changeBackGround(this, background);
       }
-      else if (UIUtil.isUnderNimbusLookAndFeel()) {
-        UIUtil.changeBackGround(this, UIUtil.TRANSPARENT_COLOR);
-      }
       customizeRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
       revalidate();
 
       return this;
     }
 
-    private NodeState getNodeStatus(final CheckedTreeNode node) {
-      if (myIgnoreInheritance) return node.isChecked() ? NodeState.FULL : NodeState.CLEAR;
+    private State getNodeStatus(final CheckedTreeNode node) {
+      if (myIgnoreInheritance) return node.isChecked() ? State.SELECTED : State.NOT_SELECTED;
       final boolean checked = node.isChecked();
-      if (node.getChildCount() == 0 || !myUsePartialStatusForParentNodes) return checked ? NodeState.FULL : NodeState.CLEAR;
+      if (node.getChildCount() == 0 || !myUsePartialStatusForParentNodes) return checked ? State.SELECTED : State.NOT_SELECTED;
 
-      NodeState result = null;
+      State result = null;
 
       for (int i = 0; i < node.getChildCount(); i++) {
         TreeNode child = node.getChildAt(i);
-        NodeState childStatus = child instanceof CheckedTreeNode? getNodeStatus((CheckedTreeNode)child) :
-                checked? NodeState.FULL : NodeState.CLEAR;
-        if (childStatus == NodeState.PARTIAL) return NodeState.PARTIAL;
+        State childStatus = child instanceof CheckedTreeNode? getNodeStatus((CheckedTreeNode)child) :
+                checked? State.SELECTED : State.NOT_SELECTED;
+        if (childStatus == State.DONT_CARE) return State.DONT_CARE;
         if (result == null) {
           result = childStatus;
         }
         else if (result != childStatus) {
-          return NodeState.PARTIAL;
+          return State.DONT_CARE;
         }
       }
 
-      return result == null ? NodeState.CLEAR : result;
+      return result == null ? State.NOT_SELECTED : result;
     }
 
     /**
@@ -259,7 +257,12 @@ public class CheckboxTreeBase extends Tree {
     }
   }
 
-
+  /**
+   * Don't use this enum. Left for API compatibility.
+   * @see ThreeStateCheckBox.State
+   * @deprecated
+   */
+  @Deprecated
   public enum NodeState {
     FULL, CLEAR, PARTIAL
   }

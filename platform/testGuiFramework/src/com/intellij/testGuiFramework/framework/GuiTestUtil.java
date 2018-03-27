@@ -32,7 +32,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SwitchBootJdkAction;
 import com.intellij.openapi.util.SystemInfo;
@@ -45,9 +44,6 @@ import com.intellij.testGuiFramework.fixtures.IdeFrameFixture;
 import com.intellij.testGuiFramework.fixtures.RadioButtonFixture;
 import com.intellij.testGuiFramework.matcher.ClassNameMatcher;
 import com.intellij.ui.KeyStrokeAdapter;
-import com.intellij.ui.components.JBList;
-import com.intellij.ui.popup.PopupFactoryImpl;
-import com.intellij.ui.popup.list.ListPopupModel;
 import com.intellij.util.JdkBundle;
 import com.intellij.util.PathUtil;
 import com.intellij.util.Producer;
@@ -64,9 +60,6 @@ import org.fest.swing.fixture.*;
 import org.fest.swing.timing.Condition;
 import org.fest.swing.timing.Pause;
 import org.fest.swing.timing.Timeout;
-import org.hamcrest.BaseMatcher;
-import org.hamcrest.Description;
-import org.hamcrest.Matcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -97,7 +90,6 @@ import static org.fest.swing.timing.Timeout.timeout;
 import static org.fest.util.Strings.isNullOrEmpty;
 import static org.fest.util.Strings.quote;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
 
 public final class GuiTestUtil {
 
@@ -429,105 +421,6 @@ public final class GuiTestUtil {
   }
 
   /**
-   * Waits until an IDE popup is shown (and returns it
-   */
-  public static JBList waitForPopup(@NotNull Robot robot) {
-    return waitUntilFound(robot, null, new GenericTypeMatcher<JBList>(JBList.class) {
-      @Override
-      protected boolean isMatching(@NotNull JBList list) {
-        ListModel model = list.getModel();
-        return model instanceof ListPopupModel;
-      }
-    });
-  }
-
-  /**
-   * Clicks an IntelliJ/Studio popup menu item with the given label prefix
-   *
-   * @param labelPrefix the target menu item label prefix
-   * @param component   a component in the same window that the popup menu is associated with
-   * @param robot       the robot to drive it with
-   */
-  public static void clickPopupMenuItem(@NotNull String labelPrefix, @NotNull Component component, @NotNull Robot robot) {
-    clickPopupMenuItemMatching(new PrefixMatcher(labelPrefix), component, robot);
-  }
-
-  public static void clickPopupMenuItem(@NotNull String label, boolean searchByPrefix, @NotNull Component component, @NotNull Robot robot) {
-    if (searchByPrefix) {
-      clickPopupMenuItemMatching(new PrefixMatcher(label), component, robot);
-    }
-    else {
-      clickPopupMenuItemMatching(new EqualsMatcher(label), component, robot);
-    }
-  }
-
-  public static void clickPopupMenuItem(@NotNull String label, boolean searchByPrefix, @NotNull Component component, @NotNull Robot robot, @NotNull Timeout timeout) {
-    if (searchByPrefix) {
-      clickPopupMenuItemMatching(new PrefixMatcher(label), component, robot, timeout);
-    }
-    else {
-      clickPopupMenuItemMatching(new EqualsMatcher(label), component, robot, timeout);
-    }
-  }
-
-  public static void clickPopupMenuItemMatching(@NotNull Matcher<String> labelMatcher, @NotNull Component component, @NotNull Robot robot) {
-    clickPopupMenuItemMatching(labelMatcher, component, robot, SHORT_TIMEOUT);
-  }
-
-  public static void clickPopupMenuItemMatching(@NotNull Matcher<String> labelMatcher, @NotNull Component component, @NotNull Robot robot, @NotNull Timeout timeout) {
-    // IntelliJ doesn't seem to use a normal JPopupMenu, so this won't work:
-    //    JPopupMenu menu = myRobot.findActivePopupMenu();
-    // Instead, it uses a JList (technically a JBList), which is placed somewhere
-    // under the root pane.
-
-    Container root = getRootContainer(component);
-
-    // First find the JBList which holds the popup. There could be other JBLists in the hierarchy,
-    // so limit it to one that is actually used as a popup, as identified by its model being a ListPopupModel:
-    assertNotNull(root);
-
-    JBList list = waitUntilFound(robot, null,  new GenericTypeMatcher<JBList>(JBList.class) {
-      @Override
-      protected boolean isMatching(@NotNull JBList list) {
-        ListModel model = list.getModel();
-        return model instanceof ListPopupModel;
-      }
-    }, timeout);
-
-
-    // We can't use the normal JListFixture method to click by label since the ListModel items are
-    // ActionItems whose toString does not reflect the text, so search through the model items instead:
-    ListPopupModel model = (ListPopupModel)list.getModel();
-    List<String> items = new ArrayList<>();
-    for (int i = 0; i < model.getSize(); i++) {
-      Object elementAt = model.getElementAt(i);
-      if (elementAt instanceof PopupFactoryImpl.ActionItem) {
-        PopupFactoryImpl.ActionItem
-          item = (PopupFactoryImpl.ActionItem)elementAt;
-        String s = item.getText();
-        if (labelMatcher.matches(s)) {
-          new JListFixture(robot, list).clickItem(i);
-          return;
-        }
-        items.add(s);
-      }
-      else { // For example package private class IntentionActionWithTextCaching used in quickfix popups
-        String s = elementAt.toString();
-        if (labelMatcher.matches(s)) {
-          new JListFixture(robot, list).clickItem(i);
-          return;
-        }
-        items.add(s);
-      }
-    }
-
-    if (items.isEmpty()) {
-      fail("Could not find any menu items in popup");
-    }
-    fail("Did not find menu item '" + labelMatcher + "' among " + StringUtil.join(items, ", "));
-  }
-
-  /**
    * Returns the root container containing the given component
    */
   @Nullable
@@ -711,6 +604,7 @@ public final class GuiTestUtil {
     return reference.get();
   }
 
+
   /**
    * Waits until no components match the given criteria under the given root
    */
@@ -757,45 +651,6 @@ public final class GuiTestUtil {
       myNotified = true;
     }
   }
-
-  private static class PrefixMatcher extends BaseMatcher<String> {
-
-    private final String prefix;
-
-    public PrefixMatcher(String prefix) {
-      this.prefix = prefix;
-    }
-
-    @Override
-    public boolean matches(Object item) {
-      return item instanceof String && ((String)item).startsWith(prefix);
-    }
-
-    @Override
-    public void describeTo(Description description) {
-      description.appendText("with prefix '" + prefix + "'");
-    }
-  }
-
-  private static class EqualsMatcher extends BaseMatcher<String> {
-
-    private final String wanted;
-
-    public EqualsMatcher(String wanted) {
-      this.wanted = wanted;
-    }
-
-    @Override
-    public boolean matches(Object item) {
-      return item instanceof String && ((String)item).equals(wanted);
-    }
-
-    @Override
-    public void describeTo(Description description) {
-      description.appendText("equals to '" + wanted + "'");
-    }
-  }
-
 
   public static String adduction(String s) {
     char ESCAPE_SYMBOL = '\u001B';

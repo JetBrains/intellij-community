@@ -16,6 +16,7 @@
 package com.intellij.java.codeInsight.intention;
 
 import com.intellij.codeInsight.intention.impl.SplitIfAction;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.testFramework.LightCodeInsightTestCase;
@@ -25,7 +26,7 @@ import com.intellij.testFramework.LightCodeInsightTestCase;
  */
 public class SplitIfActionTest extends LightCodeInsightTestCase {
   public void test1() {
-    CodeStyleSettingsManager.getSettings(getProject()).ELSE_ON_NEW_LINE= true;
+    CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE).ELSE_ON_NEW_LINE= true;
     doTest();
   }
 

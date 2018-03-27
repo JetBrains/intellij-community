@@ -34,7 +34,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
- * Date: 21-Jun-17
  */
 public class JShellParserDefinition extends JavaParserDefinition{
   private static final PsiParser PARSER = new PsiParser() {

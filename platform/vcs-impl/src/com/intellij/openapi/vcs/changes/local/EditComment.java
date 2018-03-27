@@ -30,7 +30,7 @@ public class EditComment implements ChangeListCommand {
   private String myOldComment;
   private LocalChangeList myListCopy;
 
-  public EditComment(@NotNull String name, @Nullable String newComment) {
+  public EditComment(@NotNull String name, @NotNull String newComment) {
     myNewComment = newComment;
     myName = name;
   }
@@ -39,7 +39,7 @@ public class EditComment implements ChangeListCommand {
     myOldComment = worker.editComment(myName, myNewComment);
 
     if (myOldComment != null && !Comparing.equal(myOldComment, myNewComment)) {
-      myListCopy = worker.getChangeListCopyByName(myName);
+      myListCopy = worker.getChangeListByName(myName);
     }
     else {
       myListCopy = null; // nothing changed, no notify

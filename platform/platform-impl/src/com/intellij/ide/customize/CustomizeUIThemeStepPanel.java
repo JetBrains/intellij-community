@@ -131,21 +131,16 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
 
   protected void initThemes(Collection<ThemeInfo> result) {
     if (SystemInfo.isMac) {
-      result.add(getDefaultLafOnMac());
       result.add(DARCULA);
+      result.add(getDefaultLafOnMac());
     }
     else if (SystemInfo.isWindows) {
-      //if (PlatformUtils.isIdeaCommunity()) {
-      result.add(INTELLIJ);
-      //}
-      //else {
-      //  addLaf(ALLOY);
-      //}
       result.add(DARCULA);
+      result.add(INTELLIJ);
     }
     else {
-      result.add(INTELLIJ);
       result.add(DARCULA);
+      result.add(INTELLIJ);
       result.add(GTK);
     }
   }

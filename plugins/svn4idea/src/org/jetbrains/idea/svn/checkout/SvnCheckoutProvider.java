@@ -1,24 +1,9 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.checkout;
 
-import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -40,28 +25,19 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.SvnWorkingCopyFormatHolder;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
 import org.jetbrains.idea.svn.actions.ExclusiveBackgroundVcsAction;
 import org.jetbrains.idea.svn.actions.SvnExcludingIgnoredOperation;
-import org.jetbrains.idea.svn.api.ClientFactory;
-import org.jetbrains.idea.svn.api.Depth;
-import org.jetbrains.idea.svn.api.ProgressTracker;
+import org.jetbrains.idea.svn.api.*;
 import org.jetbrains.idea.svn.checkin.CommitEventHandler;
 import org.jetbrains.idea.svn.checkin.IdeaCommitHandler;
 import org.jetbrains.idea.svn.dialogs.CheckoutDialog;
 import org.jetbrains.idea.svn.dialogs.UpgradeFormatDialog;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.DefaultSVNCommitHandler;
-import org.tmatesoft.svn.core.wc.ISVNCommitHandler;
-import org.tmatesoft.svn.core.wc.ISVNFileFilter;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Predicate;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.application.ModalityState.any;
@@ -81,15 +57,15 @@ public class SvnCheckoutProvider implements CheckoutProvider {
   }
 
   @Deprecated // Required for compatibility with external plugins.
-  public static void doCheckout(@NotNull Project project, @NotNull File target, final String url, final SVNRevision revision,
+  public static void doCheckout(@NotNull Project project, @NotNull File target, final String url, final Revision revision,
                                 final Depth depth, final boolean ignoreExternals, @Nullable final Listener listener) {
     doCheckout(project, target, parseUrl(url), revision, depth, ignoreExternals, listener);
   }
 
   public static void doCheckout(@NotNull Project project,
                                 @NotNull File target,
-                                @NotNull SVNURL url,
-                                SVNRevision revision,
+                                @NotNull Url url,
+                                Revision revision,
                                 Depth depth,
                                 boolean ignoreExternals,
                                 @Nullable Listener listener) {
@@ -105,13 +81,8 @@ public class SvnCheckoutProvider implements CheckoutProvider {
   }
 
   @NotNull
-  public static ClientFactory getFactory(@NotNull SvnVcs vcs, @NotNull WorkingCopyFormat format) throws VcsException {
-    ClientFactory settingsFactory = vcs.getFactoryFromSettings();
-    ClientFactory otherFactory = vcs.getOtherFactory();
-    List<WorkingCopyFormat> settingsFactoryFormats = settingsFactory.createCheckoutClient().getSupportedFormats();
-    List<WorkingCopyFormat> otherFactoryFormats = CheckoutFormatFromUserProvider.getOtherFactoryFormats(otherFactory);
-
-    return settingsFactoryFormats.contains(format) || !otherFactoryFormats.contains(format) ? settingsFactory : otherFactory;
+  public static ClientFactory getFactory(@NotNull SvnVcs vcs) {
+    return vcs.getFactoryFromSettings();
   }
 
 
@@ -119,7 +90,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
   public static void checkout(final Project project,
                               final File target,
                               final String url,
-                              final SVNRevision revision,
+                              final Revision revision,
                               final Depth depth,
                               final boolean ignoreExternals,
                               final Listener listener, final WorkingCopyFormat selectedFormat) {
@@ -128,8 +99,8 @@ public class SvnCheckoutProvider implements CheckoutProvider {
 
   public static void checkout(Project project,
                               File target,
-                              @NotNull SVNURL url,
-                              SVNRevision revision,
+                              @NotNull Url url,
+                              Revision revision,
                               Depth depth,
                               boolean ignoreExternals,
                               Listener listener,
@@ -140,24 +111,18 @@ public class SvnCheckoutProvider implements CheckoutProvider {
                                                                                message("message.title.check.out"), true,
                                                                                VcsConfiguration.getInstance(project).getCheckoutOption()) {
       public void run(@NotNull final ProgressIndicator indicator) {
-        final WorkingCopyFormat format = selectedFormat == null ? UNKNOWN : selectedFormat;
-
-        SvnWorkingCopyFormatHolder.setPresetFormat(format);
-
+        WorkingCopyFormat format = selectedFormat == null ? UNKNOWN : selectedFormat;
         SvnVcs vcs = SvnVcs.getInstance(project);
         ProgressTracker handler = new CheckoutEventHandler(vcs, false, ProgressManager.getInstance().getProgressIndicator());
         ProgressManager.progress(message("progress.text.checking.out", target.getAbsolutePath()));
         try {
-          getFactory(vcs, format).createCheckoutClient()
-            .checkout(SvnTarget.fromURL(url), target, revision, depth, ignoreExternals, true, format, handler);
+          getFactory(vcs).createCheckoutClient()
+            .checkout(Target.on(url), target, revision, depth, ignoreExternals, true, format, handler);
           ProgressManager.checkCanceled();
           checkoutSuccessful.set(Boolean.TRUE);
         }
         catch (VcsException e) {
           exception[0] = e;
-        }
-        finally {
-          SvnWorkingCopyFormatHolder.setPresetFormat(null);
         }
       }
 
@@ -213,7 +178,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     return new CheckoutFormatFromUserProvider(project, target).prompt();
   }
 
-  public static void doExport(final Project project, final File target, final SVNURL url, final Depth depth,
+  public static void doExport(final Project project, final File target, final Url url, final Depth depth,
                               final boolean ignoreExternals, final boolean force, final String eolStyle) {
     try {
       final VcsException[] exception = new VcsException[1];
@@ -225,9 +190,9 @@ public class SvnCheckoutProvider implements CheckoutProvider {
         try {
           progressIndicator.setText(message("progress.text.export", target.getAbsolutePath()));
 
-          SvnTarget from = SvnTarget.fromURL(url);
+          Target from = Target.on(url);
           ExportClient client = vcs.getFactoryFromSettings().createExportClient();
-          client.export(from, target, SVNRevision.HEAD, depth, eolStyle, force, ignoreExternals, handler);
+          client.export(from, target, Revision.HEAD, depth, eolStyle, force, ignoreExternals, handler);
         }
         catch (VcsException e) {
           exception[0] = e;
@@ -242,14 +207,14 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     }
   }
 
-  public static void doImport(final Project project, final File target, final SVNURL url, final Depth depth,
+  public static void doImport(final Project project, final File target, final Url url, final Depth depth,
                               final boolean includeIgnored, final String message) {
     final Ref<String> errorMessage = new Ref<>();
     final SvnVcs vcs = SvnVcs.getInstance(project);
     final String targetPath = FileUtil.toSystemIndependentName(target.getAbsolutePath());
 
     ExclusiveBackgroundVcsAction.run(project, () -> ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-      final FileIndexFacade facade = PeriodicalTasksCloser.getInstance().safeGetService(project, FileIndexFacade.class);
+      final FileIndexFacade facade = ServiceManager.getService(project, FileIndexFacade.class);
       ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
       try {
         progressIndicator.setText(message("progress.text.import", target.getAbsolutePath()));
@@ -262,10 +227,9 @@ public class SvnCheckoutProvider implements CheckoutProvider {
           final boolean isInContent = ReadAction.compute(() -> facade.isInContent(targetVf));
           CommitEventHandler handler = new IdeaCommitHandler(progressIndicator);
           boolean useFileFilter = !project.isDefault() && isInContent;
-          ISVNCommitHandler commitHandler =
-            useFileFilter ? new MyFilter(LocalFileSystem.getInstance(), new SvnExcludingIgnoredOperation.Filter(project)) : null;
-          long revision = vcs.getFactoryFromSettings().createImportClient()
-            .doImport(target, url, depth, message, includeIgnored, handler, commitHandler);
+          Predicate<File> filter = useFileFilter ? new MyFilter(new SvnExcludingIgnoredOperation.Filter(project)) : null;
+          long revision =
+            vcs.getFactoryFromSettings().createImportClient().doImport(target, url, depth, message, includeIgnored, handler, filter);
 
           if (revision > 0) {
             StatusBar.Info.set(message("status.text.comitted.revision", revision), project);
@@ -282,16 +246,16 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     }
   }
 
-  private static class MyFilter extends DefaultSVNCommitHandler implements ISVNFileFilter {
-    private final LocalFileSystem myLfs;
-    private final SvnExcludingIgnoredOperation.Filter myFilter;
+  private static class MyFilter implements Predicate<File> {
+    @NotNull private final LocalFileSystem myLfs = LocalFileSystem.getInstance();
+    @NotNull private final SvnExcludingIgnoredOperation.Filter myFilter;
 
-    private MyFilter(LocalFileSystem lfs, SvnExcludingIgnoredOperation.Filter filter) {
-      myLfs = lfs;
+    private MyFilter(@NotNull SvnExcludingIgnoredOperation.Filter filter) {
       myFilter = filter;
     }
 
-    public boolean accept(final File file) {
+    @Override
+    public boolean test(@NotNull File file) {
       final VirtualFile vf = myLfs.findFileByIoFile(file);
       return vf != null && myFilter.accept(vf);
     }
@@ -302,8 +266,6 @@ public class SvnCheckoutProvider implements CheckoutProvider {
   }
 
   public static class CheckoutFormatFromUserProvider {
-
-    private static final Logger LOG = Logger.getInstance(CheckoutFormatFromUserProvider.class);
 
     @NotNull private final Project myProject;
     @NotNull private final SvnVcs myVcs;
@@ -364,27 +326,9 @@ public class SvnCheckoutProvider implements CheckoutProvider {
 
       try {
         result.addAll(myVcs.getFactoryFromSettings().createCheckoutClient().getSupportedFormats());
-        result.addAll(getOtherFactoryFormats(myVcs.getOtherFactory()));
       }
       catch (VcsException e) {
         error.set(e.getMessage());
-      }
-
-      return result;
-    }
-
-    @NotNull
-    private static List<WorkingCopyFormat> getOtherFactoryFormats(@NotNull ClientFactory otherFactory) {
-      List<WorkingCopyFormat> result;
-
-      try {
-        result = otherFactory.createCheckoutClient().getSupportedFormats();
-      }
-      catch (VcsException e) {
-        // do not add error as it is just usability fix and "other factory" could be incorrectly configured (for instance, invalid
-        // executable path)
-        result = ContainerUtil.newArrayList();
-        LOG.info("Failed to get checkout formats from other factory", e);
       }
 
       return result;

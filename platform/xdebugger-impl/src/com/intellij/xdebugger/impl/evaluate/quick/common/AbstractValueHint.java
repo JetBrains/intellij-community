@@ -40,6 +40,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.EventObject;
+import java.util.Objects;
 
 /**
  * @author nik
@@ -363,10 +364,6 @@ public abstract class AbstractValueHint {
 
   @Override
   public int hashCode() {
-    int result = myProject.hashCode();
-    result = 31 * result + myEditor.hashCode();
-    result = 31 * result + myType.hashCode();
-    result = 31 * result + (myCurrentRange != null ? myCurrentRange.hashCode() : 0);
-    return result;
+    return Objects.hash(myProject, myEditor, myType, myCurrentRange);
   }
 }

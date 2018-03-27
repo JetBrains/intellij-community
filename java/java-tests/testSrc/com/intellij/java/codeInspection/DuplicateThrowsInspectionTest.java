@@ -17,19 +17,20 @@ package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.duplicateThrows.DuplicateThrowsInspection;
-import com.intellij.testFramework.InspectionTestCase;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
-public class DuplicateThrowsInspectionTest extends InspectionTestCase {
+public class DuplicateThrowsInspectionTest extends LightCodeInsightFixtureTestCase {
   @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/inspection";
+  protected String getBasePath() {
+    return JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/duplicateThrows";
   }
 
   private void doTest() {
-    doTest("duplicateThrows/" + getTestName(true), new DuplicateThrowsInspection());
+    myFixture.enableInspections(new DuplicateThrowsInspection());
+    myFixture.testHighlighting(getTestName(false) + ".java");
   }
 
-  public void testSimple() {
+  public void testDuplicateThrows() {
     doTest();
   }
 }

@@ -18,14 +18,14 @@ package com.siyeh.ig.classlayout;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Collection;
 
 /**
  * @author Bas Leijdekkers
@@ -66,29 +66,13 @@ public class ClassWithOnlyPrivateConstructorsInspectionBase extends BaseInspecti
           return;
         }
       }
-      final PsiClass[] innerClasses = aClass.getInnerClasses();
-      for (PsiClass innerClass : innerClasses) {
-        if (isExtendedByInnerClass(innerClass, aClass, new HashSet<>())) {
+      Collection<PsiClass> innerAndLocalClasses = PsiTreeUtil.findChildrenOfType(aClass, PsiClass.class);
+      for (PsiClass innerClass : innerAndLocalClasses) {
+        if (innerClass.isInheritor(aClass, false)) {
           return;
         }
       }
       registerClassError(aClass, aClass);
-    }
-
-    private static boolean isExtendedByInnerClass(PsiClass innerClass, PsiClass superClass, Set<PsiClass> visited) {
-      if (!visited.add(innerClass)) {
-        return false;
-      }
-      if (innerClass.isInheritor(superClass, false)) {
-        return true;
-      }
-      final PsiClass[] innerClasses = innerClass.getInnerClasses();
-      for (PsiClass aClass : innerClasses) {
-        if (isExtendedByInnerClass(aClass, superClass, visited)) {
-          return true;
-        }
-      }
-      return false;
     }
   }
 }

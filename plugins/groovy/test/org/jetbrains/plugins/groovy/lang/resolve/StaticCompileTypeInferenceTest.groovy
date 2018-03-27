@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.CommonClassNames
@@ -40,19 +26,23 @@ class Foo {
   }
 
 
-  void testImplicitFieldType() {
+  void testImplicitWithInstanceofType() {
     final GrReferenceExpression ref = (GrReferenceExpression)configureByText('''
 import groovy.transform.CompileStatic
 
 @CompileStatic
 class Foo {
-    def aa = "i'm string"
-    def foo() { a<caret>a }
+    def aa = 1
+    def foo() { 
+      if (aa instanceof String) {
+        a<caret>a 
+      }
+   }
 }
 ''').element
     final PsiType type = ref.type
     assertTrue(type instanceof PsiClassType)
-    assertTrue(type.canonicalText == CommonClassNames.JAVA_LANG_OBJECT)
+    assertEquals(CommonClassNames.JAVA_LANG_STRING, type.canonicalText)
   }
 
   void testExplicitObjectType() {
@@ -68,6 +58,65 @@ class Foo {
     final PsiType type = ref.type
     assertTrue(type instanceof PsiClassType)
     assertTrue(type.canonicalText == CommonClassNames.JAVA_LANG_OBJECT)
+  }
+
+  void testImplicitObjectType() {
+    final GrReferenceExpression ref = (GrReferenceExpression)configureByText('''
+import groovy.transform.CompileStatic
+
+@CompileStatic
+class Foo {
+    def aa 
+    def foo() { a<caret>a }
+}
+''').element
+    final PsiType type = ref.type
+    assertTrue(type instanceof PsiClassType)
+    assertEquals(CommonClassNames.JAVA_LANG_OBJECT, type.canonicalText)
+  }
+
+void testEnumObjectType() {
+    final GrReferenceExpression ref = (GrReferenceExpression)configureByText('''
+import groovy.transform.CompileStatic
+
+@CompileStatic
+class Foo {
+    static enum E {
+    FF, g, h
+  } 
+    def foo() { E.F<caret>F }
+}
+''').element
+    final PsiType type = ref.type
+    assertTrue(type instanceof PsiClassType)
+    assertEquals("Foo.E", type.canonicalText)
+  }
+
+  void testImplicitObjectTypeWithInitializer() {
+    final GrReferenceExpression ref = (GrReferenceExpression)configureByText('''
+import groovy.transform.CompileStatic
+
+class Foo {
+    def aa = 1
+    @CompileStatic
+    def foo() { a<caret>a }
+}
+''').element
+    final PsiType type = ref.type
+    assertTrue(type instanceof PsiClassType)
+    assertEquals(CommonClassNames.JAVA_LANG_OBJECT, type.canonicalText)
+  }
+
+  void testImplicitParameterType() {
+    final GrReferenceExpression ref = (GrReferenceExpression)configureByText('''
+import groovy.transform.CompileStatic
+
+class Foo {
+    def foo(aa) { a<caret>a }
+}
+''').element
+    final PsiType type = ref.type
+    assertTrue(type == null)
   }
 
   void 'test variable type'() {

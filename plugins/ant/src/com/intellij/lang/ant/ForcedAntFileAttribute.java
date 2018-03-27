@@ -28,7 +28,6 @@ import java.io.IOException;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Apr 30, 2008
  */
 public class ForcedAntFileAttribute extends FileAttribute {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.ForcedAntFileAttribute");

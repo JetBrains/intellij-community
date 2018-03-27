@@ -23,8 +23,6 @@ import java.io.IOException;
 
 /**
  * @author irengrig
- *         Date: 6/14/11
- *         Time: 2:19 PM
  */
 public interface CurrentRevisionProvider {
   VcsRevisionNumber getCurrentRevision() throws VcsException;

@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,6 +50,12 @@ public class CompletionPolicy {
         !Character.isLetter(leafText.charAt(0)) ||
         leaf instanceof PsiWhiteSpace ||
         PsiTreeUtil.getNonStrictParentOfType(leaf, PsiComment.class) != null) {
+      return null;
+    }
+
+    if (leafText.length() == 1 && 
+        "org.intellij.lang.regexp.RegExpElementType".equals(PsiUtilCore.getElementType(leaf).getClass().getName())) {
+      // regexp has a token for each character: not interesting (and no completion)
       return null;
     }
 

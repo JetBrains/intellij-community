@@ -27,7 +27,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 10/21/12
  */
 public class MavenBuilderService extends BuilderService{
   @NotNull

@@ -16,7 +16,7 @@
 package com.intellij.openapi.vcs;
 
 import com.intellij.ide.errorTreeView.HotfixData;
-import com.intellij.lifecycle.PeriodicalTasksCloser;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
@@ -51,7 +51,7 @@ public abstract class AbstractVcsHelper {
 
   @NotNull
   public static AbstractVcsHelper getInstance(Project project) {
-    return PeriodicalTasksCloser.getInstance().safeGetService(project, AbstractVcsHelper.class);
+    return ServiceManager.getService(project, AbstractVcsHelper.class);
   }
 
   public abstract void showErrors(List<VcsException> abstractVcsExceptions, @NotNull String tabDisplayName);

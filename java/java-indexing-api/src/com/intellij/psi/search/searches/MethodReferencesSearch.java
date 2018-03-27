@@ -56,6 +56,11 @@ public class MethodReferencesSearch extends ExtensibleQueryFactory<PsiReference,
       this(method, scope, strict, null);
     }
 
+    @Override
+    public boolean isQueryValid() {
+      return myMethod.isValid();
+    }
+
     @NotNull
     public Project getProject() {
       return myProject;

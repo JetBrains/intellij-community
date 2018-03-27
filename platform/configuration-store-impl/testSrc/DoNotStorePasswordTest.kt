@@ -25,9 +25,9 @@ class DoNotStorePasswordTest {
 
   @Test
   fun printPasswordComponents() {
-    val processor = BiPredicate<Class<*>, PluginDescriptor?> { aClass, pluginDescriptor ->
+    val processor = BiPredicate<Class<*>, PluginDescriptor?> { aClass, _ ->
       val stateAnnotation = StoreUtil.getStateSpec(aClass)
-      if (stateAnnotation == null || stateAnnotation.name.isNullOrEmpty()) {
+      if (stateAnnotation == null || stateAnnotation.name.isEmpty()) {
         return@BiPredicate true
       }
 
@@ -60,7 +60,7 @@ class DoNotStorePasswordTest {
     }
   }
 
-  fun isSavePasswordField(name: String) = name.contains("remember", ignoreCase = true) || name.contains("keep", ignoreCase = true) || name.contains("save", ignoreCase = true)
+  private fun isSavePasswordField(name: String) = name.contains("remember", ignoreCase = true) || name.contains("keep", ignoreCase = true) || name.contains("save", ignoreCase = true)
 
   fun check(clazz: Class<*>) {
     if (clazz === Attribute::class.java || clazz === Element::class.java) {
@@ -77,7 +77,10 @@ class DoNotStorePasswordTest {
         if (Collection::class.java.isAssignableFrom(accessor.valueClass)) {
           val genericType = accessor.genericType
           if (genericType is ParameterizedType) {
-            check(genericType.actualTypeArguments[0] as Class<*>)
+            val type = genericType.actualTypeArguments[0]
+            if (type is Class<*>) {
+              check(type)
+            }
           }
         }
         else if (accessor.valueClass != clazz) {

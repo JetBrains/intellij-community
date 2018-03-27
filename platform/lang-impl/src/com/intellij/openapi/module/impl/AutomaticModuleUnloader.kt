@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.openapi.module.impl
 
 import com.intellij.notification.Notification
@@ -11,8 +13,7 @@ import com.intellij.openapi.module.ModuleDescription
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.ConfigureUnloadedModulesDialog
-import com.intellij.util.xmlb.annotations.AbstractCollection
-import com.intellij.util.xmlb.annotations.Tag
+import com.intellij.util.xmlb.annotations.XCollection
 import com.intellij.xml.util.XmlStringUtil
 
 /**
@@ -139,8 +140,8 @@ class AutomaticModuleUnloader(private val project: Project) : PersistentStateCom
 
   override fun getState() = loadedModulesListStorage
 
-  override fun loadState(state: LoadedModulesListStorage?) {
-    setLoadedModules(state?.modules ?: emptyList())
+  override fun loadState(state: LoadedModulesListStorage) {
+    setLoadedModules(state.modules)
   }
 
   companion object {
@@ -152,8 +153,7 @@ class AutomaticModuleUnloader(private val project: Project) : PersistentStateCom
 }
 
 class LoadedModulesListStorage {
-  @Tag("loaded-modules")
-  @AbstractCollection(surroundWithTag = false, elementTag = "module", elementValueAttribute = "name")
+  @get:XCollection(elementName = "module", valueAttributeName = "name", propertyElementName = "loaded-modules")
   var modules: MutableList<String> = ArrayList()
 }
 

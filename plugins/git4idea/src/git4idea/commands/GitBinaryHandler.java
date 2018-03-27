@@ -20,7 +20,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.GitVcs;
+import git4idea.util.GitVcsConsoleWriter;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayOutputStream;
@@ -53,12 +53,13 @@ public class GitBinaryHandler extends GitHandler {
 
   @Override
   protected void startHandlingStreams() {
-    handleStream(myProcess.getErrorStream(), myStderr, "Error stream copy of "+myCommandLine.getCommandLineString());
-    handleStream(myProcess.getInputStream(), myStdout, "Output stream copy of "+myCommandLine.getCommandLineString());
+    handleStream(myProcess.getErrorStream(), myStderr, "Error stream copy of " + myCommandLine.getCommandLineString());
+    handleStream(myProcess.getInputStream(), myStdout, "Output stream copy of " + myCommandLine.getCommandLineString());
   }
 
   /**
    * Handle the single stream
+   *
    * @param in  the standard input
    * @param out the standard output
    */
@@ -117,6 +118,11 @@ public class GitBinaryHandler extends GitHandler {
    * @throws VcsException in case of the problem with running git
    */
   public byte[] run() throws VcsException {
+    Project project = project();
+    GitVcsConsoleWriter vcsConsoleWriter = project != null
+                                           ? GitVcsConsoleWriter.getInstance(project)
+                                           : null;
+
     addListener(new GitHandlerListener() {
       @Override
       public void processTerminated(int exitCode) {
@@ -133,8 +139,8 @@ public class GitBinaryHandler extends GitHandler {
             }
           }
           else {
-            if (!isStderrSuppressed()) {
-              GitVcs.getInstance(myProject).showErrorMessages(message);
+            if (vcsConsoleWriter != null && !isStderrSuppressed()) {
+              vcsConsoleWriter.showErrorMessage(message);
             }
           }
           if (message != null) {
@@ -156,7 +162,11 @@ public class GitBinaryHandler extends GitHandler {
         }
       }
     });
-    GitHandlerUtil.runInCurrentThread(this, null);
+    if (vcsConsoleWriter != null && !mySilent) {
+      vcsConsoleWriter.showCommandLine("[" + GitImpl.stringifyWorkingDir(project.getBasePath(), getWorkingDirectory()) + "] "
+                                       + printableCommandLine());
+    }
+    runInCurrentThread();
     //noinspection ThrowableResultOfMethodCallIgnored
     if (myException.get() != null) {
       throw myException.get();

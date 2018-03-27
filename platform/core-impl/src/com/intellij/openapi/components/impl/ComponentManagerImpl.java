@@ -489,6 +489,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
             ProgressIndicator indicator = getProgressIndicator();
             if (indicator != null) {
+              indicator.setIndeterminate(false);
               indicator.checkCanceled();
               setProgressDuringInit(indicator);
             }

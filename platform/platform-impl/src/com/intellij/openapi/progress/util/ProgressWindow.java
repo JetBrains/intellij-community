@@ -18,6 +18,7 @@ package com.intellij.openapi.progress.util;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.application.impl.ModalityStateEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,7 +29,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.ui.FocusTrackback;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -58,7 +58,6 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   private String myTitle;
 
   private boolean myStoppedAlready;
-  private final FocusTrackback myFocusTrackback;
   private boolean myStarted;
   protected boolean myBackgrounded;
   private String myProcessId = "<unknown>";
@@ -94,7 +93,6 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     myShouldShowCancel = shouldShowCancel;
     myCancelText = cancelText;
     setModalityProgress(shouldShowBackground ? null : this);
-    myFocusTrackback = new FocusTrackback(this, WindowManager.getInstance().suggestParentWindow(project), false);
 
     Component parent = parentComponent;
     if (parent == null && project == null && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
@@ -110,7 +108,6 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
 
     Disposer.register(this, myDialog);
 
-    myFocusTrackback.registerFocusComponent(myDialog.getPanel());
     addStateDelegate(new AbstractProgressIndicatorExBase() {
       @Override
       public void cancel() {
@@ -168,7 +165,6 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
         if (myDialog != null) {
           final DialogWrapper popup = myDialog.myPopup;
           if (popup != null) {
-            myFocusTrackback.registerFocusComponent(popup::getPreferredFocusedComponent);
             if (popup.isShowing()) {
               myDialog.myWasShown = true;
             }
@@ -178,6 +174,10 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
       }
       else {
         Disposer.dispose(this);
+        final IdeFocusManager focusManager = IdeFocusManager.getInstance(myProject);
+        focusManager.doWhenFocusSettlesDown(() -> {
+          focusManager.requestDefaultFocus(true);
+        }, ModalityState.defaultModalityState());
       }
     }, getModalityState()));
     timer.setRepeats(false);
@@ -282,25 +282,10 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
 
     super.stop();
 
-    if (isDialogShowing()) {
-      if (myFocusTrackback != null) {
-        myFocusTrackback.setWillBeScheduledForRestore();
-      }
-    }
-
     UIUtil.invokeLaterIfNeeded(() -> {
       boolean wasShowing = isDialogShowing();
       if (myDialog != null) {
         myDialog.hide();
-      }
-
-      if (myFocusTrackback != null) {
-        if (wasShowing) {
-          myFocusTrackback.restoreFocus();
-        }
-        else {
-          myFocusTrackback.dispose();
-        }
       }
 
       synchronized (this) {
@@ -332,13 +317,6 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     if (myDialog != null) {
       myBackgrounded = true;
       myDialog.background();
-
-      if (myDialog.wasShown()) {
-        myFocusTrackback.restoreFocus();
-      }
-      else {
-        myFocusTrackback.consume();
-      }
 
       myDialog = null;
     }

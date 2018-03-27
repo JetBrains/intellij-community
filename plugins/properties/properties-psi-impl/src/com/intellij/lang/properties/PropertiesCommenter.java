@@ -35,22 +35,27 @@ public class PropertiesCommenter implements CodeDocumentationAwareCommenter, Sel
   public static final String HASH_COMMENT_PREFIX = "#";
   public static final String EXCLAMATION_COMMENT_PREFIX = "!";
 
+  @Override
   public String getLineCommentPrefix() {
     return HASH_COMMENT_PREFIX;
   }
 
+  @Override
   public String getBlockCommentPrefix() {
     return null;
   }
 
+  @Override
   public String getBlockCommentSuffix() {
     return null;
   }
 
+  @Override
   public String getCommentedBlockCommentPrefix() {
     return null;
   }
 
+  @Override
   public String getCommentedBlockCommentSuffix() {
     return null;
   }

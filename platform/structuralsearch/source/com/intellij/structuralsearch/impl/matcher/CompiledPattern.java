@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.dupLocator.iterators.ArrayBackedNodeIterator;
@@ -91,19 +77,15 @@ public abstract class CompiledPattern {
   }
 
   public boolean isTypedVar(final PsiElement element) {
-    return element!=null && isTypedVar( element.getText() );
+    return element != null && isTypedVar(element.getText());
   }
 
   public boolean isRealTypedVar(PsiElement element) {
-    if (element!=null && element.getTextLength()>0) {
-      String str = getTypedVarString(element);
-      if (str.length() == 0) {
-        return false;
-      }
-      return isTypedVar( str );
-    } else {
+    if (element == null || element.getTextLength() <= 0) {
       return false;
     }
+    final String str = getTypedVarString(element);
+    return !str.isEmpty() && isTypedVar(str);
   }
 
   @NotNull
@@ -115,7 +97,7 @@ public abstract class CompiledPattern {
     return profile.getTypedVarString(element);
   }
 
-  private final HashMap<Object,MatchingHandler> handlers = new HashMap<>();
+  private final HashMap<Object, MatchingHandler> handlers = new HashMap<>();
 
   public MatchingHandler getHandlerSimple(PsiElement node) {
     return handlers.get(node);
@@ -125,14 +107,14 @@ public abstract class CompiledPattern {
   private MatchingHandler lastHandler;
 
   public MatchingHandler getHandler(PsiElement node) {
-    if (node==last) {
+    if (node == last) {
       return lastHandler;
     }
     MatchingHandler handler = handlers.get(node);
 
-    if (handler==null) {
+    if (handler == null) {
       handler = new SimpleHandler();
-      setHandler(node,handler);
+      setHandler(node, handler);
     }
 
     last = node;
@@ -147,19 +129,16 @@ public abstract class CompiledPattern {
 
   public void setHandler(PsiElement node, MatchingHandler handler) {
     last = null;
-    handlers.put(node,handler);
+    handlers.put(node, handler);
   }
 
-  public SubstitutionHandler createSubstitutionHandler(
-    String name, String compiledName, boolean target,int minOccurs, int maxOccurs, boolean greedy) {
-
+  public SubstitutionHandler createSubstitutionHandler(String name, String compiledName, boolean target,int minOccurs, int maxOccurs,
+                                                       boolean greedy) {
     SubstitutionHandler handler = (SubstitutionHandler) handlers.get(compiledName);
     if (handler != null) return handler;
 
     handler = doCreateSubstitutionHandler(name, target, minOccurs, maxOccurs, greedy);
-
-    handlers.put(compiledName,handler);
-
+    handlers.put(compiledName, handler);
     return handler;
   }
 

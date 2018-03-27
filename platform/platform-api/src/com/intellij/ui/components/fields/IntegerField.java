@@ -85,6 +85,10 @@ public class IntegerField extends JBTextField {
     myValueEditor.validateContent();
   }
 
+  public void setDefaultValueText(@NotNull String text) {
+    getEmptyText().setText(text);
+  }
+
   public void setDefaultValue(@NotNull Integer defaultValue) {
     myValueEditor.setDefaultValue(defaultValue);
   }

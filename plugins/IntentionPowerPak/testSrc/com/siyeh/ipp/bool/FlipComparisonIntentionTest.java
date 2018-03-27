@@ -24,12 +24,14 @@ public class FlipComparisonIntentionTest extends IPPTestCase {
 
   public void testSimple() {
     doTest("class X {" +
-           "  boolean b = 1 >/*_Flip '>' to '<'*/ 2;" +
+           "  boolean b = 1//some comment\n" +
+           " >/*_Flip '>' to '<'*///another comment\n" +
+           " 2;" +
            "}",
 
-           "class X {" +
-           "  boolean b = 2 < 1;" +
-           "}");
+           "class X {  //some comment\n" +
+           "    //another comment\n" +
+           "    boolean b = 2 < 1;}");
   }
 
   public void testBrokenCode() {

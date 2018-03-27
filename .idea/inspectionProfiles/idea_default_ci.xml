@@ -2917,7 +2917,8 @@
     </inspection_tool>
     <inspection_tool class="PointlessBooleanExpressionJS" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="PointlessIndexOfComparison" enabled="true" level="ERROR" enabled_by_default="true" />
-    <inspection_tool class="PointlessNullCheck" enabled="false" level="WARNING" enabled_by_default="false">
+    <inspection_tool class="PointlessNullCheck" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="REPORT_CALLS" value="false" />
       <scope name="android" level="WARNING" enabled="false" />
     </inspection_tool>
     <inspection_tool class="PostfixTemplateDescriptionNotFound" enabled="true" level="WARNING" enabled_by_default="true">

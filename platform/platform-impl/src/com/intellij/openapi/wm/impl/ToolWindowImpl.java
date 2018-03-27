@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.UiActivity;
@@ -102,6 +88,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
   private boolean myUseLastFocused = true;
 
   private static final Logger LOG = Logger.getInstance(ToolWindowImpl.class);
+  private String myHelpId;
 
   ToolWindowImpl(@NotNull ToolWindowManagerImpl toolWindowManager, @NotNull String id, boolean canCloseContent, @Nullable final JComponent component) {
     myToolWindowManager = toolWindowManager;
@@ -442,8 +429,10 @@ public final class ToolWindowImpl implements ToolWindowEx {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final Icon oldIcon = getIcon();
     if (!EventLog.LOG_TOOL_WINDOW_ID.equals(getId())) {
-      if (oldIcon != icon && icon != null && !(icon instanceof LayeredIcon) && (icon.getIconHeight() != Math.ceil(JBUI.scale(13f)) ||
-                                                                                icon.getIconWidth() != Math.ceil(JBUI.scale(13f)))) {
+      if (oldIcon != icon && icon != null && !(icon instanceof LayeredIcon) &&
+          Math.abs(icon.getIconHeight() - JBUI.scale(13f)) >= 1 ||
+          Math.abs(icon.getIconWidth() - JBUI.scale(13f)) >= 1)
+      {
         LOG.warn("ToolWindow icons should be 13x13. Please fix ToolWindow (ID:  " + getId() + ") or icon " + icon);
       }
     }
@@ -572,6 +561,17 @@ public final class ToolWindowImpl implements ToolWindowEx {
       myContentManager.removeAllContents(false);
       contentFactory.createToolWindowContent(myToolWindowManager.getProject(), this);
     }
+  }
+
+  @Override
+  public void setHelpId(String helpId) {
+    myHelpId = helpId;
+  }
+
+  @Nullable
+  @Override
+  public String getHelpId() {
+    return myHelpId;
   }
 
   @Override

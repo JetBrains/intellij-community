@@ -79,7 +79,7 @@
                      implementationClass="com.intellij.codeInspection.TrailingSpacesInPropertyInspection"/>
     <localInspection language="Properties" shortName="AlphaUnsortedPropertiesFile" bundle="messages.PropertiesBundle"
                      key="alpha.unsorted.properties.file.inspection.display.name" groupKey="properties.files.inspection.group.display.name"
-                     enabledByDefault="false" level="INFO"
+                     enabledByDefault="false" level="WEAK WARNING"
                      implementationClass="com.intellij.codeInspection.unsorted.AlphaUnsortedPropertiesFileInspection"/>
     <localInspection language="Properties" shortName="WrongPropertyKeyValueDelimiter" bundle="messages.PropertiesBundle"
                      key="wrong.property.key.value.delimiter.inspection.display.name" groupKey="properties.files.inspection.group.display.name"

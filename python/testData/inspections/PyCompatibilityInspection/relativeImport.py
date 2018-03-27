@@ -1,1 +1,0 @@
-<warning descr="Python version 2.4 doesn't support this syntax.">from ..exceptions import ServiceDoesNotExists</warning>

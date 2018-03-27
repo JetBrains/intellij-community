@@ -325,6 +325,9 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
         if (fix.isError() && isError) {
           intentions.errorFixesToShow.add(fix);
         }
+        else if (fix.isInformation()) {
+          intentions.intentionsToShow.add(fix);
+        }
         else {
           intentions.inspectionFixesToShow.add(fix);
         }

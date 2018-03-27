@@ -16,7 +16,6 @@
 package com.intellij.lang;
 
 import com.intellij.diagnostic.ImplementationConflictException;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -41,8 +40,6 @@ import java.util.concurrent.ConcurrentMap;
  * The language coming from file type can be changed by {@link com.intellij.psi.LanguageSubstitutor}
  */
 public abstract class Language extends UserDataHolderBase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.Language");
-
   private static final Map<Class<? extends Language>, Language> ourRegisteredLanguages = ContainerUtil.newConcurrentMap();
   private static final ConcurrentMap<String, List<Language>> ourRegisteredMimeTypes = ContainerUtil.newConcurrentMap();
   private static final Map<String, Language> ourRegisteredIDs = ContainerUtil.newConcurrentMap();
@@ -76,7 +73,7 @@ public abstract class Language extends UserDataHolderBase {
   protected Language(@Nullable Language baseLanguage, @NotNull String ID, @NotNull String... mimeTypes) {
     myBaseLanguage = baseLanguage;
     myID = ID;
-    myMimeTypes = mimeTypes;
+    myMimeTypes = mimeTypes.length == 0 ? ArrayUtil.EMPTY_STRING_ARRAY : mimeTypes;
 
     Class<? extends Language> langClass = getClass();
     Language prev = ourRegisteredLanguages.put(langClass, this);
@@ -226,6 +223,10 @@ public abstract class Language extends UserDataHolderBase {
 
   /** Fake language identifier without registering */
   protected Language(@NotNull String ID, @SuppressWarnings("UnusedParameters") boolean register) {
+    Language language = findLanguageByID(ID);
+    if (language != null) {
+      throw new IllegalArgumentException("Language with ID="+ID+" already registered: "+language+"; "+language.getClass());
+    }
     myID = ID;
     myBaseLanguage = null;
     myMimeTypes = null;

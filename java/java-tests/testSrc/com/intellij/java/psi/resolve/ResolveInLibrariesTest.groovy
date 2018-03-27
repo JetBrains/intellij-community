@@ -38,30 +38,6 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
  * @author peter
  */
 class ResolveInLibrariesTest extends JavaCodeInsightFixtureTestCase {
-
-  void "test prefer current library when navigation from its source"() {
-    def lib = LocalFileSystem.getInstance().refreshAndFindFileByPath(PathManagerEx.getTestDataPath() + "/../../../lib")
-    def nanoJar = lib.children.find { it.name.startsWith("nanoxml") }
-    def nanoSrc = lib.findChild("src").children.find { it.name.startsWith("nanoxml") }
-
-    def jarCopy = myFixture.copyFileToProject(nanoJar.path, 'lib/nanoJar.jar')
-    def srcCopy = myFixture.copyFileToProject(nanoSrc.path, 'lib/nanoSrc.zip')
-
-    PsiTestUtil.addLibrary(myModule, 'nano1', lib.path, ["/$nanoJar.name!/"] as String[], ["/src/$nanoSrc.name!/"] as String[])
-    PsiTestUtil.addLibrary(myModule, 'nano2', jarCopy.parent.path, ["/$jarCopy.name!/"] as String[], ["/$srcCopy.name!/"] as String[])
-
-    def parsers = JavaPsiFacade.getInstance(project).findClasses('net.n3.nanoxml.IXMLParser', GlobalSearchScope.allScope(project))
-    assert parsers.size() == 2
-
-    def file0 = parsers[0].navigationElement.containingFile
-    assert file0.virtualFile.path.startsWith(nanoSrc.path)
-    assert file0.findReferenceAt(file0.text.indexOf('IXMLReader reader')).resolve().navigationElement.containingFile.virtualFile.path.startsWith(nanoSrc.path)
-
-    def file1 = parsers[1].navigationElement.containingFile
-    assert file1.virtualFile.path.startsWith(srcCopy.path)
-    assert file1.findReferenceAt(file1.text.indexOf('IXMLReader reader')).resolve().navigationElement.containingFile.virtualFile.path.startsWith(srcCopy.path)
-  }
-
   void "test inheritance transitivity"() {
     def protobufJar = IntelliJProjectConfiguration.getJarFromSingleJarProjectLibrary("protobuf")
     VirtualFile jarCopy = WriteAction.compute {

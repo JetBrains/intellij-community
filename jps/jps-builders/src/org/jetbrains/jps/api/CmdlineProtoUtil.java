@@ -30,7 +30,6 @@ import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 4/17/12
  */
 public class CmdlineProtoUtil {
 

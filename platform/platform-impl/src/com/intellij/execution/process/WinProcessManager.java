@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ReflectionUtil;
@@ -23,44 +10,38 @@ import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.Kernel32;
 import com.sun.jna.platform.win32.WinNT;
 
+import static com.intellij.util.ObjectUtils.assertNotNull;
+
 /**
+ * Do not call this class directly - use {@link OSProcessUtil} instead.
+ *
  * @author Alexey.Ushakov
  */
 class WinProcessManager {
   private static final Logger LOG = Logger.getInstance(WinProcessManager.class);
 
-  private WinProcessManager() {}
+  private WinProcessManager() { }
 
-  /**
-   * Returns {@code pid} for Windows process
-   * @param process Windows process
-   * @return pid of the {@code process}
-   */
-  public static int getProcessPid(Process process) {
+  public static int getProcessId(Process process) {
     String processClassName = process.getClass().getName();
-
-    if (processClassName.equals("java.lang.Win32Process") ||
-        processClassName.equals("java.lang.ProcessImpl")) {
+    if (processClassName.equals("java.lang.Win32Process") || processClassName.equals("java.lang.ProcessImpl")) {
       try {
-        long handle = ReflectionUtil.getField(process.getClass(), process, long.class, "handle");
+        if (SystemInfo.IS_AT_LEAST_JAVA9) {
+          //noinspection JavaReflectionMemberAccess
+          return ((Long)Process.class.getMethod("pid").invoke(process)).intValue();
+        }
 
-        Kernel32 kernel = Kernel32.INSTANCE;
-        WinNT.HANDLE winHandle = new WinNT.HANDLE();
-        winHandle.setPointer(Pointer.createConstant(handle));
-        return kernel.GetProcessId(winHandle);
-      } catch (Throwable e) {
-        throw new IllegalStateException(e);
+        long handle = assertNotNull(ReflectionUtil.getField(process.getClass(), process, long.class, "handle"));
+        return Kernel32.INSTANCE.GetProcessId(new WinNT.HANDLE(Pointer.createConstant(handle)));
       }
-    } else {
-      throw new IllegalStateException("Unknown Process implementation: " + processClassName);
+      catch (Throwable t) {
+        throw new IllegalStateException("Failed to get PID from instance of " + process.getClass() + ", OS: " + SystemInfo.OS_NAME, t);
+      }
     }
+
+    throw new IllegalStateException("Unable to get PID from instance of " + process.getClass() + ", OS: " + SystemInfo.OS_NAME);
   }
 
-  /**
-   * Force kill a process (tree)
-   * @param process Windows process
-   * @param tree true to also kill all subprocesses
-   */
   public static boolean kill(Process process, boolean tree) {
     return kill(-1, process, tree);
   }
@@ -73,7 +54,7 @@ class WinProcessManager {
     LOG.assertTrue(pid > 0 || process != null);
     try {
       if (process != null) {
-        pid = getProcessPid(process);
+        pid = getProcessId(process);
       }
       String[] cmdArray = {"taskkill", "/f", "/pid", String.valueOf(pid), tree ? "/t" : ""};
       if (LOG.isDebugEnabled()) {
@@ -97,5 +78,10 @@ class WinProcessManager {
       LOG.warn(e);
     }
     return false;
+  }
+
+  /** @deprecated to be removed in IDEA 2018 */
+  public static int getProcessPid(Process process) {
+    return getProcessId(process);
   }
 }

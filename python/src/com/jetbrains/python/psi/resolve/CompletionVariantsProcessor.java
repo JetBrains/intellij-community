@@ -156,9 +156,6 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
 
   @Override
   protected void addElement(@NotNull String name, @NotNull PsiElement element) {
-    if (PyUtil.isClassPrivateName(name) && !PyUtil.inSameFile(element, myContext)) {
-      return;
-    }
     markAsProcessed(name);
     myVariants.put(name, setupItem(LookupElementBuilder.createWithSmartPointer(name, element).withIcon(element.getIcon(0))));
   }

@@ -29,7 +29,6 @@ import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Dec 19, 2007
  */
 @SkipSlowTestLocally
 public class PersistentMapPerformanceTest extends PersistentMapTestBase {

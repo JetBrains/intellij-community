@@ -21,7 +21,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 /**
  * @author MYakovlev
- * Date: Jul 1, 2002
  */
 public abstract class SelectInEditorManager{
   public static SelectInEditorManager getInstance(Project project) {

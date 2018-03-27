@@ -17,7 +17,6 @@ package org.jetbrains.ether;
 
 /**
  * @author: db
- * Date: 06.10.11
  */
 public class MemberChangeTest extends IncrementalTestCase {
   public MemberChangeTest() {
@@ -209,10 +208,6 @@ public class MemberChangeTest extends IncrementalTestCase {
   }
 
   public void testAddVarargMethod() {
-    doTest();
-  }
-
-  public void testReplaceMethodWithBridge() {
     doTest();
   }
 }

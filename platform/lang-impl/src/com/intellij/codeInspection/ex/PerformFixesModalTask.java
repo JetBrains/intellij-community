@@ -56,6 +56,7 @@ public abstract class PerformFixesModalTask implements SequentialTask {
   }
 
   public void doRun(ProgressIndicator indicator) {
+    indicator.setIndeterminate(false);
     while (!isDone()) {
       if (indicator.isCanceled()) {
         break;

@@ -22,10 +22,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
-import com.siyeh.ig.psiutils.ControlFlowUtils;
-import com.siyeh.ig.psiutils.EquivalenceChecker;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.VariableAccessUtils;
+import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -288,13 +285,14 @@ class FindExtremumMigration extends BaseStreamApiMigration {
       String inFilterOperation = myMax ? ">=" : "<=";
       PsiStatement loop = myTerminalBlock.getStreamSourceStatement();
       PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(loop.getProject());
-      String extremumInitializer = myExtremumKeyInitializer.getText();
+      CommentTracker ct = new CommentTracker();
+      String extremumInitializer = ct.text(myExtremumKeyInitializer);
       PsiExpression condition =
-        elementFactory.createExpressionFromText(myExtremumKeyExpr.getText() + inFilterOperation + extremumInitializer, loop);
+        elementFactory.createExpressionFromText(ct.text(myExtremumKeyExpr) + inFilterOperation + extremumInitializer, loop);
       TerminalBlock blockWithFilter =
         myTerminalBlock.add(new StreamApiMigrationInspection.FilterOp(condition, myTerminalBlock.getVariable(), false));
 
-      String lambdaText = LambdaUtil.createLambda(myTerminalBlock.getVariable(), myExtremumKeyExpr);
+      String lambdaText = ct.lambdaText(myTerminalBlock.getVariable(), myExtremumKeyExpr);
       String comparator;
       if(myComparator == null) {
         comparator = CommonClassNames.JAVA_UTIL_COMPARATOR + "." + method + "(" + lambdaText + ")";
@@ -303,8 +301,8 @@ class FindExtremumMigration extends BaseStreamApiMigration {
         if(comparatorName == null) return null;
         comparator = comparatorName;
       }
-      String stream = blockWithFilter.generate() + "." + getOperation(myMax) + "(" + comparator + ").orElse(null)";
-      return replaceWithFindExtremum(myTerminalBlock.getStreamSourceStatement(), myExtremum, stream, myExtremumKey);
+      String stream = blockWithFilter.generate(ct) + "." + getOperation(myMax) + "(" + comparator + ").orElse(null)";
+      return replaceWithFindExtremum(ct, myTerminalBlock.getStreamSourceStatement(), myExtremum, stream, myExtremumKey);
     }
 
     @Override
@@ -472,10 +470,11 @@ class FindExtremumMigration extends BaseStreamApiMigration {
       } else {
         terminalBlock = blockWithMap;
       }
+      CommentTracker ct = new CommentTracker();
       String inFilterOperation = myMax ? ">=" : "<=";
       PsiStatement loop = terminalBlock.getStreamSourceStatement();
       PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(loop.getProject());
-      String extremumInitializer = myExtremumInitializer.getText();
+      String extremumInitializer = ct.text(myExtremumInitializer);
       Object nonFilterableInitialValue = getNonFilterableInitialValue(type, myMax);
       final TerminalBlock filteredTerminalBlock;
       if (nonFilterableInitialValue != null && !nonFilterableInitialValue.equals(initializerValue)) {
@@ -488,9 +487,8 @@ class FindExtremumMigration extends BaseStreamApiMigration {
         filteredTerminalBlock = terminalBlock;
       }
 
-
-      String stream = filteredTerminalBlock.generate() + "." + getOperation(myMax) + "().orElse(" + extremumInitializer + ")";
-      return replaceWithFindExtremum(loop, myExtremum, stream, null);
+      String stream = filteredTerminalBlock.generate(ct) + "." + getOperation(myMax) + "().orElse(" + extremumInitializer + ")";
+      return replaceWithFindExtremum(ct, loop, myExtremum, stream, null);
     }
 
 
@@ -558,13 +556,14 @@ class FindExtremumMigration extends BaseStreamApiMigration {
       PsiType loopVarExpressionType = myLoopVarExpression.getType();
       if (loopVarExpressionType == null) return null;
       final String comparator;
+      CommentTracker ct = new CommentTracker();
       if(myComparator == null) {
         if(ExpressionUtils.isReferenceTo(myLoopVarExpression, myTerminalBlock.getVariable())) {
           comparator = CommonClassNames.JAVA_UTIL_COMPARATOR + ".naturalOrder()";
         } else {
           String method = getComparingMethod(loopVarExpressionType);
           if (method == null) return null;
-          String lambdaText = LambdaUtil.createLambda(myTerminalBlock.getVariable(), myLoopVarExpression);
+          String lambdaText = ct.lambdaText(myTerminalBlock.getVariable(), myLoopVarExpression);
           comparator = CommonClassNames.JAVA_UTIL_COMPARATOR + "." + method + "(" + lambdaText + ")";
         }
       } else {
@@ -572,8 +571,8 @@ class FindExtremumMigration extends BaseStreamApiMigration {
         if(comparatorName == null) return null;
         comparator = comparatorName;
       }
-      String stream = myTerminalBlock.generate() + "." + getOperation(myMax) + "(" + comparator + ").orElse(null)";
-      return replaceWithFindExtremum(myTerminalBlock.getStreamSourceStatement(), myExtremum, stream, null);
+      String stream = myTerminalBlock.generate(ct) + "." + getOperation(myMax) + "(" + comparator + ").orElse(null)";
+      return replaceWithFindExtremum(ct, myTerminalBlock.getStreamSourceStatement(), myExtremum, stream, null);
     }
 
     @Override

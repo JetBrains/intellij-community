@@ -121,7 +121,7 @@ public class TabLabel extends JPanel implements Accessible {
         public void keyPressed(KeyEvent e) {
           if (e.getKeyCode() == KeyEvent.VK_LEFT) {
             int index = myTabs.getIndexOf(myInfo);
-            if (index > 0) {
+            if (index >= 0) {
               e.consume();
               // Select the previous tab, then set the focus its TabLabel.
               TabInfo previous = myTabs.findEnabledBackward(index, true);
@@ -132,16 +132,17 @@ public class TabLabel extends JPanel implements Accessible {
           }
           else if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
             int index = myTabs.getIndexOf(myInfo);
-            if (index < myTabs.getTabCount() - 1) {
+            if (index >= 0) {
               e.consume();
-              // Select the next tab, then set the focus its TabLabel.
+              // Select the previous tab, then set the focus its TabLabel.
               TabInfo next = myTabs.findEnabledForward(index, true);
               if (next != null) {
+                // Select the next tab, then set the focus its TabLabel.
                 myTabs.select(next, false).doWhenDone(() -> myTabs.getSelectedLabel().requestFocusInWindow());
               }
             }
           }
-        }
+          }
       });
 
       // Repaint when we gain/lost focus so that the focus cue is displayed.

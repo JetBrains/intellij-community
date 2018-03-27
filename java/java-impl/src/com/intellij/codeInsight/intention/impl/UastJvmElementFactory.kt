@@ -5,10 +5,9 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.lang.jvm.JvmClass
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.JvmModifiersOwner
-import com.intellij.lang.jvm.actions.CreateMethodRequest
-import com.intellij.lang.jvm.actions.JvmElementActionsFactory
-import com.intellij.lang.jvm.actions.MemberRequest
+import com.intellij.lang.jvm.actions.*
 import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.project.Project
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.JvmPsiConversionHelper
 import com.intellij.psi.PsiElement
@@ -18,7 +17,7 @@ import org.jetbrains.uast.*
 import com.intellij.codeInsight.intention.JvmCommonIntentionActionsFactory as UastJvmCommonIntentionActionsFactory
 import com.intellij.codeInsight.intention.MethodInsertionInfo as UastMethodInsertionInfo
 
-@Deprecated("to be removed in 2017.3")
+@Deprecated("to be removed in 2018.1")
 class UastJvmElementFactory(val renderer: JavaElementRenderer) : JvmElementActionsFactory() {
 
   private fun getUastFactory(target: JvmModifiersOwner) = (target as? PsiElement)?.language?.let {
@@ -31,25 +30,35 @@ class UastJvmElementFactory(val renderer: JavaElementRenderer) : JvmElementActio
         getUastFactory(target)?.createChangeModifierAction(target.asUast<UDeclaration>(), renderer.render(modifier), shouldPresent))
     }
 
-  override fun createAddConstructorActions(targetClass: JvmClass, request: MemberRequest.Constructor): List<IntentionAction> {
+  override fun createAddConstructorActions(targetClass: JvmClass, request: CreateConstructorRequest): List<IntentionAction> {
     val project = (targetClass as? PsiElement)?.project ?: return emptyList()
-    val helper = JvmPsiConversionHelper.getInstance(project)
     return with(request) {
       getUastFactory(targetClass)?.createAddCallableMemberActions(
         UastMethodInsertionInfo.Constructor(
           targetClass.asUast(),
           modifiers.map { renderer.render(it) },
-          typeParameters.map(helper::convertTypeParameter),
-          parameters.map { it.asUast<UParameter>() }
+          emptyList(),
+          parametersAsUParameters(project, parameters)
         )
       ) ?: emptyList()
+    }
+  }
+
+  private fun parametersAsUParameters(project: Project, parameters: ExpectedParameters): List<UParameter> {
+    val helper = JvmPsiConversionHelper.getInstance(project)
+    val factory = JavaPsiFacade.getElementFactory(project)
+    return parameters.mapIndexed { i, pair ->
+      factory.createParameter(
+        pair.first.names.firstOrNull() ?: "arg$i",
+        pair.second.firstOrNull()?.theType?.let(helper::convertType)
+        ?: PsiType.getTypeByName("java.lang.Object", project, GlobalSearchScope.allScope(project))
+      ).asUast<UParameter>()
     }
   }
 
   override fun createAddMethodActions(targetClass: JvmClass, request: CreateMethodRequest): List<IntentionAction> {
     val project = (targetClass as? PsiElement)?.project ?: return emptyList()
     val helper = JvmPsiConversionHelper.getInstance(project)
-    val factory = JavaPsiFacade.getElementFactory(project)
     return with(request) {
       getUastFactory(targetClass)?.createAddCallableMemberActions(
         UastMethodInsertionInfo.Method(
@@ -58,13 +67,7 @@ class UastJvmElementFactory(val renderer: JavaElementRenderer) : JvmElementActio
           modifiers.map { renderer.render(it) },
           emptyList(),
           returnType.firstOrNull()?.theType?.let(helper::convertType) ?: PsiType.VOID,
-          parameters.mapIndexed { i, pair ->
-            factory.createParameter(
-              pair.first.names.firstOrNull() ?: "arg$i",
-              pair.second.firstOrNull()?.theType?.let(helper::convertType)
-              ?: PsiType.getTypeByName("java.lang.Object", project, GlobalSearchScope.allScope(project))
-            ).asUast<UParameter>()
-          },
+          parametersAsUParameters(project, parameters),
           modifiers.contains(JvmModifier.ABSTRACT)
         )
       ) ?: emptyList()

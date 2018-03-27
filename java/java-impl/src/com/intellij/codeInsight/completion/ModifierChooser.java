@@ -150,14 +150,7 @@ public class ModifierChooser {
 
     if (parent == null) return false;
 
-    PsiElement prev = FilterPositionUtil.searchNonSpaceNonCommentBack(element);
-
-    if (parent instanceof PsiJavaFile || parent instanceof PsiClass) {
-      if (prev == null || JavaKeywordCompletion.END_OF_BLOCK.getValue().isAcceptable(element, prev.getParent())) {
-        return true;
-      }
-    }
-
-    return false;
+    return (parent instanceof PsiJavaFile || parent instanceof PsiClass) && 
+           JavaKeywordCompletion.isEndOfBlock(element);
   }
 }

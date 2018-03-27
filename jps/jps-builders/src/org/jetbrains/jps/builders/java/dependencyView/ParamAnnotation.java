@@ -26,7 +26,6 @@ import java.io.IOException;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 20-Jul-16
  */
 public class ParamAnnotation implements RW.Savable{
   public static final ParamAnnotation[] EMPTY_ARRAY = new ParamAnnotation[0];

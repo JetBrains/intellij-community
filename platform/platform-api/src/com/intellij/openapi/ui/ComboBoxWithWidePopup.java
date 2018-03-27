@@ -16,6 +16,7 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -49,6 +50,11 @@ public class ComboBoxWithWidePopup<E> extends JComboBox<E> {
   @SuppressWarnings("GtkPreferredJComboBoxRenderer")
   @Override
   public void setRenderer(ListCellRenderer<? super E> renderer) {
+    if (renderer instanceof SimpleColoredComponent) {
+      SimpleColoredComponent scc = (SimpleColoredComponent)renderer;
+      scc.getIpad().top = scc.getIpad().bottom = 0;
+    }
+
     super.setRenderer(new AdjustingListCellRenderer(this, renderer));
   }
 

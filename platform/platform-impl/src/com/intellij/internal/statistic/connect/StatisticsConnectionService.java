@@ -19,7 +19,6 @@ import com.intellij.facet.frameworks.SettingsConnectionService;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,7 +43,7 @@ public class StatisticsConnectionService extends SettingsConnectionService {
   @NotNull
   @Override
   public String[] getAttributeNames() {
-    return ArrayUtil.append(super.getAttributeNames(), PERMISSION_ATTR_NAME);
+    return ArrayUtil.mergeArrays(super.getAttributeNames(), PERMISSION_ATTR_NAME, DISABLED);
   }
 
   public boolean isTransmissionPermitted() {

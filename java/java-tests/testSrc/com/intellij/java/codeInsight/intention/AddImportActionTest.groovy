@@ -228,6 +228,56 @@ class C {
 
 '''
   }
+  
+  void testImportFoldingWithConflictsToJavaLang() {
+
+    myFixture.addClass 'package p1; public class String {}'
+    myFixture.addClass 'package p1; public class A1 {}'
+    myFixture.addClass 'package p1; public class A2 {}'
+    myFixture.addClass 'package p1; public class A3 {}'
+    myFixture.addClass 'package p1; public class A4 {}'
+    myFixture.addClass 'package p1; public class A5 {}'
+
+    myFixture.configureByText 'C.java', '''package p2;
+
+import p1.A1;
+import p1.A2;
+import p1.A3;
+import p1.A4;
+
+class C {
+
+     A1 a1;
+     A2 a2;
+     A3 a3;
+     A4 a4;
+     A<caret>5 a5;
+
+     String myName;
+}
+
+'''
+    importClass()
+
+    myFixture.checkResult '''package p2;
+
+import p1.*;
+
+import java.lang.String;
+
+class C {
+
+     A1 a1;
+     A2 a2;
+     A3 a3;
+     A4 a4;
+     A5 a5;
+
+     String myName;
+}
+
+'''
+  }
 
   void testAnnotatedImport() {
     myFixture.addClass '''
@@ -349,7 +399,16 @@ class Test {
     }
 }
 '''
-    assert !myFixture.filterAvailableIntentions("Import class")
+    importClass()
+    myFixture.checkResult '''\
+import a.MMM;
+
+class Test {
+    {
+      MMM m;
+    }
+}
+'''
   }
 
   void "test don't import class in assignment"() {

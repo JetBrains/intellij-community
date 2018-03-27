@@ -24,7 +24,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Aug 3, 2010
  */
 public abstract class AntDomAntCall extends AntDomElement {
   

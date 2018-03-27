@@ -15,17 +15,12 @@
  */
 package org.jetbrains.idea.svn.status;
 
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.tmatesoft.svn.core.wc.SVNStatusType;
 
 import java.util.Map;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public enum StatusType {
 
   // currently used to represent some not used status types from SVNKit
@@ -88,19 +83,6 @@ public enum StatusType {
 
   private static void register(@NotNull StatusType action) {
     (action.name().startsWith(STATUS_PREFIX) ? ourStatusTypesForStatusOperation : ourOtherStatusTypes).put(action.myName, action);
-  }
-
-  @NotNull
-  public static StatusType from(@NotNull SVNStatusType type) {
-    StatusType result = ourOtherStatusTypes.get(type.toString());
-
-    // CONFLICTED, OBSTRUCTED, MISSING status types have corresponding STATUS_* analogs with same names - so additional check added when
-    // converting from SVNKit values
-    if (type != SVNStatusType.CONFLICTED && type != SVNStatusType.OBSTRUCTED && type != SVNStatusType.MISSING) {
-      result = ObjectUtils.chooseNotNull(ourStatusTypesForStatusOperation.get(type.toString()), result);
-    }
-
-    return ObjectUtils.notNull(result, UNUSED);
   }
 
   @Nullable

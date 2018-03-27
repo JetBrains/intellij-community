@@ -23,7 +23,6 @@ import org.jetbrains.annotations.Nullable;
 /**
 * Simple visitor to use with ResolveImportUtil.
 * User: dcheryasov
-* Date: Apr 6, 2010 8:06:46 PM
 */
 public interface RootVisitor {
   /**

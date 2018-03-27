@@ -30,7 +30,7 @@ import java.util.Arrays;
 import java.util.List;
 
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
-public class DiffApplication extends ApplicationStarterBase {
+public class DiffApplication extends DiffApplicationBase {
   @Override
   protected boolean checkArguments(@NotNull String[] args) {
     return (args.length == 3 || args.length == 4) && "diff".equals(args[0]);

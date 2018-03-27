@@ -142,13 +142,11 @@ public class NavBarUpdateQueue extends MergingUpdateQueue {
       }
 
       if (focus != null && focus.isShowing()) {
-        // Android Studio: modified by Change Ic9d9c9a0 / commit bb3b09b
         if (!myPanel.isFocused() && !myPanel.isNodePopupActive()) {
           requestModelUpdate(DataManager.getInstance().getDataContext(focus), null, false);
         }
       }
       else if (wnd.isActive()) {
-        // Android Studio: added by Change Ic9d9c9a0 / commit bb3b09b
         if (myPanel.allowNavItemsFocus() && (myPanel.isFocused() || myPanel.isNodePopupActive())) {
           return;
         }

@@ -16,14 +16,16 @@
 package org.jetbrains.debugger
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
-import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.EventDispatcher
 import com.intellij.util.SmartList
 import com.intellij.util.Url
 import com.intellij.util.containers.ContainerUtil
 import gnu.trove.TObjectHashingStrategy
-import org.jetbrains.concurrency.*
+import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.all
+import org.jetbrains.concurrency.nullPromise
+import org.jetbrains.concurrency.rejectedPromise
 import java.util.concurrent.ConcurrentMap
 
 abstract class BreakpointManagerBase<T : BreakpointBase<*>> : BreakpointManager {
@@ -40,7 +42,12 @@ abstract class BreakpointManagerBase<T : BreakpointBase<*>> : BreakpointManager 
       return result
     }
 
-    override fun equals(b1: T, b2: T) = b1.target.javaClass == b2.target.javaClass && b1.target == b2.target && b1.line == b2.line && b1.column == b2.column && StringUtil.equals(b1.condition, b2.condition)
+    override fun equals(b1: T, b2: T) =
+      b1.target.javaClass == b2.target.javaClass &&
+      b1.target == b2.target &&
+      b1.line == b2.line &&
+      b1.column == b2.column &&
+      StringUtil.equals(b1.condition, b2.condition)
   })
 
   protected val dispatcher: EventDispatcher<BreakpointListener> = EventDispatcher.create(BreakpointListener::class.java)
@@ -49,24 +56,22 @@ abstract class BreakpointManagerBase<T : BreakpointBase<*>> : BreakpointManager 
 
   protected abstract fun doSetBreakpoint(target: BreakpointTarget, url: Url?, breakpoint: T): Promise<out Breakpoint>
 
-  override fun setBreakpoint(target: BreakpointTarget, line: Int, column: Int, url: Url?, condition: String?, ignoreCount: Int, enabled: Boolean, promiseRef: Ref<Promise<out Breakpoint>>?): Breakpoint {
-    val breakpoint = createBreakpoint(target, line, column, condition, ignoreCount, enabled)
+  override fun setBreakpoint(target: BreakpointTarget,
+                             line: Int,
+                             column: Int,
+                             url: Url?,
+                             condition: String?,
+                             ignoreCount: Int): BreakpointManager.SetBreakpointResult {
+    val breakpoint = createBreakpoint(target, line, column, condition, ignoreCount, true)
     val existingBreakpoint = breakpointDuplicationByTarget.putIfAbsent(breakpoint, breakpoint)
     if (existingBreakpoint != null) {
-      promiseRef?.set(resolvedPromise(breakpoint))
-      return existingBreakpoint
+      return BreakpointManager.BreakpointExist(existingBreakpoint)
     }
 
     breakpoints.add(breakpoint)
-    if (enabled) {
-      val promise = doSetBreakpoint(target, url, breakpoint)
-        .rejected { dispatcher.multicaster.errorOccurred(breakpoint, it.message ?: it.toString()) }
-      promiseRef?.set(promise)
-    }
-    else {
-      promiseRef?.set(resolvedPromise(breakpoint))
-    }
-    return breakpoint
+    val promise = doSetBreakpoint(target, url, breakpoint)
+      .rejected { dispatcher.multicaster.errorOccurred(breakpoint, it.message ?: it.toString()) }
+    return BreakpointManager.BreakpointCreated(breakpoint, promise)
   }
 
   override final fun remove(breakpoint: Breakpoint): Promise<*> {
@@ -110,11 +115,13 @@ abstract class BreakpointManagerBase<T : BreakpointBase<*>> : BreakpointManager 
   override fun enableBreakpoints(enabled: Boolean): Promise<*> = rejectedPromise<Any?>("Unsupported")
 }
 
+// used in goland
+@Suppress("unused")
 class DummyBreakpointManager : BreakpointManager {
   override val breakpoints: Iterable<Breakpoint>
     get() = emptyList()
 
-  override fun setBreakpoint(target: BreakpointTarget, line: Int, column: Int, url: Url?, condition: String?, ignoreCount: Int, enabled: Boolean, promiseRef: Ref<Promise<out Breakpoint>>?): Breakpoint {
+  override fun setBreakpoint(target: BreakpointTarget, line: Int, column: Int, url: Url?, condition: String?, ignoreCount: Int): BreakpointManager.SetBreakpointResult {
     throw UnsupportedOperationException()
   }
 

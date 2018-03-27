@@ -422,14 +422,8 @@ public class JDParser {
         result.add(Pair.create(s1, marks[i]));
       }
       else {
-        if (s1.isEmpty() || s1.equals(SELF_CLOSED_P_TAG)) {
-          if (sb.length() != 0) {
-            result.add(new Pair<>(sb.toString(), false));
-            sb.setLength(0);
-          }
-          result.add(Pair.create(s1, marks[i]));
-        }
-        else if (mySettings.JD_PRESERVE_LINE_FEEDS) {
+        if (s1.isEmpty() || s1.equals(SELF_CLOSED_P_TAG) || isKeepLineFeedsIn(s1)) {
+          endParagraph(result, sb);
           result.add(Pair.create(s1, marks[i]));
         }
         else {
@@ -442,6 +436,24 @@ public class JDParser {
       result.add(new Pair<>(sb.toString(), false));
     }
     return result;
+  }
+
+  private boolean isKeepLineFeedsIn(@NotNull String line) {
+    return mySettings.JD_PRESERVE_LINE_FEEDS || startsWithTag(line);
+  }
+
+  private static boolean startsWithTag(@NotNull String line) {
+    if (line.trim().startsWith("<")) {
+      return line.matches("\\s*</?\\w+>.*");
+    }
+    return false;
+  }
+
+  private static void endParagraph(@NotNull List<Pair<String, Boolean>> result, @NotNull StringBuilder sb) {
+    if (sb.length() > 0) {
+      result.add(new Pair<>(sb.toString(), false));
+      sb.setLength(0);
+    }
   }
 
   private interface TagParser {

@@ -1,32 +1,21 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.intellij.java.codeInspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.actions.ViewOfflineResultsAction;
-import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
-import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.InspectionProfileModifiableModel;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.offline.OfflineProblemDescriptor;
-import com.intellij.codeInspection.offlineViewer.OfflineProblemDescriptorNode;
 import com.intellij.codeInspection.offlineViewer.OfflineViewParseUtil;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.codeInspection.ui.InspectionTree;
 import com.intellij.codeInspection.ui.InspectionTreeNode;
+import com.intellij.codeInspection.ui.ProblemDescriptionNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.Comparing;
@@ -37,8 +26,6 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestSourceBasedTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.siyeh.ig.bugs.EqualsWithItselfInspection;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,12 +37,13 @@ import java.util.Set;
 
 public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
   private InspectionResultsView myView;
-  private GlobalInspectionToolWrapper myUnusedToolWrapper;
-  private LocalInspectionToolWrapper myDataFlowToolWrapper;
+  private InspectionToolWrapper myUnusedToolWrapper;
+  private InspectionToolWrapper myDataFlowToolWrapper;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    InspectionProfileImpl.INIT_INSPECTIONS = true;
 
     HighlightDisplayKey key = HighlightDisplayKey.find(UnusedDeclarationInspectionBase.SHORT_NAME);
     if (key == null) {
@@ -93,13 +81,11 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
     };
 
     myView = ViewOfflineResultsAction.showOfflineView(getProject(), parse(), profile, "");
-    myUnusedToolWrapper = new GlobalInspectionToolWrapper(new UnusedDeclarationInspection());
-    myDataFlowToolWrapper = new LocalInspectionToolWrapper(new EqualsWithItselfInspection());
+    profile.initInspectionTools(myProject);
+    myUnusedToolWrapper = profile.getInspectionTool("unused", myProject);
+    myDataFlowToolWrapper = profile.getInspectionTool("EqualsWithItself", myProject);
 
-    final Map<String, Tools> tools = myView.getGlobalInspectionContext().getTools();
     for (InspectionToolWrapper tool : ContainerUtil.ar(myUnusedToolWrapper, myDataFlowToolWrapper)) {
-      profile.addTool(getProject(), tool, new THashMap<>());
-      tools.put(tool.getShortName(), new ToolsImpl(tool, tool.getDefaultLevel(), true));
       tool.initialize(myView.getGlobalInspectionContext());
     }
   }
@@ -108,8 +94,10 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
   protected void tearDown() throws Exception {
     try {
       Disposer.dispose(myView);
+
     }
     finally {
+      InspectionProfileImpl.INIT_INSPECTIONS = false;
       myView = null;
       myUnusedToolWrapper = null;
       myDataFlowToolWrapper = null;
@@ -137,145 +125,149 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
     return map;
   }
 
-  public void testOfflineWithInvalid() {
+  public void testOfflineWithInvalid() throws InterruptedException {
     ApplicationManager.getApplication().runWriteAction(() -> getJavaFacade().findClass("Test2").getContainingFile().delete());
     myView.getGlobalInspectionContext().getUIOptions().SHOW_STRUCTURE = true;
     InspectionTree tree = updateTree();
+    PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
     TreeUtil.expandAll(tree);
     PlatformTestUtil.assertTreeEqual(tree, "-" + getProject() + "\n" +
-                                           " -Declaration redundancy\n" +
-                                           "  -unused\n" +
-                                           "   -Module: 'testOfflineWithInvalid'\n" +
-                                           "    -<default>\n" +
-                                           "     -Test\n" +
-                                           "      -foo()\n" +
-                                           "       Variable <code>j</code> is never used.\n" +
-                                           "      -main(String[])\n" +
-                                           "       Variable <code>test</code> is never used.\n" +
-                                           "      -f()\n" +
-                                           "       -D\n" +
-                                           "        -b()\n" +
-                                           "         Variable <code>r</code> is never used.\n" +
-                                           "         -anonymous (Runnable)\n" +
-                                           "          -run()\n" +
-                                           "           Variable <code>i</code> is never used.\n" +
-                                           "      -ff()\n" +
-                                           "       Variable <code>a</code> is never used.\n" +
-                                           "       Variable <code>d</code> is never used.\n" +
-                                           " -Probable bugs\n" +
-                                           "  -EqualsWithItself\n" +
-                                           "   -Module: 'testOfflineWithInvalid'\n" +
-                                           "    -<default>\n" +
-                                           "     -Test\n" +
-                                           "      -m()\n" +
-                                           "       'equals()' called on itself\n" +
-                                           "     -null\n" +
-                                           "      Identical qualifier and argument to <code>equals()</code> call\n"
+                                           " -Java\n" +
+                                           "  -Declaration redundancy\n" +
+                                           "   -unused\n" +
+                                           "    -Module: 'testOfflineWithInvalid'\n" +
+                                           "     -<default>\n" +
+                                           "      -Test\n" +
+                                           "       -f()\n" +
+                                           "        -D\n" +
+                                           "         -b()\n" +
+                                           "          -anonymous (Runnable)\n" +
+                                           "           -run()\n" +
+                                           "            Variable <code>i</code> is never used.\n" +
+                                           "          Variable <code>r</code> is never used.\n" +
+                                           "       -ff()\n" +
+                                           "        Variable <code>a</code> is never used.\n" +
+                                           "        Variable <code>d</code> is never used.\n" +
+                                           "       -foo()\n" +
+                                           "        Variable <code>j</code> is never used.\n" +
+                                           "       -main(String[])\n" +
+                                           "        Variable <code>test</code> is never used.\n" +
+                                           "  -Probable bugs\n" +
+                                           "   -EqualsWithItself\n" +
+                                           "    -Module: 'testOfflineWithInvalid'\n" +
+                                           "     -<default>\n" +
+                                           "      -Test\n" +
+                                           "       -m()\n" +
+                                           "        'equals()' called on itself\n" +
+                                           "      -null\n" +
+                                           "       '()' called on itself\n"
                                           );
-    tree.setSelectionRow(27);
-    final OfflineProblemDescriptorNode node =
-      (OfflineProblemDescriptorNode)tree.getSelectionModel().getSelectionPath().getLastPathComponent();
+    tree.setSelectionRow(28);
+    final ProblemDescriptionNode node = (ProblemDescriptionNode)tree.getSelectionModel().getSelectionPath().getLastPathComponent();
     assertFalse(node.isValid());
   }
 
-  public void testOfflineView() {
+  public void testOfflineView() throws InterruptedException {
     myView.getGlobalInspectionContext().getUIOptions().SHOW_STRUCTURE = true;
     InspectionTree tree = updateTree();
+    PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
     TreeUtil.expandAll(tree);
     PlatformTestUtil.assertTreeEqual(tree, "-" + getProject() + "\n" +
-                                           " -Declaration redundancy\n" +
-                                           "  -unused\n" +
-                                           "   -Module: 'testOfflineView'\n" +
-                                           "    -<default>\n" +
-                                           "     -Test\n" +
-                                           "      -foo()\n" +
-                                           "       Variable <code>j</code> is never used.\n" +
-                                           "      -main(String[])\n" +
-                                           "       Variable <code>test</code> is never used.\n" +
-                                           "      -f()\n" +
-                                           "       -D\n" +
-                                           "        -b()\n" +
-                                           "         Variable <code>r</code> is never used.\n" +
-                                           "         -anonymous (Runnable)\n" +
-                                           "          -run()\n" +
-                                           "           Variable <code>i</code> is never used.\n" +
-                                           "      -ff()\n" +
-                                           "       Variable <code>a</code> is never used.\n" +
-                                           "       Variable <code>d</code> is never used.\n" +
-                                           " -Probable bugs\n" +
-                                           "  -" + myDataFlowToolWrapper + "\n" +
-                                           "   -Module: 'testOfflineView'\n" +
-                                           "    -<default>\n" +
-                                           "     -Test\n" +
-                                           "      -m()\n" +
-                                           "       'equals()' called on itself\n" +
-                                           "     -Test2\n" +
-                                           "      -m123()\n" +
-                                           "       'equals()' called on itself\n"
+                                           " -Java\n" +
+                                           "  -Declaration redundancy\n" +
+                                           "   -unused\n" +
+                                           "    -Module: 'testOfflineView'\n" +
+                                           "     -<default>\n" +
+                                           "      -Test\n" +
+                                           "       -f()\n" +
+                                           "        -D\n" +
+                                           "         -b()\n" +
+                                           "          -anonymous (Runnable)\n" +
+                                           "           -run()\n" +
+                                           "            Variable <code>i</code> is never used.\n" +
+                                           "          Variable <code>r</code> is never used.\n" +
+                                           "       -ff()\n" +
+                                           "        Variable <code>a</code> is never used.\n" +
+                                           "        Variable <code>d</code> is never used.\n" +
+                                           "       -foo()\n" +
+                                           "        Variable <code>j</code> is never used.\n" +
+                                           "       -main(String[])\n" +
+                                           "        Variable <code>test</code> is never used.\n" +
+                                           "  -Probable bugs\n" +
+                                           "   -" + myDataFlowToolWrapper + "\n" +
+                                           "    -Module: 'testOfflineView'\n" +
+                                           "     -<default>\n" +
+                                           "      -Test\n" +
+                                           "       -m()\n" +
+                                           "        'equals()' called on itself\n" +
+                                           "      -Test2\n" +
+                                           "       -m123()\n" +
+                                           "        'equals()' called on itself\n"
                                          );
     myView.getGlobalInspectionContext().getUIOptions().SHOW_STRUCTURE = false;
     tree = updateTree();
+    PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
+    TreeUtil.expandAll(tree);
     PlatformTestUtil.assertTreeEqual(tree, "-" + getProject() + "\n" +
-                                           " -Declaration redundancy\n" +
-                                           "  -unused\n" +
-                                           "   -Test\n" +
-                                           "    -foo()\n" +
-                                           "     Variable <code>j</code> is never used.\n" +
-                                           "    -main(String[])\n" +
-                                           "     Variable <code>test</code> is never used.\n" +
-                                           "    -f()\n" +
-                                           "     -D\n" +
-                                           "      -b()\n" +
-                                           "       Variable <code>r</code> is never used.\n" +
-                                           "       -anonymous (Runnable)\n" +
-                                           "        -run()\n" +
-                                           "         Variable <code>i</code> is never used.\n" +
-                                           "    -ff()\n" +
-                                           "     Variable <code>a</code> is never used.\n" +
-                                           "     Variable <code>d</code> is never used.\n" +
-                                           " -Probable bugs\n" +
-                                           "  -" + myDataFlowToolWrapper + "\n" +
-                                           "   -Test\n" +
-                                           "    'equals()' called on itself\n" +
-                                           "   -Test2\n" +
-                                           "    'equals()' called on itself\n"
+                                           " -Java\n" +
+                                           "  -Declaration redundancy\n" +
+                                           "   -unused\n" +
+                                           "    -Test\n" +
+                                           "     -f()\n" +
+                                           "      -D\n" +
+                                           "       -b()\n" +
+                                           "        -anonymous (Runnable)\n" +
+                                           "         -run()\n" +
+                                           "          Variable <code>i</code> is never used.\n" +
+                                           "        Variable <code>r</code> is never used.\n" +
+                                           "     -ff()\n" +
+                                           "      Variable <code>a</code> is never used.\n" +
+                                           "      Variable <code>d</code> is never used.\n" +
+                                           "     -foo()\n" +
+                                           "      Variable <code>j</code> is never used.\n" +
+                                           "     -main(String[])\n" +
+                                           "      Variable <code>test</code> is never used.\n" +
+                                           "  -Probable bugs\n" +
+                                           "   -EqualsWithItself\n" +
+                                           "    -Test\n" +
+                                           "     'equals()' called on itself\n" +
+                                           "    -Test2\n" +
+                                           "     'equals()' called on itself\n"
                                          );
     TreeUtil.selectNode(tree, tree.getRoot());
     final InspectionTreeNode root = tree.getRoot();
     root.excludeElement();
-    TreeUtil.traverse(root, node -> {
+    TreeUtil.treeNodeTraverser(root).traverse().processEach(node -> {
       assertTrue(((InspectionTreeNode)node).isExcluded());
       return true;
     });
-    myView.getGlobalInspectionContext().getUIOptions().FILTER_RESOLVED_ITEMS = true;
-    tree = updateTree();
-    PlatformTestUtil.assertTreeEqual(tree, getProject() + "\n");
     myView.getGlobalInspectionContext().getUIOptions().FILTER_RESOLVED_ITEMS = false;
     tree = updateTree();
     PlatformTestUtil.assertTreeEqual(tree, "-" + getProject() + "\n"
-                                           + " -Declaration redundancy\n"
-                                           + "  -unused\n"
-                                           + "   -Test\n" +
-                                           "    -foo()\n" +
-                                           "     Variable <code>j</code> is never used.\n" +
-                                           "    -main(String[])\n" +
-                                           "     Variable <code>test</code> is never used.\n" +
-                                           "    -f()\n" +
-                                           "     -D\n" +
-                                           "      -b()\n" +
-                                           "       Variable <code>r</code> is never used.\n" +
-                                           "       -anonymous (Runnable)\n" +
-                                           "        -run()\n" +
-                                           "         Variable <code>i</code> is never used.\n" +
-                                           "    -ff()\n" +
-                                           "     Variable <code>a</code> is never used.\n" +
-                                           "     Variable <code>d</code> is never used.\n" +
-                                           " -Probable bugs\n" +
-                                           "  -" + myDataFlowToolWrapper + "\n" +
-                                           "   -Test\n" +
-                                           "    'equals()' called on itself\n" +
-                                           "   -Test2\n" +
-                                           "    'equals()' called on itself\n"
+                                           + " -Java\n" +
+                                           "  -Declaration redundancy\n" +
+                                           "   -unused\n" +
+                                           "    -Test\n" +
+                                           "     -f()\n" +
+                                           "      -D\n" +
+                                           "       -b()\n" +
+                                           "        -anonymous (Runnable)\n" +
+                                           "         -run()\n" +
+                                           "          Variable <code>i</code> is never used.\n" +
+                                           "        Variable <code>r</code> is never used.\n" +
+                                           "     -ff()\n" +
+                                           "      Variable <code>a</code> is never used.\n" +
+                                           "      Variable <code>d</code> is never used.\n" +
+                                           "     -foo()\n" +
+                                           "      Variable <code>j</code> is never used.\n" +
+                                           "     -main(String[])\n" +
+                                           "      Variable <code>test</code> is never used.\n" +
+                                           "  -Probable bugs\n" +
+                                           "   -EqualsWithItself\n" +
+                                           "    -Test\n" +
+                                           "     'equals()' called on itself\n" +
+                                           "    -Test2\n" +
+                                           "     'equals()' called on itself\n"
                                           );
   }
 

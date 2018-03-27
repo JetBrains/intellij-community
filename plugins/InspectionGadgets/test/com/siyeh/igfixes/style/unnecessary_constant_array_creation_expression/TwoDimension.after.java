@@ -1,5 +1,6 @@
 import java.util.Map;
 
 class C {
-  final Map[][] map = {};
+    //end line comment
+    final Map[][] map = {};
 }

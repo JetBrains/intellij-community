@@ -34,10 +34,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.*;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -80,7 +77,8 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
 
       @Override
       protected void childrenChanged(PsiElement parent, final boolean stopProcessingForThisModificationCount) {
-        if (findNodeByElement(parent) == null) {
+        PsiElement containingFile = parent instanceof PsiDirectory ? parent : parent.getContainingFile();
+        if (containingFile != null && findNodeByElement(containingFile) == null) {
           queueUpdate(true);
         }
         else {

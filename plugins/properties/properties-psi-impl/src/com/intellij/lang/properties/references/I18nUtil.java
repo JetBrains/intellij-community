@@ -1,6 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+/*
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.lang.properties.references;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -78,20 +78,16 @@ public class I18nUtil {
     final List<String> paths = new ArrayList<>();
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
 
-    PropertiesReferenceManager.getInstance(project).processAllPropertiesFiles(new PropertiesFileProcessor() {
-
-      @Override
-      public boolean process(String baseName, PropertiesFile propertiesFile) {
-        if (propertiesFile instanceof XmlPropertiesFile) {
-          return true;
-        }
-        VirtualFile virtualFile = propertiesFile.getVirtualFile();
-        if (projectFileIndex.isInContent(virtualFile)) {
-          String path = FileUtil.toSystemDependentName(virtualFile.getPath());
-          paths.add(path);
-        }
+    PropertiesReferenceManager.getInstance(project).processAllPropertiesFiles((baseName, propertiesFile) -> {
+      if (propertiesFile instanceof XmlPropertiesFile) {
         return true;
       }
+      VirtualFile virtualFile = propertiesFile.getVirtualFile();
+      if (projectFileIndex.isInContent(virtualFile)) {
+        String path = FileUtil.toSystemDependentName(virtualFile.getPath());
+        paths.add(path);
+      }
+      return true;
     });
     return paths;
   }

@@ -183,9 +183,9 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
 
     AbstractTagInjection result;
     final InjectionPlace place = injection.getInjectionPlaces()[0];
-    final ElementPattern<PsiElement> rootPattern = place.getElementPattern();
-    final ElementPatternCondition<PsiElement> rootCondition = rootPattern.getCondition();
-    final Class<PsiElement> elementClass = rootCondition.getInitialCondition().getAcceptedClass();
+    final ElementPattern<? extends PsiElement> rootPattern = place.getElementPattern();
+    final ElementPatternCondition<? extends PsiElement> rootCondition = rootPattern.getCondition();
+    final Class<? extends PsiElement> elementClass = rootCondition.getInitialCondition().getAcceptedClass();
     if (XmlAttribute.class.equals(elementClass)) {
       result = new XmlAttributeInjection().copyFrom(injection);
     }
@@ -194,7 +194,7 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
     }
     else return null;
     result.setInjectionPlaces(InjectionPlace.EMPTY_ARRAY);
-    for (PatternCondition<? super PsiElement> condition : rootCondition.getConditions()) {
+    for (PatternCondition<?> condition : rootCondition.getConditions()) {
       final String value = extractValue(condition);
       if ("withLocalName".equals(condition.getDebugMethodName())) {
         if (value == null) return null;

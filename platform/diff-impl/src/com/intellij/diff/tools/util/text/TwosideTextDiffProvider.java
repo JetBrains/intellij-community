@@ -16,6 +16,7 @@
 package com.intellij.diff.tools.util.text;
 
 import com.intellij.diff.fragments.LineFragment;
+import com.intellij.diff.util.Range;
 import com.intellij.openapi.progress.ProgressIndicator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,6 +29,12 @@ public interface TwosideTextDiffProvider extends TextDiffProvider {
                              @NotNull CharSequence text2,
                              @NotNull ProgressIndicator indicator);
 
+  @Nullable
+  List<List<LineFragment>> compare(@NotNull CharSequence text1,
+                                   @NotNull CharSequence text2,
+                                   @NotNull List<Range> linesRanges,
+                                   @NotNull ProgressIndicator indicator);
+
   default boolean isHighlightingDisabled() {
     return false;
   }
@@ -39,5 +46,12 @@ public interface TwosideTextDiffProvider extends TextDiffProvider {
     List<LineFragment> compare(@NotNull CharSequence text1,
                                @NotNull CharSequence text2,
                                @NotNull ProgressIndicator indicator);
+
+    @NotNull
+    @Override
+    List<List<LineFragment>> compare(@NotNull CharSequence text1,
+                                     @NotNull CharSequence text2,
+                                     @NotNull List<Range> linesRanges,
+                                     @NotNull ProgressIndicator indicator);
   }
 }

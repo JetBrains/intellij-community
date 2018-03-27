@@ -16,7 +16,6 @@
 package com.jetbrains.env.python.console;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.intellij.execution.console.LanguageConsoleView;
 import com.intellij.execution.process.ProcessAdapter;
@@ -25,8 +24,6 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -38,7 +35,6 @@ import com.jetbrains.python.console.*;
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
 import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyDebuggerException;
-import com.jetbrains.python.tools.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
@@ -152,22 +148,9 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
 
   @Override
   public void runTestOn(final String sdkHome) throws Exception {
-    final Project project = getProject();
-
-    final Sdk sdk = createTempSdk(sdkHome, SdkCreationType.EMPTY_SDK);
-
     setProcessCanTerminate(false);
 
-    PydevConsoleRunner consoleRunner =
-      new PydevConsoleRunnerImpl(project, sdk, PyConsoleType.PYTHON, myFixture.getTempDirPath(), Maps.newHashMap(),
-                                 PyConsoleOptions.getInstance(project).getPythonConsoleSettings(),
-                                 (s) -> {
-                                 }, PydevConsoleRunnerImpl.CONSOLE_START_COMMAND) {
-        protected void showContentDescriptor(RunContentDescriptor contentDescriptor) {
-          myContentDescriptorRef.set(contentDescriptor);
-          super.showContentDescriptor(contentDescriptor);
-        }
-      };
+    PydevConsoleRunner consoleRunner = PythonConsoleRunnerFactory.getInstance().createConsoleRunner(getProject(), myFixture.getModule());
 
     before();
 

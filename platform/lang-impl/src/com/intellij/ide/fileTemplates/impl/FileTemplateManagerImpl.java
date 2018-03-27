@@ -32,7 +32,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -71,12 +70,10 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
     return (FileTemplateManagerImpl)getInstance(project);
   }
 
-  public FileTemplateManagerImpl(@NotNull FileTypeManagerEx typeManager,
-                                 FileTemplateSettings projectSettings,
-                                 ExportableFileTemplateSettings defaultSettings,
-                                 /*need this to ensure disposal of the service _after_ project manager*/
-                                 @SuppressWarnings("UnusedParameters") ProjectManager pm,
-                                 final Project project) {
+  FileTemplateManagerImpl(@NotNull FileTypeManagerEx typeManager,
+                          FileTemplateSettings projectSettings,
+                          ExportableFileTemplateSettings defaultSettings,
+                          final Project project) {
     myTypeManager = typeManager;
     myProjectSettings = projectSettings;
     myDefaultSettings = defaultSettings;

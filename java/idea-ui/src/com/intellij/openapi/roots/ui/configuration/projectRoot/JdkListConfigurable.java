@@ -65,7 +65,7 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
       final TreePath path = myTree.getSelectionPath();
       if (path != null) {
         final NamedConfigurable configurable = ((MyNode)path.getLastPathComponent()).getConfigurable();
-        if (configurable != null && configurable instanceof JdkConfigurable) {
+        if (configurable instanceof JdkConfigurable) {
           configurable.updateName();
         }
       }

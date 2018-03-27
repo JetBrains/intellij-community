@@ -29,7 +29,6 @@ import com.intellij.ide.actions.EditSourceAction;
 import com.intellij.ide.dnd.*;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.util.treeView.TreeState;
-import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
@@ -111,6 +110,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
   private MyShelfContent myContent = null;
   private final DeleteProvider myDeleteProvider = new MyShelveDeleteProvider();
   private final MergingUpdateQueue myUpdateQueue;
+  private final VcsConfiguration myVcsConfiguration;
 
   public static final DataKey<ShelvedChangeList[]> SHELVED_CHANGELIST_KEY = DataKey.create("ShelveChangesManager.ShelvedChangeListData");
   public static final DataKey<ShelvedChangeList[]> SHELVED_RECYCLED_CHANGELIST_KEY = DataKey.create("ShelveChangesManager.ShelvedRecycledChangeListData");
@@ -122,7 +122,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
   private PreviewDiffSplitterComponent mySplitterComponent;
 
   public static ShelvedChangesViewManager getInstance(Project project) {
-    return PeriodicalTasksCloser.getInstance().safeGetComponent(project, ShelvedChangesViewManager.class);
+    return project.getComponent(ShelvedChangesViewManager.class);
   }
 
   public ShelvedChangesViewManager(Project project, ChangesViewContentManager contentManager, ShelveChangesManager shelveChangesManager,
@@ -131,6 +131,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     myContentManager = contentManager;
     myShelveChangesManager = shelveChangesManager;
     myUpdateQueue = new MergingUpdateQueue("Update Shelf Content", 200, true, null, myProject, null, true);
+    myVcsConfiguration = VcsConfiguration.getInstance(myProject);
     bus.connect().subscribe(ShelveChangesManager.SHELF_TOPIC, new ChangeListener() {
       @Override
       public void stateChanged(ChangeEvent e) {
@@ -156,7 +157,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       @Override
       public void editingStopped(ChangeEvent e) {
         DefaultMutableTreeNode node = (DefaultMutableTreeNode)myTree.getLastSelectedPathComponent();
-        if (node != null && node instanceof ShelvedListNode && e.getSource() instanceof TreeCellEditor) {
+        if (node instanceof ShelvedListNode && e.getSource() instanceof TreeCellEditor) {
           String editorValue = ((TreeCellEditor)e.getSource()).getCellEditorValue().toString();
           ShelvedChangeList shelvedChangeList = ((ShelvedListNode)node).getList();
           ShelveChangesManager.getInstance(project).renameChangeList(shelvedChangeList, editorValue);
@@ -275,7 +276,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
 
     MyShelvedPreviewProcessor changeProcessor = new MyShelvedPreviewProcessor(myProject);
     mySplitterComponent = new PreviewDiffSplitterComponent(pane, changeProcessor, SHELVE_PREVIEW_SPLITTER_PROPORTION,
-                                                           VcsConfiguration.getInstance(myProject).SHELVE_DETAILS_PREVIEW_SHOWN);
+                                                           myVcsConfiguration.SHELVE_DETAILS_PREVIEW_SHOWN);
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("ShelvedChanges", actionGroup, false);
 
     JPanel rootPanel = new JPanel(new BorderLayout());
@@ -788,12 +789,12 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
       mySplitterComponent.setDetailsOn(state);
-      VcsConfiguration.getInstance(myProject).SHELVE_DETAILS_PREVIEW_SHOWN = state;
+      myVcsConfiguration.SHELVE_DETAILS_PREVIEW_SHOWN = state;
     }
 
     @Override
     public boolean isSelected(AnActionEvent e) {
-      return VcsConfiguration.getInstance(myProject).SHELVE_DETAILS_PREVIEW_SHOWN;
+      return myVcsConfiguration.SHELVE_DETAILS_PREVIEW_SHOWN;
     }
   }
 

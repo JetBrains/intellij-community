@@ -26,8 +26,6 @@ import java.util.List;
 
 /**
  * @author Alexey Chmutov
- *         Date: Jun 30, 2009
- *         Time: 7:18:37 PM
  */
 public class DataLanguageBlockFragmentWrapper implements Block {
   private final Block myOwner;

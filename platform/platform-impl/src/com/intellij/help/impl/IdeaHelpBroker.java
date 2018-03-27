@@ -18,6 +18,7 @@ package com.intellij.help.impl;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import com.sun.java.help.impl.JHelpPrintHandler;
 import org.jetbrains.annotations.NotNull;
@@ -640,10 +641,10 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
       // replace dialog.getOwner() with the following code
       Window owner=null;
       try{
-        Method m=Window.class.getMethod("getOwner",null);
+        Method m = Window.class.getMethod("getOwner", ArrayUtil.EMPTY_CLASS_ARRAY);
 
         if(m!=null&&myDialog!=null){
-          owner=(Window)m.invoke(myDialog,null);
+          owner = (Window)m.invoke(myDialog, ArrayUtil.EMPTY_OBJECT_ARRAY);
         }
       } catch(NoSuchMethodError | NoSuchMethodException ex){
         // as in JDK1.1

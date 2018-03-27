@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs.browser;
 
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -31,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.DepthCombo;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.api.Depth;
-import org.tmatesoft.svn.core.SVNURL;
+import org.jetbrains.idea.svn.api.Url;
 
 import javax.swing.*;
 import java.awt.*;
@@ -43,7 +29,7 @@ import static org.jetbrains.idea.svn.dialogs.browser.CopyOptionsDialog.configure
 
 public class ImportOptionsDialog extends DialogWrapper implements ActionListener {
 
-  private final SVNURL myURL;
+  private final Url myURL;
   private final File myFile;
   private TextFieldWithBrowseButton myPathField;
   private DepthCombo myDepth;
@@ -51,7 +37,7 @@ public class ImportOptionsDialog extends DialogWrapper implements ActionListener
   private JTextArea myCommitMessage;
   private final Project myProject;
 
-  public ImportOptionsDialog(Project project, SVNURL url, File target) {
+  public ImportOptionsDialog(Project project, Url url, File target) {
     super(project, true);
     myURL = url;
     myFile = target;

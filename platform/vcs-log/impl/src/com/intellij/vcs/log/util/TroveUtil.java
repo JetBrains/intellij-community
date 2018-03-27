@@ -82,23 +82,22 @@ public class TroveUtil {
     TIntHashSet result = new TIntHashSet();
 
     if (set1.size() < set2.size()) {
-      set1.forEach(value -> {
-        if (set2.contains(value)) {
-          result.add(value);
-        }
-        return true;
-      });
+      intersectTo(set1, set2, result);
     }
     else {
-      set2.forEach(value -> {
-        if (set1.contains(value)) {
-          result.add(value);
-        }
-        return true;
-      });
+      intersectTo(set2, set1, result);
     }
 
     return result;
+  }
+
+  private static void intersectTo(@NotNull TIntHashSet small, @NotNull TIntHashSet big, @NotNull TIntHashSet result) {
+    small.forEach(value -> {
+      if (big.contains(value)) {
+        result.add(value);
+      }
+      return true;
+    });
   }
 
   @NotNull

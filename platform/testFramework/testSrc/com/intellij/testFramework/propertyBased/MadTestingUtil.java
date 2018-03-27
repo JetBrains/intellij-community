@@ -37,15 +37,14 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ui.UIUtil;
-import jetCheck.DataStructure;
-import jetCheck.Generator;
-import jetCheck.IntDistribution;
+import org.jetbrains.jetCheck.DataStructure;
+import org.jetbrains.jetCheck.Generator;
+import org.jetbrains.jetCheck.IntDistribution;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -265,14 +264,7 @@ public class MadTestingUtil {
   }
 
   public static boolean isAfterError(PsiFile file, int offset) {
-    PsiElement leaf = file.findElementAt(offset);
-    Set<Integer> errorOffsets = SyntaxTraverser.psiTraverser(file)
-      .filter(PsiErrorElement.class)
-      .filterMap(PsiTreeUtil::nextVisibleLeaf)
-      .map(e -> e.getTextRange().getStartOffset())
-      .toSet();
-    return !errorOffsets.isEmpty() &&
-           SyntaxTraverser.psiApi().parents(leaf).find(e -> errorOffsets.contains(e.getTextRange().getStartOffset())) != null;
+    return SyntaxTraverser.psiTraverser(file).filter(PsiErrorElement.class).find(e -> e.getTextRange().getStartOffset() <= offset) != null;
   }
 
   private static class FileGenerator implements Function<DataStructure, File> {

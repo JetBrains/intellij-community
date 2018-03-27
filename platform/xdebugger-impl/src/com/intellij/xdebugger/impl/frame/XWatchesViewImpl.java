@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.xdebugger.impl.frame;
 
@@ -32,7 +20,7 @@ import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ListenerUtil;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.Alarm;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.XDebugSession;
@@ -257,10 +245,10 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
   }
 
   @NotNull
-  private XExpression[] getExpressions() {
+  private List<XExpression> getExpressions() {
     XDebuggerTree tree = getTree();
     XDebugSession session = getSession(tree);
-    XExpression[] expressions;
+    List<XExpression> expressions;
     if (session != null) {
       expressions = ((XDebugSessionImpl)session).getSessionData().getWatchExpressions();
     }
@@ -268,11 +256,11 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
       XDebuggerTreeNode root = tree.getRoot();
       List<? extends WatchNode> current = root instanceof WatchesRootNode
                                           ? ((WatchesRootNode)tree.getRoot()).getWatchChildren() : Collections.emptyList();
-      List<XExpression> list = ContainerUtil.newArrayList();
+      List<XExpression> list = new SmartList<>();
       for (WatchNode child : current) {
         list.add(child.getExpression());
       }
-      expressions = list.toArray(new XExpression[list.size()]);
+      expressions = list;
     }
     return expressions;
   }
@@ -326,13 +314,12 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
   }
 
   public void updateSessionData() {
-    List<XExpression> watchExpressions = ContainerUtil.newArrayList();
+    List<XExpression> expressions = new SmartList<>();
     List<? extends WatchNode> children = myRootNode.getWatchChildren();
     for (WatchNode child : children) {
-      watchExpressions.add(child.getExpression());
+      expressions.add(child.getExpression());
     }
     XDebugSession session = getSession(getTree());
-    XExpression[] expressions = watchExpressions.toArray(new XExpression[watchExpressions.size()]);
     if (session != null) {
       ((XDebugSessionImpl)session).setWatchExpressions(expressions);
     }

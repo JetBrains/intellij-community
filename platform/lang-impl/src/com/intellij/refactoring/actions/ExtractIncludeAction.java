@@ -78,6 +78,7 @@ public class ExtractIncludeAction extends BasePlatformRefactoringAction {
     return null;
   }
 
+  @Override
   @Nullable
   protected RefactoringActionHandler getRefactoringHandler(@NotNull RefactoringSupportProvider provider, PsiElement element) {
     return getHandler(element);

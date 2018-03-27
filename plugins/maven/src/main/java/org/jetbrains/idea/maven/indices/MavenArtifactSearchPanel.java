@@ -49,8 +49,6 @@ import java.util.List;
 
 public class MavenArtifactSearchPanel extends JPanel {
 
-  public static final boolean USE_LUCENE_INDEXES = Boolean.getBoolean("idea.maven.artifact.search.use.lucene");
-
   private static final int MAX_RESULT = 1000;
   private final Project myProject;
   private final MavenArtifactSearchDialog myDialog;
@@ -210,7 +208,7 @@ public class MavenArtifactSearchPanel extends JPanel {
   }
 
   private void doSearch(String searchText) {
-    MavenSearcher searcher = myClassMode ? new MavenClassSearcher() : new MavenArtifactSearcher(USE_LUCENE_INDEXES);
+    MavenSearcher searcher = myClassMode ? new MavenClassSearcher() : new MavenArtifactSearcher();
     List<MavenArtifactSearchResult> result = searcher.search(myProject, searchText, MAX_RESULT);
 
     resortUsingDependencyVersionMap(result);

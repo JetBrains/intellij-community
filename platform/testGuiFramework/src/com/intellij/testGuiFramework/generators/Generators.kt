@@ -58,6 +58,7 @@ import com.intellij.ui.components.labels.ActionLink
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.messages.SheetController
 import com.intellij.ui.treeStructure.SimpleTree
+import com.intellij.ui.treeStructure.treetable.TreeTable
 import com.intellij.util.ui.tree.TreeUtil
 import org.fest.reflect.core.Reflection.field
 import org.fest.swing.core.BasicRobot
@@ -107,6 +108,17 @@ class JSpinnerGenerator : ComponentCodeGenerator<JButton> {
     else
       """spinner("$labelText").decrement()"""
   }
+}
+
+class TreeTableGenerator : ComponentCodeGenerator<TreeTable>{
+  override fun accept(cmp: Component): Boolean = cmp is TreeTable
+  override fun generate(cmp: TreeTable, me: MouseEvent, cp: Point): String {
+    val path = cmp.tree.getClosestPathForLocation(cp.x, cp.y).toString()
+    val realPath = path.trim('[',']').split(',').drop(1).map { it->it.trim() }.joinToString(separator = "\",\"")
+    val column = cmp.columnAtPoint(cp)
+    return """treeTable().clickColumn($column, "$realPath")"""
+  }
+  override fun priority(): Int = 10
 }
 
 class ComponentWithBrowseButtonGenerator : ComponentCodeGenerator<FixedSizeButton> {
@@ -416,7 +428,7 @@ class ProjectViewGenerator : LocalContextCodeGenerator<JPanel>() {
 
 class ToolWindowGenerator : LocalContextCodeGenerator<Component>() {
 
-  override fun priority() = 1
+  override fun priority() = 0
 
   private fun Component.containsLocationOnScreen(locationOnScreen: Point): Boolean {
     val rectangle = this.bounds
@@ -539,6 +551,7 @@ class MessageGenerator : LocalContextCodeGenerator<JDialog>() {
 }
 
 class EditorGenerator : LocalContextCodeGenerator<EditorComponentImpl>() {
+  override fun priority() = 3
 
   override fun acceptor(): (Component) -> Boolean = { component -> component is EditorComponentImpl }
   override fun generate(cmp: EditorComponentImpl) = "editor {"

@@ -321,7 +321,7 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
   }
 
   // PY-20073
-  public void testMapArgumentsInOppositeOrder() {
+  public void testMapArgumentsInOppositeOrderPy2() {
     doTest();
   }
 

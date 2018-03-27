@@ -1,24 +1,10 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.integrate;
 
-import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
@@ -35,9 +21,9 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchMapperManager;
 import org.jetbrains.idea.svn.info.Info;
-import org.tmatesoft.svn.core.SVNURL;
 
 import javax.swing.*;
 import java.io.File;
@@ -64,7 +50,7 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
 
   private boolean myMustSelectBeforeOk;
 
-  public IntegratedSelectedOptionsDialog(final Project project, final SVNURL currentBranch, final String selectedBranchUrl) {
+  public IntegratedSelectedOptionsDialog(final Project project, final Url currentBranch, final String selectedBranchUrl) {
     super(project, true);
     myMustSelectBeforeOk = true;
     myProject = project;
@@ -211,7 +197,7 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
   private boolean underProject(final File file) {
     return ReadAction.compute(() -> {
       final VirtualFile vf = SvnUtil.getVirtualFile(file.getAbsolutePath());
-      return (vf == null) || PeriodicalTasksCloser.getInstance().safeGetService(myProject, FileIndexFacade.class).isInContent(vf);
+      return (vf == null) || ServiceManager.getService(myProject, FileIndexFacade.class).isInContent(vf);
     });
   }
 
@@ -245,17 +231,17 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
   }
 
   @Nullable
-  private static SVNURL realTargetUrl(final SvnVcs vcs, final WorkingCopyInfo info, final String targetBranchUrl) {
+  private static Url realTargetUrl(final SvnVcs vcs, final WorkingCopyInfo info, final String targetBranchUrl) {
     final Info svnInfo = vcs.getInfo(info.getLocalPath());
-    final SVNURL svnurl = svnInfo != null ? svnInfo.getURL() : null;
+    final Url svnurl = svnInfo != null ? svnInfo.getURL() : null;
 
     return (svnurl != null) && (svnurl.toString().startsWith(targetBranchUrl)) ? svnurl : null;
   }
 
   @Nullable
-  public static Pair<WorkingCopyInfo, SVNURL> selectWorkingCopy(final Project project, final SVNURL currentBranch, final String targetBranch,
-                                                                final boolean showIntegrationParameters,
-                                                                final String selectedLocalBranchPath, final String dialogTitle) {
+  public static Pair<WorkingCopyInfo, Url> selectWorkingCopy(final Project project, final Url currentBranch, final String targetBranch,
+                                                             final boolean showIntegrationParameters,
+                                                             final String selectedLocalBranchPath, final String dialogTitle) {
     final IntegratedSelectedOptionsDialog dialog = new IntegratedSelectedOptionsDialog(project, currentBranch, targetBranch);
     if (!showIntegrationParameters) {
       dialog.selectWcopyRootOnly();
@@ -279,7 +265,7 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
           return null;
         }
 
-        final SVNURL targetUrl = realTargetUrl(SvnVcs.getInstance(project), info, targetBranch);
+        final Url targetUrl = realTargetUrl(SvnVcs.getInstance(project), info, targetBranch);
 
         if (targetUrl == null) {
           Messages.showErrorDialog(SvnBundle.message("action.Subversion.integrate.changes.error.not.versioned.text"),

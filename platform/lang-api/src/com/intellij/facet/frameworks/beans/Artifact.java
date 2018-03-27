@@ -1,9 +1,12 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.facet.frameworks.beans;
 
-import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.XCollection;
 
 /**
  * @deprecated this class will be removed from open API in IDEA 11. Use {@link com.intellij.util.download.DownloadableFileService} instead
@@ -13,7 +16,7 @@ public class Artifact {
   public static final Artifact[] EMPTY_ARRAY = new Artifact[0];
   
   @Property(surroundWithTag = false)
-  @AbstractCollection(surroundWithTag = false)
+  @XCollection
   public ArtifactItem[] myItems;
 
   @Attribute("version")

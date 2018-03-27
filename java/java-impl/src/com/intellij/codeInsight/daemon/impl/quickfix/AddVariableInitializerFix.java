@@ -7,6 +7,7 @@ import com.intellij.codeInsight.lookup.ExpressionLookupItem;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -22,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 public class AddVariableInitializerFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.AddReturnFix");
@@ -48,8 +50,7 @@ public class AddVariableInitializerFix implements IntentionAction {
     return myVariable.isValid() &&
            myVariable.getManager().isInProject(myVariable) &&
            !myVariable.hasInitializer() &&
-           !(myVariable instanceof PsiParameter)
-        ;
+           !(myVariable instanceof PsiParameter);
   }
 
   @NotNull
@@ -65,6 +66,8 @@ public class AddVariableInitializerFix implements IntentionAction {
     LOG.assertTrue(suggestedInitializers[0] instanceof ExpressionLookupItem);
     final PsiExpression initializer = (PsiExpression)suggestedInitializers[0].getObject();
     myVariable.setInitializer(initializer);
+    Document document = Objects.requireNonNull(PsiDocumentManager.getInstance(project).getDocument(file));
+    PsiDocumentManager.getInstance(initializer.getProject()).doPostponedOperationsAndUnblockDocument(document);
     runAssignmentTemplate(Collections.singletonList(myVariable.getInitializer()), suggestedInitializers, editor);
   }
 
@@ -75,23 +78,22 @@ public class AddVariableInitializerFix implements IntentionAction {
     LOG.assertTrue(!initializers.isEmpty());
     final PsiExpression initializer = ObjectUtils.notNull(ContainerUtil.getFirstItem(initializers));
     PsiElement context = initializers.size() == 1 ? initializer : PsiTreeUtil.findCommonParent(initializers);
-    PsiDocumentManager.getInstance(initializer.getProject()).doPostponedOperationsAndUnblockDocument(editor.getDocument());
     final TemplateBuilderImpl builder = (TemplateBuilderImpl)TemplateBuilderFactory.getInstance().createTemplateBuilder(context);
     for (PsiExpression e : initializers) {
       builder.replaceElement(e, new Expression() {
-        @Nullable
+        @NotNull
         @Override
         public Result calculateResult(ExpressionContext context1) {
           return calculateQuickResult(context1);
         }
 
-        @Nullable
+        @NotNull
         @Override
         public Result calculateQuickResult(ExpressionContext context1) {
           return new PsiElementResult(suggestedInitializers[0].getPsiElement());
         }
 
-        @Nullable
+        @NotNull
         @Override
         public LookupElement[] calculateLookupItems(ExpressionContext context1) {
           return suggestedInitializers;

@@ -1,13 +1,22 @@
 <html>
 <body>
-Reports any call to <b>toArray()</b>
-on an object of type or subtype <b>java.util.Collection</b>
-with a zero-length array argument. When passing in an array of too small size, the 
-<b>toArray()</b> method has to construct a new array of
-the right size using reflection. On older JVMs this has worse performance than passing
-in an array of at least the size of the collection itself.
-<!-- tooltip end -->
+There are two styles to convert collection to array: either using a pre-sized array
+(like <b>c.toArray(new String[c.size()])</b>) or using an empty array (like
+<b>c.toArray(new String[0])</b>.
 <p>
-
+  In older Java versions using pre-sized array was recommended as a reflection
+  call which is necessary to create an array of proper size was quite slow.
+  However since late updates of OpenJDK 6 this call was intrinsified making
+  the performance of the empty array version the same and sometimes even better, comparing
+  to the pre-sized version. Also passing pre-sized array is dangerous for concurrent or
+  synchronized collection as data race is possible between the <b>size</b> and <b>toArray</b>
+  call which may result in extra nulls at the end of the array if the collection was concurrently
+  shrinked during the operation.
+</p>
+<p>
+  This inspection allows to follow the uniform style: either using an empty array
+  (which is recommended in modern Java)
+  or using a pre-sized array (which might be faster in older Java versions or some non-HotSpot based JVMs).
+</p>
 </body>
 </html>

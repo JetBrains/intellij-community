@@ -16,6 +16,7 @@
 class C {
     void m(boolean b) {
         final boolean isCxf = true;
+        //comment
         if (b) {
           //comment
         }

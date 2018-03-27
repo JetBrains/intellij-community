@@ -1,5 +1,0 @@
-public class XTest {
-  void testFeature() {
-    <spot>assertEquals</spot>(false, isFeatureWork());
-  }
-}

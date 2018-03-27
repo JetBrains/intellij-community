@@ -42,7 +42,6 @@ import java.util.*;
  * Implementation class for Ant generation options
  *
  * @author Eugene Zhuravlev
- *         Date: Mar 25, 2004
  */
 public class GenerationOptionsImpl extends GenerationOptions {
 

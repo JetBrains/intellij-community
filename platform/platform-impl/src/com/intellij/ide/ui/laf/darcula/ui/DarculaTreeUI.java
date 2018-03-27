@@ -28,4 +28,11 @@ public class DarculaTreeUI extends WideSelectionTreeUI {
   public static ComponentUI createUI(JComponent c) {
     return new DarculaTreeUI();
   }
+
+  @Override protected void installDefaults() {
+    super.installDefaults();
+    if (tree.isForegroundSet()) {
+      tree.setForeground(null);
+    }
+  }
 }

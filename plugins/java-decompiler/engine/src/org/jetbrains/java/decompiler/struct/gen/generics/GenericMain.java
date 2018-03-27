@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.struct.gen.generics;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
+import org.jetbrains.java.decompiler.util.TextUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -62,9 +49,7 @@ public class GenericMain {
 
   public static GenericFieldDescriptor parseFieldSignature(String signature) {
     try {
-      GenericFieldDescriptor descriptor = new GenericFieldDescriptor();
-      descriptor.type = new GenericType(signature);
-      return descriptor;
+      return new GenericFieldDescriptor(new GenericType(signature));
     }
     catch (RuntimeException e) {
       DecompilerContext.getLogger().writeMessage("Invalid signature: " + signature, IFernflowerLogger.Severity.WARN);
@@ -75,33 +60,34 @@ public class GenericMain {
   public static GenericMethodDescriptor parseMethodSignature(String signature) {
     String original = signature;
     try {
-      GenericMethodDescriptor descriptor = new GenericMethodDescriptor();
-
-      signature = parseFormalParameters(signature, descriptor.fparameters, descriptor.fbounds);
+      List<String> typeParameters = new ArrayList<>();
+      List<List<GenericType>> typeParameterBounds = new ArrayList<>();
+      signature = parseFormalParameters(signature, typeParameters, typeParameterBounds);
 
       int to = signature.indexOf(")");
-      String pars = signature.substring(1, to);
+      String parameters = signature.substring(1, to);
       signature = signature.substring(to + 1);
 
-      while (pars.length() > 0) {
-        String par = GenericType.getNextType(pars);
-        descriptor.params.add(new GenericType(par));
-        pars = pars.substring(par.length());
+      List<GenericType> parameterTypes = new ArrayList<>();
+      while (parameters.length() > 0) {
+        String par = GenericType.getNextType(parameters);
+        parameterTypes.add(new GenericType(par));
+        parameters = parameters.substring(par.length());
       }
 
-      String par = GenericType.getNextType(signature);
-      descriptor.ret = new GenericType(par);
-      signature = signature.substring(par.length());
+      String ret = GenericType.getNextType(signature);
+      GenericType returnType = new GenericType(ret);
+      signature = signature.substring(ret.length());
 
+      List<GenericType> exceptionTypes = new ArrayList<>();
       if (signature.length() > 0) {
         String[] exceptions = signature.split("\\^");
-
         for (int i = 1; i < exceptions.length; i++) {
-          descriptor.exceptions.add(new GenericType(exceptions[i]));
+          exceptionTypes.add(new GenericType(exceptions[i]));
         }
       }
 
-      return descriptor;
+      return new GenericMethodDescriptor(typeParameters, typeParameterBounds, parameterTypes, returnType, exceptionTypes);
     }
     catch (RuntimeException e) {
       DecompilerContext.getLogger().writeMessage("Invalid signature: " + original, IFernflowerLogger.Severity.WARN);
@@ -171,12 +157,9 @@ public class GenericMain {
   }
 
   public static String getGenericCastTypeName(GenericType type) {
-    String s = getTypeName(type);
-    int dim = type.arrayDim;
-    while (dim-- > 0) {
-      s += "[]";
-    }
-    return s;
+    StringBuilder s = new StringBuilder(getTypeName(type));
+    TextUtil.append(s, "[]", type.arrayDim);
+    return s.toString();
   }
 
   private static String getTypeName(GenericType type) {

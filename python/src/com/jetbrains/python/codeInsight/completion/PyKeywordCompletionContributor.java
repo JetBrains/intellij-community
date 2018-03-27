@@ -53,7 +53,6 @@ import static com.intellij.patterns.StandardPatterns.or;
  * This should not lead to any problems, because all such code is private, and the user data used to pass the original
  * element is cleared after matching.
  * User: dcheryasov
- * Date: Sep 8, 2008
  */
 @SuppressWarnings({"InstanceVariableOfConcreteClass"})
 public class PyKeywordCompletionContributor extends CompletionContributor {

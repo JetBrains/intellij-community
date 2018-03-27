@@ -183,7 +183,6 @@ public class PyCharmEduInitialConfigurator {
       EditorSettingsExternalizable.getInstance().setVirtualSpace(false);
       EditorSettingsExternalizable.getInstance().getOptions().ARE_LINE_NUMBERS_SHOWN = true;
       final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance().getCurrentSettings();
-      settings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
       settings.getCommonSettings(PythonLanguage.getInstance()).ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
       uiSettings.setShowDirectoryForNonUniqueFilenames(true);
       uiSettings.setShowMemoryIndicator(false);
@@ -382,7 +381,7 @@ public class PyCharmEduInitialConfigurator {
     AnAction action = actionManager.getAction(actionId);
     if (action != null) {
       AnAction actionGroup = actionManager.getAction(groupId);
-      if (actionGroup != null && actionGroup instanceof DefaultActionGroup) {
+      if (actionGroup instanceof DefaultActionGroup) {
         ((DefaultActionGroup)actionGroup).remove(action);
         actionManager.unregisterAction(actionId);
       }

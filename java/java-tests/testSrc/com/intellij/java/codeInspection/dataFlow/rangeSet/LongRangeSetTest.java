@@ -23,6 +23,9 @@ import org.junit.Test;
 
 import java.util.Random;
 import java.util.function.Function;
+import java.util.function.LongBinaryOperator;
+import java.util.function.LongPredicate;
+import java.util.stream.Collectors;
 
 import static com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet.*;
 import static org.junit.Assert.*;
@@ -272,6 +275,26 @@ public class LongRangeSetTest {
   }
 
   @Test
+  public void testNegate() {
+    assertTrue(empty().negate(true).isEmpty());
+    assertEquals(point(Long.MAX_VALUE), point(Long.MIN_VALUE + 1).negate(true));
+    assertEquals(point(Long.MIN_VALUE), point(Long.MIN_VALUE).negate(true));
+    assertEquals(point(Integer.MIN_VALUE), point(Integer.MIN_VALUE).negate(false));
+    assertEquals(point(Integer.MAX_VALUE + 1L), point(Integer.MIN_VALUE).negate(true));
+    assertEquals(range(-200, -100), range(100, 200).negate(true));
+    assertEquals(range(-200, 1), range(-1, 200).negate(true));
+    assertEquals(range(-200, 200), range(-200, 200).negate(false));
+    assertEquals(range(-200, 201), range(-201, 200).negate(false));
+    assertEquals(all(), all().negate(true));
+    assertEquals(range(100, Integer.MAX_VALUE).union(point(Integer.MIN_VALUE)), range(Integer.MIN_VALUE, -100).negate(false));
+    assertEquals(point(Long.MAX_VALUE).union(point(Long.MIN_VALUE)), range(Long.MIN_VALUE, Long.MIN_VALUE + 1).negate(true));
+    assertEquals(range(100, Integer.MAX_VALUE + 1L), range(Integer.MIN_VALUE, -100).negate(true));
+    LongRangeSet set = range(-900, 1000).subtract(range(-800, -600)).subtract(range(-300, 100)).subtract(range(500, 700));
+    assertEquals("{-900..-801, -599..-301, 101..499, 701..1000}", set.toString());
+    assertEquals("{-1000..-701, -499..-101, 301..599, 801..900}", set.negate(false).toString());
+  }
+
+  @Test
   public void testBitwiseAnd() {
     assertTrue(empty().bitwiseAnd(all()).isEmpty());
     assertTrue(all().bitwiseAnd(empty()).isEmpty());
@@ -291,10 +314,109 @@ public class LongRangeSetTest {
     checkBitwiseAnd(range(-30, -20).union(range(20, 33)), point(-10).union(point(10)), "{-32..-26, 0..62}");
   }
 
+  @Test
+  public void testMod() {
+    assertEquals(empty(), empty().mod(all()));
+    assertEquals(empty(), all().mod(empty()));
+    assertEquals(empty(), point(1).mod(empty()));
+    assertEquals(empty(), point(1).union(point(3)).mod(empty()));
+
+    assertEquals(point(10), point(110).mod(point(100)));
+    checkMod(range(10, 20), range(30, 40), "{10..20}");
+    checkMod(range(-10, 10), range(20, 30), "{-10..10}");
+    checkMod(point(0), range(-100, -50).union(range(20, 80)), "{0}");
+    checkMod(point(30), range(10, 40), "{0..30}");
+    checkMod(point(-30), range(-10, 40), "{-30..0}");
+    checkMod(point(Long.MIN_VALUE), range(-10, 40), "{-39..0}");
+    checkMod(range(-10, 40), point(Long.MIN_VALUE), "{-10..40}");
+    checkMod(range(-30, -20), point(23), "{-22..0}");
+    checkMod(point(10), range(30, 40), "{10}");
+    checkMod(range(-10, 40), point(Long.MIN_VALUE).union(point(70)), "{-10..40}");
+    checkMod(range(-10, 40), point(Long.MIN_VALUE).union(point(0)), "{-10..40}");
+    checkMod(point(10), point(Long.MIN_VALUE).union(point(0)), "{0, 10}");
+    checkMod(range(0, 10).union(range(30, 50)), range(-20, -10).union(range(15, 25)), "{0..24}");
+    checkMod(point(10), point(0), "{}");
+    checkMod(range(0, 10), point(0), "{}");
+    checkMod(range(Long.MIN_VALUE, Long.MIN_VALUE + 3), point(Long.MIN_VALUE), "{-9223372036854775807..-9223372036854775805, 0}");
+    checkMod(range(Long.MAX_VALUE - 3, Long.MAX_VALUE), point(Long.MAX_VALUE), "{0..9223372036854775806}");
+  }
+
+  @Test
+  public void testContains() {
+    assertTrue(range(0, 10).contains(5));
+    assertTrue(range(0, 10).union(range(13, 20)).contains(point(5)));
+    assertTrue(range(0, 10).union(range(13, 20)).contains(empty()));
+    assertFalse(range(0, 10).union(range(13, 20)).contains(point(12)));
+    assertFalse(range(0, 10).union(range(13, 20)).contains(range(9, 15)));
+    assertTrue(range(0, 10).union(range(13, 20)).contains(range(2, 8).union(range(15, 17))));
+  }
+
+  @Test
+  public void testAdd() {
+    checkAdd(empty(), empty(), true, "{}");
+    checkAdd(empty(), point(0), true, "{}");
+    checkAdd(empty(), range(0, 10), true, "{}");
+    checkAdd(empty(), range(0, 10).union(range(15, 20)), true, "{}");
+
+    checkAdd(point(5), point(10), false, "{15}");
+    checkAdd(point(Integer.MAX_VALUE), point(Integer.MAX_VALUE), false, "{-2}");
+    checkAdd(point(Integer.MAX_VALUE), point(Integer.MAX_VALUE), true, "{" + 0xFFFF_FFFEL + "}");
+    checkAdd(range(0, 10), point(10), false, "{10..20}");
+    checkAdd(range(Integer.MAX_VALUE - 10, Integer.MAX_VALUE), point(1), true, "{2147483638..2147483648}");
+    checkAdd(range(Integer.MAX_VALUE - 10, Integer.MAX_VALUE), point(1), false, "{-2147483648, 2147483638..2147483647}");
+    checkAdd(range(Integer.MAX_VALUE - 10, Integer.MAX_VALUE), point(10), false, "{-2147483648..-2147483639, 2147483647}");
+    checkAdd(range(Integer.MAX_VALUE - 10, Integer.MAX_VALUE), point(11), false, "{-2147483648..-2147483638}");
+
+    checkAdd(range(0, 10), range(20, 30), true, "{20..40}");
+    checkAdd(range(Integer.MAX_VALUE - 10, Integer.MAX_VALUE), range(0, 10), true, "{2147483637..2147483657}");
+    checkAdd(range(Integer.MAX_VALUE - 10, Integer.MAX_VALUE), range(0, 10), false, "{-2147483648..-2147483639, 2147483637..2147483647}");
+
+    checkAdd(range(10, 20).union(range(40, 50)), range(0, 3).union(range(5, 7)), true, "{10..27, 40..57}");
+
+    LongRangeSet intDomain = range(Integer.MIN_VALUE, Integer.MAX_VALUE);
+    assertEquals(intDomain, intDomain.plus(point(20), false));
+    assertEquals(intDomain.without(20), intDomain.without(0).plus(point(20), false));
+    assertEquals(all().without(20), all().without(0).plus(point(20), true));
+    assertEquals(intDomain, range(20, 30).union(range(40, 50)).plus(intDomain, false));
+    assertEquals(intDomain, range(Integer.MIN_VALUE, 2).plus(range(-2, Integer.MAX_VALUE), false));
+    assertEquals(all(), range(Long.MIN_VALUE, 2).plus(range(-2, Long.MAX_VALUE), true));
+  }
+
+  void checkAdd(LongRangeSet addend1, LongRangeSet addend2, boolean isLong, String expected) {
+    LongRangeSet result = addend1.plus(addend2, isLong);
+    assertEquals(result, addend2.plus(addend1, isLong)); // commutative
+    checkBinOp(addend1, addend2, result, x -> true, isLong ? Long::sum : (a, b) -> (int)(a + b), expected);
+  }
+
+  void checkMod(LongRangeSet dividendRange, LongRangeSet divisorRange, String expected) {
+    LongRangeSet result = dividendRange.mod(divisorRange);
+    checkBinOp(dividendRange, divisorRange, result, divisor -> divisor != 0, (a, b) -> a % b, expected);
+  }
+
   void checkBitwiseAnd(LongRangeSet range1, LongRangeSet range2, String expected) {
     LongRangeSet result = range1.bitwiseAnd(range2);
-    assertEquals(expected, result.toString());
-    assertTrue(
-      range1.stream().mapToObj(l1 -> range2.stream().map(l2 -> l1 & l2)).flatMapToLong(Function.identity()).allMatch(result::contains));
+    assertEquals(result, range2.bitwiseAnd(range1)); // commutative
+    checkBinOp(range1, range2, result, x -> true, (a, b) -> a & b, expected);
   }
+
+  void checkBinOp(LongRangeSet op1,
+                  LongRangeSet op2,
+                  LongRangeSet result,
+                  LongPredicate filter,
+                  LongBinaryOperator operator,
+                  String expected) {
+    assertEquals(expected, result.toString());
+    String errors = op1.stream()
+      .mapToObj(a -> op2.stream()
+        .filter(filter)
+        .filter(b -> !result.contains(operator.applyAsLong(a, b)))
+        .mapToObj(b -> a + " + " + b + " = " + operator.applyAsLong(a, b)))
+      .flatMap(Function.identity())
+      .collect(Collectors.joining("\n"));
+    if (!errors.isEmpty()) {
+      fail("Expected range " + expected + " is not satisfied:\n" + errors);
+    }
+  }
+
+
 }

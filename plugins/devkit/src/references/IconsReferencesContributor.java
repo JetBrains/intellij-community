@@ -18,6 +18,7 @@ package org.jetbrains.idea.devkit.references;
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.find.FindModel;
 import com.intellij.find.impl.FindInProjectUtil;
+import com.intellij.ide.presentation.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -34,6 +35,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.patterns.PsiJavaElementPattern;
 import com.intellij.patterns.PsiMethodPattern;
 import com.intellij.patterns.XmlPatterns;
+import com.intellij.patterns.uast.UastPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
@@ -53,8 +55,10 @@ import com.intellij.util.QueryExecutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
-import org.jetbrains.idea.devkit.util.DescriptorUtil;
 import org.jetbrains.idea.devkit.util.PsiUtil;
+import org.jetbrains.uast.UElement;
+import org.jetbrains.uast.UastContextKt;
+import org.jetbrains.uast.UastLiteralUtils;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -122,8 +126,7 @@ public class IconsReferencesContributor extends PsiReferenceContributor
       @NotNull
       @Override
       public PsiReference[] getReferencesByElement(@NotNull final PsiElement element, @NotNull ProcessingContext context) {
-        if (!PsiUtil.isPluginProject(element.getProject()) ||
-            !DescriptorUtil.isPluginXml(element.getContainingFile())) {
+        if (!PsiUtil.isPluginXmlPsiElement(element)) {
           return PsiReference.EMPTY_ARRAY;
         }
 
@@ -253,78 +256,71 @@ public class IconsReferencesContributor extends PsiReferenceContributor
   }
 
   private static void registerForPresentationAnnotation(@NotNull PsiReferenceRegistrar registrar) {
-    PsiJavaElementPattern.Capture<PsiLiteralExpression> presentationAnnotation
-      = literalExpression().annotationParam("com.intellij.ide.presentation.Presentation", "icon");
+    UastReferenceRegistrar.registerUastReferenceProvider(
+      registrar,
+      UastPatterns.stringLiteralExpression()
+        .sourcePsiFilter(psi -> PsiUtil.isPluginProject(psi.getProject()))
+        .annotationParam(Presentation.class.getName(), "icon"),
+      UastReferenceRegistrar.uastLiteralReferenceProvider((uElement, referencePsiElement) -> new PsiReference[]{
+        new IconPsiReferenceBase(referencePsiElement) {
 
-    registrar.registerReferenceProvider(presentationAnnotation, new PsiReferenceProvider() {
-      @NotNull
-      @Override
-      public PsiReference[] getReferencesByElement(@NotNull final PsiElement element, @NotNull ProcessingContext context) {
-        if (!PsiUtil.isPluginProject(element.getProject())) return PsiReference.EMPTY_ARRAY;
-        return new PsiReference[]{
-          new IconPsiReferenceBase(element) {
-            @Override
-            public PsiElement resolve() {
-              String value = (String)((PsiLiteralExpression)element).getValue();
-              return resolveIconPath(value, element);
+          private UElement getUElement() {
+            return UastContextKt.toUElement(getElement());
+          }
+
+          @Override
+          public PsiElement resolve() {
+            final UElement uElement = getUElement();
+            if (uElement == null) return null;
+
+            String value = UastLiteralUtils.getValueIfStringLiteral(uElement);
+            return resolveIconPath(value, getElement());
+          }
+
+          @Override
+          public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+            PsiElement field = resolve();
+            PsiElement result = handleElement(field, newElementName);
+            if (result != null) {
+              return result;
             }
+            return super.handleElementRename(newElementName);
+          }
 
-            @Override
-            public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-              PsiElement field = resolve();
-              PsiElement result = handleElement(field, newElementName);
-              if (result != null) {
-                return result;
-              }
-              return super.handleElementRename(newElementName);
-            }
-
-            @Override
-            public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
-              PsiElement result = handleElement(element, null);
-              if (result != null) {
-                return result;
-              }
-              return super.bindToElement(element);
-            }
-
-            @Nullable
-            private PsiElement handleElement(PsiElement element, @Nullable String newElementName) {
-              if (element instanceof PsiField) {
-                PsiClass containingClass = ((PsiField)element).getContainingClass();
-                if (containingClass != null) {
-                  String classQualifiedName = containingClass.getQualifiedName();
-                  if (classQualifiedName != null) {
-                    if (newElementName == null) {
-                      newElementName = ((PsiField)element).getName();
-                    }
-                    if (classQualifiedName.startsWith("com.intellij.icons.")) {
-                      return replace(newElementName, classQualifiedName, "com.intellij.icons.", element);
-                    }
-                    if (classQualifiedName.startsWith("icons.")) {
-                      return replace(newElementName, classQualifiedName, "icons.", element);
-                    }
+          @Nullable
+          private PsiElement handleElement(PsiElement element, @Nullable String newElementName) {
+            if (element instanceof PsiField) {
+              PsiClass containingClass = ((PsiField)element).getContainingClass();
+              if (containingClass != null) {
+                String classQualifiedName = containingClass.getQualifiedName();
+                if (classQualifiedName != null) {
+                  if (newElementName == null) {
+                    newElementName = ((PsiField)element).getName();
+                  }
+                  if (classQualifiedName.startsWith("com.intellij.icons.")) {
+                    return replace(newElementName, classQualifiedName, "com.intellij.icons.");
+                  }
+                  if (classQualifiedName.startsWith("icons.")) {
+                    return replace(newElementName, classQualifiedName, "icons.");
                   }
                 }
               }
-              return null;
             }
-
-            private PsiElement replace(String newElementName, String fqn, String pckg, PsiElement container) {
-              String newValue = "\"" + fqn.substring(pckg.length()) + "." + newElementName + "\"";
-              return getElement().replace(
-                JavaPsiFacade.getElementFactory(container.getProject()).createExpressionFromText(newValue, container.getParent()));
-            }
-
-            @NotNull
-            @Override
-            public Object[] getVariants() {
-              return EMPTY_ARRAY;
-            }
+            return null;
           }
-        };
-      }
-    }, PsiReferenceRegistrar.HIGHER_PRIORITY);
+
+          private PsiElement replace(String newElementName, String fqn, String packageName) {
+            String newValue = fqn.substring(packageName.length()) + "." + newElementName;
+            return ElementManipulators.getManipulator(getElement()).handleContentChange(getElement(), newValue);
+          }
+
+          @NotNull
+          @Override
+          public Object[] getVariants() {
+            return EMPTY_ARRAY;
+          }
+        }
+      }), PsiReferenceRegistrar.HIGHER_PRIORITY);
   }
 
 
@@ -380,7 +376,7 @@ public class IconsReferencesContributor extends PsiReferenceContributor
   }
 
   private static abstract class IconPsiReferenceBase extends PsiReferenceBase<PsiElement> implements EmptyResolveMessageProvider {
-    public IconPsiReferenceBase(PsiElement element) {
+    public IconPsiReferenceBase(@NotNull PsiElement element) {
       super(element, true);
     }
 

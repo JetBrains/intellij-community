@@ -39,6 +39,7 @@ class ProjectViewSharedSettings : PersistentStateComponent<ProjectViewSharedSett
   var autoscrollFromSource = false
   var autoscrollToSource = false
   var foldersAlwaysOnTop = true
+  var manualOrder = false
 
   override fun getState(): ProjectViewSharedSettings? {
     return this

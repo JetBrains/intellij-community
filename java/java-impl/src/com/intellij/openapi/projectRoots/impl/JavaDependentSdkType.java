@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 12/5/12
  */
 public abstract class JavaDependentSdkType extends DependentSdkType implements JavaSdkType {
 

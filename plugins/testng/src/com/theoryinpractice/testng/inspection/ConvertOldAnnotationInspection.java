@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author Hani Suleiman Date: Aug 3, 2005 Time: 4:17:59 PM
+ * @author Hani Suleiman
  */
 public class ConvertOldAnnotationInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final String DISPLAY_NAME = "Convert old @Configuration TestNG annotations";

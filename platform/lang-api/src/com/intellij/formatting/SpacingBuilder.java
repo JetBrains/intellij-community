@@ -1,6 +1,7 @@
 package com.intellij.formatting;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -16,6 +17,8 @@ import java.util.List;
  * @author yole
  */
 public class SpacingBuilder {
+  private static Logger LOG = Logger.getInstance(SpacingBuilder.class);
+  
   private static class SpacingRule {
     protected final RuleCondition myRuleCondition;
     protected final int myMinSpaces;
@@ -179,10 +182,12 @@ public class SpacingBuilder {
    * @param codeStyleSettings
    * @deprecated Use other constructors!
    */
+  @SuppressWarnings("unused")
   @Deprecated
   public SpacingBuilder(CodeStyleSettings codeStyleSettings) {
     // TODO: remove deprecated method (v.14)
-    myCodeStyleSettings = codeStyleSettings;
+    myCodeStyleSettings = new CommonCodeStyleSettings(Language.ANY);
+    LOG.error("The plugin calling this method uses deprecated API and must be updated.");
   }
 
   /**

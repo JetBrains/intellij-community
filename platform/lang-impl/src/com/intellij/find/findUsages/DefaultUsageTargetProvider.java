@@ -23,15 +23,16 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageTargetProvider;
+import org.jetbrains.annotations.NotNull;
 
 public class DefaultUsageTargetProvider implements UsageTargetProvider {
   @Override
-  public UsageTarget[] getTargets(Editor editor, PsiFile file) {
+  public UsageTarget[] getTargets(@NotNull Editor editor, @NotNull PsiFile file) {
     return null;
   }
 
   @Override
-  public UsageTarget[] getTargets(PsiElement psiElement) {
+  public UsageTarget[] getTargets(@NotNull PsiElement psiElement) {
     if (psiElement instanceof NavigationItem) {
       if (FindManager.getInstance(psiElement.getProject()).canFindUsages(psiElement)) {
         return new UsageTarget[]{new PsiElement2UsageTargetAdapter(psiElement)};

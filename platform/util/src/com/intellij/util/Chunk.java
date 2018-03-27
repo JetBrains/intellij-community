@@ -22,7 +22,6 @@ import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Sep 27, 2004
  */
 public class Chunk<Node> {
   @NotNull

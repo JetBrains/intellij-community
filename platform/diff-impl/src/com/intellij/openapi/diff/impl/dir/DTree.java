@@ -48,14 +48,13 @@ public class DTree {
   private boolean myExpanded = true;
   @Nullable private final DTree myParent;
   private HashMap<String, DTree> myChildren;
-  private String myName;
+  private final String myName;
   private final boolean isContainer;
   private SortedList<DTree> myChildrenList;
   private DiffElement<?> mySource;
   private DiffElement<?> myTarget;
   private DiffType myType;
   private boolean myVisible = true;
-  private String mySeparator = null;
   private String myPath = null;
 
   public DTree(@Nullable DTree parent, @NotNull String name, boolean container) {
@@ -74,12 +73,15 @@ public class DTree {
     return myChildrenList;
   }
 
-  public DTree addChild(@NotNull DiffElement element, boolean source) {
+  public DTree addChild(@NotNull DiffElement element, boolean source, String replacementName) {
     init();
     myChildrenList = null;
     final DTree node;
     final String name = element.getName();
-    if (myChildren.containsKey(name)) {
+    if (replacementName != null && myChildren.containsKey(replacementName)) {
+      node = myChildren.get(replacementName);
+    }
+    else if (myChildren.containsKey(name)) {
       node = myChildren.get(name);
     } else {
       node = new DTree(this, name, element.isContainer());
@@ -302,18 +304,11 @@ public class DTree {
     if (myPath == null) {
       final DTree parent = getParent();
       if (parent != null) {
-        myPath = parent.getPath() + getName() + (isContainer ? getSeparator() : "");
+        myPath = parent.getPath() + getName() + (isContainer ? DiffElement.getSeparator() : "");
       } else {
-        myPath = getName() + (isContainer ? getSeparator() : "");
+        myPath = getName() + (isContainer ? DiffElement.getSeparator() : "");
       }
     }
     return myPath;
-  }
-
-  private String getSeparator() {
-    if (mySeparator == null) {
-      mySeparator = mySource != null ? mySource.getSeparator() : myTarget != null ? myTarget.getSeparator() : "";
-    }
-    return mySeparator;
   }
 }

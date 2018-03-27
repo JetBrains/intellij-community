@@ -19,6 +19,7 @@ class _SpecialForm:
 
 Tuple: _SpecialForm = ...
 Generic: _SpecialForm = ...
+Protocol: _SpecialForm = ...
 Callable: _SpecialForm = ...
 Type: _SpecialForm = ...
 ClassVar: _SpecialForm = ...
@@ -64,51 +65,65 @@ _V_co = TypeVar('_V_co', covariant=True)  # Any type covariant containers.
 _KT_co = TypeVar('_KT_co', covariant=True)  # Key type covariant containers.
 _VT_co = TypeVar('_VT_co', covariant=True)  # Value type covariant containers.
 _T_contra = TypeVar('_T_contra', contravariant=True)  # Ditto contravariant.
+_TC = TypeVar('_TC', bound=Type[object])
 
-class SupportsInt(metaclass=ABCMeta):
+def runtime(cls: _TC) -> _TC: ...
+
+@runtime
+class SupportsInt(Protocol, metaclass=ABCMeta):
     @abstractmethod
     def __int__(self) -> int: ...
 
-class SupportsFloat(metaclass=ABCMeta):
+@runtime
+class SupportsFloat(Protocol, metaclass=ABCMeta):
     @abstractmethod
     def __float__(self) -> float: ...
 
-class SupportsComplex(metaclass=ABCMeta):
+@runtime
+class SupportsComplex(Protocol, metaclass=ABCMeta):
     @abstractmethod
     def __complex__(self) -> complex: ...
 
-class SupportsBytes(metaclass=ABCMeta):
+@runtime
+class SupportsBytes(Protocol, metaclass=ABCMeta):
     @abstractmethod
     def __bytes__(self) -> bytes: ...
 
-class SupportsAbs(Generic[_T]):
+@runtime
+class SupportsAbs(Protocol[_T_co]):
     @abstractmethod
-    def __abs__(self) -> _T: ...
+    def __abs__(self) -> _T_co: ...
 
-class SupportsRound(Generic[_T]):
+@runtime
+class SupportsRound(Protocol[_T_co]):
     @abstractmethod
-    def __round__(self, ndigits: int = ...) -> _T: ...
+    def __round__(self, ndigits: int = ...) -> _T_co: ...
 
-class Reversible(Generic[_T_co]):
+@runtime
+class Reversible(Protocol[_T_co]):
     @abstractmethod
     def __reversed__(self) -> Iterator[_T_co]: ...
 
-class Sized(metaclass=ABCMeta):
+@runtime
+class Sized(Protocol, metaclass=ABCMeta):
     @abstractmethod
     def __len__(self) -> int: ...
 
-class Hashable(metaclass=ABCMeta):
+@runtime
+class Hashable(Protocol, metaclass=ABCMeta):
     # TODO: This is special, in that a subclass of a hashable class may not be hashable
     #   (for example, list vs. object). It's not obvious how to represent this. This class
     #   is currently mostly useless for static checking.
     @abstractmethod
     def __hash__(self) -> int: ...
 
-class Iterable(Generic[_T_co]):
+@runtime
+class Iterable(Protocol[_T_co]):
     @abstractmethod
     def __iter__(self) -> Iterator[_T_co]: ...
 
-class Iterator(Iterable[_T_co], Generic[_T_co]):
+@runtime
+class Iterator(Iterable[_T_co], Protocol[_T_co]):
     @abstractmethod
     def __next__(self) -> _T_co: ...
     def __iter__(self) -> 'Iterator[_T_co]': ...
@@ -122,7 +137,7 @@ class Generator(Iterator[_T_co], Generic[_T_co, _T_contra, _V_co]):
 
     @abstractmethod
     def throw(self, typ: Type[BaseException], val: Optional[BaseException] = ...,
-              tb: Optional[TracebackType] = ...) -> None: ...
+              tb: Optional[TracebackType] = ...) -> _T_co: ...
 
     @abstractmethod
     def close(self) -> None: ...
@@ -139,7 +154,8 @@ class Generator(Iterator[_T_co], Generic[_T_co, _T_contra, _V_co]):
 # Awaitable, AsyncIterator, AsyncIterable, Coroutine, Collection.
 # See https: //github.com/python/typeshed/issues/655 for why this is not easy.
 
-class Awaitable(Generic[_T_co]):
+@runtime
+class Awaitable(Protocol[_T_co]):
     @abstractmethod
     def __await__(self) -> Generator[Any, None, _T_co]: ...
 
@@ -149,7 +165,7 @@ class Coroutine(Awaitable[_V_co], Generic[_T_co, _T_contra, _V_co]):
 
     @abstractmethod
     def throw(self, typ: Type[BaseException], val: Optional[BaseException] = ...,
-              tb: Optional[TracebackType] = ...) -> None: ...
+              tb: Optional[TracebackType] = ...) -> _T_co: ...
 
     @abstractmethod
     def close(self) -> None: ...
@@ -161,12 +177,14 @@ class AwaitableGenerator(Generator[_T_co, _T_contra, _V_co], Awaitable[_V_co],
                          Generic[_T_co, _T_contra, _V_co, _S]):
     pass
 
-class AsyncIterable(Generic[_T_co]):
+@runtime
+class AsyncIterable(Protocol[_T_co]):
     @abstractmethod
     def __aiter__(self) -> 'AsyncIterator[_T_co]': ...
 
+@runtime
 class AsyncIterator(AsyncIterable[_T_co],
-                    Generic[_T_co]):
+                    Protocol[_T_co]):
     @abstractmethod
     def __anext__(self) -> Awaitable[_T_co]: ...
     def __aiter__(self) -> 'AsyncIterator[_T_co]': ...
@@ -180,8 +198,8 @@ if sys.version_info >= (3, 6):
         def asend(self, value: _T_contra) -> Awaitable[_T_co]: ...
 
         @abstractmethod
-        def athrow(self, typ: Type[BaseException], val: Optional[BaseException] = None,
-                   tb: Any = None) -> Awaitable[_T_co]: ...
+        def athrow(self, typ: Type[BaseException], val: Optional[BaseException] = ...,
+                   tb: Any = ...) -> Awaitable[_T_co]: ...
 
         @abstractmethod
         def aclose(self) -> Awaitable[_T_co]: ...
@@ -194,16 +212,19 @@ if sys.version_info >= (3, 6):
         ag_frame = ...  # type: FrameType
         ag_running = ...  # type: bool
 
-class Container(Generic[_T_co]):
+@runtime
+class Container(Protocol[_T_co]):
     @abstractmethod
     def __contains__(self, x: object) -> bool: ...
 
 
 if sys.version_info >= (3, 6):
-    class Collection(Sized, Iterable[_T_co], Container[_T_co], Generic[_T_co]): ...
+    @runtime
+    class Collection(Sized, Iterable[_T_co], Container[_T_co], Protocol[_T_co]): ...
     _Collection = Collection
 else:
-    class _Collection(Sized, Iterable[_T_co], Container[_T_co], Generic[_T_co]): ...
+    @runtime
+    class _Collection(Sized, Iterable[_T_co], Container[_T_co], Protocol[_T_co]): ...
 
 class Sequence(_Collection[_T_co], Reversible[_T_co], Generic[_T_co]):
     @overload
@@ -214,7 +235,7 @@ class Sequence(_Collection[_T_co], Reversible[_T_co], Generic[_T_co]):
     def __getitem__(self, s: slice) -> Sequence[_T_co]: ...
     # Mixin methods
     if sys.version_info >= (3, 5):
-        def index(self, x: Any, start: int = 0, end: int = 0) -> int: ...
+        def index(self, x: Any, start: int = ..., end: int = ...) -> int: ...
     else:
         def index(self, x: Any) -> int: ...
     def count(self, x: Any) -> int: ...
@@ -239,6 +260,7 @@ class MutableSequence(Sequence[_T], Generic[_T]):
     def __delitem__(self, i: slice) -> None: ...
     # Mixin methods
     def append(self, object: _T) -> None: ...
+    def clear(self) -> None: ...
     def extend(self, iterable: Iterable[_T]) -> None: ...
     def reverse(self) -> None: ...
     def pop(self, index: int = ...) -> _T: ...
@@ -289,14 +311,16 @@ class ValuesView(MappingView, Iterable[_VT_co], Generic[_VT_co]):
     def __contains__(self, o: object) -> bool: ...
     def __iter__(self) -> Iterator[_VT_co]: ...
 
-class ContextManager(Generic[_T_co]):
+@runtime
+class ContextManager(Protocol[_T_co]):
     def __enter__(self) -> _T_co: ...
     def __exit__(self, exc_type: Optional[Type[BaseException]],
                  exc_value: Optional[BaseException],
                  traceback: Optional[TracebackType]) -> Optional[bool]: ...
 
 if sys.version_info >= (3, 5):
-    class AsyncContextManager(Generic[_T_co]):
+    @runtime
+    class AsyncContextManager(Protocol[_T_co]):
         def __aenter__(self) -> Awaitable[_T_co]: ...
         def __aexit__(self, exc_type: Optional[Type[BaseException]],
                       exc_value: Optional[BaseException],
@@ -520,7 +544,10 @@ class NamedTuple(tuple):
     @classmethod
     def _make(cls, iterable: Iterable[Any]) -> NamedTuple: ...
 
-    def _asdict(self) -> dict: ...
+    if sys.version_info >= (3, 1):
+        def _asdict(self) -> collections.OrderedDict[str, Any]: ...
+    else:
+        def _asdict(self) -> Dict[str, Any]: ...
     def _replace(self, **kwargs: Any) -> NamedTuple: ...
 
 def NewType(name: str, tp: Type[_T]) -> Type[_T]: ...

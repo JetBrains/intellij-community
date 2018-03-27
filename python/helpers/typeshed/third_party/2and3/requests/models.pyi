@@ -1,7 +1,9 @@
 # Stubs for requests.models (Python 3)
 
-from typing import Any, List, MutableMapping, Iterator, Dict, Text
+from typing import (Any, Dict, Iterator, List, MutableMapping, Optional, Text,
+                    Union)
 import datetime
+import types
 
 from . import hooks
 from . import structures
@@ -17,7 +19,6 @@ from . import utils
 from . import compat
 from . import status_codes
 
-from typing import Optional, Union
 
 default_hooks = hooks.default_hooks
 CaseInsensitiveDict = structures.CaseInsensitiveDict
@@ -114,6 +115,8 @@ class Response:
     def __bool__(self) -> bool: ...
     def __nonzero__(self) -> bool: ...
     def __iter__(self) -> Iterator[bytes]: ...
+    def __enter__(self) -> Response: ...
+    def __exit__(self, *args: Any) -> None: ...
     @property
     def ok(self) -> bool: ...
     @property
@@ -122,7 +125,7 @@ class Response:
     def is_permanent_redirect(self) -> bool: ...
     @property
     def apparent_encoding(self) -> str: ...
-    def iter_content(self, chunk_size: int = ...,
+    def iter_content(self, chunk_size: Optional[int] = ...,
                      decode_unicode: bool = ...) -> Iterator[Any]: ...
     def iter_lines(self, chunk_size=..., decode_unicode=..., delimiter=...): ...
     @property

@@ -21,8 +21,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author irengrig
- *         Date: 2/17/11
- *         Time: 7:05 PM
  */
 public class TodoCheckinHandlerFactory extends CheckinHandlerFactory {
   @NotNull

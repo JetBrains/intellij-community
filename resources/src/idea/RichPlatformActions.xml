@@ -68,10 +68,10 @@
       <add-to-group group-id="ExportImportGroup" anchor="last"/>
     </action>
 
-    <!-- Edit -->
-    <reference ref="EditorCompleteStatement">
-      <add-to-group group-id="EditSmartGroup" anchor="first"/>
-    </reference>
+    <action id="ConvertModuleGroupsToQualifiedNames" class="com.intellij.ide.actions.project.ConvertModuleGroupsToQualifiedNamesAction">
+      <add-to-group group-id="FileMainSettingsGroup" anchor="last"/>
+    </action>
+
 
     <!-- View -->
     <reference ref="DelegateMethods">
@@ -91,6 +91,7 @@
     <group id="InspectCodeGroup" text="Inspect Code Actions">
       <action id="InspectCode" class="com.intellij.codeInspection.actions.CodeInspectionAction"/>
       <action id="CodeCleanup" class="com.intellij.codeInspection.actions.CodeCleanupAction"/>
+      <action id="SilentCodeCleanup" class="com.intellij.codeInspection.actions.SilentCodeCleanupAction" />
       <action id="RunInspection" class="com.intellij.codeInspection.actions.RunInspectionAction"/>
       <action id="PopupHector" class="com.intellij.codeInsight.daemon.impl.PopupHectorAction"/>
       <action id="ViewOfflineInspection" class="com.intellij.codeInspection.actions.ViewOfflineResultsAction"/>

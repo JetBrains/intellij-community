@@ -84,7 +84,7 @@ public interface FileViewProvider extends Cloneable, UserDataHolderEx {
   /**
    * @return all languages this file supports, in no particular order.
    * 
-   * @see #getPsi(com.intellij.lang.Language)
+   * @see #getPsi(Language)
    */
   @NotNull
   Set<Language> getLanguages();
@@ -174,7 +174,7 @@ public interface FileViewProvider extends Cloneable, UserDataHolderEx {
    * 
    * @see #getBaseLanguage()
    * @see #findElementAt(int, Class) 
-   * @see #findElementAt(int, com.intellij.lang.Language) 
+   * @see #findElementAt(int, Language)
    * @see PsiFile#findElementAt(int) 
    */
   @Nullable
@@ -186,7 +186,7 @@ public interface FileViewProvider extends Cloneable, UserDataHolderEx {
    * 
    * @see #getBaseLanguage()
    * @see PsiFile#findReferenceAt(int)
-   * @see #findReferenceAt(int, com.intellij.lang.Language) 
+   * @see #findReferenceAt(int, Language)
    */
   @Nullable
   PsiReference findReferenceAt(int offset);

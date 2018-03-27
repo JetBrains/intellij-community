@@ -114,7 +114,9 @@ public class WinIntelliJButtonUI extends DarculaButtonUI {
     }
 
     if (isComboButton(b)) {
-      rect.x += JBUI.scale(5);
+      int delta = JBUI.scale(6);
+      rect.x += delta;
+      rect.width -= delta;
     } else if (b instanceof JBOptionButton) {
       rect.x -= JBUI.scale(4);
     }

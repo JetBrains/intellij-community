@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ThrowableRunnable;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -166,6 +167,7 @@ public interface Application extends ComponentManager {
    * @see #assertWriteAccessAllowed()
    * @see #runWriteAction(Runnable)
    */
+  @Contract(pure=true)
   boolean isWriteAccessAllowed();
 
   /**
@@ -175,6 +177,7 @@ public interface Application extends ComponentManager {
    * @see #assertReadAccessAllowed()
    * @see #runReadAction(Runnable)
    */
+  @Contract(pure=true)
   boolean isReadAccessAllowed();
 
   /**
@@ -182,6 +185,7 @@ public interface Application extends ComponentManager {
    *
    * @return true if the current thread is the Swing dispatch thread, false otherwise.
    */
+  @Contract(pure=true)
   boolean isDispatchThread();
 
   /**

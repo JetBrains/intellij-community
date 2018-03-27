@@ -162,7 +162,7 @@ public class JavaUsageTypeProvider implements UsageTypeProviderEx {
       return UsageType.ANNOTATION;
     }
 
-    if (PsiTreeUtil.getParentOfType(element, PsiImportStatement.class, false) != null) return UsageType.CLASS_IMPORT;
+    if (PsiTreeUtil.getParentOfType(element, PsiImportStatementBase.class, false) != null) return UsageType.CLASS_IMPORT;
     PsiReferenceList referenceList = PsiTreeUtil.getParentOfType(element, PsiReferenceList.class);
     if (referenceList != null) {
       if (referenceList.getParent() instanceof PsiClass) return UsageType.CLASS_EXTENDS_IMPLEMENTS_LIST;
@@ -239,8 +239,6 @@ public class JavaUsageTypeProvider implements UsageTypeProviderEx {
         return UsageType.CLASS_NEW_OPERATOR;
       }
     }
-
-    if (PsiTreeUtil.getParentOfType(element, PsiImportStaticStatement.class, false) != null) return UsageType.CLASS_IMPORT;
 
     return null;
   }

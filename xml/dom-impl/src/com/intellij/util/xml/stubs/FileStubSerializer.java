@@ -23,7 +23,6 @@ import java.io.IOException;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 8/8/12
  */
 public class FileStubSerializer implements ObjectStubSerializer<FileStub, Stub> {
 

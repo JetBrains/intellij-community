@@ -23,7 +23,7 @@ import org.jetbrains.uast.java.expressions.JavaUNamedExpression
 class JavaUAnnotation(
   override val psi: PsiAnnotation,
   givenParent: UElement?
-) : JavaAbstractUElement(givenParent), UAnnotation {
+) : JavaAbstractUElement(givenParent), UAnnotationEx {
   override val qualifiedName: String?
     get() = psi.qualifiedName
 
@@ -33,18 +33,21 @@ class JavaUAnnotation(
     attributes.map { attribute -> JavaUNamedExpression(attribute, this) }
   }
 
+  override val uastAnchor: UElement?
+    get() = psi.nameReferenceElement?.referenceNameElement?.let { UIdentifier(it, this) }
+
   override fun resolve(): PsiClass? = psi.nameReferenceElement?.resolve() as? PsiClass
 
   override fun findAttributeValue(name: String?): UExpression? {
     val context = getUastContext()
     val attributeValue = psi.findAttributeValue(name) ?: return null
-    return context.convertElement(attributeValue, this, null) as? UExpression ?: UastEmptyExpression
+    return context.convertElement(attributeValue, this, null) as? UExpression ?: UastEmptyExpression(this)
   }
 
   override fun findDeclaredAttributeValue(name: String?): UExpression? {
     val context = getUastContext()
     val attributeValue = psi.findDeclaredAttributeValue(name) ?: return null
-    return context.convertElement(attributeValue, this, null) as? UExpression ?: UastEmptyExpression
+    return context.convertElement(attributeValue, this, null) as? UExpression ?: UastEmptyExpression(this)
   }
 
   companion object {

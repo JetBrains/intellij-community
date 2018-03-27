@@ -1,0 +1,6 @@
+UFile (package = )
+    UClass (name = ClassWithInners)
+        UClass (name = InnerClass)
+        UClass (name = InnerEnum)
+    UClass (name = ATrait)
+        UMethod (name = method)

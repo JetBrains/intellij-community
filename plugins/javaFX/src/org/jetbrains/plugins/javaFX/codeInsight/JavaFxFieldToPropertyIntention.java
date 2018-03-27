@@ -203,7 +203,7 @@ public class JavaFxFieldToPropertyIntention extends PsiElementBaseIntentionActio
       myField.setInitializer(newInitializer);
 
       final PsiType fieldType = myField.getType();
-      if (PsiDiamondTypeUtil.canCollapseToDiamond(newInitializer, newInitializer, fieldType)) {
+      if (PsiDiamondTypeUtil.canCollapseToDiamond(newInitializer, (PsiNewExpression)myField.getInitializer(), fieldType)) {
         final PsiJavaCodeReferenceElement classReference = newInitializer.getClassOrAnonymousClassReference();
         if (classReference != null) {
           PsiDiamondTypeUtil.replaceExplicitWithDiamond(classReference.getParameterList());

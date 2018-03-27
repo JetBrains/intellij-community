@@ -54,8 +54,9 @@ public class RestFileViewProvider extends MultiplePsiFilesPerDocumentFileViewPro
     return PythonLanguage.getInstance();
   }
 
+  @NotNull
   @Override
-  protected MultiplePsiFilesPerDocumentFileViewProvider cloneInner(VirtualFile virtualFile) {
+  protected MultiplePsiFilesPerDocumentFileViewProvider cloneInner(@NotNull VirtualFile virtualFile) {
     return new RestFileViewProvider(getManager(), virtualFile, false);
   }
 

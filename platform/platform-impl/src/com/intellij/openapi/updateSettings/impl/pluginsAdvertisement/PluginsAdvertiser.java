@@ -403,7 +403,7 @@ public class PluginsAdvertiser implements StartupActivity {
         }
         for (String id : ids) {
           for (UnknownFeature feature : myFeatures.get(id)) {
-            addressedFeatures.putValue(feature.getFeatureDisplayName(), feature.getImplementationName());
+            addressedFeatures.putValue(feature.getFeatureDisplayName(), feature.getImplementationDisplayName());
           }
         }
         final String addressedFeaturesPresentation = StringUtil.join(addressedFeatures.entrySet(),

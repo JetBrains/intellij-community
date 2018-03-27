@@ -32,7 +32,6 @@ import java.util.*;
 
 /**
  * @author max
- * Date: Oct 21, 2001
  */
 public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   private static final List<RefMethod> EMPTY_METHOD_LIST = Collections.emptyList();

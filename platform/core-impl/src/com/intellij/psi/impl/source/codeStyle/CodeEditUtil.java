@@ -70,7 +70,7 @@ public class CodeEditUtil {
     ASTNode result = first;
     if (firstAddedLeaf != null) {
       ASTNode placeHolderEnd = makePlaceHolderBetweenTokens(prevLeaf, firstAddedLeaf, isFormattingRequired(prevLeaf, first), false);
-      if (placeHolderEnd != prevLeaf && first == firstAddedLeaf) {
+      if (placeHolderEnd != prevLeaf && first == firstAddedLeaf || result.getTreeParent() != parent) {
         result = placeHolderEnd;
       }
       ASTNode lastAddedLeaf = findLastLeaf(first, last);

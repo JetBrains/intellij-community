@@ -145,10 +145,6 @@ public class PopupDispatcher implements AWTEventListener, KeyEventDispatcher, Id
     return ourActiveWizardRoot;
   }
 
-  public static boolean isWizardShowing() {
-    return ourActiveWizardRoot != null;
-  }
-
   public Component getComponent() {
     return ourShowingStep != null ? ourShowingStep.getContent() : null;
   }
@@ -178,8 +174,6 @@ public class PopupDispatcher implements AWTEventListener, KeyEventDispatcher, Id
   }
 
   public boolean close() {
-    final String s = "sdfsf";
-
     return disposeActiveWizard();
   }
 

@@ -29,7 +29,7 @@ import java.util.ResourceBundle;
 public class InspectionsBundle {
   private static Reference<ResourceBundle> ourBundle;
 
-  private static final String BUNDLE = "messages.InspectionsBundle";
+  public static final String BUNDLE = "messages.InspectionsBundle";
 
   private InspectionsBundle() { }
 

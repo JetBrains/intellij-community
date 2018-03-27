@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,14 +17,14 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.NodeKind;
+import org.jetbrains.idea.svn.api.Revision;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationManager;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.history.SimplePropertyRevision;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusType;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
 import java.util.List;
@@ -55,7 +41,7 @@ class SvnChangeProviderContext implements StatusReceiver {
   @NotNull private final List<SvnChangedFile> myDeletedFiles = ContainerUtil.newArrayList();
   // for files moved in a subtree, which were the targets of merge (for instance).
   @NotNull private final Map<String, Status> myTreeConflicted = ContainerUtil.newHashMap();
-  @NotNull private final Map<FilePath, SVNURL> myCopyFromURLs = ContainerUtil.newHashMap();
+  @NotNull private final Map<FilePath, Url> myCopyFromURLs = ContainerUtil.newHashMap();
   @NotNull private final SvnVcs myVcs;
   private final SvnBranchConfigurationManager myBranchConfigurationManager;
   @NotNull private final List<File> filesToRefresh = ContainerUtil.newArrayList();
@@ -84,11 +70,11 @@ class SvnChangeProviderContext implements StatusReceiver {
   }
 
   @Override
-  public void processCopyRoot(VirtualFile file, SVNURL url, WorkingCopyFormat format, SVNURL rootURL) {
+  public void processCopyRoot(VirtualFile file, Url url, WorkingCopyFormat format, Url rootURL) {
   }
 
   @Override
-  public void bewareRoot(VirtualFile vf, SVNURL url) {
+  public void bewareRoot(VirtualFile vf, Url url) {
   }
 
   @Override
@@ -142,8 +128,8 @@ class SvnChangeProviderContext implements StatusReceiver {
    * @return the copy source url, or null if the file isn't a copy of anything
    */
   @Nullable
-  public SVNURL getParentCopyFromURL(@NotNull FilePath filePath) throws SvnBindException {
-    SVNURL result = null;
+  public Url getParentCopyFromURL(@NotNull FilePath filePath) throws SvnBindException {
+    Url result = null;
     FilePath parent = filePath;
 
     while (parent != null && !myCopyFromURLs.containsKey(parent)) {
@@ -151,7 +137,7 @@ class SvnChangeProviderContext implements StatusReceiver {
     }
 
     if (parent != null) {
-      SVNURL copyFromUrl = myCopyFromURLs.get(parent);
+      Url copyFromUrl = myCopyFromURLs.get(parent);
 
       //noinspection ConstantConditions
       result = parent == filePath ? copyFromUrl : append(copyFromUrl, FileUtil.getRelativePath(parent.getIOFile(), filePath.getIOFile()));
@@ -160,7 +146,7 @@ class SvnChangeProviderContext implements StatusReceiver {
     return result;
   }
 
-  public void addCopiedFile(@NotNull FilePath filePath, @NotNull Status status, @NotNull SVNURL copyFromURL) {
+  public void addCopiedFile(@NotNull FilePath filePath, @NotNull Status status, @NotNull Url copyFromURL) {
     myCopiedFiles.add(new SvnChangedFile(filePath, status, copyFromURL));
     ContainerUtil.putIfNotNull(filePath, status.getCopyFromURL(), myCopyFromURLs);
   }
@@ -183,7 +169,7 @@ class SvnChangeProviderContext implements StatusReceiver {
       myDeletedFiles.add(new SvnChangedFile(filePath, status));
     }
     else {
-      SVNURL parentCopyFromURL = getParentCopyFromURL(filePath);
+      Url parentCopyFromURL = getParentCopyFromURL(filePath);
       if (parentCopyFromURL != null) {
         addCopiedFile(filePath, status, parentCopyFromURL);
       }
@@ -360,7 +346,7 @@ class SvnChangeProviderContext implements StatusReceiver {
 
     // TODO: There are cases when status output is like (on newly added file with some properties that is locally deleted)
     // <entry path="some_path"> <wc-status item="missing" revision="-1" props="modified"> </wc-status> </entry>
-    // TODO: For such cases in current logic we'll have Change with before revision containing SVNRevision.UNDEFINED
+    // TODO: For such cases in current logic we'll have Change with before revision containing Revision.UNDEFINED
     // TODO: Analyze if this logic is OK or we should update flow somehow (for instance, to have null before revision)
     ContentRevision beforeRevision =
       !svnStatus.isProperty(StatusType.STATUS_ADDED) || deletedStatus != null ? createPropertyRevision(change, beforeFile, true) : null;
@@ -376,7 +362,7 @@ class SvnChangeProviderContext implements StatusReceiver {
     throws SvnBindException {
     FilePath path = ChangesUtil.getFilePath(change);
     ContentRevision contentRevision = isBeforeRevision ? change.getBeforeRevision() : change.getAfterRevision();
-    SVNRevision revision = isBeforeRevision ? SVNRevision.BASE : SVNRevision.WORKING;
+    Revision revision = isBeforeRevision ? Revision.BASE : Revision.WORKING;
 
     return new SimplePropertyRevision(getPropertyList(myVcs, file, revision), path, getRevisionNumber(contentRevision));
   }

@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package org.jetbrains.jps.model.java.impl;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -128,7 +130,9 @@ public class JpsJavaExtensionServiceImpl extends JpsJavaExtensionService {
 
   @Override
   public JpsTypedLibrary<JpsSdk<JpsDummyElement>> addJavaSdk(@NotNull JpsGlobal global, @NotNull String name, @NotNull String homePath) {
-    String version = JdkVersionDetector.getInstance().detectJdkVersion(homePath);
+    JdkVersionDetector.JdkVersionInfo jdkInfo = JdkVersionDetector.getInstance().detectJdkVersionInfo(homePath);
+    assert jdkInfo != null : homePath;
+    String version = JdkVersionDetector.formatVersionString(jdkInfo.version);
     JpsTypedLibrary<JpsSdk<JpsDummyElement>> sdk = global.addSdk(name, homePath, version, JpsJavaSdkType.INSTANCE);
     File homeDir = new File(FileUtil.toSystemDependentName(homePath));
     List<File> roots = JavaSdkUtil.getJdkClassesRoots(homeDir, false);

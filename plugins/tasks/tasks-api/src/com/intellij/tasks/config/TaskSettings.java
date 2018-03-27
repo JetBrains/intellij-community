@@ -23,7 +23,6 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 3/23/12
  */
 @State(
   name = "TaskSettings",

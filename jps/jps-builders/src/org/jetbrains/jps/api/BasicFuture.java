@@ -25,7 +25,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 5/3/12
  */
 public class BasicFuture<T> implements TaskFuture<T> {
   private final Semaphore mySemaphore = new Semaphore(1);

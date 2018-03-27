@@ -6,6 +6,8 @@ import groovy.transform.CompileStatic
 import static org.jetbrains.intellij.build.LibraryLicense.jetbrainsLibrary
 
 /**
+ * Defines information about licenses of libraries located in 'community', 'contrib' and 'android' repositories.
+ *
  * @author nik
  */
 @CompileStatic
@@ -16,9 +18,6 @@ class CommunityLibraryLicenses {
                        licenseUrl: "http://www.eclipse.org/org/documents/epl-v10.html"),
     new LibraryLicense(name: "aether-api", version: "1.13.1", libraryName: "aether-api-1.13.1.jar", license: "Apache 2.0",
                        url: "http://maven.apache.org/", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
-    new LibraryLicense(name: "Alloy L&F", libraryName: "alloy.jar", version: "1.4.4", license: "link (company license)",
-                       url: "http://lookandfeel.incors.com/",
-                       licenseUrl: "http://lookandfeel.incors.com/display_licence.php?back=purchase.php&selMenu=Purchase"),
     new LibraryLicense(name: "Android Builder Model", libraryName: "builder-model", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Builder", libraryName: "android-builder", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Gradle model", libraryName: "android-gradle-model", version: "0.4-SNAPSHOT", license: "Apache 2.0",
@@ -28,6 +27,12 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "Android SDK Tools", libraryName: "android-sdk-tools", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Analytics", libraryName: "google-analytics-library", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Profiler", libraryName: "studio-profiler-grpc-1.0-jarjar", license: "Apache 2.0", url: "http://source.android.com/"),
+    new LibraryLicense(name: "Android Analytics Shared", libraryName: "com.android.tools.analytics-library:shared:26.0.0", license: "Apache 2.0", url: "http://source.android.com/"),
+    new LibraryLicense(name: "Android Analytics Tracker", libraryName: "com.android.tools.analytics-library:tracker:26.0.0", license: "Apache 2.0", url: "http://source.android.com/"),
+    new LibraryLicense(name: "Android Analytics Protos", libraryName: "analytics-protos", license: "Apache 2.0", url: "http://source.android.com/"),
+    new LibraryLicense(name: "Android Baksmali", libraryName: "baksmali", license: "Apache 2.0", url: "http://source.android.com/"),
+    new LibraryLicense(name: "Android Archive Patcher", libraryName: "archive-patcher", license: "Apache 2.0", url: "http://source.android.com/"),
+    new LibraryLicense(name: "Android Aia Manifest Proto", libraryName: "aia-manifest-proto-1.0-jarjar.jar", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Layout Library", libraryName: "layoutlib", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Android DEX library", libraryName: "dexlib2", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Jimfs library", libraryName: "jimfs", license: "Apache 2.0", url: "https://github.com/google/jimfs"),
@@ -36,8 +41,6 @@ class CommunityLibraryLicenses {
                        licenseUrl: "http://ant.apache.org/license.html"),
     new LibraryLicense(name: "ANTLR 4 Runtime", libraryName: "antlr-runtime-4.1.jar", version: "4.1", license: "BSD",
                        url: "http://www.antlr.org", licenseUrl: "http://www.antlr.org/license.html"),
-    new LibraryLicense(name: "Antlr", libraryName: "antlr.jar", version: "3.4", license: "BSD", url: "http://www.antlr.org",
-                       licenseUrl: "http://www.antlr.org/license.html"),
     new LibraryLicense(name: "Apache Commons BeanUtils", libraryName: "commons-beanutils.jar", version: "1.6", license: "Apache 2.0",
                        url: "http://commons.apache.org/beanutils/"),
     new LibraryLicense(name: "Apache Commons Codec", libraryName: "commons-codec", version: "1.8", license: "Apache 2.0",
@@ -48,9 +51,8 @@ class CommunityLibraryLicenses {
                        url: "http://jakarta.apache.org/commons/discovery/", licenseUrl: "http://www.apache.org/licenses/"),
     new LibraryLicense(name: "Apache Commons HTTPClient", libraryName: "http-client-3.1", version: "3.1&nbsp; (with patch by JetBrains)",
                        license: "Apache 2.0", url: "http://hc.apache.org/httpclient-3.x"),
-    /* Android Studio: added by Change I38bafaf1 / commit 0c703f7 */
     new LibraryLicense(name: "Apache Commons IO", libraryName: "commons-io", version: "2.2", license: "Apache 2.0",
-                       url: "http://commons.apache.org/io/", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),
+                       url: "http://commons.apache.org/io/"),
     new LibraryLicense(name: "Apache Commons Lang", libraryName: "commons-lang", version: "2.6", license: "Apache 2.0",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt", url: "http://commons.apache.org/proper/commons-lang/"),
     new LibraryLicense(name: "Apache Commons Lang 3", libraryName: "commons-lang3-3.2.1.jar", version: "3.2.1", license: "Apache 2.0",
@@ -113,6 +115,8 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "epydoc", attachedTo: "python-helpers", version: "3.0.1", license: "MIT", url: "http://epydoc.sourceforge.net/"),
     new LibraryLicense(name: "Fest", libraryName: "fest", version: "", license: "Apache 2.0",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt", url: "https://code.google.com/p/fest/"),
+    new LibraryLicense(name: "fest-swing", libraryName: "fest-swing", version: "", license: "Apache 2.0",
+                       licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt", url: "https://github.com/JetBrains/intellij-deps-swing-testing"),
     new LibraryLicense(name: "FiraCode", attachedTo: "platform-resources", version: "1.200", license: "OFL", url: "https://github.com/tonsky/FiraCode/blob/master/LICENSE"),
     new LibraryLicense(name: "FreeMarker", attachedTo: "coverage", version: "2.3.15", license: "BSD", url: "http://freemarker.sourceforge.net/"),
     new LibraryLicense(name: "FreeMarker", libraryName: "freemarker", version: "2.3.20", license: "BSD",
@@ -123,8 +127,6 @@ class CommunityLibraryLicenses {
                        url: "https://github.com/codehaus/gant", licenseUrl: "https://github.com/codehaus/gant/blob/master/LICENCE.txt"),
     new LibraryLicense(name: "Gherkin", libraryName: "Gherkin", version: "2.12.2", license: "MIT",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt", url: "https://github.com/cucumber/gherkin"),
-    new LibraryLicense(name: "Gluegen", libraryName: "gluegen-rt", license: "Creative Commons Attribution License",
-                       url: "https://jogamp.org/gluegen/www/", licenseUrl: "http://creativecommons.org/licenses/by/3.0"),
     new LibraryLicense(name: "Google Feedback", libraryName: "GoogleFeedback.jar", version: "", license: "TBD"),
     new LibraryLicense(name: "Gradle", version: "4.4", license: "Apache 2.0", url: "http://gradle.org/",
                        licenseUrl: "http://gradle.org/license"),
@@ -182,6 +184,8 @@ class CommunityLibraryLicenses {
                        url: "http://jeuclid.sourceforge.net", licenseUrl: "http://sourceforge.net/p/jeuclid/code/ci/default/tree/LICENSE.txt"),
     new LibraryLicense(name: "Jackson", libraryName: "jackson", version: "2.5.1", license: "Apache 2.0",
                        licenseUrl: "http://www.eclipse.org/org/documents/edl-v10.php", url: "https://github.com/FasterXML/jackson"),
+    new LibraryLicense(name: "javax inject", libraryName: "javax.inject:javax.inject:1", version: "1", license: "Apache 2.0",
+                       licenseUrl: "http://apache.org/licenses/LICENSE-2.0", url: "http://code.google.com/p/atinject/"),
     new LibraryLicense(name: "JGit", libraryName: "jgit", version: "4.0", license: "Eclipse Distribution License 1.0",
                        licenseUrl: "http://www.eclipse.org/org/documents/edl-v10.php", url: "https://eclipse.org/jgit/"),
     new LibraryLicense(name: "JGoodies Common", libraryName: "jgoodies-common", version: "1.4.0", license: "BSD",
@@ -196,10 +200,6 @@ class CommunityLibraryLicenses {
                        license: "New BSD", licenseUrl: "http://opensource.org/licenses/BSD-3-Clause"),
     new LibraryLicense(name: "JNA", libraryName: "jna", version: "4.5.0", license: "LGPL 2.1", url: "https://github.com/java-native-access/jna",
                        licenseUrl: "http://www.opensource.org/licenses/lgpl-2.1.php"),
-    new LibraryLicense(name: "jsch-agent-proxy for svnkit trilead", libraryName: "jsch.agentproxy.svnkit-trilead-ssh2.jar",
-                       version: "0.0.9",
-                       license: "BSD", url: "https://github.com/ymnk/jsch-agent-proxy",
-                       licenseUrl: "https://github.com/ymnk/jsch-agent-proxy/blob/master/LICENSE.txt"),
     new LibraryLicense(name: "jsch-agent-proxy", libraryName: "jsch-agent-proxy", version: "0.0.9", license: "BSD",
                        url: "https://github.com/ymnk/jsch-agent-proxy",
                        licenseUrl: "https://github.com/ymnk/jsch-agent-proxy/blob/master/LICENSE.txt"),
@@ -229,6 +229,12 @@ class CommunityLibraryLicenses {
                        url: "http://sourceforge.net/projects/loboevolution/", licenseUrl: "http://opensource.org/licenses/mit-license.php"),
     new LibraryLicense(name: "Log4j", libraryName: "Log4J", version: "1.2.17", license: "Apache 2.0",
                        url: "http://logging.apache.org/log4j/1.2/index.html", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
+    /* Android Studio: removed by Change Iccdcc705 / commit 9e6f986
+    new LibraryLicense(name: "Lombok AST", libraryName: "lombok-ast", version: "0.2.1", license: "MIT", url: "http://projectlombok.org/",
+                       licenseUrl: "http://opensource.org/licenses/mit-license.php"),
+    */
+    new LibraryLicense(name: "lz4-java", libraryName: "lz4-java", version: "1.3", license: "Apache 2.0", url: "https://github.com/lz4/lz4-java",
+                       licenseUrl: "https://github.com/lz4/lz4-java/blob/master/LICENSE.txt"),
     new LibraryLicense(name: "markdown4j", libraryName: "markdown4j-2.2", version: "2.2", license: "New BSD",
                        url: "https://code.google.com/p/markdown4j/", licenseUrl: "http://opensource.org/licenses/BSD-3-Clause"),
     new LibraryLicense(name: "markdownj", attachedTo: "tasks-core", version: "", license: "BSD", url: "https://github.com/myabc/markdownj",
@@ -314,8 +320,6 @@ class CommunityLibraryLicenses {
                        licenseUrl: "http://www.mozilla.org/MPL/"),
     new LibraryLicense(name: "SceneBuilderKit", version: "8.2.0", license: "BSD", url: "http://gluonhq.com/open-source/scene-builder/",
                        licenseUrl: "http://www.oracle.com/technetwork/licenses/bsd-license-1835287.html"),
-    new LibraryLicense(name: "Sequence", libraryName: "sequence-library.jar", version: "bundled with SVNKit",
-                       license: "BSD (see LICENSE.txt in sequence-library.jar)", url: "http://www.syntevo.com"),
     new LibraryLicense(name: "six.py", attachedTo: "python-helpers", version: "1.9.0", license: "MIT", url: "http://pythonhosted.org/six/"),
     new LibraryLicense(name: "Slf4j", version: "1.7.10", license: "MIT License", url: "http://slf4j.org/",
                        licenseUrl: "http://slf4j.org/license.html"),
@@ -340,14 +344,8 @@ class CommunityLibraryLicenses {
                        url: "https://android.googlesource.com/platform/prebuilts/tools/+/master/common/spantable/"),
     new LibraryLicense(name: "sphinxcontrib-napoleon", attachedTo: "python-helpers", version: "0.3.11", license: "BSD",
                        url: "http://sphinxcontrib-napoleon.readthedocs.org/"),
-    new LibraryLicense(name: "sqljet", version: "bundled with SVNKit", libraryName: "sqljet.jar", license: "link (commercial license)",
-                       url: "http://sqljet.com", licenseUrl: "https://github.com/JetBrains/intellij-community/blob/master/license/svnkit-license.txt"),
     new LibraryLicense(name: "StreamEx", version: "0.6.2", libraryName: "StreamEx", license: "Apache 2.0",
                        url: "https://github.com/amaembo/streamex", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
-    new LibraryLicense(name: "svnkit-javahl", version: "bundled with SVNKit", libraryName: "svnkit-javahl.jar",
-                       license: "link (commercial license)", url: "http://www.svnkit.com/", licenseUrl: "https://github.com/JetBrains/intellij-community/blob/master/license/svnkit-license.txt"),
-    new LibraryLicense(name: "SVNKit", libraryName: "svnkit.jar", version: "1.8.12", license: "link (commercial license)",
-                       url: "http://www.svnkit.com/", licenseUrl: "https://github.com/JetBrains/intellij-community/blob/master/license/svnkit-license.txt"),
     new LibraryLicense(name: "swingx", libraryName: "swingx", version: "1.6.2-2", license: "LGPL 2.1", url: "http://java.net/downloads/swingx/",
                        licenseUrl: "http://www.opensource.org/licenses/lgpl-2.1.php"),
     new LibraryLicense(name: "TestNG", version: "6.9 snapshot", license: "Apache 2.0", url: "http://testng.org/doc/",
@@ -366,6 +364,7 @@ class CommunityLibraryLicenses {
                        licenseUrl: "http://trove4j.sourceforge.net/html/license.html"),
     new LibraryLicense(name: "Velocity", version: "1.7", license: "Apache 2.0", url: "http://velocity.apache.org/",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),
+    // Android Studio: added by Change Ibf21a74c / commit 4904fa8
     new LibraryLicense(name: "wadl-core", libraryName: "wadl-core.jar", license: "CDDL 1.1", url: "https://javaee.github.io/wadl/",
                        licenseUrl: "http://glassfish.java.net/public/CDDL+GPL_1_1.html"),
     new LibraryLicense(name: "weberknecht", libraryName: "weberknecht-0.1.5.jar", version: "0.1.5", license: "Apache 2.0",
@@ -394,12 +393,19 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "YourKit Java Profiler", libraryName: "yjp-controller-api-redist.jar", version: "8.0.x",
                        license: "link (commercial license)", url: "http://yourkit.com/",
                        licenseUrl: "http://www.yourkit.com/purchase/license.html"),
-    new LibraryLicense(name: "XZ for Java", libraryName: "xz", version: "1.5", license: "Public Domain", url: "http://tukaani.org/xz/java.html"),
+    new LibraryLicense(name: "XZ for Java", libraryName: "xz", version: "1.5", license: "Public Domain",
+                       url: "http://tukaani.org/xz/java.html"),
+    new LibraryLicense(name: "Plantuml", libraryName: "plantuml.jar", version: "1.2017.18", license: "Apache 2.0",
+                       url: "http://plantuml.com", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),
+    new LibraryLicense(name: "FST", libraryName: "de.ruedigermoeller:fst", version: "2.56", license: "Apache 2.0",
+                       url: "https://github.com/RuedigerMoeller/fast-serialization", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),
+
+    // Android Studio: added by Change I43400d97 / commit 27761cb
     new LibraryLicense(name: "JUniversal Char Detection", libraryName: "juniversalchardet", version: "1.0.3", license: "MPL 1.1",
                        url: "https://code.google.com/archive/p/juniversalchardet"),
+    // Android Studio: added by Change Ib7a30b9c / commit 91531e9
     new LibraryLicense(name: "Java Poet", libraryName: "javapoet-1.8.0", version: "1.8.0", license: "Apache 2.0",
                        url: "https://github.com/square/javapoet"),
-
     jetbrainsLibrary("kotlin-stdlib-jre8"),  // Android Studio: added by Change If94a51ef / commit e8d58c9
 
     jetbrainsLibrary("Coverage"),

@@ -22,6 +22,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -53,6 +54,7 @@ public class ObjectsRequireNonNullIntention extends Intention {
     final PsiVariable variable = (PsiVariable)target;
     final List<String> notNulls = NullableNotNullManager.getInstance(element.getProject()).getNotNulls();
     final PsiAnnotation annotation = AnnotationUtil.findAnnotation(variable, notNulls);
+    final CommentTracker commentTracker = new CommentTracker();
     if (annotation == null) {
       final PsiStatement referenceStatement = PsiTreeUtil.getParentOfType(referenceExpression, PsiStatement.class);
       if (referenceStatement == null) {
@@ -78,10 +80,11 @@ public class ObjectsRequireNonNullIntention extends Intention {
       if (statementToDelete == null) {
         return;
       }
-      statementToDelete.delete();
+      commentTracker.delete(statementToDelete);
     }
     PsiReplacementUtil.replaceExpressionAndShorten(referenceExpression,
-                                                   "java.util.Objects.requireNonNull(" + referenceExpression.getText() + ")");
+                                                   "java.util.Objects.requireNonNull(" + commentTracker.markUnchanged(referenceExpression).getText() + ")",
+                                                   commentTracker);
   }
 
   private static class NullCheckedAssignmentPredicate implements PsiElementPredicate {

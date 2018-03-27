@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.ide.ui.laf;
 
 import com.intellij.CommonBundle;
@@ -39,7 +41,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.UIResource;
 import javax.swing.plaf.metal.DefaultMetalTheme;
@@ -56,7 +57,6 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.List;
@@ -109,11 +109,8 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     List<UIManager.LookAndFeelInfo> lafList = ContainerUtil.newArrayList();
 
     if (SystemInfo.isMac) {
-      if (useIntelliJInsteadOfAqua()) {
-        lafList.add(new UIManager.LookAndFeelInfo("Default", IntelliJLaf.class.getName()));
-      } else {
-        lafList.add(new UIManager.LookAndFeelInfo("Default", UIManager.getSystemLookAndFeelClassName()));
-      }
+      String className = useIntelliJInsteadOfAqua() ? IntelliJLaf.class.getName() : UIManager.getSystemLookAndFeelClassName();
+      lafList.add(new UIManager.LookAndFeelInfo("Light", className));
     }
     else {
       if (isIntelliJLafEnabled()) {
@@ -128,7 +125,8 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
             && !"CDE/Motif".equalsIgnoreCase(name)
             && !"Nimbus".equalsIgnoreCase(name)
             && !"Windows Classic".equalsIgnoreCase(name)
-            && !name.startsWith("JGoodies")) {
+            && !name.startsWith("JGoodies")
+            && !("Windows".equalsIgnoreCase(name) && SystemInfo.isWin8OrNewer)) {
           lafList.add(laf);
         }
       }
@@ -394,19 +392,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   @Nullable
   private static Icon getAquaMenuInvertedIcon() {
     if (UIUtil.isUnderAquaLookAndFeel() || (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF())) {
-      final Icon arrow = (Icon)UIManager.get("Menu.arrowIcon");
-      if (arrow == null) return null;
-
-      try {
-        final Method method = ReflectionUtil.getMethod(arrow.getClass(), "getInvertedIcon");
-        if (method != null) {
-          return (Icon)method.invoke(arrow);
-        }
-        return null;
-      }
-      catch (InvocationTargetException | IllegalAccessException e1) {
-        return null;
-      }
+      return AllIcons.Mac.Tree_white_right_arrow;
     }
     return null;
   }
@@ -422,8 +408,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     fixPopupWeight();
 
     fixGtkPopupStyle();
-
-    fixTreeWideSelection(uiDefaults);
 
     fixMenuIssues(uiDefaults);
 
@@ -514,10 +498,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       uiDefaults.put("Menu.invertedArrowIcon", getAquaMenuInvertedIcon());
       uiDefaults.put("Menu.disabledArrowIcon", getAquaMenuDisabledIcon());
     }
-    else if (UIUtil.isUnderJGoodiesLookAndFeel()) {
-      uiDefaults.put("Menu.opaque", true);
-      uiDefaults.put("MenuItem.opaque", true);
-    }
 
     if (UIUtil.isUnderWin10LookAndFeel()) {
       uiDefaults.put("Menu.arrowIcon", new Win10MenuArrowIcon());
@@ -526,19 +506,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     }
 
     uiDefaults.put("MenuItem.background", UIManager.getColor("Menu.background"));
-  }
-
-  private static void fixTreeWideSelection(UIDefaults uiDefaults) {
-    if (UIUtil.isUnderAlloyIDEALookAndFeel() || UIUtil.isUnderJGoodiesLookAndFeel()) {
-      final Color bg = new ColorUIResource(56, 117, 215);
-      final Color fg = new ColorUIResource(255, 255, 255);
-      uiDefaults.put("info", bg);
-      uiDefaults.put("textHighlight", bg);
-      for (String key : ourAlloyComponentsToPatchSelection) {
-        uiDefaults.put(key + ".selectionBackground", bg);
-        uiDefaults.put(key + ".selectionForeground", fg);
-      }
-    }
   }
 
   private static void fixSeparatorColor(UIDefaults uiDefaults) {

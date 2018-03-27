@@ -1,6 +1,6 @@
 <component>
   <version codename="Community Edition" major="10" minor="0" eap="true" update-channel="IDEA10EAP"/>
-  <company name="JetBrains s.r.o." url="https://www.jetbrains.com/?fromIDE"/>
+  <company name="JetBrains s.r.o." url="https://www.jetbrains.com"/>
   <build number="__BUILD_NUMBER__" date="__BUILD_DATE__"/>
   <logo url="/idea_community_logo.png" textcolor="FFFFFF"/>
   <about url="/idea_community_about.png"/>

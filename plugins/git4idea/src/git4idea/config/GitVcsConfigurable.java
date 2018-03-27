@@ -15,61 +15,61 @@
  */
 package git4idea.config;
 
-import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurableBase;
 import com.intellij.openapi.project.Project;
 import git4idea.GitVcs;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-
-public class GitVcsConfigurable implements Configurable {
-
-  public static final String DISPLAY_NAME = GitVcs.NAME;
-
+public class GitVcsConfigurable extends ConfigurableBase<GitVcsPanel, GitVcsConfigurable.GitVcsSettingsHolder> {
   private final Project myProject;
-  private final GitVcsSettings mySettings;
-  @NotNull private final GitSharedSettings mySharedSettings;
-  private GitVcsPanel panel;
+  private final GitVcsSettingsHolder mySettingsHolder;
 
-  public GitVcsConfigurable(@NotNull Project project, @NotNull GitVcsSettings settings, @NotNull GitSharedSettings sharedSettings) {
+  public GitVcsConfigurable(@NotNull GitVcsApplicationSettings applicationSettings,
+                            @NotNull Project project,
+                            @NotNull GitVcsSettings projectSettings,
+                            @NotNull GitSharedSettings sharedSettings) {
+    super("vcs." + GitVcs.NAME, GitVcs.NAME, "project.propVCSSupport.VCSs.Git");
     myProject = project;
-    mySettings = settings;
-    mySharedSettings = sharedSettings;
+    mySettingsHolder = new GitVcsSettingsHolder(applicationSettings, projectSettings, sharedSettings);
+  }
+
+  @Override
+  protected GitVcsPanel createUi() {
+    return new GitVcsPanel(myProject);
   }
 
   @NotNull
   @Override
-  public String getDisplayName() {
-    return DISPLAY_NAME;
+  protected GitVcsSettingsHolder getSettings() {
+    return mySettingsHolder;
   }
 
-  @Nullable
-  @Override
-  public String getHelpTopic() {
-    return "project.propVCSSupport.VCSs.Git";
-  }
+  static class GitVcsSettingsHolder {
+    @NotNull private final GitVcsApplicationSettings myApplicationSettings;
+    @NotNull private final GitVcsSettings myProjectSettings;
+    @NotNull private final GitSharedSettings mySharedSettings;
 
-  @NotNull
-  @Override
-  public JComponent createComponent() {
-    panel = new GitVcsPanel(myProject);
-    panel.load(mySettings, mySharedSettings);
-    return panel.getPanel();
-  }
+    GitVcsSettingsHolder(@NotNull GitVcsApplicationSettings applicationSettings,
+                         @NotNull GitVcsSettings projectSettings,
+                         @NotNull GitSharedSettings sharedSettings) {
+      myApplicationSettings = applicationSettings;
+      myProjectSettings = projectSettings;
+      mySharedSettings = sharedSettings;
+    }
 
-  @Override
-  public boolean isModified() {
-    return panel.isModified(mySettings, mySharedSettings);
-  }
+    @NotNull
+    public GitVcsApplicationSettings getApplicationSettings() {
+      return myApplicationSettings;
+    }
 
-  @Override
-  public void apply() {
-    panel.save(mySettings, mySharedSettings);
-  }
+    @NotNull
+    public GitVcsSettings getProjectSettings() {
+      return myProjectSettings;
+    }
 
-  @Override
-  public void reset() {
-    panel.load(mySettings, mySharedSettings);
+    @NotNull
+    public GitSharedSettings getSharedSettings() {
+      return mySharedSettings;
+    }
   }
 }

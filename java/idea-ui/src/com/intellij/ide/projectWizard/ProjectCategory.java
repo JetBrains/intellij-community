@@ -25,7 +25,6 @@ import javax.swing.*;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 04.09.13
  */
 public abstract class ProjectCategory {
 

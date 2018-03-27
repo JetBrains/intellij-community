@@ -18,6 +18,7 @@ package com.siyeh.ipp.enumswitch;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NonNls;
@@ -68,12 +69,13 @@ public class CreateEnumSwitchBranchesIntention extends Intention {
     if (body == null) {
       // replace entire switch statement if no code block is present
       @NonNls final StringBuilder newStatementText = new StringBuilder();
-      newStatementText.append("switch(").append(switchExpression.getText()).append("){");
+      CommentTracker commentTracker = new CommentTracker();
+      newStatementText.append("switch(").append(commentTracker.markUnchanged(switchExpression).getText()).append("){");
       for (PsiEnumConstant missingEnumElement : missingEnumElements) {
-        newStatementText.append("case ").append(missingEnumElement.getName()).append(": break;");
+        newStatementText.append("case ").append(commentTracker.markUnchanged(missingEnumElement).getName()).append(": break;");
       }
       newStatementText.append('}');
-      PsiReplacementUtil.replaceStatement(switchStatement, newStatementText.toString());
+      PsiReplacementUtil.replaceStatement(switchStatement, newStatementText.toString(), commentTracker);
       return;
     }
     final Map<PsiEnumConstant, PsiEnumConstant> nextEnumConstants = new HashMap<>(fields.length);

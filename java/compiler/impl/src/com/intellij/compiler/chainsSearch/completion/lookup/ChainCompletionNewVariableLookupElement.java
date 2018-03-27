@@ -48,8 +48,7 @@ public class ChainCompletionNewVariableLookupElement extends LookupElement {
     VariableKind variableKind = myField ? VariableKind.FIELD : VariableKind.LOCAL_VARIABLE;
     myNewVarName = Stream
       .of(codeStyleManager.suggestVariableName(variableKind, null, null, elementFactory.createType(qualifierClass)).names)
-      .sorted(Comparator.comparing(String::length).reversed())
-      .findFirst()
+      .max(Comparator.comparing(String::length))
       .orElseThrow(IllegalStateException::new);
     myQualifierClass = qualifierClass;
     putUserData(PreferByKindWeigher.INTRODUCED_VARIABLE, Boolean.TRUE);

@@ -20,8 +20,6 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.injected.editor.DocumentWindow;
-import com.intellij.injected.editor.DocumentWindowImpl;
-import com.intellij.injected.editor.EditorWindowImpl;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.injection.MultiHostInjector;
@@ -31,6 +29,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.Extensions;
@@ -48,12 +48,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
+import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ConcurrentList;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -63,6 +63,7 @@ import java.util.*;
 /**
  * @author cdr
  */
+@SuppressWarnings("deprecation")
 public class InjectedLanguageManagerImpl extends InjectedLanguageManager implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl");
   @SuppressWarnings("RedundantStringConstructorCall")
@@ -116,48 +117,53 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
   @Override
   public void dispose() {
     myProgress.cancel();
+    disposeInvalidEditors();
+  }
+
+  public static void disposeInvalidEditors() {
     EditorWindowImpl.disposeInvalidEditors();
   }
 
   @Override
-  public void startRunInjectors(@NotNull final Document hostDocument, final boolean synchronously) {
+  public void startRunInjectorsInRange(@NotNull Document hostDocument, @NotNull TextRange range, boolean synchronously) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (myProject.isDisposed()) return;
     if (!synchronously && ApplicationManager.getApplication().isWriteAccessAllowed()) return;
+
     // use cached to avoid recreate PSI in alien project
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
     final PsiFile hostPsiFile = documentManager.getCachedPsiFile(hostDocument);
     if (hostPsiFile == null) return;
 
-    final ConcurrentList<DocumentWindow> injected = InjectedLanguageUtil.getCachedInjectedDocuments(hostPsiFile);
+    List<DocumentWindow> injected = getCachedInjectedDocumentsInRange(hostPsiFile, range);
     if (injected.isEmpty()) return;
+
+    Editor editor = PsiEditorUtil.Service.getInstance().findEditorByPsiElement(hostPsiFile);
+    if (editor == null) return;
 
     if (myProgress.isCanceled()) {
       myProgress = new DaemonProgressIndicator();
     }
-    final Set<DocumentWindow> newDocuments = Collections.synchronizedSet(new THashSet<>());
-    final Processor<DocumentWindow> commitProcessor = documentWindow -> {
-      if (myProject.isDisposed()) return false;
+
+    Runnable commitInjectionsRunnable = () -> {
       ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-      if (indicator != null && indicator.isCanceled()) return false;
-      if (documentManager.isUncommited(hostDocument) || !hostPsiFile.isValid()) return false; // will be committed later
+      if (myProgress.isCanceled() || myProject.isDisposed() || indicator != null && indicator.isCanceled()) return;
+      if (documentManager.isUncommited(hostDocument) || !hostPsiFile.isValid()) return; // will be committed later
 
-      // it is here where the reparse happens and old file contents replaced
-      InjectedLanguageUtil.enumerate(documentWindow, hostPsiFile, (injectedPsi, places) -> {
-        DocumentWindow newDocument = (DocumentWindow)injectedPsi.getViewProvider().getDocument();
-        if (newDocument != null) {
-          PsiDocumentManagerBase.checkConsistency(injectedPsi, newDocument);
-          newDocuments.add(newDocument);
-        }
-      });
-      return true;
-    };
-    final Runnable commitInjectionsRunnable = () -> {
-      if (myProgress.isCanceled()) return;
-      JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<>(injected), myProgress, true, commitProcessor);
+      // Re-parse injected fragments from the given range only (that's the range which changed after commit)
+      // These fragments may be needed by synchronous operation (e.g. reformat-commit-psi check)
+      // All others will be re-parsed later on request
 
-      synchronized (ourInjectionPsiLock) {
-        injected.clear();
-        injected.addAll(newDocuments);
+      for (DocumentWindow documentWindow : injected) {
+        int offset = documentWindow.injectedToHost(0);
+        PsiElement element = ObjectUtils.notNull(hostPsiFile.findElementAt(offset), hostPsiFile);
+        // it is here where the reparse happens and old file contents replaced
+        enumerateEx(element, hostPsiFile, true, (injectedPsi, places) -> {
+          DocumentWindow newDocument = (DocumentWindow)injectedPsi.getViewProvider().getDocument();
+          if (newDocument != null) {
+            PsiDocumentManagerBase.checkConsistency(injectedPsi, newDocument);
+          }
+        });
       }
     };
 
@@ -167,6 +173,12 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     else {
       JobLauncher.getInstance().submitToJobThread(() -> ApplicationManagerEx.getApplicationEx().tryRunReadAction(commitInjectionsRunnable), null);
     }
+  }
+
+  @Override
+  public PsiLanguageInjectionHost getInjectionHost(@NotNull FileViewProvider provider) {
+    if (!(provider instanceof InjectedFileViewProvider)) return null;
+    return ((InjectedFileViewProvider)provider).getShreds().getHostPointer().getElement();
   }
 
   @Override
@@ -260,8 +272,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     Disposer.register(parentDisposable, () -> unregisterMultiHostInjector(injector));
   }
 
-  @Override
-  public boolean unregisterMultiHostInjector(@NotNull MultiHostInjector injector) {
+  private boolean unregisterMultiHostInjector(@NotNull MultiHostInjector injector) {
     try {
       return myManualInjectors.remove(injector);
     }
@@ -362,8 +373,8 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
 
   @NotNull
   @Override
-  public List<DocumentWindow> getCachedInjectedDocuments(@NotNull PsiFile hostPsiFile) {
-    return InjectedLanguageUtil.getCachedInjectedDocuments(hostPsiFile);
+  public List<DocumentWindow> getCachedInjectedDocumentsInRange(@NotNull PsiFile hostPsiFile, @NotNull TextRange range) {
+    return InjectedLanguageUtil.getCachedInjectedDocumentsInRange(hostPsiFile, range);
   }
 
   @Override
@@ -399,6 +410,17 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
   @Override
   public boolean mightHaveInjectedFragmentAtOffset(@NotNull Document hostDocument, int hostOffset) {
     return InjectedLanguageUtil.mightHaveInjectedFragmentAtCaret(myProject, hostDocument, hostOffset);
+  }
+
+  @NotNull
+  @Override
+  public DocumentWindow freezeWindow(@NotNull DocumentWindow document) {
+    Place shreds = ((DocumentWindowImpl)document).getShreds();
+    Project project = shreds.getHostPointer().getProject();
+    DocumentEx delegate = ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(project)).getLastCommittedDocument(document.getDelegate());
+    Place place = new Place();
+    place.addAll(ContainerUtil.map(shreds, shred -> ((ShredImpl)shred).withPsiRange()));
+    return new DocumentWindowImpl(delegate, place);
   }
 
   private static int appendRange(@NotNull List<TextRange> result, int start, int length) {
@@ -480,7 +502,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     }
     final PsiElement inTree = InjectedLanguageUtil.loadTree(host, host.getContainingFile());
     final List<Pair<PsiElement, TextRange>> result = new SmartList<>();
-    InjectedLanguageUtil.enumerate(inTree, (injectedPsi, places) -> {
+    enumerate(inTree, (injectedPsi, places) -> {
       for (PsiLanguageInjectionHost.Shred place : places) {
         if (place.getHost() == inTree) {
           result.add(new Pair<>(injectedPsi, place.getRangeInsideHost()));

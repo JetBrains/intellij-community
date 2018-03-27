@@ -23,7 +23,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.testGuiFramework.recorder.components.GuiRecorderComponent
 import com.intellij.testGuiFramework.recorder.ui.GuiScriptEditorPanel
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
@@ -70,7 +69,7 @@ object GlobalActionRecorder {
     if (isActive) return
     LOG.info("Global action recorder is active")
     ActionManager.getInstance().addAnActionListener(globalActionListener)
-    IdeEventQueue.getInstance().addDispatcher(globalAwtProcessor, GuiRecorderComponent) //todo: add disposal dependency on component
+    IdeEventQueue.getInstance().addDispatcher(globalAwtProcessor, GuiRecorderManager.frame) //todo: add disposal dependency on component
     isActive = true
   }
 

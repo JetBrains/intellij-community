@@ -70,23 +70,11 @@ public class PyCompatibilityInspectionTest extends PyInspectionTestCase {
     doTest(LanguageLevel.PYTHON27);
   }
 
-  public void testPyClass() {
-    doTest();
-  }
-
   public void testPrintStatement() {
     doTest();
   }
 
   public void testFromImportStatement() {
-    doTest();
-  }
-
-  public void testAssignmentStatement() {
-    doTest();
-  }
-
-  public void testTryExceptStatement() {
     doTest();
   }
 
@@ -102,10 +90,6 @@ public class PyCompatibilityInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
-  public void testConditionalExpression() {
-    doTest();
-  }
-
   public void testClassBaseList() {
     doTest();
   }
@@ -118,11 +102,6 @@ public class PyCompatibilityInspectionTest extends PyInspectionTestCase {
   // PY-8606
   public void testEllipsisInSubscriptionPy2() {
     doTest(LanguageLevel.PYTHON33);
-  }
-
-  // PY-11047
-  public void testRelativeImport() {
-    doTest();
   }
 
   // PY-15390

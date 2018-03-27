@@ -71,6 +71,7 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
   private String myNativeBundle = JavaFxPackagerConstants.NativeBundles.none.name();
   private List<JavaFxManifestAttribute> myCustomManifestAttributes = new ArrayList<>();
   private JavaFxApplicationIcons myIcons = new JavaFxApplicationIcons();
+  private String myMsgOutputLevel = JavaFxPackagerConstants.MsgOutputLevel.Default.name();
 
   @Override
   public void onBuildFinished(@NotNull final Artifact artifact, @NotNull final CompileContext compileContext) {
@@ -106,6 +107,11 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
       @Override
       protected void registerJavaFxPackagerError(String message) {
         compileContext.addMessage(CompilerMessageCategory.ERROR, message, null, -1, -1);
+      }
+
+      @Override
+      protected void registerJavaFxPackagerInfo(String message) {
+        compileContext.addMessage(CompilerMessageCategory.INFORMATION, message, null, -1, -1);
       }
     };
     javaFxPackager.buildJavaFxArtifact(fxCompatibleSdk.getHomePath());
@@ -335,6 +341,14 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
     myIcons = icons;
   }
 
+  public String getMsgOutputLevel() {
+    return myMsgOutputLevel;
+  }
+
+  public void setMsgOutputLevel(String msgOutputLevel) {
+    myMsgOutputLevel = msgOutputLevel;
+  }
+
   public static abstract class JavaFxPackager extends AbstractJavaFxPackager {
     private final Artifact myArtifact;
     private final JavaFxArtifactProperties myProperties;
@@ -484,6 +498,11 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
     @Override
     public List<JavaFxManifestAttribute> getCustomManifestAttributes() {
       return myProperties.getCustomManifestAttributes();
+    }
+
+    @Override
+    protected JavaFxPackagerConstants.MsgOutputLevel getMsgOutputLevel() {
+      return JavaFxPackagerConstants.MsgOutputLevel.valueOf(myProperties.getMsgOutputLevel());
     }
   }
 }

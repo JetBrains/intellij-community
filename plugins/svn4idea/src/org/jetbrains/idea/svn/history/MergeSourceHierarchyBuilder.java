@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,14 +19,14 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.util.Consumer;
 import com.intellij.util.ThrowableConsumer;
 import org.jetbrains.annotations.NotNull;
-import org.tmatesoft.svn.core.SVNException;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 
 import java.util.List;
 
 /**
 * @author Konstantin Kolosovsky.
 */
-public class MergeSourceHierarchyBuilder implements ThrowableConsumer<Pair<LogEntry, Integer>, SVNException> {
+public class MergeSourceHierarchyBuilder implements ThrowableConsumer<Pair<LogEntry, Integer>, SvnBindException> {
 
   private LogHierarchyNode myCurrentHierarchy;
   @NotNull private final Consumer<LogHierarchyNode> myConsumer;
@@ -35,6 +35,7 @@ public class MergeSourceHierarchyBuilder implements ThrowableConsumer<Pair<LogEn
     myConsumer = consumer;
   }
 
+  @Override
   public void consume(Pair<LogEntry, Integer> svnLogEntryIntegerPair) {
     final LogEntry logEntry = svnLogEntryIntegerPair.getFirst();
     final Integer mergeLevel = svnLogEntryIntegerPair.getSecond();

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.editorActions.moveUpDown;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -30,12 +16,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatement;
 import com.intellij.psi.impl.source.jsp.jspJava.JspTemplateStatement;
-import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 class StatementMover extends LineMover {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.actions.moveUpDown.StatementMover");
@@ -121,29 +105,13 @@ class StatementMover extends LineMover {
 
     PsiElement sibling = firstNonWhiteElement(down ? range.lastElement.getNextSibling() : range.firstElement.getPrevSibling(), down);
     if (sibling != null) {
-      PsiClass aClass = findChildOfType(sibling, PsiClass.class, PsiStatement.class);
+      PsiClass aClass = PsiTreeUtil.findChildOfType(sibling, PsiClass.class, true, PsiStatement.class);
       if (aClass != null && PsiTreeUtil.getParentOfType(aClass, PsiStatement.class) == sibling) {
         destLine = editor.getDocument().getLineNumber(down ? sibling.getTextRange().getEndOffset() + 1 : sibling.getTextRange().getStartOffset());
       }
     }
 
     return destLine;
-  }
-
-  @Nullable
-  private static <T extends PsiElement> T findChildOfType(PsiElement element, Class<T> aClass, Class<? extends PsiElement> stopAt) {
-    PsiElementProcessor.FindElement<PsiElement> processor = new PsiElementProcessor.FindElement<PsiElement>() {
-      @Override
-      public boolean execute(@NotNull PsiElement each) {
-        if (each == element) return true; // strict
-        if (aClass.isInstance(each)) return setFound(each);
-        return stopAt == null || !stopAt.isInstance(each);
-      }
-    };
-
-    PsiTreeUtil.processElements(element, processor);
-    @SuppressWarnings("unchecked") T result = (T)processor.getFoundElement();
-    return result;
   }
 
   private static boolean calcInsertOffset(PsiFile file, Editor editor, LineRange range, MoveInfo info, boolean down) {

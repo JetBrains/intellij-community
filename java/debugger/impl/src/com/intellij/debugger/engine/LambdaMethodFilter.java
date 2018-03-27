@@ -30,7 +30,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 10/26/13
  */
 public class LambdaMethodFilter implements BreakpointStepMethodFilter {
   private final int myLambdaOrdinal;

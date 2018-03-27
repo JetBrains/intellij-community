@@ -17,12 +17,17 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiImportStaticStatement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.util.ObjectUtils;
 
+import java.util.Set;
+
 public class ImportsHighlightUtil {
+  public static final Key<Set<String>> IMPORTS_FROM_TEMPLATE = Key.create("IMPORT_FROM_FILE_TEMPLATE");
+
   static HighlightInfo checkStaticOnDemandImportResolvesToClass(PsiImportStaticStatement statement) {
     if (statement.isOnDemand() && statement.resolveTargetClass() == null) {
       PsiJavaCodeReferenceElement ref = statement.getImportReference();

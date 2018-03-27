@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.idea;
 
@@ -55,7 +43,6 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
-import java.util.concurrent.ForkJoinPool;
 
 /**
  * @author yole
@@ -71,7 +58,7 @@ public class StartupUtil {
     return !Arrays.asList(args).contains(NO_SPLASH);
   }
 
-  public synchronized static void addExternalInstanceListener(@Nullable Consumer<List<String>> consumer) {
+  public static synchronized void addExternalInstanceListener(@Nullable Consumer<List<String>> consumer) {
     // method called by app after startup
     if (ourSocketLock != null) {
       ourSocketLock.setExternalInstanceListener(consumer);
@@ -79,10 +66,11 @@ public class StartupUtil {
   }
 
   @Nullable
-  public synchronized static BuiltInServer getServer() {
+  public static synchronized BuiltInServer getServer() {
     return ourSocketLock == null ? null : ourSocketLock.getServer();
   }
 
+  @FunctionalInterface
   interface AppStarter {
     void start(boolean newConfigFolder);
 
@@ -95,6 +83,7 @@ public class StartupUtil {
   }
 
   static void prepareAndStart(String[] args, AppStarter appStarter) {
+    IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(Main.isHeadless(args));
     boolean newConfigFolder = false;
 
     if (!Main.isHeadless()) {
@@ -131,7 +120,7 @@ public class StartupUtil {
     if (result == ActivationResult.ACTIVATED) {
       System.exit(0);
     }
-    else if (result != ActivationResult.STARTED) {
+    if (result != ActivationResult.STARTED) {
       System.exit(Main.INSTANCE_CHECK_FAILED);
     }
 
@@ -189,7 +178,7 @@ public class StartupUtil {
     return true;
   }
 
-  private synchronized static boolean checkSystemFolders() {
+  private static synchronized boolean checkSystemFolders() {
     String configPath = PathManager.getConfigPath();
     PathManager.ensureConfigFolderExists();
     if (!new File(configPath).isDirectory()) {
@@ -229,7 +218,7 @@ public class StartupUtil {
     }
 
     File ideTempDir = new File(PathManager.getTempPath());
-    String tempInaccessible = null;
+    String tempInaccessible;
 
     if (!ideTempDir.isDirectory() && !ideTempDir.mkdirs()) {
       tempInaccessible = "unable to create the directory";
@@ -247,6 +236,9 @@ public class StartupUtil {
         }
         else if (new ProcessBuilder(ideTempFile.getAbsolutePath()).start().waitFor() != 0) {
           tempInaccessible = "cannot execute test script";
+        }
+        else {
+          tempInaccessible = null;
         }
 
         delete(ideTempFile);
@@ -268,9 +260,9 @@ public class StartupUtil {
   }
 
   private static void write(File file, String content) throws IOException {
-    FileWriter writer = new FileWriter(file);
-    try { writer.write(content); }
-    finally { writer.close(); }
+    try (FileWriter writer = new FileWriter(file)) {
+      writer.write(content);
+    }
   }
 
   @SuppressWarnings("SSBasedInspection")
@@ -282,7 +274,8 @@ public class StartupUtil {
 
   private enum ActivationResult { STARTED, ACTIVATED, FAILED }
 
-  private synchronized static @NotNull ActivationResult lockSystemFolders(String[] args) {
+  @NotNull
+  private static synchronized ActivationResult lockSystemFolders(String[] args) {
     if (ourSocketLock != null) {
       throw new AssertionError();
     }
@@ -308,13 +301,13 @@ public class StartupUtil {
       });
       return ActivationResult.STARTED;
     }
-    else if (status == SocketLock.ActivateStatus.ACTIVATED) {
+    if (status == SocketLock.ActivateStatus.ACTIVATED) {
       //noinspection UseOfSystemOutOrSystemErr
       System.out.println("Already running");
       return ActivationResult.ACTIVATED;
     }
-    else if (Main.isHeadless() || status == SocketLock.ActivateStatus.CANNOT_ACTIVATE) {
-      String message = "Only one instance of " + ApplicationNamesInfo.getInstance().getFullProductName() + " can be run at a time.";
+    if (Main.isHeadless() || status == SocketLock.ActivateStatus.CANNOT_ACTIVATE) {
+      String message = "Only one instance of " + ApplicationNamesInfo.getInstance().getProductName() + " can be run at a time.";
       Main.showMessage("Too Many Instances", message, true);
     }
 
@@ -343,14 +336,10 @@ public class StartupUtil {
     if (System.getProperty("jna.nosys") == null) {
       System.setProperty("jna.nosys", "true");  // prefer bundled JNA dispatcher lib
     }
-    try {
-      JnaLoader.load(log);
-    }
-    catch (Throwable t) {
-      log.error("Unable to load JNA library (OS: " + SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION + ")", t);
-    }
+    JnaLoader.load(log);
 
     if (SystemInfo.isWin2kOrNewer) {
+      //noinspection ResultOfMethodCallIgnored
       IdeaWin32.isAvailable();  // logging is done there
     }
 
@@ -361,12 +350,8 @@ public class StartupUtil {
   }
 
   private static void startLogging(final Logger log) {
-    Runtime.getRuntime().addShutdownHook(new Thread("Shutdown hook - logging") {
-      @Override
-      public void run() {
-        log.info("------------------------------------------------------ IDE SHUTDOWN ------------------------------------------------------");
-      }
-    });
+    ShutDownTracker.getInstance().registerShutdownTask(() ->
+        log.info("------------------------------------------------------ IDE SHUTDOWN ------------------------------------------------------"));
     log.info("------------------------------------------------------ IDE STARTED ------------------------------------------------------");
 
     ApplicationInfo appInfo = ApplicationInfoImpl.getShadowInstance();
@@ -381,8 +366,6 @@ public class StartupUtil {
     if (arguments != null) {
       log.info("JVM Args: " + StringUtil.join(arguments, " "));
     }
-    IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool();
-    log.info("ForkJoinPool.commonPool: "+ForkJoinPool.commonPool());
 
     String extDirs = System.getProperty("java.ext.dirs");
     if (extDirs != null) {

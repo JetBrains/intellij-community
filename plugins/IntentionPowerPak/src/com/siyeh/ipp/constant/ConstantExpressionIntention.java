@@ -21,6 +21,7 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -97,6 +98,6 @@ public class ConstantExpressionIntention extends MutablyNamedIntention {
     else {
       newExpression = String.valueOf(value);
     }
-    PsiReplacementUtil.replaceExpression(expression, newExpression);
+    PsiReplacementUtil.replaceExpression(expression, newExpression, new CommentTracker());
   }
 }

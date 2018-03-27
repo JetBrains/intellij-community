@@ -17,6 +17,7 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -26,6 +27,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -106,15 +108,13 @@ public class UseOfPropertiesAsHashtableInspection extends BaseInspection {
       if (!(grandParent instanceof PsiMethodCallExpression)) {
         return;
       }
-      final PsiMethodCallExpression methodCallExpression =
-        (PsiMethodCallExpression)grandParent;
-      final PsiReferenceExpression methodExpression =
-        methodCallExpression.getMethodExpression();
+      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
+      final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
+      CommentTracker commentTracker = new CommentTracker();
       @NonNls final StringBuilder newExpression = new StringBuilder();
-      final PsiExpression qualifierExpression =
-        methodExpression.getQualifierExpression();
+      final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
       if (qualifierExpression != null) {
-        newExpression.append(qualifierExpression.getText());
+        newExpression.append(commentTracker.markUnchanged(qualifierExpression).getText());
         newExpression.append('.');
       }
       if (put) {
@@ -123,21 +123,12 @@ public class UseOfPropertiesAsHashtableInspection extends BaseInspection {
       else {
         newExpression.append("getProperty(");
       }
-      final PsiExpressionList argumentList =
-        methodCallExpression.getArgumentList();
+      final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
       final PsiExpression[] arguments = argumentList.getExpressions();
-      boolean first = true;
-      for (PsiExpression argument : arguments) {
-        if (!first) {
-          newExpression.append(',');
-        }
-        else {
-          first = false;
-        }
-        newExpression.append(argument.getText());
-      }
+      newExpression.append(StringUtil.join(arguments, arg -> commentTracker.markUnchanged(arg).getText(), ","));
       newExpression.append(')');
-      PsiReplacementUtil.replaceExpression(methodCallExpression, newExpression.toString());
+
+      PsiReplacementUtil.replaceExpression(methodCallExpression, newExpression.toString(), commentTracker);
     }
   }
 

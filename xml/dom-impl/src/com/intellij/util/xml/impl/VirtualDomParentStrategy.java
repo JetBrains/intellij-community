@@ -52,10 +52,10 @@ public class VirtualDomParentStrategy implements DomParentStrategy {
   @Override
   @NotNull
   public synchronized DomParentStrategy refreshStrategy(final DomInvocationHandler handler) {
-    if (!myParentHandler.isValid()) return this;
-
     final long modCount = getModCount();
     if (modCount != myModCount) {
+      if (!myParentHandler.isValid()) return this;
+
       final XmlElement xmlElement = handler.recomputeXmlElement(myParentHandler);
       if (xmlElement != null) {
         return new PhysicalDomParentStrategy(xmlElement, DomManagerImpl.getDomManager(xmlElement.getProject()));

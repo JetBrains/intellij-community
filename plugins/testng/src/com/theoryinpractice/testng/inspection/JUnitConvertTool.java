@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * @author Hani Suleiman Date: Aug 3, 2005 Time: 3:34:56 AM
+ * @author Hani Suleiman
  */
 public class JUnitConvertTool extends AbstractBaseJavaLocalInspectionTool {
 
@@ -63,7 +63,7 @@ public class JUnitConvertTool extends AbstractBaseJavaLocalInspectionTool {
   @Override
   @Nullable
   public ProblemDescriptor[] checkClass(@NotNull PsiClass psiClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    if (TestNGUtil.inheritsJUnitTestCase(psiClass) || TestNGUtil.containsJunitAnnotions(psiClass)) {
+    if (TestNGUtil.inheritsJUnitTestCase(psiClass) || TestNGUtil.containsJunitAnnotations(psiClass)) {
       final PsiIdentifier nameIdentifier = psiClass.getNameIdentifier();
       ProblemDescriptor descriptor = manager.createProblemDescriptor(nameIdentifier != null ? nameIdentifier : psiClass, "TestCase can be converted to TestNG",
                                                                      new JUnitConverterQuickFix(),
@@ -101,7 +101,7 @@ public class JUnitConvertTool extends AbstractBaseJavaLocalInspectionTool {
               addMethodJavadoc(factory, method);
             }
             else {
-              if (TestNGUtil.containsJunitAnnotions(method)) {
+              if (TestNGUtil.containsJunitAnnotations(method)) {
                 convertedElements.addAll(convertJunitAnnotations(factory, method));
               } else {
                 convertedElements.add(addMethodAnnotations(factory, method));
@@ -267,7 +267,7 @@ public class JUnitConvertTool extends AbstractBaseJavaLocalInspectionTool {
       throws IncorrectOperationException {
       PsiComment newComment;
       PsiElement comment = method.getFirstChild();
-      if (comment != null && comment instanceof PsiComment) {
+      if (comment instanceof PsiComment) {
         String[] commentLines = comment.getText().split("\n");
         StringBuffer buf = new StringBuffer();
         for (int i = 0; i < commentLines.length; i++) {

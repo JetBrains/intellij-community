@@ -51,6 +51,7 @@ public class TurnRefsToSuperProcessor extends TurnRefsToSuperProcessorBase {
     mySuper = aSuper;
   }
 
+  @NotNull
   protected String getCommandName() {
     return RefactoringBundle.message("turn.refs.to.super.command",
                                      DescriptiveNameUtil.getDescriptiveName(myClass), DescriptiveNameUtil.getDescriptiveName(mySuper));
@@ -77,6 +78,7 @@ public class TurnRefsToSuperProcessor extends TurnRefsToSuperProcessorBase {
     return UsageViewUtil.removeDuplicatedUsages(usageInfos);
   }
 
+  @Override
   protected void refreshElements(@NotNull final PsiElement[] elements) {
     LOG.assertTrue(elements.length == 2 && elements[0] instanceof PsiClass && elements[1] instanceof PsiClass);
     setClasses ((PsiClass) elements[0], (PsiClass) elements[1]);
@@ -143,6 +145,7 @@ public class TurnRefsToSuperProcessor extends TurnRefsToSuperProcessorBase {
     return myReplaceInstanceOf;
   }
 
+  @Override
   @NotNull
   protected Collection<? extends PsiElement> getElementsToWrite(@NotNull final UsageViewDescriptor descriptor) {
     return Collections.emptyList(); // neither myClass nor mySuper are subject to change, it's just references that are going to change

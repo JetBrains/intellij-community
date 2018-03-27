@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
 import com.intellij.ide.DataManager;
@@ -41,7 +27,6 @@ import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.openapi.wm.impl.IdeMenuBar;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.BalloonLayout;
-import com.intellij.ui.FocusTrackback;
 import com.intellij.ui.FrameState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ImageUtil;
@@ -70,7 +55,6 @@ public class FrameWrapper implements Disposable, DataProvider {
   private final Map<String, Object> myDataMap = ContainerUtil.newHashMap();
   private Project myProject;
   private final ProjectManagerListener myProjectListener = new MyProjectManagerListener();
-  private FocusTrackback myFocusTrackback;
   private FocusWatcher myFocusWatcher;
 
   private ActionCallback myFocusedCallback;
@@ -134,8 +118,6 @@ public class FrameWrapper implements Disposable, DataProvider {
       myStatusBar.install((IdeFrame)frame);
     }
 
-    myFocusTrackback = new FocusTrackback(this, IdeFocusManager.findInstance().getFocusOwner(), true);
-
     if (frame instanceof JFrame) {
       ((JFrame)frame).setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
     } else {
@@ -191,18 +173,11 @@ public class FrameWrapper implements Disposable, DataProvider {
 
     myFocusWatcher = new FocusWatcher() {
       @Override
-      protected void focusLostImpl(final FocusEvent e) {
-        myFocusTrackback.consume();
-      }
+      protected void focusLostImpl(final FocusEvent e) {}
     };
     myFocusWatcher.install(myComponent);
     myShown = true;
     frame.setVisible(true);
-
-    if (UIUtil.isUnderAlloyLookAndFeel() && frame instanceof JFrame) {
-      //please ask [kb] before remove it
-      ((JFrame)frame).setMaximizedBounds(null);
-    }
   }
 
   public void close() {
@@ -224,15 +199,13 @@ public class FrameWrapper implements Disposable, DataProvider {
     myPreferredFocus = null;
     myProject = null;
     myDataMap.clear();
-    if (myFocusTrackback != null) {
-      myFocusTrackback.restoreFocus();
-    }
+
     if (myComponent != null && myFocusWatcher != null) {
       myFocusWatcher.deinstall(myComponent);
     }
     myFocusWatcher = null;
     myFocusedCallback = null;
-    myFocusTrackback = null;
+
     myComponent = null;
     myImages = null;
     myDisposed = true;
@@ -248,9 +221,6 @@ public class FrameWrapper implements Disposable, DataProvider {
       frame.removeAll();
       DialogWrapper.cleanupRootPane(rootPane);
 
-      if (frame instanceof JFrame) {
-        FocusTrackback.release((JFrame)frame);
-      }
       if (frame instanceof IdeFrame) {
         MouseGestureManager.getInstance().remove((IdeFrame)frame);
       }

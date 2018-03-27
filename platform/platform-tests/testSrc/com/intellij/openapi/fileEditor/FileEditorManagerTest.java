@@ -41,7 +41,6 @@ import java.util.List;
 /**
  * @author Dmitry Avdeev
  * @author Vassiliy Kudryashov
- * Date: 4/16/13
  */
 @SuppressWarnings("ConstantConditions")
 public class FileEditorManagerTest extends FileEditorManagerTestCase {

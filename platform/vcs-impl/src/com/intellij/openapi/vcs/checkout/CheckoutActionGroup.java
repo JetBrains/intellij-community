@@ -24,9 +24,25 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Arrays;
 
 public class CheckoutActionGroup extends ComputableActionGroup.Simple {
+  protected final String myIdPrefix;
+
+  @SuppressWarnings("unused")
+  public CheckoutActionGroup() {
+    this("Vcs.Checkout");
+  }
+
+  public CheckoutActionGroup(String idPrefix) {
+    myIdPrefix = idPrefix;
+  }
+
   @NotNull
   @Override
   protected AnAction[] computeChildren(@NotNull ActionManager manager) {
+    return getActions();
+  }
+
+  @NotNull
+  public AnAction[] getActions() {
     CheckoutProvider[] providers = CheckoutProvider.EXTENSION_POINT_NAME.getExtensions();
     if (providers.length == 0) {
       return EMPTY_ARRAY;
@@ -43,6 +59,6 @@ public class CheckoutActionGroup extends ComputableActionGroup.Simple {
 
   @NotNull
   protected AnAction createAction(CheckoutProvider provider) {
-    return new CheckoutAction(provider);
+    return new CheckoutAction(provider, myIdPrefix);
   }
 }

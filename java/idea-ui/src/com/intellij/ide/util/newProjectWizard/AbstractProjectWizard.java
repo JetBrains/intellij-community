@@ -47,7 +47,6 @@ import java.io.File;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 19.09.13
  */
 public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardStep> {
   protected final WizardContext myWizardContext;

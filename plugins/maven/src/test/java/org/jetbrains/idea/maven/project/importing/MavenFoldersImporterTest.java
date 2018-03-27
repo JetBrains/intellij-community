@@ -338,6 +338,54 @@ public class MavenFoldersImporterTest extends MavenImportingTestCase {
     assertContentRoots("m1-custom", getProjectPath() + "/m1/sources", getProjectPath() + "/m1/tests");
   }
 
+  public void testContentRootOutsideOfModuleDir() throws Exception {
+    createProjectSubFile("m1/pom.xml", createPomXml(
+      "<artifactId>m1-pom</artifactId>" +
+      "<version>1</version>" +
+
+      "<parent>" +
+      "  <groupId>test</groupId>" +
+      "  <artifactId>project</artifactId>" +
+      "  <version>1</version>" +
+      "</parent>" +
+
+      "<build>" +
+      "  <sourceDirectory>../pom-sources</sourceDirectory>" +
+      "</build>"));
+
+    createProjectSubFile("m1/custom.xml", createPomXml(
+      "<artifactId>m1-custom</artifactId>" +
+      "<version>1</version>" +
+
+      "<parent>" +
+      "  <groupId>test</groupId>" +
+      "  <artifactId>project</artifactId>" +
+      "  <version>1</version>" +
+      "</parent>" +
+
+      "<build>" +
+      "  <sourceDirectory>../custom-sources</sourceDirectory>" +
+      "</build>"));
+
+    new File(myProjectRoot.getPath(), "pom-sources").mkdirs();
+    new File(myProjectRoot.getPath(), "custom-sources").mkdirs();
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<packaging>pom</packaging>" +
+                  "<version>1</version>" +
+
+                  "<modules>" +
+                  "  <module>m1</module>" +
+                  "  <module>m1/custom.xml</module>" +
+                  "</modules>");
+
+    assertModules("project", "m1-pom", "m1-custom");
+
+    assertContentRoots("m1-pom", getProjectPath() + "/m1", getProjectPath() + "/pom-sources");
+    assertContentRoots("m1-custom", getProjectPath() + "/custom-sources");
+  }
+
   private void updateProjectFolders() {
     MavenFoldersImporter.updateProjectFolders(myProject, false);
   }

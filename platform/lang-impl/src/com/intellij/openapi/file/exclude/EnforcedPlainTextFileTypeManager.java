@@ -44,7 +44,7 @@ import java.util.Map;
 public class EnforcedPlainTextFileTypeManager implements ProjectManagerListener {
   private final Map<Project, Collection<VirtualFile>> myPlainTextFileSets = ContainerUtil.createConcurrentWeakMap();
   private volatile boolean mySetsInitialized;
-  private static final Object LOCK = new Object();
+  private final Object LOCK = new Object();
 
   public EnforcedPlainTextFileTypeManager() {
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, this);

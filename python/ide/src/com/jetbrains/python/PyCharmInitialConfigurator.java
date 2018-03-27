@@ -48,7 +48,6 @@ public class PyCharmInitialConfigurator {
     if (!propertiesComponent.getBoolean("PyCharm.InitialConfiguration.V2")) {
       propertiesComponent.setValue("PyCharm.InitialConfiguration.V2", true);
       final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance().getCurrentSettings();
-      settings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
       settings.getCommonSettings(PythonLanguage.getInstance()).ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
       UISettings.getInstance().setShowDirectoryForNonUniqueFilenames(true);
     }

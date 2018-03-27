@@ -243,9 +243,22 @@ public class UnusedImportGlobalInspectionTest extends LightCodeInsightFixtureTes
            "}}");
   }
 
+  public void testModuleInfo() {
+    myFixture.addClass("package a; public class A {}");
+    myFixture.addFileToProject("module-info.java", "import a.A;\n" +
+                                                   "module my {" +
+                                                   "  uses A;" +
+                                                   "}");
+    doTest();
+  }
+
   private void doTest(String classText) {
     myFixture.addClass(classText);
 
+    doTest();
+  }
+
+  private void doTest() {
     GlobalInspectionToolWrapper toolWrapper = new GlobalInspectionToolWrapper(new UnusedImportInspection());
     AnalysisScope scope = new AnalysisScope(myFixture.getProject());
     GlobalInspectionContextForTests globalContext =

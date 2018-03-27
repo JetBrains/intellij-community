@@ -52,11 +52,14 @@ public class InspectionDescriptionInfo {
   private final String myFilename;
   private final PsiMethod myMethod;
   private final PsiFile myDescriptionFile;
+  private final boolean myShortNameInXml;
 
-  private InspectionDescriptionInfo(String filename, @Nullable PsiMethod method, @Nullable PsiFile descriptionFile) {
+  private InspectionDescriptionInfo(String filename, @Nullable PsiMethod method,
+                                    @Nullable PsiFile descriptionFile, boolean shortNameInXml) {
     myFilename = filename;
     myMethod = method;
     myDescriptionFile = descriptionFile;
+    myShortNameInXml = shortNameInXml;
   }
 
   public static InspectionDescriptionInfo create(Module module, PsiClass psiClass) {
@@ -64,8 +67,10 @@ public class InspectionDescriptionInfo {
     if (method != null && method.getContainingClass().hasModifierProperty(PsiModifier.ABSTRACT)) {
       method = null;
     }
+    boolean shortNameInXml;
     String filename = null;
     if (method == null) {
+      shortNameInXml = true;
       String className = psiClass.getQualifiedName();
       if(className != null) {
         Extension extension = findExtension(module, psiClass);
@@ -75,6 +80,7 @@ public class InspectionDescriptionInfo {
       }
     }
     else {
+      shortNameInXml = false;
       filename = PsiUtil.getReturnedLiteral(method, psiClass);
     }
 
@@ -85,11 +91,11 @@ public class InspectionDescriptionInfo {
     }
 
     PsiFile descriptionFile = resolveInspectionDescriptionFile(module, filename);
-    return new InspectionDescriptionInfo(filename, method, descriptionFile);
+    return new InspectionDescriptionInfo(filename, method, descriptionFile, shortNameInXml);
   }
 
   @Nullable
-  static Extension findExtension(Module module, PsiClass psiClass) {
+  public static Extension findExtension(Module module, PsiClass psiClass) {
     return CachedValuesManager.getCachedValue(psiClass, () -> {
       Extension extension = doFindExtension(module, psiClass);
       return CachedValueProvider.Result
@@ -167,5 +173,9 @@ public class InspectionDescriptionInfo {
 
   public boolean hasDescriptionFile() {
     return getDescriptionFile() != null;
+  }
+
+  public boolean isShortNameInXml() {
+    return myShortNameInXml;
   }
 }

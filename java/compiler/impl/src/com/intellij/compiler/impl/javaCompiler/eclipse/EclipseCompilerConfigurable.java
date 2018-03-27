@@ -86,6 +86,7 @@ public class EclipseCompilerConfigurable implements Configurable {
     myCompilerSettings.GENERATE_NO_WARNINGS = myCbGenerateNoWarnings.isSelected();
     myCompilerSettings.PROCEED_ON_ERROR = myCbProceedOnErrors.isSelected();
     myCompilerSettings.ADDITIONAL_OPTIONS_STRING = myAdditionalOptionsField.getText();
+    myCompilerSettings.ADDITIONAL_OPTIONS_OVERRIDE.clear();
     myCompilerSettings.ADDITIONAL_OPTIONS_OVERRIDE.putAll(myOptionsOverride.getModuleOptionsMap());
   }
 

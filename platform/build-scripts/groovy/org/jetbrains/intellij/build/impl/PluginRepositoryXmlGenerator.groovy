@@ -33,10 +33,10 @@ class PluginRepositoryXmlGenerator {
     this.buildContext = buildContext
   }
 
-  void generate(List<PluginLayout> pluginLayouts, String targetDirectory) {
+  void generate(List<PluginLayout> pluginLayouts, Map<PluginLayout, String> pluginZipFiles, String targetDirectory) {
     def categories = new TreeMap<String, List<Plugin>>()
     pluginLayouts.each { layout ->
-      def pluginZip = new File(targetDirectory, "${layout.directoryName}.zip")
+      def pluginZip = new File(pluginZipFiles[layout])
       def moduleOutput = buildContext.getModuleOutputPath(buildContext.findRequiredModule(layout.mainModule))
       def pluginXmlPath = "$moduleOutput/META-INF/plugin.xml"
       def p = readPlugin(pluginZip, new File(pluginXmlPath), buildContext.buildNumber)

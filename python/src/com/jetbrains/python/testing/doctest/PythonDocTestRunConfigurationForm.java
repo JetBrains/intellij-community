@@ -18,10 +18,10 @@ package com.jetbrains.python.testing.doctest;
 import com.intellij.openapi.project.Project;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.testing.AbstractPythonTestRunConfigurationParams;
+import com.jetbrains.python.testing.PyTestSharedForm;
 import com.jetbrains.python.testing.PythonTestLegacyRunConfigurationForm;
 
 import javax.swing.*;
-import javax.swing.border.TitledBorder;
 import java.awt.*;
 
 public class PythonDocTestRunConfigurationForm implements PythonDocTestRunConfigurationParams {
@@ -33,9 +33,7 @@ public class PythonDocTestRunConfigurationForm implements PythonDocTestRunConfig
   public PythonDocTestRunConfigurationForm(final Project project, final PythonDocTestRunConfiguration configuration) {
     myRootPanel = new JPanel(new BorderLayout());
     myTestRunConfigurationForm = new PythonTestLegacyRunConfigurationForm(project, configuration);
-    TitledBorder border = (TitledBorder)myTestRunConfigurationForm.getTestsPanel().getBorder();
-    border.setTitle(PyBundle.message("runcfg.doctest.display_name"));
-
+    PyTestSharedForm.setBorderToPanel(myTestRunConfigurationForm.getTestsPanel(), PyBundle.message("runcfg.doctest.display_name"));
     myRootPanel.add(myTestRunConfigurationForm.getPanel(), BorderLayout.CENTER);
   }
 

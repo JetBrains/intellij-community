@@ -31,7 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.List;
 
@@ -50,12 +49,23 @@ public abstract class GitTextHandler extends GitHandler {
     super(project, directory, command, Collections.emptyList());
   }
 
-  protected GitTextHandler(final Project project, final VirtualFile vcsRoot, final GitCommand command) {
+  protected GitTextHandler(@NotNull Project project, @NotNull VirtualFile vcsRoot, @NotNull GitCommand command) {
     super(project, vcsRoot, command, Collections.emptyList());
   }
 
-  protected GitTextHandler(final Project project, final VirtualFile vcsRoot, final GitCommand command, List<String> configParameters) {
+  protected GitTextHandler(@NotNull Project project,
+                           @NotNull VirtualFile vcsRoot,
+                           @NotNull GitCommand command,
+                           List<String> configParameters) {
     super(project, vcsRoot, command, configParameters);
+  }
+
+  public GitTextHandler(@Nullable Project project,
+                        @NotNull File directory,
+                        @NotNull String pathToExecutable,
+                        @NotNull GitCommand command,
+                        @NotNull List<String> configParameters) {
+    super(project, directory, pathToExecutable, command, configParameters);
   }
 
   @Nullable
@@ -85,7 +95,6 @@ public abstract class GitTextHandler extends GitHandler {
         final int exitCode = event.getExitCode();
         try {
           setExitCode(exitCode);
-          cleanupEnv();
           GitTextHandler.this.processTerminated(exitCode);
         }
         finally {
@@ -162,20 +171,13 @@ public abstract class GitTextHandler extends GitHandler {
     return myHandler.waitFor(TERMINATION_TIMEOUT_MS);
   }
 
-  public ProcessHandler createProcess(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
-    commandLine.setCharset(getCharset());
+  protected ProcessHandler createProcess(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
     return new MyOSProcessHandler(commandLine, true);
   }
 
   protected static class MyOSProcessHandler extends KillableProcessHandler {
     protected MyOSProcessHandler(@NotNull GeneralCommandLine commandLine, boolean withMediator) throws ExecutionException {
       super(commandLine, withMediator);
-    }
-
-    @NotNull
-    @Override
-    public Charset getCharset() {
-      return myCharset;
     }
 
     @NotNull

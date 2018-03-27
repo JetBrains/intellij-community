@@ -405,6 +405,11 @@ public class MavenExternalParameters {
       parametersList.add(goal);
     }
 
+    if (parameters.getPomFileName() != null) {
+      parametersList.add("-f");
+      parametersList.add(parameters.getPomFileName());
+    }
+
     addOption(parametersList, "P", encodeProfiles(parameters.getProfilesMap()));
   }
 

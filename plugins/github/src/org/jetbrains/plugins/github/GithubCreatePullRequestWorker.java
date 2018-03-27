@@ -22,6 +22,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
@@ -288,7 +289,9 @@ public class GithubCreatePullRequestWorker {
       if (fork.getFetchTask() != null) return;
 
       final MasterFutureTask<Void> task = new MasterFutureTask<>(() -> {
-        doFetchRemote(fork);
+        BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, () -> {
+          doFetchRemote(fork);
+        });
         return null;
       });
       fork.setFetchTask(task);

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections
 
 import com.intellij.codeInspection.LocalInspectionToolSession
@@ -21,17 +7,41 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.ResolveState
-import com.intellij.psi.scope.BaseScopeProcessor
+import com.intellij.psi.scope.PsiScopeProcessor
 import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.types.PyClassLikeType
+import com.jetbrains.python.psi.types.TypeEvalContext
 import java.util.*
-import kotlin.comparisons.compareBy
 
 class PyNamedTupleInspection : PyInspection() {
+
+  companion object {
+    fun inspectFieldsOrder(cls: PyClass, context: TypeEvalContext, callback: (PsiElement, String, ProblemHighlightType) -> Unit) {
+      val fieldsProcessor = FieldsProcessor(context)
+
+      cls.processClassLevelDeclarations(fieldsProcessor)
+
+      registerErrorOnTargetsAboveBound(fieldsProcessor.lastFieldWithoutDefaultValue,
+                                       fieldsProcessor.fieldsWithDefaultValue,
+                                       "Fields with a default value must come after any fields without a default.",
+                                       callback)
+    }
+
+    private fun registerErrorOnTargetsAboveBound(bound: PyTargetExpression?,
+                                                 targets: TreeSet<PyTargetExpression>,
+                                                 message: String,
+                                                 callback: (PsiElement, String, ProblemHighlightType) -> Unit) {
+      if (bound != null) {
+        targets
+          .headSet(bound)
+          .forEach { callback(it, message, ProblemHighlightType.GENERIC_ERROR) }
+      }
+    }
+  }
 
   override fun buildVisitor(holder: ProblemsHolder,
                             isOnTheFly: Boolean,
@@ -43,35 +53,19 @@ class PyNamedTupleInspection : PyInspection() {
       super.visitPyClass(node)
 
       if (node != null && LanguageLevel.forElement(node).isAtLeast(LanguageLevel.PYTHON36) && isTypingNTInheritor(node)) {
-        val fieldsProcessor = FieldsProcessor()
-
-        node.processClassLevelDeclarations(fieldsProcessor)
-
-        registerErrorOnTargetsAboveBound(fieldsProcessor.lastFieldWithoutDefaultValue,
-                                         fieldsProcessor.fieldsWithDefaultValue,
-                                         "Fields with a default value must come after any fields without a default.")
+        inspectFieldsOrder(node, myTypeEvalContext, this::registerProblem)
       }
     }
 
     private fun isTypingNTInheritor(cls: PyClass): Boolean {
       val isTypingNT: (PyClassLikeType?) -> Boolean =
-        { it != null && !(it is PyNamedTupleType) && PyTypingTypeProvider.NAMEDTUPLE == it.classQName }
+        { it != null && it !is PyNamedTupleType && PyTypingTypeProvider.NAMEDTUPLE == it.classQName }
 
       return cls.getSuperClassTypes(myTypeEvalContext).find(isTypingNT) != null
     }
-
-    private fun registerErrorOnTargetsAboveBound(bound: PyTargetExpression?,
-                                                 targets: TreeSet<PyTargetExpression>,
-                                                 message: String) {
-      if (bound != null) {
-        targets
-          .headSet(bound)
-          .forEach { registerProblem(it, message, ProblemHighlightType.GENERIC_ERROR) }
-      }
-    }
   }
 
-  private class FieldsProcessor : BaseScopeProcessor() {
+  private class FieldsProcessor(private val context: TypeEvalContext) : PsiScopeProcessor {
 
     val lastFieldWithoutDefaultValue: PyTargetExpression?
       get() = lastFieldWithoutDefaultValueBox.result
@@ -82,11 +76,16 @@ class PyNamedTupleInspection : PyInspection() {
     init {
       val offsetComparator = compareBy(PyTargetExpression::getTextOffset)
       lastFieldWithoutDefaultValueBox = MaxBy(offsetComparator)
-      fieldsWithDefaultValue = TreeSet<PyTargetExpression>(offsetComparator)
+      fieldsWithDefaultValue = TreeSet(offsetComparator)
     }
 
     override fun execute(element: PsiElement, state: ResolveState): Boolean {
       if (element is PyTargetExpression) {
+        val annotation = element.annotation
+        if (annotation != null && PyTypingTypeProvider.isClassVarAnnotation(annotation, context)) {
+          return true
+        }
+
         when {
           element.findAssignedValue() != null -> fieldsWithDefaultValue.add(element)
           else -> lastFieldWithoutDefaultValueBox.apply(element)

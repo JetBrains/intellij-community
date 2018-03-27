@@ -421,7 +421,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         instruction = new ReturnInstruction(0, myStack, callInstruction);
       }
       else {
-        instruction = new GoToInstruction(0);
+        instruction = new GoToInstruction(0, BranchingInstruction.Role.END, PsiTreeUtil.isAncestor(exitedStatement, myCodeFragment, true));
       }
       myCurrentFlow.addInstruction(instruction);
       // exited statement might be out of control flow analyzed
@@ -483,7 +483,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         instruction = new ReturnInstruction(0, myStack, callInstruction);
       }
       else {
-        instruction = new GoToInstruction(0);
+        instruction = new GoToInstruction(0, BranchingInstruction.Role.END, PsiTreeUtil.isAncestor(body, myCodeFragment, true));
       }
       myCurrentFlow.addInstruction(instruction);
       addElementOffsetLater(body, false);

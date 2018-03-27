@@ -36,7 +36,6 @@ public class SolutionHolder {
           return;
 
         case Binding.NONCOMPARABLE:
-          continue;
       }
     }
 

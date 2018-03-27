@@ -56,7 +56,7 @@ public class ChangesBrowserFilePathNode extends ChangesBrowserNode<FilePath> {
       if (renderer.isShowFlatten()) {
         renderer.append(path.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
         FilePath parentPath = path.getParentPath();
-        appendParentPath(renderer, parentPath.getPresentableUrl());
+        appendParentPath(renderer, parentPath);
       }
       else {
         renderer.append(getRelativePath(path), SimpleTextAttributes.REGULAR_ATTRIBUTES);
@@ -68,7 +68,7 @@ public class ChangesBrowserFilePathNode extends ChangesBrowserNode<FilePath> {
 
   @NotNull
   protected String getRelativePath(FilePath path) {
-    return getRelativePath(safeCastToFilePath(((ChangesBrowserNode)getParent()).getUserObject()), path);
+    return getRelativePath(safeCastToFilePath((ChangesBrowserNode)getParent()), path);
   }
 
   @Override
@@ -82,7 +82,12 @@ public class ChangesBrowserFilePathNode extends ChangesBrowserNode<FilePath> {
   }
 
   @Nullable
-  public static FilePath safeCastToFilePath(Object o) {
+  public static FilePath safeCastToFilePath(ChangesBrowserNode node) {
+    if (node instanceof ChangesBrowserModuleNode) {
+      return ((ChangesBrowserModuleNode)node).getModuleRoot();
+    }
+
+    Object o = node.getUserObject();
     if (o instanceof FilePath) return (FilePath)o;
     if (o instanceof Change) {
       return ChangesUtil.getAfterPath((Change)o);
@@ -106,11 +111,7 @@ public class ChangesBrowserFilePathNode extends ChangesBrowserNode<FilePath> {
     return FILE_PATH_SORT_WEIGHT;
   }
 
-  public int compareUserObjects(final Object o2) {
-    if (o2 instanceof FilePath) {
-      return getUserObject().getPath().compareToIgnoreCase(((FilePath)o2).getPath());
-    }
-
-    return 0;
+  public int compareUserObjects(final FilePath o2) {
+    return getUserObject().getPath().compareToIgnoreCase(o2.getPath());
   }
 }

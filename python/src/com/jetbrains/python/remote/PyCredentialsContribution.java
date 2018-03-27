@@ -19,14 +19,6 @@ public interface PyCredentialsContribution<T> {
 
   boolean isValid(T credentials);
 
-  /**
-   * To be removed in 2018.1 IntelliJ platform.
-   *
-   * @deprecated do not use
-   */
-  @Deprecated
-  boolean shouldNotifySdkSkeletonFail();
-
   boolean isPackageManagementEnabled();
 
   boolean isSpecificCoverageAttach();

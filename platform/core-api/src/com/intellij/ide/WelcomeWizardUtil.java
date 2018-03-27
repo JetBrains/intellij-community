@@ -27,6 +27,13 @@ public class WelcomeWizardUtil {
   private static volatile String ourWizardMacKeymap;
   private static volatile String ourWizardEditorScheme;
   private static volatile Boolean ourAutoScrollToSource;
+  private static volatile Integer ourCompletionCaseSensitive;
+  private static volatile Boolean ourManualOrder;
+  private static volatile Integer ourTabsPlacement;
+  private static volatile Integer ourContinuationIndent;
+  private static volatile Integer ourAppearanceFontSize;
+  private static volatile String ourAppearanceFontFace;
+  private static volatile Boolean ourDisableBreakpointsOnClick;
   private static final Set<String> ourFeaturedPluginsToInstall = new HashSet<>();
 
   public static void setDefaultLAF(String laf) {
@@ -79,5 +86,61 @@ public class WelcomeWizardUtil {
   public static void setFeaturedPluginsToInstall(Set<String> pluginsToInstall) {
     ourFeaturedPluginsToInstall.clear();
     ourFeaturedPluginsToInstall.addAll(pluginsToInstall);
+  }
+
+  public static Boolean getDisableBreakpointsOnClick() {
+    return ourDisableBreakpointsOnClick;
+  }
+
+  public static void setDisableBreakpointsOnClick(Boolean disableBreakpointsOnClick) {
+    ourDisableBreakpointsOnClick = disableBreakpointsOnClick;
+  }
+
+  public static void setCompletionCaseSensitive(Integer completionCaseSensitive) {
+    ourCompletionCaseSensitive = completionCaseSensitive;
+  }
+
+  public static Integer getCompletionCaseSensitive() {
+    return ourCompletionCaseSensitive;
+  }
+
+  public static Boolean getManualOrder() {
+    return ourManualOrder;
+  }
+
+  public static void setManualOrder(Boolean manualOrder) {
+    ourManualOrder = manualOrder;
+  }
+
+  public static void setTabsPlacement(Integer tabsPlacement) {
+    ourTabsPlacement = tabsPlacement;
+  }
+
+  public static Integer getTabsPlacement() {
+    return ourTabsPlacement;
+  }
+
+  public static void setContinuationIndent(Integer continuationIndent) {
+    ourContinuationIndent = continuationIndent;
+  }
+
+  public static Integer getContinuationIndent() {
+    return ourContinuationIndent;
+  }
+
+  public static Integer getAppearanceFontSize() {
+    return ourAppearanceFontSize;
+  }
+
+  public static void setAppearanceFontSize(Integer appearanceFontSize) {
+    ourAppearanceFontSize = appearanceFontSize;
+  }
+
+  public static String getAppearanceFontFace() {
+    return ourAppearanceFontFace;
+  }
+
+  public static void setAppearanceFontFace(String appearanceFontFace) {
+    ourAppearanceFontFace = appearanceFontFace;
   }
 }

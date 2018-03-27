@@ -67,4 +67,8 @@ public class SameParameterValueLocalTest extends InspectionTestCase {
   public void testVarargs() {
     doTest(getGlobalTestDir(), myTool);
   }
+
+  public void testNativeMethod() {
+    doTest(getGlobalTestDir(), myTool);
+  }
 }

@@ -49,7 +49,7 @@ public class ChangesBrowserLocallyDeletedNode extends ChangesBrowserNode<Locally
     if (renderer.isShowFlatten()) {
       FilePath parentPath = filePath.getParentPath();
       if (parentPath != null) {
-        appendParentPath(renderer, parentPath.getPresentableUrl());
+        appendParentPath(renderer, parentPath);
       }
     }
 

@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.dvcs.push;
 
@@ -57,6 +45,7 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 import static com.intellij.openapi.ui.Messages.OK;
 
@@ -119,10 +108,6 @@ public class PushController implements Disposable {
       //noinspection unchecked
       return DvcsUtil.getPushSupport(vcs);
     });
-  }
-
-  public boolean isForcePushEnabled() {
-    return ContainerUtil.exists(myView2Model.values(), model -> model.getSupport().isForcePushEnabled());
   }
 
   @Nullable
@@ -398,18 +383,38 @@ public class PushController implements Disposable {
     return myPushLog;
   }
 
+  /**
+   * An exception thrown if a {@link PrePushHandler} has failed to make the decision
+   * by whatever reason: either it had been cancelled, or an execution exception had occurred.
+   */
   public static class HandlerException extends RuntimeException {
 
-    private final String myHandlerName;
+    /**
+     * Name of the handler on which an exception happened.
+     */
+    private final String myFailedHandlerName;
 
-    public HandlerException(@NotNull String name, @NotNull Throwable cause) {
+    /**
+     * Names of handlers which were skipped because {@link #myFailedHandlerName} had failed.
+     */
+    private final List<String> mySkippedHandlers;
+
+    public HandlerException(@NotNull String failedHandlerName,
+                            @NotNull List<String> skippedHandlers,
+                            @NotNull Throwable cause) {
       super(cause);
-      myHandlerName = name;
+      myFailedHandlerName = failedHandlerName;
+      mySkippedHandlers = skippedHandlers;
     }
 
     @NotNull
-    public String getHandlerName() {
-      return myHandlerName;
+    public String getFailedHandlerName() {
+      return myFailedHandlerName;
+    }
+
+    @NotNull
+    public List<String> getSkippedHandlers() {
+      return mySkippedHandlers;
     }
   }
 
@@ -441,18 +446,21 @@ public class PushController implements Disposable {
     StepsProgressIndicator stepsIndicator = new StepsProgressIndicator(indicator, myHandlers.size());
     stepsIndicator.setIndeterminate(false);
     stepsIndicator.setFraction(0);
-    for (PrePushHandler handler : myHandlers) {
+    for (int index = 0; index < myHandlers.size(); index++) {
+      PrePushHandler handler = myHandlers.get(index);
       stepsIndicator.checkCanceled();
       stepsIndicator.setText(handler.getPresentableName());
       PrePushHandler.Result prePushHandlerResult;
       try {
         prePushHandlerResult = handler.handle(pushDetails, stepsIndicator);
       }
-      catch (ProcessCanceledException pce) {
-        throw pce;
-      }
       catch (Throwable e) {
-        throw new HandlerException(handler.getPresentableName(), e);
+        List<String> skippedHandlers = myHandlers.stream()
+          .skip(index + 1)
+          .map(h -> h.getPresentableName())
+          .collect(Collectors.toList());
+
+        throw new HandlerException(handler.getPresentableName(), skippedHandlers, e);
       }
 
       if (prePushHandlerResult != PrePushHandler.Result.OK) {

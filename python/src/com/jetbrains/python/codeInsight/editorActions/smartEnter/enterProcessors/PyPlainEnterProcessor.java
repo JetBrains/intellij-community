@@ -28,8 +28,6 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Created by IntelliJ IDEA.
  * Author: Alexey.Ivanov
- * Date:   28.04.2010
- * Time:   19:15:58
  */
 public class PyPlainEnterProcessor implements EnterProcessor {
   @Nullable

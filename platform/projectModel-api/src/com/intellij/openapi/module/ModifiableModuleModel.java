@@ -33,31 +33,33 @@ public interface ModifiableModuleModel {
    *
    * @return the array of modules.
    */
-  @NotNull Module[] getModules();
+  @NotNull
+  Module[] getModules();
 
   /**
    * Creates a module of the specified type at the specified path and adds it to the project
    * to which the module manager is related. {@link #commit()} must be called to
    * bring the changes in effect.
    *
-   * @param filePath path to an *.iml file where module configuration will be saved; name of the module will be equal to the file name without extension.
+   * @param filePath     path to an *.iml file where module configuration will be saved; name of the module will be equal to the file name without extension.
    * @param moduleTypeId the ID of the module type to create.
    * @return the module instance.
    */
-  @NotNull Module newModule(@NotNull String filePath, final String moduleTypeId);
+  @NotNull
+  Module newModule(@NotNull String filePath, @NotNull String moduleTypeId);
 
   /**
    * Creates a module of the specified type at the specified path and adds it to the project
    * to which the module manager is related. {@link #commit()} must be called to
    * bring the changes in effect.
    *
-   *
-   * @param filePath path to an *.iml file where module configuration will be saved; name of the module will be equal to the file name without extension.
+   * @param filePath     path to an *.iml file where module configuration will be saved; name of the module will be equal to the file name without extension.
    * @param moduleTypeId ID of the module type to create.
-   * @param options map of module options to be used when creating the module
+   * @param options      map of module options to be used when creating the module
    * @return the module instance.
    */
-  @NotNull Module newModule(@NotNull String filePath, final String moduleTypeId, @Nullable Map<String, String> options);
+  @NotNull
+  Module newModule(@NotNull String filePath, @NotNull String moduleTypeId, @Nullable Map<String, String> options);
 
   /**
    * Loads a module from an .iml file with the specified path and adds it to the project.
@@ -65,10 +67,11 @@ public interface ModifiableModuleModel {
    *
    * @param filePath the path to load the module from.
    * @return the module instance.
-   * @throws IOException if an I/O error occurred when loading the module file.
+   * @throws IOException                 if an I/O error occurred when loading the module file.
    * @throws ModuleWithNameAlreadyExists if a module with such a name already exists in the project.
    */
-  @NotNull Module loadModule(@NotNull String filePath) throws IOException, ModuleWithNameAlreadyExists;
+  @NotNull
+  Module loadModule(@NotNull String filePath) throws IOException, ModuleWithNameAlreadyExists;
 
   /**
    * Disposes of the specified module and removes it from the project. {@link #commit()}
@@ -84,7 +87,8 @@ public interface ModifiableModuleModel {
    * @param name the name of the module to find.
    * @return the module instance, or null if no module with such name exists.
    */
-  @Nullable Module findModuleByName(@NotNull String name);
+  @Nullable
+  Module findModuleByName(@NotNull String name);
 
   /**
    * Disposes of all modules in the project.
@@ -106,7 +110,7 @@ public interface ModifiableModuleModel {
   /**
    * Schedules the rename of a module to be performed when the model is committed.
    *
-   * @param module the module to rename.
+   * @param module  the module to rename.
    * @param newName the new name to rename the module to.
    * @throws ModuleWithNameAlreadyExists if a module with such a name already exists in the project.
    */
@@ -118,7 +122,8 @@ public interface ModifiableModuleModel {
    * @param newName the name of the renamed module to find.
    * @return the module instance, or null if no module has been renamed to such a name.
    */
-  @Nullable Module getModuleToBeRenamed(@NotNull String newName);
+  @Nullable
+  Module getModuleToBeRenamed(@NotNull String newName);
 
   /**
    * Returns the name to which the specified module has been renamed.
@@ -126,9 +131,11 @@ public interface ModifiableModuleModel {
    * @param module the module for which the new name is requested.
    * @return the new name, or null if the module has not been renamed.
    */
-  @Nullable String getNewName(@NotNull Module module);
+  @Nullable
+  String getNewName(@NotNull Module module);
 
-  String[] getModuleGroupPath(Module module);
+  @Nullable
+  String[] getModuleGroupPath(@NotNull Module module);
 
   boolean hasModuleGroups();
 

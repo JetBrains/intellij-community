@@ -50,6 +50,11 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       }
 
       @Override
+      public Icon getSelectedIconFor(E value) {
+        return aPopup.getListStep().getSelectedIconFor(value);
+      }
+
+      @Override
       public boolean hasSeparatorAboveOf(E value) {
         return aPopup.getListModel().isSeparatorAboveOf(value);
       }

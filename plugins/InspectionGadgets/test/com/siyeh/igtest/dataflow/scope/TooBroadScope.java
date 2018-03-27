@@ -223,3 +223,22 @@ class T {
         array = new String[5];
     }
 }
+
+class TryWithResources {
+
+    void m() throws Throwable {
+        AutoCloseable <warning descr="Scope of variable 'closeable1' is too broad">closeable1</warning> = null;
+        try (closeable1) {}
+
+        AutoCloseable <warning descr="Scope of variable 'closeable2' is too broad">closeable2</warning> = null;
+        try (closeable2) {
+            System.out.println(closeable2);
+        }
+
+        AutoCloseable closeable3 = null;
+        try (closeable3) {
+            System.out.println(closeable3);
+        }
+        System.out.println(closeable3);
+    }
+}

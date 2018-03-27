@@ -1,24 +1,22 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package com.intellij.ui.components.fields;
 
 import com.intellij.ui.components.JBTextField;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.Icon;
-import javax.swing.JComponent;
+import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.plaf.TextUI;
 import java.util.ArrayList;
@@ -71,6 +69,17 @@ public class ExtendableTextField extends JBTextField {
     putClientProperty("JTextField.variant", VARIANT);
   }
 
+  public void addExtension(@NotNull Extension extension) {
+    ArrayList<Extension> extensions = new ArrayList<>(getExtensions());
+    if (extensions.add(extension)) setExtensions(extensions);
+  }
+
+  public void removeExtension(@NotNull Extension extension) {
+    ArrayList<Extension> extensions = new ArrayList<>(getExtensions());
+    if (extensions.remove(extension)) setExtensions(extensions);
+  }
+
+
   public interface Extension {
     Icon getIcon(boolean hovered);
 
@@ -110,17 +119,15 @@ public class ExtendableTextField extends JBTextField {
   @Deprecated
   public void setUI(TextUI ui) {
     TextUI suggested = ui;
-    String name = ui == null ? null : ui.getClass().getSuperclass().getName();
-    if (!"com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI".equals(name)) {
-      try {
+    try {
+      if (ui == null || !Class.forName("com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI").isAssignableFrom(ui.getClass())) {
         ui = (TextUI)Class
           .forName("com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI")
           .getDeclaredMethod("createUI", JComponent.class)
           .invoke(null, this);
       }
-      catch (Exception ignore) {
-      }
-    }
+    } catch (Exception ignore) {}
+
     super.setUI(ui);
     if (ui != suggested) {
       try {

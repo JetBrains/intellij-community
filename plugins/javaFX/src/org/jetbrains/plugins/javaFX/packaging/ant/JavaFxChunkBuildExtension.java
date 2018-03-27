@@ -141,6 +141,8 @@ public class JavaFxChunkBuildExtension extends ChunkBuildExtension {
       new JavaFxArtifactProperties.JavaFxPackager(artifact, properties, context.getProject()) {
         @Override
         protected void registerJavaFxPackagerError(String message) {}
+        @Override
+        protected void registerJavaFxPackagerInfo(String message) {}
       };
     final String tempDirDeployPath = tempDirPath + "/deploy";
     final List<JavaFxAntGenerator.SimpleTag> tags =

@@ -43,8 +43,6 @@ import java.util.List;
 
 /**
  * @author Maxim.Mossienko
- * Date: Apr 23, 2004
- * Time: 5:03:52 PM
  */
 public class SelectTemplateDialog extends DialogWrapper {
   private final boolean showHistory;
@@ -252,34 +250,16 @@ public class SelectTemplateDialog extends DialogWrapper {
     }
     final MatchOptions matchOptions = configuration.getMatchOptions();
 
-    UIUtil.setContent(
-      searchPatternEditor,
-      matchOptions.getSearchPattern(),
-      0,
-      searchPatternEditor.getDocument().getTextLength(),
-      project
-    );
+    UIUtil.setContent(searchPatternEditor, matchOptions.getSearchPattern());
 
     searchPatternEditor.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, configuration);
 
     if (replace) {
-      String replacement;
+      String replacement = configuration instanceof ReplaceConfiguration
+                    ? ((ReplaceConfiguration)configuration).getReplaceOptions().getReplacement()
+                    : configuration.getMatchOptions().getSearchPattern();
 
-      if (configuration instanceof ReplaceConfiguration) {
-        replacement = ((ReplaceConfiguration)configuration).getReplaceOptions().getReplacement();
-      }
-      else {
-        replacement = configuration.getMatchOptions().getSearchPattern();
-      }
-
-      UIUtil.setContent(
-        replacePatternEditor,
-        replacement,
-        0,
-        replacePatternEditor.getDocument().getTextLength(),
-        project
-      );
-
+      UIUtil.setContent(replacePatternEditor, replacement);
       replacePatternEditor.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, configuration);
     }
   }

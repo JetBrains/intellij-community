@@ -19,7 +19,6 @@ import org.jetbrains.jps.api.GlobalOptions;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 26-Sep-15
  */
 public class UnprocessedFSChangesNotification extends CustomBuilderMessage{
   public UnprocessedFSChangesNotification() {

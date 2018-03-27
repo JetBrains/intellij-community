@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -37,11 +24,11 @@ public class EscapeHandler extends EditorActionHandler {
   }
 
   @Override
-  public void execute(@NotNull Editor editor, DataContext dataContext){
+  protected void doExecute(@NotNull Editor editor, Caret caret, DataContext dataContext){
     editor.setHeaderComponent(null);
 
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    if (project != null) {
+    if (project != null && editor.getCaretModel().getCaretCount() == 1) {
       HighlightManagerImpl highlightManager = (HighlightManagerImpl)HighlightManager.getInstance(project);
       if (highlightManager != null && highlightManager.hideHighlights(editor, HighlightManager.HIDE_BY_ESCAPE | HighlightManager.HIDE_BY_ANY_KEY)) {
 
@@ -63,11 +50,11 @@ public class EscapeHandler extends EditorActionHandler {
       }
     }
 
-    myOriginalHandler.execute(editor, dataContext);
+    myOriginalHandler.execute(editor, caret, dataContext);
   }
 
   @Override
-  public boolean isEnabled(Editor editor, DataContext dataContext) {
+  public boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
     if (editor.hasHeaderComponent()) return true;
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
 
@@ -86,6 +73,6 @@ public class EscapeHandler extends EditorActionHandler {
       }
     }
 
-    return myOriginalHandler.isEnabled(editor, dataContext);
+    return myOriginalHandler.isEnabled(editor, caret, dataContext);
   }
 }

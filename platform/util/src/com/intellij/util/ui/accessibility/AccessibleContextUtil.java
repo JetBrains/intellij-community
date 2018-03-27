@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
+import javax.swing.*;
 import java.awt.*;
 
 public class AccessibleContextUtil {
@@ -29,12 +30,12 @@ public class AccessibleContextUtil {
   //@VisibleForTesting
   static final String PUNCTUATION_SEPARATOR = "  ";
 
-  public static void setName(@NotNull Component component, @NotNull Component source) {
-    setName(component, getAccessibleName(source));
+  public static void setName(@NotNull Component component, String name) {
+    setAccessibleName(component, name);
   }
 
-  public static void setName(@NotNull Component component, @Nullable String name) {
-    setAccessibleName(component, name);
+  public static void setName(@NotNull Component component, @NotNull Component source) {
+    setName(component, getAccessibleName(source));
   }
 
   public static void setCombinedName(@NotNull Component component,
@@ -79,7 +80,7 @@ public class AccessibleContextUtil {
     setAccessibleDescription(component, getAccessibleDescription(source));
   }
 
-  public static void setDescription(@NotNull Component component, @Nullable String description) {
+  public static void setDescription(@NotNull Component component, String description) {
     setAccessibleDescription(component, description);
   }
 
@@ -139,6 +140,13 @@ public class AccessibleContextUtil {
     component.getAccessibleContext().setAccessibleParent(null);
   }
 
+  /**
+   * @deprecated use {@link #setParent(Component, Component)} instead
+   */
+  public static void setParent(@NotNull JComponent component, @Nullable Component newParent) {
+    setParent((Component)component, newParent);
+  }
+
   public static @Nullable String combineAccessibleStrings(@Nullable String s1, @NotNull String separator, @Nullable String s2) {
     if (StringUtil.isEmpty(s1))
       return s2;
@@ -191,7 +199,7 @@ public class AccessibleContextUtil {
     return null;
   }
 
-  private static void setAccessibleName(@NotNull Component component, @Nullable String name) {
+  private static void setAccessibleName(@NotNull Component component, String name) {
     if (component instanceof Accessible) {
       component.getAccessibleContext().setAccessibleName(name);
     }
@@ -204,7 +212,7 @@ public class AccessibleContextUtil {
     return null;
   }
 
-  private static void setAccessibleDescription(@NotNull Component component, @Nullable String description) {
+  private static void setAccessibleDescription(@NotNull Component component, String description) {
     if (component instanceof Accessible) {
       component.getAccessibleContext().setAccessibleDescription(description);
     }

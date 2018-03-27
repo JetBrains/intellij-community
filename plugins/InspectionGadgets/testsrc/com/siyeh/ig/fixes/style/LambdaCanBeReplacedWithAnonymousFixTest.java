@@ -15,6 +15,10 @@
  */
 package com.siyeh.ig.fixes.style;
 
+import com.intellij.lang.java.JavaLanguage;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.style.LambdaCanBeReplacedWithAnonymousInspection;
@@ -109,6 +113,24 @@ public class LambdaCanBeReplacedWithAnonymousFixTest extends IGQuickFixesTestCas
 
   public void testRemoveRedundantCast() {
     doTest();
+  }
+  
+  public void testMalformedPackageName() {
+    doTest();
+  }
+
+  @Override
+  protected void doTest() {
+    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    CommonCodeStyleSettings javaSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
+    boolean oldSetting = javaSettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE;
+    try {
+      javaSettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
+      super.doTest();
+    }
+    finally {
+      javaSettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE = oldSetting;
+    }
   }
 
   @Override

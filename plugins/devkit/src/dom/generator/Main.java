@@ -31,7 +31,7 @@ import java.io.File;
 public class Main {
 
 
-  public static void main(String argv[]) throws Exception {
+  public static void main(String[] argv) throws Exception {
     if (argv.length != 4) {
       System.out.println("Usage: Main <XSD or DTD> <input folder> <output folder> <config xml>");
     }

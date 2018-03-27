@@ -15,19 +15,18 @@
  */
 package com.intellij.ide.ui.laf.darcula.ui;
 
-import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.ui.ErrorBorderCapable;
-import com.intellij.ui.Gray;
-import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.MacUIUtil;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
-import java.awt.geom.Area;
+import java.awt.geom.Path2D;
 import java.awt.geom.RoundRectangle2D;
+
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.*;
 
 /**
  * @author Konstantin Bulenkov
@@ -36,54 +35,32 @@ public class DarculaSpinnerBorder implements Border, UIResource, ErrorBorderCapa
 
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-    JSpinner spinner = (JSpinner)c;
-    JFormattedTextField editor = UIUtil.findComponentOfType(spinner, JFormattedTextField.class);
-    int x1 = x + JBUI.scale(1);
-    int y1 = y + JBUI.scale(3);
-    int width1 = width - JBUI.scale(2);
-    int height1 = height - JBUI.scale(6);
-    boolean focused = c.isEnabled() && c.isVisible() && editor != null && editor.hasFocus();
-
     Graphics2D g2 = (Graphics2D)g.create();
     try {
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-      g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
+      g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
+                          MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
 
-      if (c.isOpaque()) {
-        g2.setColor(UIUtil.getPanelBackground());
-        g2.fillRect(x, y, width, height);
-      }
+      //JBInsets.removeFrom(r, JBUI.insets(1, 0));
+      g2.translate(x, y);
 
-      g2.setColor(UIUtil.getTextFieldBackground());
-      g2.fillRoundRect(x1, y1, width1, height1, JBUI.scale(5), JBUI.scale(5));
-      g2.setColor(UIManager.getColor(spinner.isEnabled() ? "Spinner.darcula.enabledButtonColor" : "Spinner.darcula.disabledButtonColor"));
-      if (editor != null) {
-        int off = editor.getBounds().x + editor.getWidth() + ((JSpinner)c).getInsets().left + JBUI.scale(1);
-        Area rect = new Area(new RoundRectangle2D.Double(x1, y1, width1, height1, JBUI.scale(5), JBUI.scale(5)));
-        Area blueRect = new Area(new Rectangle(off, y1, JBUI.scale(22), height1));
-        rect.intersect(blueRect);
-        g2.fill(rect);
+      float lw = lw(g2);
+      float bw = bw();
+      float arc = arc();
 
-        if (UIUtil.isUnderDarcula()) {
-          g2.setColor(Gray._100);
-          g2.drawLine(off, y1, off, height1 + JBUI.scale(2));
-        }
-      }
+      Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
+      border.append(new RoundRectangle2D.Float(bw, bw, width - bw * 2, height - bw * 2, arc, arc), false);
+      border.append(new RoundRectangle2D.Float(bw + lw, bw + lw, width - (bw + lw) * 2, height - (bw + lw) * 2, arc, arc), false);
 
-      if (!c.isEnabled()) {
-        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.4f));
-      }
+      g2.setColor(getOutlineColor(c.isEnabled()));
+      g2.fill(border);
 
       Object op = ((JComponent)c).getClientProperty("JComponent.outline");
       if (op != null) {
-        g2.translate(x, y + JBUI.scale(1));
-        DarculaUIUtil.paintOutlineBorder(g2, width, height - JBUI.scale(1)*2, JBUI.scale(5), true, focused,
-                                         DarculaUIUtil.Outline.valueOf(op.toString()));
-      } else if (focused) {
-        DarculaUIUtil.paintFocusRing(g2, new Rectangle(x1 + JBUI.scale(2), y1, width1 - JBUI.scale(3), height1));
-      } else {
-        g2.setColor(new JBColor(Gray._149,Gray._100));
-        g2.drawRoundRect(x1, y1, width1, height1, JBUI.scale(5), JBUI.scale(5));
+        paintOutlineBorder(g2, width, height, arc, true, isFocused(c),
+                                         Outline.valueOf(op.toString()));
+      } else if (isFocused(c)) {
+        paintFocusBorder(g2, width, height, arc, true);
       }
     } finally {
       g2.dispose();
@@ -92,7 +69,7 @@ public class DarculaSpinnerBorder implements Border, UIResource, ErrorBorderCapa
 
   @Override
   public Insets getBorderInsets(Component c) {
-    return JBUI.insets(5, 7, 5, 7).asUIResource();
+    return JBUI.insets(3, 8, 3, 3).asUIResource();
   }
 
   @Override

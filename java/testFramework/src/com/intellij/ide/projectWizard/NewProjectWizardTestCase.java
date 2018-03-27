@@ -23,7 +23,6 @@ import java.io.File;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 23.09.13
  */
 public abstract class NewProjectWizardTestCase extends ProjectWizardTestCase {
   @Override

@@ -28,9 +28,9 @@ import com.intellij.openapi.vcs.changes.committed.CommittedChangesNavigation;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.util.*;
 
@@ -60,7 +60,7 @@ public class SvnRevisionsNavigationMediator implements CommittedChangesNavigatio
 
     Runnable process = () -> {
       try {
-        infoRef.set(vcs.getInfo(location.toSvnUrl(), SVNRevision.HEAD));
+        infoRef.set(vcs.getInfo(location.toSvnUrl(), Revision.HEAD));
       }
       catch (SvnBindException e) {
         exception[0] = e;

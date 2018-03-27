@@ -21,7 +21,7 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.openapi.util.MultiValuesMap
 import com.intellij.util.PathUtilRt
 import org.apache.tools.ant.AntClassLoader
-import org.jetbrains.jps.model.JpsProject
+import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.jps.model.artifact.JpsArtifactService
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
@@ -39,11 +39,11 @@ class LayoutBuilder {
   private final boolean compressJars
   final Set<String> usedModules = new LinkedHashSet<>()
   private final MultiValuesMap<String, String> moduleOutputPatches = new MultiValuesMap<>(true)
-  private final JpsProject project
+  private final CompilationContext context
 
-  LayoutBuilder(AntBuilder ant, JpsProject project, boolean compressJars) {
-    this.project = project
-    this.ant = ant
+  LayoutBuilder(CompilationContext context, boolean compressJars) {
+    ant = context.ant
+    this.context = context
     this.compressJars = compressJars
 
     def contextLoaderRef = "GANT_CONTEXT_CLASS_LOADER";
@@ -163,7 +163,7 @@ class LayoutBuilder {
      * keep names of JARs included into bootstrap classpath only.</strong>
      */
     def projectLibrary(String libraryName, boolean removeVersionFromJarName = false) {
-      def library = project.libraryCollection.findLibrary(libraryName)
+      def library = context.project.libraryCollection.findLibrary(libraryName)
       if (library == null) {
         throw new IllegalArgumentException("Cannot find library $libraryName in the project")
       }
@@ -174,7 +174,7 @@ class LayoutBuilder {
      * Include output of a project artifact {@code artifactName} to the current place in the layout
      */
     def artifact(String artifactName) {
-      def artifact = JpsArtifactService.instance.getArtifacts(project).find {it.name == artifactName}
+      def artifact = JpsArtifactService.instance.getArtifacts(context.project).find {it.name == artifactName}
       if (artifact == null) {
         throw new IllegalArgumentException("Cannot find artifact $artifactName in the project")
       }
@@ -227,11 +227,7 @@ class LayoutBuilder {
     }
 
     JpsModule findModule(String name) {
-      def module = project.modules.find { it.name == name }
-      if (module == null) {
-        throw new IllegalArgumentException("Cannot find module '$name' in the project")
-      }
-      module
+      context.findRequiredModule(name)
     }
 
     private String getLibraryName(JpsLibrary lib) {

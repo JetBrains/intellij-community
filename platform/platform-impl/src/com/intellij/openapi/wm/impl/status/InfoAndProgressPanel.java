@@ -1,23 +1,12 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.internal.statistic.customUsageCollectors.actions.ActionsCollector;
 import com.intellij.notification.EventLog;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -467,11 +456,15 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
   @NotNull
   private static Component getAnchor(@NotNull JRootPane pane) {
     Component tabWrapper = UIUtil.findComponentOfType(pane, TabbedPaneWrapper.TabWrapper.class);
-    if (tabWrapper != null) return tabWrapper;
-    Component splitters = UIUtil.findComponentOfType(pane, EditorsSplitters.class);
-    if (splitters != null) return splitters;
+    if (tabWrapper != null && tabWrapper.isShowing()) return tabWrapper;
+    EditorsSplitters splitters = UIUtil.findComponentOfType(pane, EditorsSplitters.class);
+    if (splitters != null) {
+      return splitters.isShowing() ? splitters : pane;
+    }
     FileEditorManagerEx ex = FileEditorManagerEx.getInstanceEx(ProjectUtil.guessCurrentProject(pane));
-    return ex == null ? pane : ex.getSplitters();
+    if (ex == null) return pane;
+    splitters = ex.getSplitters();
+    return splitters.isShowing() ? splitters : pane;
   }
 
   private static boolean isBottomSideToolWindowsVisible(@NotNull JRootPane parent) {
@@ -677,9 +670,14 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
           updateProgress();
         }
       });
-      Runnable updatePowerSaveStatus = () -> myProgress.setVisible(!PowerSaveMode.isEnabled());
-      runOnPowerSaveChange(updatePowerSaveStatus, this);
-      updatePowerSaveStatus.run();
+      runOnPowerSaveChange(this::queueProgressUpdate, this);
+    }
+
+    @Override
+    public String getText() {
+      String text = StringUtil.notNullize(super.getText());
+      ProgressSuspender suspender = getSuspender();
+      return suspender != null && suspender.isSuspended() ? suspender.getSuspendedText() : text;
     }
 
     @Override
@@ -692,6 +690,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
         ProgressSuspender suspender = Objects.requireNonNull(getSuspender());
         suspender.setSuspended(!suspender.isSuspended());
         updateProgressNow();
+        ActionsCollector.getInstance().record(suspender.isSuspended() ? "Progress Paused" : "Progress Resumed");
       }).setFillBg(false);
       suspendButton.setVisible(false);
 
@@ -776,6 +775,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
 
     @Override
     public void updateProgressNow() {
+      myProgress.setVisible(!PowerSaveMode.isEnabled() || !isPaintingIndeterminate());
       super.updateProgressNow();
       if (myPresentationModeProgressPanel != null) myPresentationModeProgressPanel.update();
     }

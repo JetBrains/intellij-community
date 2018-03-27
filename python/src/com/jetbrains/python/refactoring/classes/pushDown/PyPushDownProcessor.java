@@ -71,6 +71,7 @@ public class PyPushDownProcessor extends PyMembersRefactoringBaseProcessor {
     return null;
   }
 
+  @NotNull
   @Override
   protected String getCommandName() {
     return PyPushDownHandler.REFACTORING_NAME;

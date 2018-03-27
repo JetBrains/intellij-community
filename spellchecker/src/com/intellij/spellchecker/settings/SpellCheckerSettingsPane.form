@@ -82,9 +82,9 @@
                     <clientProperties>
                       <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithoutIndent"/>
                     </clientProperties>
-                    <border type="etched" title-resource-bundle="com/intellij/spellchecker/util/SpellCheckerBundle" title-key="dictionaries.panel.title"/>
+                    <border type="etched" title-resource-bundle="com/intellij/spellchecker/util/SpellCheckerBundle" title-key="bundled.dictionaries.title"/>
                     <children>
-                      <grid id="5ec35" binding="panelForDictionaryChooser" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                      <grid id="5ec35" binding="myPanelForBundledDictionaries" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                         <margin top="0" left="0" bottom="0" right="0"/>
                         <constraints>
                           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
@@ -114,9 +114,9 @@
                     <clientProperties>
                       <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithoutIndent"/>
                     </clientProperties>
-                    <border type="etched" title-resource-bundle="com/intellij/spellchecker/util/SpellCheckerBundle" title-key="add.directory.title"/>
+                    <border type="etched" title-resource-bundle="com/intellij/spellchecker/util/SpellCheckerBundle" title-key="custom.dictionaries.title"/>
                     <children>
-                      <grid id="607a1" binding="panelForFolderChooser" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                      <grid id="607a1" binding="myPanelForCustomDictionaries" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                         <margin top="0" left="0" bottom="0" right="0"/>
                         <constraints>
                           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
@@ -132,7 +132,7 @@
                         <properties>
                           <componentStyle value="SMALL"/>
                           <fontColor value="BRIGHTER"/>
-                          <text resource-bundle="com/intellij/spellchecker/util/SpellCheckerBundle" key="add.directory.description"/>
+                          <text resource-bundle="com/intellij/spellchecker/util/SpellCheckerBundle" key="add.dictionary.description"/>
                         </properties>
                       </component>
                     </children>

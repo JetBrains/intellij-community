@@ -24,6 +24,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
@@ -32,6 +33,7 @@ import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
 import com.jetbrains.python.psi.impl.PyConstantExpressionEvaluator;
 import com.jetbrains.python.psi.impl.PyImportStatementNavigator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -277,17 +279,18 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     }
   }
 
-  private Instruction getPrevInstruction(final PyElement condition) {
-    final Ref<Instruction> head = new Ref<>(myBuilder.prevInstruction);
+  @NotNull
+  private List<Pair<PsiElement, Instruction>> getPrevInstructions(final PyElement condition) {
+    final List<Pair<PsiElement, Instruction>> result = ContainerUtil.newArrayList(Pair.create(condition, myBuilder.prevInstruction));
     myBuilder.processPending((pendingScope, instruction) -> {
       if (pendingScope != null && PsiTreeUtil.isAncestor(condition, pendingScope, false)) {
-        head.set(instruction);
+        result.add(Pair.create(pendingScope, instruction));
       }
       else {
         myBuilder.addPendingEdge(pendingScope, instruction);
       }
     });
-    return head.get();
+    return result;
   }
 
   @Override
@@ -326,8 +329,11 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     }
     // Set the head as the last instruction of condition
     PyElement lastCondition = condition;
-    Instruction lastBranchingPoint = getPrevInstruction(condition);
-    myBuilder.prevInstruction = lastBranchingPoint;
+
+    List<Pair<PsiElement, Instruction>> lastBranchingPoints = getPrevInstructions(condition);
+    lastBranchingPoints.forEach(pair -> myBuilder.addPendingEdge(pair.getFirst(), pair.getSecond()));
+    myBuilder.prevInstruction = null;
+
     final PyStatementList thenStatements = ifPart.getStatementList();
     myBuilder.startConditionalNode(thenStatements, condition, true);
     InstructionBuilder.addAssertInstructions(myBuilder, assertionEvaluator);
@@ -343,18 +349,22 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
     for (final PyIfPart part : node.getElifParts()) {
       // Set the head as the false branch
-      myBuilder.prevInstruction = lastBranchingPoint;
+      lastBranchingPoints.forEach(pair -> myBuilder.addPendingEdge(pair.getFirst(), pair.getSecond()));
+      myBuilder.prevInstruction = null;
+
       myBuilder.startConditionalNode(part, lastCondition, false);
       condition = part.getCondition();
       assertionEvaluator = new PyTypeAssertionEvaluator();
       if (condition != null) {
         lastCondition = condition;
-        lastBranchingPoint = getPrevInstruction(lastCondition);
+        lastBranchingPoints = getPrevInstructions(lastCondition);
         condition.accept(this);
         condition.accept(assertionEvaluator);
       }
       // Set the head as the last instruction of condition
-      myBuilder.prevInstruction = getPrevInstruction(lastCondition);
+      getPrevInstructions(lastCondition).forEach(pair -> myBuilder.addPendingEdge(pair.getFirst(), pair.getSecond()));
+      myBuilder.prevInstruction = null;
+
       myBuilder.startConditionalNode(part, lastCondition, true);
       final PyStatementList statementList = part.getStatementList();
       InstructionBuilder.addAssertInstructions(myBuilder, assertionEvaluator);
@@ -378,15 +388,24 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     final PyElsePart elseBranch = node.getElsePart();
     if (elseBranch != null) {
       // Set the head as the false branch
-      myBuilder.prevInstruction = lastBranchingPoint;
+      lastBranchingPoints.forEach(pair -> myBuilder.addPendingEdge(pair.getFirst(), pair.getSecond()));
+      myBuilder.prevInstruction = null;
+
       myBuilder.startConditionalNode(elseBranch, lastCondition, false);
       InstructionBuilder.addAssertInstructions(myBuilder, negativeAssertionEvaluator);
       elseBranch.accept(this);
       myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
     }
     else {
-      myBuilder.prevInstruction = lastBranchingPoint;
-      InstructionBuilder.addAssertInstructions(myBuilder, negativeAssertionEvaluator);
+      myBuilder.prevInstruction = null;
+      final Instruction instruction = ContainerUtil.getFirstItem(InstructionBuilder.addAssertInstructions(myBuilder, negativeAssertionEvaluator));
+      if (instruction != null) {
+        lastBranchingPoints.forEach(p -> myBuilder.addEdge(p.getSecond(), instruction));
+      }
+      else {
+        lastBranchingPoints.forEach(pair -> myBuilder.addPendingEdge(pair.getFirst(), pair.getSecond()));
+      }
+
       myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
     }
   }
@@ -396,12 +415,15 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     final PyElementType operator = node.getOperator();
     if (operator == PyTokenTypes.AND_KEYWORD || operator == PyTokenTypes.OR_KEYWORD) {
       myBuilder.startNode(node);
-      final PyExpression left = node.getLeftExpression();
       final PyTypeAssertionEvaluator assertionEvaluator = new PyTypeAssertionEvaluator(operator == PyTokenTypes.AND_KEYWORD);
+
+      final PyExpression left = node.getLeftExpression();
       if (left != null) {
         left.accept(this);
         left.accept(assertionEvaluator);
+        myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
       }
+
       final PyExpression right = node.getRightExpression();
       if (right != null) {
         InstructionBuilder.addAssertInstructions(myBuilder, assertionEvaluator);
@@ -455,7 +477,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     }
     final Instruction head = myBuilder.prevInstruction;
     final PyElsePart elsePart = node.getElsePart();
-    if (elsePart == null) {
+    if (elsePart == null && !nonEmptyIterationSource(source)) {
       myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
     }
     final PyStatementList list = forPart.getStatementList();
@@ -488,6 +510,13 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
       myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
     }
     myBuilder.flowAbrupted();
+  }
+
+  private static boolean nonEmptyIterationSource(@Nullable PyExpression source) {
+    return
+      source instanceof PySequenceExpression && !((PySequenceExpression)source).isEmpty() ||
+      source instanceof PyStringLiteralExpression && !((PyStringLiteralExpression)source).getStringValue().isEmpty() ||
+      source instanceof PyParenthesizedExpression && nonEmptyIterationSource(((PyParenthesizedExpression)source).getContainedExpression());
   }
 
   @Override

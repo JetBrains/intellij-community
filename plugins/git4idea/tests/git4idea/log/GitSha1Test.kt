@@ -18,7 +18,12 @@ package git4idea.log
 import com.intellij.openapi.vcs.Executor.cd
 import com.intellij.openapi.vcs.Executor.touch
 import com.intellij.openapi.vcs.changes.patch.BlobIndexUtil
-import git4idea.test.*
+import com.intellij.openapi.vfs.LocalFileSystem
+import git4idea.test.GitSingleRepoTest
+import git4idea.test.add
+import git4idea.test.addCommit
+import git4idea.test.createFileStructure
+import java.nio.file.Paths
 
 class GitSha1Test : GitSingleRepoTest() {
   var A_FILE = "a.txt"
@@ -26,12 +31,12 @@ class GitSha1Test : GitSingleRepoTest() {
   @Throws(Exception::class)
   override fun setUp() {
     super.setUp()
-    createFileStructure(myProjectRoot, A_FILE)
+    createFileStructure(projectRoot, A_FILE)
     addCommit("initial")
   }
 
   fun `test sha for add`() {
-    cd(myProjectPath)
+    cd(projectPath)
     val newFile = "newFile.txt"
     touch(newFile, "Hello World!")
     add(newFile)
@@ -39,17 +44,17 @@ class GitSha1Test : GitSingleRepoTest() {
   }
 
   fun `test sha for del`() {
-    cd(myProjectPath)
-    val path = myProjectRoot.findChild(A_FILE)!!.path
+    cd(projectPath)
+    val path = Paths.get(projectPath, A_FILE)
     val expectedBefore = git("hash-object $path")
     git("rm $path")
     checkSha1ForSingleChange(expectedBefore, BlobIndexUtil.NOT_COMMITTED_HASH)
   }
 
   fun `test sha for modified`() {
-    cd(myProjectPath)
-    val virtualFile = myProjectRoot.findChild(A_FILE)
-    val path = virtualFile!!.path
+    cd(projectPath)
+    val path = Paths.get(projectPath, A_FILE)
+    val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(path.toFile())!!
     val expectedBefore = git("hash-object $path")
     setFileText(virtualFile, "echo content\n with line separator")
     checkSha1ForSingleChange(expectedBefore, git("hash-object $path"))

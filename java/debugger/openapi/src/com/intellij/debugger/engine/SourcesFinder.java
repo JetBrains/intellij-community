@@ -21,7 +21,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: May 23, 2006
  */
 public interface SourcesFinder<Scope> {
   /**

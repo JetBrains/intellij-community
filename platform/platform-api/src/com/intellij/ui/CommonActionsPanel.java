@@ -100,6 +100,7 @@ public class CommonActionsPanel extends JPanel {
 
   private Map<Buttons, MyActionButton> myButtons = new HashMap<>();
   private final AnActionButton[] myActions;
+  private EnumMap<Buttons, ShortcutSet> myCustomShortcuts;
 
   CommonActionsPanel(ListenerFactory factory, @Nullable JComponent contextComponent, ActionToolbarPosition position,
                      @Nullable AnActionButton[] additionalActions, @Nullable Comparator<AnActionButton> buttonComparator,
@@ -189,8 +190,14 @@ public class CommonActionsPanel extends JPanel {
     }
     final JRootPane pane = getRootPane();
     for (AnActionButton button : myActions) {
-      final ShortcutSet shortcut = button.getShortcut();
+      ShortcutSet shortcut = button.getShortcut();
       if (shortcut != null) {
+        if (button instanceof MyActionButton && myCustomShortcuts != null ) {
+          ShortcutSet customShortCut = myCustomShortcuts.get(((MyActionButton)button).myButton);
+          if (customShortCut != null) {
+            shortcut = customShortCut;
+          }
+        }
         if (button instanceof MyActionButton
             && ((MyActionButton)button).isAddButton()
             && UIUtil.isDialogRootPane(pane)) {
@@ -240,6 +247,20 @@ public class CommonActionsPanel extends JPanel {
     final MyActionButton b = myButtons.get(button);
     if (b != null) {
       b.setEnabled(enabled);
+    }
+  }
+
+  public void setCustomShortcuts(@NotNull Buttons button, @Nullable ShortcutSet... shortcutSets) {
+    if (shortcutSets != null) {
+      if (myCustomShortcuts == null) myCustomShortcuts = new EnumMap<>(Buttons.class);
+      myCustomShortcuts.put(button, new CompositeShortcutSet(shortcutSets));
+    } else {
+      if (myCustomShortcuts != null) {
+        myCustomShortcuts.remove(button);
+        if (myCustomShortcuts.isEmpty()) {
+          myCustomShortcuts = null;
+        }
+      }
     }
   }
 

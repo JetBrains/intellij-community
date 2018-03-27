@@ -1,11 +1,11 @@
 UFile (package = ) [public final enum EnumSwitchConditionalBreak {...]
     UClass (name = EnumSwitchConditionalBreak) [public final enum EnumSwitchConditionalBreak {...}]
         UEnumConstant (name = FIRST) [FIRST] = NON-EVALUATED
-            USimpleNameReferenceExpression (identifier = EnumSwitchConditionalBreak) [EnumSwitchConditionalBreak] = NON-EVALUATED
+            USimpleNameReferenceExpression (identifier = EnumSwitchConditionalBreak) [EnumSwitchConditionalBreak] = external EnumSwitchConditionalBreak()
         UEnumConstant (name = SECOND) [SECOND] = NON-EVALUATED
-            USimpleNameReferenceExpression (identifier = EnumSwitchConditionalBreak) [EnumSwitchConditionalBreak] = NON-EVALUATED
+            USimpleNameReferenceExpression (identifier = EnumSwitchConditionalBreak) [EnumSwitchConditionalBreak] = external EnumSwitchConditionalBreak()
         UEnumConstant (name = THIRD) [THIRD] = NON-EVALUATED
-            USimpleNameReferenceExpression (identifier = EnumSwitchConditionalBreak) [EnumSwitchConditionalBreak] = NON-EVALUATED
+            USimpleNameReferenceExpression (identifier = EnumSwitchConditionalBreak) [EnumSwitchConditionalBreak] = external EnumSwitchConditionalBreak()
         UMethod (name = foo) [public static fun foo(key: EnumSwitchConditionalBreak, result: int) : int {...}]
             UParameter (name = key) [var key: EnumSwitchConditionalBreak]
             UParameter (name = result) [var result: int]
@@ -32,11 +32,11 @@ UFile (package = ) [public final enum EnumSwitchConditionalBreak {...]
                                         UPostfixExpression (operator = ++) [counter++] = (var counter = 0)
                                             USimpleNameReferenceExpression (identifier = counter) [counter] = (var counter = 0)
                                         UBreakExpression (label = null) [break] = Nothing(break)
-                                    UastEmptyExpression [UastEmptyExpression] = NON-EVALUATED
+                                    UastEmptyExpression [UastEmptyExpression] = Undetermined
                                 UPostfixExpression (operator = ++) [counter++] = (var counter = 0)
                                     USimpleNameReferenceExpression (identifier = counter) [counter] = (var counter = 0)
                         USwitchClauseExpressionWithBody [else -> {...] = Undetermined
-                            UDefaultCaseExpression [else] = NON-EVALUATED
+                            UDefaultCaseExpression [else] = Undetermined
                             UExpressionList (switch_entry) [{...] = Undetermined
                                 UBinaryExpression (operator = =) [newResult = 42] = 42
                                     USimpleNameReferenceExpression (identifier = newResult) [newResult] = (var newResult = Undetermined)

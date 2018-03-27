@@ -34,7 +34,6 @@ import java.io.IOException;
 /**
  * Actual serialized data of a decorator call.
  * User: dcheryasov
- * Date: Dec 18, 2008 9:09:57 PM
  */
 public class PyDecoratorCallElementType extends PyStubElementType<PyDecoratorStub, PyDecorator> {
   public PyDecoratorCallElementType() {

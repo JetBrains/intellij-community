@@ -139,7 +139,7 @@ public abstract class GithubCreateGistTestBase extends GithubTest {
   }
 
   protected void registerCancelingLoginDialogHandler() {
-    myDialogManager.registerDialogHandler(GithubLoginDialog.class, new TestDialogHandler<GithubLoginDialog>() {
+    dialogManager.registerDialogHandler(GithubLoginDialog.class, new TestDialogHandler<GithubLoginDialog>() {
       @Override
       public int handleDialog(GithubLoginDialog dialog) {
         return DialogWrapper.CANCEL_EXIT_CODE;

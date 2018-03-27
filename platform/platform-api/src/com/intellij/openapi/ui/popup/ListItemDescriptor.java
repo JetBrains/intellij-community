@@ -32,6 +32,10 @@ public interface ListItemDescriptor<T> {
   @Nullable
   Icon getIconFor(T value);
 
+  default Icon getSelectedIconFor(T value) {
+    return getIconFor(value);
+  }
+
   boolean hasSeparatorAboveOf(T value);
 
   @Nullable

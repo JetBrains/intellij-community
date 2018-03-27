@@ -23,10 +23,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author cdr
@@ -220,8 +217,10 @@ public class MoveFieldAssignmentToInitializerInspection extends AbstractBaseJava
       PsiElement prev = PsiTreeUtil.skipWhitespacesAndCommentsBackward(assignment.getParent());
       String comments = prev == null ? null : CommentTracker.commentsBetween(prev, assignment);
 
-      PsiExpression initializer = assignment.getRExpression();
-      field.setInitializer(initializer);
+      CommentTracker ct = new CommentTracker();
+      // Should not reach here if getRExpression is null: isInitializedWithSameExpression would return false
+      PsiExpression initializer = Objects.requireNonNull(assignment.getRExpression());
+      field.setInitializer(ct.markUnchanged(initializer));
 
       PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
       if (comments != null) {
@@ -242,12 +241,13 @@ public class MoveFieldAssignmentToInitializerInspection extends AbstractBaseJava
             parent instanceof PsiWhileStatement ||
             parent instanceof PsiForStatement ||
             parent instanceof PsiForeachStatement) {
-          PsiStatement emptyStatement = factory.createStatementFromText(";", statement);
-          statement.replace(emptyStatement);
+          ct.replaceAndRestoreComments(statement, ";");
         }
         else {
-          statement.delete();
+          ct.deleteAndRestoreComments(statement);
         }
+        // if we replace/delete several assignments we want to restore comments at each place separately
+        ct = new CommentTracker();
       }
 
       // Delete empty initializer left after fix

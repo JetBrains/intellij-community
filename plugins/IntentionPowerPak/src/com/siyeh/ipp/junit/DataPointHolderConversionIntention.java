@@ -116,7 +116,7 @@ public class DataPointHolderConversionIntention extends PsiElementBaseIntentionA
       return null;
     }
     final PsiElement maybeHolder = element.getParent();
-    if (maybeHolder == null || !(maybeHolder instanceof PsiMethod || maybeHolder instanceof PsiField)) {
+    if (!(maybeHolder instanceof PsiMethod || maybeHolder instanceof PsiField)) {
       return null;
     }
     final PsiMember holder = (PsiMember)maybeHolder;

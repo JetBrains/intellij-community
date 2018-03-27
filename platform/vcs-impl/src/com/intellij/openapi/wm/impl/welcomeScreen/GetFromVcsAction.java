@@ -19,19 +19,13 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.vcs.CheckoutProvider;
-import com.intellij.openapi.vcs.checkout.CheckoutAction;
+import com.intellij.openapi.vcs.checkout.CheckoutActionGroup;
 import com.intellij.ui.UIBundle;
-
-import java.util.Arrays;
 
 public class GetFromVcsAction extends WelcomePopupAction{
 
   protected void fillActions(DefaultActionGroup group) {
-    final CheckoutProvider[] providers = Extensions.getExtensions(CheckoutProvider.EXTENSION_POINT_NAME);
-    Arrays.sort(providers, new CheckoutProvider.CheckoutProviderComparator());
-    for (CheckoutProvider provider : providers) {
-      group.add(new CheckoutAction(provider));
-    }
+    group.addAll(new CheckoutActionGroup("WelcomeScreen.GetFromVcs").getActions());
   }
 
   protected String getCaption() {

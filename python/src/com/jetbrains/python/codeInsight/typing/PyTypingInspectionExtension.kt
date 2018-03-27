@@ -35,8 +35,8 @@ class PyTypingInspectionExtension : PyInspectionExtension() {
 
   private fun isGenericItselfOrDescendant(type: PyClassLikeType,
                                           context: TypeEvalContext): Boolean {
-    return type.classQName == PyTypingTypeProvider.GENERIC ||
-           type.getSuperClassTypes(context).any { it.classQName == PyTypingTypeProvider.GENERIC }
+    return PyTypingTypeProvider.GENERIC_CLASSES.contains(type.classQName) ||
+           type.getAncestorTypes(context).any { PyTypingTypeProvider.GENERIC_CLASSES.contains(it.classQName) }
   }
 
   private fun isBuiltin(type: PyClassLikeType): Boolean {

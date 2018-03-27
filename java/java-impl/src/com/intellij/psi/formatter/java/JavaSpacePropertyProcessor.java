@@ -521,7 +521,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
   /**
    * Initializes {@link #myResult} property with {@link Spacing} which {@code 'min line feeds'} property is defined
-   * from {@link CodeStyleSettings#BLANK_LINES_AROUND_CLASS} value.
+   * from {@link CommonCodeStyleSettings#BLANK_LINES_AROUND_CLASS} value.
    */
   private void setAroundClassSpacing() {
     myResult = Spacing.createSpacing(0, Integer.MAX_VALUE, mySettings.BLANK_LINES_AROUND_CLASS + 1,
@@ -712,7 +712,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   private void processOnNewLineCondition(boolean onNewLine, boolean createSpaceInline) {
     if (onNewLine) {
       if (!mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE) {
-        myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+        myResult = Spacing.createSpacing(1, 1, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
       }
       else {
         myResult = Spacing.createDependentLFSpacing(0, 1, myParent.getTextRange(), mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
@@ -1331,7 +1331,8 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   @Override
   public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
     if ((myRole1 == ChildRole.DOUBLE_COLON && myRole2 == ChildRole.REFERENCE_NAME) ||
-        (myRole1 == ChildRole.EXPRESSION && myRole2 == ChildRole.DOUBLE_COLON)) {
+        (myRole1 == ChildRole.EXPRESSION && myRole2 == ChildRole.DOUBLE_COLON) ||
+        (myRole1 == ChildRole.CLASS_REFERENCE && myRole2 == ChildRole.DOUBLE_COLON)) {
       createSpaceInCode(mySettings.SPACE_AROUND_METHOD_REF_DBL_COLON);
     }
   }

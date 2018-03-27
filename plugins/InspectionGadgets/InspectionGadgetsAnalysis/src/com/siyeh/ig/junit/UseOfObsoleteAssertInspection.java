@@ -147,6 +147,18 @@ public class UseOfObsoleteAssertInspection extends BaseInspection {
           styleManager.shortenClassReferences(methodExpression);
         }
       }
+
+      PsiMethod newTarget = methodCallExpression.resolveMethod();
+      if (newTarget != null && newTarget.isDeprecated()) {
+        PsiParameter[] parameters = newTarget.getParameterList().getParameters();
+        if (parameters.length > 0) {
+          PsiType paramType = parameters[parameters.length - 1].getType();
+          if (PsiType.DOUBLE.equals(paramType) || PsiType.FLOAT.equals(paramType)) {
+            methodCallExpression.getArgumentList().add(JavaPsiFacade.getElementFactory(project).createExpressionFromText("0.0", methodCallExpression));
+          }
+        }
+      }
+
       /*
           //refs can be optimized now but should we really?
           if (isImportUnused) {

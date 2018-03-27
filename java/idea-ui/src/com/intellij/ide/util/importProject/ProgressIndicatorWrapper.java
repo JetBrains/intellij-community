@@ -21,7 +21,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jul 5, 2007
  */
 public class ProgressIndicatorWrapper {
   @Nullable

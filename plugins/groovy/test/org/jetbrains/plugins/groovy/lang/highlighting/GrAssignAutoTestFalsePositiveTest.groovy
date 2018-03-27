@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.codeInspection.InspectionProfileEntry
@@ -8,6 +10,7 @@ import org.codehaus.groovy.control.MultipleCompilationErrorsException
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
+import org.jetbrains.plugins.groovy.util.Slow
 
 /**
  * Character and char are skipped intentionally.
@@ -15,6 +18,7 @@ import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilit
  * Current spec https://github.com/apache/groovy/blob/master/src/spec/doc/core-differences-java.adoc#conversions
  * Bug: https://issues.apache.org/jira/browse/GROOVY-7557
  */
+@Slow
 class GrAssignAutoTestFalsePositiveTest extends GrHighlightingTestBase {
 
   List<String> types = ['boolean', 'int', 'double', 'String', 'BigDecimal', 'BigInteger', 'List', 'Object', 'Thread',
@@ -38,6 +42,8 @@ class GrAssignAutoTestFalsePositiveTest extends GrHighlightingTestBase {
   List<String> objectValues = ['new Object()', 'new Thread()', '"str"', 'null']
   List<String> listValues = ['[]', '[1]', '[0L]', '[1.1]', '[1.2f]', '["str]', 'new ArrayList<>()', '[new Object()], [new Thread()]']
 
+  List<String> voidValues = ['print("")', '(Void)null']
+
   List<String> values = booleanValues +
                         byteValues +
                         shortValues +
@@ -48,7 +54,8 @@ class GrAssignAutoTestFalsePositiveTest extends GrHighlightingTestBase {
                         doubleValues +
                         bigDecimalValues +
                         objectValues +
-                        listValues
+                        listValues +
+                        voidValues
 
   def shell = GroovyShell.newInstance()
 
@@ -111,6 +118,26 @@ class GrAssignAutoTestFalsePositiveTest extends GrHighlightingTestBase {
             'Object[] -> boolean[]', 'Object[] -> String[]', 'Thread[] -> boolean[]', 'Thread[] -> String[]']
   }
 
+  void testParameterMethodCall() {
+    doTest '''
+        import groovy.transform.CompileStatic
+
+        def bar(%2$s param) {
+        }
+        
+        @CompileStatic
+        def method(%1$s param) {
+          bar(param)
+        }
+        ''',
+           vectorProduct(types, types),
+           ['int -> double[]', 'short -> int[]', 'short -> double[]', 'short -> Integer[]', 'byte -> int[]', 'byte -> double[]',
+            'byte -> Integer[]'],
+           ['Integer[] -> int[]', 'Integer[] -> double[]',
+            'BigDecimal -> int', 'BigDecimal -> int[]', 'BigDecimal -> short', 'BigInteger -> int', 'BigInteger -> double',
+            'BigInteger -> int[]', 'BigInteger -> double[]', 'BigInteger -> short', 'int[] -> double[]', 'int[] -> Integer[]']
+  }
+
   void testLocalAssignValue() {
     doTest '''
         import groovy.transform.CompileStatic
@@ -121,7 +148,7 @@ class GrAssignAutoTestFalsePositiveTest extends GrHighlightingTestBase {
         }
         ''',
            vectorProduct(values, types),
-           ['[] -> BigInteger', '[1] -> BigInteger'],
+           ['[] -> BigInteger', '[1] -> BigInteger', '[1.1] -> BigDecimal'],
            ['[] -> int', '[] -> double', '[] -> short', '[] -> byte', '[1.1] -> int', '[1.1] -> double', '[1.1] -> boolean[]',
             '[1.1] -> String[]', '[1.1] -> short', '[] -> int', '[1] -> int', '[1] -> double', '[1] -> int',
             '[1] -> boolean[]', '[1] -> String[]', '[0L] -> double', '[0L] -> boolean[]', '[0L] -> String[]', '[1.1] -> int',

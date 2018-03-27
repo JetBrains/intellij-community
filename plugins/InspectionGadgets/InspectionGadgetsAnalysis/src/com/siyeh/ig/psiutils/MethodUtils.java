@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -22,23 +8,33 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
+import com.intellij.psi.util.*;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import com.siyeh.HardcodedMethodConstants;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class MethodUtils {
 
   private MethodUtils() {}
+
+  public static boolean isCopyConstructor(@Nullable PsiMethod constructor) {
+    if (constructor == null || !constructor.isConstructor()) {
+      return false;
+    }
+    final PsiParameter[] parameters = constructor.getParameterList().getParameters();
+    return parameters.length == 1 && constructor.getContainingClass() == PsiUtil.resolveClassInClassTypeOnly(parameters[0].getType());
+  }
 
   @Contract("null -> false")
   public static boolean isComparatorCompare(@Nullable PsiMethod method) {
@@ -310,7 +306,7 @@ public class MethodUtils {
       if (statement instanceof PsiEmptyStatement) {
         continue;
       }
-      else if (statement instanceof PsiReturnStatement) {
+      if (statement instanceof PsiReturnStatement) {
         final PsiReturnStatement returnStatement = (PsiReturnStatement)statement;
         final PsiExpression returnValue = ParenthesesUtils.stripParentheses(returnStatement.getReturnValue());
         if (returnValue == null || returnValue instanceof PsiLiteralExpression) {
@@ -392,13 +388,6 @@ public class MethodUtils {
     return returnValue instanceof PsiThisExpression;
   }
 
-  @Contract("null -> false")
-  public static boolean isStringLength(@Nullable PsiMethod method) {
-    if (method == null || !method.getName().equals("length") || method.getParameterList().getParametersCount() != 0) return false;
-    PsiClass aClass = method.getContainingClass();
-    return aClass != null && CommonClassNames.JAVA_LANG_STRING.equals(aClass.getQualifiedName());
-  }
-
   public static boolean haveEquivalentModifierLists(PsiMethod method, PsiMethod superMethod) {
     final PsiModifierList list1 = method.getModifierList();
     final PsiModifierList list2 = superMethod.getModifierList();
@@ -411,5 +400,62 @@ public class MethodUtils {
       return false;
     }
     return AnnotationUtil.equal(list1.getAnnotations(), list2.getAnnotations());
+  }
+
+  public static PsiMethodCallExpression findSuperOrThisCall(PsiMethod constructor) {
+    if (constructor == null || !constructor.isConstructor()) {
+      return null;
+    }
+    final PsiStatement firstStatement = PsiTreeUtil.getChildOfType(constructor.getBody(), PsiStatement.class);
+    if (!(firstStatement instanceof PsiExpressionStatement)) {
+      return null;
+    }
+    final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)firstStatement;
+    final PsiExpression expression = expressionStatement.getExpression();
+    if (!RefactoringChangeUtil.isSuperOrThisMethodCall(expression)) {
+      return null;
+    }
+    return (PsiMethodCallExpression)expression;
+  }
+
+  /**
+   * Find a specific method by base class method and known specific type of the object
+   *
+   * @param method a base class method
+   * @param specificType a specific type (class type or intersection type)
+   * @return more specific method, or base class method if more specific method cannot be found
+   */
+  @NotNull
+  public static PsiMethod findSpecificMethod(@NotNull PsiMethod method, @Nullable PsiType specificType) {
+    PsiClass qualifierClass = method.getContainingClass();
+    if (qualifierClass == null) return method;
+    if (specificType == null || specificType instanceof PsiArrayType) return method;
+    StreamEx<PsiType> types;
+    if (specificType instanceof PsiIntersectionType) {
+      types = StreamEx.of(((PsiIntersectionType)specificType).getConjuncts());
+    } else {
+      types = StreamEx.of(specificType);
+    }
+    List<PsiMethod> methods = types.map(PsiUtil::resolveClassInClassTypeOnly)
+      .nonNull()
+      .without(qualifierClass)
+      .distinct()
+      .filter(specificClass -> InheritanceUtil.isInheritorOrSelf(specificClass, qualifierClass, true))
+      .map(specificClass -> MethodSignatureUtil.findMethodBySuperMethod(specificClass, method, true))
+      .nonNull()
+      .distinct()
+      .toList();
+    if (methods.isEmpty()) return method;
+    PsiMethod best = methods.get(0);
+    for (PsiMethod realMethod : methods) {
+      if (best.equals(realMethod)) continue;
+      if (MethodSignatureUtil.isSuperMethod(best, realMethod)) {
+        best = realMethod;
+      } else if (!MethodSignatureUtil.isSuperMethod(realMethod, best)) {
+        // Several real candidates: give up
+        return method;
+      }
+    }
+    return best;
   }
 }

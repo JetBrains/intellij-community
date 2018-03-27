@@ -19,7 +19,7 @@ class Finder(metaclass=ABCMeta):
     # easier to simply ignore that this method exists.
     # @abstractmethod
     # def find_module(self, fullname: str,
-    #                 path: Optional[Sequence[_Path]] = None) -> Optional[Loader]: ...
+    #                 path: Optional[Sequence[_Path]] = ...) -> Optional[Loader]: ...
 
 class ResourceLoader(Loader):
     @abstractmethod
@@ -64,7 +64,7 @@ if sys.version_info >= (3, 3):
             # Not defined on the actual class, but expected to exist.
             def find_spec(
                 self, fullname: str, path: Optional[Sequence[_Path]],
-                target: Optional[types.ModuleType] = None
+                target: Optional[types.ModuleType] = ...
             ) -> Optional[ModuleSpec]:
                 ...
 
@@ -78,7 +78,7 @@ if sys.version_info >= (3, 3):
             # Not defined on the actual class, but expected to exist.
             def find_spec(
                 self, fullname: str,
-                target: Optional[types.ModuleType] = None
+                target: Optional[types.ModuleType] = ...
             ) -> Optional[ModuleSpec]: ...
 
     class FileLoader(ResourceLoader, ExecutionLoader):

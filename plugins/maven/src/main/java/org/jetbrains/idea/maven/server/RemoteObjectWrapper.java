@@ -32,7 +32,7 @@ public abstract class RemoteObjectWrapper<T> {
 
   @Nullable
   protected synchronized T getWrappee() {
-    return myWrappee == null ? null : myWrappee;
+    return myWrappee;
   }
 
   @NotNull
@@ -69,7 +69,7 @@ public abstract class RemoteObjectWrapper<T> {
     myWrappee = null;
   }
 
-  protected <T> T perform(Retriable<T> r) {
+  protected <R, E extends Exception> R perform(Retriable<R, E> r) throws E {
     RemoteException last = null;
     for (int i = 0; i < 2; i++) {
       try {
@@ -82,36 +82,7 @@ public abstract class RemoteObjectWrapper<T> {
     throw new RuntimeException("Cannot reconnect.", last);
   }
 
-  protected <T> T perform(RetriableCancelable<T> r) throws MavenProcessCanceledException {
-    RemoteException last = null;
-    for (int i = 0; i < 2; i++) {
-      try {
-        return r.execute();
-      }
-      catch (RemoteException e) {
-        handleRemoteError(last = e);
-      }
-      catch (MavenServerProcessCanceledException e) {
-        throw new MavenProcessCanceledException();
-      }
-    }
-    throw new RuntimeException("Cannot reconnect.", last);
-  }
-
-  protected <T> T perform(IndexRetriable<T> r) throws MavenServerIndexerException {
-    RemoteException last = null;
-    for (int i = 0; i < 2; i++) {
-      try {
-        return r.execute();
-      }
-      catch (RemoteException e) {
-        handleRemoteError(last = e);
-      }
-    }
-    throw new RuntimeException("Cannot reconnect.", last);
-  }
-
-  protected <T> T perform(IndexRetriableCancelable<T> r) throws MavenServerIndexerException, MavenProcessCanceledException {
+  protected <R, E extends Exception> R performCancelable(RetriableCancelable<R, E> r) throws MavenProcessCanceledException, E {
     RemoteException last = null;
     for (int i = 0; i < 2; i++) {
       try {
@@ -127,19 +98,13 @@ public abstract class RemoteObjectWrapper<T> {
     throw new RuntimeException("Cannot reconnect.", last);
   }
 
-  protected interface Retriable<T> {
-    T execute() throws RemoteException;
+  @FunctionalInterface
+  protected interface Retriable<T, E extends Exception> {
+    T execute() throws RemoteException, E;
   }
 
-  protected interface IndexRetriable<T> {
-    T execute() throws RemoteException, MavenServerIndexerException;
-  }
-
-  protected interface IndexRetriableCancelable<T> {
-    T execute() throws RemoteException, MavenServerIndexerException, MavenServerProcessCanceledException;
-  }
-
-  protected interface RetriableCancelable<T> {
-    T execute() throws RemoteException, MavenServerProcessCanceledException;
+  @FunctionalInterface
+  protected interface RetriableCancelable<T, E extends Exception> {
+    T execute() throws RemoteException, MavenServerProcessCanceledException, E;
   }
 }

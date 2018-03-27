@@ -24,6 +24,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -72,13 +73,14 @@ public class RedundantStringFormatCallInspection extends BaseInspection {
       }
       final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
+      CommentTracker commentTracker = new CommentTracker();
       @NonNls final StringBuilder newExpression = new StringBuilder();
       final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
       if (qualifierExpression != null) {
-        newExpression.append(qualifierExpression.getText()).append('.');
+        newExpression.append(commentTracker.markUnchanged(qualifierExpression).getText()).append('.');
       }
-      newExpression.append("print").append(methodCallExpression.getArgumentList().getText());
-      PsiReplacementUtil.replaceExpression(methodCallExpression, newExpression.toString());
+      newExpression.append("print").append(commentTracker.markUnchanged(methodCallExpression.getArgumentList()).getText());
+      PsiReplacementUtil.replaceExpression(methodCallExpression, newExpression.toString(), commentTracker);
     }
   }
 

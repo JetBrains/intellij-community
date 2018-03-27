@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
 import com.intellij.psi.PsiType;
@@ -19,7 +21,7 @@ public class GrNumberConverter extends GrTypeConverter {
 
   @Override
   public boolean isApplicableTo(@NotNull ApplicableTo position) {
-    return position != ApplicableTo.METHOD_PARAMETER;
+    return true;
   }
 
   @Nullable
@@ -28,10 +30,19 @@ public class GrNumberConverter extends GrTypeConverter {
                                           @NotNull PsiType actualType,
                                           @NotNull GroovyPsiElement context,
                                           @NotNull ApplicableTo currentPosition) {
+    if (currentPosition == ApplicableTo.METHOD_PARAMETER) {
+      return methodParameterConvert(targetType, actualType);
+    }
     if (PsiUtil.isCompileStatic(context)) return isCSConvertible(targetType, actualType);
     if (TypesUtil.isNumericType(targetType) && TypesUtil.isNumericType(actualType)) {
       return OK;
     }
+    return null;
+  }
+
+  private static ConversionResult methodParameterConvert(PsiType targetType, PsiType actualType) {
+    if (TypesUtil.isClassType(actualType, JAVA_MATH_BIG_DECIMAL))
+      return isFloatOrDoubleType(targetType) ? OK : null;
     return null;
   }
 

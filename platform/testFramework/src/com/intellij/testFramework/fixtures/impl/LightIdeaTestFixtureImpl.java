@@ -70,9 +70,11 @@ public class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTe
     CodeInsightSettings oldCodeInsightSettings = myOldCodeInsightSettings;
     myOldCodeInsightSettings = null;
 
+    // don't use method references here to make stack trace reading easier
+    //noinspection Convert2MethodRef
     new RunAll()
       .append(() -> UsefulTestCase.checkForStyleSettingsDamage(oldCodeStyleSettings, getCurrentCodeStyleSettings()))
-      .append(super::tearDown) // call all disposables' dispose() while the project is still open
+      .append(() -> super.tearDown()) // call all disposables' dispose() while the project is still open
       .append(() -> LightPlatformTestCase.doTearDown(project, LightPlatformTestCase.getApplication()))
       .append(() -> LightPlatformTestCase.checkEditorsReleased())
       .append(() -> myOldSdks.checkForJdkTableLeaks())

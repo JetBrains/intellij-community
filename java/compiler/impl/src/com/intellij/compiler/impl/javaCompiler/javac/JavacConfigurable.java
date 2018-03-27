@@ -29,7 +29,6 @@ import javax.swing.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Mar 30, 2004
  */
 public class JavacConfigurable implements Configurable{
   private JPanel myPanel;

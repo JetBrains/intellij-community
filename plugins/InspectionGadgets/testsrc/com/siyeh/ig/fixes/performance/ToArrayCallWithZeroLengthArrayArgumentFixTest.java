@@ -18,21 +18,28 @@ package com.siyeh.ig.fixes.performance;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.performance.ToArrayCallWithZeroLengthArrayArgumentInspection;
+import com.siyeh.ig.performance.ToArrayCallWithZeroLengthArrayArgumentInspection.PreferEmptyArray;
 
 public class ToArrayCallWithZeroLengthArrayArgumentFixTest extends IGQuickFixesTestCase {
+  private ToArrayCallWithZeroLengthArrayArgumentInspection myInspection = new ToArrayCallWithZeroLengthArrayArgumentInspection();
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myFixture.enableInspections(new ToArrayCallWithZeroLengthArrayArgumentInspection());
+    myFixture.enableInspections(myInspection);
   }
 
   public void testIntroduceVariable() {
-    doFixTest();
+    doFixTest(PreferEmptyArray.NEVER, InspectionGadgetsBundle.message("to.array.call.style.quickfix.make.presized"));
   }
 
-  private void doFixTest() {
-    doTest(getTestName(false), InspectionGadgetsBundle.message("to.array.call.with.zero.length.array.argument.quickfix"));
+  public void testPresizedToZero() {
+    doFixTest(PreferEmptyArray.ALWAYS, InspectionGadgetsBundle.message("to.array.call.style.quickfix.make.zero"));
+  }
+
+  private void doFixTest(PreferEmptyArray mode, String message) {
+    myInspection.myMode = mode;
+    doTest(getTestName(false), message);
   }
 
   @Override

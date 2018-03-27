@@ -43,10 +43,14 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
    */
   Stream<String> names();
 
+  @Contract("null -> false")
   boolean methodReferenceMatches(PsiMethodReferenceExpression methodRef);
 
   @Contract("null -> false")
   boolean test(@Nullable PsiMethodCallExpression call);
+
+  @Contract("null -> false")
+  boolean methodMatches(@Nullable PsiMethod method);
 
   /**
    * Returns true if the supplied expression is (possibly parenthesized) method call which matches this matcher
@@ -77,6 +81,16 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
       public boolean methodReferenceMatches(PsiMethodReferenceExpression methodRef) {
         for (CallMatcher m : matchers) {
           if (m.methodReferenceMatches(methodRef)) {
+            return true;
+          }
+        }
+        return false;
+      }
+
+      @Override
+      public boolean methodMatches(PsiMethod method) {
+        for (CallMatcher m : matchers) {
+          if (m.methodMatches(method)) {
             return true;
           }
         }
@@ -197,13 +211,13 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
         if (args.length < myParameters.length) return false;
       }
       PsiMethod method = call.resolveMethod();
-      if (!methodMatches(method)) return false;
+      if (method == null) return false;
       PsiParameterList parameterList = method.getParameterList();
       if (parameterList.getParametersCount() > args.length ||
           (!MethodCallUtils.isVarArgCall(call) && parameterList.getParametersCount() < args.length)) {
         return false;
       }
-      return parametersMatch(parameterList);
+      return methodMatches(method);
     }
 
     private boolean parametersMatch(@NotNull PsiParameterList parameterList) {
@@ -214,7 +228,7 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
     }
 
     @Contract("null -> false")
-    private boolean methodMatches(PsiMethod method) {
+    public boolean methodMatches(PsiMethod method) {
       if (method == null) return false;
       PsiClass aClass = method.getContainingClass();
       if (aClass == null) return false;
@@ -223,7 +237,7 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
           (!myStatic && !InheritanceUtil.isInheritor(aClass, myClassName))) {
         return false;
       }
-      return true;
+      return parametersMatch(method.getParameterList());
     }
 
     @Override

@@ -63,7 +63,7 @@ public class JavaWithIfExpressionSurrounder extends JavaBooleanExpressionSurroun
     ifStatement = (PsiIfStatement)statement.replace(ifStatement);
 
     PsiStatement thenBranch = ifStatement.getThenBranch();
-    if (thenBranch != null && thenBranch instanceof PsiBlockStatement) {
+    if (thenBranch instanceof PsiBlockStatement) {
       PsiCodeBlock block = ((PsiBlockStatement)thenBranch).getCodeBlock();
       block = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(block);
       TextRange range = block.getStatements()[0].getTextRange();

@@ -33,7 +33,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
-import com.intellij.psi.util.PsiClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -203,9 +202,5 @@ public class JavaExecutionUtil {
 
   public static void showExecutionErrorMessage(final ExecutionException e, final String title, final Project project) {
     ExecutionErrorDialog.show(e, title, project);
-  }
-
-  public static boolean isRunnableClass(final PsiClass aClass) {
-    return PsiClassUtil.isRunnableClass(aClass, true);
   }
 }

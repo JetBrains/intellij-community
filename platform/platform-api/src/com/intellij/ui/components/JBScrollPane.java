@@ -493,14 +493,17 @@ public class JBScrollPane extends JScrollPane {
         hsbOpaque = hsb.isOpaque();
         if (hsbNeeded) {
           adjustForHSB(bounds, insets, hsbBounds, hsbOpaque, hsbOnTop);
-          if (hsbOpaque && viewport != null) {
-            // If we added the horizontal scrollbar and reduced the vertical space
-            // we may have to add the vertical scrollbar, if that hasn't been done so already.
-            if (vsb != null && !vsbNeeded && vsbPolicy != VERTICAL_SCROLLBAR_NEVER) {
-              viewportExtentSize = viewport.toViewCoordinates(bounds.getSize());
-              vsbNeeded = viewPreferredSize.height > viewportExtentSize.height || viewLocation.y != 0;
-              if (vsbNeeded) adjustForVSB(bounds, insets, vsbBounds, vsbOpaque, vsbOnLeft);
+          // If we added the horizontal scrollbar and reduced the vertical space
+          // we may have to add the vertical scrollbar, if that hasn't been done so already.
+          if (vsb != null && !vsbNeeded && vsbPolicy != VERTICAL_SCROLLBAR_NEVER) {
+            if (!hsbOpaque) {
+              viewPreferredSize.height += hsbBounds.height;
             }
+            else if (viewport != null) {
+              viewportExtentSize = viewport.toViewCoordinates(bounds.getSize());
+            }
+            vsbNeeded = viewPreferredSize.height > viewportExtentSize.height || viewLocation.y != 0;
+            if (vsbNeeded) adjustForVSB(bounds, insets, vsbBounds, vsbOpaque, vsbOnLeft);
           }
         }
       }

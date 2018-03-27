@@ -18,5 +18,6 @@ LangString current_version_already_installed ${LANG_ENGLISH} "Current version of
 LangString uninstall_previous_installations_title ${LANG_ENGLISH} "Uninstall old versions"
 LangString uninstall_previous_installations ${LANG_ENGLISH} ""
 LangString uninstall_previous_installations_prompt ${LANG_ENGLISH} "Select the ${MUI_PRODUCT} version$2 that you want to uninstall."
+LangString uninstaller_relocated ${LANG_ENGLISH} "Uninstall hasn't detected folder of ${MUI_PRODUCT} installation. Probably uninstall.exe was moved from the installation folder."
 LangString empty_or_upgrade_folder ${LANG_ENGLISH} "Please select an empty folder."
 LangString application_running ${LANG_ENGLISH} "$INSTDIR is running. Close the application and retry the installation."

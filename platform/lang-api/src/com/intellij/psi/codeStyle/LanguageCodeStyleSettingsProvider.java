@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.Set;
 
 /**
- * Base class and extension point for code style settings shared between multiple languages
+ * Base class and extension point for common code style settings for a specific language.
  */
 public abstract class LanguageCodeStyleSettingsProvider {
   public static final ExtensionPointName<LanguageCodeStyleSettingsProvider> EP_NAME =
@@ -97,7 +97,7 @@ public abstract class LanguageCodeStyleSettingsProvider {
    */
   @Nullable
   public CommonCodeStyleSettings getDefaultCommonSettings() {
-    return null;
+    return new CommonCodeStyleSettings(getLanguage());
   }
 
   /**

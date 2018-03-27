@@ -115,18 +115,33 @@ public class ObjectEqualityInspection extends BaseInspection {
       if (m_ignoreEnums && TypeConversionUtil.isEnumType(lhs.getType())) {
         return;
       }
-      ProblemHighlightType highlightType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
-      if (!TypeConversionUtil.isBinaryOperatorApplicable(expression.getOperationTokenType(), lhs, rhs, false)) {
-        // don't warn on non-compiling code, but allow to replace
-        highlightType = ProblemHighlightType.INFORMATION;
+      ProblemHighlightType highlightType;
+      if (shouldHighlight(expression, rhs, lhs)) {
+        highlightType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
       }
-      if (m_ignoreClassObjects && ClassUtils.isFinalClassWithDefaultEquals(PsiUtil.resolveClassInClassTypeOnly(lhs.getType()))) {
-        highlightType = ProblemHighlightType.INFORMATION;
-      }
-      if (m_ignorePrivateConstructors && typeHasPrivateConstructor(lhs)) {
+      else {
+        if (!isOnTheFly()) {
+          return;
+        }
         highlightType = ProblemHighlightType.INFORMATION;
       }
       registerError(expression.getOperationSign(), highlightType, expression);
+    }
+
+    private boolean shouldHighlight(@NotNull PsiBinaryExpression expression,
+                                    PsiExpression rhs,
+                                    PsiExpression lhs) {
+      if (!TypeConversionUtil.isBinaryOperatorApplicable(expression.getOperationTokenType(), lhs, rhs, false)) {
+        // don't warn on non-compiling code, but allow to replace
+        return false;
+      }
+      if (m_ignoreClassObjects && ClassUtils.isFinalClassWithDefaultEquals(PsiUtil.resolveClassInClassTypeOnly(lhs.getType()))) {
+        return false;
+      }
+      if (m_ignorePrivateConstructors && typeHasPrivateConstructor(lhs)) {
+        return false;
+      }
+      return true;
     }
 
     private boolean typeHasPrivateConstructor(@Nullable PsiExpression expression) {

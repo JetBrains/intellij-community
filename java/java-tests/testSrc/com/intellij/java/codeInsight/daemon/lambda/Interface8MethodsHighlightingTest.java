@@ -128,6 +128,8 @@ public class Interface8MethodsHighlightingTest extends LightCodeInsightFixtureTe
     doTest();
   }
 
+  public void testStaticAbstractDefaultInOneHierarchy() { doTest(); }
+
   public void testMethodHierarchyWithDeclaredTypeParameters() {
     doTest();
   }

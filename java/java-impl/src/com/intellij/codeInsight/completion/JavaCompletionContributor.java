@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.codeInsight.completion;
 
@@ -22,6 +10,7 @@ import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.icons.AllIcons;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -33,6 +22,7 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
@@ -49,6 +39,7 @@ import com.intellij.psi.filters.classes.AssignableFromContextFilter;
 import com.intellij.psi.filters.element.ModifierFilter;
 import com.intellij.psi.filters.getters.ExpectedTypesGetter;
 import com.intellij.psi.filters.getters.JavaMembersGetter;
+import com.intellij.psi.impl.java.stubs.index.JavaAutoModuleNameIndex;
 import com.intellij.psi.impl.java.stubs.index.JavaModuleNameIndex;
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.impl.source.PsiLabelReference;
@@ -294,7 +285,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
 
     if (parent instanceof PsiJavaModuleReferenceElement) {
-      addModuleReferences(parent, result);
+      addModuleReferences(parent, parameters.getOriginalFile(), result);
     }
 
     result.stopHere();
@@ -594,7 +585,7 @@ public class JavaCompletionContributor extends CompletionContributor {
       addAllClasses(parameters, result, new JavaCompletionSession(result));
     }
 
-    if (annoClass != null) {
+    if (annoClass != null && annoClass.isAnnotationType()) {
       final PsiNameValuePair[] existingPairs = parameterList.getAttributes();
 
       methods: for (PsiMethod method : annoClass.getMethods()) {
@@ -923,20 +914,41 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
   }
 
-  private static void addModuleReferences(PsiElement moduleRef, CompletionResultSet result) {
+  private static void addModuleReferences(PsiElement moduleRef, PsiFile originalFile, CompletionResultSet result) {
     PsiElement statement = moduleRef.getParent();
-    if (statement instanceof PsiRequiresStatement || statement instanceof PsiPackageAccessibilityStatement) {
-      PsiElement module = statement.getParent();
-      if (module != null) {
-        String moduleName = ((PsiJavaModule)module).getName();
+    boolean requires;
+    if ((requires = statement instanceof PsiRequiresStatement) || statement instanceof PsiPackageAccessibilityStatement) {
+      PsiElement parent = statement.getParent();
+      if (parent != null) {
         Project project = moduleRef.getProject();
+        Set<String> filter = new HashSet<>();
+        filter.add(((PsiJavaModule)parent).getName());
+
         JavaModuleNameIndex index = JavaModuleNameIndex.getInstance();
         GlobalSearchScope scope = ProjectScope.getAllScope(project);
         for (String name : index.getAllKeys(project)) {
-          if (!name.equals(moduleName) && index.get(name, project, scope).size() == 1) {
-            LookupElement lookup = LookupElementBuilder.create(name);
-            if (statement instanceof PsiRequiresStatement) lookup = TailTypeDecorator.withTail(lookup, TailType.SEMICOLON);
+          if (index.get(name, project, scope).size() > 0 && filter.add(name)) {
+            LookupElement lookup = LookupElementBuilder.create(name).withIcon(AllIcons.Nodes.JavaModule);
+            if (requires) lookup = TailTypeDecorator.withTail(lookup, TailType.SEMICOLON);
             result.addElement(lookup);
+          }
+        }
+
+        if (requires) {
+          Module module = ModuleUtilCore.findModuleForFile(originalFile);
+          if (module != null) {
+            VirtualFile[] roots = ModuleRootManager.getInstance(module).orderEntries().withoutSdk().librariesOnly().getClassesRoots();
+            scope = GlobalSearchScope.filesScope(project, Arrays.asList(roots));
+            for (String name : JavaAutoModuleNameIndex.getAllKeys(project)) {
+              if (JavaAutoModuleNameIndex.getFilesByKey(name, scope).size() > 0 &&
+                  PsiNameHelper.isValidModuleName(name, parent) &&
+                  filter.add(name)) {
+                LookupElement lookup = LookupElementBuilder.create(name).withIcon(AllIcons.FileTypes.Archive);
+                lookup = TailTypeDecorator.withTail(lookup, TailType.SEMICOLON);
+                lookup = PrioritizedLookupElement.withPriority(lookup, -1);
+                result.addElement(lookup);
+              }
+            }
           }
         }
       }

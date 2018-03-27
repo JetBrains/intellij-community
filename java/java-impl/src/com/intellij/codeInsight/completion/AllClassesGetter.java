@@ -98,7 +98,7 @@ public class AllClassesGetter {
           }
         }
       }
-      if (toDelete.isValid()) {
+      if (toDelete != null && toDelete.isValid()) {
         document.deleteString(toDelete.getStartOffset(), toDelete.getEndOffset());
         context.setTailOffset(toDelete.getStartOffset());
       }

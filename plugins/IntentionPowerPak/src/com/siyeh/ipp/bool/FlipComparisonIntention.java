@@ -23,6 +23,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -64,9 +65,10 @@ public class FlipComparisonIntention extends MutablyNamedIntention {
     final PsiExpression rhs = expression.getROperand();
     final IElementType tokenType = expression.getOperationTokenType();
     assert rhs != null;
-    final String expString = rhs.getText() +
+    CommentTracker commentTracker = new CommentTracker();
+    final String expString = commentTracker.markUnchanged(rhs).getText() +
                              ComparisonUtils.getFlippedComparison(tokenType) +
-                             lhs.getText();
-    PsiReplacementUtil.replaceExpression(expression, expString);
+                             commentTracker.markUnchanged(lhs).getText();
+    PsiReplacementUtil.replaceExpression(expression, expString, commentTracker);
   }
 }

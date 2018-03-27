@@ -54,6 +54,11 @@ public class ModalityStateEx extends ModalityState {
     return new ModalityStateEx(list.toArray());
   }
 
+  void forceModalEntities(List<Object> entities) {
+    myModalEntities.clear();
+    myModalEntities.addAll(entities);
+  }
+
   @Override
   public boolean dominates(@NotNull ModalityState anotherState){
     if (anotherState == ModalityState.any()) return false;

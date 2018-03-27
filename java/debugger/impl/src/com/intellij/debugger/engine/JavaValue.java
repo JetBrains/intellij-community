@@ -41,6 +41,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ThreeState;
 import com.intellij.xdebugger.XExpression;
@@ -56,6 +57,7 @@ import com.intellij.xdebugger.impl.frame.XValueWithInlinePresentation;
 import com.intellij.xdebugger.impl.ui.XValueTextProvider;
 import com.intellij.xdebugger.impl.ui.tree.XValueExtendedPresentation;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueTextRendererImpl;
 import com.sun.jdi.ArrayReference;
 import com.sun.jdi.ArrayType;
 import com.sun.jdi.Value;
@@ -342,7 +344,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
     @NotNull
     @Override
     public String getSeparator() {
-      boolean emptyAfterSeparator = !myValueDescriptor.isShowIdLabel() && StringUtil.isEmpty(myValue);
+      boolean emptyAfterSeparator = !myValueDescriptor.isShowIdLabel() && isValueEmpty();
       String declaredType = myValueDescriptor.getDeclaredTypeLabel();
       if (!StringUtil.isEmpty(declaredType)) {
         return emptyAfterSeparator ? declaredType : declaredType + " " + DEFAULT_SEPARATOR;
@@ -353,6 +355,34 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
     @Override
     public boolean isModified() {
       return myValueDescriptor.isDirty();
+    }
+
+    private boolean isValueEmpty() {
+      final MyEmptyContainerChecker checker = new MyEmptyContainerChecker();
+      renderValue(new XValueTextRendererImpl(checker));
+      return checker.isEmpty;
+    }
+
+    private static class MyEmptyContainerChecker implements ColoredTextContainer {
+      boolean isEmpty = true;
+
+      @Override
+      public void append(@NotNull String fragment, @NotNull SimpleTextAttributes attributes) {
+        if (!fragment.isEmpty()) isEmpty = false;
+      }
+
+      @Override
+      public void append(@NotNull String fragment, @NotNull SimpleTextAttributes attributes, Object tag) {
+        append(fragment, attributes);
+      }
+
+      @Override
+      public void setIcon(@Nullable Icon icon) {
+      }
+
+      @Override
+      public void setToolTipText(@Nullable String text) {
+      }
     }
   }
 

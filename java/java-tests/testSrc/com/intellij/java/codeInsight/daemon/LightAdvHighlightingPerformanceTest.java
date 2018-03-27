@@ -116,16 +116,16 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
     assertNotNull(getFile().getText()); //to load text
     CodeInsightTestFixtureImpl.ensureIndexesUpToDate(getProject());
 
-    PlatformTestUtil.startPerformanceTest(getTestName(false), maxMillis, () -> {
-      PsiManager.getInstance(getProject()).dropPsiCaches();
-      doHighlighting();
-    }).usesAllCPUCores().assertTiming();
+    PlatformTestUtil.startPerformanceTest(getTestName(false), maxMillis, () -> doHighlighting())
+      .setup(() -> PsiManager.getInstance(getProject()).dropPsiCaches())
+      .attempts(10)
+      .usesAllCPUCores().assertTiming();
 
     return highlightErrors();
   }
 
   public void testAThinlet() {
-    List<HighlightInfo> errors = doTest(1000);
+    List<HighlightInfo> errors = doTest(2000);
     if (1170 != errors.size()) {
       doTest(getFilePath("_hl"), false, false);
       fail("Actual: " + errors.size());
@@ -148,7 +148,7 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
     text.append("}");
     configureFromFileText("x.java", text.toString());
 
-    List<HighlightInfo> infos = startTest(200);
+    List<HighlightInfo> infos = startTest(800);
     assertEmpty(infos);
   }
 }

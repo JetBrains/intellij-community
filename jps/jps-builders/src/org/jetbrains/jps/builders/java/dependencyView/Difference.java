@@ -22,7 +22,6 @@ import java.util.*;
 
 /**
  * @author: db
- * Date: 01.03.11
  */
 public abstract class Difference {
 

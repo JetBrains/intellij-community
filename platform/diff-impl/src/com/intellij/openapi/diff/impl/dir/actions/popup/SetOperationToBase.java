@@ -53,7 +53,7 @@ public abstract class SetOperationToBase extends DumbAwareAction {
   public final void update(AnActionEvent e) {
     final DirDiffTableModel model = getModel(e);
     final JTable table = getTable(e);
-    if (table != null && model != null) {
+    if (table != null && model != null && model.isOperationsEnabled()) {
       for (DirDiffElementImpl element : model.getSelectedElements()) {
         if (isEnabledFor(element)) {
           e.getPresentation().setEnabled(true);

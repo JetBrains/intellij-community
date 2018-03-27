@@ -229,12 +229,28 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
   }
 
   // PY-20889
-  public void testAndBooleanExpression() {
+  public void testTypesInAndBooleanExpression() {
     doTest();
   }
 
   // PY-20889
+  public void testTypesInOrBooleanExpression() {
+    doTest();
+  }
+
+  // PY-25974
+  public void testAndBooleanExpression() {
+    doTest();
+  }
+
+  // PY-25974
   public void testOrBooleanExpression() {
+    doTest();
+  }
+
+  // PY-14840
+  // PY-22003
+  public void testPositiveIteration() {
     doTest();
   }
 

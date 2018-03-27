@@ -43,7 +43,6 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
@@ -70,10 +69,9 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
       final Object value = node.getValue();
       final ActionCallback callback = new ActionCallback();
       final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(ObjectUtils.tryCast(value, PsiElement.class));
-      final FocusRequestor focusRequestor = IdeFocusManager.getInstance(myProject).getFurtherRequestor();
       batch(indicator -> {
         final Ref<Object> target = new Ref<>();
-        _select(value, virtualFile, false, Conditions.alwaysTrue(), callback, indicator, target, focusRequestor, false);
+        _select(element, virtualFile, true, Conditions.alwaysTrue());
         callback.doWhenDone(() -> result.setDone(target.get())).doWhenRejected(() -> result.setRejected());
       });
     }
@@ -86,12 +84,13 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
 
   @Override
   protected boolean isAlwaysShowPlus(NodeDescriptor nodeDescriptor) {
-    return ((AbstractTreeNode)nodeDescriptor).isAlwaysShowPlus();
+    return nodeDescriptor instanceof AbstractTreeNode && ((AbstractTreeNode)nodeDescriptor).isAlwaysShowPlus();
   }
 
   @Override
   protected boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
-    return nodeDescriptor.getParentDescriptor() == null || ((AbstractTreeNode)nodeDescriptor).isAlwaysExpand();
+    return nodeDescriptor.getParentDescriptor() == null ||
+           nodeDescriptor instanceof AbstractTreeNode && ((AbstractTreeNode)nodeDescriptor).isAlwaysExpand();
   }
 
   @Override
@@ -111,7 +110,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
     if (element instanceof AbstractTreeNode) {
       object = ((AbstractTreeNode)element).getValue();
     }
-    
+
     return object instanceof PsiDirectory
            ? ((PsiDirectory)object).getVirtualFile()
            : object instanceof PsiFile ? ((PsiFile)object).getVirtualFile() : null;
@@ -158,11 +157,9 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
 
     final ActionCallback result = new ActionCallback();
 
-    final FocusRequestor requestor = IdeFocusManager.getInstance(myProject).getFurtherRequestor();
-
     UiActivityMonitor.getInstance().addActivity(myProject, new UiActivity.AsyncBgOperation("projectViewSelect"), updater.getModalityState());
     batch(indicator -> {
-      _select(element, file, requestFocus, nonStopCondition, result, indicator, null, requestor, false);
+      _select(element, file, requestFocus, nonStopCondition, result, indicator, null, null, false);
       UiActivityMonitor.getInstance().removeActivity(myProject, new UiActivity.AsyncBgOperation("projectViewSelect"));
     });
 
@@ -183,8 +180,9 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
     final AbstractTreeNode alreadySelected = alreadySelectedNode(element);
 
     final Runnable onDone = () -> {
-      if (requestFocus && virtualSelectTarget == null && getUi().isReady()) {
-        focusRequestor.requestFocus(getTree(), true);
+      JTree tree = getTree();
+      if (tree != null && requestFocus && virtualSelectTarget == null && getUi().isReady()) {
+        tree.requestFocus();
       }
 
       result.setDone();
@@ -224,8 +222,9 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
     }
     for (TreePath selectionPath : selectionPaths) {
       Object selected = selectionPath.getLastPathComponent();
-      if (elementIsEqualTo(selected, element)) {
-        return ((AbstractTreeNode)((DefaultMutableTreeNode)selected).getUserObject());
+      if (selected instanceof DefaultMutableTreeNode && elementIsEqualTo(selected, element)) {
+        Object userObject = ((DefaultMutableTreeNode)selected).getUserObject();
+        if (userObject instanceof AbstractTreeNode) return (AbstractTreeNode)userObject;
       }
     }
     return null;
@@ -304,8 +303,8 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
           kids.addAll(collectChildren(rootNode));
         }
         else {
-          List<Object> list = Arrays.asList(getTreeStructure().getChildElements(root));
-          for (Object each : list) {
+          Object[] childElements = getTreeStructure().getChildElements(root);
+          for (Object each : childElements) {
             kids.add((AbstractTreeNode)each);
           }
         }

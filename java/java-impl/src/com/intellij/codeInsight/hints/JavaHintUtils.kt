@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.completion.CompletionMemory
@@ -16,10 +18,14 @@ object JavaInlayHintsProvider {
 
   fun hints(callExpression: PsiCallExpression): Set<InlayInfo> {
     if (JavaMethodCallElement.isCompletionMode(callExpression)) {
+      val argumentList = callExpression.argumentList?:return emptySet()
+      val text = argumentList.text
+      if (text == null || !text.startsWith('(') || !text.endsWith(')')) return emptySet()
+
       val method = CompletionMemory.getChosenMethod(callExpression)?:return emptySet()
-      
+
       val params = method.parameterList.parameters
-      val arguments = callExpression.argumentList?.expressions ?: emptyArray()
+      val arguments = argumentList.expressions
       
       return  params.mapIndexedNotNull { i, parameter -> 
         val paramName = parameter.name ?: return@mapIndexedNotNull null
@@ -28,7 +34,7 @@ object JavaInlayHintsProvider {
         val paramToShow = (if (varargHint) ", " else "") + paramName
         val offset = if (i < arguments.size) inlayOffset(arguments[i]) 
                         else if (varargHint && i == arguments.size) callExpression.textRange.endOffset - 1
-                        else (callExpression.argumentList?.textOffset?:return@mapIndexedNotNull null) + 1
+                        else argumentList.textOffset + 1
         InlayInfo(paramToShow, offset, false, params.size == 1, varargHint)
       }.toSet()
     }

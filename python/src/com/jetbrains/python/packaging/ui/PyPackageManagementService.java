@@ -364,7 +364,7 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
   public void updatePackage(@NotNull InstalledPackage installedPackage,
                             @Nullable String version,
                             @NotNull Listener listener) {
-    installPackage(new RepoPackage(installedPackage.getName(), null), null, true, null, listener, false);
+    installPackage(new RepoPackage(installedPackage.getName(), null), version, true, null, listener, false);
   }
 
   /**

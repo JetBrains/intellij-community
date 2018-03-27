@@ -272,7 +272,7 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
           // we need to index all parents for the moves
           // so it makes sense to add them there
         });
-        getParentPaths(changedPaths).forEach(changedPath -> {
+        getParentPaths(changedPaths, inputData.getRoot()).forEach(changedPath -> {
           try {
             addChangeToResult(result, finalParent, parentsCount, changedPath, null);
           }
@@ -341,12 +341,12 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
     }
 
     @NotNull
-    private Collection<String> getParentPaths(@NotNull Collection<String> paths) {
+    private static Collection<String> getParentPaths(@NotNull Collection<String> paths, @NotNull VirtualFile root) {
       Set<String> result = ContainerUtil.newHashSet();
       for (String path : paths) {
         while (!path.isEmpty() && !result.contains(path)) {
           result.add(path);
-          if (myRoots.contains(path)) break;
+          if (FileUtil.PATH_HASHING_STRATEGY.equals(root.getPath(), path)) break;
 
           path = PathUtil.getParentPath(path);
         }

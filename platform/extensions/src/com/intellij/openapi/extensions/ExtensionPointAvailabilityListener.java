@@ -15,10 +15,12 @@
  */
 package com.intellij.openapi.extensions;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author AKireyev
  */
 public interface ExtensionPointAvailabilityListener {
-  void extensionPointRegistered(ExtensionPoint extensionPoint);
-  void extensionPointRemoved(ExtensionPoint extensionPoint);
+  void extensionPointRegistered(@NotNull ExtensionPoint extensionPoint);
+  void extensionPointRemoved(@NotNull ExtensionPoint extensionPoint);
 }

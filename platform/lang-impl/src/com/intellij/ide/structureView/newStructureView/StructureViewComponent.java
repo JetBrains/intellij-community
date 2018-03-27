@@ -9,6 +9,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.PsiCopyPasteManager;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.structureView.*;
+import com.intellij.ide.structureView.customRegions.CustomRegionTreeElement;
 import com.intellij.ide.structureView.impl.StructureViewFactoryImpl;
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
 import com.intellij.ide.ui.customization.CustomizationUtil;
@@ -77,7 +78,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
   private static final Key<TreeState> STRUCTURE_VIEW_STATE_KEY = Key.create("STRUCTURE_VIEW_STATE");
   private static AtomicInteger ourSettingsModificationCount = new AtomicInteger();
-  private final boolean myUseATM = Registry.is("structure.view.async.tree.model");
+  private final boolean myUseATM = true; //todo inline & remove
 
   private FileEditor myFileEditor;
   private final TreeModelWrapper myTreeModelWrapper;
@@ -106,7 +107,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   private final AutoScrollFromSourceHandler myAutoScrollFromSourceHandler;
 
 
-  public StructureViewComponent(FileEditor editor,
+  public StructureViewComponent(@Nullable FileEditor editor,
                                 @NotNull StructureViewModel structureViewModel,
                                 @NotNull Project project,
                                 boolean showRootNode) {
@@ -151,8 +152,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       Disposer.register(this, () -> myTreeModelWrapper.dispose());
       Disposer.register(this, myAsyncTreeModel);
 
-      myAsyncTreeModel.addTreeModelListener(new MyExpandListener(
-        myTree, ObjectUtils.tryCast(myTreeModel, StructureViewModel.ExpandInfoProvider.class)));
+      registerAutoExpandListener(myTree, myTreeModel);
 
       myUpdateAlarm = new SingleAlarm(this::rebuild, 200, this);
       myTreeBuilder = null;
@@ -195,6 +195,11 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     setupTree();
   }
 
+  public static void registerAutoExpandListener(@NotNull JTree tree, @NotNull StructureViewModel structureViewModel) {
+    tree.getModel().addTreeModelListener(new MyExpandListener(
+      tree, ObjectUtils.tryCast(structureViewModel, StructureViewModel.ExpandInfoProvider.class)));
+  }
+
   @NotNull
   public static CopyPasteDelegator createCopyPasteDelegator(@NotNull Project project, @NotNull JTree tree) {
     return new CopyPasteDelegator(project, tree) {
@@ -231,9 +236,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     myTree.setCellRenderer(new NodeRenderer());
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
     myTree.setShowsRootHandles(true);
-    MyPsiTreeChangeListener psiListener = new MyPsiTreeChangeListener(
-      PsiManager.getInstance(myProject).getModificationTracker(), this::queueUpdate);
-    PsiManager.getInstance(myProject).addPsiTreeChangeListener(psiListener, this);
+    registerPsiListener(myProject, this, this::queueUpdate);
 
     myAutoScrollToSourceHandler.install(myTree);
     myAutoScrollFromSourceHandler.install();
@@ -248,6 +251,12 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     addTreeKeyListener();
     addTreeMouseListeners();
     restoreState();
+  }
+
+  public static void registerPsiListener(@NotNull Project project, @NotNull Disposable disposable, @NotNull Runnable onChange) {
+    MyPsiTreeChangeListener psiListener = new MyPsiTreeChangeListener(
+      PsiManager.getInstance(project).getModificationTracker(), onChange);
+    PsiManager.getInstance(project).addPsiTreeChangeListener(psiListener, disposable);
   }
 
   @NotNull
@@ -332,19 +341,23 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     Object root = myTree.getModel().getRoot();
     if (root == null) return;
     myStructureViewState = TreeState.createOn(myTree, new TreePath(root));
-    myFileEditor.putUserData(STRUCTURE_VIEW_STATE_KEY, myStructureViewState);
+    if (myFileEditor != null) {
+      myFileEditor.putUserData(STRUCTURE_VIEW_STATE_KEY, myStructureViewState);
+    }
   }
 
   @Override
   public void restoreState() {
-    myStructureViewState = myFileEditor.getUserData(STRUCTURE_VIEW_STATE_KEY);
+    myStructureViewState = myFileEditor == null ? null : myFileEditor.getUserData(STRUCTURE_VIEW_STATE_KEY);
     if (myStructureViewState == null) {
       TreeUtil.expand(getTree(), 2);
     }
     else {
       myStructureViewState.applyTo(myTree);
-      myFileEditor.putUserData(STRUCTURE_VIEW_STATE_KEY, null);
       myStructureViewState = null;
+      if (myFileEditor != null) {
+        myFileEditor.putUserData(STRUCTURE_VIEW_STATE_KEY, null);
+      }
     }
   }
 
@@ -1016,7 +1029,10 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
       if (provider != null) {
         Object value = unwrapWrapper(nodeDescriptor.getElement());
-        if (value instanceof StructureViewTreeElement) {
+        if (value instanceof CustomRegionTreeElement) {
+          return true;
+        }
+        else if (value instanceof StructureViewTreeElement) {
           return provider.isAutoExpand((StructureViewTreeElement)value);
         }
         else if (value instanceof GroupWrapper) {

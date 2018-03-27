@@ -34,7 +34,6 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -185,7 +184,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
 
     final Runnable findUsagesRunnable = () -> {
       try {
-        refUsages.set(DumbService.getInstance(myProject).runReadActionInSmartMode(() -> findUsages()));
+        refUsages.set(DumbService.getInstance(myProject).runReadActionInSmartMode(this::findUsages));
       }
       catch (UnknownReferenceTypeException e) {
         refErrorLanguage.set(e.getElementLanguage());
@@ -257,7 +256,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
 
   protected void previewRefactoring(@NotNull UsageInfo[] usages) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      if (!PREVIEW_IN_TESTS) throw new RuntimeException("Unexpected preview in tests: " + StringUtil.join(usages, info -> info.toString(), ", "));
+      if (!PREVIEW_IN_TESTS) throw new RuntimeException("Unexpected preview in tests: " + StringUtil.join(usages, UsageInfo::toString, ", "));
       ensureElementsWritable(usages, createUsageViewDescriptor(usages));
       execute(usages);
       return;
@@ -439,7 +438,8 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       }
     }
 
-    LocalHistoryAction action = LocalHistory.getInstance().startAction(getCommandName());
+    String commandName = getCommandName();
+    LocalHistoryAction action = LocalHistory.getInstance().startAction(commandName);
 
     final UsageInfo[] writableUsageInfos = usageInfoSet.toArray(new UsageInfo[usageInfoSet.size()]);
     try {
@@ -483,7 +483,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       };
       ApplicationImpl app = (ApplicationImpl)ApplicationManagerEx.getApplicationEx();
       if (Registry.is("run.refactorings.under.progress")) {
-        app.runWriteActionWithProgressInDispatchThread(getCommandName(), myProject, null, null, indicator -> performRefactoringRunnable.run());
+        app.runWriteActionWithNonCancellableProgressInDispatchThread(commandName, myProject, null, indicator -> performRefactoringRunnable.run());
       }
       else {
         app.runWriteAction(performRefactoringRunnable);
@@ -496,7 +496,12 @@ public abstract class BaseRefactoringProcessor implements Runnable {
         e.getKey().performOperation(myProject, e.getValue());
       }
       myTransaction.commit();
-      app.runWriteAction(() -> performPsiSpoilingRefactoring());
+      if (Registry.is("run.refactorings.under.progress")) {
+        app.runWriteActionWithNonCancellableProgressInDispatchThread(commandName, myProject, null, indicator -> performPsiSpoilingRefactoring());
+      }
+      else {
+        app.runWriteAction(this::performPsiSpoilingRefactoring);
+      }
     }
     finally {
       action.finish();
@@ -542,15 +547,15 @@ public abstract class BaseRefactoringProcessor implements Runnable {
   public final void run() {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       ApplicationManager.getApplication().assertIsDispatchThread();
-      NonProjectFileWritingAccessProvider.disableChecksDuring(this::doRun);
+      doRun();
       return;
     }
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
       LOG.error("Refactorings should not be started inside write action\n because they start progress inside and any read action from the progress task would cause the deadlock", new Exception());
-      DumbService.getInstance(myProject).smartInvokeLater(() -> NonProjectFileWritingAccessProvider.disableChecksDuring(this::doRun));
+      DumbService.getInstance(myProject).smartInvokeLater(this::doRun);
     }
     else {
-      NonProjectFileWritingAccessProvider.disableChecksDuring(this::doRun);
+      doRun();
     }
   }
 
@@ -670,7 +675,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     }
 
     @NotNull
-    public Language getElementLanguage() {
+    Language getElementLanguage() {
       return myElementLanguage;
     }
   }
@@ -679,7 +684,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     private final Project myProject;
     private final String myRefactoringId;
 
-    public UndoRefactoringAction(Project project, String refactoringId) {
+    UndoRefactoringAction(@NotNull Project project, @NotNull String refactoringId) {
       myProject = project;
       myRefactoringId = refactoringId;
     }

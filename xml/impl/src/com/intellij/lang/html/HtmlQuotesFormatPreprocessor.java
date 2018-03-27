@@ -16,6 +16,7 @@
 package com.intellij.lang.html;
 
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
@@ -48,7 +49,8 @@ public class HtmlQuotesFormatPreprocessor implements PreFormatProcessor {
       HtmlCodeStyleSettings htmlSettings = rootSettings.getCustomSettings(HtmlCodeStyleSettings.class);
       CodeStyleSettings.QuoteStyle quoteStyle = htmlSettings.HTML_QUOTE_STYLE;
       if (quoteStyle != CodeStyleSettings.QuoteStyle.None && htmlSettings.HTML_ENFORCE_QUOTES) {
-        PostFormatProcessorHelper postFormatProcessorHelper = new PostFormatProcessorHelper(rootSettings);
+        PostFormatProcessorHelper postFormatProcessorHelper =
+          new PostFormatProcessorHelper(rootSettings.getCommonSettings(HTMLLanguage.INSTANCE));
         postFormatProcessorHelper.setResultTextRange(range);
         HtmlQuotesConverter converter = new HtmlQuotesConverter(quoteStyle, psiElement, postFormatProcessorHelper);
         Document document = converter.getDocument();
@@ -163,7 +165,7 @@ public class HtmlQuotesFormatPreprocessor implements PreFormatProcessor {
     }
 
     public static void runOnElement(@NotNull CodeStyleSettings.QuoteStyle quoteStyle, @NotNull PsiElement element) {
-      PostFormatProcessorHelper postFormatProcessorHelper = new PostFormatProcessorHelper(null);
+      PostFormatProcessorHelper postFormatProcessorHelper = new PostFormatProcessorHelper(CodeStyle.getDefaultSettings());
       postFormatProcessorHelper.setResultTextRange(element.getTextRange());
       new HtmlQuotesConverter(quoteStyle, element, postFormatProcessorHelper).run();
     }

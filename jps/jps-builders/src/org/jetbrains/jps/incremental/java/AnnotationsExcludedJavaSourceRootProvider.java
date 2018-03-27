@@ -30,7 +30,6 @@ import java.io.File;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 12/14/12
  */
 public class AnnotationsExcludedJavaSourceRootProvider extends ExcludedJavaSourceRootProvider{
   @Override

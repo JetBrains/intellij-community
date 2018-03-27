@@ -38,6 +38,15 @@ public class ReferencedElementsCollector extends JavaRecursiveElementVisitor {
     super.visitReferenceElement(reference);
   }
 
+  @Override
+  public void visitNewExpression(PsiNewExpression expression) {
+    PsiMethod method = expression.resolveMethod();
+    if (method != null) {
+      checkAddMember(method);
+    }
+    super.visitNewExpression(expression);
+  }
+
   protected void checkAddMember(@NotNull final PsiMember member) {
     myReferencedMembers.add(member);
   }

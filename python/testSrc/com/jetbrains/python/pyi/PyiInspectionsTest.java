@@ -20,6 +20,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.*;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
@@ -38,6 +39,12 @@ public class PyiInspectionsTest extends PyTestCase {
       Disposer.dispose(myRootsDisposable);
       myRootsDisposable = null;
     }
+
+    // clear cached extensions
+    // see com.jetbrains.python.PyFunctionTypeAnnotationParsingTest.tearDown()
+    PythonVisitorFilter.INSTANCE.removeExplicitExtension(PythonLanguage.INSTANCE, (visitorClass, file) -> false);
+    PythonVisitorFilter.INSTANCE.removeExplicitExtension(PyiLanguageDialect.getInstance(), (visitorClass, file) -> false);
+
     super.tearDown();
   }
 
@@ -47,7 +54,6 @@ public class PyiInspectionsTest extends PyTestCase {
 
   private void doTestByFileName(@NotNull Class<? extends LocalInspectionTool> inspectionClass, String fileName) {
     myFixture.copyDirectoryToProject("pyi/inspections/" + getTestName(true), "");
-    myFixture.copyDirectoryToProject("typing", "");
     PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
     final PsiFile file = myFixture.configureByFile(fileName);
     myFixture.enableInspections(inspectionClass);

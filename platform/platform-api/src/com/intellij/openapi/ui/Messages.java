@@ -1,18 +1,16 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package com.intellij.openapi.ui;
 
 import com.intellij.CommonBundle;
@@ -46,8 +44,6 @@ import javax.swing.plaf.basic.BasicHTML;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
@@ -192,7 +188,6 @@ public class Messages {
     return SystemInfo.isMac
            && !isApplicationInUnitTestOrHeadless()
            && Registry.is("ide.mac.message.dialogs.as.sheets");
-           //&& !DialogWrapper.isMultipleModalDialogs();
   }
 
   public static boolean isMacSheetEmulation() {
@@ -1206,7 +1201,7 @@ public class Messages {
    * Shows dialog with text area to edit long strings that don't fit in text field.
    */
   public static void showTextAreaDialog(final JTextField textField,
-                                        final @Nls(capitalization = Nls.Capitalization.Title) String title,
+                                        @Nls(capitalization = Nls.Capitalization.Title) final String title,
                                         @NonNls final String dimensionServiceKey,
                                         final Function<String, List<String>> parser,
                                         final Function<List<String>, String> lineJoiner) {
@@ -1240,19 +1235,19 @@ public class Messages {
     }
   }
 
-  public static void showTextAreaDialog(final JTextField textField, final @Nls(capitalization = Nls.Capitalization.Title) String title, @NonNls final String dimensionServiceKey) {
+  public static void showTextAreaDialog(final JTextField textField, @Nls(capitalization = Nls.Capitalization.Title) final String title, @NonNls final String dimensionServiceKey) {
     showTextAreaDialog(textField, title, dimensionServiceKey, ParametersListUtil.DEFAULT_LINE_PARSER, ParametersListUtil.DEFAULT_LINE_JOINER);
   }
 
   private static class MoreInfoMessageDialog extends MessageDialog {
     @Nullable private final String myInfoText;
 
-    public MoreInfoMessageDialog(Project project,
-                                 String message,
-                                 @Nls(capitalization = Nls.Capitalization.Title) String title,
-                                 @Nullable String moreInfo,
-                                 @NotNull String[] options,
-                                 int defaultOptionIndex, int focusedOptionIndex, Icon icon) {
+    MoreInfoMessageDialog(Project project,
+                          String message,
+                          @Nls(capitalization = Nls.Capitalization.Title) String title,
+                          @Nullable String moreInfo,
+                          @NotNull String[] options,
+                          int defaultOptionIndex, int focusedOptionIndex, Icon icon) {
       super(project);
       myInfoText = moreInfo;
       _init(title, message, options, defaultOptionIndex, focusedOptionIndex, icon, null);
@@ -1295,72 +1290,110 @@ public class Messages {
     protected Icon myIcon;
     private MyBorderLayout myLayout;
 
-    public MessageDialog(@Nullable Project project, String message, @Nls(capitalization = Nls.Capitalization.Title) String title, @NotNull String[] options, int defaultOptionIndex, @Nullable Icon icon, boolean canBeParent) {
+    MessageDialog(@Nullable Project project,
+                  String message,
+                  @Nls(capitalization = Nls.Capitalization.Title) String title,
+                  @NotNull String[] options,
+                  int defaultOptionIndex,
+                  @Nullable Icon icon,
+                  boolean canBeParent) {
       this(project, message, title, options, defaultOptionIndex, -1, icon, canBeParent);
     }
 
-    public MessageDialog(@Nullable Project project,
-                         String message,
-                         @Nls(capitalization = Nls.Capitalization.Title) String title,
-                         @NotNull String[] options,
-                         int defaultOptionIndex,
-                         int focusedOptionIndex,
-                         @Nullable Icon icon,
-                         @Nullable DoNotAskOption doNotAskOption,
-                         boolean canBeParent) {
+    MessageDialog(@Nullable Project project,
+                  String message,
+                  @Nls(capitalization = Nls.Capitalization.Title) String title,
+                  @NotNull String[] options,
+                  int defaultOptionIndex,
+                  int focusedOptionIndex,
+                  @Nullable Icon icon,
+                  @Nullable DoNotAskOption doNotAskOption,
+                  boolean canBeParent) {
       super(project, canBeParent);
       _init(title, message, options, defaultOptionIndex, focusedOptionIndex, icon, doNotAskOption);
     }
 
-    public MessageDialog(@Nullable Project project, String message, @Nls(capitalization = Nls.Capitalization.Title) String title, @NotNull String[] options, int defaultOptionIndex, int focusedOptionIndex, @Nullable Icon icon,
-                         boolean canBeParent) {
+    MessageDialog(@Nullable Project project,
+                  String message,
+                  @Nls(capitalization = Nls.Capitalization.Title) String title,
+                  @NotNull String[] options,
+                  int defaultOptionIndex,
+                  int focusedOptionIndex,
+                  @Nullable Icon icon,
+                  boolean canBeParent) {
       super(project, canBeParent);
       _init(title, message, options, defaultOptionIndex, focusedOptionIndex, icon, null);
     }
 
-    public MessageDialog(@NotNull Component parent, String message, @Nls(capitalization = Nls.Capitalization.Title) String title, @NotNull String[] options, int defaultOptionIndex, @Nullable Icon icon) {
+    MessageDialog(@NotNull Component parent,
+                  String message,
+                  @Nls(capitalization = Nls.Capitalization.Title) String title,
+                  @NotNull String[] options,
+                  int defaultOptionIndex,
+                  @Nullable Icon icon) {
       this(parent, message, title, options, defaultOptionIndex, icon, false);
     }
 
-    public MessageDialog(@NotNull Component parent, String message, @Nls(capitalization = Nls.Capitalization.Title) String title, @NotNull String[] options, int defaultOptionIndex, @Nullable Icon icon, boolean canBeParent) {
+    MessageDialog(@NotNull Component parent,
+                  String message,
+                  @Nls(capitalization = Nls.Capitalization.Title) String title,
+                  @NotNull String[] options,
+                  int defaultOptionIndex,
+                  @Nullable Icon icon,
+                  boolean canBeParent) {
       this(parent, message, title, options, defaultOptionIndex, -1, icon, canBeParent);
     }
 
-    public MessageDialog(@NotNull Component parent,
-                         String message,
-                         @Nls(capitalization = Nls.Capitalization.Title) String title,
-                         @NotNull String[] options,
-                         int defaultOptionIndex,
-                         int focusedOptionIndex,
-                         @Nullable Icon icon,
-                         boolean canBeParent) {
+    MessageDialog(@NotNull Component parent,
+                  String message,
+                  @Nls(capitalization = Nls.Capitalization.Title) String title,
+                  @NotNull String[] options,
+                  int defaultOptionIndex,
+                  int focusedOptionIndex,
+                  @Nullable Icon icon,
+                  boolean canBeParent) {
       super(parent, canBeParent);
       _init(title, message, options, defaultOptionIndex, focusedOptionIndex, icon, null);
     }
 
-    public MessageDialog(String message, @Nls(capitalization = Nls.Capitalization.Title) String title, @NotNull String[] options, int defaultOptionIndex, @Nullable Icon icon) {
+    MessageDialog(String message,
+                  @Nls(capitalization = Nls.Capitalization.Title) String title,
+                  @NotNull String[] options,
+                  int defaultOptionIndex,
+                  @Nullable Icon icon) {
       this(message, title, options, defaultOptionIndex, icon, false);
     }
 
-    public MessageDialog(String message, @Nls(capitalization = Nls.Capitalization.Title) String title, @NotNull String[] options, int defaultOptionIndex, @Nullable Icon icon, boolean canBeParent) {
+    MessageDialog(String message,
+                  @Nls(capitalization = Nls.Capitalization.Title) String title,
+                  @NotNull String[] options,
+                  int defaultOptionIndex,
+                  @Nullable Icon icon,
+                  boolean canBeParent) {
       super(canBeParent);
       _init(title, message, options, defaultOptionIndex, -1, icon, null);
     }
 
-    public MessageDialog(String message, @Nls(capitalization = Nls.Capitalization.Title) String title, @NotNull String[] options, int defaultOptionIndex, int focusedOptionIndex, @Nullable Icon icon, @Nullable DoNotAskOption doNotAskOption) {
+    MessageDialog(String message,
+                  @Nls(capitalization = Nls.Capitalization.Title) String title,
+                  @NotNull String[] options,
+                  int defaultOptionIndex,
+                  int focusedOptionIndex,
+                  @Nullable Icon icon,
+                  @Nullable DoNotAskOption doNotAskOption) {
       super(false);
       _init(title, message, options, defaultOptionIndex, focusedOptionIndex, icon, doNotAskOption);
     }
 
-    public MessageDialog(String message, @Nls(capitalization = Nls.Capitalization.Title) String title, @NotNull String[] options, int defaultOptionIndex, Icon icon, DoNotAskOption doNotAskOption) {
+    MessageDialog(String message, @Nls(capitalization = Nls.Capitalization.Title) String title, @NotNull String[] options, int defaultOptionIndex, Icon icon, DoNotAskOption doNotAskOption) {
       this(message, title, options, defaultOptionIndex, -1, icon, doNotAskOption);
     }
 
-    protected MessageDialog() {
+    MessageDialog() {
       super(false);
     }
 
-    protected MessageDialog(Project project) {
+    MessageDialog(Project project) {
       super(project, false);
     }
 
@@ -1462,7 +1495,7 @@ public class Messages {
             Method method = Class.forName("java.awt.Window").getDeclaredMethod("setOpacity", float.class);
             if (method != null) method.invoke(getPeer().getWindow(), .8f);
           }
-          catch (Exception exception) {
+          catch (Exception ignored) {
           }
         }
         setAutoAdjustable(false);
@@ -1556,7 +1589,7 @@ public class Messages {
   }
 
   private static class MyBorderLayout extends BorderLayout {
-    private double myPhase = 0;//it varies from 0 (hidden state) to 1 (fully visible)
+    private double myPhase;//it varies from 0 (hidden state) to 1 (fully visible)
 
     private MyBorderLayout() {
     }
@@ -1610,14 +1643,7 @@ public class Messages {
       messageComponent.setCaretPosition(0);
     }
 
-    if (UIUtil.isUnderNimbusLookAndFeel()) {
-      messageComponent.setOpaque(false);
-      messageComponent.setBackground(UIUtil.TRANSPARENT_COLOR);
-    }
-    else {
-      messageComponent.setBackground(UIUtil.getOptionPaneBackground());
-    }
-
+    messageComponent.setBackground(UIUtil.getOptionPaneBackground());
     messageComponent.setForeground(UIUtil.getLabelForeground());
     return messageComponent;
   }
@@ -1684,9 +1710,9 @@ public class Messages {
         return myExitFunc.fun(exitCode, myCheckBox);
       }
 
-      boolean checkBoxSelected = (myCheckBox != null && myCheckBox.isSelected());
+      boolean checkBoxSelected = myCheckBox != null && myCheckBox.isSelected();
 
-      boolean okExitCode = (exitCode == OK_EXIT_CODE);
+      boolean okExitCode = exitCode == OK_EXIT_CODE;
 
       return checkBoxSelected && okExitCode ? OK_EXIT_CODE : CANCEL_EXIT_CODE;
     }
@@ -1764,8 +1790,8 @@ public class Messages {
         String option = myOptions[i];
         final int exitCode = i;
         if (i == 0) { // "OK" is default button. It has index 0.
-          actions[i] = getOKAction();
-          actions[i].putValue(DEFAULT_ACTION, Boolean.TRUE);
+          actions[0] = getOKAction();
+          actions[0].putValue(DEFAULT_ACTION, Boolean.TRUE);
           myField.getDocument().addDocumentListener(new DocumentAdapter() {
             @Override
             public void textChanged(DocumentEvent event) {
@@ -1814,6 +1840,8 @@ public class Messages {
       return panel;
     }
 
+    @Override
+    @NotNull
     protected JPanel createMessagePanel() {
       JPanel messagePanel = new JPanel(new BorderLayout());
       if (myMessage != null) {
@@ -1929,6 +1957,7 @@ public class Messages {
       myCheckBox.setEnabled(checkboxEnabled);
     }
 
+    @NotNull
     @Override
     protected JPanel createMessagePanel() {
       JPanel messagePanel = new JPanel(new BorderLayout());
@@ -1954,19 +1983,19 @@ public class Messages {
   /** It looks awful! */
   @Deprecated
   protected static class ChooseDialog extends MessageDialog {
-    private ComboBox myComboBox;
+    private ComboBox<String> myComboBox;
     private InputValidator myValidator;
 
     public ChooseDialog(Project project,
                         String message,
                         @Nls(capitalization = Nls.Capitalization.Title) String title,
                         @Nullable Icon icon,
-                        String[] values,
+                        @NotNull String[] values,
                         String initialValue,
                         @NotNull String[] options,
                         int defaultOption) {
       super(project, message, title, options, defaultOption, icon, true);
-      myComboBox.setModel(new DefaultComboBoxModel(values));
+      myComboBox.setModel(new DefaultComboBoxModel<>(values));
       myComboBox.setSelectedItem(initialValue);
     }
 
@@ -1974,15 +2003,24 @@ public class Messages {
       this(project, message, title, icon, values, initialValue, new String[]{OK_BUTTON, CANCEL_BUTTON}, 0);
     }
 
-    public ChooseDialog(@NotNull Component parent, String message, @Nls(capitalization = Nls.Capitalization.Title) String title, @Nullable Icon icon, String[] values, String initialValue) {
+    public ChooseDialog(@NotNull Component parent,
+                        String message,
+                        @Nls(capitalization = Nls.Capitalization.Title) String title,
+                        @Nullable Icon icon,
+                        @NotNull String[] values,
+                        String initialValue) {
       super(parent, message, title, new String[]{OK_BUTTON, CANCEL_BUTTON}, 0, icon);
-      myComboBox.setModel(new DefaultComboBoxModel(values));
+      myComboBox.setModel(new DefaultComboBoxModel<>(values));
       myComboBox.setSelectedItem(initialValue);
     }
 
-    public ChooseDialog(String message, @Nls(capitalization = Nls.Capitalization.Title) String title, @Nullable Icon icon, String[] values, String initialValue) {
+    public ChooseDialog(String message,
+                        @Nls(capitalization = Nls.Capitalization.Title) String title,
+                        @Nullable Icon icon,
+                        @NotNull String[] values,
+                        String initialValue) {
       super(message, title, new String[]{OK_BUTTON, CANCEL_BUTTON}, 0, icon);
-      myComboBox.setModel(new DefaultComboBoxModel(values));
+      myComboBox.setModel(new DefaultComboBoxModel<>(values));
       myComboBox.setSelectedItem(initialValue);
     }
 
@@ -2003,12 +2041,7 @@ public class Messages {
             }
           };
           actions[i].putValue(DEFAULT_ACTION, Boolean.TRUE);
-          myComboBox.addItemListener(new ItemListener() {
-            @Override
-            public void itemStateChanged(ItemEvent e) {
-              actions[exitCode].setEnabled(myValidator == null || myValidator.checkInput(myComboBox.getSelectedItem().toString().trim()));
-            }
-          });
+          myComboBox.addItemListener(e -> actions[exitCode].setEnabled(myValidator == null || myValidator.checkInput(myComboBox.getSelectedItem().toString().trim())));
           final JTextField textField = (JTextField)myComboBox.getEditor().getEditorComponent();
           textField.getDocument().addDocumentListener(new DocumentAdapter() {
             @Override
@@ -2039,7 +2072,7 @@ public class Messages {
       JPanel panel = createIconPanel();
       JPanel messagePanel = createMessagePanel();
 
-      myComboBox = new ComboBox(220);
+      myComboBox = new ComboBox<>(220);
       messagePanel.add(myComboBox, BorderLayout.SOUTH);
       panel.add(messagePanel, BorderLayout.CENTER);
       return panel;

@@ -19,6 +19,7 @@ import com.intellij.dvcs.branch.DvcsSyncSettings;
 import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -27,66 +28,63 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.ui.EnumComboBoxModel;
 import com.intellij.ui.ListCellRendererWrapper;
-import com.intellij.ui.components.fields.ExpandableTextField;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBTextField;
+import com.intellij.ui.components.fields.ExpandableTextField;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
-import com.intellij.util.ui.UIUtil;
 import git4idea.GitVcs;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Git VCS configuration panel
  */
-public class GitVcsPanel {
+public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSettingsHolder> {
 
   private static final String IDEA_SSH = GitBundle.getString("git.vcs.config.ssh.mode.idea"); // IDEA ssh value
   private static final String NATIVE_SSH = GitBundle.getString("git.vcs.config.ssh.mode.native"); // Native SSH value
 
-  private final GitVcsApplicationSettings myAppSettings;
-  private final GitVcs myVcs;
+  @NotNull private final Project myProject;
+  private String myDetectedGitPath;
+  private String myApplicationGitPath;
 
   private JButton myTestButton; // Test git executable
   private JComponent myRootPanel;
   private TextFieldWithBrowseButton myGitField;
+  private JBCheckBox myProjectGitPathCheckBox;
   private JComboBox mySSHExecutableComboBox; // Type of SSH executable to use
   private JCheckBox myAutoUpdateIfPushRejected;
   private JBCheckBox mySyncControl;
   private JCheckBox myAutoCommitOnCherryPick;
   private JBCheckBox myWarnAboutCrlf;
   private JCheckBox myWarnAboutDetachedHead;
-  private JCheckBox myEnableForcePush;
   private JTextField myProtectedBranchesField;
   private JBLabel myProtectedBranchesLabel;
   private JComboBox myUpdateMethodComboBox;
 
   public GitVcsPanel(@NotNull Project project) {
-    myVcs = GitVcs.getInstance(project);
-    myAppSettings = GitVcsApplicationSettings.getInstance();
+    myProject = project;
     mySSHExecutableComboBox.addItem(IDEA_SSH);
     mySSHExecutableComboBox.addItem(NATIVE_SSH);
     mySSHExecutableComboBox.setSelectedItem(IDEA_SSH);
     mySSHExecutableComboBox
       .setToolTipText(GitBundle.message("git.vcs.config.ssh.mode.tooltip", ApplicationNamesInfo.getInstance().getFullProductName()));
-    myTestButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        testConnection();
-      }
-    });
+    myTestButton.addActionListener(e -> testExecutable());
     myGitField.addBrowseFolderListener(GitBundle.getString("find.git.title"), GitBundle.getString("find.git.description"), project,
                                        FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
+    myProjectGitPathCheckBox.addActionListener(e -> handleProjectOverrideStateChanged());
     if (!project.isDefault()) {
       final GitRepositoryManager repositoryManager = GitRepositoryManager.getInstance(project);
       mySyncControl.setVisible(repositoryManager != null && repositoryManager.moreThanOneRoot());
@@ -96,31 +94,18 @@ public class GitVcsPanel {
     }
     mySyncControl.setToolTipText(DvcsBundle.message("sync.setting.description", "Git"));
     myProtectedBranchesLabel.setLabelFor(myProtectedBranchesField);
-    myEnableForcePush.addItemListener(new ItemListener() {
-      @Override
-      public void itemStateChanged(ItemEvent e) {
-        UIUtil.setEnabled(myProtectedBranchesField, myEnableForcePush.isSelected(), true);
-        UIUtil.setEnabled(myProtectedBranchesLabel, myEnableForcePush.isSelected(), false);
-      }
-    });
   }
 
-  /**
-   * Test availability of the connection
-   */
-  private void testConnection() {
-    final String executable = getCurrentExecutablePath();
-    if (myAppSettings != null) {
-      myAppSettings.setPathToGit(executable);
-    }
+  private void testExecutable() {
     GitVersion version;
+    String executable = ObjectUtils.notNull(getCurrentExecutablePath(), myDetectedGitPath);
     try {
       version = ProgressManager.getInstance().runProcessWithProgressSynchronously(new ThrowableComputable<GitVersion, Exception>() {
         @Override
         public GitVersion compute() throws Exception {
           return GitVersion.identifyVersion(executable);
         }
-      }, "Testing Git Executable...", true, myVcs.getProject());
+      }, "Testing Git Executable...", true, myProject);
     }
     catch (ProcessCanceledException pce) {
       return;
@@ -135,80 +120,124 @@ public class GitVcsPanel {
                                String.format("<html>%s<br>Git version is %s</html>", GitBundle.getString("find.git.success.title"),
                                              version.getPresentation()),
                                GitBundle.getString("find.git.success.title"));
-    } else {
-      Messages.showWarningDialog(myRootPanel, GitBundle.message("find.git.unsupported.message", version.getPresentation(), GitVersion.MIN.getPresentation()),
+    }
+    else {
+      Messages.showWarningDialog(myRootPanel, GitBundle
+                                   .message("find.git.unsupported.message", version.getPresentation(), GitVersion.MIN.getPresentation()),
                                  GitBundle.getString("find.git.success.title"));
     }
   }
 
-  private String getCurrentExecutablePath() {
-    return myGitField.getText().trim();
+  private void handleProjectOverrideStateChanged() {
+    if (!myProjectGitPathCheckBox.isSelected()
+        && !Objects.equals(getCurrentExecutablePath(), myApplicationGitPath)) {
+
+      switch (Messages.showYesNoCancelDialog(myRootPanel,
+                                             VcsBundle.getString("executable.project.override.reset.message"),
+                                             VcsBundle.getString("executable.project.override.reset.title"),
+                                             VcsBundle.getString("executable.project.override.reset.globalize"),
+                                             VcsBundle.getString("executable.project.override.reset.revert"),
+                                             Messages.CANCEL_BUTTON,
+                                             null)) {
+        case Messages.NO:
+          myGitField.setText(myApplicationGitPath);
+          break;
+        case Messages.CANCEL:
+          myProjectGitPathCheckBox.setSelected(true);
+          break;
+      }
+    }
   }
 
-  /**
-   * @return the configuration panel
-   */
-  public JComponent getPanel() {
+  @Nullable
+  private String getCurrentExecutablePath() {
+    return StringUtil.nullize(myGitField.getText().trim());
+  }
+
+  @NotNull
+  @Override
+  public JComponent getComponent() {
     return myRootPanel;
   }
 
-  /**
-   * Load settings into the configuration panel
-   *
-   * @param settings the settings to load
-   */
-  public void load(@NotNull GitVcsSettings settings, @NotNull GitSharedSettings sharedSettings) {
-    myGitField.setText(settings.getAppSettings().getPathToGit());
-    mySSHExecutableComboBox.setSelectedItem(settings.isIdeaSsh() ? IDEA_SSH : NATIVE_SSH);
-    myAutoUpdateIfPushRejected.setSelected(settings.autoUpdateIfPushRejected());
-    mySyncControl.setSelected(settings.getSyncSetting() == DvcsSyncSettings.Value.SYNC);
-    myAutoCommitOnCherryPick.setSelected(settings.isAutoCommitOnCherryPick());
-    myWarnAboutCrlf.setSelected(settings.warnAboutCrlf());
-    myWarnAboutDetachedHead.setSelected(settings.warnAboutDetachedHead());
-    myEnableForcePush.setSelected(settings.isForcePushAllowed());
-    myUpdateMethodComboBox.setSelectedItem(settings.getUpdateType());
+  @Override
+  public void reset(@NotNull GitVcsConfigurable.GitVcsSettingsHolder settings) {
+    GitVcsApplicationSettings applicationSettings = settings.getApplicationSettings();
+    GitVcsSettings projectSettings = settings.getProjectSettings();
+    GitSharedSettings sharedSettings = settings.getSharedSettings();
+
+    myApplicationGitPath = applicationSettings.getSavedPathToGit();
+    String projectSettingsPathToGit = projectSettings.getPathToGit();
+    myGitField.setText(ObjectUtils.coalesce(projectSettingsPathToGit, myApplicationGitPath));
+    myDetectedGitPath = GitExecutableManager.getInstance().getDetectedExecutable();
+    ((JBTextField)myGitField.getTextField()).getEmptyText().setText("Auto-detected: " + myDetectedGitPath);
+    myProjectGitPathCheckBox.setSelected(projectSettingsPathToGit != null);
+    mySSHExecutableComboBox.setSelectedItem(projectSettings.isIdeaSsh() ? IDEA_SSH : NATIVE_SSH);
+    myAutoUpdateIfPushRejected.setSelected(projectSettings.autoUpdateIfPushRejected());
+    mySyncControl.setSelected(projectSettings.getSyncSetting() == DvcsSyncSettings.Value.SYNC);
+    myAutoCommitOnCherryPick.setSelected(projectSettings.isAutoCommitOnCherryPick());
+    myWarnAboutCrlf.setSelected(projectSettings.warnAboutCrlf());
+    myWarnAboutDetachedHead.setSelected(projectSettings.warnAboutDetachedHead());
+    myUpdateMethodComboBox.setSelectedItem(projectSettings.getUpdateType());
     myProtectedBranchesField.setText(ParametersListUtil.COLON_LINE_JOINER.fun(sharedSettings.getForcePushProhibitedPatterns()));
   }
 
-  /**
-   * Check if fields has been modified with respect to settings object
-   *
-   * @param settings the settings to load
-   */
-  public boolean isModified(@NotNull GitVcsSettings settings, @NotNull GitSharedSettings sharedSettings) {
-    return !settings.getAppSettings().getPathToGit().equals(getCurrentExecutablePath()) ||
-           (settings.isIdeaSsh() != IDEA_SSH.equals(mySSHExecutableComboBox.getSelectedItem())) ||
-           !settings.autoUpdateIfPushRejected() == myAutoUpdateIfPushRejected.isSelected() ||
-           ((settings.getSyncSetting() == DvcsSyncSettings.Value.SYNC) != mySyncControl.isSelected() ||
-           settings.isAutoCommitOnCherryPick() != myAutoCommitOnCherryPick.isSelected() ||
-           settings.warnAboutCrlf() != myWarnAboutCrlf.isSelected() ||
-           settings.warnAboutDetachedHead() != myWarnAboutDetachedHead.isSelected() ||
-           settings.isForcePushAllowed() != myEnableForcePush.isSelected() ||
-           settings.getUpdateType() != myUpdateMethodComboBox.getModel().getSelectedItem() ||
-           !ContainerUtil.sorted(sharedSettings.getForcePushProhibitedPatterns()).equals(
-            ContainerUtil.sorted(getProtectedBranchesPatterns())));
+  @Override
+  public boolean isModified(@NotNull GitVcsConfigurable.GitVcsSettingsHolder settings) {
+    GitVcsApplicationSettings applicationSettings = settings.getApplicationSettings();
+    GitVcsSettings projectSettings = settings.getProjectSettings();
+    GitSharedSettings sharedSettings = settings.getSharedSettings();
+
+    return isGitPathModified(applicationSettings, projectSettings) ||
+           (projectSettings.isIdeaSsh() != IDEA_SSH.equals(mySSHExecutableComboBox.getSelectedItem())) ||
+           !projectSettings.autoUpdateIfPushRejected() == myAutoUpdateIfPushRejected.isSelected() ||
+           ((projectSettings.getSyncSetting() == DvcsSyncSettings.Value.SYNC) != mySyncControl.isSelected() ||
+            projectSettings.isAutoCommitOnCherryPick() != myAutoCommitOnCherryPick.isSelected() ||
+            projectSettings.warnAboutCrlf() != myWarnAboutCrlf.isSelected() ||
+            projectSettings.warnAboutDetachedHead() != myWarnAboutDetachedHead.isSelected() ||
+            projectSettings.getUpdateType() != myUpdateMethodComboBox.getModel().getSelectedItem() ||
+            !ContainerUtil.sorted(sharedSettings.getForcePushProhibitedPatterns()).equals(
+              ContainerUtil.sorted(getProtectedBranchesPatterns())));
   }
 
-  /**
-   * Save configuration panel state into settings object
-   *
-   * @param settings the settings object
-   */
-  public void save(@NotNull GitVcsSettings settings, GitSharedSettings sharedSettings) {
-    settings.getAppSettings().setPathToGit(getCurrentExecutablePath());
-    myVcs.checkVersion();
-    settings.getAppSettings().setIdeaSsh(IDEA_SSH.equals(mySSHExecutableComboBox.getSelectedItem()) ?
-                                         GitVcsApplicationSettings.SshExecutable.IDEA_SSH :
-                                         GitVcsApplicationSettings.SshExecutable.NATIVE_SSH);
-    settings.setAutoUpdateIfPushRejected(myAutoUpdateIfPushRejected.isSelected());
+  private boolean isGitPathModified(@NotNull GitVcsApplicationSettings applicationSettings, @NotNull GitVcsSettings projectSettings) {
+    return myProjectGitPathCheckBox.isSelected()
+           ? !Objects.equals(getCurrentExecutablePath(), projectSettings.getPathToGit())
+           : !Objects.equals(getCurrentExecutablePath(), applicationSettings.getSavedPathToGit())
+             || projectSettings.getPathToGit() != null;
+  }
 
-    settings.setSyncSetting(mySyncControl.isSelected() ? DvcsSyncSettings.Value.SYNC : DvcsSyncSettings.Value.DONT_SYNC);
-    settings.setAutoCommitOnCherryPick(myAutoCommitOnCherryPick.isSelected());
-    settings.setWarnAboutCrlf(myWarnAboutCrlf.isSelected());
-    settings.setWarnAboutDetachedHead(myWarnAboutDetachedHead.isSelected());
-    settings.setForcePushAllowed(myEnableForcePush.isSelected());
-    settings.setUpdateType((UpdateMethod)myUpdateMethodComboBox.getSelectedItem());
+  @Override
+  public void apply(@NotNull GitVcsConfigurable.GitVcsSettingsHolder settings) {
+    GitVcsApplicationSettings applicationSettings = settings.getApplicationSettings();
+    GitVcsSettings projectSettings = settings.getProjectSettings();
+    GitSharedSettings sharedSettings = settings.getSharedSettings();
+
+    if (myProjectGitPathCheckBox.isSelected()) {
+      projectSettings.setPathToGit(getCurrentExecutablePath());
+    }
+    else {
+      myApplicationGitPath = getCurrentExecutablePath();
+      applicationSettings.setPathToGit(getCurrentExecutablePath());
+      projectSettings.setPathToGit(null);
+    }
+
+    applicationSettings.setIdeaSsh(IDEA_SSH.equals(mySSHExecutableComboBox.getSelectedItem()) ?
+                                   GitVcsApplicationSettings.SshExecutable.IDEA_SSH :
+                                   GitVcsApplicationSettings.SshExecutable.NATIVE_SSH);
+
+    projectSettings.setAutoUpdateIfPushRejected(myAutoUpdateIfPushRejected.isSelected());
+    projectSettings.setSyncSetting(mySyncControl.isSelected() ? DvcsSyncSettings.Value.SYNC : DvcsSyncSettings.Value.DONT_SYNC);
+    projectSettings.setAutoCommitOnCherryPick(myAutoCommitOnCherryPick.isSelected());
+    projectSettings.setWarnAboutCrlf(myWarnAboutCrlf.isSelected());
+    projectSettings.setWarnAboutDetachedHead(myWarnAboutDetachedHead.isSelected());
+    projectSettings.setUpdateType((UpdateMethod)myUpdateMethodComboBox.getSelectedItem());
+
     sharedSettings.setForcePushProhibitedPatters(getProtectedBranchesPatterns());
+
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> GitVcs.getInstance(myProject).checkVersion(),
+                                                                      "Testing Git Executable...", true, null,
+                                                                      myRootPanel);
   }
 
   @NotNull
@@ -217,6 +246,7 @@ public class GitVcsPanel {
   }
 
   private void createUIComponents() {
+    myGitField = new TextFieldWithBrowseButton(new JBTextField());
     myProtectedBranchesField = new ExpandableTextField(ParametersListUtil.COLON_LINE_PARSER, ParametersListUtil.COLON_LINE_JOINER);
     myUpdateMethodComboBox = new ComboBox(new EnumComboBoxModel<>(UpdateMethod.class));
     myUpdateMethodComboBox.setRenderer(new ListCellRendererWrapper<UpdateMethod>() {

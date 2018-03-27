@@ -50,3 +50,20 @@ class <warning descr="Class 'Singleton2' is a singleton">Singleton2</warning> {
         private static final Singleton2 INSTANCE = new Singleton2();
     }
 }
+enum No1 {
+    ;
+    void f() {}
+}
+enum No2 {
+    ONE, TWO;
+
+    void f() {}
+}
+enum No3 {
+    INSTANCE
+}
+enum <warning descr="Enum 'Yes' is a singleton">Yes</warning> {
+    INSTANCE;
+
+    void f() {}
+}

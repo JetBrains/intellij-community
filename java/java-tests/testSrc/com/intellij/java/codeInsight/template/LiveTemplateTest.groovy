@@ -24,6 +24,7 @@ import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.template.*
 import com.intellij.codeInsight.template.impl.*
 import com.intellij.codeInsight.template.macro.*
+import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
@@ -44,7 +45,6 @@ import org.jetbrains.annotations.NotNull
 
 import static com.intellij.codeInsight.template.Template.Property.USE_STATIC_IMPORT_IF_POSSIBLE
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait
-
 /**
  * @author spleaner
  */
@@ -525,7 +525,8 @@ class Outer {
   }
 
   void "_testIterForceBraces"() {
-    CodeStyleSettingsManager.getSettings(getProject()).IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS
+    def settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
+    settings.IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS
 
     try {
       configure()
@@ -534,7 +535,7 @@ class Outer {
       checkResult()
     }
     finally {
-      CodeStyleSettingsManager.getSettings(getProject()).IF_BRACE_FORCE = CommonCodeStyleSettings.DO_NOT_FORCE
+      settings.IF_BRACE_FORCE = CommonCodeStyleSettings.DO_NOT_FORCE
     }
   }
 
@@ -1546,5 +1547,21 @@ java.util.List<? extends Integer> list;
 
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_LINE_END)
     myFixture.checkResult ' foo g<caret>'
+  }
+
+  void testComments() {
+    myFixture.configureByText 'a.java', '<caret>'
+
+    TemplateManager manager = TemplateManager.getInstance(getProject())
+    Template template = manager.createTemplate("empty", "user", '$V1$ line comment\n$V2$ block comment $V3$\n$V4$ any comment $V5$')
+    template.addVariable("V1", 'lineCommentStart()', '', false)
+    template.addVariable("V2", 'blockCommentStart()', '', false)
+    template.addVariable("V3", 'blockCommentEnd()', '', false)
+    template.addVariable("V4", 'commentStart()', '', false)
+    template.addVariable("V5", 'commentEnd()', '', false)
+    
+    manager.startTemplate(myFixture.editor, template)
+    
+    myFixture.checkResult '// line comment\n/* block comment */\n// any comment '
   }
 }

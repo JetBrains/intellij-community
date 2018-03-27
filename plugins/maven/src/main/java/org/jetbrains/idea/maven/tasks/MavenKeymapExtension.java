@@ -230,6 +230,7 @@ public class MavenKeymapExtension implements ExternalSystemKeymapExtension.Actio
       MavenExplicitProfiles explicitProfiles = projectsManager.getExplicitProfiles();
       MavenRunnerParameters params = new MavenRunnerParameters(true,
                                                                myMavenProject.getDirectory(),
+                                                               myMavenProject.getFile().getName(),
                                                                Collections.singletonList(myGoal),
                                                                explicitProfiles.getEnabledProfiles(),
                                                                explicitProfiles.getDisabledProfiles());

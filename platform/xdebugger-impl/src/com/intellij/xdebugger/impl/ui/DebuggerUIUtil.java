@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorColorsUtil;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
@@ -99,8 +100,13 @@ public class DebuggerUIUtil {
 
   @Nullable
   public static RelativePoint getPositionForPopup(@NotNull Editor editor, int line) {
-    Point p = editor.logicalPositionToXY(new LogicalPosition(line + 1, 0));
-    return editor.getScrollingModel().getVisibleArea().contains(p) ? new RelativePoint(editor.getContentComponent(), p) : null;
+    if (line > -1) {
+      Point p = editor.logicalPositionToXY(new LogicalPosition(line + 1, 0));
+      if (editor.getScrollingModel().getVisibleArea().contains(p)) {
+        return new RelativePoint(editor.getContentComponent(), p);
+      }
+    }
+    return null;
   }
 
   public static void showPopupForEditorLine(@NotNull JBPopup popup, @NotNull Editor editor, int line) {
@@ -463,5 +469,13 @@ public class DebuggerUIUtil {
       }
     }
     return data;
+  }
+
+  public static void repaintCurrentEditor(Project project) {
+    Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
+    if (editor != null) {
+      editor.getContentComponent().revalidate();
+      editor.getContentComponent().repaint();
+    }
   }
 }

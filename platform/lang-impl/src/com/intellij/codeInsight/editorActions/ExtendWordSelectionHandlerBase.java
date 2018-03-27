@@ -38,10 +38,10 @@ import java.util.List;
 public abstract class ExtendWordSelectionHandlerBase implements ExtendWordSelectionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.ExtendWordSelectionHandlerBase");
   @Override
-  public abstract boolean canSelect(PsiElement e);
+  public abstract boolean canSelect(@NotNull PsiElement e);
 
   @Override
-  public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
+  public List<TextRange> select(@NotNull PsiElement e, @NotNull CharSequence editorText, int cursorOffset, @NotNull Editor editor) {
     final TextRange originalRange = e.getTextRange();
     if (originalRange.getEndOffset() > editorText.length()) {
       throw new LogEventException("Invalid element range in " + getClass(),

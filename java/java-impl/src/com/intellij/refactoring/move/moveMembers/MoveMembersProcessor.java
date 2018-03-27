@@ -77,6 +77,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
     setOptions(options);
   }
 
+  @NotNull
   protected String getCommandName() {
     return myCommandName;
   }
@@ -143,6 +144,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
     return usageInfos;
   }
 
+  @Override
   protected void refreshElements(@NotNull PsiElement[] elements) {
     LOG.assertTrue(myMembersToMove.size() == elements.length);
     myMembersToMove.clear();
@@ -338,6 +340,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
     }
   }
 
+  @Override
   public void doRun() {
     if (myMembersToMove.isEmpty()){
       String message = RefactoringBundle.message("no.members.selected");

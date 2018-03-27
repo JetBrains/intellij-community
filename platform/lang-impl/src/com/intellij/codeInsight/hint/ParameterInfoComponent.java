@@ -1,6 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 
 package com.intellij.codeInsight.hint;
 
@@ -140,9 +140,9 @@ public class ParameterInfoComponent extends JPanel {
 
   @Override
   public Dimension getPreferredSize() {
-    int size = myPanels.length;
+    long visibleRows = Stream.of(myPanels).filter(Component::isVisible).count();
     final Dimension preferredSize = super.getPreferredSize();
-    if (size >= 0 && size <= 20) {
+    if (visibleRows <= 20) {
       return preferredSize;
     }
     else {

@@ -34,6 +34,7 @@ import gnu.trove.TIntArrayList;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -51,7 +52,7 @@ public class PatternCompiler {
     assert fileType instanceof LanguageFileType;
     Language language = ((LanguageFileType)fileType).getLanguage();
     StructuralSearchProfile profile = StructuralSearchUtil.getProfileByLanguage(language);
-    assert profile != null;
+    assert profile != null : "no profile found for " + fileType.getDescription();
     CompiledPattern result = profile.createCompiledPattern();
 
     final String[] prefixes = result.getTypedVarPrefixes();
@@ -80,7 +81,7 @@ public class PatternCompiler {
           filesToScan.add(file);
         }
 
-        if (filesToScan.size() == 0) {
+        if (filesToScan.isEmpty()) {
           throw new NoMatchFoundException(SSRBundle.message("ssr.will.not.find.anything", scope.getDisplayName()));
         }
         result.setScope(new LocalSearchScope(PsiUtilCore.toPsiElementArray(filesToScan)));
@@ -114,6 +115,7 @@ public class PatternCompiler {
     }
   }
 
+  @TestOnly
   public static String getLastFindPlan() {
     return ((TestModeOptimizingSearchHelper)lastTestingContext.getSearchHelper()).getSearchPlan();
   }
@@ -148,8 +150,7 @@ public class PatternCompiler {
     final int[] varEndOffsets = findAllTypedVarOffsets(file, patterns);
 
     final int patternEndOffset = last.getTextRange().getEndOffset();
-    if (elements.size() == 0 ||
-        checkErrorElements(file, patternEndOffset, patternEndOffset, varEndOffsets, true) != Boolean.TRUE) {
+    if (elements.isEmpty() || checkErrorElements(file, patternEndOffset, patternEndOffset, varEndOffsets, true) != Boolean.TRUE) {
       return elements;
     }
 
@@ -344,13 +345,14 @@ public class PatternCompiler {
 
     final StringBuilder buf = new StringBuilder();
 
-    Template template = TemplateManager.getInstance(project).createTemplate("", "", options.getSearchPattern());
+    final Template template = TemplateManager.getInstance(project).createTemplate("", "", options.getSearchPattern());
 
-    int segmentsCount = template.getSegmentsCount();
-    String text = template.getTemplateText();
+    final int segmentsCount = template.getSegmentsCount();
+    final String text = template.getTemplateText();
     int prevOffset = 0;
+    final Set<String> seen = new HashSet<>();
 
-    for(int i=0;i<segmentsCount;++i) {
+    for(int i = 0; i < segmentsCount; i++) {
       final int offset = template.getSegmentOffset(i);
       final String name = template.getSegmentName(i);
 
@@ -359,75 +361,76 @@ public class PatternCompiler {
         throw new MalformedPatternException();
       }
 
-      buf.append(text.substring(prevOffset, offset));
-      buf.append(prefix);
-      buf.append(name);
+      final String compiledName = prefix + name;
+      buf.append(text.substring(prevOffset, offset)).append(compiledName);
 
-      MatchVariableConstraint constraint = options.getVariableConstraint(name);
-      if (constraint==null) {
-        // we do not edited the constraints
-        constraint = new MatchVariableConstraint();
-        constraint.setName(name);
-        options.addVariableConstraint(constraint);
-      }
+      if (seen.add(compiledName)) {
+        // the same variable can occur multiple times in a single template
+        // no need to process it more than once
 
-      SubstitutionHandler handler = result.createSubstitutionHandler(
-        name,
-        prefix + name,
-        constraint.isPartOfSearchResults(),
-        constraint.getMinCount(),
-        constraint.getMaxCount(),
-        constraint.isGreedy()
-      );
+        MatchVariableConstraint constraint = options.getVariableConstraint(name);
+        if (constraint == null) {
+          // we do not edited the constraints
+          constraint = new MatchVariableConstraint();
+          constraint.setName(name);
+          options.addVariableConstraint(constraint);
+        }
 
-      if(constraint.isWithinHierarchy()) {
-        handler.setSubtype(true);
-      }
-
-      if(constraint.isStrictlyWithinHierarchy()) {
-        handler.setStrictSubtype(true);
-      }
-
-      MatchPredicate predicate;
-
-      if (!StringUtil.isEmptyOrSpaces(constraint.getRegExp())) {
-        predicate = new RegExpPredicate(
-          constraint.getRegExp(),
-          options.isCaseSensitiveMatch(),
+        SubstitutionHandler handler = result.createSubstitutionHandler(
           name,
-          constraint.isWholeWordsOnly(),
-          constraint.isPartOfSearchResults()
+          compiledName,
+          constraint.isPartOfSearchResults(),
+          constraint.getMinCount(),
+          constraint.getMaxCount(),
+          constraint.isGreedy()
         );
-        if (constraint.isInvertRegExp()) {
-          predicate = new NotPredicate(predicate);
+
+        if (constraint.isWithinHierarchy()) {
+          handler.setSubtype(true);
         }
-        addPredicate(handler, predicate);
-      }
 
-      if (!StringUtil.isEmptyOrSpaces(constraint.getReferenceConstraint())) {
-        predicate = new ReferencePredicate(constraint.getReferenceConstraint(), options.getFileType(), project);
-
-        if (constraint.isInvertReference()) {
-          predicate = new NotPredicate(predicate);
+        if (constraint.isStrictlyWithinHierarchy()) {
+          handler.setStrictSubtype(true);
         }
-        addPredicate(handler, predicate);
-      }
 
-      addExtensionPredicates(options, constraint, handler);
-      addScriptConstraint(project, name, constraint, handler);
-
-      if (!StringUtil.isEmptyOrSpaces(constraint.getContainsConstraint())) {
-        predicate = new ContainsPredicate(name, constraint.getContainsConstraint());
-        if (constraint.isInvertContainsConstraint()) {
-          predicate = new NotPredicate(predicate);
+        if (!StringUtil.isEmptyOrSpaces(constraint.getRegExp())) {
+          MatchPredicate predicate = new RegExpPredicate(
+            constraint.getRegExp(),
+            options.isCaseSensitiveMatch(),
+            name,
+            constraint.isWholeWordsOnly(),
+            constraint.isPartOfSearchResults()
+          );
+          if (constraint.isInvertRegExp()) {
+            predicate = new NotPredicate(predicate);
+          }
+          addPredicate(handler, predicate);
         }
-        addPredicate(handler, predicate);
-      }
 
-      if (!StringUtil.isEmptyOrSpaces(constraint.getWithinConstraint())) {
-        assert false;
-      }
+        if (!StringUtil.isEmptyOrSpaces(constraint.getReferenceConstraint())) {
+          MatchPredicate predicate = new ReferencePredicate(constraint.getReferenceConstraint(), options.getFileType(), project);
 
+          if (constraint.isInvertReference()) {
+            predicate = new NotPredicate(predicate);
+          }
+          addPredicate(handler, predicate);
+        }
+
+        addExtensionPredicates(options, constraint, handler);
+        addScriptConstraint(project, name, constraint, handler);
+
+        if (!StringUtil.isEmptyOrSpaces(constraint.getContainsConstraint())) {
+          MatchPredicate predicate = new ContainsPredicate(name, constraint.getContainsConstraint());
+          if (constraint.isInvertContainsConstraint()) {
+            predicate = new NotPredicate(predicate);
+          }
+          addPredicate(handler, predicate);
+        }
+
+        if (!StringUtil.isEmptyOrSpaces(constraint.getWithinConstraint())) {
+          assert false;
+        }
+      }
       prevOffset = offset;
     }
 
@@ -467,17 +470,15 @@ public class PatternCompiler {
     }
 
     NodeFilter filter = LexicalNodesFilter.getInstance();
-
-    GlobalCompilingVisitor compilingVisitor = new GlobalCompilingVisitor();
-    compilingVisitor.compile(matchStatements,context);
     List<PsiElement> elements = new SmartList<>();
-
     for (PsiElement matchStatement : matchStatements) {
       if (!filter.accepts(matchStatement)) {
         elements.add(matchStatement);
       }
     }
 
+    GlobalCompilingVisitor compilingVisitor = new GlobalCompilingVisitor();
+    compilingVisitor.compile(elements.toArray(PsiElement.EMPTY_ARRAY), context);
     new DeleteNodesAction(compilingVisitor.getLexicalNodes()).run();
     return elements;
   }
@@ -505,10 +506,6 @@ public class PatternCompiler {
   }
 
   private static void addPredicate(SubstitutionHandler handler, MatchPredicate predicate) {
-    if (handler.getPredicate()==null) {
-      handler.setPredicate(predicate);
-    } else {
-      handler.setPredicate(new AndPredicate(handler.getPredicate(), predicate));
-    }
+    handler.setPredicate((handler.getPredicate() == null) ? predicate : new AndPredicate(handler.getPredicate(), predicate));
   }
 }

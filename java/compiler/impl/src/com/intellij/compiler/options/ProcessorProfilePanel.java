@@ -43,7 +43,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 5/28/12
  */
 public class ProcessorProfilePanel extends JPanel {
   private final Project myProject;

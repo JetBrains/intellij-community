@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
+import com.intellij.util.QueryParameters;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -70,11 +71,14 @@ public abstract class QueryExecutorBase<Result, Params> implements QueryExecutor
     };
 
     if (myRequireReadAction && !ApplicationManager.getApplication().isReadAccessAllowed()) {
-      Runnable runnable = () -> processQuery(queryParameters, wrapper);
+      Runnable runnable = () -> {
+        if (!(queryParameters instanceof QueryParameters) || ((QueryParameters)queryParameters).isQueryValid()) {
+          processQuery(queryParameters, wrapper);
+        }
+      };
       
       if (!DumbService.isDumbAware(this)) {
-        Project project = queryParameters instanceof DumbAwareSearchParameters ? ((DumbAwareSearchParameters)queryParameters).getProject()
-                                                                                 : null;
+        Project project = queryParameters instanceof QueryParameters ? ((QueryParameters)queryParameters).getProject() : null;
         if (project != null) {
           DumbService.getInstance(project).runReadActionInSmartMode(runnable);
           return toContinue.get();

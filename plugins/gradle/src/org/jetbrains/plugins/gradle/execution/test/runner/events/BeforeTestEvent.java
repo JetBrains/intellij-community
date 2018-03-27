@@ -57,7 +57,7 @@ public class BeforeTestEvent extends AbstractTestEvent {
         addToInvokeLater(() -> {
           final List<GradleSMTestProxy> notYetAddedParents = ContainerUtil.newSmartList();
           SMTestProxy currentParentTestProxy = parentTestProxy;
-          while (currentParentTestProxy != null && currentParentTestProxy instanceof GradleSMTestProxy) {
+          while (currentParentTestProxy instanceof GradleSMTestProxy) {
             final String parentId = ((GradleSMTestProxy)currentParentTestProxy).getParentId();
             if (currentParentTestProxy.getParent() == null && parentId != null) {
               notYetAddedParents.add((GradleSMTestProxy)currentParentTestProxy);

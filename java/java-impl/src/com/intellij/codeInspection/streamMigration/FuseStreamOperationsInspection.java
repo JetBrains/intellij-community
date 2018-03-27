@@ -10,6 +10,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
@@ -42,14 +43,14 @@ public class FuseStreamOperationsInspection extends AbstractBaseJavaLocalInspect
     }
 
     @Override
-    String generateIntermediate() {
+    String generateIntermediate(CommentTracker ct) {
       PsiExpression qualifier = myChain.getMethodExpression().getQualifierExpression();
-      return Objects.requireNonNull(qualifier).getText();
+      return ct.text(Objects.requireNonNull(qualifier));
     }
 
     @Override
-    String generateTerminal() {
-      return ".collect(" + myCollector.getText() + ")";
+    String generateTerminal(CommentTracker ct) {
+      return ".collect(" + ct.text(myCollector) + ")";
     }
 
     private static PsiClass resolveClassCreatedByFunction(PsiExpression function) {
@@ -184,19 +185,19 @@ public class FuseStreamOperationsInspection extends AbstractBaseJavaLocalInspect
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiMethodCallExpression chain = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiMethodCallExpression.class);
       if (chain == null) return;
-      PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       CollectTerminal terminal = extractTerminal(chain);
       if (terminal == null) return;
-      String stream = terminal.generateIntermediate() + terminal.generateTerminal();
+      CommentTracker ct = new CommentTracker();
+      String stream = terminal.generateIntermediate(ct) + terminal.generateTerminal(ct);
       PsiElement toReplace = terminal.getElementToReplace();
       PsiElement result;
       if (toReplace != null) {
-        result = toReplace.replace(factory.createExpressionFromText(stream, toReplace));
+        result = ct.replaceAndRestoreComments(toReplace, stream);
       }
       else {
         PsiVariable variable = Objects.requireNonNull(terminal.getTargetVariable());
         PsiExpression initializer = Objects.requireNonNull(variable.getInitializer());
-        result = initializer.replace(factory.createExpressionFromText(stream, initializer));
+        result = ct.replaceAndRestoreComments(initializer, stream);
       }
       terminal.cleanUp();
       LambdaCanBeMethodReferenceInspection.replaceAllLambdasWithMethodReferences(result);

@@ -17,7 +17,7 @@ public class PyCondaPackageCache extends PyAbstractPackageCache {
   @NotNull
   public static synchronized PyCondaPackageCache getInstance() {
     if (ourInstance == null) {
-      ourInstance = load(PyCondaPackageCache.class, new PyCondaPackageCache(), CACHE_FILE_NAME);
+      ourInstance = load(PyCondaPackageCache.class, new PyCondaPackageCache(), getDefaultCachePath(CACHE_FILE_NAME));
     }
     return ourInstance;
   }

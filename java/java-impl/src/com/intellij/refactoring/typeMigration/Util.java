@@ -27,7 +27,6 @@ import java.util.List;
 
 /**
  * @author db
- * Date: Nov 4, 2004
  */
 public class Util {
   private Util() { }

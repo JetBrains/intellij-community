@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Parameter renaming.
 * User: dcheryasov
-* Date: Nov 30, 2008 6:10:13 AM
 */
 public class RenameParameterQuickFix implements LocalQuickFix {
   private final String myNewName;
@@ -38,7 +37,7 @@ public class RenameParameterQuickFix implements LocalQuickFix {
 
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     final PsiElement elt = descriptor.getPsiElement();
-    if (elt != null && elt instanceof PyNamedParameter) {
+    if (elt instanceof PyNamedParameter) {
       new RenameProcessor(project, elt, myNewName, false, true).run();
     }
   }

@@ -19,7 +19,6 @@ import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 18-Mar-17
  */
 public class RepositoryArtifactDescription {
   private final String myGroupId;

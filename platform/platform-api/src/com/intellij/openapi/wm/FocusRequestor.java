@@ -34,13 +34,5 @@ public interface FocusRequestor extends Disposable {
    */
   @NotNull
   ActionCallback requestFocus(@NotNull Component c, boolean forced);
-
-  /**
-   * Runs a request focus command, actual focus request is defined by the user in the command itself
-   * @param forced - if true - focus request is explicit, must be fulfilled, if false - can be dropped
-   * @return action callback that either notifies when the focus was obtained or focus request was dropped
-   */
-  @NotNull
-  ActionCallback requestFocus(@NotNull FocusCommand command, boolean forced);
   
 }

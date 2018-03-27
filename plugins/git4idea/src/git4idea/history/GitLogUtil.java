@@ -18,9 +18,7 @@ package git4idea.history;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -38,10 +36,7 @@ import git4idea.GitCommit;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.branch.GitBranchUtil;
-import git4idea.commands.GitCommand;
-import git4idea.commands.GitHandler;
-import git4idea.commands.GitLineHandler;
-import git4idea.commands.GitTextHandler;
+import git4idea.commands.*;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.log.GitLogProvider;
 import git4idea.log.GitRefManager;
@@ -86,28 +81,20 @@ public class GitLogUtil {
     h.addParameters(new ArrayList<>(hashes));
     h.endOptions();
 
+    String output = Git.getInstance().runCommand(h).getOutputOrThrow();
+    List<GitLogRecord> records = parser.parse(output);
 
-    List<VcsShortCommitDetails> result = ContainerUtil.newArrayList();
-    GitLogOutputSplitter handlerListener = new GitLogOutputSplitter(h, output -> {
-      List<GitLogRecord> records = parser.parse(output);
-      for (GitLogRecord record : records) {
-        List<Hash> parents = new SmartList<>();
-        for (String parent : record.getParentsHashes()) {
-          parents.add(HashImpl.build(parent));
-        }
-        record.setUsedHandler(h);
-        result.add(factory.createShortDetails(HashImpl.build(record.getHash()), parents, record.getCommitTime(), root,
-                                              record.getSubject(), record.getAuthorName(), record.getAuthorEmail(),
-                                              record.getCommitterName(),
-                                              record.getCommitterEmail(),
-                                              record.getAuthorTimeStamp()));
+    return ContainerUtil.map(records, record -> {
+      List<Hash> parents = new SmartList<>();
+      for (String parent : record.getParentsHashes()) {
+        parents.add(HashImpl.build(parent));
       }
+      record.setUsedHandler(h);
+      return factory.createShortDetails(HashImpl.build(record.getHash()), parents, record.getCommitTime(), root,
+                                        record.getSubject(), record.getAuthorName(), record.getAuthorEmail(), record.getCommitterName(),
+                                        record.getCommitterEmail(),
+                                        record.getAuthorTimeStamp());
     });
-
-    h.runInCurrentThread(null);
-    handlerListener.reportErrors();
-
-    return result;
   }
 
   public static void readTimedCommits(@NotNull Project project,
@@ -130,24 +117,18 @@ public class GitLogUtil {
     handler.addParameters(parameters);
     handler.endOptions();
 
-    GitLogOutputSplitter handlerListener = new GitLogOutputSplitter(handler, output -> {
-      List<GitLogRecord> records = parser.parse(output);
-      for (GitLogRecord record : records) {
-        if (record == null) continue;
-        record.setUsedHandler(handler);
+    GitLogOutputSplitter handlerListener = new GitLogOutputSplitter(handler, parser, record -> {
+      Hash hash = HashImpl.build(record.getHash());
+      List<Hash> parents = getParentHashes(factory, record);
+      commitConsumer.consume(factory.createTimedCommit(hash, parents, record.getCommitTime()));
 
-        Hash hash = HashImpl.build(record.getHash());
-        List<Hash> parents = getParentHashes(factory, record);
-        commitConsumer.consume(factory.createTimedCommit(hash, parents, record.getCommitTime()));
-
-        for (VcsRef ref : parseRefs(record.getRefs(), hash, factory, root)) {
-          refConsumer.consume(ref);
-        }
-
-        userConsumer.consume(factory.createUser(record.getAuthorName(), record.getAuthorEmail()));
+      for (VcsRef ref : parseRefs(record.getRefs(), hash, factory, root)) {
+        refConsumer.consume(ref);
       }
+
+      userConsumer.consume(factory.createUser(record.getAuthorName(), record.getAuthorEmail()));
     });
-    handler.runInCurrentThread(null);
+    Git.getInstance().runCommandWithoutCollectingOutput(handler);
     handlerListener.reportErrors();
   }
 
@@ -314,32 +295,10 @@ public class GitLogUtil {
 
     StopWatch sw = StopWatch.start("loading details in [" + root.getName() + "]");
 
-    Ref<Throwable> parseError = new Ref<>();
-    GitLogOutputSplitter handlerListener = new GitLogOutputSplitter(handler, output -> {
-      try {
-        GitLogRecord record = parser.parseOneRecord(output);
-        if (record != null) {
-          record.setUsedHandler(handler);
-          converter.consume(record);
-        }
-      }
-      catch (ProcessCanceledException pce) {
-        throw pce;
-      }
-      catch (Throwable t) {
-        if (parseError.isNull()) {
-          parseError.set(t);
-          LOG.error("Could not parse \" " + GitLogParser.getTruncatedEscapedOutput(output) + "\"\n" +
-                    "Command " + handler.printableCommandLine(), t);
-        }
-      }
-    });
-    handler.runInCurrentThread(null);
+    GitLogOutputSplitter handlerListener = new GitLogOutputSplitter(handler, parser, converter);
+    Git.getInstance().runCommandWithoutCollectingOutput(handler);
     handlerListener.reportErrors();
 
-    if (!parseError.isNull()) {
-      throw new VcsException(parseError.get());
-    }
     sw.report();
   }
 
@@ -436,9 +395,7 @@ public class GitLogUtil {
   }
 
   @NotNull
-  private static GitLineHandler createGitHandler(@NotNull Project project,
-                                                 @NotNull VirtualFile root,
-                                                 @NotNull List<String> configParameters) {
+  private static GitLineHandler createGitHandler(@NotNull Project project, @NotNull VirtualFile root, @NotNull List<String> configParameters) {
     return new GitLineHandler(project, root, GitCommand.LOG, configParameters, false);
   }
 

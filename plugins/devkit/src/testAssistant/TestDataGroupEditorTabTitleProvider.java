@@ -18,13 +18,14 @@ package org.jetbrains.idea.devkit.testAssistant;
 import com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.testAssistant.vfs.TestDataGroupVirtualFile;
 
 public class TestDataGroupEditorTabTitleProvider implements EditorTabTitleProvider {
   @Nullable
   @Override
-  public String getEditorTabTitle(Project project, VirtualFile file) {
+  public String getEditorTabTitle(@NotNull Project project, @NotNull VirtualFile file) {
     if (!(file instanceof TestDataGroupVirtualFile)) {
       return null;
     }

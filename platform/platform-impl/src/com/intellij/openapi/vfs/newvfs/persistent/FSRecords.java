@@ -20,16 +20,18 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
-import com.intellij.openapi.util.io.ByteSequence;
+import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
+import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.IntArrayList;
+import com.intellij.util.containers.IntObjectMap;
 import com.intellij.util.io.*;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.storage.*;
@@ -1139,22 +1141,24 @@ public class FSRecords {
     return -1;
   }
 
-  // returns id, parent(id), parent(parent(id)), ...  (already cached id or rootId)
+  // returns (list of id and its parent ids up to and including id of already cached parent, that already cached parent)
   @NotNull
-  static TIntArrayList getParents(int id, @NotNull ConcurrentIntObjectMap<?> idCache) {
-    TIntArrayList result = new TIntArrayList(10);
+  static Pair<TIntArrayList, VirtualFileSystemEntry> getParents(int id, @NotNull IntObjectMap<VirtualFileSystemEntry> idCache) {
+    TIntArrayList ids = new TIntArrayList(10);
     r.lock();
+    VirtualFileSystemEntry cached = null;
     try {
       int parentId;
       do {
-        result.add(id);
-        if (idCache.containsKey(id)) {
+        ids.add(id);
+        cached = idCache.get(id);
+        if (cached != null) {
           break;
         }
         parentId = getRecordInt(id, PARENT_OFFSET);
-        if (parentId == id || result.size() % 128 == 0 && result.contains(parentId)) {
+        if (parentId == id || ids.size() % 128 == 0 && ids.contains(parentId)) {
           LOG.error("Cyclic parent child relations in the database. id = " + parentId);
-          return result;
+          break;
         }
         id = parentId;
       } while (parentId != 0);
@@ -1165,7 +1169,7 @@ public class FSRecords {
     finally {
       r.unlock();
     }
-    return result;
+    return Pair.create(ids, cached);
   }
 
   static void setParent(int id, int parentId) {
@@ -1664,7 +1668,7 @@ public class FSRecords {
 
   private static final MessageDigest myDigest = ContentHashesUtil.createHashDigest();
 
-  static void writeContent(int fileId, ByteSequence bytes, boolean readOnly) {
+  static void writeContent(int fileId, ByteArraySequence bytes, boolean readOnly) {
     //noinspection IOResourceOpenedButNotSafelyClosed
     new ContentOutputStream(fileId, readOnly).writeBytes(bytes);
   }
@@ -1724,10 +1728,10 @@ public class FSRecords {
       super.close();
 
       final BufferExposingByteArrayOutputStream _out = (BufferExposingByteArrayOutputStream)out;
-      writeBytes(new ByteSequence(_out.getInternalBuffer(), 0, _out.size()));
+      writeBytes(new ByteArraySequence(_out.getInternalBuffer(), 0, _out.size()));
     }
 
-    private void writeBytes(ByteSequence bytes) {
+    private void writeBytes(ByteArraySequence bytes) {
       RefCountingStorage contentStorage = getContentStorage();
       w.lock();
       try {
@@ -1764,7 +1768,7 @@ public class FSRecords {
           DataOutputStream outputStream = new DataOutputStream(out);
           CompressionUtil.writeCompressed(outputStream, bytes.getBytes(), bytes.getOffset(), bytes.getLength());
           outputStream.close();
-          bytes = new ByteSequence(out.getInternalBuffer(), 0, out.size());
+          bytes = new ByteArraySequence(out.getInternalBuffer(), 0, out.size());
         }
         contentStorage.writeBytes(page, bytes, fixedSize);
       }
@@ -1862,10 +1866,10 @@ public class FSRecords {
               out = stream;
               writeRecordHeader(DbConnection.getAttributeId(myAttribute.getId()), myFileId, this);
               write(_out.getInternalBuffer(), 0, _out.size());
-              getAttributesStorage().writeBytes(page, new ByteSequence(stream.getInternalBuffer(), 0, stream.size()), myAttribute.isFixedSize());
+              getAttributesStorage().writeBytes(page, new ByteArraySequence(stream.getInternalBuffer(), 0, stream.size()), myAttribute.isFixedSize());
             }
             else {
-              getAttributesStorage().writeBytes(page, new ByteSequence(_out.getInternalBuffer(), 0, _out.size()), myAttribute.isFixedSize());
+              getAttributesStorage().writeBytes(page, new ByteArraySequence(_out.getInternalBuffer(), 0, _out.size()), myAttribute.isFixedSize());
             }
           }
           finally {
@@ -1934,7 +1938,7 @@ public class FSRecords {
                 if (_out.size() == attrAddressOrSize) {
                   // update inplace when new attr has the same size
                   int remaining = attrRefs.available();
-                  storage.replaceBytes(recordId, remainingAtStart - remaining, new ByteSequence(_out.getInternalBuffer(), 0, _out.size()));
+                  storage.replaceBytes(recordId, remainingAtStart - remaining, new ByteArraySequence(_out.getInternalBuffer(), 0, _out.size()));
                   return;
                 }
                 attrRefs.skipBytes(attrAddressOrSize);

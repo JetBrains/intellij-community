@@ -287,8 +287,7 @@ public class PsiTypesUtil {
       }
       else if (gParent instanceof PsiArrayInitializerExpression) {
         final PsiType expectedTypeByParent = getExpectedTypeByParent(parent);
-        return expectedTypeByParent != null && expectedTypeByParent instanceof PsiArrayType
-               ? ((PsiArrayType)expectedTypeByParent).getComponentType() : null;
+        return expectedTypeByParent instanceof PsiArrayType ? ((PsiArrayType)expectedTypeByParent).getComponentType() : null;
       }
     }
     return null;
@@ -395,6 +394,32 @@ public class PsiTypesUtil {
   public static PsiTypeParameter[] filterUnusedTypeParameters(final PsiType superReturnTypeInBaseClassType,
                                                               @NotNull PsiTypeParameter[] typeParameters) {
     return filterUnusedTypeParameters(typeParameters, superReturnTypeInBaseClassType);
+  }
+
+  public static boolean isAccessibleAt(PsiTypeParameter parameter, PsiElement context) {
+    PsiTypeParameterListOwner owner = parameter.getOwner();
+    if(owner instanceof PsiMethod) {
+      return PsiTreeUtil.isAncestor(owner, context, false);
+    }
+    if(owner instanceof PsiClass) {
+      return PsiTreeUtil.isAncestor(owner, context, false) &&
+             InheritanceUtil.hasEnclosingInstanceInScope((PsiClass)owner, context, false, false);
+    }
+    return false;
+  }
+
+  public static boolean allTypeParametersResolved(PsiElement context, PsiType targetType) {
+    TypeParameterSearcher searcher = new TypeParameterSearcher();
+    targetType.accept(searcher);
+    Set<PsiTypeParameter> parameters = searcher.getTypeParameters();
+    return parameters.stream().allMatch(parameter -> isAccessibleAt(parameter, context));
+  }
+
+  public static PsiType createArrayType(PsiType newType, int arrayDim) {
+    for(int i = 0; i < arrayDim; i++){
+      newType = newType.createArrayType();
+    }
+    return newType;
   }
 
   public static class TypeParameterSearcher extends PsiTypeVisitor<Boolean> {

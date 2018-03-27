@@ -10,7 +10,6 @@ import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,14 +29,6 @@ public class CustomResourceBundlePropertiesFileNode extends PsiFileNode implemen
   public void update(PresentationData data) {
     super.update(data);
     data.setLocationString(PropertiesBundle.message("project.view.resource.bundle.tree.node.text", getResourceBundle().getBaseName()));
-  }
-
-  @Override
-  public boolean equals(Object object) {
-    if (!(object instanceof CustomResourceBundlePropertiesFileNode)) {
-      return false;
-    }
-    return Comparing.equal(getValue(), ((CustomResourceBundlePropertiesFileNode)object).getValue());
   }
 
   @NotNull

@@ -320,6 +320,7 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
     return showConflicts(conflicts, refUsages.get());
   }
 
+  @NotNull
   protected String getCommandName() {
     return REFACTORING_NAME;
   }

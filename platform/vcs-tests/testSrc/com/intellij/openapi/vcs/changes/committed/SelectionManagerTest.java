@@ -35,8 +35,6 @@ import java.util.Map;
 
 /**
  * @author irengrig
- *         Date: 2/7/11
- *         Time: 1:17 PM
  */
 public class SelectionManagerTest extends PlatformTestCase {
   private FileStructure myFs;

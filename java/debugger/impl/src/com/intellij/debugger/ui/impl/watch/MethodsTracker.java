@@ -23,7 +23,6 @@ import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Dec 13, 2006
  */
 public class MethodsTracker {
   private final Map<Method, Integer> myMethodToOccurrenceMap = new HashMap<>();

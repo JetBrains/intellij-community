@@ -26,7 +26,6 @@ import java.util.Map;
  * Simplifies API and ensures that data key will always be equal to virtual file id
  *
  * @author Eugene Zhuravlev
- *         Date: Feb 18, 2009
  */
 public abstract class SingleEntryIndexer<V> implements DataIndexer<Integer, V, FileContent>{
   private final boolean myAcceptNullValues;

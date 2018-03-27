@@ -21,6 +21,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBGradientPaint;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import sun.swing.SwingUtilities2;
@@ -31,12 +32,14 @@ import javax.swing.plaf.basic.BasicHTML;
 import javax.swing.plaf.metal.MetalRadioButtonUI;
 import javax.swing.text.View;
 import java.awt.*;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.Path2D;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class DarculaRadioButtonUI extends MetalRadioButtonUI {
-  @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
+  @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
     return new DarculaRadioButtonUI();
   }
@@ -44,17 +47,18 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
   @Override
   public synchronized void paint(Graphics g2d, JComponent c) {
     Graphics2D g = (Graphics2D)g2d;
-
     Dimension size = c.getSize();
 
     Rectangle viewRect = new Rectangle(size);
     Rectangle iconRect = new Rectangle();
     Rectangle textRect = new Rectangle();
     AbstractButton b = (AbstractButton) c;
-    //ButtonModel model = b.getModel();
+
     Font f = c.getFont();
     g.setFont(f);
     FontMetrics fm = SwingUtilities2.getFontMetrics(c, g, f);
+
+    JBInsets.removeFrom(viewRect, c.getInsets());
 
     String text = SwingUtilities.layoutCompoundLabel(
       c, fm, b.getText(), getDefaultIcon(),
@@ -85,11 +89,12 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
       g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
       g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_DEFAULT);
 
-      int rad = JBUI.scale(5);
-      int x = iconRect.x + (rad - (rad % 2 == 1 ? 1 : 0)) / 2;
-      int y = iconRect.y + (rad - (rad % 2 == 1 ? 1 : 0)) / 2;
-      int w = iconRect.width - rad;
-      int h = iconRect.height - rad;
+      float rad = DarculaUIUtil.arc();
+      float x = iconRect.x + rad / 2;
+      float y = iconRect.y + rad / 2;
+      float w = iconRect.width - rad;
+      float h = iconRect.height - rad;
+      float lw = DarculaUIUtil.lw(g);
 
       g.translate(x, y);
 
@@ -111,38 +116,47 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
       if (!UIUtil.isUnderDarcula() && selected) {
         GraphicsConfig fillOvalConf = new GraphicsConfig(g);
         g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
-        g.fillOval(0, JBUI.scale(1), w, h);
+        g.fill(new Ellipse2D.Float(0, JBUI.scale(1), w, h));
         fillOvalConf.restore();
       } else {
         if (focus) {
-          g.fillOval(0, JBUI.scale(1), w, h);
+          g.fill(new Ellipse2D.Float(0, JBUI.scale(1), w, h));
         } else if (c.isEnabled()){
-          g.fillOval(0, JBUI.scale(1), w - JBUI.scale(1), h - JBUI.scale(1));
+          g.fill(new Ellipse2D.Float(0, JBUI.scale(1), w - JBUI.scale(1), h - JBUI.scale(1)));
         }
       }
 
       if (focus) {
-        if (JBUI.isPixHiDPI(c)) {
-          DarculaUIUtil.paintFocusOval(g, JBUI.scale(1), JBUI.scale(1) + 1, w - JBUI.scale(2), h - JBUI.scale(2));
-        } else {
-          DarculaUIUtil.paintFocusOval(g, 0, JBUI.scale(1), w, h);
-        }
+        DarculaUIUtil.paintFocusOval(g, 0, JBUI.scale(1), w, h);
       } else {
         if (UIUtil.isUnderDarcula()) {
           if (c.isEnabled()) {
             g.setPaint(UIUtil.getGradientPaint(w / 2, 1, Gray._160.withAlpha(90), w / 2, h, Gray._100.withAlpha(90)));
-            g.drawOval(0, JBUI.scale(1) + 1, w - 1, h - 1);
+
+            Path2D shape = new Path2D.Float(Path2D.WIND_EVEN_ODD);
+            shape.append(new Ellipse2D.Float(0, JBUI.scale(1) + 1, w - 1, h - 1), false);
+            shape.append(new Ellipse2D.Float(lw, JBUI.scale(1) + 1 + lw, w - 1 - lw*2, h - 1 - lw*2), false);
+            g.fill(shape);
 
             g.setPaint(Gray._40.withAlpha(200));
-            g.drawOval(0, JBUI.scale(1), w - 1, h - 1);
+            shape = new Path2D.Float(Path2D.WIND_EVEN_ODD);
+            shape.append(new Ellipse2D.Float(0, JBUI.scale(1), w - 1, h - 1), false);
+            shape.append(new Ellipse2D.Float(lw, JBUI.scale(1) + lw, w - 1 - lw*2, h - 1 - lw*2), false);
+            g.fill(shape);
           } else {
             g.setColor(Gray.x58);
-            g.drawOval(0, JBUI.scale(1), w - 1, h - 1);
+            Path2D shape = new Path2D.Float(Path2D.WIND_EVEN_ODD);
+            shape.append(new Ellipse2D.Float(0, JBUI.scale(1), w - 1, h - 1), false);
+            shape.append(new Ellipse2D.Float(lw, JBUI.scale(1) + lw, w - 1 - lw*2, h - 1 - lw*2), false);
+            g.fill(shape);
           }
         } else {
           g.setPaint(selected ? ijGradient : c.isEnabled() ? Gray._30 : Gray._130);
           if (!selected) {
-            g.drawOval(0, JBUI.scale(1) + 1, w - 1, h - 1);
+            Path2D shape = new Path2D.Float(Path2D.WIND_EVEN_ODD);
+            shape.append(new Ellipse2D.Float(0, JBUI.scale(1) + 1, w - 1, h - 1), false);
+            shape.append(new Ellipse2D.Float(lw, JBUI.scale(1) + 1 + lw, w - 1 - lw*2, h - 1 - lw*2), false);
+            g.fill(shape);
           }
         }
       }
@@ -153,11 +167,11 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
 
         if (!UIUtil.isUnderDarcula() || enabled) {
           g.setColor(UIManager.getColor(enabled ? "RadioButton.darcula.selectionEnabledShadowColor" : "RadioButton.darcula.selectionDisabledShadowColor"));
-          g.fillOval(w/2 - rad/2, h/2 - rad/2 + yOff , rad, rad);
+          g.fill(new Ellipse2D.Double(w/2 - rad/2, h/2 - rad/2 + yOff , rad, rad));
         }
 
         g.setColor(UIManager.getColor(enabled ? "RadioButton.darcula.selectionEnabledColor" : "RadioButton.darcula.selectionDisabledColor"));
-        g.fillOval(w/2 - rad/2, h/2 - rad/2 - 1 + yOff, rad, rad);
+        g.fill(new Ellipse2D.Double(w/2 - rad/2, h/2 - rad/2 - 1 + yOff, rad, rad));
       }
     } finally {
       g.dispose();
@@ -191,9 +205,7 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
   }
 
   @Override
-  protected void paintFocus(Graphics g, Rectangle t, Dimension d) {
-
-  }
+  protected void paintFocus(Graphics g, Rectangle t, Dimension d) {}
 
   @Override
   public Icon getDefaultIcon() {

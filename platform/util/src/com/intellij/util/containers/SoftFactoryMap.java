@@ -40,10 +40,6 @@ public abstract class SoftFactoryMap<T,V> {
     return prev == null || prev == NULL ? value : prev;
   }
 
-  public final boolean containsKey(T key) {
-    return myMap.containsKey(key);
-  }
-
   public void clear() {
     myMap.clear();
   }

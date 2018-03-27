@@ -50,7 +50,6 @@ import static com.jetbrains.python.psi.PyUtil.sure;
  * Adds a missing top-level function to a module.
  * <br/>
  * User: dcheryasov
- * Date: Sep 15, 2010 4:34:23 PM
  * @see AddMethodQuickFix AddMethodQuickFix
  */
 public class AddFunctionQuickFix  implements LocalQuickFix {

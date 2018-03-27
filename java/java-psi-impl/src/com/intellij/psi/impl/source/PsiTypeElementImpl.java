@@ -170,7 +170,8 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
         if (e instanceof PsiExpression) {
           if (!(e instanceof PsiArrayInitializerExpression) &&
               !isSelfReferenced((PsiExpression)e, parent)) {
-            PsiType type = ((PsiExpression)e).getType();
+            PsiExpression expression = (PsiExpression)e;
+            PsiType type = JavaVarTypeUtil.ourVarGuard.doPreventingRecursion(expression, true, () -> expression.getType());
             return type == null ? null : JavaVarTypeUtil.getUpwardProjection(type);
           }
           return null;

@@ -13,7 +13,7 @@ def f7():
 def f8():
   pass
 
-@deco<warning descr="Unexpected argument(s)">(1, <warning descr="Unexpected argument">2</warning>)</warning> # fail: extra param
+@deco(1, <warning descr="Unexpected argument">2</warning>) # fail: extra param
 def f9():
   pass
 

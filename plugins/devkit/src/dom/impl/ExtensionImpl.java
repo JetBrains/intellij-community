@@ -21,7 +21,6 @@ import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 10/10/11
  */
 public abstract class ExtensionImpl implements Extension {
 

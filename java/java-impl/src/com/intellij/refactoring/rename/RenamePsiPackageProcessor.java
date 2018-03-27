@@ -113,6 +113,7 @@ public class RenamePsiPackageProcessor extends RenamePsiElementProcessor {
         return newName;
       }
 
+      @NotNull
       @Override
       protected String getCommandName() {
         return "Rename package";

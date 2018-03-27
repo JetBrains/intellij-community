@@ -1910,6 +1910,43 @@ public class PyRequirementTest extends PyTestCase {
     doTest("django-haystack", "dev", "git://github.com/toastdriven/django-haystack.git#egg=django-haystack-dev");
   }
 
+  // PY-26844
+  public void testExtrasInRequirementEggName() {
+    final String line1 = "git://github.com/python-social-auth/social-core.git#egg=social-auth-core[openidconnect]";
+    assertEquals(new PyRequirement("social-auth-core", Collections.emptyList(), Collections.singletonList(line1), "[openidconnect]"),
+                 PyRequirement.fromLine(line1));
+
+    final String line2 = "git://github.com/python-social-auth/social-core.git#egg=social-auth-core[openidconnect,security]";
+    assertEquals(
+      new PyRequirement("social-auth-core", Collections.emptyList(), Collections.singletonList(line2), "[openidconnect,security]"),
+      PyRequirement.fromLine(line2)
+    );
+
+    final String line3 =
+      "git://github.com/python-social-auth/social-core.git#egg=social-auth-core[openidconnect]&subdirectory=clients/python";
+    assertEquals(new PyRequirement("social-auth-core", Collections.emptyList(), Collections.singletonList(line3), "[openidconnect]"),
+                 PyRequirement.fromLine(line3));
+
+    final String line4 =
+      "git://github.com/python-social-auth/social-core.git#egg=social-auth-core[openidconnect,security]&subdirectory=clients/python";
+    assertEquals(
+      new PyRequirement("social-auth-core", Collections.emptyList(), Collections.singletonList(line4), "[openidconnect,security]"),
+      PyRequirement.fromLine(line4)
+    );
+
+    final String line5 =
+      "git://github.com/python-social-auth/social-core.git#subdirectory=clients/python&egg=social-auth-core[openidconnect]";
+    assertEquals(new PyRequirement("social-auth-core", Collections.emptyList(), Collections.singletonList(line5), "[openidconnect]"),
+                 PyRequirement.fromLine(line5));
+
+    final String line6 =
+      "git://github.com/python-social-auth/social-core.git#subdirectory=clients/python&egg=social-auth-core[openidconnect,security]";
+    assertEquals(
+      new PyRequirement("social-auth-core", Collections.emptyList(), Collections.singletonList(line6), "[openidconnect,security]"),
+      PyRequirement.fromLine(line6)
+    );
+  }
+
   // LOCAL DIR
   // TODO: which must contain a setup.py
 

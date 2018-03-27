@@ -43,7 +43,6 @@ import static com.jetbrains.python.psi.PyUtil.sure;
 /**
  * Does the actual job of adding an import statement into a file.
  * User: dcheryasov
- * Date: Apr 24, 2009 3:17:59 AM
  */
 public class AddImportHelper {
   private static final Logger LOG = Logger.getInstance(AddImportHelper.class);
@@ -127,7 +126,7 @@ public class AddImportHelper {
       return myDescription;
     }
   }
-  
+
   private static final ImportPriority UNRESOLVED_SYMBOL_PRIORITY = ImportPriority.THIRD_PARTY;
 
   private AddImportHelper() {
@@ -203,7 +202,7 @@ public class AddImportHelper {
         feeler = feeler.getNextSibling();
         skippedOverImports = true;
       }
-      else if (PyUtil.instanceOf(feeler, PsiWhiteSpace.class, PsiComment.class)) {
+      else if (PsiTreeUtil.instanceOf(feeler, PsiWhiteSpace.class, PsiComment.class)) {
         seeker = feeler;
         feeler = feeler.getNextSibling();
       }
@@ -231,7 +230,7 @@ public class AddImportHelper {
       newImport.putCopyableUserData(PyBlock.IMPORT_GROUP_BEGIN, true);
     }
     if (priorityBelow != null) {
-      // actually not necessary because existing import with higher priority (i.e. lower import group) 
+      // actually not necessary because existing import with higher priority (i.e. lower import group)
       // probably should have IMPORT_GROUP_BEGIN flag already, but we add it anyway just for safety
       if (priorityBelow.compareTo(priority) > 0) {
         importBelow.putCopyableUserData(PyBlock.IMPORT_GROUP_BEGIN, true);
@@ -425,7 +424,7 @@ public class AddImportHelper {
    * Adds a new {@link PyFromImportStatement} statement within other top-level imports or as specified by anchor.
    *
    * @param file      where to operate
-   * @param newImport new "from import" statement to insert. It may be generated, because it won't be used for resolving anyway. 
+   * @param newImport new "from import" statement to insert. It may be generated, because it won't be used for resolving anyway.
    *                  You might want to use overloaded version of this method to generate such statement automatically.
    * @param anchor    place where the imported name was used. It will be used to determine proper block where new import should be inserted,
    *                  e.g. inside conditional block or try/except statement. Also if anchor is another import statement, new import statement
@@ -455,7 +454,7 @@ public class AddImportHelper {
       else {
         insertParent = file;
       }
-      
+
       if (insideDoctest) {
         final PsiElement element = insertParent.addBefore(newImport, getInsertPosition(insertParent, newImport, priority));
         PsiElement whitespace = element.getNextSibling();

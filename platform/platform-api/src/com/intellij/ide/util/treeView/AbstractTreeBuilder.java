@@ -24,6 +24,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Progressive;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.AsyncResult;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.containers.TransferToEDTQueue;
 import com.intellij.util.ui.UIUtil;
@@ -522,6 +523,13 @@ public class AbstractTreeBuilder implements Disposable {
 
     @Override
     public void update(PresentationData presentation) {
+    }
+
+    @Override
+    public boolean equals(Object object) {
+      if (object == this) return true;
+      // this hack allows to find a node in a map without checking a class type
+      return object instanceof AbstractTreeNode && Comparing.equal(getEqualityObject(), ((AbstractTreeNode)object).getEqualityObject());
     }
   }
 

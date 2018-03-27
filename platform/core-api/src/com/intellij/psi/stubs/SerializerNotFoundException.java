@@ -17,7 +17,6 @@ package com.intellij.psi.stubs;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 8/31/12
  */
 public class SerializerNotFoundException extends Exception {
 

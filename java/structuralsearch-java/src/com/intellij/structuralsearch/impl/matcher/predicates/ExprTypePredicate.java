@@ -28,8 +28,6 @@ import java.util.Set;
 
 /**
  * @author Maxim.Mossienko
- * Date: Mar 23, 2004
- * Time: 6:37:15 PM
  */
 public class ExprTypePredicate extends MatchPredicate {
   private final RegExpPredicate delegate;

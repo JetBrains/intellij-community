@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package org.jetbrains.plugins.groovy.lang.completion;
 
@@ -27,10 +15,9 @@ import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Consumer;
@@ -40,6 +27,7 @@ import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.lang.completion.handlers.AfterNewClassInsertHandler;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -171,7 +159,8 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
                                       context.getOffsetMap().getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET));
               }
 
-              final CodeStyleSettings csSettings = CodeStyleSettingsManager.getSettings(context.getProject());
+              final CommonCodeStyleSettings csSettings =
+                CodeStyleSettingsManager.getSettings(context.getProject()).getCommonSettings(GroovyLanguage.INSTANCE);
               final int oldTail = context.getTailOffset();
               context.setTailOffset(GroovyCompletionUtil.addRParenth(editor, oldTail, csSettings.SPACE_WITHIN_CAST_PARENTHESES));
 
@@ -326,12 +315,11 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
     }
     else if (pparent instanceof GrAssignmentExpression) {
       GrAssignmentExpression assignment = (GrAssignmentExpression)pparent;
-      IElementType optoken = assignment.getOperationTokenType();
 
       GrExpression lvalue = assignment.getLValue();
       GrExpression rvalue = assignment.getRValue();
 
-      if (parent == rvalue && optoken == GroovyTokenTypes.mASSIGN) {
+      if (parent == rvalue && !assignment.isOperatorAssignment()) {
         return lvalue.getNominalType();
       }
     }
@@ -339,12 +327,11 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
       PsiElement ppparent = pparent.getParent();
       if (ppparent instanceof GrAssignmentExpression) {
         GrAssignmentExpression assignment = (GrAssignmentExpression)ppparent;
-        IElementType optoken = assignment.getOperationTokenType();
 
         GrExpression lvalue = assignment.getLValue();
         GrExpression rvalue = assignment.getRValue();
 
-        if (pparent == rvalue && optoken == GroovyTokenTypes.mASSIGN) {
+        if (pparent == rvalue && !assignment.isOperatorAssignment()) {
           return lvalue.getNominalType();
         }
       }
@@ -383,7 +370,6 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
                                                            !PsiDiamondTypeImpl.haveConstructorsGenericsParameters(psiClass);
       final PsiType initializerType = initializer.getType();
       if (hasDefaultConstructorOrNoGenericsOne &&
-          initializerType != null &&
           initializerType instanceof PsiClassType &&
           ((PsiClassType)initializerType).getParameters().length > 0) {
         type = initializerType;
@@ -449,16 +435,9 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
       return PsiUtil.getSmartReturnType((PsiMethod)element);
     }
     if (element instanceof GrVariable) {
-      if (PsiUtil.isLocalVariable(element)) {
-        return TypeInferenceHelper.getInferredType(context, ((GrVariable)element).getName());
-      }
-      else {
-        return ((GrVariable)element).getTypeGroovy();
-      }
+        return TypeInferenceHelper.getVariableTypeInContext(context, (GrVariable)element);
     }
-/*    if(element instanceof PsiKeyword){
-      return getKeywordItemType(context, element.getText());
-    }*/
+
     if (element instanceof GrExpression) {
       return ((GrExpression)element).getType();
     }
@@ -468,6 +447,4 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
 
     return null;
   }
-
-
 }

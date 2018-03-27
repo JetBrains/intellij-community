@@ -29,6 +29,17 @@ class JavaUSimpleNameReferenceExpression(
   override fun resolve() = (reference ?: psi as? PsiReference)?.resolve()
   override val resolvedName: String?
     get() = ((reference ?: psi as? PsiReference)?.resolve() as? PsiNamedElement)?.name
+
+  override fun getPsiParentForLazyConversion(): PsiElement? {
+    val parent = super.getPsiParentForLazyConversion()
+    if (parent is PsiReferenceExpression && parent.parent is PsiMethodCallExpression) {
+      return parent.parent
+    }
+    return parent
+  }
+
+  override fun convertParent(): UElement? = super.convertParent().let(this::unwrapCompositeQualifiedReference)
+
 }
 
 class JavaUTypeReferenceExpression(

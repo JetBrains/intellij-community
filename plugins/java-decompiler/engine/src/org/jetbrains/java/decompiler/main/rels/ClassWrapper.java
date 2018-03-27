@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.main.rels;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -33,13 +19,11 @@ import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 public class ClassWrapper {
-
   private final StructClass classStruct;
   private final Set<String> hiddenMembers = new HashSet<>();
   private final VBStyleCollection<Exprent, String> staticFieldInitializers = new VBStyleCollection<>();
@@ -50,7 +34,7 @@ public class ClassWrapper {
     this.classStruct = classStruct;
   }
 
-  public void init() throws IOException {
+  public void init() {
     DecompilerContext.setProperty(DecompilerContext.CURRENT_CLASS, classStruct);
     DecompilerContext.setProperty(DecompilerContext.CURRENT_CLASS_WRAPPER, this);
     DecompilerContext.getLogger().startClass(classStruct.qualifiedName);
@@ -61,15 +45,12 @@ public class ClassWrapper {
     for (StructMethod mt : classStruct.getMethods()) {
       DecompilerContext.getLogger().startMethod(mt.getName() + " " + mt.getDescriptor());
 
-      VarNamesCollector vc = new VarNamesCollector();
-      DecompilerContext.setVarNamesCollector(vc);
-
-      CounterContainer counter = new CounterContainer();
-      DecompilerContext.setCounterContainer(counter);
-
       MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
       VarProcessor varProc = new VarProcessor(mt, md);
-      DecompilerContext.setProperty(DecompilerContext.CURRENT_VAR_PROCESSOR, varProc);
+      DecompilerContext.startMethod(varProc);
+
+      VarNamesCollector vc = varProc.getVarNamesCollector();
+      CounterContainer counter = DecompilerContext.getCounterContainer();
 
       RootStatement root = null;
 
@@ -81,7 +62,7 @@ public class ClassWrapper {
             root = MethodProcessorRunnable.codeToJava(mt, md, varProc);
           }
           else {
-            MethodProcessorRunnable mtProc = new MethodProcessorRunnable(mt, md, varProc, DecompilerContext.getCurrentContext());
+            MethodProcessorRunnable mtProc = new MethodProcessorRunnable(mt, md, varProc);
 
             Thread mtThread = new Thread(mtProc, "Java decompiler");
             long stopAt = System.currentTimeMillis() + maxSec * 1000;
@@ -142,9 +123,8 @@ public class ClassWrapper {
         }
       }
       catch (Throwable ex) {
-        DecompilerContext.getLogger().writeMessage("Method " + mt.getName() + " " + mt.getDescriptor() + " couldn't be decompiled.",
-                                                   IFernflowerLogger.Severity.WARN,
-                                                   ex);
+        String message = "Method " + mt.getName() + " " + mt.getDescriptor() + " couldn't be decompiled.";
+        DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN, ex);
         isError = true;
       }
 

@@ -32,6 +32,13 @@ class EdtTestUtil {
 }
 
 @TestOnly
+fun <V> runInEdtAndGet(compute: () -> V): V {
+  var v : V? = null
+  runInEdtAndWait { v = compute() }
+  return v!!
+}
+
+@TestOnly
 fun runInEdtAndWait(runnable: () -> Unit) {
   val app = ApplicationManager.getApplication()
   if (app is ApplicationImpl) {

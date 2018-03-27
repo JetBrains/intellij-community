@@ -151,6 +151,18 @@ public class AutoCloseableResourceInspectionTest extends LightInspectionTestCase
            "");
   }
 
+  public void testTernary() {
+    doTest("import java.io.*;\n" +
+           "\n" +
+           "class X {\n" +
+           "  private static void example(int a) throws IOException {\n" +
+           "    try (FileOutputStream byteArrayOutputStream = a > 0 ? new FileOutputStream(\"/etc/passwd\") : new\n" +
+           "      FileOutputStream(\"/etc/shadow\")) {\n" +
+           "    }\n" +
+           "  }\n" +
+           "}");
+  }
+
   @Override
   protected LocalInspectionTool getInspection() {
     return new AutoCloseableResourceInspection();

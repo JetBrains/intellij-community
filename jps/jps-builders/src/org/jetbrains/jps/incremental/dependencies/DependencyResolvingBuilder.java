@@ -54,7 +54,6 @@ import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 21-Jun-16
  */
 public class DependencyResolvingBuilder extends ModuleLevelBuilder{
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.dependencies.DependencyResolvingBuilder");

@@ -31,7 +31,6 @@ import java.util.NoSuchElementException;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Apr 6, 2010
  */
 @SuppressWarnings({"AbstractClassNeverImplemented"})
 public abstract class AntDomElement implements DomElement {

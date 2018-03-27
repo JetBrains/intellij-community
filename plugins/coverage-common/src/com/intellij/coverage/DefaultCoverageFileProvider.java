@@ -19,7 +19,6 @@ import java.io.File;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jul 8, 2006
  */
 public final class DefaultCoverageFileProvider implements CoverageFileProvider{
   private final File myFile;

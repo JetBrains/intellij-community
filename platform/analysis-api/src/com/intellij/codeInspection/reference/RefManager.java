@@ -62,7 +62,7 @@ public abstract class RefManager {
    * @return the node for the module, or null if {@code module} is null.
    */
   @Nullable
-  public abstract RefModule getRefModule(Module module);
+  public abstract RefModule getRefModule(@Nullable Module module);
 
   /**
    * Creates (if necessary) and returns the reference graph node for the specified PSI element.
@@ -72,7 +72,7 @@ public abstract class RefManager {
    * a corresponding reference graph node type (is not a field, method, class or file).
    */
   @Nullable
-  public abstract RefElement getReference(PsiElement elem);
+  public abstract RefElement getReference(@Nullable PsiElement elem);
 
   /**
    * Creates (if necessary) and returns the reference graph node for the PSI element specified by its type and FQName.
@@ -90,7 +90,7 @@ public abstract class RefManager {
   public abstract <T> T getExtension(@NotNull Key<T> key);
 
   @Nullable
-  public abstract String getType(final RefEntity ref);
+  public abstract String getType(@NotNull RefEntity ref);
 
   @NotNull
   public abstract RefEntity getRefinedElement(@NotNull RefEntity ref);
@@ -98,11 +98,12 @@ public abstract class RefManager {
   public abstract Element export(@NotNull RefEntity entity, @NotNull Element element, final int actualLine);
 
   @Nullable
-  public abstract String getGroupName(final RefElement entity);
+  public abstract String getGroupName(@NotNull RefElement entity);
 
-  public abstract boolean belongsToScope(PsiElement psiElement);
+  public abstract boolean belongsToScope(@Nullable PsiElement psiElement);
 
-  public abstract String getQualifiedName(RefEntity refEntity);
+  @Nullable
+  public abstract String getQualifiedName(@Nullable RefEntity refEntity);
 
   public abstract void removeRefElement(@NotNull RefElement refElement, @NotNull List<RefElement> deletedRefs);
 

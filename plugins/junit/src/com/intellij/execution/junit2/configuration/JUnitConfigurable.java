@@ -45,6 +45,7 @@ import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -113,6 +114,8 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
   private JComboBox myRepeatCb;
   private JTextField myRepeatCountField;
   private LabeledComponent<JComboBox<String>> myChangeListLabeledComponent;
+  private LabeledComponent<RawCommandLineEditor> myUniqueIdField;
+  private LabeledComponent<RawCommandLineEditor> myTagsField;
   private Project myProject;
   private JComponent anchor;
 
@@ -158,7 +161,8 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
           return null;
         }
       },
-      new CategoryBrowser(project)
+      new CategoryBrowser(project),
+      null
     };
     // Garbage support
     final DefaultComboBoxModel aModel = new DefaultComboBoxModel();
@@ -168,6 +172,8 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     aModel.addElement(JUnitConfigurationModel.CLASS);
     aModel.addElement(JUnitConfigurationModel.METHOD);
     aModel.addElement(JUnitConfigurationModel.CATEGORY);
+    aModel.addElement(JUnitConfigurationModel.UNIQUE_ID);
+    aModel.addElement(JUnitConfigurationModel.TAGS);
     if (Registry.is("testDiscovery.enabled")) {
       aModel.addElement(JUnitConfigurationModel.BY_SOURCE_POSITION);
       aModel.addElement(JUnitConfigurationModel.BY_SOURCE_CHANGES);
@@ -194,6 +200,12 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
             break;
           case JUnitConfigurationModel.CATEGORY:
             setText("Category");
+            break;
+          case JUnitConfigurationModel.UNIQUE_ID:
+            setText("UniqueId");
+            break;
+          case JUnitConfigurationModel.TAGS:
+            setText("Tags (JUnit 5)");
             break;
           case JUnitConfigurationModel.BY_SOURCE_POSITION:
             setText("Through source location");
@@ -299,8 +311,10 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     catch (NumberFormatException e) {
       configuration.setRepeatCount(1);
     }
-    myModel.apply(getModuleSelector().getModule(), configuration);
+    configuration.getPersistentData().setUniqueIds(myUniqueIdField.getComponent().getText().split(" "));
+    configuration.getPersistentData().setTags(myTagsField.getComponent().getText().split(" "));
     configuration.getPersistentData().setChangeList((String)myChangeListLabeledComponent.getComponent().getSelectedItem());
+    myModel.apply(getModuleSelector().getModule(), configuration);
     applyHelpersTo(configuration);
     final JUnitConfiguration.Data data = configuration.getPersistentData();
     if (myWholeProjectScope.isSelected()) {
@@ -328,6 +342,12 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
 
     myModel.reset(configuration);
     myChangeListLabeledComponent.getComponent().setSelectedItem(configuration.getPersistentData().getChangeList());
+    String[] ids = configuration.getPersistentData().getUniqueIds();
+    myUniqueIdField.getComponent().setText(ids != null ? StringUtil.join(ids, " ") : null);
+
+    String[] tags = configuration.getPersistentData().getTags();
+    myTagsField.getComponent().setText(tags != null ? StringUtil.join(tags, " ") : null);
+
     myCommonJavaParameters.reset(configuration);
     getModuleSelector().reset(configuration);
     final TestSearchScope scope = configuration.getPersistentData().getScope();
@@ -358,6 +378,8 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
       myPattern.setVisible(false);
       myClass.setVisible(false);
       myCategory.setVisible(false);
+      myUniqueIdField.setVisible(false);
+      myTagsField.setVisible(false);
       myMethod.setVisible(false);
       myDir.setVisible(false);
       myChangeListLabeledComponent.setVisible(false);
@@ -371,6 +393,8 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
       myPattern.setVisible(false);
       myClass.setVisible(false);
       myCategory.setVisible(false);
+      myUniqueIdField.setVisible(false);
+      myTagsField.setVisible(false);
       myChangeListLabeledComponent.setVisible(false);
       myMethod.setVisible(false);
       myForkCb.setEnabled(true);
@@ -384,6 +408,8 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
       myDir.setVisible(false);
       myClass.setVisible(true);
       myCategory.setVisible(false);
+      myUniqueIdField.setVisible(false);
+      myTagsField.setVisible(false);
       myChangeListLabeledComponent.setVisible(false);
       myMethod.setVisible(false);
       myForkCb.setEnabled(true);
@@ -397,6 +423,8 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
       myDir.setVisible(false);
       myClass.setVisible(true);
       myCategory.setVisible(false);
+      myUniqueIdField.setVisible(false);
+      myTagsField.setVisible(false);
       myMethod.setVisible(true);
       myChangeListLabeledComponent.setVisible(false);
       myForkCb.setEnabled(false);
@@ -408,6 +436,8 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
       myPattern.setVisible(false);
       myClass.setVisible(false);
       myCategory.setVisible(true);
+      myUniqueIdField.setVisible(false);
+      myTagsField.setVisible(false);
       myMethod.setVisible(false);
       myChangeListLabeledComponent.setVisible(false);
       myForkCb.setEnabled(true);
@@ -421,8 +451,40 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
       myPattern.setVisible(false);
       myClass.setVisible(false);
       myCategory.setVisible(false);
+      myUniqueIdField.setVisible(false);
+      myTagsField.setVisible(false);
       myMethod.setVisible(false);
       myChangeListLabeledComponent.setVisible(true);
+      myForkCb.setEnabled(true);
+      myForkCb.setModel(new DefaultComboBoxModel(FORK_MODE_ALL));
+      myForkCb.setSelectedItem(selectedItem);
+    }
+    else if (selectedType == JUnitConfigurationModel.UNIQUE_ID) {
+      myPackagePanel.setVisible(false);
+      myScopesPanel.setVisible(false);
+      myDir.setVisible(false);
+      myPattern.setVisible(false);
+      myClass.setVisible(false);
+      myCategory.setVisible(false);
+      myUniqueIdField.setVisible(true);
+      myTagsField.setVisible(false);
+      myMethod.setVisible(false);
+      myChangeListLabeledComponent.setVisible(false);
+      myForkCb.setEnabled(true);
+      myForkCb.setModel(new DefaultComboBoxModel(FORK_MODE_ALL));
+      myForkCb.setSelectedItem(selectedItem);
+    }
+    else if (selectedType == JUnitConfigurationModel.TAGS) {
+      myPackagePanel.setVisible(false);
+      myScopesPanel.setVisible(false);
+      myDir.setVisible(false);
+      myPattern.setVisible(false);
+      myClass.setVisible(false);
+      myCategory.setVisible(false);
+      myUniqueIdField.setVisible(false);
+      myTagsField.setVisible(true);
+      myMethod.setVisible(false);
+      myChangeListLabeledComponent.setVisible(false);
       myForkCb.setEnabled(true);
       myForkCb.setModel(new DefaultComboBoxModel(FORK_MODE_ALL));
       myForkCb.setSelectedItem(selectedItem);
@@ -434,6 +496,8 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
       myDir.setVisible(false);
       myClass.setVisible(false);
       myCategory.setVisible(false);
+      myUniqueIdField.setVisible(false);
+      myTagsField.setVisible(false);
       myMethod.setVisible(true);
       myChangeListLabeledComponent.setVisible(false);
       myForkCb.setEnabled(true);
@@ -545,6 +609,8 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     myPattern.setAnchor(anchor);
     myPackage.setAnchor(anchor);
     myCategory.setAnchor(anchor);
+    myUniqueIdField.setAnchor(anchor);
+    myTagsField.setAnchor(anchor);
     myChangeListLabeledComponent.setAnchor(anchor);
   }
 
@@ -557,7 +623,9 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
       myModule.setEnabled(false);
     } else */if (newType != JUnitConfigurationModel.ALL_IN_PACKAGE &&
                  newType != JUnitConfigurationModel.PATTERN &&
-                 newType != JUnitConfigurationModel.CATEGORY) {
+                 newType != JUnitConfigurationModel.CATEGORY &&
+                 newType != JUnitConfigurationModel.TAGS &&
+                 newType != JUnitConfigurationModel.UNIQUE_ID) {
       myModule.setEnabled(true);
     }
     else {
@@ -569,7 +637,9 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     final Integer selectedItem = (Integer)myTypeChooser.getSelectedItem();
     final boolean allInPackageAllInProject = (selectedItem == JUnitConfigurationModel.ALL_IN_PACKAGE ||
                                               selectedItem == JUnitConfigurationModel.PATTERN ||
-                                              selectedItem == JUnitConfigurationModel.CATEGORY) && myWholeProjectScope.isSelected();
+                                              selectedItem == JUnitConfigurationModel.CATEGORY ||
+                                              selectedItem == JUnitConfigurationModel.TAGS ||
+                                              selectedItem == JUnitConfigurationModel.UNIQUE_ID ) && myWholeProjectScope.isSelected();
     myModule.setEnabled(!allInPackageAllInProject);
     if (allInPackageAllInProject) {
       myModule.getComponent().setSelectedItem(null);

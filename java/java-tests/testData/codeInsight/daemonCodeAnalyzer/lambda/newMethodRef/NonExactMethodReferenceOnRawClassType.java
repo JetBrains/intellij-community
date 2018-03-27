@@ -4,7 +4,7 @@ class InlineRef {
   <K> void foo(Consumer<K> f) {}
 
   void bar(){
-    foo(Descriptor::<error descr="Cannot resolve method 'getName'">getName</error>);
+    foo(Descriptor::<error descr="Incompatible types: Object is not convertible to Descriptor">getName</error>);
   }
 }
 

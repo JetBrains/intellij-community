@@ -51,7 +51,7 @@ public abstract class ModuleBasedTarget<R extends BuildRootDescriptor> extends B
     if (this == o) {
       return true;
     }
-    if (o == null || !(o instanceof ModuleBasedTarget)) {
+    if (!(o instanceof ModuleBasedTarget)) {
       return false;
     }
 

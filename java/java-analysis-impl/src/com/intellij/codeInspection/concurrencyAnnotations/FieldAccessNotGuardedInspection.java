@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -81,7 +82,7 @@ public class FieldAccessNotGuardedInspection extends AbstractBaseJavaLocalInspec
           if (guardExpression instanceof PsiThisExpression) {
             final PsiThisExpression thisExpression = (PsiThisExpression)guardExpression;
             final PsiClass aClass = getClassFromThisExpression(thisExpression, field);
-            if (aClass == null || aClass.equals(containingMethod.getContainingClass())) {
+            if (aClass == null || InheritanceUtil.isInheritorOrSelf(containingMethod.getContainingClass(), aClass, true)) {
               return;
             }
           }

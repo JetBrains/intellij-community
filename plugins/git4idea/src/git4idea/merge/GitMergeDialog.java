@@ -21,9 +21,9 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitVcs;
+import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
-import git4idea.commands.GitSimpleHandler;
 import git4idea.i18n.GitBundle;
 import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -149,10 +149,10 @@ public class GitMergeDialog extends DialogWrapper {
    */
   public void updateBranches() throws VcsException {
     VirtualFile root = getSelectedRoot();
-    GitSimpleHandler handler = new GitSimpleHandler(myProject, root, GitCommand.BRANCH);
+    GitLineHandler handler = new GitLineHandler(myProject, root, GitCommand.BRANCH);
     handler.setSilent(true);
     handler.addParameters("--no-color", "-a", "--no-merged");
-    String output = handler.run();
+    String output = Git.getInstance().runCommand(handler).getOutputOrThrow();
     myBranchChooser.clear();
     for (StringTokenizer lines = new StringTokenizer(output, "\n", false); lines.hasMoreTokens();) {
       String branch = lines.nextToken().substring(2);

@@ -139,7 +139,9 @@ public class DocumentContentImpl extends DiffContentBase implements DocumentCont
     public void navigate(boolean requestFocus) {
       Document targetDocument = FileDocumentManager.getInstance().getDocument(myTargetFile);
       LineCol targetPosition = translatePosition(myDocument, targetDocument, myPosition);
-      OpenFileDescriptor descriptor = new OpenFileDescriptor(myProject, myTargetFile, targetPosition.line, targetPosition.column);
+      OpenFileDescriptor descriptor = targetDocument != null
+                                      ? new OpenFileDescriptor(myProject, myTargetFile, targetPosition.toOffset(targetDocument))
+                                      : new OpenFileDescriptor(myProject, myTargetFile, targetPosition.line, targetPosition.column);
       if (descriptor.canNavigate()) descriptor.navigate(true);
     }
 

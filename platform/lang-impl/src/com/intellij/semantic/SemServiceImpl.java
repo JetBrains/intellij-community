@@ -28,8 +28,8 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.IntObjectMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashMap;
@@ -39,13 +39,14 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author peter
  */
 @SuppressWarnings({"unchecked"})
 public class SemServiceImpl extends SemService{
-  private final ConcurrentMap<PsiElement, SemCacheChunk> myCache = ContainerUtil.createConcurrentWeakKeySoftValueMap();
+  private final AtomicReference<ConcurrentMap<PsiElement, SemCacheChunk>> myCache = new AtomicReference<>();
   private volatile  MultiMap<SemKey, NullableFunction<PsiElement, Collection<? extends SemElement>>> myProducers;
   private final Project myProject;
 
@@ -117,7 +118,7 @@ public class SemServiceImpl extends SemService{
 
   @Override
   public void clearCache() {
-    myCache.clear();
+    myCache.set(null);
   }
 
   @Override
@@ -249,7 +250,8 @@ public class SemServiceImpl extends SemService{
 
   @Nullable
   private SemCacheChunk obtainChunk(@Nullable PsiElement root) {
-    return myCache.get(root);
+    ConcurrentMap<PsiElement, SemCacheChunk> map = myCache.get();
+    return map == null ? null : map.get(root);
   }
 
   @Override
@@ -257,21 +259,20 @@ public class SemServiceImpl extends SemService{
     getOrCreateChunk(psi).putSemElements(key, ContainerUtil.createMaybeSingletonList(semElement));
   }
 
-  @Override
-  public void clearCachedSemElements(@NotNull PsiElement psi) {
-    myCache.remove(psi);
-  }
-
   private SemCacheChunk getOrCreateChunk(final PsiElement element) {
     SemCacheChunk chunk = obtainChunk(element);
     if (chunk == null) {
-      chunk = ConcurrencyUtil.cacheOrGet(myCache, element, new SemCacheChunk());
+      ConcurrentMap<PsiElement, SemCacheChunk> map = myCache.get();
+      if (map == null) {
+        map = ConcurrencyUtil.cacheOrGet(myCache, ContainerUtil.createConcurrentWeakKeySoftValueMap());
+      }
+      chunk = ConcurrencyUtil.cacheOrGet(map, element, new SemCacheChunk());
     }
     return chunk;
   }
 
   private static class SemCacheChunk {
-    private final ConcurrentIntObjectMap<List<SemElement>> map = ContainerUtil.createConcurrentIntObjectMap();
+    private final IntObjectMap<List<SemElement>> map = ContainerUtil.createConcurrentIntObjectMap();
 
     public List<SemElement> getSemElements(SemKey<?> key) {
       return map.get(key.getUniqueId());

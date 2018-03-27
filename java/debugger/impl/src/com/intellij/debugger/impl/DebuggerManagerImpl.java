@@ -1,8 +1,9 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.*;
-import com.intellij.debugger.apiAdapters.TransportServiceWrapper;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.settings.CaptureSettingsProvider;
 import com.intellij.debugger.settings.DebuggerSettings;
@@ -457,9 +458,9 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
       address = debugPort;
     }
 
-    final TransportServiceWrapper transportService = TransportServiceWrapper.getTransportService(useSockets);
     final String debugAddress = debuggerInServerMode && useSockets ? LOCALHOST_ADDRESS_FALLBACK + ":" + address : address;
-    String debuggeeRunProperties = "transport=" + transportService.transportId() + ",address=" + debugAddress;
+    String debuggeeRunProperties =
+      "transport=" + DebugProcessImpl.findConnector(useSockets, debuggerInServerMode).transport().name() + ",address=" + debugAddress;
     if (debuggerInServerMode) {
       debuggeeRunProperties += ",suspend=y,server=n";
     }
@@ -595,16 +596,11 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
       properties.setProperty("debug", "true");
     }
     int idx = 0;
-    for (CaptureSettingsProvider.AgentPoint point : CaptureSettingsProvider.getCapturePoints()) {
-      properties.setProperty("capture" + idx++, point.myClassName + CaptureSettingsProvider.AgentPoint.SEPARATOR +
-                                                point.myMethodName + CaptureSettingsProvider.AgentPoint.SEPARATOR +
-                                                point.myKey.asString());
-    }
-    idx = 0;
-    for (CaptureSettingsProvider.AgentPoint point : CaptureSettingsProvider.getInsertPoints()) {
-      properties.setProperty("insert" + idx++, point.myClassName + CaptureSettingsProvider.AgentPoint.SEPARATOR +
-                                               point.myMethodName + CaptureSettingsProvider.AgentPoint.SEPARATOR +
-                                               point.myKey.asString());
+    for (CaptureSettingsProvider.AgentPoint point : CaptureSettingsProvider.getPoints()) {
+      properties.setProperty((point.isCapture() ? "capture" : "insert") + idx++,
+                             point.myClassName + CaptureSettingsProvider.AgentPoint.SEPARATOR +
+                             point.myMethodName + CaptureSettingsProvider.AgentPoint.SEPARATOR +
+                             point.myKey.asString());
     }
     try {
       File file = FileUtil.createTempFile("capture", ".props");

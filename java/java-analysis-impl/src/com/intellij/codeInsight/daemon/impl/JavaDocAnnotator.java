@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 11/8/11
  */
 public class JavaDocAnnotator implements Annotator {
   @Override

@@ -169,23 +169,26 @@ class AsyncProjectViewSupport {
     TreeVisitor visitor = createVisitor(element, file, null);
     if (visitor != null) {
       expand(tree, promise -> myAsyncTreeModel.accept(visitor).processed(path -> {
-        if (path != null) {
-          TreeUtil.selectPath(tree, path);
-          promise.setResult(null);
-        }
-        else if (element == null || file == null || Registry.is("async.project.view.support.extra.select.disabled")) {
+        if (selectPath(tree, path) || element == null || file == null || Registry.is("async.project.view.support.extra.select.disabled")) {
           promise.setResult(null);
         }
         else {
           // try to search the specified file instead of element,
           // because Kotlin files cannot represent containing functions
           myAsyncTreeModel.accept(createVisitor(null, file, null)).processed(path2 -> {
-            if (path2 != null) TreeUtil.selectPath(tree, path2);
+            selectPath(tree, path2);
             promise.setResult(null);
           });
         }
       }));
     }
+  }
+
+  private static boolean selectPath(@NotNull JTree tree, TreePath path) {
+    if (path == null) return false;
+    tree.expandPath(path); // request to expand found path
+    TreeUtil.selectPath(tree, path); // select and scroll to center
+    return true;
   }
 
   public void updateAll(Runnable onDone) {
@@ -282,9 +285,9 @@ class AsyncProjectViewSupport {
   }
 
   private static TreeVisitor createVisitor(PsiElement element, VirtualFile file, Predicate<TreePath> predicate) {
-    if (element != null) return new ProjectViewNodeVisitor(element, file, predicate);
+    if (element != null && element.isValid()) return new ProjectViewNodeVisitor(element, file, predicate);
     if (file != null) return new ProjectViewFileVisitor(file, predicate);
-    LOG.warn("cannot create visitor without element and/or file");
+    LOG.warn(element != null ? "element invalidated: " + element : "cannot create visitor without element and/or file");
     return null;
   }
 

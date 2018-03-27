@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.theoryinpractice.testng.model;
 
@@ -50,7 +38,8 @@ public abstract class TestNGTestObject {
     myConfig = config;
   }
 
-  public static TestNGTestObject fromConfig(TestNGConfiguration config) {
+  @NotNull
+  public static TestNGTestObject fromConfig(@NotNull TestNGConfiguration config) {
     final String testObject = config.getPersistantData().TEST_OBJECT;
     if (testObject.equals(TestType.PACKAGE.getType())) {
       return new TestNGTestPackage(config);
@@ -147,7 +136,7 @@ public abstract class TestNGTestObject {
 
   private static void collectGroupsMembers(final String annotationFqn,
                                            final Set<String> groups,
-                                           final boolean skipUnrelated, 
+                                           final boolean skipUnrelated,
                                            final Map<PsiClass, Map<PsiMethod, List<String>>> results,
                                            final Set<PsiMember> alreadyMarkedToBeChecked,
                                            final GlobalSearchScope searchScope,
@@ -227,7 +216,7 @@ public abstract class TestNGTestObject {
                                         Map<PsiClass, Map<PsiMethod, List<String>>> results) {
     final PsiMethod[] psiMethods = containingClass.findMethodsByName(methodName, true);
     for (PsiMethod method : psiMethods) {
-      if (AnnotationUtil.isAnnotated(method, TestNGUtil.TEST_ANNOTATION_FQN, false) &&
+      if (AnnotationUtil.isAnnotated(method, TestNGUtil.TEST_ANNOTATION_FQN, 0) &&
           appendMember(method, alreadyMarkedToBeChecked, results)) {
         membersToCheckNow.add(method);
       }
@@ -297,7 +286,7 @@ public abstract class TestNGTestObject {
     }
 
     @Override
-    public void fillTestObjects(Map<PsiClass, Map<PsiMethod, List<String>>> classes) throws CantRunException {}
+    public void fillTestObjects(Map<PsiClass, Map<PsiMethod, List<String>>> classes) {}
 
     @Override
     public String getGeneratedName() {
@@ -310,6 +299,6 @@ public abstract class TestNGTestObject {
     }
 
     @Override
-    public void checkConfiguration() throws RuntimeConfigurationException {}
+    public void checkConfiguration() {}
   }
 }

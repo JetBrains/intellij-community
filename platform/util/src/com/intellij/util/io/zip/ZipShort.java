@@ -128,7 +128,7 @@ public final class ZipShort implements Cloneable {
    * @since 1.1
    */
   public boolean equals(Object o) {
-    if (o == null || !(o instanceof ZipShort)) {
+    if (!(o instanceof ZipShort)) {
       return false;
     }
     return value == ((ZipShort)o).getValue();

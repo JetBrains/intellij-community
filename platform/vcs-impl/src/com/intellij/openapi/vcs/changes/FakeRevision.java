@@ -16,18 +16,15 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-
 public class FakeRevision implements ContentRevision {
   private final FilePath myFile;
 
-  public FakeRevision(String path) {
-    myFile = VcsContextFactory.SERVICE.getInstance().createFilePathOn(new File(path));
+  public FakeRevision(@NotNull FilePath file) {
+    myFile = file;
   }
 
   @Nullable

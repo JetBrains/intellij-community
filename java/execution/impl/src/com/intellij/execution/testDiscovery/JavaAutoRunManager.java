@@ -57,6 +57,7 @@ public class JavaAutoRunManager extends AbstractAutoTestManager {
         }
 
         myEventDisposable = Disposer.newDisposable();
+        Disposer.register(project, myEventDisposable);
         project.getMessageBus().connect(myEventDisposable).subscribe(CompilerTopics.COMPILATION_STATUS, new CompilationStatusListener() {
           private boolean myFoundFilesToMake = false;
 

@@ -18,11 +18,11 @@ class JSONDecoder:
     strict = ...  # type: bool
     object_pairs_hook = ...  # type: Callable[[List[Tuple[str, Any]]], Any]
 
-    def __init__(self, object_hook: Optional[Callable[[Dict[str, Any]], Any]] = None,
-            parse_float: Optional[Callable[[str], Any]] = None,
-            parse_int: Optional[Callable[[str], Any]] = None,
-            parse_constant: Optional[Callable[[str], Any]] = None,
-            strict: bool = True,
-            object_pairs_hook: Optional[Callable[[List[Tuple[str, Any]]], Any]] = None) -> None: ...
+    def __init__(self, object_hook: Optional[Callable[[Dict[str, Any]], Any]] = ...,
+            parse_float: Optional[Callable[[str], Any]] = ...,
+            parse_int: Optional[Callable[[str], Any]] = ...,
+            parse_constant: Optional[Callable[[str], Any]] = ...,
+            strict: bool = ...,
+            object_pairs_hook: Optional[Callable[[List[Tuple[str, Any]]], Any]] = ...) -> None: ...
     def decode(self, s: str) -> Any: ...
     def raw_decode(self, s: str, idx: int = ...) -> Tuple[Any, int]: ...

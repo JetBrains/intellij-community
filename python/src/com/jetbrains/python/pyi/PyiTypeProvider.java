@@ -17,16 +17,16 @@ package com.jetbrains.python.pyi;
 
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
+import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * @author vlan
@@ -134,12 +134,29 @@ public class PyiTypeProvider extends PyTypeProviderBase {
     if (target instanceof PyTargetExpression) {
       final PsiElement pythonStub = PyiUtil.getPythonStub((PyTargetExpression)target);
       if (pythonStub instanceof PyTypedElement) {
-        // XXX: Force the switch to AST for getting the type out of the hint in the comment
-        final TypeEvalContext effectiveContext = context.maySwitchToAST(pythonStub) ?
-                                                 context : TypeEvalContext.deepCodeInsight(target.getProject());
-        return effectiveContext.getType((PyTypedElement)pythonStub);
+        return context.getType((PyTypedElement)pythonStub);
       }
     }
     return null;
+  }
+
+  @Nullable
+  @Override
+  public PyType getGenericType(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
+    final PyClass classStub = as(PyiUtil.getPythonStub(cls), PyClass.class);
+    if (classStub != null) {
+      return new PyTypingTypeProvider().getGenericType(classStub, context);
+    }
+    return null;
+  }
+
+  @NotNull
+  @Override
+  public Map<PyType, PyType> getGenericSubstitutions(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
+    final PyClass classStub = as(PyiUtil.getPythonStub(cls), PyClass.class);
+    if (classStub != null) {
+      return new PyTypingTypeProvider().getGenericSubstitutions(classStub, context);
+    }
+    return Collections.emptyMap();
   }
 }

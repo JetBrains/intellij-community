@@ -47,21 +47,14 @@ public class LanguageFolding extends LanguageExtension<FoldingBuilder> {
     if (cached != null) return cached;
 
     List<FoldingBuilder> extensions = new ArrayList<>(forKey(l));
+
+    MetaLanguage.getAllMatchingMetaLanguages(l).forEach(metaLanguage -> extensions.addAll(allForLanguage(metaLanguage)));
+
     FoldingBuilder result;
-
-    MetaLanguage.getAllMatchingMetaLanguages(l).forEach(metaLanguage -> {
-      extensions.addAll(allForLanguage(metaLanguage));
-    });
-
     if (extensions.isEmpty()) {
 
       Language base = l.getBaseLanguage();
-      if (base != null) {
-        result = forLanguage(base);
-      }
-      else {
-        result = getDefaultImplementation();
-      }
+      result = base == null ? getDefaultImplementation() : forLanguage(base);
     }
     else {
       return extensions.size() == 1 ? extensions.get(0) : new CompositeFoldingBuilder(extensions);

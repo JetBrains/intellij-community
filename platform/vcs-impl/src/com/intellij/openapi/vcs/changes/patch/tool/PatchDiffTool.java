@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.changes.patch.tool;
 
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.FrameDiffTool;
+import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.diff.tools.util.PrevNextDifferenceIterableBase;
@@ -127,9 +128,11 @@ public class PatchDiffTool implements FrameDiffTool {
         int offset = patchDocument.getLineStartOffset(line);
         DiffDrawUtil.createLineSeparatorHighlighter(myEditor, offset, offset, BooleanGetter.TRUE);
       }
+
       // highlighting
       for (PatchChangeBuilder.Hunk hunk : myHunks) {
-        DiffDrawUtil.createUnifiedChunkHighlighters(myEditor, hunk.getPatchDeletionRange(), hunk.getPatchInsertionRange(), null);
+        List<DiffFragment> innerFragments = PatchChangeBuilder.computeInnerDifferences(patchDocument, hunk);
+        DiffDrawUtil.createUnifiedChunkHighlighters(myEditor, hunk.getPatchDeletionRange(), hunk.getPatchInsertionRange(), innerFragments);
       }
 
       myEditor.getGutterComponentEx().revalidateMarkup();

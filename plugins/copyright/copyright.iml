@@ -19,5 +19,6 @@
     <orderEntry type="module" module-name="testExtensions" scope="TEST" />
     <orderEntry type="module" module-name="testFramework" scope="TEST" />
     <orderEntry type="module" module-name="configuration-store-impl" scope="TEST" />
+    <orderEntry type="module" module-name="external-system-api" />
   </component>
 </module>

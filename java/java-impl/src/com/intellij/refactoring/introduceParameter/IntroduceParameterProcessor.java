@@ -593,6 +593,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
     });
   }
 
+  @NotNull
   protected String getCommandName() {
     return RefactoringBundle.message("introduce.parameter.command", DescriptiveNameUtil.getDescriptiveName(myMethodToReplaceIn));
   }

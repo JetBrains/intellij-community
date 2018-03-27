@@ -230,7 +230,7 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
 
   @Override
   protected ProjectViewTree createTree(final DefaultTreeModel treeModel) {
-    return new ProjectViewTree(myProject, treeModel) {
+    return new ProjectViewTree(treeModel) {
       public String toString() {
         return myDescriptor.getFramework().getDisplayName() + " " + super.toString();
       }

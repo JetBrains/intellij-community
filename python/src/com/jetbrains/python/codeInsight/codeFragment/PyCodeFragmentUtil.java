@@ -20,13 +20,13 @@ import com.intellij.codeInsight.codeFragment.CodeFragmentUtil;
 import com.intellij.codeInsight.codeFragment.Position;
 import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.codeInsight.controlflow.Instruction;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.usageView.UsageInfo;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -218,7 +218,14 @@ public class PyCodeFragmentUtil {
       final boolean isExceptTarget = target instanceof PyExceptPart || target instanceof PyFinallyPart;
       final boolean isLoopTarget = target instanceof PyWhileStatement || PyForStatementNavigator.getPyForStatementByIterable(target) != null;
 
-      if (target != null && !isExceptTarget && !isLoopTarget) {
+      final PyBinaryExpression binaryExpression = PsiTreeUtil.getParentOfType(source, PyBinaryExpression.class);
+      final boolean isOppositeBinaryTarget =
+        binaryExpression != null &&
+        ArrayUtil.contains(binaryExpression.getOperator(), PyTokenTypes.AND_KEYWORD, PyTokenTypes.OR_KEYWORD) &&
+        binaryExpression.getLeftExpression() == source &&
+        binaryExpression.getRightExpression() == target;
+
+      if (target != null && !isExceptTarget && !isLoopTarget && !isOppositeBinaryTarget) {
         targetInstructions.add(targetInstruction);
       }
 

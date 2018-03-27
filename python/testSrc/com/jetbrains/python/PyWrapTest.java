@@ -15,10 +15,11 @@
  */
 package com.jetbrains.python;
 
+import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
 
 /**
@@ -75,7 +76,9 @@ public class PyWrapTest extends PyTestCase {
     myFixture.configureByFile("wrap/WrapInStringLiteral.py");
 
     final int stringLiteralOffset = 114;
-    assertNotNull(InjectedLanguageUtil.findInjectedElementNoCommit(myFixture.getFile(), stringLiteralOffset + "\"".length()));
+    PsiFile hostFile = myFixture.getFile();
+    assertNotNull(
+      InjectedLanguageManager.getInstance(hostFile.getProject()).findInjectedElementAt(hostFile, stringLiteralOffset + "\"".length()));
 
     myFixture.type(" AND field");
     myFixture.checkResultByFile("wrap/WrapInStringLiteral.after.py", true);

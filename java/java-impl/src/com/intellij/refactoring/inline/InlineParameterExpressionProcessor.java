@@ -77,6 +77,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
     myCallingBlock = PsiTreeUtil.getTopmostParentOfType(myMethodCall, PsiCodeBlock.class);
   }
 
+  @NotNull
   @Override
   protected String getCommandName() {
     return InlineParameterHandler.REFACTORING_NAME;

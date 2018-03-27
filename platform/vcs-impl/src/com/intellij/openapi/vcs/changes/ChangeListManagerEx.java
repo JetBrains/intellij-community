@@ -20,13 +20,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.List;
 
 public abstract class ChangeListManagerEx extends ChangeListManager {
   public abstract boolean isInUpdate();
 
   @NotNull
-  public abstract Collection<LocalChangeList> getInvolvedListsFilterChanges(@NotNull Collection<Change> changes, @NotNull List<Change> validChanges);
+  public abstract Collection<LocalChangeList> getAffectedLists(@NotNull Collection<Change> changes);
 
   @NotNull
   public abstract LocalChangeList addChangeList(@NotNull String name, @Nullable String comment, @Nullable ChangeListData data);

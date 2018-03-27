@@ -364,8 +364,6 @@ public class ExternalSystemNotificationManager implements Disposable {
         prepareMessagesView(externalSystemId, notificationData.getNotificationSource(), activate);
       final GroupingElement groupingElement = errorTreeView.getErrorViewStructure().getGroupingElement(groupName, null, virtualFile);
       final NavigatableMessageElement navigatableMessageElement;
-
-      // Android Studio: modified by Change I3ce1e1c2 / commit 1cd9f42
       // Note: Given that screen readers don't currently support hyperlinks and
       // that having a cell editor for a panel in a tree view node makes
       // the user-interaction confusing for keyboard only users,

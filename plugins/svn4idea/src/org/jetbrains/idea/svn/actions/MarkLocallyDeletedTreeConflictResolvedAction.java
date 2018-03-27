@@ -42,8 +42,6 @@ import java.util.List;
 
 /**
  * @author irengrig
- *         Date: 6/8/11
- *         Time: 4:58 PM
  */
 public class MarkLocallyDeletedTreeConflictResolvedAction extends AnAction {
   public MarkLocallyDeletedTreeConflictResolvedAction() {

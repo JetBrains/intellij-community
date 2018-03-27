@@ -16,8 +16,8 @@
 package com.intellij.openapi.util;
 
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.IntObjectMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,12 +31,12 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author max
  * @author Konstantin Bulenkov
  */
-@SuppressWarnings({"EqualsWhichDoesntCheckParameterClass"})
+@SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
 public class Key<T> {
   private static final AtomicInteger ourKeysCounter = new AtomicInteger();
   private final int myIndex = ourKeysCounter.getAndIncrement();
   private final String myName; // for debug purposes only
-  private static final ConcurrentIntObjectMap<Key> allKeys = ContainerUtil.createConcurrentIntObjectWeakValueMap();
+  private static final IntObjectMap<Key> allKeys = ContainerUtil.createConcurrentIntObjectWeakValueMap();
 
   public Key(@NotNull @NonNls String name) {
     myName = name;
@@ -118,7 +118,7 @@ public class Key<T> {
    */
   @Nullable
   public static Key<?> findKeyByName(String name) {
-    for (ConcurrentIntObjectMap.IntEntry<Key> key : allKeys.entries()) {
+    for (IntObjectMap.Entry<Key> key : allKeys.entries()) {
       if (name.equals(key.getValue().myName)) {
         //noinspection unchecked
         return key.getValue();

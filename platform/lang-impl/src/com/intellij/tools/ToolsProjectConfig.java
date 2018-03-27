@@ -21,7 +21,6 @@ import com.intellij.util.xmlb.annotations.Tag;
 
 /**
  * @author lene
- *         Date: 06.08.12
  */
 @State(name = "ToolsProjectConfig", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class ToolsProjectConfig implements PersistentStateComponent<ToolsProjectConfig.State> {

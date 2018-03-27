@@ -31,8 +31,8 @@ class GitSingleRepoUpdateTest : GitUpdateBaseTest() {
   override fun setUp() {
     super.setUp()
 
-    repo = createRepository(myProject, myProjectPath, true)
-    cd(myProjectPath)
+    repo = createRepository(project, projectPath, true)
+    cd(projectPath)
 
     val parent = prepareRemoteRepo(repo)
     git("push -u origin master")
@@ -49,7 +49,7 @@ class GitSingleRepoUpdateTest : GitUpdateBaseTest() {
     updateChangeListManager()
 
     var stashCalled = false
-    myGit.stashListener = {
+    git.stashListener = {
       stashCalled = true
     }
 
@@ -66,7 +66,7 @@ class GitSingleRepoUpdateTest : GitUpdateBaseTest() {
     updateChangeListManager()
 
     var stashCalled = false
-    myGit.stashListener = {
+    git.stashListener = {
       stashCalled = true
     }
 
@@ -81,7 +81,7 @@ class GitSingleRepoUpdateTest : GitUpdateBaseTest() {
     broRepo.commitAndPush()
 
     var stashCalled = false
-    myGit.stashListener = {
+    git.stashListener = {
       stashCalled = true
     }
 
@@ -89,14 +89,8 @@ class GitSingleRepoUpdateTest : GitUpdateBaseTest() {
     assertFalse("Stash shouldn't be called for clean working tree", stashCalled)
   }
 
-  private fun createBroRepo(broName: String, parentRepo: File): File {
-    cd(myTestRoot)
-    git("clone " + parentRepo.name + " " + broName)
-    return File(myTestRoot, broName)
-  }
-
   private fun updateWithRebase(): GitUpdateResult {
-    return GitUpdateProcess(myProject, EmptyProgressIndicator(), listOf(repo), UpdatedFiles.create(), false, true).update(UpdateMethod.REBASE)
+    return GitUpdateProcess(project, EmptyProgressIndicator(), listOf(repo), UpdatedFiles.create(), false, true).update(UpdateMethod.REBASE)
   }
 
   private fun File.commitAndPush() {
@@ -109,4 +103,6 @@ class GitSingleRepoUpdateTest : GitUpdateBaseTest() {
   private fun assertSuccessfulUpdate(result: GitUpdateResult) {
     assertEquals("Incorrect update result", GitUpdateResult.SUCCESS, result)
   }
+
+  internal fun file(path: String) = repo.file(path)
 }

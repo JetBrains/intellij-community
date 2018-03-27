@@ -94,12 +94,20 @@ open class JavaULocalVariable(
     get() = javaPsi
 
   override val javaPsi = unwrap<ULocalVariable, PsiLocalVariable>(psi)
+
+  override fun getPsiParentForLazyConversion(): PsiElement? = super.getPsiParentForLazyConversion()?.let {
+    when (it) {
+      is PsiResourceList -> it.parent
+      else -> it
+    }
+  }
+
 }
 
 open class JavaUEnumConstant(
   psi: PsiEnumConstant,
   givenParent: UElement?
-) : AbstractJavaUVariable(givenParent), UEnumConstant, PsiEnumConstant by psi {
+) : AbstractJavaUVariable(givenParent), UEnumConstant, UCallExpressionEx, PsiEnumConstant by psi {
   override val initializingClass: UClass? by lz { getLanguagePlugin().convertOpt<UClass>(psi.initializingClass, this) }
 
   override val psi
@@ -116,7 +124,7 @@ open class JavaUEnumConstant(
   override val methodIdentifier: UIdentifier?
     get() = null
   override val classReference: UReferenceExpression?
-    get() = JavaEnumConstantClassReference(psi, uastParent)
+    get() = JavaEnumConstantClassReference(psi, this)
   override val typeArgumentCount: Int
     get() = 0
   override val typeArguments: List<PsiType>
@@ -126,9 +134,11 @@ open class JavaUEnumConstant(
 
   override val valueArguments by lz {
     psi.argumentList?.expressions?.map {
-      getLanguagePlugin().convertElement(it, this) as? UExpression ?: UastEmptyExpression
+      getLanguagePlugin().convertElement(it, this) as? UExpression ?: UastEmptyExpression(this)
     } ?: emptyList()
   }
+
+  override fun getArgumentForParameter(i: Int): UExpression? = valueArguments.getOrNull(i)
 
   override val returnType: PsiType?
     get() = psi.type

@@ -125,7 +125,9 @@ public class CodeInsightUtil {
         element2 = element2.getParent();
       }
     }
-    if (endOffset != element2.getTextRange().getEndOffset()) return PsiElement.EMPTY_ARRAY;
+    if (endOffset != element2.getTextRange().getEndOffset() && !isAtTrailingComment(element1, element2, endOffset)) {
+      return PsiElement.EMPTY_ARRAY;
+    }
 
     if (parent instanceof PsiCodeBlock &&
         element1 == ((PsiCodeBlock)parent).getLBrace() && element2 == ((PsiCodeBlock)parent).getRBrace()) {
@@ -144,6 +146,28 @@ public class CodeInsightUtil {
 
     PsiElement[] children = parent.getChildren();
     return getStatementsInRange(children, element1, element2);
+  }
+
+  private static boolean isAtTrailingComment(PsiElement element1, PsiElement element2, int offset) {
+    if (element1 == element2 && element1 instanceof PsiExpressionStatement) {
+      for (PsiElement child = element1.getLastChild(); child != null; child = child.getPrevSibling()) {
+        if (PsiUtil.isJavaToken(child, JavaTokenType.SEMICOLON) && child.getTextRange().getEndOffset() == offset) {
+          return false; // findExpressionInRange() counts this as an expression - don't interfere with it
+        }
+      }
+    }
+    PsiElement trailing = element2;
+    while (trailing.getTextRange().contains(offset) && trailing.getLastChild() != null) {
+      trailing = trailing.getLastChild();
+    }
+    while (trailing instanceof PsiComment || trailing instanceof PsiWhiteSpace) {
+      PsiElement previous = trailing.getPrevSibling();
+      if (trailing.getTextRange().contains(offset)) {
+        return true;
+      }
+      trailing = previous;
+    }
+    return false;
   }
 
   @NotNull
@@ -240,20 +264,19 @@ public class CodeInsightUtil {
 
   @NotNull
   public static PsiExpression[] findReferenceExpressions(PsiElement scope, PsiElement referee) {
-    ArrayList<PsiElement> array = new ArrayList<>();
-    if (scope != null) {
-      addReferenceExpressions(array, scope, referee);
-    }
-    return array.toArray(new PsiExpression[array.size()]);
+    if (scope == null) return PsiExpression.EMPTY_ARRAY;
+    List<PsiExpression> array = new ArrayList<>();
+    addReferenceExpressions(array, scope, referee);
+    return array.toArray(PsiExpression.EMPTY_ARRAY);
   }
 
-  private static void addReferenceExpressions(ArrayList<PsiElement> array, PsiElement scope, PsiElement referee) {
+  private static void addReferenceExpressions(List<PsiExpression> array, PsiElement scope, PsiElement referee) {
     PsiElement[] children = scope.getChildren();
     for (PsiElement child : children) {
       if (child instanceof PsiReferenceExpression) {
         PsiElement ref = ((PsiReferenceExpression)child).resolve();
         if (ref != null && PsiEquivalenceUtil.areElementsEquivalent(ref, referee)) {
-          array.add(child);
+          array.add((PsiExpression)child);
         }
       }
       addReferenceExpressions(array, child, referee);
@@ -369,7 +392,7 @@ public class CodeInsightUtil {
       PsiClassType inheritorType = typeArgs == null || typeArgs.contains(null)
                                    ? factory.createType(inheritor, factory.createRawSubstitutor(inheritor))
                                    : factory.createType(inheritor, typeArgs.toArray(PsiType.EMPTY_ARRAY));
-      PsiType toAdd = addArrayDimensions(arrayDim, inheritorType);
+      PsiType toAdd = PsiTypesUtil.createArrayType(inheritorType, arrayDim);
       if (baseType.isAssignableFrom(toAdd)) {
         result.consume(toAdd);
       }
@@ -378,57 +401,15 @@ public class CodeInsightUtil {
     };
   }
 
-  private static PsiType addArrayDimensions(int arrayDim, PsiType newType) {
-    for(int i = 0; i < arrayDim; i++){
-      newType = newType.createArrayType();
-    }
-    return newType;
-  }
-
   @NotNull
   public static List<PsiType> getExpectedTypeArgs(PsiElement context,
                                                   PsiTypeParameterListOwner paramOwner,
                                                   Iterable<PsiTypeParameter> typeParams, PsiClassType expectedType) {
     if (paramOwner instanceof PsiClass) {
-      PsiClassType.ClassResolveResult resolve = expectedType.resolveGenerics();
-      PsiClass expectedClass = resolve.getElement();
-
-      if (!InheritanceUtil.isInheritorOrSelf((PsiClass)paramOwner, expectedClass, true)) {
-        return ContainerUtil.map(typeParams, p -> (PsiType)null);
-      }
-
-      PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(expectedClass, (PsiClass)paramOwner, PsiSubstitutor.EMPTY);
-      assert substitutor != null;
-
-      return ContainerUtil.map(typeParams, p -> getExpectedTypeArg(context, resolve, substitutor, p));
+      return GenericsUtil.getExpectedTypeArguments(context, (PsiClass)paramOwner, typeParams, expectedType);
     }
 
     PsiSubstitutor substitutor = SmartCompletionDecorator.calculateMethodReturnTypeSubstitutor((PsiMethod)paramOwner, expectedType);
     return ContainerUtil.map(typeParams, substitutor::substitute);
-  }
-
-  @Nullable
-  private static PsiType getExpectedTypeArg(PsiElement context,
-                                            PsiClassType.ClassResolveResult expectedType,
-                                            PsiSubstitutor superClassSubstitutor, PsiTypeParameter typeParam) {
-    PsiClass expectedClass = expectedType.getElement();
-    assert expectedClass != null;
-    for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(expectedClass)) {
-      PsiType paramSubstitution = superClassSubstitutor.substitute(parameter);
-      PsiClass inheritorCandidateParameter = PsiUtil.resolveClassInType(paramSubstitution);
-      if (inheritorCandidateParameter instanceof PsiTypeParameter &&
-          ((PsiTypeParameter)inheritorCandidateParameter).getOwner() == typeParam.getOwner() &&
-          inheritorCandidateParameter != typeParam) {
-        continue;
-      }
-
-      PsiType argSubstitution = expectedType.getSubstitutor().substitute(parameter);
-      PsiType substitution = JavaPsiFacade.getInstance(context.getProject()).getResolveHelper()
-        .getSubstitutionForTypeParameter(typeParam, paramSubstitution, argSubstitution, true, PsiUtil.getLanguageLevel(context));
-      if (substitution != null && substitution != PsiType.NULL) {
-        return substitution;
-      }
-    }
-    return null;
   }
 }

@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Maxim.Mossienko
@@ -38,51 +25,43 @@ abstract class OptimizingSearchHelperBase implements OptimizingSearchHelper {
   @Override
   public void clear() {
     scanned.clear();
+    scannedText.clear();
     scannedComments.clear();
     scannedLiterals.clear();
   }
 
   @Override
-  public boolean addWordToSearchInCode(final String refname) {
-    if (doOptimizing() && scanned.add(refname)) {
-      doAddSearchWordInCode(refname);
-      return true;
+  public void addWordToSearchInCode(String word) {
+    if (word != null && doOptimizing() && scanned.add(word)) {
+      doAddSearchWordInCode(word);
     }
-    return false;
   }
 
   @Override
-  public boolean addWordToSearchInText(final String refname) {
-    if (doOptimizing() && scannedText.add(refname)) {
-      doAddSearchWordInText(refname);
-      return true;
+  public void addWordToSearchInText(String word) {
+    if (word != null && doOptimizing() && scannedText.add(word)) {
+      doAddSearchWordInText(word);
     }
-    return false;
   }
 
   @Override
-  public boolean addWordToSearchInComments(final String refname) {
-    if (doOptimizing() && scannedComments.add(refname)) {
-      doAddSearchWordInComments(refname);
-      return true;
+  public void addWordToSearchInComments(String word) {
+    if (word != null && doOptimizing() && scannedComments.add(word)) {
+      doAddSearchWordInComments(word);
     }
-    return false;
   }
 
   @Override
-  public boolean addWordToSearchInLiterals(final String refname) {
-    if (doOptimizing() && scannedLiterals.add(refname)) {
-      doAddSearchWordInLiterals(refname);
-      return true;
+  public void addWordToSearchInLiterals(String word) {
+    if (word != null && doOptimizing() && scannedLiterals.add(word)) {
+      doAddSearchWordInLiterals(word);
     }
-    return false;
   }
 
-  protected abstract void doAddSearchWordInCode(final String refname);
-  protected abstract void doAddSearchWordInText(final String refname);
-
-  protected abstract void doAddSearchWordInComments(final String refname);
-  protected abstract void doAddSearchWordInLiterals(final String refname);
+  protected abstract void doAddSearchWordInCode(@NotNull String word);
+  protected abstract void doAddSearchWordInText(@NotNull String word);
+  protected abstract void doAddSearchWordInComments(@NotNull String word);
+  protected abstract void doAddSearchWordInLiterals(@NotNull String word);
 
   @Override
   public void endTransaction() {
@@ -91,6 +70,6 @@ abstract class OptimizingSearchHelperBase implements OptimizingSearchHelper {
 
   @Override
   public boolean isScannedSomething() {
-    return scanned.size() > 0 || scannedComments.size() > 0 || scannedLiterals.size() > 0;
+    return !scanned.isEmpty() || !scannedText.isEmpty() || !scannedComments.isEmpty() || !scannedLiterals.isEmpty();
   }
 }

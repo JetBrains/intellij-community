@@ -38,8 +38,6 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 
-import static com.intellij.util.ObjectUtils.assertNotNull;
-
 public class GitRepositoryManager extends AbstractRepositoryManager<GitRepository> {
   private static final Logger LOG = Logger.getInstance(GitRepositoryManager.class);
 
@@ -60,7 +58,7 @@ public class GitRepositoryManager extends AbstractRepositoryManager<GitRepositor
   }
 
   public GitRepositoryManager(@NotNull Project project, @NotNull VcsRepositoryManager vcsRepositoryManager) {
-    super(vcsRepositoryManager, assertNotNull(GitVcs.getInstance(project)), GitUtil.DOT_GIT);
+    super(vcsRepositoryManager, GitVcs.getInstance(project), GitUtil.DOT_GIT);
     mySettings = GitVcsSettings.getInstance(project);
   }
 

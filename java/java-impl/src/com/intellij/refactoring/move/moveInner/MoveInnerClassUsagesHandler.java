@@ -19,10 +19,25 @@ import com.intellij.lang.LanguageExtension;
 import com.intellij.psi.PsiClass;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface MoveInnerClassUsagesHandler {
   LanguageExtension<MoveInnerClassUsagesHandler> EP_NAME =
     new LanguageExtension<>("com.intellij.refactoring.moveInnerClassUsagesHandler");
 
-  void correctInnerClassUsage(@NotNull UsageInfo usage, @NotNull PsiClass outerClass);
+  /**
+   * Override {@link #correctInnerClassUsage(UsageInfo, PsiClass, String)} instead
+   * 
+   * to be deleted in 2018.2
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
+  default void correctInnerClassUsage(@NotNull UsageInfo usage, @NotNull PsiClass outerClass) {}
+  default void correctInnerClassUsage(@NotNull UsageInfo usage,
+                                      @NotNull PsiClass outerClass, 
+                                      @Nullable String parameterNameOuterClass) {
+    if (parameterNameOuterClass != null) {
+      correctInnerClassUsage(usage, outerClass);
+    }
+  }
 }

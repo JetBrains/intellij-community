@@ -24,7 +24,6 @@ import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,14 +60,14 @@ public class StaticImportMethodFix extends StaticImportMemberFix<PsiMethod> {
     PsiReferenceExpression reference = element == null ? null : element.getMethodExpression();
     String name = reference == null ? null : reference.getReferenceName();
     if (name == null) return Collections.emptyList();
-    final StaticMembersProcessor<PsiMethod> processor = new MyStaticMethodProcessor(element, showMembersFromDefaultPackage(), searchMode);
+    final StaticMembersProcessor<PsiMethod> processor = new MyStaticMethodProcessor(element, toAddStaticImports(), searchMode);
     cache.processMethodsWithName(name, element.getResolveScope(), processor);
     return processor.getMembersToImport(applicableOnly);
   }
 
   @Override
-  protected boolean showMembersFromDefaultPackage() {
-    return false;
+  protected boolean toAddStaticImports() {
+    return true;
   }
 
   @NotNull
@@ -110,8 +109,8 @@ public class StaticImportMethodFix extends StaticImportMemberFix<PsiMethod> {
       PsiSubstitutor substitutorForMethod = candidateInfo.getSubstitutor();
       if (PsiUtil.isApplicable(method, substitutorForMethod, argumentList)) {
         final PsiType returnType = substitutorForMethod.substitute(method.getReturnType());
-        final PsiType expectedType = getExpectedType();
-        return expectedType == null || returnType == null || TypeConversionUtil.isAssignable(expectedType, returnType);
+        if (returnType == null) return true;
+        return isApplicableFor(returnType);
       }
       return false;
     }

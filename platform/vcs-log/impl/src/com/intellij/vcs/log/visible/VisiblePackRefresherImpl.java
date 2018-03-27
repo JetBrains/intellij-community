@@ -23,7 +23,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -225,8 +224,8 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
           return refresh(state, filterRequest, moreCommitsRequests);
         }
         else if (!indexingRequests.isEmpty()) {
-          if (myVisiblePackBuilder.affectedByIndexingRoots(state.getFilters(),
-                                                           ContainerUtil.map(indexingRequests, IndexingFinishedRequest::getRoot))) {
+          if (myVisiblePackBuilder.areFiltersAffectedByIndexing(state.getFilters(),
+                                                                ContainerUtil.map(indexingRequests, IndexingFinishedRequest::getRoot))) {
             return refresh(state, filterRequest, moreCommitsRequests);
           }
         }

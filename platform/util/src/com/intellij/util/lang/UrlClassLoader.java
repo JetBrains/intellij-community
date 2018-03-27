@@ -69,6 +69,19 @@ public class UrlClassLoader extends ClassLoader {
     ourParallelCapableLoaders.add(loaderClass);
   }
 
+  /**
+   * Called by the VM to support dynamic additions to the class path
+   *
+   * @see java.lang.instrument.Instrumentation#appendToSystemClassLoaderSearch
+   */
+  @SuppressWarnings("unused")
+  void appendToClassPathForInstrumentation(String jar) {
+    try {
+      //noinspection deprecation
+      addURL(new File(jar).toURI().toURL());
+    } catch(MalformedURLException ignore) {}
+  }
+
   private static final boolean ourClassPathIndexEnabled = Boolean.parseBoolean(System.getProperty("idea.classpath.index.enabled", "true"));
 
   @NotNull
@@ -93,7 +106,6 @@ public class UrlClassLoader extends ClassLoader {
     private boolean myAcceptUnescaped;
     private boolean myPreload = true;
     private boolean myAllowBootstrapResources;
-    private boolean myErrorOnMissingJar = true;
     @Nullable private CachePoolImpl myCachePool;
     @Nullable private CachingCondition myCachingCondition;
 
@@ -139,7 +151,6 @@ public class UrlClassLoader extends ClassLoader {
     public Builder allowUnescaped() { myAcceptUnescaped = true; return this; }
     public Builder noPreload() { myPreload = false; return this; }
     public Builder allowBootstrapResources() { myAllowBootstrapResources = true; return this; }
-    public Builder setLogErrorOnMissingJar(boolean log) {myErrorOnMissingJar = log; return this; }
 
     /** @deprecated use {@link #allowUnescaped()} (to be removed in IDEA 2018) */
     public Builder allowUnescaped(boolean acceptUnescaped) { myAcceptUnescaped = acceptUnescaped; return this; }
@@ -180,8 +191,7 @@ public class UrlClassLoader extends ClassLoader {
   @NotNull
   protected final ClassPath createClassPath(@NotNull Builder builder) {
     return new ClassPath(myURLs, builder.myLockJars, builder.myUseCache, builder.myAcceptUnescaped, builder.myPreload,
-                                builder.myUsePersistentClasspathIndex, builder.myCachePool, builder.myCachingCondition,
-                                builder.myErrorOnMissingJar);
+                                builder.myUsePersistentClasspathIndex, builder.myCachePool, builder.myCachingCondition);
   }
 
   public static URL internProtocol(@NotNull URL url) {

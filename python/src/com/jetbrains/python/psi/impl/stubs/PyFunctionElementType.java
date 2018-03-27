@@ -68,6 +68,7 @@ public class PyFunctionElementType extends PyStubElementType<PyFunctionStub, PyF
                                   PyPsiUtils.strValue(docStringExpression),
                                   message,
                                   function.isAsync(),
+                                  function.isGenerator(),
                                   function.onlyRaisesNotImplementedError(),
                                   typeComment,
                                   annotationContent,
@@ -81,6 +82,7 @@ public class PyFunctionElementType extends PyStubElementType<PyFunctionStub, PyF
     dataStream.writeUTFFast(StringUtil.notNullize(stub.getDocString()));
     dataStream.writeName(stub.getDeprecationMessage());
     dataStream.writeBoolean(stub.isAsync());
+    dataStream.writeBoolean(stub.isGenerator());
     dataStream.writeBoolean(stub.onlyRaisesNotImplementedError());
     dataStream.writeName(stub.getTypeComment());
     dataStream.writeName(stub.getAnnotation());
@@ -93,6 +95,7 @@ public class PyFunctionElementType extends PyStubElementType<PyFunctionStub, PyF
     String docString = dataStream.readUTFFast();
     StringRef deprecationMessage = dataStream.readName();
     final boolean isAsync = dataStream.readBoolean();
+    final boolean isGenerator = dataStream.readBoolean();
     final boolean onlyRaisesNotImplementedError = dataStream.readBoolean();
     final StringRef typeComment = dataStream.readName();
     final StringRef annotationContent = dataStream.readName();
@@ -100,6 +103,7 @@ public class PyFunctionElementType extends PyStubElementType<PyFunctionStub, PyF
                                   StringUtil.nullize(docString),
                                   deprecationMessage == null ? null : deprecationMessage.getString(),
                                   isAsync,
+                                  isGenerator,
                                   onlyRaisesNotImplementedError,
                                   typeComment == null ? null : typeComment.getString(),
                                   annotationContent == null ? null : annotationContent.getString(),

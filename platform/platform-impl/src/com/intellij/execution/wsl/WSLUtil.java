@@ -5,7 +5,6 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,14 +43,11 @@ public class WSLUtil {
   };
 
   private static final List<WSLDistribution> DISTRIBUTIONS = Arrays.asList(
-    new WSLDistribution("UBUNTU", "ubuntu.exe", "Ubuntu"),
-    new WSLDistribution("OPENSUSE42", "opensuse-42.exe", "openSUSE Leap 42"),
-    new WSLDistribution("SLES12", "sles-12.exe", "SUSE Linux Enterprise Server 12"),
+    new WSLDistribution("UBUNTU", "Ubuntu", "ubuntu.exe", "Ubuntu"),
+    new WSLDistribution("OPENSUSE42", "openSUSE-42", "opensuse-42.exe", "openSUSE Leap 42"),
+    new WSLDistribution("SLES12", "SLES-12", "sles-12.exe", "SUSE Linux Enterprise Server 12"),
     LEGACY_WSL
   );
-
-  private static final AtomicNotNullLazyValue<List<WSLDistribution>> AVAILABLE_DISTRIBUTIONS_PROVIDER =
-    AtomicNotNullLazyValue.createValue(() -> ContainerUtil.filter(DISTRIBUTIONS, dist -> dist.isAvailable()));
 
   /**
    * @return
@@ -66,7 +62,7 @@ public class WSLUtil {
    */
   @NotNull
   public static List<WSLDistribution> getAvailableDistributions() {
-    return AVAILABLE_DISTRIBUTIONS_PROVIDER.getValue();
+    return ContainerUtil.filter(DISTRIBUTIONS, dist -> dist.isAvailable());
   }
 
   /**

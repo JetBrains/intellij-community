@@ -40,7 +40,6 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Apr 9, 2010
  */
 public class AntDomExtender extends DomExtender<AntDomElement>{
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.dom.AntDomExtender");

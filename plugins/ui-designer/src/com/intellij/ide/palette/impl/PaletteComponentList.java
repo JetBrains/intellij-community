@@ -297,7 +297,7 @@ public class PaletteComponentList extends JBList {
       Component next = focusNext
                        ? policy.getComponentAfter(container, PaletteComponentList.this)
                        : policy.getComponentBefore(container, PaletteComponentList.this);
-      if (null != next && next instanceof PaletteGroupHeader) {
+      if (next instanceof PaletteGroupHeader) {
         clearSelection();
         IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
           IdeFocusManager.getGlobalInstance().requestFocus(next, true);

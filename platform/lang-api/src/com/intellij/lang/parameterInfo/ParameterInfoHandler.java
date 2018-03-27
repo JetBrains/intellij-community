@@ -1,18 +1,16 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 package com.intellij.lang.parameterInfo;
 
@@ -38,14 +36,13 @@ public interface ParameterInfoHandler <ParameterOwner, ParameterType> {
   // context.setEnabled / context.setupUIComponentPresentation
   void updateUI(ParameterType p, @NotNull ParameterInfoUIContext context);
 
-
-  // methods below are not currently used by IntelliJ platform code
-
-  @Nullable Object[] getParametersForDocumentation(ParameterType p, ParameterInfoContext context);
-  // Can be null if parameter info does not track parameter index
-  @Nullable String getParameterCloseChars();
-  boolean tracksParameterIndex();
-
   default boolean supportsOverloadSwitching() { return false; }
-  default void dispose() {}
+  default void dispose(@NotNull DeleteParameterInfoContext context) {}
+
+  /** @deprecated not used */
+  default @Nullable Object[] getParametersForDocumentation(ParameterType p, ParameterInfoContext context) { return null; }
+  /** @deprecated not used */
+  default @Nullable String getParameterCloseChars() { return null; }
+  /** @deprecated not used */
+  default boolean tracksParameterIndex() { return false; }
 }

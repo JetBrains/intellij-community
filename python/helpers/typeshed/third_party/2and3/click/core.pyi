@@ -30,7 +30,7 @@ def invoke_param_callback(
 
 @contextmanager
 def augment_usage_errors(
-    ctx: 'Context', param: Optional['Parameter'] = None
+    ctx: 'Context', param: Optional['Parameter'] = ...
 ) -> Generator[None, None, None]:
     ...
 
@@ -73,25 +73,25 @@ class Context:
     def __init__(
         self,
         command: 'Command',
-        parent: Optional['Context'] = None,
-        info_name: Optional[str] = None,
-        obj: Optional[Any] = None,
-        auto_envvar_prefix: Optional[str] = None,
-        default_map: Optional[Mapping[str, Any]] = None,
-        terminal_width: Optional[int] = None,
-        max_content_width: Optional[int] = None,
-        resilient_parsing: bool = False,
-        allow_extra_args: Optional[bool] = None,
-        allow_interspersed_args: Optional[bool] = None,
-        ignore_unknown_options: Optional[bool] = None,
-        help_option_names: Optional[List[str]] = None,
-        token_normalize_func: Optional[Callable[[str], str]] = None,
-        color: Optional[bool] = None
+        parent: Optional['Context'] = ...,
+        info_name: Optional[str] = ...,
+        obj: Optional[Any] = ...,
+        auto_envvar_prefix: Optional[str] = ...,
+        default_map: Optional[Mapping[str, Any]] = ...,
+        terminal_width: Optional[int] = ...,
+        max_content_width: Optional[int] = ...,
+        resilient_parsing: bool = ...,
+        allow_extra_args: Optional[bool] = ...,
+        allow_interspersed_args: Optional[bool] = ...,
+        ignore_unknown_options: Optional[bool] = ...,
+        help_option_names: Optional[List[str]] = ...,
+        token_normalize_func: Optional[Callable[[str], str]] = ...,
+        color: Optional[bool] = ...
     ) -> None:
         ...
 
     @contextmanager
-    def scope(self, cleanup: bool = True) -> Generator['Context', None, None]:
+    def scope(self, cleanup: bool = ...) -> Generator['Context', None, None]:
         ...
 
     def make_formatter(self) -> HelpFormatter:
@@ -121,7 +121,7 @@ class Context:
     def abort(self) -> None:
         ...
 
-    def exit(self, code: Union[int, str] = 0) -> None:
+    def exit(self, code: Union[int, str] = ...) -> None:
         ...
 
     def get_usage(self) -> str:
@@ -147,7 +147,7 @@ class BaseCommand:
     name: str
     context_settings: Dict
 
-    def __init__(self, name: str, context_settings: Optional[Dict] = None) -> None:
+    def __init__(self, name: str, context_settings: Optional[Dict] = ...) -> None:
         ...
 
     def get_usage(self, ctx: Context) -> str:
@@ -157,7 +157,7 @@ class BaseCommand:
         ...
 
     def make_context(
-        self, info_name: str, args: List[str], parent: Optional[Context] = None, **extra
+        self, info_name: str, args: List[str], parent: Optional[Context] = ..., **extra
     ) -> Context:
         ...
 
@@ -169,10 +169,10 @@ class BaseCommand:
 
     def main(
         self,
-        args: Optional[List[str]] = None,
-        prog_name: Optional[str] = None,
-        complete_var: Optional[str] = None,
-        standalone_mode: bool = True,
+        args: Optional[List[str]] = ...,
+        prog_name: Optional[str] = ...,
+        complete_var: Optional[str] = ...,
+        standalone_mode: bool = ...,
         **extra
     ) -> Any:
         ...
@@ -193,14 +193,14 @@ class Command(BaseCommand):
     def __init__(
         self,
         name: str,
-        context_settings: Optional[Dict] = None,
-        callback: Optional[Callable] = None,
-        params: Optional[List['Parameter']] = None,
-        help: Optional[str] = None,
-        epilog: Optional[str] = None,
-        short_help: Optional[str] = None,
-        options_metavar: str = '[OPTIONS]',
-        add_help_option: bool = True
+        context_settings: Optional[Dict] = ...,
+        callback: Optional[Callable] = ...,
+        params: Optional[List['Parameter']] = ...,
+        help: Optional[str] = ...,
+        epilog: Optional[str] = ...,
+        short_help: Optional[str] = ...,
+        options_metavar: str = ...,
+        add_help_option: bool = ...
     ) -> None:
         ...
 
@@ -252,18 +252,18 @@ class MultiCommand(Command):
 
     def __init__(
         self,
-        name: Optional[str] = None,
-        invoke_without_command: bool = False,
-        no_args_is_help: Optional[bool] = None,
-        subcommand_metavar: Optional[str] = None,
-        chain: bool = False,
-        result_callback: Optional[Callable] = None,
+        name: Optional[str] = ...,
+        invoke_without_command: bool = ...,
+        no_args_is_help: Optional[bool] = ...,
+        subcommand_metavar: Optional[str] = ...,
+        chain: bool = ...,
+        result_callback: Optional[Callable] = ...,
         **attrs
     ) -> None:
         ...
 
     def resultcallback(
-        self, replace: bool = False
+        self, replace: bool = ...
     ) -> _Decorator:
         ...
 
@@ -286,11 +286,11 @@ class Group(MultiCommand):
     commands: Dict[str, Command]
 
     def __init__(
-        self, name: Optional[str] = None, commands: Optional[Dict[str, Command]] = None, **attrs
+        self, name: Optional[str] = ..., commands: Optional[Dict[str, Command]] = ..., **attrs
     ) -> None:
         ...
 
-    def add_command(self, cmd: Command, name: Optional[str] = None):
+    def add_command(self, cmd: Command, name: Optional[str] = ...):
         ...
 
     def command(self, *args, **kwargs) -> _Decorator:
@@ -304,7 +304,7 @@ class CommandCollection(MultiCommand):
     sources: List[MultiCommand]
 
     def __init__(
-        self, name: Optional[str] = None, sources: Optional[List[MultiCommand]] = None, **attrs
+        self, name: Optional[str] = ..., sources: Optional[List[MultiCommand]] = ..., **attrs
     ) -> None:
         ...
 
@@ -332,16 +332,16 @@ class Parameter:
 
     def __init__(
         self,
-        param_decls: Optional[List[str]] = None,
-        type: Optional[Union[type, 'ParamType']] = None,
-        required: bool = False,
-        default: Optional[Any] = None,
-        callback: Optional[Callable[[Context, 'Parameter', str], Any]] = None,
-        nargs: Optional[int] = None,
-        metavar: Optional[str] = None,
-        expose_value: bool = True,
-        is_eager: bool = False,
-        envvar: Optional[Union[str, List[str]]] = None
+        param_decls: Optional[List[str]] = ...,
+        type: Optional[Union[type, 'ParamType']] = ...,
+        required: bool = ...,
+        default: Optional[Any] = ...,
+        callback: Optional[Callable[[Context, 'Parameter', str], Any]] = ...,
+        nargs: Optional[int] = ...,
+        metavar: Optional[str] = ...,
+        expose_value: bool = ...,
+        is_eager: bool = ...,
+        envvar: Optional[Union[str, List[str]]] = ...
     ) -> None:
         ...
 
@@ -402,18 +402,18 @@ class Option(Parameter):
 
     def __init__(
         self,
-        param_decls: Optional[List[str]] = None,
-        show_default: bool = False,
-        prompt: Union[bool, str] = False,
-        confirmation_prompt: bool = False,
-        hide_input: bool = False,
-        is_flag: Optional[bool] = None,
-        flag_value: Optional[Any] = None,
-        multiple: bool = False,
-        count: bool = False,
-        allow_from_autoenv: bool = True,
-        type: Optional[Union[type, 'ParamType']] = None,
-        help: Optional[str] = None,
+        param_decls: Optional[List[str]] = ...,
+        show_default: bool = ...,
+        prompt: Union[bool, str] = ...,
+        confirmation_prompt: bool = ...,
+        hide_input: bool = ...,
+        is_flag: Optional[bool] = ...,
+        flag_value: Optional[Any] = ...,
+        multiple: bool = ...,
+        count: bool = ...,
+        allow_from_autoenv: bool = ...,
+        type: Optional[Union[type, 'ParamType']] = ...,
+        help: Optional[str] = ...,
         **attrs
     ) -> None:
         ...
@@ -425,8 +425,8 @@ class Option(Parameter):
 class Argument(Parameter):
     def __init__(
         self,
-        param_decls: Optional[List[str]] = None,
-        required: Optional[bool] = None,
+        param_decls: Optional[List[str]] = ...,
+        required: Optional[bool] = ...,
         **attrs
     ) -> None:
         ...

@@ -86,8 +86,11 @@ public class FoldingModelSupport {
       if (myCount > 1) {
         myEditors[i].getFoldingModel().addListener(new MyFoldingListener(i), disposable);
       }
-      myEditors[i].getGutterComponentEx().setLineNumberConvertor(getLineConvertor(i));
     }
+  }
+
+  public int getCount() {
+    return myCount;
   }
 
   //
@@ -280,7 +283,7 @@ public class FoldingModelSupport {
   }
 
   @NotNull
-  protected TIntFunction getLineConvertor(final int index) {
+  public TIntFunction getLineConvertor(final int index) {
     return value -> {
       updateLineNumbers(false);
       for (FoldedBlock folding : getFoldedBlocks()) { // TODO: avoid full scan - it could slowdown painting

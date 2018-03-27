@@ -17,7 +17,6 @@ package com.intellij.lang.ant.dom;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Aug 3, 2010
  */
 public class AntBooleanConverterDefaultTrue extends AntBooleanConverter {
 

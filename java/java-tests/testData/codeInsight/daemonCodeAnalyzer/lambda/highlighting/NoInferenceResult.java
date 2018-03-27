@@ -15,13 +15,13 @@ class NoInferenceResult {
     <T> void m1(T t) { }
 
     void test() {
-        m(<error descr="Object is not a functional interface">(String s1) ->  (String s2) ->  s1 + s2</error>);
-        m(<error descr="Object is not a functional interface">(String s1) ->  {return (String s2) ->  s1 + s2;}</error>);
+        m((String s1) ->  <error descr="Target type of a lambda conversion must be an interface">(String s2) ->  s1 + s2</error>);
+        m((String s1) ->  {return <error descr="Target type of a lambda conversion must be an interface">(String s2) ->  s1 + s2</error>;});
 
         m((String s1) -> s1.length());
         m((String s1) -> s1);
 
-        m1(<error descr="Object is not a functional interface">() -> { }</error>);
+        m1(<error descr="Target type of a lambda conversion must be an interface">() -> { }</error>);
 
         Foo<String> foo = new Foo<String>();
         foo.map(v -> null);

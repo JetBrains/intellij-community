@@ -39,7 +39,6 @@ import java.text.MessageFormat;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 10/10/11
  */
 public class InspectionMappingConsistencyInspection extends DevKitInspectionBase {
 

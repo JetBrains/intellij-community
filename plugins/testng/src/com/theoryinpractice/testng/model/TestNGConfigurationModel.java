@@ -17,7 +17,6 @@ package com.theoryinpractice.testng.model;
 
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.junit.JUnitUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -33,7 +32,7 @@ import javax.swing.text.PlainDocument;
 import java.util.LinkedHashSet;
 
 /**
- * @author Hani Suleiman Date: Jul 21, 2005 Time: 1:20:14 PM
+ * @author Hani Suleiman
  */
 public class TestNGConfigurationModel
 {

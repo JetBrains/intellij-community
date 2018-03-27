@@ -34,7 +34,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author mike
- *         Date: Aug 20, 2002
  */
 public class SetupJDKFix implements IntentionAction, HighPriorityAction {
   private static final SetupJDKFix ourInstance = new SetupJDKFix();

@@ -17,10 +17,11 @@
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiRecursiveVisitor;
 import com.intellij.util.WalkingState;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class RecursiveTreeElementWalkingVisitor extends TreeElementVisitor {
+public abstract class RecursiveTreeElementWalkingVisitor extends TreeElementVisitor implements PsiRecursiveVisitor {
   private final boolean myDoTransform;
 
   protected RecursiveTreeElementWalkingVisitor() {

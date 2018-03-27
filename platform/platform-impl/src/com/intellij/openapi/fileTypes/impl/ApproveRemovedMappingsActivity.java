@@ -36,7 +36,6 @@ import java.util.Map;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 3/11/13
  */
 public class ApproveRemovedMappingsActivity implements StartupActivity {
   @Override

@@ -16,22 +16,15 @@
 package com.intellij.codeInspection.dataFlow.instructions;
 
 import com.intellij.codeInspection.dataFlow.*;
-import com.intellij.psi.PsiExpression;
 
 public class CheckNotNullInstruction extends Instruction {
-  private final PsiExpression myExpression;
-  private final NullabilityProblem myProblem;
+  private final NullabilityProblemKind.NullabilityProblem<?> myProblem;
 
-  public CheckNotNullInstruction(PsiExpression expression, NullabilityProblem problem) {
-    myExpression = expression;
+  public CheckNotNullInstruction(NullabilityProblemKind.NullabilityProblem<?> problem) {
     myProblem = problem;
   }
 
-  public PsiExpression getExpression() {
-    return myExpression;
-  }
-
-  public NullabilityProblem getProblem() {
+  public NullabilityProblemKind.NullabilityProblem<?> getProblem() {
     return myProblem;
   }
 
@@ -42,6 +35,6 @@ public class CheckNotNullInstruction extends Instruction {
 
   @Override
   public String toString() {
-    return "CHECK_NOT_NULL ["+myProblem+"] "+myExpression.getText();
+    return "CHECK_NOT_NULL "+myProblem;
   }
 }

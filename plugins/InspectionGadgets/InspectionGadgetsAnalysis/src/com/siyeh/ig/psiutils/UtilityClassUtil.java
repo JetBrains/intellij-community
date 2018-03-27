@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.psiutils;
 
+import com.intellij.codeInspection.inheritance.ImplicitSubclassProvider;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -61,6 +62,13 @@ public class UtilityClassUtil {
     final PsiField[] fields = aClass.getFields();
     if (!allFieldsStatic(fields)) {
       return false;
+    }
+    if (fullCheck) {
+      for (ImplicitSubclassProvider subclassProvider : ImplicitSubclassProvider.EP_NAME.getExtensions()) {
+        if (subclassProvider.isApplicableTo(aClass) && subclassProvider.getSubclassingInfo(aClass) != null) {
+          return false;
+        }
+      }
     }
     return (!fullCheck || staticMethodCount != 0) || fields.length != 0;
   }

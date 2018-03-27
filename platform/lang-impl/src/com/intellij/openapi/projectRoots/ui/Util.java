@@ -27,8 +27,6 @@ import java.net.URL;
 
 /**
  * @author MYakovlev
- * Date: Oct 29, 2002
- * Time: 8:47:43 PM
  */
 public class Util{
 

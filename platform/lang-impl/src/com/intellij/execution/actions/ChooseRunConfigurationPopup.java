@@ -790,7 +790,7 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
       }
 
       final Object o = getListModel().get(index);
-      if (o != null && o instanceof ItemWrapper && ((ItemWrapper)o).canBeDeleted()) {
+      if (o instanceof ItemWrapper && ((ItemWrapper)o).canBeDeleted()) {
         deleteConfiguration(myProject, (RunnerAndConfigurationSettings)((ItemWrapper)o).getValue());
         getListModel().deleteItem(o);
         final List<Object> values = getListStep().getValues();
@@ -803,6 +803,11 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
           onChildSelectedFor(values.get(index - 1));
         }
       }
+    }
+
+    @Override
+    protected boolean isResizable() {
+      return true;
     }
   }
 

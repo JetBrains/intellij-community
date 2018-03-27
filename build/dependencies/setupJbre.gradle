@@ -94,7 +94,11 @@ def createTarJbreTask(String taskName, String untarTaskName, String platform, St
       outputs.file(outputFile)
       def arguments = ['tar', '-czf', outputFile, '-C', untarOutputs.singleFile.absolutePath]
       if (!includeToolsJar) {
-        arguments += ['--exclude', "**/tools.jar"]
+        arguments += ['--exclude', '**/tools.jar']
+        // exclude entire lib directory (IDEA-176641)
+        if (platform == 'osx') {
+          arguments += ['--exclude', './jdk/Contents/Home/lib']
+        }
       }
       arguments += [dirToTar]
       commandLine arguments

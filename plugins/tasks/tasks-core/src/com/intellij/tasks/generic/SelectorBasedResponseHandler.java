@@ -1,3 +1,6 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.tasks.generic;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -8,9 +11,7 @@ import com.intellij.tasks.Task;
 import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xmlb.annotations.AbstractCollection;
-import com.intellij.util.xmlb.annotations.Property;
-import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -83,9 +84,7 @@ public abstract class SelectorBasedResponseHandler extends ResponseHandler {
     ));
   }
 
-  @Tag("selectors")
-  @Property(surroundWithTag = false)
-  @AbstractCollection(surroundWithTag = false)
+  @XCollection(propertyElementName = "selectors")
   @NotNull
   public List<Selector> getSelectors() {
     return new ArrayList<>(mySelectors.values());

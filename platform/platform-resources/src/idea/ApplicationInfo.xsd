@@ -98,6 +98,13 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
+    <xs:attribute type="xs:string" name="copyrightStart">
+      <xs:annotation>
+        <xs:documentation>
+          Year of first publication of the product protected by copyright.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:complexType>
   <xs:complexType name="buildType">
     <xs:attribute type="xs:string" name="number" use="required">

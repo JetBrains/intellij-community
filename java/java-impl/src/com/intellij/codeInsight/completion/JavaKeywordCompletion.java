@@ -7,17 +7,12 @@ import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
 import com.intellij.codeInsight.daemon.impl.analysis.LambdaHighlightingUtil;
 import com.intellij.codeInsight.lookup.*;
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.filters.*;
-import com.intellij.psi.filters.position.*;
-import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatement;
-import com.intellij.psi.jsp.JspElementType;
+import com.intellij.psi.filters.FilterPositionUtil;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -25,9 +20,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,59 +42,33 @@ public class JavaKeywordCompletion {
         psiElement().withTreeParent(
           psiElement(PsiParameterList.class).andNot(psiElement(PsiAnnotationParameterList.class)))));
 
-  private static final AndFilter START_OF_CODE_FRAGMENT = new AndFilter(
-    new ScopeFilter(new AndFilter(
-      new ClassFilter(JavaCodeFragment.class),
-      new ClassFilter(PsiExpressionCodeFragment.class, false),
-      new ClassFilter(PsiJavaCodeReferenceCodeFragment.class, false),
-      new ClassFilter(PsiTypeCodeFragment.class, false)
-    )),
-    new StartElementFilter()
-  );
+  private static boolean isStatementCodeFragment(PsiFile file) {
+    return file instanceof JavaCodeFragment &&
+           !(file instanceof PsiExpressionCodeFragment ||
+             file instanceof PsiJavaCodeReferenceCodeFragment ||
+             file instanceof PsiTypeCodeFragment);
+  }
 
-  static final NotNullLazyValue<ElementFilter> END_OF_BLOCK = new AtomicNotNullLazyValue<ElementFilter>() {
-    @NotNull
-    @Override
-    protected ElementFilter compute() {
-      return new OrFilter(
-        new AndFilter(
-          new LeftNeighbour(
-            new OrFilter(
-              new AndFilter (
-                new TextFilter("{", "}", ";", ":", "else"),
-                new NotFilter (
-                  new SuperParentFilter(new ClassFilter(PsiAnnotation.class))
-                )
-              ),
-              new ElementFilter() {
-                @Override
-                public boolean isAcceptable(Object element, @Nullable PsiElement context) {
-                  return ((PsiElement)element).getText().endsWith("*/");
-                }
-
-                @Override
-                public boolean isClassAcceptable(Class hintClass) {
-                  return true;
-                }
-              },
-              new TokenTypeFilter(JspElementType.HOLDER_TEMPLATE_DATA),
-              new ClassFilter(OuterLanguageElement.class),
-              new AndFilter(
-                new TextFilter(")"),
-                new NotFilter(
-                  new OrFilter(
-                    new ParentElementFilter(new ClassFilter(PsiExpressionList.class)),
-                    new ParentElementFilter(new ClassFilter(PsiParameterList.class)),
-                    new ParentElementFilter(new ClassFilter(PsiTypeCastExpression.class))
-                  )
-                )
-              ))),
-          new NotFilter(new TextFilter("."))
-        ),
-        START_OF_CODE_FRAGMENT
-      );
+  static boolean isEndOfBlock(@NotNull PsiElement element) {
+    PsiElement prev = prevSignificantLeaf(element);
+    if (prev == null) {
+      PsiFile file = element.getContainingFile();
+      return !(file instanceof PsiCodeFragment) || isStatementCodeFragment(file);
     }
-  };
+
+    if (psiElement().inside(psiAnnotation()).accepts(prev)) return false;
+
+    if (prev instanceof OuterLanguageElement) return true;
+    if (psiElement().withText(string().oneOf("{", "}", ";", ":", "else")).accepts(prev)) return true;
+    if (prev.textMatches(")")) {
+      PsiElement parent = prev.getParent();
+      return !(parent instanceof PsiExpressionList ||
+               parent instanceof PsiParameterList ||
+               parent instanceof PsiTypeCastExpression);
+    }
+
+    return false;
+  }
 
   static final ElementPattern<PsiElement> START_SWITCH =
     psiElement().afterLeaf(psiElement().withText("{").withParents(PsiCodeBlock.class, PsiSwitchStatement.class));
@@ -120,16 +87,6 @@ public class JavaKeywordCompletion {
     PsiKeyword.INT, PsiKeyword.FLOAT,
     PsiKeyword.CHAR, PsiKeyword.BYTE
   );
-
-  private static final NotNullLazyValue<ElementFilter> CLASS_BODY = new AtomicNotNullLazyValue<ElementFilter>() {
-    @NotNull
-    @Override
-    protected ElementFilter compute() {
-      return new OrFilter(
-        new AfterElementFilter(new TextFilter("{")),
-        new ScopeFilter(new ClassFilter(JspClassLevelDeclarationStatement.class)));
-    }
-  };
 
   static final PsiElementPattern<PsiElement,?> START_FOR = psiElement().afterLeaf(psiElement().withText("(").afterLeaf("for"));
   private static final ElementPattern<PsiElement> CLASS_REFERENCE =
@@ -151,7 +108,6 @@ public class JavaKeywordCompletion {
   private final CompletionParameters myParameters;
   private final JavaCompletionSession mySession;
   private final PsiElement myPosition;
-  private final String myPrefix;
   private final PrefixMatcher myKeywordMatcher;
   private final List<LookupElement> myResults = new ArrayList<>();
   private final PsiElement myPrevLeaf;
@@ -159,8 +115,7 @@ public class JavaKeywordCompletion {
   JavaKeywordCompletion(CompletionParameters parameters, JavaCompletionSession session) {
     myParameters = parameters;
     mySession = session;
-    myPrefix = session.getMatcher().getPrefix();
-    myKeywordMatcher = new FixingLayoutPlainMatcher(myPrefix);
+    myKeywordMatcher = new FixingLayoutPlainMatcher(session.getMatcher().getPrefix());
     myPosition = parameters.getPosition();
     myPrevLeaf = prevSignificantLeaf(myPosition);
 
@@ -169,7 +124,7 @@ public class JavaKeywordCompletion {
   }
 
   private static PsiElement prevSignificantLeaf(PsiElement position) {
-    return JBIterable.generate(position, PsiTreeUtil::prevVisibleLeaf).skip(1).skipWhile(e -> PsiTreeUtil.getNonStrictParentOfType(e, PsiComment.class) != null).first();
+    return FilterPositionUtil.searchNonSpaceNonCommentBack(position);
   }
 
   private void addKeyword(LookupElement element) {
@@ -480,7 +435,7 @@ public class JavaKeywordCompletion {
         addKeyword(new OverridableSpace(createKeyword(PsiKeyword.PACKAGE), TailType.HUMBLE_SPACE_BEFORE_WORD));
         addKeyword(new OverridableSpace(createKeyword(PsiKeyword.IMPORT), TailType.HUMBLE_SPACE_BEFORE_WORD));
       }
-      else if (END_OF_BLOCK.getValue().isAcceptable(myPosition, myPosition) && PsiTreeUtil.getParentOfType(myPosition, PsiMember.class) == null) {
+      else if (isEndOfBlock(myPosition) && PsiTreeUtil.getParentOfType(myPosition, PsiMember.class) == null) {
         addKeyword(new OverridableSpace(createKeyword(PsiKeyword.IMPORT), TailType.HUMBLE_SPACE_BEFORE_WORD));
       }
     }
@@ -524,11 +479,11 @@ public class JavaKeywordCompletion {
         addKeyword(new OverridableSpace(createKeyword(s), TailType.HUMBLE_SPACE_BEFORE_WORD));
       }
 
-      PsiExpression expression = PsiTreeUtil.getParentOfType(myPosition, PsiExpression.class, true, PsiMember.class);
-      if (expression != null && expression.getParent() instanceof PsiExpressionStatement) {
+      if (psiElement().insideStarting(psiElement(PsiLocalVariable.class, PsiExpressionStatement.class)).accepts(myPosition)) {
         addKeyword(new OverridableSpace(createKeyword(PsiKeyword.CLASS), TailType.HUMBLE_SPACE_BEFORE_WORD));
       }
-      if (expression == null && PsiTreeUtil.getParentOfType(myPosition, PsiCodeBlock.class, true, PsiMember.class) == null) {
+      if (PsiTreeUtil.getParentOfType(myPosition, PsiExpression.class, true, PsiMember.class) == null && 
+          PsiTreeUtil.getParentOfType(myPosition, PsiCodeBlock.class, true, PsiMember.class) == null) {
         addKeyword(new OverridableSpace(createKeyword(PsiKeyword.CLASS), TailType.HUMBLE_SPACE_BEFORE_WORD));
         addKeyword(new OverridableSpace(createKeyword(PsiKeyword.INTERFACE), TailType.HUMBLE_SPACE_BEFORE_WORD));
         if (PsiUtil.isLanguageLevel5OrHigher(myPosition)) {
@@ -619,11 +574,15 @@ public class JavaKeywordCompletion {
     if (psiElement().withoutText(".").inside(
       psiElement(PsiModifierList.class).withParent(
         not(psiElement(PsiParameter.class)).andNot(psiElement(PsiParameterList.class)))).accepts(prev) &&
-        !psiElement().inside(PsiAnnotationParameterList.class).accepts(prev)) {
+        (!psiElement().inside(PsiAnnotationParameterList.class).accepts(prev) || prev.textMatches(")"))) {
       return true;
     }
 
-    return END_OF_BLOCK.getValue().isAcceptable(position, position);
+    if (psiElement().withParents(PsiErrorElement.class, PsiFile.class).accepts(position)) {
+      return true;
+    }
+
+    return isEndOfBlock(position);
   }
 
   static boolean isAfterPrimitiveOrArrayType(PsiElement element) {
@@ -681,6 +640,9 @@ public class JavaKeywordCompletion {
           result.consume(BasicExpressionCompletionContributor.createKeywordLookupItem(position, primitiveType));
         }
       }
+      if (expressionPosition && !session.isKeywordAlreadyProcessed(PsiKeyword.VOID)) {
+        result.consume(BasicExpressionCompletionContributor.createKeywordLookupItem(position, PsiKeyword.VOID));
+      }
     }
     if (declaration) {
       LookupElement item = BasicExpressionCompletionContributor.createKeywordLookupItem(position, PsiKeyword.VOID);
@@ -693,16 +655,6 @@ public class JavaKeywordCompletion {
 
   static boolean isDeclarationStart(@NotNull PsiElement position) {
     if (psiElement().afterLeaf("@", ".").accepts(position)) return false;
-
-    if (new FilterPattern(CLASS_BODY.getValue()).accepts(position)) {
-      if (new FilterPattern(END_OF_BLOCK.getValue()).accepts(position)) return true;
-      if (psiElement().afterLeaf(or(
-        psiElement().inside(PsiModifierList.class),
-        psiElement().withElementType(JavaTokenType.GT).inside(PsiTypeParameterList.class)
-      )).accepts(position)) {
-        return true;
-      }
-    }
 
     PsiElement parent = position.getParent();
     if (parent instanceof PsiJavaCodeReferenceElement && parent.getParent() instanceof PsiTypeElement) {
@@ -725,7 +677,7 @@ public class JavaKeywordCompletion {
       if (parent instanceof PsiVariable) parent = parent.getParent();
       return parent instanceof PsiCatchSection || parent instanceof PsiResourceList;
     }
-    return false;
+    return psiElement().insideStarting(psiElement(PsiResourceExpression.class)).accepts(position);
   }
 
   private void addBreakContinue() {
@@ -766,7 +718,7 @@ public class JavaKeywordCompletion {
       return false;
     }
 
-    if (END_OF_BLOCK.getValue().isAcceptable(position, position) &&
+    if (isEndOfBlock(position) &&
         PsiTreeUtil.getParentOfType(position, PsiCodeBlock.class, true, PsiMember.class) != null) {
       return !isForLoopMachinery(position);
     }

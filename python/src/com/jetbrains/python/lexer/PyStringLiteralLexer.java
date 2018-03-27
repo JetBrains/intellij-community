@@ -30,7 +30,6 @@ import org.jetbrains.annotations.NotNull;
  * Snatched from com.intellij.lexer.StringLiteralLexer and may inherit from it in the future.
  * Lexes the entire string, with u/b/r designator, quotes, and content, thus self-adjusts for the format.
  * User: dcheryasov
- * Date: May 13, 2009 7:35:59 PM
  */
 public class PyStringLiteralLexer extends LexerBase {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.lexer.PyStringLiteralLexer");

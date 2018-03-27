@@ -32,8 +32,6 @@ import java.util.Map;
 
 /**
  * @author Maxim.Mossienko
- *         Date: Oct 14, 2008
- *         Time: 11:38:46 PM
  */
 public class HtmlLineMarkerProvider implements LineMarkerProvider {
   private final Map<Language, LineMarkerProvider> embeddedLanguagesLineMarkerProviders = new THashMap<>();

@@ -50,6 +50,7 @@ blog
 blogger
 blogging
 bool
+bootstrapper
 boxable
 breakpoint
 breakpoints
@@ -143,6 +144,7 @@ decompiling
 dedent
 deduplicate
 deferrable
+deferrer
 deque
 dereference
 dereferences
@@ -306,6 +308,7 @@ jsdoc
 jsessionid
 jshint
 json
+jsonb
 junit
 keepduplicates
 keychain
@@ -316,6 +319,7 @@ keymap
 keymaps
 keystore
 kotlin
+kubernetes
 kryo
 labeler
 labelers
@@ -340,6 +344,7 @@ login
 logoff
 logon
 logout
+lombok
 longblob
 longtext
 lookahead
@@ -438,6 +443,7 @@ noninfingement
 nonnull
 nonschema
 nonstatic
+noop
 noorder
 noparallel
 norely
@@ -459,6 +465,7 @@ nullptr
 nvarchar
 oauth
 objc
+objenesis
 oidindex
 onchange
 onclick
@@ -470,6 +477,7 @@ opensymphony
 optnone
 osgi
 outfile
+overrideable
 overrider
 overriders
 pageable
@@ -710,6 +718,7 @@ tablespace
 taglib
 teamcity
 templatemode
+templating
 temptable
 thiscall
 throwable
@@ -732,7 +741,9 @@ tooltips
 toplink
 trebuchet
 trie
+truststore
 tuple
+tuples
 twitter
 typedef
 typedefs
@@ -791,11 +802,13 @@ vtlvariable
 wakeup
 watchlist
 wchar
+webapp
 webjar
 webjars
 webpack
 webservice
 webservices
+whitelabel
 whitespace
 whitespaces
 wifi

@@ -1,11 +1,8 @@
 PsiJavaFile:Reference1.java
-  PsiJavaCodeReferenceElement:a.
-    PsiJavaCodeReferenceElement:a
-      PsiIdentifier:a('a')
-      PsiReferenceParameterList
-        <empty list>
-    PsiJavaToken:DOT('.')
-    PsiErrorElement:Identifier expected
-      <empty list>
+  PsiJavaCodeReferenceElement:a
+    PsiIdentifier:a('a')
     PsiReferenceParameterList
       <empty list>
+  PsiJavaToken:DOT('.')
+  PsiErrorElement:Identifier expected
+    <empty list>

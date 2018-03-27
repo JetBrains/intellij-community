@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package org.jetbrains.jps.incremental.java;
 
@@ -23,7 +11,6 @@ import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
@@ -31,6 +18,7 @@ import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.io.PersistentEnumeratorBase;
+import com.intellij.util.lang.JavaVersion;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -69,8 +57,7 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.jps.service.SharedThreadPool;
 
-import javax.tools.Diagnostic;
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
@@ -95,7 +82,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
   public static final Key<Boolean> IS_ENABLED = Key.create("_java_compiler_enabled_");
   public static final FileFilter JAVA_SOURCES_FILTER = FileFilters.withExtension(JAVA_EXTENSION);
 
-  private static final Key<Integer> JAVA_COMPILER_VERSION_KEY = GlobalContextKey.create("_java_compiler_version_");
   private static final Key<Boolean> PREFER_TARGET_JDK_COMPILER = GlobalContextKey.create("_prefer_target_jdk_javac_");
   private static final Key<JavaCompilingTool> COMPILING_TOOL = Key.create("_java_compiling_tool_");
   private static final Key<ConcurrentMap<String, Collection<String>>> COMPILER_USAGE_STATISTICS = Key.create("_java_compiler_usage_stats_");
@@ -382,7 +368,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
     final Set<JpsModule> modules = chunk.getModules();
     ProcessorConfigProfile profile = null;
-    
+
     if (modules.size() == 1) {
       final JpsJavaCompilerConfiguration compilerConfig =
         JpsJavaExtensionService.getInstance().getCompilerConfiguration(context.getProjectDescriptor().getProject());
@@ -413,7 +399,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         }
       }
 
-      final int compilerSdkVersion = forkSdk == null? getCompilerSdkVersion(context) : forkSdk.getSecond();
+      final int compilerSdkVersion = forkSdk == null ? JavaVersion.current().feature : forkSdk.getSecond();
 
       final Pair<List<String>, List<String>> vm_compilerOptions = getCompilationOptions(
         compilerSdkVersion, context, chunk, profile, compilingTool
@@ -598,7 +584,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     if (!isJavac(COMPILING_TOOL.get(context))) {
       return false; // applicable to javac only
     }
-    final int compilerSdkVersion = getCompilerSdkVersion(context);
+    final int compilerSdkVersion = JavaVersion.current().feature;
 
     if (preferTargetJdkCompiler(context)) {
       final Pair<JpsSdk<JpsDummyElement>, Integer> sdkVersionPair = getAssociatedSdk(chunk);
@@ -831,14 +817,14 @@ public class JavaBuilder extends ModuleLevelBuilder {
                                            CompileContext context,
                                            ModuleChunk chunk,
                                            @Nullable ProcessorConfigProfile profile) {
-    addCompilationOptions(getCompilerSdkVersion(context), options, context, chunk, profile);
+    addCompilationOptions(JavaVersion.current().feature, options, context, chunk, profile);
   }
 
   private static void addCompilationOptions(int compilerSdkVersion,
                                             List<String> options,
                                             CompileContext context, ModuleChunk chunk,
                                             @Nullable ProcessorConfigProfile profile) {
-    if (!isEncodingSet(options)) {
+    if (!options.contains("-encoding")) {
       final CompilerEncodingConfiguration config = context.getProjectDescriptor().getEncodingConfiguration();
       final String encoding = config.getPreferredModuleChunkEncoding(chunk);
       if (config.getAllModuleChunkEncodings(chunk).size() > 1) {
@@ -1004,32 +990,13 @@ public class JavaBuilder extends ModuleLevelBuilder {
     return 0;
   }
 
-  private static boolean isEncodingSet(List<String> options) {
-    for (String option : options) {
-      if ("-encoding".equals(option)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private static int getCompilerSdkVersion(CompileContext context) {
-    final Integer cached = JAVA_COMPILER_VERSION_KEY.get(context);
-    if (cached != null) {
-      return cached;
-    }
-    int javaVersion = JpsJavaSdkType.parseVersion(SystemProperties.getJavaVersion());
-    JAVA_COMPILER_VERSION_KEY.set(context, javaVersion);
-    return javaVersion;
-  }
-
   private static int getChunkSdkVersion(ModuleChunk chunk) {
     int chunkSdkVersion = -1;
     for (JpsModule module : chunk.getModules()) {
       final JpsSdk<JpsDummyElement> sdk = module.getSdk(JpsJavaSdkType.INSTANCE);
       if (sdk != null) {
-        final int moduleSdkVersion = JpsJavaSdkType.parseVersion(sdk.getVersionString());
-        if (moduleSdkVersion != 0 /*could determine the version*/&& (chunkSdkVersion < 0 || chunkSdkVersion > moduleSdkVersion)) {
+        final int moduleSdkVersion = JpsJavaSdkType.getJavaVersion(sdk);
+        if (moduleSdkVersion != 0 /*could determine the version*/ && (chunkSdkVersion < 0 || chunkSdkVersion > moduleSdkVersion)) {
           chunkSdkVersion = moduleSdkVersion;
         }
       }
@@ -1071,7 +1038,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     // assuming all modules in the chunk have the same associated JDK;
     // this constraint should be validated on build start
     final JpsSdk<JpsDummyElement> sdk = chunk.representativeTarget().getModule().getSdk(JpsJavaSdkType.INSTANCE);
-    return sdk != null? Pair.create(sdk, JpsJavaSdkType.parseVersion(sdk.getVersionString())) : null;
+    return sdk != null ? Pair.create(sdk, JpsJavaSdkType.getJavaVersion(sdk)) : null;
   }
 
   @Override

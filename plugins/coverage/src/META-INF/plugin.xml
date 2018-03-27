@@ -50,5 +50,6 @@
       <reference ref="CoverageMenu"/>
       <add-to-group group-id="AnalyzeMenu" anchor="before" relative-to-action="AnalyzeActions"/>
     </group>
+    <group overrides="true" class="com.intellij.openapi.actionSystem.EmptyActionGroup" id="CoveragePlatformMenu"/>
   </actions>
 </idea-plugin>

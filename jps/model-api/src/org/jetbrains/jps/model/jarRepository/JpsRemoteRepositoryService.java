@@ -22,7 +22,6 @@ import org.jetbrains.jps.service.JpsServiceManager;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 25-Apr-17
  */
 public abstract class JpsRemoteRepositoryService {
   public static JpsRemoteRepositoryService getInstance() {

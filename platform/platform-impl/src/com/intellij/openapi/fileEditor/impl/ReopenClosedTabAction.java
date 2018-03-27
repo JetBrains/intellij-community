@@ -54,6 +54,6 @@ public class ReopenClosedTabAction extends AnAction {
   @Override
   public void update(AnActionEvent e) {
     final EditorWindow window = getEditorWindow(e);
-    e.getPresentation().setEnabled(window != null && window.hasClosedTabs());
+    e.getPresentation().setEnabledAndVisible(window != null && window.hasClosedTabs());
   }
 }

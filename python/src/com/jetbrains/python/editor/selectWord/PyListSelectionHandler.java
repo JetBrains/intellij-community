@@ -24,6 +24,7 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.jetbrains.python.psi.PyArgumentList;
 import com.jetbrains.python.psi.PyListLiteralExpression;
 import com.jetbrains.python.psi.PyParameterList;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
@@ -35,12 +36,12 @@ import java.util.List;
  */
 public class PyListSelectionHandler extends ExtendWordSelectionHandlerBase {
   @Override
-  public boolean canSelect(PsiElement e) {
+  public boolean canSelect(@NotNull PsiElement e) {
     return e instanceof PyListLiteralExpression || e instanceof PyParameterList || e instanceof PyArgumentList;
   }
 
   @Override
-  public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
+  public List<TextRange> select(@NotNull PsiElement e, @NotNull CharSequence editorText, int cursorOffset, @NotNull Editor editor) {
     TextRange stringRange = e.getTextRange();
     PsiElement firstChild = e.getFirstChild().getNextSibling();
     if (firstChild instanceof PsiErrorElement) {

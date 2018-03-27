@@ -221,8 +221,13 @@ public class ExternalSystemKeymapExtension implements KeymapExtension {
   public static void clearActions(Project project, Collection<DataNode<TaskData>> taskData) {
     ActionManager actionManager = ActionManager.getInstance();
     if (actionManager != null) {
-      for (DataNode<TaskData> each : taskData) {
-        for (String eachAction : actionManager.getActionIds(getActionPrefix(project, each.getData().getLinkedExternalProjectPath()))) {
+      Set<String> externalProjectPaths = ContainerUtil.newHashSet();
+      for (DataNode<TaskData> node : taskData) {
+        externalProjectPaths.add(node.getData().getLinkedExternalProjectPath());
+      }
+
+      for (String externalProjectPath : externalProjectPaths) {
+        for (String eachAction : actionManager.getActionIds(getActionPrefix(project, externalProjectPath))) {
           AnAction action = actionManager.getAction(eachAction);
           if (!(action instanceof ExternalSystemRunConfigurationAction)) {
             actionManager.unregisterAction(eachAction);

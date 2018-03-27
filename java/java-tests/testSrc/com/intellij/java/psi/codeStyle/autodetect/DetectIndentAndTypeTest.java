@@ -83,7 +83,7 @@ public class DetectIndentAndTypeTest extends LightPlatformCodeInsightFixtureTest
 
   public void testContinuationTab_AsTabSize() {
     CommonCodeStyleSettings common = mySettings.getCommonSettings(JavaLanguage.INSTANCE);
-    mySettings.ALIGN_MULTILINE_BINARY_OPERATION = false;
+    common.ALIGN_MULTILINE_BINARY_OPERATION = false;
     CommonCodeStyleSettings.IndentOptions indentOptions = common.getIndentOptions();
 
     assert indentOptions != null;
@@ -106,7 +106,7 @@ public class DetectIndentAndTypeTest extends LightPlatformCodeInsightFixtureTest
 
   public void testContinuationTabs_AsDoubleTabSize() {
     CommonCodeStyleSettings common = mySettings.getCommonSettings(JavaLanguage.INSTANCE);
-    mySettings.ALIGN_MULTILINE_BINARY_OPERATION = false;
+    common.ALIGN_MULTILINE_BINARY_OPERATION = false;
     CommonCodeStyleSettings.IndentOptions indentOptions = common.getIndentOptions();
 
     assert indentOptions != null;

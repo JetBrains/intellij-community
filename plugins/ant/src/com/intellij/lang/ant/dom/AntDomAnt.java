@@ -24,7 +24,6 @@ import com.intellij.util.xml.GenericAttributeValue;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Aug 3, 2010
  */
 public abstract class AntDomAnt extends AntDomElement {
   public static final String DEFAULT_ANTFILE_NAME = "build.xml";

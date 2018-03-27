@@ -42,6 +42,7 @@ public class IdeaActionButtonLook extends ActionButtonLook {
     if (state != ActionButtonComponent.NORMAL) {
       paintBackground(g, component.getSize(), state);
     }
+    // Android Studio: added by Change Ia6abcc69 / commit 0ccfb87
     if (component.hasFocus()) {
       DarculaUIUtil.paintFocusOval((Graphics2D)g, 3, 3, component.getWidth() - 4, component.getHeight() - 4);
     }

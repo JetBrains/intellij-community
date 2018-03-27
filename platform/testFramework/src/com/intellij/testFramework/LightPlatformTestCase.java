@@ -376,6 +376,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   protected void tearDown() throws Exception {
     Project project = getProject();
 
+    // don't use method references here to make stack trace reading easier
+    //noinspection Convert2MethodRef
     new RunAll(
       () -> CodeStyleSettingsManager.getInstance(project).dropTemporarySettings(),
       this::checkForSettingsDamage,
@@ -390,6 +392,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   }
 
   public static void doTearDown(@NotNull Project project, @NotNull IdeaTestApplication application) {
+    // don't use method references here to make stack trace reading easier
+    //noinspection Convert2MethodRef
     new RunAll().
       append(() -> ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue()).
       append(() -> CodeStyleSettingsManager.getInstance(project).dropTemporarySettings()).
@@ -482,6 +486,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   }
 
   public static void checkEditorsReleased() {
+    // don't use method references here to make stack trace reading easier
+    //noinspection Convert2MethodRef
     new RunAll(
       () -> UIUtil.dispatchAllInvocationEvents(),
       () -> {

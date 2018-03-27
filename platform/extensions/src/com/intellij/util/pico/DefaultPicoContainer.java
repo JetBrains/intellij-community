@@ -30,14 +30,15 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class DefaultPicoContainer implements AreaPicoContainer {
+  static final DelegatingComponentMonitor DEFAULT_DELEGATING_COMPONENT_MONITOR = new DelegatingComponentMonitor();
+  static final DefaultLifecycleStrategy DEFAULT_LIFECYCLE_STRATEGY = new DefaultLifecycleStrategy(DEFAULT_DELEGATING_COMPONENT_MONITOR);
   private final PicoContainer parent;
   private final Set<PicoContainer> children = new THashSet<>();
 
   private final Map<Object, ComponentAdapter> componentKeyToAdapterCache = ContainerUtil.newConcurrentMap();
   private final LinkedHashSetWrapper<ComponentAdapter> componentAdapters = new LinkedHashSetWrapper<>();
   private final Map<String, ComponentAdapter> classNameToAdapter = ContainerUtil.newConcurrentMap();
-  private final AtomicReference<FList<ComponentAdapter>> nonAssignableComponentAdapters =
-    new AtomicReference<>(FList.<ComponentAdapter>emptyList());
+  private final AtomicReference<FList<ComponentAdapter>> nonAssignableComponentAdapters = new AtomicReference<>(FList.<ComponentAdapter>emptyList());
 
   public DefaultPicoContainer(@Nullable PicoContainer parent) {
     this.parent = parent == null ? null : ImmutablePicoContainerProxyFactory.newProxyInstance(parent);
@@ -238,10 +239,7 @@ public class DefaultPicoContainer implements AreaPicoContainer {
     try {
       return componentAdapter.getComponentInstance(this);
     }
-    catch (PicoInitializationException e) {
-      firstLevelException = e;
-    }
-    catch (PicoIntrospectionException e) {
+    catch (PicoInitializationException | PicoIntrospectionException e) {
       firstLevelException = e;
     }
 
@@ -324,7 +322,7 @@ public class DefaultPicoContainer implements AreaPicoContainer {
 
   @Override
   public ComponentAdapter registerComponentInstance(@NotNull Object componentKey, @NotNull Object componentInstance) {
-    return registerComponent(new InstanceComponentAdapter(componentKey, componentInstance));
+    return registerComponent(new InstanceComponentAdapter(componentKey, componentInstance, DEFAULT_LIFECYCLE_STRATEGY));
   }
 
   @Override

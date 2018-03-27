@@ -17,7 +17,6 @@ package com.intellij.javaee;
 
 /**
 * @author Dmitry Avdeev
-*         Date: 7/18/12
 */
 public class NameLocationPair implements Comparable {
   final String myName;

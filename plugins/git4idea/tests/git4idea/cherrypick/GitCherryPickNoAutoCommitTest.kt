@@ -16,16 +16,13 @@
 package git4idea.cherrypick
 
 import com.intellij.openapi.vcs.changes.LocalChangeList
-import git4idea.test.branch
-import git4idea.test.checkout
-import git4idea.test.file
-import git4idea.test.git
+import git4idea.test.*
 
 class GitCherryPickNoAutoCommitTest : GitCherryPickTest() {
 
   override fun setUp() {
     super.setUp()
-    myGitSettings.isAutoCommitOnCherryPick = false
+    settings.isAutoCommitOnCherryPick = false
   }
 
   fun `test commit dialog shown on cherry pick`() {
@@ -52,7 +49,7 @@ class GitCherryPickNoAutoCommitTest : GitCherryPickTest() {
 
     assertLastMessage("fix #1\n\n(cherry picked from commit ${shortHash(commit)})")
     assertSuccessfulNotification("Cherry-pick successful", "${shortHash(commit)} fix #1")
-    assertOnlyDefaultChangelist()
+    changeListManager.assertOnlyDefaultChangelist()
   }
 
   fun `test cherry pick and cancel commit`() {
@@ -63,7 +60,7 @@ class GitCherryPickNoAutoCommitTest : GitCherryPickTest() {
 
     cherryPick(commit)
 
-    val list = assertChangelistCreated("fix #1 (cherry picked from commit ${shortHash(commit)})")
+    val list = changeListManager.assertChangeListExists("fix #1\n\n(cherry picked from commit ${shortHash(commit)})")
     assertNoNotification()
     updateChangeListManager()
     assertChanges(list, "f.txt")
@@ -89,7 +86,7 @@ class GitCherryPickNoAutoCommitTest : GitCherryPickTest() {
       fix #1
 
       (cherry picked from commit ${shortHash(commits[0])})""")
-    assertOnlyDefaultChangelist()
+    changeListManager.assertOnlyDefaultChangelist()
   }
 
   fun `test cherry pick 2 commits, but cancel second`() {
@@ -113,7 +110,7 @@ class GitCherryPickNoAutoCommitTest : GitCherryPickTest() {
       ${shortHash(commit2)} fix #2
       However cherry-pick succeeded for the following commit:
       ${shortHash(commit1)} fix #1""".trimIndent())
-    val list = assertChangelistCreated("fix #2 (cherry picked from commit ${shortHash(commit2)})")
+    val list = changeListManager.assertChangeListExists("fix #2\n\n(cherry picked from commit ${shortHash(commit2)})")
     assertChanges(list, "2.txt")
   }
 
@@ -131,6 +128,32 @@ class GitCherryPickNoAutoCommitTest : GitCherryPickTest() {
 
   fun `test resolve conflicts and commit`() {
     `check resolve conflicts and commit`()
+  }
+
+  fun `test cherry-pick changes in renamed file`() {
+    val initialName = "a.txt"
+    file(initialName).create("This file has name $initialName").addCommit("Create $initialName")
+
+    val renamed = "renamed.txt"
+    repo.checkoutNew("feature")
+    git("mv $initialName $renamed")
+    commit("Rename $initialName to $renamed")
+    val commit = file(renamed).write("This file has name $renamed").addCommit("Modify the file").hash()
+    checkout("master")
+
+    vcsHelper.onCommit { msg ->
+      git("commit -am '$msg'")
+      true
+    }
+
+    cherryPick(commit)
+
+    assertSuccessfulNotification("Cherry-pick successful", "${shortHash(commit)} Modify the file")
+    assertLastMessage("Modify the file\n\n(cherry picked from commit ${shortHash(commit)})")
+    repo.assertCommitted {
+      modified(initialName)
+    }
+    changeListManager.assertOnlyDefaultChangelist()
   }
 
   private fun assertChanges(list: LocalChangeList, file: String) {

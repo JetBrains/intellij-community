@@ -52,16 +52,16 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
   }
 
   @Override
-  protected SMTestProxy createProxy(String testName, String locationHint, String id, String parentNodeId) {
-    SMTestProxy proxy = super.createProxy(testName, locationHint, id, parentNodeId);
+  protected SMTestProxy createProxy(String testName, String locationHint, String metaInfo, String id, String parentNodeId) {
+    SMTestProxy proxy = super.createProxy(testName, locationHint, metaInfo, id, parentNodeId);
     SMTestProxy currentSuite = getCurrentSuite();
     currentSuite.addChild(proxy);
     return proxy;
   }
 
   @Override
-  protected SMTestProxy createSuite(String suiteName, String locationHint, String id, String parentNodeId) {
-    SMTestProxy newSuite = super.createSuite(suiteName, locationHint, id, parentNodeId);
+  protected SMTestProxy createSuite(String suiteName, String locationHint, String metaInfo, String id, String parentNodeId) {
+    SMTestProxy newSuite = super.createSuite(suiteName, locationHint, metaInfo, id, parentNodeId);
     final SMTestProxy parentSuite = getCurrentSuite();
 
     parentSuite.addChild(newSuite);
@@ -278,14 +278,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
   public void onUncapturedOutput(@NotNull final String text, final Key outputType) {
     addToInvokeLater(() -> {
       final SMTestProxy currentProxy = findCurrentTestOrSuite();
-
-      if (ProcessOutputTypes.STDERR.equals(outputType)) {
-        currentProxy.addStdErr(text);
-      } else if (ProcessOutputTypes.SYSTEM.equals(outputType)) {
-        currentProxy.addSystemOutput(text);
-      } else {
-        currentProxy.addStdOutput(text, outputType);
-      }
+      currentProxy.addOutput(text, outputType);
     });
   }
 

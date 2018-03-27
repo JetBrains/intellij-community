@@ -70,6 +70,7 @@ public class DummyHolderViewProvider extends AbstractFileViewProvider {
     return target == getBaseLanguage() ? myHolder : null;
   }
 
+  @NotNull
   @Override
   public List<PsiFile> getCachedPsiFiles() {
     return Collections.singletonList(myHolder);

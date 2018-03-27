@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.ui;
 
@@ -26,10 +14,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.paint.EffectPainter;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import gnu.trove.TIntIntHashMap;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
@@ -122,9 +107,9 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     myFragments = new ArrayList<>(3);
     myLayouts = new ArrayList<>(3);
     myAttributes = new ArrayList<>(3);
-    myIpad = new JBInsets(1, 2, 1, 2);
+    myIpad = JBUI.insets(1, 2);
     myIconTextGap = JBUI.scale(2);
-    myBorder = new MyBorder();
+    myBorder = JBUI.Borders.empty(1, UIUtil.isUnderWin10LookAndFeel() ? 0 : 1);
     myFragmentPadding = new TIntIntHashMap(10);
     myFragmentAlignment = new TIntIntHashMap(10);
     setOpaque(true);
@@ -725,7 +710,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     }
 
     doPaintTextBackground(g, offset);
-    offset = doPaintText(g, offset, myFocusBorderAroundIcon || icon == null);
+    offset = doPaintText(g, offset, myFocusBorderAroundIcon || icon == null) + myIconTextGap;
     if (icon != null && myIconOnTheRight) {
       doPaintIcon(g, icon, offset);
     }
@@ -772,6 +757,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     if (myBorder != null) {
       offset += myBorder.getBorderInsets(this).left;
     }
+    offset += getInsets().left;
 
     class Frag { int index; float start; float end; float baseLine; Font font; Frag next;
       public Frag(int index, float start, float end, float baseLine, Font font, Frag next) {
@@ -1047,37 +1033,8 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   }
 
   protected void setBorderInsets(Insets insets) {
-    if (myBorder instanceof MyBorder) {
-      ((MyBorder)myBorder).setInsets(insets);
-    }
-
+    myBorder = new JBEmptyBorder(insets);
     revalidateAndRepaint();
-  }
-
-  private static final class MyBorder implements Border {
-    private Insets myInsets;
-
-    public MyBorder() {
-      myInsets = JBUI.insets(1);
-    }
-
-    public void setInsets(final Insets insets) {
-      myInsets = insets;
-    }
-
-    @Override
-    public void paintBorder(final Component c, final Graphics g, final int x, final int y, final int width, final int height) {
-    }
-
-    @Override
-    public Insets getBorderInsets(final Component c) {
-      return (Insets)myInsets.clone();
-    }
-
-    @Override
-    public boolean isBorderOpaque() {
-      return false;
-    }
   }
 
   @NotNull

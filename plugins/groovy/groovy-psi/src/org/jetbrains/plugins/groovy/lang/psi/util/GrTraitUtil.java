@@ -95,7 +95,7 @@ public class GrTraitUtil {
   @Contract("null -> false")
   public static boolean isTrait(@Nullable PsiClass aClass) {
     return aClass instanceof GrTypeDefinition && ((GrTypeDefinition)aClass).isTrait() ||
-           aClass instanceof ClsClassImpl && aClass.isInterface() && AnnotationUtil.isAnnotated(aClass, GROOVY_TRAIT, false);
+           aClass instanceof ClsClassImpl && aClass.isInterface() && AnnotationUtil.isAnnotated(aClass, GROOVY_TRAIT, 0);
   }
 
   @NotNull
@@ -109,7 +109,7 @@ public class GrTraitUtil {
 
   private static void doCollectCompiledTraitMethods(final ClsClassImpl trait, final Collection<PsiMethod> result) {
     for (PsiMethod method : trait.getMethods()) {
-      if (AnnotationUtil.isAnnotated(method, GROOVY_TRAIT_IMPLEMENTED, false)) {
+      if (AnnotationUtil.isAnnotated(method, GROOVY_TRAIT_IMPLEMENTED, 0)) {
         result.add(method);
       }
     }

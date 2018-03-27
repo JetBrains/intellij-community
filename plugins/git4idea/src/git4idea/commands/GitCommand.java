@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
  *   The descriptor of git command.
  * </p>
  * <p>
- *   It contains policy information about locking which is handled in {@link GitHandler#runInCurrentThread(java.lang.Runnable)} to prevent
+ *   It contains policy information about locking which is handled in {@link Git#runCommand(GitLineHandler)} to prevent
  *   simultaneous Git commands conflict on the index.lock file.
  *   write-commands can't be executed simultaneously, but a write-command doesn't prevent read-commands to execute.
  * </p>
@@ -43,7 +43,7 @@ public class GitCommand {
   public static final GitCommand CONFIG = read("config");
   public static final GitCommand CHERRY = read("cherry");
   public static final GitCommand CHERRY_PICK = write("cherry-pick");
-  public static final GitCommand CLONE = write("clone");
+  public static final GitCommand CLONE = read("clone"); // write, but can't interfere with any other command => should be treated as read
   public static final GitCommand DIFF = read("diff");
   public static final GitCommand FETCH = read("fetch");  // fetch is a read-command, because it doesn't modify the index
   public static final GitCommand INIT = write("init");
@@ -68,6 +68,7 @@ public class GitCommand {
   public static final GitCommand STATUS = write("status");
   public static final GitCommand TAG = read("tag");
   public static final GitCommand UPDATE_INDEX = write("update-index");
+  public static final GitCommand HASH_OBJECT = write("hash-object");
 
   /**
    * Name of environment variable that specifies editor for the git

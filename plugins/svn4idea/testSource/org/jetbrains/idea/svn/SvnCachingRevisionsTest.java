@@ -1,3 +1,4 @@
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.util.Pair;
@@ -6,9 +7,9 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.changes.committed.ChangesBunch;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
+import org.jetbrains.idea.svn.api.Revision;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.history.*;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.util.*;
 
@@ -16,7 +17,7 @@ public class SvnCachingRevisionsTest extends CodeInsightFixtureTestCase {
   private SvnRepositoryLocation myLocation;
   private LoadedRevisionsCache myInternalManager;
   private final static String URL = "file:///C:/repo/trunk";
-  private final static SVNURL ROOT = SvnUtil.parseUrl("file:///C:/repo");
+  private final static Url ROOT = SvnUtil.parseUrl("file:///C:/repo");
   private final static String AUTHOR = "author";
   private final static int PAGE = 5;
 
@@ -50,7 +51,7 @@ public class SvnCachingRevisionsTest extends CodeInsightFixtureTestCase {
     }
 
     @Override
-    public List<CommittedChangeList> loadInterval(final SVNRevision fromIncluding, final SVNRevision toIncluding, final int maxCount,
+    public List<CommittedChangeList> loadInterval(final Revision fromIncluding, final Revision toIncluding, final int maxCount,
                                                   final boolean includingYoungest, final boolean includeOldest) {
       long young = fromIncluding.getNumber();
       young = (young == -1) ? myRevisions.get(myRevisions.size() - 1) : young;

@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package org.jetbrains.jps.incremental.groovy;
 
@@ -20,12 +8,12 @@ import com.intellij.compiler.instrumentation.FailSafeClassReader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
@@ -43,6 +31,7 @@ import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
+import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.service.JpsServiceManager;
@@ -149,7 +138,7 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
     if (myForStubs) {
       clearContinuation(context, chunk);
     }
-    
+
     GroovycContinuation continuation = takeContinuation(context, chunk);
     if (continuation != null) {
       if (Utils.IS_TEST_MODE || LOG.isDebugEnabled()) {
@@ -161,9 +150,9 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
     final Set<String> toCompilePaths = getPathsToCompile(toCompile);
 
     JpsSdk<JpsDummyElement> jdk = GroovyBuilder.getJdk(chunk);
-    String version = jdk == null ? SystemInfo.JAVA_RUNTIME_VERSION : jdk.getVersionString();
-    boolean inProcess = "true".equals(System.getProperty("groovyc.in.process", "true"));
-    boolean mayDependOnUtilJar = version != null && StringUtil.compareVersionNumbers(version, "1.6") >= 0;
+    int version = jdk != null ? JpsJavaSdkType.getJavaVersion(jdk) : JavaVersion.current().feature;
+    boolean inProcess = shouldRunGroovycInProcess(version);
+    boolean mayDependOnUtilJar = version >= 6;
     boolean optimizeClassLoading = !inProcess && mayDependOnUtilJar && ourOptimizeThreshold != 0 && toCompilePaths.size() >= ourOptimizeThreshold;
 
     Map<String, String> class2Src = buildClassToSourceMap(chunk, context, toCompilePaths, finalOutputs);
@@ -194,6 +183,11 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
     continuation = groovyc.runGroovyc(classpath, myForStubs, settings, tempFile, parser);
     setContinuation(context, chunk, continuation);
     return parser;
+  }
+
+  private static boolean shouldRunGroovycInProcess(int jdkVersion) {
+    String explicitProperty = System.getProperty("groovyc.in.process");
+    return explicitProperty != null ? "true".equals(explicitProperty) : jdkVersion == JavaVersion.current().feature;
   }
 
   static void clearContinuation(CompileContext context, ModuleChunk chunk) {

@@ -39,6 +39,7 @@ import io.netty.util.AttributeKey;
 import io.netty.util.concurrent.ImmediateEventExecutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
@@ -49,6 +50,7 @@ import java.io.File;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.*;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -71,6 +73,7 @@ public class ExternalJavacManager {
   private final Map<UUID, JavacProcessDescriptor> myMessageHandlers = new HashMap<>();
   private int myListenPort = DEFAULT_SERVER_PORT;
   private final Set<ProcessHandler> myRunningHandlers = ContainerUtil.newConcurrentSet();
+  private final ThreadPoolExecutor myExecutor = ConcurrencyUtil.newSingleThreadExecutor("Javac server event loop pool");
 
   public ExternalJavacManager(@NotNull final File workingDir) {
     myWorkingDir = workingDir;
@@ -80,7 +83,7 @@ public class ExternalJavacManager {
   public void start(int listenPort) {
     final ChannelHandler compilationRequestsHandler = new CompilationRequestsHandler();
     final ServerBootstrap bootstrap = new ServerBootstrap()
-      .group(new NioEventLoopGroup(1, ConcurrencyUtil.newNamedThreadFactory("Javac server event loop")))
+      .group(new NioEventLoopGroup(1, myExecutor))
       .channel(NioServerSocketChannel.class)
       .childOption(ChannelOption.TCP_NODELAY, true)
       .childOption(ChannelOption.SO_KEEPALIVE, true)
@@ -180,13 +183,24 @@ public class ExternalJavacManager {
   }
 
   // returns true if all process handlers terminated
-  public boolean waitForAllProcessHandlers(long time, TimeUnit unit) {
+  @TestOnly
+  public boolean waitForAllProcessHandlers(long time, @NotNull TimeUnit unit) {
     for (ProcessHandler handler : myRunningHandlers) {
       if (!handler.waitFor(unit.toMillis(time))) {
         return false;
       }
     }
     return true;
+  }
+
+  @TestOnly
+  public boolean awaitNettyThreadPoolTermination(long time, @NotNull TimeUnit unit) {
+    try {
+      return myExecutor.awaitTermination(time, unit);
+    }
+    catch (InterruptedException ignored) {
+      return true;
+    }
   }
 
   private void unregisterMessageHandler(UUID uuid) {
@@ -207,6 +221,7 @@ public class ExternalJavacManager {
 
   public void stop() {
     myChannelRegistrar.close().awaitUninterruptibly();
+    myExecutor.shutdown();
   }
 
   private ExternalJavacProcessHandler launchExternalJavacProcess(UUID uuid,
@@ -422,16 +437,14 @@ public class ExternalJavacManager {
           break;
         }
       }
-
-      ChannelGroupFuture future;
       try {
-        future = openChannels.close();
+        return openChannels.close();
       }
       finally {
-        assert eventLoopGroup != null;
-        eventLoopGroup.shutdownGracefully(0, 15, TimeUnit.SECONDS);
+        if (eventLoopGroup != null) {
+          eventLoopGroup.shutdownGracefully(0, 15, TimeUnit.SECONDS);
+        }
       }
-      return future;
     }
   }
 

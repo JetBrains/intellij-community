@@ -30,6 +30,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 
+import static com.intellij.openapi.application.Experiments.isFeatureEnabled;
+
 /**
 * @author yole
 */
@@ -54,8 +56,8 @@ class TestProjectViewPSIPane extends AbstractProjectViewPSIPane {
   }
 
   @Override
-  @NotNull
   protected BaseProjectTreeBuilder createBuilder(DefaultTreeModel treeModel) {
+    if (isFeatureEnabled("project.view.async.tree.model")) return null;
     return new ProjectTreeBuilder(myProject, myTree, treeModel, AlphaComparator.INSTANCE,
                                   (ProjectAbstractTreeStructureBase)myTreeStructure) {
       @Override
@@ -72,7 +74,7 @@ class TestProjectViewPSIPane extends AbstractProjectViewPSIPane {
 
   @Override
   protected ProjectViewTree createTree(DefaultTreeModel treeModel) {
-    return new ProjectViewTree(myProject, treeModel) {
+    return new ProjectViewTree(treeModel) {
     };
   }
 

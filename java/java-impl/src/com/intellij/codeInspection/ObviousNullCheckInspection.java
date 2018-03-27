@@ -61,6 +61,7 @@ public class ObviousNullCheckInspection extends AbstractBaseJavaLocalInspectionT
     if (arg instanceof PsiPolyadicExpression && ((PsiPolyadicExpression)arg).getOperationTokenType() == JavaTokenType.PLUS) {
       return "concatenation";
     }
+    if (arg instanceof PsiThisExpression) return "this object";
     return null;
   }
 

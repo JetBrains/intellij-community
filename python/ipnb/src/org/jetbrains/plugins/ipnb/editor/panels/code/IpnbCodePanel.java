@@ -345,7 +345,7 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
         myPromptLabel.setText(prompt);
         application.runWriteAction(() -> myCodeSourcePanel.getEditor().getDocument().setText(replacementContent));
       }
-      if (outputContent != null) {
+      if (outputContent != null && myHideableOutputPanel != null) {
         myCell.addCellOutput(outputContent);
         final JComponent component = myHideableOutputPanel.getSecondComponent();
         if (component != null) {

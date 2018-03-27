@@ -89,7 +89,7 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
             : candidate;
           holder.registerProblem(holder.getManager().createProblemDescriptor(
             element,
-            "Can be replaced with method reference",
+            getDisplayName(),
             type != ProblemHighlightType.INFORMATION,
             type, true, new ReplaceWithMethodRefFix(methodRefCandidate.mySafeQualifier ? "" : " (may change semantics)")));
         }
@@ -251,7 +251,9 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
       return null;
     }
     if (expression instanceof PsiNewExpression) {
-      return new MethodReferenceCandidate(expression, checkQualifier(((PsiNewExpression)expression).getQualifier()), true);
+      PsiExpression qualifier = ((PsiNewExpression)expression).getQualifier();
+      if (qualifier != null) return null;
+      return new MethodReferenceCandidate(expression, true, true);
     }
     else if (expression instanceof PsiMethodCallExpression) {
       return new MethodReferenceCandidate(expression,

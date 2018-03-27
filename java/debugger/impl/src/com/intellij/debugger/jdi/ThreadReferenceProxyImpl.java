@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 /*
@@ -28,6 +16,7 @@ import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NonNls;
@@ -46,6 +35,8 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
   private List<StackFrameProxyImpl> myFrames = null;
 
   private ThreadGroupReferenceProxyImpl myThreadGroupProxy;
+
+  private ThreeState myResumeOnHotSwap = ThreeState.UNSURE;
 
   public static final Comparator<ThreadReferenceProxyImpl> ourComparator = (th1, th2) -> {
     int res = Comparing.compare(th2.isSuspended(), th1.isSuspended());
@@ -326,7 +317,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     catch (InvalidStackFrameException | ObjectCollectedException ignored) {
     }
     catch (InternalException e) {
-      if (e.errorCode() == 32) {
+      if (e.errorCode() == JvmtiError.OPAQUE_FRAME) {
         throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("drop.frame.error.no.information"));
       }
       else throw EvaluateExceptionUtil.createEvaluateException(e);
@@ -344,6 +335,17 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     DebuggerManagerThreadImpl.assertIsManagerThread();
     try {
       getThreadReference().forceEarlyReturn(value);
+    }
+    finally {
+      clearCaches();
+      getVirtualMachineProxy().clearCaches();
+    }
+  }
+
+  public void stop(ObjectReference exception) throws InvalidTypeException {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    try {
+      getThreadReference().stop(exception);
     }
     finally {
       clearCaches();
@@ -373,5 +375,13 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     } catch (ObjectCollectedException ignored) {
     }
     return false;
+  }
+
+  public boolean isResumeOnHotSwap() {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    if (myResumeOnHotSwap == ThreeState.UNSURE) {
+      myResumeOnHotSwap = ThreeState.fromBoolean(name().startsWith("YJPAgent-"));
+    }
+    return myResumeOnHotSwap.toBoolean();
   }
 }

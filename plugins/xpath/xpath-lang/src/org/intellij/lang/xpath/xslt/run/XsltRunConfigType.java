@@ -64,6 +64,7 @@ public class XsltRunConfigType implements ConfigurationType {
       super(type);
     }
 
+    @NotNull
     public RunConfiguration createTemplateConfiguration(final Project project) {
       return new XsltRunConfiguration(project, this);
     }

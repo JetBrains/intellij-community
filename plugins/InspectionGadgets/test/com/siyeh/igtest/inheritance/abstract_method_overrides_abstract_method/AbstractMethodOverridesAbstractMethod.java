@@ -109,3 +109,12 @@ class CovariantReturnTypes {
   }
 }
 
+class Vararg {
+  interface A {
+    void foo(int[] ints);
+  }
+
+  interface B extends A {
+    void foo(int... ints);
+  }
+}

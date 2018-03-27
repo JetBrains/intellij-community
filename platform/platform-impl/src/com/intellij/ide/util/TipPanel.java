@@ -34,20 +34,29 @@ import java.awt.*;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.openapi.util.SystemInfo.isWin10OrNewer;
+import static com.intellij.openapi.util.text.StringUtil.isEmpty;
+import static com.intellij.ui.Gray.xD0;
+import static com.intellij.util.ui.UIUtil.isUnderDarcula;
+
 public class TipPanel extends JPanel implements DoNotAskOption {
   private static final JBColor DIVIDER_COLOR = new JBColor(0xd9d9d9, 0x515151);
   private static final int DEFAULT_WIDTH = 400;
   private static final int DEFAULT_HEIGHT = 200;
 
-  private final JEditorPane myBrowser;
+  private final TipUIUtil.Browser myBrowser;
   private final JLabel myPoweredByLabel;
   private final List<TipAndTrickBean> myTips = ContainerUtil.newArrayList();
 
   public TipPanel() {
     setLayout(new BorderLayout());
-    myBrowser = TipUIUtil.createTipBrowser();
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myBrowser, true);
-    scrollPane.setBorder(JBUI.Borders.customLine(DIVIDER_COLOR, 1, 0, 1, 0));
+    if (isWin10OrNewer && !isUnderDarcula()) {
+      setBorder(JBUI.Borders.customLine(xD0, 1, 0, 0, 0));
+    }
+    myBrowser = TipUIUtil.createBrowser();
+    myBrowser.getComponent().setBorder(JBUI.Borders.empty(8, 12));
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myBrowser.getComponent(), true);
+    scrollPane.setBorder(JBUI.Borders.customLine(DIVIDER_COLOR, 0, 0, 1, 0));
     add(scrollPane, BorderLayout.CENTER);
 
     myPoweredByLabel = new JBLabel();
@@ -85,9 +94,10 @@ public class TipPanel extends JPanel implements DoNotAskOption {
     setTip(tip, lastTip, myBrowser, settings);
   }
 
-  private void setTip(TipAndTrickBean tip, int lastTip, JEditorPane browser, GeneralSettings settings) {
+  private void setTip(TipAndTrickBean tip, int lastTip, TipUIUtil.Browser browser, GeneralSettings settings) {
     TipUIUtil.openTipInBrowser(tip, browser);
     myPoweredByLabel.setText(TipUIUtil.getPoweredByText(tip));
+    myPoweredByLabel.setVisible(!isEmpty(myPoweredByLabel.getText()));
     settings.setLastTip(lastTip);
   }
 

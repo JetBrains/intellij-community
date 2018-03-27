@@ -95,7 +95,7 @@ public abstract class ModuleRootManagerTestCase extends ModuleTestCase {
   }
 
   protected VirtualFile getJDomSources() {
-    String url = assertOneElement(IntelliJProjectConfiguration.getProjectLibrarySourceRootUrls("JDOM"));
+    String url = assertOneElement(IntelliJProjectConfiguration.getProjectLibrary("JDOM").getSourcesUrls());
     VirtualFile jar = VirtualFileManager.getInstance().refreshAndFindFileByUrl(url);
     assertNotNull(jar);
     return jar;

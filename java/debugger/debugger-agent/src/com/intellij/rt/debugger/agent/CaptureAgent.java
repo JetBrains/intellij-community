@@ -164,7 +164,7 @@ public class CaptureAgent {
             ClassReader reader = new ClassReader(classfileBuffer);
             ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_FRAMES);
 
-            reader.accept(new CaptureInstrumentor(Opcodes.ASM6, writer, capturePoints, insertPoints), 0);
+            reader.accept(new CaptureInstrumentor(Opcodes.API_VERSION, writer, capturePoints, insertPoints), 0);
             byte[] bytes = writer.toByteArray();
 
             if (DEBUG) {
@@ -442,12 +442,22 @@ public class CaptureAgent {
     if ("this".equals(line[0])) {
       return THIS_KEY_PROVIDER;
     }
-    try {
-      return new ParamKeyProvider(Integer.parseInt(line[0]));
-    }
-    catch (NumberFormatException ignored) {
+    if (isNumber(line[0])) {
+      try {
+        return new ParamKeyProvider(Integer.parseInt(line[0]));
+      }
+      catch (NumberFormatException ignored) {
+      }
     }
     return new FieldKeyProvider(line[0], line[1], line[2]);
+  }
+
+  private static boolean isNumber(String s) {
+    if (s == null) return false;
+    for (int i = 0; i < s.length(); ++i) {
+      if (!Character.isDigit(s.charAt(i))) return false;
+    }
+    return true;
   }
 
   private interface KeyProvider {

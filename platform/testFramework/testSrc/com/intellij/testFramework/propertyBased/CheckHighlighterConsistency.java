@@ -24,7 +24,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LexerTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
-import jetCheck.Generator;
+import org.jetbrains.jetCheck.Generator;
 
 /**
  * Checks that incrementally updated editor highlighter produces the same result as it would

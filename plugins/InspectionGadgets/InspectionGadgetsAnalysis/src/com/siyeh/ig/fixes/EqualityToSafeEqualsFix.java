@@ -19,12 +19,12 @@ import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -83,8 +83,9 @@ public class EqualityToSafeEqualsFix extends InspectionGadgetsFix {
     if (lhs == null ||  rhs == null) {
       return;
     }
-    final String lhsText = lhs.getText();
-    final String rhsText = rhs.getText();
+    CommentTracker tracker = new CommentTracker();
+    final String lhsText = tracker.markUnchanged(lhs).getText();
+    final String rhsText = tracker.markUnchanged(rhs).getText();
     @NonNls final StringBuilder newExpression = new StringBuilder();
     if (PsiUtil.isLanguageLevel7OrHigher(expression) && ClassUtils.findClass("java.util.Objects", expression) != null) {
       if (JavaTokenType.NE.equals(expression.getOperationTokenType())) {
@@ -105,6 +106,7 @@ public class EqualityToSafeEqualsFix extends InspectionGadgetsFix {
       }
       newExpression.append(".equals(").append(rhsText).append(')');
     }
-    PsiReplacementUtil.replaceExpressionAndShorten(expression, newExpression.toString());
+
+    PsiReplacementUtil.replaceExpressionAndShorten(expression, newExpression.toString(), tracker);
   }
 }

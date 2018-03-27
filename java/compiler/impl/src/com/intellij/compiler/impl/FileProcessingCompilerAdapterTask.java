@@ -34,7 +34,6 @@ import java.util.List;
  * This is an adapter for running any FileProcessingCompiler as a compiler task.
  *
  * @author Eugene Zhuravlev
- *         Date: 9/5/12
  */
 public class FileProcessingCompilerAdapterTask implements CompileTask {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.FileProcessingCompilerAdapterTask");

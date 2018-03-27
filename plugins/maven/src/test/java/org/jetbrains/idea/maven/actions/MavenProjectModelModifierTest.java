@@ -217,7 +217,7 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
     String pomText = PsiManager.getInstance(myProject).findFile(pom).getText();
     Pattern
       pattern = Pattern.compile("(?s).*<dependency>\\s*<groupId>" + groupId + "</groupId>\\s*<artifactId>" +
-                                artifactId + "</artifactId>\\s*<version>(.*)</version>\\s*</dependency>.*");
+                                artifactId + "</artifactId>\\s*<version>(.*)</version>\\s*<scope>(.*)</scope>\\s*</dependency>.*");
     Matcher matcher = pattern.matcher(pomText);
     assertTrue(matcher.matches());
     return matcher.group(1);

@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.codeInsight;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.editorActions.TypedHandlerDelegate;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
@@ -27,8 +28,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
@@ -37,6 +36,7 @@ import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.regex.Pattern;
 
@@ -44,13 +44,13 @@ import java.util.regex.Pattern;
  * Adds appropriate first parameter to a freshly-typed method declaration.
  * <br/>
  * User: dcheryasov
- * Date: 11/29/10 12:44 AM
  */
 public class PyMethodNameTypedHandler extends TypedHandlerDelegate {
   private static final Pattern DEF_THEN_IDENTIFIER = Pattern.compile(".*\\bdef\\s+" + PyNames.IDENTIFIER_RE);
 
+  @NotNull
   @Override
-  public Result beforeCharTyped(char character, Project project, Editor editor, PsiFile file, FileType fileType) {
+  public Result beforeCharTyped(char character, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file, @NotNull FileType fileType) {
     if (DumbService.isDumb(project) || !(fileType instanceof PythonFileType)) return Result.CONTINUE; // else we'd mess up with other file types!
     if (character == '(') {
       if (!PyCodeInsightSettings.getInstance().INSERT_SELF_FOR_METHODS) {
@@ -95,8 +95,7 @@ public class PyMethodNameTypedHandler extends TypedHandlerDelegate {
                   paramName = "";
                 }
                 // TODO: only print the ")" if Settings require it
-                final CodeStyleSettings settingsManager = CodeStyleSettingsManager.getSettings(project);
-                final CommonCodeStyleSettings settings = settingsManager.getCommonSettings(PythonLanguage.getInstance());
+                final CommonCodeStyleSettings settings = CodeStyle.getLanguageSettings(file, PythonLanguage.getInstance());
                 final StringBuilder textToType = new StringBuilder();
                 textToType.append("(");
                 if (!paramName.isEmpty()) {

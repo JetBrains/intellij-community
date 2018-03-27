@@ -21,7 +21,6 @@ import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.plaf.InsetsUIResource;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
 
@@ -30,13 +29,12 @@ import java.awt.*;
  */
 public class DarculaCheckBoxBorder implements Border, UIResource {
   @Override
-  public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-  }
+  public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {}
 
   @Override
   public Insets getBorderInsets(Component c) {
-    final int a = SystemInfo.isMac || UIUtil.getParentOfType(CellRendererPane.class, c) != null ? 0 : 2;
-    return JBUI.insets(a, a, a, a).asUIResource();
+    int a = SystemInfo.isMac || UIUtil.getParentOfType(CellRendererPane.class, c) != null ? 0 : 2;
+    return JBUI.insets(a).asUIResource();
   }
 
   @Override

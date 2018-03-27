@@ -35,7 +35,6 @@ import javax.swing.*;
 
 /**
 * @author Dmitry Avdeev
-*         Date: 9/27/12
 */
 public class WebModuleBuilder<T> extends ModuleBuilder {
   public static final String GROUP_NAME = "Static Web";

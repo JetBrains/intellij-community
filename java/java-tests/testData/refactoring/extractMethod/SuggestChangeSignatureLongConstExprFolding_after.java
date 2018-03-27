@@ -3,18 +3,18 @@ class C {
 
     void foo(int x) {
 
-        newMethod(x, 1, "A" + "B" + "C" + "D" + "E" + 1);
+        newMethod(x, 1);
 
 
-        newMethod(x, 2, "A" + "B" + "C" + "D" + "E" + 2);
+        newMethod(x, 2);
 
         if (x <= A + B + C + D + E + 2)
             bar("A" + "B" + "C" + "D" + "E" + 2);
     }
 
-    private void newMethod(int x, int i, String s) {
+    private void newMethod(int x, int i) {
         if (x >= A + B + C + D + E + i)
-            bar(s);
+            bar("A" + "B" + "C" + "D" + "E" + i);
     }
 
     void bar(String s) {}

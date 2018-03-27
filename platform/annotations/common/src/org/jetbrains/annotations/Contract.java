@@ -64,4 +64,21 @@ public @interface Contract {
    * to check that the method's return value is actually used in the call place.
    */
   boolean pure() default false;
+
+  /**
+   * Contains a specifier which describes which method parameters can be mutated during the method call.
+   * <p>
+   *   The following values are possible:
+   *   <table>
+   *     <tr><td>"this"</td>Method mutates the receiver object, and doesn't mutates any objects passed as arguments (cannot be applied for static method or constructor)</tr>
+   *     <tr><td>"arg"</td>Method mutates the sole argument and doesn't mutate the receiver object (if applicable)</tr>
+   *     <tr><td>"arg1", "arg2", ...</td>Method mutates the N-th argument</tr>
+   *     <tr><td>"this,arg1"</td>Method mutates the receiver and first argument and doesn't mutate any other arguments</tr>
+   *   </table>
+   * </p>
+   *
+   * @return a mutation specifier string
+   * Warning: This annotation parameter is experimental and may be changed or removed without further notice!
+   */
+  String mutates() default "";
 }

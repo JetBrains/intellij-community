@@ -49,7 +49,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- * Date: 06-Jun-17
  */
 public class SnippetEditorDecorator extends EditorNotifications.Provider<SnippetEditorDecorator.ConfigurationPane>{
   public static final Key<ConfigurationPane> CONTEXT_KEY = Key.create("jshell.editor.toolbar");

@@ -76,6 +76,8 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable implements Co
 
     myServersLabel.setLabelFor(myRepositoriesList);
 
+    myServersPanel.setMinimumSize(new Dimension(-1, 100));
+
     TaskRepositoryType[] groups = TaskRepositoryType.getRepositoryTypes();
 
     final List<AnAction> createActions = new ArrayList<>();

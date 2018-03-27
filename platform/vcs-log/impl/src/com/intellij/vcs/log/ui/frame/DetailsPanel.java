@@ -210,10 +210,7 @@ public class DetailsPanel extends JPanel implements EditorColorsListener {
 
     @Override
     protected void onEmptySelection() {
-      myEmptyText.setText("No commits selected");
-      myMainContentPanel.removeAll();
-      mySelection = ContainerUtil.emptyList();
-      myCommitDetails = Collections.emptySet();
+      setEmpty("No commits selected");
     }
 
     @NotNull
@@ -230,6 +227,18 @@ public class DetailsPanel extends JPanel implements EditorColorsListener {
     @Override
     protected void stopLoading() {
       myLoadingPanel.stopLoading();
+    }
+
+    @Override
+    protected void onError(@NotNull Throwable error) {
+      setEmpty("Error loading commits");
+    }
+
+    private void setEmpty(@NotNull String text) {
+      myEmptyText.setText(text);
+      myMainContentPanel.removeAll();
+      mySelection = ContainerUtil.emptyList();
+      myCommitDetails = Collections.emptySet();
     }
   }
 

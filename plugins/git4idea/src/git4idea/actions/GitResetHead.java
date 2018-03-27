@@ -17,12 +17,15 @@ package git4idea.actions;
 
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.GitUtil;
-import git4idea.commands.GitHandlerUtil;
-import git4idea.commands.GitLineHandler;
+import git4idea.commands.Git;
+import git4idea.commands.GitCommandResult;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.ui.GitResetDialog;
@@ -52,19 +55,24 @@ public class GitResetHead extends GitRepositoryAction {
     if (!d.showAndGet()) {
       return;
     }
-    GitLineHandler h = d.handler();
-    AccessToken token = DvcsUtil.workingTreeChangeStarted(project);
-    try {
-      GitHandlerUtil.doSynchronously(h, GitBundle.getString("resetting.title"), h.printableCommandLine());
-    }
-    finally {
-      token.finish();
-    }
-    GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
-    manager.updateRepository(d.getGitRoot());
-    VfsUtil.markDirtyAndRefresh(true, true, false, d.getGitRoot());
-    if(!h.errors().isEmpty()) {
-      showErrors(project, getActionName(), h.errors());
-    }
+
+    new Task.Backgroundable(project, GitBundle.getString("resetting.title"), true) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        try (AccessToken ignored = DvcsUtil.workingTreeChangeStarted(project)) {
+          GitCommandResult result = Git.getInstance().runCommand(d.handler());
+          if (!result.success()) {
+            VcsNotifier.getInstance(project).notifyError(GitBundle.getString("resetting.title"),
+                                                         result.getErrorOutputAsHtmlString());
+          }
+        }
+      }
+
+      @Override
+      public void onFinished() {
+        GitRepositoryManager.getInstance(project).updateRepository(d.getGitRoot());
+        VfsUtil.markDirtyAndRefresh(true, true, false, d.getGitRoot());
+      }
+    }.queue();
   }
 }

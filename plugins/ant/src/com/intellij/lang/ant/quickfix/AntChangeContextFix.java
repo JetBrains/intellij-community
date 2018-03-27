@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: May 12, 2008
  */
 public class AntChangeContextFix extends BaseIntentionAction {
   public AntChangeContextFix() {

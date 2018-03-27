@@ -8,7 +8,6 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,42 +56,9 @@ public class EnterAction extends EditorAction {
     // Smart indenting here:
     CharSequence text = document.getCharsSequence();
     int caretOffset = editor.getCaretModel().getOffset();
-    String s;
-    if (PlatformUtils.isGoIde()) {
-      int lineStartOffset = document.getLineStartOffset(caretLine);
-      int lineStartWsEndOffset = CharArrayUtil.shiftForward(text, lineStartOffset, " \t");
-      s = "\n" + text.subSequence(lineStartOffset, Math.min(caretOffset, lineStartWsEndOffset));
-    }
-    else {
-      int indentLineNum = caretLine;
-      int lineLength = 0;
-      if (document.getLineCount() > 0) {
-        for(;indentLineNum >= 0; indentLineNum--) {
-          lineLength = document.getLineEndOffset(indentLineNum) - document.getLineStartOffset(indentLineNum);
-          if(lineLength > 0)
-            break;
-        }
-      } else {
-        indentLineNum = -1;
-      }
-
-      int colNumber = editor.getCaretModel().getLogicalPosition().column;
-      StringBuilder buf = new StringBuilder();
-      if(indentLineNum >= 0) {
-        int lineStartOffset = document.getLineStartOffset(indentLineNum);
-        for(int i = 0; i < lineLength; i++) {
-          char c = text.charAt(lineStartOffset + i);
-          if(c != ' ' && c != '\t') {
-            break;
-          }
-          if(i >= colNumber) {
-            break;
-          }
-          buf.append(c);
-        }
-      }
-      s = "\n" + buf;
-    }
+    int lineStartOffset = document.getLineStartOffset(caretLine);
+    int lineStartWsEndOffset = CharArrayUtil.shiftForward(text, lineStartOffset, " \t");
+    String s = "\n" + text.subSequence(lineStartOffset, Math.min(caretOffset, lineStartWsEndOffset));
     document.insertString(caretOffset, s);
     editor.getCaretModel().moveToOffset(caretOffset + s.length());
     EditorModificationUtil.scrollToCaret(editor);

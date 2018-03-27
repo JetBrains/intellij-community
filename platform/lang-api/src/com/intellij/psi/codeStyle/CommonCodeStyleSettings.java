@@ -58,11 +58,11 @@ public class CommonCodeStyleSettings {
 
   private ArrangementSettings myArrangementSettings;
   private CodeStyleSettings   myRootSettings;
-  private IndentOptions       myIndentOptions;
+  private @Nullable IndentOptions       myIndentOptions;
   private final FileType myFileType;
   private boolean             myForceArrangeMenuAvailable;
 
-  protected SoftMargins mySoftMargins = new SoftMargins();
+  private SoftMargins mySoftMargins = new SoftMargins();
 
   @NonNls private static final String INDENT_OPTIONS_TAG = "indentOptions";
 
@@ -138,7 +138,7 @@ public class CommonCodeStyleSettings {
     return commonSettings;
   }
 
-  protected static void copyPublicFields(Object from, Object to) {
+  static void copyPublicFields(Object from, Object to) {
     assert from != to;
     ReflectionUtil.copyFields(to.getClass().getFields(), from, to);
   }
@@ -168,6 +168,9 @@ public class CommonCodeStyleSettings {
     Set<String> supportedFields = getSupportedFields();
     if (supportedFields != null) {
       supportedFields.add("FORCE_REARRANGE_MODE");
+    }
+    else {
+      return;
     }
     DefaultJDOMExternalizer.writeExternal(this, element, new SupportedFieldsDiffFilter(this, supportedFields, defaultSettings));
     mySoftMargins.serializeInto(element);
@@ -207,7 +210,7 @@ public class CommonCodeStyleSettings {
 
     @Override
     public boolean isAccept(@NotNull Field field) {
-      if (mySupportedFieldNames == null ||
+      if (mySupportedFieldNames != null &&
           mySupportedFieldNames.contains(field.getName())) {
         return super.isAccept(field);
       }
@@ -919,11 +922,11 @@ public class CommonCodeStyleSettings {
     public boolean KEEP_INDENTS_ON_EMPTY_LINES = false;
 
     // region More continuations (reserved for versions 2018.x)
-    @SuppressWarnings("unused") public int DECLARATION_PARAMETER_INDENT = - 1;
-    @SuppressWarnings("unused") public int GENERIC_TYPE_PARAMETER_INDENT = -1;
-    @SuppressWarnings("unused") public int CALL_PARAMETER_INDENT = -1;
-    @SuppressWarnings("unused") public int CHAINED_CALL_INDENT = -1;
-    @SuppressWarnings("unused") public int ARRAY_ELEMENT_INDENT = -1; // array declarations
+    public int DECLARATION_PARAMETER_INDENT = - 1;
+    public int GENERIC_TYPE_PARAMETER_INDENT = -1;
+    public int CALL_PARAMETER_INDENT = -1;
+    public int CHAINED_CALL_INDENT = -1;
+    public int ARRAY_ELEMENT_INDENT = -1; // array declarations
     // endregion
 
     private FileIndentOptionsProvider myFileIndentOptionsProvider;
@@ -981,6 +984,12 @@ public class CommonCodeStyleSettings {
       if (SMART_TABS != that.SMART_TABS) return false;
       if (TAB_SIZE != that.TAB_SIZE) return false;
       if (USE_TAB_CHARACTER != that.USE_TAB_CHARACTER) return false;
+
+      if (DECLARATION_PARAMETER_INDENT != that.DECLARATION_PARAMETER_INDENT) return false;
+      if (GENERIC_TYPE_PARAMETER_INDENT != that.GENERIC_TYPE_PARAMETER_INDENT) return false;
+      if (CALL_PARAMETER_INDENT != that.CALL_PARAMETER_INDENT) return false;
+      if (CHAINED_CALL_INDENT != that.CHAINED_CALL_INDENT) return false;
+      if (ARRAY_ELEMENT_INDENT != that.ARRAY_ELEMENT_INDENT) return false;
 
       return true;
     }
@@ -1047,7 +1056,7 @@ public class CommonCodeStyleSettings {
       if (
         ReflectionUtil.comparePublicNonFinalFields(this, obj) &&
         mySoftMargins.equals(((CommonCodeStyleSettings)obj).mySoftMargins) &&
-        myIndentOptions.equals(((CommonCodeStyleSettings)obj).getIndentOptions()) &&
+        Comparing.equal(myIndentOptions, ((CommonCodeStyleSettings)obj).getIndentOptions()) &&
         arrangementSettingsEqual((CommonCodeStyleSettings)obj)
         ) {
         return true;

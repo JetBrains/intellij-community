@@ -74,7 +74,7 @@ class IntelliJCoreArtifactsBuilder {
       ant.mkdir(dir: coreArtifactDir)
       String home = buildContext.paths.communityHome
       List<String> analysisModules = ANALYSIS_API_MODULES + ANALYSIS_IMPL_MODULES
-      new LayoutBuilder(ant, buildContext.project, false).layout(coreArtifactDir) {
+      new LayoutBuilder(buildContext, false).layout(coreArtifactDir) {
         jar("intellij-core.jar") {
           module("util-rt")
           module("util")

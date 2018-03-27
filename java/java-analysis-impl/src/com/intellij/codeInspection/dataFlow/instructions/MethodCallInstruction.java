@@ -253,6 +253,29 @@ public class MethodCallInstruction extends Instruction {
     return myContext;
   }
 
+  /**
+   * @return a nullability problem which will occur on call if qualifier is nullable.
+   * May return null if nullability problem is impossible for this instruction.
+   */
+  @Nullable
+  public NullabilityProblemKind.NullabilityProblem<?> getQualifierNullabilityProblem() {
+    switch (getMethodType()) {
+      case UNBOXING:
+        return NullabilityProblemKind.unboxingNullable.problem(getContext());
+      case METHOD_REFERENCE_CALL:
+        return NullabilityProblemKind.callMethodRefNPE.problem((PsiMethodReferenceExpression)getContext());
+      case REGULAR_METHOD_CALL:
+        if (getContext() instanceof PsiMethodCallExpression) {
+          return NullabilityProblemKind.callNPE.problem((PsiMethodCallExpression)getContext());
+        }
+        // If context is something else (e.g. PsiNewExpression), qualifier is not dereferenced
+        return null;
+      default:
+        // Qualifier is not dereferenced for BOXING or CAST
+        return null;
+    }
+  }
+
   @Nullable
   public DfaValue getPrecalculatedReturnValue() {
     return myPrecalculatedReturnValue;

@@ -14,6 +14,7 @@ import com.intellij.lang.jvm.types.JvmSubstitutor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.PsiModifier.ModifierConstant
+import com.intellij.psi.codeStyle.SuggestedNameInfo
 import com.intellij.psi.impl.compiled.ClsClassImpl
 
 @ModifierConstant
@@ -77,4 +78,9 @@ private fun ExpectedType.Kind.infoKind(): Int {
 
 internal fun JvmSubstitutor.toPsiSubstitutor(project: Project): PsiSubstitutor {
   return JvmPsiConversionHelper.getInstance(project).convertSubstitutor(this)
+}
+
+internal inline fun extractNames(suggestedNames: SuggestedNameInfo?, defaultName: () -> String): Array<out String> {
+  val names = (suggestedNames ?: SuggestedNameInfo.NULL_INFO).names
+  return if (names.isEmpty()) arrayOf(defaultName()) else names
 }

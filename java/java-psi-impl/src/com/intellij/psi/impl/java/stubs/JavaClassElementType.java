@@ -202,9 +202,4 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
     }
   }
 
-  @Override
-  public String getId(@NotNull final PsiClassStub stub) {
-    final String name = stub.getName();
-    return name != null ? name : super.getId(stub);
-  }
 }

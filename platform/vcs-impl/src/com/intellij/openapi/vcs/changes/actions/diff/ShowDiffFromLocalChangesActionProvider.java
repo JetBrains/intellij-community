@@ -23,6 +23,7 @@ import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
 import com.intellij.openapi.vcs.changes.ui.ChangesComparator;
@@ -134,7 +135,16 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
       if (changeList != null) {
         List<Change> changelistChanges = new ArrayList<>(changeList.getChanges());
         ContainerUtil.sort(changelistChanges, ChangesComparator.getInstance(isFlatten));
-        showChangesDiff(project, ListSelection.create(changelistChanges, selectedChange));
+
+        int selectedIndex = ContainerUtil.indexOf(changelistChanges, (Condition<Change>)it -> {
+          return ChangeListChange.HASHING_STRATEGY.equals(selectedChange, it);
+        });
+        if (selectedIndex != -1) {
+          showChangesDiff(project, ListSelection.createAt(changelistChanges, selectedIndex));
+        }
+        else {
+          showChangesDiff(project, ListSelection.create(changelistChanges, selectedChange));
+        }
         return;
       }
     }
@@ -171,9 +181,9 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
                                         @NotNull List<Change> changes,
                                         @NotNull List<VirtualFile> unversioned) {
     List<ChangeDiffRequestChain.Producer> changeRequests =
-      ContainerUtil.map(changes, change -> ChangeDiffRequestProducer.create(project, change));
+      ContainerUtil.mapNotNull(changes, change -> ChangeDiffRequestProducer.create(project, change));
     List<ChangeDiffRequestChain.Producer> unversionedRequests =
-      ContainerUtil.map(unversioned, file -> UnversionedDiffRequestProducer.create(project, file));
+      ContainerUtil.mapNotNull(unversioned, file -> UnversionedDiffRequestProducer.create(project, file));
 
     showDiff(project, ContainerUtil.concat(changeRequests, unversionedRequests), 0);
   }

@@ -148,9 +148,4 @@ public abstract class JavaFieldStubElementType extends JavaStubElementType<PsiFi
     }
   }
 
-  @Override
-  public String getId(@NotNull PsiFieldStub stub) {
-    String name = stub.getName();
-    return name != null ? name : super.getId(stub);
-  }
 }

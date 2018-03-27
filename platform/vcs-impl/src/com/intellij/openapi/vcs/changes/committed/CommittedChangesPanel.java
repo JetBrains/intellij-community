@@ -160,9 +160,11 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
       public void run(@NotNull final ProgressIndicator indicator) {
         try {
           final AsynchConsumer<List<CommittedChangeList>> appender = new AsynchConsumer<List<CommittedChangeList>>() {
+            @Override
             public void finished() {
             }
 
+            @Override
             public void consume(final List<CommittedChangeList> list) {
               runOrInvokeLaterAboveProgress(() -> myBrowser.append(list), ModalityState.stateForComponent(myBrowser), myProject);
             }
@@ -170,9 +172,11 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
           final BufferedListConsumer<CommittedChangeList> bufferedListConsumer = new BufferedListConsumer<>(30, appender, -1);
 
           myProvider.loadCommittedChanges(mySettings, myLocation, myMaxCount, new AsynchConsumer<CommittedChangeList>() {
+            @Override
             public void finished() {
               bufferedListConsumer.flush();
             }
+            @Override
             public void consume(CommittedChangeList committedChangeList) {
               if (myDisposed) {
                 indicator.cancel();

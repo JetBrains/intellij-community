@@ -28,7 +28,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jun 23, 2010
  */
 public abstract class AbstractDomDeclarationSearcher extends PomDeclarationSearcher {
 

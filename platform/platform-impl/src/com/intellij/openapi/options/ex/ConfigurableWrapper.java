@@ -31,7 +31,6 @@ import java.util.*;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 9/17/12
  */
 public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
   private static final Logger LOG = Logger.getInstance(ConfigurableWrapper.class);

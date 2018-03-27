@@ -15,11 +15,14 @@
  */
 package com.siyeh.ipp.functional;
 
+import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pass;
 import com.intellij.psi.*;
@@ -33,16 +36,15 @@ import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenamer;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.duplicates.MethodDuplicatesHandler;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.UniqueNameGenerator;
 import com.siyeh.IntentionPowerPackBundle;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
+import java.util.*;
 
 public class ExtractToMethodReferenceIntention extends BaseElementAtCaretIntentionAction {
   private static final Logger LOG = Logger.getInstance(ExtractToMethodReferenceIntention.class);
@@ -129,7 +131,9 @@ public class ExtractToMethodReferenceIntention extends BaseElementAtCaretIntenti
       PsiMethod method = (PsiMethod)CodeStyleManager.getInstance(project).reformat(JavaCodeStyleManager.getInstance(project).shortenClassReferences(targetClass.add(emptyMethod)));
       PsiMethodReferenceExpression methodReference =
         (PsiMethodReferenceExpression)elementFactory.createExpressionFromText((canBeStatic ? targetClass.getName() : "this") + "::" + targetMethodName, lambdaExpression);
-      methodReference = (PsiMethodReferenceExpression)lambdaExpression.replace(methodReference);
+      CommentTracker tracker = new CommentTracker();
+      methodReference = (PsiMethodReferenceExpression)tracker.replace(lambdaExpression, methodReference);
+      tracker.insertCommentsBefore(methodReference);
 
       startInplaceRename(editor, method, methodReference);
     }
@@ -152,11 +156,28 @@ public class ExtractToMethodReferenceIntention extends BaseElementAtCaretIntenti
     processor.substituteElementToRename(method, editor, new Pass<PsiElement>() {
       @Override
       public void pass(PsiElement substitutedElement) {
-        final MemberInplaceRenamer renamer = new MemberInplaceRenamer(method, substitutedElement, editor);
+        final MemberInplaceRenamer renamer = new MemberInplaceRenamer(method, substitutedElement, editor) {
+          @Override
+          protected boolean performRefactoring() {
+            if (super.performRefactoring()) {
+              ApplicationManager.getApplication().invokeLater(() -> processMethodsDuplicates(method));
+              return true;
+            }
+            return false;
+          }
+        };
         final LinkedHashSet<String> nameSuggestions = new LinkedHashSet<>(suggestedNames);
         renamer.performInplaceRefactoring(nameSuggestions);
       }
     });
+  }
+
+  private static void processMethodsDuplicates(PsiMethod method) {
+    final Runnable runnable = () -> {
+      if (!method.isValid()) return;
+      MethodDuplicatesHandler.invokeOnScope(method.getProject(), Collections.singleton(method), new AnalysisScope(method.getContainingFile()), true);
+    };
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(runnable), MethodDuplicatesHandler.REFACTORING_NAME, true, method.getProject());
   }
 
   private static String getUniqueMethodName(PsiClass targetClass,

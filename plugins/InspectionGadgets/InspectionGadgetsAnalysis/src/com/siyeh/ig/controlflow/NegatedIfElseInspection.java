@@ -27,6 +27,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -100,8 +101,9 @@ public class NegatedIfElseInspection extends BaseInspection {
       if (condition == null) {
         return;
       }
-      final String negatedCondition = BoolUtils.getNegatedExpressionText(condition);
-      String elseText = elseBranch.getText();
+      CommentTracker tracker = new CommentTracker();
+      final String negatedCondition = BoolUtils.getNegatedExpressionText(condition, tracker);
+      String elseText = tracker.markUnchanged(elseBranch).getText();
       final PsiElement lastChild = elseBranch.getLastChild();
       if (lastChild instanceof PsiComment) {
         final PsiComment comment = (PsiComment)lastChild;
@@ -110,8 +112,8 @@ public class NegatedIfElseInspection extends BaseInspection {
           elseText += '\n';
         }
       }
-      @NonNls final String newStatement = "if(" + negatedCondition + ')' + elseText + " else " + thenBranch.getText();
-      PsiReplacementUtil.replaceStatement(ifStatement, newStatement);
+      @NonNls final String newStatement = "if(" + negatedCondition + ')' + elseText + " else " + tracker.markUnchanged(thenBranch).getText();
+      PsiReplacementUtil.replaceStatement(ifStatement, newStatement, tracker);
     }
   }
 

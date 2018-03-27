@@ -4,13 +4,11 @@ Reports <b>static</b> methods which
 are only called from one class which is not the same as the class containing the
 method. Such methods could be moved into that class.
 Methods called from an anonymous class inside the method's class are ignored.
-<p>
-This inspection may be cpu intensive.
 <!-- tooltip end -->
 <p>
 Use the first checkbox below to have this inspection not report when the static method is only used from a test class.
 <p>
-Use the second checkbox below to ignore method calls from inside all anonymous classes.
+Use the second checkbox below to ignore method calls from inside anonymous, local and non-static inner classes.
 <p>
 Use the third checkbox below to not warn on methods which cannot be moved without problems.
 For example because a method with an identical signature is already present in the target class.

@@ -5,9 +5,8 @@ class T {
     }
     void f(boolean b) {
         g(() -> {
-            int n = -1;
             if (b) return 1;
-            return n;
+            return -1;
         });
     }
 

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.merge;
 
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.NotNull;
@@ -58,4 +59,14 @@ public interface MergeSession {
    */
   void conflictResolvedForFile(@NotNull VirtualFile file, @NotNull Resolution resolution);
 
+  /**
+   * Called before {@link #conflictResolvedForFile} when the user executes "Accept Theirs" or "Accept Ours" action
+   * to update file content to the selected version.
+   *
+   * @param resolution AcceptedYours or AcceptedTheirs
+   * @return true if operation was performed, false if we should fall back to generic implementation.
+   */
+  default boolean acceptFileRevision(@NotNull VirtualFile file, @NotNull MergeSession.Resolution resolution) throws VcsException {
+    return false;
+  }
 }

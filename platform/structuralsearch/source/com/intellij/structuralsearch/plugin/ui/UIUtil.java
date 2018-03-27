@@ -36,8 +36,6 @@ import java.awt.event.MouseEvent;
 
 /**
  * @author Maxim.Mossienko
- * Date: Apr 21, 2004
- * Time: 7:50:48 PM
  */
 public class UIUtil {
   private static final String MODIFY_EDITOR_CONTENT = SSRBundle.message("modify.editor.content.command.name");
@@ -107,12 +105,12 @@ public class UIUtil {
     return createOptionLine(new JComponent[]{option});
   }
 
-  public static void setContent(final Editor editor, String val, final int from, final int end, final Project project) {
-    final String value = val != null ? val : "";
+  public static void setContent(final Editor editor, String text) {
+    final String value = text != null ? text : "";
 
     CommandProcessor.getInstance().executeCommand(
-      project, () -> ApplicationManager.getApplication().runWriteAction(
-        () -> editor.getDocument().replaceString(from, (end == -1) ? editor.getDocument().getTextLength() : end, value)),
+      editor.getProject(), () -> ApplicationManager.getApplication().runWriteAction(
+        () -> editor.getDocument().replaceString(0, editor.getDocument().getTextLength(), value)),
       MODIFY_EDITOR_CONTENT, SS_GROUP);
   }
 

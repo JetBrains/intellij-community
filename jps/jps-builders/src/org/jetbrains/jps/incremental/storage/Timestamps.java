@@ -22,7 +22,6 @@ import java.io.IOException;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 4/24/12
  */
 public interface Timestamps {
   void force();

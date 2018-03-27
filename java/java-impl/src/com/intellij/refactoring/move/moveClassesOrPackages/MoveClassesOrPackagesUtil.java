@@ -247,7 +247,7 @@ public class MoveClassesOrPackagesUtil {
         !PsiUtil.isModuleFile(file)) {
       String qualifiedName = newPackage.getQualifiedName();
       if (!Comparing.strEqual(qualifiedName, ((PsiClassOwner)file).getPackageName()) && 
-          PsiNameHelper.getInstance(file.getProject()).isQualifiedName(qualifiedName)) {
+          (qualifiedName.isEmpty() || PsiNameHelper.getInstance(file.getProject()).isQualifiedName(qualifiedName))) {
         // Do not rely on class instance identity retention after setPackageName (Scala)
         String aClassName = aClass.getName();
         ((PsiClassOwner)file).setPackageName(qualifiedName);

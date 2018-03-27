@@ -28,7 +28,6 @@ import java.io.IOException;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Aug 6, 2010
  */
 public abstract class AntDomLoadFileTask extends AntDomPropertyDefiningTask {
 

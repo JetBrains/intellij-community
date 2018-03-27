@@ -19,7 +19,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 05-Jul-16
  */
 public abstract class InternedString {
   @NotNull

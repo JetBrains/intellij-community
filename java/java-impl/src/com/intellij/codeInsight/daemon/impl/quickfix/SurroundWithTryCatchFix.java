@@ -32,7 +32,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author mike
- * Date: Aug 19, 2002
  */
 public class SurroundWithTryCatchFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.SurroundWithTryCatchFix");

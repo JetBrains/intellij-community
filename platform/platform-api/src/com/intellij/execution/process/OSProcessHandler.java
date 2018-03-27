@@ -41,12 +41,35 @@ public class OSProcessHandler extends BaseOSProcessHandler {
   private Set<File> myFilesToDelete = null;
 
   public OSProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
-    this(commandLine.createProcess(), commandLine.getCommandLineString(), commandLine.getCharset());
+    this(startProcess(commandLine), commandLine.getCommandLineString(), commandLine.getCharset());
     myHasErrorStream = !commandLine.isRedirectErrorStream();
     myFilesToDelete = commandLine.getUserData(DELETE_FILES_ON_TERMINATION);
   }
 
-  /** @deprecated use {@link #OSProcessHandler(Process, String)} or any other ctor (to be removed in IDEA 17) */
+  private static Process startProcess(GeneralCommandLine commandLine) throws ExecutionException {
+    try {
+      return commandLine.createProcess();
+    }
+    catch (ExecutionException | RuntimeException | Error e) {
+      deleteTempFiles(commandLine.getUserData(DELETE_FILES_ON_TERMINATION));
+      throw e;
+    }
+  }
+
+  private static void deleteTempFiles(Set<File> tempFiles) {
+    if (tempFiles != null) {
+      try {
+        for (File file : tempFiles) {
+          FileUtil.delete(file);
+        }
+      }
+      catch (Throwable t) {
+        LOG.error("failed to delete temp. files", t);
+      }
+    }
+  }
+
+  /** @deprecated use {@link #OSProcessHandler(Process, String)} or any other constructor (to be removed in IDEA 2019) */
   @Deprecated
   public OSProcessHandler(@NotNull Process process) {
     this(process, null);
@@ -87,11 +110,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
   @Override
   protected void onOSProcessTerminated(int exitCode) {
     super.onOSProcessTerminated(exitCode);
-    if (myFilesToDelete != null) {
-      for (File file : myFilesToDelete) {
-        FileUtil.delete(file);
-      }
-    }
+    deleteTempFiles(myFilesToDelete);
   }
 
   @Override
@@ -137,7 +156,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
       killProcessTreeSync(process);
     }
     else {
-      executeOnPooledThread(() -> killProcessTreeSync(process));
+      executeTask(() -> killProcessTreeSync(process));
     }
   }
 

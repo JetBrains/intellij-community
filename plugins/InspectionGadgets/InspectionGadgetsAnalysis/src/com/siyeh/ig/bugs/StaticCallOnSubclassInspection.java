@@ -25,6 +25,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 
 public class StaticCallOnSubclassInspection extends BaseInspection implements CleanupLocalInspectionTool {
@@ -88,8 +89,9 @@ public class StaticCallOnSubclassInspection extends BaseInspection implements Cl
         return;
       }
       final String containingClassName = containingClass.getQualifiedName();
-      final String argText = argumentList.getText();
-      PsiReplacementUtil.replaceExpressionAndShorten(call, containingClassName + '.' + call.getTypeArgumentList().getText() + methodName + argText);
+      CommentTracker commentTracker = new CommentTracker();
+      final String argText = commentTracker.markUnchanged(argumentList).getText();
+      PsiReplacementUtil.replaceExpressionAndShorten(call, containingClassName + '.' + commentTracker.markUnchanged(call.getTypeArgumentList()).getText() + methodName + argText, commentTracker);
     }
   }
 

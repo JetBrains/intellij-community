@@ -171,7 +171,10 @@ public class IfCanBeAssertionInspection extends BaseInspection {
         if (!(condition instanceof PsiBinaryExpression)) return null;
         PsiExpression nullComparedExpression = ExpressionUtils.getValueComparedWithNull((PsiBinaryExpression)condition);
         if (nullComparedExpression == null) return null;
-        return new Replacer(text -> PsiReplacementUtil.replaceStatementAndShortenClassNames(ifStatement, text + ";"), nullComparedExpression, null);
+        CommentTracker tracker = new CommentTracker();
+        return new Replacer(text -> PsiReplacementUtil.replaceStatementAndShortenClassNames(ifStatement, text + ";", tracker),
+                            tracker.markUnchanged(nullComparedExpression),
+                            null);
       } else {
         PsiReferenceExpression ref = ObjectUtils.tryCast(descriptor.getPsiElement().getParent(), PsiReferenceExpression.class);
         if (ref == null) return null;
@@ -185,7 +188,10 @@ public class IfCanBeAssertionInspection extends BaseInspection {
         }
         PsiExpression[] args = methodCall.getArgumentList().getExpressions();
         if (args.length > 2) return null;
-        return new Replacer(text -> PsiReplacementUtil.replaceExpressionAndShorten(methodCall, text), args[0], args.length == 2 ? args[1] : null);
+        CommentTracker tracker = new CommentTracker();
+        return new Replacer(text -> PsiReplacementUtil.replaceExpressionAndShorten(methodCall, text, tracker),
+                            tracker.markUnchanged(args[0]),
+                            args.length == 2 ? tracker.markUnchanged(args[1]) : null);
       }
     }
 
@@ -207,17 +213,18 @@ public class IfCanBeAssertionInspection extends BaseInspection {
       }
       final PsiIfStatement ifStatement = (PsiIfStatement)parent;
       @NonNls final StringBuilder newStatementText = new StringBuilder("assert ");
-      newStatementText.append(BoolUtils.getNegatedExpressionText(ifStatement.getCondition()));
+      CommentTracker tracker = new CommentTracker();
+      newStatementText.append(BoolUtils.getNegatedExpressionText(ifStatement.getCondition(), tracker));
       final PsiNewExpression newException = getThrownNewException(ifStatement.getThenBranch());
-      final String message = getExceptionMessage(newException);
+      final String message = getExceptionMessage(newException, tracker);
       if (message != null) {
         newStatementText.append(':').append(message);
       }
       newStatementText.append(';');
-      PsiReplacementUtil.replaceStatement(ifStatement, newStatementText.toString());
+      PsiReplacementUtil.replaceStatement(ifStatement, newStatementText.toString(), tracker);
     }
 
-    private static String getExceptionMessage(PsiNewExpression newExpression) {
+    private static String getExceptionMessage(PsiNewExpression newExpression, CommentTracker tracker) {
       if (newExpression == null) {
         return null;
       }
@@ -229,7 +236,7 @@ public class IfCanBeAssertionInspection extends BaseInspection {
       if (arguments.length < 1) {
         return null;
       }
-      return arguments[0].getText();
+      return tracker.markUnchanged(arguments[0]).getText();
     }
   }
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.idea.svn.history;
 
@@ -29,9 +15,10 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.api.Revision;
+import org.jetbrains.idea.svn.api.Target;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -91,7 +78,7 @@ public class SvnRepositoryContentRevision extends SvnBaseContentRevision impleme
 
   @NotNull
   public SvnRevisionNumber getRevisionNumber() {
-    return new SvnRevisionNumber(SVNRevision.create(myRevision));
+    return new SvnRevisionNumber(Revision.of(myRevision));
   }
 
   public static SvnRepositoryContentRevision create(@NotNull SvnVcs vcs,
@@ -99,7 +86,7 @@ public class SvnRepositoryContentRevision extends SvnBaseContentRevision impleme
                                                     @NotNull String path,
                                                     @Nullable FilePath localPath,
                                                     long revision) {
-    return create(vcs, SvnUtil.appendMultiParts(repositoryRoot, path), localPath, revision);
+    return create(vcs, Url.append(repositoryRoot, path), localPath, revision);
   }
 
   public static SvnRepositoryContentRevision createForRemotePath(@NotNull SvnVcs vcs,
@@ -107,7 +94,7 @@ public class SvnRepositoryContentRevision extends SvnBaseContentRevision impleme
                                                                  @NotNull String path,
                                                                  boolean isDirectory,
                                                                  long revision) {
-    FilePath remotePath = VcsUtil.getFilePathOnNonLocal(SvnUtil.appendMultiParts(repositoryRoot, path), isDirectory);
+    FilePath remotePath = VcsUtil.getFilePathOnNonLocal(Url.append(repositoryRoot, path), isDirectory);
     return create(vcs, remotePath, remotePath, revision);
   }
 
@@ -160,8 +147,8 @@ public class SvnRepositoryContentRevision extends SvnBaseContentRevision impleme
 
       try {
         // TODO: Local path could also be used here
-        SVNRevision revision = SVNRevision.create(myRevision);
-        byte[] contents = SvnUtil.getFileContents(myVcs, SvnTarget.fromURL(SvnUtil.parseUrl(getFullPath())), revision, revision);
+        Revision revision = Revision.of(myRevision);
+        byte[] contents = SvnUtil.getFileContents(myVcs, Target.on(SvnUtil.parseUrl(getFullPath())), revision, revision);
         myDst.write(contents);
       }
       catch (VcsException | IOException e) {
@@ -180,7 +167,7 @@ public class SvnRepositoryContentRevision extends SvnBaseContentRevision impleme
   }
 
   @NotNull
-  public SvnTarget toTarget() throws SvnBindException {
-    return SvnTarget.fromURL(SvnUtil.createUrl(getFullPath()), getRevisionNumber().getRevision());
+  public Target toTarget() throws SvnBindException {
+    return Target.on(SvnUtil.createUrl(getFullPath()), getRevisionNumber().getRevision());
   }
 }

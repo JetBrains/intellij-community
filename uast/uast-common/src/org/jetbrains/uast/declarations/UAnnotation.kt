@@ -67,3 +67,7 @@ interface UAnnotation : UElement, UResolvable {
   override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
     visitor.visitAnnotation(this, data)
 }
+
+interface UAnnotationEx : UAnnotation {
+  val uastAnchor: UElement?
+}

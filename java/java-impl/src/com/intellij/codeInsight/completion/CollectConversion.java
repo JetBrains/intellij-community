@@ -16,9 +16,12 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
+import com.intellij.codeInsight.ExpectedTypesProvider;
+import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.TypedLookupItem;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -29,10 +32,11 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collector;
 
 import static com.intellij.psi.CommonClassNames.*;
 
@@ -42,17 +46,60 @@ import static com.intellij.psi.CommonClassNames.*;
 class CollectConversion {
  
   static void addCollectConversion(PsiReferenceExpression ref, Collection<ExpectedTypeInfo> expectedTypes, Consumer<LookupElement> consumer) {
-    final PsiExpression qualifier = ref.getQualifierExpression();
-    PsiType component = qualifier == null ? null : PsiUtil.substituteTypeParameter(qualifier.getType(), JAVA_UTIL_STREAM_STREAM, 0, true);
-    if (component == null) return;
+    PsiClass collectors = JavaPsiFacade.getInstance(ref.getProject()).findClass(JAVA_UTIL_STREAM_COLLECTORS, ref.getResolveScope());
+    if (collectors == null) return;
 
-    JavaPsiFacade facade = JavaPsiFacade.getInstance(ref.getProject());
+    PsiExpression qualifier = ref.getQualifierExpression();
+    if (qualifier == null) {
+      if (ref.getParent() instanceof PsiExpressionList && ref.getParent().getParent() instanceof PsiMethodCallExpression) {
+        PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)ref.getParent().getParent()).getMethodExpression();
+        qualifier = methodExpression.getQualifierExpression();
+        if ("collect".equals(methodExpression.getReferenceName()) && qualifier != null) {
+          suggestCollectorsArgument(expectedTypes, consumer, collectors, qualifier);
+        }
+      }
+      return;
+    }
+
+    convertQualifierViaCollectors(ref, expectedTypes, consumer, qualifier);
+  }
+
+  private static void suggestCollectorsArgument(Collection<ExpectedTypeInfo> expectedTypes, Consumer<LookupElement> consumer, PsiClass collectors, PsiExpression qualifier) {
+    PsiType matchingExpectation = JBIterable.from(expectedTypes).map(ExpectedTypeInfo::getType)
+      .find(t -> TypeConversionUtil.erasure(t).equalsToText(Collector.class.getName()));
+    if (matchingExpectation == null) return;
+
+    for (Pair<String, PsiType> pair : suggestCollectors(Arrays.asList(ExpectedTypesProvider.getExpectedTypes(qualifier, true)), qualifier)) {
+      PsiMethod[] methods = collectors.findMethodsByName(pair.first, false);
+      if (methods.length == 0) continue;
+      
+      JavaMethodCallElement item = new JavaMethodCallElement(methods[0], false, false);
+      item.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
+      item.setInferenceSubstitutorFromExpectedType(qualifier, matchingExpectation);
+      consumer.consume(PrioritizedLookupElement.withPriority(item, 1));
+    }
+  }
+
+  private static void convertQualifierViaCollectors(PsiReferenceExpression ref,
+                                                    Collection<ExpectedTypeInfo> expectedTypes,
+                                                    Consumer<LookupElement> consumer, PsiExpression qualifier) {
+    for (Pair<String, PsiType> pair : suggestCollectors(expectedTypes, qualifier)) {
+      consumer.consume(new MyLookupElement(pair.first, pair.second, ref));
+    }
+  }
+  
+  // each pair of method name in Collectors class, and the corresponding collection type
+  private static List<Pair<String, PsiType>> suggestCollectors(Collection<ExpectedTypeInfo> expectedTypes, PsiExpression qualifier) {
+    PsiType component = PsiUtil.substituteTypeParameter(qualifier.getType(), JAVA_UTIL_STREAM_STREAM, 0, true);
+    if (component == null) return Collections.emptyList();
+
+    JavaPsiFacade facade = JavaPsiFacade.getInstance(qualifier.getProject());
     PsiElementFactory factory = facade.getElementFactory();
-    GlobalSearchScope scope = ref.getResolveScope();
+    GlobalSearchScope scope = qualifier.getResolveScope();
     PsiClass list = facade.findClass(JAVA_UTIL_LIST, scope);
     PsiClass set = facade.findClass(JAVA_UTIL_SET, scope);
     PsiClass collection = facade.findClass(JAVA_UTIL_COLLECTION, scope);
-    if (facade.findClass(JAVA_UTIL_STREAM_COLLECTORS, scope) == null || list == null || set == null || collection == null) return;
+    if (list == null || set == null || collection == null) return Collections.emptyList();
 
     PsiType listType = null;
     PsiType setType = null;
@@ -77,16 +124,17 @@ class CollectConversion {
       setType = factory.createType(set, component);
     }
 
+    List<Pair<String, PsiType>> result = new ArrayList<>();
     if (listType != null) {
-      consumer.consume(new MyLookupElement("toList", listType, ref));
+      result.add(Pair.create("toList", listType));
     }
     if (setType != null) {
-      consumer.consume(new MyLookupElement("toSet", setType, ref));
+      result.add(Pair.create("toSet", setType));
     }
-
     if (expectedTypes.isEmpty() || hasIterable) {
-      consumer.consume(new MyLookupElement("toCollection", factory.createType(collection, component), ref));
+      result.add(Pair.create("toCollection", factory.createType(collection, component)));
     }
+    return result;
   }
 
   private static class MyLookupElement extends LookupElement implements TypedLookupItem {

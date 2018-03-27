@@ -250,13 +250,6 @@ public class DataManagerImpl extends DataManager {
       }
     }
 
-    if (Registry.is("actionSystem.noContextComponentWhileFocusTransfer")) {
-      IdeFocusManager fm = IdeFocusManager.findInstanceByComponent(activeWindow);
-      if (fm.isFocusBeingTransferred()) {
-        return null;
-      }
-    }
-
     // In case we have an active floating toolwindow and some component in another window focused,
     // we want this other component to receive key events.
     // Walking up the window ownership hierarchy from the floating toolwindow would have led us to the main IdeFrame

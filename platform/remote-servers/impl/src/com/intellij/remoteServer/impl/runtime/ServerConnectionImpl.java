@@ -19,6 +19,8 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.deployment.DeploymentConfiguration;
@@ -37,10 +39,12 @@ import com.intellij.remoteServer.runtime.deployment.debug.DebugConnectionDataNot
 import com.intellij.remoteServer.runtime.deployment.debug.DebugConnector;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author nik
@@ -51,10 +55,12 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
   private final ServerConnector<D> myConnector;
   private final ServerConnectionEventDispatcher myEventDispatcher;
   private final ServerConnectionManagerImpl myConnectionManager;
+  private MessageBusConnection myMessageBusConnection;
+
   private volatile ConnectionStatus myStatus = ConnectionStatus.DISCONNECTED;
   private volatile String myStatusText;
   private volatile ServerRuntimeInstance<D> myRuntimeInstance;
-  private final Map<String, DeploymentLogManagerImpl> myLogManagers = ContainerUtil.newConcurrentMap();
+  private final Map<Project, LogManagersForProject> myPerProjectLogManagers = ContainerUtil.newConcurrentMap();
   private final MyDeployments myAllDeployments;
 
   public ServerConnectionImpl(RemoteServer<?> server,
@@ -117,8 +123,12 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
         myRuntimeInstance = null;
       }
       setStatus(ConnectionStatus.DISCONNECTED);
-      for (DeploymentLogManagerImpl logManager : myLogManagers.values()) {
-        logManager.disposeLogs();
+      for (LogManagersForProject forNextProject : myPerProjectLogManagers.values()) {
+        forNextProject.disposeAllLogs();
+      }
+      if (myMessageBusConnection != null) {
+        myMessageBusConnection.disconnect();
+        myMessageBusConnection = null;
       }
     }
   }
@@ -137,10 +147,11 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
         String deploymentName = deployment.getName();
         myAllDeployments.addLocal(deployment);
 
-        DeploymentLogManagerImpl logManager = new DeploymentLogManagerImpl(task.getProject(), new ChangeListener())
+        DeploymentLogManagerImpl logManager = myPerProjectLogManagers.computeIfAbsent(task.getProject(), LogManagersForProject::new)
+          .findOrCreateManager(deployment)
           .withMainHandlerVisible(true);
+
         LoggingHandlerImpl handler = logManager.getMainLoggingHandler();
-        myLogManagers.put(deploymentName, logManager);
         handler.printlnSystemMessage("Deploying '" + deploymentName + "'...");
         onDeploymentStarted.accept(deploymentName);
         instance
@@ -151,18 +162,15 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
 
   @Nullable
   @Override
-  public DeploymentLogManager getLogManager(@NotNull Deployment deployment) {
-    return myLogManagers.get(deployment.getName());
+  public DeploymentLogManager getLogManager(@NotNull Project project, @NotNull Deployment deployment) {
+    LogManagersForProject forProject = myPerProjectLogManagers.get(project);
+    return forProject == null ? null : forProject.findManager(deployment);
   }
 
   @NotNull
   public DeploymentLogManager getOrCreateLogManager(@NotNull Project project, @NotNull Deployment deployment) {
-    DeploymentLogManagerImpl result = (DeploymentLogManagerImpl)getLogManager(deployment);
-    if (result == null) {
-      result = new DeploymentLogManagerImpl(project, new ChangeListener());
-      myLogManagers.put(deployment.getName(), result);
-    }
-    return result;
+    LogManagersForProject forProject = myPerProjectLogManagers.computeIfAbsent(project, LogManagersForProject::new);
+    return forProject.findOrCreateManager(deployment);
   }
 
   @Override
@@ -239,14 +247,18 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
 
     myEventDispatcher.queueDeploymentsChanged(this);
 
-    DeploymentLogManagerImpl logManager = myLogManagers.get(deploymentName);
-    final LoggingHandlerImpl loggingHandler = logManager == null ? null : logManager.getMainLoggingHandler();
+    final List<LoggingHandlerImpl> handlers = myPerProjectLogManagers.values().stream()
+      .map(fnp -> fnp.findManager(deployment))
+      .filter(Objects::nonNull)
+      .map(DeploymentLogManagerImpl::getMainLoggingHandler)
+      .collect(Collectors.toList());
+
     final Consumer<String> logConsumer = message -> {
-      if (loggingHandler == null) {
+      if (handlers.isEmpty()) {
         LOG.info(message);
       }
       else {
-        loggingHandler.printlnSystemMessage(message);
+        handlers.forEach(h -> h.printlnSystemMessage(message));
       }
     };
 
@@ -260,10 +272,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
           undeployInProgress.succeeded();
         }
 
-        DeploymentLogManagerImpl logManager = myLogManagers.remove(deploymentName);
-        if (logManager != null) {
-          logManager.disposeLogs();
-        }
+        myPerProjectLogManagers.values().forEach(nextForProject -> nextForProject.disposeManager(deploymentName));
 
         myEventDispatcher.queueDeploymentsChanged(ServerConnectionImpl.this);
         computeDeployments(myRuntimeInstance, EmptyRunnable.INSTANCE);
@@ -288,6 +297,18 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
     return myAllDeployments.listDeployments();
   }
 
+  private void setupProjectListener() {
+    if (myMessageBusConnection == null) {
+      myMessageBusConnection = ApplicationManager.getApplication().getMessageBus().connect();
+      myMessageBusConnection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+        @Override
+        public void projectClosed(Project project) {
+          onProjectClosed(project);
+        }
+      });
+    }
+  }
+
   @Override
   public void connectIfNeeded(final ServerConnector.ConnectionCallback<D> callback) {
     final ServerRuntimeInstance<D> instance = myRuntimeInstance;
@@ -302,6 +323,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
       public void connected(@NotNull ServerRuntimeInstance<D> instance) {
         setStatus(ConnectionStatus.CONNECTED);
         myRuntimeInstance = instance;
+        setupProjectListener();
         callback.connected(instance);
       }
 
@@ -331,6 +353,49 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
 
     if (myAllDeployments.updateAnyState(deployment, deploymentRuntime, oldStatus, newStatus, statusText)) {
       myEventDispatcher.queueDeploymentsChanged(this);
+    }
+  }
+
+  private void onProjectClosed(@NotNull Project project) {
+    myPerProjectLogManagers.remove(project);
+    boolean hasChanged = myAllDeployments.removedAllLocalForProject(project);
+    if (hasChanged) {
+      myEventDispatcher.queueDeploymentsChanged(this);
+    }
+  }
+
+  private class LogManagersForProject {
+    private final Project myProject;
+    private final Map<String, DeploymentLogManagerImpl> myLogManagers = ContainerUtil.newConcurrentMap();
+
+    public LogManagersForProject(@NotNull Project project) {
+      myProject = project;
+    }
+
+    @Nullable
+    public DeploymentLogManagerImpl findManager(@NotNull Deployment deployment) {
+      return myLogManagers.get(deployment.getName());
+    }
+
+    public DeploymentLogManagerImpl findOrCreateManager(@NotNull Deployment deployment) {
+      return myLogManagers.computeIfAbsent(deployment.getName(), this::newDeploymentLogManager);
+    }
+
+    private DeploymentLogManagerImpl newDeploymentLogManager(String deploymentName) {
+      return new DeploymentLogManagerImpl(myProject, new ChangeListener());
+    }
+
+    public void disposeManager(@NotNull String deploymentName) {
+      DeploymentLogManagerImpl manager = myLogManagers.remove(deploymentName);
+      if (manager != null) {
+        manager.disposeLogs();
+      }
+    }
+
+    public void disposeAllLogs() {
+      for (DeploymentLogManagerImpl nextManager : myLogManagers.values()) {
+        nextManager.disposeLogs();
+      }
     }
   }
 
@@ -502,6 +567,23 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
 
       result.addAll(orderedDeployments.keySet());
       return result;
+    }
+
+    public boolean removedAllLocalForProject(@NotNull Project project) {
+      synchronized (myLocalLock) {
+        boolean hasChanged = false;
+        for (Iterator<LocalDeploymentImpl> it = myLocalDeployments.values().iterator(); it.hasNext(); ) {
+          LocalDeploymentImpl nextLocal = it.next();
+          if (nextLocal.getDeploymentTask() != null && nextLocal.getDeploymentTask().getProject() == project) {
+            it.remove();
+            hasChanged = true;
+          }
+        }
+        if (hasChanged) {
+          myCachedAllDeployments = null;
+        }
+        return hasChanged;
+      }
     }
 
     @SuppressWarnings("Duplicates")

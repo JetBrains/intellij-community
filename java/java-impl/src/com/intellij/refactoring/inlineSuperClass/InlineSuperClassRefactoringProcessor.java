@@ -433,6 +433,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
     return subst;
   }
 
+  @NotNull
   protected String getCommandName() {
     return InlineSuperClassRefactoringHandler.REFACTORING_NAME;
   }

@@ -24,21 +24,17 @@ import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.StateStorage.SaveSession
-import com.intellij.openapi.components.impl.ServiceManagerImpl
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.IProjectStore
-import com.intellij.openapi.components.impl.stores.StoreUtil
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.module.impl.ModuleManagerImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCoreUtil
 import com.intellij.openapi.project.ex.ProjectNameProvider
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.project.impl.ProjectManagerImpl.UnableToSaveProjectNotification
 import com.intellij.openapi.project.impl.ProjectStoreClassProvider
-import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
@@ -47,23 +43,21 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.ReadonlyStatusHandler
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.*
+import com.intellij.util.PathUtilRt
+import com.intellij.util.SmartList
 import com.intellij.util.containers.computeIfAny
-import com.intellij.util.containers.forEachGuaranteed
 import com.intellij.util.containers.isNullOrEmpty
 import com.intellij.util.io.*
 import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.text.nullize
-import gnu.trove.THashSet
-import org.jdom.Element
-import java.io.File
 import java.io.IOException
-import java.nio.file.FileSystems
+import java.nio.file.FileAlreadyExistsException
+import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.Paths
 
-const val PROJECT_FILE = "\$PROJECT_FILE$"
-const val PROJECT_CONFIG_DIR = "\$PROJECT_CONFIG_DIR$"
+internal const val PROJECT_FILE = "\$PROJECT_FILE$"
+internal const val PROJECT_CONFIG_DIR = "\$PROJECT_CONFIG_DIR$"
 
 val IProjectStore.nameFile: Path
   get() = Paths.get(directoryStorePath, ProjectImpl.NAME_FILE)
@@ -71,7 +65,7 @@ val IProjectStore.nameFile: Path
 internal val PROJECT_FILE_STORAGE_ANNOTATION = FileStorageAnnotation(PROJECT_FILE, false)
 internal val DEPRECATED_PROJECT_FILE_STORAGE_ANNOTATION = FileStorageAnnotation(PROJECT_FILE, true)
 
-abstract class ProjectStoreBase(override final val project: ProjectImpl) : ComponentStoreImpl(), IProjectStore {
+internal abstract class ProjectStoreBase(override final val project: ProjectImpl) : ComponentStoreImpl(), IProjectStore {
   // protected setter used in upsource
   // Zelix KlassMaster - ERROR: Could not find method 'getScheme()'
   var scheme = StorageScheme.DEFAULT
@@ -96,6 +90,11 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
 
   override fun getProjectFilePath() = storageManager.expandMacro(PROJECT_FILE)
 
+  /**
+   * `null` for default or non-directory based project.
+   */
+  override fun getProjectConfigDir() = if (isDirectoryBased) storageManager.expandMacro(PROJECT_CONFIG_DIR) else null
+
   override final fun getWorkspaceFilePath() = storageManager.expandMacro(StoragePathMacros.WORKSPACE_FILE)
 
   override final fun clearStorages() {
@@ -109,6 +108,11 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
     LOG.runAndLogException {
       if (isDirectoryBased) {
         normalizeDefaultProjectElement(defaultProject, element, Paths.get(storageManager.expandMacro(PROJECT_CONFIG_DIR)))
+      }
+      else {
+        LOG.runAndLogException {
+          moveComponentConfiguration(defaultProject, element) { if (it == "workspace.xml") Paths.get(workspaceFilePath) else Paths.get(projectFilePath) }
+        }
       }
     }
     (storageManager.getOrCreateStorage(PROJECT_FILE) as XmlElementStorage).setDefaultState(element)
@@ -136,7 +140,7 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
 
       storageManager.addMacro(PROJECT_FILE, filePath)
 
-      val workspacePath = composeWsPath(filePath)
+      val workspacePath = composeFileBasedProjectWorkSpacePath(filePath)
       storageManager.addMacro(StoragePathMacros.WORKSPACE_FILE, workspacePath)
 
       if (refreshVfs) {
@@ -147,24 +151,19 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
 
       if (ApplicationManager.getApplication().isUnitTestMode) {
         // load state only if there are existing files
-        isOptimiseTestLoadSpeed = !File(filePath).exists()
+        isOptimiseTestLoadSpeed = !Paths.get(filePath).exists()
       }
     }
     else {
       scheme = StorageScheme.DIRECTORY_BASED
 
-      // if useOldWorkspaceContentIfExists false, so, file path is expected to be correct (we must avoid file io operations)
-      val isDir = !useOldWorkspaceContentIfExists || Paths.get(filePath).isDirectory()
-      val configDir = "${(if (isDir) filePath else PathUtilRt.getParentPath(filePath))}/${Project.DIRECTORY_STORE_FOLDER}"
+      val configDir = "$filePath/${Project.DIRECTORY_STORE_FOLDER}"
       storageManager.addMacro(PROJECT_CONFIG_DIR, configDir)
       storageManager.addMacro(PROJECT_FILE, "$configDir/misc.xml")
       storageManager.addMacro(StoragePathMacros.WORKSPACE_FILE, "$configDir/workspace.xml")
 
-      if (!isDir) {
-        val workspace = File(workspaceFilePath)
-        if (!workspace.exists()) {
-          useOldWorkspaceContent(filePath, workspace)
-        }
+      if (useOldWorkspaceContentIfExists && !Paths.get(filePath).isDirectory()) {
+        useOldWorkspaceContent(filePath, Paths.get(workspaceFilePath))
       }
 
       if (ApplicationManager.getApplication().isUnitTestMode) {
@@ -407,173 +406,21 @@ private class PlatformProjectStoreClassProvider : ProjectStoreClassProvider {
   }
 }
 
-private fun composeWsPath(filePath: String) = "${FileUtilRt.getNameWithoutExtension(filePath)}${WorkspaceFileType.DOT_DEFAULT_EXTENSION}"
+private fun composeFileBasedProjectWorkSpacePath(filePath: String) = "${FileUtilRt.getNameWithoutExtension(filePath)}${WorkspaceFileType.DOT_DEFAULT_EXTENSION}"
 
-private fun useOldWorkspaceContent(filePath: String, ws: File) {
-  val oldWs = File(composeWsPath(filePath))
-  if (!oldWs.exists()) {
+private fun useOldWorkspaceContent(filePath: String, newWorkspacePath: Path) {
+  if (newWorkspacePath.exists()) {
     return
   }
 
   try {
-    FileUtil.copyContent(oldWs, ws)
+    Paths.get(composeFileBasedProjectWorkSpacePath(filePath)).copy(newWorkspacePath)
+  }
+  catch (ignored: NoSuchFileException) {
+  }
+  catch (ignored: FileAlreadyExistsException) {
   }
   catch (e: IOException) {
     LOG.error(e)
-  }
-}
-
-private fun moveComponentConfiguration(defaultProject: Project, element: Element, projectConfigDir: Path) {
-  val componentElements = element.getChildren("component")
-  if (componentElements.isEmpty()) {
-    return
-  }
-
-  val workspaceComponentNames = THashSet(listOf("GradleLocalSettings"))
-  val compilerComponentNames = THashSet<String>()
-  val goImportsComponentNames = THashSet<String>()
-
-  fun processComponents(aClass: Class<*>) {
-    val stateAnnotation = StoreUtil.getStateSpec(aClass)
-    if (stateAnnotation == null || stateAnnotation.name.isEmpty()) {
-      return
-    }
-
-    val storage = stateAnnotation.storages.sortByDeprecated().firstOrNull() ?: return
-
-    when {
-      storage.path == StoragePathMacros.WORKSPACE_FILE -> workspaceComponentNames.add(stateAnnotation.name)
-      storage.path == "compiler.xml" -> compilerComponentNames.add(stateAnnotation.name)
-      storage.path == "go.imports.xml" -> goImportsComponentNames.add(stateAnnotation.name)
-    }
-  }
-
-  @Suppress("DEPRECATION")
-  val projectComponents = defaultProject.getComponents(PersistentStateComponent::class.java)
-  projectComponents.forEachGuaranteed {
-    processComponents(it.javaClass)
-  }
-
-  ServiceManagerImpl.processAllImplementationClasses(defaultProject as ProjectImpl) { aClass, _ ->
-    processComponents(aClass)
-    true
-  }
-
-  @Suppress("RemoveExplicitTypeArguments")
-  val elements = mapOf(compilerComponentNames to SmartList<Element>(), goImportsComponentNames to SmartList<Element>(), workspaceComponentNames to SmartList<Element>())
-  val iterator = componentElements.iterator()
-  for (componentElement in iterator) {
-    val name = componentElement.getAttributeValue("name") ?: continue
-    for ((names, list) in elements) {
-      if (names.contains(name)) {
-        iterator.remove()
-        list.add(componentElement)
-      }
-    }
-  }
-
-  for ((names, list) in elements) {
-    val name = when {
-      names === workspaceComponentNames -> "workspace.xml"
-      names === goImportsComponentNames -> "go.imports.xml"
-      else -> "compiler.xml"
-    }
-    writeConfigFile(list, projectConfigDir.resolve(name))
-  }
-}
-
-private fun writeConfigFile(elements: List<Element>, file: Path) {
-  if (elements.isEmpty()) {
-    return
-  }
-
-  var wrapper = Element("project").attribute("version", "4")
-  if (file.exists()) {
-    try {
-      wrapper = loadElement(file)
-    }
-    catch (e: Exception) {
-      LOG.warn(e)
-    }
-  }
-  elements.forEach { wrapper.addContent(it) }
-  // .idea component configuration files uses XML prolog due to historical reasons
-  if (file.fileSystem == FileSystems.getDefault()) {
-    // VFS must be used to write workspace.xml and misc.xml to ensure that project files will be not reloaded on external file change event
-    writeFile(file, SaveSession { }, null, wrapper, LineSeparator.LF, prependXmlProlog = true)
-  }
-  else {
-    file.outputStream().use {
-      it.write(XML_PROLOG)
-      it.write(LineSeparator.LF.separatorBytes)
-      wrapper.write(it)
-    }
-  }
-}
-
-// public only to test
-fun normalizeDefaultProjectElement(defaultProject: Project, element: Element, projectConfigDir: Path) {
-  LOG.runAndLogException {
-    moveComponentConfiguration(defaultProject, element, projectConfigDir)
-  }
-
-  LOG.runAndLogException {
-    val iterator = element.getChildren("component").iterator()
-    for (component in iterator) {
-      val componentName = component.getAttributeValue("name")
-
-      fun writeProfileSettings(schemeDir: Path) {
-        component.removeAttribute("name")
-        if (!component.isEmpty()) {
-          val wrapper = Element("component").attribute("name", componentName)
-          component.name = "settings"
-          wrapper.addContent(component)
-
-          val file = schemeDir.resolve("profiles_settings.xml")
-          if (file.fileSystem == FileSystems.getDefault()) {
-            // VFS must be used to write workspace.xml and misc.xml to ensure that project files will be not reloaded on external file change event
-            writeFile(file, SaveSession { }, null, wrapper, LineSeparator.LF, prependXmlProlog = false)
-          }
-          else {
-            file.outputStream().use {
-              wrapper.write(it)
-            }
-          }
-        }
-      }
-
-      when (componentName) {
-        "InspectionProjectProfileManager" -> {
-          iterator.remove()
-          val schemeDir = projectConfigDir.resolve("inspectionProfiles")
-          convertProfiles(component.getChildren("profile").iterator(), componentName, schemeDir)
-          component.removeChild("version")
-          writeProfileSettings(schemeDir)
-        }
-
-        "CopyrightManager" -> {
-          iterator.remove()
-          val schemeDir = projectConfigDir.resolve("copyright")
-          convertProfiles(component.getChildren("copyright").iterator(), componentName, schemeDir)
-          writeProfileSettings(schemeDir)
-        }
-
-        ModuleManagerImpl.COMPONENT_NAME -> {
-          iterator.remove()
-        }
-      }
-    }
-  }
-}
-
-private fun convertProfiles(profileIterator: MutableIterator<Element>, componentName: String, schemeDir: Path) {
-  for (profile in profileIterator) {
-    val schemeName = profile.getChildren("option").find { it.getAttributeValue("name") == "myName" }?.getAttributeValue("value") ?: continue
-
-    profileIterator.remove()
-    val wrapper = Element("component").attribute("name", componentName)
-    wrapper.addContent(profile)
-    val path = schemeDir.resolve("${FileUtil.sanitizeFileName(schemeName, true)}.xml")
-    JDOMUtil.write(wrapper, path.outputStream(), "\n")
   }
 }

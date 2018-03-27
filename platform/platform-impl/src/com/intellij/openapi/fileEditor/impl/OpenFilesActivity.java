@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 4/11/12
  */
 public class OpenFilesActivity implements StartupActivity, DumbAware {
 

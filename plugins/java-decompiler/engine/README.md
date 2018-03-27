@@ -52,15 +52,15 @@ The rest of options can be left as they are: they are aimed at professional reve
 - lit (0): output numeric literals "as-is"
 - asc (0): encode non-ASCII characters in string and character literals as Unicode escapes
 - bto (1): interpret int 1 as boolean true (workaround to a compiler bug)
-- nns (1): allow for not set synthetic attribute (workaround to a compiler bug)
+- nns (0): allow for not set synthetic attribute (workaround to a compiler bug)
 - uto (1): consider nameless types as java.lang.Object (workaround to a compiler architecture flaw)
 - udv (1): reconstruct variable names from debug information, if present
 - rer (1): remove empty exception ranges
 - fdi (1): de-inline finally structures
 - mpm (0): maximum allowed processing time per decompiled method, in seconds. 0 means no upper limit
 - ren (0): rename ambiguous (resp. obfuscated) classes and class elements
-- urc: full name of user-supplied class implementing IIdentifierRenamer. It is used to determine which class identifiers
-         should be renamed and provides new identifier names (see "Renaming identifiers")
+- urc (-): full name of a user-supplied class implementing IIdentifierRenamer interface. It is used to determine which class identifiers
+           should be renamed and provides new identifier names (see "Renaming identifiers")
 - inn (1): check for IntelliJ IDEA-specific @NotNull annotation and remove inserted code if found
 - lac (0): decompile lambda expressions to anonymous classes
 - nls (0): define new line character to be used for output. 0 - '\r\n' (Windows), 1 - '\n' (Unix), default is OS-dependent

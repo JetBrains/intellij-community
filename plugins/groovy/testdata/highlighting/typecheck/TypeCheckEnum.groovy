@@ -99,7 +99,7 @@ class FooEnum {
       case 7: <error descr="Cannot return 'short' from method returning 'E'">return</error> 1 as short
       case 8: <error descr="Cannot return 'long' from method returning 'E'">return</error> 1 as long
       case 9: <error descr="Cannot return 'boolean' from method returning 'E'">return</error> 1 as boolean
-      case 10: return explicitVoid()
+      case 10: <warning descr="Cannot return 'void' from method returning 'E'">return</warning> explicitVoid()
       case 11: <error descr="Cannot return 'Date' from method returning 'E'">return</error> new Date()
       case 12: return <warning descr="Cannot find enum constant 'a' in enum 'E'">"a"</warning>
       case 13: return <weak_warning descr="Cannot assign string to enum 'E'">"${System.in.read()}"</weak_warning>

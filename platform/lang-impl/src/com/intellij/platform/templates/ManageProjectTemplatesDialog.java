@@ -41,7 +41,6 @@ import java.util.Arrays;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 11/13/12
  */
 class ManageProjectTemplatesDialog extends DialogWrapper {
 

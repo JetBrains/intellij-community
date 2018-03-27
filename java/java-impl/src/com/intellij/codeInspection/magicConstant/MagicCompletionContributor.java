@@ -27,16 +27,12 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
@@ -99,7 +95,7 @@ public class MagicCompletionContributor extends CompletionContributor {
 
   @NotNull
   public static List<Pair<PsiModifierListOwner, PsiType>> getMembersWithAllowedValues(@NotNull PsiElement pos) {
-    List<Pair<PsiModifierListOwner, PsiType>> result = ContainerUtil.newArrayList();
+    Set<Pair<PsiModifierListOwner, PsiType>> result = new THashSet<>();
     if (IN_METHOD_CALL_ARGUMENT.accepts(pos)) {
       PsiCall call = PsiTreeUtil.getParentOfType(pos, PsiCall.class);
       if (!(call instanceof PsiExpression)) return Collections.emptyList();
@@ -124,7 +120,7 @@ public class MagicCompletionContributor extends CompletionContributor {
         PsiParameter[] params = method.getParameterList().getParameters();
         if (i >= params.length) continue;
         PsiParameter parameter = params[i];
-        result.add(new Pair<>(parameter, parameter.getType()));
+        result.add(Pair.create(parameter, parameter.getType()));
       }
     }
     else if (IN_BINARY_COMPARISON.accepts(pos)) {
@@ -134,6 +130,14 @@ public class MagicCompletionContributor extends CompletionContributor {
           PsiModifierListOwner resolved = resolveExpression(operand);
           if (resolved != null) {
             result.add(Pair.create(resolved, operand.getType()));
+            // if something interesting assigned to this variable, e.g. magic method, suggest its magic too
+            MagicConstantInspection.processValuesFlownTo(operand, pos.getContainingFile(), pos.getManager(), expression -> {
+              PsiModifierListOwner assigned = resolveExpression(expression);
+              if (assigned != null) {
+                result.add(Pair.create(assigned, operand.getType()));
+              }
+              return true;
+            });
           }
         }
       }
@@ -167,11 +171,11 @@ public class MagicCompletionContributor extends CompletionContributor {
         PsiReference ref = pair.getReference();
         PsiMethod method = ref == null ? null : (PsiMethod)ref.resolve();
         if (method != null) {
-          result.add(new Pair<>(method, method.getReturnType()));
+          result.add(Pair.create(method, method.getReturnType()));
         }
       }
     }
-    return result;
+    return new ArrayList<>(result);
   }
 
   private static void addCompletionVariants(@NotNull final CompletionParameters parameters,

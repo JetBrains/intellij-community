@@ -19,7 +19,6 @@ import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.VcsTaskHandler;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.tasks.BranchInfo;
 import com.intellij.tasks.LocalTask;
@@ -28,6 +27,7 @@ import com.intellij.tasks.actions.OpenTaskDialog;
 import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.RunAll;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +37,6 @@ import java.util.List;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 18.07.13
  */
 public abstract class TaskBranchesTest extends PlatformTestCase {
 
@@ -45,13 +44,12 @@ public abstract class TaskBranchesTest extends PlatformTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    try {
-      ((ChangeListManagerImpl)ChangeListManager.getInstance(myProject)).waitEverythingDoneInTestMode();
-    }
-    finally {
-      myTaskManager = null;
-      super.tearDown();
-    }
+    new RunAll()
+      .append(() -> ChangeListManagerImpl.getInstanceImpl(myProject).freeze("For Tests"))
+      .append(() -> ChangeListManagerImpl.getInstanceImpl(myProject).waitEverythingDoneInTestMode())
+      .append(() -> myTaskManager = null)
+      .append(() -> super.tearDown())
+      .run();
   }
 
   public void testVcsTaskHandler() {

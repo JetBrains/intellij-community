@@ -277,7 +277,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       public void actionPerformed(@NotNull AnActionEvent e) {
         myFilterComponent.reset();
         currentKeymapChanged();
-        myFilteringPanel.showPopup(searchToolbar);
+        myFilteringPanel.showPopup(searchToolbar, e.getInputEvent().getComponent());
       }
     });
     group.add(new DumbAwareAction(KeyMapBundle.message("filter.clear.action.text"),
@@ -330,11 +330,12 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
   }
 
   private void filterTreeByShortcut(Shortcut shortcut) {
-    myTreeExpansionMonitor.freeze();
+    boolean wasFreezed = myTreeExpansionMonitor.isFreeze();
+    if (!wasFreezed) myTreeExpansionMonitor.freeze();
     myActionsTree.filterTree(shortcut, myQuickLists);
     final JTree tree = myActionsTree.getTree();
     TreeUtil.expandAll(tree);
-    myTreeExpansionMonitor.restore();
+    if (!wasFreezed) myTreeExpansionMonitor.restore();
   }
 
   public void showOption(String option) {

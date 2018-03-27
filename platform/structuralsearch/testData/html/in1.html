@@ -1,0 +1,401 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<LINK REL="stylesheet" HREF="../style.css" TYPE="text/css">
+<title>IntelliJ IDEA Help: Intention Actions</title>
+</head>
+<body style="font-family: Verdana; font-size: 13" bgColor="#ffffff" LEFTMARGIN="0" RIGHTMARGIN="0" MARGINWIDTH="0" MARGINHEIGHT="0" TOPMARGIN="0" link="#336666" vlink="#669999" alink="#669999">
+
+<table cellspacing="0" width="65%" height="30" cellPadding="0"  border="0">
+  <tr>
+    <td width="70%" valign="center" bgcolor="#669999" background="../images/secondary/headerBg.gif">
+       <font class="mainheader">&nbsp;&nbsp;Intention Actions</font>
+    </td>
+    <td width="30%" valign="center"  height="25" align="right" background="../images/secondary/headerBg.gif">
+      <img src="../images/secondary/headerSec.gif">
+    </td>
+  </tr>
+  <tr>
+    <td colspan="2"><img src="../images/secondary/transparency.gif" width="600" height="1" border="0">
+    </td>
+  </tr>
+</table>
+<table cellpadding="15" width="750" border="0">
+<tr><td valign="top">
+<table  width="100%"  cellPadding="3"  border="0" bgcolor="#669999">
+    <tr>
+        <td>
+            <font class="tableheader">Overview</font>
+        </td>
+    </tr>
+</table>
+<br>
+Everyone makes mistakes while writing code. Most IDEs simply ignore this fact and leave you on your own. You have to compile to find out you
+did something wrong, and then you're on your own to figure out what you did, where you did it, and how to fix it when you finally find what you did. <br><br>
+
+<font class="idea">IntelliJ IDEA</font>, on the other hand, assumes that mistakes <i>will</i> happen when you're coding complex solutions under deadline pressure, so
+some intelligence is built in to  assist you in dealing with them, trying to guess what you were going to make or what you <font class="detailedtext">INTENDED</font>
+to do. Almost like a pair programming partner, <font class="idea">IntelliJ IDEA</font> observes the code you write and tries to flag problems <i>as they occur</i>. What's more,
+it suggests one or more ways of solving the problem. If you agree with a proposed solution, IntelliJ IDEA fixes the problem after a quick keystroke or click. If the proposed
+fixes are not what you need, you at least know about the problem and can correct it yourself. In other words, when IntelliJ IDEA considers that there is something wrong
+with your code, it suggests an ACTION to fix it. This feature is called <font class="detailedtext">Intention Actions</font>. Not only, does is help you find and
+fix mistakes, but it can also speed coding by enabling you to start using new things before they have been declared. Let's see an example of how this
+can help you.<br><br>
+
+Suppose that while writing code, you find you need a new field. Traditionally, you would scroll up the class declaration, declare the new
+field, then scroll back down and begin using it. You might do those steps in the opposite order, or you might just use a new symbol and forget to
+declare it, not realizing your mistake until you compile. In any case, it's inefficient. With <font class="idea">IDEA</font>, you can just start using
+the new field without declaring it first. The name will be <a href="errorHighlighting.html" class="context">highlighted as an error</a> because it is not
+yet declared. Now move the caret into the name. <font class="idea">IntelliJ IDEA</font> will show a light bulb sign by the current line. That's your cue that the
+Intention Action feature has spotted the problem and has a suggestion for you.
+
+<ul><img src="../images/editing/intentionBulb.gif" border="1"></ul>
+
+Now press <font class="detailedtext"><nobr>Alt + Enter</nobr></font> (or click the light bulb) and IDEA pops up a list of suggested actions it can take with this reference to fix
+the code.
+
+<ul><img src="../images/editing/intentionDialog.gif" border="1"></ul>
+
+In this case, <font class="idea">IntelliJ IDEA</font> suggests several possible actions: create either a field, a local variable, or a parameter, or rename the reference.
+If a suggested solution is suitable (in this case, creating a field), press <font class="detailedtext">Enter</font> (or click the item in the popup).
+<font class="idea">IntelliJ IDEA</font> will then create the new field declaration at an appropriate line (which <i>you</i> don't need to scroll to!), and also try to
+guess its type. If none of the suggestions reflect what you really want, press <font class="detailedtext">Escape</font> to remove the popup. You can then proceed
+to fix the code however you choose.<br><br>
+
+<!-- begin NOTE -->
+<hr>
+<table cellpadding="5" border="0" width="100%">
+    <tr>
+        <td valign="top" width="5%"><img src="../images/secondary/bell2.gif" border="0"></td>
+        <td width="95%"><font class="note">Intention actions also appear as appropriate in the <a class="notelink" href="../uiDesigner/index.html">GUI Designer</a> for form components and/or properties.</font></td>
+    </tr>
+</table>
+<hr>
+<!-- end NOTE -->
+<br><br>
+<table  width="100%"  cellPadding="3"  border="0" bgcolor="#669999">
+    <tr>
+        <td>
+            <font class="tableheader"><a name="disable"></a>Disabling Intention Actions</font>
+        </td>
+    </tr>
+</table>
+
+
+<table width="100%" cellpadding="8">
+    <tr>
+        <td bgcolor="#669999" >
+            <font class="tableheader"><a name="disable"></a>Disabling Intention Actions</font>
+        </td>
+    </tr>
+</table>
+
+
+<br>
+If you needn&#039;t an intention action to appear in a project for a particular expression or statement each time the
+caret is on it you can switch it off. Every suggested intention action has a bulb sign to the left. Just click it.
+The bulb sign will be grayed and this action will not appear again. However, if there are several actions possible
+you have to switch off all of them.
+<ul><img src="../images/editing/intentionDialogWithDisabled.gif" border="1"></ul>
+And if you wish to see what intention actions are available for this expression or statement you can still
+use the <font class="detailedtext"><nobr>Alt + Enter</nobr></font> shortcut. To switch on the disabled intention action
+click the grayed bulb.
+<br><br>
+There is another way to manage the inspection-related intention actions - they can be suppressed. In other words,
+you can "switch off" inspection check for either particular class or a class member, or edit settings for the selected
+inspection.<br><br>
+After the intention action is opened and there is a small arrow at the right, press it or press
+<font class="detailedtext">Enter</font>.
+<ul><img src="../images/editing/intentionDialogSuppress.gif" border="1"></ul>
+
+In the appearing popup select the desired action - to suppress inspections either for a statement/method/class or
+edit the inspection properties.
+The inspection properties can be edited in the <font class="detailedtext">'Inspection name' Settings</font> dialog.
+
+<ul><img src="../images/editing/intentionDialogSettings.gif" border="1"></ul>
+
+The dialog elements are similar to the <font class="detailedtext">Inspection &amp; Highlighting Profiles</font> option
+group of the <a class="context" href="../preferences/errorHighlight.html#profiles">Errors</a> dialog.
+
+<br><br>
+
+<table width="100%" cellPadding="3"  border="1" bgcolor="#669999">
+    <tr>
+        <td>
+            <font class="tableheader">Types of Intention Actions</font>
+        </td>
+    </tr>
+</table>
+<br>
+Generally, intention actions can be divided into several groups:
+<ol>
+    <li><font class="detailedtext">&quot;Create from usage&quot; intentions</font><br>
+    This type of intention action creates new code items: classes, interfaces, methods, etc. They are smart enough to analyze
+	your code and provide actions suitable for the particular case. For example,
+	<font class="detailedtext">Create constant field</font> is suggested if the reference is uppercase, or
+	<font class="detailedtext">Create class</font> appears when a name is typed after the <font class="detailedtext">new</font>
+	keyword, or when an identifier starts with a capitalized letter, etc.<br><br>
+
+	The main concept behind this type is that you can begin using new things <i>without declaring them first</i>. You are not taken
+	away from your current task for mundane minutiae like creating declarations, new files, etc. which <font class="idea">IDEA</font>
+	handles while <i>you</i> keep focused.<br><br>
+    </li>
+    <li><font class="detailedtext">Quick fixes</font><br>
+    This type of intention action responds to common coding mistakes: a misspelled variable name, using an improper access modifier, or an
+	expression of the wrong type. <font class="idea">IDEA</font> catches these kinds of problems as you type, and provides a quick way to
+	fix them using Intentions Actions with appropriate suggestions for the error.
+	<br><br>
+    </li>
+    <li><font class="detailedtext">Micro-refactorings</font><br>
+    These intention actions appear for code that is correct, but which may possible be made more readable by such things as:
+    <ul>
+    <img src="../images/secondary/markerL2.gif">&nbsp;splitting declaration and assignment<br>
+    <img src="../images/secondary/markerL2.gif">&nbsp;inverting <font class="detailedtext">if</font> condition <br>
+    <img src="../images/secondary/markerL2.gif">&nbsp;splitting into 2 <font class="detailedtext">if</font> statements <br>
+    <img src="../images/secondary/markerL2.gif">&nbsp;etc.<br><br>
+    </ul>
+    </li>
+    <li><font class="detailedtext">EJB-specific intentions</font><br>
+    This type of intention action occurs only within EJB classes. They catch and provide fixes for a number of error and warning conditions. For
+	details, see <a href="intentionActionList.html#ejbactions" class="context">Intention Action List: Intention Actions for EJBs</a>.<br><br>
+    </li>
+    <li><font class="detailedtext">Miscellaneous intentions</font><br>
+    The group includes intentions that cannot be placed in any of the groups above. Currently, there are two of them:
+    <font class="detailedtext">Fetch external resource</font> and <font class="detailedtext">Ignore external resource</font>.
+    </li>
+</ol>
+
+The light bulb sign differs for various intentions.
+<br><br>
+<table width="90%" border="1" cellpadding="6">
+  <tr>
+    <td valign="center">Intention action sign</td>
+    <td valign="center"><img src="../images/iconsMarks/bulbEnabled.gif"></td>
+    <td valign="top">A yellow bulb indicates that IDEA just proposes you to alter your code. It covers a range of
+    situations, from warning correction to suggestions for code improvement (like micro-refactorings).</td>
+  </tr>
+  <tr>
+    <td valign="center">Quick-fix sign</td>
+    <td valign="center"><img src="../images/iconsMarks/quickfixBulb.gif"></td>
+    <td valign="top">A red bulb with an exclamation mark indicates that IntelliJ IDEA suggests you a way to fix an error.
+    It is related to such intentions as <font class="detailedtext">Create from usage intentions</font> and
+    <font class="detailedtext">Quick fixes</font>.
+    </td>
+  </tr>
+</table>
+<br><br>
+To see the complete list of <font class="detailedtext">Intention Actions</font>, please, refer to the <a href="intentionActionList.html" class="context">Intention
+Action List</a> section.<br><br>
+<!-- ?????  If the content that was in the file linked below has moved somewhere other than intentionActionList.html then we need this next
+     section, otherwise not. -->
+<!-- <table cellpadding="5" border="0" width="100%">
+    <tr>
+        <td valign="top" width="5%">
+            <img src="../images/secondary/bell2.gif" border="0">
+        </td>
+		<td width="95%"><font class="note">The <font class="notebold">Intention Actions</font> feature for EJBs is described in the
+		<a href="../j2ee/ejb/editingEJB.html#intentionActions" class="notelink"  color="#993300"> Intention Actions in EJBs</a> section.</font>
+        </td>
+    </tr>
+</table>
+<hr> -->
+
+<table  width="100%"  cellPadding="3"  border="0" bgcolor="#669999">
+    <tr>
+        <td>
+            <font class="tableheader"><a name="create"></a>&#039;Create from Usage&#039; Intention Actions</font>
+        </td>
+    </tr>
+</table>
+<br>
+This is a common name for a group of intention actions including &#039;Create class from usage&#039;, &#039;Create field from usage&#039;,
+etc. These intentions work in a quite similar way when you have unresolved references.<br><br>
+For instance, you have the following unresolved reference:
+<ul><img src="../images/editing/intentionCreateField1.gif" border="1"></ul>
+Press <font class="detailedtext"><nobr>Alt + Enter</nobr></font> and select <font class="detailedtext">Create field &#039;ref_1&#039;</font>.
+<ul><img src="../images/editing/intentionCreateField2.gif" border="1"></ul>
+IDEA creates a field and suggests an appropriate type in the drop-down list.
+<ul><img src="../images/editing/intentionCreateField3.gif" border="1"></ul>
+You can select one of the types suggested by IntelliJ IDEA or enter another one.
+<br><br>
+<table width="100%" cellPadding="3" border="0" bgcolor="#669999">
+    <tr>
+        <td>
+            <font class="tableheader"><a name="accessor"></a>&#039;Create Getter/Setter&#039; Intention Action</font>
+        </td>
+    </tr>
+</table>
+<br>
+This is a special case of the <a class="context" href="#create">&#039;Create from Usage&#039; Intention Action</a>. <br><br>
+The unresolved method call should contain words <font class="detailedtext">get</font>, <font class="detailedtext">set</font>
+or <font class="detailedtext">is</font>
+<ul><img src="../images/editing/intentionCreateGetter1.gif" border="1"></ul>
+
+Press <font class="detailedtext"><nobr>Alt + Enter</nobr></font>. IntelliJ IDEA suggests to create a getter (or setter when
+prefix <font class="detailedtext">set</font> is present) for the corresponding reference. Select
+<font class="detailedtext">Create Getter</font>.
+<ul><img src="../images/editing/intentionCreateGetter2.gif" border="1"></ul>
+
+IDEA creates a getter method with a suggested return type, which is automatically selected. You can either type a new value or select a different type
+from a list by pressing <font class="detailedtext"><nobr>Ctrl + Space</nobr></font>.
+<ul><img src="../images/editing/intentionCreateGetter3.gif" border="1"></ul>
+
+After specifying the return type for the method (press <font class="detailedtext">Enter</font>),
+a list pops up enabling you to choose a name for the returned variable chosen from the fields of an applicable type.
+You can select one of the types suggested by IntelliJ IDEA or enter another one. Besides, you can base the accessor on the existing
+field or define a new one.
+<ul><img src="../images/editing/intentionCreateGetter4.gif" border="1"></ul>
+
+<table width="100%" cellPadding="3" border="0" bgcolor="#669999">
+    <tr>
+        <td>
+            <font class="tableheader"><a name="rename"></a>&#039;Rename reference&#039; Intention Action</font>
+        </td>
+    </tr>
+</table>
+<br>
+The <font class="detailedtext">Rename reference</font> intention action works like intentions of the
+<a class="context" href="#create">Create from Usage</a> type.<br><br>
+
+Sometimes you can mistype a name. A quick way to fix it is with the <font class="detailedtext">Rename reference</font> intention action:
+<ul><img src="../images/editing/intentionRenameReference1.gif" border="1"></ul>
+
+When you choose Rename reference form the actions list, IDEA makes a suggestion from among the references with similar spelling,
+and drops down a list of valid field and local variable names.
+
+<ul><img src="../images/editing/intentionRenameReference2.gif" border="1"></ul>
+You can keep the default suggestion in (selected and outlined in red) by pressing <font class="detailedtext">Enter</font>, or you can type a different name
+(a good choice if the name is short), or you can select one of the names suggested by IntelliJ IDEA in the drop-down list (a good idea for long names). By typing the first few
+letters you can narrow down the list. After you press <font class="detailedtext">Enter</font>, all unresolved references with the same name are renamed to the
+new value.
+
+<br><br>
+<table width="100%" cellPadding="3" border="0" bgcolor="#669999">
+    <tr>
+        <td>
+            <font class="tableheader"><a name="javadoc"></a>&#039;Add Javadoc Tag&#039; Intention Action</font>
+        </td>
+    </tr>
+</table>
+<br>
+The <font class="detailedtext">Add Javadoc Tag</font> intention action works like intentions of the
+<a class="context" href="#create">Create from Usage</a> type.<br><br>
+
+If you write a new custom Javadoc tag, an Intention Action is suggested that enables you to add it to the list
+of custom Javadoc tags:
+<ul><img src="../images/editing/intentionAddJavadocTag.gif" border="1"></ul>
+
+<hr>
+<table cellpadding="5" border="0" width="100%">
+    <tr>
+        <td valign="top" width="5%">
+            <img src="../images/secondary/bell2.gif" border="0">
+        </td>
+        <td width="95%"><font class="note">You can manage custom Javadoc tags in
+        <font class="notebold">File | Settings | IDE Settings: Errors: Unknown Javadoc Tags: Options</font>.</font>
+        </td>
+    </tr>
+</table><br>
+<hr>
+<!-- Another way to add or to edit/remove additional tags, open the <font class="detailedtext">File | Settings | IDE Settings | Errors</font>
+dialog and select there the <font class="detailedtext">Unknown javadoc tags</font> item. In the
+<font class="detailedtext">Options</font> panel the <font class="detailedtext">Additional JavaDoc Tags</font> text field
+appears.
+
+<br><br><img src="../images/editing/intentionAddJavadocTag3.gif" border="1"><br><br>
+
+You can add/edit/remove tags in this field or call the <font class="detailedtext">Edit Additional JavaDoc Tags</font>
+dialog pressing the <font class="detailedtext">Expand Field</font> button if the tag list does not fit the field.
+
+<br><br><img src="../images/editing/intentionAddJavadocTag3.gif" border="1"><br><br>
+ -->
+<table width="100%" cellPadding="3" border="0" bgcolor="#669999">
+    <tr>
+        <td>
+            <font class="tableheader"><a name="parameter"></a>Interface Intention Action on Parameter Mismatch</font>
+        </td>
+    </tr>
+</table>
+<br>
+This intention action is related to the micro-refactorings. It inserts interface implementation into a class in case
+there is a method call where some parameters have a type of this interface.
+<br><br>
+
+Let's take following two classes and an interface.
+
+<br><br><img src="../images/editing/intentionInterfaceParamter1.gif" border="1"><br><br>
+
+The <font class="detailedtext">bar()</font> method of <font class="detailedtext">ClassCaller</font> calls
+<font class="detailedtext">foo()</font> from <font class="detailedtext">ClassCallee</font>. However, the caller class
+lacks implementation of the <font class="detailedtext">myInterface</font> interface. Press <font class="detailedtext"><nobr>Alt + Enter</nobr></font>.
+
+<br><br><img src="../images/editing/intentionInterfaceParamter2.gif" border="1"><br><br>
+
+Select &#039;<font class="detailedtext">Make &#039;ClassCaller&#039; implement Sample.I</font>&#039;.
+
+<br><br><img src="../images/editing/intentionInterfaceParamter3.gif" border="1"><br><br>
+
+The interface implementation is added to the class declaration. Also the interface methods will be suggested for
+implementation with the <font class="detailedtext">Select Methods to Implement</font> dialog.
+
+<br><br>
+<table width="100%" cellPadding="3" border="0" bgcolor="#669999">
+    <tr>
+        <td>
+            <font class="tableheader"><a name="staticimport"></a>Static Import Intention Actions</font>
+        </td>
+    </tr>
+</table>
+<br>
+Static import enables you to use static classes and class members without a qualifier. There two following static import
+intentions, "on demand" and "single static import".
+<font class="detailedtext">On-demand static import</font> is called if the caret is on the class name in the editor.
+
+<br><br><img src="../images/editing/staticImportOnDemand.gif" border="1"><br><br>
+
+Then all members of the imported class will be used without a qualifier. The
+<font class="detailedtext">import</font> statement will look as follows:
+
+<br><br><code><font class="detailedtext">import static</font> java.lang.Math.*;</code><br><br>
+
+Single static import is called if the caret is on the class name in the editor.
+
+<br><br><img src="../images/editing/staticImportSingle.gif" border="1"><br><br>
+
+Only members with the given name in the imported class will be used without a qualifier. The
+<font class="detailedtext">import</font> statement will look as follows:
+
+<br><br><code><font class="detailedtext">import static</font> java.lang.Math.abs;</code><br><br>
+
+<hr>
+<table cellpadding="5" border="0" width="100%">
+  <tr>
+      <td valign="top" width="5%">
+          <img src="../images/secondary/bell2.gif" border="0">
+      </td>
+      <td valign="top" width="95%"><font class="note">To use these intentions, the
+      <a class="notelink" href="../project/paths.html#language">Language level for Java SDK 1.5</a> should be enabled.
+      </font>
+      </td>
+  </tr>
+</table>
+<hr>
+<br><br>
+<table width="100%" cellPadding="3" border="0" bgcolor="#669999">
+    <tr>
+        <td>
+            <font class="tableheader"><a name="import"></a>Import Assistant</font>
+        </td>
+    </tr>
+</table>
+<br>
+You can configure the <font class="detailedtext">Import Assistant</font> feature to behave as an Intention Action. For more information, see
+<a href="manageImports.html#import" class="context">Managing Imports: Import Assistant</a>.
+<hr>
+
+</td></tr>
+</table>
+
+</body>
+</html>
+<!-- Spellcheck: 02.05.2004  -->

@@ -263,7 +263,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
   private void updateProgress() {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    if (indicator != null) {
+    if (indicator != null && !indicator.isIndeterminate()) {
       indicator.setFraction(indicator.getFraction() + myProgressStep);
     }
   }

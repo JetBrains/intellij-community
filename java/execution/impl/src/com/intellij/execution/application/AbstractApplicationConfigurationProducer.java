@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.execution.application;
 
@@ -72,7 +60,7 @@ public abstract class AbstractApplicationConfigurationProducer<T extends Applica
   }
 
   private void setupConfiguration(T configuration, final PsiClass aClass, final ConfigurationContext context) {
-    configuration.MAIN_CLASS_NAME = JavaExecutionUtil.getRuntimeQualifiedName(aClass);
+    configuration.setMainClassName(JavaExecutionUtil.getRuntimeQualifiedName(aClass));
     configuration.setGeneratedName();
     setupConfigurationModule(context, configuration);
   }
@@ -91,7 +79,7 @@ public abstract class AbstractApplicationConfigurationProducer<T extends Applica
   public boolean isConfigurationFromContext(T appConfiguration, ConfigurationContext context) {
     final PsiElement location = context.getPsiLocation();
     final PsiClass aClass = ApplicationConfigurationType.getMainClass(location);
-    if (aClass != null && Comparing.equal(JavaExecutionUtil.getRuntimeQualifiedName(aClass), appConfiguration.MAIN_CLASS_NAME)) {
+    if (aClass != null && Comparing.equal(JavaExecutionUtil.getRuntimeQualifiedName(aClass), appConfiguration.getMainClassName())) {
       final PsiMethod method = PsiTreeUtil.getParentOfType(location, PsiMethod.class, false);
       if (method != null && TestFrameworks.getInstance().isTestMethod(method)) {
         return false;

@@ -28,8 +28,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Hani Suleiman
- *         Date: Jul 21, 2005
- *         Time: 4:29:00 PM
  */
 public class GroupBrowser extends BrowseModuleValueActionListener
 {

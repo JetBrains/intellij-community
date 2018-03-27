@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path;
 
@@ -19,6 +21,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpre
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyIndexPropertyUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyLValueUtil;
 
+import static org.jetbrains.plugins.groovy.lang.resolve.ReferencesKt.referenceArray;
+
 /**
  * @author ilyas
  */
@@ -32,22 +36,9 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
     () -> GroovyLValueUtil.isLValue(this) ? new GrIndexPropertyReference(this, false) : null
   );
 
-  private final NotNullLazyValue<GroovyPolyVariantReference[]> myReferences = AtomicNotNullLazyValue.createValue(() -> {
-    GroovyPolyVariantReference lValueReference = getLValueReference();
-    GroovyPolyVariantReference rValueReference = getRValueReference();
-    if (lValueReference == null && rValueReference == null) {
-      return GroovyPolyVariantReference.EMPTY_ARRAY;
-    }
-    else if (lValueReference == null) {
-      return new GroovyPolyVariantReference[]{rValueReference};
-    }
-    else if (rValueReference == null) {
-      return new GroovyPolyVariantReference[]{lValueReference};
-    }
-    else {
-      return new GroovyPolyVariantReference[]{rValueReference, lValueReference};
-    }
-  });
+  private final NotNullLazyValue<GroovyPolyVariantReference[]> myReferences = AtomicNotNullLazyValue.createValue(
+    () -> referenceArray(getRValueReference(), getLValueReference())
+  );
 
   @Nullable
   @Override

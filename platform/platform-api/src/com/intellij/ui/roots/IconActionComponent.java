@@ -25,7 +25,6 @@ import java.awt.event.MouseEvent;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Nov 3
  * @author 2003
  */
 public class IconActionComponent extends ScalableIconComponent {

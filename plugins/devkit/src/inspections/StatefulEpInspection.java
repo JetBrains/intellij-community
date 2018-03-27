@@ -44,7 +44,7 @@ public class StatefulEpInspection extends DevKitUastInspectionBase {
     if (fields.length == 0) return super.checkClass(psiClass, manager, isOnTheFly);
 
     final boolean isQuickFix = InheritanceUtil.isInheritor(psiClass, LocalQuickFix.class.getCanonicalName());
-    ExtensionLocator locator = new ExtensionLocator(psiClass);
+    ExtensionLocator locator = ExtensionLocator.byPsiClass(psiClass);
     List<ExtensionCandidate> targets = locator.findCandidates();
     if (isQuickFix || !targets.isEmpty()) {
       boolean isProjectComponent = InheritanceUtil.isInheritor(psiClass, ProjectComponent.class.getCanonicalName());

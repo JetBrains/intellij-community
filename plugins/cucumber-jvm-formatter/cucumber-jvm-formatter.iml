@@ -8,6 +8,6 @@
     <orderEntry type="jdk" jdkName="IDEA jdk" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" scope="PROVIDED" name="cucumber-core" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="io.cucumber:cucumber-core:2.0.1" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="cucumber-core:2.0.1" level="project" />
   </component>
 </module>

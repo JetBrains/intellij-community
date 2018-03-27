@@ -44,7 +44,7 @@ class FooString {
     s = 1 as short
     s = 1 as long
     s = 1 as boolean
-    s = explicitVoid()
+    <warning descr="Cannot assign 'void' to 'String'">s</warning> = explicitVoid()
     s = new Date()
     s = "a"
     s = "${System.in.read()}"
@@ -75,7 +75,7 @@ class FooString {
     String s7 = 1 as short
     String s8 = 1 as long
     String s9 = 1 as boolean
-    String s10 = explicitVoid()
+    String <warning descr="Cannot assign 'void' to 'String'">s10</warning> = explicitVoid()
     String s11 = new Date()
     String s12 = "a"
     String s13 = "${System.in.read()}"
@@ -104,7 +104,7 @@ class FooString {
       case 7: return 1 as short
       case 8: return 1 as long
       case 9: return 1 as boolean
-      case 10: return explicitVoid()
+      case 10: <warning descr="Cannot return 'void' from method returning 'String'">return</warning> explicitVoid()
       case 11: return new Date()
       case 12: return "a"
       case 13: return "${System.in.read()}"

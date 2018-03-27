@@ -5,7 +5,7 @@ import java.util.concurrent.TimeUnit;
 
 public class Test {
   void testList(List<String> input) {
-    List<String> result = new ArrayList<>(10);
+    List<String> result = new ArrayList<>(/*initial size*/10);
     for (String s : in<caret>put) {
       if (!s.isEmpty()) {
         result.add(s);
@@ -13,7 +13,7 @@ public class Test {
     }
     System.out.println(result);
 
-    ArrayList<String> result2 = new ArrayList<>(20);
+    ArrayList<String> result2 = new ArrayList<>/*valuable comment*/(20);
     for (String s : input) {
       if (!s.isEmpty()) {
         result2.add(s);
@@ -43,7 +43,7 @@ public class Test {
   }
 
   void testSet(List<String> input) {
-    Set<String> result = new HashSet<>(10);
+    Set<String> result = new HashSet/*comment*/<>(/*size*/10);
     for (String s : input) {
       if (!s.isEmpty()) {
         result.add(s);
@@ -51,7 +51,7 @@ public class Test {
     }
     System.out.println(result);
 
-    Collection<String> result2 = new LinkedHashSet<>(20, 0.8f);
+    Collection<String> result2 = new LinkedHashSet<>(20, /*load factor*/ 0.8f);
     for (String s : input) {
       if (!s.isEmpty()) {
         result2.add(s);
@@ -68,7 +68,7 @@ public class Test {
     }
     System.out.println(result3);
 
-    Collection<TimeUnit> result4 = EnumSet.noneOf(TimeUnit.class);
+    Collection<TimeUnit> result4 = EnumSet.noneOf(/*timeunits*/TimeUnit.class);
     for (String s : input) {
       if (!s.isEmpty()) {
         result4.add(TimeUnit.valueOf(s));

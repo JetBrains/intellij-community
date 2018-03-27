@@ -1,20 +1,9 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
@@ -26,6 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.LowMemoryWatcher;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -40,14 +30,17 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.BitUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.UriUtil;
-import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.IntObjectMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.ReplicatorInputStream;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.MessageBus;
-import gnu.trove.*;
+import gnu.trove.THashMap;
+import gnu.trove.THashSet;
+import gnu.trove.TIntArrayList;
+import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,6 +49,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author max
@@ -64,15 +58,16 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.persistent.PersistentFS");
 
   private final Map<String, VirtualFileSystemEntry> myRoots =
-    ConcurrentCollectionFactory.createMap(10, 0.4f, JobSchedulerImpl.CORES_COUNT, FileUtil.PATH_HASHING_STRATEGY);
-  private final ConcurrentIntObjectMap<VirtualFileSystemEntry> myRootsById = ContainerUtil.createConcurrentIntObjectMap(10, 0.4f, JobSchedulerImpl.CORES_COUNT);
+    ConcurrentCollectionFactory.createMap(10, 0.4f, JobSchedulerImpl.getCPUCoresCount(), FileUtil.PATH_HASHING_STRATEGY);
+  private final IntObjectMap<VirtualFileSystemEntry>
+    myRootsById = ContainerUtil.createConcurrentIntObjectMap(10, 0.4f, JobSchedulerImpl.getCPUCoresCount());
 
   // FS roots must be in this map too. findFileById() relies on this.
-  private final ConcurrentIntObjectMap<VirtualFileSystemEntry> myIdToDirCache = ContainerUtil.createConcurrentIntObjectMap();
+  private final ConcurrentIntObjectMap<VirtualFileSystemEntry> myIdToDirCache = ContainerUtil.createConcurrentIntObjectSoftValueMap();
   private final Object myInputLock = new Object();
 
   private final AtomicBoolean myShutDown = new AtomicBoolean(false);
-  private volatile int myStructureModificationCount;
+  private final AtomicInteger myStructureModificationCount = new AtomicInteger();
   private final BulkFileListener myPublisher;
 
   public PersistentFSImpl(@NotNull MessageBus bus) {
@@ -118,6 +113,20 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   @Override
   public long getCreationTimestamp() {
     return FSRecords.getCreationTimestamp();
+  }
+
+  @NotNull
+  public VirtualFileSystemEntry getOrCacheDir(int id,
+                                              @NotNull VfsData.Segment segment,
+                                              @NotNull VfsData.DirectoryData o,
+                                              @NotNull VirtualDirectoryImpl parent) {
+    VirtualFileSystemEntry dir = myIdToDirCache.get(id);
+    if (dir != null) return dir;
+    dir = new VirtualDirectoryImpl(id, segment, o, parent, parent.getFileSystem());
+    return myIdToDirCache.cacheOrGet(id, dir);
+  }
+  public VirtualFileSystemEntry getCachedDir(int id) {
+    return myIdToDirCache.get(id);
   }
 
   @NotNull
@@ -242,7 +251,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     return FSRecords.writeContent(getFileId(file), readOnly);
   }
 
-  private static void writeContent(@NotNull VirtualFile file, ByteSequence content, boolean readOnly) {
+  private static void writeContent(@NotNull VirtualFile file, ByteArraySequence content, boolean readOnly) {
     FSRecords.writeContent(getFileId(file), content, readOnly);
   }
 
@@ -263,11 +272,11 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   @Override
   public int getStructureModificationCount() {
-    return myStructureModificationCount;
+    return myStructureModificationCount.get();
   }
 
   public void incStructuralModificationCount() {
-    myStructureModificationCount++;
+    myStructureModificationCount.incrementAndGet();
   }
 
   @Override
@@ -519,7 +528,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
            cacheContent && !application.isInternal() && !application.isUnitTestMode()) &&
           content.length <= PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD) {
         synchronized (myInputLock) {
-          writeContent(file, new ByteSequence(content), delegate.isReadOnly());
+          writeContent(file, new ByteArraySequence(content), delegate.isReadOnly());
           setFlag(file, MUST_RELOAD_CONTENT, false);
         }
       }
@@ -557,9 +566,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
         if (len > PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD) return nativeStream;
         return createReplicator(file, nativeStream, len, delegate.isReadOnly());
       }
-      else {
-        return contentStream;
-      }
+      return contentStream;
     }
   }
 
@@ -596,7 +603,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
                                      boolean readOnly, @NotNull byte[] bytes, int bytesLength) {
     synchronized (myInputLock) {
       if (bytesLength == fileLength) {
-        writeContent(file, new ByteSequence(bytes, 0, bytesLength), readOnly);
+        writeContent(file, new ByteArraySequence(bytes, 0, bytesLength), readOnly);
         setFlag(file, MUST_RELOAD_CONTENT, false);
       }
       else {
@@ -615,7 +622,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   public OutputStream getOutputStream(@NotNull final VirtualFile file,
                                       final Object requestor,
                                       final long modStamp,
-                                      final long timeStamp) throws IOException {
+                                      final long timeStamp) {
     return new ByteArrayOutputStream() {
       private boolean closed; // protection against user calling .close() twice
 
@@ -1040,11 +1047,10 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   @Override
   public void clearIdCache() {
     // remove all except myRootsById contents
-    for (Iterator<ConcurrentIntObjectMap.IntEntry<VirtualFileSystemEntry>> iterator = myIdToDirCache.entries().iterator(); iterator.hasNext(); ) {
-      ConcurrentIntObjectMap.IntEntry<VirtualFileSystemEntry> entry = iterator.next();
-      int id = entry.getKey();
+    int[] ids = myIdToDirCache.keys();
+    for (int id : ids) {
       if (!myRootsById.containsKey(id)) {
-        iterator.remove();
+        myIdToDirCache.remove(id);
       }
     }
   }
@@ -1065,16 +1071,17 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     VirtualFileSystemEntry cached = myIdToDirCache.get(id);
     if (cached != null) return cached;
 
-    TIntArrayList parents = FSRecords.getParents(id, myIdToDirCache);
-    // the last element of the parents is either a root or already cached element
-    int parentId = parents.get(parents.size() - 1);
-    VirtualFileSystemEntry result = myIdToDirCache.get(parentId);
+    Pair<TIntArrayList, VirtualFileSystemEntry> pair = FSRecords.getParents(id, myIdToDirCache);
+    TIntArrayList parents = pair.getFirst();
+    VirtualFileSystemEntry cachedDir = pair.getSecond();
+    if (cachedDir == null) return null;
+    VirtualFileSystemEntry result = cachedDir;
 
     for (int i=parents.size() - 2; i>=0; i--) {
       if (!(result instanceof VirtualDirectoryImpl)) {
         return null;
       }
-      parentId = parents.get(i);
+      int parentId = parents.get(i);
       result = ((VirtualDirectoryImpl)result).findChildById(parentId, cachedOnly);
       if (result instanceof VirtualDirectoryImpl) {
         VirtualFileSystemEntry old = myIdToDirCache.putIfAbsent(parentId, result);
@@ -1089,7 +1096,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   @NotNull
   public VirtualFile[] getRoots() {
     Collection<VirtualFileSystemEntry> roots = myRoots.values();
-    return ArrayUtil.stripTrailingNulls(VfsUtilCore.toVirtualFileArray(roots));
+    return VfsUtilCore.toVirtualFileArray(roots); // ConcurrentHashMap.keySet().toArray(new T[0]) guaranteed to return array with no nulls
   }
 
   @Override

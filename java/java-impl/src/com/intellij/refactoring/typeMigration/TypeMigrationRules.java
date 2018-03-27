@@ -26,7 +26,6 @@ import java.util.Map;
 
 /**
  * @author db
- * Date: Oct 2, 2004
  */
 public class TypeMigrationRules {
   private final List<TypeConversionRule> myConversionRules;

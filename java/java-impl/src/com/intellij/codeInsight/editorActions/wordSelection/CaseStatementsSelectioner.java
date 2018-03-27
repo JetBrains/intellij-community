@@ -19,19 +19,20 @@ import com.intellij.psi.*;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.Document;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.ArrayList;
 
 public class CaseStatementsSelectioner extends BasicSelectioner {
     @Override
-    public boolean canSelect(PsiElement e) {
+    public boolean canSelect(@NotNull PsiElement e) {
       return  e.getParent() instanceof PsiCodeBlock &&
              e.getParent().getParent() instanceof PsiSwitchStatement;
     }
 
     @Override
-    public List<TextRange> select(PsiElement statement, CharSequence editorText, int cursorOffset, Editor editor) {
+    public List<TextRange> select(@NotNull PsiElement statement, @NotNull CharSequence editorText, int cursorOffset, @NotNull Editor editor) {
       List<TextRange> result = new ArrayList<>();
       PsiElement caseStart = statement;
       PsiElement caseEnd = statement;
