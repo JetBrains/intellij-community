@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.concurrency.JobScheduler;
@@ -16,9 +17,8 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author ksafonov
  */
-public class IdeFatalErrorsIcon extends JLabel {
-
-  public enum State {UnreadErrors, ReadErrors, NoErrors}
+class IdeErrorsIcon extends JLabel {
+  enum State {UnreadErrors, ReadErrors, NoErrors}
 
   private final LayeredIcon myIcon;
   private final ActionListener myListener;
@@ -27,8 +27,8 @@ public class IdeFatalErrorsIcon extends JLabel {
   private Future myBlinker;
   private State myState;
 
-  public IdeFatalErrorsIcon(ActionListener aListener, boolean enableBlink) {
-    myListener = aListener;
+  IdeErrorsIcon(@NotNull ActionListener listener, boolean enableBlink) {
+    myListener = listener;
     myEnableBlink = enableBlink;
     setBorder(BorderFactory.createEmptyBorder(0, 1, 0, 1));
 
@@ -57,7 +57,7 @@ public class IdeFatalErrorsIcon extends JLabel {
     setIcon(myIcon);
   }
 
-  public void setState(State state) {
+  void setState(State state) {
     myState = state;
     switch (state) {
       case UnreadErrors:
@@ -66,7 +66,7 @@ public class IdeFatalErrorsIcon extends JLabel {
         myIcon.setLayerEnabled(2, false);
         startBlinker();
         setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        setToolTipText(IdeMessagePanel.INTERNAL_ERROR_NOTICE);
+        setToolTipText(DiagnosticBundle.message("error.notification.tooltip"));
         break;
 
       case ReadErrors:
@@ -75,7 +75,7 @@ public class IdeFatalErrorsIcon extends JLabel {
         myIcon.setLayerEnabled(1, true);
         myIcon.setLayerEnabled(2, false);
         setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        setToolTipText(IdeMessagePanel.INTERNAL_ERROR_NOTICE);
+        setToolTipText(DiagnosticBundle.message("error.notification.tooltip"));
         break;
 
       case NoErrors:
@@ -89,28 +89,26 @@ public class IdeFatalErrorsIcon extends JLabel {
         break;
 
       default:
-        assert false;
+        throw new IllegalStateException(state.name());
     }
     repaint();
   }
 
-    private synchronized void startBlinker() {
-    if (myBlinker != null || !myEnableBlink) {
-      return;
+  private synchronized void startBlinker() {
+    if (myEnableBlink && myBlinker == null) {
+      myBlinker = JobScheduler.getScheduler().scheduleWithFixedDelay(new Runnable() {
+        boolean enabled = false;
+
+        @Override
+        public void run() {
+          myIcon.setLayerEnabled(0, enabled);
+          myIcon.setLayerEnabled(1, false);
+          myIcon.setLayerEnabled(2, !enabled);
+          repaint();
+          enabled = !enabled;
+        }
+      }, 1, 1, TimeUnit.SECONDS);
     }
-
-    myBlinker = JobScheduler.getScheduler().scheduleWithFixedDelay(new Runnable() {
-      boolean enabled = false;
-
-      @Override
-      public void run() {
-        myIcon.setLayerEnabled(0, enabled);
-        myIcon.setLayerEnabled(1, false);
-        myIcon.setLayerEnabled(2, !enabled);
-        repaint();
-        enabled = !enabled;
-      }
-    }, 1, 1, TimeUnit.SECONDS);
   }
 
   private synchronized void stopBlinker() {
