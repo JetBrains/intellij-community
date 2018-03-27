@@ -710,6 +710,12 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     if (PsiType.BYTE.getPresentableText().equals(expectedType)) {
       return vm.mirrorOf((byte)value);
     }
+    if (PsiType.DOUBLE.getName().equals(expectedType)) {
+      return vm.mirrorOf((double)value);
+    }
+    if (PsiType.FLOAT.getName().equals(expectedType)) {
+      return vm.mirrorOf((float)value);
+    }
     return null;
   }
 
