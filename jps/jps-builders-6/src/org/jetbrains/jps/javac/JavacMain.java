@@ -282,6 +282,7 @@ public class JavacMain {
       }
       skip = false;
     }
+    compilingTool.preprocessOptions(result);
     return result;
   }
 
