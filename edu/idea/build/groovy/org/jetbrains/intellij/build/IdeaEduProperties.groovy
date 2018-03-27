@@ -22,7 +22,7 @@ class IdeaEduProperties extends IdeaCommunityProperties {
   private final String dependenciesPath
 
   IdeaEduProperties(String home) {
-    super(new File(home, "community").exists() ? "$home/community" : home)
+    super(home)
     dependenciesPath = "$home/edu/dependencies"
   }
 
