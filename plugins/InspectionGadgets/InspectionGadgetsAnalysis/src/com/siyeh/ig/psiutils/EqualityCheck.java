@@ -1,11 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.psiutils;
 
+import com.intellij.psi.PsiConditionalExpression;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -36,19 +37,39 @@ public class EqualityCheck {
   @Nullable
   @Contract("null -> null")
   public static EqualityCheck from(PsiExpression expression) {
-    PsiMethodCallExpression call = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(expression), PsiMethodCallExpression.class);
-    if (call == null) {
-      return null;
-    }
-    if (MethodCallUtils.isEqualsCall(call)) {
-      PsiExpression left = call.getMethodExpression().getQualifierExpression();
-      PsiExpression right = ArrayUtil.getFirstElement(call.getArgumentList().getExpressions());
-      if (left == null || right == null) return null;
-      return new EqualityCheck(left, right, true);
-    }
-    if (OBJECT_EQUALS.test(call)) {
-      PsiExpression[] args = call.getArgumentList().getExpressions();
-      return new EqualityCheck(args[0], args[1], false);
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
+    if (expression instanceof PsiMethodCallExpression) {
+      PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
+      if (MethodCallUtils.isEqualsCall(call)) {
+        PsiExpression left = call.getMethodExpression().getQualifierExpression();
+        PsiExpression right = ArrayUtil.getFirstElement(call.getArgumentList().getExpressions());
+        if (left == null || right == null) return null;
+        return new EqualityCheck(left, right, true);
+      }
+      if (OBJECT_EQUALS.test(call)) {
+        PsiExpression[] args = call.getArgumentList().getExpressions();
+        return new EqualityCheck(args[0], args[1], false);
+      }
+    } else if (expression instanceof PsiConditionalExpression) {
+      PsiConditionalExpression ternary = (PsiConditionalExpression)expression;
+      EqualityCheck nestedCheck = from(ternary.getThenExpression());
+      PsiExpression other = ternary.getElseExpression();
+      boolean equalsToNull = false;
+      if (nestedCheck == null) {
+        nestedCheck = from(ternary.getElseExpression());
+        other = ternary.getThenExpression();
+        equalsToNull = true;
+      }
+      if(nestedCheck != null && nestedCheck.isLeftDereferenced() && other != null) {
+        PsiReferenceExpression leftRef = ExpressionUtils.getReferenceExpressionFromNullComparison(ternary.getCondition(), equalsToNull);
+        EquivalenceChecker equivalence = EquivalenceChecker.getCanonicalPsiEquivalence();
+        if (equivalence.expressionsAreEquivalent(leftRef, nestedCheck.getLeft())) {
+          PsiReferenceExpression rightRef = ExpressionUtils.getReferenceExpressionFromNullComparison(other, true);
+          if (equivalence.expressionsAreEquivalent(rightRef, nestedCheck.getRight())) {
+            return new EqualityCheck(nestedCheck.getLeft(), nestedCheck.getRight(), false);
+          }
+        }
+      }
     }
     return null;
   }
