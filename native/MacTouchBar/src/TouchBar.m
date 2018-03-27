@@ -94,28 +94,16 @@ void releaseTouchBar(id tbobj) {
 // We can obtain "item's descriptor" via java-callback (called from NSTouchBarDelegate:touchBar:makeItemForIdentifier).
 // This allows to alloc resources by request but it can produce latency in AppKit-thread theoretically (read icon from file, for example)
 
-id registerButtonText(id tbobj, char* text, execute action) {
-    ButtonDesc * bdesc = [[[ButtonTextDesc alloc] init:[NSString stringWithUTF8String:text] act:action] autorelease];
-    [(TouchBar *)tbobj registerItem:bdesc];
-    return bdesc;
-}
-
-id registerButtonImg(id tbobj, char* raster4ByteRGBA, int w, int h, execute action) {
-    if (w <= 0 || h <= 0) {
-        nserror(@"incorrect image sizes");
-        return nil;
-    }
-    ButtonDesc * bdesc = [[[ButtonImgDesc alloc] init:createImgFrom4ByteRGBA((unsigned char *)raster4ByteRGBA, w, h) act:action] autorelease];
-    [(TouchBar *)tbobj registerItem:bdesc];
-    return bdesc;
-}
-
 id registerButtonImgText(id tbobj, char* text, char* raster4ByteRGBA, int w, int h, execute action) {
-    if (w <= 0 || h <= 0) {
-        nserror(@"incorrect image sizes");
-        return nil;
+    NSImage * img = nil;
+    if (raster4ByteRGBA != NULL) {
+        if (w <= 0 || h <= 0)
+            nserror(@"incorrect image sizes");
+        else
+            img = createImgFrom4ByteRGBA((unsigned char *)raster4ByteRGBA, w, h);
     }
-    ButtonDesc * bdesc = [[[ButtonImgTextDesc alloc] init:createImgFrom4ByteRGBA((unsigned char *)raster4ByteRGBA, w, h) text:[NSString stringWithUTF8String:text] act:action] autorelease];
+    NSString * txt = text == NULL ? nil : [NSString stringWithUTF8String:text];
+    ButtonDesc * bdesc = [[[ButtonDesc alloc] init:img text:txt act:action] autorelease];
     [(TouchBar *)tbobj registerItem:bdesc];
     return bdesc;
 }

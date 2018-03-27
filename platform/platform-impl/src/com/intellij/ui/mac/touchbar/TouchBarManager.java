@@ -1,11 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.touchbar;
 
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.RunManager;
-import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -21,6 +21,7 @@ import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.util.lang.UrlClassLoader;
 import com.sun.jna.Native;
+import org.jetbrains.annotations.NotNull;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -86,7 +87,7 @@ public class TouchBarManager {
             }
 
             myTB = new TouchBar(name());
-            myTB.addItem(new TBItemButtonImg(AllIcons.Toolwindows.ToolWindowBuild, new TBItemAction("CompileDirty"))); // NOTE: IdeActions.ACTION_COMPILE doesn't work
+            myTB.addItem(new TBItemButton(AllIcons.Toolwindows.ToolWindowBuild, null, new TBItemAction("CompileDirty"))); // NOTE: IdeActions.ACTION_COMPILE doesn't work
 
             final RunManager rm = RunManager.getInstance(project);
             final RunnerAndConfigurationSettings selected = rm.getSelectedConfiguration();
@@ -96,7 +97,7 @@ public class TouchBarManager {
 
               TouchBar expandTB = new TouchBar("main_popover_expand");
               expandTB
-                .addItem(new TBItemButtonImg(AllIcons.Actions.EditSource, new TBItemAction(IdeActions.ACTION_EDIT_RUN_CONFIGURATIONS)));
+                .addItem(new TBItemButton(AllIcons.Actions.EditSource, null, new TBItemAction(IdeActions.ACTION_EDIT_RUN_CONFIGURATIONS)));
               TBItemScrubber scrubber = new TBItemScrubber(500);
               expandTB.addItem(scrubber);
               List<RunnerAndConfigurationSettings> allRunCongigs = rm.getAllSettings();
@@ -114,37 +115,38 @@ public class TouchBarManager {
               popover.setExpandTB(expandTB);
 
               TouchBar tapHoldTB = new TouchBar("main_popover_tap_and_hold");
-              tapHoldTB.addItem(new TBItemButtonImgText(selected.getConfiguration().getIcon(), selected.getName(), () -> {})); // TODO: remove button, use NSView with 'image+text'
+              tapHoldTB.addItem(new TBItemButton(selected.getConfiguration().getIcon(), selected.getName(), () -> {})); // TODO: remove button, use NSView with 'image+text'
               tapHoldTB.selectAllItemsToShow();
 
               popover.setTapAndHoldTB(tapHoldTB);
 
-              myTB.addItem(new TBItemButtonImg(AllIcons.Toolwindows.ToolWindowRun, new TBItemAction(IdeActions.ACTION_DEFAULT_RUNNER)));
-              myTB.addItem(new TBItemButtonImg(AllIcons.Toolwindows.ToolWindowDebugger, new TBItemAction(IdeActions.ACTION_DEFAULT_DEBUGGER)));
+              myTB.addItem(new TBItemButton(AllIcons.Toolwindows.ToolWindowRun, null, new TBItemAction(IdeActions.ACTION_DEFAULT_RUNNER)));
+              myTB.addItem(new TBItemButton(AllIcons.Toolwindows.ToolWindowDebugger, null, new TBItemAction(IdeActions.ACTION_DEFAULT_DEBUGGER)));
             }
 
             myTB.addItem(new TBItemSpacing(TBItemSpacing.TYPE.large));
-            myTB.addItem(new TBItemButtonImg(AllIcons.Actions.CheckOut, new TBItemAction("Vcs.UpdateProject")));  // NOTE: IdeActions.ACTION_CVS_CHECKOUT doesn't works
-            myTB.addItem(new TBItemButtonImg(AllIcons.Actions.Commit, new TBItemAction("CheckinProject")));       // NOTE: IdeActions.ACTION_CVS_COMMIT doesn't works
+            myTB.addItem(new TBItemButton(AllIcons.Actions.CheckOut, null, new TBItemAction("Vcs.UpdateProject")));  // NOTE: IdeActions.ACTION_CVS_CHECKOUT doesn't works
+            myTB.addItem(new TBItemButton(AllIcons.Actions.Commit, null, new TBItemAction("CheckinProject")));       // NOTE: IdeActions.ACTION_CVS_COMMIT doesn't works
           }
           else if (this == debug) {
             myTB = new TouchBar(name());
-            myTB.addItem(new TBItemButtonText("Step", new TBItemAction("Step Over")));
+            myTB.addItem(new TBItemButton(null, "Step Over", new TBItemAction("Step Over")));
+            myTB.addItem(new TBItemButton(null, "Step Into", new TBItemAction("Step Into")));
           }
           else if (this == test) {
             myTB = new TouchBar(name());
             myTB.addItem(new TBItemSpacing(TBItemSpacing.TYPE.large));
-            myTB.addItem(new TBItemButtonText("test1", createPrintTextCallback("pressed test1 button")));
-            myTB.addItem(new TBItemButtonText("test2", createPrintTextCallback("pressed test2 button")));
+            myTB.addItem(new TBItemButton(null, "test1", createPrintTextCallback("pressed test1 button")));
+            myTB.addItem(new TBItemButton(null, "test2", createPrintTextCallback("pressed test2 button")));
             myTB.addItem(new TBItemSpacing(TBItemSpacing.TYPE.small));
-            myTB.addItem(new TBItemButtonImg(AllIcons.Toolwindows.ToolWindowRun, createPrintTextCallback("pressed image button")));
+            myTB.addItem(new TBItemButton(AllIcons.Toolwindows.ToolWindowRun, null, createPrintTextCallback("pressed image button")));
 
             final int configPopoverWidth = 143;
             TBItemPopover popover = new TBItemPopover(AllIcons.Toolwindows.ToolWindowBuild, "test-popover", configPopoverWidth);
             myTB.addItem(popover);
 
             TouchBar expandTB = new TouchBar("main_popover_expand");
-            expandTB.addItem(new TBItemButtonImg(AllIcons.Toolwindows.ToolWindowDebugger, createPrintTextCallback("pressed pimage button")));
+            expandTB.addItem(new TBItemButton(AllIcons.Toolwindows.ToolWindowDebugger, null, createPrintTextCallback("pressed pimage button")));
             TBItemScrubber scrubber = new TBItemScrubber(400);
             expandTB.addItem(scrubber);
             for (int c = 0; c < 15; ++c) {
@@ -161,7 +163,7 @@ public class TouchBarManager {
             popover.setExpandTB(expandTB);
 
             TouchBar tapHoldTB = new TouchBar("main_popover_tap_and_hold");
-            tapHoldTB.addItem(new TBItemButtonImg(AllIcons.Toolwindows.ToolWindowPalette, createPrintTextCallback("pressed pimage button")));
+            tapHoldTB.addItem(new TBItemButton(AllIcons.Toolwindows.ToolWindowPalette, null, createPrintTextCallback("pressed pimage button")));
             tapHoldTB.selectAllItemsToShow();
 
             popover.setTapAndHoldTB(tapHoldTB);
