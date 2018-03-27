@@ -307,8 +307,14 @@ public class ShowDiscoveredTestsAction extends AnAction {
   @Nullable
   private static Couple<String> getMethodQualifiedName(@NotNull PsiMethod method) {
     PsiClass c = method.getContainingClass();
-    String fqn = c != null ? ClassUtil.getJVMClassName(c) : null;
+    String fqn = c != null ? getName(c) : null;
     return fqn == null ? null : Couple.of(fqn, method.getName());
+  }
+
+  private static String getName(PsiClass c) {
+    StringBuilder buf = new StringBuilder();
+    ClassUtil.formatClassName(c, buf);
+    return buf.toString();
   }
 
   @Nullable
