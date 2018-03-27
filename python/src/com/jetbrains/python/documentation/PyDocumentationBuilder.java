@@ -104,7 +104,7 @@ public class PyDocumentationBuilder {
       buildFromDocstring(elementDefinition, isProperty);
     }
     else if (isAttribute()) {
-      buildFromAttributeDoc();
+      buildFromAttributeDoc(context);
     }
     else if (elementDefinition instanceof PyNamedParameter) {
       buildFromParameter(context, outerElement, elementDefinition);
@@ -524,10 +524,10 @@ public class PyDocumentationBuilder {
     return Pair.create(type, desc);
   }
 
-  private void buildFromAttributeDoc() {
+  private void buildFromAttributeDoc(@NotNull TypeEvalContext context) {
     final PyClass cls = PsiTreeUtil.getParentOfType(myElement, PyClass.class);
     assert cls != null;
-    final String type = PyUtil.isInstanceAttribute((PyExpression)myElement) ? "Instance attribute " : "Class attribute ";
+    final String type = PyUtil.isInstanceAttribute((PyTargetExpression)myElement, context) ? "Instance attribute " : "Class attribute ";
     myProlog
       .addItem(type)
       .addWith(TagBold, $().addWith(TagCode, $(((PyTargetExpression)myElement).getName())))

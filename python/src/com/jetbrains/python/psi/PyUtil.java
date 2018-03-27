@@ -302,30 +302,42 @@ public class PyUtil {
   }
 
   public static boolean isAttribute(PyTargetExpression ex) {
-    return isInstanceAttribute(ex) || isClassAttribute(ex);
+    return isInstanceAttribute(ex, null) || isClassAttribute(ex);
   }
 
+  /**
+   * @deprecated Use {@link PyUtil#isInstanceAttribute(PyTargetExpression, TypeEvalContext)} instead.
+   * This method will be removed in 2018.3.
+   */
+  @Deprecated
   public static boolean isInstanceAttribute(PyExpression target) {
-    if (!(target instanceof PyTargetExpression)) {
-      return false;
-    }
+    return target instanceof PyTargetExpression && isInstanceAttribute((PyTargetExpression)target, null);
+  }
+
+  /**
+   * @param target expression to check
+   * @param context context to be used to resolve qualifier type
+   * @return false if passed target is not inside method. And true if AST is not available or target updates containing class.
+   */
+  public static boolean isInstanceAttribute(@NotNull PyTargetExpression target, @Nullable TypeEvalContext context) {
     final ScopeOwner owner = ScopeUtil.getScopeOwner(target);
     if (owner instanceof PyFunction) {
       final PyFunction method = (PyFunction)owner;
       final PyClass cls = method.getContainingClass();
 
       if (cls != null) {
-        if (method.getStub() != null) {
-          return true;
-        }
+        if (method.getStub() == null || context != null && context.maySwitchToAST(target)) {
+          final PyExpression qualifier = target.getQualifier();
+          if (qualifier != null) {
+            final TypeEvalContext contextToUse =
+              context != null ? context : TypeEvalContext.codeAnalysis(target.getProject(), target.getContainingFile());
 
-        final PyExpression qualifier = ((PyTargetExpression)target).getQualifier();
-        if (qualifier != null) {
-          final TypeEvalContext context = TypeEvalContext.codeAnalysis(target.getProject(), target.getContainingFile());
-          final PyClassType qualifierType = as(context.getType(qualifier), PyClassType.class);
-          if (qualifierType != null && qualifierType.getPyClass() == cls) {
-            return true;
+            final PyClassType qualifierType = as(contextToUse.getType(qualifier), PyClassType.class);
+            return qualifierType != null && qualifierType.getPyClass() == cls;
           }
+        }
+        else {
+          return true;
         }
       }
     }

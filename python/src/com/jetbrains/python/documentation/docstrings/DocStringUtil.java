@@ -303,7 +303,7 @@ public class DocStringUtil {
       }
       if (scope instanceof PyFunction) {
         for (PyExpression target : assignmentStatement.getTargets()) {
-          if (PyUtil.isInstanceAttribute(target)) {
+          if (target instanceof PyTargetExpression && PyUtil.isInstanceAttribute((PyTargetExpression)target, null)) {
             return true;
           }
         }

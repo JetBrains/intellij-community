@@ -141,7 +141,7 @@ public class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction {
         return candidates.anyMatch(PyAnnotateVariableTypeIntention::hasInlineAnnotation);
       }
     }
-    else if (isInstanceAttribute(target, context)) {
+    else if (PyUtil.isInstanceAttribute(target, context)) {
       // Set isDefinition=true to start searching right from the class level.
       //noinspection ConstantConditions
       final List<PyTargetExpression> classLevelDefinitions = findClassLevelDefinitions(target, context);
@@ -166,25 +166,6 @@ public class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction {
       .select(PyTargetExpression.class)
       .filter(x -> ScopeUtil.getScopeOwner(x) instanceof PyClass)
       .toList();
-  }
-
-  private static boolean isInstanceAttribute(@NotNull PyTargetExpression target, @NotNull TypeEvalContext context) {
-    final ScopeOwner scopeOwner = ScopeUtil.getScopeOwner(target);
-    if (target.isQualified() && target.getContainingClass() != null && scopeOwner instanceof PyFunction) {
-
-      if (context.maySwitchToAST(target)) {
-        final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
-        //noinspection ConstantConditions
-        return StreamEx.of(PyUtil.multiResolveTopPriority(target.getQualifier(), resolveContext))
-          .select(PyParameter.class)
-          .filter(PyParameter::isSelf)
-          .anyMatch(p -> PsiTreeUtil.getParentOfType(p, PyFunction.class) == scopeOwner);
-      }
-      else {
-        return PyUtil.isInstanceAttribute(target);
-      }
-    }
-    return false;
   }
 
   private static boolean hasInlineAnnotation(@NotNull PyTargetExpression target) {
@@ -219,7 +200,7 @@ public class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction {
     PyTypeHintGenerationUtil.checkPep484Compatibility(inferredType, context);
     final String annotationText = PythonDocumentationProvider.getTypeHint(inferredType, context);
     final AnnotationInfo info = new AnnotationInfo(annotationText, inferredType);
-    if (isInstanceAttribute(target, context)) {
+    if (PyUtil.isInstanceAttribute(target, context)) {
       final List<PyTargetExpression> classLevelAttrs = findClassLevelDefinitions(target, context);
       if (classLevelAttrs.isEmpty()) {
         PyTypeHintGenerationUtil.insertStandaloneAttributeAnnotation(target, context, info, true);
@@ -236,7 +217,7 @@ public class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction {
   private static void insertVariableTypeComment(@NotNull PyTargetExpression target) {
     final TypeEvalContext context = TypeEvalContext.userInitiated(target.getProject(), target.getContainingFile());
     final AnnotationInfo info = generateNestedTypeHint(target, context);
-    if (isInstanceAttribute(target, context)) {
+    if (PyUtil.isInstanceAttribute(target, context)) {
       final List<PyTargetExpression> classLevelAttrs = findClassLevelDefinitions(target, context);
       if (classLevelAttrs.isEmpty()) {
         PyTypeHintGenerationUtil.insertStandaloneAttributeTypeComment(target, context, info, true);

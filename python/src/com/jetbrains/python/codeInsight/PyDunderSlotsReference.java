@@ -41,12 +41,12 @@ public class PyDunderSlotsReference extends PsiReferenceBase<PyStringLiteralExpr
 
   @Override
   public boolean isReferenceTo(PsiElement element) {
-    if (element instanceof PyExpression && PyUtil.isInstanceAttribute((PyExpression)element)) {
-      PyClass elementClass = PsiTreeUtil.getParentOfType(element, PyClass.class);
-      PyClass referenceClass = PsiTreeUtil.getParentOfType(myElement, PyClass.class);
+    if (element instanceof PyTargetExpression && PyUtil.isInstanceAttribute((PyTargetExpression)element, null)) {
+      final PyClass elementClass = PsiTreeUtil.getParentOfType(element, PyClass.class);
+      final PyClass referenceClass = PsiTreeUtil.getParentOfType(myElement, PyClass.class);
       if (referenceClass != null && referenceClass.isSubclass(elementClass, null)) {
-        String elementName = ((PyTargetExpression) element).getReferencedName();
-        String referenceName = myElement.getStringValue();
+        final String elementName = ((PyTargetExpression) element).getReferencedName();
+        final String referenceName = myElement.getStringValue();
         if (Comparing.equal(elementName, referenceName)) {
           return true;
         }
