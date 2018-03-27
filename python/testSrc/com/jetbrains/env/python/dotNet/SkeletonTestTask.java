@@ -136,20 +136,20 @@ class SkeletonTestTask extends PyExecutionFixtureTestTask {
         StreamUtil.readText(new FileInputStream(new File(getTestDataPath(), myExpectedSkeletonFile)), Charset.defaultCharset());
 
 
-      Assert.assertThat("Wrong skeleton generated", removeGeneratorVersion(actual),
-                        Matchers.equalToIgnoringCase(removeGeneratorVersion(skeletonText)));
+      Assert.assertThat("Wrong skeleton generated", removeComments(actual),
+                        Matchers.equalToIgnoringCase(removeComments(skeletonText)));
     }
     myFixture.configureByFile(skeletonFile.getName());
   }
 
   /**
-   * Removes strings that starts with "#", because generator version and other stuff may change
+   * Removes strings that starts with "#" and """, because generator version and other stuff may change
    *
    * @param textToClean text to remove strings from
    * @return text after cleanup
    */
-  private static String removeGeneratorVersion(@NotNull final String textToClean) {
-    return textToClean.replaceAll("#.+", "");
+  private static String removeComments(@NotNull final String textToClean) {
+    return textToClean.replaceAll("(#|\"\"\").+", "");
   }
 
 
