@@ -23,9 +23,11 @@ class LayoutBuilder @PublishedApi internal constructor(@PublishedApi internal va
   /**
    * Hyperlinks are supported (`<a href=""></a>`), new lines and <br> are supported only if no links (file issue if need).
    */
-  fun noteRow(text: String, linkHandler: ((url: String) -> Unit)? = null) {
+  fun noteRow(text: String, linkHandler: ((url: String) -> Unit)?) {
     builder.noteRow(text, linkHandler)
   }
+
+  fun noteRow(text: String) = noteRow(text, null)
 
   inline fun buttonGroup(init: LayoutBuilder.() -> Unit) {
     LayoutBuilder(builder, ButtonGroup()).init()
