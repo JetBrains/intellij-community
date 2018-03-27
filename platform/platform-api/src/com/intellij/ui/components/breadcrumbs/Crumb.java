@@ -1,21 +1,12 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components.breadcrumbs;
 
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.Action;
 import javax.swing.Icon;
+import java.util.Collection;
 
 /**
  * @author Sergey.Malenkov
@@ -27,15 +18,28 @@ public interface Crumb {
 
   default String getTooltip() { return null; }
 
+  /**
+   * @return a list of actions for context menu
+   */
+  @NotNull
+  default Collection<? extends Action> getContextActions() {
+    return ContainerUtil.emptyList();
+  }
+
+
   class Impl implements Crumb {
     private final Icon icon;
     private final String text;
     private final String tooltip;
+    private final Collection<? extends Action> actions;
 
-    public Impl(Icon icon, String text, String tooltip) {
+    public Impl(Icon icon, String text, String tooltip, Action... actions) {
       this.icon = icon;
       this.text = text;
       this.tooltip = tooltip;
+      this.actions = actions == null || actions.length == 0
+                     ? ContainerUtil.emptyList()
+                     : ContainerUtil.list(actions);
     }
 
     @Override
@@ -46,6 +50,12 @@ public interface Crumb {
     @Override
     public String getTooltip() {
       return tooltip;
+    }
+
+    @NotNull
+    @Override
+    public Collection<? extends Action> getContextActions() {
+      return actions;
     }
 
     @Override
