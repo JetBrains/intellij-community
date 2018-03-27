@@ -11,6 +11,7 @@ import com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint;
 import com.intellij.debugger.ui.tree.render.BatchEvaluator;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
+import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.configurations.RemoteConnection;
@@ -542,7 +543,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
               }
             }
             if (agentFile.exists()) {
-              String agentPath = handleSpacesInPath(agentFile.getAbsolutePath());
+              String agentPath = JavaExecutionUtil.handleSpacesInAgentPath(agentFile.getAbsolutePath(), "captureAgent", null);
               if (agentPath != null) {
                 parametersList.add(prefix + agentPath + "=" + generateAgentSettings());
               }
@@ -557,51 +558,6 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
         }
       }
     }
-  }
-
-  @Nullable
-  private static String handleSpacesInPath(String agentPath) {
-    if (agentPath.contains(" ")) {
-      File targetDir = new File(PathManager.getSystemPath(), "captureAgent");
-      String res = copyAgent(agentPath, targetDir);
-      if (res == null) {
-        try {
-          targetDir = FileUtil.createTempDirectory("capture", "jars");
-          res = copyAgent(agentPath, targetDir);
-          if (res == null && targetDir.getAbsolutePath().contains(" ")) {
-            LOG.info("Capture agent was not used since the agent path contained spaces: " + agentPath);
-            return null;
-          }
-        }
-        catch (IOException e) {
-          LOG.info(e);
-          return null;
-        }
-      }
-
-      return res;
-    }
-    return agentPath;
-  }
-
-  @Nullable
-  private static String copyAgent(String agentPath, File targetDir) {
-    if (!targetDir.getAbsolutePath().contains(" ")) {
-      try {
-        //noinspection ResultOfMethodCallIgnored
-        targetDir.mkdirs();
-        Path source = Paths.get(agentPath);
-        Path target = targetDir.toPath().resolve(AGENT_FILE_NAME);
-        Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
-        Files.copy(source.getParent().resolve(STORAGE_FILE_NAME), targetDir.toPath().resolve(STORAGE_FILE_NAME),
-                   StandardCopyOption.REPLACE_EXISTING);
-        return target.toString();
-      }
-      catch (IOException e) {
-        LOG.info(e);
-      }
-    }
-    return null;
   }
 
   private static String generateAgentSettings() {

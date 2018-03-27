@@ -1,9 +1,9 @@
 package com.intellij.coverage;
 
+import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.SimpleJavaParameters;
-import com.intellij.execution.testframework.JavaTestAgentUtil;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -164,8 +164,9 @@ public class JaCoCoCoverageRunner extends JavaCoverageRunner {
   public void appendCoverageArgument(final String sessionDataFilePath, final String[] patterns, final SimpleJavaParameters javaParameters,
                                      final boolean collectLineInfo, final boolean isSampling) {
     StringBuilder argument = new StringBuilder("-javaagent:");
-    final String parentPath = JavaTestAgentUtil.handleSpacesInAgentPath(PathUtil.getJarPathForClass(RT.class));
-    argument.append(parentPath);
+    final String agentPath = handleSpacesInAgentPath(PathUtil.getJarPathForClass(RT.class));
+    if (agentPath == null) return;
+    argument.append(agentPath);
     argument.append("=");
     argument.append("destfile=").append(sessionDataFilePath);
     argument.append(",append=false");
