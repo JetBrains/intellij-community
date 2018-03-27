@@ -80,10 +80,12 @@ object Urls {
     return newUrl("http", authority, path)
   }
 
+  @JvmStatic
   fun newHttpUrl(authority: String, path: String?, parameters: String?): Url {
     return UrlImpl("http", authority, path, parameters)
   }
 
+  @JvmStatic
   fun newUrl(scheme: String, authority: String, path: String?): Url {
     return UrlImpl(scheme, authority, path)
   }
