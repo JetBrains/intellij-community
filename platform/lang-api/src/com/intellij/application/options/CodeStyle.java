@@ -211,4 +211,19 @@ public class CodeStyle {
     CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
   }
 
+  /**
+   * @return A global application-level line separator. By default line separator is the same as defined in the system.
+   */
+  public String getDefaultLineSeparator() {
+    return getDefaultSettings().getLineSeparator();
+  }
+
+  /**
+   * @param project The project to get a configured line separator for.
+   * @return The line separator configured for the project or system line separator if not defined.
+   */
+  public String getLineSeparator(@NotNull Project project) {
+    return getSettings(project).getLineSeparator();
+  }
+
 }
