@@ -18,9 +18,6 @@ abstract class Row : Cell() {
 
   protected abstract val builder: LayoutBuilderImpl
 
-  // override here for backward compatibility
-  abstract override operator fun JComponent.invoke(vararg constraints: CCFlags, gapLeft: Int, growPolicy: GrowPolicy?, comment: String?)
-
   fun label(text: String, gapLeft: Int = 0, style: ComponentStyle? = null, fontColor: FontColor? = null, bold: Boolean = false): JLabel {
     val label = Label(text, style, fontColor, bold)
     label(gapLeft = gapLeft)
@@ -71,6 +68,12 @@ abstract class Row : Cell() {
 
   @Deprecated(message = "Nested noteRow is prohibited", level = DeprecationLevel.ERROR)
   fun noteRow(text: String) {
+  }
+
+  // override here for backward compatibility
+  @Deprecated(level = DeprecationLevel.HIDDEN, message = "deprecated")
+  operator fun JComponent.invoke(vararg constraints: CCFlags, gapLeft: Int = 0, growPolicy: GrowPolicy? = null) {
+    invoke(constraints = *constraints, gapLeft = gapLeft, growPolicy = growPolicy, comment = null)
   }
 }
 
