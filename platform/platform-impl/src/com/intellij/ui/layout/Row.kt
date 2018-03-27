@@ -4,6 +4,7 @@ package com.intellij.ui.layout
 import com.intellij.ui.components.Label
 import com.intellij.util.ui.UIUtil.ComponentStyle
 import com.intellij.util.ui.UIUtil.FontColor
+import javax.swing.JComponent
 import javax.swing.JLabel
 
 abstract class Row : Cell() {
@@ -16,6 +17,9 @@ abstract class Row : Cell() {
   abstract var subRowsVisible: Boolean
 
   protected abstract val builder: LayoutBuilderImpl
+
+  // override here for backward compatibility
+  abstract override operator fun JComponent.invoke(vararg constraints: CCFlags, gapLeft: Int, growPolicy: GrowPolicy?, comment: String?)
 
   fun label(text: String, gapLeft: Int = 0, style: ComponentStyle? = null, fontColor: FontColor? = null, bold: Boolean = false): JLabel {
     val label = Label(text, style, fontColor, bold)

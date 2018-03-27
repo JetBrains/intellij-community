@@ -20,6 +20,7 @@ class LayoutBuilder @PublishedApi internal constructor(@PublishedApi internal va
     return row
   }
 
+  // linkHandler is not an optional for backward compatibility
   /**
    * Hyperlinks are supported (`<a href=""></a>`), new lines and <br> are supported only if no links (file issue if need).
    */
