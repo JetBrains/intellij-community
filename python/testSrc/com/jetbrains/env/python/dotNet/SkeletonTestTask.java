@@ -14,7 +14,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
 import com.jetbrains.env.PyTestTask;
 import com.jetbrains.python.PyBundle;
@@ -136,10 +135,9 @@ class SkeletonTestTask extends PyExecutionFixtureTestTask {
       final String skeletonText =
         StreamUtil.readText(new FileInputStream(new File(getTestDataPath(), myExpectedSkeletonFile)), Charset.defaultCharset());
 
-      // TODO: Move to separate method ?
-      if (!Matchers.equalToIgnoringWhiteSpace(removeGeneratorVersion(skeletonText)).matches(removeGeneratorVersion(actual))) {
-        throw new FileComparisonFailure("Wrong skeleton generated", skeletonText, actual, skeletonFile.getAbsolutePath());
-      }
+
+      Assert.assertThat("Wrong skeleton generated", removeGeneratorVersion(actual),
+                        Matchers.equalToIgnoringCase(removeGeneratorVersion(skeletonText)));
     }
     myFixture.configureByFile(skeletonFile.getName());
   }
