@@ -21,7 +21,6 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.Processor;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
@@ -200,14 +199,14 @@ public final class PyCustomType implements PyClassLikeType {
   }
 
   @Override
-  public Object[] getCompletionVariants(String completionPrefix, PsiElement location, ProcessingContext context) {
-    final List<Object> lookupElements = new ArrayList<>();
+  public LookupElement[] getCompletionVariants(String completionPrefix, PsiElement location, ProcessingContext context) {
+    final List<LookupElement> lookupElements = new ArrayList<>();
 
     for (PyClassLikeType parentType : myTypesToMimic) {
       lookupElements.addAll(Collections2.filter(Arrays.asList(parentType.getCompletionVariants(completionPrefix, location, context)),
                                                 new CompletionFilter()));
     }
-    return ArrayUtil.toObjectArray(lookupElements);
+    return lookupElements.toArray(LookupElement.EMPTY_ARRAY);
   }
 
 

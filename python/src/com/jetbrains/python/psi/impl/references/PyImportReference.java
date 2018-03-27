@@ -27,7 +27,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
@@ -83,18 +82,18 @@ public class PyImportReference extends PyReferenceImpl {
   protected List<RatedResolveResult> resolveInner() {
     final PyImportElement parent = PsiTreeUtil.getParentOfType(myElement, PyImportElement.class); //importRef.getParent();
     final QualifiedName qname = myElement.asQualifiedName();
-    return qname == null ? Collections.emptyList() : ResolveImportUtil.resolveNameInImportStatement(parent, qname);
+    return qname == null || parent == null ? Collections.emptyList() : ResolveImportUtil.resolveNameInImportStatement(parent, qname);
   }
 
   @NotNull
   @Override
-  public Object[] getVariants() {
+  public LookupElement[] getVariants() {
     // no completion in invalid import statements
     PyImportElement importElement = PsiTreeUtil.getParentOfType(myElement, PyImportElement.class);
     if (importElement != null) {
       PsiErrorElement prevError = PsiTreeUtil.getPrevSiblingOfType(importElement, PsiErrorElement.class);
       if (prevError != null) {
-        return ArrayUtil.EMPTY_OBJECT_ARRAY;
+        return LookupElement.EMPTY_ARRAY;
       }
     }
 
@@ -105,14 +104,14 @@ public class PyImportReference extends PyReferenceImpl {
       // qualifier's type must be module, it should know how to complete
       PyType type = context.getType(qualifier);
       if (type != null) {
-        Object[] variants = getTypeCompletionVariants(myElement, type);
+        LookupElement[] variants = getTypeCompletionVariants(myElement, type);
         if (!alreadyHasImportKeyword()) {
           replaceInsertHandler(variants, ImportKeywordHandler.INSTANCE);
         }
         return variants;
       }
       else {
-        return ArrayUtil.EMPTY_OBJECT_ARRAY;
+        return LookupElement.EMPTY_ARRAY;
       }
     }
     else {
@@ -173,7 +172,7 @@ public class PyImportReference extends PyReferenceImpl {
   class ImportVariantCollector {
     private final PsiFile myCurrentFile;
     private final Set<String> myNamesAlready;
-    private final List<Object> myObjects;
+    private final List<LookupElement> myObjects;
     @NotNull private final TypeEvalContext myContext;
 
     public ImportVariantCollector(@NotNull TypeEvalContext context) {
@@ -185,7 +184,7 @@ public class PyImportReference extends PyReferenceImpl {
       myObjects = new ArrayList<>();
     }
 
-    public Object[] execute() {
+    public LookupElement[] execute() {
       int relativeLevel = -1;
       InsertHandler<LookupElement> insertHandler = null;
 
@@ -206,11 +205,11 @@ public class PyImportReference extends PyReferenceImpl {
               ctx.put(PyType.CTX_NAMES, myNamesAlready);
               Collections.addAll(myObjects, qualifierType.getCompletionVariants(myElement.getName(), myElement, ctx));
             }
-            return myObjects.toArray();
+            return myObjects.toArray(LookupElement.EMPTY_ARRAY);
           }
           else if (modCandidate instanceof PsiDirectory) {
             fillFromDir((PsiDirectory)modCandidate, ImportKeywordHandler.INSTANCE);
-            return myObjects.toArray();
+            return myObjects.toArray(LookupElement.EMPTY_ARRAY);
           }
         }
         else { // null source, must be a "from ... import"
@@ -262,7 +261,7 @@ public class PyImportReference extends PyReferenceImpl {
         fillFromQName(QualifiedName.fromComponents(), insertHandler);
       }
 
-      return ArrayUtil.toObjectArray(myObjects);
+      return myObjects.toArray(LookupElement.EMPTY_ARRAY);
     }
 
     private void fillFromQName(QualifiedName thisQName, InsertHandler<LookupElement> insertHandler) {
@@ -291,7 +290,7 @@ public class PyImportReference extends PyReferenceImpl {
           PyModuleType moduleType = new PyModuleType((PyFile)initPy);
           ProcessingContext context = new ProcessingContext();
           context.put(PyType.CTX_NAMES, myNamesAlready);
-          Object[] completionVariants = moduleType.getCompletionVariants("", getElement(), context);
+          LookupElement[] completionVariants = moduleType.getCompletionVariants("", getElement(), context);
           if (insertHandler != null) {
             replaceInsertHandler(completionVariants, insertHandler);
           }

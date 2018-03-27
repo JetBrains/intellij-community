@@ -15,9 +15,9 @@
  */
 package com.jetbrains.python.psi.types;
 
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
@@ -83,7 +83,7 @@ public class PyFunctionTypeImpl implements PyFunctionType {
   }
 
   @Override
-  public Object[] getCompletionVariants(String completionPrefix, PsiElement location, ProcessingContext context) {
+  public LookupElement[] getCompletionVariants(String completionPrefix, PsiElement location, ProcessingContext context) {
     final TypeEvalContext typeEvalContext = TypeEvalContext.codeCompletion(location.getProject(), location.getContainingFile());
     final PyClassType delegate;
     if (location instanceof PyReferenceExpression) {
@@ -95,7 +95,7 @@ public class PyFunctionTypeImpl implements PyFunctionType {
       delegate = cls != null ? new PyClassTypeImpl(cls, false) : null;
     }
     if (delegate == null) {
-      return ArrayUtil.EMPTY_OBJECT_ARRAY;
+      return LookupElement.EMPTY_ARRAY;
     }
     return delegate.getCompletionVariants(completionPrefix, location, context);
   }

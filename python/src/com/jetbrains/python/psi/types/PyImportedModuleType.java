@@ -6,7 +6,6 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
 import com.jetbrains.python.psi.AccessDirection;
@@ -80,7 +79,7 @@ public class PyImportedModuleType implements PyType {
   }
 
   @Override
-  public Object[] getCompletionVariants(String completionPrefix, PsiElement location, ProcessingContext context) {
+  public LookupElement[] getCompletionVariants(String completionPrefix, PsiElement location, ProcessingContext context) {
     final List<LookupElement> result = new ArrayList<>();
     for (PsiElement resolveResult : ResolveResultList.getElements(myImportedModule.multiResolve())) {
       if (resolveResult instanceof PyFile) {
@@ -101,7 +100,7 @@ public class PyImportedModuleType implements PyType {
         }
       }
     }
-    return ArrayUtil.toObjectArray(result);
+    return result.toArray(LookupElement.EMPTY_ARRAY);
   }
 
   @Override
