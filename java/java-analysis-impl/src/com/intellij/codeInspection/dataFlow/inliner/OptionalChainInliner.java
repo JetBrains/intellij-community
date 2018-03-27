@@ -234,7 +234,7 @@ public class OptionalChainInliner implements CallInliner {
           return;
         }
         // Restore stack for common invokeFunction
-        StreamEx.of(parameters).forEach(p -> builder.push(builder.getFactory().getVarFactory().createVariableValue(p, false)));
+        StreamEx.of(parameters).map(builder.getFactory().getVarFactory()::createVariableValue).forEach(builder::push);
       }
     }
     builder

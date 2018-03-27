@@ -15,6 +15,8 @@
  */
 package com.jetbrains.env;
 
+import com.jetbrains.TestEnv;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -32,4 +34,5 @@ public @interface EnvTestTagsRequired {
    * @return tags should exist on interpreter for this test not to be skipped
    */
   String[] tags();
+  TestEnv[] skipOnOSes() default {};
 }

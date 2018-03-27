@@ -13,10 +13,8 @@ import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
-import com.intellij.util.ui.UIUtil;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
 import com.jetbrains.env.PyTestTask;
 import com.jetbrains.python.PyBundle;
@@ -36,8 +34,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -116,7 +112,7 @@ class SkeletonTestTask extends PyExecutionFixtureTestTask {
     myFixture.enableInspections(PyUnresolvedReferencesInspection.class); // This inspection should suggest us to generate stubs
 
 
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+    ApplicationManager.getApplication().invokeAndWait(() -> {
       PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
       final String intentionName = PyBundle.message("sdk.gen.stubs.for.binary.modules", myUseQuickFixWithThisModuleOnly);
       IntentionAction intention = myFixture.findSingleIntention(intentionName);
@@ -132,7 +128,7 @@ class SkeletonTestTask extends PyExecutionFixtureTestTask {
                         Matchers.instanceOf(GenerateBinaryStubsFix.class));
       final Task fixTask = ((GenerateBinaryStubsFix)quickFix).getFixTask(myFixture.getFile());
       fixTask.run(new AbstractProgressIndicatorBase());
-    });
+    }, ModalityState.defaultModalityState());
 
     FileUtil.copy(skeletonFile, new File(myFixture.getTempDirPath(), skeletonFile.getName()));
     if (myExpectedSkeletonFile != null) {
@@ -142,27 +138,20 @@ class SkeletonTestTask extends PyExecutionFixtureTestTask {
 
       // TODO: Move to separate method ?
       if (!Matchers.equalToIgnoringWhiteSpace(removeGeneratorVersion(skeletonText)).matches(removeGeneratorVersion(actual))) {
-        throw new FileComparisonFailure("asd", skeletonText, actual, skeletonFile.getAbsolutePath());
+        throw new FileComparisonFailure("Wrong skeleton generated", skeletonText, actual, skeletonFile.getAbsolutePath());
       }
     }
     myFixture.configureByFile(skeletonFile.getName());
   }
 
   /**
-   * Removes strings that starts with "# by generator", because generator version may change
+   * Removes strings that starts with "#", because generator version and other stuff may change
    *
    * @param textToClean text to remove strings from
    * @return text after cleanup
    */
   private static String removeGeneratorVersion(@NotNull final String textToClean) {
-    final List<String> strings = StringUtil.split(textToClean, "\n");
-    final Iterator<String> iterator = strings.iterator();
-    while (iterator.hasNext()) {
-      if (iterator.next().startsWith("# by generator")) {
-        iterator.remove();
-      }
-    }
-    return StringUtil.join(strings, "\n");
+    return textToClean.replaceAll("#.+", "");
   }
 
 

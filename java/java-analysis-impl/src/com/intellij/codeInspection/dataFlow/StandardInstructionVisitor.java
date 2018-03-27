@@ -28,6 +28,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.MethodUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import gnu.trove.THashSet;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -502,15 +503,13 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
     if (methodType == MethodCallInstruction.MethodType.METHOD_REFERENCE_CALL && qualifierValue instanceof DfaVariableValue) {
       PsiMethod method = instruction.getTargetMethod();
-      for (SpecialField sf : SpecialField.values()) {
-        if (sf.isMyAccessor(method)) {
-          return sf.createValue(factory, qualifierValue);
-        }
+      DfaValue value = SpecialField.tryCreateValue(qualifierValue, method);
+      if (value != null) {
+        return value;
       }
-      PsiModifierListOwner modifierListOwner = DfaExpressionFactory.getAccessedVariableOrGetter(method);
-      if (modifierListOwner != null) {
-        return factory.getVarFactory().createVariableValue(modifierListOwner, instruction.getResultType(), false,
-                                                           (DfaVariableValue)qualifierValue);
+      DfaVariableSource source = DfaExpressionFactory.getAccessedVariableOrGetter(method);
+      if (source != null) {
+        return factory.getVarFactory().createVariableValue(source, instruction.getResultType(), (DfaVariableValue)qualifierValue);
       }
     }
 
@@ -525,7 +524,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
     if (methodType == MethodCallInstruction.MethodType.CAST) {
       assert qualifierValue != null;
-      if (qualifierValue instanceof DfaConstValue) {
+      if (qualifierValue instanceof DfaConstValue && type != null) {
         Object casted = TypeConversionUtil.computeCastTo(((DfaConstValue)qualifierValue).getValue(), type);
         return factory.getConstFactory().createFromValue(casted, type, ((DfaConstValue)qualifierValue).getConstant());
       }
@@ -603,8 +602,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       }
     }
     DfaValue result = null;
-    PsiElement expr = instruction.getPsiAnchor();
-    PsiType type = expr instanceof PsiExpression ? ((PsiExpression)expr).getType() : null;
+    PsiType type = instruction.getResultType();
     if (PsiType.INT.equals(type) || PsiType.LONG.equals(type)) {
       LongRangeSet left = memState.getValueFact(dfaLeft, DfaFactType.RANGE);
       LongRangeSet right = memState.getValueFact(dfaRight, DfaFactType.RANGE);
@@ -616,8 +614,8 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       }
     }
     if (result == null) {
-      if (JavaTokenType.PLUS == opSign && !(type instanceof PsiPrimitiveType)) {
-        result = instruction.getNonNullStringValue(runner.getFactory());
+      if (JavaTokenType.PLUS == opSign && TypeUtils.isJavaLangString(type)) {
+        result = runner.getFactory().createTypeValue(type, Nullness.NOT_NULL);
       }
       else if (instruction instanceof InstanceofInstruction) {
         handleInstanceof((InstanceofInstruction)instruction, dfaRight, dfaLeft);
