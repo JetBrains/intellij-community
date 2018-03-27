@@ -312,15 +312,20 @@ public class PyUtil {
     final ScopeOwner owner = ScopeUtil.getScopeOwner(target);
     if (owner instanceof PyFunction) {
       final PyFunction method = (PyFunction)owner;
-      if (method.getContainingClass() != null) {
+      final PyClass cls = method.getContainingClass();
+
+      if (cls != null) {
         if (method.getStub() != null) {
           return true;
         }
-        final PyParameter[] params = method.getParameterList().getParameters();
-        if (params.length > 0) {
-          final PyTargetExpression targetExpr = (PyTargetExpression)target;
-          final PyExpression qualifier = targetExpr.getQualifier();
-          return qualifier != null && qualifier.getText().equals(params[0].getName());
+
+        final PyExpression qualifier = ((PyTargetExpression)target).getQualifier();
+        if (qualifier != null) {
+          final TypeEvalContext context = TypeEvalContext.codeAnalysis(target.getProject(), target.getContainingFile());
+          final PyClassType qualifierType = as(context.getType(qualifier), PyClassType.class);
+          if (qualifierType != null && qualifierType.getPyClass() == cls) {
+            return true;
+          }
         }
       }
     }

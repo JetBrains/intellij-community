@@ -1134,9 +1134,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   private void collectAttributesInNew(@NotNull final Map<String, PyTargetExpression> result) {
     final PyFunction newMethod = findMethodByName(PyNames.NEW, false, null);
     if (newMethod != null) {
-      for (PyTargetExpression target : getTargetExpressions(newMethod)) {
-        result.put(target.getName(), target);
-      }
+      collectInstanceAttributes(newMethod, result);
     }
   }
 

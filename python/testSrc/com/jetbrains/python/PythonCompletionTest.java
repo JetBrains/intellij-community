@@ -1267,6 +1267,27 @@ public class PythonCompletionTest extends PyTestCase {
                          () -> doMultiFileAssertSameElements("m1", "pkg2", "pkg3", "bar", "foo", "foo2"));
   }
 
+  // PY-27261
+  public void testLocalVariablesInDunderNew() {
+    assertEmpty(
+      doTestByText("class A:\n" +
+                   "    def __new__(cls, *args, **kwargs):\n" +
+                   "        abacaba = 'bar'\n" +
+                   "        return super(A, cls).__new__(cls)\n" +
+                   "A().abaca<caret>")
+    );
+
+    assertEmpty(
+      doTestByText("class Meta(type):\n" +
+                   "    def __new__(cls, *args, **kwargs):\n" +
+                   "        abacaba = \"bar\"\n" +
+                   "        return type.__new__(cls, *args, **kwargs)\n" +
+                   "class A(metaclass=Meta):\n" +
+                   "    pass\n" +
+                   "A().abaca<caret>")
+    );
+  }
+
   private void doMultiFileAssertSameElements(String... variants) {
     myFixture.copyDirectoryToProject(getTestName(true), "");
     myFixture.configureByFile("a.py");
