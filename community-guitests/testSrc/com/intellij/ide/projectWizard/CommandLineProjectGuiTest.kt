@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.testGuiFramework.tests.community
+package com.intellij.ide.projectWizard
 
 import com.intellij.diff.comparison.ComparisonPolicy
 import com.intellij.diff.comparison.ComparisonUtil
@@ -27,7 +27,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 @RunWithIde(CommunityIde::class)
-class CommandLineProjectTest: GuiTestCase() {
+class CommandLineProjectGuiTest: GuiTestCase() {
 
   val testProjectName = "test-cmd-template"
   val codeText: String = """package com.company;

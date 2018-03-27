@@ -15,6 +15,7 @@
  */
 package com.intellij.testGuiFramework.tests.community
 
+import com.intellij.ide.projectWizard.CommandLineProjectGuiTest
 import com.intellij.testGuiFramework.framework.FirstStartWith
 import com.intellij.testGuiFramework.framework.GuiTestSuite
 import com.intellij.testGuiFramework.framework.RunWithIde
@@ -26,5 +27,5 @@ import org.junit.runners.Suite
 @RunWith(GuiTestSuite::class)
 @RunWithIde(CommunityIde::class)
 @FirstStartWith(CommunityIdeFirstStart::class)
-@Suite.SuiteClasses(CommandLineProjectTest::class)
+@Suite.SuiteClasses(CommandLineProjectGuiTest::class)
 class CommunityTestSuite
