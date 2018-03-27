@@ -95,14 +95,6 @@ public class IdeEventQueue extends EventQueue {
   private final IdeMouseEventDispatcher myMouseEventDispatcher = new IdeMouseEventDispatcher();
   private final IdePopupManager myPopupManager = new IdePopupManager();
   private final ToolkitBugsProcessor myToolkitBugsProcessor = new ToolkitBugsProcessor();
-  private boolean mySuspendMode;
-  /**
-   * We exit from suspend mode when focus owner changes and no more WindowEvent.WINDOW_OPENED events
-   * <p/>
-   * in the queue. If WINDOW_OPENED event does exists in the queues then we restart the alarm.
-   */
-  private Component myFocusOwner;
-  private final Runnable myExitSuspendModeRunnable = new ExitSuspendModeRunnable();
 
   /**
    * We exit from suspend mode when this alarm is triggered and no mode WindowEvent.WINDOW_OPENED
@@ -206,9 +198,6 @@ public class IdeEventQueue extends EventQueue {
       application.assertIsDispatchThread();
       final Window focusedWindow = keyboardFocusManager.getFocusedWindow();
       final Component focusOwner = keyboardFocusManager.getFocusOwner();
-      if (mySuspendMode && focusedWindow != null && focusOwner != null && focusOwner != myFocusOwner && !(focusOwner instanceof Window)) {
-        exitSuspendMode();
-      }
     });
 
     addDispatcher(new WindowsAltSuppressor(), null);
@@ -266,36 +255,6 @@ public class IdeEventQueue extends EventQueue {
   @SuppressWarnings("unused") // Used in upsource.
   public void stopIdleTimeCalculation() {
     myIdleTimeCounterAlarm.cancelAllRequests();
-  }
-
-  public boolean shouldNotTypeInEditor() {
-    return myKeyEventDispatcher.isWaitingForSecondKeyStroke() || mySuspendMode;
-  }
-
-
-  private void enterSuspendMode() {
-    mySuspendMode = true;
-    myFocusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-    mySuspendModeAlarm.cancelAllRequests();
-    mySuspendModeAlarm.addRequest(myExitSuspendModeRunnable, 750);
-  }
-
-  /**
-   * Exits suspend mode and pumps all suspended events.
-   */
-  private void exitSuspendMode() {
-    if (shallEnterSuspendMode()) {
-      // We have to exit from suspend mode (focus owner changes or alarm is triggered) but
-      // WINDOW_OPENED isn't dispatched yet. In this case we have to restart the alarm until
-      // all WINDOW_OPENED event will be processed.
-      mySuspendModeAlarm.cancelAllRequests();
-      mySuspendModeAlarm.addRequest(myExitSuspendModeRunnable, 250);
-    }
-    else {
-      // Now we can pump all suspended events.
-      mySuspendMode = false;
-      myFocusOwner = null; // to prevent memory leaks
-    }
   }
 
   public void addIdleListener(@NotNull final Runnable runnable, final int timeoutMillis) {
@@ -657,10 +616,6 @@ public class IdeEventQueue extends EventQueue {
 
     if (processAppActivationEvents(e)) return;
 
-    if (!myPopupManager.isPopupActive()) {
-      enterSuspendModeIfNeeded(e);
-    }
-
     myKeyboardBusy = e instanceof KeyEvent || myKeyboardEventsPosted.get() > myKeyboardEventsDispatched.get();
 
     if (e instanceof KeyEvent) {
@@ -735,13 +690,10 @@ public class IdeEventQueue extends EventQueue {
     }
 
     if (e instanceof KeyEvent) {
-      if (mySuspendMode || !myKeyEventDispatcher.dispatchKeyEvent((KeyEvent)e)) {
-        defaultDispatchEvent(e);
-      }
-      else {
+      if (myKeyEventDispatcher.dispatchKeyEvent((KeyEvent)e)) {
         ((KeyEvent)e).consume();
-        defaultDispatchEvent(e);
       }
+      defaultDispatchEvent(e);
     }
     else if (e instanceof MouseEvent) {
       MouseEvent me = (MouseEvent)e;
@@ -782,18 +734,6 @@ public class IdeEventQueue extends EventQueue {
            queue.peekEvent(MouseEvent.MOUSE_PRESSED) != null ||
            queue.peekEvent(MouseEvent.MOUSE_RELEASED) != null ||
            queue.peekEvent(MouseEvent.MOUSE_CLICKED) != null;
-  }
-
-  private void enterSuspendModeIfNeeded(@NotNull AWTEvent e) {
-    if (e instanceof KeyEvent) {
-      if (!mySuspendMode && shallEnterSuspendMode()) {
-        enterSuspendMode();
-      }
-    }
-  }
-
-  private boolean shallEnterSuspendMode() {
-    return peekEvent(WindowEvent.WINDOW_OPENED) != null;
   }
 
   private static boolean processAppActivationEvents(@NotNull AWTEvent e) {
@@ -968,16 +908,6 @@ public class IdeEventQueue extends EventQueue {
     }
   }
 
-  private final class ExitSuspendModeRunnable implements Runnable {
-    @Override
-    public void run() {
-      if (mySuspendMode) {
-        exitSuspendMode();
-      }
-    }
-  }
-
-
   public long getIdleTime() {
     return myIdleTime;
   }
@@ -1007,11 +937,6 @@ public class IdeEventQueue extends EventQueue {
   public void blockNextEvents(@NotNull MouseEvent e, @NotNull BlockMode blockMode) {
     myMouseEventDispatcher.blockNextEvents(e, blockMode);
   }
-
-  public boolean isSuspendMode() {
-    return mySuspendMode;
-  }
-
 
   private boolean isReady() {
     return !myKeyboardBusy && myKeyEventDispatcher.isReady();
