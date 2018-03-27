@@ -44,12 +44,11 @@ class GoToClassTwiceFocusTest : GuiTestCase() {
     Pause.pause(1000)
     ideFrame {
       focusOnEditor()
-      repeat(5) {
+      repeat(20) {
         intensiveCpuCalc()
         openGoToClassSearchAndType(this@GoToClassTwiceFocusTest)
         focusOnEditor()
       }
-      Assert.assertTrue("Intented fail", false)
     }
   }
 
