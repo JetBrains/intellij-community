@@ -27,10 +27,6 @@ public final class PyIronPythonTest extends PyEnvTestCase {
    */
   static final String IRON_TAG = "iron";
 
-  public PyIronPythonTest() {
-    super(IRON_TAG);
-  }
-
   /**
    * Tests skeleton generation
    */
