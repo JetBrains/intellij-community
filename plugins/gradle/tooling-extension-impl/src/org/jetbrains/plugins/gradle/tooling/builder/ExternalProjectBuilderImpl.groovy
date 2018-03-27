@@ -204,12 +204,12 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
     //noinspection GrUnresolvedAccess
     if(project.hasProperty('sourceCompatibility') && project.sourceCompatibility instanceof JavaVersion) {
       //noinspection GrUnresolvedAccess
-      projectSourceCompatibility = project.sourceCompatibility.name
+      projectSourceCompatibility = project.sourceCompatibility.toString()
     }
     //noinspection GrUnresolvedAccess
     if(project.hasProperty('targetCompatibility') && project.targetCompatibility instanceof JavaVersion) {
       //noinspection GrUnresolvedAccess
-      projectTargetCompatibility = project.targetCompatibility.name
+      projectTargetCompatibility = project.targetCompatibility.toString()
     }
 
     def result = [:] as Map<String, ExternalSourceSet>
