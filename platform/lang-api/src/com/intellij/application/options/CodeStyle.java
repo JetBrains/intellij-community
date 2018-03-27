@@ -214,7 +214,7 @@ public class CodeStyle {
   /**
    * @return A global application-level line separator. By default line separator is the same as defined in the system.
    */
-  public String getDefaultLineSeparator() {
+  public static String getDefaultLineSeparator() {
     return getDefaultSettings().getLineSeparator();
   }
 
@@ -222,7 +222,7 @@ public class CodeStyle {
    * @param project The project to get a configured line separator for.
    * @return The line separator configured for the project or system line separator if not defined.
    */
-  public String getLineSeparator(@NotNull Project project) {
+  public static String getLineSeparator(@NotNull Project project) {
     return getSettings(project).getLineSeparator();
   }
 
