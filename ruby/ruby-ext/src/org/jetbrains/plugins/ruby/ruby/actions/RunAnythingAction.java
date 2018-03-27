@@ -99,6 +99,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   public static final AtomicBoolean ourAltIsPressed = new AtomicBoolean(false);
   public static final Key<JBPopup> RUN_ANYTHING_POPUP = new Key<>("RunAnythingPopup");
   public static final String RUN_ANYTHING_ACTION_ID = "RunAnything";
+  public static final DataKey<AnActionEvent> RUN_ANYTHING_EVENT_KEY = DataKey.create("RUN_ANYTHING_EVENT_KEY");
 
   private static final int MAX_RUN_ANYTHING_HISTORY = 50;
   private static final Logger LOG = Logger.getInstance(RunAnythingAction.class);
@@ -581,6 +582,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     HashMap<String, Object> dataMap = ContainerUtil.newHashMap();
     dataMap.put(LangDataKeys.MODULE.getName(), module);
     dataMap.put(CommonDataKeys.PROJECT.getName(), project);
+    dataMap.put(RUN_ANYTHING_EVENT_KEY.getName(), myActionEvent);
     myDataContext = SimpleDataContext.getSimpleContext(dataMap, e.getDataContext());
 
     if (myPopupField != null) {
