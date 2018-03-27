@@ -104,7 +104,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
     String fqn = couple != null ? couple.first : null;
     if (fqn == null || c == null) return;
     String methodName = couple.second;
-    String methodPresentationName = c.getName() + "." + methodName;
+    String methodPresentationName = ClassUtil.extractClassName(fqn) + "." + methodName;
 
     DataContext dataContext = DataManager.getInstance().getDataContext(e.getRequiredData(EDITOR).getContentComponent());
     FeatureUsageTracker.getInstance().triggerFeatureUsed("test.discovery");
