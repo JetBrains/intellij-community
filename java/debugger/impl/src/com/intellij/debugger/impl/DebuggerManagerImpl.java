@@ -543,7 +543,10 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
               }
             }
             if (agentFile.exists()) {
-              String agentPath = JavaExecutionUtil.handleSpacesInAgentPath(agentFile.getAbsolutePath(), "captureAgent", null);
+              String agentPath = JavaExecutionUtil.handleSpacesInAgentPath(agentFile.getAbsolutePath(), "captureAgent", null, f -> {
+                String name = f.getName();
+                return STORAGE_FILE_NAME.equals(name) || AGENT_FILE_NAME.equals(name);
+              });
               if (agentPath != null) {
                 parametersList.add(prefix + agentPath + "=" + generateAgentSettings());
               }

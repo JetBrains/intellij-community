@@ -44,6 +44,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
@@ -214,16 +215,27 @@ public class JavaExecutionUtil {
   }
 
   @Nullable
-  public static String handleSpacesInAgentPath(@NotNull String agentPath, @NotNull String copyDirName, @Nullable String agentPathPropertyKey) {
+  public static String handleSpacesInAgentPath(@NotNull String agentPath,
+                                               @NotNull String copyDirName,
+                                               @Nullable String agentPathPropertyKey) {
+    return handleSpacesInAgentPath(agentPath, copyDirName, agentPathPropertyKey, null);
+  }
+
+  @Nullable
+  public static String handleSpacesInAgentPath(@NotNull String agentPath,
+                                               @NotNull String copyDirName,
+                                               @Nullable String agentPathPropertyKey,
+                                               @Nullable FileFilter fileFilter) {
     String agentName = new File(agentPath).getName();
-    String containingDir = handleSpacesInContainingDir(agentPath, copyDirName, agentPathPropertyKey);
+    String containingDir = handleSpacesInContainingDir(agentPath, copyDirName, agentPathPropertyKey, fileFilter);
     return containingDir == null ? null : FileUtil.join(containingDir, agentName);
   }
 
   @Nullable
   private static String handleSpacesInContainingDir(@NotNull String agentPath,
                                                     @NotNull String copyDirName,
-                                                    @Nullable String agentPathPropertyKey) {
+                                                    @Nullable String agentPathPropertyKey,
+                                                    @Nullable FileFilter fileFilter) {
     String agentContainingDir;
     String userDefined = agentPathPropertyKey == null ? null : System.getProperty(agentPathPropertyKey);
     if (userDefined != null && new File(userDefined).exists()) {
@@ -251,7 +263,10 @@ public class JavaExecutionUtil {
 
       try {
         LOG.info("Agent jars were copied to " + dir.getPath());
-        FileUtil.copyDir(new File(agentContainingDir), dir, pathname -> FileUtilRt.extensionEquals(pathname.getPath(), "jar"));
+        if (fileFilter == null) {
+          fileFilter = pathname -> FileUtilRt.extensionEquals(pathname.getPath(), "jar");
+        }
+        FileUtil.copyDir(new File(agentContainingDir), dir, fileFilter);
         return dir.getPath();
       }
       catch (IOException e) {
