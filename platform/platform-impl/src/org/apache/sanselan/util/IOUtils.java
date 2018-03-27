@@ -51,19 +51,28 @@ public class IOUtils {
   }
 
   public static void copyStreamToStream(InputStream src, OutputStream dst, boolean close_streams) throws IOException {
+    BufferedInputStream bis = null;
+    BufferedOutputStream bos = null;
     try {
-      FileUtil.copy(new BufferedInputStream(src), new BufferedOutputStream(dst));
+      bis = new BufferedInputStream(src);
+      bos = new BufferedOutputStream(dst);
+      FileUtil.copy(bis, bos);
+      bos.flush();
     }
     finally {
       if (close_streams) {
         try {
-          src.close();
+          if (bis != null) {
+            bis.close();
+          }
         }
         catch (IOException ignore) {
         }
         finally {
           try {
-            dst.close();
+            if (bos != null) {
+              bos.close();
+            }
           }
           catch (IOException ignore) {
           }
