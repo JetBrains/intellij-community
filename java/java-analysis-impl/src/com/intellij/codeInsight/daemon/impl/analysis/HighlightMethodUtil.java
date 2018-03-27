@@ -1286,8 +1286,8 @@ public class HighlightMethodUtil {
           if (Stream.of(method.findDeepestSuperMethods()).map(PsiMethod::getContainingClass)
                     .filter(Objects::nonNull).map(PsiClass::getQualifiedName).noneMatch(CommonClassNames.JAVA_LANG_OBJECT::equals)) {
             additionalFixes.add(QUICK_FIX_FACTORY.createModifierListFix(method, PsiModifier.DEFAULT, true, false));
+            additionalFixes.add(QUICK_FIX_FACTORY.createModifierListFix(method, PsiModifier.STATIC, true, false));
           }
-          additionalFixes.add(QUICK_FIX_FACTORY.createModifierListFix(method, PsiModifier.STATIC, true, false));
         }
       }
     }
