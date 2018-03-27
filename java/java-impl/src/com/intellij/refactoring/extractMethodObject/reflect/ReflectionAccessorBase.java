@@ -49,6 +49,10 @@ public abstract class ReflectionAccessorBase<T extends ItemToReplaceDescriptor> 
     return myPsiClass;
   }
 
+  /**
+   * Implementers of this method must place all child elements before their parent to ensure that all elements are not replaced
+   * together a previous element
+   */
   protected abstract List<T> findItemsToReplace(@NotNull PsiElement element);
 
   protected abstract void grantAccess(@NotNull T descriptor);
