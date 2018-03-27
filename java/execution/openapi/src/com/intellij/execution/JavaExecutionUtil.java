@@ -243,7 +243,7 @@ public class JavaExecutionUtil {
     } else {
       agentContainingDir = new File(agentPath).getParent();
     }
-    if (!SystemInfo.isWindows && agentContainingDir.contains(" ")) {
+    if (agentContainingDir.contains(" ")) {
       File dir = new File(PathManager.getSystemPath(), copyDirName);
       if (dir.getAbsolutePath().contains(" ")) {
         try {
