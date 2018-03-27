@@ -7,12 +7,15 @@ import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.testGuiFramework.fixtures.IdeFrameFixture
 import com.intellij.testGuiFramework.impl.GuiTestCase
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt
+import com.intellij.testGuiFramework.impl.LogActionsDuringTest
+import com.intellij.testGuiFramework.impl.ScreenshotsDuringTest
 import com.intellij.testGuiFramework.tests.community.CommunityProjectCreator
 import com.intellij.testGuiFramework.util.Key.ESCAPE
 import org.fest.swing.core.SmartWaitRobot
 import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.timing.Pause
 import org.junit.Assert
+import org.junit.Rule
 import org.junit.Test
 import java.awt.Container
 import java.awt.Window
@@ -24,11 +27,16 @@ import javax.swing.KeyStroke
 class GoToClassTwiceFocusTest : GuiTestCase() {
 
   private val typedString = "hefuihwefwehrf;werfwerfw"
+
+  @Rule @JvmField
+  val screenshotsDuringTest = ScreenshotsDuringTest()
+  @Rule @JvmField
+  val logActionsDuringTest = LogActionsDuringTest()
+
   private val actionKeyStroke: KeyStroke by lazy {
     val activeKeymapShortcuts: ShortcutSet = KeymapUtil.getActiveKeymapShortcuts("GotoClass")
     KeymapUtil.getKeyStroke(activeKeymapShortcuts)!!
   }
-
 
   @Test
   fun testGoToClassFocusTwice() {
@@ -36,10 +44,12 @@ class GoToClassTwiceFocusTest : GuiTestCase() {
     Pause.pause(1000)
     ideFrame {
       focusOnEditor()
-      for (i in 0..10) {
+      repeat(5) {
+        intensiveCpuCalc()
         openGoToClassSearchAndType(this@GoToClassTwiceFocusTest)
         focusOnEditor()
       }
+      Assert.assertTrue("Intented fail", false)
     }
   }
 
