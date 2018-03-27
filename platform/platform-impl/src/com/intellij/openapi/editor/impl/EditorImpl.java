@@ -2,10 +2,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.application.options.EditorFontsConstants;
-import com.intellij.codeInsight.hint.DocumentFragmentTooltipRenderer;
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
-import com.intellij.codeInsight.hint.TooltipController;
-import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.ide.*;
@@ -513,6 +510,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     EditorHighlighter highlighter = new NullEditorHighlighter();
     setHighlighter(highlighter);
+
+    new FoldingPopupManager(this);
 
     myEditorComponent = new EditorComponentImpl(this);
     myScrollPane.putClientProperty(JBScrollPane.BRIGHTNESS_FROM_VIEW, true);
@@ -3551,8 +3550,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (event.getArea() == EditorMouseEventArea.LINE_MARKERS_AREA) {
         myGutterComponent.mouseExited(e);
       }
-
-      TooltipController.getInstance().cancelTooltip(FOLDING_TOOLTIP_GROUP, e, true);
     }
 
     private void runMousePressedCommand(@NotNull final MouseEvent e) {
@@ -3983,8 +3980,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myUseEditorAntialiasing = value;
   }
 
-  private static final TooltipGroup FOLDING_TOOLTIP_GROUP = new TooltipGroup("FOLDING_TOOLTIP_GROUP", 10);
-
   private class MyMouseMotionListener implements MouseMotionListener {
     @Override
     public void mouseDragged(@NotNull MouseEvent e) {
@@ -4028,39 +4023,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         myGutterComponent.mouseMoved(e);
       }
 
-      if (event.getArea() == EditorMouseEventArea.EDITING_AREA) {
-        FoldRegion fold = myFoldingModel.getFoldingPlaceholderAt(e.getPoint());
-        TooltipController controller = TooltipController.getInstance();
-        if (fold != null && !fold.shouldNeverExpand()) {
-          DocumentFragment range = createDocumentFragment(fold);
-          final Point p =
-            SwingUtilities.convertPoint((Component)e.getSource(), e.getPoint(), getComponent().getRootPane().getLayeredPane());
-          controller.showTooltip(EditorImpl.this, p, new DocumentFragmentTooltipRenderer(range), false, FOLDING_TOOLTIP_GROUP);
-        }
-        else {
-          controller.cancelTooltip(FOLDING_TOOLTIP_GROUP, e, true);
-        }
-      }
-
       for (EditorMouseMotionListener listener : myMouseMotionListeners) {
         listener.mouseMoved(event);
         if (isReleased) return;
       }
-    }
-
-    @NotNull
-    private DocumentFragment createDocumentFragment(@NotNull FoldRegion fold) {
-      final FoldingGroup group = fold.getGroup();
-      final int foldStart = fold.getStartOffset();
-      if (group != null) {
-        final int endOffset = myFoldingModel.getEndOffset(group);
-        if (offsetToVisualLine(endOffset) == offsetToVisualLine(foldStart)) {
-          return new DocumentFragment(myDocument, foldStart, endOffset);
-        }
-      }
-
-      final int oldEnd = fold.getEndOffset();
-      return new DocumentFragment(myDocument, foldStart, oldEnd);
     }
   }
 
