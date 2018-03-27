@@ -104,7 +104,7 @@ envs {
                true)
 
   if (Os.isFamily(Os.FAMILY_UNIX)) {
-    createPython("pyqt_env", "2.7.13", [condaPackage("pyqt=5.6.0")], "pyqt5", false, true)
+    createPython("pyqt_env", "3.5.4", ["pyqt==5.10.1"], "pyqt5", true)
   }
 
   createPython("django_latest", "3.5.3", ["django"], "python3.5\ndjango", true)
