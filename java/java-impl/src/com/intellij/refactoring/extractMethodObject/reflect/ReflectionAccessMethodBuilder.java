@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethodObject.reflect;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
@@ -18,6 +19,8 @@ import java.util.List;
  * @author Vitaliy.Bibaev
  */
 public class ReflectionAccessMethodBuilder {
+  private static final Logger LOG = Logger.getInstance(ReflectionAccessMethodBuilder.class);
+
   private boolean myIsStatic = false;
   private String myReturnType = "void";
   private final String myName;
@@ -115,11 +118,34 @@ public class ReflectionAccessMethodBuilder {
     for (int i = 0; i < parameters.length; i++) {
       PsiParameter parameter = parameters[i];
       String name = parameter.getName();
-      PsiType type = TypeConversionUtil.erasure(parameter.getType());
-      myParameters.add(new ParameterInfo(type.getCanonicalText(), name == null ? "arg" + i : name, extractJvmType(type)));
+      String type = eraseGenerics(parameter.getType());
+
+      if (name == null) {
+        LOG.info("Parameter name not found, index = " + i + ", type = " + type);
+        name = "arg" + i;
+      }
+
+      myParameters.add(new ParameterInfo(type, name, extractJvmType(parameter.getType())));
     }
 
     return this;
+  }
+
+  @NotNull
+  private static String eraseGenerics(@NotNull PsiType type) {
+    PsiType erasedType = TypeConversionUtil.erasure(type);
+    if (erasedType == null) {
+      String typeName = type.getCanonicalText();
+      int typeParameterIndex = typeName.indexOf('<');
+      if (typeParameterIndex != -1) {
+        typeName = typeName.substring(0, typeParameterIndex);
+      }
+
+      LOG.info("Type erasure failed, the following type used instead: " + typeName);
+      return typeName;
+    }
+
+    return erasedType.getCanonicalText();
   }
 
   @NotNull
