@@ -7,10 +7,7 @@ import com.intellij.util.indexing.InvertedIndex;
 import com.intellij.util.io.PersistentEnumeratorDelegate;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 class PersistentObjectSeq {
   private static final Logger LOG = Logger.getInstance(PersistentObjectSeq.class);
