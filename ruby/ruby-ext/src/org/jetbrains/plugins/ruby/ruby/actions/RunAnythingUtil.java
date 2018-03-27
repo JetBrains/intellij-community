@@ -35,6 +35,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.ruby.actions.groups.RunAnythingGroup;
+import org.jetbrains.plugins.ruby.ruby.actions.setup.RunAnythingActivityProvider;
 import org.jetbrains.plugins.ruby.ruby.run.configuration.AbstractRubyRunConfiguration;
 
 import javax.swing.*;
@@ -42,6 +43,7 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
 import static com.intellij.execution.actions.RunConfigurationsComboBoxAction.EMPTY_ICON;
 import static com.intellij.ide.actions.GotoActionAction.performAction;
@@ -336,22 +338,35 @@ public class RunAnythingUtil {
     return panel;
   }
 
-  static void runOrCreateRunConfiguration(@NotNull Project project,
+  static void runOrCreateRunConfiguration(@NotNull DataContext dataContext,
                                           @NotNull String pattern,
-                                          @Nullable Module module,
                                           @NotNull VirtualFile workDirectory) {
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    Module module = LangDataKeys.MODULE.getData(dataContext);
+
     if (pattern.isEmpty()) return;
 
-    triggerDebuggerStatistics();
+    if (runMatchedConfiguration(Objects.requireNonNull(project), pattern, workDirectory)) return;
 
-    RunAnythingProvider provider = RunAnythingProvider.findMatchedProvider(project, pattern, workDirectory);
-    if (provider != null) {
-      runMatchedConfiguration(RunAnythingAction.getExecutor(), workDirectory, project,
-                              provider.createConfiguration(project, pattern, workDirectory));
-      return;
-    }
+    if (runMatchedActivity(dataContext, pattern)) return;
 
     RunAnythingCommandItem.runCommand(workDirectory, project, StringUtil.trim(pattern), module, RunAnythingAction.getExecutor());
+  }
+
+  private static boolean runMatchedActivity(@NotNull DataContext dataContext, @NotNull String pattern) {
+    RunAnythingActivityProvider activityProvider = RunAnythingActivityProvider.findMatchedProvider(dataContext, StringUtil.trim(pattern));
+    return activityProvider != null && activityProvider.runActivity(dataContext, pattern);
+  }
+
+  private static boolean runMatchedConfiguration(@NotNull Project project, @NotNull String pattern, @NotNull VirtualFile workDirectory) {
+    RunAnythingProvider provider = RunAnythingProvider.findMatchedProvider(project, pattern, workDirectory);
+    if (provider != null) {
+      triggerDebuggerStatistics();
+      runMatchedConfiguration(RunAnythingAction.getExecutor(), workDirectory, project,
+                              provider.createConfiguration(project, pattern, workDirectory));
+      return true;
+    }
+    return false;
   }
 
 
@@ -367,6 +382,7 @@ public class RunAnythingUtil {
       ((AbstractRubyRunConfiguration)configuration).setWorkingDirectory(workDirectory.getPath());
     }
 
+    triggerDebuggerStatistics();
     ExecutionUtil.runConfiguration(settings, executor);
   }
 

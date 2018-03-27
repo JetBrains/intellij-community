@@ -82,10 +82,8 @@ import javax.swing.plaf.TextUI;
 import javax.swing.text.BadLocationException;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
@@ -433,7 +431,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
         onDone = () -> ((RunAnythingCommandItem)value).run(getExecutor(), directory, null, project, null);
       }
       else if (value == null) {
-        onDone = () -> RunAnythingUtil.runOrCreateRunConfiguration(project, pattern, module, directory);
+        onDone = () -> RunAnythingUtil.runOrCreateRunConfiguration(myDataContext, pattern, directory);
         return;
       }
     }
@@ -580,7 +578,10 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
 
     Module module = RModuleUtil.getInstance().getModule(myActionEvent.getDataContext());
 
-    myDataContext = SimpleDataContext.getSimpleContext(LangDataKeys.MODULE.getName(), module);
+    HashMap<String, Object> dataMap = ContainerUtil.newHashMap();
+    dataMap.put(LangDataKeys.MODULE.getName(), module);
+    dataMap.put(CommonDataKeys.PROJECT.getName(), project);
+    myDataContext = SimpleDataContext.getSimpleContext(dataMap, e.getDataContext());
 
     if (myPopupField != null) {
       Disposer.dispose(myPopupField);
