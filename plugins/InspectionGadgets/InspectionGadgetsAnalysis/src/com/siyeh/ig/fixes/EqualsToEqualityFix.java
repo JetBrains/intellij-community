@@ -41,7 +41,7 @@ public class EqualsToEqualityFix extends InspectionGadgetsFix {
 
   @Override
   protected void doFix(Project project, ProblemDescriptor descriptor) {
-    final PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethodCallExpression.class);
+    final PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethodCallExpression.class, false);
     EqualityCheck check = EqualityCheck.from(call);
     if (check == null) return;
     PsiExpression lhs = check.getLeft();
