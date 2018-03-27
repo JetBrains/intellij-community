@@ -92,7 +92,7 @@ class GitInteractiveRebaseFile {
     PrintWriter out = new PrintWriter(new OutputStreamWriter(new FileOutputStream(myFile), encoding));
     try {
       for (GitRebaseEntry e : entries) {
-        if (e.getAction() != GitRebaseEntry.Action.skip) {
+        if (e.getAction() != GitRebaseEntry.Action.SKIP) {
           out.println(e.getAction().toString() + " " + e.getCommit() + " " + e.getSubject());
         }
       }
