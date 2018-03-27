@@ -21,14 +21,19 @@ import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.InstructionVisitor;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import org.jetbrains.annotations.Nullable;
 
 public class FlushVariableInstruction extends Instruction {
-  private final DfaVariableValue myVariable;
+  private final @Nullable DfaVariableValue myVariable;
 
-  public FlushVariableInstruction(DfaVariableValue expr) {
-    myVariable = expr;
+  /**
+   * @param variable variable to flush (if null, then it signals to flush all the fields)
+   */
+  public FlushVariableInstruction(@Nullable DfaVariableValue variable) {
+    myVariable = variable;
   }
 
+  @Nullable
   public DfaVariableValue getVariable() {
     return myVariable;
   }

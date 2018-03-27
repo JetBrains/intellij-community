@@ -117,6 +117,16 @@ public class PyUnreachableCodeInspectionTest extends PyInspectionTestCase {
     );
   }
 
+  // PY-28972
+  public void testWhileTrueElse() {
+    doTestByText(
+      "while True:\n" +
+      "    pass\n" +
+      "else:\n" +
+      "    <warning descr=\"This code is unreachable\">print(\"ok\")</warning>"
+    );
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

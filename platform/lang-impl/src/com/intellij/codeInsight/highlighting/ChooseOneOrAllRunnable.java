@@ -26,6 +26,7 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -59,7 +60,7 @@ public abstract class ChooseOneOrAllRunnable<T extends PsiElement> implements Ru
         selected(myClasses);
         return;
       }
-      List<Object> model = Arrays.asList(myClasses);
+      List<Object> model = new ArrayList<>(Arrays.asList(myClasses));
       String selectAll = CodeInsightBundle.message("highlight.thrown.exceptions.chooser.all.entry");
       model.add(0, selectAll);
 

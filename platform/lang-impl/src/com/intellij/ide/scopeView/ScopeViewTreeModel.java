@@ -205,10 +205,11 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
   private void update(@NotNull AbstractTreeNode node, boolean structure) {
     model.onValidThread(() -> {
       boolean updated = node.update();
-      if (!updated && !structure) return;
+      boolean changed = structure || !(node instanceof Node);
+      if (!updated && !changed) return;
       TreePath path = TreePathUtil.pathToCustomNode(node, AbstractTreeNode::getParent);
       if (path == null || root != path.getPathComponent(0)) return;
-      if (structure) {
+      if (changed) {
         LOG.debug("structure changed: ", node);
         treeStructureChanged(path, null, null);
       }

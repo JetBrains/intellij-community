@@ -1026,6 +1026,11 @@ public class MavenProject {
   }
 
   @Nullable
+  public String getReleaseLevel() {
+    return getCompilerLevel("release");
+  }
+
+  @Nullable
   private String getCompilerLevel(String level) {
     String result = MavenJDOMUtil.findChildValueByPath(getCompilerConfig(), level);
 

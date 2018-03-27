@@ -223,4 +223,5 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testOptionalTooComplex() { doTest(); }
 
   public void testMethodReferenceBoundToNullable() { doTestWithCustomAnnotations(); }
+  public void testEscapeAnalysis() { doTest(); }
 }

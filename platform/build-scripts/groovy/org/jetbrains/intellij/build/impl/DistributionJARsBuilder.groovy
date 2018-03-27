@@ -141,6 +141,7 @@ class DistributionJARsBuilder {
       }
       withProjectLibrariesFromIncludedModules(buildContext)
       removeVersionFromProjectLibraryJarNames("Trove4j")
+      removeVersionFromProjectLibraryJarNames("Log4J")
     }
   }
 

@@ -108,6 +108,21 @@ envs {
   }
 
   createPython("django_latest", "3.5.3", ["django"], "python3.5\ndjango", true)
+
+  if (Os.isFamily(Os.FAMILY_WINDOWS)) { // Only windows needs ironPython
+
+    ironpython "ironpython", "32" // For some reason x64 is buggy and leads to StackOverflow when called with ensurepip
+
+    project.tasks.create("Misc for ironpython") { //"Misc" will be launched by "build"
+      shouldRunAfter 'build_envs'
+
+      doLast {
+        def file = Paths.get(bootstrapDirectory.toString(), "ironpython", "tags.txt").toFile()
+        file.createNewFile()
+        file.write("iron")
+      }
+    }
+  }
 }
 
 /**

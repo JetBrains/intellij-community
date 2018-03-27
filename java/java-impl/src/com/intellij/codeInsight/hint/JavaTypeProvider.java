@@ -23,6 +23,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -87,7 +88,7 @@ public class JavaTypeProvider extends ExpressionTypeProvider<PsiExpression> {
            : "<table>" + makeHtmlRow("Type", basicTypeEscaped) + advancedTypeInfo + "</table>";
   }
 
-  private static <T> String formatFact(DfaFactType<T> factType, T value, PsiType type) {
+  private static <T> String formatFact(@NotNull DfaFactType<T> factType, @NotNull T value, @Nullable PsiType type) {
     String presentationText = factType.getPresentationText(value, type);
     return presentationText.isEmpty() ? "" : makeHtmlRow(factType.getName(), StringUtil.escapeXml(presentationText));
   }

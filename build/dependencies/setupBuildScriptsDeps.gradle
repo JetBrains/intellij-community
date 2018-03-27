@@ -25,6 +25,7 @@ dependencies {
   buildScriptsDeps loadLibraryMavenId("Netty")
   buildScriptsDeps loadLibraryMavenId("lz4-java")
   buildScriptsDeps(loadLibraryMavenId("gant-groovy"), { transitive = false })
+  buildScriptsDeps loadLibraryMavenId("Log4J")
 }
 
 /**

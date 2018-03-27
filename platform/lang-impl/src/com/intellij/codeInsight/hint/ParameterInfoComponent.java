@@ -270,10 +270,6 @@ public class ParameterInfoComponent extends JPanel {
     }
 
     if (myShortcutLabel != null) myShortcutLabel.setVisible(!singleParameterInfo);
-
-    invalidate();
-    validate();
-    repaint();
   }
 
   public Object[] getObjects() {

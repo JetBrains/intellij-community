@@ -139,7 +139,6 @@ public class MacOSApplicationProvider {
       installAutoUpdateMenu();
 
       TouchBarManager.initialize();
-      TouchBarManager.setCurrent(TouchBarManager.TOUCHBARS.main);
     }
 
     private static void installAutoUpdateMenu() {

@@ -997,13 +997,24 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     try {
       VirtualFile file = WriteCommandAction.runWriteCommandAction(getProject(), (ThrowableComputable<VirtualFile, IOException>)() -> {
         try {
+          VirtualFile f;
           if (myTempDirFixture instanceof LightTempDirTestFixtureImpl) {
-            return myTempDirFixture.createFile(relativePath, fileText);
+            f = myTempDirFixture.createFile(relativePath, fileText);
           }
-          else {
-            return ((HeavyIdeaTestFixture)myProjectFixture).addFileToProject(rootPath, relativePath, fileText).getViewProvider()
+          else if (myProjectFixture instanceof HeavyIdeaTestFixture){
+            f = ((HeavyIdeaTestFixture)myProjectFixture).addFileToProject(rootPath, relativePath, fileText).getViewProvider()
                                                            .getVirtualFile();
           }
+          else {
+            f = myTempDirFixture.createFile(relativePath, fileText);
+          }
+
+          prepareVirtualFile(f);
+
+          return f;
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
         }
         finally {
           PsiManager.getInstance(getProject()).dropPsiCaches();

@@ -1,0 +1,38 @@
+call text: WithReflectionAccess result = Test.invoke();
+class: 
+static class Test {
+        static WithReflectionAccess invoke() {
+            return newWithReflectionAccess1(50);
+        }
+
+        public static WithReflectionAccess newWithReflectionAccess1(int value) {
+            try {
+                Class<?> klass = Class.forName("WithReflectionAccess");
+                java.lang.reflect.Constructor<?> member = null;
+                int interfaceNumber = -1;
+                Class<?>[] interfaces = null;
+                while (member == null) {
+                    try {
+                        member = klass.getDeclaredConstructor(int.class);
+                    } catch (ReflectiveOperationException e) {
+                        if (interfaceNumber == -1) {
+                            interfaces = klass.getInterfaces();
+                            interfaceNumber = 0;
+                        }
+                        if (interfaceNumber < interfaces.length) {
+                            klass = interfaces[interfaceNumber];
+                            interfaceNumber += 1;
+                        } else {
+                            klass = klass.getSuperclass();
+                            if (klass == null) throw e;
+                            interfaceNumber = -1;
+                        }
+                    }
+                }
+                member.setAccessible(true);
+                return (WithReflectionAccess) member.newInstance(value);
+            } catch (ReflectiveOperationException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }

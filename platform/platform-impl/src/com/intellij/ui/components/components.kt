@@ -62,7 +62,8 @@ fun Link(text: String, style: UIUtil.ComponentStyle? = null, action: () -> Unit)
   return result
 }
 
-fun noteComponent(note: String): JComponent {
+@JvmOverloads
+fun noteComponent(note: String, linkHandler: ((url: String) -> Unit)? = null): JComponent {
   val matcher = HREF_PATTERN.matcher(note)
   if (!matcher.find()) {
     return Label(note)
@@ -74,7 +75,9 @@ fun noteComponent(note: String): JComponent {
     if (matcher.start() != prev) {
       noteComponent.append(note.substring(prev, matcher.start()))
     }
-    noteComponent.append(matcher.group(2), LINK_TEXT_ATTRIBUTES, SimpleColoredComponent.BrowserLauncherTag(matcher.group(1)))
+
+    val linkUrl = matcher.group(1)
+    noteComponent.append(matcher.group(2), LINK_TEXT_ATTRIBUTES, if (linkHandler == null) SimpleColoredComponent.BrowserLauncherTag(linkUrl) else Runnable { linkHandler(linkUrl) })
     prev = matcher.end()
   }
   while (matcher.find())

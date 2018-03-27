@@ -331,6 +331,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
                      .descriptionAndTooltip("Lambda expression not expected here").create());
     }
 
+    if (!myHolder.hasErrorResults()) myHolder.add(LambdaHighlightingUtil.checkConsistentParameterDeclaration(expression));
+    
     PsiType functionalInterfaceType = null;
     if (!myHolder.hasErrorResults()) {
       functionalInterfaceType = expression.getFunctionalInterfaceType();

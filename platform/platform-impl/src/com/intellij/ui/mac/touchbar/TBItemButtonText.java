@@ -6,7 +6,7 @@ import com.intellij.ui.mac.foundation.ID;
 public class TBItemButtonText extends TBItemButton {
   private final String myText;
 
-  public TBItemButtonText(String text, TBItemCallback action) {
+  public TBItemButtonText(String text, NSTLibrary.Action action) {
     super(action);
     myText = text;
   }

@@ -15,7 +15,6 @@
  */
 package com.intellij.execution.junit.testDiscovery;
 
-import com.intellij.execution.ExecutionException;
 import com.intellij.execution.JavaTestConfigurationBase;
 import com.intellij.execution.PsiLocation;
 import com.intellij.execution.configurations.RunConfiguration;
@@ -26,12 +25,13 @@ import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.junit.TestsPattern;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testDiscovery.TestDiscoveryConfigurationProducer;
-import com.intellij.execution.testframework.SearchForTestsTask;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiMethod;
 
 import java.util.Arrays;
+import java.util.LinkedHashSet;
+import java.util.stream.Collectors;
 
 public class JUnitTestDiscoveryConfigurationProducer extends TestDiscoveryConfigurationProducer {
   protected JUnitTestDiscoveryConfigurationProducer() {
@@ -62,20 +62,12 @@ public class JUnitTestDiscoveryConfigurationProducer extends TestDiscoveryConfig
                                        Module module,
                                        RunConfiguration configuration,
                                        ExecutionEnvironment environment) {
-    return new TestsPattern((JUnitConfiguration)configuration, environment) {
-
-      @Override
-      public SearchForTestsTask createSearchingForTestsTask() {
-        return new SearchForTestsTask(configuration.getProject(), myServerSocket) {
-          @Override
-          protected void search() { }
-
-          @Override
-          protected void onFound() throws ExecutionException { 
-            addClassesListToJavaParameters(Arrays.asList(testMethods), method -> method.getContainingClass().getQualifiedName() + "," + method.getName(), "", false, getJavaParameters());
-          }
-        };
-      }
-    };
+    JUnitConfiguration.Data data = ((JUnitConfiguration)configuration).getPersistentData();
+    data.setPatterns(
+      Arrays.stream(testMethods)
+            .map(method -> method.getContainingClass().getQualifiedName() + "," + method.getName())
+            .collect(Collectors.toCollection(LinkedHashSet::new)));
+    data.TEST_OBJECT = JUnitConfiguration.TEST_PATTERN;
+    return new TestsPattern((JUnitConfiguration)configuration, environment);
   }
 }

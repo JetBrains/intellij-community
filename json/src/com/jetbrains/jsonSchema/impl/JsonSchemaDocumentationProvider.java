@@ -36,7 +36,7 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
   }
 
   @Nullable
-  private static String findSchemaAndGenerateDoc(PsiElement element, @Nullable PsiElement originalElement, final boolean preferShort) {
+  public static String findSchemaAndGenerateDoc(PsiElement element, @Nullable PsiElement originalElement, final boolean preferShort) {
     element = ObjectUtils.coalesce(originalElement, element);
     final PsiFile containingFile = element.getContainingFile();
     if (containingFile == null) return null;

@@ -7,7 +7,6 @@ import com.intellij.configurationStore.StateStorageManagerImpl
 import com.intellij.configurationStore.reloadAppStore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.stateStore
-import com.intellij.openapi.options.ConfigurableUi
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.progress.runModalTask
 import com.intellij.ui.layout.*
@@ -20,7 +19,7 @@ internal class RepositoryItem(var url: String? = null) {
   override fun toString() = url ?: ""
 }
 
-internal fun createRepositoryListEditor(icsManager: IcsManager): ConfigurableUi<IcsSettings> {
+internal fun createRepositoryListEditor(icsManager: IcsManager): ConfigurableUiEx<IcsSettings> {
   val editor = ComboBoxModelEditor(object: ListItemEditor<RepositoryItem> {
     override fun getItemClass() = RepositoryItem::class.java
 
@@ -35,17 +34,23 @@ internal fun createRepositoryListEditor(icsManager: IcsManager): ConfigurableUi<
     }
   }
 
-  return object: ConfigurableUi<IcsSettings> {
+  return object: ConfigurableUiEx<IcsSettings> {
     private var repositoryRow: Row? = null
 
     override fun isModified(settings: IcsSettings) = editor.isModified
 
-    override fun getComponent() = panel {
-      repositoryRow = row("Repository:") {
-        editor.comboBox(comment = "Use File -> Settings Repository... to configure")
-        deleteButton()
+    override fun buildUi(builder: LayoutBuilder) {
+      builder.apply {
+        repositoryRow = row("Repository:") {
+          cell {
+            editor.comboBox(comment = "Use File -> Settings Repository... to configure")
+            deleteButton()
+          }
+        }
       }
     }
+
+    override fun getComponent() = panel(init = ::buildUi)
 
     override fun apply(settings: IcsSettings) {
       val newList = editor.apply()

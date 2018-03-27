@@ -21,10 +21,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
+import javax.imageio.ImageTypeSpecifier;
 import javax.imageio.stream.ImageInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.IOException;
 import java.util.Iterator;
 
 /**
@@ -55,11 +55,12 @@ public class ImageInfoReader {
         reader.setInput(iis, true);
         int w = reader.getWidth(0);
         int h = reader.getHeight(0);
-        int bpp = reader.getRawImageType(0).getColorModel().getPixelSize();
+        Iterator<ImageTypeSpecifier> it2 = reader.getImageTypes(0);
+        int bpp = it2 != null && it2.hasNext() ? it2.next().getColorModel().getPixelSize() : -1;
         return new Info(w, h, bpp);
       }
     }
-    catch (IOException e) {
+    catch (Exception e) {
       LOG.warn(e);
     }
     return null;

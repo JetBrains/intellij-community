@@ -763,6 +763,9 @@
     <!-- PyQt -->
     <typeProvider implementation="com.jetbrains.pyqt.PyQtTypeProvider"/>
 
+    <!-- Type from ancestors -->
+    <typeProvider implementation="com.jetbrains.python.codeInsight.typing.PyAncestorTypeProvider"/>
+
     <!-- PyFunctionTypeAnnotation -->
     <visitorFilter language="PyFunctionTypeComment"
                    implementationClass="com.jetbrains.python.codeInsight.functionTypeComments.PyFunctionTypeAnnotationVisitorFilter"/>

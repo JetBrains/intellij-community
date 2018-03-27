@@ -19,7 +19,8 @@ internal class IcsConfigurable : ConfigurableBase<IcsConfigurableUi, IcsSettings
 internal class IcsConfigurableUi : ConfigurableUi<IcsSettings>, Disposable {
   private val icsManager = if (ApplicationManager.getApplication().isUnitTestMode) IcsManager(Paths.get(PathManager.getConfigPath()).resolve("settingsRepository")) else org.jetbrains.settingsRepository.icsManager
 
-  private val editors = listOf(createRepositoryListEditor(icsManager), createReadOnlySourcesEditor())
+  private val repositoryListEditor = createRepositoryListEditor(icsManager)
+  private val editors = listOf(repositoryListEditor, createReadOnlySourcesEditor())
   private val autoSync = JCheckBox("Auto Sync")
 
   override fun dispose() {
@@ -50,7 +51,7 @@ internal class IcsConfigurableUi : ConfigurableUi<IcsSettings>, Disposable {
   }
 
   override fun getComponent() = panel {
-    row { editors.get(0).component() }
+    repositoryListEditor.buildUi(this)
     row { autoSync(comment = "Use VCS -> Sync Settings to sync when you want") }
     row { panel("Read-only Sources", editors.get(1).component) }
   }

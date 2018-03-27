@@ -21,7 +21,6 @@ import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashMap;
 import com.intellij.util.containers.MultiMap;
 import one.util.streamex.LongStreamEx;
 import one.util.streamex.StreamEx;
@@ -306,6 +305,7 @@ class StateMerger {
       changed = false;
       for (DfaMemoryStateImpl state : states) {
         for (Map.Entry<DfaVariableValue, Map<LongRangeSet, LongRangeSet>> entry : ranges.entrySet()) {
+          if (state.isUnknownState(entry.getKey())) continue;
           DfaVariableState variableState = state.getVariableState(entry.getKey());
           LongRangeSet range = variableState.getFact(RANGE);
           if (range != null && !range.isEmpty() && range.max() == range.min()) continue;
@@ -382,7 +382,7 @@ class StateMerger {
 
       DfaMemoryStateImpl getState() {
         if(myCommonEqualities != null) {
-          myState.flushVariable(var);
+          myState.removeEquivalenceRelations(var);
           myState.setFact(var, RANGE, myRange);
           for (EqualityFact equality : myCommonEqualities) {
             equality.applyTo(myState);
@@ -412,7 +412,7 @@ class StateMerger {
     // If there are too many states, try to drop range information from some variable
     DfaVariableValue lastVar = Collections.max(rangeVariables, Comparator.comparingInt(DfaVariableValue::getID));
     for (DfaMemoryStateImpl state : states) {
-      state.setFact(lastVar, RANGE, null);
+      state.dropFact(lastVar, RANGE);
     }
     return new ArrayList<>(new HashSet<>(states));
   }

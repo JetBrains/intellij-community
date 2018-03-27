@@ -159,7 +159,9 @@ public class PsiLambdaExpressionImpl extends JavaStubPsiElement<FunctionalExpres
   public boolean hasFormalParameterTypes() {
     final PsiParameter[] parameters = getParameterList().getParameters();
     for (PsiParameter parameter : parameters) {
-      if (parameter.getTypeElement() == null) return false;
+      PsiTypeElement typeElement = parameter.getTypeElement();
+      if (typeElement == null) return false;
+      if (typeElement.isInferredType()) return false;
     }
     return true;
   }

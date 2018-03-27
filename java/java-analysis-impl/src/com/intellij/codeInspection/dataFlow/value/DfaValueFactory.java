@@ -71,6 +71,12 @@ public class DfaValueFactory {
   @NotNull
   public DfaValue createTypeValue(@Nullable PsiType type, @NotNull Nullness nullability) {
     if (type == null) return DfaUnknownValue.getInstance();
+    if (type instanceof PsiPrimitiveType) {
+      LongRangeSet range = LongRangeSet.fromType(type);
+      if (range != null) {
+        return getFactFactory().createValue(DfaFactType.RANGE, range);
+      }
+    }
     DfaFactMap facts = DfaFactMap.EMPTY.with(DfaFactType.TYPE_CONSTRAINT, TypeConstraint.EMPTY.withInstanceofValue(createDfaType(type)))
       .with(DfaFactType.CAN_BE_NULL, NullnessUtil.toBoolean(nullability));
     return getFactFactory().createValue(facts);
@@ -89,14 +95,7 @@ public class DfaValueFactory {
 
   @NotNull
   public DfaPsiType createDfaType(@NotNull PsiType psiType) {
-    int dimensions = psiType.getArrayDimensions();
-    psiType = psiType.getDeepComponentType();
-    if (psiType instanceof PsiClassType) {
-      psiType = ((PsiClassType)psiType).rawType();
-    }
-    while (dimensions-- > 0) {
-      psiType = psiType.createArrayType();
-    }
+    psiType = DfaPsiType.normalizeType(psiType);
     DfaPsiType dfaType = myDfaTypes.get(psiType);
     if (dfaType == null) {
       myDfaTypes.put(psiType, dfaType = new DfaPsiType(myDfaTypes.size() + 1, psiType, myAssignableCache, myConvertibleCache));
@@ -270,7 +269,7 @@ public class DfaValueFactory {
                                        .select(PsiMember.class)
                                        .filter(member -> member.hasModifierProperty(PsiModifier.STATIC))
                                        .flatMap(member -> StreamEx.<PsiElement>ofTree(member, e -> StreamEx.of(e.getChildren())))
-                                       .select(PsiNewExpression.class).map(newExpr -> newExpr.getClassReference()).nonNull()
+                                       .select(PsiNewExpression.class).map(PsiNewExpression::getClassReference).nonNull()
                                        .anyMatch(classRef -> classRef.isReferenceTo(psiClass));
       mySuperCtorsCallMethods =
         !InheritanceUtil.processSupers(psiClass, false, superClass -> !canCallMethodsInConstructors(superClass, true));

@@ -31,6 +31,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.fixes.EqualsToEqualityFix;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
@@ -682,11 +683,21 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
         fixes.add(new SetInspectionOptionFix(this, "DONT_REPORT_TRUE_ASSERT_STATEMENTS",
                                              InspectionsBundle.message("inspection.data.flow.turn.off.true.asserts.quickfix"), true));
       }
+      ContainerUtil.addIfNotNull(fixes, createReplaceWithNullCheckFix(psiAnchor, evaluatesToTrue));
       String message = InspectionsBundle.message(isAtRHSOfBooleanAnd(psiAnchor) ?
                                                  "dataflow.message.constant.condition.when.reached" :
                                                  "dataflow.message.constant.condition", Boolean.toString(evaluatesToTrue));
       holder.registerProblem(psiAnchor, message, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
     }
+  }
+
+  private static LocalQuickFix createReplaceWithNullCheckFix(PsiElement psiAnchor, boolean evaluatesToTrue) {
+    if (evaluatesToTrue) return null;
+    if (!(psiAnchor instanceof PsiMethodCallExpression) || !MethodCallUtils.isEqualsCall((PsiMethodCallExpression)psiAnchor)) return null;
+    PsiExpression arg = ArrayUtil.getFirstElement(((PsiMethodCallExpression)psiAnchor).getArgumentList().getExpressions());
+    if (!ExpressionUtils.isNullLiteral(arg)) return null;
+    PsiElement parent = PsiUtil.skipParenthesizedExprUp(psiAnchor.getParent());
+    return new EqualsToEqualityFix(parent instanceof PsiExpression && BoolUtils.isNegation((PsiExpression)parent));
   }
 
   protected LocalQuickFix[] createConditionalAssignmentFixes(boolean evaluatesToTrue, PsiAssignmentExpression parent, final boolean onTheFly) {

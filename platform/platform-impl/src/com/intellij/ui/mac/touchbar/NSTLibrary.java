@@ -2,6 +2,7 @@
 package com.intellij.ui.mac.touchbar;
 
 import com.intellij.ui.mac.foundation.ID;
+import com.sun.jna.Callback;
 import com.sun.jna.Library;
 
 import javax.swing.*;
@@ -12,14 +13,23 @@ public interface NSTLibrary extends Library {
   ID createTouchBar(String name);
   void releaseTouchBar(ID tbObj);
 
-  ID registerButtonText(ID tbObj, String text, TBItemCallback action);
-  ID registerButtonImg(ID tbObj, byte[] raster4ByteRGBA, int w, int h, TBItemCallback action);
-  ID registerPopover(ID tbObj, String text, byte[] raster4ByteRGBA, int w, int h);
+  ID registerSpacing(ID tbObj, String type); // allowed types: 'small', 'large', 'flexible'
+  ID registerButtonText(ID tbObj, String text, Action action);
+  ID registerButtonImg(ID tbObj, byte[] raster4ByteRGBA, int w, int h, Action action);
+  ID registerButtonImgText(ID tbObj, String text, byte[] raster4ByteRGBA, int w, int h, Action action);
+  ID registerPopover(ID tbObj, String text, byte[] raster4ByteRGBA, int w, int h, int popW);
   void setPopoverExpandTouchBar(ID popoverObj, ID expandTbObj);
   void setPopoverTapAndHoldTouchBar(ID popoverObj, ID tapHoldTbObj);
 
   void selectAllItemsToShow(ID tbObj);
   void setTouchBar(ID tbObj);
+
+  ID registerScrubber(ID tbObj, int scrubW);
+  void addScrubberItem(ID scrubObj, String text, byte[] raster4ByteRGBA, int w, int h, Action action);
+
+  interface Action extends Callback {
+    void execute();
+  }
 
   static byte[] getRasterFromIcon(Icon icon) {
     final int w = icon.getIconWidth();

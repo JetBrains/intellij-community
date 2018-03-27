@@ -15,22 +15,22 @@ import static com.intellij.psi.CommonClassNames.*;
 /**
  * @since 2018.2
  */
-public enum JvmPrimitiveTypeKind {
+public final class JvmPrimitiveTypeKind {
 
-  BYTE("byte", JAVA_LANG_BYTE),
-  CHAR("char", JAVA_LANG_CHARACTER),
-  DOUBLE("double", JAVA_LANG_DOUBLE),
-  FLOAT("float", JAVA_LANG_FLOAT),
-  INT("int", JAVA_LANG_INTEGER),
-  LONG("long", JAVA_LANG_LONG),
-  SHORT("short", JAVA_LANG_SHORT),
-  BOOLEAN("boolean", JAVA_LANG_BOOLEAN),
-  VOID("void", JAVA_LANG_VOID);
+  public static final JvmPrimitiveTypeKind BOOLEAN = new JvmPrimitiveTypeKind("boolean", JAVA_LANG_BOOLEAN);
+  public static final JvmPrimitiveTypeKind BYTE = new JvmPrimitiveTypeKind("byte", JAVA_LANG_BYTE);
+  public static final JvmPrimitiveTypeKind CHAR = new JvmPrimitiveTypeKind("char", JAVA_LANG_CHARACTER);
+  public static final JvmPrimitiveTypeKind DOUBLE = new JvmPrimitiveTypeKind("double", JAVA_LANG_DOUBLE);
+  public static final JvmPrimitiveTypeKind FLOAT = new JvmPrimitiveTypeKind("float", JAVA_LANG_FLOAT);
+  public static final JvmPrimitiveTypeKind INT = new JvmPrimitiveTypeKind("int", JAVA_LANG_INTEGER);
+  public static final JvmPrimitiveTypeKind LONG = new JvmPrimitiveTypeKind("long", JAVA_LANG_LONG);
+  public static final JvmPrimitiveTypeKind SHORT = new JvmPrimitiveTypeKind("short", JAVA_LANG_SHORT);
+  public static final JvmPrimitiveTypeKind VOID = new JvmPrimitiveTypeKind("void", JAVA_LANG_VOID);
 
   private final String myName;
   private final String myBoxedFqn;
 
-  JvmPrimitiveTypeKind(String name, String boxedFqn) {
+  private JvmPrimitiveTypeKind(String name, String boxedFqn) {
     myName = name;
     myBoxedFqn = boxedFqn;
   }
@@ -51,9 +51,10 @@ public enum JvmPrimitiveTypeKind {
   private static final Map<String, JvmPrimitiveTypeKind> ourFqnToKind;
 
   static {
+    JvmPrimitiveTypeKind[] values = {BOOLEAN, BYTE, CHAR, DOUBLE, FLOAT, INT, LONG, SHORT, VOID};
     THashMap<String, JvmPrimitiveTypeKind> nameToKind = new THashMap<>();
     THashMap<String, JvmPrimitiveTypeKind> fqnToKind = new THashMap<>();
-    for (JvmPrimitiveTypeKind kind : values()) {
+    for (JvmPrimitiveTypeKind kind : values) {
       nameToKind.put(kind.getName(), kind);
       fqnToKind.put(kind.getBoxedFqn(), kind);
     }

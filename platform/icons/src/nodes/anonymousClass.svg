@@ -1,6 +1,6 @@
-<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
   <title>anonymousClass</title>
-  <g opacity="0.5">
-    <path d="M8,1a7,7,0,1,0,7,7A7,7,0,0,0,8,1ZM8,11a3,3,0,1,1,3-3A3,3,0,0,1,8,11Z" fill="#40b6e0"/>
+  <g opacity="0.6">
+    <path d="M8,1a7,7,0,1,0,7,7A7,7,0,0,0,8,1ZM8,11a3,3,0,1,1,3-3A3.00007,3.00007,0,0,1,8,11Z" fill="#40b6e0"/>
   </g>
 </svg>

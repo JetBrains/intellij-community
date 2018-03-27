@@ -9,12 +9,14 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.indexing.ValueContainer;
 import com.intellij.util.io.*;
-import com.intellij.util.io.DataOutputStream;
-import gnu.trove.*;
+import gnu.trove.TLongHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;

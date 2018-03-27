@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.diff.util.DiffPlaces;
 import com.intellij.diff.util.DiffUserDataKeysEx;
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.ide.HelpIdProvider;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
@@ -1135,6 +1136,11 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
       putContextUserData(DiffUserDataKeysEx.SHOW_READ_ONLY_LOCK, true);
       putContextUserData(LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT, true);
+    }
+
+    @Override
+    public boolean isWindowFocused() {
+      return DiffUtil.isFocusedComponent(getProject(), getComponent());
     }
 
     @NotNull

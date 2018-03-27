@@ -101,6 +101,9 @@ public abstract class CodeStyleFacade {
 
   public abstract boolean useTabCharacter(final FileType fileType);
 
+  /**
+   * @deprecated Use {@code CodeStyle.getDefaultLineSeparator()} or {@code CodeStyle.getLineSeparator(Project)}
+   */
   public abstract String getLineSeparator();
 
   public abstract boolean projectUsesOwnSettings();

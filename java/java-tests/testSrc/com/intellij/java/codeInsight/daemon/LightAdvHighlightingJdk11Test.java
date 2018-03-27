@@ -21,6 +21,14 @@ public class LightAdvHighlightingJdk11Test extends LightDaemonAnalyzerTestCase {
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_10, getModule(), getTestRootDisposable());//todo
   }
 
+  private void doTest() {
+    doTest(BASE_PATH + "/" + getTestName(false) + ".java", false, false);
+  }
+
+  public void testMixedVarAndExplicitTypesInLambdaDeclaration() {
+    doTest();
+  }
+
   public void testGotoDeclarationOnLambdaVarParameter() {
     configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
     final int offset = getEditor().getCaretModel().getOffset();
