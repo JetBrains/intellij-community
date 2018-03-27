@@ -11,7 +11,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.Processor;
@@ -542,21 +541,21 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   public static final Key<Boolean> CTX_SUPPRESS_PARENTHESES = Key.create("PyFunction.SuppressParentheses");
 
   @Override
-  public Object[] getCompletionVariants(String prefix, PsiElement location, ProcessingContext context) {
+  public LookupElement[] getCompletionVariants(String prefix, PsiElement location, ProcessingContext context) {
     Set<PyClassType> visited = context.get(CTX_VISITED);
     if (visited == null) {
       visited = new HashSet<>();
       context.put(CTX_VISITED, visited);
     }
     if (visited.contains(this)) {
-      return ArrayUtil.EMPTY_OBJECT_ARRAY;
+      return LookupElement.EMPTY_ARRAY;
     }
     visited.add(this);
     Set<String> namesAlready = context.get(CTX_NAMES);
     if (namesAlready == null) {
       namesAlready = new HashSet<>();
     }
-    List<Object> ret = new ArrayList<>();
+    List<LookupElement> ret = new ArrayList<>();
 
     boolean suppressParentheses = context.get(CTX_SUPPRESS_PARENTHESES) != null;
     addOwnClassMembers(location, namesAlready, suppressParentheses, ret, prefix);
@@ -590,32 +589,33 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
 
     Collections.addAll(ret, getMetaClassCompletionVariants(prefix, location, context, typeEvalContext));
 
-    return ret.toArray();
+    return ret.toArray(LookupElement.EMPTY_ARRAY);
   }
 
   @NotNull
-  private Object[] getMetaClassCompletionVariants(@Nullable String prefix,
+  private LookupElement[] getMetaClassCompletionVariants(@Nullable String prefix,
                                                   @Nullable PsiElement location,
                                                   @NotNull ProcessingContext processingContext,
                                                   @NotNull TypeEvalContext typeEvalContext) {
     if (!myClass.isNewStyleClass(typeEvalContext)) {
-      return ArrayUtil.EMPTY_OBJECT_ARRAY;
+      return LookupElement.EMPTY_ARRAY;
     }
 
     final PyClassLikeType typeType = getMetaClassType(typeEvalContext, true);
     if (typeType == null) {
-      return ArrayUtil.EMPTY_OBJECT_ARRAY;
+      return LookupElement.EMPTY_ARRAY;
     }
 
     if (isDefinition()) {
       return typeType.getCompletionVariants(prefix, location, processingContext);
     }
     else if (typeType instanceof PyClassType) {
-      final List<PyTargetExpression> typeInstanceAttributes = ((PyClassType)typeType).getPyClass().getInstanceAttributes();
-      return ContainerUtil.map2Array(typeInstanceAttributes, LookupElementBuilder::create);
+      return StreamEx.of(((PyClassType)typeType).getPyClass().getInstanceAttributes())
+        .map(LookupElementBuilder::create)
+        .toArray(LookupElement.EMPTY_ARRAY);
     }
 
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
+    return LookupElement.EMPTY_ARRAY;
   }
 
   @Override
@@ -729,7 +729,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   private void addOwnClassMembers(PsiElement expressionHook,
                                   Set<String> namesAlready,
                                   boolean suppressParentheses,
-                                  List<Object> ret,
+                                  List<LookupElement> ret,
                                   @Nullable final String prefix) {
     PyClass containingClass = PsiTreeUtil.getParentOfType(expressionHook, PyClass.class);
     if (containingClass != null) {
@@ -781,7 +781,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
                                    PsiElement expressionHook,
                                    Set<String> namesAlready,
                                    ProcessingContext context,
-                                   List<Object> ret,
+                                   List<LookupElement> ret,
                                    @NotNull TypeEvalContext typeEvalContext) {
     for (PyType type : myClass.getSuperClassTypes(typeEvalContext)) {
       if (!(type instanceof PyClassLikeType)) {
@@ -793,8 +793,8 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
         type = classLikeType.toInstance();
       }
 
-      Object[] ancestry = type.getCompletionVariants(name, expressionHook, context);
-      for (Object ob : ancestry) {
+      LookupElement[] ancestry = type.getCompletionVariants(name, expressionHook, context);
+      for (LookupElement ob : ancestry) {
         String inheritedName = ob.toString();
         if (!namesAlready.contains(inheritedName) && !PyUtil.isClassPrivateName(inheritedName)) {
           ret.add(ob);
@@ -848,10 +848,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   }
 
   public static boolean is(@NotNull String qName, PyType type) {
-    if (type instanceof PyClassType) {
-      return qName.equals(((PyClassType)type).getClassQName());
-    }
-    return false;
+    return type instanceof PyClassType && qName.equals(((PyClassType)type).getClassQName());
   }
 
   @Override

@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.psi.impl;
 
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -24,7 +25,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyExpression;
@@ -75,8 +75,8 @@ public class PyJavaPackageType implements PyType {
   }
 
   @Override
-  public Object[] getCompletionVariants(String completionPrefix, PsiElement location, ProcessingContext context) {
-    List<Object> variants = new ArrayList<>();
+  public LookupElement[] getCompletionVariants(String completionPrefix, PsiElement location, ProcessingContext context) {
+    List<LookupElement> variants = new ArrayList<>();
     final GlobalSearchScope scope = getScope(location.getProject());
     final PsiClass[] classes = myPackage.getClasses(scope);
     for (PsiClass psiClass : classes) {
@@ -86,7 +86,7 @@ public class PyJavaPackageType implements PyType {
     for (PsiPackage subPackage : subPackages) {
       variants.add(LookupElementBuilder.create(subPackage).withIcon(subPackage.getIcon(0)));
     }
-    return ArrayUtil.toObjectArray(variants);
+    return variants.toArray(LookupElement.EMPTY_ARRAY);
   }
 
   @Override

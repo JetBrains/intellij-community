@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.psi.impl;
 
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -66,8 +67,8 @@ public class PyJavaMethodType implements PyCallableType {
   }
 
   @Override
-  public Object[] getCompletionVariants(String completionPrefix, PsiElement location, ProcessingContext context) {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
+  public LookupElement[] getCompletionVariants(String completionPrefix, PsiElement location, ProcessingContext context) {
+    return LookupElement.EMPTY_ARRAY;
   }
 
   @Nullable

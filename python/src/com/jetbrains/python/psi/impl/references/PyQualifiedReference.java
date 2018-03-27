@@ -30,7 +30,6 @@ import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -255,13 +254,13 @@ public class PyQualifiedReference extends PyReferenceImpl {
 
   @NotNull
   @Override
-  public Object[] getVariants() {
+  public LookupElement[] getVariants() {
     PyExpression qualifier = myElement.getQualifier();
     if (qualifier != null) {
       qualifier = CompletionUtil.getOriginalOrSelf(qualifier);
     }
     if (qualifier == null) {
-      return EMPTY_ARRAY;
+      return LookupElement.EMPTY_ARRAY;
     }
     final PyQualifiedExpression element = CompletionUtil.getOriginalOrSelf(myElement);
 
@@ -269,7 +268,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
     ProcessingContext ctx = new ProcessingContext();
     final Set<String> namesAlready = new HashSet<>();
     ctx.put(PyType.CTX_NAMES, namesAlready);
-    final Collection<Object> variants = new ArrayList<>();
+    final Collection<LookupElement> variants = new ArrayList<>();
     if (qualifierType != null) {
       Collections.addAll(variants, getVariantFromHasAttr(qualifier));
       if (qualifierType instanceof PyStructuralType && ((PyStructuralType)qualifierType).isInferredFromUsages()) {
@@ -304,7 +303,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
           }
         }
         Collections.addAll(variants, qualifierType.getCompletionVariants(element.getName(), element, ctx));
-        return variants.toArray();
+        return variants.toArray(LookupElement.EMPTY_ARRAY);
       }
       else {
         return qualifierType.getCompletionVariants(element.getName(), element, ctx);
@@ -318,12 +317,12 @@ public class PyQualifiedReference extends PyReferenceImpl {
       if (qualifier instanceof PyReferenceExpression) {
         Collections.addAll(variants, collectSeenMembers(qualifier.getText()));
       }
-      return variants.toArray();
+      return variants.toArray(LookupElement.EMPTY_ARRAY);
     }
   }
 
-  private Object[] getVariantFromHasAttr(PyExpression qualifier) {
-    Collection<Object> variants = new ArrayList<>();
+  private LookupElement[] getVariantFromHasAttr(PyExpression qualifier) {
+    Collection<LookupElement> variants = new ArrayList<>();
     PyIfStatement ifStatement = PsiTreeUtil.getParentOfType(myElement, PyIfStatement.class);
     while (ifStatement != null) {
       PyExpression condition = ifStatement.getIfPart().getCondition();
@@ -331,12 +330,14 @@ public class PyQualifiedReference extends PyReferenceImpl {
         PyCallExpression call = (PyCallExpression)condition;
         if (call.getArguments().length > 1 && call.getArguments()[0].getText().equals(qualifier.getText())) {
           PyStringLiteralExpression string = call.getArgument(1, PyStringLiteralExpression.class);
-          if (string != null && StringUtil.isJavaIdentifier(string.getStringValue())) variants.add(string.getStringValue());
+          if (string != null && StringUtil.isJavaIdentifier(string.getStringValue())) {
+            variants.add(LookupElementBuilder.create(string.getStringValue()));
+          }
         }
       }
       ifStatement = PsiTreeUtil.getParentOfType(ifStatement, PyIfStatement.class);
     }
-    return variants.toArray();
+    return variants.toArray(LookupElement.EMPTY_ARRAY);
   }
 
   @Nullable
@@ -375,7 +376,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
     return result;
   }
 
-  private Object[] collectSeenMembers(final String text) {
+  private LookupElement[] collectSeenMembers(final String text) {
     final Set<String> members = new HashSet<>();
     myElement.getContainingFile().accept(new PyRecursiveElementVisitor() {
       @Override
@@ -406,7 +407,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
     for (String member : members) {
       results.add(AutoCompletionPolicy.NEVER_AUTOCOMPLETE.applyPolicy(LookupElementBuilder.create(member)));
     }
-    return ArrayUtil.toObjectArray(results);
+    return results.toArray(LookupElement.EMPTY_ARRAY);
   }
 
   /**

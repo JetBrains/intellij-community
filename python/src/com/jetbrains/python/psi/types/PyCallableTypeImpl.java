@@ -15,9 +15,9 @@
  */
 package com.jetbrains.python.psi.types;
 
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.AccessDirection;
@@ -70,8 +70,8 @@ public class PyCallableTypeImpl implements PyCallableType {
   }
 
   @Override
-  public Object[] getCompletionVariants(String completionPrefix, PsiElement location, ProcessingContext context) {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
+  public LookupElement[] getCompletionVariants(String completionPrefix, PsiElement location, ProcessingContext context) {
+    return LookupElement.EMPTY_ARRAY;
   }
 
   @Nullable
