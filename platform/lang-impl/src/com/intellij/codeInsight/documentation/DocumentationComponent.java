@@ -914,8 +914,11 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
         }
         myIsShown = true;
         // workaround for IDEA-188907
-        myHint.getPopupWindow().setFocusableWindowState(true);
-        myHint.getPopupWindow().setFocusable(true);
+        Window window = myHint.getPopupWindow();
+        if (window != null) {
+          window.setFocusableWindowState(true);
+          window.setFocusable(true);
+        }
         if (myHint.getDimensionServiceKey() == null) {
           SwingUtilities.invokeLater(this::registerSizeTracker);
         }
