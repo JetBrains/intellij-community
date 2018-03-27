@@ -118,22 +118,24 @@ public class ReflectionAccessMethodBuilder {
     for (int i = 0; i < parameters.length; i++) {
       PsiParameter parameter = parameters[i];
       String name = parameter.getName();
-      String type = eraseGenerics(parameter.getType());
+      PsiType parameterType = parameter.getType();
+      PsiType erasedType = TypeConversionUtil.erasure(parameterType);
+      String typeName = typeName(parameterType, erasedType);
+      String jvmType = erasedType != null ? extractJvmType(erasedType) : typeName;
 
       if (name == null) {
-        LOG.info("Parameter name not found, index = " + i + ", type = " + type);
+        LOG.info("Parameter name not found, index = " + i + ", type = " + typeName);
         name = "arg" + i;
       }
 
-      myParameters.add(new ParameterInfo(type, name, extractJvmType(parameter.getType())));
+      myParameters.add(new ParameterInfo(typeName, name, jvmType));
     }
 
     return this;
   }
 
   @NotNull
-  private static String eraseGenerics(@NotNull PsiType type) {
-    PsiType erasedType = TypeConversionUtil.erasure(type);
+  private static String typeName(@NotNull PsiType type, @Nullable PsiType erasedType) {
     if (erasedType == null) {
       String typeName = type.getCanonicalText();
       int typeParameterIndex = typeName.indexOf('<');
