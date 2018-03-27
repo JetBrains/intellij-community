@@ -13,7 +13,6 @@ import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
@@ -40,7 +39,7 @@ import java.util.Map;
 /**
  * Renders editor contents.
  */
-class EditorPainter implements TextDrawingCallback {
+public class EditorPainter implements TextDrawingCallback {
   private static final Color CARET_LIGHT = Gray._255;
   private static final Color CARET_DARK = Gray._0;
   private static final Stroke IME_COMPOSED_TEXT_UNDERLINE_STROKE = new BasicStroke(1, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0,
@@ -87,8 +86,8 @@ class EditorPainter implements TextDrawingCallback {
     int yShift = -clip.y;
     g.translate(0, -yShift);
 
-    float[] marginShifts = paintBackground(g, clip, yShift, startLine, endLine, caretData);
-    paintRightMargin(g, clip, yShift, startLine, endLine, marginShifts);
+    float[] marginWidths = paintBackground(g, clip, yShift, startLine, endLine, caretData);
+    paintRightMargin(g, clip, yShift, startLine, endLine, marginWidths);
     paintCustomRenderers(g, yShift, startOffset, endOffset);
     MarkupModelEx docMarkup = myEditor.getFilteredDocumentMarkupModel();
     paintLineMarkersSeparators(g, clip, yShift, docMarkup, startOffset, endOffset);
@@ -143,19 +142,24 @@ class EditorPainter implements TextDrawingCallback {
                                 int yShift,
                                 int startVisualLine,
                                 int endVisualLine,
-                                float[] marginShifts) {
+                                float[] marginWidths) {
     if (!isMarginShown()) return;
     g.setColor(myEditor.getColorsScheme().getColor(EditorColors.RIGHT_MARGIN_COLOR));
-    if (marginShifts == null) {
-      int x = myCorrector.marginX();
+    float baseMarginWidth = getBaseMarginWidth(myView);
+    if (marginWidths == null) {
+      int x = myCorrector.marginX(baseMarginWidth);
       UIUtil.drawLine(g, x, 0, x, clip.height);
     }
     else {
       int y = myView.visualLineToY(startVisualLine) + yShift;
       int lineHeight = myView.getLineHeight();
       for(int i = startVisualLine; i <= endVisualLine; i++) {
-        int x = myCorrector.marginX(marginShifts[i - startVisualLine]);
-        int nextX = myCorrector.marginX(marginShifts[i - startVisualLine + 1]);
+        float width = marginWidths[i - startVisualLine];
+        if (width == 0) width = baseMarginWidth;
+        float nextWidth = marginWidths[i - startVisualLine + 1];
+        if (nextWidth == 0) nextWidth = baseMarginWidth;
+        int x = myCorrector.marginX(width);
+        int nextX = myCorrector.marginX(nextWidth);
         g.fillRect(x, y, 1, lineHeight);
         if (nextX != x) g.fillRect(Math.min(x, nextX), y + lineHeight - 1, Math.abs(x - nextX) + 1, 1);
         y += lineHeight;
@@ -170,11 +174,16 @@ class EditorPainter implements TextDrawingCallback {
     }
   }
 
+  private static float getBaseMarginWidth(EditorView view) {
+    Editor editor = view.getEditor();
+    return editor.getSettings().getRightMargin(editor.getProject()) * view.getPlainSpaceWidth();
+  }
+
   private boolean isMarginShown() {
     return isMarginShown(myEditor);
   }
 
-  private static boolean isMarginShown(@NotNull Editor editor) {
+  public static boolean isMarginShown(@NotNull Editor editor) {
     return editor.getSettings().isRightMarginShown() &&
            editor.getColorsScheme().getColor(EditorColors.RIGHT_MARGIN_COLOR) != null &&
            (Registry.is("editor.show.right.margin.in.read.only.files") || editor.getDocument().isWritable());
@@ -182,9 +191,9 @@ class EditorPainter implements TextDrawingCallback {
 
   private float[] paintBackground(Graphics2D g, Rectangle clip, int yShift,
                                int startVisualLine, int endVisualLine, IterationState.CaretData caretData) {
-    Ref<float[]> marginShifts = new Ref<>();
-    boolean calculateMarginShift = Registry.is("editor.adjust.right.margin") && isMarginShown();
-    int maxVisualLine = endVisualLine + (calculateMarginShift ? 1 : 0);
+    boolean calculateMarginWidths = Registry.is("editor.adjust.right.margin") && isMarginShown();
+    float[] marginWidths = calculateMarginWidths ? new float[endVisualLine - startVisualLine + 2] : null;
+    int maxVisualLine = endVisualLine + (calculateMarginWidths ? 1 : 0);
     int lineCount = myEditor.getVisibleLineCount();
     
     final Map<Integer, Couple<Integer>> virtualSelectionMap = createVirtualSelectionMap(startVisualLine, endVisualLine);
@@ -240,13 +249,11 @@ class EditorPainter implements TextDrawingCallback {
                                                          primarySelectionStart, primarySelectionEnd);
           }
         }
-      }, calculateMarginShift ? shift -> {
-        if (marginShifts.isNull()) marginShifts.set(new float[endVisualLine - startVisualLine + 2]);
-        marginShifts.get()[visualLine - startVisualLine] += shift;
-      } : null);
+      }, calculateMarginWidths && !visLinesIterator.endsWithSoftWrap() && !visLinesIterator.startsWithSoftWrap()
+         ? width -> marginWidths[visualLine - startVisualLine] = width : null);
       visLinesIterator.advance();
     }
-    return marginShifts.get();
+    return marginWidths;
   }
 
   private void paintFoldingBackground(Graphics2D g, TextAttributes attributes, float x, int y, float width, FoldRegion foldRegion) {
@@ -1017,12 +1024,12 @@ class EditorPainter implements TextDrawingCallback {
     }
   }
 
-  private interface MarginShiftConsumer {
-    void process(float shift);
+  private interface MarginWidthConsumer {
+    void process(float width);
   }
 
   private void paintLineFragments(Graphics2D g, Rectangle clip, VisualLinesIterator visLineIterator, IterationState.CaretData caretData,
-                                  int y, LineFragmentPainter painter, MarginShiftConsumer marginShiftConsumer) {
+                                  int y, LineFragmentPainter painter, MarginWidthConsumer marginWidthConsumer) {
     int visualLine = visLineIterator.getVisualLine();
     float x = myCorrector.startX(visualLine) + (visualLine == 0 ? myView.getPrefixTextWidthInPixels() : 0);
     int offset = visLineIterator.getVisualLineStartOffset();
@@ -1031,6 +1038,9 @@ class EditorPainter implements TextDrawingCallback {
     int prevEndOffset = -1;
     boolean firstFragment = true;
     int maxColumn = 0;
+    int marginColumns = myEditor.getSettings().getRightMargin(myEditor.getProject());
+    int endLogicalLine = visLineIterator.getEndLogicalLine();
+    boolean marginReached = false;
     for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, visLineIterator, null, true)) {
       int fragmentStartOffset = fragment.getStartOffset();
       int start = fragmentStartOffset;
@@ -1054,11 +1064,10 @@ class EditorPainter implements TextDrawingCallback {
           }
         }
       }
-      float marginShift = 0;
       FoldRegion foldRegion = fragment.getCurrentFoldRegion();
       if (foldRegion == null) {
         if (start != prevEndOffset) {
-          it = new IterationState(myEditor, start, fragment.isRtl() ? offset : visualLineEndOffset, 
+          it = new IterationState(myEditor, start, fragment.isRtl() ? offset : visualLineEndOffset,
                                   caretData, false, false, false, fragment.isRtl());
         }
         prevEndOffset = end;
@@ -1072,7 +1081,6 @@ class EditorPainter implements TextDrawingCallback {
           if (xNew >= clip.getMinX()) {
             painter.paint(g, fragment, 0, 0, attributes, x, xNew, y);
           }
-          if (marginShiftConsumer != null) marginShift = xNew - x;
           x = xNew;
         }
         else {
@@ -1093,6 +1101,11 @@ class EditorPainter implements TextDrawingCallback {
             x = xNew;
             start = curEnd;
           }
+          if (marginWidthConsumer != null && fragment.getEndLogicalLine() == endLogicalLine &&
+              fragment.getStartLogicalColumn() <= marginColumns && fragment.getEndLogicalColumn() > marginColumns) {
+            marginWidthConsumer.process(fragment.visualColumnToX(fragment.logicalToVisualColumn(marginColumns)));
+            marginReached = true;
+          }
         }
       }
       else {
@@ -1103,10 +1116,7 @@ class EditorPainter implements TextDrawingCallback {
         x = xNew;
         prevEndOffset = -1;
         it = null;
-        if (marginShiftConsumer != null) marginShift = x - myCorrector.startX(visualLine) 
-                                                       - fragment.getEndLogicalColumn() * myView.getPlainSpaceWidth();
       }
-      if (marginShift != 0) marginShiftConsumer.process(marginShift);
       if (x > clip.getMaxX()) return;
       maxColumn = fragment.getEndVisualColumn();
     }
@@ -1118,8 +1128,8 @@ class EditorPainter implements TextDrawingCallback {
       painter.paintBeforeLineStart(g, it.getBeforeLineStartBackgroundAttributes(), false, maxColumn, x, y);
     }
     if (it == null || it.getEndOffset() != visualLineEndOffset) {
-      it = new IterationState(myEditor, visualLineEndOffset == offset ? visualLineEndOffset
-                                                                      : DocumentUtil.getPreviousCodePointOffset(myDocument, visualLineEndOffset),
+      it = new IterationState(myEditor, visualLineEndOffset == offset
+                                        ? visualLineEndOffset : DocumentUtil.getPreviousCodePointOffset(myDocument, visualLineEndOffset),
                               visualLineEndOffset, caretData, false, false, false, false);
     }
     if (!it.atEnd()) {
@@ -1127,6 +1137,13 @@ class EditorPainter implements TextDrawingCallback {
     }
     assert it.atEnd();
     painter.paintAfterLineEnd(g, clip, it, maxColumn, x, y);
+    if (marginWidthConsumer != null && !marginReached &&
+        (visualLine == myEditor.getCaretModel().getVisualPosition().line || x > marginColumns * myView.getPlainSpaceWidth())) {
+      int endLogicalColumn = myView.offsetToLogicalPosition(visualLineEndOffset).column;
+      if (endLogicalColumn < marginColumns) {
+        marginWidthConsumer.process(x + (marginColumns - endLogicalColumn) * myView.getPlainSpaceWidth());
+      }
+    }
   }
 
   private TextAttributes getFoldRegionAttributes(FoldRegion foldRegion) {
@@ -1225,8 +1242,7 @@ class EditorPainter implements TextDrawingCallback {
     int lineSeparatorEnd(int maxX);
     float singleLineBorderStart(float x);
     float singleLineBorderEnd(float x);
-    int marginX();
-    int marginX(float shift);
+    int marginX(float marginWidth);
     List<Integer> softMarginsX();
 
     @NotNull
@@ -1289,18 +1305,12 @@ class EditorPainter implements TextDrawingCallback {
 
       @Override
       public int lineSeparatorEnd(int maxX) {
-        return isMarginShown(myView.getEditor()) ? Math.min(marginX(), maxX) : maxX;
+        return isMarginShown(myView.getEditor()) ? Math.min(marginX(getBaseMarginWidth(myView)), maxX) : maxX;
       }
 
       @Override
-      public int marginX() {
-        EditorImpl editor = myView.getEditor();
-        return (int) (myView.getInsets().left + editor.getSettings().getRightMargin(editor.getProject()) * myView.getPlainSpaceWidth());
-      }
-
-      @Override
-      public int marginX(float shift) {
-        return marginX() + (int)shift;
+      public int marginX(float marginWidth) {
+        return (int)(myView.getInsets().left + marginWidth);
       }
 
       @Override
@@ -1358,7 +1368,7 @@ class EditorPainter implements TextDrawingCallback {
 
       @Override
       public int lineSeparatorStart(int minX) {
-        return isMarginShown(myView.getEditor()) ? Math.max(marginX(), minX) : minX;
+        return isMarginShown(myView.getEditor()) ? Math.max(marginX(getBaseMarginWidth(myView)), minX) : minX;
       }
 
       @Override
@@ -1367,15 +1377,8 @@ class EditorPainter implements TextDrawingCallback {
       }
 
       @Override
-      public int marginX() {
-        EditorImpl editor = myView.getEditor();
-        return (int) (myView.getRightAlignmentMarginX() - 
-                      editor.getSettings().getRightMargin(editor.getProject()) * myView.getPlainSpaceWidth());
-      }
-
-      @Override
-      public int marginX(float shift) {
-        return marginX() - (int)shift;
+      public int marginX(float marginWidth) {
+        return (int)(myView.getRightAlignmentMarginX() - marginWidth);
       }
 
       @Override
