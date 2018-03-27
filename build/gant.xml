@@ -45,8 +45,6 @@
         <include name="httpclient-*.jar"/>
         <include name="httpcore-*.jar"/>
         <include name="httpmime-*.jar"/>
-        <include name="slf4j-api-*.jar"/>
-        <include name="slf4j-log4j12-*.jar"/>
       </fileset>
     </path>
 
