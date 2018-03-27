@@ -233,7 +233,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     }
 
     private int calculateHeight() {
-      return Math.max(myReferencePainter.getSize().height, myGraphTable.getFontMetrics(myFont).getHeight() + VERTICAL_PADDING);
+      return Math.max(myReferencePainter.getSize().height, getFontMetrics(myFont).getHeight() + VERTICAL_PADDING);
     }
 
     public int getPreferredHeight() {
@@ -283,6 +283,11 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     @NotNull
     public LabelPainter getReferencePainter() {
       return myReferencePainter;
+    }
+
+    @Override
+    public FontMetrics getFontMetrics(Font font) {
+      return myGraphTable.getFontMetrics(font);
     }
   }
 
