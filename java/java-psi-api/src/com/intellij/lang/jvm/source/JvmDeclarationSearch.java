@@ -4,13 +4,16 @@ package com.intellij.lang.jvm.source;
 import com.intellij.lang.jvm.JvmElement;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.containers.SmartHashSet;
+import com.intellij.psi.PsiNameIdentifierOwner;
+import com.intellij.util.containers.EmptyIterator;
+import com.intellij.util.containers.FlatteningIterator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 
 import static com.intellij.lang.jvm.source.JvmDeclarationSearcher.EP;
 
@@ -39,14 +42,49 @@ public class JvmDeclarationSearch {
    * (because in class file there will be two methods).
    */
   @NotNull
-  public static Collection<JvmElement> getElementsByIdentifier(@NotNull PsiElement identifierElement) {
-    Collection<JvmElement> result = new SmartHashSet<>();
-    for (JvmDeclarationSearcher search : EP.allForLanguage(identifierElement.getLanguage())) {
-      ProgressManager.checkCanceled();
-      search.findDeclarationsByIdentifier(identifierElement, result::add);
+  public static Iterable<JvmElement> getElementsByIdentifier(@NotNull PsiElement identifierElement) {
+    PsiElement declaringElement = findDeclaringElement(identifierElement);
+    if (declaringElement == null) {
+      return Collections.emptyList();
     }
-    ProgressManager.checkCanceled();
-    return result;
+    else {
+      return () -> iterateDeclarations(declaringElement);
+    }
+  }
+
+  @Nullable
+  private static PsiElement findDeclaringElement(@NotNull PsiElement potentiallyIdentifyingElement) {
+    PsiElement parent = potentiallyIdentifyingElement.getParent();
+    if (parent instanceof PsiNameIdentifierOwner
+        && ((PsiNameIdentifierOwner)parent).getIdentifyingElement() == potentiallyIdentifyingElement) {
+      return parent;
+    }
+    else {
+      return null;
+    }
+  }
+
+  @NotNull
+  private static Iterator<JvmElement> iterateDeclarations(@NotNull PsiElement declaringElement) {
+    List<JvmDeclarationSearcher> searchers = EP.allForLanguage(declaringElement.getLanguage());
+    return searchers.isEmpty() ? EmptyIterator.getInstance() : iterateDeclarations(declaringElement, searchers);
+  }
+
+  @NotNull
+  private static Iterator<JvmElement> iterateDeclarations(@NotNull PsiElement declaringElement,
+                                                          @NotNull Collection<JvmDeclarationSearcher> searchers) {
+    return new FlatteningIterator<JvmDeclarationSearcher, JvmElement>(searchers.iterator()) {
+      @Override
+      public boolean hasNext() {
+        ProgressManager.checkCanceled();
+        return super.hasNext();
+      }
+
+      @Override
+      protected Iterator<JvmElement> createValueIterator(JvmDeclarationSearcher searcher) {
+        return searcher.findDeclarations(declaringElement).iterator();
+      }
+    };
   }
 
   /**
@@ -60,21 +98,21 @@ public class JvmDeclarationSearch {
    * (because in class file there will be two methods).
    */
   @NotNull
-  public static Collection<JvmElement> getImmediatelyContainingElements(@NotNull PsiElement place) {
+  public static Iterable<JvmElement> getImmediatelyContainingElements(@NotNull PsiElement place) {
     List<JvmDeclarationSearcher> extensions = EP.allForLanguage(place.getLanguage());
-    if (extensions.isEmpty()) return Collections.emptyList();
+    if (extensions.isEmpty()) {
+      return Collections.emptyList();
+    }
 
-    Set<JvmElement> result = new SmartHashSet<>();
     PsiElement current = place;
     while (current != null) {
-      for (JvmDeclarationSearcher searcher : extensions) {
-        searcher.findDeclarations(current, result::add);
-        if (!result.isEmpty()) {
-          return result;
-        }
+      Iterator<JvmElement> iterator = iterateDeclarations(current, extensions);
+      if (iterator.hasNext()) {
+        return () -> iterator;
       }
       current = current.getParent();
     }
+
     return Collections.emptyList();
   }
 }
