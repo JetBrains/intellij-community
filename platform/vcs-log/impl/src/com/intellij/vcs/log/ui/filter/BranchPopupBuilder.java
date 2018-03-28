@@ -50,6 +50,9 @@ public abstract class BranchPopupBuilder {
     assert myRecentItems == null;
   }
 
+  protected void createFavoritesAction(@NotNull DefaultActionGroup actionGroup, @NotNull List<String> favorites) {
+  }
+
   @NotNull
   protected AnAction createCollapsedAction(@NotNull String actionName, @NotNull Collection<VcsRef> refs) {
     return createAction(actionName, refs);
@@ -90,6 +93,9 @@ public abstract class BranchPopupBuilder {
       for (List<String> recentItem : groups.recentGroups) {
         createRecentAction(actionGroup, recentItem);
       }
+    }
+    if (groups.favoriteGroups.size() > 1) {
+      createFavoritesAction(actionGroup, ContainerUtil.newArrayList(groups.favoriteGroups.keySet()));
     }
     for (Map.Entry<String, Collection<VcsRef>> entry : groups.favoriteGroups.entrySet()) {
       actionGroup.add(createAction(entry.getKey(), entry.getValue()));

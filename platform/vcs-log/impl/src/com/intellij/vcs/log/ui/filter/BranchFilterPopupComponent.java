@@ -127,6 +127,11 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
       return new BranchFilterAction(actionName, refs);
     }
 
+    @Override
+    protected void createFavoritesAction(@NotNull DefaultActionGroup actionGroup, @NotNull List<String> favorites) {
+      actionGroup.add(new PredefinedValueAction("Favorites", favorites));
+    }
+
     private class BranchFilterAction extends PredefinedValueAction {
       @NotNull private final LayeredIcon myIcon;
       @NotNull private final LayeredIcon myHoveredIcon;

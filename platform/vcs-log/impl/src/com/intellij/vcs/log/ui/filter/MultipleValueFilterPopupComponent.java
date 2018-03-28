@@ -110,8 +110,12 @@ abstract class MultipleValueFilterPopupComponent<Filter extends VcsLogFilter> ex
     }
 
     public PredefinedValueAction(@NotNull List<String> values) {
+      this(displayableText(values), values);
+    }
+
+    public PredefinedValueAction(@NotNull String name, @NotNull List<String> values) {
       super(null, tooltip(values), null);
-      getTemplatePresentation().setText(displayableText(values), false);
+      getTemplatePresentation().setText(name, false);
       myValues = values;
     }
 
