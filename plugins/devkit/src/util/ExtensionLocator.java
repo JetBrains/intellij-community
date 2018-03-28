@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.util;
 
+import com.intellij.lang.jvm.JvmClass;
+import com.intellij.lang.jvm.util.JvmClassUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
@@ -30,6 +32,11 @@ public abstract class ExtensionLocator {
   @NotNull
   public abstract List<ExtensionCandidate> findCandidates();
 
+  @NotNull
+  public static ExtensionLocator byClass(@NotNull Project project, @NotNull JvmClass clazz) {
+    return new ExtensionByClassLocator(project, clazz);
+  }
+
   public static ExtensionLocator byPsiClass(PsiClass psiClass) {
     return new ExtensionByPsiClassLocator(psiClass);
   }
@@ -42,6 +49,37 @@ public abstract class ExtensionLocator {
     return new ExtensionByExtensionPointLocator(extensionPoint, extensionId);
   }
 
+  private static class ExtensionByClassLocator extends ExtensionLocator {
+
+    private final Project myProject;
+    private final JvmClass myClazz;
+
+    ExtensionByClassLocator(@NotNull Project project, @NotNull JvmClass clazz) {
+      myProject = project;
+      myClazz = clazz;
+    }
+
+    @NotNull
+    @Override
+    public List<ExtensionCandidate> findCandidates() {
+      String jvmName = JvmClassUtil.getJvmClassName(myClazz);
+      if (jvmName == null) {
+        return Collections.emptyList();
+      }
+
+      List<ExtensionCandidate> result = new SmartList<>();
+      processExtensionDeclarations(myClazz.getQualifiedName(), myProject, (file, startOffset, endOffset) -> {
+        XmlTag tag = getXmlTagOfTokenElement(file, startOffset, jvmName, true);
+        DomElement dom = DomUtil.getDomElement(tag);
+        if (dom instanceof Extension && ((Extension)dom).getExtensionPoint() != null) {
+          result.add(new ExtensionCandidate(SmartPointerManager.getInstance(tag.getProject()).createSmartPsiElementPointer(tag)));
+        }
+        return true; // continue processing
+      });
+
+      return result;
+    }
+  }
 
   private static class ExtensionByPsiClassLocator extends ExtensionLocator {
     private final PsiClass myPsiClass;
