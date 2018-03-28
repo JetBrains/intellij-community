@@ -5,12 +5,29 @@ import com.intellij.execution.Location;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.execution.junit2.info.MethodLocation;
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.service.resolve.GradleResolverUtil;
+import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * @author Vladislav.Soroka
@@ -39,5 +56,72 @@ public class GradleRunnerUtil {
       if (JUnitUtil.isTestMethod(methodLocation, false)) return methodLocation;
     }
     return null;
+  }
+
+  @Nullable
+  public static String resolveProjectPath(@NotNull Module module) {
+    final String rootProjectPath = ExternalSystemApiUtil.getExternalRootProjectPath(module);
+    String projectPath = ExternalSystemApiUtil.getExternalProjectPath(module);
+
+    if (rootProjectPath == null || projectPath == null) return null;
+    if (!FileUtil.isAncestor(rootProjectPath, projectPath, false)) {
+      projectPath = rootProjectPath;
+    }
+    return projectPath;
+  }
+
+  @NotNull
+  public static List<String> getTasksTarget(@Nullable Location location) {
+    if (location == null) return Collections.emptyList();
+    if (location instanceof GradleTaskLocation) {
+      return ((GradleTaskLocation)location).getTasks();
+    }
+
+    PsiElement parent = location.getPsiElement();
+    while (parent.getParent() != null && !(parent.getParent() instanceof PsiFile)) {
+      parent = parent.getParent();
+    }
+
+    if (isCreateTaskMethod(parent)) {
+      final GrExpression[] arguments = ((GrMethodCallExpression)parent).getExpressionArguments();
+      if (arguments.length > 0 && arguments[0] instanceof GrLiteral && ((GrLiteral)arguments[0]).getValue() instanceof String) {
+        return Collections.singletonList((String)((GrLiteral)arguments[0]).getValue());
+      }
+    }
+    else if (parent instanceof GrApplicationStatement) {
+      PsiElement shiftExpression = parent.getChildren()[1].getChildren()[0];
+      if (GradleResolverUtil.isLShiftElement(shiftExpression)) {
+        PsiElement shiftiesChild = shiftExpression.getChildren()[0];
+        if (shiftiesChild instanceof GrReferenceExpression) {
+          return Collections.singletonList(shiftiesChild.getText());
+        }
+        else if (shiftiesChild instanceof GrMethodCallExpression) {
+          return Collections.singletonList(shiftiesChild.getChildren()[0].getText());
+        }
+      }
+      else if (shiftExpression instanceof GrMethodCallExpression) {
+        return Collections.singletonList(shiftExpression.getChildren()[0].getText());
+      }
+    }
+    GrMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(location.getPsiElement(), GrMethodCallExpression.class);
+    if (methodCallExpression != null) {
+      String taskNameCandidate = methodCallExpression.getChildren()[0].getText();
+      Project project = location.getProject();
+      Module module = location.getModule();
+      GradleExtensionsSettings.GradleExtensionsData extensionsData = GradleExtensionsSettings.getInstance(project).getExtensionsFor(module);
+      if (extensionsData != null) {
+        for (GradleExtensionsSettings.GradleTask task : extensionsData.tasks) {
+          if (taskNameCandidate.equals(task.name)) {
+            return Collections.singletonList(taskNameCandidate);
+          }
+        }
+      }
+    }
+
+    return Collections.emptyList();
+  }
+
+  private static boolean isCreateTaskMethod(PsiElement parent) {
+    return parent instanceof GrMethodCallExpression && PsiUtil.isMethodCall((GrMethodCallExpression)parent, "createTask");
   }
 }
