@@ -129,7 +129,7 @@ public class GitRefManager implements VcsLogRefManager {
 
     List<RefGroup> result = ContainerUtil.newArrayList();
     result.addAll(simpleGroups);
-    if (!localBranches.isEmpty()) result.add(new SimpleRefGroup("Local", localBranches, true));
+    if (!localBranches.isEmpty()) result.add(new SimpleRefGroup("Local", localBranches, false));
     for (Map.Entry<GitRemote, Collection<VcsRef>> entry : remoteRefGroups.entrySet()) {
       result.add(new RemoteRefGroup(entry.getKey(), entry.getValue()));
     }

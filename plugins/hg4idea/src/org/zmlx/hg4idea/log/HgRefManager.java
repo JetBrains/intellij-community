@@ -134,8 +134,8 @@ public class HgRefManager implements VcsLogRefManager {
       }
     }
 
-    if (!branches.isEmpty()) result.add(new SimpleRefGroup("Branches", branches, true));
-    if (!bookmarks.isEmpty()) result.add(new SimpleRefGroup("Bookmarks", bookmarks, true));
+    if (!branches.isEmpty()) result.add(new SimpleRefGroup("Branches", branches, false));
+    if (!bookmarks.isEmpty()) result.add(new SimpleRefGroup("Bookmarks", bookmarks, false));
 
     return result;
   }

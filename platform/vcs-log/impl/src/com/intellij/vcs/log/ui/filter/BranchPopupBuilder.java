@@ -69,7 +69,7 @@ public abstract class BranchPopupBuilder {
       if (visibleRoots != null && !visibleRoots.contains(root)) continue;
       List<RefGroup> refGroups = dataPack.getLogProviders().get(root).getReferenceManager().groupForBranchFilter(entry.getValue());
 
-      putActionsForReferences(refGroups, filteredGroups);
+      putActionsForReferences(dataPack, refGroups, filteredGroups);
     }
 
     if (recentItems != null) {
@@ -90,6 +90,9 @@ public abstract class BranchPopupBuilder {
         createRecentAction(actionGroup, recentItem);
       }
     }
+    for (String actionName : groups.favoriteGroups) {
+      actionGroup.add(createAction(actionName));
+    }
     for (Map.Entry<String, TreeSet<String>> group : groups.expandedGroups.entrySet()) {
       actionGroup.addSeparator(group.getKey());
       for (String actionName : group.getValue()) {
@@ -108,30 +111,38 @@ public abstract class BranchPopupBuilder {
   }
 
   private static class Groups {
+    private final TreeSet<String> favoriteGroups = ContainerUtil.newTreeSet();
     private final TreeSet<String> singletonGroups = ContainerUtil.newTreeSet();
     private final List<List<String>> recentGroups = ContainerUtil.newArrayList();
     private final TreeMap<String, TreeSet<String>> expandedGroups = ContainerUtil.newTreeMap();
     private final TreeMap<String, TreeSet<String>> collapsedGroups = ContainerUtil.newTreeMap();
   }
 
-  private static void putActionsForReferences(List<RefGroup> references, Groups actions) {
-    for (final RefGroup refGroup : references) {
+  private static void putActionsForReferences(@NotNull VcsLogDataPack pack, @NotNull List<RefGroup> references, @NotNull Groups actions) {
+    for (RefGroup refGroup : references) {
       if (refGroup instanceof SingletonRefGroup) {
-        actions.singletonGroups.add(refGroup.getName());
-      }
-      else if (refGroup.isExpanded()) {
-        addToGroup(refGroup, actions.expandedGroups);
+        VcsRef ref = ((SingletonRefGroup)refGroup).getRef();
+        if (isFavorite(pack, ref)) {
+          actions.favoriteGroups.add(refGroup.getName());
+        }
+        else {
+          actions.singletonGroups.add(refGroup.getName());
+        }
       }
       else {
-        addToGroup(refGroup, actions.collapsedGroups);
+        TreeMap<String, TreeSet<String>> groups = refGroup.isExpanded() ? actions.expandedGroups : actions.collapsedGroups;
+        TreeSet<String> groupActions = groups.computeIfAbsent(refGroup.getName(), key -> new TreeSet<>());
+        for (VcsRef ref : refGroup.getRefs()) {
+          if (isFavorite(pack, ref)) {
+            actions.favoriteGroups.add(ref.getName());
+          }
+          groupActions.add(ref.getName());
+        }
       }
     }
   }
 
-  private static void addToGroup(final RefGroup refGroup, TreeMap<String, TreeSet<String>> groupToAdd) {
-    TreeSet<String> groupActions = groupToAdd.computeIfAbsent(refGroup.getName(), key -> new TreeSet<>());
-    for (VcsRef ref : refGroup.getRefs()) {
-      groupActions.add(ref.getName());
-    }
+  public static boolean isFavorite(@NotNull VcsLogDataPack pack, @NotNull VcsRef ref) {
+    return pack.getLogProviders().get(ref.getRoot()).getReferenceManager().isFavorite(ref);
   }
 }
