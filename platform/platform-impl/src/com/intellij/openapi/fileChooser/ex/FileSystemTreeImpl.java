@@ -19,6 +19,7 @@ import com.intellij.openapi.fileChooser.impl.FileComparator;
 import com.intellij.openapi.fileChooser.impl.FileTreeBuilder;
 import com.intellij.openapi.fileChooser.impl.FileTreeStructure;
 import com.intellij.openapi.fileChooser.tree.FileNode;
+import com.intellij.openapi.fileChooser.tree.FileNodeVisitor;
 import com.intellij.openapi.fileChooser.tree.FileRefresher;
 import com.intellij.openapi.fileChooser.tree.FileRenderer;
 import com.intellij.openapi.fileChooser.tree.FileTreeModel;
@@ -273,12 +274,13 @@ public class FileSystemTreeImpl implements FileSystemTree {
           if (onDone != null) onDone.run();
           break;
         case 1:
-          myAsyncTreeModel.getTreePath(file[0])
-                          .onSuccess(path -> {
-                            myTree.setSelectionPath(path);
-                            myTree.scrollPathToVisible(path);
-                            if (onDone != null) onDone.run();
-                          });
+          TreeUtil.promiseExpand(myTree, new FileNodeVisitor(file[0])).onSuccess(path -> {
+            if (path != null) {
+              myTree.setSelectionPath(path);
+              myTree.scrollPathToVisible(path);
+              if (onDone != null) onDone.run();
+            }
+          });
           break;
         default:
           myTree.clearSelection();
@@ -309,11 +311,9 @@ public class FileSystemTreeImpl implements FileSystemTree {
 
   public void expand(final VirtualFile file, @Nullable final Runnable onDone) {
     if (myAsyncTreeModel != null) {
-      myAsyncTreeModel.getTreePath(file)
-                      .onSuccess(path -> {
-                        myTree.expandPath(path);
-                        if (onDone != null) onDone.run();
-                      });
+      TreeUtil.promiseExpand(myTree, new FileNodeVisitor(file)).onSuccess(path -> {
+        if (path != null && onDone != null) onDone.run();
+      });
     }
     else {
       myTreeBuilder.expand(getFileElementFor(file), onDone);
