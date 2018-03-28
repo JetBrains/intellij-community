@@ -19,6 +19,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInspection.dataFlow.inliner.*;
 import com.intellij.codeInspection.dataFlow.instructions.*;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -628,13 +629,32 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       addInstruction(new PushInstruction(loopVar, null));
       addInstruction(new PushInstruction(myFactory.getConstFactory().createFromValue(1, PsiType.INT, null), null));
       addInstruction(new BinopInstruction(JavaTokenType.PLUS, null, loopVar.getVariableType()));
+      addInstruction(new AssignInstruction(null, null));
+      addInstruction(new PopInstruction());
+    }
+    else if (start != null) {
+      long maxValue;
+      if (end != null) {
+        maxValue = loop.isIncluding() ? end + 1 : end;
+      }
+      else {
+        maxValue = type.equals(PsiType.LONG) ? Long.MAX_VALUE : Integer.MAX_VALUE;
+      }
+      if (start >= maxValue) {
+        addInstruction(new GotoInstruction(getEndOffset(statement)));
+      }
+      else {
+        addInstruction(new PushInstruction(myFactory.getFactValue(DfaFactType.RANGE, LongRangeSet.range(start + 1L, maxValue)), null));
+        addInstruction(new AssignInstruction(null, null));
+        addInstruction(new PopInstruction());
+      }
     } else {
       pushUnknown();
+      addInstruction(new AssignInstruction(null, null));
+      addInstruction(new PushInstruction(origin, null));
+      addInstruction(new BinopInstruction(JavaTokenType.LE, null, PsiType.BOOLEAN));
+      addInstruction(new ConditionalGotoInstruction(getEndOffset(statement), false, null));
     }
-    addInstruction(new AssignInstruction(null, null));
-    addInstruction(new PushInstruction(origin, null));
-    addInstruction(new BinopInstruction(JavaTokenType.LE, null, PsiType.BOOLEAN));
-    addInstruction(new ConditionalGotoInstruction(getEndOffset(statement), false, null));
     return true;
   }
 
@@ -1279,7 +1299,11 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   private boolean isAcceptableContextForMathOperation(PsiExpression expression) {
     PsiElement parent = expression.getParent();
     while (parent != null && parent != myCodeFragment) {
-      if (parent instanceof PsiExpressionList) return true;
+      if (parent instanceof PsiExpressionList ||
+          parent instanceof PsiArrayInitializerExpression ||
+          parent instanceof PsiArrayAccessExpression) {
+        return true;
+      }
       if (parent instanceof PsiBinaryExpression && DfaRelationValue.RelationType.fromElementType(((PsiBinaryExpression)parent).getOperationTokenType()) != null) {
         return true;
       }
