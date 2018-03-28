@@ -54,11 +54,12 @@ public class RunAnythingCommandItem extends RunAnythingItem<String> {
   }
 
   @Override
-  public void runInner(@NotNull Executor executor,
-                       @Nullable VirtualFile workDirectory,
-                       @Nullable Component component,
-                       @NotNull Project project,
-                       @Nullable AnActionEvent event) {
+  public void run(@NotNull Project project,
+                  @NotNull Executor executor, @Nullable AnActionEvent event,
+                  @Nullable VirtualFile workDirectory,
+                  @Nullable Component focusOwner) {
+    super.run(project, executor, event, workDirectory, focusOwner);
+
     LOG.assertTrue(workDirectory != null);
     runCommand(workDirectory, project, myCommandLine, myModule, executor);
   }

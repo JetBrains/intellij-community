@@ -24,12 +24,12 @@ public class RunAnythingActionItem extends RunAnythingItem<AnAction> {
   }
 
   @Override
-  public void runInner(@NotNull Executor executor,
-                       @Nullable VirtualFile workDirectory,
-                       @Nullable Component component,
-                       @NotNull Project project,
-                       @Nullable AnActionEvent event) {
-    RunAnythingUtil.performRunAnythingAction(myAction, project, component, event);
+  public void run(@NotNull Project project,
+                  @NotNull Executor executor,
+                  @Nullable AnActionEvent event,
+                  @Nullable VirtualFile workDirectory,
+                  @Nullable Component focusOwner) {
+    RunAnythingUtil.performRunAnythingAction(myAction, project, focusOwner, event);
   }
 
   @NotNull

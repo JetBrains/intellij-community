@@ -429,7 +429,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       }
       VirtualFile directory = getWorkDirectory(module);
       if (value instanceof RunAnythingCommandItem) {
-        onDone = () -> ((RunAnythingCommandItem)value).run(getExecutor(), directory, null, project, null);
+        onDone = () -> ((RunAnythingCommandItem)value).run(project, getExecutor(), null, directory, null);
       }
       else if (value == null) {
         onDone = () -> RunAnythingUtil.runOrCreateRunConfiguration(myDataContext, pattern, directory);
@@ -453,7 +453,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       Component c = comp;
       if (c == null) c = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
 
-      value.run(getExecutor(), null, c, project, event);
+      value.run(project, getExecutor(), event, null, c);
     });
   }
 

@@ -24,16 +24,18 @@ public class RunAnythingRunConfigurationItem extends RunAnythingItem<ChooseRunCo
   }
 
   @Override
-  public void runInner(@NotNull Executor executor,
-                       @Nullable VirtualFile workDirectory,
-                       @Nullable Component component,
-                       @NotNull Project project,
-                       @Nullable AnActionEvent event) {
+  public void run(@NotNull Project project,
+                  @NotNull Executor executor,
+                  @Nullable AnActionEvent event,
+                  @Nullable VirtualFile workDirectory,
+                  @Nullable Component focusOwner) {
+    super.run(project, executor, event, workDirectory, focusOwner);
+
     Object value = myWrapper.getValue();
     if (value instanceof RunnerAndConfigurationSettings) {
       Executor runExecutor = RunAnythingUtil.findExecutor((RunnerAndConfigurationSettings)value);
       if (runExecutor != null) {
-        myWrapper.perform(project, runExecutor, DataManager.getInstance().getDataContext(component));
+        myWrapper.perform(project, runExecutor, DataManager.getInstance().getDataContext(focusOwner));
       }
     }
   }

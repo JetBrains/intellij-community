@@ -10,33 +10,56 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
+/**
+ * {@link RunAnythingItem} represents an item of 'Run Anything' list
+ *
+ * @param <T> user object of the item
+ */
 public abstract class RunAnythingItem<T> {
-  protected abstract void runInner(@NotNull Executor executor,
-                                   @Nullable VirtualFile workDirectory,
-                                   @Nullable Component component,
-                                   @NotNull Project project,
-                                   @Nullable AnActionEvent event);
-
-  @NotNull
-  public abstract String getText();
-
-  @NotNull
-  public abstract Icon getIcon();
-
+  /**
+   * Returns user object of current item
+   */
   @NotNull
   public abstract T getValue();
 
-  protected void triggerUsage() {}
+  /**
+   * Returns text presentation of {@link T}
+   */
+  @NotNull
+  public abstract String getText();
 
+  /**
+   * Returns icon of {@link T}
+   */
+  @NotNull
+  public abstract Icon getIcon();
+
+  /**
+   * Returns current item {@link Component} presentation
+   *
+   * @param isSelected true if item is selected in the list
+   */
   @NotNull
   public abstract Component getComponent(boolean isSelected);
 
-  public void run(@NotNull Executor executor,
+  /**
+   * Sends statistic if current item action is being executed
+   */
+  protected void triggerUsage() {}
+
+  /**
+   * Executes specific action on choosing current item in the list
+   *
+   * @param executor      Defines whether the action is being executed in debug mode or not
+   * @param event         'Run Anything' action event
+   * @param workDirectory Working directory where the action will be executed
+   * @param focusOwner    Focus owner
+   */
+  public void run(@NotNull Project project,
+                  @NotNull Executor executor,
+                  @Nullable AnActionEvent event,
                   @Nullable VirtualFile workDirectory,
-                  @Nullable Component component,
-                  @NotNull Project project,
-                  @Nullable AnActionEvent event) {
+                  @Nullable Component focusOwner) {
     triggerUsage();
-    runInner(executor, workDirectory, component, project, event);
   }
 }
