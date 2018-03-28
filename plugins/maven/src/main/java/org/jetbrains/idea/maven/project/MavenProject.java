@@ -16,9 +16,13 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.execution.configurations.ParametersList;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.CompilerModuleExtension;
+import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -26,12 +30,17 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
+import com.intellij.util.Consumer;
+import com.intellij.util.PathsList;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.importing.MavenAnnotationProcessorsModuleService;
 import org.jetbrains.idea.maven.importing.MavenExtraArtifactType;
 import org.jetbrains.idea.maven.importing.MavenImporter;
 import org.jetbrains.idea.maven.model.*;
@@ -43,7 +52,8 @@ import org.jetbrains.idea.maven.utils.*;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
+
+import static com.intellij.openapi.roots.OrderEnumerator.orderEntries;
 
 public class MavenProject {
 
@@ -859,14 +869,48 @@ public class MavenProject {
   }
 
   @NotNull
-  public List<MavenArtifact> getAnnotationProcessors() {
+  public List<MavenArtifact> getExternalAnnotationProcessors() {
     return myState.myAnnotationProcessors;
   }
 
   @NotNull
-  public String getAnnotationProcessorPath() {
-    return getAnnotationProcessors()
-      .stream().map(MavenArtifact::getPath).map(FileUtil::toSystemDependentName).collect(Collectors.joining(File.pathSeparator));
+  public String getAnnotationProcessorPath(Project project) {
+    StringJoiner annotationProcessorPath = new StringJoiner(File.pathSeparator);
+
+    Consumer<String> resultAppender = path -> annotationProcessorPath.add(FileUtil.toSystemDependentName(path));
+
+    for (MavenArtifact artifact : getExternalAnnotationProcessors()) {
+      resultAppender.consume(artifact.getPath());
+    }
+
+    MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
+    Module module = projectsManager.findModule(this);
+    if (module != null) {
+      MavenAnnotationProcessorsModuleService apService = MavenAnnotationProcessorsModuleService.getInstance(module);
+      for (String moduleName : apService.getAnnotationProcessorModules()) {
+        Module annotationProcessorModule = ModuleManager.getInstance(project).findModuleByName(moduleName);
+        if (annotationProcessorModule != null) {
+          OrderEnumerator enumerator = orderEntries(annotationProcessorModule).withoutSdk().productionOnly().runtimeOnly().recursively();
+
+          PathsList pathsList = enumerator.getPathsList();
+          for (String path : pathsList.getPathList()) {
+            resultAppender.consume(path);
+          }
+
+          // module output folders might not be created yet and hence be absent from pathsList
+          enumerator.forEachModule(m -> {
+            CompilerModuleExtension compilerModuleExtension = CompilerModuleExtension.getInstance(m);
+            if (compilerModuleExtension != null) {
+              VirtualFilePointer compilerOutputPointer = compilerModuleExtension.getCompilerOutputPointer();
+              resultAppender.consume(VfsUtil.urlToPath(compilerOutputPointer.getUrl()));
+            }
+            return true;
+          });
+        }
+      }
+    }
+
+    return annotationProcessorPath.toString();
   }
 
   @NotNull

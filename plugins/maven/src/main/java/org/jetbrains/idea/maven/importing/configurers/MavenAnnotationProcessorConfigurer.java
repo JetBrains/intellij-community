@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -122,7 +123,7 @@ public class MavenAnnotationProcessorConfigurer extends MavenModuleConfigurer {
       }
 
       moduleProfile.addModuleName(module.getName());
-      configureAnnotationProcessorPath(moduleProfile, mavenProject);
+      configureAnnotationProcessorPath(moduleProfile, mavenProject, project);
       cleanAndMergeModuleProfiles(rootProject, compilerConfiguration, moduleProfile, isDefault, module);
     }
     else {
@@ -130,11 +131,12 @@ public class MavenAnnotationProcessorConfigurer extends MavenModuleConfigurer {
     }
   }
 
-  private static void configureAnnotationProcessorPath(ProcessorConfigProfile profile, MavenProject mavenProject) {
-    if (mavenProject.getAnnotationProcessors().isEmpty()) return;
-
-    profile.setObtainProcessorsFromClasspath(false);
-    profile.setProcessorPath(mavenProject.getAnnotationProcessorPath());
+  private static void configureAnnotationProcessorPath(ProcessorConfigProfile profile, MavenProject mavenProject, Project project) {
+    String annotationProcessorPath = mavenProject.getAnnotationProcessorPath(project);
+    if (StringUtil.isNotEmpty(annotationProcessorPath)) {
+      profile.setObtainProcessorsFromClasspath(false);
+      profile.setProcessorPath(annotationProcessorPath);
+    }
   }
 
   private static void cleanAndMergeModuleProfiles(@NotNull MavenProject rootProject,

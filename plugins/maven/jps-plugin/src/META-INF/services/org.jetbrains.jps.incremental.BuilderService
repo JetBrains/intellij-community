@@ -1,1 +1,2 @@
 org.jetbrains.jps.maven.compiler.MavenBuilderService
+org.jetbrains.jps.maven.compiler.MavenAnnotationProcessorBuilderService
