@@ -179,4 +179,4 @@ fun GitRepository.resolveConflicts() {
 }
 
 fun getPrettyFormatTagForFullCommitMessage(project: Project) =
-  if (GitVersionSpecialty.STARTED_USING_RAW_BODY_IN_FORMAT.existsIn(GitVcs.getInstance(project).version)) "%B" else "%s%n%n%-b"
+  if (GitVersionSpecialty.STARTED_USING_RAW_BODY_IN_FORMAT.existsIn(project)) "%B" else "%s%n%n%-b"
