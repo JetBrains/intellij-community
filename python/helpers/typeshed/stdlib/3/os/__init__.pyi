@@ -4,10 +4,9 @@
 from io import TextIOWrapper as _TextIOWrapper
 import sys
 from typing import (
-    Mapping, MutableMapping, Dict, List, Any, Tuple, IO, Iterable, Iterator, overload, Union, AnyStr,
+    Mapping, MutableMapping, Dict, List, Any, Tuple, IO, Iterable, Iterator, NoReturn, overload, Union, AnyStr,
     Optional, Generic, Set, Callable, Text, Sequence, NamedTuple, TypeVar, ContextManager
 )
-from mypy_extensions import NoReturn
 
 # Re-exported names from other modules.
 from builtins import OSError as error
@@ -383,7 +382,16 @@ if sys.version_info >= (3, 3):
 else:
     def link(src: _PathType, link_name: _PathType) -> None: ...
 
-if sys.version_info >= (3, 3):
+if sys.version_info >= (3, 6):
+    @overload
+    def listdir(path: Optional[str] = ...) -> List[str]: ...
+    @overload
+    def listdir(path: bytes) -> List[bytes]: ...
+    @overload
+    def listdir(path: int) -> List[str]: ...
+    @overload
+    def listdir(path: PathLike[str]) -> List[str]: ...
+elif sys.version_info >= (3, 3):
     @overload
     def listdir(path: Optional[str] = ...) -> List[str]: ...
     @overload

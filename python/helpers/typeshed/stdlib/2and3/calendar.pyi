@@ -65,6 +65,14 @@ class HTMLCalendar(Calendar):
     def formatmonth(self, theyear: int, themonth: int, withyear: bool = ...) -> str: ...
     def formatyear(self, theyear: int, width: int = ...) -> str: ...
     def formatyearpage(self, theyear: int, width: int = ..., css: Optional[str] = ..., encoding: Optional[str] = ...) -> str: ...
+    if sys.version_info >= (3, 7):
+        cssclasses: List[str]
+        cssclass_today: str
+        cssclasses_weekday_head: List[str]
+        cssclass_month_head: str
+        cssclass_month: str
+        cssclass_year: str
+        cssclass_year_head: str
 
 if sys.version_info < (3, 0):
     class TimeEncoding:

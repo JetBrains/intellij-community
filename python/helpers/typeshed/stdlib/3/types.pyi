@@ -152,10 +152,19 @@ class BuiltinFunctionType:
 BuiltinMethodType = BuiltinFunctionType
 
 class TracebackType:
-    tb_frame = ...  # type: FrameType
-    tb_lasti = ...  # type: int
-    tb_lineno = ...  # type: int
-    tb_next = ...  # type: TracebackType
+    if sys.version_info >= (3, 7):
+        def __init__(self, tb_next: Optional[TracebackType], tb_frame: FrameType, tb_lasti: int, tb_lineno: int) -> None: ...
+        tb_next: Optional[TracebackType]
+    else:
+        @property
+        def tb_next(self) -> Optional[TracebackType]: ...
+    # the rest are read-only even in 3.7
+    @property
+    def tb_frame(self) -> FrameType: ...
+    @property
+    def tb_lasti(self) -> int: ...
+    @property
+    def tb_lineno(self) -> int: ...
 
 class FrameType:
     f_back = ...  # type: FrameType

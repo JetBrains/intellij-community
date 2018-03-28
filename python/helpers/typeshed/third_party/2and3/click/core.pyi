@@ -17,6 +17,7 @@ from typing import (
 
 from click.formatting import HelpFormatter
 from click.parser import OptionParser
+from click.types import ParamType, _ConvertibleType
 
 
 def invoke_param_callback(
@@ -317,7 +318,7 @@ class Parameter:
     name: str
     opts: List[str]
     secondary_opts: List[str]
-    type: 'ParamType'
+    type: ParamType
     required: bool
     callback: Optional[Callable[[Context, 'Parameter', str], Any]]
     nargs: int
@@ -333,7 +334,7 @@ class Parameter:
     def __init__(
         self,
         param_decls: Optional[List[str]] = ...,
-        type: Optional[Union[type, 'ParamType']] = ...,
+        type: Optional[_ConvertibleType] = ...,
         required: bool = ...,
         default: Optional[Any] = ...,
         callback: Optional[Callable[[Context, 'Parameter', str], Any]] = ...,
@@ -412,7 +413,7 @@ class Option(Parameter):
         multiple: bool = ...,
         count: bool = ...,
         allow_from_autoenv: bool = ...,
-        type: Optional[Union[type, 'ParamType']] = ...,
+        type: Optional[_ConvertibleType] = ...,
         help: Optional[str] = ...,
         **attrs
     ) -> None:
@@ -430,6 +431,3 @@ class Argument(Parameter):
         **attrs
     ) -> None:
         ...
-
-# cyclic dependency
-from click.types import ParamType  # noqa: E402

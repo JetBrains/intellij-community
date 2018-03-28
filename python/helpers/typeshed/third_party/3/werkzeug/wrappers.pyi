@@ -1,12 +1,14 @@
+from datetime import datetime
 from typing import (
-    Any, Iterable, Mapping, Optional, Sequence, Tuple, Type, Union,
+    Any, Iterable, Mapping, MutableMapping, Optional, Sequence, Tuple, Type,
+    Union,
 )
 
 from wsgiref.types import WSGIEnvironment
 
 from .datastructures import (
     CombinedMultiDict, EnvironHeaders, Headers, ImmutableMultiDict,
-    MultiDict, TypeConversionDict,
+    MultiDict, TypeConversionDict, HeaderSet,
 )
 
 class BaseRequest:
@@ -167,36 +169,45 @@ class ResponseStreamMixin:
     def stream(self): ...
 
 class CommonRequestDescriptorsMixin:
-    content_type = ...  # type: Any
-    def content_length(self): ...
-    content_encoding = ...  # type: Any
-    content_md5 = ...  # type: Any
-    referrer = ...  # type: Any
-    date = ...  # type: Any
-    max_forwards = ...  # type: Any
     @property
-    def mimetype(self): ...
+    def content_type(self) -> Optional[str]: ...
     @property
-    def mimetype_params(self): ...
-    def pragma(self): ...
+    def content_length(self) -> Optional[int]: ...
+    @property
+    def content_encoding(self) -> Optional[str]: ...
+    @property
+    def content_md5(self) -> Optional[str]: ...
+    @property
+    def referrer(self) -> Optional[str]: ...
+    @property
+    def date(self) -> Optional[datetime]: ...
+    @property
+    def max_forwards(self) -> Optional[int]: ...
+    @property
+    def mimetype(self) -> str: ...
+    @property
+    def mimetype_params(self) -> Mapping[str, str]: ...
+    @property
+    def pragma(self) -> HeaderSet: ...
 
 class CommonResponseDescriptorsMixin:
-    mimetype = ...  # type: Any
-    mimetype_params = ...  # type: Any
-    location = ...  # type: Any
-    age = ...  # type: Any
-    content_type = ...  # type: Any
-    content_length = ...  # type: Any
-    content_location = ...  # type: Any
-    content_encoding = ...  # type: Any
-    content_md5 = ...  # type: Any
-    date = ...  # type: Any
-    expires = ...  # type: Any
-    last_modified = ...  # type: Any
-    retry_after = ...  # type: Any
-    vary = ...  # type: Any
-    content_language = ...  # type: Any
-    allow = ...  # type: Any
+    mimetype: Optional[str] = ...
+    @property
+    def mimetype_params(self) -> MutableMapping[str, str]: ...
+    location: Optional[str] = ...
+    age: Any = ...  # get: Optional[datetime.timedelta]
+    content_type: Optional[str] = ...
+    content_length: Optional[int] = ...
+    content_location: Optional[str] = ...
+    content_encoding: Optional[str] = ...
+    content_md5: Optional[str] = ...
+    date: Any = ...  # get: Optional[datetime.datetime]
+    expires: Any = ...  # get: Optional[datetime.datetime]
+    last_modified: Any = ...  # get: Optional[datetime.datetime]
+    retry_after: Any = ...  # get: Optional[datetime.datetime]
+    vary: Optional[str] = ...
+    content_language: Optional[str] = ...
+    allow: Optional[str] = ...
 
 class WWWAuthenticateMixin:
     @property

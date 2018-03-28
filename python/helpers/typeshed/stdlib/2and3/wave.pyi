@@ -1,8 +1,9 @@
 # Stubs for wave (Python 2 and 3)
 
 import sys
-from mypy_extensions import NoReturn
-from typing import Any, NamedTuple, Optional, Text, BinaryIO, Union, Tuple
+from typing import (
+    Any, NamedTuple, NoReturn, Optional, Text, BinaryIO, Union, Tuple
+)
 
 _File = Union[Text, BinaryIO]
 

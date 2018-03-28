@@ -225,7 +225,7 @@ class InterpolationSyntaxError(InterpolationError):
     pass
 
 
-class ParsingError:
+class ParsingError(Error):
     source = ...  # type: str
     errors = ...  # type: Sequence[Tuple[int, str]]
 
