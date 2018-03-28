@@ -1335,6 +1335,11 @@ public class PythonCompletionTest extends PyTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON34, this::assertSingleVariantInExtendedCompletion);
   }
 
+  // PY-28341
+  public void testCompletionForUsedAttribute() {
+    doMultiFileTest();
+  }
+
   // PY-28103
   public void testPrintFunctionWithoutFuture() {
     final List<String> suggested = doTestByText("pr<caret>");
