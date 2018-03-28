@@ -46,7 +46,7 @@ public class KotlinBinaryCompatibilityTest {
 
     File[] outputDirs = TestUtils.getWorkspaceRoot().listFiles(((dir, name) -> name.startsWith("verification-")));
     assertWithMessage("should be exactly one output file").that(outputDirs).hasLength(1);
-    return new File(outputDirs[0], "AI-173.SNAPSHOT/plugins/Kotlin/problems.txt");
+    return new File(outputDirs[0], "AI-181.SNAPSHOT/plugins/Kotlin/problems.txt"); // TODO: fix path to adapt to build numbering changes
   }
 
   private static void extract(File studioZip, File tmpDir) throws IOException, ArchiveException {

@@ -1,6 +1,2 @@
-// Known incompatibilities between Android Studio Canary 8 and kotlin-plugin-1.2.20-release-Studio3.1-1. Do NOT add to this list!
+// Known incompatibilities between Android Studio 3.2 Canary 10 and kotlin-plugin-1.2.31-release-Studio3.2-1. Do NOT add to this list!
 org.jetbrains.kotlin::Access to unresolved class com.android.dx.*
-// TODO: the problem below seems to affect kts support, which we don't yet use.
-org.jetbrains.kotlin::Invocation of unresolved method com.intellij.openapi.module.ModuleGrouperKt.isQualifiedModuleNamesEnabled\(\).*
-// TODO: Remove after the Kotlin plugin is rebuilt.
-org.jetbrains.kotlin::Invocation of unresolved method org.jetbrains.kotlin.android.ResourceReferenceAnnotatorUtil.findResourceValue\(.*
