@@ -194,13 +194,14 @@ public class HgRefManager implements VcsLogRefManager {
 
   @Override
   public boolean isFavorite(@NotNull VcsRef reference) {
+    if (reference.getType().equals(HEAD) || reference.getType().equals(TIP)) return true;
     if (!reference.getType().isBranch()) return false;
     return myBranchManager.isFavorite(getBranchType(reference), getRepository(reference), reference.getName());
   }
 
   @Override
   public void setFavorite(@NotNull VcsRef reference, boolean favorite) {
-    if (!reference.getType().isBranch()) return;
+    if (!reference.getType().isBranch() || reference.getType().equals(HEAD) || reference.getType().equals(TIP)) return;
     myBranchManager.setFavorite(getBranchType(reference), getRepository(reference), reference.getName(), favorite);
   }
 
