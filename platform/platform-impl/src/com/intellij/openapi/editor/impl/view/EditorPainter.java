@@ -20,6 +20,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.paint.EffectPainter;
+import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.JBUI;
@@ -148,7 +149,7 @@ public class EditorPainter implements TextDrawingCallback {
     float baseMarginWidth = getBaseMarginWidth(myView);
     if (marginWidths == null) {
       int x = myCorrector.marginX(baseMarginWidth);
-      UIUtil.drawLine(g, x, 0, x, clip.height);
+      LinePainter2D.paint((Graphics2D)g, x, 0, x, clip.height);
     }
     else {
       int y = myView.visualLineToY(startVisualLine) + yShift;
@@ -169,7 +170,7 @@ public class EditorPainter implements TextDrawingCallback {
     if (visualGuidesColor != null) {
       g.setColor(visualGuidesColor);
       for (Integer marginX : myCorrector.softMarginsX()) {
-        UIUtil.drawLine(g, marginX, 0, marginX, clip.height);
+        LinePainter2D.paint((Graphics2D)g, marginX, 0, marginX, clip.height);
       }
     }
   }
@@ -401,7 +402,7 @@ public class EditorPainter implements TextDrawingCallback {
       lineSeparatorRenderer.drawLine(g, startX, endX, y);
     }
     else {
-      UIUtil.drawLine(g, startX, y, endX, y);
+      LinePainter2D.paint((Graphics2D)g, startX, y, endX, y);
     }
   }
 
@@ -624,8 +625,8 @@ public class EditorPainter implements TextDrawingCallback {
             int halfHeight = height / 2;
             int mid = y - halfHeight;
             int top = y - height;
-            UIUtil.drawLine(g, startX, mid, endX, mid);
-            UIUtil.drawLine(g, endX, y, endX, top);
+            LinePainter2D.paint(g, startX, mid, endX, mid);
+            LinePainter2D.paint(g, endX, y, endX, top);
             g.fillPolygon(new int[]{endX - halfHeight, endX - halfHeight, endX}, new int[]{y, y - height, y - halfHeight}, 3);
           }
           else if (c == '\u3000') { // ideographic space
@@ -852,7 +853,7 @@ public class EditorPainter implements TextDrawingCallback {
     if (rounded) {
       UIUtil.drawLinePickedOut(g, (int) x1, y1, (int)x2, y2);
     } else {
-      UIUtil.drawLine(g, (int)x1, y1, (int)x2, y2);
+      LinePainter2D.paint(g, (int)x1, y1, (int)x2, y2);
     }
   }
 
@@ -947,7 +948,7 @@ public class EditorPainter implements TextDrawingCallback {
      
       g.setStroke(IME_COMPOSED_TEXT_UNDERLINE_STROKE);
       g.setColor(myEditor.getColorsScheme().getDefaultForeground());
-      UIUtil.drawLine(g, (int)p1.getX(), y, (int)p2.getX(), y);
+      LinePainter2D.paint(g, (int)p1.getX(), y, (int)p2.getX(), y);
     }
   }
 
