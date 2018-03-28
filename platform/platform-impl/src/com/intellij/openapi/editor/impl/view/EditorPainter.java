@@ -1141,7 +1141,7 @@ public class EditorPainter implements TextDrawingCallback {
     if (marginWidthConsumer != null && !marginReached &&
         (visualLine == myEditor.getCaretModel().getVisualPosition().line || x > marginColumns * myView.getPlainSpaceWidth())) {
       int endLogicalColumn = myView.offsetToLogicalPosition(visualLineEndOffset).column;
-      if (endLogicalColumn < marginColumns) {
+      if (endLogicalColumn <= marginColumns) {
         marginWidthConsumer.process(x + (marginColumns - endLogicalColumn) * myView.getPlainSpaceWidth());
       }
     }
