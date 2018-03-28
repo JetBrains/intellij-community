@@ -2,3 +2,5 @@
 org.jetbrains.kotlin::Access to unresolved class com.android.dx.*
 // TODO: the problem below seems to affect kts support, which we don't yet use.
 org.jetbrains.kotlin::Invocation of unresolved method com.intellij.openapi.module.ModuleGrouperKt.isQualifiedModuleNamesEnabled\(\).*
+// TODO: Remove after the Kotlin plugin is rebuilt.
+org.jetbrains.kotlin::Invocation of unresolved method org.jetbrains.kotlin.android.ResourceReferenceAnnotatorUtil.findResourceValue\(.*
