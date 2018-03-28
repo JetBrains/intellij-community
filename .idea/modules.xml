@@ -671,7 +671,6 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/terminal/intellij.terminal.iml" filepath="$PROJECT_DIR$/plugins/terminal/intellij.terminal.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/testng/intellij.testng.iml" filepath="$PROJECT_DIR$/plugins/testng/intellij.testng.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/testng_rt/intellij.testng.rt.iml" filepath="$PROJECT_DIR$/plugins/testng_rt/intellij.testng.rt.iml" />
-      <module fileurl="file://$PROJECT_DIR$/build/dependencies/intellij.tools.dependencies.iml" filepath="$PROJECT_DIR$/build/dependencies/intellij.tools.dependencies.iml" />
       <module fileurl="file://$PROJECT_DIR$/build/dependencies/gradle-api-deps/intellij.tools.dependencies.gradle.iml" filepath="$PROJECT_DIR$/build/dependencies/gradle-api-deps/intellij.tools.dependencies.gradle.iml" />
       <module fileurl="file://$PROJECT_DIR$/tools/index-tools/intellij.tools.index.iml" filepath="$PROJECT_DIR$/tools/index-tools/intellij.tools.index.iml" />
       <module fileurl="file://$PROJECT_DIR$/jetCheck/intellij.tools.jetCheck.iml" filepath="$PROJECT_DIR$/jetCheck/intellij.tools.jetCheck.iml" />
