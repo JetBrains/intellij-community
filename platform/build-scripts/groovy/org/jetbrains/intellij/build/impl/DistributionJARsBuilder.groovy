@@ -443,7 +443,7 @@ class DistributionJARsBuilder {
             if (testModuleJars.containsKey(jarPath)) {
               testModuleJars.get(jarPath).each { testModuleName ->
                 moduleTests(testModuleName) {
-                  if (layout.packLocalizableResourcesInCommonJar(testModuleName)) {
+                  if (layout.localizableResourcesJarName(testModuleName) != null) {
                     ant.patternset(refid: resourceExcluded)
                   }
                   layout.moduleExcludes.get(testModuleName)?.each {
@@ -468,7 +468,7 @@ class DistributionJARsBuilder {
             jar(jarPath, true) {
               modules.each { moduleName ->
                 moduleTests(moduleName) {
-                  if (layout.packLocalizableResourcesInCommonJar(moduleName)) {
+                  if (layout.localizableResourcesJarName(moduleName) != null) {
                     ant.patternset(refid: resourceExcluded)
                   }
                   layout.moduleExcludes.get(moduleName)?.each {

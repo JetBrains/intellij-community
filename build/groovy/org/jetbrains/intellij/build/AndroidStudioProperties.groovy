@@ -119,7 +119,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       withTestModule("uitest-framework")
       withTestModule("android-uitests")
       withModule("fest-swing")
-      withModule("testutils")
+      withTestModule("testutils")
       withTestModule("android-test-framework")
       withModule("testFramework")
       withTestModule("observable")
