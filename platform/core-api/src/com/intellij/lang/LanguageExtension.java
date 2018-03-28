@@ -118,9 +118,4 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
   protected T getDefaultImplementation() {
     return myDefaultImplementation;
   }
-
-  @NotNull
-  protected Key<T> getLanguageCache() {
-    return IN_LANGUAGE_CACHE;
-  }
 }
