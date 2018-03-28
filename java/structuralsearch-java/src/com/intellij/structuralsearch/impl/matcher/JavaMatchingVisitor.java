@@ -1366,6 +1366,22 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
   }
 
   @Override
+  public void visitLabeledStatement(PsiLabeledStatement statement) {
+    final PsiLabeledStatement other = (PsiLabeledStatement)myMatchingVisitor.getElement();
+    final PsiIdentifier identifier = statement.getLabelIdentifier();
+    final MatchContext context = myMatchingVisitor.getMatchContext();
+    final boolean isTypedVar = context.getPattern().isTypedVar(identifier);
+    context.pushResult();
+    try {
+      myMatchingVisitor.setResult(isTypedVar || myMatchingVisitor.matchText(identifier, other.getNameIdentifier()) &&
+                                                myMatchingVisitor.match(statement.getStatement(), other.getStatement()));
+    }
+    finally {
+      saveOrDropResult(identifier, isTypedVar, other.getLabelIdentifier());
+    }
+  }
+
+  @Override
   public void visitInstanceOfExpression(final PsiInstanceOfExpression instanceOf) {
     final PsiInstanceOfExpression other = getExpression(PsiInstanceOfExpression.class);
     if (other == null) return;

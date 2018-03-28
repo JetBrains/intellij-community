@@ -2862,4 +2862,16 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("find code ignored comments 5a", 1,
                  findMatchesCount(source5, "new String('_a{0,0})"));
   }
+
+  public void testFindLabeledStatements() {
+    final String s = "class X {" +
+                     "  void x() {" +
+                     "    String x = null;" +
+                     "    x: System.out.println();" +
+                     "    y: System.out.println();" +
+                     "  }" +
+                     "}";
+    assertEquals("Find statement labels", 4, findMatchesCount(s, "x"));
+    assertEquals("Find statement label variable", 2, findMatchesCount(s, "'_l : '_s;"));
+  }
 }
