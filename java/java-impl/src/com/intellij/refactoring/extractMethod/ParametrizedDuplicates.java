@@ -28,10 +28,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
 import com.intellij.refactoring.util.VariableData;
-import com.intellij.refactoring.util.duplicates.DuplicatesFinder;
-import com.intellij.refactoring.util.duplicates.ExtractedParameter;
-import com.intellij.refactoring.util.duplicates.Match;
-import com.intellij.refactoring.util.duplicates.VariableReturnValue;
+import com.intellij.refactoring.util.duplicates.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
 import gnu.trove.THashMap;
@@ -326,16 +323,45 @@ public class ParametrizedDuplicates {
 
   @NotNull
   private static PsiElement[] wrapWithCodeBlock(@NotNull PsiElement[] elements) {
-    PsiElement parent = elements[0].getParent();
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(elements[0].getProject());
+    PsiElement fragmentStart = elements[0];
+    PsiElement fragmentEnd = elements[elements.length - 1];
+    List<ReusedLocalVariable> reusedLocalVariables =
+      ReusedLocalVariablesFinder.findReusedLocalVariables(fragmentStart, fragmentEnd, Collections.emptySet());
+
+    PsiElement parent = fragmentStart.getParent();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(fragmentStart.getProject());
     PsiBlockStatement statement = (PsiBlockStatement)factory.createStatementFromText("{}", parent);
-    statement.getCodeBlock().addRange(elements[0], elements[elements.length - 1]);
-    statement = (PsiBlockStatement)parent.addBefore(statement, elements[0]);
-    parent.deleteChildRange(elements[0], elements[elements.length - 1]);
+    statement.getCodeBlock().addRange(fragmentStart, fragmentEnd);
+    statement = (PsiBlockStatement)parent.addBefore(statement, fragmentStart);
+    parent.deleteChildRange(fragmentStart, fragmentEnd);
+
     PsiCodeBlock codeBlock = statement.getCodeBlock();
-    PsiElement[] elementsInCopy = codeBlock.getChildren();
-    LOG.assertTrue(elementsInCopy.length >= elements.length + 2, "wrapper block length is too small");
-    return Arrays.copyOfRange(elementsInCopy, 1, elementsInCopy.length - 1);
+    PsiElement[] elementsInBlock = codeBlock.getChildren();
+    LOG.assertTrue(elementsInBlock.length >= elements.length + 2, "wrapper block length is too small");
+    elementsInBlock = Arrays.copyOfRange(elementsInBlock, 1, elementsInBlock.length - 1);
+
+    declareReusedLocalVariables(reusedLocalVariables, statement, factory);
+    return elementsInBlock;
+  }
+
+  private static void declareReusedLocalVariables(@NotNull List<ReusedLocalVariable> reusedLocalVariables,
+                                                  @NotNull PsiBlockStatement statement,
+                                                  @NotNull PsiElementFactory factory) {
+    PsiElement parent = statement.getParent();
+    PsiCodeBlock codeBlock = statement.getCodeBlock();
+    PsiStatement addAfter = statement;
+    for (ReusedLocalVariable variable : reusedLocalVariables) {
+      if (variable.reuseValue()) {
+        PsiStatement declarationBefore = factory.createStatementFromText(variable.getTempDeclarationText(), codeBlock.getRBrace());
+        parent.addBefore(declarationBefore, statement);
+
+        PsiStatement assignment = factory.createStatementFromText(variable.getAssignmentText(), codeBlock.getRBrace());
+        codeBlock.addBefore(assignment, codeBlock.getRBrace());
+      }
+      PsiStatement declarationAfter = factory.createStatementFromText(variable.getDeclarationText(), statement);
+      parent.addAfter(declarationAfter, addAfter);
+      addAfter = declarationAfter;
+    }
   }
 
   @Nullable
