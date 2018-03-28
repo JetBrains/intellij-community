@@ -102,19 +102,18 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
         boolean isOperational = myTracker.isOperational();
         List<String> affectedChangelistIds = myTracker.getAffectedChangeListsIds();
 
-        List<LocalRange> ranges = null;
-        CharSequence localText = null;
-        CharSequence vcsText = null;
-        CharSequence trackerVcsText = null;
-        if (isOperational) {
-          ranges = myTracker.getRanges();
-
-          localText = getContent2().getDocument().getImmutableCharSequence();
-          vcsText = getContent1().getDocument().getImmutableCharSequence();
-          trackerVcsText = myTracker.getVcsDocument().getImmutableCharSequence();
+        if (!isOperational) {
+          return new TrackerData(isReleased, affectedChangelistIds, null);
         }
 
-        return new TrackerData(isReleased, isOperational, affectedChangelistIds, ranges, localText, vcsText, trackerVcsText);
+        List<LocalRange> ranges = myTracker.getRanges();
+
+        CharSequence localText = getContent2().getDocument().getImmutableCharSequence();
+        CharSequence vcsText = getContent1().getDocument().getImmutableCharSequence();
+        CharSequence trackerVcsText = myTracker.getVcsDocument().getImmutableCharSequence();
+
+        TrackerDiffData diffData = new TrackerDiffData(ranges, localText, vcsText, trackerVcsText);
+        return new TrackerData(isReleased, affectedChangelistIds, diffData);
       });
 
 
@@ -122,7 +121,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
         return applyNotification(DiffNotifications.createError()); // DiffRequest is out of date
       }
 
-      if (!data.isOperational &&
+      if (data.diffData == null &&
           data.affectedChangelist.size() == 1 &&
           data.affectedChangelist.contains(myChangelistId)) {
         // tracker is waiting for initialisation
@@ -134,49 +133,13 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
         };
       }
 
-      if (data.ranges == null) {
+      TrackerDiffData diffData = data.diffData;
+      if (diffData == null || diffData.ranges == null) {
         scheduleRediff();
         throw new ProcessCanceledException();
       }
 
-
-      assert data.localText != null;
-      assert data.vcsText != null;
-      assert data.trackerVcsText != null;
-
-      if (!StringUtil.equals(data.trackerVcsText, data.vcsText)) {
-        return applyNotification(DiffNotifications.createError()); // DiffRequest is out of date
-      }
-
-      if (myTextDiffProvider.isHighlightingDisabled()) {
-        return apply(new CompareData(null, data.ranges.isEmpty()));
-      }
-
-
-      List<Range> linesRanges = ContainerUtil.map(data.ranges, range -> {
-        return new Range(range.getVcsLine1(), range.getVcsLine2(), range.getLine1(), range.getLine2());
-      });
-
-      List<List<LineFragment>> newFragments = notNull(myTextDiffProvider.compare(data.vcsText, data.localText, linesRanges, indicator));
-
-      boolean isContentsEqual = data.ranges.isEmpty();
-      List<SimpleDiffChange> changes = new ArrayList<>();
-
-      for (int i = 0; i < data.ranges.size(); i++) {
-        PartialLocalLineStatusTracker.LocalRange localRange = data.ranges.get(i);
-        List<LineFragment> rangeFragments = newFragments.get(i);
-
-        boolean isExcludedFromCommit = localRange.isExcludedFromCommit();
-        boolean isFromActiveChangelist = localRange.getChangelistId().equals(myChangelistId);
-        boolean isSkipped = !isFromActiveChangelist;
-        boolean isExcluded = !isFromActiveChangelist || (myAllowExcludeChangesFromCommit && isExcludedFromCommit);
-
-        changes.addAll(ContainerUtil.map(rangeFragments, fragment -> {
-          return new MySimpleDiffChange(fragment, isExcluded, isSkipped, localRange.getChangelistId(), isExcludedFromCommit);
-        }));
-      }
-
-      return apply(new CompareData(changes, isContentsEqual));
+      return performRediffUsingPartialTracker(diffData.ranges, diffData.localText, diffData.vcsText, diffData.trackerVcsText, indicator);
     }
     catch (DiffTooBigException e) {
       return applyNotification(DiffNotifications.createDiffTooBig());
@@ -188,6 +151,47 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
       LOG.error(e);
       return applyNotification(DiffNotifications.createError());
     }
+  }
+
+  @NotNull
+  private Runnable performRediffUsingPartialTracker(@NotNull List<LocalRange> ranges,
+                                                    @NotNull CharSequence localText,
+                                                    @NotNull CharSequence vcsText,
+                                                    @NotNull CharSequence trackerVcsText,
+                                                    @NotNull ProgressIndicator indicator) {
+    if (!StringUtil.equals(trackerVcsText, vcsText)) {
+      return applyNotification(DiffNotifications.createError()); // DiffRequest is out of date
+    }
+
+    if (myTextDiffProvider.isHighlightingDisabled()) {
+      return apply(new CompareData(null, ranges.isEmpty()));
+    }
+
+
+    List<Range> linesRanges = ContainerUtil.map(ranges, range -> {
+      return new Range(range.getVcsLine1(), range.getVcsLine2(), range.getLine1(), range.getLine2());
+    });
+
+    List<List<LineFragment>> newFragments = notNull(myTextDiffProvider.compare(vcsText, localText, linesRanges, indicator));
+
+    boolean isContentsEqual = ranges.isEmpty();
+    List<SimpleDiffChange> changes = new ArrayList<>();
+
+    for (int i = 0; i < ranges.size(); i++) {
+      LocalRange localRange = ranges.get(i);
+      List<LineFragment> rangeFragments = newFragments.get(i);
+
+      boolean isExcludedFromCommit = localRange.isExcludedFromCommit();
+      boolean isFromActiveChangelist = localRange.getChangelistId().equals(myChangelistId);
+      boolean isSkipped = !isFromActiveChangelist;
+      boolean isExcluded = !isFromActiveChangelist || (myAllowExcludeChangesFromCommit && isExcludedFromCommit);
+
+      changes.addAll(ContainerUtil.map(rangeFragments, fragment -> {
+        return new MySimpleDiffChange(fragment, isExcluded, isSkipped, localRange.getChangelistId(), isExcludedFromCommit);
+      }));
+    }
+
+    return apply(new CompareData(changes, isContentsEqual));
   }
 
 
@@ -413,23 +417,28 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
 
   private static class TrackerData {
     private final boolean isReleased;
-    public final boolean isOperational;
     @NotNull public final List<String> affectedChangelist;
-    @Nullable public final List<LocalRange> ranges;
-    @Nullable public final CharSequence localText;
-    @Nullable public final CharSequence vcsText;
-    @Nullable public final CharSequence trackerVcsText;
+    @Nullable public final TrackerDiffData diffData;
 
     public TrackerData(boolean isReleased,
-                       boolean isOperational,
                        @NotNull List<String> affectedChangelist,
-                       @Nullable List<LocalRange> ranges,
-                       @Nullable CharSequence localText,
-                       @Nullable CharSequence vcsText,
-                       @Nullable CharSequence trackerVcsText) {
+                       @Nullable TrackerDiffData diffData) {
       this.isReleased = isReleased;
-      this.isOperational = isOperational;
       this.affectedChangelist = affectedChangelist;
+      this.diffData = diffData;
+    }
+  }
+
+  private static class TrackerDiffData {
+    @Nullable public final List<LocalRange> ranges;
+    @NotNull public final CharSequence localText;
+    @NotNull public final CharSequence vcsText;
+    @NotNull public final CharSequence trackerVcsText;
+
+    public TrackerDiffData(@Nullable List<LocalRange> ranges,
+                           @NotNull CharSequence localText,
+                           @NotNull CharSequence vcsText,
+                           @NotNull CharSequence trackerVcsText) {
       this.ranges = ranges;
       this.localText = localText;
       this.vcsText = vcsText;
