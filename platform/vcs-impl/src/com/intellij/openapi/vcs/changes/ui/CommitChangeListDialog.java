@@ -361,7 +361,10 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
         updateWarning();
       });
 
-      browser.getViewer().addSelectionListener(() -> SwingUtilities.invokeLater(() -> changeDetails()));
+      browser.getViewer().addSelectionListener(() -> {
+        boolean fromModelRefresh = browser.getViewer().isModelUpdateInProgress();
+        SwingUtilities.invokeLater(() -> changeDetails(fromModelRefresh));
+      });
     }
 
     myChangesInfoCalculator = new ChangeInfoCalculator();
@@ -405,7 +408,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                                                          @Override
                                                          public void on(Integer integer) {
                                                            if (integer == 0) return;
-                                                           myDiffDetails.refresh();
+                                                           myDiffDetails.refresh(false);
                                                            mySplitter.skipNextLayouting();
                                                            myDetailsSplitter.getComponent().skipNextLayouting();
                                                            Dimension dialogSize = getSize();
@@ -518,7 +521,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     if (showDetails) {
       myDetailsSplitter.initOn();
     }
-    SwingUtilities.invokeLater(() -> changeDetails());
+    SwingUtilities.invokeLater(() -> changeDetails(false));
   }
 
   private void updateOnListSelection() {
@@ -1182,9 +1185,9 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
   }
 
-  private void changeDetails() {
+  private void changeDetails(boolean fromModelRefresh) {
     if (myDetailsSplitter.isOn()) {
-      myDiffDetails.refresh();
+      myDiffDetails.refresh(fromModelRefresh);
     }
   }
 
