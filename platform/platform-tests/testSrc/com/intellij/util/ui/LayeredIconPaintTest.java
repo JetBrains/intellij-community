@@ -16,6 +16,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.net.MalformedURLException;
+import java.util.function.BiFunction;
 
 import static com.intellij.util.ui.JBUI.ScaleType.*;
 
@@ -27,20 +28,26 @@ import static com.intellij.util.ui.JBUI.ScaleType.*;
 public class LayeredIconPaintTest extends TestScaleHelper {
   @Test
   public void test() throws MalformedURLException {
-    JBUI.setUserScaleFactor(1);
     overrideJreHiDPIEnabled(true);
 
-    test(1, 1);
-    test(1, 2);
-    test(2, 1);
-    test(2, 2);
+    BiFunction<Integer, Integer, Integer> bit2scale = (mask, bit) -> ((mask >> bit) & 0x1) + 1;
+
+    for (int mask=0; mask<7; mask++) {
+      int iconScale = bit2scale.apply(mask, 2);
+      int usrScale = bit2scale.apply(mask, 1);
+      int sysScale = bit2scale.apply(mask, 0);
+      assert iconScale * usrScale * sysScale <= 4;
+      test(iconScale, usrScale, sysScale);
+    }
   }
 
-  private void test(int iconScale, int sysScale) throws MalformedURLException {
+  private void test(int iconScale, int usrScale, int sysScale) throws MalformedURLException {
+    JBUI.setUserScaleFactor(usrScale);
+
     CachedImageIcon icon1 = new CachedImageIcon(new File(getIcon1Path()).toURI().toURL());
     CachedImageIcon icon2 = new CachedImageIcon(new File(getIcon2Path()).toURI().toURL());
 
-    ScaleContext ctx = ScaleContext.create(SYS_SCALE.of(sysScale));
+    ScaleContext ctx = ScaleContext.create(SYS_SCALE.of(sysScale)/*, USR_SCALE.of(usrScale)*/); // USR_SCALE is set automatically
     icon1.updateScaleContext(ctx.copy());
     icon2.updateScaleContext(ctx.copy());
 
@@ -52,7 +59,7 @@ public class LayeredIconPaintTest extends TestScaleHelper {
   protected ScalableIcon createAndSetIcons(Icon icon1, Icon icon2) {
     LayeredIcon icon = new LayeredIcon(2);
     icon.setIcon(icon1, 0);
-    icon.setIcon(icon2, 1, 10, 6);
+    icon.setIcon(icon2, 1, JBUI.scale(10), JBUI.scale(6));
     return icon;
   }
 
