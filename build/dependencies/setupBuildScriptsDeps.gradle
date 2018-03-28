@@ -27,6 +27,7 @@ dependencies {
   buildScriptsDeps(loadLibraryMavenId("gant-groovy"), { transitive = false })
   buildScriptsDeps loadLibraryMavenId("Log4J")
   buildScriptsDeps loadLibraryMavenId("Slf4j")
+  buildScriptsDeps loadLibraryMavenId("jna")
 }
 
 /**
