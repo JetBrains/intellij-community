@@ -265,12 +265,14 @@ public class GitRefManager implements VcsLogRefManager {
 
   @Override
   public boolean isFavorite(@NotNull VcsRef reference) {
+    if (reference.getType().equals(HEAD)) return true;
     if (!reference.getType().isBranch()) return false;
     return myBranchManager.isFavorite(getBranchType(reference), getRepository(reference), reference.getName());
   }
 
   @Override
   public void setFavorite(@NotNull VcsRef reference, boolean favorite) {
+    if (reference.getType().equals(HEAD)) return;
     if (!reference.getType().isBranch()) return;
     myBranchManager.setFavorite(getBranchType(reference), getRepository(reference), reference.getName(), favorite);
   }
