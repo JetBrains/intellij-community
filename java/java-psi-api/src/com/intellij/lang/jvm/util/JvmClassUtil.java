@@ -5,14 +5,44 @@ import com.intellij.lang.jvm.JvmClass;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
+import java.util.List;
+
+import static com.intellij.openapi.util.text.StringUtil.join;
+import static com.intellij.util.containers.ContainerUtil.reverse;
 
 public class JvmClassUtil {
 
   private JvmClassUtil() {}
+
+  @Nullable
+  public static String getJvmClassName(@NotNull JvmClass aClass) {
+    final List<String> parts = new SmartList<>();
+
+    JvmClass current = aClass;
+    while (true) {
+      final JvmClass containingClass = current.getContainingClass();
+      if (containingClass == null) { // current class is top-level class
+        String qualifiedName = current.getQualifiedName();
+        if (qualifiedName == null) return null;
+        parts.add(qualifiedName);
+        break;
+      }
+      else {
+        String name = current.getName();
+        if (name == null) return null;
+        parts.add(name);
+        current = containingClass;
+      }
+    }
+
+    return join(reverse(parts), "$");
+  }
 
   @Contract(pure = true)
   @NotNull
