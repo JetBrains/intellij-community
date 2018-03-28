@@ -29,8 +29,8 @@ import static com.intellij.patterns.StandardPatterns.or;
 
 public class DfaValueFactory {
   private final List<DfaValue> myValues = ContainerUtil.newArrayList();
-  private final Map<Pair<DfaPsiType, DfaPsiType>, Boolean> myAssignableCache = ContainerUtil.newHashMap();
-  private final Map<Pair<DfaPsiType, DfaPsiType>, Boolean> myConvertibleCache = ContainerUtil.newHashMap();
+  final Map<Pair<DfaPsiType, DfaPsiType>, Boolean> myAssignableCache = ContainerUtil.newHashMap();
+  final Map<Pair<DfaPsiType, DfaPsiType>, Boolean> myConvertibleCache = ContainerUtil.newHashMap();
   private final Map<PsiType, DfaPsiType> myDfaTypes = ContainerUtil.newHashMap();
   private final boolean myUnknownMembersAreNullable;
   private final FieldChecker myFieldChecker;
@@ -98,7 +98,7 @@ public class DfaValueFactory {
     psiType = DfaPsiType.normalizeType(psiType);
     DfaPsiType dfaType = myDfaTypes.get(psiType);
     if (dfaType == null) {
-      myDfaTypes.put(psiType, dfaType = new DfaPsiType(myDfaTypes.size() + 1, psiType, myAssignableCache, myConvertibleCache));
+      myDfaTypes.put(psiType, dfaType = new DfaPsiType(myDfaTypes.size() + 1, psiType, this));
     }
     return dfaType;
   }
