@@ -793,6 +793,8 @@
     <applicationService serviceInterface="com.intellij.codeInsight.javadoc.JavaDocInfoGeneratorFactory"
                         serviceImplementation="com.intellij.codeInsight.javadoc.JavaDocInfoGeneratorFactory"/>
     <projectService serviceImplementation="com.intellij.codeInsight.JavaProjectCodeInsightSettings"/>
+    <applicationService serviceImplementation="com.intellij.pom.java.AcceptedLanguageLevelsSettings"/>
+    <postStartupActivity implementation="com.intellij.pom.java.AcceptedLanguageLevelsSettings"/>
     <projectService serviceImplementation="com.intellij.javadoc.JavadocGenerationManager"/>
     <psi.treeChangePreprocessor implementation="com.intellij.psi.impl.JavaCodeBlockModificationListener"/>
     <projectService serviceInterface="com.intellij.codeInspection.ex.EntryPointsManager"

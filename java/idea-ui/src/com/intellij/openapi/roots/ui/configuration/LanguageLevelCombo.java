@@ -22,12 +22,15 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.pom.java.AcceptedLanguageLevelsSettings;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.ui.ColoredListCellRendererWrapper;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 /**
  * @author ven
@@ -53,6 +56,18 @@ public abstract class LanguageLevelCombo extends ComboBox {
           LanguageLevel defaultLevel = getDefaultLevel();
           if (defaultLevel != null) {
             append(" (" + defaultLevel.getPresentableText() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+          }
+        }
+      }
+    });
+    addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        LanguageLevel selectedLevel = getSelectedLevel();
+        if (selectedLevel != null) {
+          LanguageLevel level = AcceptedLanguageLevelsSettings.checkAccepted(LanguageLevelCombo.this, selectedLevel);
+          if (level == null) {
+            setSelectedItem(AcceptedLanguageLevelsSettings.getHighestAcceptedLevel());
           }
         }
       }
