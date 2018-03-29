@@ -1,8 +1,7 @@
 # Stubs for sunau (Python 2 and 3)
 
 import sys
-from mypy_extensions import NoReturn
-from typing import Any, NamedTuple, Optional, Text, IO, Union, Tuple
+from typing import Any, NamedTuple, NoReturn, Optional, Text, IO, Union, Tuple
 
 _File = Union[Text, IO[bytes]]
 

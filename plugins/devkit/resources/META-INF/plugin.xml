@@ -151,6 +151,10 @@
                      groupKey="inspections.group.name"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.StatefulEpInspection"/>
+    <localInspection language="JVM" shortName="StatefulEp2" displayName="Stateful Extension 2"
+                     groupKey="inspections.group.name"
+                     enabledByDefault="false" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.StatefulEpInspection2"/>
     <localInspection language="UAST" shortName="UElementAsPsi" displayName="UElement as PsiElement usage"
                      groupKey="inspections.group.name"
                      enabledByDefault="true" level="WARNING"

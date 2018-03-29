@@ -97,4 +97,5 @@ public abstract class PyMultiFileResolveTestCase extends PyResolveTestCase {
     }
     return Collections.singletonList(ref.resolve());
   }
+
 }

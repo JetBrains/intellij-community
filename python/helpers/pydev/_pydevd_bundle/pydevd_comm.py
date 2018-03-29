@@ -67,12 +67,18 @@ from _pydev_imps._pydev_saved_modules import threading
 from _pydev_imps._pydev_saved_modules import socket
 from socket import socket, AF_INET, SOCK_STREAM, SHUT_RD, SHUT_WR, SOL_SOCKET, SO_REUSEADDR, SHUT_RDWR, timeout
 from _pydevd_bundle.pydevd_constants import DebugInfoHolder, get_thread_id, IS_JYTHON, IS_PY2, IS_PY3K, \
-    IS_PY36_OR_GREATER, STATE_RUN, dict_keys, ASYNC_EVAL_TIMEOUT_SEC
+    IS_PY36_OR_GREATER, STATE_RUN, dict_keys, ASYNC_EVAL_TIMEOUT_SEC, IS_IRONPYTHON
 
 try:
     from urllib import quote_plus, unquote, unquote_plus
 except:
     from urllib.parse import quote_plus, unquote, unquote_plus  #@Reimport @UnresolvedImport
+    
+if IS_IRONPYTHON:
+    # redefine `unquote` for IronPython, since we use it only for logging messages, but it leads to SOF with IronPython
+    def unquote(s):
+        return s
+
 import pydevconsole
 from _pydevd_bundle import pydevd_vars
 from _pydevd_bundle import pydevd_xml

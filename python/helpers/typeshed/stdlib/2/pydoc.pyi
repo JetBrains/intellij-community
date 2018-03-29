@@ -1,5 +1,4 @@
-from typing import Any, AnyStr, Callable, Container, Dict, IO, List, Mapping, MutableMapping, Optional, Tuple, Type, Union
-from mypy_extensions import NoReturn
+from typing import Any, AnyStr, Callable, Container, Dict, IO, List, Mapping, MutableMapping, NoReturn, Optional, Tuple, Type, Union
 from repr import Repr
 
 from types import FunctionType, MethodType, ModuleType, TracebackType

@@ -7,22 +7,14 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil.getMethodOrReflectedMethods
-import org.jetbrains.plugins.groovy.util.plusAssign
-import java.util.function.Consumer
 
 class GroovyDeclarationSearcher : JvmDeclarationSearcher {
 
-  override fun isDeclaringElement(identifierElement: PsiElement, declaringElement: PsiElement): Boolean {
-    val parent = identifierElement.parent as? GrNamedElement
-    return parent != null && parent.nameIdentifierGroovy == identifierElement
-  }
-
-  override fun findDeclarations(declaringElement: PsiElement, consumer: Consumer<in JvmElement>) {
-    if (declaringElement is GrMethod) {
-      consumer += getMethodOrReflectedMethods(declaringElement)
-    }
-    else if (declaringElement is GrNamedElement && declaringElement is JvmElement) {
-      consumer += declaringElement
+  override fun findDeclarations(declaringElement: PsiElement): Collection<JvmElement> {
+    return when {
+      declaringElement is GrMethod -> getMethodOrReflectedMethods(declaringElement).toList()
+      declaringElement is GrNamedElement && declaringElement is JvmElement -> listOf(declaringElement)
+      else -> emptyList()
     }
   }
 }

@@ -4,17 +4,19 @@ package com.intellij.lang.java.source;
 import com.intellij.lang.jvm.JvmElement;
 import com.intellij.lang.jvm.source.JvmDeclarationSearcher;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiNameIdentifierOwner;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.function.Consumer;
+import java.util.Collection;
+
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
 
 public class JavaDeclarationSearcher implements JvmDeclarationSearcher {
 
+  @NotNull
   @Override
-  public void findDeclarations(@NotNull PsiElement declaringElement, @NotNull Consumer<? super JvmElement> consumer) {
-    if (declaringElement instanceof PsiNameIdentifierOwner && declaringElement instanceof JvmElement) {
-      consumer.accept((JvmElement)declaringElement);
-    }
+  public Collection<JvmElement> findDeclarations(@NotNull PsiElement declaringElement) {
+    return declaringElement instanceof JvmElement ? singletonList((JvmElement)declaringElement)
+                                                  : emptyList();
   }
 }

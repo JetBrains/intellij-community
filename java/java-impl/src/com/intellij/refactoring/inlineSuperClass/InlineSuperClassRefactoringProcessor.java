@@ -39,6 +39,7 @@ import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ConstructorUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -170,23 +171,12 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
         final PsiMethod[] superConstructors = mySuperClass.getConstructors();
         for (PsiMethod constructor : targetClass.getConstructors()) {
           final PsiCodeBlock constrBody = constructor.getBody();
-          if (constrBody != null) {
-            final PsiStatement[] statements = constrBody.getStatements();
-            if (statements.length > 0) {
-              final PsiStatement firstConstrStatement = statements[0];
-              if (firstConstrStatement instanceof PsiExpressionStatement) {
-                final PsiExpression expression = ((PsiExpressionStatement)firstConstrStatement).getExpression();
-                if (expression instanceof PsiMethodCallExpression) {
-                  final PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)expression).getMethodExpression();
-                  if (methodExpression.getText().equals(PsiKeyword.SUPER)) {
-                    final PsiMethod superConstructor = ((PsiMethodCallExpression)expression).resolveMethod();
-                    if (superConstructor != null && superConstructor.getBody() != null) {
-                      usages.add(new InlineSuperCallUsageInfo((PsiMethodCallExpression)expression));
-                      continue;
-                    }
-                  }
-                }
-              }
+          PsiMethodCallExpression call = ConstructorUtil.findThisOrSuperCallInConstructor(constructor);
+          if (ConstructorUtil.isSuperConstructorCall(call)) {
+            final PsiMethod superConstructor = call.resolveMethod();
+            if (superConstructor != null && superConstructor.getBody() != null) {
+              usages.add(new InlineSuperCallUsageInfo(call));
+              continue;
             }
           }
 

@@ -11,6 +11,8 @@ from typing import (
     TypeVar,
 )
 
+from click.types import _ConvertibleType
+
 
 def hidden_prompt_func(prompt: str) -> str:
     ...
@@ -30,7 +32,7 @@ def prompt(
     default: Optional[str] = ...,
     hide_input: bool = ...,
     confirmation_prompt: bool = ...,
-    type: Optional[Any] = ...,
+    type: Optional[_ConvertibleType] = ...,
     value_proc: Optional[Callable[[Optional[str]], Any]] = ...,
     prompt_suffix: str = ...,
     show_default: bool = ...,

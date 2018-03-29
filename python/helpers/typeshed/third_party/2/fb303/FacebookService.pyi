@@ -1,5 +1,5 @@
 from typing import Any
-from thrift.Thrift import TProcessor
+from thrift.Thrift import TProcessor  # type: ignore
 
 fastbinary = ...  # type: Any
 

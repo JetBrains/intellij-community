@@ -1857,7 +1857,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     List<Crumb> result = new ArrayList<>();
     while (element != null) {
       if (provider.acceptElement(element)) {
-        result.add(new Crumb.Impl(provider.getElementIcon(element), provider.getElementInfo(element), provider.getElementTooltip(element)));
+        result.add(new Crumb.Impl(provider, element));
       }
       element = provider.getParent(element);
     }

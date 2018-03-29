@@ -330,4 +330,28 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
                "            <caret>\n" +
                "        });");
   }
+
+  public void testIdea187535() throws IOException {
+    doTextTest(
+      "java",
+
+      "public class Main {\n" +
+      "    void foo() {\n" +
+      "        {\n" +
+      "            int a = 1;\n" +
+      "        }\n" +
+      "        int b = 2;<caret>\n" +
+      "    }\n" +
+      "}"
+      ,
+      "public class Main {\n" +
+      "    void foo() {\n" +
+      "        {\n" +
+      "            int a = 1;\n" +
+      "        }\n" +
+      "        int b = 2;\n" +
+      "        <caret>\n" +
+      "    }\n" +
+      "}");
+  }
 }

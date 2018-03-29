@@ -2,49 +2,36 @@
 package org.jetbrains.plugins.gradle.execution;
 
 import com.intellij.execution.Location;
-import com.intellij.execution.console.DuplexConsoleView;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.execution.junit2.info.MethodLocation;
-import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.testframework.JavaTestLocator;
-import com.intellij.execution.ui.ConsoleView;
-import com.intellij.icons.AllIcons;
-import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecutionInfo;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter;
-import com.intellij.openapi.externalSystem.model.task.event.*;
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemTaskLocation;
-import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
-import com.intellij.testIntegration.TestLocator;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.util.GradleBundle;
+import org.jetbrains.plugins.gradle.service.resolve.GradleResolverUtil;
+import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-
-import static com.intellij.util.io.URLUtil.SCHEME_SEPARATOR;
 
 /**
  * @author Vladislav.Soroka
@@ -75,77 +62,109 @@ public class GradleRunnerUtil {
     return null;
   }
 
-  public static Object getData(@NotNull Project project, @NonNls String dataId, @NotNull ExecutionInfo executionInfo) {
-    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
-      final Location location = getLocation(project, executionInfo);
-      final OpenFileDescriptor openFileDescriptor = location == null ? null : location.getOpenFileDescriptor();
-      if (openFileDescriptor != null && openFileDescriptor.getFile().isValid()) {
-        return openFileDescriptor;
+  @Nullable
+  public static String resolveProjectPath(@NotNull Module module) {
+    final String rootProjectPath = ExternalSystemApiUtil.getExternalRootProjectPath(module);
+    String projectPath = ExternalSystemApiUtil.getExternalProjectPath(module);
+
+    if (rootProjectPath == null || projectPath == null) return null;
+    if (!FileUtil.isAncestor(rootProjectPath, projectPath, false)) {
+      projectPath = rootProjectPath;
+    }
+    return projectPath;
+  }
+
+  public static boolean isFromGroovyGradleScript(@Nullable Location location) {
+    if (location == null) return false;
+    return isFromGroovyGradleScript(location.getPsiElement());
+  }
+
+  public static boolean isFromGroovyGradleScript(@NotNull PsiElement element) {
+    PsiFile file = element.getContainingFile();
+    if (!(file instanceof GroovyFile)) {
+      return false;
+    }
+    return GradleConstants.EXTENSION.equals(file.getVirtualFile().getExtension());
+  }
+
+  @NotNull
+  public static List<String> getTasksTarget(@Nullable Location location) {
+    if (location == null) return Collections.emptyList();
+    if (location instanceof GradleTaskLocation) {
+      return ((GradleTaskLocation)location).getTasks();
+    }
+
+    Module module = location.getModule();
+    return getTasksTarget(location.getPsiElement(), module);
+  }
+
+  @NotNull
+  public static List<String> getTasksTarget(@NotNull PsiElement element, @Nullable Module module) {
+    PsiElement parent = element;
+    while (parent.getParent() != null && !(parent.getParent() instanceof PsiFile)) {
+      parent = parent.getParent();
+    }
+
+    if (isCreateTaskMethod(parent)) {
+      final GrExpression[] arguments = ((GrMethodCallExpression)parent).getExpressionArguments();
+      if (arguments.length > 0 && arguments[0] instanceof GrLiteral && ((GrLiteral)arguments[0]).getValue() instanceof String) {
+        return Collections.singletonList((String)((GrLiteral)arguments[0]).getValue());
       }
     }
-    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
-      final Location location = getLocation(project, executionInfo);
-      if (location != null) {
-        final PsiElement element = location.getPsiElement();
-        return element.isValid() ? element : null;
+    else if (parent instanceof GrApplicationStatement) {
+      PsiElement shiftExpression = parent.getChildren()[1].getChildren()[0];
+      if (GradleResolverUtil.isLShiftElement(shiftExpression)) {
+        PsiElement shiftiesChild = shiftExpression.getChildren()[0];
+        if (shiftiesChild instanceof GrReferenceExpression) {
+          return Collections.singletonList(shiftiesChild.getText());
+        }
+        else if (shiftiesChild instanceof GrMethodCallExpression) {
+          return Collections.singletonList(shiftiesChild.getChildren()[0].getText());
+        }
       }
-      else {
-        return null;
+      else if (shiftExpression instanceof GrMethodCallExpression) {
+        return Collections.singletonList(shiftExpression.getChildren()[0].getText());
       }
     }
-    if (Location.DATA_KEY.is(dataId)) return getLocation(project, executionInfo);
-    return null;
+    GrMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(element, GrMethodCallExpression.class);
+    if (methodCallExpression != null) {
+      String taskNameCandidate = methodCallExpression.getChildren()[0].getText();
+      Project project = element.getProject();
+      if (module == null) {
+        module = getModule(element, project);
+      }
+      GradleExtensionsSettings.GradleExtensionsData extensionsData = GradleExtensionsSettings.getInstance(project).getExtensionsFor(module);
+      if (extensionsData != null) {
+        for (GradleExtensionsSettings.GradleTask task : extensionsData.tasks) {
+          if (taskNameCandidate.equals(task.name)) {
+            return Collections.singletonList(taskNameCandidate);
+          }
+        }
+      }
+    }
+
+    return Collections.emptyList();
   }
 
   @Nullable
-  public static ExternalSystemTaskLocation getTaskLocation(Project project, ExecutionInfo... executionInfos) {
-    ExternalTaskExecutionInfo taskExecutionInfo = new ExternalTaskExecutionInfo();
-
-    String projectPath = null;
-    final List<String> taskNames = taskExecutionInfo.getSettings().getTaskNames();
-    for (ExecutionInfo executionInfo : executionInfos) {
-      final OperationDescriptor descriptor = executionInfo.getDescriptor();
-      if (descriptor instanceof TaskOperationDescriptor) {
-        final String taskName = ((TaskOperationDescriptor)descriptor).getTaskName();
-        if (projectPath == null) {
-          projectPath = executionInfo.getWorkingDir();
-        }
-        else if (!projectPath.equals(executionInfo.getWorkingDir())) {
-          return null;
-        }
-        taskNames.add(taskName);
+  private static Module getModule(@NotNull PsiElement element, @NotNull Project project) {
+    PsiFile containingFile = element.getContainingFile();
+    if (containingFile != null) {
+      VirtualFile virtualFile = containingFile.getVirtualFile();
+      if (virtualFile != null) {
+        return ProjectFileIndex.SERVICE.getInstance(project).getModuleForFile(virtualFile);
       }
-      else {
-        return null;
-      }
-    }
-
-    if (!taskNames.isEmpty()) {
-      taskExecutionInfo.getSettings().setExternalSystemIdString(GradleConstants.SYSTEM_ID.toString());
-      taskExecutionInfo.getSettings().setExternalProjectPath(projectPath);
-      return ExternalSystemTaskLocation.create(project, GradleConstants.SYSTEM_ID, projectPath, taskExecutionInfo);
     }
     return null;
   }
 
-  @Nullable
-  private static Location getLocation(@NotNull Project project, @NotNull ExecutionInfo executionInfo) {
-    final OperationDescriptor descriptor = executionInfo.getDescriptor();
-    if (descriptor instanceof TestOperationDescriptor) {
-      if (DumbService.isDumb(project)) return null;
+  @NotNull
+  public static List<String> getTasksTarget(@NotNull PsiElement element) {
+    return getTasksTarget(element, null);
+  }
 
-      String suiteName = ((TestOperationDescriptor)descriptor).getSuiteName();
-      if (StringUtil.isNotEmpty(suiteName)) {
-        return TestLocator.getLocation(JavaTestLocator.SUITE_PROTOCOL + SCHEME_SEPARATOR + suiteName, project);
-      }
 
-      final String className = ((TestOperationDescriptor)descriptor).getClassName();
-      if (className == null) return null;
-
-      final String methodName = ((TestOperationDescriptor)descriptor).getMethodName();
-      return TestLocator.getLocation(
-        JavaTestLocator.TEST_PROTOCOL + SCHEME_SEPARATOR + StringUtil.getQualifiedName(className, methodName), project);
-    }
-    return getTaskLocation(project, executionInfo);
+  private static boolean isCreateTaskMethod(PsiElement parent) {
+    return parent instanceof GrMethodCallExpression && PsiUtil.isMethodCall((GrMethodCallExpression)parent, "createTask");
   }
 }

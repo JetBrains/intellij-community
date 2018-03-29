@@ -41,7 +41,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
-import com.intellij.refactoring.util.RefactoringChangeUtil;
+import com.intellij.util.ConstructorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -821,16 +821,9 @@ public class HighlightClassUtil {
     PsiMethod[] constructors = aClass.getConstructors();
     if (constructors.length == 0) return false;
     for (PsiMethod constructor : constructors) {
-      PsiCodeBlock body = constructor.getBody();
-      if (body == null) return false;
-      PsiStatement[] statements = body.getStatements();
-      if (statements.length == 0) return false;
-      PsiStatement firstStatement = statements[0];
-      if (!(firstStatement instanceof PsiExpressionStatement)) return false;
-      PsiExpression expression = ((PsiExpressionStatement)firstStatement).getExpression();
-      if (!RefactoringChangeUtil.isSuperOrThisMethodCall(expression)) return false;
-      PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
-      if (PsiKeyword.THIS.equals(methodCallExpression.getMethodExpression().getReferenceName())) continue;
+      PsiMethodCallExpression methodCallExpression = ConstructorUtil.findThisOrSuperCallInConstructor(constructor);
+      if (methodCallExpression == null) return false;
+      if (ConstructorUtil.isChainedConstructorCall(methodCallExpression)) continue;
       PsiReferenceExpression referenceExpression = methodCallExpression.getMethodExpression();
       PsiExpression qualifierExpression = PsiUtil.skipParenthesizedExprDown(referenceExpression.getQualifierExpression());
       //If the class instance creation expression is qualified, then the immediately
@@ -885,7 +878,7 @@ public class HighlightClassUtil {
 
   @Nullable
   static HighlightInfo checkSuperQualifierType(@NotNull Project project, @NotNull PsiMethodCallExpression superCall) {
-    if (!RefactoringChangeUtil.isSuperMethodCall(superCall)) return null;
+    if (!ConstructorUtil.isSuperConstructorCall(superCall)) return null;
     PsiMethod ctr = PsiTreeUtil.getParentOfType(superCall, PsiMethod.class, true, PsiMember.class);
     if (ctr == null) return null;
     final PsiClass aClass = ctr.getContainingClass();

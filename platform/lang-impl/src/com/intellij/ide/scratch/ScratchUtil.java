@@ -43,7 +43,8 @@ public class ScratchUtil {
    * @see ScratchFileService
    */
   public static boolean isScratch(@Nullable VirtualFile file) {
-    return file != null && file.getFileType() == ScratchFileType.INSTANCE;
+    RootType rootType = RootType.forFile(file);
+    return rootType != null && !rootType.isHidden();
   }
 
   public static void updateFileExtension(@NotNull Project project, @Nullable VirtualFile file) throws IOException {

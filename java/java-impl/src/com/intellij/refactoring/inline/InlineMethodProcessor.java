@@ -44,6 +44,7 @@ import com.intellij.refactoring.util.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ConstructorUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -1524,14 +1525,14 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   @Deprecated
   public static String checkCalledInSuperOrThisExpr(PsiCodeBlock methodBody, final PsiElement element) {
     return checkUnableToInsertCodeBlock(methodBody, element,
-                                        expr -> RefactoringChangeUtil.isSuperOrThisMethodCall(expr) && expr.getMethodExpression() != element)
+                                        expr -> ConstructorUtil.isConstructorCall(expr) && expr.getMethodExpression() != element)
            ? "Inline cannot be applied to multiline method in constructor call"
            : null;
   }
 
   public static String checkUnableToInsertCodeBlock(PsiCodeBlock methodBody, final PsiElement element) {
     if (checkUnableToInsertCodeBlock(methodBody, element,
-                                     expr -> RefactoringChangeUtil.isSuperOrThisMethodCall(expr) && expr.getMethodExpression() != element)) {
+                                     expr -> ConstructorUtil.isConstructorCall(expr) && expr.getMethodExpression() != element)) {
       return "Inline cannot be applied to multiline method in constructor call";
     }
     return checkUnableToInsertCodeBlock(methodBody, element,

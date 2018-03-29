@@ -141,6 +141,7 @@ def can_run(path, exe, *args):
     except OSError:
         return False
 
+
 def pytype_test(args):
     dirs = get_project_dirs(args)
     pytype_exe = os.path.join(dirs.pytype, 'pytype')
@@ -157,6 +158,11 @@ def pytype_test(args):
         pytd_exe = os.path.join(dirs.pytype, 'pytd_tool')
     else:
         print('Cannot run pytd. Did you install pytype?')
+        return 0, 0
+
+    if not can_run('', args.python36_exe, '--version'):
+        print('Cannot run python3.6 from %s. (point to a valid executable via '
+              '--python36_exe)' % args.python36_exe)
         return 0, 0
 
     wanted = re.compile(r'stdlib/.*\.pyi$')
@@ -181,6 +187,8 @@ def pytype_test(args):
     running_tests = collections.deque()
     max_code, runs, errors = 0, 0, 0
     files = pytype_run + pytd_run
+    total_files = len(files)
+    print("Testing files with pytype...")
     while 1:
         while files and len(running_tests) < args.num_parallel:
             f = files.pop()
@@ -221,6 +229,9 @@ def pytype_test(args):
             # actual error; to see the stack traces use --print_stderr.
             bad.append((_get_relative(test_run.args[-1]),
                         stderr.rstrip().rsplit('\n', 1)[-1]))
+
+        if runs % 25 == 0:
+            print("  %3d/%d with %3d errors" % (runs, total_files, errors))
 
     print('Ran pytype with %d pyis, got %d errors.' % (runs, errors))
     for f, err in bad:

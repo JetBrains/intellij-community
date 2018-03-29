@@ -16,6 +16,7 @@
 package com.jetbrains.env;
 
 import com.jetbrains.TestEnv;
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -35,4 +36,5 @@ public @interface EnvTestTagsRequired {
    */
   String[] tags();
   TestEnv[] skipOnOSes() default {};
+  Class<? extends PythonSdkFlavor>[] skipOnFlavors() default {};
 }

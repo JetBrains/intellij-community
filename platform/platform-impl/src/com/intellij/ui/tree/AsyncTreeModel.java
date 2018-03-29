@@ -31,6 +31,7 @@ import java.util.function.ToIntFunction;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
+import static java.util.stream.Collectors.toList;
 import static org.jetbrains.concurrency.Promises.rejectedPromise;
 
 /**
@@ -769,6 +770,8 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
       if (object == node.object) return;
       // always use new instance of user's object, because
       // some trees provide equal nodes with different behavior
+      map.remove(node.object);
+      node.updatePaths(node.object, object);
       node.object = object;
       map.put(object, node); // update key
     }
@@ -865,6 +868,34 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
         parent.paths.forEach(path -> removePath(path.pathByAddingChild(object)));
         tree.removeEmpty(this);
       }
+    }
+
+    private void updatePaths(@NotNull Object oldObject, @NotNull Object newObject) {
+      if (paths.stream().anyMatch(path -> contains(path, oldObject))) {
+        // replace instance of user's object in all internal maps to avoid memory leaks
+        List<TreePath> updated = paths.stream().map(path -> update(path, oldObject, newObject)).collect(toList());
+        paths.clear();
+        paths.addAll(updated);
+        forEachChildExceptLoading(child -> child.updatePaths(oldObject, newObject));
+      }
+    }
+
+    private static TreePath update(@NotNull TreePath path, @NotNull Object oldObject, @NotNull Object newObject) {
+      if (!contains(path, oldObject)) return path;
+      LOG.debug("update path: ", path);
+      Object[] objects = TreePathUtil.convertTreePathToArray(path);
+      for (int i = 0; i < objects.length; i++) {
+        if (oldObject == objects[i]) objects[i] = newObject;
+      }
+      return TreePathUtil.convertArrayToTreePath(objects);
+    }
+
+    private static boolean contains(@NotNull TreePath path, @NotNull Object object) {
+      while (object != path.getLastPathComponent()) {
+        path = path.getParentPath();
+        if (path == null) return false;
+      }
+      return true;
     }
   }
 

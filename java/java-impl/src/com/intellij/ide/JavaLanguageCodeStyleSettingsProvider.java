@@ -459,7 +459,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     "    super.getFoo().foo().getBar().bar();\n" +
     "\n" +
     "    label: " +
-    "    if (2 < 3) return; else if (2 > 3) return; else return;\n" +
+    "    if (2 < 3) {return;} else if (2 > 3) return; else return;\n" +
     "    for (int i = 0; i < 0xFFFFFF; i += 2) System.out.println(i);\n" +
     "    while (x < 50000) x++;\n" +
     "    do x++; while (x < 10000);\n" +

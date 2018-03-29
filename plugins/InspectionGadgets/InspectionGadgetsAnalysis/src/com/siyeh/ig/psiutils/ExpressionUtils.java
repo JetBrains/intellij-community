@@ -505,19 +505,6 @@ public class ExpressionUtils {
   }
 
 
-  public static boolean isConstructorInvocation(PsiElement element) {
-    if (!(element instanceof PsiMethodCallExpression)) {
-      return false;
-    }
-    final PsiMethodCallExpression methodCallExpression =
-      (PsiMethodCallExpression)element;
-    final PsiReferenceExpression methodExpression =
-      methodCallExpression.getMethodExpression();
-    final String callName = methodExpression.getReferenceName();
-    return PsiKeyword.THIS.equals(callName) ||
-           PsiKeyword.SUPER.equals(callName);
-  }
-
   public static boolean hasType(@Nullable PsiExpression expression, @NonNls @NotNull String typeName) {
     if (expression == null) {
       return false;

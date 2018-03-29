@@ -44,13 +44,13 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.inCallers.AbstractJavaMemberCallerChooser;
 import com.intellij.refactoring.safeDelete.usageInfo.*;
 import com.intellij.refactoring.util.ConflictsUtil;
-import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ConstructorUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -615,12 +615,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
             if (statements.length == 0) continue;
             if (statements.length == 1 && statements[0] instanceof PsiExpressionStatement) {
               final PsiExpression expression = ((PsiExpressionStatement)statements[0]).getExpression();
-              if (expression instanceof PsiMethodCallExpression) {
-                PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)expression).getMethodExpression();
-                if (methodExpression.getText().equals(PsiKeyword.SUPER)) {
-                  continue;
-                }
-              }
+              if (ConstructorUtil.isSuperConstructorCall(expression)) continue;
             }
           }
         }
@@ -978,7 +973,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
         if (safeDeleteDelegate != null) {
           safeDeleteDelegate.createUsageInfoForParameter(reference, usages, parameter, method);
         }
-        if (!parameter.isVarArgs() && !RefactoringChangeUtil.isSuperMethodCall(element.getParent())) {
+        if (!parameter.isVarArgs() && !ConstructorUtil.isSuperConstructorCall(element.getParent())) {
           final PsiParameter paramInCaller = SafeDeleteJavaCallerChooser.isTheOnlyOneParameterUsage(element.getParent(), parameterIndex, method);
           if (paramInCaller != null) {
             final PsiMethod callerMethod = (PsiMethod)paramInCaller.getDeclarationScope();
@@ -1000,11 +995,10 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
       boolean isSafeDelete = false;
       if (element.getParent().getParent() instanceof PsiMethodCallExpression) {
         PsiMethodCallExpression call = (PsiMethodCallExpression)element.getParent().getParent();
-        PsiReferenceExpression methodExpression = call.getMethodExpression();
-        if (methodExpression.getText().equals(PsiKeyword.SUPER)) {
+        if (ConstructorUtil.isSuperConstructorCall(call)) {
           isSafeDelete = true;
         }
-        else if (methodExpression.getQualifierExpression() instanceof PsiSuperExpression) {
+        else if (call.getMethodExpression().getQualifierExpression() instanceof PsiSuperExpression) {
           final PsiMethod superMethod = call.resolveMethod();
           if (superMethod != null && MethodSignatureUtil.isSuperMethod(superMethod, method)) {
             isSafeDelete = true;

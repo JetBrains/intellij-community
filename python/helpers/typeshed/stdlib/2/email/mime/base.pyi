@@ -1,8 +1,4 @@
-# NOTE: This stub is incomplete.
+from email import message
 
-# import message
-
-# TODO
-# class MIMEBase(message.Message):
-class MIMEBase:
+class MIMEBase(message.Message):
     def __init__(self, _maintype, _subtype, **_params) -> None: ...

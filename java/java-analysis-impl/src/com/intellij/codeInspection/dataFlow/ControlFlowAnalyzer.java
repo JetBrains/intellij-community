@@ -17,8 +17,10 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
 import com.intellij.codeInspection.dataFlow.inliner.*;
 import com.intellij.codeInspection.dataFlow.instructions.*;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -78,17 +80,14 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private void buildClassInitializerFlow(PsiClass psiClass, boolean isStatic) {
-    pushUnknown();
-    ConditionalGotoInstruction conditionalGoto = new ConditionalGotoInstruction(null, false, null);
-    addInstruction(conditionalGoto);
     for (PsiElement element : psiClass.getChildren()) {
       if ((element instanceof PsiField || element instanceof PsiClassInitializer) &&
           ((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.STATIC) == isStatic) {
         element.accept(this);
       }
     }
+    addInstruction(new EndOfInitializerInstruction(isStatic));
     addInstruction(new FlushVariableInstruction(null));
-    conditionalGoto.setOffset(getInstructionCount());
   }
 
   @Nullable
@@ -96,9 +95,16 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     myCurrentFlow = new ControlFlow(myFactory);
     try {
       if(myCodeFragment instanceof PsiClass) {
-        // if(unknown) { staticInitializer(); } if(unknown) { instanceInitializer(); }
+        // if(unknown) { staticInitializer(); } else { instanceInitializer(); }
+        pushUnknown();
+        ConditionalGotoInstruction conditionalGoto = new ConditionalGotoInstruction(null, false, null);
+        addInstruction(conditionalGoto);
         buildClassInitializerFlow((PsiClass)myCodeFragment, true);
+        GotoInstruction unconditionalGoto = new GotoInstruction(null);
+        addInstruction(unconditionalGoto);
+        conditionalGoto.setOffset(getInstructionCount());
         buildClassInitializerFlow((PsiClass)myCodeFragment, false);
+        unconditionalGoto.setOffset(getInstructionCount());
       } else {
         myCodeFragment.accept(this);
       }
@@ -279,7 +285,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     if (initializer != null) {
       initializeVariable(field, initializer);
     }
-    else if (!field.hasModifierProperty(PsiModifier.FINAL)) {
+    else if (!field.hasModifierProperty(PsiModifier.FINAL) && !UnusedSymbolUtil.isImplicitWrite(field)) {
       // initialize with default value
       DfaVariableValue dfaVariable = myFactory.getVarFactory().createVariableValue(field);
       addInstruction(new PushInstruction(dfaVariable, null, true));
@@ -628,13 +634,32 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       addInstruction(new PushInstruction(loopVar, null));
       addInstruction(new PushInstruction(myFactory.getConstFactory().createFromValue(1, PsiType.INT, null), null));
       addInstruction(new BinopInstruction(JavaTokenType.PLUS, null, loopVar.getVariableType()));
+      addInstruction(new AssignInstruction(null, null));
+      addInstruction(new PopInstruction());
+    }
+    else if (start != null) {
+      long maxValue;
+      if (end != null) {
+        maxValue = loop.isIncluding() ? end + 1 : end;
+      }
+      else {
+        maxValue = type.equals(PsiType.LONG) ? Long.MAX_VALUE : Integer.MAX_VALUE;
+      }
+      if (start >= maxValue) {
+        addInstruction(new GotoInstruction(getEndOffset(statement)));
+      }
+      else {
+        addInstruction(new PushInstruction(myFactory.getFactValue(DfaFactType.RANGE, LongRangeSet.range(start + 1L, maxValue)), null));
+        addInstruction(new AssignInstruction(null, null));
+        addInstruction(new PopInstruction());
+      }
     } else {
       pushUnknown();
+      addInstruction(new AssignInstruction(null, null));
+      addInstruction(new PushInstruction(origin, null));
+      addInstruction(new BinopInstruction(JavaTokenType.LE, null, PsiType.BOOLEAN));
+      addInstruction(new ConditionalGotoInstruction(getEndOffset(statement), false, null));
     }
-    addInstruction(new AssignInstruction(null, null));
-    addInstruction(new PushInstruction(origin, null));
-    addInstruction(new BinopInstruction(JavaTokenType.LE, null, PsiType.BOOLEAN));
-    addInstruction(new ConditionalGotoInstruction(getEndOffset(statement), false, null));
     return true;
   }
 
@@ -1279,7 +1304,11 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   private boolean isAcceptableContextForMathOperation(PsiExpression expression) {
     PsiElement parent = expression.getParent();
     while (parent != null && parent != myCodeFragment) {
-      if (parent instanceof PsiExpressionList) return true;
+      if (parent instanceof PsiExpressionList ||
+          parent instanceof PsiArrayInitializerExpression ||
+          parent instanceof PsiArrayAccessExpression) {
+        return true;
+      }
       if (parent instanceof PsiBinaryExpression && DfaRelationValue.RelationType.fromElementType(((PsiBinaryExpression)parent).getOperationTokenType()) != null) {
         return true;
       }
