@@ -26,9 +26,12 @@ import com.intellij.openapi.vcs.changes.IgnoreSettingsType;
 import com.intellij.openapi.vcs.changes.IgnoredFileBean;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.speedSearch.SpeedSearchUtil;
+import com.intellij.util.Function;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -48,6 +51,9 @@ public class IgnoredSettingsPanel implements SearchableConfigurable, Configurabl
     myList.setCellRenderer(new MyCellRenderer());
     myList.getEmptyText().setText(VcsBundle.message("no.ignored.files"));
 
+    new ListSpeedSearch<>(myList, (Function<IgnoredFileBean, String>)bean -> {
+      return getBeanTextPresentation(bean);
+    });
     myProject = project;
     myChangeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
   }
@@ -161,6 +167,27 @@ public class IgnoredSettingsPanel implements SearchableConfigurable, Configurabl
     return getHelpTopic();
   }
 
+
+  @Nullable
+  private static String getBeanTextPresentation(IgnoredFileBean bean) {
+    IgnoreSettingsType type = bean.getType();
+
+    String path = bean.getPath();
+    String mask = bean.getMask();
+
+    if (type == IgnoreSettingsType.UNDER_DIR && path != null) {
+      return VcsBundle.message("ignored.configure.item.directory", path);
+    }
+    if (type == IgnoreSettingsType.FILE && path != null) {
+      return VcsBundle.message("ignored.configure.item.file", path);
+    }
+    if (type == IgnoreSettingsType.MASK && mask != null) {
+      return VcsBundle.message("ignored.configure.item.mask", mask);
+    }
+
+    return null;
+  }
+
   private static class MyCellRenderer extends ColoredListCellRenderer<IgnoredFileBean> {
     protected void customizeCellRenderer(@NotNull JList list, IgnoredFileBean bean, int index, boolean selected, boolean hasFocus) {
       if (UIUtil.isUnderGTKLookAndFeel()) {
@@ -168,18 +195,12 @@ public class IgnoredSettingsPanel implements SearchableConfigurable, Configurabl
         UIUtil.changeBackGround(this, background);
       }
 
-      final String path = bean.getPath();
-      if (path != null) {
-        if (path.endsWith("/")) {
-          append(VcsBundle.message("ignored.configure.item.directory", path), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-        }
-        else {
-          append(VcsBundle.message("ignored.configure.item.file", path), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-        }
+      String text = getBeanTextPresentation(bean);
+      if (text != null) {
+        append(text, SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
-      else if (bean.getMask() != null) {
-        append(VcsBundle.message("ignored.configure.item.mask", bean.getMask()), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-      }
+
+      SpeedSearchUtil.applySpeedSearchHighlighting(list, this, true, selected);
     }
   }
 }
