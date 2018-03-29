@@ -1,112 +1,105 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.Set;
-
-import static com.intellij.psi.util.PsiUtilCore.getVirtualFile;
-
-@SuppressWarnings("unused")
+/**
+ * Enforces tree loading policies.
+ * <p/>
+ * For example it's very slow to load AST for all shown files
+ * when updating Project View nodes,
+ * or loading other files when current file is being highlighted.
+ * <p/>
+ * To prevent loading <i>in the current thread</i> {@link #disableTreeLoading} should be used.<br/>
+ * In this case the exception will be thrown when some code unexpectedly tries to load the tree, and then there are two options:
+ * <ul>
+ * <li>examine the stack trace, fix the code,
+ * so tree loading won't occur anymore,
+ * e.g. data will be taken from stubs,
+ * and cover it with a test.
+ * <b>It is highly preferable to fix the code</b>, which gains a speed up.
+ * </li>
+ * <li>force enable tree loading by wrapping troublesome operation into {@link #forceEnableTreeLoading}.
+ * In this case there are no performance gains, but later it will be possible to examine all bottlenecks
+ * by finding usages of {@link #forceEnableTreeLoading}</li>
+ * </ul>
+ * Example:
+ * <pre>
+ *   disableTreeLoading {
+ *     // some deep trace
+ *     doSomeOperation {
+ *       // access tree, exception is thrown
+ *     }
+ *     ...
+ *     forceEnableTreeLoading {
+ *       doSomeOperation {
+ *         // access tree, no exception is thrown
+ *       }
+ *     }
+ *   }
+ * </pre>
+ * <p/>
+ * Note that tree access won't result in an exception when the tree was already loaded.
+ */
 public class AstLoadingFilter {
 
-  @SuppressWarnings("SSBasedInspection")
-  private static final ThreadLocal<Set<VirtualFile>> myEnabledFiles = ThreadLocal.withInitial(() -> new HashSet<>());
-  private static final ThreadLocal<Integer> myEnabledCounter = ThreadLocal.withInitial(() -> 0);
+  private static final ThreadLocal<Boolean> myDisabledSwitch = ThreadLocal.withInitial(() -> false); // enable by default
+  private static final ThreadLocal<Boolean> myForcedEnabled = ThreadLocal.withInitial(() -> false);
+
+  private AstLoadingFilter() {}
 
   public static boolean isTreeLoadingEnabled(@NotNull VirtualFile file) {
-    if (!Registry.is("disable.tree.loading")) return true;
-    return file instanceof VirtualFileWindow || myEnabledCounter.get() > 0 || myEnabledFiles.get().contains(file);
+    if (!Registry.is("ast.loading.filter")) return true;
+    if (file instanceof VirtualFileWindow) return true;
+    return !myDisabledSwitch.get() || myForcedEnabled.get();
   }
 
   public static <E extends Throwable>
-  void enableTreeLoading(@NotNull ThrowableRunnable<E> runnable) throws E {
-    try {
-      increment(myEnabledCounter);
+  void disableTreeLoading(@NotNull ThrowableRunnable<E> runnable) throws E {
+    disableTreeLoading(() -> {
       runnable.run();
-    }
-    finally {
-      decrement(myEnabledCounter);
-    }
+      return null;
+    });
   }
 
   public static <T, E extends Throwable>
-  T enableTreeLoading(@NotNull ThrowableComputable<T, E> computable) throws E {
-    try {
-      increment(myEnabledCounter);
-      return computable.compute();
-    }
-    finally {
-      decrement(myEnabledCounter);
-    }
+  T disableTreeLoading(@NotNull ThrowableComputable<T, E> computable) throws E {
+    return computeWithSwitch(computable, myDisabledSwitch);
   }
 
   public static <E extends Throwable>
-  void enableTreeLoading(@Nullable PsiElement element, @NotNull ThrowableRunnable<E> runnable) throws E {
-    enableTreeLoading(getVirtualFile(element), runnable);
+  void forceEnableTreeLoading(@NotNull ThrowableRunnable<E> runnable) throws E {
+    forceEnableTreeLoading(() -> {
+      runnable.run();
+      return null;
+    });
   }
 
   public static <T, E extends Throwable>
-  T enableTreeLoading(@Nullable PsiElement element, @NotNull ThrowableComputable<T, E> computable) throws E {
-    return enableTreeLoading(getVirtualFile(element), computable);
+  T forceEnableTreeLoading(@NotNull ThrowableComputable<T, E> computable) throws E {
+    if (!myDisabledSwitch.get()) {
+      throw new IllegalStateException("It's not allowed to force enable loading before it has been disabled");
+    }
+    return computeWithSwitch(computable, myForcedEnabled);
   }
 
-  public static <E extends Throwable>
-  void enableTreeLoading(@Nullable VirtualFile file, @NotNull ThrowableRunnable<E> runnable) throws E {
-    if (file != null && myEnabledFiles.get().add(file)) {
-      try {
-        runnable.run();
-      }
-      finally {
-        myEnabledFiles.get().remove(file);
-      }
+  private static <T, E extends Throwable>
+  T computeWithSwitch(@NotNull ThrowableComputable<T, E> computable, @NotNull ThreadLocal<Boolean> theSwitch) throws E {
+    if (theSwitch.get()) {
+      return computable.compute();    // switch is already on
     }
     else {
-      runnable.run();
-    }
-  }
-
-  public static <T, E extends Throwable>
-  T enableTreeLoading(@Nullable VirtualFile file, @NotNull ThrowableComputable<T, E> computable) throws E {
-    if (file != null && myEnabledFiles.get().add(file)) {
       try {
+        theSwitch.set(true);          // switch on
         return computable.compute();
       }
       finally {
-        myEnabledFiles.get().remove(file);
+        theSwitch.set(false);         // reset switch
       }
     }
-    else {
-      return computable.compute();
-    }
-  }
-
-  private static void increment(@NotNull ThreadLocal<Integer> counter) {
-    counter.set(counter.get() + 1);
-  }
-
-  private static void decrement(@NotNull ThreadLocal<Integer> counter) {
-    counter.set(counter.get() - 1);
   }
 }
