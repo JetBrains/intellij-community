@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.netbeans.lib.cvsclient.response;
 
 import com.intellij.util.text.SyncDateFormat;
@@ -20,8 +21,9 @@ final class ResponseUtils {
 
   private static SyncDateFormat getFormatter() {
     if (dateFormatter == null) {
-      dateFormatter = new SyncDateFormat(new SimpleDateFormat(DATE_FORMAT_STR, Locale.US));
-      dateFormatter.setTimeZone(TimeZone.getTimeZone(TIME_ZONE_FORMAT_STR));
+      SimpleDateFormat delegate = new SimpleDateFormat(DATE_FORMAT_STR, Locale.US);
+      delegate.setTimeZone(TimeZone.getTimeZone(TIME_ZONE_FORMAT_STR));
+      dateFormatter = new SyncDateFormat(delegate);
     }
     return dateFormatter;
   }
