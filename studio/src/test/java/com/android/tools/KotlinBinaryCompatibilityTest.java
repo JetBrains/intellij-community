@@ -2,6 +2,8 @@ package com.android.tools;
 
 import com.android.testutils.TestUtils;
 import com.android.testutils.truth.FileSubject;
+import com.google.common.base.Charsets;
+import com.google.common.io.Files;
 import org.apache.commons.compress.archivers.ArchiveException;
 import org.apache.commons.compress.archivers.ArchiveInputStream;
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
@@ -46,7 +48,10 @@ public class KotlinBinaryCompatibilityTest {
 
     File[] outputDirs = TestUtils.getWorkspaceRoot().listFiles(((dir, name) -> name.startsWith("verification-")));
     assertWithMessage("should be exactly one output file").that(outputDirs).hasLength(1);
-    return new File(outputDirs[0], "AI-181.SNAPSHOT/plugins/Kotlin/problems.txt"); // TODO: fix path to adapt to build numbering changes
+
+    String productName = Files.readFirstLine(new File(tmpDir.getPath(), "/android-studio/build.txt"), Charsets.UTF_8);
+    assertAbout(FileSubject.FACTORY).that(new File(outputDirs[0], productName + "/plugins/Kotlin/verdict.txt")).exists();
+    return new File(outputDirs[0], productName + "/plugins/Kotlin/problems.txt");
   }
 
   private static void extract(File studioZip, File tmpDir) throws IOException, ArchiveException {
