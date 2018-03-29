@@ -240,7 +240,7 @@ public final class DiscoveredTestDataHolder {
   }
 
   @NotNull
-  public TestId createTestId(String className, String methodName, byte frameworkPrefix) throws IOException {
+  private TestId createTestId(String className, String methodName, byte frameworkPrefix) throws IOException {
     return new TestId(myClassEnumerator.enumerate(className), myMethodEnumerator.enumerate(methodName), frameworkPrefix);
   }
 
