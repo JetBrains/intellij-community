@@ -822,7 +822,8 @@ public class HighlightClassUtil {
     if (constructors.length == 0) return false;
     for (PsiMethod constructor : constructors) {
       PsiMethodCallExpression methodCallExpression = ConstructorUtil.findThisOrSuperCallInConstructor(constructor);
-      if (!ConstructorUtil.isSuperConstructorCall(methodCallExpression)) continue;
+      if (methodCallExpression == null) return false;
+      if (ConstructorUtil.isChainedConstructorCall(methodCallExpression)) continue;
       PsiReferenceExpression referenceExpression = methodCallExpression.getMethodExpression();
       PsiExpression qualifierExpression = PsiUtil.skipParenthesizedExprDown(referenceExpression.getQualifierExpression());
       //If the class instance creation expression is qualified, then the immediately
