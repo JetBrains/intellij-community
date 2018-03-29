@@ -770,6 +770,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
       if (object == node.object) return;
       // always use new instance of user's object, because
       // some trees provide equal nodes with different behavior
+      map.remove(node.object);
       node.updatePaths(node.object, object);
       node.object = object;
       map.put(object, node); // update key
