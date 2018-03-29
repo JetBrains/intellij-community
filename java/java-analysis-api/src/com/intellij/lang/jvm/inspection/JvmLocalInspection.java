@@ -29,7 +29,7 @@ public abstract class JvmLocalInspection extends LocalInspectionTool {
         for (JvmElement jvmElement : JvmDeclarationSearch.getElementsByIdentifier(element)) {
           if (visitor == null) {
             // don't build visitor until there is at least one JvmElement
-            visitor = buildJvmVisitor(
+            visitor = buildVisitor(
               holder.getProject(),
               (message, highlightType, fixes) -> holder.registerProblem(element, message, highlightType, fixes),
               isOnTheFly
@@ -57,12 +57,5 @@ public abstract class JvmLocalInspection extends LocalInspectionTool {
   }
 
   @Nullable
-  protected JvmElementVisitor<Boolean> buildJvmVisitor(@NotNull Project project, @NotNull HighlightSink sink, boolean isOnTheFly) {
-    return buildJvmVisitor(project, sink);
-  }
-
-  @Nullable
-  protected JvmElementVisitor<Boolean> buildJvmVisitor(@NotNull Project project, @NotNull HighlightSink sink) {
-    return null;
-  }
+  protected abstract JvmElementVisitor<Boolean> buildVisitor(@NotNull Project project, @NotNull HighlightSink sink, boolean isOnTheFly);
 }
