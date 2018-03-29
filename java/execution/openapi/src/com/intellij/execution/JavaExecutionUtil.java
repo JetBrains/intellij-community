@@ -249,9 +249,12 @@ public class JavaExecutionUtil {
         try {
           dir = FileUtil.createTempDirectory(copyDirName, "jars");
           if (dir.getAbsolutePath().contains(" ")) {
-            LOG.info("agent not used since the agent path contains spaces: " + agentContainingDir + "\n" +
-                     "One can move the agent libraries to a directory with no spaces in path and specify its path in idea.properties as " +
-                     agentPathPropertyKey + "=<path>");
+            String message = "agent not used since the agent path contains spaces: " + agentContainingDir;
+            if (agentPathPropertyKey != null) {
+              message += "\nOne can move the agent libraries to a directory with no spaces in path and specify its path in idea.properties as " +
+              agentPathPropertyKey + "=<path>";
+            }
+            LOG.info(message);
             return null;
           }
         }
