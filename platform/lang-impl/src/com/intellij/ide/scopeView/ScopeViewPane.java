@@ -34,6 +34,7 @@ import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
+import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.stripe.ErrorStripePainter;
 import com.intellij.ui.stripe.TreeUpdater;
 import com.intellij.ui.tree.AsyncTreeModel;
@@ -181,6 +182,7 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
       ToolTipManager.sharedInstance().registerComponent(myTree);
       EditSourceOnDoubleClickHandler.install(myTree);
       CustomizationUtil.installPopupHandler(myTree, IdeActions.GROUP_SCOPE_VIEW_POPUP, ActionPlaces.SCOPE_VIEW_POPUP);
+      new TreeSpeedSearch(myTree);
       enableDnD();
     }
     if (myScrollPane == null) {
