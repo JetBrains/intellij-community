@@ -1,7 +1,9 @@
 package git4idea.log;
 
 import com.intellij.dvcs.repo.RepositoryManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -16,9 +18,11 @@ import com.intellij.vcs.log.util.VcsLogUtil;
 import git4idea.GitBranch;
 import git4idea.GitRemoteBranch;
 import git4idea.GitTag;
+import git4idea.branch.GitBranchType;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
+import git4idea.ui.branch.GitBranchManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,11 +66,13 @@ public class GitRefManager implements VcsLogRefManager {
   @NotNull private final RepositoryManager<GitRepository> myRepositoryManager;
   @NotNull private final Comparator<VcsRef> myLabelsComparator;
   @NotNull private final Comparator<VcsRef> myBranchLayoutComparator;
+  @NotNull private final GitBranchManager myBranchManager;
 
-  public GitRefManager(@NotNull RepositoryManager<GitRepository> repositoryManager) {
+  public GitRefManager(@NotNull Project project, @NotNull RepositoryManager<GitRepository> repositoryManager) {
     myRepositoryManager = repositoryManager;
     myBranchLayoutComparator = new GitBranchLayoutComparator(repositoryManager);
     myLabelsComparator = new GitLabelComparator(repositoryManager);
+    myBranchManager = ServiceManager.getService(project, GitBranchManager.class);
   }
 
   @NotNull
@@ -227,7 +233,7 @@ public class GitRefManager implements VcsLogRefManager {
     if (references.isEmpty()) return null;
 
     VcsRef ref = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(references));
-    GitRepository repository = myRepositoryManager.getRepositoryForRoot(ref.getRoot());
+    GitRepository repository = getRepository(ref);
     if (repository == null) {
       LOG.warn("No repository for root: " + ref.getRoot());
     }
@@ -245,6 +251,28 @@ public class GitRefManager implements VcsLogRefManager {
     int id = in.readInt();
     if (id < 0 || id > REF_TYPE_INDEX.size() - 1) throw new IOException("Reference type by id " + id + " does not exist");
     return REF_TYPE_INDEX.get(id);
+  }
+
+  @NotNull
+  private static GitBranchType getBranchType(@NotNull VcsRef reference) {
+    return reference.getType().equals(LOCAL_BRANCH) ? GitBranchType.LOCAL : GitBranchType.REMOTE;
+  }
+
+  @Nullable
+  private GitRepository getRepository(@NotNull VcsRef reference) {
+    return myRepositoryManager.getRepositoryForRoot(reference.getRoot());
+  }
+
+  @Override
+  public boolean isFavorite(@NotNull VcsRef reference) {
+    if (!reference.getType().isBranch()) return false;
+    return myBranchManager.isFavorite(getBranchType(reference), getRepository(reference), reference.getName());
+  }
+
+  @Override
+  public void setFavorite(@NotNull VcsRef reference, boolean favorite) {
+    if (!reference.getType().isBranch()) return;
+    myBranchManager.setFavorite(getBranchType(reference), getRepository(reference), reference.getName(), favorite);
   }
 
   private static Set<String> getLocalBranches(GitRepository repository) {

@@ -270,6 +270,15 @@ public class TestVcsLogProvider implements VcsLogProvider {
       throw new UnsupportedOperationException();
     }
 
+    @Override
+    public boolean isFavorite(@NotNull VcsRef reference) {
+      return false;
+    }
+
+    @Override
+    public void setFavorite(@NotNull VcsRef reference, boolean favorite) {
+    }
+
     @NotNull
     @Override
     public Comparator<VcsRef> getBranchLayoutComparator() {

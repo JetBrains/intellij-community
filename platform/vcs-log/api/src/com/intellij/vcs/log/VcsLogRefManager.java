@@ -86,4 +86,8 @@ public interface VcsLogRefManager {
    */
   @NotNull
   VcsRefType deserialize(@NotNull DataInput in) throws IOException;
+
+  boolean isFavorite(@NotNull VcsRef reference);
+
+  void setFavorite(@NotNull VcsRef reference, boolean favorite);
 }

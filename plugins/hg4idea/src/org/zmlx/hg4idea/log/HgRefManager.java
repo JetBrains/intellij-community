@@ -15,6 +15,9 @@
  */
 package org.zmlx.hg4idea.log;
 
+import com.intellij.dvcs.repo.RepositoryManager;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.ui.JBColor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -24,6 +27,10 @@ import com.intellij.vcs.log.impl.SimpleRefType;
 import com.intellij.vcs.log.impl.SingletonRefGroup;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.branch.HgBranchManager;
+import org.zmlx.hg4idea.branch.HgBranchType;
+import org.zmlx.hg4idea.repo.HgRepository;
 
 import java.awt.*;
 import java.io.DataInput;
@@ -31,6 +38,8 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
+
+import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
 public class HgRefManager implements VcsLogRefManager {
   private static final Color CLOSED_BRANCH_COLOR = new JBColor(new Color(0x823139), new Color(0xff5f6f));
@@ -88,6 +97,14 @@ public class HgRefManager implements VcsLogRefManager {
     return VcsLogUtil.compareRoots(ref1.getRoot(), ref2.getRoot());
   };
 
+  @NotNull private final HgBranchManager myBranchManager;
+  @NotNull private final RepositoryManager<HgRepository> myRepositoryManager;
+
+  public HgRefManager(@NotNull Project project, @NotNull RepositoryManager<HgRepository> repositoryManager) {
+    myRepositoryManager = repositoryManager;
+    myBranchManager = ServiceManager.getService(project, HgBranchManager.class);
+  }
+
   @NotNull
   @Override
   public Comparator<VcsRef> getLabelsOrderComparator() {
@@ -141,7 +158,7 @@ public class HgRefManager implements VcsLogRefManager {
 
     List<RefGroup> result = ContainerUtil.newArrayList();
     SimpleRefGroup.buildGroups(groupedRefs, compact, showTagNames, result);
-    RefGroup firstGroup = ContainerUtil.getFirstItem(result);
+    RefGroup firstGroup = getFirstItem(result);
     if (firstGroup != null) {
       firstGroup.getRefs().addAll(0, headAndTip);
     }
@@ -163,6 +180,28 @@ public class HgRefManager implements VcsLogRefManager {
     int id = in.readInt();
     if (id < 0 || id > REF_TYPE_INDEX.size() - 1) throw new IOException("Reference type by id " + id + " does not exist");
     return REF_TYPE_INDEX.get(id);
+  }
+
+  @NotNull
+  private static HgBranchType getBranchType(@NotNull VcsRef reference) {
+    return reference.getType().equals(BOOKMARK) ? HgBranchType.BOOKMARK : HgBranchType.BRANCH;
+  }
+
+  @Nullable
+  private HgRepository getRepository(@NotNull VcsRef reference) {
+    return myRepositoryManager.getRepositoryForRoot(reference.getRoot());
+  }
+
+  @Override
+  public boolean isFavorite(@NotNull VcsRef reference) {
+    if (!reference.getType().isBranch()) return false;
+    return myBranchManager.isFavorite(getBranchType(reference), getRepository(reference), reference.getName());
+  }
+
+  @Override
+  public void setFavorite(@NotNull VcsRef reference, boolean favorite) {
+    if (!reference.getType().isBranch()) return;
+    myBranchManager.setFavorite(getBranchType(reference), getRepository(reference), reference.getName(), favorite);
   }
 
   @NotNull
