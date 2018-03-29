@@ -201,14 +201,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
     myDataProvider = new MyPanel();
     myDataProvider.add(myPanel, BorderLayout.CENTER);
-    myCopyPasteDelegator = new CopyPasteDelegator(myProject, myPanel) {
-      @Override
-      @NotNull
-      protected PsiElement[] getSelectedElements() {
-        final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
-        return viewPane == null ? PsiElement.EMPTY_ARRAY : viewPane.getSelectedPSIElements();
-      }
-    };
+    myCopyPasteDelegator = new CopyPasteDelegator(myProject, myPanel);
     myAutoScrollToSourceHandler = new AutoScrollToSourceHandler() {
       @Override
       protected boolean isAutoScrollMode() {

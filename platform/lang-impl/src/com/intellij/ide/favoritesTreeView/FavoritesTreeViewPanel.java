@@ -172,13 +172,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
 
     EditSourceOnDoubleClickHandler.install(myTree);
     EditSourceOnEnterKeyHandler.install(myTree);
-    myCopyPasteDelegator = new CopyPasteDelegator(myProject, this) {
-      @Override
-      @NotNull
-      protected PsiElement[] getSelectedElements() {
-        return getSelectedPsiElements();
-      }
-    };
+    myCopyPasteDelegator = new CopyPasteDelegator(myProject, this);
 
     AnActionButton addActionButton = AnActionButton.fromAction(ActionManager.getInstance().getAction("AddNewFavoritesList"));
     addActionButton.getTemplatePresentation().setIcon(CommonActionsPanel.Buttons.ADD.getIcon());
