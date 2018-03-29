@@ -25,6 +25,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.psi.*;
@@ -33,6 +34,7 @@ import com.intellij.refactoring.copy.CopyHandler;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -101,7 +103,8 @@ public class CopyPasteDelegator implements CopyPasteSupport {
     @Override
     public boolean isCopyEnabled(@NotNull DataContext dataContext) {
       PsiElement[] elements = getValidSelectedElements();
-      return CopyHandler.canCopy(elements) || PsiCopyPasteManager.asFileList(elements) != null;
+      return CopyHandler.canCopy(elements) ||
+             JBIterable.of(elements).filter(Conditions.instanceOf(PsiNamedElement.class)).isNotEmpty();
     }
 
     @Override
