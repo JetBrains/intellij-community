@@ -42,7 +42,7 @@ public class IgnoredSettingsPanel implements SearchableConfigurable, Configurabl
   private final JBList<IgnoredFileBean> myList;
   private JPanel myPanel;
   private final Project myProject;
-  private DefaultListModel<IgnoredFileBean> myModel;
+  private DefaultListModel<IgnoredFileBean> myModel = new DefaultListModel<>();
   private final ChangeListManagerImpl myChangeListManager;
   private final Set<String> myDirectoriesManuallyRemovedFromIgnored = new HashSet<>();
 
