@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.pom.java.AcceptedLanguageLevelsSettings;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -19,11 +20,12 @@ public class LocalVariableTypeInferenceUnresolvedFixProvider extends UnresolvedR
     LanguageLevel targetLanguageLevel;
     if (parent instanceof PsiParameter && ((PsiParameter)parent).getDeclarationScope() instanceof PsiLambdaExpression) {
       //early-draft specification support to be enabled after release
-      if (LanguageLevel.HIGHEST.isAtLeast(LanguageLevel.JDK_X)) {
-        targetLanguageLevel = LanguageLevel.JDK_X;
+      if (LanguageLevel.HIGHEST.isAtLeast(LanguageLevel.JDK_11)) {
+        targetLanguageLevel = LanguageLevel.JDK_11;
       }
-      else if (ApplicationManager.getApplication().isEAP()) {
-        targetLanguageLevel = LanguageLevel.JDK_X;
+      else if (ApplicationManager.getApplication().isEAP() || 
+               AcceptedLanguageLevelsSettings.isLanguageLevelAccepted(LanguageLevel.JDK_11)) {
+        targetLanguageLevel = LanguageLevel.JDK_11;
 
         //show module options with ability to explicitly agree with legal notice
         increaseLanguageLevel = false;
