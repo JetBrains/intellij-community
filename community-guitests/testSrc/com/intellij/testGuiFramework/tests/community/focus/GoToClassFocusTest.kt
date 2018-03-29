@@ -26,7 +26,7 @@ class GoToClassFocusTest : GuiTestCase() {
 
   @Test
   fun testGoToClassFocus() {
-    CommunityProjectCreator.createCommandLineProject()
+    CommunityProjectCreator.importCommandLineAppAndOpenMain()
     Pause.pause(1000)
     ideFrame {
       focusOnEditor()
@@ -86,7 +86,7 @@ class GoToClassFocusTest : GuiTestCase() {
     }
     with(guiTestCase) {
       val textfield = textfield("", searchWindow, guiTestCase.defaultTimeout)
-      Assert.assertEquals(textfield.target().text, typedString)
+      Assert.assertEquals(typedString, textfield.target().text)
     }
   }
 

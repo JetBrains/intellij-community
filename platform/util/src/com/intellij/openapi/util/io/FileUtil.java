@@ -736,7 +736,7 @@ public class FileUtil extends FileUtilRt {
       if (removeLastSlash) {
         int start = processRoot(path, NullAppendable.INSTANCE);
         int slashIndex = path.lastIndexOf('/');
-        return slashIndex != -1 && slashIndex > start ? StringUtil.trimEnd(path, '/') : path;
+        return slashIndex != -1 && slashIndex > start ? StringUtil.trimTrailing(path, '/') : path;
       }
       return path;
     }

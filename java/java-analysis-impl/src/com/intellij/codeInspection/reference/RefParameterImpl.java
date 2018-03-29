@@ -7,7 +7,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -129,13 +128,11 @@ public class RefParameterImpl extends RefJavaElementImpl implements RefParameter
       PsiElement resolved = referenceExpression.resolve();
       if (resolved instanceof PsiField) {
         PsiField psiField = (PsiField) resolved;
-        if (psiField.hasModifierProperty(PsiModifier.STATIC) &&
-            psiField.hasModifierProperty(PsiModifier.FINAL) &&
-            psiField.getContainingClass().getQualifiedName() != null) {
-          return PsiFormatUtil.formatVariable(psiField, PsiFormatUtilBase.SHOW_NAME |
-                                                        PsiFormatUtilBase.SHOW_CONTAINING_CLASS |
-                                                        PsiFormatUtilBase.SHOW_FQ_NAME,
-                                              PsiSubstitutor.EMPTY);
+        if (psiField.hasModifierProperty(PsiModifier.STATIC) && psiField.hasModifierProperty(PsiModifier.FINAL)) {
+          PsiClass containingClass = psiField.getContainingClass();
+          if (containingClass != null && containingClass.getQualifiedName() != null) {
+            return psiField;
+          }
         }
       }
     }
@@ -143,7 +140,7 @@ public class RefParameterImpl extends RefJavaElementImpl implements RefParameter
       return null;
     }
     Object constValue = JavaConstantExpressionEvaluator.computeConstantExpression(expression, false);
-    return constValue == null ? VALUE_IS_NOT_CONST : constValue;
+    return constValue == null ? VALUE_IS_NOT_CONST : constValue instanceof String ? "\"" + constValue + "\"" : constValue;
   }
 
   @Nullable

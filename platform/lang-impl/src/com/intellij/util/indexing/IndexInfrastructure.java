@@ -31,7 +31,7 @@ import com.intellij.psi.stubs.StubIndexKey;
 import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.concurrency.BoundedTaskExecutor;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,7 +54,8 @@ public class IndexInfrastructure {
   private static final boolean ourDoParallelIndicesInitialization = SystemProperties
     .getBooleanProperty("idea.parallel.indices.initialization", false);
   public static final boolean ourDoAsyncIndicesInitialization = SystemProperties.getBooleanProperty("idea.async.indices.initialization", true);
-  private static final ExecutorService ourGenesisExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("IndexInfrastructure pool");
+  private static final ExecutorService ourGenesisExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(
+    "IndexInfrastructure Pool");
 
   private IndexInfrastructure() {
   }
@@ -187,8 +188,9 @@ public class IndexInfrastructure {
       CountDownLatch proceedLatch = new CountDownLatch(numberOfTasksToExecute);
 
       if (ourDoParallelIndicesInitialization) {
-        BoundedTaskExecutor taskExecutor = new BoundedTaskExecutor("IndexInfrastructure.DataInitialization.runParallelNestedInitializationTasks", PooledThreadExecutor.INSTANCE,
-                                                                   CacheUpdateRunner.indexingThreadCount());
+        ExecutorService taskExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor(
+          "IndexInfrastructure.DataInitialization.RunParallelNestedInitializationTasks", PooledThreadExecutor.INSTANCE,
+          CacheUpdateRunner.indexingThreadCount());
 
         for (ThrowableRunnable callable : myNestedInitializationTasks) {
           taskExecutor.execute(() -> executeNestedInitializationTask(callable, proceedLatch));

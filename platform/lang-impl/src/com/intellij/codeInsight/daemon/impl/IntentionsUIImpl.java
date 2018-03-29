@@ -12,9 +12,13 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
-public class IntentionsUIImpl implements IntentionsUI {
+public class IntentionsUIImpl extends IntentionsUI {
 
   private volatile IntentionHintComponent myLastIntentionHint;
+
+  public IntentionsUIImpl(Project project) {
+    super(project);
+  }
 
   IntentionHintComponent getLastIntentionHint() {
     return myLastIntentionHint;
@@ -24,7 +28,15 @@ public class IntentionsUIImpl implements IntentionsUI {
   public void update(@NotNull CachedIntentions cachedIntentions, boolean actionsChanged) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     Editor editor = cachedIntentions.getEditor();
+    if (editor == null) return;
     if (!ApplicationManager.getApplication().isUnitTestMode() && !editor.getContentComponent().hasFocus()) return;
+    if (!actionsChanged) return;
+
+    //IntentionHintComponent hint = myLastIntentionHint;
+    //if (hint != null && hint.getPopupUpdateResult(actionsChanged) == IntentionHintComponent.PopupUpdateResult.CHANGED_INVISIBLE) {
+    //  hint.recreate();
+    //  return;
+    //}
 
     Project project = cachedIntentions.getProject();
     LogicalPosition caretPos = editor.getCaretModel().getLogicalPosition();

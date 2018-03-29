@@ -200,7 +200,7 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
       SuspendContextCommand suspendContextCommand = (SuspendContextCommand)command;
       schedule(new SuspendContextCommandImpl((SuspendContextImpl)suspendContextCommand.getSuspendContext()) {
           @Override
-          public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
+          public void contextAction(@NotNull SuspendContextImpl suspendContext) {
             command.action();
           }
 

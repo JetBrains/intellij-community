@@ -307,6 +307,22 @@ public class PyRenameTest extends PyTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doMultiFileTest("bar"));
   }
 
+  // PY-28199
+  public void testCamelCaseToSnakeCaseTransformation() {
+    assertEquals("foo", PyNameSuggestionProvider.toUnderscores("foo"));
+    assertEquals("foo", PyNameSuggestionProvider.toUnderscores("Foo"));
+    assertEquals("foo", PyNameSuggestionProvider.toUnderscores("FOO"));
+    assertEquals("foo_bar", PyNameSuggestionProvider.toUnderscores("FooBar"));
+    assertEquals("foo_bar", PyNameSuggestionProvider.toUnderscores("foo_bar"));
+    assertEquals("foo_bar", PyNameSuggestionProvider.toUnderscores("FOO_BAR"));
+    assertEquals("__foo_bar", PyNameSuggestionProvider.toUnderscores("__Foo_Bar"));
+    assertEquals("foo42bar", PyNameSuggestionProvider.toUnderscores("foo42bar"));
+    assertEquals("foo42_bar", PyNameSuggestionProvider.toUnderscores("foo42Bar"));
+    assertEquals("foo42_bar", PyNameSuggestionProvider.toUnderscores("FOO42BAR"));
+    assertEquals("foo_bar", PyNameSuggestionProvider.toUnderscores("FOOBar"));
+    assertEquals("foo_bar_baz", PyNameSuggestionProvider.toUnderscores("foo_BarBAZ"));
+  }
+
   private void renameWithDocStringFormat(DocStringFormat format, final String newName) {
     runWithDocStringFormat(format, () -> doTest(newName));
   }

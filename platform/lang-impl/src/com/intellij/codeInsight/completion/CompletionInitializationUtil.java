@@ -82,8 +82,7 @@ public class CompletionInitializationUtil {
   }
 
   public static CompletionParameters prepareCompletionParameters(CompletionInitializationContext initContext,
-                                                                 CompletionProcessEx process) {
-    CompletionProcessEx indicator = (CompletionProcessEx) process;
+                                                                 CompletionProcessEx indicator) {
     OffsetsInFile hostCopyOffsets = insertDummyIdentifier(initContext, indicator, indicator.getHostOffsets());
     if (hostCopyOffsets == null) {
       return null;
@@ -93,7 +92,9 @@ public class CompletionInitializationUtil {
     OffsetsInFile finalOffsets = toInjectedIfAny(initContext.getFile(), hostCopyOffsets);
     indicator.registerChildDisposable(finalOffsets::getOffsets);
 
-    return createCompletionParameters(initContext, indicator, finalOffsets);
+    CompletionParameters parameters = createCompletionParameters(initContext, indicator, finalOffsets);
+    indicator.setParameters(parameters);
+    return parameters;
   }
 
   @NotNull

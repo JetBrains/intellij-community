@@ -18,7 +18,9 @@ package com.intellij.refactoring.extractMethodObject;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -48,11 +50,13 @@ public class ExtractLightMethodObjectHandler {
     private final String myGeneratedCallText;
     private final PsiClass myGeneratedInnerClass;
     private final PsiElement myAnchor;
+    private final boolean myUseMagicAccessor;
 
-    public ExtractedData(String generatedCallText, PsiClass generatedInnerClass, PsiElement anchor) {
+    public ExtractedData(String generatedCallText, PsiClass generatedInnerClass, PsiElement anchor, boolean useMagicAccessor) {
       myGeneratedCallText = generatedCallText;
       myGeneratedInnerClass = generatedInnerClass;
       myAnchor = anchor;
+      myUseMagicAccessor = useMagicAccessor;
     }
 
     public PsiElement getAnchor() {
@@ -66,6 +70,10 @@ public class ExtractLightMethodObjectHandler {
     public PsiClass getGeneratedInnerClass() {
       return myGeneratedInnerClass;
     }
+
+    public boolean useMagicAccessor() {
+      return myUseMagicAccessor;
+    }
   }
 
   @Nullable
@@ -73,7 +81,7 @@ public class ExtractLightMethodObjectHandler {
                                                        @Nullable PsiElement originalContext,
                                                        @NotNull final PsiCodeFragment fragment,
                                                        final String methodName,
-                                                       boolean useReflection) throws PrepareFailedException {
+                                                       @Nullable JavaSdkVersion javaVersion) throws PrepareFailedException {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     PsiElement[] elements = completeToStatementArray(fragment, elementFactory);
     if (elements == null) {
@@ -198,7 +206,9 @@ public class ExtractLightMethodObjectHandler {
     PsiStatement outStatement = elementFactory.createStatementFromText("System.out.println(" + outputVariables + ");", anchor);
     outStatement = (PsiStatement)container.addAfter(outStatement, elementsCopy[elementsCopy.length - 1]);
 
-    if (!useReflection) {
+    boolean useMagicAccessor = Registry.is("debugger.compiling.evaluator.magic.accessor") &&
+                               javaVersion != null && !javaVersion.isAtLeast(JavaSdkVersion.JDK_1_9);
+    if (useMagicAccessor) {
       copy.accept(new JavaRecursiveElementWalkingVisitor() {
         private void makePublic(PsiMember method) {
           if (method.hasModifierProperty(PsiModifier.PRIVATE)) {
@@ -261,6 +271,8 @@ public class ExtractLightMethodObjectHandler {
     final PsiClass inner = extractMethodObjectProcessor.getInnerClass();
     final PsiMethod[] methods = inner.findMethodsByName("invoke", false);
 
+    boolean useReflection = javaVersion == null || javaVersion.isAtLeast(JavaSdkVersion.JDK_1_9) ||
+                            Registry.is("debugger.compiling.evaluator.reflection.access.with.java8");
     if (useReflection && methods.length == 1) {
       final PsiMethod method = methods[0];
       CompositeReflectionAccessor.createAccessorToEverything(inner, elementFactory)
@@ -270,7 +282,7 @@ public class ExtractLightMethodObjectHandler {
     final String generatedCall = copy.getText().substring(startOffset, outStatement.getTextOffset());
     return new ExtractedData(generatedCall,
                              (PsiClass)CodeStyleManager.getInstance(project).reformat(extractMethodObjectProcessor.getInnerClass()),
-                             originalAnchor);
+                             originalAnchor, useMagicAccessor);
   }
 
   @Nullable

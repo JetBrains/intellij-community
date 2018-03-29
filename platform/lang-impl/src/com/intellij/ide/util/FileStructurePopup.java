@@ -181,12 +181,11 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
 
     myStructureTreeModel = new StructureTreeModel(true);
     myStructureTreeModel.setStructure(myFilteringStructure);
-    myAsyncTreeModel = new AsyncTreeModel(myStructureTreeModel);
+    myAsyncTreeModel = new AsyncTreeModel(myStructureTreeModel, false, this);
     myAsyncTreeModel.setRootImmediately(myStructureTreeModel.getRootImmediately());
     myTree = new MyTree(myAsyncTreeModel);
     registerAutoExpandListener(myTree, myTreeModel);
     Disposer.register(this, () -> myTreeModelWrapper.dispose());
-    Disposer.register(this, myAsyncTreeModel);
 
     ModelListener modelListener = new ModelListener() {
       @Override
@@ -837,7 +836,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
           () ->
             (selection == null ? myAsyncTreeModel.accept(o -> TreeVisitor.Action.CONTINUE) : select(selection))
               .rejected(ignore2 -> result.setError("rejected"))
-              .done(p -> UIUtil.invokeLaterIfNeeded(
+              .onSuccess(p -> UIUtil.invokeLaterIfNeeded(
                 () -> {
                   TreeUtil.expand(getTree(), myTreeModel instanceof StructureViewCompositeModel ? 3 : 2);
                   TreeUtil.ensureSelection(myTree);

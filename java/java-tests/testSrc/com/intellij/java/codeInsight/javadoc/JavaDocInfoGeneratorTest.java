@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -181,7 +182,7 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     PsiField field = psiClass.getFields() [0];
     String docInfo = new JavaDocumentationProvider().generateDoc(field, field);
     assertNotNull(docInfo);
-    assertEquals(exampleHtmlFileText(getTestName(true)), replaceEnvironmentDependentContent(docInfo));
+    assertFileTextEquals(docInfo);
 
     docInfo = new JavaDocumentationProvider().getQuickNavigateInfo(field, field);
     assertNotNull(docInfo);
@@ -196,7 +197,7 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     assertNotNull(innermostComponentReferenceElement);
     String docInfo = new JavaDocumentationProvider().generateDoc(innermostComponentReferenceElement.resolve(), element);
     assertNotNull(docInfo);
-    assertEquals(exampleHtmlFileText(getTestName(true)), replaceEnvironmentDependentContent(docInfo));
+    assertFileTextEquals(docInfo);
   }
   
   public void testNoSpaceAfterTagName() throws Exception {
@@ -217,7 +218,16 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
 
     String docInfo = new JavaDocumentationProvider().getQuickNavigateInfo(superClass, referenceElement);
     assertNotNull(docInfo);
-    assertEquals(exampleHtmlFileText(getTestName(true)), replaceEnvironmentDependentContent(docInfo));
+    assertFileTextEquals(docInfo);
+  }
+
+  void assertFileTextEquals(String docInfo) throws IOException {
+    String actualText = replaceEnvironmentDependentContent(docInfo);
+    final File htmlPath = new File(JavaTestUtil.getJavaTestDataPath() + TEST_DATA_FOLDER + getTestName(true) + ".html");
+    String expectedText = StringUtil.convertLineSeparators(FileUtil.loadFile(htmlPath).trim());
+    if (!StringUtil.equals(expectedText, actualText)) {
+      throw new FileComparisonFailure("Text mismatch in file: " + htmlPath.getName(), expectedText, actualText, FileUtil.toSystemIndependentName(htmlPath.getPath()));
+    }
   }
 
   public void testLambdaParameter() throws Exception {
@@ -264,7 +274,7 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
   private void verifyJavaDoc(final PsiElement field, List<String> docUrls) throws IOException {
     String docInfo = JavaDocumentationProvider.generateExternalJavadoc(field, docUrls);
     assertNotNull(docInfo);
-    assertEquals(exampleHtmlFileText(getTestName(true)), replaceEnvironmentDependentContent(docInfo));
+    assertFileTextEquals(docInfo);
   }
 
   public void testPackageInfo() throws Exception {
@@ -418,7 +428,7 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     configureByFile();
     String docInfo = JavaExternalDocumentationTest.getDocumentationText(myFile, myEditor.getCaretModel().getOffset());
     assertNotNull(docInfo);
-    assertEquals(exampleHtmlFileText(getTestName(true)), replaceEnvironmentDependentContent(docInfo));
+    assertFileTextEquals(docInfo);
   }
 
   private void configureByFile() throws Exception {

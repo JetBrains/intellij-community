@@ -4,12 +4,11 @@
 # based on http://docs.python.org/3.2/library/sys.html
 
 from typing import (
-    List, Sequence, Any, Dict, Tuple, TextIO, overload, Optional, Union,
-    TypeVar, Callable, Type,
+    List, NoReturn, Sequence, Any, Dict, Tuple, TextIO, overload, Optional,
+    Union, TypeVar, Callable, Type,
 )
 import sys
 from types import FrameType, TracebackType
-from mypy_extensions import NoReturn
 
 _T = TypeVar('_T')
 

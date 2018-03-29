@@ -160,12 +160,13 @@ class ProjectInspectionProfileManager(val project: Project,
   private class ProjectInspectionProfileStartUpActivity : StartupActivity {
     override fun runActivity(project: Project) {
       getInstance(project).apply {
-        initialLoadSchemesFuture.done {
-          if (!project.isDisposed) {
-            currentProfile.initInspectionTools(project)
-            fireProfilesInitialized()
+        initialLoadSchemesFuture
+          .onSuccess {
+            if (!project.isDisposed) {
+              currentProfile.initInspectionTools(project)
+              fireProfilesInitialized()
+            }
           }
-        }
 
         scopeListener = NamedScopesHolder.ScopeListener {
           for (profile in schemeManager.allSchemes) {

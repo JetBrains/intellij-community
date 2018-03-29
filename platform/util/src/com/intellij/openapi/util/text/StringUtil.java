@@ -1450,13 +1450,18 @@ public class StringUtil extends StringUtilRt {
 
   @NotNull
   @Contract(pure = true)
-  public static String[] surround(@NotNull String[] strings1, String prefix, String suffix) {
-    String[] result = ArrayUtil.newStringArray(strings1.length);
+  public static String[] surround(@NotNull String[] strings, @Nullable String prefix, @Nullable String suffix) {
+    String[] result = ArrayUtil.newStringArray(strings.length);
     for (int i = 0; i < result.length; i++) {
-      result[i] = prefix + strings1[i] + suffix;
+      result[i] = surround(strings[i], prefix, suffix);
     }
-
     return result;
+  }
+
+  @NotNull
+  public static String surround(@NotNull String string, @Nullable String prefix, @Nullable String suffix) {
+    if (prefix == null && suffix == null) return string;
+    return notNullize(prefix) + string + notNullize(suffix);
   }
 
   @NotNull
@@ -1584,6 +1589,20 @@ public class StringUtil extends StringUtilRt {
     return text;
   }
 
+  @NotNull
+  @Contract(pure = true)
+  public static String formatNumber(long number) {
+    return formatNumber(number, "");
+  }
+
+  @NotNull
+  @Contract(pure = true)
+  public static String formatNumber(long number, @NotNull String unitSeparator) {
+    return formatValue(number, null,
+                       unitSeparator, new String[]{"", "K", "M", "G", "T", "P", "E"},
+                       new long[]{1, 1000, 1000, 1000, 1000, 1000, 1000});
+  }
+
   /**
    * Formats the specified file size as a string.
    *
@@ -1594,71 +1613,71 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static String formatFileSize(long fileSize) {
-    return formatFileSize(fileSize, null);
+    return formatFileSize(fileSize, " ");
   }
 
-  /**
-   * Formats the specified file size as a string.
-   *
-   * @param fileSize the size to format.
-   * @param spaceBeforeUnits space to be used between counts and measurement units
-   * @return the size formatted as a string.
-   * @since 5.0.1
-   */
   @NotNull
   @Contract(pure = true)
-  public static String formatFileSize(long fileSize, final String spaceBeforeUnits) {
+  public static String formatFileSize(long fileSize, @NotNull String unitSeparator) {
     return formatValue(fileSize, null,
-                       new String[]{"B", "K", "M", "G", "T", "P", "E"},
-                       new long[]{1000, 1000, 1000, 1000, 1000, 1000}, spaceBeforeUnits);
+                       unitSeparator, new String[]{"B", "KB", "MB", "GB", "TB", "PB", "EB"},
+                       new long[]{1, 1024, 1024, 1024, 1024, 1024, 1024});
   }
 
   @NotNull
   @Contract(pure = true)
   public static String formatDuration(long duration) {
-    return formatDuration(duration, null);
+    return formatDuration(duration, " ");
   }
 
   @NotNull
   @Contract(pure = true)
-  public static String formatDuration(long duration, final String spaceBeforeUnits) {
-    return formatValue(duration, " ",
-                       new String[]{"ms", "s", "m", "h", "d", "w", "mo", "yr", "c", "ml", "ep"},
-                       new long[]{1000, 60, 60, 24, 7, 4, 12, 100, 10, 10000}, spaceBeforeUnits);
+  public static String formatDuration(long duration, @NotNull String unitSeparator) {
+    return formatValue(duration, " ", unitSeparator,
+                       new String[]{"ms", "s", "m", "h", "d", "mo", "yr", "c", "ml", "ep"},
+                       new long[]{1, 1000, 60, 60, 24, 30, 12, 100, 10, 10000});
   }
 
   @NotNull
-  private static String formatValue(long value, String partSeparator, String[] units, long[] multipliers, final String spaceBeforeUnits) {
+  private static String formatValue(long value,
+                                    @Nullable String partSeparator, @NotNull String unitSeparator,
+                                    @NotNull String[] units, @NotNull long[] multipliers) {
+    LOG.assertTrue(units.length == multipliers.length);
     StringBuilder sb = new StringBuilder();
     long count = value;
     long remainder = 0;
-    int i = 0;
-    for (; i < units.length; i++) {
-      long multiplier = i < multipliers.length ? multipliers[i] : -1;
-      if (multiplier == -1 || count < multiplier) break;
+    int i = 1;
+    for (; i < units.length && count > 0; i++) {
+      long multiplier = multipliers[i];
+      if (count < multiplier) break;
       remainder = count % multiplier;
       count /= multiplier;
       if (partSeparator != null && (remainder != 0 || sb.length() > 0)) {
-        sb.insert(0, units[i]);
-        if (spaceBeforeUnits != null) {
-          sb.insert(0, spaceBeforeUnits);
+        if (!units[i - 1].isEmpty()) {
+          sb.insert(0, units[i - 1]);
+          sb.insert(0, unitSeparator);
         }
         sb.insert(0, remainder).insert(0, partSeparator);
       }
+      else {
+        remainder = Math.round(remainder * 100 / (double)multiplier);
+        count += remainder / 100;
+        remainder %= 100;
+      }
     }
     if (partSeparator != null || remainder == 0) {
-      sb.insert(0, units[i]);
-      if (spaceBeforeUnits != null) {
-        sb.insert(0, spaceBeforeUnits);
+      if (!units[i - 1].isEmpty()) {
+        sb.insert(0, units[i - 1]);
+        sb.insert(0, unitSeparator);
       }
       sb.insert(0, count);
     }
     else if (remainder > 0) {
-      sb.append(String.format(Locale.US, "%.2f", count + (double)remainder / multipliers[i - 1]));
-      if (spaceBeforeUnits != null) {
-        sb.append(spaceBeforeUnits);
+      sb.append(count).append(".").append(remainder / 10 == 0 ? "0" : "").append(remainder);
+      if (!units[i - 1].isEmpty()) {
+        sb.append(unitSeparator);
+        sb.append(units[i - 1]);
       }
-      sb.append(units[i]);
     }
     return sb.toString();
   }

@@ -105,6 +105,9 @@ public class PsiDiamondTypeUtil {
       return parent;
     }
     final PsiJavaCodeReferenceElement javaCodeReferenceElement = (PsiJavaCodeReferenceElement) parent;
+    PsiReferenceParameterList parameterList = javaCodeReferenceElement.getParameterList();
+    if (parameterList == null) return javaCodeReferenceElement;
+
     final StringBuilder text = new StringBuilder();
     text.append(javaCodeReferenceElement.getQualifiedName());
     text.append('<');
@@ -114,7 +117,10 @@ public class PsiDiamondTypeUtil {
     text.append('>');
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(element.getProject());
     final PsiJavaCodeReferenceElement newReference = elementFactory.createReferenceFromText(text.toString(), element);
-    return CodeStyleManager.getInstance(javaCodeReferenceElement.getProject()).reformat(javaCodeReferenceElement.replace(newReference));
+    PsiReferenceParameterList newReferenceParameterList = newReference.getParameterList();
+    LOG.assertTrue(newReferenceParameterList != null);
+    CodeStyleManager.getInstance(javaCodeReferenceElement.getProject()).reformat(parameterList.replace(newReferenceParameterList));
+    return javaCodeReferenceElement;
   }
 
   public static PsiExpression expandTopLevelDiamondsInside(PsiExpression expr) {

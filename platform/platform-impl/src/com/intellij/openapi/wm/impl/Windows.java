@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -90,6 +91,17 @@ public class Windows {
         return source != null;
       }
 
+      return false;
+    }
+
+    public static boolean isInToolWindow (Component component) {
+      Container c = component.getParent();
+      while (c != null) {
+        if (c instanceof ToolWindow) {
+          return true;
+        }
+        c = c.getParent();
+      }
       return false;
     }
 

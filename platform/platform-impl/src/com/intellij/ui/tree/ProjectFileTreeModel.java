@@ -35,15 +35,7 @@ import static com.intellij.openapi.vfs.VirtualFileManager.VFS_CHANGES;
 import static com.intellij.ui.tree.TreePathUtil.pathToCustomNode;
 import static java.util.Collections.emptyList;
 
-public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileTreeModel.Child> implements InvokerSupplier {
-  public interface Child {
-    @NotNull
-    Module getModule();
-
-    @NotNull
-    VirtualFile getVirtualFile();
-  }
-
+public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> implements InvokerSupplier {
   private final Invoker invoker = new Invoker.BackgroundThread(this);
   private final ProjectNode root;
 
@@ -126,12 +118,12 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileTreeMod
 
   @NotNull
   @Override
-  public List<Child> getChildren(Object object) {
+  public List<ProjectFileNode> getChildren(Object object) {
     Node node = object instanceof Node && isValidThread() ? (Node)object : null;
     if (node == null) return emptyList();
     List<?> children = node.getChildren();
     if (children.isEmpty()) return emptyList();
-    List<Child> result = new SmartList<>();
+    List<ProjectFileNode> result = new SmartList<>();
     VirtualFileFilter filter = root.filter;
     for (Object child : children) {
       if (child instanceof FileNode && isVisible((FileNode)child, filter)) {
@@ -142,8 +134,7 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileTreeMod
   }
 
   private static boolean isVisible(@NotNull FileNode node, @Nullable VirtualFileFilter filter) {
-    if (node.module.isDisposed()) return false; // ignore disposed module
-    if (!node.file.isValid()) return false; // ignore removed file
+    if (!node.isValid()) return false;
     if (filter == null) return true;
     ThreeState visibility = node.visibility;
     if (visibility == ThreeState.NO) return false;
@@ -290,7 +281,7 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileTreeMod
   }
 
 
-  private static class FileNode extends Node<FileNode> implements Child {
+  private static class FileNode extends Node<FileNode> implements ProjectFileNode {
     final VirtualFile file;
     final Module module;
 
@@ -318,7 +309,7 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileTreeMod
     @Override
     List<FileNode> getChildren(@NotNull List<FileNode> oldList) {
       visibility = ThreeState.NO;
-      if (!file.isValid() || module.isDisposed()) return emptyList();
+      if (!isValid()) return emptyList();
       ModuleRootManager manager = ModuleRootManager.getInstance(module);
       if (manager == null) return emptyList();
       visibility = ThreeState.UNSURE;
@@ -333,7 +324,7 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileTreeMod
     }
 
     final void invalidateChildren(Predicate<FileNode> validator) {
-      if (valid) {
+      if (valid || !file.isDirectory()) {
         if (validator == null || !validator.test(this)) {
           validator = null; // all children will be invalid
           valid = false;

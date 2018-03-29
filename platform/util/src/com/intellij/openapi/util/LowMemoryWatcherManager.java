@@ -55,7 +55,7 @@ public class LowMemoryWatcherManager implements Disposable {
   };
 
   public LowMemoryWatcherManager(@NotNull ExecutorService executorService) {
-    myExecutorService = new SequentialTaskExecutor("LowMemoryWatcherManager", executorService);
+    myExecutorService = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("LowMemoryWatcherManager", executorService);
     try {
       for (MemoryPoolMXBean bean : ManagementFactory.getMemoryPoolMXBeans()) {
         if (bean.getType() == MemoryType.HEAP && bean.isUsageThresholdSupported()) {

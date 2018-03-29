@@ -476,7 +476,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
             FindInProjectUtil.setupProcessPresentation(myProject, showPanelIfOnlyOneUsage, presentation);
           ThreadLocal<VirtualFile> lastUsageFileRef = new ThreadLocal<>();
 
-          FindInProjectUtil.findUsages(findModel, myProject, info -> {
+          FindInProjectUtil.findUsages(findModel, myProject, processPresentation, filesToScanInitially, info -> {
             if(isCancelled()) {
               return false;
             }
@@ -495,7 +495,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
               model.addRow(new Object[]{usage});
             }, state);
             return resultsCount.incrementAndGet() < ShowUsagesAction.getUsagesPageSize();
-          }, processPresentation, filesToScanInitially);
+          });
 
           boolean succeeded = !progressIndicatorWhenSearchStarted.isCanceled();
           if (succeeded) {

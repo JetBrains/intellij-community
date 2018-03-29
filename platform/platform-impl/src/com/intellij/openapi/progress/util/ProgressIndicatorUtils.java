@@ -247,6 +247,13 @@ public class ProgressIndicatorUtils {
    * by background thread read action (until its first checkCanceled call). Shouldn't be called from under read action.
    */
   public static void yieldToPendingWriteActions() {
-    ApplicationManager.getApplication().invokeAndWait(EmptyRunnable.INSTANCE, ModalityState.any());
+    Application application = ApplicationManager.getApplication();
+    if (application.isReadAccessAllowed()) {
+      throw new IllegalStateException("Mustn't be called from within read action");
+    }
+    if (application.isDispatchThread()) {
+      throw new IllegalStateException("Mustn't be called from EDT");
+    }
+    application.invokeAndWait(EmptyRunnable.INSTANCE, ModalityState.any());
   }
 }

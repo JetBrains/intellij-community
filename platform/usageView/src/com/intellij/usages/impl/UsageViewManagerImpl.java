@@ -61,29 +61,23 @@ public class UsageViewManagerImpl extends UsageViewManager {
     myProject = project;
   }
 
-
-  @NotNull
-  protected UsageViewEx createEmptyUsageView(@NotNull UsageTarget[] targets,
-                                        @NotNull UsageViewPresentation presentation,
-                                        Factory<UsageSearcher> usageSearcherFactory) {
-    return new UsageViewImpl(myProject, presentation, targets, usageSearcherFactory);
-  }
-
   @Override
   @NotNull
   public UsageViewEx createUsageView(@NotNull UsageTarget[] targets,
-                                   @NotNull Usage[] usages,
-                                   @NotNull UsageViewPresentation presentation,
-                                   Factory<UsageSearcher> usageSearcherFactory) {
-    UsageViewEx usageView = createEmptyUsageView(targets, presentation, usageSearcherFactory);
-    usageView.appendUsagesInBulk(Arrays.asList(usages));
-    ProgressManager.getInstance().run(new Task.Modal(myProject, "Waiting For Usages", false) {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        usageView.waitForUpdateRequestsCompletion();
-      }
-    });
-    usageView.setSearchInProgress(false);
+                                     @NotNull Usage[] usages,
+                                     @NotNull UsageViewPresentation presentation,
+                                     Factory<UsageSearcher> usageSearcherFactory) {
+    UsageViewEx usageView = new UsageViewImpl(myProject, presentation, targets, usageSearcherFactory);
+    if (usages.length != 0) {
+      usageView.appendUsagesInBulk(Arrays.asList(usages));
+      ProgressManager.getInstance().run(new Task.Modal(myProject, "Waiting For Usages", false) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          usageView.waitForUpdateRequestsCompletion();
+        }
+      });
+      usageView.setSearchInProgress(false);
+    }
 
     return usageView;
   }

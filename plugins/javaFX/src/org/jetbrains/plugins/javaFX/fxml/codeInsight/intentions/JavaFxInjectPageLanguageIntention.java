@@ -33,7 +33,6 @@ import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlProcessingInstruction;
 import com.intellij.psi.xml.XmlProlog;
-import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -86,14 +85,16 @@ public class JavaFxInjectPageLanguageIntention extends PsiElementBaseIntentionAc
     final Set<String> availableLanguages = getAvailableLanguages(project);
 
     LOG.assertTrue(availableLanguages != null);
+    final List<String> list = ContainerUtil.newArrayList(availableLanguages);
 
     if (availableLanguages.size() == 1) {
       registerPageLanguage(project, containingFile, availableLanguages.iterator().next());
     } else {
-      final JBList list = new JBList(availableLanguages);
-      JBPopupFactory.getInstance().createListPopupBuilder(list)
-        .setItemChoosenCallback(
-          () -> registerPageLanguage(project, containingFile, (String)list.getSelectedValue())).createPopup().showInBestPositionFor(editor);
+      JBPopupFactory.getInstance()
+        .createPopupChooserBuilder(list)
+        .setItemChosenCallback(
+          (selectedValue) -> registerPageLanguage(project, containingFile, selectedValue))
+        .createPopup().showInBestPositionFor(editor);
     }
   }
 

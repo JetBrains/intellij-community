@@ -23,7 +23,11 @@ dependencies {
   buildScriptsDeps loadLibraryMavenId("Guava")
   buildScriptsDeps loadLibraryMavenId("JUnit4")
   buildScriptsDeps loadLibraryMavenId("Netty")
+  buildScriptsDeps loadLibraryMavenId("lz4-java")
   buildScriptsDeps(loadLibraryMavenId("gant-groovy"), { transitive = false })
+  buildScriptsDeps loadLibraryMavenId("Log4J")
+  buildScriptsDeps loadLibraryMavenId("Slf4j")
+  buildScriptsDeps loadLibraryMavenId("jna")
 }
 
 /**

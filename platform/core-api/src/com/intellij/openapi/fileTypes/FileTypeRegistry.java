@@ -31,6 +31,8 @@ public abstract class FileTypeRegistry {
 
   public abstract boolean isFileIgnored(@NotNull VirtualFile file);
 
+  public abstract boolean isFileOfType(@NotNull VirtualFile file, @NotNull FileType type);
+
   public static FileTypeRegistry getInstance() {
     return ourInstanceGetter.get();
   }

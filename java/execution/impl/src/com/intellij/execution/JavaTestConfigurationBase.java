@@ -50,6 +50,7 @@ public abstract class JavaTestConfigurationBase extends ModuleBasedConfiguration
   }
 
   public abstract TestSearchScope getTestSearchScope();
+  public abstract void setSearchScope(TestSearchScope searchScope);
 
   @Nullable
   @Override

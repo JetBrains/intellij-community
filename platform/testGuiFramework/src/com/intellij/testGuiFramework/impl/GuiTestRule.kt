@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.impl
 
 import com.intellij.diagnostic.MessagePool
@@ -226,19 +212,17 @@ class GuiTestRule : TestRule {
   }
 
   inner class FatalErrorsFlusher : ExternalResource() {
-
     override fun after() {
       try {
         val executorService = AppExecutorUtil.getAppExecutorService()
         //wait 10 second for the termination of all
         if (!executorService.awaitTermination(10, TimeUnit.SECONDS)) executorService.shutdownNow()
-        MessagePool.getInstance().clearFatals()
+        MessagePool.getInstance().clearErrors()
       }
       catch (e: Exception) {
         //TODO: log it
       }
     }
-
   }
 
   fun findWelcomeFrame(): WelcomeFrameFixture {
@@ -304,14 +288,20 @@ class GuiTestRule : TestRule {
     val toSelect = VfsUtil.findFileByIoFile(projectPath, false)
     Assert.assertNotNull(toSelect)
     doImportProject(toSelect!!)
-
 //TODO: add wait to open project
-
     return findIdeFrame(projectPath)
   }
 
   fun importProject(projectDirName: String): File {
     val projectPath = setUpProject(projectDirName, false)
+    val toSelect = VfsUtil.findFileByIoFile(projectPath, false)
+    Assert.assertNotNull(toSelect)
+    doImportProject(toSelect!!)
+    return projectPath
+  }
+
+  fun importProject(projectFile: File): File {
+    val projectPath = setUpProject(projectFile, false)
     val toSelect = VfsUtil.findFileByIoFile(projectPath, false)
     Assert.assertNotNull(toSelect)
     doImportProject(toSelect!!)
@@ -333,6 +323,13 @@ class GuiTestRule : TestRule {
     return projectPath
   }
 
+  private fun setUpProject(projectDirFile: File,
+                           forOpen: Boolean): File {
+    val projectPath = copyProjectBeforeOpening(projectDirFile)
+    Assert.assertNotNull(projectPath)
+    return projectPath
+  }
+
 
   fun copyProjectBeforeOpening(projectDirName: String): File {
     val masterProjectPath = getMasterProjectDirPath(projectDirName)
@@ -344,6 +341,18 @@ class GuiTestRule : TestRule {
     }
     FileUtil.copyDir(masterProjectPath, projectPath)
     println("Copied project '$projectDirName' to path '${projectPath.path}'")
+    return projectPath
+  }
+
+  fun copyProjectBeforeOpening(projectDirFile: File): File {
+
+    val projectPath = getTestProjectDirPath(projectDirFile.name)
+    if (projectPath.isDirectory) {
+      FileUtilRt.delete(projectPath)
+      println(String.format("Deleted project path '%1\$s'", projectPath.path))
+    }
+    FileUtil.copyDir(projectDirFile, projectPath)
+    println("Copied project '${projectDirFile.name}' to path '${projectPath.path}'")
     return projectPath
   }
 

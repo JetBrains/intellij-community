@@ -154,8 +154,9 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
         Collections.sort(testNames); //sort tests in FQN order
       }
 
-      final String category = JUnitConfiguration.TEST_CATEGORY.equals(data.TEST_OBJECT) ? data.getCategory()
-                                                                                        : JUnitConfiguration.TEST_TAGS.equals(data.TEST_OBJECT) ? StringUtil.join(data.getTags(), " ") : "";
+      final String category = JUnitConfiguration.TEST_CATEGORY.equals(data.TEST_OBJECT) 
+                              ? data.getCategory()
+                              : JUnitConfiguration.TEST_TAGS.equals(data.TEST_OBJECT) ? data.getTags().replaceAll(" ", "") : "";
       final String filters = JUnitConfiguration.TEST_PATTERN.equals(data.TEST_OBJECT) ? data.getPatternPresentation() : "";
       JUnitStarter.printClassesList(testNames, packageName, category, filters, myTempFile);
 
@@ -413,6 +414,17 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   }
 
   protected PsiElement retrievePsiElement(Object element) {
+    if (element instanceof String) {
+      SourceScope scope = getSourceScope();
+      Project project = getConfiguration().getProject();
+      String qName = (String)element;
+      int idx = qName.indexOf(',');
+      String className = idx > 0 ? qName.substring(0, idx) : qName;
+      return JavaPsiFacade.getInstance(project).findClass(className, scope != null
+                                                                     ? scope.getGlobalSearchScope() 
+                                                                     : GlobalSearchScope.projectScope(project));
+      
+    }
     return element instanceof PsiElement ? (PsiElement)element : null;
   }
 

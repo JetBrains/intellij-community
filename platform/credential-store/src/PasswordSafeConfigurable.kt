@@ -201,20 +201,17 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
             )
           }
           row("Master Password:") {
-            keePassMasterPassword(growPolicy = GrowPolicy.SHORT_TEXT)
-          }
-          if (!SystemInfo.isWindows) {
-            row { hint("Stored using weak encryption. It is recommended to store on encrypted volume for additional security.") }
+            keePassMasterPassword(comment = if (SystemInfo.isWindows) null else "Stored using weak encryption. It is recommended to store on encrypted volume for additional security.")
           }
         }
 
         row {
-          rememberPasswordsUntilClosing()
-        }
-
-        val currentProvider = passwordSafe.currentProvider
-        if (currentProvider is KeePassCredentialStore && !currentProvider.memoryOnly) {
-          row { hint("Existing KeePass file will be removed.") }
+          var comment: String? = null
+          val currentProvider = passwordSafe.currentProvider
+          if (currentProvider is KeePassCredentialStore && !currentProvider.memoryOnly) {
+            comment = "Existing KeePass file will be removed."
+          }
+          rememberPasswordsUntilClosing(comment = comment)
         }
       }
     }

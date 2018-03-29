@@ -3,7 +3,6 @@
  */
 package com.intellij.openapi.projectRoots;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.impl.SdkVersionUtil;
 import com.intellij.openapi.util.io.FileUtil;
@@ -19,7 +18,7 @@ import java.io.File;
  */
 public class SimpleJavaSdkType extends SdkType implements JavaSdkType {
   public static SimpleJavaSdkType getInstance() {
-    return ApplicationManager.getApplication().getComponent(SimpleJavaSdkType.class);
+    return SdkType.findInstance(SimpleJavaSdkType.class);
   }
 
   public SimpleJavaSdkType() {

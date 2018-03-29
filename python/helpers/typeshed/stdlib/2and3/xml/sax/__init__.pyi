@@ -1,5 +1,4 @@
-from typing import Any, List, Optional, Text, Union, IO
-from mypy_extensions import NoReturn
+from typing import Any, List, NoReturn, Optional, Text, Union, IO
 
 import xml.sax
 from xml.sax.xmlreader import InputSource, Locator

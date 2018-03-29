@@ -5,8 +5,6 @@ package com.intellij.util;
 
 import com.intellij.internal.IconsLoadTime;
 import com.intellij.internal.IconsLoadTime.StatData;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ui.TestScaleHelper;
 import org.junit.After;
@@ -17,7 +15,6 @@ import java.io.*;
 
 import static com.intellij.testFramework.PlatformTestUtil.assertTiming;
 import static com.intellij.util.ImageLoader.ImageDesc.Type;
-import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertNotNull;
 import static org.junit.Assume.assumeTrue;
 
@@ -33,14 +30,16 @@ public class IconsLoadTimeTest {
   // a list of icons for which we have SVG versions
   private static final String ICONS_LIST_PATH = PlatformTestUtil.getPlatformTestDataPath() + "icons/icons_list.txt";
 
-  private static boolean initialSvgProp;
-
   @Before
   public void setState() {
-    TestScaleHelper.setProperty("idea.is.internal", "true");
-    RegistryValue rv = Registry.get("ide.svg.icon");
-    initialSvgProp = rv.asBoolean();
-    rv.setValue(true);
+    TestScaleHelper.setSystemProperty("idea.is.internal", "true");
+    TestScaleHelper.setRegistryProperty("ide.svg.icon", "true");
+  }
+
+  @After
+  public void restoreState() {
+    TestScaleHelper.restoreSystemProperties();
+    TestScaleHelper.restoreRegistryProperties();
   }
 
   @Test
@@ -63,11 +62,5 @@ public class IconsLoadTimeTest {
 
     assertTiming("SVG icon load time raised to " + String.format("%.02fms", svgData.averageTime),
                  SVG_ICON_AVERAGE_LOAD_TIME_EXPECTED, (int)svgData.averageTime);
-  }
-
-  @After
-  public void restoreState() {
-    TestScaleHelper.restoreProperties();
-    Registry.get("ide.svg.icon").setValue(initialSvgProp);
   }
 }

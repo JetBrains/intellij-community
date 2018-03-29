@@ -69,6 +69,7 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
   @get:OptionTag("SCROLL_TAB_LAYOUT_IN_EDITOR") var scrollTabLayoutInEditor by property(true)
   @get:OptionTag("HIDE_TABS_IF_NEED") var hideTabsIfNeed by property(true)
   @get:OptionTag("SHOW_CLOSE_BUTTON") var showCloseButton by property(true)
+  @get:OptionTag("CLOSE_TAB_BUTTON_ON_THE_RIGHT") var closeTabButtonOnTheRight by property(true)
   @get:OptionTag("EDITOR_TAB_PLACEMENT") var editorTabPlacement by property(SwingConstants.TOP)
   @get:OptionTag("HIDE_KNOWN_EXTENSION_IN_TABS") var hideKnownExtensionInTabs by property(false)
   @get:OptionTag("SHOW_ICONS_IN_QUICK_NAVIGATION") var showIconInQuickNavigation by property(true)
@@ -239,6 +240,13 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
   companion object {
     private val LOG = Logger.getInstance(UISettings::class.java)
 
+    init {
+      verbose("defFontSize=%d, defFontScale=%.2f", defFontSize, defFontScale)
+    }
+
+    @JvmStatic
+    private fun verbose(msg: String, vararg args: Any) = if (JBUI.SCALE_VERBOSE) LOG.info(String.format(msg, *args)) else {}
+
     const val ANIMATION_DURATION = 300 // Milliseconds
 
     /** Not tabbed pane.  */
@@ -364,6 +372,7 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
     fun restoreFontSize(readSize: Int, readScale: Float?): Int {
       var size = readSize
       if (readScale == null || readScale <= 0) {
+        verbose("Reset font to default")
         // Reset font to default on switch from IDE-managed HiDPI to JRE-managed HiDPI. Doesn't affect OSX.
         if (UIUtil.isJreHiDPIEnabled() && !SystemInfo.isMac) size = defFontSize
       }
@@ -375,6 +384,7 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
             // [tav] todo: temp workaround for transitioning IDEA 173 to 181
             // not converting fonts stored with scale equal to the old calculation
             oldDefFontScale = fdata.second / 12f
+            verbose("oldDefFontScale=%.2f", oldDefFontScale)
           }
         }
         if (readScale != defFontScale && readScale != oldDefFontScale) size = Math.round((readSize / readScale) * defFontScale)

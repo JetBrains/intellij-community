@@ -35,7 +35,7 @@ import java.util.regex.Pattern;
 
 public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNamePopupComponent, Disposable {
   public static final Key<ChooseByNamePopup> CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY = new Key<>("ChooseByNamePopup");
-  public static final Key<String> CURRENT_SEARCH_PATTERN = new Key<String>("ChooseByNamePattern");
+  public static final Key<String> CURRENT_SEARCH_PATTERN = new Key<>("ChooseByNamePattern");
 
   private Component myOldFocusOwner = null;
   private boolean myShowListForEmptyPattern = false;
@@ -148,9 +148,6 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
 
     // calculate maximal size for the popup window
     Rectangle screen = ScreenUtil.getScreenRectangle(location);
-    screen.width -= location.x - screen.x;
-    screen.height -= location.y - screen.y;
-
     if (preferredScrollPaneSize.width > screen.width) {
       preferredScrollPaneSize.width = screen.width;
       if (model.getSize() <= myList.getVisibleRowCount()) {
@@ -162,6 +159,9 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
       }
     }
     if (preferredScrollPaneSize.height > screen.height) preferredScrollPaneSize.height = screen.height;
+
+    location.x = Math.min(location.x, screen.x + screen.width - preferredScrollPaneSize.width);
+    location.y = Math.min(location.y, screen.y + screen.height - preferredScrollPaneSize.height);
 
     String adText = getAdText();
     if (myDropdownPopup == null) {
@@ -202,24 +202,18 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
 
     myModel.saveInitialCheckBoxState(myCheckBox.isSelected());
     if (isOk) {
-
       final List<Object> chosenElements = getChosenElements();
-      if (chosenElements != null) {
-        if (myActionListener instanceof MultiElementsCallback) {
-          ((MultiElementsCallback)myActionListener).elementsChosen(chosenElements);
-        }
-        else {
-          for (Object element : chosenElements) {
-            myActionListener.elementChosen(element);
-            String text = myModel.getFullName(element);
-            if (text != null) {
-              StatisticsManager.getInstance().incUseCount(new StatisticsInfo(statisticsContext(), text));
-            }
-          }
-        }
+      if (myActionListener instanceof MultiElementsCallback) {
+        ((MultiElementsCallback)myActionListener).elementsChosen(chosenElements);
       }
       else {
-        return;
+        for (Object element : chosenElements) {
+          myActionListener.elementChosen(element);
+          String text = myModel.getFullName(element);
+          if (text != null) {
+            StatisticsManager.getInstance().incUseCount(new StatisticsInfo(statisticsContext(), text));
+          }
+        }
       }
 
       if (!chosenElements.isEmpty()) {
@@ -238,9 +232,6 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
             }
           }
         }
-      }
-      else {
-        return;
       }
     }
     Disposer.dispose(this);

@@ -3,8 +3,6 @@
   <module value="org.jetbrains.plugins.gradle.java"/>
 
   <depends>org.jetbrains.plugins.gradle</depends>
-  <depends optional="true" config-file="gradle-maven-integration.xml">org.jetbrains.idea.maven</depends>
-  <depends optional="true" config-file="gradle-coverage-integration.xml">com.intellij.modules.coverage</depends>
 
   <extensionPoints>
     <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.frameworkSupport" interface="org.jetbrains.plugins.gradle.frameworkSupport.GradleFrameworkSupportProvider"/>
@@ -59,5 +57,10 @@
                               order="last"/>
     <runConfigurationProducer implementation="org.jetbrains.plugins.gradle.execution.test.runner.PatternGradleConfigurationProducer"
                               order="last"/>
+    <runConfigurationProducer implementation="org.jetbrains.plugins.gradle.execution.GradleGroovyScriptRunConfigurationProducer"
+                              order="last"/>
+
+    <runLineMarkerContributor language="Groovy" id="gradleGroovyRunLineMarkerProvider"
+                              implementationClass="org.jetbrains.plugins.gradle.execution.GradleGroovyRunLineMarkerProvider"/>
   </extensions>
 </idea-plugin>

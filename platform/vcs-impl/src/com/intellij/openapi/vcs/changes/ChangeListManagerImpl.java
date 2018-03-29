@@ -124,7 +124,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
     myComposite = new FileHolderComposite(project);
     myDeltaForwarder = new MyChangesDeltaForwarder(myProject, myScheduler);
-    myDelayedNotificator = new DelayedNotificator(myListeners, myScheduler);
+    myDelayedNotificator = new DelayedNotificator(this, myListeners, myScheduler);
     myWorker = new ChangeListWorker(myProject, myDelayedNotificator);
 
     myUpdater = new UpdateRequestsQueue(myProject, myScheduler, () -> updateImmediately());
@@ -132,9 +132,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
     myListeners.addListener(new ChangeListAdapter() {
       @Override
-      public void defaultListChanged(final ChangeList oldDefaultList, ChangeList newDefaultList) {
+      public void defaultListChanged(ChangeList oldDefaultList, ChangeList newDefaultList, boolean automatic) {
         final LocalChangeList oldList = (LocalChangeList)oldDefaultList;
-        if (oldDefaultList == null || oldList.hasDefaultName() || oldDefaultList.equals(newDefaultList)) return;
+        if (automatic || oldDefaultList == null || oldList.hasDefaultName() || oldDefaultList.equals(newDefaultList)) return;
 
         scheduleAutomaticEmptyChangeListDeletion(oldList);
       }
@@ -537,6 +537,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         if (LOG.isDebugEnabled()) {
           String scopeInString = StringUtil.join(scopes, scope -> scope.toString(), "->\n");
           LOG.debug("refresh procedure started, everything: " + wasEverythingDirty + " dirty scope: " + scopeInString +
+                    "\nignored: " + myComposite.getIgnoredFileHolder().values().size() +
+                    "\nunversioned: " + myComposite.getVFHolder(FileHolder.HolderType.UNVERSIONED).getFiles().size() +
                     "\ncurrent changes: " + myWorker);
         }
       }
@@ -979,19 +981,28 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     removeChangeList(list.getName());
   }
 
-  @Override
-  public void setDefaultChangeList(@NotNull String name) {
+  public void setDefaultChangeList(@NotNull String name, boolean automatic) {
     ApplicationManager.getApplication().runReadAction(() -> {
       synchronized (myDataLock) {
-        myModifier.setDefault(name);
+        myModifier.setDefault(name, automatic);
       }
     });
     myChangesViewManager.scheduleRefresh();
   }
 
   @Override
+  public void setDefaultChangeList(@NotNull String name) {
+    setDefaultChangeList(name, false);
+  }
+
+  @Override
   public void setDefaultChangeList(@NotNull final LocalChangeList list) {
-    setDefaultChangeList(list.getName());
+    setDefaultChangeList(list, false);
+  }
+
+  @Override
+  public void setDefaultChangeList(@NotNull final LocalChangeList list, boolean automatic) {
+    setDefaultChangeList(list.getName(), automatic);
   }
 
   @Override
@@ -1053,8 +1064,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
   }
 
-  public void notifyChangelistsChanged() {
-    myWorker.notifyChangelistsChanged();
+  public void notifyChangelistsChanged(@NotNull FilePath path,
+                                       @NotNull List<String> beforeChangeListsIds,
+                                       @NotNull List<String> afterChangeListsIds) {
+    myWorker.notifyChangelistsChanged(path, beforeChangeListsIds, afterChangeListsIds);
   }
 
   @Override
@@ -1677,7 +1690,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   static class Scheduler {
     private final AtomicReference<Future> myLastTask = new AtomicReference<>(); // @TestOnly
     private final ScheduledExecutorService myExecutor =
-      AppExecutorUtil.createBoundedScheduledExecutorService("ChangeListManagerImpl pool", 1);
+      AppExecutorUtil.createBoundedScheduledExecutorService("ChangeListManagerImpl Pool", 1);
 
     public void schedule(@NotNull Runnable command, long delay, @NotNull TimeUnit unit) {
       myLastTask.set(myExecutor.schedule(command, delay, unit));

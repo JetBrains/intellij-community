@@ -15,16 +15,12 @@
  */
 package com.intellij.ide.ui.laf.intellij;
 
-import com.intellij.ide.ui.laf.IconCache;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.PopupMenuListenerAdapter;
-import com.intellij.util.ui.JBDimension;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,7 +30,6 @@ import javax.swing.event.PopupMenuEvent;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicArrowButton;
 import javax.swing.plaf.basic.BasicComboBoxEditor;
-import javax.swing.plaf.basic.BasicComboPopup;
 import javax.swing.plaf.basic.ComboPopup;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
@@ -517,8 +512,9 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
   }
 
 
-  @Override protected ComboPopup createPopup() {
-    return new BasicComboPopup(comboBox) {
+  @Override
+  protected ComboPopup createPopup() {
+    return new CustomComboPopup(comboBox) {
       @Override
       protected void configurePopup() {
         super.configurePopup();

@@ -359,7 +359,7 @@ public class PathManager {
    */
   @Nullable
   public static String getResourceRoot(@NotNull ClassLoader cl, String resourcePath) {
-    final URL url = cl.getResource(resourcePath);
+    URL url = cl.getResource(resourcePath);
     return url != null ? extractRoot(url, resourcePath) : null;
   }
 
@@ -389,9 +389,12 @@ public class PathManager {
         resultPath = FileUtil.toSystemDependentName(paths.first);
       }
     }
+    else if (URLUtil.JRT_PROTOCOL.equals(protocol)) {
+      return null;
+    }
 
     if (resultPath == null) {
-      log("cannot extract: " + resourcePath + " from " + resourceURL);
+      log("cannot extract '" + resourcePath + "' from '" + resourceURL + "'");
       return null;
     }
 
@@ -509,7 +512,7 @@ public class PathManager {
       FileUtils.class,              // JNA (jna-platform)
       PatternMatcher.class,         // OROMatcher
       Snappy.class,                 // Snappy
-      LZ4Factory.class,             // Snappy
+      LZ4Factory.class,             // lz4-java
     };
 
     final Set<String> classPath = new HashSet<String>();

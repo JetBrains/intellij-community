@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.actions;
 
 import com.intellij.execution.*;
@@ -79,7 +77,7 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
        return null;
      }
     }
-    catch (Exception e) {
+    catch (ClassCastException e) {
       LOG.error(myConfigurationFactory + " produced wrong type", e);
       return null;
     }

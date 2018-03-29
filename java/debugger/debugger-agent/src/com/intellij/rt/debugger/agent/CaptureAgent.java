@@ -157,6 +157,7 @@ public class CaptureAgent {
             return bytes;
           }
           catch (Exception e) {
+            System.out.println("Capture agent: failed to instrument " + className);
             e.printStackTrace();
           }
         }
@@ -484,6 +485,11 @@ public class CaptureAgent {
       if (myIdx >= argumentTypes.length) {
         throw new IllegalStateException(
           "Argument with id " + myIdx + " is not available, method " + methodDisplayName + " has only " + argumentTypes.length);
+      }
+      int sort = argumentTypes[myIdx].getSort();
+      if (sort != Type.OBJECT && sort != Type.ARRAY) {
+        throw new IllegalStateException(
+          "Argument with id " + myIdx + " in method " + methodDisplayName + " must be an object");
       }
       for (int i = 0; i < myIdx; i++) {
         index += argumentTypes[i].getSize();

@@ -14,7 +14,7 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.StringInterner;
 import com.intellij.util.containers.WeakStringInterner;
 import org.jdom.Element;
@@ -137,7 +137,7 @@ public class IntentionManagerSettings implements PersistentStateComponent<Elemen
     myMetaData.put(key, metaData);
   }
 
-  private static final ExecutorService ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("loader", 1);
+  private static final ExecutorService ourExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Intentions Loader");
   
   private static void processMetaData(@NotNull IntentionActionMetaData metaData) {
     final Application app = ApplicationManager.getApplication();

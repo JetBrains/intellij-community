@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.impl.DebuggerManagerImpl;
@@ -25,6 +11,7 @@ import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.process.ProcessInfo;
 import com.intellij.internal.DebugAttachDetector;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
@@ -35,17 +22,19 @@ import com.intellij.xdebugger.attach.XDefaultLocalAttachGroup;
 import com.intellij.xdebugger.attach.XLocalAttachDebugger;
 import com.intellij.xdebugger.attach.XLocalAttachDebuggerProvider;
 import com.intellij.xdebugger.attach.XLocalAttachGroup;
+import com.sun.tools.attach.AttachNotSupportedException;
+import com.sun.tools.attach.VirtualMachine;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.io.IOException;
+import java.util.*;
 
 /**
  * @author egor
  */
 public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider {
-  private static final XLocalAttachDebugger ourAttachDebugger = new XLocalAttachDebugger() {
+  private static final List<XLocalAttachDebugger> ourAttachDebuggers = Collections.singletonList(new XLocalAttachDebugger() {
     @NotNull
     @Override
     public String getDebuggerDisplayName() {
@@ -54,8 +43,8 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
 
     @Override
     public void attachDebugSession(@NotNull Project project, @NotNull ProcessInfo processInfo) {
-      Pair<String, Integer> address = getAttachAddress(processInfo);
-      assert address != null;
+      LocalAttachInfo info = getAttachInfo(processInfo, null);
+      assert info != null;
 
       // TODO: first need to remove circular dependency with intellij.java.execution.impl
       //RunnerAndConfigurationSettings runSettings = RunManager.getInstance(project)
@@ -68,24 +57,23 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
       //configuration.USE_SOCKET_TRANSPORT = true;
       //configuration.SERVER_MODE = false;
 
-      String name = getAttachString(address);
-      RunnerAndConfigurationSettings runSettings = RunManager.getInstance(project)
-        .createRunConfiguration(name, Objects.requireNonNull(ConfigurationTypeUtil.findConfigurationType("Remote")).getConfigurationFactories()[0]);
+      RunnerAndConfigurationSettings runSettings = RunManager.getInstance(project).createRunConfiguration(":" + info.myAddress, Objects
+        .requireNonNull(ConfigurationTypeUtil.findConfigurationType("Remote")).getConfigurationFactories()[0]);
 
       RunConfiguration remoteConfiguration = runSettings.getConfiguration();
-      String host = address.first != null && !"*".equals(address.first) ? address.first : DebuggerManagerImpl.LOCALHOST_ADDRESS_FALLBACK;
-      ReflectionUtil.setField(remoteConfiguration.getClass(), remoteConfiguration, String.class, "HOST", host);
-      ReflectionUtil.setField(remoteConfiguration.getClass(), remoteConfiguration, String.class, "PORT", String.valueOf(address.second));
-      ReflectionUtil.setField(remoteConfiguration.getClass(), remoteConfiguration, boolean.class, "USE_SOCKET_TRANSPORT", true);
+      ReflectionUtil.setField(remoteConfiguration.getClass(), remoteConfiguration, String.class, "HOST",
+                              DebuggerManagerImpl.LOCALHOST_ADDRESS_FALLBACK);
+      ReflectionUtil.setField(remoteConfiguration.getClass(), remoteConfiguration, String.class,
+                              info.myUseSocket ? "PORT" : "SHMEM_ADDRESS", info.myAddress);
+      ReflectionUtil.setField(remoteConfiguration.getClass(), remoteConfiguration, boolean.class, "USE_SOCKET_TRANSPORT",
+                              info.myUseSocket);
       ReflectionUtil.setField(remoteConfiguration.getClass(), remoteConfiguration, boolean.class, "SERVER_MODE", false);
 
       ProgramRunnerUtil.executeConfiguration(runSettings, DefaultDebugExecutor.getDebugExecutorInstance());
     }
-  };
+  });
 
-  private static String getAttachString(Pair<String, Integer> address) {
-    return StringUtil.notNullize(address.first) + ":" + address.second;
-  }
+  private static final Key<Map<String, LocalAttachInfo>> ADDRESS_MAP_KEY = Key.create("ADDRESS_MAP");
 
   private static final XLocalAttachGroup ourAttachGroup = new XDefaultLocalAttachGroup() {
     @Override
@@ -102,9 +90,17 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
     @NotNull
     @Override
     public String getProcessDisplayText(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
-      Pair<String, Integer> address = getAttachAddress(info);
-      assert address != null;
-      return StringUtil.notNullize(ArrayUtil.getLastElement(info.getCommandLine().split(" "))) + " (" + getAttachString(address) + ')';
+      LocalAttachInfo attachInfo = getAttachInfo(info, dataHolder.getUserData(ADDRESS_MAP_KEY));
+      assert attachInfo != null;
+      StringBuilder res = new StringBuilder();
+      String executable = info.getExecutableDisplayName();
+      if ("java".equals(executable)) {
+        res.append(StringUtil.notNullize(ArrayUtil.getLastElement(info.getCommandLine().split(" ")))); // should be class name
+      }
+      else {
+        res.append(executable);
+      }
+      return res.append(" (").append(attachInfo.myAddress).append(')').toString();
     }
   };
 
@@ -119,14 +115,71 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
   public List<XLocalAttachDebugger> getAvailableDebuggers(@NotNull Project project,
                                                           @NotNull ProcessInfo processInfo,
                                                           @NotNull UserDataHolder contextHolder) {
-    Pair<String, Integer> address = getAttachAddress(processInfo);
-    if (address != null) {
-      return Collections.singletonList(ourAttachDebugger);
+    Map<String, LocalAttachInfo> addressMap = contextHolder.getUserData(ADDRESS_MAP_KEY);
+    if (addressMap == null) {
+      addressMap = new HashMap<>();
+      contextHolder.putUserData(ADDRESS_MAP_KEY, addressMap);
+      final Map<String, LocalAttachInfo> map = addressMap;
+      VirtualMachine.list().forEach(desc -> {
+        LocalAttachInfo address = getProcessAttachInfo(desc.id());
+        if (address != null) {
+          map.put(desc.id(), address);
+        }
+      });
     }
-    return Collections.emptyList();
+
+    return getAttachInfo(processInfo, addressMap) != null ? ourAttachDebuggers : Collections.emptyList();
   }
 
-  private static Pair<String, Integer> getAttachAddress(ProcessInfo processInfo) {
-    return DebugAttachDetector.getAttachAddress(ParametersListUtil.parse(processInfo.getCommandLine()));
+  @Nullable
+  private static LocalAttachInfo getAttachInfo(ProcessInfo processInfo, @Nullable Map<String, LocalAttachInfo> addressMap) {
+    LocalAttachInfo res;
+    if (addressMap != null) {
+      res = addressMap.get(String.valueOf(processInfo.getPid()));
+    }
+    else {
+      res = getProcessAttachInfo(String.valueOf(processInfo.getPid()));
+    }
+    if (res == null) {
+      Pair<String, Integer> address = DebugAttachDetector.getAttachAddress(ParametersListUtil.parse(processInfo.getCommandLine()));
+      if (address != null) {
+        res = new LocalAttachInfo(true, String.valueOf(address.getSecond()));
+      }
+    }
+    return res;
+  }
+
+  @Nullable
+  private static LocalAttachInfo getProcessAttachInfo(String pid) {
+    VirtualMachine vm = null;
+    try {
+      vm = VirtualMachine.attach(pid);
+      String property = vm.getAgentProperties().getProperty("sun.jdwp.listenerAddress");
+      if (property != null && property.indexOf(':') != -1) {
+        return new LocalAttachInfo(!"dt_shmem".equals(StringUtil.substringBefore(property, ":")), StringUtil.substringAfter(property, ":"));
+      }
+    }
+    catch (AttachNotSupportedException | IOException ignored) {
+    }
+    finally {
+      if (vm != null) {
+        try {
+          vm.detach();
+        }
+        catch (IOException ignored) {
+        }
+      }
+    }
+    return null;
+  }
+
+  private static class LocalAttachInfo {
+    final boolean myUseSocket;
+    final String myAddress;
+
+    private LocalAttachInfo(boolean socket, @NotNull String address) {
+      myUseSocket = socket;
+      myAddress = address;
+    }
   }
 }

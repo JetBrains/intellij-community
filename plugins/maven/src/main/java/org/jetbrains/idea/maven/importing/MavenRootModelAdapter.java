@@ -153,8 +153,12 @@ public class MavenRootModelAdapter {
     addSourceFolder(path, rootType, false, rootType.createDefaultProperties());
   }
 
+  public void addGeneratedJavaSourceFolder(String path, JavaSourceRootType rootType, boolean ifNotEmpty) {
+    addSourceFolder(path, rootType, ifNotEmpty, JpsJavaExtensionService.getInstance().createSourceRootProperties("", true));
+  }
+
   public void addGeneratedJavaSourceFolder(String path, JavaSourceRootType rootType) {
-    addSourceFolder(path, rootType, true, JpsJavaExtensionService.getInstance().createSourceRootProperties("", true));
+    addGeneratedJavaSourceFolder(path, rootType, true);
   }
 
   private  <P extends JpsElement> void addSourceFolder(@NotNull String path, final @NotNull JpsModuleSourceRootType<P> rootType, boolean ifNotEmpty,

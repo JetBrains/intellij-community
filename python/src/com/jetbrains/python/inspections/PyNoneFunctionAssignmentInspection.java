@@ -67,10 +67,7 @@ public class PyNoneFunctionAssignmentInspection extends PyInspection {
             }
             if (callable instanceof PyFunction) {
               final PyFunction function = (PyFunction)callable;
-              // Currently we don't infer types returned by decorators
-              if (hasInheritors(function) ||
-                  PyKnownDecoratorUtil.hasUnknownOrChangingReturnTypeDecorator(function, myTypeEvalContext) ||
-                  PyKnownDecoratorUtil.hasAbstractDecorator(function, myTypeEvalContext)) {
+              if (hasInheritors(function) || PyKnownDecoratorUtil.hasAbstractDecorator(function, myTypeEvalContext)) {
                 return true;
               }
             }

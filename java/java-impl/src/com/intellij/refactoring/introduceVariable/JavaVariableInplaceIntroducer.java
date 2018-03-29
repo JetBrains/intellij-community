@@ -75,6 +75,7 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
   private final boolean myReplaceSelf;
   private boolean myDeleteSelf = true;
   private final boolean mySkipTypeExpressionOnStart;
+  private final PsiFile myFile;
 
   public JavaVariableInplaceIntroducer(final Project project,
                                        IntroduceVariableSettings settings, PsiElement chosenAnchor, final Editor editor,
@@ -86,6 +87,7 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
     super(project, editor, RefactoringUtil.outermostParenthesizedExpression(expr), null, occurrences, selectorManager, title);
     mySettings = settings;
     myChosenAnchor = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(chosenAnchor);
+    myFile = chosenAnchor.getContainingFile();
     myCantChangeFinalModifier = cantChangeFinalModifier;
     myHasTypeSuggestion = selectorManager.getTypesForAll().length > 1;
     myTitle = title;
@@ -371,7 +373,7 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
 
 
   protected boolean createFinals() {
-    return IntroduceVariableBase.createFinals(myProject);
+    return IntroduceVariableBase.createFinals(myFile);
   }
 
   public static void adjustLine(final PsiVariable psiVariable, final Document document) {

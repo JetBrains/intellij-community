@@ -585,6 +585,9 @@ public class InjectedLanguageUtil {
     return combinedEditablesLength != elementRange.getLength();
   }
 
+  /**
+   * @deprecated Use {@link InjectedLanguageManager#getInjectedPsiFiles(PsiElement)} != null instead
+   */
   public static boolean hasInjections(@NotNull PsiLanguageInjectionHost host) {
     if (!host.isPhysical()) return false;
     final Ref<Boolean> result = Ref.create(false);

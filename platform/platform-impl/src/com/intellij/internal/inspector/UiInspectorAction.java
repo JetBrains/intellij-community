@@ -390,7 +390,35 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     if (StringUtil.isNotEmpty(componentName)) {
       name += " \"" + componentName + "\"";
     }
+    String fieldName = getFieldName(component);
+    if (fieldName != null) {
+      name += "(" + fieldName+")";
+    }
     return name;
+  }
+
+  private static String getFieldName(Component component) {
+    Container parent = component.getParent();
+    int deepness = 1;
+    while(parent != null && deepness <= 3) {
+      Class<? extends Container> aClass = parent.getClass();
+      Field[] fields = aClass.getDeclaredFields();
+      for (Field field : fields) {
+        try {
+          field.setAccessible(true);
+          if (field.get(parent) == component) {
+            String simpleName = parent.getClass().getSimpleName();
+            return field.getName() + (/*deepness > 1 &&*/ !StringUtil.isEmpty(simpleName) ? "@" + simpleName : "");
+          }
+        }
+        catch (IllegalAccessException e) {
+          //skip
+        }
+      }
+      parent = parent.getParent();
+      deepness++;
+    }
+    return null;
   }
 
   private static TreeModel buildModel(Component c) {
@@ -1172,7 +1200,9 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       else if (layout instanceof MigLayout) {
         MigLayout migLayout = (MigLayout)layout;
 
-        myProperties.add(new PropertyBean("MigLayout constraints", migLayout.getColumnConstraints()));
+        myProperties.add(new PropertyBean("MigLayout layout constraints", migLayout.getLayoutConstraints()));
+        myProperties.add(new PropertyBean("MigLayout column constraints", migLayout.getColumnConstraints()));
+        myProperties.add(new PropertyBean("MigLayout row constraints", migLayout.getRowConstraints()));
 
         for (Component child : component.getComponents()) {
           myProperties.add(new PropertyBean(prefix + getComponentName(child), migLayout.getComponentConstraints(child)));

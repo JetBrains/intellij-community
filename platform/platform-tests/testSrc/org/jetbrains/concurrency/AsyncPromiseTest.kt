@@ -23,6 +23,7 @@ class AsyncPromiseTest {
     assertThat(promise.isCancelled).isTrue()
     assertThat(promise.cancel(true)).isFalse()
     assertThat(promise.isCancelled).isTrue()
+    assertThat(promise.blockingGet(1)).isNull()
   }
 
   @Test

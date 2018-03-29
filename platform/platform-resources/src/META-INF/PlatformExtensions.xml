@@ -201,13 +201,17 @@
                         serviceImplementation="com.intellij.openapi.roots.ui.FileAppearanceServiceImpl"/>
 
     <applicationService serviceImplementation="com.intellij.internal.statistic.UsageTrigger"/>
-    <projectService serviceImplementation="com.intellij.internal.statistic.service.fus.collectors.FUSUsageTrigger"/>
-    <applicationService serviceImplementation="com.intellij.internal.statistic.customUsageCollectors.ui.ToolbarClicksCollector"/>
-    <applicationService serviceImplementation="com.intellij.internal.statistic.customUsageCollectors.ui.ShortcutsCollector"/>
+
+    <projectService serviceImplementation="com.intellij.internal.statistic.service.fus.collectors.FUSProjectUsageTrigger"/>
+    <applicationService serviceImplementation="com.intellij.internal.statistic.service.fus.collectors.FUSApplicationUsageTrigger"/>
+
+    <applicationService serviceImplementation="com.intellij.internal.statistic.collectors.fus.ui.persistence.ToolbarClicksCollector"/>
+    <applicationService serviceImplementation="com.intellij.internal.statistic.collectors.fus.ui.persistence.ShortcutsCollector"/>
     <applicationService serviceInterface="com.intellij.ide.actions.ActionsCollector"
-        serviceImplementation="com.intellij.internal.statistic.customUsageCollectors.actions.ActionsCollectorImpl"/>
-    <applicationService serviceImplementation="com.intellij.internal.statistic.customUsageCollectors.actions.MainMenuCollector"/>
-    <applicationService serviceImplementation="com.intellij.internal.statistic.customUsageCollectors.actions.IntentionsCollector"/>
+        serviceImplementation="com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl"/>
+    <applicationService serviceImplementation="com.intellij.internal.statistic.collectors.fus.actions.persistence.MainMenuCollector"/>
+    <applicationService serviceImplementation="com.intellij.internal.statistic.collectors.fus.actions.persistence.IntentionsCollector"/>
+    <applicationService serviceImplementation="com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.util.DimensionService"/>
     <applicationService serviceInterface="com.intellij.openapi.util.WindowStateService"
@@ -316,13 +320,13 @@
 
     <!-- Plugins -->
     <applicationConfigurable groupId="root" groupWeight="55" instance="com.intellij.ide.plugins.PluginManagerConfigurableNew" id="preferences.pluginManagerNew"
-                             displayName="Plugins (New Design)"/>
+                             displayName="Plugins2"/>
     <applicationConfigurable groupId="root" groupWeight="55" instance="com.intellij.ide.plugins.PluginManagerConfigurable" id="preferences.pluginManager"
                              displayName="Plugins"/>
     <actionFromOptionDescriptorProvider implementation="com.intellij.ide.plugins.InstalledPluginsManagerMain$PluginsActionFromOptionDescriptorProvider"/>
     <customFileDropHandler implementation="com.intellij.ide.plugins.InstalledPluginsManagerMain$PluginDropHandler"/>
     <applicationConfigurable parentId="preferences.general" instance="com.intellij.util.net.HttpProxyConfigurable" id="http.proxy" displayName="HTTP Proxy"/>
-    <applicationConfigurable parentId="preferences.general" instance="com.intellij.ide.gdpr.ConsentConfigurable" id="consents" displayName="Analytics"/>
+    <applicationConfigurable parentId="preferences.general" instance="com.intellij.ide.gdpr.ConsentConfigurable" id="consents" displayName="Data Sharing"/>
     <applicationConfigurable groupId="tools" displayName="Server Certificates" id="http.certificates" instance="com.intellij.util.net.ssl.CertificateConfigurable"/>
 
     <fileTypeFactory implementation="com.intellij.openapi.fileTypes.impl.PlatformFileTypeFactory"/>
@@ -330,6 +334,10 @@
     <postStartupActivity implementation="com.intellij.openapi.fileTypes.impl.ApproveRemovedMappingsActivity"/>
     <applicationService serviceInterface="com.intellij.openapi.options.colors.ColorSettingsPages"
                         serviceImplementation="com.intellij.openapi.options.colors.pages.ColorSettingsPagesImpl"/>
+
+    <postStartupActivity implementation="com.intellij.externalDependencies.impl.CheckRequiredPluginsActivity"/>
+    <projectConfigurable groupId="build" provider="com.intellij.externalDependencies.impl.ExternalDependenciesConfigurableProvider"
+                         id="preferences.externalDependencies" displayName="Required Plugins"/>
 
     <applicationConfigurable parentId="preferences.general" instance="com.intellij.openapi.updateSettings.impl.UpdateSettingsConfigurable" id="preferences.updates"
                              key="updates.settings.title" bundle="messages.IdeBundle"/>
@@ -387,42 +395,68 @@
 
     <keymapExtension implementation="com.intellij.ide.actions.ToolWindowKeymapExtension"/>
 
-    <statistics.usagesCollector implementation="com.intellij.ide.plugins.DisabledPluginsUsagesCollector"/>
-    <statistics.usagesCollector implementation="com.intellij.ide.plugins.NonBundledPluginsUsagesCollector"/>
-    <statistics.usagesCollector implementation="com.intellij.featureStatistics.FeaturesUsageCollector"/>
 
-    <statistics.applicationUsagesCollector implementation="com.intellij.featureStatistics.fusCollectors.ProductivityUsageCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.ProductivityUsageCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.plugins.DisabledPluginsUsagesCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.plugins.NonBundledPluginsUsagesCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.ui.ToolbarClicksUsagesCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.ui.EditorColorSchemesUsagesCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.actions.ActionUsagesCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.actions.ToolWindowUsagesCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.actions.IntentionUsagesCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.actions.MainMenuUsagesCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.jdk.JdkInfoUsageCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.os.OsNameUsageCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.os.OsVersionUsageCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.ui.FontSizeInfoUsageCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.ui.HiDPIModeUsagesCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.ui.LaFUsagesCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.ui.ScaleInfoUsageCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.ui.ShortcutUsagesCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.ui.UiInfoUsageCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.ui.A11YUsagesCollector"/>
 
-    <statistics.usagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsUsagesCollector"/>
-    <statistics.usagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsOptionsUsagesCollector"/>
-    <statistics.usagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsStatsUsagesCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.collectors.legacy.productivity.LegacyProductivityFeaturesUsageCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.collectors.legacy.plugins.LegacyDisabledPluginsUsagesCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.collectors.legacy.plugins.LegacyNonBundledPluginsUsagesCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.collectors.legacy.ui.LegacyToolbarClicksUsagesCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.collectors.legacy.ui.LegacyEditorColorSchemesUsagesCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.collectors.legacy.actions.LegacyActionUsagesCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.collectors.legacy.actions.LegacyToolWindowUsagesCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.collectors.legacy.actions.LegacyIntentionUsagesCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.collectors.legacy.actions.LegacyMainMenuUsagesCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.collectors.legacy.jdk.LegacyJdkInfoUsageCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.collectors.legacy.os.LegacyOsNameUsageCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.collectors.legacy.os.LegacyOsVersionUsageCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.collectors.legacy.ui.LegacyFontSizeInfoUsageCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.collectors.legacy.ui.LegacyHiDPIModeUsagesCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.collectors.legacy.ui.LegacyLaFUsagesCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.collectors.legacy.ui.LegacyScaleInfoUsageCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.collectors.legacy.ui.LegacyShortcutUsagesCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.collectors.legacy.ui.LegacyUiInfoUsageCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.collectors.legacy.ui.LegacyUiInfoUsageCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.collectors.legacy.ui.LegacyA11YUsagesCollector"/>
+
+    <statistics.projectUsagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsOptionsUsagesCollector"/>
+    <statistics.projectUsagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsStatsUsagesCollector"/>
+    <statistics.projectUsagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsNamesUsagesCollector"/>
+
+    <statistics.usagesCollector implementation="com.intellij.openapi.vcs.statistics.LegacyVcsOptionsUsagesCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.openapi.vcs.statistics.LegacyVcsStatsUsagesCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.openapi.vcs.statistics.LegacyVcsUsagesCollector"/>
+
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.UsageTrigger$MyCollector"/>
-    <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.ui.ToolbarClicksCollector$ToolbarClicksUsagesCollector"/>
-    <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.ui.ShortcutsCollector$ShortcutUsagesCollector"/>
-    <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.actions.ActionsCollectorImpl$ActionUsagesCollector"/>
-    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.actions.ActionsCollectorImpl$ActionUsagesCollectorNew"/>
-    <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.actions.IntentionsCollector$IntentionUsagesCollector"/>
-    <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.ExperimentalFeaturesUsageCollector"/>
-    <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.RegistryUsagesCollector"/>
-    <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.actions.MainMenuCollector$MainMenuUsagesCollector"/>
-    <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.ui.LaFUsagesCollector"/>
-    <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.os.OsNameUsageCollector"/>
-    <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.os.OsVersionUsageCollector"/>
-    <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.ui.UiInfoUsageCollector"/>
-    <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.jdk.JdkInfoUsageCollector"/>
-    <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.jdk.JdkSettingsUsageCollector"/>
-    <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.ui.FontSizeInfoUsageCollector"/>
-    <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.build.BuildNumberUsageCollector"/>
-    <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.ui.ScaleInfoUsageCollector"/>
-    <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.ui.HiDPIModeUsagesCollector"/>
-    <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.ui.A11YUsagesCollector"/>
-    <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.ideSettings.IdeInitialConfigUsageCollectors$ConfigImport"/>
-    <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.ideSettings.IdeInitialConfigUsageCollectors$SkipSteps"/>
-    <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.ideSettings.IdeInitialConfigUsageCollectors$SelectedLAF"/>
-    <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.ideSettings.IdeInitialConfigUsageCollectors$SelectedKeymap"/>
-    <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.ideSettings.IdeInitialConfigUsageCollectors$DisabledPlugins"/>
-    <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.ideSettings.IdeInitialConfigUsageCollectors$DownloadedPlugins"/>
-    <statistics.usagesCollector implementation="com.intellij.openapi.editor.colors.impl.EditorColorSchemesUsagesCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.collectors.legacy.ExperimentalFeaturesUsageCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.collectors.legacy.LegacyRegistryUsagesCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.collectors.legacy.jdk.JdkSettingsUsageCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.collectors.legacy.build.BuildNumberUsageCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.collectors.legacy.ideSettings.IdeInitialConfigUsageCollectors$ConfigImport"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.collectors.legacy.ideSettings.IdeInitialConfigUsageCollectors$SkipSteps"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.collectors.legacy.ideSettings.IdeInitialConfigUsageCollectors$SelectedLAF"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.collectors.legacy.ideSettings.IdeInitialConfigUsageCollectors$SelectedKeymap"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.collectors.legacy.ideSettings.IdeInitialConfigUsageCollectors$DisabledPlugins"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.collectors.legacy.ideSettings.IdeInitialConfigUsageCollectors$DownloadedPlugins"/>
+
 
     <statistic.eventLog.featureUsageEventLogger implementation="com.intellij.internal.statistic.eventLog.FeatureUsageFileEventLogger"/>
 
@@ -531,6 +565,8 @@
         serviceInterface="com.intellij.psi.availability.PsiAvailabilityService"
         serviceImplementation="com.intellij.psi.availability.PsiAvailabilityServiceImpl"/>
 
+    <sdkType implementation="com.intellij.openapi.projectRoots.SimpleJavaSdkType"/>
+
     <!--context providers-->
     <tasks.contextProvider implementation="com.intellij.tasks.context.OpenEditorsContextProvider"/>
     <tasks.contextProvider implementation="com.intellij.tasks.context.ProjectViewContextProvider"/>
@@ -543,12 +579,6 @@
     <postStartupActivity implementation="com.intellij.tasks.context.BranchContextTracker$TrackerStartupActivity"/>
 
     <!-- experiments -->
-    <experimentalFeature id="package.view.async.tree.model" internalFeature="false" percentOfUsers="100" requireRestart="true">
-      <description>New implementation of Package View based on AsyncTreeModel + StructureTreeModel</description>
-    </experimentalFeature>
-    <experimentalFeature id="project.view.async.tree.model" internalFeature="false" percentOfUsers="100" requireRestart="true">
-      <description>New implementation of Project View based on AsyncTreeModel + StructureTreeModel</description>
-    </experimentalFeature>
     <experimentalFeature id="inline.browse.button" internalFeature="true" percentOfUsers="0">
       <description>Inlines browse button inside TextFieldWithBrowseButton component</description>
     </experimentalFeature>

@@ -126,6 +126,7 @@ public class CountingLoop {
     } else return null;
     if(bound == null || !ExpressionUtils.isReferenceTo(ref, counter)) return null;
     if(!TypeConversionUtil.areTypesAssignmentCompatible(counter.getType(), bound)) return null;
+    if(VariableAccessUtils.variableIsAssigned(counter, forStatement.getBody())) return null;
     return new CountingLoop(forStatement, counter, initializer, bound, closed);
   }
 }

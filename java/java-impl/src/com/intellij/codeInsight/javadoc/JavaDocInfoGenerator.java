@@ -210,20 +210,6 @@ public class JavaDocInfoGenerator {
     };
   }
 
-  @Nullable
-  public String generateFileInfo() {
-    StringBuilder buffer = new StringBuilder();
-    if (myElement instanceof PsiFile) {
-      generatePrologue(buffer);
-
-      VirtualFile virtualFile = ((PsiFile)myElement).getVirtualFile();
-      if (virtualFile != null) buffer.append(virtualFile.getPresentableUrl());
-
-    }
-
-    return sanitizeHtml(buffer);
-  }
-
   private String sanitizeHtml(StringBuilder buffer) {
     String text = buffer.toString();
     if (text.isEmpty()) return null;
@@ -1189,7 +1175,7 @@ public class JavaDocInfoGenerator {
   protected void generatePrologue(StringBuilder buffer) {
     URL baseUrl = getBaseUrl();
     if (baseUrl != null) {
-      buffer.append("<html><head><base href=\"").append(baseUrl).append("\"></head><body>");
+      buffer.append("<html><head><base href=\"").append(baseUrl).append("\"></head><body>"); // used to resolve URLs of local images
     }
   }
 

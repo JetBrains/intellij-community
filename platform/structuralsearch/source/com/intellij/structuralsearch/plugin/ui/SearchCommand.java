@@ -5,10 +5,10 @@ import com.intellij.find.FindManager;
 import com.intellij.find.FindProgressIndicator;
 import com.intellij.find.FindSettings;
 import com.intellij.find.impl.FindManagerImpl;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
-import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -163,16 +163,20 @@ public class SearchCommand {
     try {
       new Matcher(mySearchContext.getProject()).findMatches(sink, myConfiguration.getMatchOptions());
     }
-    catch (final StructuralSearchException e) {
+    catch (StructuralSearchException e) {
       myProcessPresentation.setShowNotFoundMessage(false);
-      UIUtil.SSR_NOTIFICATION_GROUP.createNotification(SSRBundle.message("problem", e.getMessage()), MessageType.ERROR)
+      //noinspection InstanceofCatchParameter
+      UIUtil.SSR_NOTIFICATION_GROUP.createNotification(NotificationType.ERROR)
+                                   .setContent(e instanceof StructuralSearchScriptException
+                                               ? SSRBundle.message("search.script.problem", e.getCause())
+                                               : SSRBundle.message("search.template.problem", e.getMessage()))
                                    .setImportant(true)
                                    .notify(mySearchContext.getProject());
     }
   }
 
   public void stopAsyncSearch() {
-    if (process!=null) process.stop();
+    if (process != null) process.stop();
   }
 
   protected void findStarted() {

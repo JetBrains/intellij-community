@@ -83,7 +83,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.intellij.util.containers.Queue;
 
 /**
  * @author max
@@ -378,8 +377,8 @@ public class UsageViewImpl implements UsageViewEx {
   };
 
   // parent nodes under which the child node was just inserted.
-  // it is needed for firing javax.swing.tree.DefaultTreeModel.fireTreeNodesInserted() events in batch
-  // has to be linked because events for child nodes should be fired after events for parent nodes
+  // it is needed for firing javax.swing.tree.DefaultTreeModel.fireTreeNodesInserted() events in batch.
+  // has to be linked because events for child nodes should be fired after events for parent nodes.
   private final Set<Node> nodesInsertedUnder = new LinkedHashSet<>(); // guarded by nodesInsertedUnder
 
   private final Consumer<Node> edtNodeInsertedUnderQueue = (@NotNull Node parent) -> {
@@ -400,7 +399,7 @@ public class UsageViewImpl implements UsageViewEx {
     }
     // for each node synchronize its Swing children (javax.swing.tree.DefaultMutableTreeNode.children)
     // and its model children (com.intellij.usages.impl.GroupNode.getChildren())
-    // by issuing corresponding javax.swing.tree.DefaultMutableTreeNode.insert() and then javax.swing.tree.DefaultTreeModel.nodesWereInserted()
+    // by issuing corresponding javax.swing.tree.DefaultMutableTreeNode.insert() and then calling javax.swing.tree.DefaultTreeModel.nodesWereInserted()
     TIntArrayList indicesToFire = new TIntArrayList();
     List<Node> nodesToFire = new ArrayList<>();
     for (Node parentNode : insertedUnder) {
@@ -656,7 +655,7 @@ public class UsageViewImpl implements UsageViewEx {
             usage.highlightInEditor();
           }
           else if (node.isLeaf()) {
-            Navigatable navigatable = getNavigatableForNode(node);
+            Navigatable navigatable = getNavigatableForNode(node, !myPresentation.isReplaceMode());
             if (navigatable != null && navigatable.canNavigate()) {
               navigatable.navigate(false);
             }
@@ -1178,7 +1177,7 @@ public class UsageViewImpl implements UsageViewEx {
       return null;
     }
 
-    UsageNode child = myBuilder.appendUsage(usage, edtNodeInsertedUnderQueue, isFilterDuplicateLines());
+    UsageNode child = myBuilder.appendOrGet(usage, edtNodeInsertedUnderQueue, isFilterDuplicateLines());
     myUsageNodes.put(usage, child == null ? NULL_NODE : child);
 
     for (Node node = child; node != myRoot && node != null; node = (Node)node.getParent()) {
@@ -1407,7 +1406,7 @@ public class UsageViewImpl implements UsageViewEx {
       }
     }
 
-    if (smartPointers.size() > 0) {
+    if (!smartPointers.isEmpty()) {
       SmartPointerManager pointerManager = SmartPointerManager.getInstance(getProject());
       for (SmartPsiElementPointer<?> pointer : smartPointers) {
         pointerManager.removePointer(pointer);
@@ -1713,11 +1712,26 @@ public class UsageViewImpl implements UsageViewEx {
   }
 
   @Nullable
-  private static Navigatable getNavigatableForNode(@NotNull DefaultMutableTreeNode node) {
+  private static Navigatable getNavigatableForNode(@NotNull DefaultMutableTreeNode node, boolean allowRequestFocus) {
     Object userObject = node.getUserObject();
     if (userObject instanceof Navigatable) {
       final Navigatable navigatable = (Navigatable)userObject;
-      return navigatable.canNavigate() ? navigatable : null;
+      return navigatable.canNavigate() ? new Navigatable() {
+        @Override
+        public void navigate(boolean requestFocus) {
+          navigatable.navigate(allowRequestFocus && requestFocus);
+        }
+
+        @Override
+        public boolean canNavigate() {
+          return navigatable.canNavigate();
+        }
+
+        @Override
+        public boolean canNavigateToSource() {
+          return navigatable.canNavigateToSource();
+        }
+      } : null;
     }
     return null;
   }
@@ -1756,7 +1770,7 @@ public class UsageViewImpl implements UsageViewEx {
         protected Navigatable createDescriptorForNode(DefaultMutableTreeNode node) {
           if (node.getChildCount() > 0) return null;
           if (node instanceof Node && ((Node)node).isExcluded()) return null;
-          return getNavigatableForNode(node);
+          return getNavigatableForNode(node, !myPresentation.isReplaceMode());
         }
 
         @Override

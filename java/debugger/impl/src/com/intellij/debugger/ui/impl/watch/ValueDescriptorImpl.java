@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.Patches;
@@ -25,7 +25,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.xdebugger.frame.XValueModifier;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
@@ -147,7 +146,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
         semaphore.down();
         evalContext.getDebugProcess().getManagerThread().invoke(new SuspendContextCommandImpl(evalContext.getSuspendContext()) {
           @Override
-          public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
+          public void contextAction(@NotNull SuspendContextImpl suspendContext) {
             // re-setting the context will cause value recalculation
             try {
               setContext(myStoredEvaluationContext);
@@ -490,41 +489,36 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     if (objRef instanceof StringReference && !classRenderer.SHOW_STRINGS_TYPE) {
       return null;
     }
-    StringBuilder buf = StringBuilderSpinAllocator.alloc();
-    try {
-      final boolean showConcreteType =
-        !classRenderer.SHOW_DECLARED_TYPE ||
-        (!(objRef instanceof StringReference) && !(objRef instanceof ClassObjectReference) && !isEnumConstant(objRef));
-      if (showConcreteType || classRenderer.SHOW_OBJECT_ID) {
-        //buf.append('{');
-        if (showConcreteType) {
-          buf.append(classRenderer.renderTypeName(objRef.type().name()));
-        }
-        if (classRenderer.SHOW_OBJECT_ID) {
-          buf.append('@');
-          if(ApplicationManager.getApplication().isUnitTestMode()) {
-            //noinspection HardCodedStringLiteral
-            buf.append("uniqueID");
-          }
-          else {
-            buf.append(objRef.uniqueID());
-          }
-        }
-        //buf.append('}');
+    StringBuilder buf = new StringBuilder();
+    final boolean showConcreteType =
+      !classRenderer.SHOW_DECLARED_TYPE ||
+      (!(objRef instanceof StringReference) && !(objRef instanceof ClassObjectReference) && !isEnumConstant(objRef));
+    if (showConcreteType || classRenderer.SHOW_OBJECT_ID) {
+      //buf.append('{');
+      if (showConcreteType) {
+        buf.append(classRenderer.renderTypeName(objRef.type().name()));
       }
-
-      if (objRef instanceof ArrayReference) {
-        int idx = buf.indexOf("[");
-        if(idx >= 0) {
-          buf.insert(idx + 1, Integer.toString(((ArrayReference)objRef).length()));
+      if (classRenderer.SHOW_OBJECT_ID) {
+        buf.append('@');
+        if(ApplicationManager.getApplication().isUnitTestMode()) {
+          //noinspection HardCodedStringLiteral
+          buf.append("uniqueID");
+        }
+        else {
+          buf.append(objRef.uniqueID());
         }
       }
+      //buf.append('}');
+    }
 
-      return buf.toString();
+    if (objRef instanceof ArrayReference) {
+      int idx = buf.indexOf("[");
+      if(idx >= 0) {
+        buf.insert(idx + 1, Integer.toString(((ArrayReference)objRef).length()));
+      }
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(buf);
-    }
+
+    return buf.toString();
   }
 
   private static boolean isEnumConstant(final ObjectReference objRef) {

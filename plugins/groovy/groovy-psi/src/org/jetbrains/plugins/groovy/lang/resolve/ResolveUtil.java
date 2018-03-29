@@ -42,13 +42,15 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
@@ -1038,7 +1040,8 @@ public class ResolveUtil {
   }
 
   public static boolean canResolveToMethod(@NotNull GrReferenceExpression ref) {
-    return ref.hasMemberPointer() || ref.getParent() instanceof GrMethodCall;
+    assert !ref.hasMemberPointer();
+    return ref.getParent() instanceof GrMethodCall;
   }
 
   public static boolean processClassDeclarations(@NotNull PsiClass scope,
@@ -1049,24 +1052,5 @@ public class ResolveUtil {
       if (!scope.processDeclarations(each, state, lastParent, place)) return false;
     }
     return true;
-  }
-
-  @NotNull
-  public static List<GroovyResolveResult> collapseReflectedMethods(Collection<GroovyResolveResult> candidates) {
-    Set<GrMethod> visited = ContainerUtil.newHashSet();
-    List<GroovyResolveResult> collapsed = ContainerUtil.newArrayList();
-    for (GroovyResolveResult result : candidates) {
-      PsiElement element = result.getElement();
-      if (element instanceof GrReflectedMethod) {
-        GrMethod baseMethod = ((GrReflectedMethod)element).getBaseMethod();
-        if (visited.add(baseMethod)) {
-          collapsed.add(PsiImplUtil.reflectedToBase(result, baseMethod, (GrReflectedMethod)element));
-        }
-      }
-      else {
-        collapsed.add(result);
-      }
-    }
-    return collapsed;
   }
 }

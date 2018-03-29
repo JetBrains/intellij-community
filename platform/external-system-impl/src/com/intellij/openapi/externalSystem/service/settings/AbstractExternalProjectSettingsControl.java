@@ -56,6 +56,9 @@ public abstract class AbstractExternalProjectSettingsControl<S extends ExternalP
   private JBRadioButton myUseModuleGroupsRadioButton;
   @NotNull
   private final ExternalSystemSettingsControlCustomizer myCustomizer;
+  @SuppressWarnings("FieldCanBeLocal") // the field needed for the option rendering per linked project, see ExternalSystemUiUtil.showUi
+  @Nullable
+  private JPanel myOrganizeModuleNamesPanel;
 
   protected AbstractExternalProjectSettingsControl(@NotNull S initialSettings) {
     this(null, initialSettings, null);
@@ -87,16 +90,16 @@ public abstract class AbstractExternalProjectSettingsControl<S extends ExternalP
     }
 
     if (!myCustomizer.isModulesGroupingOptionPanelHidden()) {
-      JPanel organizeModuleNamesPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-      organizeModuleNamesPanel.add(new JBLabel(ExternalSystemBundle.message("settings.label.group.modules")));
+      myOrganizeModuleNamesPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+      myOrganizeModuleNamesPanel.add(new JBLabel(ExternalSystemBundle.message("settings.label.group.modules")));
       myUseModuleGroupsRadioButton = new JBRadioButton(ExternalSystemBundle.message("settings.radio.button.use.module.groups"), true);
-      organizeModuleNamesPanel.add(myUseModuleGroupsRadioButton);
+      myOrganizeModuleNamesPanel.add(myUseModuleGroupsRadioButton);
       myUseQualifiedModuleNamesRadioButton = new JBRadioButton(ExternalSystemBundle.message("settings.radio.button.use.qualified.name"));
-      organizeModuleNamesPanel.add(myUseQualifiedModuleNamesRadioButton);
+      myOrganizeModuleNamesPanel.add(myUseQualifiedModuleNamesRadioButton);
       ButtonGroup group = new ButtonGroup();
       group.add(myUseModuleGroupsRadioButton);
       group.add(myUseQualifiedModuleNamesRadioButton);
-      canvas.add(organizeModuleNamesPanel, ExternalSystemUiUtil.getFillLineConstraints(indentLevel));
+      canvas.add(myOrganizeModuleNamesPanel, ExternalSystemUiUtil.getFillLineConstraints(indentLevel));
     }
     fillExtraControls(canvas, indentLevel); 
   }

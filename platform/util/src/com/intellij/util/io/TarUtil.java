@@ -22,6 +22,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
+import org.apache.commons.compress.utils.IOUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -195,23 +196,13 @@ public class TarUtil {
       file.mkdir();
     }
     else {
-      if (entry.getSize() > Integer.MAX_VALUE) {
-        throw new IllegalArgumentException("Tar entries bigger then " + Integer.MAX_VALUE + " aren't supported");
+      FileOutputStream fileOutputStream = new FileOutputStream(file);
+      try {
+        IOUtils.copy(inputStream, fileOutputStream);
       }
-      int len = (int)entry.getSize();
-
-      byte[] content = new byte[len];
-
-      int n = 0;
-      while (n < len) {
-        int count = inputStream.read(content, n, len - n);
-        if (count < 0) {
-          throw new EOFException();
-        }
-        n += count;
+      finally {
+        fileOutputStream.close();
       }
-
-      FileUtil.writeToFile(file, content, false);
     }
   }
 

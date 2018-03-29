@@ -83,6 +83,7 @@ public class ExtractedParameter {
     if (myType instanceof PsiEllipsisType) {
       type = ((PsiEllipsisType)myType).toArrayType();
     }
+    type = GenericsUtil.getVariableTypeByExpressionType(type);
     return type.getCanonicalText();
   }
 

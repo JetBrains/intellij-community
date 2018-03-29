@@ -4,9 +4,10 @@ from opcode import opmap, EXTENDED_ARG, HAVE_ARGUMENT
 from types import CodeType
 
 MAX_BYTE = 255
+RETURN_VALUE_SIZE = 2
 
 
-def _add_attr_values_from_insert_to_original(original_code, insert_code, insert_code_obj, attribute_name, op_list):
+def _add_attr_values_from_insert_to_original(original_code, insert_code, insert_code_list, attribute_name, op_list):
     """
     This function appends values of the attribute `attribute_name` of the inserted code to the original values,
      and changes indexes inside inserted code. If some bytecode instruction in the inserted code used to call argument
@@ -24,7 +25,7 @@ def _add_attr_values_from_insert_to_original(original_code, insert_code, insert_
     orig_value = getattr(original_code, attribute_name)
     insert_value = getattr(insert_code, attribute_name)
     orig_names_len = len(orig_value)
-    code_with_new_values = list(insert_code_obj)
+    code_with_new_values = list(insert_code_list)
     offset = 0
     while offset < len(code_with_new_values):
         op = code_with_new_values[offset]
@@ -155,6 +156,23 @@ def _return_none_fun():
     return None
 
 
+def add_jump_instruction(jump_arg, code_to_insert):
+    """
+    Add additional instruction POP_JUMP_IF_TRUE to implement a proper jump for "set next statement" action
+    Jump should be done to the beginning of the inserted fragment
+    :param jump_arg: argument for jump instruction
+    :param code_to_insert: code to insert
+    :return: a code to insert with properly added jump instruction
+    """
+    extended_arg_list = []
+    if jump_arg > MAX_BYTE:
+        extended_arg_list += [EXTENDED_ARG, jump_arg >> 8]
+        jump_arg = jump_arg & MAX_BYTE
+
+    # remove 'RETURN_VALUE' instruction and add 'POP_JUMP_IF_TRUE' with (if needed) 'EXTENDED_ARG'
+    return list(code_to_insert.co_code[:-RETURN_VALUE_SIZE]) + extended_arg_list + [opmap['POP_JUMP_IF_TRUE'], jump_arg]
+
+
 def insert_code(code_to_modify, code_to_insert, before_line):
     """
     Insert piece of code `code_to_insert` to `code_to_modify` right inside the line `before_line` before the
@@ -173,19 +191,18 @@ def insert_code(code_to_modify, code_to_insert, before_line):
         if line_no == before_line:
             offset = off
 
-    return_none_size = len(_return_none_fun.__code__.co_code)
-    code_to_insert_obj = code_to_insert.co_code[:-return_none_size]
+    code_to_insert_list = add_jump_instruction(offset, code_to_insert)
     try:
-        code_to_insert_obj, new_names = \
-            _add_attr_values_from_insert_to_original(code_to_modify, code_to_insert, code_to_insert_obj, 'co_names',
+        code_to_insert_list, new_names = \
+            _add_attr_values_from_insert_to_original(code_to_modify, code_to_insert, code_to_insert_list, 'co_names',
                                                      dis.hasname)
-        code_to_insert_obj, new_consts = \
-            _add_attr_values_from_insert_to_original(code_to_modify, code_to_insert, code_to_insert_obj, 'co_consts',
+        code_to_insert_list, new_consts = \
+            _add_attr_values_from_insert_to_original(code_to_modify, code_to_insert, code_to_insert_list, 'co_consts',
                                                      [opmap['LOAD_CONST']])
-        code_to_insert_obj, new_vars = \
-            _add_attr_values_from_insert_to_original(code_to_modify, code_to_insert, code_to_insert_obj, 'co_varnames',
+        code_to_insert_list, new_vars = \
+            _add_attr_values_from_insert_to_original(code_to_modify, code_to_insert, code_to_insert_list, 'co_varnames',
                                                      dis.haslocal)
-        new_bytes, all_inserted_code = _update_label_offsets(code_to_modify.co_code, offset, list(code_to_insert_obj))
+        new_bytes, all_inserted_code = _update_label_offsets(code_to_modify.co_code, offset, list(code_to_insert_list))
 
         new_lnotab = _modify_new_lines(code_to_modify, all_inserted_code)
     except ValueError:

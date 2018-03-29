@@ -20,7 +20,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.util.*;
 
 public class TestDiscoverySearchHelper {
@@ -62,14 +61,11 @@ public class TestDiscoverySearchHelper {
               if (containingClass != null && containingClass.getParent() == psiFile) {
                 final String classQualifiedName = containingClass.getQualifiedName();
                 final String changedMethodName = changedMethod.getName();
-                try {
-                  if (classQualifiedName != null &&
-                      (position == null && TestFrameworks.detectFramework(containingClass) != null ||
-                       position != null && !discoveryIndex.hasTestTrace(classQualifiedName, changedMethodName, frameworkId))) {
-                    patterns.add(classQualifiedName + "," + changedMethodName);
-                  }
+                if (classQualifiedName != null &&
+                    (position == null && TestFrameworks.detectFramework(containingClass) != null ||
+                     position != null && !discoveryIndex.hasTestTrace(classQualifiedName, changedMethodName, frameworkId))) {
+                  patterns.add(classQualifiedName + "," + changedMethodName);
                 }
-                catch (IOException ignore) {}
               }
             }
           }

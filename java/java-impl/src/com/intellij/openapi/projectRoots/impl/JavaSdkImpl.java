@@ -17,6 +17,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.jrt.JrtFileSystem;
 import com.intellij.util.PathUtil;
@@ -32,6 +33,8 @@ import org.jetbrains.jps.model.java.impl.JavaSdkUtil;
 
 import javax.swing.*;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
@@ -47,7 +50,7 @@ public class JavaSdkImpl extends JavaSdk {
 
   public static final DataKey<Boolean> KEY = DataKey.create("JavaSdk");
 
-  private static final String VM_EXE_NAME = "java";   // do not use JavaW.exe for Windows because of issues with encoding
+  private static final String VM_EXE_NAME = SystemInfo.isWindows ? "java.exe" : "java";  // do not use JavaW.exe because of issues with encoding
 
   private final Map<String, String> myCachedSdkHomeToVersionString = new ConcurrentHashMap<>();
   private final Map<String, JavaVersion> myCachedVersionStringToJdkVersion = new ConcurrentHashMap<>();
@@ -238,15 +241,15 @@ public class JavaSdkImpl extends JavaSdk {
     File jdkHome = new File(homePath);
     SdkModificator sdkModificator = sdk.getSdkModificator();
 
-    List<VirtualFile> classes = findClasses(jdkHome, false);
-    Set<VirtualFile> previousRoots = new LinkedHashSet<>(Arrays.asList(sdkModificator.getRoots(OrderRootType.CLASSES)));
+    List<String> classes = findClasses(jdkHome, false);
+    Set<String> previousRoots = new LinkedHashSet<>(Arrays.asList(sdkModificator.getUrls(OrderRootType.CLASSES)));
     sdkModificator.removeRoots(OrderRootType.CLASSES);
     previousRoots.removeAll(new HashSet<>(classes));
-    for (VirtualFile aClass : classes) {
-      sdkModificator.addRoot(aClass, OrderRootType.CLASSES);
+    for (String url : classes) {
+      sdkModificator.addRoot(url, OrderRootType.CLASSES);
     }
-    for (VirtualFile root : previousRoots) {
-      sdkModificator.addRoot(root, OrderRootType.CLASSES);
+    for (String url : previousRoots) {
+      sdkModificator.addRoot(url, OrderRootType.CLASSES);
     }
 
     addSources(jdkHome, sdkModificator);
@@ -379,37 +382,72 @@ public class JavaSdkImpl extends JavaSdk {
   }
 
   private static void addClasses(@NotNull File file, @NotNull SdkModificator sdkModificator, boolean isJre) {
-    for (VirtualFile virtualFile : findClasses(file, isJre)) {
-      sdkModificator.addRoot(virtualFile, OrderRootType.CLASSES);
+    for (String url : findClasses(file, isJre)) {
+      sdkModificator.addRoot(url, OrderRootType.CLASSES);
     }
   }
 
+  /**
+   * Tries to load the list of modules in the JDK from the 'release' file. Returns null if the 'release' file is not there
+   * or doesn't contain the expected information.
+   */
+  @Nullable
+  private static List<String> readModulesFromReleaseFile(File jrtBaseDir) {
+    File releaseFile = new File(jrtBaseDir, "release");
+    if (releaseFile.isFile()) {
+      Properties p = new Properties();
+      try (FileInputStream stream = new FileInputStream(releaseFile)) {
+        p.load(stream);
+        String modules = p.getProperty("MODULES");
+        if (modules != null) {
+          return StringUtil.split(StringUtil.unquoteString(modules), " ");
+        }
+      }
+      catch (IOException | IllegalArgumentException e) {
+        LOG.info(e);
+      }
+    }
+    return null;
+  }
+
   @NotNull
-  private static List<VirtualFile> findClasses(@NotNull File file, boolean isJre) {
-    List<VirtualFile> result = ContainerUtil.newArrayList();
+  private static List<String> findClasses(@NotNull File file, boolean isJre) {
+    List<String> result = ContainerUtil.newArrayList();
     VirtualFileManager fileManager = VirtualFileManager.getInstance();
 
     if (JdkUtil.isExplodedModularRuntime(file.getPath())) {
       VirtualFile exploded = fileManager.findFileByUrl(StandardFileSystems.FILE_PROTOCOL_PREFIX + getPath(new File(file, "modules")));
       if (exploded != null) {
-        ContainerUtil.addAll(result, exploded.getChildren());
+        for (VirtualFile virtualFile : exploded.getChildren()) {
+          result.add(virtualFile.getUrl());
+        }
       }
     }
     else if (JdkUtil.isModularRuntime(file)) {
-      VirtualFile jrt = fileManager.findFileByUrl(JrtFileSystem.PROTOCOL_PREFIX + getPath(file) + JrtFileSystem.SEPARATOR);
-      if (jrt != null) {
-        ContainerUtil.addAll(result, jrt.getChildren());
+      String jrtBaseUrl = JrtFileSystem.PROTOCOL_PREFIX + getPath(file) + JrtFileSystem.SEPARATOR;
+      List<String> modules = readModulesFromReleaseFile(file);
+      if (modules != null) {
+        for (String module : modules) {
+          result.add(jrtBaseUrl + module);
+        }
+      }
+      else {
+        VirtualFile jrt = fileManager.findFileByUrl(jrtBaseUrl);
+        if (jrt != null) {
+          for (VirtualFile virtualFile : jrt.getChildren()) {
+            result.add(virtualFile.getUrl());
+          }
+        }
       }
     }
     else {
       for (File root : JavaSdkUtil.getJdkClassesRoots(file, isJre)) {
         String url = VfsUtil.getUrlForLibraryRoot(root);
-        ContainerUtil.addIfNotNull(result, fileManager.findFileByUrl(url));
+        result.add(url);
       }
     }
 
-    Collections.sort(result, Comparator.comparing(VirtualFile::getPath));
-
+    Collections.sort(result);
     return result;
   }
 

@@ -116,9 +116,8 @@ class VirtualFilePointerImpl extends TraceableDisposable implements VirtualFileP
       kill("URL when die: "+ toString());
       VirtualFilePointerManager pointerManager = VirtualFilePointerManager.getInstance();
       if (pointerManager instanceof VirtualFilePointerManagerImpl) {
-        ((VirtualFilePointerManagerImpl)pointerManager).removeNode(myNode, myListener); // remove from the tree
+        ((VirtualFilePointerManagerImpl)pointerManager).removeNodeFrom(this);
       }
-      myNode = null;
     }
   }
 

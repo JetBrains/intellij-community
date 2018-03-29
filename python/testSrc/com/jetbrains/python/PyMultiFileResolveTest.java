@@ -2,7 +2,6 @@
 package com.jetbrains.python;
 
 import com.google.common.collect.Lists;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -10,7 +9,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.PsiTestUtil;
 import com.jetbrains.python.codeInsight.PyCustomMember;
 import com.jetbrains.python.fixtures.PyMultiFileResolveTestCase;
 import com.jetbrains.python.fixtures.PyResolveTestCase;
@@ -303,6 +301,7 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
       myTestFileName = null;
     }
   }
+
   // PY-2813
   public void testFromNamespacePackageImport() {
     assertResolvesTo(PyFunction.class, "foo");
@@ -437,7 +436,7 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
   // PY-18626
   public void testManySourceRoots() {
     myFixture.copyDirectoryToProject("manySourceRoots", "");
-    withSourceRoots(Lists.newArrayList(myFixture.findFileInTempDir("root1"), myFixture.findFileInTempDir("root2")), () -> {
+    runWithSourceRoots(Lists.newArrayList(myFixture.findFileInTempDir("root1"), myFixture.findFileInTempDir("root2")), () -> {
       final PsiFile psiFile = myFixture.configureByFile("a.py");
       final PsiReference ref = PyResolveTestCase.findReferenceByMarker(psiFile);
       assertInstanceOf(ref, PsiPolyVariantReference.class);
@@ -453,7 +452,7 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
   // PY-28321
   public void testImportManySourceRoots() {
     myFixture.copyDirectoryToProject("importManySourceRoots", "");
-    withSourceRoots(Lists.newArrayList(myFixture.findFileInTempDir("root2"), myFixture.findFileInTempDir("root1")), () -> {
+    runWithSourceRoots(Lists.newArrayList(myFixture.findFileInTempDir("root2"), myFixture.findFileInTempDir("root1")), () -> {
       final PsiFile psiFile = myFixture.configureByFile("root1/pkg/a.py");
       final PsiReference ref = PyResolveTestCase.findReferenceByMarker(psiFile);
       assertInstanceOf(ref, PsiPolyVariantReference.class);
@@ -469,7 +468,7 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
   // PY-28321
   public void testImportManySourceRootsReverseRootOrder() {
     myFixture.copyDirectoryToProject("importManySourceRoots", "");
-    withSourceRoots(Lists.newArrayList(myFixture.findFileInTempDir("root1"), myFixture.findFileInTempDir("root2")), () -> {
+    runWithSourceRoots(Lists.newArrayList(myFixture.findFileInTempDir("root1"), myFixture.findFileInTempDir("root2")), () -> {
       final PsiFile psiFile = myFixture.configureByFile("root1/pkg/a.py");
       final PsiReference ref = PyResolveTestCase.findReferenceByMarker(psiFile);
       assertInstanceOf(ref, PsiPolyVariantReference.class);
@@ -484,7 +483,7 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
 
     VirtualFile vf = myFixture.findFileInTempDir("ext/m1.py");
 
-    withSourceRoots(Lists.newArrayList(myFixture.findFileInTempDir("root")), () -> {
+    runWithSourceRoots(Lists.newArrayList(myFixture.findFileInTempDir("root")), () -> {
       final PsiFile extSource = myFixture.getPsiManager().findFile(vf);
       PyImportResolver foreignResolver = (name, context, withRoots) -> name.toString().equals("m1") ? extSource : null;
       PlatformTestUtil.registerExtension(PyImportResolver.EP_NAME, foreignResolver, getTestRootDisposable());
@@ -495,25 +494,10 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
       final List<PsiElement> elements = PyUtil.multiResolveTopPriority((PsiPolyVariantReference)ref);
       assertEquals(2, elements.size());
       final Set<String> parentNames = elements.stream()
-        .filter(e -> e instanceof PyFile)
-        .map(e -> ((PyFile)e).getVirtualFile().getParent().getName()).collect(Collectors.toSet());
+                                              .filter(e -> e instanceof PyFile)
+                                              .map(e -> ((PyFile)e).getVirtualFile().getParent().getName()).collect(Collectors.toSet());
       assertContainsElements(parentNames, "root", "ext");
     });
-  }
-
-  private void withSourceRoots(@NotNull List<VirtualFile> sourceRoots, @NotNull Runnable f) {
-    final Module module = myFixture.getModule();
-    for (VirtualFile root : sourceRoots) {
-      PsiTestUtil.addSourceRoot(module, root);
-    }
-    try {
-      f.run();
-    }
-    finally {
-      for (VirtualFile root : sourceRoots) {
-        PsiTestUtil.removeSourceRoot(module, root);
-      }
-    }
   }
 
   // PY-19989
@@ -543,10 +527,9 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
       fileSystemItems = Stream.of(PyPsiUtils.getFileSystemItem(reference.resolve()));
     }
     return fileSystemItems.map(f -> VfsUtilCore.getRelativeLocation(f.getVirtualFile(), root)).collect(Collectors.toList());
-    
   }
 
-  public void testCustomMemberTargetClass(){
+  public void testCustomMemberTargetClass() {
     prepareTestDirectory();
 
     final PyCustomMember customMember = new PyCustomMember("Clazz").resolvesToClass("pkg.mod1.Clazz");
@@ -558,11 +541,22 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
     final PsiElement resolved = customMember.resolve(context, resolveContext);
     assertInstanceOf(resolved, PyTypedElement.class);
 
-    final PyType type = typeEvalContext.getType((PyTypedElement) resolved);
+    final PyType type = typeEvalContext.getType((PyTypedElement)resolved);
     assertInstanceOf(type, PyClassType.class);
   }
 
   public void testImportAliasTargetReference() {
     assertResolvesTo(PyTargetExpression.class, "bar");
+  }
+
+  //PY-28685
+  public void testImplicitImportSelf() {
+    prepareTestDirectory();
+    assertSameElements(doMultiResolveAndGetFileUrls("pkg1/pkg2/mod1.py"), "pkg1/pkg2/mod1.py");
+  }
+
+  public void testImportResolvesToPkgInit() {
+    prepareTestDirectory();
+    assertSameElements(doMultiResolveAndGetFileUrls("pkg1/pkg2/mod1.py"), "pkg1/pkg2/__init__.py");
   }
 }

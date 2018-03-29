@@ -6,7 +6,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.refactoring.extractMethodObject.ItemToReplaceDescriptor;
-import com.intellij.refactoring.extractMethodObject.PsiReflectionAccessUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,7 +29,7 @@ public class FieldReflectionAccessor extends ReferenceReflectionAccessorBase<Fie
     if (resolved instanceof PsiField) {
       final PsiField field = (PsiField)resolved;
       String name = field.getName();
-      if (name != null && !Objects.equals(field.getContainingClass(), getOuterClass()) && needReplace(field)) {
+      if (name != null && !Objects.equals(field.getContainingClass(), getOuterClass()) && needReplace(field, expression)) {
         return new FieldDescriptor(field, expression);
       }
     }
@@ -87,21 +86,21 @@ public class FieldReflectionAccessor extends ReferenceReflectionAccessorBase<Fie
   private PsiMethod createPsiMethod(@NotNull FieldDescriptor descriptor, FieldAccessType accessType) {
     PsiClass outerClass = getOuterClass();
     PsiClass containingClass = descriptor.field.getContainingClass();
-    String returnType = PsiReflectionAccessUtil.getAccessibleReturnType(descriptor.field.getType());
     String className = containingClass == null ? null : ClassUtil.getJVMClassName(containingClass);
     String fieldName = descriptor.field.getName();
     if (className == null || fieldName == null) {
       LOG.warn("Code is incomplete. Class name or field name not found");
       return null;
     }
-    if (returnType == null) {
-      LOG.warn("Could not resolve return type");
-      return null;
-    }
 
     String methodName = PsiReflectionAccessUtil.getUniqueMethodName(outerClass, "accessToField" + StringUtil.capitalize(fieldName));
     ReflectionAccessMethodBuilder methodBuilder = new ReflectionAccessMethodBuilder(methodName);
     if (FieldAccessType.GET.equals(accessType)) {
+      String returnType = PsiReflectionAccessUtil.getAccessibleReturnType(resolveFieldType(descriptor));
+      if (returnType == null) {
+        LOG.warn("Could not resolve field type");
+        return null;
+      }
       methodBuilder.accessedField(className, fieldName)
                    .setReturnType(returnType);
     }
@@ -117,8 +116,15 @@ public class FieldReflectionAccessor extends ReferenceReflectionAccessorBase<Fie
     return methodBuilder.build(getElementFactory(), outerClass);
   }
 
-  protected boolean needReplace(@NotNull PsiField field) {
-    return !PsiReflectionAccessUtil.isAccessibleMember(field);
+  private static boolean needReplace(@NotNull PsiField field, @NotNull PsiReferenceExpression expression) {
+    return !PsiReflectionAccessUtil.isAccessibleMember(field) ||
+           !PsiReflectionAccessUtil.isQualifierAccessible(expression.getQualifierExpression());
+  }
+
+  @NotNull
+  private static PsiType resolveFieldType(@NotNull FieldDescriptor descriptor) {
+    PsiType rawType = descriptor.field.getType();
+    return descriptor.expression.advancedResolve(false).getSubstitutor().substitute(rawType);
   }
 
   @Nullable

@@ -13,6 +13,10 @@ public class ArgumentPostfixTemplateTest extends PostfixTemplateTestCase {
     doArgTest();
   }
 
+  public void testInStatement() {
+    doArgTest();
+  }
+
   private void doArgTest() {
     TemplateManagerImpl.setTemplateTesting(myFixture.getProject(), getTestRootDisposable());
     myFixture.configureByFile(getTestName(true) + ".java");

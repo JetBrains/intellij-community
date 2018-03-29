@@ -143,7 +143,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
       }
 
       @Override
-      public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
+      public void contextAction(@NotNull SuspendContextImpl suspendContext) {
         if (node.isObsolete()) {
           return;
         }
@@ -523,7 +523,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
       }
 
       @Override
-      public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
+      public void contextAction(@NotNull SuspendContextImpl suspendContext) {
         ApplicationManager.getApplication().runReadAction(() -> {
           SourcePosition position = SourcePositionProvider.getSourcePosition(myValueDescriptor, getProject(), getDebuggerContext(), false);
           if (position != null) {
@@ -602,7 +602,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
         }
 
         @Override
-        public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
+        public void contextAction(@NotNull SuspendContextImpl suspendContext) {
           evaluationExpression = ReadAction.compute(() -> {
             try {
               PsiElement psiExpression = getDescriptor().getTreeEvaluation(JavaValue.this, getDebuggerContext());

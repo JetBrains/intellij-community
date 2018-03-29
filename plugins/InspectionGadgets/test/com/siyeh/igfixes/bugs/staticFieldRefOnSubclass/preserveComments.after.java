@@ -6,6 +6,7 @@ class Child implements Super {}
 
 class Bar {
   {
-    String s = Child./*some comment*/FOO;
+      /*some comment*/
+      String s = Super.FOO;
   }
 }

@@ -48,6 +48,21 @@ public final class TypeConstraint {
     myNotInstanceofValues = notInstanceofValues;
   }
 
+  @NotNull
+  public String getPresentationText(@Nullable PsiType type) {
+    Set<DfaPsiType> instanceOfTypes = myInstanceofValues;
+    if (type != null) {
+      instanceOfTypes = StreamEx.of(instanceOfTypes)
+                                .removeBy(DfaPsiType::getPsiType, DfaPsiType.normalizeType(type))
+                                .toSet();
+    }
+    return EntryStream.of("instanceof ", instanceOfTypes,
+                          "not instanceof ", myNotInstanceofValues)
+                      .removeValues(Set::isEmpty)
+                      .mapKeyValue((prefix, set) -> StreamEx.of(set).map(DfaPsiType::toString).sorted().joining(", ", prefix, ""))
+                      .joining("\n");
+  }
+
   private static TypeConstraint create(@NotNull Set<DfaPsiType> instanceofValues, @NotNull Set<DfaPsiType> notInstanceofValues) {
     if (instanceofValues.isEmpty() && notInstanceofValues.isEmpty()) {
       return EMPTY;
@@ -154,9 +169,9 @@ public final class TypeConstraint {
     if (that.myNotInstanceofValues.containsAll(myNotInstanceofValues) && that.myInstanceofValues.containsAll(myInstanceofValues)) {
       return true;
     }
-    if (this.myNotInstanceofValues.isEmpty() && that.myNotInstanceofValues.isEmpty() && this.myInstanceofValues.size() == 1) {
-      DfaPsiType type = this.myInstanceofValues.iterator().next();
-      return that.myInstanceofValues.stream().allMatch(type::isAssignableFrom);
+    if (this.myNotInstanceofValues.isEmpty() && that.myNotInstanceofValues.isEmpty()) {
+      return that.myInstanceofValues.stream().allMatch(
+        thatType -> this.myInstanceofValues.stream().allMatch(thisType -> thisType.isAssignableFrom(thatType)));
     }
     return false;
   }
@@ -165,29 +180,25 @@ public final class TypeConstraint {
   public TypeConstraint union(@NotNull TypeConstraint other) {
     if(isSuperStateOf(other)) return this;
     if(other.isSuperStateOf(this)) return other;
-    Set<DfaPsiType> leftTypes = new HashSet<>(this.myInstanceofValues);
-    Set<DfaPsiType> leftNotTypes = new HashSet<>(this.myNotInstanceofValues);
-    Set<DfaPsiType> rightTypes = new HashSet<>(other.myInstanceofValues);
-    Set<DfaPsiType> rightNotTypes = new HashSet<>(other.myNotInstanceofValues);
-    filter(leftTypes, rightTypes, rightNotTypes);
-    filter(rightTypes, leftTypes, leftNotTypes);
-    TypeConstraint left = create(leftTypes, leftNotTypes);
-    TypeConstraint right = create(rightTypes, rightNotTypes);
-    if(left.isSuperStateOf(right)) return left;
-    if(right.isSuperStateOf(left)) return right;
-    return null;
+    Set<DfaPsiType> notTypes = new HashSet<>(this.myNotInstanceofValues);
+    notTypes.retainAll(other.myNotInstanceofValues);
+    Set<DfaPsiType> instanceOfTypes;
+    if (this.myInstanceofValues.containsAll(other.myInstanceofValues)) {
+      instanceOfTypes = other.myInstanceofValues;
+    } else if (other.myInstanceofValues.containsAll(this.myInstanceofValues)) {
+      instanceOfTypes = this.myInstanceofValues;
+    } else {
+      instanceOfTypes = withSuper(this.myInstanceofValues);
+      instanceOfTypes.retainAll(withSuper(other.myInstanceofValues));
+    }
+    TypeConstraint constraint = StreamEx.of(instanceOfTypes).foldLeft(EMPTY, TypeConstraint::withInstanceofValue);
+    return StreamEx.of(notTypes).foldLeft(constraint, TypeConstraint::withNotInstanceofValue);
   }
 
-  private static void filter(Set<DfaPsiType> leftTypes, Set<DfaPsiType> rightTypes, Set<DfaPsiType> rightNotTypes) {
-    Set<DfaPsiType> addTypes = new HashSet<>();
-    for (Iterator<DfaPsiType> iterator = leftTypes.iterator(); iterator.hasNext(); ) {
-      DfaPsiType type = iterator.next();
-      if(rightNotTypes.remove(type)) {
-        iterator.remove();
-        StreamEx.of(rightTypes).filter(t -> t.isAssignableFrom(type)).into(addTypes);
-      }
-    }
-    leftTypes.addAll(addTypes);
+  private static Set<DfaPsiType> withSuper(Set<DfaPsiType> instanceofValues) {
+    return StreamEx.of(instanceofValues)
+                   .flatMap(type -> StreamEx.of(type.getPsiType().getSuperTypes()).map(type.getFactory()::createDfaType).append(type))
+                   .toSet();
   }
 
   @NotNull
@@ -222,9 +233,9 @@ public final class TypeConstraint {
   public String toString() {
     return EntryStream.of("instanceof ", myInstanceofValues,
                           "not instanceof ", myNotInstanceofValues)
-      .removeValues(Set::isEmpty)
-      .mapKeyValue((prefix, set) -> StreamEx.of(set).joining(",", prefix, ""))
-      .joining(" ");
+                      .removeValues(Set::isEmpty)
+                      .mapKeyValue((prefix, set) -> StreamEx.of(set).joining(", ", prefix, ""))
+                      .joining(" ");
   }
 
   @Nullable

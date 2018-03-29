@@ -17,7 +17,9 @@ package com.intellij.diff.comparison
 
 import com.intellij.diff.DiffTestCase
 import com.intellij.diff.fragments.LineFragment
+import com.intellij.diff.tools.util.text.LineOffsetsUtil
 import com.intellij.diff.util.IntPair
+import com.intellij.diff.util.Range
 import com.intellij.openapi.util.Couple
 import com.intellij.openapi.util.TextRange
 import java.util.*
@@ -411,6 +413,103 @@ class IgnoreComparisonUtilTest : DiffTestCase() {
       .run()
   }
 
+  fun `test explicit blocks`() {
+    Test("X_a_Y_b_Z", "X_a 1 c_Y_b 1 c_Z",
+         "         ", "   +++     +++   ",
+         "         ", "      -          ")
+      .ranged(Range(1, 2, 1, 2))
+      .changedLinesNumber(1, 1)
+      .run()
+
+    Test("X_a_Y_b_Z", "X_a 1 c_Y_b 1 c_Z",
+         "         ", "   ++++    +++   ",
+         "         ", "                 ")
+      .ranged(Range(1, 2, 1, 2))
+      .changedLinesNumber(0, 0)
+      .run()
+
+    Test("X_a_Y_b_Z", "X_a 1 c_Y_b 1 c_Z",
+         "         ", "              +  ",
+         "         ", "           ---   ")
+      .ranged(Range(3, 4, 3, 4))
+      .changedLinesNumber(1, 1)
+      .run()
+
+    Test("X_a_Y_b_Z", "X_a 1 c_Y_b 1 c_Z",
+         "         ", "              +  ",
+         "  -      ", "          ----   ")
+      .ranged(Range(1, 2, 3, 4))
+      .changedLinesNumber(1, 1)
+      .run()
+
+    Test("X_a_Y_b_Z", "Y_b 1 c_Z",
+         "         ", "      +  ",
+         "         ", "   ---   ")
+      .ranged(Range(3, 4, 1, 2))
+      .changedLinesNumber(1, 1)
+      .run()
+
+    Test("X_a_Y_b_Z", "Y_c_d_b_Z",
+         "         ", "  ++++   ",
+         "         ", "         ")
+      .ranged(Range(3, 4, 1, 4))
+      .changedLinesNumber(0, 0)
+      .run()
+
+    Test("X_a_Y_Z", "Y_c_d_Z",
+         "       ", "  ++++ ",
+         "       ", "       ")
+      .ranged(Range(3, 3, 1, 3))
+      .changedLinesNumber(0, 0)
+      .run()
+
+
+    Test("X_a_Y_Z", "Y_c_d_Z",
+         "       ", "       ",
+         "       ", "  ---- ")
+      .ranged(Range(3, 3, 1, 3))
+      .changedLinesNumber(0, 2)
+      .run()
+
+    Test("X_W 1 W_Y_W 2 W_Z", "X_W 3 W_B_W 4 W_Z",
+         "    +       +    ", "    +       +    ",
+         "        --       ", "        --       ")
+      .ranged(Range(2, 4, 2, 4))
+      .changedLinesNumber(1, 1)
+      .noInnerChanges()
+      .run()
+
+    Test("X_W 1 W_Y_W 2 W_Z", "X_W 3 W_B_W 4 W_Z",
+         "    +       +    ", "    +       +    ",
+         "        --       ", "        --       ")
+      .ranged(Range(1, 5, 1, 5))
+      .changedLinesNumber(1, 1)
+      .noInnerChanges()
+      .run()
+
+    Test("X_W 1 W_Y_W 2 W_Z", "X_W 3 W_B_W 4 W_Z",
+         "    +       +    ", "    +       +    ",
+         "                 ", "                 ")
+      .ranged(Range(1, 2, 3, 4))
+      .changedLinesNumber(0, 0)
+      .noInnerChanges()
+      .run()
+
+    Test("X_a Y_Z", "Y_aY_Z",
+         "   + + ", "    + ",
+         "  ---  ", "  --  ")
+      .ranged(Range(1, 2, 1, 2))
+      .changedLinesNumber(1, 1)
+      .run()
+
+    Test("X_a Y_Z", "X_aY_Z",
+         "   + + ", "    + ",
+         "  ---  ", "  --  ")
+      .ranged(Range(1, 2, 1, 2))
+      .changedLinesNumber(1, 1)
+      .run()
+  }
+
   private inner class Test(val input1: String, val input2: String,
                            ignored1: String, ignored2: String,
                            result1: String, result2: String) {
@@ -421,6 +520,7 @@ class IgnoreComparisonUtilTest : DiffTestCase() {
 
     private var inner = true
     private var changedLines: IntPair? = null
+    private var range: Range? = null
 
     fun noInnerChanges(): Test {
       inner = false
@@ -429,6 +529,11 @@ class IgnoreComparisonUtilTest : DiffTestCase() {
 
     fun changedLinesNumber(lines1: Int, lines2: Int): Test {
       changedLines = IntPair(lines1, lines2)
+      return this
+    }
+
+    fun ranged(range: Range): Test {
+      this.range = range
       return this
     }
 
@@ -444,7 +549,18 @@ class IgnoreComparisonUtilTest : DiffTestCase() {
       val ignoredRanges1 = parseIgnored(ignored1)
       val ignoredRanges2 = parseIgnored(ignored2)
 
-      val result = MANAGER.compareLinesWithIgnoredRanges(text1, text2, ignoredRanges1, ignoredRanges2, inner, INDICATOR)
+      val ignored1 = ComparisonManagerImpl.collectIgnoredRanges(ignoredRanges1)
+      val ignored2 = ComparisonManagerImpl.collectIgnoredRanges(ignoredRanges2)
+
+      val lineOffsets1 = LineOffsetsUtil.create(text1)
+      val lineOffsets2 = LineOffsetsUtil.create(text2)
+
+      val result = if (range != null) {
+        MANAGER.compareLinesWithIgnoredRanges(range!!, text1, text2, lineOffsets1, lineOffsets2, ignored1, ignored2, inner, INDICATOR)
+      }
+      else {
+        MANAGER.compareLinesWithIgnoredRanges(text1, text2, lineOffsets1, lineOffsets2, ignored1, ignored2, inner, INDICATOR)
+      }
 
       val expected = Couple(parseExpected(result1), parseExpected(result2))
       val actual = parseActual(result)

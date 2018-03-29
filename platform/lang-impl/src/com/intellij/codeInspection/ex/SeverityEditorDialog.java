@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.ex;
 
@@ -36,8 +22,10 @@ import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.ui.JBUI;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -58,7 +46,7 @@ import static com.intellij.codeInsight.daemon.impl.SeverityRegistrar.SeverityBas
 public class SeverityEditorDialog extends DialogWrapper {
   private final JPanel myPanel;
 
-  private final JList myOptionsList = new JBList();
+  private final JList<SeverityBasedTextAttributes> myOptionsList = new JBList<>();
   private final ColorAndFontDescriptionPanel myOptionsPanel = new ColorAndFontDescriptionPanel();
 
   private SeverityBasedTextAttributes myCurrentSelection;
@@ -81,10 +69,7 @@ public class SeverityEditorDialog extends DialogWrapper {
       @Override
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         final Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        if (value instanceof SeverityBasedTextAttributes) {
-          final HighlightSeverity severity = ((SeverityBasedTextAttributes)value).getSeverity();
-          setText(StringUtil.capitalizeWords(severity.getName().toLowerCase(), true));
-        }
+        setText(SingleInspectionProfilePanel.renderSeverity(((SeverityBasedTextAttributes)value).getSeverity()));
         return rendererComponent;
       }
     });
@@ -94,7 +79,7 @@ public class SeverityEditorDialog extends DialogWrapper {
         if (myCurrentSelection != null) {
           apply(myCurrentSelection);
         }
-        myCurrentSelection = (SeverityBasedTextAttributes)myOptionsList.getSelectedValue();
+        myCurrentSelection = myOptionsList.getSelectedValue();
         if (myCurrentSelection != null) {
           reset(myCurrentSelection);
           myCard.show(myRightPanel, mySeverityRegistrar.isDefaultSeverity(myCurrentSelection.getSeverity()) ? DEFAULT : EDITABLE);
@@ -133,7 +118,7 @@ public class SeverityEditorDialog extends DialogWrapper {
                                                                                                        .createTextAttributesKey(name));
 
           SeverityBasedTextAttributes newSeverityBasedTextAttributes = new SeverityBasedTextAttributes(textAttributes.clone(), info);
-          ((DefaultListModel)myOptionsList.getModel()).addElement(newSeverityBasedTextAttributes);
+          ((DefaultListModel<SeverityBasedTextAttributes>)myOptionsList.getModel()).addElement(newSeverityBasedTextAttributes);
 
           myOptionsList.clearSelection();
           ScrollingUtil.selectItem(myOptionsList, newSeverityBasedTextAttributes);
@@ -155,7 +140,7 @@ public class SeverityEditorDialog extends DialogWrapper {
       @Override
       public boolean isEnabled(AnActionEvent e) {
         return !mySeverityRegistrar
-          .isDefaultSeverity(((SeverityBasedTextAttributes)myOptionsList.getSelectedValue()).getSeverity());
+          .isDefaultSeverity(myOptionsList.getSelectedValue().getSeverity());
       }
     });
     ToolbarDecorator.findUpButton(leftPanel).addCustomUpdater(new AnActionButtonUpdater() {
@@ -164,10 +149,10 @@ public class SeverityEditorDialog extends DialogWrapper {
         boolean canMove = ListUtil.canMoveSelectedItemsUp(myOptionsList);
         if (canMove) {
           SeverityBasedTextAttributes pair =
-            (SeverityBasedTextAttributes)myOptionsList.getSelectedValue();
+            myOptionsList.getSelectedValue();
           if (pair != null && mySeverityRegistrar.isDefaultSeverity(pair.getSeverity())) {
             final int newPosition = myOptionsList.getSelectedIndex() - 1;
-            pair = (SeverityBasedTextAttributes)myOptionsList.getModel().getElementAt(newPosition);
+            pair = myOptionsList.getModel().getElementAt(newPosition);
             if (mySeverityRegistrar.isDefaultSeverity(pair.getSeverity())) {
               canMove = false;
             }
@@ -183,10 +168,10 @@ public class SeverityEditorDialog extends DialogWrapper {
         boolean canMove = ListUtil.canMoveSelectedItemsDown(myOptionsList);
         if (canMove) {
           SeverityBasedTextAttributes pair =
-            (SeverityBasedTextAttributes)myOptionsList.getSelectedValue();
+            myOptionsList.getSelectedValue();
           if (pair != null && mySeverityRegistrar.isDefaultSeverity(pair.getSeverity())) {
             final int newPosition = myOptionsList.getSelectedIndex() + 1;
-            pair = (SeverityBasedTextAttributes)myOptionsList.getModel().getElementAt(newPosition);
+            pair = myOptionsList.getModel().getElementAt(newPosition);
             if (mySeverityRegistrar.isDefaultSeverity(pair.getSeverity())) {
               canMove = false;
             }
@@ -210,7 +195,7 @@ public class SeverityEditorDialog extends DialogWrapper {
       }
     });
     disabled.add(button,
-                 new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0,
+                 new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, JBUI.emptyInsets(), 0,
                                         0));
     myRightPanel.add(DEFAULT, disabled);
     myRightPanel.add(EDITABLE, myOptionsPanel);
@@ -219,11 +204,11 @@ public class SeverityEditorDialog extends DialogWrapper {
     fillList(selectedSeverity);
     init();
     setTitle(InspectionsBundle.message("severities.editor.dialog.title"));
-    reset((SeverityBasedTextAttributes)myOptionsList.getSelectedValue());
+    reset(myOptionsList.getSelectedValue());
   }
 
   private void editColorsAndFonts() {
-    final String toConfigure = getSelectedType().getSeverity(null).myName;
+    final String toConfigure = Objects.requireNonNull(getSelectedType()).getSeverity(null).myName;
     if (myCloseDialogWhenSettingsShown) {
       doOKAction();
     }
@@ -233,8 +218,7 @@ public class SeverityEditorDialog extends DialogWrapper {
   }
 
   private void fillList(final @Nullable HighlightSeverity severity) {
-    DefaultListModel model = new DefaultListModel();
-    model.removeAllElements();
+    DefaultListModel<SeverityBasedTextAttributes> model = new DefaultListModel<>();
     final List<SeverityBasedTextAttributes> infoTypes =
       new ArrayList<>(SeverityUtil.getRegisteredHighlightingInfoTypes(mySeverityRegistrar));
     Collections.sort(infoTypes,
@@ -290,7 +274,7 @@ public class SeverityEditorDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    apply((SeverityBasedTextAttributes)myOptionsList.getSelectedValue());
+    apply(myOptionsList.getSelectedValue());
     final Collection<SeverityBasedTextAttributes> infoTypes =
       new HashSet<>(SeverityUtil.getRegisteredHighlightingInfoTypes(mySeverityRegistrar));
     final ListModel listModel = myOptionsList.getModel();
@@ -332,8 +316,7 @@ public class SeverityEditorDialog extends DialogWrapper {
 
   @Nullable
   public HighlightInfoType getSelectedType() {
-    final SeverityBasedTextAttributes selection =
-      (SeverityBasedTextAttributes)myOptionsList.getSelectedValue();
+    final SeverityBasedTextAttributes selection =  myOptionsList.getSelectedValue();
     return selection != null ? selection.getType() : null;
   }
 

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.command.WriteCommandAction;
@@ -44,8 +30,7 @@ public class EditorStressTest extends AbstractEditorTest {
                                                                          new MoveCharacter(),
                                                                          new AddFoldRegion(),
                                                                          new RemoveFoldRegion(),
-                                                                         new CollapseFoldRegion(),
-                                                                         new ExpandFoldRegion(),
+                                                                         new ExpandOrCollapseFoldRegions(),
                                                                          new ClearFoldRegions(),
                                                                          new ChangeBulkModeState(),
                                                                          new ChangeEditorVisibility(),
@@ -158,7 +143,7 @@ public class EditorStressTest extends AbstractEditorTest {
     }
   }
 
-  private static class CollapseFoldRegion implements Action {
+  private static class ExpandOrCollapseFoldRegions implements Action {
     @Override
     public void perform(final EditorEx editor, Random random) {
       DocumentEx document = editor.getDocument();
@@ -166,24 +151,16 @@ public class EditorStressTest extends AbstractEditorTest {
       final FoldingModel foldingModel = editor.getFoldingModel();
       FoldRegion[] foldRegions = foldingModel.getAllFoldRegions();
       if (foldRegions.length == 0) return;
-      final FoldRegion region = foldRegions[random.nextInt(foldRegions.length)];
-      foldingModel.runBatchFoldingOperation(() -> region.setExpanded(false));
+      int operations = random.nextInt(foldRegions.length) + 1;
+      foldingModel.runBatchFoldingOperation(() -> {
+        for (int i = 0; i < operations; i++) {
+          FoldRegion region = foldRegions[random.nextInt(foldRegions.length)];
+          region.setExpanded(!region.isExpanded());
+        }
+      });
     }
   }
 
-  private static class ExpandFoldRegion implements Action {
-    @Override
-    public void perform(final EditorEx editor, Random random) {
-      DocumentEx document = editor.getDocument();
-      if (document.isInBulkUpdate()) return;
-      final FoldingModel foldingModel = editor.getFoldingModel();
-      FoldRegion[] foldRegions = foldingModel.getAllFoldRegions();
-      if (foldRegions.length == 0) return;
-      final FoldRegion region = foldRegions[random.nextInt(foldRegions.length)];
-      foldingModel.runBatchFoldingOperation(() -> region.setExpanded(true));
-    }
-  }
-  
   private static class ClearFoldRegions implements Action {
     @Override
     public void perform(final EditorEx editor, Random random) {

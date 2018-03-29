@@ -12,6 +12,10 @@ operator fun <T> Consumer<in T>.plusAssign(elements: Iterable<T>) {
   elements.forEach(this::plusAssign)
 }
 
+operator fun <T> Consumer<in T>.plusAssign(elements: Array<out T>) {
+  elements.forEach(this::plusAssign)
+}
+
 operator fun <T> Consumer<in T>.plusAssign(element: T) {
   accept(element)
 }

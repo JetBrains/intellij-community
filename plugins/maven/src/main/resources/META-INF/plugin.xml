@@ -43,6 +43,7 @@
     <frameworkSupport implementation="org.jetbrains.idea.maven.wizards.MavenFrameworkSupportProvider"/>
     <moduleExtension implementation="org.jetbrains.idea.maven.importing.MavenSourceFoldersModuleExtension"/>
     <moduleService serviceImplementation="org.jetbrains.idea.maven.importing.MavenPomPathModuleService"/>
+    <moduleService serviceImplementation="org.jetbrains.idea.maven.importing.MavenAnnotationProcessorsModuleService"/>
 
     <applicationService serviceImplementation="org.jetbrains.idea.maven.server.MavenServerManager"/>
     <applicationService serviceImplementation="org.jetbrains.idea.maven.indices.MavenIndicesManager"/>

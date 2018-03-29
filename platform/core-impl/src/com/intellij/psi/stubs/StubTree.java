@@ -43,15 +43,11 @@ public class StubTree extends ObjectStubTree<StubElement<?>> {
 
   @NotNull
   @Override
-  public List<StubElement<?>> getPlainListFromAllRoots() {
-    final PsiFileStub[] roots = getRoot().getStubRoots();
+  final List<StubElement<?>> getPlainListFromAllRoots() {
+    PsiFileStub[] roots = ((PsiFileStubImpl<?>)getRoot()).getStubRoots();
     if (roots.length == 1) return super.getPlainListFromAllRoots();
 
-    return ContainerUtil.concat(roots, stub -> {
-      @SuppressWarnings("unchecked")
-      final ObjectStubTree<StubElement<?>> existingTree = stub.getUserData(STUB_TO_TREE_REFERENCE);
-      return existingTree != null ? existingTree.getPlainList() : new StubTree(stub, false).getPlainList();
-    });
+    return ContainerUtil.concat(roots, stub -> ((PsiFileStubImpl)stub).myStubList.toPlainList());
   }
 
   @NotNull

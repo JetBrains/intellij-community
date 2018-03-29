@@ -192,7 +192,11 @@ public final class PsiUtil extends PsiUtilCore {
       ref = factory.createReferenceElementByFQClassName(exceptionName, method.getResolveScope());
     }
     else {
-      PsiClassType type = factory.createType(exceptionClass);
+      PsiClass superClass = exceptionClass.getSuperClass();
+      while (superClass != null && isLocalOrAnonymousClass(superClass)) {
+        superClass = superClass.getSuperClass();
+      }
+      PsiClassType type = factory.createType(superClass != null ? superClass : exceptionClass);
       ref = factory.createReferenceElementByType(type);
     }
     throwsList.add(ref);
@@ -984,6 +988,14 @@ public final class PsiUtil extends PsiUtilCore {
 
   public static boolean isLanguageLevel9OrHigher(@NotNull final PsiElement element) {
     return getLanguageLevel(element).isAtLeast(LanguageLevel.JDK_1_9);
+  }
+
+  public static boolean isLanguageLevel10OrHigher(@NotNull final PsiElement element) {
+    return getLanguageLevel(element).isAtLeast(LanguageLevel.JDK_10);
+  }
+
+  public static boolean isLanguageLevel11OrHigher(@NotNull final PsiElement element) {
+    return getLanguageLevel(element).isAtLeast(LanguageLevel.JDK_X);
   }
 
   @NotNull

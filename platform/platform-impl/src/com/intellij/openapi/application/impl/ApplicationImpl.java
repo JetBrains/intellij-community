@@ -69,6 +69,7 @@ import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -167,12 +168,11 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       }));
 
       //noinspection AssignmentToStaticFieldFromInstanceMethod
-      WindowsCommandLineProcessor.LISTENER = (currentDirectory, commandLine) -> {
-        LOG.info("Received external Windows command line: current directory " + currentDirectory + ", command line " + commandLine);
+      WindowsCommandLineProcessor.LISTENER = (currentDirectory, args) -> {
+        List<String> argsList = Arrays.asList(args);
+        LOG.info("Received external Windows command line: current directory " + currentDirectory + ", command line " + argsList);
         invokeLater(() -> {
-          final List<String> args = StringUtil.splitHonorQuotes(commandLine, ' ');
-          args.remove(0);   // process name
-          CommandLineProcessor.processExternalCommandLine(args, currentDirectory);
+          CommandLineProcessor.processExternalCommandLine(argsList, currentDirectory);
         });
       };
     }
@@ -210,6 +210,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
    * would fail (i.e. throw {@link ApplicationUtil.CannotRunReadActionException})
    * if there is a pending write action.
    */
+  @Override
   public void executeByImpatientReader(@NotNull Runnable runnable) throws ApplicationUtil.CannotRunReadActionException {
     if (isDispatchThread()) {
       runnable.run();

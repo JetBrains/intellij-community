@@ -36,7 +36,8 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.server.DefaultMessageHandler");
   public static final long CONSTANT_SEARCH_TIME_LIMIT = 60 * 1000L; // one minute
   private final Project myProject;
-  private final ExecutorService myTaskExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("DefaultMessageHandler pool");
+  private final ExecutorService myTaskExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(
+    "DefaultMessageHandler Pool");
   private volatile long myConstantSearchTime = 0L;
 
   protected DefaultMessageHandler(Project project) {

@@ -9,8 +9,7 @@ import com.intellij.debugger.memory.utils.AbstractTableModelWithColumns;
 import com.intellij.debugger.memory.utils.InstancesProvider;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
@@ -35,6 +34,7 @@ import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableRowSorter;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -52,6 +52,12 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
   private static final Border EMPTY_BORDER = BorderFactory.createEmptyBorder();
   private static final JBColor CLICKABLE_COLOR = new JBColor(new Color(250, 251, 252), new Color(62, 66, 69));
   private static final String DEFAULT_EMPTY_TEXT = "Nothing to show";
+
+  private static final SimpleTextAttributes LINK_ATTRIBUTES =
+    new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, SimpleTextAttributes.LINK_ATTRIBUTES.getFgColor());
+  private static final SimpleTextAttributes UNDERLINE_LINK_ATTRIBUTES = SimpleTextAttributes.LINK_ATTRIBUTES;
+  private static final String NO_LOADED_CLASSES_MESSAGE = "No classes loaded.";
+  private static final String LOAD_CLASS_LINK = "Load classes";
 
   private static final int CLASSES_COLUMN_PREFERRED_WIDTH = 250;
   private static final int COUNT_COLUMN_MIN_WIDTH = 80;
@@ -182,15 +188,21 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     return myMouseListener != null;
   }
 
-  void makeClickable(@NotNull String text, @NotNull Runnable onClick) {
+  void makeClickable(@NotNull Runnable onClick) {
     releaseMouseListener();
-    getEmptyText().setText(text);
 
-    if (!ApplicationManager.getApplication().isUnitTestMode() && getMousePosition() != null) {
-      setBackground(CLICKABLE_COLOR);
-    }
+    AnAction action = new AnAction() {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        onClick.run();
+        releaseMouseListener();
+      }
+    };
 
-    myMouseListener = new MouseAdapter() {
+    KeyboardShortcut shortcut = new KeyboardShortcut(KeyStroke.getKeyStroke('l', InputEvent.SHIFT_DOWN_MASK), null);
+    action.registerCustomShortcutSet(new CustomShortcutSet(shortcut), null);
+
+    MyMouseAdapter listener = new MyMouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
         onClick.run();
@@ -199,17 +211,34 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
 
       @Override
       public void mouseEntered(MouseEvent e) {
-        setBackground(CLICKABLE_COLOR);
+        updateTable(true);
       }
 
       @Override
       public void mouseExited(MouseEvent e) {
-        setBackground(JBColor.background());
+        updateTable(false);
+      }
+
+      @Override
+      void updateTable(boolean mouseOnTable) {
+        setBackground(mouseOnTable ? CLICKABLE_COLOR : JBColor.background());
+        SimpleTextAttributes linkAttributes = mouseOnTable ? UNDERLINE_LINK_ATTRIBUTES : LINK_ATTRIBUTES;
+        getEmptyText().clear()
+                      .appendText(NO_LOADED_CLASSES_MESSAGE).appendText(" ")
+                      .appendText(LOAD_CLASS_LINK, linkAttributes).appendText(" ");
       }
     };
 
+    boolean mouseOnTable = !ApplicationManager.getApplication().isUnitTestMode() && getMousePosition() != null;
+    listener.updateTable(mouseOnTable);
+
+    myMouseListener = listener;
     addMouseListener(myMouseListener);
     setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+  }
+
+  private abstract static class MyMouseAdapter extends MouseAdapter {
+    abstract void updateTable(boolean mouseOnTable);
   }
 
   void exitClickableMode() {

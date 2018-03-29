@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -45,6 +46,7 @@ import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.nio.charset.Charset;
 import java.util.Collection;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -82,7 +84,8 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
 
   private static final Key<Charset> CACHED_CHARSET_FROM_CONTENT = Key.create("CACHED_CHARSET_FROM_CONTENT");
 
-  private final BoundedTaskExecutor changedDocumentExecutor = new BoundedTaskExecutor("EncodingManagerImpl document pool", PooledThreadExecutor.INSTANCE, JobSchedulerImpl.getJobPoolParallelism(), this);
+  private final ExecutorService changedDocumentExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor(
+    "EncodingManagerImpl Document Pool", PooledThreadExecutor.INSTANCE, JobSchedulerImpl.getJobPoolParallelism(), this);
 
   private final AtomicBoolean myDisposed = new AtomicBoolean();
   public EncodingManagerImpl(@NotNull EditorFactory editorFactory, MessageBus messageBus) {
@@ -237,10 +240,10 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
       throw new IllegalStateException("Must not call clearDocumentQueue() from under write action because some queued detectors require read action");
     }
-    changedDocumentExecutor.clearAndCancelAll();
+    ((BoundedTaskExecutor)changedDocumentExecutor).clearAndCancelAll();
     // after clear and canceling all queued tasks, make sure they all are finished
     try {
-      changedDocumentExecutor.waitAllTasksExecuted(1, TimeUnit.MINUTES);
+      ((BoundedTaskExecutor)changedDocumentExecutor).waitAllTasksExecuted(1, TimeUnit.MINUTES);
     }
     catch (Exception e) {
       LOG.error(e);

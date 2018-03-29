@@ -1642,6 +1642,7 @@ public class AbstractPopup implements JBPopup {
     return popupWindow;
   }
 
+  @Override
   public void setCaption(String title) {
     if (myCaption instanceof TitlePanel) {
       ((TitlePanel)myCaption).setText(title);
@@ -1694,7 +1695,7 @@ public class AbstractPopup implements JBPopup {
   }
 
   public Window getPopupWindow() {
-    return myPopup.getWindow();
+    return myPopup != null ? myPopup.getWindow() : null;
   }
 
   public void setUserData(List<Object> userData) {

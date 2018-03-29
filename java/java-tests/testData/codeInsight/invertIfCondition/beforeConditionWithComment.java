@@ -7,6 +7,6 @@ class A {
         <caret>if (value != null) {
             System.out.println(value);
             // Comment gets deleted.
-        }
+        } // Another comment
     }
 }

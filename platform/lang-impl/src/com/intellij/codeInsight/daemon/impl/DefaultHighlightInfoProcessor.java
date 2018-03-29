@@ -141,8 +141,7 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
                               @NotNull TextRange priorityRange,
                               @NotNull TextRange restrictedRange,
                               int groupId) {
-    HighlightingSessionImpl impl = (HighlightingSessionImpl)session;
-    impl.queueHighlightInfo(info, restrictedRange, groupId);
+    ((HighlightingSessionImpl)session).queueHighlightInfo(info, restrictedRange, groupId);
   }
 
   @Override

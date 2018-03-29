@@ -103,6 +103,15 @@ class GitRepositoryReader {
     return file.exists() && file.canExecute();
   }
 
+  boolean hasShallowCommits() {
+    File shallowFile = myGitFiles.getShallowFile();
+    if (!shallowFile.exists()) {
+      return false;
+    }
+
+    return shallowFile.length() > 0;
+  }
+
   @Nullable
   private static String getCurrentRevision(@NotNull HeadInfo headInfo, @Nullable Hash currentBranchHash) {
     String currentRevision;
@@ -283,7 +292,7 @@ class GitRepositoryReader {
 
       if (remote == null) {
         // user may remove the remote section from .git/config, but leave remote refs untouched in .git/refs/remotes
-        LOG.debug(String.format("No remote found with the name [%s]. All remotes: %s", remoteName, remotes));
+        LOG.trace(String.format("No remote found with the name [%s]. All remotes: %s", remoteName, remotes));
         GitRemote fakeRemote = new GitRemote(remoteName, emptyList(), emptyList(), emptyList(), emptyList());
         return new GitStandardRemoteBranch(fakeRemote, branchName);
       }

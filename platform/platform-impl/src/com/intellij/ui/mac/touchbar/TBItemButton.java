@@ -2,7 +2,7 @@
 package com.intellij.ui.mac.touchbar;
 
 public abstract class TBItemButton extends TBItem {
-  protected final TBItemCallback myAction;
+  protected final NSTLibrary.Action myAction;
 
-  protected TBItemButton(TBItemCallback action) { myAction = action; }
+  protected TBItemButton(NSTLibrary.Action action) { myAction = action; }
 }

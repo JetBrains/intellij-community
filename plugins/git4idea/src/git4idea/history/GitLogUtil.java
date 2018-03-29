@@ -179,7 +179,8 @@ public class GitLogUtil {
     List<VcsCommitMetadata> commits = ContainerUtil.newArrayList();
 
     try {
-      readRecords(project, root, true, false, DiffRenameLimit.GIT_CONFIG, record -> commits.add(converter.fun(record)), parameters);
+      GitLineHandler handler = createGitHandler(project, root, createConfigParameters(false, false, DiffRenameLimit.GIT_CONFIG));
+      readRecordsFromHandler(project, root, true, false, record -> commits.add(converter.fun(record)), handler, parameters);
     }
     catch (VcsException e) {
       if (commits.isEmpty()) {
@@ -231,7 +232,7 @@ public class GitLogUtil {
 
     List<GitCommit> commits = ContainerUtil.newArrayList();
     try {
-      readFullDetails(project, root, commits::add, parameters);
+      readFullDetails(project, root, commits::add, true, parameters);
     }
     catch (VcsException e) {
       if (commits.isEmpty()) {
@@ -245,7 +246,20 @@ public class GitLogUtil {
   public static void readFullDetails(@NotNull Project project,
                                      @NotNull VirtualFile root,
                                      @NotNull Consumer<? super GitCommit> commitConsumer,
+                                     boolean includeRootChanges,
                                      @NotNull String... parameters) throws VcsException {
+    DiffRenameLimit renameLimit = DiffRenameLimit.REGISTRY;
+
+    GitLineHandler handler = createGitHandler(project, root, createConfigParameters(true, includeRootChanges, renameLimit));
+    readFullDetailsFromHandler(project, root, commitConsumer, renameLimit, handler, parameters);
+  }
+
+  private static void readFullDetailsFromHandler(@NotNull Project project,
+                                                 @NotNull VirtualFile root,
+                                                 @NotNull Consumer<? super GitCommit> commitConsumer,
+                                                 @NotNull DiffRenameLimit renameLimit,
+                                                 @NotNull GitLineHandler handler,
+                                                 @NotNull String... parameters) throws VcsException {
     VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
     if (factory == null) {
       return;
@@ -254,34 +268,22 @@ public class GitLogUtil {
     GitLogRecordCollector recordCollector = new GitLogRecordCollector(project, root) {
       @Override
       public void consume(@NotNull List<GitLogRecord> records) {
-        assertCorrectNumberOfRecords(records);
-        commitConsumer.consume(createCommit(project, root, records, factory));
+        GitLogRecord firstRecord = notNull(getFirstItem(records));
+        String[] parents = firstRecord.getParentsHashes();
+
+        LOG.assertTrue(parents.length == 0 || parents.length == records.size(), "Not enough records for commit " +
+                                                                                firstRecord.getHash() +
+                                                                                " expected " +
+                                                                                parents.length +
+                                                                                " records, but got " +
+                                                                                records.size());
+
+        commitConsumer.consume(createCommit(project, root, records, factory, renameLimit));
       }
     };
-    readRecords(project, root, false, true, DiffRenameLimit.REGISTRY, recordCollector, parameters);
+
+    readRecordsFromHandler(project, root, false, true, recordCollector, handler, parameters);
     recordCollector.finish();
-  }
-
-  public static void assertCorrectNumberOfRecords(@NotNull List<GitLogRecord> records) {
-    GitLogRecord firstRecord = notNull(getFirstItem(records));
-    String[] parents = firstRecord.getParentsHashes();
-    LOG.assertTrue(parents.length == 0 || parents.length == records.size(), "Not enough records for commit " +
-                                                                            firstRecord.getHash() +
-                                                                            " expected " +
-                                                                            parents.length +
-                                                                            " records, but got " +
-                                                                            records.size());
-  }
-
-  private static void readRecords(@NotNull Project project,
-                                  @NotNull VirtualFile root,
-                                  boolean withRefs,
-                                  boolean withChanges,
-                                  @NotNull DiffRenameLimit renameLimit,
-                                  @NotNull Consumer<GitLogRecord> converter,
-                                  String... parameters) throws VcsException {
-    GitLineHandler handler = createGitHandler(project, root, createConfigParameters(withChanges, renameLimit));
-    readRecordsFromHandler(project, root, withRefs, withChanges, converter, handler, parameters);
   }
 
   private static void readRecordsFromHandler(@NotNull Project project,
@@ -337,41 +339,22 @@ public class GitLogUtil {
                                               @NotNull GitVcs vcs,
                                               @NotNull Consumer<? super GitCommit> commitConsumer,
                                               @NotNull List<String> hashes,
+                                              boolean includeRootChanges,
                                               @NotNull DiffRenameLimit renameLimit) throws VcsException {
-    VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
-    if (factory == null) {
-      return;
-    }
-
-    GitLogRecordCollector recordCollector = new GitLogRecordCollector(project, root) {
-      @Override
-      public void consume(@NotNull List<GitLogRecord> records) {
-        assertCorrectNumberOfRecords(records);
-        commitConsumer.consume(createCommit(project, root, records, factory, renameLimit));
-      }
-    };
-    GitLineHandler handler = createGitHandler(project, root, createConfigParameters(true, renameLimit));
+    GitLineHandler handler = createGitHandler(project, root, createConfigParameters(true, includeRootChanges, renameLimit));
     sendHashesToStdin(vcs, hashes, handler);
 
-    readRecordsFromHandler(project, root, false, true, recordCollector, handler, getNoWalkParameter(vcs), STDIN);
-    recordCollector.finish();
+    readFullDetailsFromHandler(project, root, commitConsumer, renameLimit, handler, getNoWalkParameter(vcs), STDIN);
   }
 
   public static void sendHashesToStdin(@NotNull GitVcs vcs, @NotNull Collection<String> hashes, @NotNull GitHandler handler) {
     // if we close this stream, RunnerMediator won't be able to send ctrl+c to the process in order to softly kill it
     // see RunnerMediator.sendCtrlEventThroughStream
+    String separator = GitVersionSpecialty.LF_SEPARATORS_IN_STDIN.existsIn(vcs.getVersion()) ? "\n" : System.lineSeparator();
     handler.setInputProcessor(GitHandlerInputProcessorUtil.writeLines(hashes,
-                                                                      getSeparator(vcs),
+                                                                      separator,
                                                                       handler.getCharset(),
                                                                       true));
-  }
-
-  @NotNull
-  private static String getSeparator(@NotNull GitVcs vcs) {
-    if (GitVersionSpecialty.LF_SEPARATORS_IN_STDIN.existsIn(vcs.getVersion())) {
-      return "\n";
-    }
-    return System.lineSeparator();
   }
 
   @NotNull
@@ -385,28 +368,40 @@ public class GitLogUtil {
   }
 
   @NotNull
-  private static GitLineHandler createGitHandler(@NotNull Project project, @NotNull VirtualFile root, @NotNull List<String> configParameters) {
+  private static GitLineHandler createGitHandler(@NotNull Project project,
+                                                 @NotNull VirtualFile root,
+                                                 @NotNull List<String> configParameters) {
     GitLineHandler handler = new GitLineHandler(project, root, GitCommand.LOG, configParameters);
     handler.setWithMediator(false);
     return handler;
   }
 
   @NotNull
-  private static List<String> createConfigParameters(boolean withChanges, @NotNull DiffRenameLimit renameLimit) {
+  private static List<String> createConfigParameters(boolean withChanges,
+                                                     boolean includeRootChanges,
+                                                     @NotNull DiffRenameLimit renameLimit) {
     if (!withChanges) return Collections.emptyList();
+
+    List<String> result = ContainerUtil.newArrayList();
     switch (renameLimit) {
       case INFINITY:
-        return renameLimit(0);
+        result.add(renameLimit(0));
+        break;
       case REGISTRY:
-        return renameLimit(Registry.intValue("git.diff.renameLimit"));
+        result.add(renameLimit(Registry.intValue("git.diff.renameLimit")));
+        break;
       case GIT_CONFIG:
     }
-    return Collections.emptyList();
+
+    if (!includeRootChanges) {
+      result.add("log.showRoot=false");
+    }
+    return result;
   }
 
   @NotNull
-  private static List<String> renameLimit(int limit) {
-    return Collections.singletonList("diff.renameLimit=" + limit);
+  private static String renameLimit(int limit) {
+    return "diff.renameLimit=" + limit;
   }
 
   public enum DiffRenameLimit {

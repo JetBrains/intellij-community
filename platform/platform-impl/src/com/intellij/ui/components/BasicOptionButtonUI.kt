@@ -9,7 +9,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager.getApplication
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.ui.DialogWrapperButtonLayout.Companion.EXTRA_WIDTH_KEY
 import com.intellij.openapi.ui.OptionAction
 import com.intellij.openapi.ui.popup.JBPopupAdapter
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
@@ -19,6 +18,7 @@ import com.intellij.ui.ScreenUtil
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBOptionButton.PROP_OPTIONS
 import com.intellij.ui.components.JBOptionButton.PROP_OPTION_TOOLTIP
+import com.intellij.ui.popup.ActionPopupStep
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.PopupFactoryImpl.ActionGroupPopup.getActionItems
 import com.intellij.ui.popup.list.PopupListElementRenderer
@@ -28,6 +28,7 @@ import com.intellij.util.ui.JBUI.scale
 import java.awt.*
 import java.awt.event.*
 import java.beans.PropertyChangeListener
+import java.util.function.Supplier
 import javax.swing.*
 import javax.swing.AbstractButton.MNEMONIC_CHANGED_PROPERTY
 import javax.swing.AbstractButton.TEXT_CHANGED_PROPERTY
@@ -113,12 +114,10 @@ open class BasicOptionButtonUI : OptionButtonUI() {
 
   protected open fun configureOptionButton() {
     optionButton.layout = createLayoutManager()
-    updateExtraWidth()
   }
 
   protected open fun unconfigureOptionButton() {
     optionButton.layout = null
-    optionButton.putClientProperty(EXTRA_WIDTH_KEY, null)
     optionButton.removeAll()
   }
 
@@ -176,7 +175,6 @@ open class BasicOptionButtonUI : OptionButtonUI() {
       TOOL_TIP_TEXT_KEY, PROP_OPTION_TOOLTIP -> updateTooltip()
       PROP_OPTIONS -> {
         closePopup()
-        updateExtraWidth()
         updateTooltip()
         updateOptions()
       }
@@ -296,10 +294,6 @@ open class BasicOptionButtonUI : OptionButtonUI() {
 
   protected open fun createAnAction(action: Action) = action.getValue(OptionAction.AN_ACTION) as? AnAction ?: ActionDelegate(action)
 
-  private fun updateExtraWidth() {
-    optionButton.putClientProperty(EXTRA_WIDTH_KEY, if (!isSimpleButton) arrowButton.preferredSize.width else null)
-  }
-
   private fun updateTooltip() {
     val toolTip = if (!isSimpleButton) optionButton.optionTooltipText else optionButton.toolTipText
 
@@ -338,7 +332,7 @@ open class BasicOptionButtonUI : OptionButtonUI() {
     override fun minimumLayoutSize(parent: Container) = parent.minimumSize
   }
 
-  open inner class OptionButtonPopup(step: PopupFactoryImpl.ActionPopupStep, dataContext: DataContext, private val ensureSelection: Boolean)
+  open inner class OptionButtonPopup(step: ActionPopupStep, dataContext: DataContext, private val ensureSelection: Boolean)
     : PopupFactoryImpl.ActionGroupPopup(null, step, null, dataContext, ActionPlaces.UNKNOWN, -1) {
     init {
       list.background = background
@@ -363,7 +357,8 @@ open class BasicOptionButtonUI : OptionButtonUI() {
   }
 
   open inner class OptionButtonPopupStep(actions: List<PopupFactoryImpl.ActionItem>, private val defaultSelection: Condition<AnAction>?)
-    : PopupFactoryImpl.ActionPopupStep(actions, null, optionButton, true, defaultSelection, false, true) {
+    : ActionPopupStep(actions, null,
+                      Supplier<DataContext> { DataManager.getInstance().getDataContext(optionButton) }, true, defaultSelection, false, true) {
     // if there is no default selection condition - -1 should be returned, this way first enabled action should be selected by
     // OptionButtonPopup.afterShow() (if corresponding ensureSelection parameter is true)
     override fun getDefaultOptionIndex() = defaultSelection?.let { super.getDefaultOptionIndex() } ?: -1

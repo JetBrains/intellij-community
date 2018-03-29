@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic.errordialog;
 
 import com.intellij.openapi.ui.LabeledComponent;
@@ -21,15 +22,14 @@ public class LabeledTextComponent {
 
   private LabeledComponent<JPanel> myComponent;
   private JPanel myContentPane;
-
   private final JTextArea myTextPane;
 
   public LabeledTextComponent() {
     myTextPane = new JTextArea();
+    myTextPane.setBackground(UIUtil.getTextFieldBackground());
 
     myComponent.getLabel().setMinimumSize(new Dimension(0, -1));
     myComponent.getComponent().setLayout(new BorderLayout());
-    myTextPane.setBackground(UIUtil.getTextFieldBackground());
     myComponent.getComponent().add(new JBScrollPane(myTextPane));
     myComponent.getComponent().setBorder(IdeBorderFactory.createBorder());
   }
@@ -54,7 +54,7 @@ public class LabeledTextComponent {
     }
   }
 
-  public void addCommentsListener(final TextListener l) {
+  public void addCommentsListener(TextListener l) {
     myTextPane.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
@@ -62,5 +62,4 @@ public class LabeledTextComponent {
       }
     });
   }
-
 }

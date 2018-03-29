@@ -87,6 +87,7 @@
            class="com.intellij.openapi.vcs.changes.actions.SelectChangesGroupingActionGroup">
       <action id="ChangesView.GroupBy.Directory" text="Directory"
               class="com.intellij.openapi.vcs.changes.actions.SetDirectoryChangesGroupingAction"/>
+      <add-to-group group-id="Vcs.KeymapGroup"/>
     </group>
 
     <group id="ChangesViewToolbar">
@@ -287,7 +288,10 @@
 
     <group id="Vcs.CommitExecutor.Actions"/>
 
+    <action class="com.intellij.openapi.vcs.actions.VcsToolbarLabelAction" id="VcsToolbarLabelAction" text="VCS Label"/>
+
     <group id="VcsToobarActions">
+      <reference ref="VcsToolbarLabelAction"/>
       <reference ref="Vcs.UpdateProject"/>
       <reference ref="CheckinProject"/>
       <reference ref="Compare.SameVersion"/>
@@ -298,6 +302,7 @@
     </group>
 
     <group id="VcsNavBarToobarActions">
+      <reference ref="VcsToolbarLabelAction"/>
       <reference ref="Vcs.UpdateProject"/>
       <reference ref="CheckinProject"/>
       <reference ref="Vcs.ShowTabbedFileHistory"/>

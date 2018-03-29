@@ -46,8 +46,7 @@ import com.intellij.ui.*;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.OpenSourceUtil;
-import com.intellij.util.concurrency.AppExecutorUtil;
-import java.util.HashSet;
+import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -59,7 +58,6 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.InputEvent;
@@ -105,7 +103,8 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   private final InspectionViewSuppressActionHolder mySuppressActionHolder = new InspectionViewSuppressActionHolder();
 
   private final Object myTreeStructureUpdateLock = new Object();
-  private final ExecutorService myTreeUpdater = AppExecutorUtil.createBoundedApplicationPoolExecutor("inspection-view-tree-updater", 1);
+  private final ExecutorService myTreeUpdater = SequentialTaskExecutor
+    .createSequentialApplicationPoolExecutor("Inspection-View-Tree-Updater");
 
   public InspectionResultsView(@NotNull GlobalInspectionContextImpl globalInspectionContext,
                                @NotNull InspectionRVContentProvider provider) {
@@ -637,12 +636,13 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   public void update() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final Application app = ApplicationManager.getApplication();
+    Collection<Tools> tools = new ArrayList<>(myGlobalInspectionContext.getTools().values());
     final Runnable buildAction = () -> {
       try {
         setUpdating(true);
         synchronized (myTreeStructureUpdateLock) {
           myTree.removeAllNodes();
-          addToolsSynchronously(myGlobalInspectionContext.getTools().values());
+          addToolsSynchronously(tools);
         }
       }
       finally {

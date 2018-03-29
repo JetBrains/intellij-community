@@ -164,7 +164,12 @@ public class PyPackageRequirementsInspection extends PyInspection {
         final Module module = ModuleUtilCore.findModuleForPsiElement(packageReferenceExpression);
         if (module == null) return;
 
-        final Collection<PyRequirement> requirements = getRequirementsInclTransitive(module);
+        final Sdk sdk = PythonSdkType.findPythonSdk(module);
+        if (sdk == null) return;
+
+        final PyPackageManager packageManager = PyPackageManager.getInstance(sdk);
+
+        final Collection<PyRequirement> requirements = getRequirementsInclTransitive(packageManager, module);
         if (requirements == null) return;
 
         for (PyRequirement req : requirements) {
@@ -209,7 +214,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
           .of(packageName)
           .append(possiblePyPIPackageNames)
           .filter(PyPIPackageUtil.INSTANCE::isInPyPI)
-          .map(name -> new AddToRequirementsFix(module, name, LanguageLevel.forElement(importedExpression)))
+          .map(name -> new AddToRequirementsFix(packageManager, module, name, LanguageLevel.forElement(importedExpression)))
           .forEach(quickFixes::add);
 
         quickFixes.add(new IgnoreRequirementFix(Collections.singleton(packageName)));
@@ -224,13 +229,8 @@ public class PyPackageRequirementsInspection extends PyInspection {
   }
 
   @Nullable
-  private static Set<PyRequirement> getRequirementsInclTransitive(@NotNull Module module) {
-    final Sdk sdk = PythonSdkType.findPythonSdk(module);
-    if (sdk == null) return null;
-
-    final PyPackageManager packageManager = PyPackageManager.getInstance(sdk);
-
-    final List<PyRequirement> requirements = getListedRequirements(module, packageManager);
+  private static Set<PyRequirement> getRequirementsInclTransitive(@NotNull PyPackageManager packageManager, @NotNull Module module) {
+    final List<PyRequirement> requirements = getListedRequirements(packageManager, module);
     if (requirements == null) return null;
     if (requirements.isEmpty()) return Collections.emptySet();
 
@@ -243,7 +243,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
   }
 
   @Nullable
-  private static List<PyRequirement> getListedRequirements(@NotNull Module module, @NotNull PyPackageManager packageManager) {
+  private static List<PyRequirement> getListedRequirements(@NotNull PyPackageManager packageManager, @NotNull Module module) {
     final List<PyRequirement> requirements = packageManager.getRequirements(module);
     final List<PyRequirement> extrasRequirements = getExtrasRequirements(module);
     if (requirements == null) return extrasRequirements;
@@ -549,11 +549,24 @@ public class PyPackageRequirementsInspection extends PyInspection {
   }
 
   private static class AddToRequirementsFix implements LocalQuickFix {
-    @NotNull private final Module myModule;
-    @NotNull private final String myPackageName;
-    @NotNull private final LanguageLevel myLanguageLevel;
 
-    private AddToRequirementsFix(@NotNull Module module, @NotNull String packageName, @NotNull LanguageLevel languageLevel) {
+    @NotNull
+    private final PyPackageManager myPackageManager;
+
+    @NotNull
+    private final Module myModule;
+
+    @NotNull
+    private final String myPackageName;
+
+    @NotNull
+    private final LanguageLevel myLanguageLevel;
+
+    private AddToRequirementsFix(@NotNull PyPackageManager packageManager,
+                                 @NotNull Module module,
+                                 @NotNull String packageName,
+                                 @NotNull LanguageLevel languageLevel) {
+      myPackageManager = packageManager;
       myModule = module;
       myPackageName = packageName;
       myLanguageLevel = languageLevel;
@@ -571,8 +584,18 @@ public class PyPackageRequirementsInspection extends PyInspection {
     }
 
     @Override
-    public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
-      CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> PyPackageUtil.addRequirementToTxtOrSetupPy(myModule, myPackageName, myLanguageLevel)), getName(), null);
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      final List<PyRequirement> requirements = myPackageManager.getRequirements(myModule);
+      if (requirements != null && ContainerUtil.exists(requirements, r -> r.getName().equals(myPackageName))) return;
+
+      CommandProcessor.getInstance().executeCommand(
+        project,
+        () -> ApplicationManager.getApplication().runWriteAction(
+          () -> PyPackageUtil.addRequirementToTxtOrSetupPy(myModule, myPackageName, myLanguageLevel)
+        ),
+        getName(),
+        null
+      );
     }
 
     @NotNull

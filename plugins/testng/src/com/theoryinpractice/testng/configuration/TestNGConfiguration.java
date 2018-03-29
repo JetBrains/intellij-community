@@ -221,6 +221,11 @@ public class TestNGConfiguration extends JavaTestConfigurationBase {
     return getPersistantData().getScope();
   }
 
+  @Override
+  public void setSearchScope(TestSearchScope searchScope) {
+    getPersistantData().setScope(searchScope);
+  }
+
   public void setPackageConfiguration(Module module, PsiPackage pkg) {
     data.setPackage(pkg);
     setModule(module);

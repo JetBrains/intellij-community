@@ -2,15 +2,8 @@
 package com.intellij.execution.testDiscovery;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
-
-import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
 
 public class LocalTestDiscoveryProducer implements TestDiscoveryProducer {
   @Override
@@ -19,13 +12,7 @@ public class LocalTestDiscoveryProducer implements TestDiscoveryProducer {
                                                      @NotNull String classFQName,
                                                      @NotNull String methodName,
                                                      byte frameworkId) {
-    try {
-      return TestDiscoveryIndex.getInstance(project).getTestsByMethodName(classFQName, methodName, frameworkId);
-    }
-    catch (IOException e) {
-      TestDiscoveryProducer.LOG.error(e);
-      return MultiMap.empty();
-    }
+    return TestDiscoveryIndex.getInstance(project).getTestsByMethodName(classFQName, methodName, frameworkId);
   }
 
   @Override

@@ -92,7 +92,8 @@ public class EncodingUtil {
     try {
       bytesToSave = toSave.getBytes(charset);
     }
-    catch (UnsupportedOperationException e) {
+    // turned out some crazy charsets have incorrectly implemented .newEncoder() returning null
+    catch (UnsupportedOperationException | NullPointerException e) {
       return Magic8.NO_WAY;
     }
     if (bom != null && !ArrayUtil.startsWith(bytesToSave, bom)) {

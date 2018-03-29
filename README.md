@@ -21,5 +21,7 @@ To run tests apply these setting to the **default** JUnit run configuration type
   `<IDEA_HOME>\bin`
 * VM parameters: 
   `-ea -Xmx128M -Djava.system.class.loader=com.intellij.util.lang.UrlClassLoader -Didea.config.path=../test-config -Didea.system.path=../test-system`
+  
+To build an installation packages, run `ant` command in `<IDEA_HOME>` directory. See build.xml file for details.  
 
 You can find other useful information at [http://www.jetbrains.org](http://www.jetbrains.org). [Contribute section](http://www.jetbrains.org/display/IJOS/Contribute) of that site describes how you can contribute to IntelliJ IDEA.

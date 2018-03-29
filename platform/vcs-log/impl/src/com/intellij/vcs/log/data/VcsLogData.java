@@ -198,6 +198,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
           @Override
           public void onThrowable(@NotNull Throwable error) {
             synchronized (myLock) {
+              LOG.error(error);
               if (myState.equals(State.INITIALIZED)) {
                 myState = State.CREATED;
                 myInitialization = null;

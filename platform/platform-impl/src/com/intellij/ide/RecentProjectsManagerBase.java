@@ -438,7 +438,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
     }
 
     paths.remove(null);
-    paths.removeAll(openedPaths);
+    //paths.removeAll(openedPaths);
 
     List<AnAction> actions = new SmartList<>();
     Set<String> duplicates = getDuplicateProjectNames(openedPaths, paths);

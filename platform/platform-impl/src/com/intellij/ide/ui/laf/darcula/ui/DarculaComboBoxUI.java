@@ -2,6 +2,7 @@
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
+import com.intellij.openapi.ui.ComboBoxWithWidePopup;
 import com.intellij.openapi.ui.ErrorBorderCapable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.EditorTextField;
@@ -20,6 +21,8 @@ import javax.swing.border.Border;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicArrowButton;
 import javax.swing.plaf.basic.BasicComboBoxUI;
+import javax.swing.plaf.basic.BasicComboPopup;
+import javax.swing.plaf.basic.ComboPopup;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.*;
@@ -38,8 +41,9 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
   public DarculaComboBoxUI() {}
 
+  @SuppressWarnings("unused")
   @Deprecated
-  public DarculaComboBoxUI(JComboBox unused) {}
+  public DarculaComboBoxUI(JComboBox c) {}
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "unused"})
   public static ComponentUI createUI(final JComponent c) {
@@ -70,6 +74,11 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
       comboBox.removePropertyChangeListener(propertyListener);
       propertyListener = null;
     }
+  }
+
+  @Override
+  protected ComboPopup createPopup() {
+    return new CustomComboPopup(comboBox);
   }
 
   protected PropertyChangeListener createPropertyListener() {
@@ -217,7 +226,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
   public void paintCurrentValue(Graphics g, Rectangle bounds, boolean hasFocus) {
     ListCellRenderer renderer = comboBox.getRenderer();
-    Component c = renderer.getListCellRendererComponent(listBox, comboBox.getSelectedItem(), -1, false, false);
+    @SuppressWarnings("unchecked") Component c = renderer.getListCellRendererComponent(listBox, comboBox.getSelectedItem(), -1, false, false);
 
     if (!hasFocus || isPopupVisible(comboBox)) {
       c.setBackground(UIManager.getColor("ComboBox.background"));
@@ -492,6 +501,32 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
         er.height = eps.height;
       }
       editor.setBounds(er);
+    }
+  }
+
+  // Wide popup that uses preferred size
+  protected static class CustomComboPopup extends BasicComboPopup {
+    public CustomComboPopup(JComboBox combo) {
+      super(combo);
+    }
+
+    @Override
+    public void show(Component invoker, int x, int y) {
+      if (comboBox instanceof ComboBoxWithWidePopup) {
+        Dimension popupSize = comboBox.getSize();
+        int minPopupWidth = ((ComboBoxWithWidePopup)comboBox).getMinimumPopupWidth();
+        Insets insets = getInsets();
+
+        popupSize.width = Math.max(popupSize.width, minPopupWidth);
+        popupSize.setSize(popupSize.width - (insets.right + insets.left), getPopupHeightForRowCount(comboBox.getMaximumRowCount()));
+
+        scroller.setMaximumSize(popupSize);
+        scroller.setPreferredSize(popupSize);
+        scroller.setMinimumSize(popupSize);
+
+        list.revalidate();
+      }
+      super.show(invoker, x, y);
     }
   }
 }
