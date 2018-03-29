@@ -13,10 +13,10 @@ import java.awt.event.KeyEvent;
 
 import static java.awt.event.ComponentEvent.COMPONENT_FIRST;
 
-public class TBItemAction implements NSTLibrary.Action {
+public class PlatformAction implements NSTLibrary.Action {
   final String myActionId;
 
-  public TBItemAction(String actionId) {
+  public PlatformAction(String actionId) {
     myActionId = actionId;
   }
 

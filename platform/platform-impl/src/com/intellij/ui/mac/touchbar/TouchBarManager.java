@@ -15,6 +15,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.mac.foundation.Foundation;
@@ -87,19 +88,21 @@ public class TouchBarManager {
             }
 
             myTB = new TouchBar(name());
-            myTB.addItem(new TBItemButton(AllIcons.Toolwindows.ToolWindowBuild, null, new TBItemAction("CompileDirty"))); // NOTE: IdeActions.ACTION_COMPILE doesn't work
+            myTB.addButton(AllIcons.Toolwindows.ToolWindowBuild, null, "CompileDirty"); // NOTE: IdeActions.ACTION_COMPILE doesn't work
 
             final RunManager rm = RunManager.getInstance(project);
             final RunnerAndConfigurationSettings selected = rm.getSelectedConfiguration();
             if (selected != null) {
-              TBItemPopover popover = new TBItemPopover(selected.getConfiguration().getIcon(), selected.getName(), 143);
-              myTB.addItem(popover);
+              final TouchBar tapHoldTB = new TouchBar("run_configs_popover_tap_and_hold");
+              final TouchBar expandTB = new TouchBar("run_configs_popover_expand");
+              final TBItemPopover popover = myTB.addPopover(selected.getConfiguration().getIcon(), selected.getName(), 143, expandTB, tapHoldTB);
 
-              TouchBar expandTB = new TouchBar("main_popover_expand");
-              expandTB
-                .addItem(new TBItemButton(AllIcons.Actions.EditSource, null, new TBItemAction(IdeActions.ACTION_EDIT_RUN_CONFIGURATIONS)));
-              TBItemScrubber scrubber = new TBItemScrubber(500);
-              expandTB.addItem(scrubber);
+              tapHoldTB.addFlexibleSpacing();
+              tapHoldTB.addButton(selected.getConfiguration().getIcon(), selected.getName(), () -> {}); // TODO: remove button, use NSView with 'image+text'
+              tapHoldTB.selectAllItemsToShow();
+
+              expandTB.addButton(AllIcons.Actions.EditSource, null, IdeActions.ACTION_EDIT_RUN_CONFIGURATIONS);
+              final TBItemScrubber scrubber = expandTB.addScrubber(500);
               List<RunnerAndConfigurationSettings> allRunCongigs = rm.getAllSettings();
               for (RunnerAndConfigurationSettings rc : allRunCongigs) {
                 final Icon iconRc = rc.getConfiguration().getIcon();
@@ -109,64 +112,52 @@ public class TouchBarManager {
                   popover.dismiss();
                 });
               }
-              expandTB.addItem(new TBItemSpacing(TBItemSpacing.TYPE.flexible));
+              expandTB.addFlexibleSpacing();
               expandTB.selectAllItemsToShow();
 
-              popover.setExpandTB(expandTB);
-
-              TouchBar tapHoldTB = new TouchBar("main_popover_tap_and_hold");
-              tapHoldTB.addItem(new TBItemButton(selected.getConfiguration().getIcon(), selected.getName(), () -> {})); // TODO: remove button, use NSView with 'image+text'
-              tapHoldTB.selectAllItemsToShow();
-
-              popover.setTapAndHoldTB(tapHoldTB);
-
-              myTB.addItem(new TBItemButton(AllIcons.Toolwindows.ToolWindowRun, null, new TBItemAction(IdeActions.ACTION_DEFAULT_RUNNER)));
-              myTB.addItem(new TBItemButton(AllIcons.Toolwindows.ToolWindowDebugger, null, new TBItemAction(IdeActions.ACTION_DEFAULT_DEBUGGER)));
+              myTB.addButton(AllIcons.Toolwindows.ToolWindowRun, null, IdeActions.ACTION_DEFAULT_RUNNER);
+              myTB.addButton(AllIcons.Toolwindows.ToolWindowDebugger, null, IdeActions.ACTION_DEFAULT_DEBUGGER);
+              myTB.addButton(IconLoader.getDisabledIcon(AllIcons.Actions.Suspend), null, (NSTLibrary.Action)null);
             }
 
-            myTB.addItem(new TBItemSpacing(TBItemSpacing.TYPE.large));
-            myTB.addItem(new TBItemButton(AllIcons.Actions.CheckOut, null, new TBItemAction("Vcs.UpdateProject")));  // NOTE: IdeActions.ACTION_CVS_CHECKOUT doesn't works
-            myTB.addItem(new TBItemButton(AllIcons.Actions.Commit, null, new TBItemAction("CheckinProject")));       // NOTE: IdeActions.ACTION_CVS_COMMIT doesn't works
+            myTB.addSpacing(true);
+            myTB.addButton(AllIcons.Actions.CheckOut, null, new PlatformAction("Vcs.UpdateProject"));  // NOTE: IdeActions.ACTION_CVS_CHECKOUT doesn't works
+            myTB.addButton(AllIcons.Actions.Commit, null, new PlatformAction("CheckinProject"));       // NOTE: IdeActions.ACTION_CVS_COMMIT doesn't works
           }
           else if (this == debug) {
             myTB = new TouchBar(name());
-            myTB.addItem(new TBItemButton(null, "Step Over", new TBItemAction("Step Over")));
-            myTB.addItem(new TBItemButton(null, "Step Into", new TBItemAction("Step Into")));
+            myTB.addButton(null, "Step Over", "Step Over");
+            myTB.addButton(null, "Step Into", "Step Into");
+            myTB.addButton(AllIcons.Actions.Suspend, null, "Stop");
           }
           else if (this == test) {
             myTB = new TouchBar(name());
-            myTB.addItem(new TBItemSpacing(TBItemSpacing.TYPE.large));
-            myTB.addItem(new TBItemButton(null, "test1", createPrintTextCallback("pressed test1 button")));
-            myTB.addItem(new TBItemButton(null, "test2", createPrintTextCallback("pressed test2 button")));
-            myTB.addItem(new TBItemSpacing(TBItemSpacing.TYPE.small));
-            myTB.addItem(new TBItemButton(AllIcons.Toolwindows.ToolWindowRun, null, createPrintTextCallback("pressed image button")));
+            myTB.addSpacing(true);
+            myTB.addButton(null, "test1", createPrintTextCallback("pressed test1 button"));
+            myTB.addButton(null, "test2", createPrintTextCallback("pressed test2 button"));
+            myTB.addSpacing(false);
+            myTB.addButton(AllIcons.Toolwindows.ToolWindowRun, null, createPrintTextCallback("pressed image button"));
 
+
+            final TouchBar tapHoldTB = new TouchBar("test_popover_tap_and_hold");
+            final TouchBar expandTB = new TouchBar("test_configs_popover_expand");
             final int configPopoverWidth = 143;
-            TBItemPopover popover = new TBItemPopover(AllIcons.Toolwindows.ToolWindowBuild, "test-popover", configPopoverWidth);
-            myTB.addItem(popover);
+            myTB.addPopover(AllIcons.Toolwindows.ToolWindowBuild, "test-popover", configPopoverWidth, expandTB, tapHoldTB);
 
-            TouchBar expandTB = new TouchBar("main_popover_expand");
-            expandTB.addItem(new TBItemButton(AllIcons.Toolwindows.ToolWindowDebugger, null, createPrintTextCallback("pressed pimage button")));
-            TBItemScrubber scrubber = new TBItemScrubber(400);
-            expandTB.addItem(scrubber);
+            expandTB.addButton(AllIcons.Toolwindows.ToolWindowDebugger, null, createPrintTextCallback("pressed pimage button"));
+            final TBItemScrubber scrubber = expandTB.addScrubber(450);
             for (int c = 0; c < 15; ++c) {
               String txt;
               if (c == 7)           txt = "very very long configuration name (debugging type)";
-              else                  txt = "rnd" + Math.random();
+              else                  txt = String.format("r%1.2f", Math.random());
               int finalC = c;
               scrubber.addItem(AllIcons.Toolwindows.ToolWindowPalette, txt,
                                () -> System.out.println("JAVA: performed action of scrubber item at index " + finalC + " [thread:" + Thread.currentThread() + "]"));
             }
-
             expandTB.selectAllItemsToShow();
 
-            popover.setExpandTB(expandTB);
-
-            TouchBar tapHoldTB = new TouchBar("main_popover_tap_and_hold");
-            tapHoldTB.addItem(new TBItemButton(AllIcons.Toolwindows.ToolWindowPalette, null, createPrintTextCallback("pressed pimage button")));
+            tapHoldTB.addButton(AllIcons.Toolwindows.ToolWindowPalette, null, createPrintTextCallback("pressed pimage button"));
             tapHoldTB.selectAllItemsToShow();
-
-            popover.setTapAndHoldTB(tapHoldTB);
           }
 
           if (myTB != null)
@@ -187,7 +178,6 @@ public class TouchBarManager {
       myTB = null;
     }
   }
-
 
   public static void initialize() {
     if (!isTouchBarAvailable())

@@ -2,25 +2,42 @@
 package com.intellij.ui.mac.touchbar;
 
 import com.intellij.ui.mac.foundation.ID;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 public class TBItemButton extends TBItem {
-  private final NSTLibrary.Action myAction;
-  private final Icon myIcon;
-  private final String myText;
+  private @Nullable NSTLibrary.Action myAction;
+  private @Nullable Icon myIcon;
+  private @Nullable String myText;
+  private int myWidth;
 
-  public TBItemButton(Icon icon, String text, NSTLibrary.Action action) {
+  public TBItemButton(@NotNull String uid, Icon icon, String text, NSTLibrary.Action action, int buttWidth) {
+    super(uid);
     myAction = action;
     myIcon = icon;
     myText = text;
+    myWidth = buttWidth;
+  }
+  public TBItemButton(@NotNull String uid, Icon icon, String text, NSTLibrary.Action action) {
+    this(uid, icon, text, action, -1);
+  }
+
+  public void update(Icon icon, String text, NSTLibrary.Action action) {
+    myIcon = icon;
+    myText = text;
+    myAction = action;
+    updateNativePeer();
   }
 
   @Override
-  protected ID _register(ID tbOwner) {
-    return TouchBarManager.getNSTLibrary().registerButtonImgText(
-      tbOwner, myText, NSTLibrary.getRasterFromIcon(myIcon),
-      myIcon == null ? 0 : myIcon.getIconWidth(), myIcon == null ? 0 : myIcon.getIconHeight(), myAction
-    );
+  protected void _updateNativePeer() {
+    TouchBarManager.getNSTLibrary().updateButton(myNativePeer, myWidth, myText, getRaster(myIcon), getIconW(myIcon), getIconH(myIcon), myAction);
+  }
+
+  @Override
+  protected ID _createNativePeer() {
+    return TouchBarManager.getNSTLibrary().createButton(myUid, myWidth, myText, getRaster(myIcon), getIconW(myIcon), getIconH(myIcon), myAction);
   }
 }
