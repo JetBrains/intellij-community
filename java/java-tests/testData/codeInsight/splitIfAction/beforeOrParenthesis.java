@@ -1,6 +1,6 @@
 class C {
     void foo() {
-        if ((a) |<caret>| (b)) {
+        if (((a) |<caret>| (b))) {
             call();
         }
     }
