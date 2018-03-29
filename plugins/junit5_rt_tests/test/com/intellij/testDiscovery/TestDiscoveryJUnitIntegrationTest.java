@@ -2,16 +2,13 @@
 package com.intellij.testDiscovery;
 
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.junit.JUnitConfiguration;
-import com.intellij.execution.junit.JUnitConfigurationType;
 import com.intellij.execution.testDiscovery.TestDiscoveryDataSocketListener;
 import com.intellij.execution.testDiscovery.TestDiscoveryExtension;
 import com.intellij.execution.testDiscovery.TestDiscoveryIndex;
 import com.intellij.junit4.JUnitAbstractIntegrationTest;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
@@ -97,11 +94,15 @@ public class TestDiscoveryJUnitIntegrationTest extends JUnitAbstractIntegrationT
 
   private void assertTestDiscoveryIndex(String className, String methodName, Pair<String, String>... expectedTests) throws IOException {
     TestDiscoveryIndex testDiscoveryIndex = TestDiscoveryIndex.getInstance(myProject);
-    MultiMap<String, String> rawActualTests = testDiscoveryIndex.getTestsByMethodName(className, methodName, JUnitConfiguration.FRAMEWORK_ID);
-    Set<Pair<String, String>> actualTests = rawActualTests.entrySet().stream().flatMap(e -> e.getValue().stream().map(m -> Pair.create(e.getKey(), m))).collect(Collectors.toSet());
-    assertEquals(ContainerUtil.newHashSet(expectedTests), actualTests);
+    MultiMap<String, String> rawActualTests1 = testDiscoveryIndex.getTestsByMethodName(className, methodName, JUnitConfiguration.FRAMEWORK_ID);
+    MultiMap<String, String> rawActualTests2 = testDiscoveryIndex.getTestsByClassName(className, JUnitConfiguration.FRAMEWORK_ID);
 
-    Set<String> modules = actualTests
+    Set<Pair<String, String>> actualTests1 = rawActualTests1.entrySet().stream().flatMap(e -> e.getValue().stream().map(m -> Pair.create(e.getKey(), m))).collect(Collectors.toSet());
+    Set<Pair<String, String>> actualTests2 = rawActualTests2.entrySet().stream().flatMap(e -> e.getValue().stream().map(m -> Pair.create(e.getKey(), m))).collect(Collectors.toSet());
+    assertEquals(ContainerUtil.newHashSet(expectedTests), actualTests1);
+    assertEquals(ContainerUtil.newHashSet(expectedTests), actualTests2);
+
+    Set<String> modules = actualTests1
       .stream()
       .flatMap(
         test -> testDiscoveryIndex.getTestModulesByMethodName(test.getFirst(), test.getSecond(), JUnitConfiguration.FRAMEWORK_ID).stream())
@@ -115,7 +116,9 @@ public class TestDiscoveryJUnitIntegrationTest extends JUnitAbstractIntegrationT
   }
 
   private void runTestConfiguration(@NotNull PsiElement psiElement) throws ExecutionException {
-    RunConfiguration configuration = createConfiguration(psiElement);
+    MapDataContext context = new MapDataContext();
+    context.put(LangDataKeys.MODULE, myModule);
+    RunConfiguration configuration = createConfiguration(psiElement, context);
     ProcessOutput processOutput = doStartTestsProcess(configuration);
     TestDiscoveryDataSocketListener socketListener = ((RunConfigurationBase)configuration).getUserData(TestDiscoveryExtension.SOCKET_LISTENER_KEY);
     socketListener.awaitTermination();

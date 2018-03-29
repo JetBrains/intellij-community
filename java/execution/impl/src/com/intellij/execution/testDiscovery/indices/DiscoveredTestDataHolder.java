@@ -9,7 +9,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.indexing.ValueContainer;
 import com.intellij.util.io.*;
-import gnu.trove.TLongHashSet;
+import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,6 +20,7 @@ import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 public final class DiscoveredTestDataHolder {
@@ -36,7 +37,7 @@ public final class DiscoveredTestDataHolder {
   private boolean myDisposed;
   private final Disposable myDisposable = Disposer.newDisposable();
 
-  static final int VERSION = 8;
+  static final int VERSION = 9;
 
   public DiscoveredTestDataHolder(@NotNull Path basePath) {
     final Path versionFile = getVersionFile(basePath);
@@ -113,6 +114,7 @@ public final class DiscoveredTestDataHolder {
     }
   }
 
+
   private static void writeVersion(@NotNull Path versionFile) throws IOException {
     try (final DataOutputStream versionOut = new DataOutputStream(PathKt.outputStream(versionFile))) {
       DataInputOutputUtil.writeINT(versionOut, VERSION);
@@ -172,16 +174,37 @@ public final class DiscoveredTestDataHolder {
                              byte frameworkId) throws IOException {
 
     final int testNameId = myTestEnumerator.enumerate(createTestId(testClassName, testMethodName, frameworkId));
-    TLongHashSet result = new TLongHashSet();
+    Map<Integer, TIntArrayList> result = new HashMap<>();
     for (Map.Entry<String, Collection<String>> e : usedMethods.entrySet()) {
-      int classId = myClassEnumerator.enumerate(e.getKey());
+      TIntArrayList methodIds = new TIntArrayList(e.getValue().size());
+      result.put(myClassEnumerator.enumerate(e.getKey()), methodIds);
       for (String methodName : e.getValue()) {
-        long key = createKey(classId, myMethodEnumerator.enumerate(methodName));
-        result.add(key);
+        methodIds.add(myMethodEnumerator.enumerate(methodName));
       }
     }
     myDiscoveredTestsIndex.update(testNameId, new DiscoveredTestsIndex.UsedMethods(result)).compute();
     myTestModuleIndex.appendModuleData(testNameId, moduleName);
+  }
+
+  @NotNull
+  public MultiMap<String, String> getTestsByClassName(@NotNull String classFQName, byte frameworkId) throws IOException {
+    int classId = myClassEnumerator.tryEnumerate(classFQName);
+    if (classId == 0) return MultiMap.empty();
+    try {
+      MultiMap<String, String> result = new MultiMap<>();
+      IOException[] exception = {null};
+      myDiscoveredTestsIndex.getData(classId).forEach(new ValueContainer.ContainerAction<TIntArrayList>() {
+        @Override
+        public boolean perform(int testId, TIntArrayList value) {
+          return consumeDiscoveredTest(testId, frameworkId, result, exception);
+        }
+      });
+      if (exception[0] != null) throw exception[0];
+      return result;
+    }
+    catch (StorageException e) {
+      throw new IOException(e);
+    }
   }
 
   @NotNull
@@ -193,22 +216,10 @@ public final class DiscoveredTestDataHolder {
     try {
       MultiMap<String, String> result = new MultiMap<>();
       IOException[] exception = {null};
-      myDiscoveredTestsIndex.getData(createKey(classId, methodId)).forEach(new ValueContainer.ContainerAction<Void>() {
+      myDiscoveredTestsIndex.getData(classId).forEach(new ValueContainer.ContainerAction<TIntArrayList>() {
         @Override
-        public boolean perform(int testId, Void value) {
-          try {
-            TestId test = myTestEnumerator.valueOf(testId);
-            if (test.getFrameworkId() == frameworkId) {
-              String testClassName = myClassEnumerator.valueOf(test.getClassId());
-              String testMethodName = myMethodEnumerator.valueOf(test.getMethodId());
-              result.putValue(testClassName, testMethodName);
-            }
-          }
-          catch (IOException e) {
-            exception[0] = e;
-            return false;
-          }
-          return true;
+        public boolean perform(int testId, TIntArrayList value) {
+          return !value.contains(methodId) || consumeDiscoveredTest(testId, frameworkId, result, exception);
         }
       });
       if (exception[0] != null) throw exception[0];
@@ -235,5 +246,21 @@ public final class DiscoveredTestDataHolder {
   @NotNull
   public TestId createTestId(String className, String methodName, byte frameworkPrefix) throws IOException {
     return new TestId(myClassEnumerator.enumerate(className), myMethodEnumerator.enumerate(methodName), frameworkPrefix);
+  }
+
+  private boolean consumeDiscoveredTest(int testId, byte frameworkId, @NotNull MultiMap<String, String> result, @NotNull IOException[] exceptionRef) {
+    try {
+      TestId test = myTestEnumerator.valueOf(testId);
+      if (test.getFrameworkId() == frameworkId) {
+        String testClassName = myClassEnumerator.valueOf(test.getClassId());
+        String testMethodName = myMethodEnumerator.valueOf(test.getMethodId());
+        result.putValue(testClassName, testMethodName);
+      }
+    }
+    catch (IOException e) {
+      exceptionRef[0] = e;
+      return false;
+    }
+    return true;
   }
 }
