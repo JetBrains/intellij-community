@@ -31,13 +31,14 @@ import javax.imageio.ImageIO
 import javax.swing.JFrame
 import javax.swing.JPanel
 import javax.swing.UIManager
+import javax.swing.plaf.metal.MetalLookAndFeel
 import kotlin.properties.Delegates
 
 /**
- * Set `test.update.snapshots=true` to automatically update snapshots if need
+ * Set `test.update.snapshots=true` to automatically update snapshots if need.
  *
  * Checkout git@github.com:develar/intellij-ui-dsl-test-snapshots.git (or create own repo) to some local dir and set env LAYOUT_IMAGE_REPO
- * to store image snapshots
+ * to use image snapshots.
  */
 class UiDslTest {
   companion object {
@@ -45,6 +46,7 @@ class UiDslTest {
     @BeforeClass
     fun setUpOnce() {
       FailOnThreadViolationRepaintManager.install()
+      UIManager.setLookAndFeel(MetalLookAndFeel())
       UIManager.setLookAndFeel(IntelliJLaf())
     }
 
@@ -88,7 +90,7 @@ class UiDslTest {
   }
 
   @Test
-  fun `cell`() {
+  fun cell() {
     doTest(cellPanel())
   }
 

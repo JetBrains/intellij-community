@@ -179,7 +179,7 @@ public class GitLogUtil {
     List<VcsCommitMetadata> commits = ContainerUtil.newArrayList();
 
     try {
-      GitLineHandler handler = createGitHandler(project, root, createConfigParameters(false, DiffRenameLimit.GIT_CONFIG));
+      GitLineHandler handler = createGitHandler(project, root, createConfigParameters(false, false, DiffRenameLimit.GIT_CONFIG));
       readRecordsFromHandler(project, root, true, false, record -> commits.add(converter.fun(record)), handler, parameters);
     }
     catch (VcsException e) {
@@ -232,7 +232,7 @@ public class GitLogUtil {
 
     List<GitCommit> commits = ContainerUtil.newArrayList();
     try {
-      readFullDetails(project, root, commits::add, parameters);
+      readFullDetails(project, root, commits::add, true, parameters);
     }
     catch (VcsException e) {
       if (commits.isEmpty()) {
@@ -246,10 +246,11 @@ public class GitLogUtil {
   public static void readFullDetails(@NotNull Project project,
                                      @NotNull VirtualFile root,
                                      @NotNull Consumer<? super GitCommit> commitConsumer,
+                                     boolean includeRootChanges,
                                      @NotNull String... parameters) throws VcsException {
     DiffRenameLimit renameLimit = DiffRenameLimit.REGISTRY;
 
-    GitLineHandler handler = createGitHandler(project, root, createConfigParameters(true, renameLimit));
+    GitLineHandler handler = createGitHandler(project, root, createConfigParameters(true, includeRootChanges, renameLimit));
     readFullDetailsFromHandler(project, root, commitConsumer, renameLimit, handler, parameters);
   }
 
@@ -338,8 +339,9 @@ public class GitLogUtil {
                                               @NotNull GitVcs vcs,
                                               @NotNull Consumer<? super GitCommit> commitConsumer,
                                               @NotNull List<String> hashes,
+                                              boolean includeRootChanges,
                                               @NotNull DiffRenameLimit renameLimit) throws VcsException {
-    GitLineHandler handler = createGitHandler(project, root, createConfigParameters(true, renameLimit));
+    GitLineHandler handler = createGitHandler(project, root, createConfigParameters(true, includeRootChanges, renameLimit));
     sendHashesToStdin(vcs, hashes, handler);
 
     readFullDetailsFromHandler(project, root, commitConsumer, renameLimit, handler, getNoWalkParameter(vcs), STDIN);
@@ -375,21 +377,31 @@ public class GitLogUtil {
   }
 
   @NotNull
-  private static List<String> createConfigParameters(boolean withChanges, @NotNull DiffRenameLimit renameLimit) {
+  private static List<String> createConfigParameters(boolean withChanges,
+                                                     boolean includeRootChanges,
+                                                     @NotNull DiffRenameLimit renameLimit) {
     if (!withChanges) return Collections.emptyList();
+
+    List<String> result = ContainerUtil.newArrayList();
     switch (renameLimit) {
       case INFINITY:
-        return renameLimit(0);
+        result.add(renameLimit(0));
+        break;
       case REGISTRY:
-        return renameLimit(Registry.intValue("git.diff.renameLimit"));
+        result.add(renameLimit(Registry.intValue("git.diff.renameLimit")));
+        break;
       case GIT_CONFIG:
     }
-    return Collections.emptyList();
+
+    if (!includeRootChanges) {
+      result.add("log.showRoot=false");
+    }
+    return result;
   }
 
   @NotNull
-  private static List<String> renameLimit(int limit) {
-    return Collections.singletonList("diff.renameLimit=" + limit);
+  private static String renameLimit(int limit) {
+    return "diff.renameLimit=" + limit;
   }
 
   public enum DiffRenameLimit {

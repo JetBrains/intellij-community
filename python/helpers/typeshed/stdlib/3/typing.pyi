@@ -498,9 +498,9 @@ class Pattern(Generic[AnyStr]):
     pattern = ...  # type: AnyStr
 
     def search(self, string: AnyStr, pos: int = ...,
-               endpos: int = ...) -> Match[AnyStr]: ...
+               endpos: int = ...) -> Optional[Match[AnyStr]]: ...
     def match(self, string: AnyStr, pos: int = ...,
-              endpos: int = ...) -> Match[AnyStr]: ...
+              endpos: int = ...) -> Optional[Match[AnyStr]]: ...
     # New in Python 3.4
     def fullmatch(self, string: AnyStr, pos: int = ...,
                   endpos: int = ...) -> Optional[Match[AnyStr]]: ...
@@ -535,6 +535,7 @@ def cast(tp: Type[_T], obj: Any) -> _T: ...
 
 # NamedTuple is special-cased in the type checker
 class NamedTuple(tuple):
+    _field_types = ...  # type: collections.OrderedDict[str, Type[Any]]
     _fields = ...  # type: Tuple[str, ...]
     _source = ...  # type: str
 

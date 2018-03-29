@@ -4,6 +4,7 @@ package com.intellij.ui.layout
 import com.intellij.ui.components.Label
 import com.intellij.util.ui.UIUtil.ComponentStyle
 import com.intellij.util.ui.UIUtil.FontColor
+import javax.swing.JComponent
 import javax.swing.JLabel
 
 abstract class Row : Cell() {
@@ -67,6 +68,12 @@ abstract class Row : Cell() {
 
   @Deprecated(message = "Nested noteRow is prohibited", level = DeprecationLevel.ERROR)
   fun noteRow(text: String) {
+  }
+
+  // override here for backward compatibility
+  @Deprecated(level = DeprecationLevel.HIDDEN, message = "deprecated")
+  operator fun JComponent.invoke(vararg constraints: CCFlags, gapLeft: Int = 0, growPolicy: GrowPolicy? = null) {
+    invoke(constraints = *constraints, gapLeft = gapLeft, growPolicy = growPolicy, comment = null)
   }
 }
 

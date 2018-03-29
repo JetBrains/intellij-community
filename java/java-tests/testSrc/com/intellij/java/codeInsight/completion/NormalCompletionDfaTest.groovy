@@ -61,6 +61,8 @@ class NormalCompletionDfaTest extends NormalCompletionTestCase {
   void testNoUnnecessaryCastRawDfa() { doTest() }
   void testNoUnnecessaryCastDeepHierarchy() { doTest() }
   void testInstanceOfAfterFunction() { doTest() }
+  void testInstanceOfDisjunction() { doTest() }
+  void testInstanceOfDisjunction2() { doTest() }
   void testComplexInstanceOfDfa() {
     configureByTestName()
     myFixture.assertPreferredCompletionItems 0, 'methodFromX', 'methodFromX2', 'methodFromY', 'methodFromY2'

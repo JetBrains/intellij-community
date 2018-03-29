@@ -8,19 +8,22 @@ import javax.swing.*;
 public class TBItemPopover extends TBItem {
   private final Icon myIcon;
   private final String myText;
+  private final int myWidthPix;
   private TouchBar myExpandTB;
   private TouchBar myTapAndHoldTB;
 
-  public TBItemPopover(Icon icon, String text) {
+  // NOTE: make popover with 'flexible' width when widthInPix <= 0
+  public TBItemPopover(Icon icon, String text, int widthInPix) {
     myIcon = icon;
     myText = text;
+    myWidthPix = widthInPix;
   }
 
   @Override
   protected ID _register(ID tb) {
     return TouchBarManager.getNSTLibrary().registerPopover(
       tb, myText, NSTLibrary.getRasterFromIcon(myIcon),
-      myIcon.getIconWidth(), myIcon.getIconHeight()
+      myIcon.getIconWidth(), myIcon.getIconHeight(), myWidthPix
     );
   }
 

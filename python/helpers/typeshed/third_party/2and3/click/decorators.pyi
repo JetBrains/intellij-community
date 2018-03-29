@@ -2,7 +2,7 @@ from distutils.version import Version
 from typing import Any, Callable, Dict, List, Optional, Type, TypeVar, Union, Text
 
 from click.core import Command, Group, Argument, Option, Parameter, Context
-from click.types import ParamType
+from click.types import _ConvertibleType
 
 _T = TypeVar('_T')
 _Decorator = Callable[[_T], _T]
@@ -74,7 +74,7 @@ def argument(
     # Argument
     required: Optional[bool] = ...,
     # Parameter
-    type: Optional[Union[type, ParamType]] = ...,
+    type: Optional[_ConvertibleType] = ...,
     default: Optional[Any] = ...,
     callback: Optional[_Callback] = ...,
     nargs: Optional[int] = ...,
@@ -99,7 +99,7 @@ def option(
     multiple: bool = ...,
     count: bool = ...,
     allow_from_autoenv: bool = ...,
-    type: Optional[Union[type, ParamType]] = ...,
+    type: Optional[_ConvertibleType] = ...,
     help: Optional[str] = ...,
     # Parameter
     default: Optional[Any] = ...,
@@ -109,7 +109,9 @@ def option(
     metavar: Optional[str] = ...,
     expose_value: bool = ...,
     is_eager: bool = ...,
-    envvar: Optional[Union[str, List[str]]] = ...
+    envvar: Optional[Union[str, List[str]]] = ...,
+    # User-defined
+    **kwargs: Any,
 ) -> _Decorator:
     ...
 
@@ -127,7 +129,7 @@ def confirmation_option(
     multiple: bool = ...,
     count: bool = ...,
     allow_from_autoenv: bool = ...,
-    type: Optional[Union[type, ParamType]] = ...,
+    type: Optional[_ConvertibleType] = ...,
     help: str = ...,
     # Parameter
     default: Optional[Any] = ...,
@@ -154,7 +156,7 @@ def password_option(
     multiple: bool = ...,
     count: bool = ...,
     allow_from_autoenv: bool = ...,
-    type: Optional[Union[type, ParamType]] = ...,
+    type: Optional[_ConvertibleType] = ...,
     help: Optional[str] = ...,
     # Parameter
     default: Optional[Any] = ...,
@@ -184,7 +186,7 @@ def version_option(
     multiple: bool = ...,
     count: bool = ...,
     allow_from_autoenv: bool = ...,
-    type: Optional[Union[type, ParamType]] = ...,
+    type: Optional[_ConvertibleType] = ...,
     help: str = ...,
     # Parameter
     default: Optional[Any] = ...,
@@ -211,7 +213,7 @@ def help_option(
     multiple: bool = ...,
     count: bool = ...,
     allow_from_autoenv: bool = ...,
-    type: Optional[Union[type, ParamType]] = ...,
+    type: Optional[_ConvertibleType] = ...,
     help: str = ...,
     # Parameter
     default: Optional[Any] = ...,

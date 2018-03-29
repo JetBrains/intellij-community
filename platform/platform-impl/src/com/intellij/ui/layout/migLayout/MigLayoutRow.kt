@@ -52,8 +52,8 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       row.apply {
         val separatorComponent = SeparatorComponent(0, OnePixelDivider.BACKGROUND, null)
         val cc = CC()
-        cc.vertical.gapBefore = gapToBoundSize(UIUtil.LARGE_VGAP, false)
-        cc.vertical.gapAfter = gapToBoundSize(UIUtil.DEFAULT_VGAP * 2, false)
+        cc.vertical.gapBefore = gapToBoundSize(builder.largeVerticalGap, false)
+        cc.vertical.gapAfter = gapToBoundSize(builder.verticalGap * 2, false)
         componentConstraints.put(separatorComponent, cc)
         separatorComponent()
       }
@@ -99,7 +99,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
         return ComponentPanelBuilder.computeCommentInsets(firstComponent, true).left
       }
       else {
-        return UIUtil.DEFAULT_HGAP * 3
+        return builder.horizontalGap * 3
       }
     }
   }
@@ -187,9 +187,10 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
 
     // JScrollPane doesn't have visual insets (not set by layout, but part of component implementation) as TextField, Combobox and other such components,
     // but it looks ugly, so, if not other components in the row and row is labeled - add left/right insets
-    if (component is JScrollPane && labeled && components.size == 2) {
-      cc.value.horizontal.gapBefore = gapToBoundSize(4, true)
-      cc.value.horizontal.gapAfter = gapToBoundSize(4, true)
+    if (component is JScrollPane && labeled && components.size == 2 && !UIUtil.isUnderWin10LookAndFeel()) {
+      val scrollPaneHGap = gapToBoundSize(4, true)
+      cc.value.horizontal.gapBefore = scrollPaneHGap
+      cc.value.horizontal.gapAfter = scrollPaneHGap
     }
 
     if (!noGrid && indent > 0 && components.size == 1) {
@@ -229,6 +230,8 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
         // if pushX defined for component, set column grow to 1000 (value that greater than default non-labeled column grow)
         // (for now we don't allow to specify custom weight for push, so, real value of specified pushX doesn't matter)
         builder.columnConstraints.grow(1000f, columnIndex)
+        // unset
+        cc.value.pushX = null
       }
     }
     else if (columnIndex > 0 && columnIndex >= builder.columnConstraints.count) {

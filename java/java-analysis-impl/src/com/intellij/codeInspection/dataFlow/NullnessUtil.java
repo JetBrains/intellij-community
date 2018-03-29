@@ -30,6 +30,7 @@ public class NullnessUtil {
     if (nullability != Nullness.UNKNOWN) {
       return toBoolean(nullability);
     }
+    if (var == null) return null;
 
     Nullness defaultNullability = value.getFactory().suggestNullabilityForNonAnnotatedMember(var);
 

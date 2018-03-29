@@ -8,7 +8,7 @@ import javax.swing.*;
 public class TBItemButtonImg extends TBItemButton {
   private final Icon myIcon;
 
-  public TBItemButtonImg(Icon icon, TBItemCallback action) {
+  public TBItemButtonImg(Icon icon, NSTLibrary.Action action) {
     super(action);
     myIcon = icon;
   }

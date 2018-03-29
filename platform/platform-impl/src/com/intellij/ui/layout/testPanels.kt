@@ -70,7 +70,9 @@ fun noteRowInTheDialog(): JPanel {
     noteRow("Profiler requires access to the kernel-level API.\nEnter the sudo password to allow this. ")
     row("Sudo password:") { passwordField() }
     row { CheckBox(CommonBundle.message("checkbox.remember.password"), true)() }
-    noteRow("Should be an empty row above as a gap")
+    noteRow("Should be an empty row above as a gap. <a href=''>Click me</a>.") {
+      System.out.println("Hello")
+    }
   }
 }
 

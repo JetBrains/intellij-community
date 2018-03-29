@@ -21,6 +21,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.psi.PsiType;
 import com.intellij.util.Function;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Tagir Valeev
@@ -52,7 +53,7 @@ public abstract class ContractValue {
     return new Spec(this, field);
   }
 
-  public static ContractValue constant(Object value, PsiType type) {
+  public static ContractValue constant(Object value, @NotNull PsiType type) {
     return new IndependentValue(factory -> factory.getConstFactory().createFromValue(value, type, null), String.valueOf(value));
   }
 

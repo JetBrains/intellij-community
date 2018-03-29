@@ -28,7 +28,6 @@ import com.intellij.util.PairFunction;
 import com.intellij.util.containers.*;
 import com.intellij.util.containers.Queue;
 import one.util.streamex.IntStreamEx;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -209,8 +208,7 @@ public class LiveVariablesAnalyzer {
       for (FinishElementInstruction instruction : toFlush.keySet()) {
         Collection<DfaVariableValue> values = toFlush.get(instruction);
         // Do not flush special values as they could be used implicitly
-        values.removeIf(var -> var.getQualifier() != null &&
-                               StreamEx.of(SpecialField.values()).anyMatch(sf -> sf.isMyAccessor(var.getPsiVariable())));
+        values.removeIf(var -> var.getSource() instanceof SpecialField);
         instruction.getVarsToFlush().addAll(values);
       }
     }

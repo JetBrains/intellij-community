@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.RunAll
 import com.intellij.util.ThrowableRunnable
+import com.intellij.util.ui.UIUtil
 import com.intellij.vcsUtil.VcsUtil
 
 abstract class BaseLineStatusTrackerManagerTest : LightPlatformTestCase() {
@@ -146,7 +147,7 @@ abstract class BaseLineStatusTrackerManagerTest : LightPlatformTestCase() {
 
     val contentRevision: ContentRevision? = when (baseContent) {
       null -> null
-      else -> SimpleContentRevision(parseInput(baseContent), filePath, "HEAD")
+      else -> SimpleContentRevision(parseInput(baseContent), filePath, baseContent)
     }
 
     changeProvider.changes[filePath] = contentRevision
@@ -161,6 +162,7 @@ abstract class BaseLineStatusTrackerManagerTest : LightPlatformTestCase() {
     dirtyScopeManager.markEverythingDirty()
     clm.scheduleUpdate()
     clm.waitUntilRefreshed()
+    UIUtil.dispatchAllInvocationEvents() // ensure `fileStatusesChanged` events are fired
   }
 
   protected fun releaseUnneededTrackers() {
@@ -180,6 +182,10 @@ abstract class BaseLineStatusTrackerManagerTest : LightPlatformTestCase() {
       lstm.releaseTrackerFor(document, this)
     }
   }
+
+  protected fun VirtualFile.assertAffectedChangeLists(vararg expectedNames: String) {
+    assertSameElements(clm.getChangeLists(this).map { it.name }, *expectedNames)
+  }
   protected open fun runCommand(task: () -> Unit) {
     CommandProcessor.getInstance().executeCommand(getProject(), {
       ApplicationManager.getApplication().runWriteAction(task)
@@ -187,12 +193,15 @@ abstract class BaseLineStatusTrackerManagerTest : LightPlatformTestCase() {
   }
 
   protected fun String.asListNameToList(): LocalChangeList = clm.changeLists.find { it.name == this }!!
+  protected fun String.asListIdToList(): LocalChangeList = clm.changeLists.find { it.id == this }!!
   protected fun String.asListNameToId(): String = asListNameToList().id
-  protected fun Array<out String>.asListNamesToIds() = this.map { it.asListNameToId() }
+  protected fun String.asListIdToName(): String = asListIdToList().name
+  protected fun Iterable<String>.asListNamesToIds() = this.map { it.asListNameToId() }
+  protected fun Iterable<String>.asListIdsToNames() = this.map { it.asListIdToName() }
   private fun changeListsNames() = clm.changeLists.map { it.name }
 
   protected fun PartialLocalLineStatusTracker.assertAffectedChangeLists(vararg expectedNames: String) {
-    assertSameElements(this.affectedChangeListsIds, expectedNames.asListNamesToIds())
+    assertSameElements(this.affectedChangeListsIds.asListIdsToNames(), *expectedNames)
   }
 
   protected fun Range.assertChangeList(listName: String) {
@@ -210,7 +219,6 @@ abstract class BaseLineStatusTrackerManagerTest : LightPlatformTestCase() {
       BackgroundTaskUtil.syncPublisher(BatchFileChangeListener.TOPIC).batchChangeCompleted(ourProject)
     }
   }
-
 
   protected fun createChangelist(listName: String) {
     assertDoesntContain(changeListsNames(), listName)

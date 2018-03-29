@@ -69,6 +69,7 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
   @get:OptionTag("SCROLL_TAB_LAYOUT_IN_EDITOR") var scrollTabLayoutInEditor by property(true)
   @get:OptionTag("HIDE_TABS_IF_NEED") var hideTabsIfNeed by property(true)
   @get:OptionTag("SHOW_CLOSE_BUTTON") var showCloseButton by property(true)
+  @get:OptionTag("CLOSE_TAB_BUTTON_ON_THE_RIGHT") var closeTabButtonOnTheRight by property(true)
   @get:OptionTag("EDITOR_TAB_PLACEMENT") var editorTabPlacement by property(SwingConstants.TOP)
   @get:OptionTag("HIDE_KNOWN_EXTENSION_IN_TABS") var hideKnownExtensionInTabs by property(false)
   @get:OptionTag("SHOW_ICONS_IN_QUICK_NAVIGATION") var showIconInQuickNavigation by property(true)

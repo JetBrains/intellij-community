@@ -332,7 +332,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
     return myProjectPom = createPomFile(myProjectRoot, xml);
   }
 
-  protected VirtualFile createModulePom(String relativePath, String xml) {
+  protected VirtualFile createModulePom(String relativePath, @Language("xml") String xml) {
     return createPomFile(createProjectSubDir(relativePath), xml);
   }
 

@@ -7,10 +7,9 @@ from posix import stat_result as stat_result  # TODO: use this, see https://gith
 import sys
 from typing import (
     Mapping, MutableMapping, Dict, List, Any, Tuple, Iterator, overload, Union, AnyStr,
-    Optional, Generic, Set, Callable, Text, Sequence, IO, NamedTuple, TypeVar
+    Optional, Generic, Set, Callable, Text, Sequence, IO, NamedTuple, NoReturn, TypeVar
 )
 from . import path as path
-from mypy_extensions import NoReturn
 
 _T = TypeVar('_T')
 

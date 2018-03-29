@@ -61,4 +61,9 @@ public interface JvmMethod extends JvmTypeParametersOwner {
    */
   @NotNull
   JvmReferenceType[] getThrowsTypes();
+
+  @Override
+  default <T> T accept(@NotNull JvmElementVisitor<T> visitor) {
+    return visitor.visitMethod(this);
+  }
 }

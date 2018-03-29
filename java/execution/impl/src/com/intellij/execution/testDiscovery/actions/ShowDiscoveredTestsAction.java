@@ -104,7 +104,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
     String fqn = couple != null ? couple.first : null;
     if (fqn == null || c == null) return;
     String methodName = couple.second;
-    String methodPresentationName = c.getName() + "." + methodName;
+    String methodPresentationName = ClassUtil.extractClassName(fqn) + "." + methodName;
 
     DataContext dataContext = DataManager.getInstance().getDataContext(e.getRequiredData(EDITOR).getContentComponent());
     FeatureUsageTracker.getInstance().triggerFeatureUsed("test.discovery");
@@ -307,8 +307,14 @@ public class ShowDiscoveredTestsAction extends AnAction {
   @Nullable
   private static Couple<String> getMethodQualifiedName(@NotNull PsiMethod method) {
     PsiClass c = method.getContainingClass();
-    String fqn = c != null ? ClassUtil.getJVMClassName(c) : null;
+    String fqn = c != null ? getName(c) : null;
     return fqn == null ? null : Couple.of(fqn, method.getName());
+  }
+
+  private static String getName(PsiClass c) {
+    StringBuilder buf = new StringBuilder();
+    ClassUtil.formatClassName(c, buf);
+    return buf.toString();
   }
 
   @Nullable

@@ -118,7 +118,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
       @Override
       public void mouseExited(MouseEvent event) {
         // don't hide the hint if mouse exited to it
-        if (myTipComponent.getMousePosition() == null) {
+        if (Registry.is("ide.hide.expandable.tooltip.owner.mouse.exit") || myTipComponent.getMousePosition() == null) {
           hideHint();
         }
       }

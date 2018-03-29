@@ -100,7 +100,7 @@ public abstract class DfaFactType<T> extends Key<T> {
     @Override
     Mutability calcFromVariable(@NotNull DfaVariableValue value) {
       PsiModifierListOwner variable = value.getPsiVariable();
-      return Mutability.getMutability(variable);
+      return variable == null ? Mutability.UNKNOWN : Mutability.getMutability(variable);
     }
   };
 
@@ -145,16 +145,12 @@ public abstract class DfaFactType<T> extends Key<T> {
     @Nullable
     @Override
     LongRangeSet calcFromVariable(@NotNull DfaVariableValue var) {
-      if (var.getQualifier() != null) {
-        for (SpecialField sf : SpecialField.values()) {
-          if (sf.isMyAccessor(var.getPsiVariable())) {
-            return sf.getRange();
-          }
-        }
+      DfaVariableSource source = var.getSource();
+      if(source instanceof SpecialField) {
+        return ((SpecialField)source).getRange();
       }
-      PsiModifierListOwner psiVariable = var.getPsiVariable();
       LongRangeSet fromType = LongRangeSet.fromType(var.getVariableType());
-      return fromType == null ? null : LongRangeSet.fromPsiElement(psiVariable).intersect(fromType);
+      return fromType == null ? null : LongRangeSet.fromPsiElement(var.getPsiVariable()).intersect(fromType);
     }
 
     @Nullable

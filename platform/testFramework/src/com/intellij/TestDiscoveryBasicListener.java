@@ -4,6 +4,7 @@ package com.intellij;
 import com.intellij.util.ArrayUtil;
 import junit.framework.AssertionFailedError;
 import junit.framework.Test;
+import junit.framework.TestCase;
 import junit.framework.TestListener;
 
 import java.lang.reflect.Method;
@@ -50,14 +51,16 @@ public class TestDiscoveryBasicListener implements TestListener {
   }
 
   private static String getMethodName(Test test) {
+    if (test instanceof TestCase) {
+      String name = ((TestCase)test).getName();
+      if (name != null) return name;
+    }
     String toString = test.toString();
     int braceIdx = toString.indexOf("(");
     return braceIdx > 0 ? toString.substring(0, braceIdx) : toString;
   }
 
   private static String getClassName(Test test) {
-    String toString = test.toString();
-    int braceIdx = toString.indexOf("(");
-    return braceIdx > 0 && toString.endsWith(")") ? toString.substring(braceIdx + 1, toString.length() - 1) : null;
+    return test.getClass().getName();
   }
 }

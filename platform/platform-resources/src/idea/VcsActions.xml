@@ -87,6 +87,7 @@
            class="com.intellij.openapi.vcs.changes.actions.SelectChangesGroupingActionGroup">
       <action id="ChangesView.GroupBy.Directory" text="Directory"
               class="com.intellij.openapi.vcs.changes.actions.SetDirectoryChangesGroupingAction"/>
+      <add-to-group group-id="Vcs.KeymapGroup"/>
     </group>
 
     <group id="ChangesViewToolbar">

@@ -1,10 +1,9 @@
 # Stubs for unittest
 
-from mypy_extensions import NoReturn
 from typing import (
     Any, Callable, ContextManager, Dict, FrozenSet, Generic, Iterable, Iterator,
-    List, Optional, overload, Pattern, Sequence, Set, TextIO, Tuple, Type,
-    TypeVar, Union
+    List, NoReturn, Optional, overload, Pattern, Sequence, Set, TextIO, Tuple,
+    Type, TypeVar, Union
 )
 import logging
 import sys
@@ -279,8 +278,8 @@ class TestResult:
                        outcome: Optional[_SysExcInfoType]) -> None: ...
 
 class TextTestResult(TestResult):
-    def __init__(self, stream: TextIO = ..., descriptions: bool = ...,
-                 verbosity: int = ...) -> None: ...
+    def __init__(self, stream: TextIO, descriptions: bool,
+                 verbosity: int) -> None: ...
 _TextTestResult = TextTestResult
 
 defaultTestLoader = ...  # type: TestLoader
@@ -324,10 +323,12 @@ def main(module: str = ..., defaultTest: _DefaultTestType = ...,
          buffer: Optional[bool] = ...,
          warnings: Optional[str] = ...) -> TestProgram: ...
 
+def load_tests(loader: TestLoader, tests: TestSuite,
+               pattern: Optional[str]) -> TestSuite: ...
 
 def installHandler() -> None: ...
 def registerResult(result: TestResult) -> None: ...
-def removeResult(result: TestResult) -> None: ...
+def removeResult(result: TestResult) -> bool: ...
 @overload
 def removeHandler() -> None: ...
 @overload

@@ -108,6 +108,11 @@ public class PyCallingNonCallableInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-28626
+  public void testFunctionDecoratedAsContextManager() {
+    doMultiFileTest();
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

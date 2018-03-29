@@ -103,12 +103,19 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
     return providers;
   }
 
-  protected T getDefaultImplementation() {
-    return myDefaultImplementation;
+  @Override
+  public void addExplicitExtension(@NotNull Language key, @NotNull T t) {
+    key.putUserData(IN_LANGUAGE_CACHE, null);
+    super.addExplicitExtension(key, t);
   }
 
-  @NotNull
-  protected Key<T> getLanguageCache() {
-    return IN_LANGUAGE_CACHE;
+  @Override
+  public void removeExplicitExtension(@NotNull Language key, @NotNull T t) {
+    key.putUserData(IN_LANGUAGE_CACHE, null);
+    super.removeExplicitExtension(key, t);
+  }
+
+  protected T getDefaultImplementation() {
+    return myDefaultImplementation;
   }
 }

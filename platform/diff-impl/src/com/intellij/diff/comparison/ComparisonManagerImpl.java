@@ -547,7 +547,7 @@ public class ComparisonManagerImpl extends ComparisonManager {
 
     FairDiffIterable iterable = ByLine.compare(lineTexts1, lineTexts2, ComparisonPolicy.DEFAULT, indicator);
 
-    FairDiffIterable correctedIterable = correctIgnoredRangesSecondStep(iterable, text1, text2, lineOffsets1, lineOffsets2,
+    FairDiffIterable correctedIterable = correctIgnoredRangesSecondStep(range, iterable, text1, text2, lineOffsets1, lineOffsets2,
                                                                         ignored1, ignored2);
 
     List<LineFragment> lineFragments = convertIntoLineFragments(range, lineOffsets1, lineOffsets2, correctedIterable);
@@ -571,7 +571,8 @@ public class ComparisonManagerImpl extends ComparisonManager {
   }
 
   @NotNull
-  private static FairDiffIterable correctIgnoredRangesSecondStep(@NotNull FairDiffIterable iterable,
+  private static FairDiffIterable correctIgnoredRangesSecondStep(@NotNull Range range,
+                                                                 @NotNull FairDiffIterable iterable,
                                                                  @NotNull CharSequence text1,
                                                                  @NotNull CharSequence text2,
                                                                  @NotNull LineOffsets lineOffsets1,
@@ -579,12 +580,12 @@ public class ComparisonManagerImpl extends ComparisonManager {
                                                                  @NotNull BitSet ignored1,
                                                                  @NotNull BitSet ignored2) {
     DiffIterableUtil.ChangeBuilder builder = new DiffIterableUtil.ChangeBuilder(iterable.getLength1(), iterable.getLength2());
-    for (Range range : iterable.iterateUnchanged()) {
-      int count = range.end1 - range.start1;
+    for (Range ch : iterable.iterateUnchanged()) {
+      int count = ch.end1 - ch.start1;
       for (int i = 0; i < count; i++) {
-        int index1 = range.start1 + i;
-        int index2 = range.start2 + i;
-        if (areIgnoredEqualLines(index1, index2, text1, text2, lineOffsets1, lineOffsets2, ignored1, ignored2)) {
+        int index1 = ch.start1 + i;
+        int index2 = ch.start2 + i;
+        if (areIgnoredEqualLines(range.start1 + index1, range.start2 + index2, text1, text2, lineOffsets1, lineOffsets2, ignored1, ignored2)) {
           builder.markEqual(index1, index2);
         }
       }

@@ -150,6 +150,10 @@ class SmartWaitRobot : BasicRobot(null, ExistingHierarchy()) {
     fastReleaseKey(keyCode)
   }
 
+  fun shortcut(keyStoke: KeyStroke) {
+    fastPressAndReleaseKey(keyStoke.keyCode, keyStoke.modifiers)
+  }
+
   fun shortcutAndTypeString(keyStoke: KeyStroke, string: String, delayBetweenShortcutAndTypingMs: Int = 0) {
     fastPressAndReleaseKey(keyStoke.keyCode, keyStoke.modifiers)
     fastTyping(string, delayBetweenShortcutAndTypingMs)

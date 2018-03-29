@@ -404,4 +404,48 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
     }
     assertNull(file.tracker)
   }
+
+  fun `test vcs refresh - incoming changes in non-active changelist 1`() {
+    createChangelist("Test")
+
+    val file = addLocalFile(FILE_1, "a_b_c_d_e2")
+    setBaseVersion(FILE_1, "a_b_c_d_e")
+    refreshCLM()
+    file.moveAllChangesTo("Test")
+    file.assertAffectedChangeLists("Test")
+
+    runCommand { file.document.replaceString(0, 1, "a2") }
+    val tracker = file.tracker as PartialLocalLineStatusTracker
+    tracker.assertAffectedChangeLists("Default", "Test")
+
+    setBaseVersion(FILE_1, "a2_b_c_d_e")
+    refreshCLM()
+    lstm.waitUntilBaseContentsLoaded()
+
+    file.assertAffectedChangeLists("Test")
+    assertNull(file.tracker)
+  }
+
+  fun `test vcs refresh - incoming changes in non-active changelist 2`() {
+    createChangelist("Test")
+
+    val file = addLocalFile(FILE_1, "a_b_c_d_e2")
+    setBaseVersion(FILE_1, "a_b_c_d_e")
+    refreshCLM()
+    file.moveAllChangesTo("Test")
+    file.assertAffectedChangeLists("Test")
+
+    runCommand { file.document.replaceString(0, 1, "a2") }
+    lstm.waitUntilBaseContentsLoaded()
+
+    val tracker = file.tracker as PartialLocalLineStatusTracker
+    tracker.assertAffectedChangeLists("Default", "Test")
+
+    setBaseVersion(FILE_1, "a2_b_c_d_e")
+    refreshCLM()
+    lstm.waitUntilBaseContentsLoaded()
+
+    file.assertAffectedChangeLists("Test")
+    assertNull(file.tracker)
+  }
 }
