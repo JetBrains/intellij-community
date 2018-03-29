@@ -19,6 +19,8 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.components.JBList;
@@ -113,16 +115,18 @@ public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionActio
 
 
   private static void addTypeToCatch(@NotNull List<PsiClassType> exceptionsToAdd, @NotNull PsiCatchSection catchSection) {
-    WriteCommandAction.runWriteCommandAction(catchSection.getProject(), () -> {
+    Project project = catchSection.getProject();
+    WriteCommandAction.runWriteCommandAction(project, () -> {
       if (!catchSection.isValid() || !exceptionsToAdd.stream().allMatch(type -> type.isValid())) return;
       PsiParameter parameter = catchSection.getParameter();
       if (parameter == null) return;
       PsiTypeElement typeElement = parameter.getTypeElement();
       if (typeElement == null) return;
       PsiType parameterType = parameter.getType();
-      PsiElementFactory factory = JavaPsiFacade.getElementFactory(catchSection.getProject());
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       String flattenText = getTypeText(exceptionsToAdd, parameter, parameterType, factory);
-      typeElement.replace(factory.createTypeElementFromText(flattenText, parameter));
+      PsiElement newTypeElement = typeElement.replace(factory.createTypeElementFromText(flattenText, parameter));
+      CodeStyleManager.getInstance(project).reformat(JavaCodeStyleManager.getInstance(project).shortenClassReferences(newTypeElement));
     });
   }
 
