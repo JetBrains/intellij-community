@@ -37,6 +37,9 @@ import java.util.Collection;
 import java.util.List;
 
 public abstract class AbstractLightClass extends LightElement implements PsiClass {
+
+  //public Exception myException = new Exception("created");
+
   protected AbstractLightClass(PsiManager manager, Language language) {
     super(manager, language);
   }
