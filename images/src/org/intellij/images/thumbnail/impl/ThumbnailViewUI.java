@@ -18,9 +18,10 @@
 
 package org.intellij.images.thumbnail.impl;
 
+import com.intellij.ide.CopyPasteDelegator;
 import com.intellij.ide.CopyPasteSupport;
 import com.intellij.ide.DeleteProvider;
-import com.intellij.ide.PsiActionSupportFactory;
+import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -99,14 +100,8 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
 
         this.thumbnailView = thumbnailView;
 
-        final PsiActionSupportFactory factory = PsiActionSupportFactory.getInstance();
-        copyPasteSupport = factory.createPsiBasedCopyPasteSupport(thumbnailView.getProject(), this, new PsiActionSupportFactory.PsiElementSelector() {
-            public PsiElement[] getSelectedElements() {
-                return (PsiElement[]) getData(LangDataKeys.PSI_ELEMENT_ARRAY.getName());
-            }
-        });
-
-        deleteProvider = factory.createPsiBasedDeleteProvider();
+        copyPasteSupport = new CopyPasteDelegator(thumbnailView.getProject(), this);
+        deleteProvider = new DeleteHandler.DefaultDeleteProvider();
 
     }
 

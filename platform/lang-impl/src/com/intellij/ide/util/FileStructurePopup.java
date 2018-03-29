@@ -254,7 +254,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     });
 
     myTreeExpander = new DefaultTreeExpander(myTree);
-    myCopyPasteDelegator = createCopyPasteDelegator(myProject, myTree);
+    myCopyPasteDelegator = new CopyPasteDelegator(myProject, myTree);
 
     myInitialElement = myTreeModel.getCurrentEditorElement();
     TreeUtil.installActions(myTree);

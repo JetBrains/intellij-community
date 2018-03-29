@@ -120,14 +120,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     if (!docked && UIUtil.isUnderDarcula()) {
       setBorder(new LineBorder(Gray._120, 1));
     }
-    myCopyPasteDelegator = new CopyPasteDelegator(myProject, NavBarPanel.this) {
-      @Override
-      @NotNull
-      protected PsiElement[] getSelectedElements() {
-        Object inner = getDataInner(LangDataKeys.PSI_ELEMENT_ARRAY.getName());
-        return inner instanceof PsiElement[] ? (PsiElement[])inner : PsiElement.EMPTY_ARRAY;
-      }
-    };
+    myCopyPasteDelegator = new CopyPasteDelegator(myProject, this);
 
     myUpdateQueue.queueModelUpdateFromFocus();
     myUpdateQueue.queueRebuildUi();

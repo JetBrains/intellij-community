@@ -15,10 +15,11 @@
  */
 package org.intellij.images.editor.impl;
 
+import com.intellij.ide.CopyPasteDelegator;
 import com.intellij.ide.CopyPasteSupport;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.DeleteProvider;
-import com.intellij.ide.PsiActionSupportFactory;
+import com.intellij.ide.util.DeleteHandler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -33,7 +34,6 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.Magnificator;
-import com.intellij.util.LazyInitializer;
 import com.intellij.util.LazyInitializer.MutableNotNullValue;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -102,20 +102,8 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
     EditorOptions editorOptions = options.getEditorOptions();
     options.addPropertyChangeListener(optionsChangeListener);
 
-    final PsiActionSupportFactory factory = PsiActionSupportFactory.getInstance();
-    if (factory != null && editor != null) {
-      copyPasteSupport =
-        factory.createPsiBasedCopyPasteSupport(editor.getProject(), this, new PsiActionSupportFactory.PsiElementSelector() {
-          public PsiElement[] getSelectedElements() {
-            PsiElement[] data = LangDataKeys.PSI_ELEMENT_ARRAY.getData(ImageEditorUI.this);
-            return data == null ? PsiElement.EMPTY_ARRAY : data;
-          }
-        });
-    } else {
-      copyPasteSupport = null;
-    }
-
-    deleteProvider = factory == null ? null : factory.createPsiBasedDeleteProvider();
+    copyPasteSupport = editor != null ? new CopyPasteDelegator(editor.getProject(), this) : null;
+    deleteProvider = new DeleteHandler.DefaultDeleteProvider();
 
     ImageDocument document = imageComponent.getDocument();
     document.addChangeListener(changeListener);

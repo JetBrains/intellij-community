@@ -32,6 +32,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.copy.CopyHandler;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandler;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +40,7 @@ import javax.swing.*;
 import java.io.File;
 import java.util.List;
 
-public abstract class CopyPasteDelegator implements CopyPasteSupport {
+public class CopyPasteDelegator implements CopyPasteSupport {
   private static final ExtensionPointName<PasteProvider> EP_NAME = ExtensionPointName.create("com.intellij.filePasteProvider");
   public static final Key<Boolean> SHOW_CHOOSER_KEY = Key.create("show.dirs.chooser");
 
@@ -47,14 +48,17 @@ public abstract class CopyPasteDelegator implements CopyPasteSupport {
   private final JComponent myKeyReceiver;
   private final MyEditable myEditable;
 
-  public CopyPasteDelegator(Project project, JComponent keyReceiver) {
+  public CopyPasteDelegator(@NotNull Project project, @NotNull JComponent keyReceiver) {
     myProject = project;
     myKeyReceiver = keyReceiver;
     myEditable = new MyEditable();
   }
 
   @NotNull
-  protected abstract PsiElement[] getSelectedElements();
+  protected PsiElement[] getSelectedElements() {
+    DataContext dataContext = DataManager.getInstance().getDataContext(myKeyReceiver);
+    return ObjectUtils.notNull(LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext), PsiElement.EMPTY_ARRAY);
+  }
 
   @NotNull
   private PsiElement[] getValidSelectedElements() {

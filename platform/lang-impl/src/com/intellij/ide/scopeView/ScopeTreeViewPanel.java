@@ -8,11 +8,7 @@ import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.*;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.projectView.ProjectView;
-import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
-import com.intellij.ide.projectView.impl.CompoundProjectViewNodeDecorator;
-import com.intellij.ide.projectView.impl.ModuleGroup;
-import com.intellij.ide.projectView.impl.ProjectViewPane;
-import com.intellij.ide.projectView.impl.ProjectViewTree;
+import com.intellij.ide.projectView.impl.*;
 import com.intellij.ide.scopeView.nodes.BasePsiNode;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.DirectoryChooserUtil;
@@ -247,13 +243,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     TreeUtil.installActions(myTree);
     EditSourceOnDoubleClickHandler.install(myTree);
     new TreeSpeedSearch(myTree);
-    myCopyPasteDelegator = new CopyPasteDelegator(myProject, this) {
-      @Override
-      @NotNull
-      protected PsiElement[] getSelectedElements() {
-        return getSelectedPsiElements();
-      }
-    };
+    myCopyPasteDelegator = new CopyPasteDelegator(myProject, this);
     myTreeExpansionMonitor = PackageTreeExpansionMonitor.install(myTree, myProject);
     final ScopeTreeStructureExpander[] extensions = Extensions.getExtensions(ScopeTreeStructureExpander.EP_NAME, myProject);
     for (ScopeTreeStructureExpander expander : extensions) {
