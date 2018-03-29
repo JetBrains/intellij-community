@@ -238,7 +238,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
         builder = builder.withTypeText(StringUtil.removeHtmlTags(typeText), true);
       }
 
-      if (variants.size() <= 1) {
+      if (hasSameType(variants)) {
         final JsonSchemaType type = jsonSchemaObject.getType();
         final List<Object> values = jsonSchemaObject.getEnum();
         if (type != null || !ContainerUtil.isEmpty(values) || jsonSchemaObject.getDefault() != null) {
@@ -249,6 +249,10 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       }
 
       myVariants.add(builder);
+    }
+
+    private static boolean hasSameType(@NotNull Collection<JsonSchemaObject> variants) {
+      return variants.stream().map(JsonSchemaObject::getType).filter(Objects::nonNull).distinct().count() <= 1;
     }
 
     private static InsertHandler<LookupElement> createArrayOrObjectLiteralInsertHandler() {
