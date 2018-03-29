@@ -239,10 +239,6 @@ public final class DiscoveredTestDataHolder {
     return path.resolve("index.version");
   }
 
-  public static long createKey(int classQName, int methodName) {
-    return ((long)classQName << 32) | methodName;
-  }
-
   @NotNull
   public TestId createTestId(String className, String methodName, byte frameworkPrefix) throws IOException {
     return new TestId(myClassEnumerator.enumerate(className), myMethodEnumerator.enumerate(methodName), frameworkPrefix);
