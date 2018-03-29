@@ -63,6 +63,7 @@ import com.jetbrains.python.run.*
 import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant
 import com.jetbrains.python.run.targetBasedConfiguration.TargetWithVariant
 import com.jetbrains.python.run.targetBasedConfiguration.createRefactoringListenerIfPossible
+import com.jetbrains.python.run.targetBasedConfiguration.targetAsPsiElement
 import com.jetbrains.reflection.DelegationProperty
 import com.jetbrains.reflection.Properties
 import com.jetbrains.reflection.Property
@@ -756,7 +757,18 @@ object PyTestsConfigurationProducer : AbstractPythonTestConfigurationProducer<Py
     val psiElement = context?.psiLocation ?: return false
     val targetForConfig = PyTestsConfigurationProducer.getTargetForConfig(configuration,
                                                                           psiElement) ?: return false
-    return configuration.target == targetForConfig.first
+
+    if (configuration.target != targetForConfig.first) return false
+
+
+    //Even of both configurations have same targets, it could be that both have same qname which is resolved
+    // to different elements due to different working folders.
+    // Resolve them and check files
+    if (configuration.target.targetType != PyRunTargetVariant.PYTHON) return true
+
+    val targetPsi = targetAsPsiElement(configuration.target.targetType, configuration.target.target, configuration,
+                                       configuration.getWorkingDirectoryAsVirtual()) ?: return true
+    return targetPsi.containingFile == psiElement.containingFile
   }
 }
 
