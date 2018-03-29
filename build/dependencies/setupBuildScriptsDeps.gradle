@@ -11,24 +11,31 @@ configurations {
   buildScriptsDeps
 }
 
+List<String> projectLibraries = [
+  "Groovy",
+  "cli-parser",
+  "protobuf",
+  "OroMatcher",
+  "commons-codec",
+  "commons-logging",
+  "Trove4j",
+  "NanoXML",
+  "Guava",
+  "JUnit4",
+  "Netty",
+  "lz4-java",
+  "gant-groovy",
+  "Log4J",
+  "Slf4j",
+  "jna",
+  "jgoodies-forms"
+]
+
 dependencies {
-  buildScriptsDeps loadLibraryMavenId("Groovy")
-  buildScriptsDeps loadLibraryMavenId("cli-parser")
-  buildScriptsDeps loadLibraryMavenId("protobuf")
-  buildScriptsDeps loadLibraryMavenId("OroMatcher")
-  buildScriptsDeps loadLibraryMavenId("commons-codec")
-  buildScriptsDeps loadLibraryMavenId("commons-logging")
-  buildScriptsDeps loadLibraryMavenId("Trove4j")
-  buildScriptsDeps loadLibraryMavenId("NanoXML")
-  buildScriptsDeps loadLibraryMavenId("Guava")
-  buildScriptsDeps loadLibraryMavenId("JUnit4")
-  buildScriptsDeps loadLibraryMavenId("Netty")
-  buildScriptsDeps loadLibraryMavenId("lz4-java")
-  buildScriptsDeps(loadLibraryMavenId("gant-groovy"), { transitive = false })
-  buildScriptsDeps loadLibraryMavenId("Log4J")
-  buildScriptsDeps loadLibraryMavenId("Slf4j")
-  buildScriptsDeps loadLibraryMavenId("jna")
-  buildScriptsDeps loadLibraryMavenId("jgoodies-forms")
+  projectLibraries.each {
+    def properties = loadProjectLibraryProperties(it)
+    buildScriptsDeps(properties.first, { transitive = properties.second })
+  }
 }
 
 /**
@@ -39,7 +46,7 @@ task setupBuildScriptsDeps(dependsOn: configurations.buildScriptsDeps, type: Syn
   into "${project.buildDir}/build-scripts-deps"
 }
 
-private String loadLibraryMavenId(String libraryName) {
+private Tuple2<String, Boolean> loadProjectLibraryProperties(String libraryName) {
   File file = new File(project.rootDir, "../../.idea/libraries/${libraryName.replace('-', '_')}.xml")
   if (!file.exists()) {
     throw new GradleException("Cannot find $libraryName project library: $file doesn't exist")
@@ -49,6 +56,7 @@ private String loadLibraryMavenId(String libraryName) {
   if (propertiesTags.isEmpty()) {
     throw new GradleException("$libraryName project library is not a repository library")
   }
+  def propertiesTag = propertiesTags.first()
   //noinspection GrUnresolvedAccess
-  propertiesTags.first().'@maven-id'
+  new Tuple2(propertiesTag.'@maven-id', propertiesTag.'@include-transitive-deps' != "false")
 }
