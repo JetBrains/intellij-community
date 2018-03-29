@@ -445,7 +445,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
       mergedFacetsTag = JDOMUtil.deepMerge(facetsTag, externalFacetsTag);
     }
     else {
-      mergedFacetsTag = null;
+      mergedFacetsTag = facetsTag;
     }
     JpsFacetSerializer.loadFacets(module, mergedFacetsTag);
     return module;
