@@ -20,8 +20,18 @@ class DebugInfoHolder:
 
 #Hold a reference to the original _getframe (because psyco will change that as soon as it's imported)
 import sys #Note: the sys import must be here anyways (others depend on it)
+IS_IRONPYTHON = sys.platform == 'cli'
 try:
     get_frame = sys._getframe
+    if IS_IRONPYTHON:
+        def get_frame():
+            try:
+                return sys._getframe()
+            except ValueError:
+                if IS_IRONPYTHON:
+                    pass
+                else:
+                    raise
 except AttributeError:
     def get_frame():
         raise AssertionError('sys._getframe not available (possible causes: enable -X:Frames on IronPython?)')
@@ -38,8 +48,6 @@ import os
 from _pydevd_bundle import pydevd_vm_type
 
 IS_JYTHON = pydevd_vm_type.get_vm_type() == pydevd_vm_type.PydevdVmType.JYTHON
-IS_IRONPYTHON = sys.platform == 'cli'
-
 IS_JYTH_LESS25 = False
 if IS_JYTHON:
     if sys.version_info[0] == 2 and sys.version_info[1] < 5:
