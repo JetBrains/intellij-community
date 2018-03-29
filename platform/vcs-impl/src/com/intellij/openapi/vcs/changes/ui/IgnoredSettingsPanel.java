@@ -36,15 +36,15 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class IgnoredSettingsPanel implements SearchableConfigurable, Configurable.NoScroll {
-  private final JBList myList;
+  private final JBList<IgnoredFileBean> myList;
   private JPanel myPanel;
   private final Project myProject;
-  private DefaultListModel myModel;
+  private DefaultListModel<IgnoredFileBean> myModel;
   private final ChangeListManagerImpl myChangeListManager;
   private final Set<String> myDirectoriesManuallyRemovedFromIgnored = new HashSet<>();
 
   public IgnoredSettingsPanel(Project project) {
-    myList = new JBList();
+    myList = new JBList<>();
     myList.setCellRenderer(new MyCellRenderer());
     myList.getEmptyText().setText(VcsBundle.message("no.ignored.files"));
 
@@ -53,7 +53,7 @@ public class IgnoredSettingsPanel implements SearchableConfigurable, Configurabl
   }
 
   private void setItems(final IgnoredFileBean[] filesToIgnore) {
-    myModel = new DefaultListModel();
+    myModel = new DefaultListModel<>();
     for (IgnoredFileBean bean : filesToIgnore) {
       myModel.addElement(bean);
     }
@@ -64,7 +64,7 @@ public class IgnoredSettingsPanel implements SearchableConfigurable, Configurabl
     final int count = myList.getModel().getSize();
     IgnoredFileBean[] result = new IgnoredFileBean[count];
     for (int i = 0; i < count; i++) {
-      result[i] = (IgnoredFileBean)myList.getModel().getElementAt(i);
+      result[i] = myList.getModel().getElementAt(i);
     }
     return result;
   }
@@ -80,7 +80,7 @@ public class IgnoredSettingsPanel implements SearchableConfigurable, Configurabl
   }
 
   private void editItem() {
-    IgnoredFileBean bean = (IgnoredFileBean)myList.getSelectedValue();
+    IgnoredFileBean bean = myList.getSelectedValue();
     if (bean == null) return;
     IgnoreUnversionedDialog dlg = new IgnoreUnversionedDialog(myProject);
     dlg.setIgnoredFile(bean);
@@ -93,8 +93,7 @@ public class IgnoredSettingsPanel implements SearchableConfigurable, Configurabl
   }
 
   private void deleteItems() {
-    for (Object o : myList.getSelectedValues()) {
-      IgnoredFileBean bean = (IgnoredFileBean)o;
+    for (IgnoredFileBean bean : myList.getSelectedValuesList()) {
       if (bean.getType() == IgnoreSettingsType.UNDER_DIR) {
         myDirectoriesManuallyRemovedFromIgnored.add(bean.getPath());
       }
@@ -151,6 +150,7 @@ public class IgnoredSettingsPanel implements SearchableConfigurable, Configurabl
     return "Ignored Files";
   }
 
+  @NotNull
   @Override
   public String getHelpTopic() {
     return "project.propVCSSupport.Ignored.Files";
@@ -161,14 +161,13 @@ public class IgnoredSettingsPanel implements SearchableConfigurable, Configurabl
     return getHelpTopic();
   }
 
-  private static class MyCellRenderer extends ColoredListCellRenderer {
-    protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
+  private static class MyCellRenderer extends ColoredListCellRenderer<IgnoredFileBean> {
+    protected void customizeCellRenderer(@NotNull JList list, IgnoredFileBean bean, int index, boolean selected, boolean hasFocus) {
       if (UIUtil.isUnderGTKLookAndFeel()) {
         final Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
         UIUtil.changeBackGround(this, background);
       }
 
-      IgnoredFileBean bean = (IgnoredFileBean)value;
       final String path = bean.getPath();
       if (path != null) {
         if (path.endsWith("/")) {
