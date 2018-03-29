@@ -269,6 +269,25 @@ public class PyDunderSlotsInspectionTest extends PyInspectionTestCase {
     );
   }
 
+  // PY-29268
+  public void testWriteToNewStyleInheritedFromOldStyle() {
+    doTestByText("class A:\n" +
+                 "    __slots__ = ['a']\n" +
+                 "\n" +
+                 "class B(A, object):\n" +
+                 "    __slots__ = ['b']\n" +
+                 "\n" +
+                 "B().c = 1");
+  }
+
+  // PY-29268
+  public void testWriteToNewStyleInheritedFromUnknown() {
+    doTestByText("class B(A, object):\n" +
+                 "    __slots__ = ['b']\n" +
+                 "\n" +
+                 "B().c = 1");
+  }
+
   private void doTestPy2() {
     runWithLanguageLevel(LanguageLevel.PYTHON26, this::doTest);
   }

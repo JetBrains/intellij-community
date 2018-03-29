@@ -747,7 +747,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     final TypeEvalContext context =
       (expressionHook != null ? TypeEvalContext.codeCompletion(myClass.getProject(), myClass.getContainingFile()) : null);
 
-    processor.setAllowedNames(PyUtil.deactivateSlots(myClass, myClass.getSlots(context), context));
+    processor.setAllowedNames(myClass.getSlots(context));
     myClass.processInstanceLevelDeclarations(processor, expressionHook);
 
     for (LookupElement le : processor.getResultList()) {

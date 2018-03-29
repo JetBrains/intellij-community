@@ -101,7 +101,7 @@ class PyDunderSlotsInspection : PyInspection() {
     }
 
     private fun attributeIsWritableInPy2(cls: PyClass, name: String): Boolean {
-      val slots = PyUtil.deactivateSlots(cls, cls.getSlots(myTypeEvalContext), myTypeEvalContext)
+      val slots = cls.getSlots(myTypeEvalContext)
       return slots == null ||
              slots.contains(name) && cls.findClassAttribute(name, true, myTypeEvalContext) == null ||
              cls.findProperty(name, true, myTypeEvalContext) != null
