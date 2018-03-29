@@ -8,7 +8,9 @@ import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -18,6 +20,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.resolve.GradleResolverUtil;
 import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings;
+import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -70,6 +74,19 @@ public class GradleRunnerUtil {
     return projectPath;
   }
 
+  public static boolean isFromGroovyGradleScript(@Nullable Location location) {
+    if (location == null) return false;
+    return isFromGroovyGradleScript(location.getPsiElement());
+  }
+
+  public static boolean isFromGroovyGradleScript(@NotNull PsiElement element) {
+    PsiFile file = element.getContainingFile();
+    if (!(file instanceof GroovyFile)) {
+      return false;
+    }
+    return GradleConstants.EXTENSION.equals(file.getVirtualFile().getExtension());
+  }
+
   @NotNull
   public static List<String> getTasksTarget(@Nullable Location location) {
     if (location == null) return Collections.emptyList();
@@ -77,7 +94,13 @@ public class GradleRunnerUtil {
       return ((GradleTaskLocation)location).getTasks();
     }
 
-    PsiElement parent = location.getPsiElement();
+    Module module = location.getModule();
+    return getTasksTarget(location.getPsiElement(), module);
+  }
+
+  @NotNull
+  public static List<String> getTasksTarget(@NotNull PsiElement element, @Nullable Module module) {
+    PsiElement parent = element;
     while (parent.getParent() != null && !(parent.getParent() instanceof PsiFile)) {
       parent = parent.getParent();
     }
@@ -103,11 +126,13 @@ public class GradleRunnerUtil {
         return Collections.singletonList(shiftExpression.getChildren()[0].getText());
       }
     }
-    GrMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(location.getPsiElement(), GrMethodCallExpression.class);
+    GrMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(element, GrMethodCallExpression.class);
     if (methodCallExpression != null) {
       String taskNameCandidate = methodCallExpression.getChildren()[0].getText();
-      Project project = location.getProject();
-      Module module = location.getModule();
+      Project project = element.getProject();
+      if (module == null) {
+        module = getModule(element, project);
+      }
       GradleExtensionsSettings.GradleExtensionsData extensionsData = GradleExtensionsSettings.getInstance(project).getExtensionsFor(module);
       if (extensionsData != null) {
         for (GradleExtensionsSettings.GradleTask task : extensionsData.tasks) {
@@ -120,6 +145,24 @@ public class GradleRunnerUtil {
 
     return Collections.emptyList();
   }
+
+  @Nullable
+  private static Module getModule(@NotNull PsiElement element, @NotNull Project project) {
+    PsiFile containingFile = element.getContainingFile();
+    if (containingFile != null) {
+      VirtualFile virtualFile = containingFile.getVirtualFile();
+      if (virtualFile != null) {
+        return ProjectFileIndex.SERVICE.getInstance(project).getModuleForFile(virtualFile);
+      }
+    }
+    return null;
+  }
+
+  @NotNull
+  public static List<String> getTasksTarget(@NotNull PsiElement element) {
+    return getTasksTarget(element, null);
+  }
+
 
   private static boolean isCreateTaskMethod(PsiElement parent) {
     return parent instanceof GrMethodCallExpression && PsiUtil.isMethodCall((GrMethodCallExpression)parent, "createTask");

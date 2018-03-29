@@ -12,16 +12,12 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
 import java.util.List;
 
-import static org.jetbrains.plugins.gradle.execution.GradleRunnerUtil.getTasksTarget;
-import static org.jetbrains.plugins.gradle.execution.GradleRunnerUtil.resolveProjectPath;
+import static org.jetbrains.plugins.gradle.execution.GradleRunnerUtil.*;
 
 /**
  * @author Vladislav.Soroka
@@ -78,15 +74,5 @@ public class GradleGroovyScriptRunConfigurationProducer extends RunConfiguration
 
     if (tasks.containsAll(taskNames) && !taskNames.isEmpty()) return true;
     return false;
-  }
-
-  private static boolean isFromGroovyGradleScript(@Nullable Location location) {
-    if (location == null) return false;
-    PsiElement element = location.getPsiElement();
-    PsiFile file = element.getContainingFile();
-    if (!(file instanceof GroovyFile)) {
-      return false;
-    }
-    return GradleConstants.EXTENSION.equals(file.getVirtualFile().getExtension());
   }
 }
