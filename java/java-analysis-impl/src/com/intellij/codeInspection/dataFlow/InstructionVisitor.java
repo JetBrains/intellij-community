@@ -76,6 +76,10 @@ public abstract class InstructionVisitor {
       .toArray(DfaInstructionState.EMPTY_ARRAY);
   }
 
+  public DfaInstructionState[] visitEndOfInitializer(EndOfInitializerInstruction instruction, DataFlowRunner runner, DfaMemoryState state) {
+    return nextInstruction(instruction, runner, state);
+  }
+
   protected static DfaInstructionState[] nextInstruction(Instruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     return new DfaInstructionState[]{new DfaInstructionState(runner.getInstruction(instruction.getIndex() + 1), memState)};
   }

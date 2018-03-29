@@ -591,4 +591,5 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
     myFixture.addClass("package org.junit; public class Assume { public static void assumeNotNull(Object... objects) {}}");
     doTest();
   }
+  public void testMergedInitializerAndConstructor() { doTest(); }
 }

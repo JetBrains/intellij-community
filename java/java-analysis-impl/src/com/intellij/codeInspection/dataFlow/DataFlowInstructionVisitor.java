@@ -6,6 +6,8 @@ import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
@@ -33,6 +35,7 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
   private final Set<PsiElement> myArgumentMutabilityViolation = new HashSet<>();
   private final Map<PsiExpression, Boolean> mySameValueAssigned = new HashMap<>();
   private boolean myAlwaysReturnsNotNull = true;
+  private final List<DfaMemoryState> myEndOfInitializerStates = new ArrayList<>();
 
   @Override
   public DfaInstructionState[] visitAssign(AssignInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
@@ -43,14 +46,16 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
           LOG.debug("Non-physical element in assignment instruction: " + left.getParent().getText(), new Throwable());
         }
       } else {
-        DfaValue dest = memState.peek();
+        DfaValue value = memState.peek();
         // Reporting of floating zero is skipped, because this produces false-positives on the code like
         // if(x == -0.0) x = 0.0;
-        if (dest instanceof DfaVariableValue || (dest instanceof DfaConstValue && !isFloatingZero(((DfaConstValue)dest).getValue()))) {
+        if (value instanceof DfaVariableValue || (value instanceof DfaConstValue && !isFloatingZero(((DfaConstValue)value).getValue()))) {
           DfaMemoryState copy = memState.createCopy();
           copy.pop();
-          DfaValue src = copy.peek();
-          boolean sameValue = !copy.applyCondition(runner.getFactory().createCondition(dest, DfaRelationValue.RelationType.NE, src));
+          DfaValue target = copy.peek();
+          boolean sameValue =
+            !isAssignmentToDefaultValueInConstructor(instruction, runner, target) &&
+            !copy.applyCondition(runner.getFactory().createCondition(value, DfaRelationValue.RelationType.NE, target));
           mySameValueAssigned.merge(left, sameValue, Boolean::logicalAnd);
         }
         else {
@@ -59,6 +64,29 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
       }
     }
     return super.visitAssign(instruction, runner, memState);
+  }
+
+  private static boolean isAssignmentToDefaultValueInConstructor(AssignInstruction instruction, DataFlowRunner runner, DfaValue target) {
+    if (!(target instanceof DfaVariableValue)) return false;
+    DfaVariableValue var = (DfaVariableValue)target;
+    if (var.getQualifier() != null || !(var.getPsiVariable() instanceof PsiField)) return false;
+
+    // chained assignment like this.a = this.b = 0; is also supported
+    PsiExpression rExpression = instruction.getRExpression();
+    while (rExpression instanceof PsiAssignmentExpression &&
+           ((PsiAssignmentExpression)rExpression).getOperationTokenType().equals(JavaTokenType.EQ)) {
+      rExpression = ((PsiAssignmentExpression)rExpression).getRExpression();
+    }
+    if (rExpression == null) return false;
+    DfaValue dest = runner.getFactory().createValue(rExpression);
+    if (!(dest instanceof DfaConstValue)) return false;
+    Object value = ((DfaConstValue)dest).getValue();
+
+    PsiType type = var.getVariableType();
+    boolean isDefaultValue = Objects.equals(PsiTypesUtil.getDefaultValue(type), value) || Long.valueOf(0L).equals(value) && PsiType.INT.equals(type);
+    if (!isDefaultValue) return false;
+    PsiMethod method = PsiTreeUtil.getParentOfType(rExpression, PsiMethod.class);
+    return method != null && method.isConstructor();
   }
 
   private static boolean isFloatingZero(Object value) {
@@ -109,6 +137,10 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
 
   Set<PsiElement> getMutabilityViolations(boolean receiver) {
     return receiver ? myReceiverMutabilityViolation : myArgumentMutabilityViolation;
+  }
+
+  public List<DfaMemoryState> getEndOfInitializerStates() {
+    return myEndOfInitializerStates;
   }
 
   Stream<PsiArrayAccessExpression> outOfBoundsArrayAccesses() {
@@ -205,6 +237,14 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
       }
     }
     return super.visitPush(instruction, runner, memState);
+  }
+
+  @Override
+  public DfaInstructionState[] visitEndOfInitializer(EndOfInitializerInstruction instruction, DataFlowRunner runner, DfaMemoryState state) {
+    if (!instruction.isStatic()) {
+      myEndOfInitializerStates.add(state.createCopy());
+    }
+    return super.visitEndOfInitializer(instruction, runner, state);
   }
 
   public List<Pair<PsiReferenceExpression, DfaConstValue>> getConstantReferenceValues() {

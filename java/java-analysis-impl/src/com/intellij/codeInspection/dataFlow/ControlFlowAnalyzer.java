@@ -17,6 +17,7 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
 import com.intellij.codeInspection.dataFlow.inliner.*;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
@@ -79,17 +80,14 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private void buildClassInitializerFlow(PsiClass psiClass, boolean isStatic) {
-    pushUnknown();
-    ConditionalGotoInstruction conditionalGoto = new ConditionalGotoInstruction(null, false, null);
-    addInstruction(conditionalGoto);
     for (PsiElement element : psiClass.getChildren()) {
       if ((element instanceof PsiField || element instanceof PsiClassInitializer) &&
           ((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.STATIC) == isStatic) {
         element.accept(this);
       }
     }
+    addInstruction(new EndOfInitializerInstruction(isStatic));
     addInstruction(new FlushVariableInstruction(null));
-    conditionalGoto.setOffset(getInstructionCount());
   }
 
   @Nullable
@@ -97,9 +95,16 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     myCurrentFlow = new ControlFlow(myFactory);
     try {
       if(myCodeFragment instanceof PsiClass) {
-        // if(unknown) { staticInitializer(); } if(unknown) { instanceInitializer(); }
+        // if(unknown) { staticInitializer(); } else { instanceInitializer(); }
+        pushUnknown();
+        ConditionalGotoInstruction conditionalGoto = new ConditionalGotoInstruction(null, false, null);
+        addInstruction(conditionalGoto);
         buildClassInitializerFlow((PsiClass)myCodeFragment, true);
+        GotoInstruction unconditionalGoto = new GotoInstruction(null);
+        addInstruction(unconditionalGoto);
+        conditionalGoto.setOffset(getInstructionCount());
         buildClassInitializerFlow((PsiClass)myCodeFragment, false);
+        unconditionalGoto.setOffset(getInstructionCount());
       } else {
         myCodeFragment.accept(this);
       }
@@ -280,7 +285,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     if (initializer != null) {
       initializeVariable(field, initializer);
     }
-    else if (!field.hasModifierProperty(PsiModifier.FINAL)) {
+    else if (!field.hasModifierProperty(PsiModifier.FINAL) && !UnusedSymbolUtil.isImplicitWrite(field)) {
       // initialize with default value
       DfaVariableValue dfaVariable = myFactory.getVarFactory().createVariableValue(field);
       addInstruction(new PushInstruction(dfaVariable, null, true));
