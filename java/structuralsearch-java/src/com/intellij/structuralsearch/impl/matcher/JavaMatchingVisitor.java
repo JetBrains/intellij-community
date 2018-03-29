@@ -266,15 +266,12 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
   @Override
   public void visitJavaToken(final PsiJavaToken token) {
-    PsiElement element = myMatchingVisitor.getElement();
+    final PsiElement element = myMatchingVisitor.getElement();
 
-    if (!(element instanceof PsiJavaToken)) {
-      myMatchingVisitor.setResult(myMatchingVisitor.matchText(token, element));
-    } else {
-      final PsiJavaToken anotherToken = (PsiJavaToken)element;
-      myMatchingVisitor.setResult(token.getTokenType() == anotherToken.getTokenType() && myMatchingVisitor.matchText(token, anotherToken));
-    }
-
+    myMatchingVisitor.setResult((!(element instanceof PsiJavaToken) || token.getTokenType() == ((PsiJavaToken)element).getTokenType())
+                                && (myMatchingVisitor.getMatchContext().getPattern().isTypedVar(token)
+                                    ? myMatchingVisitor.handleTypedElement(token, element)
+                                    : myMatchingVisitor.matchText(token, element)));
   }
 
   @Override

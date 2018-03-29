@@ -2874,4 +2874,30 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("Find statement labels", 4, findMatchesCount(s, "x"));
     assertEquals("Find statement label variable", 2, findMatchesCount(s, "'_l : '_s;"));
   }
+
+  public void testFindBreakContinue() {
+    final String s = "class X {" +
+                     "  void m() {" +
+                     "    outer: for (int i = 0; i < 10; i++) {" +
+                     "      if (i == 1) break outer;" +
+                     "      if (i == 2) break;" +
+                     "    }" +
+                     "  }" +
+                     "}";
+    assertEquals("Find break statements", 2, findMatchesCount(s, "break;"));
+    assertEquals("Find labeled break statements", 1, findMatchesCount(s, "break '_label;"));
+    assertEquals("Find outer break statement", 1, findMatchesCount(s, "break outer;"));
+
+    final String s2 = "class X {" +
+                     "  void m() {" +
+                     "    outer: for (int i = 0; i < 10; i++) {" +
+                     "      if (i == 3) continue outer;" +
+                     "      if (i == 4) continue;" +
+                     "    }" +
+                     "  }" +
+                     "}";
+    assertEquals("Find continue statements", 2, findMatchesCount(s2, "continue;"));
+    assertEquals("Find continue break statements", 1, findMatchesCount(s2, "continue '_label;"));
+    assertEquals("Find outer continue statement", 1, findMatchesCount(s2, "continue outer;"));
+  }
 }
