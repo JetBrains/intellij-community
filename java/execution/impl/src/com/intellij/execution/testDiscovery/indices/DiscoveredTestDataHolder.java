@@ -193,12 +193,7 @@ public final class DiscoveredTestDataHolder {
     try {
       MultiMap<String, String> result = new MultiMap<>();
       IOException[] exception = {null};
-      myDiscoveredTestsIndex.getData(classId).forEach(new ValueContainer.ContainerAction<TIntArrayList>() {
-        @Override
-        public boolean perform(int testId, TIntArrayList value) {
-          return consumeDiscoveredTest(testId, frameworkId, result, exception);
-        }
-      });
+      myDiscoveredTestsIndex.getData(classId).forEach((testId, value) -> consumeDiscoveredTest(testId, frameworkId, result, exception));
       if (exception[0] != null) throw exception[0];
       return result;
     }
@@ -216,12 +211,8 @@ public final class DiscoveredTestDataHolder {
     try {
       MultiMap<String, String> result = new MultiMap<>();
       IOException[] exception = {null};
-      myDiscoveredTestsIndex.getData(classId).forEach(new ValueContainer.ContainerAction<TIntArrayList>() {
-        @Override
-        public boolean perform(int testId, TIntArrayList value) {
-          return !value.contains(methodId) || consumeDiscoveredTest(testId, frameworkId, result, exception);
-        }
-      });
+      myDiscoveredTestsIndex.getData(classId).forEach(
+        (testId, value) -> !value.contains(methodId) || consumeDiscoveredTest(testId, frameworkId, result, exception));
       if (exception[0] != null) throw exception[0];
       return result;
     }

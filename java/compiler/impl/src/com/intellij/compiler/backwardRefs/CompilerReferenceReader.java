@@ -111,12 +111,9 @@ class CompilerReferenceReader {
         return null;
       }
       final int[] count = {0};
-      myIndex.get(CompilerIndices.BACK_HIERARCHY).getData(classDef).forEach(new ValueContainer.ContainerAction<Collection<LightRef>>() {
-        @Override
-        public boolean perform(int id, Collection<LightRef> value) {
-          count[0] += value.size();
-          return true;
-        }
+      myIndex.get(CompilerIndices.BACK_HIERARCHY).getData(classDef).forEach((id, value) -> {
+        count[0] += value.size();
+        return true;
       });
       return count[0];
     }
@@ -129,12 +126,9 @@ class CompilerReferenceReader {
     try {
       int[] result = new int[]{0};
       myIndex.get(CompilerIndices.BACK_USAGES).getData(element).forEach(
-        new ValueContainer.ContainerAction<Integer>() {
-          @Override
-          public boolean perform(int id, Integer value) {
-            result[0] += value;
-            return true;
-          }
+        (id, value) -> {
+          result[0] += value;
+          return true;
         });
       return result[0];
     }
@@ -181,15 +175,12 @@ class CompilerReferenceReader {
   @NotNull
   OccurrenceCounter<LightRef> getTypeCastOperands(@NotNull LightRef.LightClassHierarchyElementDef castType, @Nullable TIntHashSet fileIds) throws StorageException {
     OccurrenceCounter<LightRef> result = new OccurrenceCounter<>();
-    myIndex.get(CompilerIndices.BACK_CAST).getData(castType).forEach(new ValueContainer.ContainerAction<Collection<LightRef>>() {
-      @Override
-      public boolean perform(int id, Collection<LightRef> values) {
-        if (fileIds != null && !fileIds.contains(id)) return true;
-        for (LightRef ref : values) {
-          result.add(ref);
-        }
-        return true;
+    myIndex.get(CompilerIndices.BACK_CAST).getData(castType).forEach((id, values) -> {
+      if (fileIds != null && !fileIds.contains(id)) return true;
+      for (LightRef ref : values) {
+        result.add(ref);
       }
+      return true;
     });
     return result;
   }
@@ -215,15 +206,12 @@ class CompilerReferenceReader {
 
   private void addUsages(LightRef usage, TIntHashSet sink) throws StorageException {
     myIndex.get(CompilerIndices.BACK_USAGES).getData(usage).forEach(
-      new ValueContainer.ContainerAction<Integer>() {
-        @Override
-        public boolean perform(int id, Integer value) {
-          final VirtualFile file = findFile(id);
-          if (file != null) {
-            sink.add(((VirtualFileWithId)file).getId());
-          }
-          return true;
+      (id, value) -> {
+        final VirtualFile file = findFile(id);
+        if (file != null) {
+          sink.add(((VirtualFileWithId)file).getId());
         }
+        return true;
       });
   }
 
@@ -307,19 +295,16 @@ class CompilerReferenceReader {
   @NotNull
   private DefCount getDefinitionCount(LightRef.NamedLightRef def) throws StorageException {
     DefCount[] result = new DefCount[]{DefCount.NONE};
-    myIndex.get(CompilerIndices.BACK_CLASS_DEF).getData(def).forEach(new ValueContainer.ContainerAction<Void>() {
-      @Override
-      public boolean perform(int id, Void value) {
-        if (result[0] == DefCount.NONE) {
-          result[0] = DefCount.ONE;
-          return true;
-        }
-        if (result[0] == DefCount.ONE) {
-          result[0] = DefCount.MANY;
-          return true;
-        }
-        return false;
+    myIndex.get(CompilerIndices.BACK_CLASS_DEF).getData(def).forEach((id, value) -> {
+      if (result[0] == DefCount.NONE) {
+        result[0] = DefCount.ONE;
+        return true;
       }
+      if (result[0] == DefCount.ONE) {
+        result[0] = DefCount.MANY;
+        return true;
+      }
+      return false;
     });
     return result[0];
   }
