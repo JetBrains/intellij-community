@@ -9,18 +9,17 @@ import net.miginfocom.swing.MigLayout
 import java.awt.Component
 import java.awt.Container
 import javax.swing.ButtonGroup
+import javax.swing.JDialog
 import javax.swing.JLabel
 
-/**
- * Automatically add `growX` to JTextComponent (see isAddGrowX).
- * Automatically add `grow` and `push` to JPanel (see isAddGrowX).
- */
-internal class MigLayoutBuilder(val horizontalGap: Int, val verticalGap: Int, val largeVerticalGap: Int) : LayoutBuilderImpl {
+internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuilderImpl {
   /**
    * Map of component to constraints shared among rows (since components are unique)
    */
   private val componentConstraints: MutableMap<Component, CC> = ContainerUtil.newIdentityTroveMap()
   private val rootRow = MigLayoutRow(parent = null, componentConstraints = componentConstraints, builder = this, indent = 0)
+
+  val defaultComponentConstraintCreator = DefaultComponentConstraintCreator(spacing)
 
   val columnConstraints = AC()
 
@@ -30,8 +29,8 @@ internal class MigLayoutBuilder(val horizontalGap: Int, val verticalGap: Int, va
 
   override fun noteRow(text: String, linkHandler: ((url: String) -> Unit)?) {
     val cc = CC()
-    cc.vertical.gapBefore = gapToBoundSize(if (rootRow.subRows == null) verticalGap else largeVerticalGap, false)
-    cc.vertical.gapAfter = gapToBoundSize(horizontalGap, false)
+    cc.vertical.gapBefore = gapToBoundSize(if (rootRow.subRows == null) spacing.verticalGap else spacing.largeVerticalGap, false)
+    cc.vertical.gapAfter = gapToBoundSize(spacing.verticalGap * 2, false)
 
     val row = rootRow.createChildRow(label = null, noGrid = true)
     row.apply {
@@ -42,7 +41,10 @@ internal class MigLayoutBuilder(val horizontalGap: Int, val verticalGap: Int, va
   }
 
   override fun build(container: Container, layoutConstraints: Array<out LCFlags>) {
-    val lc = createLayoutConstraints(horizontalGap, verticalGap)
+    val lc = LC()
+    lc.gridGapX = gapToBoundSize(0, true)
+    lc.gridGapY = gapToBoundSize(spacing.verticalGap, false)
+    lc.insets("0px")
     if (layoutConstraints.isEmpty()) {
       lc.fillX()
       // not fillY because it leads to enormously large cells - we use cc `push` in addition to cc `grow` as a more robust and easy solution
@@ -51,18 +53,49 @@ internal class MigLayoutBuilder(val horizontalGap: Int, val verticalGap: Int, va
       lc.apply(layoutConstraints)
     }
 
-    lc.noVisualPadding()
+    lc.isVisualPadding = spacing.isCompensateVisualPaddings
     lc.hideMode = 3
+
+    if (rootRow.subRows!!.any { it.isLabeledIncludingSubRows }) {
+      // using columnConstraints instead of component gap allows easy debug (proper painting of debug grid)
+      columnConstraints.gap("${spacing.labelColumnHorizontalGap}px!", 0)
+    }
+
+    for (i in 1 until columnConstraints.count) {
+      columnConstraints.gap("${spacing.horizontalGap}px!", i)
+    }
 
     // if constraint specified only for rows 0 and 1, MigLayout will use constraint 1 for any rows with index 1+ (see LayoutUtil.getIndexSafe - use last element if index > size)
     val rowConstraints = AC()
     rowConstraints.align("top")
-    container.layout = MigLayout(lc, columnConstraints, rowConstraints)
+
+    var isLayoutInsetsAdjusted = false
+    container.layout = object : MigLayout(lc, columnConstraints, rowConstraints) {
+      override fun layoutContainer(parent: Container) {
+        if (!isLayoutInsetsAdjusted) {
+          isLayoutInsetsAdjusted = true
+
+          var topParent = parent.parent
+          while (topParent != null) {
+            if (topParent is JDialog) {
+              val topBottom = createUnitValue(spacing.dialogTopBottom, false)
+              val leftRight = createUnitValue(spacing.dialogLeftRight, true)
+              // since we compensate visual padding, child components should be not clipped, so, we do not use content pane DialogWrapper border (returns null),
+              // but instead set insets to our content panel (so, child components are not clipped)
+              lc.insets = arrayOf(topBottom, leftRight, topBottom, leftRight)
+              break
+            }
+            topParent = topParent.parent
+          }
+        }
+
+        super.layoutContainer(parent)
+      }
+    }
 
     val isNoGrid = layoutConstraints.contains(LCFlags.noGrid)
 
     var rowIndex = 0
-
     fun configureComponents(row: MigLayoutRow) {
       val lastComponent = row.components.lastOrNull()
       for ((index, component) in row.components.withIndex()) {
@@ -74,6 +107,8 @@ internal class MigLayoutBuilder(val horizontalGap: Int, val verticalGap: Int, va
           continue
         }
 
+        // we cannot use columnCount as an indicator of whether to use spanX/wrap or not because component can share cell with another component,
+        // in any case MigLayout is smart enough and unnecessary spanX/wrap doesn't harm
         if (component === lastComponent) {
           cc.spanX()
           cc.wrap()
@@ -119,18 +154,12 @@ internal class MigLayoutBuilder(val horizontalGap: Int, val verticalGap: Int, va
 }
 
 internal fun gapToBoundSize(value: Int, isHorizontal: Boolean): BoundSize {
-  val unitValue = UnitValue(value.toFloat(), "px", isHorizontal, UnitValue.STATIC, null)
+  val unitValue = createUnitValue(value, isHorizontal)
   return BoundSize(unitValue, unitValue, null, false, null)
 }
 
-// default values differs to MigLayout - IntelliJ Platform defaults are used
-private fun createLayoutConstraints(gridGapX: Int, gridGapY: Int): LC {
-  val lc = LC()
-  // gap multiplied by 2 (it seems in terms of MigLayout gap is both left and right space)
-  lc.gridGapX = gapToBoundSize(gridGapX * 2, true)
-  lc.gridGapY = gapToBoundSize(gridGapY, false)
-  lc.insets = ConstraintParser.parseInsets("0px", true)
-  return lc
+private fun createUnitValue(value: Int, isHorizontal: Boolean): UnitValue {
+  return UnitValue(value.toFloat(), "px", isHorizontal, UnitValue.STATIC, null)
 }
 
 private fun LC.apply(flags: Array<out LCFlags>): LC {

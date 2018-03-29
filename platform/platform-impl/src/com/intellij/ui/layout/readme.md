@@ -1,3 +1,5 @@
+# UI DSL
+
 Use `panel` to create UI:
 
 ```kotlin

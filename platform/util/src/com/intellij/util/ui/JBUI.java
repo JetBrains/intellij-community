@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.LazyInitializer.NotNullValue;
@@ -41,6 +42,7 @@ public class JBUI {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.ui.JBUI");
 
   public static final String USER_SCALE_FACTOR_PROPERTY = "JBUI.userScaleFactor";
+  public static final String COMPENSATE_VISUAL_PADDING_KEY = "compensate.visual.padding";
 
   private static final PropertyChangeSupport PCS = new PropertyChangeSupport(new JBUI());
 
@@ -306,6 +308,10 @@ public class JBUI {
     return sysScale();
   }
 
+  public static boolean isRetina(@NotNull GraphicsDevice device) {
+    return UIUtil.DetectRetinaKit.isOracleMacRetinaDevice(device);
+  }
+
   /**
    * Returns the system scale factor, corresponding to the graphics.
    * For BufferedImage's graphics, the scale is taken from the graphics itself.
@@ -490,6 +496,7 @@ public class JBUI {
     return new JBDimension(size.width, size.height);
   }
 
+  @NotNull
   public static JBInsets insets(int top, int left, int bottom, int right) {
     return new JBInsets(top, left, bottom, right);
   }
@@ -1429,7 +1436,7 @@ public class JBUI {
     return color == null ? defaultColor : color;
   }
 
-  private static int getInt(String propertyName, int defaultValue) {
+  public static int getInt(String propertyName, int defaultValue) {
     Object value = UIManager.get(propertyName);
     return value instanceof Integer ? (Integer)value : defaultValue;
   }
@@ -1437,5 +1444,23 @@ public class JBUI {
   private static Icon getIcon(String propertyName, Icon defaultIcon) {
     Icon icon = UIManager.getIcon(propertyName);
     return icon == null ? defaultIcon : icon;
+  }
+
+  /**
+   * Temp method to not break IDEA LaF until changes are not reviewed.
+   *
+   * Correct input size is used now only for UI DSL.
+   */
+  public static boolean isUseCorrectInputHeightOnMacOS(@NotNull Component component) {
+    if (!SystemInfoRt.isMac) {
+      return false;
+    }
+
+    Container parent = component.getParent();
+    return !isCompensateVisualPaddingOnComponentLevel(parent instanceof JComboBox ? parent.getParent() : parent);
+  }
+
+  public static boolean isCompensateVisualPaddingOnComponentLevel(@Nullable Component parent) {
+    return !(SystemInfoRt.isMac && parent instanceof JPanel && ((JPanel)parent).getClientProperty(COMPENSATE_VISUAL_PADDING_KEY) == Boolean.FALSE);
   }
 }

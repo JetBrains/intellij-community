@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
@@ -28,19 +14,29 @@ import java.awt.geom.RoundRectangle2D;
  * @author Konstantin Bulenkov
  */
 public class DarculaTextFieldUI extends TextFieldWithPopupHandlerUI {
+  protected static final int MACOS_LIGHT_INPUT_HEIGHT = 21;
+  protected static final int DARCULA_INPUT_HEIGHT = 24;
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
     return new DarculaTextFieldUI();
   }
 
+  // real height without visual paddings
+  protected int getMinimumHeightForTextField() {
+    return DARCULA_INPUT_HEIGHT;
+  }
+
   @Override
   protected int getMinimumHeight() {
     Insets i = getComponent().getInsets();
     JComponent c = getComponent();
-    return DarculaEditorTextFieldBorder.isComboBoxEditor(c) ||
-           UIUtil.getParentOfType(JSpinner.class, c) != null ?
-            JBUI.scale(22) : JBUI.scale(20) + i.top + i.bottom;
+    if (DarculaEditorTextFieldBorder.isComboBoxEditor(c) || UIUtil.getParentOfType(JSpinner.class, c) != null) {
+      return JBUI.scale(JBUI.getInt("TextFieldUI.spinnerOrComboboxEditorHeight", 22));
+    }
+    else {
+      return JBUI.scale(JBUI.isUseCorrectInputHeightOnMacOS(c) ? getMinimumHeightForTextField() : 22) + i.top + i.bottom;
+    }
   }
 
   @Override

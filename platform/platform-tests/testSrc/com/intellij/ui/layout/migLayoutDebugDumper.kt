@@ -34,6 +34,24 @@ private val filter by lazy {
       if (bean is BoundSize && property.name == "unset") {
         return null
       }
+      if (bean is UnitValue) {
+        if (property.name == "unitString") {
+          if (propertyValue != "px" && bean.value != 0f) {
+            throw RuntimeException("Only px must be used")
+          }
+          return null
+        }
+        if (property.name == "unit" && bean.value != 0f) {
+          if (propertyValue != UnitValue.PIXEL) {
+            throw RuntimeException("Only px must be used")
+          }
+          return null
+        }
+        if (property.name == "operation" && propertyValue == 100) {
+          // ignore static operation
+          return null
+        }
+      }
 
       val emptyBean = when (bean) {
         is AC -> emptyAC

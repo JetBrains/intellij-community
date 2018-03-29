@@ -1,0 +1,67 @@
+layoutConstraints: !!net.miginfocom.layout.LC
+  fillX: true
+  gridGapX:
+    min: &id001 {horizontal: true, unit: 0, value: 0.0}
+    preferred: *id001
+  gridGapY:
+    min: &id002 {horizontal: false, value: 10.0}
+    preferred: *id002
+  hideMode: 3
+  insets:
+  - {horizontal: false, unit: 0, value: 0.0}
+  - {horizontal: true, unit: 0, value: 0.0}
+  - {horizontal: false, unit: 0, value: 0.0}
+  - {horizontal: true, unit: 0, value: 0.0}
+rowConstraints:
+  constraints:
+  - align: {horizontal: false, unit: 6, value: 0.0}
+    gapAfter:
+      max: &id003 {horizontal: true, value: 4.0}
+      min: *id003
+      preferred: *id003
+  - {}
+  count: 2
+columnConstraints:
+  constraints:
+  - gapAfter:
+      max: &id004 {horizontal: true, value: 6.0}
+      min: *id004
+      preferred: *id004
+  - gapAfter:
+      max: &id005 {horizontal: true, value: 8.0}
+      min: *id005
+      preferred: *id005
+    grow: 100.0
+  - {}
+  count: 3
+componentConstrains:
+  'Repository:':
+    vertical:
+      gapBefore:
+        max: &id006 {horizontal: false, value: 2.0}
+        min: *id006
+        preferred: *id006
+  'ComboBox #1': {split: 2}
+  Delete:
+    horizontal:
+      gapBefore:
+        min: &id007 {horizontal: true, value: 8.0}
+        preferred: *id007
+    spanX: 2097051
+    wrap: true
+  Use File -> Settings Repository... to configure:
+    horizontal:
+      gapBefore:
+        min: &id008 {horizontal: true, value: 2.0}
+        preferred: *id008
+    skip: 1
+    spanX: 2097051
+    wrap: true
+  'JBScrollPane #4':
+    horizontal: {grow: 100.0}
+    pushY: 100.0
+    spanX: 2097051
+    vertical: {grow: 100.0}
+    wrap: true
+rectangles: '[0, 0, 70, 21], [76, 0, 396, 21], [76, 0, 396, 21], [76, 25, 404, 14],
+  [0, 49, 480, 261]'

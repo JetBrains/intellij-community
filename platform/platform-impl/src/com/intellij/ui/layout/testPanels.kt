@@ -3,9 +3,9 @@ package com.intellij.ui.layout
 
 import com.intellij.CommonBundle
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.ui.JBIntSpinner
 import com.intellij.ui.components.CheckBox
 import com.intellij.ui.components.JBPasswordField
-import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.RadioButton
 import java.awt.Dimension
 import javax.swing.*
@@ -23,7 +23,7 @@ fun makeSecondColumnSmaller(): JPanel {
   val branchCombobox = ComboBox<String>()
   val diffButton = JButton("Show Diff")
 
-  val titleTextField = JBTextField()
+  val titleTextField = JTextField()
 
   val descriptionTextArea = JTextArea()
 
@@ -33,8 +33,10 @@ fun makeSecondColumnSmaller(): JPanel {
       selectForkButton(growX)
     }
     row("Base branch:") {
-      branchCombobox(growX, pushX)
-      diffButton(growX)
+      cell {
+        branchCombobox(growX, pushX)
+        diffButton(growX)
+      }
     }
     row("Title:") { titleTextField() }
     row("Description:") {
@@ -45,6 +47,50 @@ fun makeSecondColumnSmaller(): JPanel {
   // test scrollPane
   panel.preferredSize = Dimension(512, 256)
   return panel
+}
+
+fun visualPaddingsPanelOnlyComboBox(): JPanel {
+  return panel {
+    row("Combobox:") { JComboBox<String>(arrayOf("one", "two"))(growX) }
+  }
+}
+
+fun visualPaddingsPanelOnlyButton(): JPanel {
+  return panel {
+    row("Button:") { button("label", growX) {} }
+  }
+}
+
+fun visualPaddingsPanel(): JPanel {
+  // we use growX to test right border
+  return panel {
+    row("Text field:") { JTextField("text")() }
+    row("Password:") { JPasswordField("secret")() }
+    row("Combobox:") { JComboBox<String>(arrayOf("one", "two"))(growX) }
+    row("Combobox Editable:") {
+      val field = JComboBox<String>(arrayOf("one", "two"))
+      field.isEditable = true
+      field(growX)
+    }
+    row("Button:") { button("label", growX) {} }
+    row("CheckBox:") { CheckBox("enabled")() }
+    row("RadioButton:") { JRadioButton("label")() }
+    row("Spinner:") { JBIntSpinner(0, 0, 7)() }
+    // test text baseline alignment
+    row("All:") {
+      cell {
+        JTextField("t")()
+        JPasswordField("secret")()
+        JComboBox<String>(arrayOf("c1", "c2"))(growX)
+        button("b") {}
+        CheckBox("c")()
+        JRadioButton("rb")()
+      }
+    }
+    row("Scroll pane:") {
+      scrollPane(JTextArea("first line baseline equals to label"))
+    }
+  }
 }
 
 fun alignFieldsInTheNestedGrid(): JPanel {

@@ -1,26 +1,15 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui;
 
+import com.intellij.ide.ui.laf.VisualPaddingsProvider;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.ui.ErrorBorderCapable;
 import com.intellij.ui.ColorPanel;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MacUIUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -35,13 +24,13 @@ import java.awt.geom.RoundRectangle2D;
 /**
  * @author Konstantin Bulenkov
  */
-public class DarculaTextBorder implements Border, UIResource, ErrorBorderCapable {
+public class DarculaTextBorder implements Border, UIResource, ErrorBorderCapable, VisualPaddingsProvider {
   @Override
   public Insets getBorderInsets(Component c) {
     if (c instanceof JTextField && c.getParent() instanceof ColorPanel) {
       return JBUI.insets(3, 3, 2, 2).asUIResource();
     }
-    Insets insets = JBUI.insets(5, 9).asUIResource();
+    Insets insets = JBUI.insets(JBUI.isCompensateVisualPaddingOnComponentLevel(c.getParent()) ? 5 : (int)bw(), 9).asUIResource();
     TextFieldWithPopupHandlerUI.updateBorderInsets(c, insets);
     return insets;
   }
@@ -67,20 +56,27 @@ public class DarculaTextBorder implements Border, UIResource, ErrorBorderCapable
         g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
                             MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
 
-        JBInsets.removeFrom(r, JBUI.insets(1));
+        Container parent = c.getParent();
+        // if panel layout will compensate visual paddings,  paint as MacComboBoxBorder does - do not translate to avoid complicating code (and logical expectations)
+        if (JBUI.isCompensateVisualPaddingOnComponentLevel(parent)) {
+          JBInsets.removeFrom(r, JBUI.insets(1));
+        }
+
         g2.translate(r.x, r.y);
 
         Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
         float lw = lw(g2);
         float bw = bw();
-        border.append(new Rectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2), false);
-        border.append(new Rectangle2D.Float(bw + lw, bw + lw, r.width - (bw + lw) * 2, r.height - (bw + lw) * 2), false);
+
+        // paint as MacComboBoxBorder does - use passed width instead of r.width
+        border.append(new Rectangle2D.Float(bw, bw, width - bw * 2, height - bw * 2), false);
+        border.append(new Rectangle2D.Float(bw + lw, bw + lw, width - (bw + lw) * 2, height - (bw + lw) * 2), false);
 
         boolean editable = !(c instanceof JTextComponent) || ((JTextComponent)c).isEditable();
         g2.setColor(getOutlineColor(c.isEnabled() && editable));
         g2.fill(border);
 
-        if (c.getParent() instanceof JComboBox) return;
+        if (parent instanceof JComboBox) return;
         paint(c, g2, r.width, r.height, 0);
       }
       finally {
@@ -166,5 +162,11 @@ public class DarculaTextBorder implements Border, UIResource, ErrorBorderCapable
 
   protected Color getOutlineColor(boolean enabled) {
     return DarculaUIUtil.getOutlineColor(enabled);
+  }
+
+  @Nullable
+  @Override
+  public Insets getVisualPaddings(@NotNull Component component) {
+    return JBUI.insets((int)bw());
   }
 }

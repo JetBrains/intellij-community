@@ -1,0 +1,155 @@
+layoutConstraints: !!net.miginfocom.layout.LC
+  fillX: true
+  gridGapX:
+    min: &id001 {horizontal: true, unit: 0, value: 0.0}
+    preferred: *id001
+  gridGapY:
+    min: &id002 {horizontal: false, value: 10.0}
+    preferred: *id002
+  hideMode: 3
+  insets:
+  - {horizontal: false, unit: 0, value: 0.0}
+  - {horizontal: true, unit: 0, value: 0.0}
+  - {horizontal: false, unit: 0, value: 0.0}
+  - {horizontal: true, unit: 0, value: 0.0}
+rowConstraints:
+  constraints:
+  - align: {horizontal: false, unit: 6, value: 0.0}
+columnConstraints:
+  constraints:
+  - gapAfter:
+      max: &id003 {horizontal: true, value: 6.0}
+      min: *id003
+      preferred: *id003
+  - gapAfter:
+      max: &id004 {horizontal: true, value: 8.0}
+      min: *id004
+      preferred: *id004
+    grow: 100.0
+  - {}
+  count: 3
+componentConstrains:
+  'Text field:':
+    vertical:
+      gapBefore:
+        max: &id005 {horizontal: false, value: 2.0}
+        min: *id005
+        preferred: *id005
+  'JTextField #1':
+    horizontal: {grow: 100.0}
+    spanX: 2097051
+    wrap: true
+  'Password:':
+    vertical:
+      gapBefore:
+        max: &id006 {horizontal: false, value: 2.0}
+        min: *id006
+        preferred: *id006
+  'JPasswordField #3': {spanX: 2097051, wrap: true}
+  'Combobox:':
+    vertical:
+      gapBefore:
+        max: &id007 {horizontal: false, value: 2.0}
+        min: *id007
+        preferred: *id007
+  'JComboBox #5':
+    horizontal: {grow: 100.0}
+    spanX: 2097051
+    wrap: true
+  'Combobox Editable:':
+    vertical:
+      gapBefore:
+        max: &id008 {horizontal: false, value: 2.0}
+        min: *id008
+        preferred: *id008
+  'JComboBox #7':
+    horizontal: {grow: 100.0}
+    spanX: 2097051
+    wrap: true
+  'Button:':
+    vertical:
+      gapBefore:
+        max: &id009 {horizontal: false, value: 2.0}
+        min: *id009
+        preferred: *id009
+  label: {spanX: 2097051, wrap: true}
+  'CheckBox:':
+    vertical:
+      gapBefore:
+        max: &id010 {horizontal: false, value: 2.0}
+        min: *id010
+        preferred: *id010
+  enabled: {spanX: 2097051, wrap: true}
+  'RadioButton:':
+    vertical:
+      gapBefore:
+        max: &id011 {horizontal: false, value: 2.0}
+        min: *id011
+        preferred: *id011
+  'Spinner:':
+    vertical:
+      gapBefore:
+        max: &id012 {horizontal: false, value: 2.0}
+        min: *id012
+        preferred: *id012
+  'JBIntSpinner #15': {spanX: 2097051, wrap: true}
+  'All:':
+    vertical:
+      gapBefore:
+        max: &id013 {horizontal: false, value: 2.0}
+        min: *id013
+        preferred: *id013
+  'JTextField #17':
+    horizontal: {grow: 100.0}
+    split: 6
+  'JPasswordField #18':
+    horizontal:
+      gapBefore:
+        min: &id014 {horizontal: true, value: 8.0}
+        preferred: *id014
+      size:
+        max: &id015 {horizontal: true, value: 250.0}
+        min: *id015
+        preferred: *id015
+  'JComboBox #19':
+    horizontal:
+      gapBefore:
+        min: &id016 {horizontal: true, value: 8.0}
+        preferred: *id016
+      grow: 100.0
+  b:
+    horizontal:
+      gapBefore:
+        min: &id017 {horizontal: true, value: 8.0}
+        preferred: *id017
+  c:
+    horizontal:
+      gapBefore:
+        min: &id018 {horizontal: true, value: 8.0}
+        preferred: *id018
+  rb:
+    horizontal:
+      gapBefore:
+        min: &id019 {horizontal: true, value: 8.0}
+        preferred: *id019
+    spanX: 2097051
+    wrap: true
+  'Scroll pane:':
+    vertical:
+      gapBefore:
+        max: &id020 {horizontal: false, value: 1.0}
+        min: *id020
+        preferred: *id020
+  'JBScrollPane #24':
+    horizontal: {grow: 100.0}
+    pushY: 100.0
+    spanX: 2097051
+    vertical: {grow: 100.0}
+    wrap: true
+rectangles: '[0, 0, 124, 21], [130, 0, 519, 21], [0, 31, 124, 21], [130, 31, 519,
+  21], [0, 62, 124, 21], [130, 62, 519, 21], [0, 93, 124, 21], [130, 93, 519, 21],
+  [0, 124, 124, 21], [130, 124, 519, 21], [0, 155, 124, 21], [130, 155, 519, 21],
+  [0, 186, 124, 21], [130, 186, 519, 21], [0, 217, 124, 21], [130, 217, 519, 21],
+  [0, 248, 124, 21], [130, 248, 511, 21], [130, 248, 511, 21], [130, 248, 511, 21],
+  [130, 248, 511, 21], [130, 248, 511, 21], [130, 248, 511, 21], [0, 279, 124, 31],
+  [130, 279, 519, 31]'

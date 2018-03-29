@@ -62,14 +62,6 @@ abstract class Row : Cell() {
   @PublishedApi
   internal abstract fun setCellMode(value: Boolean)
 
-  @Deprecated(message = "Nested row is prohibited", level = DeprecationLevel.ERROR)
-  fun row(label: JLabel? = null, init: Row.() -> Unit) {
-  }
-
-  @Deprecated(message = "Nested noteRow is prohibited", level = DeprecationLevel.ERROR)
-  fun noteRow(text: String) {
-  }
-
   // override here for backward compatibility
   @Deprecated(level = DeprecationLevel.HIDDEN, message = "deprecated")
   operator fun JComponent.invoke(vararg constraints: CCFlags, gapLeft: Int = 0, growPolicy: GrowPolicy? = null) {

@@ -124,6 +124,9 @@ private fun setTitledBorder(title: String, panel: JPanel) {
   border.acceptMinimumSize(panel)
 }
 
+/**
+ * Consider using [UI DSL](https://github.com/JetBrains/intellij-community/tree/master/platform/platform-impl/src/com/intellij/ui/layout#readme) to create panel.
+ */
 fun dialog(title: String,
            panel: JComponent,
            resizable: Boolean = false,

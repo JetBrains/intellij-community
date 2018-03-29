@@ -3,19 +3,19 @@ package com.intellij.ui.layout.migLayout
 
 import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
+import com.intellij.ide.ui.laf.VisualPaddingsProvider
 import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.components.Label
 import com.intellij.ui.layout.*
 import com.intellij.util.SmartList
-import com.intellij.util.ui.UIUtil
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.ConstraintParser
+import net.miginfocom.layout.PlatformDefaults
 import java.awt.Component
 import javax.swing.*
-
-private val LABEL_TOP_GAP = ConstraintParser.parseBoundSize("4px!", true, false)
+import javax.swing.border.LineBorder
 
 internal class MigLayoutRow(private val parent: MigLayoutRow?,
                             private val componentConstraints: MutableMap<Component, CC>,
@@ -39,70 +39,8 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
 
   private var componentIndexWhenCellModeWasEnabled = -1
 
-  fun createChildRow(label: JLabel? = null, buttonGroup: ButtonGroup? = null, separated: Boolean = false, noGrid: Boolean = false): MigLayoutRow {
-    if (subRows == null) {
-      subRows = SmartList()
-    }
-
-    val subRows = subRows!!
-
-    if (separated) {
-      val row = MigLayoutRow(this, componentConstraints, builder, indent = indent, noGrid = true)
-      subRows.add(row)
-      row.apply {
-        val separatorComponent = SeparatorComponent(0, OnePixelDivider.BACKGROUND, null)
-        val cc = CC()
-        cc.vertical.gapBefore = gapToBoundSize(builder.largeVerticalGap, false)
-        cc.vertical.gapAfter = gapToBoundSize(builder.verticalGap * 2, false)
-        componentConstraints.put(separatorComponent, cc)
-        separatorComponent()
-      }
-    }
-
-    val row = MigLayoutRow(this, componentConstraints, builder, labeled = label != null, noGrid = noGrid, indent = indent + computeChildRowIndent(), buttonGroup = buttonGroup)
-    subRows.add(row)
-
-    if (label != null) {
-      val labelComponentConstraints = CC()
-      labelComponentConstraints.vertical.gapBefore = LABEL_TOP_GAP
-      componentConstraints.put(label, labelComponentConstraints)
-      row.addComponent(label)
-    }
-
-    return row
-  }
-
-  // cell mode not tested with "gear" button, wait first user request
-  override fun setCellMode(value: Boolean) {
-    if (value) {
-      assert(componentIndexWhenCellModeWasEnabled == -1)
-      componentIndexWhenCellModeWasEnabled = components.size
-    }
-    else {
-      val firstComponentIndex = componentIndexWhenCellModeWasEnabled
-      componentIndexWhenCellModeWasEnabled = -1
-      // do not add split if cell empty or contains the only component
-      if ((components.size - firstComponentIndex) > 1) {
-        val component = components.get(firstComponentIndex)
-        componentConstraints.getOrPut(component) { CC() }.split(components.size - firstComponentIndex)
-      }
-    }
-  }
-
-  private fun computeChildRowIndent(): Int {
-    if (components.isEmpty()) {
-      return 0
-    }
-    else {
-      val firstComponent = components.first()
-      if (firstComponent is JRadioButton || firstComponent is JCheckBox) {
-        return ComponentPanelBuilder.computeCommentInsets(firstComponent, true).left
-      }
-      else {
-        return builder.horizontalGap * 3
-      }
-    }
-  }
+  private val spacing: SpacingConfiguration
+    get() = builder.spacing
 
   override var enabled: Boolean = true
     set(value) {
@@ -148,29 +86,117 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       subRows?.forEach { it.visible = value }
     }
 
+  internal val isLabeledIncludingSubRows: Boolean
+    get() = labeled || (subRows?.any { it.isLabeledIncludingSubRows } ?: false)
+
+  fun createChildRow(label: JLabel? = null, buttonGroup: ButtonGroup? = null, separated: Boolean = false, noGrid: Boolean = false): MigLayoutRow {
+    if (subRows == null) {
+      subRows = SmartList()
+    }
+
+    val subRows = subRows!!
+
+    if (separated) {
+      val row = MigLayoutRow(this, componentConstraints, builder, indent = indent, noGrid = true)
+      subRows.add(row)
+      row.apply {
+        val separatorComponent = SeparatorComponent(0, OnePixelDivider.BACKGROUND, null)
+        val cc = CC()
+        cc.vertical.gapBefore = gapToBoundSize(spacing.largeVerticalGap, false)
+        cc.vertical.gapAfter = gapToBoundSize(spacing.verticalGap * 2, false)
+        componentConstraints.put(separatorComponent, cc)
+        addComponent(separatorComponent, lazyOf(cc))
+      }
+    }
+
+    val row = MigLayoutRow(this, componentConstraints, builder, labeled = label != null, noGrid = noGrid,
+                           indent = indent + computeChildRowIndent(), buttonGroup = buttonGroup)
+    subRows.add(row)
+
+    if (label != null) {
+      val labelComponentConstraints = CC()
+      labelComponentConstraints.vertical.gapBefore = ConstraintParser.parseBoundSize("${spacing.labelColumnVerticalTopGap}px!", true, false)
+      componentConstraints.put(label, labelComponentConstraints)
+      row.addComponent(label, lazyOf(labelComponentConstraints))
+    }
+
+    return row
+  }
+
+  // cell mode not tested with "gear" button, wait first user request
+  override fun setCellMode(value: Boolean) {
+    if (value) {
+      assert(componentIndexWhenCellModeWasEnabled == -1)
+      componentIndexWhenCellModeWasEnabled = components.size
+    }
+    else {
+      val firstComponentIndex = componentIndexWhenCellModeWasEnabled
+      componentIndexWhenCellModeWasEnabled = -1
+      // do not add split if cell empty or contains the only component
+      if ((components.size - firstComponentIndex) > 1) {
+        val component = components.get(firstComponentIndex)
+        componentConstraints.getOrPut(component) { CC() }.split(components.size - firstComponentIndex)
+      }
+    }
+  }
+
+  private fun computeChildRowIndent(): Int {
+    val firstComponent = components.firstOrNull() ?: return 0
+    if (firstComponent is JRadioButton || firstComponent is JCheckBox) {
+      return getCommentLeftInset(firstComponent)
+    }
+    else {
+      return spacing.horizontalGap * 3
+    }
+  }
+
+  private fun getCommentLeftInset(component: JComponent): Int {
+    if (component is JTextField) {
+      // 1px border, better to indent comment text
+      return 1
+    }
+
+    // as soon as ComponentPanelBuilder will also compensate visual paddings (instead of compensating on LaF level),
+    // this logic will be moved into computeCommentInsets
+    val componentBorderVisualLeftPadding = (component.border as? VisualPaddingsProvider)?.getVisualPaddings(component)?.left ?: 0
+    val insets = ComponentPanelBuilder.computeCommentInsets(component, true)
+    return insets.left - componentBorderVisualLeftPadding
+  }
+
   override operator fun JComponent.invoke(vararg constraints: CCFlags, gapLeft: Int, growPolicy: GrowPolicy?, comment: String?) {
-    addComponent(this, constraints, gapLeft, growPolicy, comment)
+    addComponent(this, constraints.create()?.let { lazyOf(it) } ?: lazy { CC() }, gapLeft, growPolicy, comment)
   }
 
   // separate method to avoid JComponent as a receiver
-  private fun addComponent(component: JComponent,
-                           constraints: Array<out CCFlags>? = null,
-                           gapLeft: Int = 0,
-                           growPolicy: GrowPolicy? = null,
-                           comment: String? = null) {
+  private fun addComponent(component: JComponent, cc: Lazy<CC>, gapLeft: Int = 0, growPolicy: GrowPolicy? = null, comment: String? = null) {
     components.add(component)
 
+    if (!shareCellWithPreviousComponentIfNeed(component, cc)) {
+      // increase column index if cell mode not enabled or it is a first component of cell
+      if (componentIndexWhenCellModeWasEnabled == -1 || componentIndexWhenCellModeWasEnabled == (components.size - 1)) {
+        columnIndex++
+      }
+    }
+
+    setVisualPaddingsAndLabelTopGapIfNeed(component)
+
+    // (not yet clear is it true or just some strange gaps from another source) MigLayout compensate outer visual paddings, but if there are more than one component in the cell,
+    // inner horizontal spacing will be not corrected (e.g. between combobox and button will be 7px horizontal gap in case of macOS IntelliJ LaF), as solution, we set horizontal gap for such components).
+    // if it is not a first component in the cell, compensate horizontal visual paddings using gap.
+    if (componentIndexWhenCellModeWasEnabled != -1 && componentIndexWhenCellModeWasEnabled < (components.size - 1)) {
+      cc.value.horizontal.gapBefore = gapToBoundSize(spacing.horizontalGap, true)
+    }
+
     if (comment != null && comment.isNotEmpty()) {
-      gapAfter = "0px!"
+      gapAfter = "${spacing.unitSize}px!"
 
       val isParentRowLabeled = labeled
       // create comment in a new sibling row (developer is still able to create sub rows because rows is not stored in a flat list)
       parent!!.createChildRow().apply {
         val commentComponent = ComponentPanelBuilder.createCommentComponent(comment, true)
-        addComponent(commentComponent)
-
         val commentComponentCC = CC()
-        commentComponentCC.horizontal.gapBefore = gapToBoundSize(ComponentPanelBuilder.computeCommentInsets(component, true).left, true)
+        addComponent(commentComponent, lazyOf(commentComponentCC))
+        commentComponentCC.horizontal.gapBefore = gapToBoundSize(getCommentLeftInset(component), true)
         if (isParentRowLabeled) {
           commentComponentCC.skip()
         }
@@ -182,26 +208,10 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       buttonGroup.add(component)
     }
 
-    val cc = constraints?.create()?.let { lazyOf(it) } ?: lazy { CC() }
-    createComponentConstraints(cc, component, gapLeft = gapLeft, growPolicy = growPolicy)
-
-    // JScrollPane doesn't have visual insets (not set by layout, but part of component implementation) as TextField, Combobox and other such components,
-    // but it looks ugly, so, if not other components in the row and row is labeled - add left/right insets
-    if (component is JScrollPane && labeled && components.size == 2 && !UIUtil.isUnderWin10LookAndFeel()) {
-      val scrollPaneHGap = gapToBoundSize(4, true)
-      cc.value.horizontal.gapBefore = scrollPaneHGap
-      cc.value.horizontal.gapAfter = scrollPaneHGap
-    }
+    builder.defaultComponentConstraintCreator.createComponentConstraints(cc, component, gapLeft = gapLeft, growPolicy = growPolicy)
 
     if (!noGrid && indent > 0 && components.size == 1) {
       cc.value.horizontal.gapBefore = gapToBoundSize(indent, true)
-    }
-
-    if (!shareCellWithPreviousComponentIfNeed(component, cc)) {
-      // increase column index if cell mode not enabled or it is a first component of cell
-      if (componentIndexWhenCellModeWasEnabled == -1 || componentIndexWhenCellModeWasEnabled == (components.size - 1)) {
-        columnIndex++
-      }
     }
 
     // if this row is not labeled and previous row is labeled and component is a "Remember" checkbox, skip one column (since this row doesn't have a label)
@@ -240,9 +250,26 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     }
   }
 
+  private fun setVisualPaddingsAndLabelTopGapIfNeed(component: JComponent) {
+    if (!spacing.isCompensateVisualPaddings) {
+      return
+    }
+
+    val border = component.border
+    if (border is LineBorder) {
+      if (labeled && components.size == 2) {
+        componentConstraints.get(components.first())?.vertical?.gapBefore = builder.defaultComponentConstraintCreator.vertical1pxGap
+      }
+      return
+    }
+
+    val paddings = (border as? VisualPaddingsProvider)?.getVisualPaddings(component) ?: return
+    component.putClientProperty(PlatformDefaults.VISUAL_PADDING_PROPERTY, paddings)
+  }
+
   private fun shareCellWithPreviousComponentIfNeed(component: JComponent, componentCC: Lazy<CC>): Boolean {
     if (components.size > 1 && component is JLabel && component.icon === AllIcons.General.Gear) {
-      componentCC.value.horizontal.gapBefore = gapToBoundSize(0, true)
+      componentCC.value.horizontal.gapBefore = builder.defaultComponentConstraintCreator.horizontalUnitSizeGap
 
       if (lastComponentConstraintsWithSplit == null) {
         val prevComponent = components.get(components.size - 2)!!

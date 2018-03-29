@@ -2,7 +2,9 @@
 package com.intellij.ui.layout
 
 import com.intellij.ide.ui.laf.IntelliJLaf
+import com.intellij.ide.ui.laf.darcula.DarculaLaf
 import com.intellij.openapi.application.invokeAndWaitIfNeed
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.assertions.Assertions
@@ -10,23 +12,26 @@ import com.intellij.util.io.exists
 import com.intellij.util.io.outputStream
 import com.intellij.util.io.sanitizeFileName
 import com.intellij.util.io.write
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import io.netty.util.internal.SystemPropertyUtil
 import net.miginfocom.layout.Grid
 import net.miginfocom.layout.LayoutUtil
 import net.miginfocom.swing.MigLayout
 import org.assertj.core.data.Offset
 import org.assertj.swing.assertions.Assertions.assertThat
-import org.assertj.swing.edt.FailOnThreadViolationRepaintManager
-import org.assertj.swing.edt.GuiActionRunner
-import org.assertj.swing.fixture.FrameFixture
-import org.junit.*
 import org.junit.Assume.assumeTrue
+import org.junit.Before
+import org.junit.Rule
+import org.junit.Test
 import org.junit.rules.TestName
-import java.awt.*
+import java.awt.BorderLayout
+import java.awt.Component
+import java.awt.Dimension
+import java.awt.GraphicsEnvironment
 import java.awt.image.BufferedImage
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.concurrent.Callable
 import javax.imageio.ImageIO
 import javax.swing.JFrame
 import javax.swing.JPanel
@@ -40,84 +45,103 @@ import kotlin.properties.Delegates
  * Checkout git@github.com:develar/intellij-ui-dsl-test-snapshots.git (or create own repo) to some local dir and set env LAYOUT_IMAGE_REPO
  * to use image snapshots.
  */
-class UiDslTest {
+open class UiDslTest {
   companion object {
-    @Suppress("unused")
-    @BeforeClass
-    fun setUpOnce() {
-      FailOnThreadViolationRepaintManager.install()
-      UIManager.setLookAndFeel(MetalLookAndFeel())
-      UIManager.setLookAndFeel(IntelliJLaf())
-    }
+    var currentLaf: String? = null
 
     private val imageDir: String? = System.getenv("LAYOUT_IMAGE_REPO")
   }
 
-  private var window: FrameFixture by Delegates.notNull()
+  open val lafName = "IntelliJ"
 
   @Rule
   @JvmField
   val testName = TestName()
 
-  @After
-  fun tearDown() {
-    window.cleanUp()
-  }
-
   @Before
   fun beforeMethod() {
     assumeTrue(!UsefulTestCase.IS_UNDER_TEAMCITY)
-  }
 
-  private fun saveImage(file: Path) {
-    file.outputStream().use {
-      ImageIO.write(componentToImage(getContentPane()), "png", it)
+    if (currentLaf != lafName) {
+      currentLaf = lafName
+      invokeAndWaitIfNeed {
+        UIManager.setLookAndFeel(MetalLookAndFeel())
+        val laf = if (lafName == "IntelliJ") IntelliJLaf() else DarculaLaf()
+        UIManager.setLookAndFeel(laf)
+
+        if (lafName == "Darcula") {
+          // static init it is hell - UIUtil static init is called too early, so, call it to init properly
+          // (otherwise null stylesheet added and it leads to NPE on set comment text)
+          UIManager.getDefaults().put("javax.swing.JLabel.userStyleSheet", UIUtil.JBHtmlEditorKit.createStyleSheet())
+        }
+      }
     }
   }
 
-  private fun getContentPane(): Container {
-    return window.target()
+  private fun saveImage(file: Path, component: Component) {
+    file.outputStream().use {
+      ImageIO.write(componentToImage(component), "png", it)
+    }
   }
 
   @Test
   fun `align fields in the nested grid`() {
-    doTest(alignFieldsInTheNestedGrid())
+    doTest { alignFieldsInTheNestedGrid() }
   }
 
   @Test
   fun `align fields`() {
-    doTest(labelRowShouldNotGrow())
+    doTest { labelRowShouldNotGrow() }
   }
 
   @Test
   fun cell() {
-    doTest(cellPanel())
+    doTest { cellPanel() }
   }
 
   @Test
   fun `note row in the dialog`() {
-    doTest(noteRowInTheDialog())
+    doTest { noteRowInTheDialog() }
   }
 
-  private fun doTest(panel: JPanel) {
-    val frame = GuiActionRunner.execute(Callable {
+  @Test
+  fun `visual paddings`() {
+    doTest { visualPaddingsPanel()}
+  }
+
+  private fun doTest(panelCreator: () -> JPanel) {
+    var panel: JPanel by Delegates.notNull()
+    val frame = invokeAndWaitIfNeed {
       LayoutUtil.setGlobalDebugMillis(1000)
 
-      panel.background = Color.WHITE
-      panel.name = "test"
+      panel = panelCreator()
 
       val frame = JFrame("wrapper")
       frame.isUndecorated = true
-      frame.contentPane.background = Color.WHITE
-      frame.background = Color.WHITE
       frame.contentPane.add(panel, BorderLayout.CENTER)
-      frame.minimumSize = Dimension(512, 256)
-      frame
-    })
-    window = FrameFixture(frame)
-    window.show()
+      frame.minimumSize = Dimension(480, 320)
 
-    val component = window.panel("test").target() as JPanel
+      val screenDevices = GraphicsEnvironment.getLocalGraphicsEnvironment().screenDevices
+      if (SystemInfoRt.isMac && screenDevices != null && screenDevices.size > 1) {
+        // use non-Retina
+        for (screenDevice in screenDevices) {
+          if (!JBUI.isRetina(screenDevice)) {
+            frame.setLocation(screenDevice.defaultConfiguration.bounds.x, frame.y)
+            break
+          }
+        }
+      }
+
+      frame.pack()
+      frame.isVisible = true
+
+      // clear focus from first input field
+      frame.requestFocusInWindow()
+
+      frame
+    }
+
+    val component = panel
     val layout = component.layout as MigLayout
 
     val gridField = MigLayout::class.java.getDeclaredField("grid")
@@ -126,38 +150,40 @@ class UiDslTest {
     val rectangles = MigLayoutTestUtil.getRectangles(grid)
 
     val imageName = sanitizeFileName(testName.methodName)
-    val actualLayoutJson = configurationToJson(component, component.layout as MigLayout,
-                                               rectangles.joinToString(", ") { "[${it.joinToString(", ")}]" })
+    val actualSerializedLayout = configurationToJson(component, component.layout as MigLayout,
+                                                     rectangles.joinToString(", ") { "[${it.joinToString(", ")}]" })
     try {
-      val expectedLayoutDataFile = Paths.get(PlatformTestUtil.getPlatformTestDataPath(), "ui", "layout", "$imageName.yml")
+      val expectedLayoutDataFile = Paths.get(PlatformTestUtil.getPlatformTestDataPath(), "ui", "layout", lafName, "$imageName.yml")
       val isUpdateSnapshots = SystemPropertyUtil.getBoolean("test.update.snapshots", false)
       if (!expectedLayoutDataFile.exists() || isUpdateSnapshots) {
-        expectedLayoutDataFile.write(actualLayoutJson)
+        expectedLayoutDataFile.write(actualSerializedLayout)
       }
       else {
-        Assertions.assertThat(actualLayoutJson).isEqualTo(expectedLayoutDataFile)
+        Assertions.assertThat(actualSerializedLayout).isEqualTo(expectedLayoutDataFile)
       }
 
       if (imageDir.isNullOrEmpty()) {
         return
       }
 
-      val imagePath = Paths.get(imageDir, "$imageName.png")
+      val imagePath = Paths.get(imageDir, lafName, "$imageName.png")
       if (!imagePath.exists()) {
         System.out.println("Write a new snapshot image ${imagePath.fileName}")
-        saveImage(imagePath)
+        saveImage(imagePath, frame)
         return
       }
 
       val newImage = ImageIO.read(imagePath.toFile())
+      @Suppress("UnnecessaryVariable")
+      val snapshotComponent = frame
       try {
-        assertThat(componentToImage(getContentPane())).isEqualTo(newImage, Offset.offset(32))
+        assertThat(componentToImage(snapshotComponent)).isEqualTo(newImage, Offset.offset(8))
       }
       catch (e: AssertionError) {
         if (isUpdateSnapshots) {
           System.out.println("UPDATED snapshot image ${imagePath.fileName}")
           imagePath.outputStream().use {
-            ImageIO.write(componentToImage(getContentPane()), "png", it)
+            ImageIO.write(componentToImage(snapshotComponent), "png", it)
           }
         }
         else {
@@ -167,12 +193,19 @@ class UiDslTest {
     }
     catch (e: AssertionError) {
       if (!imageDir.isNullOrEmpty()) {
-        Paths.get(imageDir, "$imageName-NEW.yml").write(actualLayoutJson)
-        saveImage(Paths.get(imageDir, "$imageName-NEW.png"))
+        Paths.get(imageDir, "$imageName-NEW.yml").write(actualSerializedLayout)
+        saveImage(Paths.get(imageDir, "$imageName-NEW.png"), frame)
       }
       throw e
     }
+
+    frame.isVisible = false
+    frame.dispose()
   }
+}
+
+class DarculaUiDslTest : UiDslTest() {
+  override val lafName = "Darcula"
 }
 
 private fun componentToImage(component: Component, type: Int = BufferedImage.TYPE_BYTE_GRAY): BufferedImage {
