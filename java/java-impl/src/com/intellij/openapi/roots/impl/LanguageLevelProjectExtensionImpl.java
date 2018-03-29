@@ -55,10 +55,19 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
       myLanguageLevel = null;
     }
     else {
-      myLanguageLevel = LanguageLevel.valueOf(level);
+      myLanguageLevel = readLanguageLevel(level);
     }
     String aDefault = element.getAttributeValue(DEFAULT_ATTRIBUTE);
     setDefault(aDefault == null ? null : Boolean.parseBoolean(aDefault));
+  }
+
+  private static LanguageLevel readLanguageLevel(String level) {
+    for (LanguageLevel languageLevel : LanguageLevel.values()) {
+      if (level.equals(languageLevel.name())) {
+        return languageLevel;
+      }
+    }
+    return LanguageLevel.HIGHEST;
   }
 
   private void writeExternal(final Element element) {
