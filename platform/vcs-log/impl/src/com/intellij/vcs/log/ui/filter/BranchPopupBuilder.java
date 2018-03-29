@@ -89,10 +89,11 @@ public abstract class BranchPopupBuilder {
       actionGroup.add(createAction(entry.getKey(), entry.getValue()));
     }
     if (!groups.recentGroups.isEmpty()) {
-      actionGroup.addSeparator("Recent");
+      DefaultActionGroup recentGroup = new DefaultActionGroup("Recent", true);
       for (List<String> recentItem : groups.recentGroups) {
-        createRecentAction(actionGroup, recentItem);
+        createRecentAction(recentGroup, recentItem);
       }
+      actionGroup.add(recentGroup);
     }
     if (groups.favoriteGroups.size() > 1) {
       createFavoritesAction(actionGroup, ContainerUtil.newArrayList(groups.favoriteGroups.keySet()));
