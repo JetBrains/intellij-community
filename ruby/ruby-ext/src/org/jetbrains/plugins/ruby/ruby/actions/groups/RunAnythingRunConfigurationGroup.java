@@ -9,24 +9,22 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindowId;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.ruby.ruby.actions.RunAnythingAction;
 import org.jetbrains.plugins.ruby.ruby.actions.RunAnythingRunConfigurationItem;
 import org.jetbrains.plugins.ruby.ruby.actions.RunAnythingSearchListModel;
 
-public abstract class RunAnythingRunConfigurationGroup extends RunAnythingGroup {
+public abstract class RunAnythingRunConfigurationGroup extends RunAnythingGroupBase {
   private static final int MAX_RUN_CONFIGURATION = 6;
 
   @Override
-  protected int getMaxItemsToShow() {
+  protected int getMaxInitialItems() {
     return MAX_RUN_CONFIGURATION;
   }
 
   @Override
-  public RunAnythingAction.SearchResult getItems(@NotNull Project project,
-                                                 @Nullable Module module,
-                                                 @NotNull RunAnythingSearchListModel model,
-                                                 @NotNull String pattern,
-                                                 boolean isMore, @NotNull Runnable check) {
+  public SearchResult getItems(@NotNull Project project,
+                               @Nullable Module module,
+                               @NotNull RunAnythingSearchListModel model, @NotNull String pattern,
+                               boolean isInsertionMode, @NotNull Runnable check) {
 
     final ChooseRunConfigurationPopup.ItemWrapper[] wrappers =
       ChooseRunConfigurationPopup.createSettingsList(project, new ExecutorProvider() {
@@ -37,12 +35,12 @@ public abstract class RunAnythingRunConfigurationGroup extends RunAnythingGroup 
       }, false);
 
     check.run();
-    RunAnythingAction.SearchResult result = new RunAnythingAction.SearchResult();
+    SearchResult result = new SearchResult();
     for (ChooseRunConfigurationPopup.ItemWrapper wrapper : wrappers) {
       if (!isTemporary(wrapper)) continue;
 
       RunAnythingRunConfigurationItem runConfigurationItem = new RunAnythingRunConfigurationItem(wrapper);
-      if (addToList(model, result, pattern, runConfigurationItem, runConfigurationItem.getText(), isMore)) break;
+      if (addToList(model, result, pattern, runConfigurationItem, runConfigurationItem.getText(), isInsertionMode)) break;
       check.run();
     }
 

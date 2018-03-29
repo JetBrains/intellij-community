@@ -4,16 +4,15 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.psi.codeStyle.NameUtil;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.ruby.ruby.actions.RunAnythingAction.SearchResult;
 import org.jetbrains.plugins.ruby.ruby.actions.RunAnythingCache;
 import org.jetbrains.plugins.ruby.ruby.actions.RunAnythingItem;
 import org.jetbrains.plugins.ruby.ruby.actions.RunAnythingSearchListModel;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 /**
@@ -23,7 +22,6 @@ public abstract class RunAnythingGroup {
   public static final ExtensionPointName<RunAnythingGroup> EP_NAME =
     ExtensionPointName.create("org.jetbrains.plugins.ruby.runAnythingGroup");
 
-  private static final int DEFAULT_MORE_STEP_COUNT = 5;
   /**
    * {@link #myMoreIndex} is a group 'load more..' index in the main list.
    */
@@ -49,22 +47,14 @@ public abstract class RunAnythingGroup {
   /**
    * @return Current group maximum number of items to be shown.
    */
-  protected abstract int getMaxItemsToShow();
+  protected abstract int getMaxInitialItems();
 
   /**
-   * Gets current group items to add into the main list.
-   *
-   * @param model   main list model
-   * @param pattern input search string
-   * @param isMore  if true gets {@link #DEFAULT_MORE_STEP_COUNT} group items, else limits to {@link #getMaxItemsToShow()}
-   * @param check   checks 'load more' calculation process to be cancelled
+   * @return Current group maximum number of items to be insert by click on 'load more..'.
    */
-  protected abstract SearchResult getItems(@NotNull Project project,
-                                           @Nullable Module module,
-                                           @NotNull RunAnythingSearchListModel model,
-                                           @NotNull String pattern,
-                                           boolean isMore,
-                                           @NotNull Runnable check);
+  protected int getMaxItemsToInsert() {
+    return 5;
+  }
 
   /**
    * @return Defines whether this group should be shown with empty input or not.
@@ -74,78 +64,36 @@ public abstract class RunAnythingGroup {
   }
 
   /**
-   * Adds current group matched items into the list.
+   * Gets current group items to add into the main list.
    *
-   * @param model      main list model
-   * @param pattern    input search string
-   * @param check      checks 'load more' calculation process to be cancelled
-   * @param isCanceled computes if 'load more' calculation process has already cancelled
+   * @param model           list model
+   * @param pattern         input search string
+   * @param isInsertionMode if true gets {@link #getMaxItemsToInsert()} group items, else limits to {@link #getMaxInitialItems()}
+   * @param check           checks 'load more' calculation process to be cancelled
    */
-  public final synchronized void collectItems(@NotNull Project project,
-                                              @Nullable Module module,
-                                              @NotNull RunAnythingSearchListModel model,
-                                              @NotNull String pattern,
-                                              @NotNull Runnable check,
-                                              @NotNull Computable<Boolean> isCanceled) {
-    SearchResult result = getAllItems(project, module, model, pattern, false, check);
-
-    check.run();
-    if (result.size() > 0) {
-      //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(() -> {
-        if (isCanceled.compute()) return;
-
-        myTitleIndex = model.size();
-        for (Object file : result) {
-          model.addElement(file);
-        }
-        myMoreIndex = result.needMore ? model.getSize() - 1 : -1;
-      });
-    }
-  }
-
-  /**
-   * Adds limited number of matched items into the list.
-   *
-   * @param listModel   main list model
-   * @param pattern     input search string
-   * @param result      collection items to be added to
-   * @param isMore      if true gets {@link #DEFAULT_MORE_STEP_COUNT} group items, else limits to {@link #getMaxItemsToShow()}
-   * @param textToMatch an item presentation text to be matched with
-   * @return true if limit exceeded
-   */
-  boolean addToList(@NotNull RunAnythingSearchListModel listModel,
-                    @NotNull SearchResult result,
-                    @NotNull String pattern,
-                    @NotNull RunAnythingItem item,
-                    @NotNull String textToMatch,
-                    boolean isMore) {
-    if (!listModel.contains(item) && NameUtil.buildMatcher("*" + pattern).build().matches(textToMatch)) {
-      if (result.size() == (isMore ? DEFAULT_MORE_STEP_COUNT : getMaxItemsToShow())) {
-        result.needMore = true;
-        return true;
-      }
-      result.add(item);
-    }
-    return false;
-  }
+  protected abstract SearchResult getItems(@NotNull Project project,
+                                           @Nullable Module module,
+                                           @NotNull RunAnythingSearchListModel model,
+                                           @NotNull String pattern,
+                                           boolean isInsertionMode,
+                                           @NotNull Runnable check);
 
   /**
    * Gets all current group matched by {@code pattern} items if its visibility turned on and empty collection otherwise
    *
-   * @param listModel main list model
-   * @param pattern   input search string
-   * @param check     checks 'load more' calculation process to be cancelled
-   * @param isMore    limits group items to get by a constant group specific value
+   * @param model
+   * @param pattern         input search string
+   * @param isInsertionMode limits group items to get by a constant group specific value
+   * @param check           checks 'load more' calculation process to be cancelled
    */
-  public SearchResult getAllItems(@NotNull Project project,
-                                  @Nullable Module module,
-                                  @NotNull RunAnythingSearchListModel listModel,
-                                  @NotNull String pattern,
-                                  boolean isMore,
-                                  @NotNull Runnable check) {
+  public SearchResult getVisibleItems(@NotNull Project project,
+                                      @Nullable Module module,
+                                      @NotNull RunAnythingSearchListModel model,
+                                      @NotNull String pattern,
+                                      boolean isInsertionMode,
+                                      @NotNull Runnable check) {
     return RunAnythingCache.getInstance(project).isGroupVisible(getVisibilityKey())
-           ? getItems(project, module, listModel, pattern, isMore, check) : new SearchResult();
+           ? getItems(project, module, model, pattern, isInsertionMode, check) : new SearchResult();
   }
 
   /**
@@ -217,7 +165,8 @@ public abstract class RunAnythingGroup {
    */
   @Nullable
   public static RunAnythingGroup findRunAnythingGroup(int index) {
-    return Arrays.stream(EP_NAME.getExtensions()).filter(runAnythingGroup -> index == runAnythingGroup.myMoreIndex).findFirst().orElse(null);
+    return Arrays.stream(EP_NAME.getExtensions()).filter(runAnythingGroup -> index == runAnythingGroup.myMoreIndex).findFirst()
+                 .orElse(null);
   }
 
   /**
@@ -241,5 +190,51 @@ public abstract class RunAnythingGroup {
   public static void clearIndexes() {
     clearTitleIndex();
     clearMoreIndex();
+  }
+
+  /**
+   * Adds current group matched items into the list.
+   *
+   * @param model      main list model
+   * @param pattern    input search string
+   * @param check      checks 'load more' calculation process to be cancelled
+   * @param isCanceled computes if 'load more' calculation process has already cancelled
+   */
+  public final synchronized void collectItems(@NotNull Project project,
+                                              @Nullable Module module,
+                                              @NotNull RunAnythingSearchListModel model,
+                                              @NotNull String pattern,
+                                              @NotNull Runnable check,
+                                              @NotNull Computable<Boolean> isCanceled) {
+    SearchResult result = getVisibleItems(project, module, model, pattern, false, check);
+
+    check.run();
+    if (result.size() > 0) {
+      //noinspection SSBasedInspection
+      SwingUtilities.invokeLater(() -> {
+        if (isCanceled.compute()) return;
+
+        myTitleIndex = model.size();
+        for (Object element : result) {
+          model.addElement(element);
+        }
+        myMoreIndex = result.myNeedMore ? model.getSize() - 1 : -1;
+      });
+    }
+  }
+
+  /**
+   * Represents collection of the group items with {@code myNeedMore} flag is set to true is limit is exceeded
+   */
+  public static class SearchResult extends ArrayList<RunAnythingItem> {
+    boolean myNeedMore;
+
+    public boolean isNeedMore() {
+      return myNeedMore;
+    }
+
+    public void setNeedMore(boolean needMore) {
+      myNeedMore = needMore;
+    }
   }
 }

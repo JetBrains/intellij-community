@@ -31,7 +31,7 @@ public class RunAnythingGeneratorGroup extends RunAnythingActionGroup<AnAction> 
   }
 
   @Override
-  protected int getMaxItemsToShow() {
+  protected int getMaxInitialItems() {
     return MAX_GENERATORS;
   }
 

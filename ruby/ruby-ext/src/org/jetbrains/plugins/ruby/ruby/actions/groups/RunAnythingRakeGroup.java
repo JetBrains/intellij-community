@@ -45,7 +45,7 @@ public class RunAnythingRakeGroup extends RunAnythingActionGroup<RakeAction> {
   }
 
   @Override
-  protected int getMaxItemsToShow() {
+  protected int getMaxInitialItems() {
     return MAX_RAKE;
   }
 

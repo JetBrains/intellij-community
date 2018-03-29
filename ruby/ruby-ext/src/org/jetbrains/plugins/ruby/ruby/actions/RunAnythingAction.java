@@ -1257,7 +1257,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     public ActionCallback insert(final int index, @NotNull RunAnythingGroup group) {
       ApplicationManager.getApplication().executeOnPooledThread(() -> runReadAction(() -> {
         try {
-          SearchResult result = group.getAllItems(myProject, myModule, myListModel, myPattern, true, this::check);
+          RunAnythingGroup.SearchResult result = group.getVisibleItems(myProject, myModule, myListModel, myPattern, true, this::check);
 
           check();
           SwingUtilities.invokeLater(() -> {
@@ -1272,7 +1272,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
               }
 
               RunAnythingGroup.shiftIndexes(index, shift);
-              if (!result.needMore) {
+              if (!result.isNeedMore()) {
                 group.dropMoreIndex();
               }
 
@@ -1380,10 +1380,6 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       catch (Exception ignore) {
       }
     }
-  }
-
-  public static class SearchResult extends ArrayList<RunAnythingItem> {
-    public boolean needMore;
   }
 
   private enum HistoryType {PSI, FILE, SETTING, ACTION, RUN_CONFIGURATION}

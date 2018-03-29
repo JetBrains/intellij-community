@@ -7,13 +7,12 @@ import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.RBundle;
-import org.jetbrains.plugins.ruby.ruby.actions.RunAnythingAction;
 import org.jetbrains.plugins.ruby.ruby.actions.RunAnythingActionItem;
 import org.jetbrains.plugins.ruby.ruby.actions.RunAnythingSearchListModel;
 
 import java.util.List;
 
-public abstract class RunAnythingActionGroup<T extends AnAction> extends RunAnythingGroup {
+public abstract class RunAnythingActionGroup<T extends AnAction> extends RunAnythingGroupBase {
   @NotNull
   protected abstract String getPrefix();
 
@@ -26,14 +25,14 @@ public abstract class RunAnythingActionGroup<T extends AnAction> extends RunAnyt
   protected abstract List<T> getActions(@Nullable Module module);
 
   @Override
-  public RunAnythingAction.SearchResult getItems(@NotNull Project project,
-                                                 @Nullable Module module,
-                                                 @NotNull RunAnythingSearchListModel model,
-                                                 @NotNull String pattern,
-                                                 boolean isMore,
-                                                 @NotNull Runnable check) {
+  public SearchResult getItems(@NotNull Project project,
+                               @Nullable Module module,
+                               @NotNull RunAnythingSearchListModel model,
+                               @NotNull String pattern,
+                               boolean isInsertionMode,
+                               @NotNull Runnable check) {
 
-    final RunAnythingAction.SearchResult result = new RunAnythingAction.SearchResult();
+    final SearchResult result = new SearchResult();
 
     check.run();
     for (T action : getActions(module)) {
@@ -41,7 +40,7 @@ public abstract class RunAnythingActionGroup<T extends AnAction> extends RunAnyt
       RunAnythingActionItem actionItem = new RunAnythingActionItem(action, actionText == null ? ObjectUtils
         .notNull(action.getTemplatePresentation().getText(), RBundle.message("run.anything.acton.group.title")) : actionText);
 
-      if (addToList(model, result, pattern, actionItem, getPrefix() + " " + actionItem.getText(), isMore)) break;
+      if (addToList(model, result, pattern, actionItem, getPrefix() + " " + actionItem.getText(), isInsertionMode)) break;
       check.run();
     }
 

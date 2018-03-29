@@ -35,7 +35,7 @@ public class RunAnythingBundlerActionGroup extends RunAnythingActionGroup<AnActi
   }
 
   @Override
-  protected int getMaxItemsToShow() {
+  protected int getMaxInitialItems() {
     return MAX_BUNDLER_ACTIONS;
   }
 

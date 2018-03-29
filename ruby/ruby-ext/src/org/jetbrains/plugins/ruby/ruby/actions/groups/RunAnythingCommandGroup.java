@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.RBundle;
 import org.jetbrains.plugins.ruby.ruby.actions.*;
 
-public class RunAnythingCommandGroup extends RunAnythingGroup {
+public class RunAnythingCommandGroup extends RunAnythingGroupBase {
   private static final int MAX_COMMANDS = 5;
 
   @NotNull
@@ -24,21 +24,21 @@ public class RunAnythingCommandGroup extends RunAnythingGroup {
   }
 
   @Override
-  protected int getMaxItemsToShow() {
+  protected int getMaxInitialItems() {
     return MAX_COMMANDS;
   }
 
-  public RunAnythingAction.SearchResult getItems(@NotNull Project project,
-                                                 @Nullable Module module,
-                                                 @NotNull RunAnythingSearchListModel model,
-                                                 @NotNull String pattern,
-                                                 boolean isMore,
-                                                 @NotNull Runnable check) {
-    RunAnythingAction.SearchResult result = new RunAnythingAction.SearchResult();
+  public SearchResult getItems(@NotNull Project project,
+                               @Nullable Module module,
+                               @NotNull RunAnythingSearchListModel model,
+                               @NotNull String pattern,
+                               boolean isInsertionMode,
+                               @NotNull Runnable check) {
+    SearchResult result = new SearchResult();
 
     check.run();
     for (String command : ContainerUtil.iterateBackward(RunAnythingCache.getInstance(project).getState().getCommands())) {
-      if (addToList(model, result, pattern, new RunAnythingCommandItem(project, module, command), command, isMore)) break;
+      if (addToList(model, result, pattern, new RunAnythingCommandItem(project, module, command), command, isInsertionMode)) break;
       check.run();
     }
     return result;
