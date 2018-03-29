@@ -427,7 +427,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     return findChild(name, false, true, getFileSystem());
   }
 
-  public VirtualFileSystemEntry findChildById(int id, boolean cachedOnly) {
+  @SuppressWarnings("deprecation")
+  @Override
+  public VirtualFileSystemEntry findChildById(int id) {
     int i;
     synchronized (myData) {
       i = ArrayUtil.indexOf(myData.myChildrenIds, id);
@@ -435,7 +437,6 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     if (i >= 0) {
       return VfsData.getFileById(id, this);
     }
-    if (cachedOnly) return null;
 
     String name = ourPersistence.getName(id);
     return findChild(name, false, false, getFileSystem());

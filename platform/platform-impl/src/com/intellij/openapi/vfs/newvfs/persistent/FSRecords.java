@@ -20,7 +20,6 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteArraySequence;
@@ -28,11 +27,12 @@ import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
+import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
+import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.IntArrayList;
-import com.intellij.util.containers.IntObjectMap;
 import com.intellij.util.io.*;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.storage.*;
@@ -1019,29 +1019,62 @@ public class FSRecords {
     });
   }
 
-  // returns (list of id and its parent ids up to and including id of already cached parent, that already cached parent)
-  @NotNull
-  static Pair<TIntArrayList, VirtualFileSystemEntry> getParents(int id, @NotNull IntObjectMap<VirtualFileSystemEntry> idCache) {
-    return readAndHandleErrors(()->{
-      TIntArrayList ids = new TIntArrayList(10);
-      VirtualFileSystemEntry cached;
-      int parentId;
-      int currentId = id;
-      do {
-        ids.add(currentId);
-        cached = idCache.get(currentId);
-        if (cached != null) {
-          break;
+  @Nullable
+  static VirtualFileSystemEntry findFileById(int id, @NotNull ConcurrentIntObjectMap<VirtualFileSystemEntry> idCache) {
+    class ParentFinder implements ThrowableComputable<Void, Throwable> {
+      @Nullable TIntArrayList path = null;
+      VirtualFileSystemEntry foundParent;
+      
+      @Override
+      public Void compute() {
+        int currentId = id;
+        while (true) {
+          int parentId = getRecordInt(currentId, PARENT_OFFSET);
+          if (parentId == 0) {
+            return null;
+          }
+          if (parentId == currentId || path != null && path.size() % 128 == 0 && path.contains(parentId)) {
+            LOG.error("Cyclic parent child relations in the database. id = " + parentId);
+            return null;
+          }
+          foundParent = idCache.get(parentId);
+          if (foundParent != null) {
+            return null;
+          }
+
+          currentId = parentId;
+          if (path == null) path = new TIntArrayList();
+          path.add(currentId);
         }
-        parentId = getRecordInt(currentId, PARENT_OFFSET);
-        if (parentId == currentId || ids.size() % 128 == 0 && ids.contains(parentId)) {
-          LOG.error("Cyclic parent child relations in the database. id = " + parentId);
-          break;
+      }
+
+      VirtualFileSystemEntry findDescendantByIdPath() {
+        VirtualFileSystemEntry parent = foundParent;
+        if (path != null) {
+          for (int i = path.size() - 1; i >= 0; i--) {
+            parent = findChild(parent, path.get(i));
+          }
         }
-        currentId = parentId;
-      } while (parentId != 0);
-      return Pair.create(ids, cached);
-    });
+
+        return findChild(parent, id);
+      }
+
+      private VirtualFileSystemEntry findChild(VirtualFileSystemEntry parent, int childId) {
+        if (!(parent instanceof VirtualDirectoryImpl)) {
+          return null;
+        }
+        VirtualFileSystemEntry child = ((VirtualDirectoryImpl)parent).findChildById(childId);
+        if (child instanceof VirtualDirectoryImpl) {
+          VirtualFileSystemEntry old = idCache.putIfAbsent(childId, child);
+          if (old != null) child = old;
+        }
+        return child;
+      }
+    }
+    
+    ParentFinder finder = new ParentFinder();
+    readAndHandleErrors(finder);
+    return finder.findDescendantByIdPath();
   }
 
   static void setParent(int id, int parentId) {
