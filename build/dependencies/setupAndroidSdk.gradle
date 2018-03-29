@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
+import org.jetbrains.intellij.build.DependenciesBuildUtils
 buildscript {
   repositories {
-    if (project.ext.inJetBrainsNetwork) {
-      maven { url "http://repo.labs.intellij.net/plugins-gradle-org/" }
-    }
-    maven { url "https://plugins.gradle.org/m2/" }
+    maven { url DependenciesBuildUtils.gradlePluginsRepo }
   }
   dependencies {
     classpath "de.undercouch:gradle-download-task:3.2.0"
@@ -35,21 +33,21 @@ task downloadGradleDistribution(type: Download) {
   src "http://repo.labs.intellij.net/thirdparty/gradle/gradle-4.1-bin.zip"
   dest "$buildDir/android-sdk/tools/external/gradle/gradle-4.1-bin.zip"
   onlyIfNewer true
-  onlyIf { inJetBrainsNetwork }
+  onlyIf { DependenciesBuildUtils.inJetBrainsNetwork }
 }
 
 task downloadGradleDistribution2(type: Download) {
   src "http://repo.labs.intellij.net/thirdparty/gradle/gradle-2.2.1-bin.zip"
   dest "$buildDir/android-sdk/tools/external/gradle/gradle-2.2.1-bin.zip"
   onlyIfNewer true
-  onlyIf { inJetBrainsNetwork }
+  onlyIf { DependenciesBuildUtils.inJetBrainsNetwork }
 }
 
 task downloadOfflineRepo(type: Download) {
   src "http://repo.labs.intellij.net/thirdparty/android-sdk/offline_repo_repo_3_0_03.zip"
   dest "$buildDir/android-sdk/offline_repo_repo.zip"
   onlyIfNewer true
-  onlyIf { inJetBrainsNetwork }
+  onlyIf { DependenciesBuildUtils.inJetBrainsNetwork }
 }
 
 task setupOfflineRepo(dependsOn: downloadOfflineRepo, type: Copy) {
@@ -62,7 +60,7 @@ task downloadAndroidSdk(type: Download) {
   src "http://repo.labs.intellij.net/thirdparty/android-sdk/${osFamily}.tar.gz"
   dest "$buildDir/android-sdk/${osFamily}.tar.gz"
   onlyIfNewer true
-  onlyIf { !currentOs.isMacOsX() && inJetBrainsNetwork }
+  onlyIf { !currentOs.isMacOsX() && DependenciesBuildUtils.inJetBrainsNetwork }
 }
 
 task setupAndroidSdk(dependsOn: [downloadAndroidSdk, downloadGradleDistribution, downloadGradleDistribution2, setupOfflineRepo], type: Copy) {

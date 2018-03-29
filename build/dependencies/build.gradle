@@ -24,28 +24,14 @@ apply plugin: 'base'
 group 'intellij.tools'
 version '1.0'
 
-try {
-  project.ext.inJetBrainsNetwork = InetAddress.getByName("repo.labs.intellij.net").isReachable(1000)
-  if (!project.ext.inJetBrainsNetwork && org.gradle.internal.os.OperatingSystem.current().isWindows()) {
-    project.ext.inJetBrainsNetwork = Runtime.getRuntime().exec("ping -n 1 repo.labs.intellij.net").waitFor() == 0
-  }
-  if (!project.ext.inJetBrainsNetwork) {
-    logger.info('repo.labs.intellij.net is not reachable')
-  }
-}
-catch (UnknownHostException e) {
-  logger.info('repo.labs.intellij.net is not reachable', e)
-  project.ext.inJetBrainsNetwork = false
-}
-
 apply from: 'setupJdk.gradle'
 apply from: 'setupJbre.gradle'
 apply from: 'setupKotlin.gradle'
 apply from: 'setupAndroidSdk.gradle'
 apply from: 'setupBuildScriptsDeps.gradle'
 
-task setupDependencies(dependsOn: ['setupJdks', 'setupJbre', 'setupKotlinPlugin', 'setupJetSign'], group: 'dependencies')
-clean.dependsOn('cleanSetupJdks', 'cleanSetupJbre', 'cleanSetupKotlinPlugin', 'cleanSetupJetSign')
+task setupDependencies(dependsOn: ['setupJdks', 'setupJbre', 'setupKotlinPlugin'], group: 'dependencies')
+clean.dependsOn('cleanSetupJdks', 'cleanSetupJbre', 'cleanSetupKotlinPlugin')
 
 task dependenciesFile() {
   description = 'Creates file with all dependencies version, even those that were overloaded by system or env properties'

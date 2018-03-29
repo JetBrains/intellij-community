@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import org.jetbrains.intellij.build.DependenciesBuildUtils
+
 repositories {
-  if (project.ext.inJetBrainsNetwork) {
-    maven { url 'http://repo.labs.intellij.net/plugins.jetbrains.com' }
-  }
-  maven { url 'http://plugins.jetbrains.com/maven/' }
+  maven { url DependenciesBuildUtils.pluginsRepo }
 }
 
 configurations {

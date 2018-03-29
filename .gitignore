@@ -1,5 +1,7 @@
 build/dependencies/.gradle
 build/dependencies/build
+build/dependencies/buildSrc/.gradle
+build/dependencies/buildSrc/build
 /android
 /config
 /system

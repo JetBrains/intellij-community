@@ -1,6 +1,6 @@
 task setupJbre {}
 
-def jdkRepo = inJetBrainsNetwork ? 'http://repo.labs.intellij.net/intellij-jdk' : 'https://dl.bintray.com/jetbrains/intellij-jdk'
+import org.jetbrains.intellij.build.DependenciesBuildUtils
 def targetOs = "${System.getProperty("intellij.build.target.os", "all")}"
 
 jrePlatformsToDownload(targetOs).each { platform ->
@@ -18,7 +18,7 @@ jrePlatformsToDownload(targetOs).each { platform ->
       doLast {
         logger.info("Downloading $jbrexArtifactName to $outputFile")
         download {
-          src "$jdkRepo/${jbrexArtifactName}.tar.gz"
+          src "$DependenciesBuildUtils.jdkRepo/${jbrexArtifactName}.tar.gz"
           dest outputFile
           tempAndMove true
         }
