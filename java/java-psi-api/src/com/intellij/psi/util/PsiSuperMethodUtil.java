@@ -74,9 +74,7 @@ public class PsiSuperMethodUtil {
 
   public static boolean isSuperMethod(@NotNull PsiMethod method, @NotNull PsiMethod superMethod) {
     HierarchicalMethodSignature signature = method.getHierarchicalMethodSignature();
-    List<HierarchicalMethodSignature> superSignatures = signature.getSuperSignatures();
-    for (int i = 0, superSignaturesSize = superSignatures.size(); i < superSignaturesSize; i++) {
-      HierarchicalMethodSignature supsig = superSignatures.get(i);
+    for (HierarchicalMethodSignature supsig : signature.getSuperSignatures()) {
       PsiMethod supsigme = supsig.getMethod();
       if (superMethod.equals(supsigme) || isSuperMethod(supsigme, superMethod)) return true;
     }
