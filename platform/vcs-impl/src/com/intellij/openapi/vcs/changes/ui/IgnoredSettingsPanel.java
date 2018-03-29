@@ -60,11 +60,11 @@ public class IgnoredSettingsPanel implements SearchableConfigurable, Configurabl
     myList.setModel(myModel);
   }
 
-  public IgnoredFileBean[] getItems() {
-    final int count = myList.getModel().getSize();
+  private IgnoredFileBean[] getItems() {
+    final int count = myModel.getSize();
     IgnoredFileBean[] result = new IgnoredFileBean[count];
     for (int i = 0; i < count; i++) {
-      result[i] = myList.getModel().getElementAt(i);
+      result[i] = myModel.getElementAt(i);
     }
     return result;
   }
