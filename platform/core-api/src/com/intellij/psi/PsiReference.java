@@ -1,9 +1,10 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
+import com.intellij.model.ModelReference;
+import com.intellij.model.ModelResolveResult;
+import com.intellij.model.psi.PsiModelResolveResult;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.pom.PomReference;
-import com.intellij.pom.PomResolveResult;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +25,7 @@ import java.util.Collections;
  * @see PsiReferenceBase
  * @see PsiReferenceContributor
  */
-public interface PsiReference extends PomReference {
+public interface PsiReference extends ModelReference {
   PsiReference[] EMPTY_ARRAY = new PsiReference[0];
 
   ArrayFactory<PsiReference> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new PsiReference[count];
@@ -116,8 +117,8 @@ public interface PsiReference extends PomReference {
 
   @NotNull
   @Override
-  default Iterable<? extends PomResolveResult> resolve(boolean incomplete) {
+  default Iterable<? extends ModelResolveResult> resolve(boolean incomplete) {
     PsiElement resolved = resolve();
-    return resolved == null ? Collections.emptyList() : Collections.singletonList(new PsiResolveResult(resolved));
+    return resolved == null ? Collections.emptyList() : Collections.singletonList(new PsiModelResolveResult(resolved));
   }
 }

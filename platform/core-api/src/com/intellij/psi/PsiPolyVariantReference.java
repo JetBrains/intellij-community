@@ -1,10 +1,9 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
-import com.intellij.pom.PomResolveResult;
+import com.intellij.model.ModelResolveResult;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Arrays;
 
 /**
  * Inherit this interface if you want the reference to resolve to more than one element,
@@ -29,7 +28,8 @@ public interface PsiPolyVariantReference extends PsiReference {
 
   @NotNull
   @Override
-  default Iterable<? extends PomResolveResult> resolve(boolean incomplete) {
-    return Arrays.asList(multiResolve(incomplete));
+  default Iterable<? extends ModelResolveResult> resolve(boolean incomplete) {
+    ResolveResult[] results = multiResolve(incomplete);
+    return ContainerUtil.filter(results, it -> it.getElement() != null);
   }
 }
