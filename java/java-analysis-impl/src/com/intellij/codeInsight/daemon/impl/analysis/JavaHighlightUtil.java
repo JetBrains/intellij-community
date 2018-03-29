@@ -20,7 +20,11 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ConstructorUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -155,22 +159,8 @@ public class JavaHighlightUtil {
   static void visitConstructorChain(@NotNull PsiMethod entry, @NotNull ConstructorVisitorInfo info) {
     PsiMethod constructor = entry;
     while (true) {
-      final PsiCodeBlock body = constructor.getBody();
-      if (body == null) return;
-      final PsiStatement[] statements = body.getStatements();
-      if (statements.length == 0) return;
-      final PsiStatement statement = statements[0];
-      final PsiElement element = new PsiMatcherImpl(statement)
-          .dot(PsiMatchers.hasClass(PsiExpressionStatement.class))
-          .firstChild(PsiMatchers.hasClass(PsiMethodCallExpression.class))
-          .firstChild(PsiMatchers.hasClass(PsiReferenceExpression.class))
-          .firstChild(PsiMatchers.hasClass(PsiKeyword.class))
-          .dot(PsiMatchers.hasText(PsiKeyword.THIS))
-          .parent(null)
-          .parent(null)
-          .getElement();
-      if (element == null) return;
-      PsiMethodCallExpression methodCall = (PsiMethodCallExpression)element;
+      PsiMethodCallExpression methodCall = ConstructorUtil.findThisOrSuperCallInConstructor(constructor);
+      if (!ConstructorUtil.isChainedConstructorCall(methodCall)) return;
       PsiMethod method = methodCall.resolveMethod();
       if (method == null) return;
       if (info.visitedConstructors != null && info.visitedConstructors.contains(method)) {

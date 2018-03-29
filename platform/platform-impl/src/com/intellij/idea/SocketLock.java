@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
 import com.intellij.ide.IdeBundle;
@@ -74,6 +72,9 @@ public final class SocketLock {
   public SocketLock(@NotNull String configPath, @NotNull String systemPath) {
     myConfigPath = canonicalPath(configPath);
     mySystemPath = canonicalPath(systemPath);
+    if (FileUtil.pathsEqual(myConfigPath, mySystemPath)) {
+      throw new IllegalArgumentException("'config' and 'system' paths should point to different directories");
+    }
   }
 
   public void setExternalInstanceListener(@Nullable Consumer<List<String>> consumer) {

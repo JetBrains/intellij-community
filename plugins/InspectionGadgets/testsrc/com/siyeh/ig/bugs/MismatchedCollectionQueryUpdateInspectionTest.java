@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.bugs;
 
+import com.intellij.ToolExtensionPoints;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.extensions.Extensions;
@@ -58,6 +59,7 @@ public class MismatchedCollectionQueryUpdateInspectionTest extends LightInspecti
   protected void setUp() throws Exception {
     super.setUp();
     PlatformTestUtil.registerExtension(Extensions.getRootArea(), ImplicitUsageProvider.EP_NAME, TEST_PROVIDER, myFixture.getTestRootDisposable());
+    Extensions.getExtensions(ToolExtensionPoints.DEAD_CODE_TOOL);
   }
 
   public void testMismatchedCollectionQueryUpdate() {

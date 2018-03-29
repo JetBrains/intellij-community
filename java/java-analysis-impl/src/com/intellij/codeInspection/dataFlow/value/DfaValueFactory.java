@@ -305,8 +305,8 @@ public class DfaValueFactory {
 
     FieldChecker(PsiElement context) {
       PsiMethod method = context instanceof PsiClass ? null : PsiTreeUtil.getParentOfType(context, PsiMethod.class);
-      myClass = method == null ? null : method.getContainingClass();
-      if (myClass == null) {
+      myClass = method != null ? method.getContainingClass() : context instanceof PsiClass ? (PsiClass)context : null;
+      if (method == null || myClass == null) {
         myTrustDirectFieldInitializers = myTrustFieldInitializersInConstructors = myCanInstantiateItself = false;
         return;
       }

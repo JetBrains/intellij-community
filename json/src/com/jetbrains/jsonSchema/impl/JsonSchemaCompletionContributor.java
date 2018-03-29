@@ -176,6 +176,10 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
         addPossibleStringValue(schema);
       } else if (JsonSchemaType._null.equals(type)) {
         addValueVariant("null", null);
+      } else if (JsonSchemaType._array.equals(type)) {
+        addValueVariant("[]", null, createArrayOrObjectLiteralInsertHandler());
+      } else if (JsonSchemaType._object.equals(type)) {
+        addValueVariant("{}", null, createArrayOrObjectLiteralInsertHandler());
       }
     }
 
@@ -208,16 +212,24 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
 
 
     private void addValueVariant(@NotNull String key, @SuppressWarnings("SameParameterValue") @Nullable final String description) {
+      addValueVariant(key, description, null);
+    }
+
+    private void addValueVariant(@NotNull String key, @SuppressWarnings("SameParameterValue") @Nullable final String description,
+                                 @Nullable InsertHandler<LookupElement> handler) {
       LookupElementBuilder builder = LookupElementBuilder.create(!myWrapInQuotes ? StringUtil.unquoteString(key) : key);
       if (description != null) {
         builder = builder.withTypeText(description);
+      }
+      if (handler != null) {
+        builder = builder.withInsertHandler(handler);
       }
       myVariants.add(builder);
     }
 
     private void addPropertyVariant(@NotNull String key, @NotNull JsonSchemaObject jsonSchemaObject, boolean hasValue, boolean insertComma) {
-      jsonSchemaObject = ObjectUtils.coalesce(ContainerUtil.getFirstItem(new JsonSchemaResolver(jsonSchemaObject).resolve()),
-                                              jsonSchemaObject);
+      final Collection<JsonSchemaObject> variants = new JsonSchemaResolver(jsonSchemaObject).resolve();
+      jsonSchemaObject = ObjectUtils.coalesce(ContainerUtil.getFirstItem(variants), jsonSchemaObject);
       key = !myWrapInQuotes ? key : StringUtil.wrapWithDoubleQuote(key);
       LookupElementBuilder builder = LookupElementBuilder.create(key);
 
@@ -226,15 +238,31 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
         builder = builder.withTypeText(StringUtil.removeHtmlTags(typeText), true);
       }
 
-      final JsonSchemaType type = jsonSchemaObject.getType();
-      final List<Object> values = jsonSchemaObject.getEnum();
-      if (type != null || !ContainerUtil.isEmpty(values) || jsonSchemaObject.getDefault() != null) {
-        builder = builder.withInsertHandler(createPropertyInsertHandler(jsonSchemaObject, hasValue, insertComma));
+      if (hasSameType(variants)) {
+        final JsonSchemaType type = jsonSchemaObject.getType();
+        final List<Object> values = jsonSchemaObject.getEnum();
+        if (type != null || !ContainerUtil.isEmpty(values) || jsonSchemaObject.getDefault() != null) {
+          builder = builder.withInsertHandler(createPropertyInsertHandler(jsonSchemaObject, hasValue, insertComma));
+        }
       } else if (!hasValue) {
         builder = builder.withInsertHandler(createDefaultPropertyInsertHandler(false, insertComma));
       }
 
       myVariants.add(builder);
+    }
+
+    private static boolean hasSameType(@NotNull Collection<JsonSchemaObject> variants) {
+      return variants.stream().map(JsonSchemaObject::getType).filter(Objects::nonNull).distinct().count() <= 1;
+    }
+
+    private static InsertHandler<LookupElement> createArrayOrObjectLiteralInsertHandler() {
+      return new InsertHandler<LookupElement>() {
+        @Override
+        public void handleInsert(InsertionContext context, LookupElement item) {
+          EditorModificationUtil.moveCaretRelatively(context.getEditor(), -1);
+          AutoPopupController.getInstance(context.getProject()).autoPopupMemberLookup(context.getEditor(), null);
+        }
+      };
     }
 
     private InsertHandler<LookupElement> createDefaultPropertyInsertHandler(@SuppressWarnings("SameParameterValue") boolean hasValue,

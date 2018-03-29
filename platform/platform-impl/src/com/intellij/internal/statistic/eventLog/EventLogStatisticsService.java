@@ -9,15 +9,18 @@ import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceCom
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.HttpRequests;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.zip.GZIPOutputStream;
 
 public class EventLogStatisticsService implements StatisticsService {
   private static final Logger LOG = Logger.getInstance("com.intellij.internal.statistic.eventLog.EventLogStatisticsService");
@@ -44,9 +47,9 @@ public class EventLogStatisticsService implements StatisticsService {
       final List<File> logs = FeatureUsageLogger.INSTANCE.getLogFiles();
       final List<File> toRemove = new ArrayList<>(logs.size());
       for (File file : logs) {
-        final LogEventRecordRequest request = LogEventRecordRequest.Companion.create(file);
-        final String error = validate(request, file);
-        if (StringUtil.isNotEmpty(error) || request == null) {
+        final LogEventRecordRequest recordRequest = LogEventRecordRequest.Companion.create(file);
+        final String error = validate(recordRequest, file);
+        if (StringUtil.isNotEmpty(error) || recordRequest == null) {
           if (LOG.isTraceEnabled()) {
             LOG.trace(file.getName() + "-> " + error);
           }
@@ -58,10 +61,15 @@ public class EventLogStatisticsService implements StatisticsService {
           HttpRequests
             .post(serviceUrl, HttpRequests.JSON_CONTENT_TYPE)
             .isReadResponseOnError(true)
-            .connect(request1 -> {
-              request1.write(LogEventSerializer.INSTANCE.toString(request));
+            .tuner(connection -> connection.setRequestProperty("Content-Encoding", "gzip"))
+            .connect(request -> {
+              final BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream();
+              try (OutputStreamWriter writer = new OutputStreamWriter(new GZIPOutputStream(out))) {
+                LogEventSerializer.INSTANCE.toString(recordRequest, writer);
+              }
+              request.write(out.toByteArray());
               if (LOG.isTraceEnabled()) {
-                LOG.trace(file.getName() + " -> " + request1.readString());
+                LOG.trace(file.getName() + " -> " + request.readString());
               }
               return null;
             });

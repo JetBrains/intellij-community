@@ -25,12 +25,16 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ConstructorUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
-import com.siyeh.ig.psiutils.*;
+import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.ExpectedTypeUtils;
+import com.siyeh.ig.psiutils.MethodCallUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -286,7 +290,7 @@ public class ConditionalExpressionInspection extends BaseInspection {
       final PsiMethodCallExpression methodCallExpression =
         PsiTreeUtil.getParentOfType(expression, PsiMethodCallExpression.class, true,
                                     PsiLambdaExpression.class, PsiStatement.class, PsiMember.class);
-      return ExpressionUtils.isConstructorInvocation(methodCallExpression);
+      return ConstructorUtil.isConstructorCall(methodCallExpression);
     }
   }
 }

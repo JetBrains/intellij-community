@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.openapi.util.text.StringUtil;
@@ -178,7 +179,7 @@ public class StartupUtil {
 
     if ("true".equals(System.getProperty("idea.64bit.check"))) {
       if (PlatformUtils.isCidr() && !SystemInfo.is64Bit) {
-        String message = "32-bit JVM is not supported. Please install 64-bit version.";
+        String message = "32-bit JVM is not supported. Please use 64-bit version.";
         Main.showMessage("Unsupported JVM", message, true);
         return false;
       }
@@ -203,8 +204,8 @@ public class StartupUtil {
     String configPath = PathManager.getConfigPath();
     PathManager.ensureConfigFolderExists();
     if (!new File(configPath).isDirectory()) {
-      String message = "Config path '" + configPath + "' is invalid.\n" +
-                       "If you have modified the '" + PathManager.PROPERTY_CONFIG_PATH + "' property please make sure it is correct,\n" +
+      String message = "Config path '" + configPath + "' is invalid.\n\n" +
+                       "If you have modified the '" + PathManager.PROPERTY_CONFIG_PATH + "' property, please make sure it is correct,\n" +
                        "otherwise please re-install the IDE.";
       Main.showMessage("Invalid Config Path", message, true);
       return false;
@@ -212,10 +213,18 @@ public class StartupUtil {
 
     String systemPath = PathManager.getSystemPath();
     if (!new File(systemPath).isDirectory()) {
-      String message = "System path '" + systemPath + "' is invalid.\n" +
-                       "If you have modified the '" + PathManager.PROPERTY_SYSTEM_PATH + "' property please make sure it is correct,\n" +
+      String message = "System path '" + systemPath + "' is invalid.\n\n" +
+                       "If you have modified the '" + PathManager.PROPERTY_SYSTEM_PATH + "' property, please make sure it is correct,\n" +
                        "otherwise please re-install the IDE.";
       Main.showMessage("Invalid System Path", message, true);
+      return false;
+    }
+
+    if (FileUtil.pathsEqual(configPath, systemPath)) {
+      String message = "Config and system paths seem to be equal.\n\n" +
+                       "If you have modified '" + PathManager.PROPERTY_CONFIG_PATH + "' or '" + PathManager.PROPERTY_SYSTEM_PATH + "' properties,\n" +
+                       "please make sure they point to different directories, otherwise please re-install the IDE.";
+      Main.showMessage("Invalid Config or System Path", message, true);
       return false;
     }
 
@@ -231,7 +240,7 @@ public class StartupUtil {
       catch (IOException ignored) { }
     }
     if (!logOk) {
-      String message = "Log path '" + logDir.getPath() + "' is inaccessible.\n" +
+      String message = "Log path '" + logDir.getPath() + "' is inaccessible.\n\n" +
                        "If you have modified the '" + PathManager.PROPERTY_LOG_PATH + "' property please make sure it is correct,\n" +
                        "otherwise please re-install the IDE.";
       Main.showMessage("Invalid Log Path", message, true);
@@ -270,7 +279,7 @@ public class StartupUtil {
     }
 
     if (tempInaccessible != null) {
-      String message = "Temp directory '" + ideTempDir + "' is inaccessible.\n" +
+      String message = "Temp directory '" + ideTempDir + "' is inaccessible.\n\n" +
                        "If you have modified the '" + PathManager.PROPERTY_SYSTEM_PATH + "' property please make sure it is correct,\n" +
                        "otherwise please re-install the IDE.\n\nDetails: " + tempInaccessible;
       Main.showMessage("Invalid System Path", message, true);
@@ -408,7 +417,7 @@ public class StartupUtil {
       }
       catch (IOException e) {
         String message =
-          "The IDE failed to install some plugins.\n" +
+          "The IDE failed to install some plugins.\n\n" +
           "Most probably, this happened because of a change in a serialization format.\n" +
           "Please try again, and if the problem persists, please report it\n" +
           "to http://jb.gg/ide/critical-startup-errors" +

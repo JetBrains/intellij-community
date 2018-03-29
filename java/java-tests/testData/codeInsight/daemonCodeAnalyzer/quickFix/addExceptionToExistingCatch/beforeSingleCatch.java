@@ -1,10 +1,10 @@
 // "Add exception to existing catch clause" "true"
-import java.io.IOException;
+import java.io.File;
 
 class Test {
   public static void main(String[] args) {
     try {
-      throw new IOException<caret>();
+      new File("path").getCanonical<caret>Path();
     } catch (IndexOutOfBoundsException e) {
     }
   }

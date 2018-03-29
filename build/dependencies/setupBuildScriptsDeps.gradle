@@ -28,6 +28,7 @@ dependencies {
   buildScriptsDeps loadLibraryMavenId("Log4J")
   buildScriptsDeps loadLibraryMavenId("Slf4j")
   buildScriptsDeps loadLibraryMavenId("jna")
+  buildScriptsDeps loadLibraryMavenId("jgoodies-forms")
 }
 
 /**
