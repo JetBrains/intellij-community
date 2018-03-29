@@ -8,6 +8,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
@@ -17,17 +18,20 @@ import com.intellij.psi.stubs.StubIndexKey;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext;
+import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
 import com.jetbrains.python.psi.stubs.PyVariableNameIndex;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
+
+import static com.jetbrains.python.psi.resolve.PyResolveImportUtil.fromFoothold;
+import static com.jetbrains.python.psi.resolve.PyResolveImportUtil.resolveQualifiedName;
 
 /**
  * Adds completion variants for Python classes, functions and variables.
@@ -46,7 +50,7 @@ public class PyClassNameCompletionContributor extends PyExtendedCompletionContri
                          originalFile,
                          PyClassNameIndex.KEY,
                          parent instanceof PyStringLiteralExpression ? getStringLiteralInsertHandler() : getImportingInsertHandler(),
-                         // TODO: implement autocompletion for inner classes
+                         // TODO: implement autocompletion for inner classes, also see docstring for isTopLevelMemberAccessible
                          PyUtil::isTopLevel,
                          PyClass.class,
                          createClassElementHandler(originalFile));
@@ -128,9 +132,48 @@ public class PyClassNameCompletionContributor extends PyExtendedCompletionContri
         }
       }
     }
-    // TODO: find whether the element could be resolved and filter if it's not
     uniqueResults.values().stream()
                  .map(elementHandler)
+                 .filter(PyClassNameCompletionContributor::isTopLevelMemberAccessible)
                  .forEach(resultSet::addElement);
+  }
+
+  /**
+   * Check whether the element from the {@link LookupElement} is accessible with current context
+   * and source root configuration.
+   *
+   * The method returns false for nested classes so it should ne changed to implement nested classes completion.
+   */
+  private static boolean isTopLevelMemberAccessible(LookupElement lookupElement) {
+    PsiElement element = lookupElement.getPsiElement();
+    if (!(element instanceof PyElement) || !(element.getContainingFile() instanceof PyFile)) {
+      return false;
+    }
+    PyElement pyElement = (PyElement)element;
+    String name = QualifiedNameFinder.getQualifiedName(pyElement);
+    if (name == null) {
+      return false;
+    }
+    QualifiedName qualifiedName = QualifiedName.fromDottedString(name);
+    if (qualifiedName.getLastComponent() == null) {
+      return false;
+    }
+
+    PyQualifiedNameResolveContext resolveContext = fromFoothold(element.getContainingFile());
+    List<PsiElement> moduleResolveResults = resolveQualifiedName(qualifiedName.removeLastComponent(), resolveContext);
+
+    return StreamEx.of(moduleResolveResults)
+                   .map(psiElement -> {
+                     if (psiElement instanceof PyFile) {
+                       return (PyFile)psiElement;
+                     }
+                     if (psiElement instanceof PsiDirectory) {
+                       return PyUtil.as(PyUtil.turnDirIntoInit(psiElement), PyFile.class);
+                     }
+                     return null;
+                   })
+                   .nonNull()
+                   .flatMap(resolveResult -> resolveResult.multiResolveName(qualifiedName.getLastComponent()).stream())
+                   .findAny().isPresent();
   }
 }

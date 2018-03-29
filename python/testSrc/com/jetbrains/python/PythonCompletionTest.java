@@ -1325,6 +1325,16 @@ public class PythonCompletionTest extends PyTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON34, this::assertSingleVariantInExtendedCompletion);
   }
 
+  // PY-28974
+  public void testClassFromMultipleSourceRoots() {
+    assertNoVariantsInExtendedCompletionWithSourceRoots();
+  }
+
+  // PY-28991
+  public void testCompletionFromNamespacePackagesPy2() {
+    runWithLanguageLevel(LanguageLevel.PYTHON27, this::assertNoVariantsInExtendedCompletion);
+  }
+
   private void assertNoVariantsInExtendedCompletion() {
     myFixture.copyDirectoryToProject(getTestName(true), "");
     myFixture.configureByFile("a.py");
@@ -1347,6 +1357,19 @@ public class PythonCompletionTest extends PyTestCase {
                          myFixture.configureByFile("a.py");
                          assertNull(myFixture.complete(CompletionType.BASIC, 2));
                          myFixture.checkResultByFile(getTestName(true) + "/a.after.py");
+                       });
+  }
+
+  private void assertNoVariantsInExtendedCompletionWithSourceRoots() {
+    myFixture.copyDirectoryToProject(getTestName(true), "");
+    runWithSourceRoots(Lists.newArrayList(
+      myFixture.findFileInTempDir("root1"),
+      myFixture.findFileInTempDir("root2")),
+                       () -> {
+                         myFixture.configureByFile("a.py");
+                         myFixture.complete(CompletionType.BASIC, 2);
+                         assertNotNull(myFixture.getLookupElements());
+                         assertEmpty(myFixture.getLookupElements());
                        });
   }
 
