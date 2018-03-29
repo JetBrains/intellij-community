@@ -365,7 +365,7 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
           boolean installed = false;
           if (!forceInstallFramework) {
             // First check if we need to do it
-            indicator.setText(String.format("Checking in %s installed..", frameworkName));
+            indicator.setText(String.format("Checking if %s is installed...", frameworkName));
             final List<PyPackage> packages = PyPackageUtil.refreshAndGetPackagesModally(sdk);
             installed = PyPackageUtil.findPackage(packages, requirement) != null;
           }
