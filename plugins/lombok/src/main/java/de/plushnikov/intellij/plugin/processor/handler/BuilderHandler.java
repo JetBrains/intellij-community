@@ -90,6 +90,7 @@ public class BuilderHandler {
   private static final String BUILDER_OBTAIN_VIA_METHOD = "method";
   private static final String BUILDER_OBTAIN_VIA_STATIC = "isStatic";
   private static final String BUILDER_OBTAIN_VIA_ANNOTATION = Builder.ObtainVia.class.getName().replace("$", ".");
+  private static final String BUILDER_DEFAULT_ANNOTATION = Builder.Default.class.getName().replace("$", ".");
 
 
   private final ToStringProcessor toStringProcessor;
@@ -553,9 +554,12 @@ public class BuilderHandler {
       if (null != modifierList) {
         //Skip static fields.
         selectField = !modifierList.hasModifierProperty(PsiModifier.STATIC);
+
         // skip initialized final fields unless annotated with @Builder.Default
-        selectField &= !(null != psiField.getInitializer() && modifierList.hasModifierProperty(PsiModifier.FINAL))
-          || isBuilderDefaultAnnotated(psiField);
+        final boolean isInitializedFinalField = null != psiField.getInitializer() && modifierList.hasModifierProperty(PsiModifier.FINAL);
+        if (isInitializedFinalField && null == PsiAnnotationSearchUtil.findAnnotation(psiField, BUILDER_DEFAULT_ANNOTATION)) {
+          selectField = false;
+        }
       }
       //Skip fields that start with $
       final String psiFieldName = psiField.getName();
@@ -698,20 +702,6 @@ public class BuilderHandler {
     for (PsiTypeParameter psiTypeParameter : psiTypeParameters) {
       methodBuilder.withTypeParameter(psiTypeParameter);
     }
-  }
-
-  private boolean isBuilderDefaultAnnotated(@NotNull PsiField psiField) {
-    if (psiField.getModifierList() == null) {
-      return false;
-    }
-    PsiAnnotation[] annotations = psiField.getModifierList().getAnnotations();
-    for(PsiAnnotation psiAnnotation: annotations) {
-      if (psiAnnotation.getQualifiedName() != null &&
-        psiAnnotation.getQualifiedName().equals(Builder.Default.class.getCanonicalName())) {
-        return true;
-      }
-    }
-    return false;
   }
 
   // These exist just to support the 'old' lombok.experimental.Builder, which had these properties. lombok.Builder no longer has them.

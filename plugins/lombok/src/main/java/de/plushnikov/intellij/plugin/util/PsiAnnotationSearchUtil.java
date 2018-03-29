@@ -69,7 +69,7 @@ public class PsiAnnotationSearchUtil {
           }
 
           final String annotationQualifiedName = getAndCacheFQN(annotation, referenceName);
-          if (qualifiedName.equals(annotationQualifiedName)) {
+          if (null != annotationQualifiedName && qualifiedName.endsWith(annotationQualifiedName)) {
             return annotation;
           }
         }

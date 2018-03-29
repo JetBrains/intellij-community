@@ -5,7 +5,7 @@ import lombok.Value;
 @Value
 public class BuilderDefaultValue
 {
-  @Builder.Default
+  @lombok.Builder.Default
   int canSet = 0;
   int canNotSet = 0;
 

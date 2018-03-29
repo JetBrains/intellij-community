@@ -260,7 +260,8 @@
 		<ul>
 		<li>0.17
 				<ol>
-            <li>Fixed #: </li>
+            <li>Fixed #375: Added support for @Builder.Default</li>
+            <li>Fixed #465: Fix plugin compatibility with IntelliJ 2018.1</li>
 				</ol>
 			</li>
 		<li>0.16
