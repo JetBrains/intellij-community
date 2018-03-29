@@ -1239,3 +1239,11 @@ java_library(
         "//prebuilts/tools/common/m2/repository/org/objenesis/objenesis/2.5.1:jar",
     ],
 )
+
+java_library(
+    name = "jetifier-core",
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    exports = ["//prebuilts/tools/common/m2/repository/com/android/tools/build/jetifier/jetifier-core/0.0.1:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/android/tools/build/jetifier/jetifier-core/0.0.1:jar"],
+)
