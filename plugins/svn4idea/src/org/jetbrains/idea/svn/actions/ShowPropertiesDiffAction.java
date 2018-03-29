@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.actions;
 
 import com.intellij.diff.DiffManager;
@@ -45,7 +45,6 @@ import java.util.List;
 import static com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.exists;
-import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
 public class ShowPropertiesDiffAction extends AnAction implements DumbAware {
 
@@ -206,7 +205,7 @@ public class ShowPropertiesDiffAction extends AnAction implements DumbAware {
     Target target;
     if (contentRevision instanceof SvnRepositoryContentRevision) {
       SvnRepositoryContentRevision svnRevision = (SvnRepositoryContentRevision)contentRevision;
-      target = Target.on(createUrl(svnRevision.getFullPath()), revision);
+      target = Target.on(svnRevision.getUrl(), revision);
     } else {
       File ioFile = contentRevision.getFile().getIOFile();
       target = Target.on(ioFile, revision);
