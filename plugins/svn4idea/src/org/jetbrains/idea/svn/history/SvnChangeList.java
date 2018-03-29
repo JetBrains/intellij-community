@@ -527,7 +527,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
     final Url becameUrl;
     Url wasUrl;
     try {
-      becameUrl = createUrl(Url.append(myRepositoryRoot, path));
+      becameUrl = createUrl(Url.append(myRepositoryRoot, path), false);
       wasUrl = becameUrl;
 
       if (change instanceof ExternallyRenamedChange && change.getBeforeRevision() != null) {
@@ -535,7 +535,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
 
         if (originUrl != null) {
           // use another url for origin
-          wasUrl = createUrl(Url.append(myRepositoryRoot, originUrl));
+          wasUrl = createUrl(Url.append(myRepositoryRoot, originUrl), false);
         }
       }
     }
