@@ -368,7 +368,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
   public Promise<AbstractTreeNode> expandPathToElement(Object element) {
     return expandSelectFocusInner(element, false, false)
-      .then(p -> ObjectUtils.tryCast(TreeUtil.getUserObject(p.getLastPathComponent()), AbstractTreeNode.class));
+      .then(p -> TreeUtil.getUserObject(AbstractTreeNode.class, p.getLastPathComponent()));
   }
 
   @NotNull
@@ -670,8 +670,8 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     AsyncPromise<Void> result = new AsyncPromise<>();
     rebuild();
     TreeVisitor visitor = path -> {
-      Object o = TreeUtil.getUserObject(path.getLastPathComponent());
-      if (o instanceof AbstractTreeNode) ((AbstractTreeNode)o).update();
+      AbstractTreeNode node = TreeUtil.getUserObject(AbstractTreeNode.class, path.getLastPathComponent());
+      if (node != null) node.update();
       return TreeVisitor.Action.CONTINUE;
     };
     myAsyncTreeModel.accept(visitor).processed(ignore -> result.setResult(null));
@@ -960,8 +960,8 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       }
       else {
         for (Object o : children) {
-          Object userObject = TreeUtil.getUserObject(o);
-          if (userObject instanceof NodeDescriptor && isAutoExpandNode((NodeDescriptor)userObject)) {
+          NodeDescriptor descriptor = TreeUtil.getUserObject(NodeDescriptor.class, o);
+          if (descriptor != null && isAutoExpandNode(descriptor)) {
             expandLater(parentPath, o);
           }
         }
