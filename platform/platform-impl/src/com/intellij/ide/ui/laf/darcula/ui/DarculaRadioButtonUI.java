@@ -28,7 +28,7 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
   @Override
   public Dimension getMinimumSize(JComponent c) {
     Dimension size = super.getMinimumSize(c);
-    return JBUI.isCompensateVisualPaddingOnComponentLevel(c.getParent()) ? size : new Dimension(size.width, DarculaTextFieldUI.DARCULA_INPUT_HEIGHT);
+    return JBUI.isCompensateVisualPaddingOnComponentLevel(c.getParent()) ? size : new Dimension(size.width, JBUI.scale(DarculaTextFieldUI.DARCULA_INPUT_HEIGHT));
   }
 
   @Override public void installDefaults(AbstractButton b) {
