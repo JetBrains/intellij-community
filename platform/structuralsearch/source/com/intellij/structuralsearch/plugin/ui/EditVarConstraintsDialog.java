@@ -44,13 +44,12 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.ui.TextAccessor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.fields.IntegerField;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
@@ -67,11 +66,11 @@ import java.util.regex.PatternSyntaxException;
 class EditVarConstraintsDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.structuralsearch.plugin.ui.EditVarConstraintsDialog");
 
-  private JTextField maxoccurs;
+  private IntegerField maxoccurs;
   private JCheckBox applyWithinTypeHierarchy;
   private JCheckBox notRegexp;
   private EditorTextField regexp;
-  private JTextField minoccurs;
+  private IntegerField minoccurs;
   private JPanel mainForm;
   private JList<Variable> parameterList;
   private JCheckBox partOfSearchResults;
@@ -87,7 +86,6 @@ class EditVarConstraintsDialog extends DialogWrapper {
   private JCheckBox invertFormalArgType;
   private EditorTextField formalArgType;
   private ComponentWithBrowseButton<EditorTextField> customScriptCode;
-  private JCheckBox maxoccursUnlimited;
 
   private TextFieldWithAutoCompletionWithBrowseButton withinTextField;
   private JPanel containedInConstraints;
@@ -96,11 +94,6 @@ class EditVarConstraintsDialog extends DialogWrapper {
   private JPanel occurencePanel;
   private JPanel textConstraintsPanel;
   private JLabel myRegExHelpLabel;
-  private JButton myZeroZeroButton;
-  private JButton myOneOneButton;
-  private JButton myZeroInfinityButton;
-  private JButton myOneInfinityButton;
-  private JButton myZeroOneButton;
   private TextFieldWithAutoCompletionWithBrowseButton refererenceTargetTextField;
   private JPanel referenceTargetConstraints;
   private JBCheckBox invertReferenceTarget;
@@ -122,44 +115,10 @@ class EditVarConstraintsDialog extends DialogWrapper {
         applyWithinTypeHierarchy.setEnabled(e.getDocument().getTextLength() > 0 && fileType == StdFileTypes.JAVA);
       }
     });
-    myZeroZeroButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        minoccurs.setText("0");
-        maxoccurs.setText("0");
-        maxoccursUnlimited.setSelected(false);
-      }
-    });
-    myZeroOneButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        minoccurs.setText("0");
-        maxoccurs.setText("1");
-        maxoccursUnlimited.setSelected(false);
-      }
-    });
-    myOneOneButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        minoccurs.setText("1");
-        maxoccurs.setText("1");
-        maxoccursUnlimited.setSelected(false);
-      }
-    });
-    myZeroInfinityButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        minoccurs.setText("0");
-        maxoccursUnlimited.setSelected(true);
-      }
-    });
-    myOneInfinityButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        minoccurs.setText("1");
-        maxoccursUnlimited.setSelected(true);
-      }
-    });
+    minoccurs.setMinValue(0);
+    maxoccurs.setMinValue(0);
+    maxoccurs.setDefaultValue(Integer.MAX_VALUE);
+    maxoccurs.setDefaultValueText(SSRBundle.message("editvarcontraints.unlimited"));
     regexprForExprType.getDocument().addDocumentListener(new MyDocumentListener(exprTypeWithinHierarchy, notExprType));
     formalArgType.getDocument().addDocumentListener(new MyDocumentListener(formalArgTypeWithinHierarchy, invertFormalArgType));
 
@@ -256,8 +215,6 @@ class EditVarConstraintsDialog extends DialogWrapper {
       }
     );
 
-    maxoccursUnlimited.addChangeListener(new MyChangeListener(maxoccurs, true));
-
     customScriptCode.getButton().addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(@NotNull final ActionEvent e) {
@@ -318,9 +275,9 @@ class EditVarConstraintsDialog extends DialogWrapper {
     final int minCount = Integer.parseInt(minoccurs.getText());
     varInfo.setMinCount(minCount);
 
-    final int maxCount = maxoccursUnlimited.isSelected() ? Integer.MAX_VALUE : Integer.parseInt(maxoccurs.getText());
-
+    final int maxCount = StringUtil.parseInt(maxoccurs.getText(), Integer.MAX_VALUE);
     varInfo.setMaxCount(maxCount);
+
     varInfo.setWithinHierarchy(applyWithinTypeHierarchy.isSelected());
     varInfo.setInvertRegExp(notRegexp.isSelected());
 
@@ -398,7 +355,6 @@ class EditVarConstraintsDialog extends DialogWrapper {
 
       minoccurs.setText("1");
       maxoccurs.setText("1");
-      maxoccursUnlimited.setSelected(false);
       applyWithinTypeHierarchy.setSelected(false);
       partOfSearchResults.setSelected(UIUtil.isTarget(varName, matchOptions));
 
@@ -422,14 +378,12 @@ class EditVarConstraintsDialog extends DialogWrapper {
 
       notRegexp.setSelected(varInfo.isInvertRegExp());
       minoccurs.setText(Integer.toString(varInfo.getMinCount()));
+      minoccurs.selectAll();
 
-      if(varInfo.getMaxCount() == Integer.MAX_VALUE) {
-        maxoccursUnlimited.setSelected(true);
-        maxoccurs.setText("");
-      } else {
-        maxoccursUnlimited.setSelected(false);
-        maxoccurs.setText(Integer.toString(varInfo.getMaxCount()));
-      }
+      maxoccurs.setText(varInfo.getMaxCount() == Integer.MAX_VALUE
+                        ? SSRBundle.message("editvarcontraints.unlimited")
+                        : Integer.toString(varInfo.getMaxCount()));
+      maxoccurs.selectAll();
 
       partOfSearchResults.setSelected(UIUtil.isTarget(varName, matchOptions));
 
@@ -522,9 +476,11 @@ class EditVarConstraintsDialog extends DialogWrapper {
     catch (NumberFormatException e) {
       return showError(minoccurs, SSRBundle.message("invalid.occurence.count"));
     }
-    if (!maxoccursUnlimited.isSelected()) {
+
+    String maxoccursText = maxoccurs.getText();
+    if (!maxoccursText.isEmpty() && !maxoccursText.equals(SSRBundle.message("editvarcontraints.unlimited"))) {
       try {
-        if (Integer.parseInt(maxoccurs.getText()) < minValue) throw new NumberFormatException();
+        if (Integer.parseInt(maxoccursText) < minValue) throw new NumberFormatException();
       }
       catch (NumberFormatException e) {
         return showError(maxoccurs, SSRBundle.message("invalid.occurence.count"));
@@ -590,22 +546,6 @@ class EditVarConstraintsDialog extends DialogWrapper {
     FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(fileName);
     if (fileType == FileTypes.UNKNOWN) fileType = FileTypes.PLAIN_TEXT;
     return fileType;
-  }
-
-  private static class MyChangeListener implements ChangeListener {
-    private final JComponent component;
-    private final boolean inverted;
-
-    MyChangeListener(JComponent _component, boolean _inverted) {
-      component = _component;
-      inverted = _inverted;
-    }
-
-    @Override
-    public void stateChanged(@NotNull ChangeEvent e) {
-      final JCheckBox jCheckBox = (JCheckBox)e.getSource();
-      component.setEnabled(inverted ^ jCheckBox.isSelected());
-    }
   }
 
   private static class MyDocumentListener implements DocumentListener {
