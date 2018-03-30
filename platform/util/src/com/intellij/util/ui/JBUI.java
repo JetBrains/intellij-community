@@ -308,10 +308,6 @@ public class JBUI {
     return sysScale();
   }
 
-  public static boolean isRetina(@NotNull GraphicsDevice device) {
-    return UIUtil.DetectRetinaKit.isOracleMacRetinaDevice(device);
-  }
-
   /**
    * Returns the system scale factor, corresponding to the graphics.
    * For BufferedImage's graphics, the scale is taken from the graphics itself.

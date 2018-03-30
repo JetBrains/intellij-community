@@ -6,7 +6,7 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.ui.components.dialog
 import com.intellij.util.io.write
-import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import net.miginfocom.layout.LayoutUtil
 import net.miginfocom.swing.MigLayout
 import java.awt.Dimension
@@ -51,7 +51,7 @@ object MigLayoutTestApp {
       if (SystemInfoRt.isMac && screenDevices != null && screenDevices.size > 1) {
         // use not-Retina
         for (screenDevice in screenDevices) {
-          if (!JBUI.isRetina(screenDevice)) {
+          if (!UIUtil.isRetina(screenDevice)) {
             val screenBounds = screenDevice.defaultConfiguration.bounds
             dialog.setLocation(screenBounds.x, (screenBounds.height - dialog.preferredSize.height) / 2)
             dialog.window.setLocation(screenBounds.x, (screenBounds.height - dialog.preferredSize.height) / 2)

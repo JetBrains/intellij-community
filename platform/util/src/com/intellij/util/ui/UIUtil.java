@@ -4331,4 +4331,8 @@ public class UIUtil {
       LOG.debug(e);
     }
   }
+
+  public static boolean isRetina(@NotNull GraphicsDevice device) {
+    return UIUtil.DetectRetinaKit.isOracleMacRetinaDevice(device);
+  }
 }

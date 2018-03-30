@@ -12,7 +12,6 @@ import com.intellij.util.io.exists
 import com.intellij.util.io.outputStream
 import com.intellij.util.io.sanitizeFileName
 import com.intellij.util.io.write
-import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import io.netty.util.internal.SystemPropertyUtil
 import net.miginfocom.layout.Grid
@@ -125,7 +124,7 @@ open class UiDslTest {
       if (SystemInfoRt.isMac && screenDevices != null && screenDevices.size > 1) {
         // use non-Retina
         for (screenDevice in screenDevices) {
-          if (!JBUI.isRetina(screenDevice)) {
+          if (!UIUtil.isRetina(screenDevice)) {
             frame.setLocation(screenDevice.defaultConfiguration.bounds.x, frame.y)
             break
           }
