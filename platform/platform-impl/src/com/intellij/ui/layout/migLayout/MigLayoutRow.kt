@@ -158,7 +158,10 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
 
     // as soon as ComponentPanelBuilder will also compensate visual paddings (instead of compensating on LaF level),
     // this logic will be moved into computeCommentInsets
-    val componentBorderVisualLeftPadding = (component.border as? VisualPaddingsProvider)?.getVisualPaddings(component)?.left ?: 0
+    val componentBorderVisualLeftPadding = when {
+      spacing.isCompensateVisualPaddings -> (component.border as? VisualPaddingsProvider)?.getVisualPaddings(component)?.left ?: 0
+      else -> 0
+    }
     val insets = ComponentPanelBuilder.computeCommentInsets(component, true)
     return insets.left - componentBorderVisualLeftPadding
   }
