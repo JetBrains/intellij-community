@@ -29,4 +29,6 @@ public interface FindUI {
 
   @NotNull
   Disposable getDisposable();
+
+  void saveSettings();
 }
