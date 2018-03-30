@@ -579,7 +579,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @NotNull
       @Override
       public Set<String> getTags() {
-        return ImmutableSet.of("-jython");
+        return ImmutableSet.of("-jython", "-iron");
       }
     });
   }
@@ -605,7 +605,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @NotNull
       @Override
       public Set<String> getTags() {
-        return ImmutableSet.of("-jython");
+        return ImmutableSet.of("-jython", "-iron");
       }
     });
   }
@@ -1313,6 +1313,12 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         assertTrue(pair.first);
         eval("a").hasValue("2");
         resume();
+      }
+
+      @NotNull
+      @Override
+      public Set<String> getTags() {
+        return ImmutableSet.of("-iron");
       }
     });
   }
