@@ -53,8 +53,8 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       "$home/../vendor/google/firebase/lib/licenses",
     )
 
-    productLayout.platformApiModules = CommunityRepositoryModules.PLATFORM_API_MODULES + JAVA_API_MODULES
-    productLayout.platformImplementationModules = CommunityRepositoryModules.PLATFORM_IMPLEMENTATION_MODULES + JAVA_IMPLEMENTATION_MODULES +
+    productLayout.productApiModules = JAVA_API_MODULES
+    productLayout.productImplementationModules = JAVA_IMPLEMENTATION_MODULES +
                                                   [
                                                     // Android Studio: CIDR/CLion: Must be included here to be packaged into core, not as separate plugins
                                                     "cidr-common",
