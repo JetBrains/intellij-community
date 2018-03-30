@@ -87,7 +87,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       }
     }
     addInstruction(new EndOfInitializerInstruction(isStatic));
-    addInstruction(new FlushVariableInstruction(null));
+    addInstruction(new FlushFieldsInstruction());
   }
 
   @Nullable
@@ -891,7 +891,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       addInstruction(new DereferenceInstruction(lock));
     }
 
-    addInstruction(new FlushVariableInstruction(null));
+    addInstruction(new FlushFieldsInstruction());
 
     PsiCodeBlock body = statement.getBody();
     if (body != null) {

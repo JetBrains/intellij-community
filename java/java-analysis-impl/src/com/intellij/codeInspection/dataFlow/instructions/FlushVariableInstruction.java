@@ -21,19 +21,22 @@ import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.InstructionVisitor;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
+/**
+ * Flush single variable
+ */
 public class FlushVariableInstruction extends Instruction {
-  private final @Nullable DfaVariableValue myVariable;
+  private final @NotNull DfaVariableValue myVariable;
 
   /**
-   * @param variable variable to flush (if null, then it signals to flush all the fields)
+   * @param variable variable to flush
    */
-  public FlushVariableInstruction(@Nullable DfaVariableValue variable) {
+  public FlushVariableInstruction(@NotNull DfaVariableValue variable) {
     myVariable = variable;
   }
 
-  @Nullable
+  @NotNull
   public DfaVariableValue getVariable() {
     return myVariable;
   }
@@ -44,6 +47,6 @@ public class FlushVariableInstruction extends Instruction {
   }
 
   public String toString() {
-    return "FLUSH " + (myVariable != null ? myVariable.toString() : " all fields");
+    return "FLUSH " + myVariable.toString();
   }
 }

@@ -375,7 +375,7 @@ public class CFGBuilder {
    * @return this builder
    */
   public CFGBuilder flushFields() {
-    myAnalyzer.addInstruction(new FlushVariableInstruction(null));
+    myAnalyzer.addInstruction(new FlushFieldsInstruction());
     return this;
   }
 

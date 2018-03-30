@@ -166,12 +166,12 @@ public abstract class InstructionVisitor {
   }
 
   public DfaInstructionState[] visitFlushVariable(FlushVariableInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-    final DfaVariableValue variable = instruction.getVariable();
-    if (variable != null) {
-      memState.flushVariable(variable);
-    } else {
-      memState.flushFields();
-    }
+    memState.flushVariable(instruction.getVariable());
+    return nextInstruction(instruction, runner, memState);
+  }
+
+  public DfaInstructionState[] visitFlushFields(FlushFieldsInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+    memState.flushFields();
     return nextInstruction(instruction, runner, memState);
   }
 
