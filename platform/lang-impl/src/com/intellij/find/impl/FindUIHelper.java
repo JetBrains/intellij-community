@@ -77,6 +77,7 @@ public class FindUIHelper implements Disposable {
     new AnAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
+        ui.saveSettings();
         myModel.setReplaceState(replace);
         ui.initByModel();
       }
