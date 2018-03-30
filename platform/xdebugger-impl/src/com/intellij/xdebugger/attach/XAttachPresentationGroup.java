@@ -34,12 +34,26 @@ public interface XAttachPresentationGroup<T> {
   String getGroupName();
 
   /**
+   * @deprecated Use {@link #getIcon(Project, Object, UserDataHolder)}
+   */
+  @NotNull
+  Icon getProcessIcon(@NotNull Project project, @NotNull T info, @NotNull UserDataHolder dataHolder);
+
+  /**
    * @param dataHolder you may put your specific data into the holder at previous step in method @{@link XAttachDebuggerProvider#getAvailableDebuggers}
    *                   and use it for presentation
    * @return an icon to be shown in popup menu for your item
    */
   @NotNull
-  Icon getIcon(@NotNull Project project, @NotNull T info, @NotNull UserDataHolder dataHolder);
+  default Icon getIcon(@NotNull Project project, @NotNull T info, @NotNull UserDataHolder dataHolder) {
+    return getProcessIcon(project, info, dataHolder);
+  }
+
+  /**
+   * @deprecated Use {@link #getItemDisplayText(Project, Object, UserDataHolder)}
+   */
+  @NotNull
+  String getProcessDisplayText(@NotNull Project project, @NotNull T info, @NotNull UserDataHolder dataHolder);
 
   /**
    * @param dataHolder you may put your specific data into the holder at previous step in method @{@link XAttachDebuggerProvider#getAvailableDebuggers}
@@ -47,7 +61,9 @@ public interface XAttachPresentationGroup<T> {
    * @return a text to be shown on your item
    */
   @NotNull
-  String getItemDisplayText(@NotNull Project project, @NotNull T info, @NotNull UserDataHolder dataHolder);
+  default String getItemDisplayText(@NotNull Project project, @NotNull T info, @NotNull UserDataHolder dataHolder) {
+    return getProcessDisplayText(project, info, dataHolder);
+  }
 
   /**
    * @param dataHolder you may put your specific data into the holder at previous step in method @{@link XAttachDebuggerProvider#getAvailableDebuggers}

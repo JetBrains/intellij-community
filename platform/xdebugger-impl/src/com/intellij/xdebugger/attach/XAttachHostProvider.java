@@ -16,7 +16,9 @@
 package com.intellij.xdebugger.attach;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -36,6 +38,6 @@ public interface XAttachHostProvider<T extends XAttachHost> {
   /**
    * @return a list of connections of this type
    */
-  List<T> getAvailableHosts();
+  List<T> getAvailableHosts(@NotNull Project project);
 
 }

@@ -147,7 +147,7 @@ public class AttachToProcessAction extends AnAction {
 
     for (XAttachHostProvider hostProvider : hostProviders) {
       //noinspection unchecked
-      List<XAttachHost> settingsList = hostProvider.getAvailableHosts();
+      List<XAttachHost> settingsList = hostProvider.getAvailableHosts(project);
 
       for (XAttachHost eachSettings : settingsList) {
         groupWithItems.putValue(hostProvider.getPresentationGroup(), Pair.create(eachSettings, hostProvider));

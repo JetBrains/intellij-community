@@ -3,9 +3,10 @@ package com.intellij.xdebugger.attach;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.process.BaseProcessHandler;
+import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.OSProcessUtil;
 import com.intellij.execution.process.ProcessInfo;
-import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -55,15 +56,14 @@ public class LocalAttachHost extends EnvironmentAwareHost {
 
   @NotNull
   @Override
-  public ProcessOutput execAndGetOutput(@Nullable Project project, @NotNull GeneralCommandLine command)
-    throws ExecutionException {
-    return ExecUtil.execAndGetOutput(command);
+  public BaseProcessHandler getProcessHandler(@Nullable Project project, @NotNull GeneralCommandLine commandLine) throws ExecutionException {
+    return new CapturingProcessHandler(commandLine);
   }
 
   @Nullable
   @Override
-  public InputStream getRemoteFile(@NotNull String remotePath) throws ExecutionException {
-    VirtualFile file = LocalFileSystem.getInstance().findFileByPath(remotePath);
+  public InputStream getFile(@NotNull String filePath) throws ExecutionException {
+    VirtualFile file = LocalFileSystem.getInstance().findFileByPath(filePath);
     if (file == null) {
       return null;
     }
@@ -98,7 +98,7 @@ public class LocalAttachHost extends EnvironmentAwareHost {
 
   private static boolean isSudoNeededUnix(int pid) {
     /* TODO actually, if security level is 1 then depending on CAP_SYS_PTRACE or some predefined relationship with
-     * the target process we might can attach to it without sudo. Thats why we might need pid.
+     * the target process we might can attach to it without sudo. That's why we might need pid.
      */
     return (getPtraceScope() > 0 || !isSameUser(pid));
   }

@@ -3,6 +3,8 @@ package com.intellij.xdebugger.attach;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.process.BaseProcessHandler;
+import com.intellij.execution.process.CapturingProcessRunner;
 import com.intellij.execution.process.ProcessInfo;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.project.Project;
@@ -14,28 +16,40 @@ import org.jetbrains.annotations.Nullable;
 import java.io.InputStream;
 import java.util.Arrays;
 
+/**
+ * This abstract class represent {@link XAttachHost} with extended functional, such as executing {@link GeneralCommandLine},
+ * downloading remote files and getting OS of a remote host
+ */
 @ApiStatus.Experimental
 public abstract class EnvironmentAwareHost implements XAttachHost {
 
   private OSType myOSType;
 
   /**
-   * @param command commandLine to execute on this host
+   * @param commandLine commandLine to execute on this host
    * @return output of the corresponding process
    */
   @NotNull
-  public abstract ProcessOutput execAndGetOutput(@Nullable Project project,
-                                 @NotNull GeneralCommandLine command) throws ExecutionException;
+  public abstract BaseProcessHandler getProcessHandler(@Nullable Project project,
+                                                       @NotNull GeneralCommandLine commandLine) throws ExecutionException;
 
+  @NotNull
+  public ProcessOutput getProcessOutput(@Nullable Project project,
+                                        @NotNull GeneralCommandLine commandLine) throws ExecutionException {
+    BaseProcessHandler handler = getProcessHandler(project, commandLine);
+    CapturingProcessRunner runner = new CapturingProcessRunner(handler);
+    return runner.runProcess();
+  }
 
   /**
    * Retrieves remote file contents stream. May be used to sync parts of the debugged project.
-   * @param remotePath host-dependent path
+   *
+   * @param filePath host-dependent path
    * @return stream with file contents or <code>null</code> if the specified file does not exist
    * @throws ExecutionException on stream retrieval error
    */
   @Nullable
-  public abstract InputStream getRemoteFile(@NotNull String remotePath) throws ExecutionException;
+  public abstract InputStream getFile(@NotNull String filePath) throws ExecutionException;
 
   /**
    * @return uid of user or -1 if error occurred
@@ -56,31 +70,28 @@ public abstract class EnvironmentAwareHost implements XAttachHost {
     }
   }
 
-  private int getUidUnix(Project project) throws ExecutionException {
+  private int getUidUnix(@Nullable Project project) throws ExecutionException {
 
     GeneralCommandLine commandLine = new GeneralCommandLine(Arrays.asList("id", "-u"));
-    ProcessOutput uidOutput = execAndGetOutput(project, commandLine);
-
-    String uid = uidOutput.getStdout().trim();
+    String uid = getProcessOutput(project, commandLine).getStdout();
 
     try {
       return Integer.valueOf(uid);
     }
     catch (NumberFormatException e) {
-      throw new ExecutionException("Error while parsing uid");
+      throw new ExecutionException("Error while parsing uid from " + uid + "\n" + e);
     }
   }
 
-  public OSType getOsType(Project project) throws ExecutionException {
+  @NotNull
+  public OSType getOsType(@Nullable Project project) throws ExecutionException {
     if (myOSType != null) {
       return myOSType;
     }
 
     try {
       GeneralCommandLine getOsCommandLine = new GeneralCommandLine("uname", "-s");
-      ProcessOutput getOsOutput = execAndGetOutput(project, getOsCommandLine);
-
-      String osString = getOsOutput.getStdout().trim();
+      final String osString = getProcessOutput(project, getOsCommandLine).getStdout().trim();
 
       OSType osType;
 
@@ -98,7 +109,6 @@ public abstract class EnvironmentAwareHost implements XAttachHost {
           osType = OSType.UNKNOWN;
           break;
       }
-
       return myOSType = osType;
     }
     catch (ExecutionException ex) {

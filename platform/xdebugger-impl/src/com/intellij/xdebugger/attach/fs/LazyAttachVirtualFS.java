@@ -120,7 +120,7 @@ public class LazyAttachVirtualFS extends VirtualFileSystem {
 
   @Nullable
   private static String getFileContent(@NotNull EnvironmentAwareHost host, @NotNull String path) throws ExecutionException {
-    InputStream stream = host.getRemoteFile(path);
+    InputStream stream = host.getFile(path);
     if (stream == null) {
       return null;
     }

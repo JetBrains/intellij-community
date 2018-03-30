@@ -15,16 +15,11 @@
  */
 package com.intellij.xdebugger.attach;
 
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessInfo;
-import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.io.InputStream;
 import java.util.List;
 
 /**
