@@ -7,6 +7,7 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar
 import com.intellij.openapi.components.AbstractProjectComponent
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiJavaFile
 
@@ -21,7 +22,11 @@ class MethodChainHintsPassFactory(project: Project, registrar: TextEditorHighlig
     if (editor.isOneLineMode
         || file !is PsiJavaFile
         || AnnotationHintsPassFactory.LAST_PASS_MODIFICATION_TIMESTAMP.get(editor, 0) == ParameterHintsPassFactory.getCurrentModificationStamp(file)) return null
-    return MethodChainHintsPass(file, editor)
+    return MethodChainHintsPass(modificationStampHolder, file, editor)
+  }
+
+  companion object {
+    val modificationStampHolder = ModificationStampHolder(Key.create("METHOD_CHAIN_PASS_LAST_MODIFICATION_TIMESTAMP"))
   }
 
 }

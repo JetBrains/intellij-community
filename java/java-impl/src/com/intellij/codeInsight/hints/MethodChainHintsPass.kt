@@ -1,36 +1,31 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints
 
-import com.intellij.codeHighlighting.EditorBoundHighlightingPass
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.daemon.impl.HintRenderer
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.ex.util.CaretVisualPositionKeeper
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
-import com.intellij.psi.*
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethodCallExpression
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.util.DocumentUtil
 import com.siyeh.ig.psiutils.ExpressionUtils
 import gnu.trove.TIntObjectHashMap
 
-class MethodChainHintsPass(private val rootElement: PsiElement, editor: Editor) : EditorBoundHighlightingPass(editor,
-                                                                                                              rootElement.containingFile,
-                                                                                                              true) {
+
+class MethodChainHintsPass(
+  override val modificationStampHolder: ModificationStampHolder,
+  rootElement: PsiElement,
+  editor: Editor
+) : ElementProcessingHintPass(rootElement, editor) {
   private val hints = TIntObjectHashMap<String>()
-  private val traverser: SyntaxTraverser<PsiElement> = SyntaxTraverser.psiTraverser(rootElement)
 
-  override fun doCollectInformation(progress: ProgressIndicator) {
-    assert(myDocument != null)
-    hints.clear()
+  override fun isAvailable(virtualFile: VirtualFile) = CodeInsightSettings.getInstance().SHOW_METHOD_CHAIN_TYPES_INLINE
 
-    val virtualFile = rootElement.containingFile?.originalFile?.virtualFile
-    if (virtualFile != null && CodeInsightSettings.getInstance().SHOW_METHOD_CHAIN_TYPES_INLINE) {
-      traverser.forEach { process(it) }
-    }
-  }
-
-  private fun process(element: PsiElement) {
+  override fun collectElementHints(element: PsiElement) {
     val call = element as? PsiMethodCallExpression ?: return
     val qualifier = call.methodExpression.qualifierExpression
     if (qualifier != null && qualifier is PsiMethodCallExpression) {
@@ -71,9 +66,7 @@ class MethodChainHintsPass(private val rootElement: PsiElement, editor: Editor) 
     return chain
   }
 
-  override fun doApplyInformationToEditor() {
-    val keeper = CaretVisualPositionKeeper(myEditor)
-
+  override fun applyHintsToEditor() {
     val inlayModel = myEditor.inlayModel
 
     val toRemove = inlayModel.getInlineElementsInRange(rootElement.textRange.startOffset + 1, rootElement.textRange.endOffset - 1)
@@ -92,19 +85,18 @@ class MethodChainHintsPass(private val rootElement: PsiElement, editor: Editor) 
         true
       }
     }
+  }
 
-    keeper.restoreOriginalLocation(false)
+  private class MethodChainHintRenderer(text: String) : HintRenderer(text) {
+    override fun getContextMenuGroupId() = "MethodChainHintsContextMenu"
+  }
 
-    if (rootElement === myFile) {
-      AnnotationHintsPassFactory.putCurrentModificationStamp(myEditor, myFile)
-    }
+  override fun clearCollected() {
+    hints.clear()
   }
 
   companion object {
     private val METHOD_CHAIN_INLAY_KEY = Key.create<Boolean>("METHOD_CHAIN_INLAY_KEY")
   }
 
-  private class MethodChainHintRenderer(text: String) : HintRenderer(text) {
-    override fun getContextMenuGroupId() = "MethodChainHintsContextMenu"
-  }
 }

@@ -17,6 +17,6 @@ class MethodChainHintsConfigurable : BeanConfigurable<CodeInsightSettings>(CodeI
 
   override fun apply() {
     super.apply()
-    AnnotationHintsPassFactory.forceHintsUpdateOnNextPass()
+    MethodChainHintsPassFactory.modificationStampHolder.forceHintsUpdateOnNextPass()
   }
 }

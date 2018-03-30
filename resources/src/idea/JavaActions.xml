@@ -496,7 +496,7 @@
     <group id="MethodChainHintsContextMenu" popup="true">
       <action id="MethodChainHintAction"
               class="com.intellij.codeInsight.hints.MethodChainHintTurningAction"
-              text="Toggle method chain hints"/>
+              text="Show Method chain hints"/>
       <separator/>
       <reference ref="EditorPopupMenu"/>
     </group>
