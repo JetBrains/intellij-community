@@ -626,10 +626,15 @@ public class JBUI {
       return SystemInfo.isMac ? smallFont() : label();
     }
   }
+  
+  private static final JBEmptyBorder SHARED_EMPTY_INSTANCE = new JBEmptyBorder(0);
 
   @SuppressWarnings("UseDPIAwareBorders")
   public static class Borders {
     public static JBEmptyBorder empty(int top, int left, int bottom, int right) {
+      if (top == 0 && left == 0 && bottom == 0 && right == 0) {
+        return SHARED_EMPTY_INSTANCE;
+      }
       return new JBEmptyBorder(top, left, bottom, right);
     }
 
