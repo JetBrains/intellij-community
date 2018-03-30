@@ -39,7 +39,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.io.JarUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiFile;
@@ -80,6 +79,10 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Stream;
 import java.util.zip.CRC32;
+
+import static com.intellij.openapi.util.io.JarUtil.getJarAttribute;
+import static com.intellij.openapi.util.io.JarUtil.loadProperties;
+import static com.intellij.openapi.util.text.StringUtil.*;
 
 public class MavenUtil {
   public static final String MAVEN_NOTIFICATION_GROUP = "Maven";
@@ -556,7 +559,7 @@ public class MavenUtil {
     final int versionIndex = prefix.length();
     for (String path : list) {
       if (path.startsWith(prefix) &&
-          (home == null || StringUtil.compareVersionNumbers(path.substring(versionIndex), home.substring(versionIndex)) > 0)) {
+          (home == null || compareVersionNumbers(path.substring(versionIndex), home.substring(versionIndex)) > 0)) {
         home = path;
       }
     }
@@ -580,7 +583,7 @@ public class MavenUtil {
     }
 
     if (list.length > 1) {
-      Arrays.sort(list, (o1, o2) -> StringUtil.compareVersionNumbers(o2, o1));
+      Arrays.sort(list, (o1, o2) -> compareVersionNumbers(o2, o1));
     }
 
     final File file = new File(brewDir, list[0] + "/libexec");
@@ -606,21 +609,13 @@ public class MavenUtil {
 
     if (libs != null) {
       for (String lib : libs) {
+        File mavenLibFile = new File(mavenHome, "lib/" + lib);
         if (lib.equals("maven-core.jar")) {
-          String version = JarUtil.getJarAttribute(new File(mavenHome, "lib/" + lib), java.util.jar.Attributes.Name.IMPLEMENTATION_VERSION);
-          if (StringUtil.isNotEmpty(version)) return version;
-          continue;
+          return getMavenLibVersion(mavenLibFile);
         }
         if (lib.startsWith("maven-core-") && lib.endsWith(".jar")) {
           String version = lib.substring("maven-core-".length(), lib.length() - ".jar".length());
-          if (StringUtil.contains(version, ".x")) {
-            Properties props = JarUtil.loadProperties(new File(mavenHome, "lib/" + lib),
-                                                      "META-INF/maven/org.apache.maven/maven-core/pom.properties");
-            return props != null ? props.getProperty("version") : null;
-          }
-          else {
-            return version;
-          }
+          return contains(version, ".x") ? getMavenLibVersion(mavenLibFile) : version;
         }
         if (lib.startsWith("maven-") && lib.endsWith("-uber.jar")) {
           return lib.substring("maven-".length(), lib.length() - "-uber.jar".length());
@@ -628,6 +623,13 @@ public class MavenUtil {
       }
     }
     return null;
+  }
+
+  private static String getMavenLibVersion(File file) {
+    Properties props = loadProperties(file, "META-INF/maven/org.apache.maven/maven-core/pom.properties");
+    return props != null
+           ? nullize(props.getProperty("version"))
+           : nullize(getJarAttribute(file, java.util.jar.Attributes.Name.IMPLEMENTATION_VERSION));
   }
 
   @Nullable
@@ -679,14 +681,14 @@ public class MavenUtil {
   public static File doResolveLocalRepository(@Nullable File userSettingsFile, @Nullable File globalSettingsFile) {
     if (userSettingsFile != null) {
       final String fromUserSettings = getRepositoryFromSettings(userSettingsFile);
-      if (!StringUtil.isEmpty(fromUserSettings)) {
+      if (!isEmpty(fromUserSettings)) {
         return new File(fromUserSettings);
       }
     }
 
     if (globalSettingsFile != null) {
       final String fromGlobalSettings = getRepositoryFromSettings(globalSettingsFile);
-      if (!StringUtil.isEmpty(fromGlobalSettings)) {
+      if (!isEmpty(fromGlobalSettings)) {
         return new File(fromGlobalSettings);
       }
     }
