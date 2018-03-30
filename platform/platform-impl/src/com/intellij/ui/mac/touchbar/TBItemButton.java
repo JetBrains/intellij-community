@@ -33,11 +33,11 @@ public class TBItemButton extends TBItem {
 
   @Override
   protected void _updateNativePeer() {
-    TouchBarManager.getNSTLibrary().updateButton(myNativePeer, myWidth, myText, getRaster(myIcon), getIconW(myIcon), getIconH(myIcon), myAction);
+    NST.updateButton(myNativePeer, myWidth, myText, getRaster(myIcon), getIconW(myIcon), getIconH(myIcon), myAction);
   }
 
   @Override
   protected ID _createNativePeer() {
-    return TouchBarManager.getNSTLibrary().createButton(myUid, myWidth, myText, getRaster(myIcon), getIconW(myIcon), getIconH(myIcon), myAction);
+    return NST.createButton(myUid, myWidth, myText, getRaster(myIcon), getIconW(myIcon), getIconH(myIcon), myAction);
   }
 }

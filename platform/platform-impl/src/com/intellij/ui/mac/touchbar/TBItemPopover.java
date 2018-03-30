@@ -51,12 +51,12 @@ public class TBItemPopover extends TBItem {
 
   @Override
   protected void _updateNativePeer() {
-    TouchBarManager.getNSTLibrary().updatePopover(myNativePeer, myWidthPix, myText, getRaster(myIcon), getIconW(myIcon), getIconH(myIcon), getNativePeer(myExpandTB), getNativePeer(myTapAndHoldTB));
+    NST.updatePopover(myNativePeer, myWidthPix, myText, getRaster(myIcon), getIconW(myIcon), getIconH(myIcon), getNativePeer(myExpandTB), getNativePeer(myTapAndHoldTB));
   }
 
   @Override
   protected ID _createNativePeer() {
-    return TouchBarManager.getNSTLibrary().createPopover(myUid, myWidthPix, myText, getRaster(myIcon), getIconW(myIcon), getIconH(myIcon), getNativePeer(myExpandTB), getNativePeer(myTapAndHoldTB));
+    return NST.createPopover(myUid, myWidthPix, myText, getRaster(myIcon), getIconW(myIcon), getIconH(myIcon), getNativePeer(myExpandTB), getNativePeer(myTapAndHoldTB));
   }
 
   private static ID getNativePeer(TouchBar tb) { return tb == null ? ID.NIL : tb.getNativePeer(); }

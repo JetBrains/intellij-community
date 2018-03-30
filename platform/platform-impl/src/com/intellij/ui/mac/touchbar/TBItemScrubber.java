@@ -42,7 +42,7 @@ public class TBItemScrubber extends TBItem {
 
   @Override
   protected ID _createNativePeer() {
-    return TouchBarManager.getNSTLibrary().createScrubber(myUid, myWidth, mySource, myCount, myActions);
+    return NST.createScrubber(myUid, myWidth, mySource, myCount, myActions);
   }
 
   public void executeAt(int index) {

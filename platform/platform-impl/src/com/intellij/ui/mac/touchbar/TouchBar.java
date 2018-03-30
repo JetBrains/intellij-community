@@ -18,7 +18,7 @@ public class TouchBar implements NSTLibrary.ItemCreator {
 
   TouchBar(String touchbarName) {
     myName = touchbarName;
-    myNativePeer = TouchBarManager.getNSTLibrary().createTouchBar(touchbarName, this);
+    myNativePeer = NST.createTouchBar(touchbarName, this);
   }
 
   @Override
@@ -37,7 +37,7 @@ public class TouchBar implements NSTLibrary.ItemCreator {
   void release() {
     for (TBItem item : myItems)
       item.releaseNativePeer();
-    TouchBarManager.getNSTLibrary().releaseTouchBar(myNativePeer);
+    NST.releaseTouchBar(myNativePeer);
 
     myItems.clear();
     myNativePeer = ID.NIL;
@@ -94,7 +94,7 @@ public class TouchBar implements NSTLibrary.ItemCreator {
     for (TBItem item : myItems)
       ids[c++] = item.myUid;
 
-    TouchBarManager.getNSTLibrary().selectItemsToShow(myNativePeer, ids, ids.length);
+    NST.selectItemsToShow(myNativePeer, ids, ids.length);
   }
 
   private TBItem findItem(String uid) {
