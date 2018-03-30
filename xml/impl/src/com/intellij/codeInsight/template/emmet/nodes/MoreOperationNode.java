@@ -78,13 +78,18 @@ public class MoreOperationNode extends ZenCodingNode {
       else {
         UnaryMulOperationNode unaryMul = (UnaryMulOperationNode)myLeftOperand;
         String[] lines = LineTokenizer.tokenize(surroundedText, false);
-        for (int i = 0; i < lines.length; i++) {
-          String line = lines[i].trim();
-          List<GenerationNode> parentNodes = unaryMul.getOperand().expand(i, totalIterations, line, callback, insertSurroundedTextAtTheEnd, parent);
+        int iteration = 0;
+        for (String line : lines) {
+          line = line.trim();
+          if (iteration == 0 && line.isEmpty()) {
+            continue;
+          }
+          List<GenerationNode> parentNodes = unaryMul.getOperand().expand(iteration, totalIterations, line, callback, insertSurroundedTextAtTheEnd, parent);
           for (GenerationNode parentNode : parentNodes) {
-            myRightOperand.expand(i, totalIterations, line, callback, insertSurroundedTextAtTheEnd, parentNode);
+            myRightOperand.expand(iteration, totalIterations, line, callback, insertSurroundedTextAtTheEnd, parentNode);
           }
           result.addAll(parentNodes);
+          iteration++;
         }
       }
       return result;
