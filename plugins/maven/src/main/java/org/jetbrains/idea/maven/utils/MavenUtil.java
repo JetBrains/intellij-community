@@ -606,6 +606,11 @@ public class MavenUtil {
 
     if (libs != null) {
       for (String lib : libs) {
+        if (lib.equals("maven-core.jar")) {
+          String version = JarUtil.getJarAttribute(new File(mavenHome, "lib/" + lib), java.util.jar.Attributes.Name.IMPLEMENTATION_VERSION);
+          if (StringUtil.isNotEmpty(version)) return version;
+          continue;
+        }
         if (lib.startsWith("maven-core-") && lib.endsWith(".jar")) {
           String version = lib.substring("maven-core-".length(), lib.length() - ".jar".length());
           if (StringUtil.contains(version, ".x")) {
