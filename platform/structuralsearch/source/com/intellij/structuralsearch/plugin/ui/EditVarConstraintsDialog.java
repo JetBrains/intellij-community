@@ -20,7 +20,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -121,6 +120,12 @@ class EditVarConstraintsDialog extends DialogWrapper {
     maxoccurs.setMinValue(0);
     maxoccurs.setDefaultValue(Integer.MAX_VALUE);
     maxoccurs.setDefaultValueText(SSRBundle.message("editvarcontraints.unlimited"));
+    minoccurs.getValueEditor().addListener(newValue -> {
+      if (maxoccurs.getValue() < newValue) maxoccurs.setValue(newValue);
+    });
+    maxoccurs.getValueEditor().addListener(newValue -> {
+      if (minoccurs.getValue() > newValue) minoccurs.setValue(newValue);
+    });
     regexprForExprType.getDocument().addDocumentListener(new MyDocumentListener(exprTypeWithinHierarchy, notExprType));
     formalArgType.getDocument().addDocumentListener(new MyDocumentListener(formalArgTypeWithinHierarchy, invertFormalArgType));
 
@@ -231,7 +236,12 @@ class EditVarConstraintsDialog extends DialogWrapper {
     });
     init();
 
-    if (variables.size() > 0) parameterList.setSelectedIndex(0);
+    if (!variables.isEmpty()) parameterList.setSelectedIndex(0);
+  }
+
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return parameterList;
   }
 
   static String stripReplacementVarDecoration(String name) {
@@ -376,6 +386,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
     } else {
       applyWithinTypeHierarchy.setSelected(varInfo.isWithinHierarchy());
       regexp.getDocument().setText(varInfo.getRegExp());
+      regexp.selectAll();
 
       notRegexp.setSelected(varInfo.isInvertRegExp());
       minoccurs.setText(Integer.toString(varInfo.getMinCount()));
@@ -388,6 +399,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
 
       exprTypeWithinHierarchy.setSelected(varInfo.isExprTypeWithinHierarchy());
       regexprForExprType.getDocument().setText(varInfo.getNameOfExprType());
+      regexprForExprType.selectAll();
 
       notExprType.setSelected( varInfo.isInvertExprType() );
       wholeWordsOnly.setSelected( varInfo.isWholeWordsOnly() );
@@ -395,6 +407,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
       invertFormalArgType.setSelected( varInfo.isInvertFormalType() );
       formalArgTypeWithinHierarchy.setSelected(varInfo.isFormalArgTypeWithinHierarchy());
       formalArgType.getDocument().setText(varInfo.getNameOfFormalArgType());
+      formalArgType.selectAll();
       restoreScriptCode(varInfo);
 
       withinTextField.setText(StringUtil.unquoteString(varInfo.getWithinConstraint()));
@@ -499,14 +512,8 @@ class EditVarConstraintsDialog extends DialogWrapper {
   }
 
   @Override
-  @NotNull
-  protected Action[] createActions() {
-    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
-  }
-
-  @Override
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp("reference.dialogs.search.replace.structural.editvariable");
+  protected String getHelpId() {
+    return "reference.dialogs.search.replace.structural.editvariable";
   }
 
   private void createUIComponents() {
