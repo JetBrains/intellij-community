@@ -503,9 +503,9 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
     if (methodType == MethodCallInstruction.MethodType.METHOD_REFERENCE_CALL && qualifierValue instanceof DfaVariableValue) {
       PsiMethod method = instruction.getTargetMethod();
-      DfaValue value = SpecialField.tryCreateValue(qualifierValue, method);
-      if (value != null) {
-        return value;
+      SpecialField field = SpecialField.findSpecialField(method);
+      if (field != null) {
+        return field.createValue(factory, qualifierValue);
       }
       DfaVariableSource source = DfaExpressionFactory.getAccessedVariableOrGetter(method);
       if (source != null) {

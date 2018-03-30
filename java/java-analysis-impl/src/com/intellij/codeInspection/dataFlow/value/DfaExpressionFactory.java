@@ -197,8 +197,11 @@ public class DfaExpressionFactory {
   private DfaValue createFromSpecialField(PsiReferenceExpression refExpr) {
     PsiElement target = refExpr.resolve();
     if (!(target instanceof PsiModifierListOwner)) return null;
+    SpecialField sf = SpecialField.findSpecialField(target);
+    if (sf == null) return null;
     DfaVariableValue qualifier = getQualifierVariable(refExpr.getQualifierExpression());
-    return SpecialField.tryCreateValue(qualifier, target);
+    if (qualifier == null) return null;
+    return sf.createValue(myFactory, qualifier);
   }
 
   @Contract("null -> null")

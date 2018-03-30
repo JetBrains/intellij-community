@@ -1123,13 +1123,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (constValue != null) {
       return constValue;
     }
-    DfaVariableValue qualifier = var.getQualifier();
-    if (qualifier != null) {
-      DfaValue value = SpecialField.tryCreateValue(qualifier, var.getPsiVariable());
-      if (value != null) {
-        return value;
-      }
-    }
     return var;
   }
 
