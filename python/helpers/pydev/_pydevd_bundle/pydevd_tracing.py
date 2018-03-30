@@ -79,6 +79,8 @@ def _do_not_trace_ctx():
     current_thread.pydev_do_not_trace = True
     try:
         yield
+    except:
+        pass
     finally:
         current_thread.pydev_do_not_trace = do_not_trace_before
 

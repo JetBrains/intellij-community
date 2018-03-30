@@ -28,10 +28,7 @@ try:
             try:
                 return sys._getframe()
             except ValueError:
-                if IS_IRONPYTHON:
-                    pass
-                else:
-                    raise
+                pass
 except AttributeError:
     def get_frame():
         raise AssertionError('sys._getframe not available (possible causes: enable -X:Frames on IronPython?)')
