@@ -8,6 +8,7 @@
  */
 package com.intellij.debugger.ui.impl.watch;
 
+import com.intellij.debugger.engine.DebuggerExtension;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -25,7 +26,10 @@ public class StaticDescriptorImpl extends NodeDescriptorImpl implements StaticDe
 
   public StaticDescriptorImpl(ReferenceType refType) {
     myType = refType;
-    myHasStaticFields = myType.allFields().stream().anyMatch(TypeComponent::isStatic);
+    // Android Studio: This is to filter Instant Run variables
+    DebuggerExtension extension = DebuggerExtension.EP_NAME.findExtension(DebuggerExtension.class);
+    myHasStaticFields = myType.allFields().stream()
+      .anyMatch((field) -> field.isStatic() && (extension == null || !extension.filterStaticVariable(refType, field, field.isSynthetic())));
   }
 
   public ReferenceType getType() {
