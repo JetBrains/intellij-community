@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui;
 
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.IconCache;
 import com.intellij.util.ui.JBInsets;
@@ -28,7 +29,7 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
   @Override
   public Dimension getMinimumSize(JComponent c) {
     Dimension size = super.getMinimumSize(c);
-    return JBUI.isCompensateVisualPaddingOnComponentLevel(c.getParent()) ? size : new Dimension(size.width, JBUI.scale(DarculaTextFieldUI.DARCULA_INPUT_HEIGHT));
+    return JBUI.isCompensateVisualPaddingOnComponentLevel(c.getParent()) ? size : new Dimension(size.width, JBUI.scale(DarculaUIUtil.DARCULA_INPUT_HEIGHT));
   }
 
   @Override public void installDefaults(AbstractButton b) {

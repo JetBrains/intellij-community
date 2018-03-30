@@ -14,8 +14,6 @@ import java.awt.geom.RoundRectangle2D;
  * @author Konstantin Bulenkov
  */
 public class DarculaTextFieldUI extends TextFieldWithPopupHandlerUI {
-  protected static final int DARCULA_INPUT_HEIGHT = 24;
-
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
     return new DarculaTextFieldUI();
@@ -23,7 +21,7 @@ public class DarculaTextFieldUI extends TextFieldWithPopupHandlerUI {
 
   // real height without visual paddings
   protected int getMinimumHeightForTextField() {
-    return DARCULA_INPUT_HEIGHT;
+    return DarculaUIUtil.DARCULA_INPUT_HEIGHT;
   }
 
   @Override

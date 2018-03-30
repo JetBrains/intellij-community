@@ -55,7 +55,7 @@ public class DarculaPasswordFieldUI extends BasicPasswordFieldUI {
   public Dimension getPreferredSize(JComponent c) {
     Dimension size = super.getPreferredSize(c);
     Insets i = getComponent().getInsets();
-    return new Dimension(size.width, Math.max(size.height, JBUI.scale(JBUI.isCompensateVisualPaddingOnComponentLevel(c.getParent()) ? 20 : DarculaTextFieldUI.DARCULA_INPUT_HEIGHT) + i.top + i.bottom));
+    return new Dimension(size.width, Math.max(size.height, JBUI.scale(JBUI.isCompensateVisualPaddingOnComponentLevel(c.getParent()) ? 20 : DarculaUIUtil.DARCULA_INPUT_HEIGHT) + i.top + i.bottom));
   }
 
   @Override
