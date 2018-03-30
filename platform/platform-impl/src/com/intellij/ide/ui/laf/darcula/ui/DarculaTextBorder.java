@@ -67,10 +67,8 @@ public class DarculaTextBorder implements Border, UIResource, ErrorBorderCapable
         Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
         float lw = lw(g2);
         float bw = bw();
-
-        // paint as MacComboBoxBorder does - use passed width instead of r.width
-        border.append(new Rectangle2D.Float(bw, bw, width - bw * 2, height - bw * 2), false);
-        border.append(new Rectangle2D.Float(bw + lw, bw + lw, width - (bw + lw) * 2, height - (bw + lw) * 2), false);
+        border.append(new Rectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2), false);
+        border.append(new Rectangle2D.Float(bw + lw, bw + lw, r.width - (bw + lw) * 2, r.height - (bw + lw) * 2), false);
 
         boolean editable = !(c instanceof JTextComponent) || ((JTextComponent)c).isEditable();
         g2.setColor(getOutlineColor(c.isEnabled() && editable));
