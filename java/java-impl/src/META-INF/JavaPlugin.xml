@@ -1160,9 +1160,5 @@
       <className>com.intellij.codeInsight.intention.impl.SplitFilterAction</className>
       <category>Java/Streams</category>
     </intentionAction>
-    <intentionAction>
-      <className>com.intellij.codeInsight.hints.MethodChainHintTurningAction</className>
-      <category>Other</category>
-    </intentionAction>
   </extensions>
 </idea-plugin>

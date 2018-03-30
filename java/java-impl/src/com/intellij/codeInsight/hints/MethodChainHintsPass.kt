@@ -104,5 +104,7 @@ class MethodChainHintsPass(private val rootElement: PsiElement, editor: Editor) 
     private val METHOD_CHAIN_INLAY_KEY = Key.create<Boolean>("METHOD_CHAIN_INLAY_KEY")
   }
 
-  private class MethodChainHintRenderer(text: String) : HintRenderer(text)
+  private class MethodChainHintRenderer(text: String) : HintRenderer(text) {
+    override fun getContextMenuGroupId() = "MethodChainHintsContextMenu"
+  }
 }
