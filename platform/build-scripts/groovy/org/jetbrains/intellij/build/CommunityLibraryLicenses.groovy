@@ -160,7 +160,7 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "Inconsolata", attachedTo: "intellij.platform.resources", version: "001.010", license: "OFL", url: "https://github.com/google/fonts/blob/master/ofl/inconsolata/OFL.txt"),
     new LibraryLicense(name: "ini4j (JetBrains's fork)", libraryName: "ini4j", version: "0.5.5-1", license: "Apache 2.0",
                        url: "https://github.com/JetBrains/intellij-deps-ini4j"),
-    new LibraryLicense(name: "ISO RELAX", libraryName: "isorelax.jar", license: "MIT License",
+    new LibraryLicense(name: "ISO RELAX", libraryName: "isorelax", license: "MIT License",
                        url: "http://sourceforge.net/projects/iso-relax/", licenseUrl: "http://www.opensource.org/licenses/mit-license.html"),
     new LibraryLicense(name: "Jakarta ORO", libraryName: "OroMatcher", version: "2.0.8", license: "Apache",
                        url: "http://jakarta.apache.org/oro/", licenseUrl: "http://svn.apache.org/repos/asf/jakarta/oro/trunk/LICENSE"),
