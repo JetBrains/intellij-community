@@ -1,5 +1,7 @@
 package com.siyeh.igtest.bugs.equals_which_doesnt_check_parameter;
 
+import java.util.Optional;
+
 public class EqualsWhichDoesntCheckParameterClass {
     private int foo;
 
@@ -100,5 +102,29 @@ class Six {
   @Override
   public boolean equals(Object obj) {
     return this == obj;
+  }
+}
+class Cell {
+  int x, y;
+
+  @Override
+  public boolean equals(Object obj) {
+    return Optional.ofNullable(obj)
+                   .filter(Cell.class::isInstance)
+                   .map(that -> (Cell)that)
+                   .filter(that -> x == that.x && y == that.y)
+                   .isPresent();
+  }
+}
+class Cell2 {
+  int x, y;
+
+  @Override
+  public boolean equals(Object obj) {
+    return Optional.ofNullable(obj)
+                   .filter(x -> x instanceof Cell2)
+                   .map(that -> (Cell2)that)
+                   .filter(that -> x == that.x && y == that.y)
+                   .isPresent();
   }
 }
