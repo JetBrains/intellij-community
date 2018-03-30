@@ -52,7 +52,7 @@ componentConstrains:
   Use File -> Settings Repository... to configure:
     horizontal:
       gapBefore:
-        min: &id008 {horizontal: true, value: 2.0}
+        min: &id008 {horizontal: true, value: 1.0}
         preferred: *id008
     skip: 1
     spanX: 2097051

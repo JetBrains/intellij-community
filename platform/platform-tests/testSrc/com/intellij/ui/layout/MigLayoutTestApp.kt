@@ -32,6 +32,7 @@ object MigLayoutTestApp {
 //      UIManager.setLookAndFeel(DarculaLaf())
 
 //      val panel = visualPaddingsPanelOnlyButton()
+//      val panel = visualPaddingsPanelOnlyComboBox()
 //      val panel = alignFieldsInTheNestedGrid()
 //      val panel = cellPanel()
       val panel = visualPaddingsPanel()
@@ -39,10 +40,9 @@ object MigLayoutTestApp {
       val editableCombobox = JComboBox<String>(arrayOf("one", "two"))
       editableCombobox.isEditable = true
 
-//      val panel = UI.PanelFactory.grid()
-//        .add(UI.PanelFactory.panel(JComboBox<String>(arrayOf("one", "two"))))
-//        .add(UI.PanelFactory.panel(editableCombobox))
-//        .createPanel()
+//      val panel = JPanel(VerticalFlowLayout())
+//      panel.add(JComboBox<String>(arrayOf("one", "two")))
+//      panel.add(editableCombobox)
 
       val dialog = dialog(
         title = "",

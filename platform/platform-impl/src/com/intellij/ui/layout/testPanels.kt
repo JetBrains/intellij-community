@@ -52,6 +52,11 @@ fun makeSecondColumnSmaller(): JPanel {
 fun visualPaddingsPanelOnlyComboBox(): JPanel {
   return panel {
     row("Combobox:") { JComboBox<String>(arrayOf("one", "two"))(growX) }
+    row("Combobox Editable:") {
+      val field = JComboBox<String>(arrayOf("one", "two"))
+      field.isEditable = true
+      field(growX)
+    }
   }
 }
 

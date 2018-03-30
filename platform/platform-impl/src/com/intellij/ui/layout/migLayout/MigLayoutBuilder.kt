@@ -5,6 +5,7 @@ import com.intellij.ui.components.noteComponent
 import com.intellij.ui.layout.*
 import com.intellij.util.containers.ContainerUtil
 import net.miginfocom.layout.*
+import net.miginfocom.layout.PlatformDefaults.VISUAL_PADDING_PROPERTY
 import net.miginfocom.swing.MigLayout
 import java.awt.Component
 import java.awt.Container
@@ -13,6 +14,26 @@ import javax.swing.JDialog
 import javax.swing.JLabel
 
 internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuilderImpl {
+  companion object {
+    init {
+      // unset incorrect for our LaF values (todo add ability to provide own provider to MigLayout)
+      PlatformDefaults.setDefaultVisualPadding("ComboBox.$VISUAL_PADDING_PROPERTY", null)
+      PlatformDefaults.setDefaultVisualPadding("ComboBox.isPopDown.$VISUAL_PADDING_PROPERTY", null)
+      PlatformDefaults.setDefaultVisualPadding("ComboBox.isSquare.$VISUAL_PADDING_PROPERTY", null)
+      PlatformDefaults.setDefaultVisualPadding("ComboBox.editable.$VISUAL_PADDING_PROPERTY", null)
+      PlatformDefaults.setDefaultVisualPadding("ComboBox.editable.isSquare.$VISUAL_PADDING_PROPERTY", null)
+
+      PlatformDefaults.setDefaultVisualPadding("TextField.$VISUAL_PADDING_PROPERTY", null)
+      PlatformDefaults.setDefaultVisualPadding("Spinner.$VISUAL_PADDING_PROPERTY", null)
+      PlatformDefaults.setDefaultVisualPadding("RadioButton.$VISUAL_PADDING_PROPERTY", null)
+      PlatformDefaults.setDefaultVisualPadding("RadioButton.small.$VISUAL_PADDING_PROPERTY", null)
+      PlatformDefaults.setDefaultVisualPadding("RadioButton.mini.$VISUAL_PADDING_PROPERTY", null)
+      PlatformDefaults.setDefaultVisualPadding("CheckBox.$VISUAL_PADDING_PROPERTY", null)
+      PlatformDefaults.setDefaultVisualPadding("CheckBox.small.$VISUAL_PADDING_PROPERTY", null)
+      PlatformDefaults.setDefaultVisualPadding("CheckBox.mini.$VISUAL_PADDING_PROPERTY", null)
+    }
+  }
+
   /**
    * Map of component to constraints shared among rows (since components are unique)
    */

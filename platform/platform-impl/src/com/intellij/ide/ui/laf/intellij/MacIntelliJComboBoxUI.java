@@ -331,4 +331,9 @@ public class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
   @Nullable Rectangle getArrowButtonBounds() {
     return arrowButton != null ? arrowButton.getBounds() : null;
   }
+
+  @Override
+  public Insets getVisualPaddings(@NotNull Component component) {
+    return JBUI.insets(3);
+  }
 }

@@ -154,8 +154,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
   @NotNull
   static Dimension getArrowButtonPreferredSize(@Nullable JComboBox comboBox) {
     Insets i = comboBox != null ? comboBox.getInsets() : getDefaultComboBoxInsets();
-    int height = comboBox != null && JBUI.isUseCorrectInputHeightOnMacOS(comboBox) ? DARCULA_INPUT_HEIGHT : 22;
-    return new Dimension(JBUI.scale(16) + i.left, JBUI.scale(height) + i.top + i.bottom);
+    return new Dimension(JBUI.scale(16) + i.left, JBUI.scale(22) + i.top + i.bottom);
   }
 
   static Shape getArrowShape(Component button) {
@@ -183,9 +182,6 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
   @Override
   protected Insets getInsets() {
-    if (JBUI.isUseCorrectInputHeightOnMacOS(comboBox)) {
-      return JBUI.insets(2, 8, 2, 4).asUIResource();
-    }
     return getDefaultComboBoxInsets().asUIResource();
   }
 
@@ -199,9 +195,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
     Graphics2D g2 = (Graphics2D)g.create();
     Rectangle r = new Rectangle(c.getSize());
-    if (!JBUI.isUseCorrectInputHeightOnMacOS(comboBox)) {
-      JBInsets.removeFrom(r, JBUI.insets(1));
-    }
+    JBInsets.removeFrom(r, JBUI.insets(1));
 
     try {
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -334,9 +328,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
       g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
 
       Rectangle r = new Rectangle(x, y, width, height);
-      if (!JBUI.isUseCorrectInputHeightOnMacOS(c)) {
-        JBInsets.removeFrom(r, JBUI.insets(1));
-      }
+      JBInsets.removeFrom(r, JBUI.insets(1));
 
       g2.translate(r.x, r.y);
 
@@ -398,7 +390,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     Dimension abSize = arrowButton.getPreferredSize();
 
     int editorHeight = editor != null ? editor.getPreferredSize().height + i.top + i.bottom : 0;
-    int height = Math.max(Math.max(editorHeight, Math.max(abSize.height, d.height)), JBUI.scale(JBUI.isUseCorrectInputHeightOnMacOS(comboBox) ? DARCULA_INPUT_HEIGHT : 22) + i.top + i.bottom);
+    int height = Math.max(Math.max(editorHeight, Math.max(abSize.height, d.height)), JBUI.scale(22) + i.top + i.bottom);
     int width = Math.max(d.width, abSize.width + JBUI.scale(10));
 
     return new Dimension(width, height);
@@ -539,8 +531,9 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     }
   }
 
+  @Nullable
   @Override
   public Insets getVisualPaddings(@NotNull Component component) {
-    return JBUI.insets((int)bw());
+    return JBUI.insets(3);
   }
 }

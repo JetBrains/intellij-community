@@ -176,7 +176,7 @@ open class UiDslTest {
       @Suppress("UnnecessaryVariable")
       val snapshotComponent = frame
       try {
-        assertThat(componentToImage(snapshotComponent)).isEqualTo(newImage, Offset.offset(8))
+        assertThat(componentToImage(snapshotComponent)).isEqualTo(newImage, Offset.offset(16))
       }
       catch (e: AssertionError) {
         if (isUpdateSnapshots) {
