@@ -81,7 +81,7 @@ class CommunityLibraryLicenses {
                        additionalLibraryNames: ["asm-capture"]),
     new LibraryLicense(name: "ASM Tools", libraryName: "asm-tools",
                        license: "BSD", url: "http://asm.objectweb.org/", licenseUrl: "http://asm.objectweb.org/license.html"),
-    new LibraryLicense(name: "Automaton", libraryName: "automaton", version: "1.11", license: "BSD", url: "http://www.brics.dk/automaton/",
+    new LibraryLicense(name: "Automaton", libraryName: "automaton", version: "1.12-1", license: "BSD", url: "http://www.brics.dk/automaton/",
                        licenseUrl: "http://www.opensource.org/licenses/bsd-license.php"),
     new LibraryLicense(name: "Apache Axis", libraryName: "axis-1.4", version: "1.4", license: "Apache 2.0", url: "http://ws.apache.org/axis/",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.html"),
