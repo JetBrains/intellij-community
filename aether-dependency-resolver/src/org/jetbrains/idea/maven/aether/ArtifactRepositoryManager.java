@@ -118,6 +118,39 @@ public class ArtifactRepositoryManager {
     mySession = session;
   }
 
+  /**
+   * Returns list
+   */
+  @SuppressWarnings("UnnecessaryFullyQualifiedName")
+  public static List<Class> getClassesFromDependencies() {
+    return Arrays.asList(
+      org.jetbrains.idea.maven.aether.ArtifactRepositoryManager.class, //this module
+      org.apache.maven.repository.internal.VersionsMetadataGeneratorFactory.class, //maven-aether-provider
+      org.apache.maven.artifact.Artifact.class, //maven-artifact
+      org.apache.commons.lang3.StringUtils.class, //commons-lang3
+      org.codehaus.plexus.util.Base64.class, //plexus-utils
+      org.apache.maven.building.Problem.class, //maven-builder-support
+      org.apache.maven.model.Model.class, //maven-model
+      org.apache.maven.model.building.ModelBuilder.class, //maven-model-builder
+      org.apache.maven.artifact.repository.metadata.Metadata.class, //maven-repository-metadata
+      org.codehaus.plexus.component.annotations.Component.class, //plexus-component-annotations
+      org.codehaus.plexus.interpolation.Interpolator.class, //plexus-interpolation
+      org.eclipse.aether.RepositorySystem.class, //aether-api
+      org.eclipse.aether.connector.basic.BasicRepositoryConnectorFactory.class, //aether-connector-basic
+      org.eclipse.aether.spi.connector.RepositoryConnector.class, //aether-spi
+      org.eclipse.aether.util.StringUtils.class, //aether-util
+      org.eclipse.aether.impl.ArtifactResolver.class, //aether-impl
+      org.eclipse.aether.transport.file.FileTransporterFactory.class, //aether-transport-file
+      org.eclipse.aether.transport.http.HttpTransporterFactory.class, //aether-transport-http
+      com.google.common.base.Predicate.class, //guava
+      org.apache.http.HttpConnection.class, //httpcore
+      org.apache.http.client.HttpClient.class, //httpclient
+      org.apache.commons.codec.binary.Base64.class, // commons-codec
+      org.apache.commons.logging.LogFactory.class, // commons-logging
+      org.slf4j.Marker.class // slf4j
+    );
+  }
+
   public void addRemoteRepository(final String id, final String url) {
     myRemoteRepositories.add(createRemoteRepository(id, url));
   }

@@ -29,6 +29,7 @@ class CommunityStandaloneJpsBuilder {
   }
 
   void layoutJps(String targetDir, String buildNumber, @DelegatesTo(LayoutBuilder.LayoutSpec) Closure additionalJars) {
+    def context = buildContext
     new LayoutBuilder(buildContext, false).layout(targetDir) {
       zip("standalone-jps-${buildNumber}.zip") {
         jar("util.jar") {
@@ -93,8 +94,9 @@ class CommunityStandaloneJpsBuilder {
         ].each {
           projectLibrary(it)
         }
-        moduleLibrary("intellij.java.aetherDependencyResolver", "aether-1.1.0-all.jar")
-        moduleLibrary("intellij.java.aetherDependencyResolver", "maven-aether-provider-3.3.9-all.jar")
+        context.findRequiredModule("intellij.java.aetherDependencyResolver").libraryCollection.libraries.each {
+          jpsLibrary(it)
+        }
 
         moduleLibrary("intellij.platform.jps.build.javac.rt", "optimizedFileManager.jar")
         jar("ant-jps-plugin.jar") { module("intellij.ant.jps") }

@@ -32,8 +32,9 @@ List<String> projectLibraries = [
 ]
 
 dependencies {
-  projectLibraries.each {
-    def properties = loadProjectLibraryProperties(it)
+  (projectLibraries.collect { loadProjectLibraryProperties(it) } +
+   loadModuleLibraryProperties("aether-dependency-resolver/intellij.java.aetherDependencyResolver.iml")
+  ).each { properties ->
     buildScriptsDeps(properties.first, { transitive = properties.second })
   }
 }
@@ -56,7 +57,31 @@ private Tuple2<String, Boolean> loadProjectLibraryProperties(String libraryName)
   if (propertiesTags.isEmpty()) {
     throw new GradleException("$libraryName project library is not a repository library")
   }
-  def propertiesTag = propertiesTags.first()
-  //noinspection GrUnresolvedAccess
+  //noinspection GroovyAssignabilityCheck
+  loadLibraryProperties(propertiesTags.first())
+}
+
+private List<Tuple2<String, Boolean>> loadModuleLibraryProperties(String moduleFileRelativePath) {
+  File file = new File(project.rootDir, "../../$moduleFileRelativePath")
+  if (!file.exists()) {
+    throw new GradleException("Cannot find $moduleFileRelativePath module: $file doesn't exist")
+  }
+
+  def root = new XmlParser().parse(file)
+  def rootManager = root.component?.find { it.@name == 'NewModuleRootManager'}
+  if (rootManager == null) {
+    throw new GradleException("Cannot find 'NewModuleRootManager' component in $file")
+  }
+  rootManager.orderEntry.findAll { it.@type == 'module-library' }.collect {
+    def libraryTag = it.library.first()
+    if (libraryTag.properties.isEmpty()) {
+      throw new GradleException("Library '${libraryTag.'@name'}' in $moduleFileRelativePath is not a repository library")
+    }
+    //noinspection GroovyAssignabilityCheck
+    loadLibraryProperties(libraryTag.properties.first())
+  }
+}
+
+private static Tuple2<String, Boolean> loadLibraryProperties(Node propertiesTag) {
   new Tuple2(propertiesTag.'@maven-id', propertiesTag.'@include-transitive-deps' != "false")
 }
