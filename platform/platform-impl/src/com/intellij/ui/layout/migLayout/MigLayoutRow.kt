@@ -4,6 +4,7 @@ package com.intellij.ui.layout.migLayout
 import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.laf.VisualPaddingsProvider
+import com.intellij.openapi.ui.ComponentWithBrowseButton
 import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.ui.SeparatorComponent
@@ -253,9 +254,16 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     }
   }
 
-  private fun setVisualPaddingsAndLabelTopGapIfNeed(component: JComponent) {
+  private fun setVisualPaddingsAndLabelTopGapIfNeed(originalComponent: JComponent) {
     if (!spacing.isCompensateVisualPaddings) {
       return
+    }
+
+    val component = if (originalComponent is ComponentWithBrowseButton<*>) {
+      originalComponent.childComponent
+    }
+    else {
+      originalComponent
     }
 
     val border = component.border
@@ -266,8 +274,8 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       return
     }
 
-    val paddings = (border as? VisualPaddingsProvider)?.getVisualPaddings(component) ?: return
-    component.putClientProperty(PlatformDefaults.VISUAL_PADDING_PROPERTY, paddings)
+    val paddings = (border as? VisualPaddingsProvider)?.getVisualPaddings(originalComponent) ?: return
+    originalComponent.putClientProperty(PlatformDefaults.VISUAL_PADDING_PROPERTY, paddings)
   }
 
   private fun shareCellWithPreviousComponentIfNeed(component: JComponent, componentCC: Lazy<CC>): Boolean {

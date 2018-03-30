@@ -157,6 +157,7 @@ public class MacComboBoxBorder extends MacIntelliJTextBorder {
   @Nullable
   @Override
   public Insets getVisualPaddings(@NotNull Component component) {
-    return JBUI.insets(3, 3, 3, 4);
+    int right = (component instanceof JComboBox<?> && !((JComboBox)component).isEditable()) ? 4 : 3;
+    return JBUI.insets(3, 3, 3, right);
   }
 }

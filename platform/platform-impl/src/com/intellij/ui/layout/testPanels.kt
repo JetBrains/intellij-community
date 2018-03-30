@@ -76,6 +76,7 @@ fun visualPaddingsPanel(): JPanel {
     row("CheckBox:") { CheckBox("enabled")() }
     row("RadioButton:") { JRadioButton("label")() }
     row("Spinner:") { JBIntSpinner(0, 0, 7)() }
+    row("Text with browse:") { textFieldWithBrowseButton("File") }
     // test text baseline alignment
     row("All:") {
       cell {

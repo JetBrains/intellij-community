@@ -4,6 +4,7 @@
 package com.intellij.ui.components
 
 import com.intellij.BundleBase
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.project.Project
@@ -179,6 +180,11 @@ fun <T : JComponent> installFileCompletionAndBrowseDialog(project: Project?,
                                                           fileChooserDescriptor: FileChooserDescriptor,
                                                           textComponentAccessor: TextComponentAccessor<T>,
                                                           fileChosen: ((chosenFile: VirtualFile) -> String)? = null) {
+  if (ApplicationManager.getApplication() == null) {
+    // tests
+    return
+  }
+
   component.addActionListener(
       object : BrowseFolderActionListener<T>(browseDialogTitle, null, component, project, fileChooserDescriptor, textComponentAccessor) {
         override fun onFileChosen(chosenFile: VirtualFile) {

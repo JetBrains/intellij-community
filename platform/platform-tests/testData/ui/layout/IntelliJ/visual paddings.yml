@@ -93,54 +93,67 @@ componentConstrains:
         min: *id012
         preferred: *id012
   'JBIntSpinner #15': {spanX: 2097051, wrap: true}
-  'All:':
+  'Text with browse:':
     vertical:
       gapBefore:
         max: &id013 {horizontal: false, value: 2.0}
         min: *id013
         preferred: *id013
-  'JTextField #17':
+  'TextFieldWithHistoryWithBrowseButton #17':
+    horizontal:
+      grow: 100.0
+      size:
+        min: {horizontal: true, value: 350.0}
+    spanX: 2097051
+    wrap: true
+  'All:':
+    vertical:
+      gapBefore:
+        max: &id014 {horizontal: false, value: 2.0}
+        min: *id014
+        preferred: *id014
+  'JTextField #19':
     horizontal: {grow: 100.0}
     split: 6
-  'JPasswordField #18':
+  'JPasswordField #20':
     horizontal:
       gapBefore:
-        min: &id014 {horizontal: true, value: 8.0}
-        preferred: *id014
-      size:
-        max: &id015 {horizontal: true, value: 250.0}
-        min: *id015
+        min: &id015 {horizontal: true, value: 8.0}
         preferred: *id015
-  'JComboBox #19':
-    horizontal:
-      gapBefore:
-        min: &id016 {horizontal: true, value: 8.0}
+      size:
+        max: &id016 {horizontal: true, value: 250.0}
+        min: *id016
         preferred: *id016
-      grow: 100.0
-  b:
+  'JComboBox #21':
     horizontal:
       gapBefore:
         min: &id017 {horizontal: true, value: 8.0}
         preferred: *id017
-  c:
+      grow: 100.0
+  b:
     horizontal:
       gapBefore:
         min: &id018 {horizontal: true, value: 8.0}
         preferred: *id018
-  rb:
+  c:
     horizontal:
       gapBefore:
         min: &id019 {horizontal: true, value: 8.0}
         preferred: *id019
+  rb:
+    horizontal:
+      gapBefore:
+        min: &id020 {horizontal: true, value: 8.0}
+        preferred: *id020
     spanX: 2097051
     wrap: true
   'Scroll pane:':
     vertical:
       gapBefore:
-        max: &id020 {horizontal: false, value: 1.0}
-        min: *id020
-        preferred: *id020
-  'JBScrollPane #24':
+        max: &id021 {horizontal: false, value: 1.0}
+        min: *id021
+        preferred: *id021
+  'JBScrollPane #26':
     horizontal: {grow: 100.0}
     pushY: 100.0
     spanX: 2097051
@@ -150,6 +163,6 @@ rectangles: '[0, 0, 124, 21], [130, 0, 519, 21], [0, 31, 124, 21], [130, 31, 519
   21], [0, 62, 124, 21], [130, 62, 519, 21], [0, 93, 124, 21], [130, 93, 519, 21],
   [0, 124, 124, 21], [130, 124, 519, 21], [0, 155, 124, 21], [130, 155, 519, 21],
   [0, 186, 124, 21], [130, 186, 519, 21], [0, 217, 124, 21], [130, 217, 519, 21],
-  [0, 248, 124, 21], [130, 248, 511, 21], [130, 248, 511, 21], [130, 248, 511, 21],
-  [130, 248, 511, 21], [130, 248, 511, 21], [130, 248, 511, 21], [0, 279, 124, 31],
-  [130, 279, 519, 31]'
+  [0, 248, 124, 20], [130, 248, 519, 20], [0, 278, 124, 21], [130, 278, 511, 21],
+  [130, 278, 511, 21], [130, 278, 511, 21], [130, 278, 511, 21], [130, 278, 511, 21],
+  [130, 278, 511, 21], [0, 309, 124, 21], [130, 309, 519, 21]'

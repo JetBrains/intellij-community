@@ -12,14 +12,15 @@ import net.miginfocom.swing.MigLayout
 import java.awt.Dimension
 import java.awt.GraphicsEnvironment
 import java.nio.file.Paths
+import javax.swing.JComboBox
 import javax.swing.UIManager
 import javax.swing.plaf.metal.MetalLookAndFeel
 
 object MigLayoutTestApp {
   @JvmStatic
   fun main(args: Array<String>) {
-//    val isDebugEnabled = true
-    val isDebugEnabled = false
+    val isDebugEnabled = true
+//    val isDebugEnabled = false
     @Suppress("ConstantConditionIf")
     if (isDebugEnabled) {
       LayoutUtil.setGlobalDebugMillis(1000)
@@ -35,6 +36,14 @@ object MigLayoutTestApp {
 //      val panel = cellPanel()
       val panel = visualPaddingsPanel()
 
+      val editableCombobox = JComboBox<String>(arrayOf("one", "two"))
+      editableCombobox.isEditable = true
+
+//      val panel = UI.PanelFactory.grid()
+//        .add(UI.PanelFactory.panel(JComboBox<String>(arrayOf("one", "two"))))
+//        .add(UI.PanelFactory.panel(editableCombobox))
+//        .createPanel()
+
       val dialog = dialog(
         title = "",
         panel = panel,
@@ -45,7 +54,9 @@ object MigLayoutTestApp {
       }
 
       panel.preferredSize = Dimension(50, 50)
-      Paths.get(System.getProperty("user.home"), "layout-dump.yml").write(configurationToJson(panel, panel.layout as MigLayout))
+      if (panel.layout is MigLayout) {
+        Paths.get(System.getProperty("user.home"), "layout-dump.yml").write(configurationToJson(panel, panel.layout as MigLayout))
+      }
 
       val screenDevices = GraphicsEnvironment.getLocalGraphicsEnvironment().screenDevices
       if (SystemInfoRt.isMac && screenDevices != null && screenDevices.size > 1) {
