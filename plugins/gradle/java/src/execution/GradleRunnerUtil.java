@@ -1,8 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.execution;
 
+import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.execution.Location;
-import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
@@ -57,7 +57,7 @@ public class GradleRunnerUtil {
   public static Location<PsiMethod> getTestMethod(final Location<?> location) {
     for (Iterator<Location<PsiMethod>> iterator = location.getAncestors(PsiMethod.class, false); iterator.hasNext(); ) {
       final Location<PsiMethod> methodLocation = iterator.next();
-      if (JUnitUtil.isTestMethod(methodLocation, false)) return methodLocation;
+      if (TestFrameworks.getInstance().isTestMethod(methodLocation.getPsiElement())) return methodLocation;
     }
     return null;
   }
