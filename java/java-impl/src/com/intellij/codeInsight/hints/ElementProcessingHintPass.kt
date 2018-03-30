@@ -41,12 +41,21 @@ abstract class ElementProcessingHintPass(
     }
   }
 
+  /**
+   * Returns true if this pass should be applied for current [virtualFile]
+   */
   abstract fun isAvailable(virtualFile: VirtualFile): Boolean
 
+  /**
+   * For current [element] collect hints information if it is possible
+   */
   abstract fun collectElementHints(element: PsiElement)
 
   abstract fun applyHintsToEditor()
 
+  /**
+   * Clear collected hint information
+   */
   abstract fun clearCollected()
 
   abstract val modificationStampHolder: ModificationStampHolder
