@@ -21,8 +21,8 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ConstructorUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.JavaPsiConstructorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,7 +60,7 @@ public class RefactoringChangeUtil {
     PsiManager manager = referenceExpression.getManager();
     PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(referenceExpression, PsiMethodCallExpression.class, true);
     while (methodCallExpression != null) {
-      if (ConstructorUtil.isConstructorCall(methodCallExpression)) {
+      if (JavaPsiConstructorUtil.isConstructorCall(methodCallExpression)) {
         return referenceExpression;
       }
       methodCallExpression = PsiTreeUtil.getParentOfType(methodCallExpression, PsiMethodCallExpression.class, true);

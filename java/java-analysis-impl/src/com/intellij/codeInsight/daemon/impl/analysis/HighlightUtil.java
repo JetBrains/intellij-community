@@ -44,7 +44,7 @@ import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.ConstructorUtil;
+import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashSet;
@@ -2056,7 +2056,7 @@ public class HighlightUtil extends HighlightUtilBase {
       type = qualifier instanceof PsiExpression ? ((PsiExpression)qualifier).getType() : null;
       referencedClass = PsiUtil.resolveClassInType(type);
 
-      boolean isSuperCall = ConstructorUtil.isSuperConstructorCall(expression.getParent());
+      boolean isSuperCall = JavaPsiConstructorUtil.isSuperConstructorCall(expression.getParent());
       if (resolved == null && isSuperCall) {
         if (qualifier instanceof PsiReferenceExpression) {
           resolved = ((PsiReferenceExpression)qualifier).resolve();
@@ -2151,7 +2151,7 @@ public class HighlightUtil extends HighlightUtilBase {
     PsiElement element = expression.getParent();
     while (element != null) {
       // check if expression inside super()/this() call
-      if (ConstructorUtil.isConstructorCall(element)) {
+      if (JavaPsiConstructorUtil.isConstructorCall(element)) {
         PsiElement parentClass = new PsiMatcherImpl(element)
           .parent(PsiMatchers.hasClass(PsiExpressionStatement.class))
           .parent(PsiMatchers.hasClass(PsiCodeBlock.class))
@@ -2243,8 +2243,8 @@ public class HighlightUtil extends HighlightUtilBase {
       return createMemberReferencedError(aClass.getName() + ".this", range);
     }
     for (PsiMethod constructor : constructors) {
-      PsiMethodCallExpression call = ConstructorUtil.findThisOrSuperCallInConstructor(constructor);
-      if (!ConstructorUtil.isSuperConstructorCall(call)) {
+      PsiMethodCallExpression call = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(constructor);
+      if (!JavaPsiConstructorUtil.isSuperConstructorCall(call)) {
         return createMemberReferencedError(aClass.getName() + ".this", HighlightNamesUtil.getMethodDeclarationTextRange(constructor));
       }
     }

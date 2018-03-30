@@ -38,7 +38,7 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
-import com.intellij.util.ConstructorUtil;
+import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -316,7 +316,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
 
   @Nullable
   private PsiElement findAnchorForLocalVariableDeclaration(PsiCodeBlock body) {
-    PsiMethodCallExpression call = ConstructorUtil.findThisOrSuperCallInConstructor(myMethod);
+    PsiMethodCallExpression call = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(myMethod);
     if (call != null) {
       return call.getParent();
     }

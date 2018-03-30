@@ -39,8 +39,8 @@ import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.ConstructorUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -171,8 +171,8 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
         final PsiMethod[] superConstructors = mySuperClass.getConstructors();
         for (PsiMethod constructor : targetClass.getConstructors()) {
           final PsiCodeBlock constrBody = constructor.getBody();
-          PsiMethodCallExpression call = ConstructorUtil.findThisOrSuperCallInConstructor(constructor);
-          if (ConstructorUtil.isSuperConstructorCall(call)) {
+          PsiMethodCallExpression call = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(constructor);
+          if (JavaPsiConstructorUtil.isSuperConstructorCall(call)) {
             final PsiMethod superConstructor = call.resolveMethod();
             if (superConstructor != null && superConstructor.getBody() != null) {
               usages.add(new InlineSuperCallUsageInfo(call));

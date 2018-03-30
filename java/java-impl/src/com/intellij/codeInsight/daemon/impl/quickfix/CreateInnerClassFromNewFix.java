@@ -20,7 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ConstructorUtil;
+import com.intellij.util.JavaPsiConstructorUtil;
 
 /**
  * @author yole
@@ -74,7 +74,7 @@ public class CreateInnerClassFromNewFix extends CreateClassFromNewFix {
     final PsiExpressionStatement expressionStatement = PsiTreeUtil.getParentOfType(newExpression, PsiExpressionStatement.class);
     if (expressionStatement != null) {
       final PsiExpression expression = expressionStatement.getExpression();
-      if (ConstructorUtil.isConstructorCall(expression)) {
+      if (JavaPsiConstructorUtil.isConstructorCall(expression)) {
         return true;
       }
     }

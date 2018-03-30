@@ -24,7 +24,7 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.ConstructorUtil;
+import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -159,8 +159,8 @@ public class JavaHighlightUtil {
   static void visitConstructorChain(@NotNull PsiMethod entry, @NotNull ConstructorVisitorInfo info) {
     PsiMethod constructor = entry;
     while (true) {
-      PsiMethodCallExpression methodCall = ConstructorUtil.findThisOrSuperCallInConstructor(constructor);
-      if (!ConstructorUtil.isChainedConstructorCall(methodCall)) return;
+      PsiMethodCallExpression methodCall = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(constructor);
+      if (!JavaPsiConstructorUtil.isChainedConstructorCall(methodCall)) return;
       PsiMethod method = methodCall.resolveMethod();
       if (method == null) return;
       if (info.visitedConstructors != null && info.visitedConstructors.contains(method)) {

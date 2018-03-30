@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashSet;
 import java.util.Set;
 
-public class ConstructorUtil {
+public class JavaPsiConstructorUtil {
   /**
    * Finds call to another constructor within this constructor (either chained or super)
    * @param constructor constructor to search in

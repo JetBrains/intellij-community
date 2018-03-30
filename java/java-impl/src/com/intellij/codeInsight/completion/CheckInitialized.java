@@ -22,7 +22,7 @@ import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ConstructorUtil;
+import com.intellij.util.JavaPsiConstructorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,7 +43,7 @@ class CheckInitialized implements ElementFilter {
   }
 
   static boolean isInsideConstructorCall(@NotNull PsiElement position) {
-    return ConstructorUtil.isConstructorCall(PsiTreeUtil.getParentOfType(position, PsiMethodCallExpression.class)) &&
+    return JavaPsiConstructorUtil.isConstructorCall(PsiTreeUtil.getParentOfType(position, PsiMethodCallExpression.class)) &&
            !JavaKeywordCompletion.AFTER_DOT.accepts(position);
   }
 

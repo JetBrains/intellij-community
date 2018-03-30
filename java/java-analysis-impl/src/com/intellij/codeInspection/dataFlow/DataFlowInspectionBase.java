@@ -97,8 +97,8 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
         List<DfaMemoryState> states = visitor.getEndOfInitializerStates();
         for (PsiMethod method : aClass.getConstructors()) {
           List<DfaMemoryState> initialStates;
-          PsiMethodCallExpression call = ConstructorUtil.findThisOrSuperCallInConstructor(method);
-          if (ConstructorUtil.isChainedConstructorCall(call) || (call == null && hasImplicitImpureSuperCall(aClass, method))) {
+          PsiMethodCallExpression call = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(method);
+          if (JavaPsiConstructorUtil.isChainedConstructorCall(call) || (call == null && hasImplicitImpureSuperCall(aClass, method))) {
             initialStates = Collections.singletonList(runner.createMemoryState());
           } else {
             initialStates = StreamEx.of(states).map(DfaMemoryState::createCopy).toList();

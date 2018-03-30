@@ -12,8 +12,8 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ConstructorUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.Query;
 import com.siyeh.HardcodedMethodConstants;
 import one.util.streamex.StreamEx;
@@ -325,7 +325,7 @@ public class MethodUtils {
       }
       else if (statement instanceof PsiExpressionStatement) {
         final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)statement;
-        if (!ConstructorUtil.isSuperConstructorCall(expressionStatement.getExpression())) {
+        if (!JavaPsiConstructorUtil.isSuperConstructorCall(expressionStatement.getExpression())) {
           return false;
         }
       }

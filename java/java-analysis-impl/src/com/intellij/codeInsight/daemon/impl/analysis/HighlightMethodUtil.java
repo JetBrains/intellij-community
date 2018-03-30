@@ -28,7 +28,7 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.*;
 import com.intellij.ui.ColorUtil;
-import com.intellij.util.ConstructorUtil;
+import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MostlySingularMultiMap;
@@ -1318,7 +1318,7 @@ public class HighlightMethodUtil {
 
   @Nullable
   static HighlightInfo checkConstructorCallMustBeFirstStatement(@NotNull PsiMethodCallExpression methodCall) {
-    if (!ConstructorUtil.isConstructorCall(methodCall)) return null;
+    if (!JavaPsiConstructorUtil.isConstructorCall(methodCall)) return null;
     PsiElement codeBlock = methodCall.getParent().getParent();
     if (codeBlock instanceof PsiCodeBlock
         && codeBlock.getParent() instanceof PsiMethod
@@ -1358,7 +1358,7 @@ public class HighlightMethodUtil {
     PsiCodeBlock body = constructor.getBody();
     if (body == null) return null;
 
-    if (ConstructorUtil.findThisOrSuperCallInConstructor(constructor) != null) return null;
+    if (JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(constructor) != null) return null;
     TextRange textRange = HighlightNamesUtil.getMethodDeclarationTextRange(constructor);
     PsiClassType[] handledExceptions = constructor.getThrowsList().getReferencedTypes();
     HighlightInfo info = HighlightClassUtil.checkBaseClassDefaultConstructorProblem(aClass, refCountHolder, resolveHelper, textRange, handledExceptions);

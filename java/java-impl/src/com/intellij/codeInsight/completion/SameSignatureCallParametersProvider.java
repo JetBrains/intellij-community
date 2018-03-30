@@ -30,8 +30,8 @@ import com.intellij.psi.impl.source.tree.java.PsiEmptyExpressionImpl;
 import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.LayeredIcon;
-import com.intellij.util.ConstructorUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
@@ -93,7 +93,7 @@ class SameSignatureCallParametersProvider extends CompletionProvider<CompletionP
 
   private static LookupElement createParametersLookupElement(final PsiMethod takeParametersFrom, PsiElement call, PsiMethod invoked) {
     final PsiParameter[] parameters = takeParametersFrom.getParameterList().getParameters();
-    final String lookupString = StringUtil.join(parameters, psiParameter -> psiParameter.getName(), ", ");
+    final String lookupString = StringUtil.join(parameters, PsiNamedElement::getName, ", ");
 
     final int w = PlatformIcons.PARAMETER_ICON.getIconWidth();
     LayeredIcon icon = new LayeredIcon(2);
@@ -131,8 +131,8 @@ class SameSignatureCallParametersProvider extends CompletionProvider<CompletionP
       results = new JavaResolveResult[]{expression.resolveMethodGenerics()};
     }
 
-    PsiMethod toExclude = ConstructorUtil.isConstructorCall(expression) ? PsiTreeUtil.getParentOfType(expression, PsiMethod.class)
-                                                                        : null;
+    PsiMethod toExclude =
+      JavaPsiConstructorUtil.isConstructorCall(expression) ? PsiTreeUtil.getParentOfType(expression, PsiMethod.class) : null;
 
     for (final JavaResolveResult candidate : results) {
       final PsiElement element = candidate.getElement();

@@ -25,7 +25,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.ConstructorUtil;
+import com.intellij.util.JavaPsiConstructorUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -271,7 +271,7 @@ public class ConditionalExpressionInspection extends BaseInspection {
         if (expressionContext && (ignoreExpressionContext || isVisibleHighlight(expression))) {
           return;
         }
-        registerError(expression, Boolean.valueOf(!expressionContext));
+        registerError(expression, !expressionContext);
       }
     }
 
@@ -290,7 +290,7 @@ public class ConditionalExpressionInspection extends BaseInspection {
       final PsiMethodCallExpression methodCallExpression =
         PsiTreeUtil.getParentOfType(expression, PsiMethodCallExpression.class, true,
                                     PsiLambdaExpression.class, PsiStatement.class, PsiMember.class);
-      return ConstructorUtil.isConstructorCall(methodCallExpression);
+      return JavaPsiConstructorUtil.isConstructorCall(methodCallExpression);
     }
   }
 }

@@ -34,7 +34,7 @@ import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ConstructorUtil;
+import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import gnu.trove.THashSet;
@@ -946,7 +946,7 @@ public class ExpectedTypesProvider {
         return ExpectedTypeInfo.EMPTY_ARRAY;
       }
 
-      PsiMethod toExclude = ConstructorUtil.isConstructorCall(argumentList.getParent())
+      PsiMethod toExclude = JavaPsiConstructorUtil.isConstructorCall(argumentList.getParent())
                             ? PsiTreeUtil.getParentOfType(argument, PsiMethod.class) : null;
 
       PsiResolveHelper helper = JavaPsiFacade.getInstance(myExpr.getProject()).getResolveHelper();

@@ -50,8 +50,8 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ConstructorUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -615,7 +615,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
             if (statements.length == 0) continue;
             if (statements.length == 1 && statements[0] instanceof PsiExpressionStatement) {
               final PsiExpression expression = ((PsiExpressionStatement)statements[0]).getExpression();
-              if (ConstructorUtil.isSuperConstructorCall(expression)) continue;
+              if (JavaPsiConstructorUtil.isSuperConstructorCall(expression)) continue;
             }
           }
         }
@@ -973,7 +973,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
         if (safeDeleteDelegate != null) {
           safeDeleteDelegate.createUsageInfoForParameter(reference, usages, parameter, method);
         }
-        if (!parameter.isVarArgs() && !ConstructorUtil.isSuperConstructorCall(element.getParent())) {
+        if (!parameter.isVarArgs() && !JavaPsiConstructorUtil.isSuperConstructorCall(element.getParent())) {
           final PsiParameter paramInCaller = SafeDeleteJavaCallerChooser.isTheOnlyOneParameterUsage(element.getParent(), parameterIndex, method);
           if (paramInCaller != null) {
             final PsiMethod callerMethod = (PsiMethod)paramInCaller.getDeclarationScope();
@@ -995,7 +995,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
       boolean isSafeDelete = false;
       if (element.getParent().getParent() instanceof PsiMethodCallExpression) {
         PsiMethodCallExpression call = (PsiMethodCallExpression)element.getParent().getParent();
-        if (ConstructorUtil.isSuperConstructorCall(call)) {
+        if (JavaPsiConstructorUtil.isSuperConstructorCall(call)) {
           isSafeDelete = true;
         }
         else if (call.getMethodExpression().getQualifierExpression() instanceof PsiSuperExpression) {
