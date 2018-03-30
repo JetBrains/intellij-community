@@ -18,8 +18,8 @@ import javax.swing.plaf.metal.MetalLookAndFeel
 object MigLayoutTestApp {
   @JvmStatic
   fun main(args: Array<String>) {
-    val isDebugEnabled = true
-//    val isDebugEnabled = false
+//    val isDebugEnabled = true
+    val isDebugEnabled = false
     @Suppress("ConstantConditionIf")
     if (isDebugEnabled) {
       LayoutUtil.setGlobalDebugMillis(1000)
@@ -27,8 +27,8 @@ object MigLayoutTestApp {
 
     runInEdtAndWait {
       UIManager.setLookAndFeel(MetalLookAndFeel())
-//      UIManager.setLookAndFeel(IntelliJLaf())
-      UIManager.setLookAndFeel(DarculaLaf())
+      UIManager.setLookAndFeel(IntelliJLaf())
+//      UIManager.setLookAndFeel(DarculaLaf())
 
 //      val panel = visualPaddingsPanelOnlyButton()
 //      val panel = alignFieldsInTheNestedGrid()
