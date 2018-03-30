@@ -1103,18 +1103,10 @@ public class PyUtil {
    * Counts initial underscores of an identifier.
    *
    * @param name identifier
-   * @return 0 if no initial underscores found, 1 if there's only one underscore, 2 if there's two or more initial underscores.
+   * @return 0 if null or no initial underscores found, 1 if there's only one underscore, 2 if there's two or more initial underscores.
    */
-  public static int getInitialUnderscores(String name) {
-    if (name == null) {
-      return 0;
-    }
-    int underscores = 0;
-    if (name.startsWith("__")) {
-      underscores = 2;
-    }
-    else if (name.startsWith("_")) underscores = 1;
-    return underscores;
+  public static int getInitialUnderscores(@Nullable String name) {
+    return name == null ? 0 : name.startsWith("__") ? 2 : name.startsWith(PyNames.UNDERSCORE) ? 1 : 0;
   }
 
   /**
