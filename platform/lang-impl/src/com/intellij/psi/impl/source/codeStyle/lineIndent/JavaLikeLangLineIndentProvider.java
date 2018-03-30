@@ -132,7 +132,7 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
           return myFactory.createIndentCalculator(NONE, position -> statementStart);
         }
       }
-      else if (getPosition(editor, offset).before().isAt(ArrayOpeningBracket)) {
+      else if (isInArray(editor, offset)) {
         return myFactory.createIndentCalculator(getIndentInBrackets(), IndentCalculator.LINE_BEFORE);
       }
       else if (getPosition(editor, offset).before().isAt(LeftParenthesis)) {
@@ -189,6 +189,18 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
     }
     //return myFactory.createIndentCalculator(NONE, IndentCalculator.LINE_BEFORE); /* TO CHECK UNCOVERED CASES */
     return null;
+  }
+
+  /**
+   * Checks that the current offset is inside array. By default it is assumed to be after opening array bracket
+   * but can be overridden for more complicated logic, for example, the following case in Java: []{&lt;caret&gt;}.
+   *
+   * @param editor The editor.
+   * @param offset The current offset in the editor.
+   * @return {@code true} if the position is inside array.
+   */
+  protected boolean isInArray(@NotNull Editor editor, int offset) {
+    return getPosition(editor, offset).before().isAt(ArrayOpeningBracket);
   }
 
   /**
