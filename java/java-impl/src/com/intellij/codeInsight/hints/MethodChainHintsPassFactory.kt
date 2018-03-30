@@ -21,7 +21,7 @@ class MethodChainHintsPassFactory(project: Project, registrar: TextEditorHighlig
   override fun createHighlightingPass(file: PsiFile, editor: Editor): TextEditorHighlightingPass? {
     if (editor.isOneLineMode
         || file !is PsiJavaFile
-        || AnnotationHintsPassFactory.LAST_PASS_MODIFICATION_TIMESTAMP.get(editor, 0) == ParameterHintsPassFactory.getCurrentModificationStamp(file)) return null
+        || modificationStampHolder.key.get(editor, 0) == ParameterHintsPassFactory.getCurrentModificationStamp(file)) return null
     return MethodChainHintsPass(modificationStampHolder, file, editor)
   }
 
