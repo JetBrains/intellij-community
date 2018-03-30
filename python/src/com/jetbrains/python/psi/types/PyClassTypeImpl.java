@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.types;
 
+import com.google.common.collect.Iterables;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
@@ -860,6 +861,72 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   @Override
   public boolean isValid() {
     return myClass.isValid();
+  }
+
+  @Override
+  public boolean isAttributeWritable(@NotNull String name, @NotNull TypeEvalContext context) {
+    if (isDefinition() || PyUtil.isObjectClass(getPyClass())) return true;
+
+    /*
+    The only difference between Py2 and Py3+ is that the following case is considered as writable in Py3+:
+
+    class A:
+        attr = "attr"
+        __slots__ = ("attr")
+
+    A().attr
+
+    Py3+ raises ValueError about conflict between __slots__ and class variable.
+    This case is handled in com.jetbrains.python.inspections.PyDunderSlotsInspection.Visitor.processSlot.
+    */
+    if (LanguageLevel.forElement(getPyClass()).isPython2()) {
+      return attributeIsWritableInPy2(name, context);
+    }
+    else {
+      return attributeIsWritableInPy3(name, context);
+    }
+  }
+
+  private boolean attributeIsWritableInPy2(@NotNull String name, @NotNull TypeEvalContext context) {
+    final List<String> slots = getPyClass().getSlots(context);
+    return slots == null ||
+           slots.contains(name) && getPyClass().findClassAttribute(name, true, context) == null ||
+           getPyClass().findProperty(name, true, context) != null;
+  }
+
+  private boolean attributeIsWritableInPy3(@NotNull String name, @NotNull TypeEvalContext context) {
+    boolean classAttrIsFound = false;
+    boolean slotIsFound = false;
+
+    for (PyClassLikeType type : Iterables.concat(Collections.singletonList(this), getAncestorTypes(context))) {
+      if (!(type instanceof PyClassType)) return true;
+
+      final PyClass cls = ((PyClassType)type).getPyClass();
+      if (PyUtil.isObjectClass(cls)) {
+        continue;
+      }
+
+      if (!cls.isNewStyleClass(context)) return true;
+
+      final List<String> ownSlots = cls.getOwnSlots();
+      if (ownSlots == null || ownSlots.contains(PyNames.DICT)) {
+        return true;
+      }
+
+      if (cls.findProperty(name, false, context) != null) {
+        return true;
+      }
+
+      if (!classAttrIsFound) {
+        classAttrIsFound = cls.findClassAttribute(name, false, context) != null;
+        if (ownSlots.contains(name)) {
+          if (classAttrIsFound) return true;
+          slotIsFound = true;
+        }
+      }
+    }
+
+    return slotIsFound && !classAttrIsFound;
   }
 
   @Nullable

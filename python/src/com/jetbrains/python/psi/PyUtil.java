@@ -1905,13 +1905,6 @@ public class PyUtil {
     }
   }
 
-  @Nullable
-  public static List<String> deactivateSlots(@NotNull PyClass cls, @Nullable List<String> slots, @NotNull TypeEvalContext context) {
-    if (!cls.isNewStyleClass(context)) return null;
-    if (slots == null || slots.contains(PyNames.DICT)) return null;
-    return slots;
-  }
-
   /**
    * This helper class allows to collect various information about AST nodes composing {@link PyStringLiteralExpression}.
    */

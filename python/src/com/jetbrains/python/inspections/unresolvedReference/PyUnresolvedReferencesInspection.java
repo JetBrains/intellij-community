@@ -128,9 +128,9 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
 
   public static class Visitor extends PyInspectionVisitor {
 
-    private final Set<PyImportedNameDefiner> myImportsInsideGuard = Collections.synchronizedSet(new HashSet<PyImportedNameDefiner>());
-    private final Set<PyImportedNameDefiner> myUsedImports = Collections.synchronizedSet(new HashSet<PyImportedNameDefiner>());
-    private final Set<PyImportedNameDefiner> myAllImports = Collections.synchronizedSet(new HashSet<PyImportedNameDefiner>());
+    private final Set<PyImportedNameDefiner> myImportsInsideGuard = Collections.synchronizedSet(new HashSet<>());
+    private final Set<PyImportedNameDefiner> myUsedImports = Collections.synchronizedSet(new HashSet<>());
+    private final Set<PyImportedNameDefiner> myAllImports = Collections.synchronizedSet(new HashSet<>());
     private final ImmutableSet<String> myIgnoredIdentifiers;
     private volatile Boolean myIsEnabled = null;
 
@@ -162,38 +162,15 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
 
     private void checkSlotsAndProperties(PyQualifiedExpression node) {
       final PyExpression qualifier = node.getQualifier();
-      if (qualifier != null) {
+      final String attrName = node.getReferencedName();
+      if (qualifier != null && attrName != null) {
         final PyType type = myTypeEvalContext.getType(qualifier);
-        if (type instanceof PyClassType) {
-          final PyClass pyClass = ((PyClassType)type).getPyClass();
-          final String attrName = node.getReferencedName();
-          if (attrName != null && !canHaveAttribute(pyClass, attrName)) {
-            for (PyClass ancestor : pyClass.getAncestorClasses(myTypeEvalContext)) {
-              if (ancestor == null) {
-                return;
-              }
-              if (PyUtil.isObjectClass(ancestor)) {
-                break;
-              }
-              if (canHaveAttribute(ancestor, attrName)) {
-                return;
-              }
-            }
-            final ASTNode nameNode = node.getNameElement();
-            final PsiElement e = nameNode != null ? nameNode.getPsi() : node;
-            registerProblem(e, "'" + pyClass.getName() + "' object has no attribute '" + attrName + "'");
-          }
+        if (type instanceof PyClassType && !((PyClassType)type).isAttributeWritable(attrName, myTypeEvalContext)) {
+          final ASTNode nameNode = node.getNameElement();
+          final PsiElement e = nameNode != null ? nameNode.getPsi() : node;
+          registerProblem(e, "'" + type.getName() + "' object has no attribute '" + attrName + "'");
         }
       }
-    }
-
-    private boolean canHaveAttribute(@NotNull PyClass cls, @NotNull String attrName) {
-      final List<String> slots = PyUtil.deactivateSlots(cls, cls.getOwnSlots(), myTypeEvalContext);
-
-      return slots == null ||
-             slots.contains(attrName) ||
-             cls.findClassAttribute(attrName, false, myTypeEvalContext) != null ||
-             cls.findProperty(attrName, false, myTypeEvalContext) != null;
     }
 
     @Override
