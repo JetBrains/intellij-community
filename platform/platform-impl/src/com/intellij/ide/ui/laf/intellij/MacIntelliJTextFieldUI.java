@@ -15,6 +15,7 @@ import java.awt.*;
  * @author Sergey Malenkov
  */
 public class MacIntelliJTextFieldUI extends DarculaTextFieldUI {
+  private static final int MACOS_LIGHT_INPUT_HEIGHT = 21;
   public static final int BW = 3;
   public static final int MACOS_LIGHT_INPUT_HEIGHT_TOTAL = MACOS_LIGHT_INPUT_HEIGHT + (BW * 2);
 
@@ -37,7 +38,7 @@ public class MacIntelliJTextFieldUI extends DarculaTextFieldUI {
 
   @Override
   protected int getMinimumHeightForTextField() {
-    return DarculaTextFieldUI.MACOS_LIGHT_INPUT_HEIGHT;
+    return JBUI.scale(MACOS_LIGHT_INPUT_HEIGHT);
   }
 
   @Override

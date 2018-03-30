@@ -14,7 +14,6 @@ import java.awt.geom.RoundRectangle2D;
  * @author Konstantin Bulenkov
  */
 public class DarculaTextFieldUI extends TextFieldWithPopupHandlerUI {
-  protected static final int MACOS_LIGHT_INPUT_HEIGHT = 21;
   protected static final int DARCULA_INPUT_HEIGHT = 24;
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
