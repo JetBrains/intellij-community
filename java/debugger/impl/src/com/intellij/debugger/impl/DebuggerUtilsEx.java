@@ -8,6 +8,7 @@ package com.intellij.debugger.impl;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.EvaluatingComputable;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.*;
@@ -436,6 +437,35 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     if (value instanceof ObjectReference) {
       ((SuspendContextImpl)context.getSuspendContext()).keep((ObjectReference)value);
     }
+  }
+
+  public static StringReference mirrorOfString(@NotNull String s, VirtualMachineProxyImpl virtualMachineProxy, EvaluationContext context)
+    throws EvaluateException {
+    return computeAndKeep(() -> virtualMachineProxy.mirrorOf(s), context);
+  }
+
+  public static ArrayReference mirrorOfArray(@NotNull ArrayType arrayType, int dimension, EvaluationContext context)
+    throws EvaluateException {
+    return computeAndKeep(() -> arrayType.newInstance(dimension), context);
+  }
+
+  public static <T extends Value> T computeAndKeep(EvaluatingComputable<T> computable, EvaluationContext context) throws EvaluateException {
+    T res;
+    int retries = 10;
+    do {
+      res = computable.compute();
+      try {
+        keep(res, context);
+      }
+      catch (ObjectCollectedException oce) {
+        if (--retries < 0) {
+          throw oce;
+        }
+        res = null; // collected already
+      }
+    }
+    while (res == null);
+    return res;
   }
 
   public abstract DebuggerTreeNode  getSelectedNode    (DataContext context);
