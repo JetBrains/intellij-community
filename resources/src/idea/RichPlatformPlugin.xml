@@ -171,8 +171,6 @@
                     serviceImplementation="com.intellij.compiler.options.ValidationConfiguration"/>
     <projectService serviceInterface="com.intellij.compiler.options.ValidationConfiguration$ExcludedFromValidationConfiguration"
                     serviceImplementation="com.intellij.compiler.options.ValidationConfiguration$ExcludedFromValidationConfiguration"/>
-    <projectService serviceInterface="com.intellij.openapi.roots.CompilerProjectExtension"
-                    serviceImplementation="com.intellij.openapi.roots.impl.CompilerProjectExtensionImpl"/>
     <projectService serviceInterface="com.intellij.compiler.CompilerEncodingService"
                     serviceImplementation="com.intellij.compiler.impl.CompilerEncodingServiceImpl"/>
 
@@ -341,8 +339,6 @@
 
     <applicationService serviceInterface="com.intellij.openapi.roots.ModifiableModelsProvider"
                         serviceImplementation="com.intellij.openapi.roots.IdeaModifiableModelsProvider"/>
-    <projectExtension implementation="com.intellij.openapi.roots.impl.CompilerProjectExtensionImpl$MyProjectExtension"/>
-    <roots.watchedRootsProvider implementation="com.intellij.openapi.roots.impl.CompilerProjectExtensionImpl$MyWatchedRootsProvider"/>
     <projectService serviceInterface="com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureProblemsSettings"
                     serviceImplementation="com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureProblemsSettingsImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureProblemsSettings"
