@@ -197,7 +197,8 @@ public final class TypeConstraint {
 
   private static Set<DfaPsiType> withSuper(Set<DfaPsiType> instanceofValues) {
     return StreamEx.of(instanceofValues)
-                   .flatMap(type -> StreamEx.of(type.getPsiType().getSuperTypes()).map(type.getFactory()::createDfaType).append(type))
+                   .flatMap(type -> StreamEx.ofTree(type.getPsiType(), t -> StreamEx.of(t.getSuperTypes()))
+                                            .map(type.getFactory()::createDfaType))
                    .toSet();
   }
 
