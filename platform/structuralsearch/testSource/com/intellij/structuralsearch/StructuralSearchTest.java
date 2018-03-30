@@ -1720,23 +1720,27 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                  "  @Foo(value2=baz4) int a9;\n" +
                  "  @Foo int a10;\n" +
                  "}";
-    assertEquals("Find anno parameter value", 1, findMatchesCount(s11, "@Foo(value=baz) int 'a;"));
-    assertEquals("Find anno parameter value", 2, findMatchesCount(s11, "@Foo(value='baz:baz2 ) int '_a;"));
-    assertEquals("Find anno parameter value", 3, findMatchesCount(s11, "@Foo('value:value2 = baz3 ) int '_a;"));
-    assertEquals("Find anno parameter value", 3, findMatchesCount(s11, "@Foo('value:value2 = '_baz3:baz3 ) int '_a;"));
-    assertEquals("Find anno parameter value", 0, findMatchesCount(s11, "@Foo('value:value2 = '_baz3:baz ) int '_a;"));
-    assertEquals("Find anno parameter value", 6, findMatchesCount(s11, "@Foo('value:value2 = '_baz3 ) int '_a;"));
+    assertEquals("Find anno parameter value 1", 1, findMatchesCount(s11, "@Foo(value=baz) int 'a;"));
+    assertEquals("Find anno parameter value 2", 2, findMatchesCount(s11, "@Foo(value='_value:baz2 ) int '_a;"));
+    assertEquals("Find anno parameter value 3", 2, findMatchesCount(s11, "@Foo('_name:value ='_value:baz2 ) int '_a;"));
+    assertEquals("Find anno parameter value 4", 3, findMatchesCount(s11, "@Foo('_name:value2 = baz3 ) int '_a;"));
+    assertEquals("Find anno parameter value 5", 3, findMatchesCount(s11, "@Foo('_name:value2 = '_value:baz3 ) int '_a;"));
+    assertEquals("Find anno parameter value 6", 0, findMatchesCount(s11, "@Foo('_name:value2 = '_value:baz ) int '_a;"));
+    assertEquals("Find anno parameter value 7", 6, findMatchesCount(s11, "@Foo('_name:value2 = '_value ) int '_a;"));
+    assertEquals("Find anno parameter value 8", 9, findMatchesCount(s11, "@Foo('_name = '_value ) int '_a;"));
     try {
-      findMatchesCount(s11, "@Foo('value:value2 = ) int '_a;");
+      findMatchesCount(s11, "@Foo('_name:value2 = ) int '_a;");
       fail("should report missing value");
     } catch (MalformedPatternException ignored) {}
     assertEquals("Match anno parameter name", 6, findMatchesCount(s11, "@Foo(value2='_value)"));
     assertEquals("Match anno parameter name 2", 3, findMatchesCount(s11, "@Foo(value='_value)"));
-    assertEquals("Match anno parameter value only", 4, findMatchesCount(s11, "@Foo(baz2)"));
-    assertEquals("Match all anno parameters", 9, findMatchesCount(s11, "@Foo('_any)"));
-    assertEquals("Match all annotations", 10, findMatchesCount(s11, "@Foo('_any*)"));
-    // todo
-    //assertEquals("Match annotations without parameters", 1, findMatchesCount(s11, "@Foo('_any{0,0})"));
+    assertEquals("Match value anno parameter only", 2, findMatchesCount(s11, "@Foo(baz2)"));
+    assertEquals("Match value anno parameters", 3, findMatchesCount(s11, "@Foo('_value)"));
+    assertEquals("Match all annotations", 10, findMatchesCount(s11, "@Foo('_value*)"));
+    assertEquals("Match annotations without parameters", 1, findMatchesCount(s11, "@Foo('_name{0,0}='_v)"));
+
+    String s12 = "@X(value=1, x=2) @Y(1) @Z(x=0, y=0, z=0) @W(2) @V(x=0, y=0, z=0) class One {}";
+    assertEquals("Match annotations with two parameters", 1, findMatchesCount(s12, "@'_anno('_name{2,2}='_v)"));
 
     String source1 = "class A {" +
                      "  void m() {" +

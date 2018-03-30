@@ -284,23 +284,38 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
   @Override
   public void visitNameValuePair(PsiNameValuePair pair) {
-    final PsiNameValuePair elementNameValuePair = (PsiNameValuePair)myMatchingVisitor.getElement();
+    final PsiNameValuePair other = (PsiNameValuePair)myMatchingVisitor.getElement();
 
-    final PsiAnnotationMemberValue value = pair.getValue();
-    if (myMatchingVisitor.setResult(myMatchingVisitor.match(value, elementNameValuePair.getValue()))) {
-      final PsiIdentifier nameIdentifier = pair.getNameIdentifier();
-      if (nameIdentifier != null) {
-        final PsiIdentifier otherIdentifier = elementNameValuePair.getNameIdentifier();
-        final MatchingHandler handler = myMatchingVisitor.getMatchContext().getPattern().getHandler(nameIdentifier);
-        if (handler instanceof SubstitutionHandler) {
-          myMatchingVisitor.setResult(((SubstitutionHandler)handler).handle(otherIdentifier, myMatchingVisitor.getMatchContext()));
+    final MatchContext context = myMatchingVisitor.getMatchContext();
+    final PsiIdentifier nameIdentifier = pair.getNameIdentifier();
+    final boolean isTypedVar = context.getPattern().isTypedVar(nameIdentifier);
+    if (nameIdentifier != null) context.pushResult();
+    final PsiIdentifier otherIdentifier = other.getNameIdentifier();
+    try {
+      final PsiAnnotationMemberValue value = pair.getValue();
+      if (myMatchingVisitor.setResult(myMatchingVisitor.match(value, other.getValue()))) {
+        if (nameIdentifier != null) {
+          myMatchingVisitor.setResult(isTypedVar ||
+            myMatchingVisitor.matchText(nameIdentifier.getText(),
+                                        otherIdentifier == null ? PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME : otherIdentifier.getText()));
         }
         else {
-          myMatchingVisitor.setResult(
-            (PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.equals(nameIdentifier.getText()) && otherIdentifier == null) ||
-            myMatchingVisitor.match(nameIdentifier, otherIdentifier));
+          myMatchingVisitor.setResult(otherIdentifier == null ||
+                                      PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.equals(otherIdentifier.getText()));
         }
       }
+    } finally {
+      final PsiIdentifier matchNode;
+      if (otherIdentifier != null) {
+        matchNode = otherIdentifier;
+      }
+      else {
+        final PsiElementFactory factory = JavaPsiFacade.getElementFactory(other.getProject());
+        final PsiAnnotation annotation =
+          (PsiAnnotation)factory.createStatementFromText("@Anno(value=\"\")", other).getFirstChild().getFirstChild();
+        matchNode = annotation.getParameterList().getAttributes()[0].getNameIdentifier();
+      }
+      if (nameIdentifier != null) saveOrDropResult(nameIdentifier, isTypedVar, matchNode);
     }
   }
 
