@@ -1,12 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints
 
-import com.intellij.application.options.editor.CodeFoldingOptionsProvider
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.options.BeanConfigurable
 
-class MethodChainHintsConfigurable : BeanConfigurable<CodeInsightSettings>(CodeInsightSettings.getInstance()), CodeFoldingOptionsProvider {
+class MethodChainHintsConfigurable : BeanConfigurable<CodeInsightSettings>(CodeInsightSettings.getInstance()) {
   init {
     val settings = instance
 
