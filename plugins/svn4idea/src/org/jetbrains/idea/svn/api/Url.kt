@@ -8,6 +8,8 @@ import org.jetbrains.idea.svn.commandLine.SvnBindException
 import java.net.URI
 import java.net.URISyntaxException
 
+private const val FILE_URL_PREFIX = "file:/"
+
 class Url private constructor(innerUri: URI) {
   private val uri = fixDefaultPort(innerUri)
 
@@ -47,8 +49,12 @@ class Url private constructor(innerUri: URI) {
 
   override fun hashCode() = uri.hashCode()
 
-  override fun toString() = uri.toASCIIString().removeSuffix("/")
+  override fun toString() = fixFileUrlToString(uri.toASCIIString().removeSuffix("/"))
   fun toDecodedString() = URLUtil.unescapePercentSequences(toString())
+
+  private fun fixFileUrlToString(url: String) = if (url.startsWith(FILE_URL_PREFIX) && !url.startsWith(
+      "$FILE_URL_PREFIX/")) "$FILE_URL_PREFIX//${url.substring(FILE_URL_PREFIX.length)}"
+  else url
 
   companion object {
     @JvmField
