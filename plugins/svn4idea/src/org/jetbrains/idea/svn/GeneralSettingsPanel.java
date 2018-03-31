@@ -111,7 +111,7 @@ public class GeneralSettingsPanel implements ConfigurableUi<SvnConfiguration> {
 
     applicationSettings17.setCommandLinePath(myCommandLineClient.getText().trim());
     boolean isClientValid = vcs17.checkCommandLineVersion();
-    if (isClientValid && reloadWorkingCopies) {
+    if (!myProject.isDefault() && isClientValid && reloadWorkingCopies) {
       vcs17.invokeRefreshSvnRoots();
       VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     }
