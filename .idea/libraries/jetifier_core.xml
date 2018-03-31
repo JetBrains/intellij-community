@@ -2,7 +2,7 @@
   <library name="jetifier-core" type="repository">
     <properties maven-id="com.android.tools.build.jetifier:jetifier-core:0.0.1" />
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/m2/repository/com/android/tools/build/jetifier/jetifier-core/0.0.1/jetifier-core-0.0.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/android/tools/build/jetifier/jetifier-core/0.0.1/jetifier-core-0.0.1.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />
