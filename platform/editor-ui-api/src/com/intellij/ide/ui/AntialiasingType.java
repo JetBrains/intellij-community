@@ -3,7 +3,6 @@
  */
 package com.intellij.ide.ui;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.ui.GraphicsUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,7 +24,7 @@ public enum AntialiasingType {
   }
 
   public static Object getKeyForCurrentScope(boolean inEditor) {
-    UISettings uiSettings = ApplicationManager.getApplication() == null ? null : UISettings.getInstance();
+    UISettings uiSettings = UISettings.getInstanceOrNull();
     if (uiSettings != null) {
       AntialiasingType type = inEditor ? uiSettings.getEditorAAType() : uiSettings.getIdeAAType();
       return type.myHint;
