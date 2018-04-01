@@ -1318,11 +1318,14 @@ public class AllIcons {
     public static final Icon Arrow_right = IconLoader.getIcon("/vcs/arrow_right.png"); // 16x16
     public static final Icon CheckSpelling = IconLoader.getIcon("/vcs/checkSpelling.png"); // 16x16
     public static final Icon Equal = IconLoader.getIcon("/vcs/equal.png"); // 16x16
+    public static final Icon Favorite = IconLoader.getIcon("/vcs/favorite.png"); // 16x16
+    public static final Icon FavoriteOnHover = IconLoader.getIcon("/vcs/favoriteOnHover.png"); // 16x16
     public static final Icon History = IconLoader.getIcon("/vcs/history.png"); // 16x16
     public static final Icon MapBase = IconLoader.getIcon("/vcs/mapBase.png"); // 16x16
     public static final Icon Merge = IconLoader.getIcon("/vcs/merge.png"); // 12x12
     public static final Icon MergeSourcesTree = IconLoader.getIcon("/vcs/mergeSourcesTree.png"); // 16x16
     public static final Icon Not_equal = IconLoader.getIcon("/vcs/not_equal.png"); // 16x16
+    public static final Icon NotFavoriteOnHover = IconLoader.getIcon("/vcs/notFavoriteOnHover.png"); // 16x16
     public static final Icon Patch = IconLoader.getIcon("/vcs/patch.png"); // 16x16
     public static final Icon Patch_applied = IconLoader.getIcon("/vcs/patch_applied.png"); // 16x16
     public static final Icon Push = IconLoader.getIcon("/vcs/push.png"); // 16x16

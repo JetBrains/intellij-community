@@ -20,7 +20,7 @@ import javax.swing.*;
 import java.awt.*;
 
 public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
-  private final ListPopupImpl myPopup;
+  protected final ListPopupImpl myPopup;
   private JLabel myShortcutLabel;
 
   public PopupListElementRenderer(final ListPopupImpl aPopup) {
