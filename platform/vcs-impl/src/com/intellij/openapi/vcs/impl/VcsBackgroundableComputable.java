@@ -23,22 +23,21 @@ import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class VcsBackgroundableComputable<T> extends Task.Backgroundable {
-  private final String myErrorTitle;
-
-  private boolean mySilent;
+  @NotNull private final ThrowableComputable<T, VcsException> myBackgroundable;
   @NotNull private final BackgroundableActionLock myLock;
-  private final ThrowableComputable<T, VcsException> myBackgroundable;
-  private final Consumer<T> myAwtSuccessContinuation;
+  @NotNull private final Consumer<T> myAwtSuccessContinuation;
+
+  @Nullable private final String myErrorTitle;
 
   private VcsException myException;
   private T myResult;
 
-  public VcsBackgroundableComputable(final Project project, final String title,
-                                     final String errorTitle,
-                                     final ThrowableComputable<T, VcsException> backgroundable,
-                                     final Consumer<T> awtSuccessContinuation,
+  public VcsBackgroundableComputable(@NotNull Project project, @NotNull String title, @Nullable String errorTitle,
+                                     @NotNull ThrowableComputable<T, VcsException> backgroundable,
+                                     @NotNull Consumer<T> awtSuccessContinuation,
                                      @NotNull BackgroundableActionLock lock) {
     super(project, title, true);
     myErrorTitle = errorTitle;
@@ -65,9 +64,7 @@ public class VcsBackgroundableComputable<T> extends Task.Backgroundable {
   public void onSuccess() {
     commonFinish();
     if (myException == null) {
-      if (myAwtSuccessContinuation != null) {
-        myAwtSuccessContinuation.consume(myResult);
-      }
+      myAwtSuccessContinuation.consume(myResult);
     }
   }
 
@@ -80,12 +77,8 @@ public class VcsBackgroundableComputable<T> extends Task.Backgroundable {
   private void commonFinish() {
     myLock.unlock();
 
-    if ((!mySilent) && (myException != null)) {
+    if (myErrorTitle != null && myException != null) {
       AbstractVcsHelper.getInstance(getProject()).showError(myException, myErrorTitle);
     }
-  }
-
-  public void setSilent(boolean silent) {
-    mySilent = silent;
   }
 }

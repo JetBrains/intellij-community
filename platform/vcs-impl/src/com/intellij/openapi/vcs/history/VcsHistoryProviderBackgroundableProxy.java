@@ -77,10 +77,9 @@ public class VcsHistoryProviderBackgroundableProxy {
     };
   }
 
-  public void createSessionFor(final VcsKey vcsKey, final FilePath filePath, final Consumer<VcsHistorySession> continuation,
-                               @NotNull VcsBackgroundableActions actionKey,
-                               final boolean silent,
-                               @Nullable final Consumer<VcsHistorySession> backgroundSpecialization) {
+  public void createSessionFor(@NotNull VcsKey vcsKey, @NotNull FilePath filePath, @NotNull Consumer<VcsHistorySession> continuation,
+                               @NotNull VcsBackgroundableActions actionKey, boolean silent,
+                               @Nullable Consumer<VcsHistorySession> backgroundSpecialization) {
     ThrowableComputable<VcsHistorySession, VcsException> throwableComputable =
       myHistoryComputerFactory.create(filePath, backgroundSpecialization, vcsKey);
 
@@ -93,7 +92,6 @@ public class VcsHistoryProviderBackgroundableProxy {
 
     VcsBackgroundableComputable<VcsHistorySession> computable =
       new VcsBackgroundableComputable<>(myProject, title, errorTitle, throwableComputable, continuation, lock);
-    computable.setSilent(silent);
     lock.lock();
     ProgressManager.getInstance().run(computable);
   }
