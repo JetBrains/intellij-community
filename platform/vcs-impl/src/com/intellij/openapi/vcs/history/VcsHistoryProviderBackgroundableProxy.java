@@ -126,7 +126,7 @@ public class VcsHistoryProviderBackgroundableProxy {
     if (lock.isLocked()) return;
     lock.lock();
 
-    final VcsAppendableHistorySessionPartner cachedPartner;
+    VcsAppendableHistorySessionPartner cachedPartner = partner;
     if (myCachesHistory && startRevisionNumber == null) {
       cachedPartner = new HistoryPartnerProxy(partner, session -> {
         if (session == null) return;
@@ -136,9 +136,7 @@ public class VcsHistoryProviderBackgroundableProxy {
         myVcsHistoryCache.put(filePath, correctedPath, vcsKey, (VcsAbstractHistorySession)session.copy(), delegate, true);
       });
     }
-    else {
-      cachedPartner = partner;
-    }
+
     reportHistory(filePath, startRevisionNumber, vcsKey, lock, cachedPartner, canUseLastRevisionCheck);
   }
 
