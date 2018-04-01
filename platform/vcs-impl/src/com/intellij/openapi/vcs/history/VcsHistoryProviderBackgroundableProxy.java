@@ -81,14 +81,21 @@ public class VcsHistoryProviderBackgroundableProxy {
                                @NotNull VcsBackgroundableActions actionKey,
                                final boolean silent,
                                @Nullable final Consumer<VcsHistorySession> backgroundSpecialization) {
-    final ThrowableComputable<VcsHistorySession, VcsException> throwableComputable =
+    ThrowableComputable<VcsHistorySession, VcsException> throwableComputable =
       myHistoryComputerFactory.create(filePath, backgroundSpecialization, vcsKey);
-    final Object key = VcsBackgroundableActions.keyFrom(filePath);
 
-    VcsBackgroundableComputable.createAndRun(myProject, actionKey, key, VcsBundle.message("loading.file.history.progress"),
-                                             silent ? null : VcsBundle.message("message.title.could.not.load.file.history"),
-                                             throwableComputable,
-                                             continuation, silent);
+    String title = VcsBundle.message("loading.file.history.progress");
+    String errorTitle = silent ? null : VcsBundle.message("message.title.could.not.load.file.history");
+
+    Object key = VcsBackgroundableActions.keyFrom(filePath);
+    BackgroundableActionLock lock = BackgroundableActionLock.getLock(myProject, actionKey, key);
+    if (lock.isLocked()) return;
+
+    VcsBackgroundableComputable<VcsHistorySession> computable =
+      new VcsBackgroundableComputable<>(myProject, title, errorTitle, throwableComputable, continuation, lock);
+    computable.setSilent(silent);
+    lock.lock();
+    ProgressManager.getInstance().run(computable);
   }
 
   public void executeAppendableSession(final VcsKey vcsKey, final FilePath filePath, final VcsAppendableHistorySessionPartner partner,

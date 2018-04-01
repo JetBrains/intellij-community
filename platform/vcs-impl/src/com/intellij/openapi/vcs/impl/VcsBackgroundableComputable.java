@@ -16,7 +16,6 @@
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -24,7 +23,6 @@ import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class VcsBackgroundableComputable<T> extends Task.Backgroundable {
   private final String myErrorTitle;
@@ -37,33 +35,16 @@ public class VcsBackgroundableComputable<T> extends Task.Backgroundable {
   private VcsException myException;
   private T myResult;
 
-  private VcsBackgroundableComputable(final Project project, final String title,
-                                      final String errorTitle,
-                                      final ThrowableComputable<T, VcsException> backgroundable,
-                                      final Consumer<T> awtSuccessContinuation,
-                                      @NotNull BackgroundableActionLock lock) {
+  public VcsBackgroundableComputable(final Project project, final String title,
+                                     final String errorTitle,
+                                     final ThrowableComputable<T, VcsException> backgroundable,
+                                     final Consumer<T> awtSuccessContinuation,
+                                     @NotNull BackgroundableActionLock lock) {
     super(project, title, true);
     myErrorTitle = errorTitle;
     myBackgroundable = backgroundable;
     myAwtSuccessContinuation = awtSuccessContinuation;
     myLock = lock;
-  }
-
-  public static <T> void createAndRun(final Project project, @Nullable final VcsBackgroundableActions actionKey,
-                                      @Nullable final Object actionParameter,
-                                      final String title,
-                                      final String errorTitle,
-                                      final ThrowableComputable<T, VcsException> backgroundable,
-                                      @Nullable final Consumer<T> awtSuccessContinuation,
-                                      final boolean silent) {
-    BackgroundableActionLock lock = BackgroundableActionLock.getLock(project, actionKey, actionParameter);
-    if (lock.isLocked()) return;
-
-    VcsBackgroundableComputable<T> computable = new VcsBackgroundableComputable<>(project, title, errorTitle, backgroundable,
-                                                                                  awtSuccessContinuation, lock);
-    computable.setSilent(silent);
-    lock.lock();
-    ProgressManager.getInstance().run(computable);
   }
 
   public void run(@NotNull ProgressIndicator indicator) {
