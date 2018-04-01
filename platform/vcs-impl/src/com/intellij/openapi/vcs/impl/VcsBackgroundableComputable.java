@@ -20,6 +20,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
@@ -130,7 +131,7 @@ public class VcsBackgroundableComputable<T> extends Task.Backgroundable {
     myLock.unlock();
 
     if ((!mySilent) && (myException != null)) {
-      AbstractVcsHelperImpl.getInstance(getProject()).showError(myException, myErrorTitle);
+      AbstractVcsHelper.getInstance(getProject()).showError(myException, myErrorTitle);
     }
   }
 
