@@ -29,7 +29,6 @@ public class VcsBackgroundableComputable<T> extends Task.Backgroundable {
   private final String myErrorTitle;
 
   private boolean mySilent;
-  private final Project myProject;
   @NotNull private final BackgroundableActionLock myLock;
   private final ThrowableComputable<T, VcsException> myBackgroundable;
 
@@ -50,7 +49,6 @@ public class VcsBackgroundableComputable<T> extends Task.Backgroundable {
     myBackgroundable = backgroundable;
     myAwtSuccessContinuation = awtSuccessContinuation;
     myAwtErrorContinuation = awtErrorContinuation;
-    myProject = project;
     myLock = lock;
   }
 
@@ -132,7 +130,7 @@ public class VcsBackgroundableComputable<T> extends Task.Backgroundable {
     myLock.unlock();
 
     if ((!mySilent) && (myException != null)) {
-      AbstractVcsHelperImpl.getInstance(myProject).showError(myException, myErrorTitle);
+      AbstractVcsHelperImpl.getInstance(getProject()).showError(myException, myErrorTitle);
     }
   }
 
