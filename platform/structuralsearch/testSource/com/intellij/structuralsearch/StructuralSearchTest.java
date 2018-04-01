@@ -925,6 +925,12 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       fail("Catch RuntimeExceptions from Groovy runtime");
     }
 
+    String source3 = "class X {{" +
+                     "  new String();" +
+                     "}}";
+    assertEquals("Variables initialized to null even when not present in search results", 1,
+                 findMatchesCount(source3, "[script(\"args == null\")]new String('_args*)"));
+
   }
 
   public void testCheckScriptValidation() {
@@ -967,32 +973,13 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
   }
 
   public void testInterfaceImplementationsSearch() {
-    String in = "class A implements Cloneable {\n" +
-                "    \n" +
-                "  }\n" +
-                "  \n" +
-                "  class B implements Serializable {\n" +
-                "    \n" +
-                "  }\n" +
-                "  \n" +
-                "  class C implements Cloneable,Serializable {\n" +
-                "    \n" +
-                "  }\n" +
-                "  class C2 implements Serializable,Cloneable {\n" +
-                "    \n" +
-                "  }\n" +
-                "  \n" +
-                "  class E extends B implements Cloneable {\n" +
-                "    \n" +
-                "  }\n" +
-                "  \n" +
-                "  class F extends A implements Serializable {\n" +
-                "    \n" +
-                "  }\n" +
-                "  \n" +
-                "  class D extends C {\n" +
-                "    \n" +
-                "  }";
+    String in = "class A implements Cloneable {}" +
+                "class B implements Serializable {}" +
+                "class C implements Cloneable,Serializable {}" +
+                "class C2 implements Serializable,Cloneable {}" +
+                "class E extends B implements Cloneable {}" +
+                "class F extends A implements Serializable {}" +
+                "class D extends C {}";
     assertEquals("search interface within hierarchy", 5,
                  findMatchesCount(in, "class 'A implements '_B:*Serializable , '_C:*Cloneable {}"));
   }

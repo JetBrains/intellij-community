@@ -22,10 +22,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Maxim.Mossienko
@@ -41,10 +38,12 @@ public class ScriptSupport {
   private final Script script;
   private final ScriptLog myScriptLog;
   private final String myName;
+  private final Collection<String> myVariableNames;
 
-  public ScriptSupport(Project project, String text, String name) {
+  public ScriptSupport(Project project, String text, String name, Collection<String> variableNames) {
     myScriptLog = new ScriptLog(project);
     myName = name;
+    myVariableNames = variableNames;
     final GroovyShell shell = new GroovyShell();
     try {
       final File scriptFile = new File(text);
@@ -87,6 +86,7 @@ public class ScriptSupport {
   public String evaluate(MatchResult result, PsiElement context) {
     try {
       final HashMap<String, Object> variableMap = new HashMap<>();
+      myVariableNames.forEach(n -> variableMap.put(n, null));
       variableMap.put(ScriptLog.SCRIPT_LOG_VAR_NAME, myScriptLog);
       if (result != null) {
         buildVariableMap(result.getRoot(), variableMap);
