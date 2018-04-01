@@ -12,9 +12,9 @@ import org.yaml.snakeyaml.introspector.Property
 import org.yaml.snakeyaml.nodes.NodeTuple
 import org.yaml.snakeyaml.nodes.Tag
 import org.yaml.snakeyaml.representer.Representer
+import java.awt.Container
 import javax.swing.AbstractButton
 import javax.swing.JLabel
-import javax.swing.JPanel
 
 private val filter by lazy {
   object : Representer() {
@@ -78,8 +78,17 @@ private val filter by lazy {
   }
 }
 
+private fun dumpComponentBounds(layout: MigLayout): Any {
+  val gridField = MigLayout::class.java.getDeclaredField("grid")
+  gridField.isAccessible = true
+  return MigLayoutTestUtil.getRectangles(gridField.get(layout) as Grid)
+}
+
 @Suppress("UNCHECKED_CAST")
-fun configurationToJson(component: JPanel, layout: MigLayout, rectangles: String? = null): String {
+internal fun serializeLayout(component: Container, isIncludeBounds: Boolean = true): String {
+  val layout = component.layout as MigLayout
+  val rectangles = if (isIncludeBounds) dumpComponentBounds(layout) else null
+
   val componentConstrains = LinkedHashMap<String, Any>()
   for ((index, c) in component.components.withIndex()) {
     var key = "${c.javaClass.simpleName} #${index}"
@@ -101,9 +110,10 @@ fun configurationToJson(component: JPanel, layout: MigLayout, rectangles: String
     "rowConstraints" to layout.rowConstraints,
     "columnConstraints" to layout.columnConstraints,
     "componentConstrains" to componentConstrains,
-    "rectangles" to rectangles
+    "bounds" to rectangles
   ))
     .replace("constaints", "constraints")
     .replace(" !!net.miginfocom.layout.CC", "")
     .replace(" !!net.miginfocom.layout.AC", "")
+    .replace(" !!net.miginfocom.layout.LC", "")
 }

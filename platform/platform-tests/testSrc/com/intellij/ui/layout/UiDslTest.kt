@@ -1,41 +1,22 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.layout
 
-import com.intellij.ide.ui.laf.IntelliJLaf
-import com.intellij.ide.ui.laf.darcula.DarculaLaf
 import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
-import com.intellij.testFramework.assertions.Assertions
-import com.intellij.util.io.exists
-import com.intellij.util.io.outputStream
-import com.intellij.util.io.sanitizeFileName
-import com.intellij.util.io.write
-import com.intellij.util.ui.UIUtil
-import io.netty.util.internal.SystemPropertyUtil
-import net.miginfocom.layout.Grid
+import com.intellij.ui.*
 import net.miginfocom.layout.LayoutUtil
-import net.miginfocom.swing.MigLayout
-import org.assertj.core.data.Offset
-import org.assertj.swing.assertions.Assertions.assertThat
 import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestName
-import java.awt.BorderLayout
-import java.awt.Component
-import java.awt.Dimension
-import java.awt.GraphicsEnvironment
-import java.awt.image.BufferedImage
-import java.nio.file.Path
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
+import java.io.File
 import java.nio.file.Paths
-import javax.imageio.ImageIO
-import javax.swing.JFrame
 import javax.swing.JPanel
-import javax.swing.UIManager
-import javax.swing.plaf.metal.MetalLookAndFeel
 import kotlin.properties.Delegates
 
 /**
@@ -44,43 +25,31 @@ import kotlin.properties.Delegates
  * Checkout git@github.com:develar/intellij-ui-dsl-test-snapshots.git (or create own repo) to some local dir and set env LAYOUT_IMAGE_REPO
  * to use image snapshots.
  */
-open class UiDslTest {
+@RunWith(Parameterized::class)
+class UiDslTest {
   companion object {
-    var currentLaf: String? = null
-
-    private val imageDir: String? = System.getenv("LAYOUT_IMAGE_REPO")
+    @JvmStatic
+    @Parameterized.Parameters(name = "{0}")
+    fun lafNames() = listOf("IntelliJ", "Darcula")
   }
 
-  open val lafName = "IntelliJ"
+  @Suppress("MemberVisibilityCanBePrivate")
+  @Parameterized.Parameter
+  lateinit var lafName: String
 
   @Rule
   @JvmField
   val testName = TestName()
 
+  @Rule
+  @JvmField
+  val frameRule = FrameRule()
+
   @Before
   fun beforeMethod() {
     assumeTrue(!UsefulTestCase.IS_UNDER_TEAMCITY)
 
-    if (currentLaf != lafName) {
-      currentLaf = lafName
-      invokeAndWaitIfNeed {
-        UIManager.setLookAndFeel(MetalLookAndFeel())
-        val laf = if (lafName == "IntelliJ") IntelliJLaf() else DarculaLaf()
-        UIManager.setLookAndFeel(laf)
-
-        if (lafName == "Darcula") {
-          // static init it is hell - UIUtil static init is called too early, so, call it to init properly
-          // (otherwise null stylesheet added and it leads to NPE on set comment text)
-          UIManager.getDefaults().put("javax.swing.JLabel.userStyleSheet", UIUtil.JBHtmlEditorKit.createStyleSheet())
-        }
-      }
-    }
-  }
-
-  private fun saveImage(file: Path, component: Component) {
-    file.outputStream().use {
-      ImageIO.write(componentToImage(component), "png", it)
-    }
+    changeLafIfNeed(lafName)
   }
 
   @Test
@@ -105,115 +74,24 @@ open class UiDslTest {
 
   @Test
   fun `visual paddings`() {
-    doTest { visualPaddingsPanel()}
+    doTest { visualPaddingsPanel() }
   }
+
+  private val testDataPathQualifier: String
+    get() = "$lafName${if (SystemInfoRt.isWindows) "${File.separatorChar}win" else ""}"
 
   private fun doTest(panelCreator: () -> JPanel) {
     var panel: JPanel by Delegates.notNull()
-    val frame = invokeAndWaitIfNeed {
+    invokeAndWaitIfNeed {
+      // otherwise rectangles are not set
       LayoutUtil.setGlobalDebugMillis(1000)
 
       panel = panelCreator()
-
-      val frame = JFrame("wrapper")
-      frame.isUndecorated = true
-      frame.contentPane.add(panel, BorderLayout.CENTER)
-      frame.minimumSize = Dimension(480, 320)
-
-      val screenDevices = GraphicsEnvironment.getLocalGraphicsEnvironment().screenDevices
-      if (SystemInfoRt.isMac && screenDevices != null && screenDevices.size > 1) {
-        // use non-Retina
-        for (screenDevice in screenDevices) {
-          if (!UIUtil.isRetina(screenDevice)) {
-            frame.setLocation(screenDevice.defaultConfiguration.bounds.x, frame.y)
-            break
-          }
-        }
-      }
-
-      frame.pack()
-      frame.isVisible = true
-
-      // clear focus from first input field
-      frame.requestFocusInWindow()
-
-      frame
+      frameRule.show(panel)
     }
 
-    val component = panel
-    val layout = component.layout as MigLayout
-
-    val gridField = MigLayout::class.java.getDeclaredField("grid")
-    gridField.isAccessible = true
-    val grid = gridField.get(layout) as Grid
-    val rectangles = MigLayoutTestUtil.getRectangles(grid)
-
-    val imageName = sanitizeFileName(testName.methodName)
-    val actualSerializedLayout = configurationToJson(component, component.layout as MigLayout,
-                                                     rectangles.joinToString(", ") { "[${it.joinToString(", ")}]" })
-    try {
-      val expectedLayoutDataFile = Paths.get(PlatformTestUtil.getPlatformTestDataPath(), "ui", "layout", lafName, "$imageName.yml")
-      val isUpdateSnapshots = SystemPropertyUtil.getBoolean("test.update.snapshots", false)
-      if (!expectedLayoutDataFile.exists() || isUpdateSnapshots) {
-        expectedLayoutDataFile.write(actualSerializedLayout)
-      }
-      else {
-        Assertions.assertThat(actualSerializedLayout).isEqualTo(expectedLayoutDataFile)
-      }
-
-      if (imageDir.isNullOrEmpty()) {
-        return
-      }
-
-      val imagePath = Paths.get(imageDir, lafName, "$imageName.png")
-      if (!imagePath.exists()) {
-        System.out.println("Write a new snapshot image ${imagePath.fileName}")
-        saveImage(imagePath, frame)
-        return
-      }
-
-      val newImage = ImageIO.read(imagePath.toFile())
-      @Suppress("UnnecessaryVariable")
-      val snapshotComponent = frame
-      try {
-        assertThat(componentToImage(snapshotComponent)).isEqualTo(newImage, Offset.offset(16))
-      }
-      catch (e: AssertionError) {
-        if (isUpdateSnapshots) {
-          System.out.println("UPDATED snapshot image ${imagePath.fileName}")
-          imagePath.outputStream().use {
-            ImageIO.write(componentToImage(snapshotComponent), "png", it)
-          }
-        }
-        else {
-          throw e
-        }
-      }
-    }
-    catch (e: AssertionError) {
-      if (!imageDir.isNullOrEmpty()) {
-        Paths.get(imageDir, "$imageName-NEW.yml").write(actualSerializedLayout)
-        saveImage(Paths.get(imageDir, "$imageName-NEW.png"), frame)
-      }
-      throw e
-    }
-
-    frame.isVisible = false
-    frame.dispose()
-  }
-}
-
-class DarculaUiDslTest : UiDslTest() {
-  override val lafName = "Darcula"
-}
-
-private fun componentToImage(component: Component, type: Int = BufferedImage.TYPE_BYTE_GRAY): BufferedImage {
-  return invokeAndWaitIfNeed {
-    // we don't need retina image
-    val image = BufferedImage(component.width, component.height, type)
-    val g = image.graphics
-    component.paint(g)
-    g.dispose()
-    image
+    val snapshotName = testName.snapshotFileName
+    validateUsingImage(frameRule.frame, "layout${File.separatorChar}$testDataPathQualifier${File.separatorChar}$snapshotName")
+    validateBounds(panel, Paths.get(PlatformTestUtil.getPlatformTestDataPath(), "ui", "layout", testDataPathQualifier), snapshotName)
   }
 }

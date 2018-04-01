@@ -1,0 +1,64 @@
+bounds:
+-
+  height: 26
+  location: {x: 8, y: 10}
+  size: {height: 26, width: 82}
+  width: 82
+  x: 8
+  y: 10
+-
+  height: 30
+  location: {x: 8, y: 46}
+  size: {height: 30, width: 82}
+  width: 82
+  x: 8
+  y: 46
+-
+  height: 26
+  location: {x: 8, y: 86}
+  size: {height: 26, width: 82}
+  width: 82
+  x: 8
+  y: 86
+-
+  height: 26
+  location: {x: 8, y: 122}
+  size: {height: 26, width: 82}
+  width: 82
+  x: 8
+  y: 122
+-
+  height: 27
+  location: {x: 8, y: 158}
+  size: {height: 27, width: 82}
+  width: 82
+  x: 8
+  y: 158
+-
+  height: 26
+  location: {x: 8, y: 195}
+  size: {height: 26, width: 82}
+  width: 82
+  x: 8
+  y: 195
+-
+  height: 26
+  location: {x: 8, y: 231}
+  size: {height: 26, width: 82}
+  width: 82
+  x: 8
+  y: 231
+-
+  height: 27
+  location: {x: 8, y: 267}
+  size: {height: 27, width: 82}
+  width: 82
+  x: 8
+  y: 267
+-
+  height: 26
+  location: {x: 8, y: 304}
+  size: {height: 26, width: 82}
+  width: 82
+  x: 8
+  y: 304

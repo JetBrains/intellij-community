@@ -9,19 +9,16 @@ import java.awt.Container
 import javax.swing.ButtonGroup
 import javax.swing.JLabel
 
-// https://jetbrains.github.io/ui/controls/input_field/#spacing
-@PublishedApi
-internal fun createLayoutBuilder(): LayoutBuilder {
+fun createIntelliJSpacingConfiguration(): SpacingConfiguration {
   // https://jetbrains.github.io/ui/controls/input_field/#spacing
   val isUnderIntelliJLaF = UIUtil.isUnderIntelliJLaF()
-
 
   val labelColumnVerticalTopGap = when {
     SystemInfoRt.isMac && isUnderIntelliJLaF -> 2
     else -> 4
   }
 
-  val spacing = object : SpacingConfiguration {
+  return object : SpacingConfiguration {
     override val labelColumnVerticalTopGap = JBUI.scale(labelColumnVerticalTopGap)
 
     override val isCompensateVisualPaddings = SystemInfoRt.isMac
@@ -39,7 +36,12 @@ internal fun createLayoutBuilder(): LayoutBuilder {
     override val dialogTopBottom = JBUI.scale(8)
     override val dialogLeftRight = JBUI.scale(12)
   }
-  return LayoutBuilder(MigLayoutBuilder(spacing))
+}
+
+// https://jetbrains.github.io/ui/controls/input_field/#spacing
+@PublishedApi
+internal fun createLayoutBuilder(): LayoutBuilder {
+  return LayoutBuilder(MigLayoutBuilder(createIntelliJSpacingConfiguration()))
 }
 
 interface LayoutBuilderImpl {
@@ -50,7 +52,7 @@ interface LayoutBuilderImpl {
   fun noteRow(text: String, linkHandler: ((url: String) -> Unit)? = null)
 }
 
-internal interface SpacingConfiguration {
+interface SpacingConfiguration {
   /**
    * Horizontal space between two components (in terms of layout grid - cells).
    *

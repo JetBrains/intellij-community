@@ -1,4 +1,4 @@
-layoutConstraints: !!net.miginfocom.layout.LC
+layoutConstraints:
   fillX: true
   gridGapX:
     min: &id001 {horizontal: true, unit: 0, value: 0.0}
@@ -63,5 +63,9 @@ componentConstrains:
     spanX: 2097051
     vertical: {grow: 100.0}
     wrap: true
-rectangles: '[0, 0, 70, 21], [76, 0, 396, 21], [76, 0, 396, 21], [76, 25, 404, 14],
-  [0, 49, 480, 261]'
+bounds:
+- [0, 0, 70, 21]
+- [76, 0, 396, 21]
+- [76, 0, 396, 21]
+- [76, 25, 404, 14]
+- [0, 49, 480, 261]

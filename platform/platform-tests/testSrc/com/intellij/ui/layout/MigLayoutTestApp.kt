@@ -55,7 +55,7 @@ object MigLayoutTestApp {
 
       panel.preferredSize = Dimension(50, 50)
       if (panel.layout is MigLayout) {
-        Paths.get(System.getProperty("user.home"), "layout-dump.yml").write(configurationToJson(panel, panel.layout as MigLayout))
+        Paths.get(System.getProperty("user.home"), "layout-dump.yml").write(serializeLayout(panel, isIncludeBounds = false))
       }
 
       val screenDevices = GraphicsEnvironment.getLocalGraphicsEnvironment().screenDevices
