@@ -89,10 +89,10 @@ public class FileHistoryRefresher implements FileHistoryRefresherI {
                                                                                             myVcs.getDiffProvider());
     VcsKey key = myVcs.getKeyInstanceMethod();
     if (myVcsHistoryProvider instanceof VcsHistoryProviderEx && myStartingRevisionNumber != null) {
-      proxy.executeAppendableSession(key, myPath, myStartingRevisionNumber, mySessionPartner, null);
+      proxy.executeAppendableSession(key, myPath, myStartingRevisionNumber, mySessionPartner);
     }
     else {
-      proxy.executeAppendableSession(key, myPath, mySessionPartner, null, myCanUseCache, canUseLastRevision);
+      proxy.executeAppendableSession(key, myPath, mySessionPartner, myCanUseCache, canUseLastRevision);
     }
     myCanUseCache = false;
   }

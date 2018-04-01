@@ -96,8 +96,8 @@ public class VcsHistoryProviderBackgroundableProxy {
   }
 
   public void executeAppendableSession(final VcsKey vcsKey, final FilePath filePath, final VcsAppendableHistorySessionPartner partner,
-                                       @Nullable VcsBackgroundableActions actionKey, boolean canUseCache, boolean canUseLastRevisionCheck) {
-    doExecuteAppendableSession(vcsKey, filePath, null, partner, actionKey, canUseCache, canUseLastRevisionCheck);
+                                       boolean canUseCache, boolean canUseLastRevisionCheck) {
+    doExecuteAppendableSession(vcsKey, filePath, null, partner, canUseCache, canUseLastRevisionCheck);
   }
 
   /**
@@ -105,14 +105,14 @@ public class VcsHistoryProviderBackgroundableProxy {
    * that doesn't implement {@link VcsHistoryProviderEx}
    */
   public void executeAppendableSession(final VcsKey vcsKey, final FilePath filePath, @Nullable VcsRevisionNumber startRevisionNumber,
-                                       final VcsAppendableHistorySessionPartner partner, @Nullable VcsBackgroundableActions actionKey) {
+                                       final VcsAppendableHistorySessionPartner partner) {
     if (!(myDelegate instanceof VcsHistoryProviderEx)) throw new UnsupportedOperationException();
-    doExecuteAppendableSession(vcsKey, filePath, startRevisionNumber, partner, actionKey, false, false);
+    doExecuteAppendableSession(vcsKey, filePath, startRevisionNumber, partner, false, false);
   }
   
   private void doExecuteAppendableSession(final VcsKey vcsKey, final FilePath filePath, @Nullable VcsRevisionNumber startRevisionNumber,
-                                       final VcsAppendableHistorySessionPartner partner, @Nullable VcsBackgroundableActions actionKey,
-                                       boolean canUseCache, boolean canUseLastRevisionCheck) {
+                                          final VcsAppendableHistorySessionPartner partner,
+                                          boolean canUseCache, boolean canUseLastRevisionCheck) {
     if (myCachesHistory && canUseCache) {
       final VcsAbstractHistorySession session = getFullHistoryFromCache(vcsKey, filePath);
       if (session != null) {
@@ -123,14 +123,12 @@ public class VcsHistoryProviderBackgroundableProxy {
     }
 
     final ProjectLevelVcsManagerImpl vcsManager = (ProjectLevelVcsManagerImpl) ProjectLevelVcsManager.getInstance(myProject);
-    final VcsBackgroundableActions resultingActionKey = actionKey == null ? VcsBackgroundableActions.CREATE_HISTORY_SESSION : actionKey;
 
-    final BackgroundableActionEnabledHandler handler;
-    handler = vcsManager.getBackgroundableActionHandler(resultingActionKey);
+    BackgroundableActionEnabledHandler handler = vcsManager.getBackgroundableActionHandler(VcsBackgroundableActions.CREATE_HISTORY_SESSION);
     // fo not start same action twice
-    if (handler.isInProgress(resultingActionKey)) return;
-
-    handler.register(resultingActionKey);
+    Object key = VcsBackgroundableActions.keyFrom(filePath);
+    if (handler.isInProgress(key)) return;
+    handler.register(key);
 
     final VcsAppendableHistorySessionPartner cachedPartner;
     if (myCachesHistory && startRevisionNumber == null) {
@@ -144,7 +142,7 @@ public class VcsHistoryProviderBackgroundableProxy {
     } else {
       cachedPartner = partner;
     }
-    reportHistory(filePath, startRevisionNumber, vcsKey, resultingActionKey, handler, cachedPartner, canUseLastRevisionCheck);
+    reportHistory(filePath, startRevisionNumber, vcsKey, key, handler, cachedPartner, canUseLastRevisionCheck);
   }
 
   private VcsAbstractHistorySession getFullHistoryFromCache(VcsKey vcsKey, FilePath filePath) {
@@ -163,9 +161,9 @@ public class VcsHistoryProviderBackgroundableProxy {
     return full;
   }
 
-  private void reportHistory(final FilePath filePath, @Nullable final VcsRevisionNumber startRevisionNumber, 
+  private void reportHistory(final FilePath filePath, @Nullable final VcsRevisionNumber startRevisionNumber,
                              final VcsKey vcsKey,
-                             final VcsBackgroundableActions resultingActionKey,
+                             final Object resultingActionKey,
                              final BackgroundableActionEnabledHandler handler,
                              final VcsAppendableHistorySessionPartner cachedPartner, final boolean canUseLastRevisionCheck) {
     ProgressManager.getInstance().run(new Task.Backgroundable(myProject, VcsBundle.message("loading.file.history.progress"), true) {
