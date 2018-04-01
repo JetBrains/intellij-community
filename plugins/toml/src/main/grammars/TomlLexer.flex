@@ -24,7 +24,7 @@ COMMENT=#[^\n\r]*
 BOOLEAN=true|false
 
 BARE_KEY_OR_NUMBER=-?[0-9]+
-BARE_KEY_OR_DATE={DATE}
+BARE_KEY_OR_DATE={DATE}[Zz]?
 
 NUMBER=[-+]?
  (0|[1-9](_?[0-9])*) // no leading zeros

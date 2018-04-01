@@ -37,6 +37,24 @@ TOML File
   PsiWhiteSpace('\n\n')
   TomlKeyValue
     TomlKey
+      PsiElement(BARE_KEY)('2018-04-01')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    TomlLiteral
+      PsiElement(DATE_TIME)('2018-04-01')
+  PsiWhiteSpace('\n')
+  TomlKeyValue
+    TomlKey
+      PsiElement(BARE_KEY)('2018-04-01Z')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    TomlLiteral
+      PsiElement(DATE_TIME)('2018-04-01Z')
+  PsiWhiteSpace('\n\n')
+  TomlKeyValue
+    TomlKey
       PsiElement(BASIC_STRING)('"127.0.0.1"')
     PsiWhiteSpace(' ')
     PsiElement(=)('=')

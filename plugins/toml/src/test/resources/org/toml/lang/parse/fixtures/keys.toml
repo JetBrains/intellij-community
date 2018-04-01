@@ -3,6 +3,9 @@ bare_key = "value"
 bare-key = "value"
 1234 = "value"
 
+2018-04-01 = 2018-04-01
+2018-04-01Z = 2018-04-01Z
+
 "127.0.0.1" = "value"
 "character encoding" = "value"
 "ʎǝʞ" = "value"
