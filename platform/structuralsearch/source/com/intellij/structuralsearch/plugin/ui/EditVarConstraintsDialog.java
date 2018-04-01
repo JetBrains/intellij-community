@@ -195,7 +195,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
             rollingBackSelection=false;
             return;
           }
-          final Variable var = variables.get(parameterList.getSelectedIndex());
+          final Variable var = parameterList.getSelectedValue();
           if (validateParameters()) {
             if (current!=null) copyValuesFromUI(current);
             ApplicationManager.getApplication().runWriteAction(() -> copyValuesToUI(var));
@@ -236,7 +236,19 @@ class EditVarConstraintsDialog extends DialogWrapper {
     });
     init();
 
-    if (!variables.isEmpty()) parameterList.setSelectedIndex(0);
+    if (!variables.isEmpty()) {
+      int selectedIndex = 0;
+      final String variableName = configuration.getCurrentVariableName();
+      if (variableName != null) {
+        for (int i = 0, size = variables.size(); i < size; i++) {
+          if (variables.get(i).getName().equals(variableName)) {
+            selectedIndex = i;
+            break;
+          }
+        }
+      }
+      parameterList.setSelectedIndex(selectedIndex);
+    }
   }
 
   @Override

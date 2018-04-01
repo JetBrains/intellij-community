@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.codeInsight.hint.TooltipController;
@@ -60,18 +60,19 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
 
       while(end < length && Character.isJavaIdentifierPart(elements.charAt(end)) && elements.charAt(end)!='$') end++;
       if (end < length && elements.charAt(end) == '$') {
-        String varname = elements.subSequence(start + 1, end).toString();
+        String variableName = elements.subSequence(start + 1, end).toString();
         Variable foundVar = null;
 
         for (final Variable var : variables) {
-          if (var.getName().equals(varname)) {
+          if (var.getName().equals(variableName)) {
             foundVar = var;
             break;
           }
         }
 
         if (foundVar != null) {
-          text = getShortParamString(configuration, varname);
+          text = getShortParamString(configuration, variableName);
+          configuration.setCurrentVariableName(variableName);
         }
       }
     }

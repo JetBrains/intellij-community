@@ -186,6 +186,7 @@ public class UIUtil {
         label.setText(SSRBundle.message("complete.match.variable.tooltip.message",
                                         SubstitutionShortInfoHandler.getShortParamString(constraint)));
         IdeTooltipManager.getInstance().show(tooltip, true);
+        configuration.setCurrentVariableName(Configuration.CONTEXT_VAR_NAME);
       }
 
       @Override
