@@ -45,7 +45,7 @@ public class WSLUtil {
   private static final List<WSLDistribution> DISTRIBUTIONS = Arrays.asList(
     new WSLDistribution("UBUNTU", "Ubuntu", "ubuntu.exe", "Ubuntu"),
     new WSLDistribution("DEBIAN", "Debian", "debian.exe", "Debian GNU/Linux"),
-    new WSLDistribution("KALI", "kali-rolling", "kali.exe", "Kali Linux"),
+    new WSLDistribution("KALI", "kali-linux", "kali.exe", "Kali Linux"),
     new WSLDistribution("OPENSUSE42", "openSUSE-42", "opensuse-42.exe", "openSUSE Leap 42"),
     new WSLDistribution("SLES12", "SLES-12", "sles-12.exe", "SUSE Linux Enterprise Server 12"),
     LEGACY_WSL
