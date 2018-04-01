@@ -65,14 +65,6 @@ public class VcsBackgroundableComputable<T> extends Task.Backgroundable {
                                       @Nullable final Object actionParameter,
                                       final String title,
                                       final String errorTitle,
-                                      final ThrowableComputable<T, VcsException> backgroundable) {
-    createAndRun(project, actionKey, actionParameter, title, errorTitle, backgroundable, null, null);
-  }
-
-  public static <T> void createAndRun(final Project project, @Nullable final VcsBackgroundableActions actionKey,
-                                      @Nullable final Object actionParameter,
-                                      final String title,
-                                      final String errorTitle,
                                       final ThrowableComputable<T, VcsException> backgroundable,
                                       @Nullable final Consumer<T> awtSuccessContinuation,
                                       @Nullable final Runnable awtErrorContinuation) {
