@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 public class VcsBackgroundableComputable<T> extends Task.Backgroundable {
   @NotNull private final ThrowableComputable<T, VcsException> myBackgroundable;
   @NotNull private final BackgroundableActionLock myLock;
-  @NotNull private final Consumer<T> myAwtSuccessContinuation;
+  @NotNull private final Consumer<T> myOnSuccess;
 
   @Nullable private final String myErrorTitle;
 
@@ -37,12 +37,12 @@ public class VcsBackgroundableComputable<T> extends Task.Backgroundable {
 
   public VcsBackgroundableComputable(@NotNull Project project, @NotNull String title, @Nullable String errorTitle,
                                      @NotNull ThrowableComputable<T, VcsException> backgroundable,
-                                     @NotNull Consumer<T> awtSuccessContinuation,
+                                     @NotNull Consumer<T> onSuccess,
                                      @NotNull BackgroundableActionLock lock) {
     super(project, title, true);
     myErrorTitle = errorTitle;
     myBackgroundable = backgroundable;
-    myAwtSuccessContinuation = awtSuccessContinuation;
+    myOnSuccess = onSuccess;
     myLock = lock;
   }
 
@@ -64,7 +64,7 @@ public class VcsBackgroundableComputable<T> extends Task.Backgroundable {
   public void onSuccess() {
     commonFinish();
     if (myException == null) {
-      myAwtSuccessContinuation.consume(myResult);
+      myOnSuccess.consume(myResult);
     }
   }
 
