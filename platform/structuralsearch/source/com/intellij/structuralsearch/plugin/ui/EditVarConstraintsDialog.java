@@ -284,11 +284,8 @@ class EditVarConstraintsDialog extends DialogWrapper {
     varInfo.setRegExp(regexp.getDocument().getText());
     varInfo.setInvertRegExp(notRegexp.isSelected());
 
-    final int minCount = Integer.parseInt(minoccurs.getText());
-    varInfo.setMinCount(minCount);
-
-    final int maxCount = maxoccurs.getValue();
-    varInfo.setMaxCount(maxCount);
+    varInfo.setMinCount(minoccurs.getValue());
+    varInfo.setMaxCount(maxoccurs.getValue());
     varInfo.setWithinHierarchy(applyWithinTypeHierarchy.isSelected());
     varInfo.setInvertRegExp(notRegexp.isSelected());
 
@@ -389,7 +386,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
       regexp.selectAll();
 
       notRegexp.setSelected(varInfo.isInvertRegExp());
-      minoccurs.setText(Integer.toString(varInfo.getMinCount()));
+      minoccurs.setValue(varInfo.getMinCount());
       minoccurs.selectAll();
 
       maxoccurs.setValue(varInfo.getMaxCount());
@@ -481,12 +478,17 @@ class EditVarConstraintsDialog extends DialogWrapper {
 
   private boolean validateCounts() {
     final int minValue;
-    try {
-      minValue = Integer.parseInt(minoccurs.getText());
-      if (minValue < 0) throw new NumberFormatException();
-    }
-    catch (NumberFormatException e) {
-      return showError(minoccurs, SSRBundle.message("invalid.occurence.count"));
+    final String minoccursText = minoccurs.getText();
+    if (!minoccursText.isEmpty()) {
+      try {
+        minValue = Integer.parseInt(minoccursText);
+        if (minValue < 0) throw new NumberFormatException();
+      }
+      catch (NumberFormatException e) {
+        return showError(minoccurs, SSRBundle.message("invalid.occurence.count"));
+      }
+    } else {
+      minValue = 0;
     }
 
     final String maxoccursText = maxoccurs.getText();
