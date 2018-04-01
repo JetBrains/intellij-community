@@ -55,37 +55,38 @@ public class VcsBackgroundableComputable<T> extends Task.Backgroundable {
   }
 
   public static <T> void createAndRunSilent(final Project project, @Nullable final VcsBackgroundableActions actionKey,
-                                 @Nullable final Object actionParameter, final String title,
-                                 final ThrowableComputable<T, VcsException> backgroundable,
-                                 @Nullable final Consumer<T> awtSuccessContinuation) {
+                                            @Nullable final Object actionParameter, final String title,
+                                            final ThrowableComputable<T, VcsException> backgroundable,
+                                            @Nullable final Consumer<T> awtSuccessContinuation) {
     createAndRun(project, actionKey, actionParameter, title, null, backgroundable, awtSuccessContinuation, null, true);
   }
 
   public static <T> void createAndRun(final Project project, @Nullable final VcsBackgroundableActions actionKey,
-                                 @Nullable final Object actionParameter,
-                                 final String title,
-                                 final String errorTitle,
-                                 final ThrowableComputable<T, VcsException> backgroundable) {
+                                      @Nullable final Object actionParameter,
+                                      final String title,
+                                      final String errorTitle,
+                                      final ThrowableComputable<T, VcsException> backgroundable) {
     createAndRun(project, actionKey, actionParameter, title, errorTitle, backgroundable, null, null);
   }
 
   public static <T> void createAndRun(final Project project, @Nullable final VcsBackgroundableActions actionKey,
-                                 @Nullable final Object actionParameter,
-                                 final String title,
-                                 final String errorTitle,
-                                 final ThrowableComputable<T, VcsException> backgroundable,
-                                 @Nullable final Consumer<T> awtSuccessContinuation,
-                                 @Nullable final Runnable awtErrorContinuation) {
-    createAndRun(project, actionKey, actionParameter, title, errorTitle, backgroundable, awtSuccessContinuation, awtErrorContinuation, false);
+                                      @Nullable final Object actionParameter,
+                                      final String title,
+                                      final String errorTitle,
+                                      final ThrowableComputable<T, VcsException> backgroundable,
+                                      @Nullable final Consumer<T> awtSuccessContinuation,
+                                      @Nullable final Runnable awtErrorContinuation) {
+    createAndRun(project, actionKey, actionParameter, title, errorTitle, backgroundable, awtSuccessContinuation, awtErrorContinuation,
+                 false);
   }
 
   private static <T> void createAndRun(final Project project, @Nullable final VcsBackgroundableActions actionKey,
-                                 @Nullable final Object actionParameter,
-                                 final String title,
-                                 final String errorTitle,
-                                 final ThrowableComputable<T, VcsException> backgroundable,
-                                 @Nullable final Consumer<T> awtSuccessContinuation,
-                                 @Nullable final Runnable awtErrorContinuation, final boolean silent) {
+                                       @Nullable final Object actionParameter,
+                                       final String title,
+                                       final String errorTitle,
+                                       final ThrowableComputable<T, VcsException> backgroundable,
+                                       @Nullable final Consumer<T> awtSuccessContinuation,
+                                       @Nullable final Runnable awtErrorContinuation, final boolean silent) {
     BackgroundableActionLock lock = BackgroundableActionLock.getLock(project, actionKey, actionParameter);
     if (lock.isLocked()) return;
 
@@ -118,7 +119,8 @@ public class VcsBackgroundableComputable<T> extends Task.Backgroundable {
       if (myAwtSuccessContinuation != null) {
         myAwtSuccessContinuation.consume(myResult);
       }
-    } else {
+    }
+    else {
       if (myAwtErrorContinuation != null) {
         myAwtErrorContinuation.run();
       }
@@ -137,7 +139,7 @@ public class VcsBackgroundableComputable<T> extends Task.Backgroundable {
   private void commonFinish() {
     myLock.unlock();
 
-    if ((! mySilent) && (myException != null)) {
+    if ((!mySilent) && (myException != null)) {
       AbstractVcsHelperImpl.getInstance(myProject).showError(myException, myErrorTitle);
     }
   }
