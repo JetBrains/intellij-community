@@ -78,10 +78,8 @@ public class VcsHistoryProviderBackgroundableProxy {
   }
 
   public void createSessionFor(@NotNull VcsKey vcsKey, @NotNull FilePath filePath, @NotNull Consumer<VcsHistorySession> continuation,
-                               @NotNull VcsBackgroundableActions actionKey, boolean silent,
-                               @Nullable Consumer<VcsHistorySession> backgroundSpecialization) {
-    ThrowableComputable<VcsHistorySession, VcsException> throwableComputable =
-      myHistoryComputerFactory.create(filePath, backgroundSpecialization, vcsKey);
+                               @NotNull VcsBackgroundableActions actionKey, boolean silent) {
+    ThrowableComputable<VcsHistorySession, VcsException> throwableComputable = myHistoryComputerFactory.create(filePath, null, vcsKey);
 
     String title = VcsBundle.message("loading.file.history.progress");
     String errorTitle = silent ? null : VcsBundle.message("message.title.could.not.load.file.history");
