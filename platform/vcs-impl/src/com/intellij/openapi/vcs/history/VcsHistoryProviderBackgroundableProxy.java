@@ -69,7 +69,8 @@ public class VcsHistoryProviderBackgroundableProxy {
                                                                          VcsKey vcsKey) {
         if (myCachesHistory) {
           return new CachingHistoryComputer(filePath, consumer, vcsKey);
-        } else {
+        }
+        else {
           return new SimpleHistoryComputer(filePath, consumer);
         }
       }
@@ -84,14 +85,10 @@ public class VcsHistoryProviderBackgroundableProxy {
       myHistoryComputerFactory.create(filePath, backgroundSpecialization, vcsKey);
     final Object key = VcsBackgroundableActions.keyFrom(filePath);
 
-    if (silent) {
-      VcsBackgroundableComputable.createAndRunSilent(myProject, actionKey, key, VcsBundle.message("loading.file.history.progress"),
-                                                     throwableComputable, continuation);
-    } else {
-      VcsBackgroundableComputable.createAndRun(myProject, actionKey, key, VcsBundle.message("loading.file.history.progress"),
-                                               VcsBundle.message("message.title.could.not.load.file.history"), throwableComputable,
-                                               continuation);
-    }
+    VcsBackgroundableComputable.createAndRun(myProject, actionKey, key, VcsBundle.message("loading.file.history.progress"),
+                                             silent ? null : VcsBundle.message("message.title.could.not.load.file.history"),
+                                             throwableComputable,
+                                             continuation, silent);
   }
 
   public void executeAppendableSession(final VcsKey vcsKey, final FilePath filePath, final VcsAppendableHistorySessionPartner partner,
@@ -100,15 +97,15 @@ public class VcsHistoryProviderBackgroundableProxy {
   }
 
   /**
-   * @throws UnsupportedOperationException if this proxy was created for {@link VcsHistoryProvider} instance, 
-   * that doesn't implement {@link VcsHistoryProviderEx}
+   * @throws UnsupportedOperationException if this proxy was created for {@link VcsHistoryProvider} instance,
+   *                                       that doesn't implement {@link VcsHistoryProviderEx}
    */
   public void executeAppendableSession(final VcsKey vcsKey, final FilePath filePath, @Nullable VcsRevisionNumber startRevisionNumber,
                                        final VcsAppendableHistorySessionPartner partner) {
     if (!(myDelegate instanceof VcsHistoryProviderEx)) throw new UnsupportedOperationException();
     doExecuteAppendableSession(vcsKey, filePath, startRevisionNumber, partner, false, false);
   }
-  
+
   private void doExecuteAppendableSession(final VcsKey vcsKey, final FilePath filePath, @Nullable VcsRevisionNumber startRevisionNumber,
                                           final VcsAppendableHistorySessionPartner partner,
                                           boolean canUseCache, boolean canUseLastRevisionCheck) {
@@ -135,7 +132,8 @@ public class VcsHistoryProviderBackgroundableProxy {
         FilePath correctedPath = delegate.getUsedFilePath(session);
         myVcsHistoryCache.put(filePath, correctedPath, vcsKey, (VcsAbstractHistorySession)session.copy(), delegate, true);
       });
-    } else {
+    }
+    else {
       cachedPartner = partner;
     }
     reportHistory(filePath, startRevisionNumber, vcsKey, lock, cachedPartner, canUseLastRevisionCheck);
@@ -171,7 +169,8 @@ public class VcsHistoryProviderBackgroundableProxy {
               myCachesHistory &&
               (cachedSession = getSessionFromCacheWithLastRevisionCheck(filePath, vcsKey)) != null) {
             cachedPartner.reportCreatedEmptySession(cachedSession);
-          } else if (myDelegate instanceof VcsHistoryProviderEx) {
+          }
+          else if (myDelegate instanceof VcsHistoryProviderEx) {
             ((VcsHistoryProviderEx)myDelegate).reportAppendableHistory(filePath, startRevisionNumber, cachedPartner);
           }
           else {
@@ -201,7 +200,7 @@ public class VcsHistoryProviderBackgroundableProxy {
 
     @Override
     public void reportCreatedEmptySession(VcsAbstractHistorySession session) {
-      myCopy = (VcsAbstractHistorySession) session.copy();
+      myCopy = (VcsAbstractHistorySession)session.copy();
       myPartner.reportCreatedEmptySession(session);
     }
 
@@ -267,8 +266,9 @@ public class VcsHistoryProviderBackgroundableProxy {
     };
     try {
       myDelegate.reportAppendableHistory(filePath, partner);
-    } catch (ProcessCanceledException e) {
-      if (! check.isOver()) throw e;
+    }
+    catch (ProcessCanceledException e) {
+      if (!check.isOver()) throw e;
     }
     return partner.getSession();
   }
@@ -323,15 +323,16 @@ public class VcsHistoryProviderBackgroundableProxy {
       if (virtualFile != null) {
         final VcsRevisionNumber currentRevision = myDiffProvider.getCurrentRevision(virtualFile);
         final List<VcsFileRevision> revisionList = cached.getRevisionList();
-        if (! revisionList.isEmpty() && revisionList.get(0).getRevisionNumber().equals(currentRevision)) {
+        if (!revisionList.isEmpty() && revisionList.get(0).getRevisionNumber().equals(currentRevision)) {
           return cached;
         }
       }
-    } else {
+    }
+    else {
       final ItemLatestState lastRevision = myDiffProvider.getLastRevision(correctedFilePath != null ? correctedFilePath : filePath);
-      if (lastRevision != null && ! lastRevision.isDefaultHead() && lastRevision.isItemExists()) {
+      if (lastRevision != null && !lastRevision.isDefaultHead() && lastRevision.isItemExists()) {
         final List<VcsFileRevision> revisionList = cached.getRevisionList();
-        if (! revisionList.isEmpty() && revisionList.get(0).getRevisionNumber().equals(lastRevision.getNumber())) {
+        if (!revisionList.isEmpty() && revisionList.get(0).getRevisionNumber().equals(lastRevision.getNumber())) {
           return cached;
         }
       }

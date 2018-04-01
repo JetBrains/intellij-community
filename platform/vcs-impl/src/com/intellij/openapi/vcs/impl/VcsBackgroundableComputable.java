@@ -49,29 +49,13 @@ public class VcsBackgroundableComputable<T> extends Task.Backgroundable {
     myLock = lock;
   }
 
-  public static <T> void createAndRunSilent(final Project project, @Nullable final VcsBackgroundableActions actionKey,
-                                            @Nullable final Object actionParameter, final String title,
-                                            final ThrowableComputable<T, VcsException> backgroundable,
-                                            @Nullable final Consumer<T> awtSuccessContinuation) {
-    createAndRun(project, actionKey, actionParameter, title, null, backgroundable, awtSuccessContinuation, true);
-  }
-
   public static <T> void createAndRun(final Project project, @Nullable final VcsBackgroundableActions actionKey,
                                       @Nullable final Object actionParameter,
                                       final String title,
                                       final String errorTitle,
                                       final ThrowableComputable<T, VcsException> backgroundable,
-                                      @Nullable final Consumer<T> awtSuccessContinuation) {
-    createAndRun(project, actionKey, actionParameter, title, errorTitle, backgroundable, awtSuccessContinuation, false);
-  }
-
-  private static <T> void createAndRun(final Project project, @Nullable final VcsBackgroundableActions actionKey,
-                                       @Nullable final Object actionParameter,
-                                       final String title,
-                                       final String errorTitle,
-                                       final ThrowableComputable<T, VcsException> backgroundable,
-                                       @Nullable final Consumer<T> awtSuccessContinuation,
-                                       final boolean silent) {
+                                      @Nullable final Consumer<T> awtSuccessContinuation,
+                                      final boolean silent) {
     BackgroundableActionLock lock = BackgroundableActionLock.getLock(project, actionKey, actionParameter);
     if (lock.isLocked()) return;
 
