@@ -2,7 +2,6 @@
 package com.intellij.ui.layout
 
 import com.intellij.openapi.application.invokeAndWaitIfNeed
-import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.ui.*
@@ -77,9 +76,6 @@ class UiDslTest {
     doTest { visualPaddingsPanel() }
   }
 
-  private val testDataPathQualifier: String
-    get() = "$lafName${if (SystemInfoRt.isWindows) "${File.separatorChar}win" else ""}"
-
   private fun doTest(panelCreator: () -> JPanel) {
     var panel: JPanel by Delegates.notNull()
     invokeAndWaitIfNeed {
@@ -91,7 +87,7 @@ class UiDslTest {
     }
 
     val snapshotName = testName.snapshotFileName
-    validateUsingImage(frameRule.frame, "layout${File.separatorChar}$testDataPathQualifier${File.separatorChar}$snapshotName")
-    validateBounds(panel, Paths.get(PlatformTestUtil.getPlatformTestDataPath(), "ui", "layout", testDataPathQualifier), snapshotName)
+    validateUsingImage(frameRule.frame, "layout${File.separatorChar}${getSnapshotRelativePath(lafName, isForImage = true)}${File.separatorChar}$snapshotName")
+    validateBounds(panel, Paths.get(PlatformTestUtil.getPlatformTestDataPath(), "ui", "layout", getSnapshotRelativePath(lafName, isForImage = false)), snapshotName)
   }
 }

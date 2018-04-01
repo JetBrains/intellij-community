@@ -4,7 +4,6 @@ package com.intellij.ui.laf
 import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.ui.VerticalFlowLayout
-import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.ui.*
@@ -77,9 +76,6 @@ class LafTest {
     }
   }
 
-  private val testDataPathQualifier: String
-    get() = "$lafName${if (SystemInfoRt.isWindows) "${File.separatorChar}win" else ""}"
-
   private fun doTest(panelCreator: () -> JPanel) {
     var panel: JPanel by Delegates.notNull()
     invokeAndWaitIfNeed {
@@ -88,7 +84,7 @@ class LafTest {
     }
 
     val snapshotName = testName.snapshotFileName
-    validateUsingImage(frameRule.frame, "laf${File.separatorChar}$testDataPathQualifier${File.separatorChar}$snapshotName")
-    validateBounds(panel, Paths.get(PlatformTestUtil.getPlatformTestDataPath(), "ui", "laf", testDataPathQualifier), snapshotName)
+    validateUsingImage(frameRule.frame, "laf${File.separatorChar}${getSnapshotRelativePath(lafName, isForImage = true)}${File.separatorChar}$snapshotName")
+    validateBounds(panel, Paths.get(PlatformTestUtil.getPlatformTestDataPath(), "ui", "laf", getSnapshotRelativePath(lafName, isForImage = false)), snapshotName)
   }
 }

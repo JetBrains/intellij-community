@@ -4,6 +4,7 @@ package com.intellij.ui
 import com.intellij.ide.ui.laf.IntelliJLaf
 import com.intellij.ide.ui.laf.darcula.DarculaLaf
 import com.intellij.openapi.application.invokeAndWaitIfNeed
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.ui.layout.*
@@ -23,6 +24,7 @@ import org.yaml.snakeyaml.DumperOptions
 import org.yaml.snakeyaml.Yaml
 import java.awt.*
 import java.awt.image.BufferedImage
+import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
 import javax.imageio.ImageIO
@@ -99,6 +101,24 @@ private fun createTestFrame(minSize: Dimension?): JFrame {
   }
 
   return frame
+}
+
+fun getSnapshotRelativePath(lafName: String, isForImage: Boolean): String {
+  val platformName = when {
+    SystemInfo.isWindows -> "win"
+    SystemInfo.isMac -> "mac"
+    else -> "linux"
+  }
+
+  val result = StringBuilder()
+  result.append(lafName)
+  if (lafName != "Darcula" || isForImage) {
+    // Darcula bounds are the same on all platforms, but images differ due to fonts (mostly)
+    result.append(File.separatorChar)
+    result.append(platformName)
+  }
+
+  return result.toString()
 }
 
 fun validateBounds(component: Container, snapshotDir: Path, snapshotName: String, isUpdateSnapshots: Boolean = isUpdateSnapshotsGlobal) {
