@@ -32,9 +32,7 @@ public class VcsBackgroundableComputable<T> extends Task.Backgroundable {
   private boolean mySilent;
   @NotNull private final BackgroundableActionLock myLock;
   private final ThrowableComputable<T, VcsException> myBackgroundable;
-
   private final Consumer<T> myAwtSuccessContinuation;
-  private final Runnable myAwtErrorContinuation;
 
   private VcsException myException;
   private T myResult;
@@ -43,13 +41,11 @@ public class VcsBackgroundableComputable<T> extends Task.Backgroundable {
                                       final String errorTitle,
                                       final ThrowableComputable<T, VcsException> backgroundable,
                                       final Consumer<T> awtSuccessContinuation,
-                                      final Runnable awtErrorContinuation,
                                       @NotNull BackgroundableActionLock lock) {
     super(project, title, true);
     myErrorTitle = errorTitle;
     myBackgroundable = backgroundable;
     myAwtSuccessContinuation = awtSuccessContinuation;
-    myAwtErrorContinuation = awtErrorContinuation;
     myLock = lock;
   }
 
@@ -57,7 +53,7 @@ public class VcsBackgroundableComputable<T> extends Task.Backgroundable {
                                             @Nullable final Object actionParameter, final String title,
                                             final ThrowableComputable<T, VcsException> backgroundable,
                                             @Nullable final Consumer<T> awtSuccessContinuation) {
-    createAndRun(project, actionKey, actionParameter, title, null, backgroundable, awtSuccessContinuation, null, true);
+    createAndRun(project, actionKey, actionParameter, title, null, backgroundable, awtSuccessContinuation, true);
   }
 
   public static <T> void createAndRun(final Project project, @Nullable final VcsBackgroundableActions actionKey,
@@ -65,10 +61,8 @@ public class VcsBackgroundableComputable<T> extends Task.Backgroundable {
                                       final String title,
                                       final String errorTitle,
                                       final ThrowableComputable<T, VcsException> backgroundable,
-                                      @Nullable final Consumer<T> awtSuccessContinuation,
-                                      @Nullable final Runnable awtErrorContinuation) {
-    createAndRun(project, actionKey, actionParameter, title, errorTitle, backgroundable, awtSuccessContinuation, awtErrorContinuation,
-                 false);
+                                      @Nullable final Consumer<T> awtSuccessContinuation) {
+    createAndRun(project, actionKey, actionParameter, title, errorTitle, backgroundable, awtSuccessContinuation, false);
   }
 
   private static <T> void createAndRun(final Project project, @Nullable final VcsBackgroundableActions actionKey,
@@ -77,16 +71,15 @@ public class VcsBackgroundableComputable<T> extends Task.Backgroundable {
                                        final String errorTitle,
                                        final ThrowableComputable<T, VcsException> backgroundable,
                                        @Nullable final Consumer<T> awtSuccessContinuation,
-                                       @Nullable final Runnable awtErrorContinuation, final boolean silent) {
+                                       final boolean silent) {
     BackgroundableActionLock lock = BackgroundableActionLock.getLock(project, actionKey, actionParameter);
     if (lock.isLocked()) return;
 
-    final VcsBackgroundableComputable<T> backgroundableComputable =
-      new VcsBackgroundableComputable<>(project, title, errorTitle, backgroundable, awtSuccessContinuation, awtErrorContinuation,
-                                        lock);
-    backgroundableComputable.setSilent(silent);
+    VcsBackgroundableComputable<T> computable = new VcsBackgroundableComputable<>(project, title, errorTitle, backgroundable,
+                                                                                  awtSuccessContinuation, lock);
+    computable.setSilent(silent);
     lock.lock();
-    ProgressManager.getInstance().run(backgroundableComputable);
+    ProgressManager.getInstance().run(computable);
   }
 
   public void run(@NotNull ProgressIndicator indicator) {
@@ -111,20 +104,12 @@ public class VcsBackgroundableComputable<T> extends Task.Backgroundable {
         myAwtSuccessContinuation.consume(myResult);
       }
     }
-    else {
-      if (myAwtErrorContinuation != null) {
-        myAwtErrorContinuation.run();
-      }
-    }
   }
 
   @Override
   public void onThrowable(@NotNull Throwable error) {
     myException = new VcsException(error);
     commonFinish();
-    if (myAwtErrorContinuation != null) {
-      myAwtErrorContinuation.run();
-    }
   }
 
   private void commonFinish() {

@@ -89,7 +89,8 @@ public class VcsHistoryProviderBackgroundableProxy {
                                                      throwableComputable, continuation);
     } else {
       VcsBackgroundableComputable.createAndRun(myProject, actionKey, key, VcsBundle.message("loading.file.history.progress"),
-                                               VcsBundle.message("message.title.could.not.load.file.history"), throwableComputable, continuation, null);
+                                               VcsBundle.message("message.title.could.not.load.file.history"), throwableComputable,
+                                               continuation);
     }
   }
 
