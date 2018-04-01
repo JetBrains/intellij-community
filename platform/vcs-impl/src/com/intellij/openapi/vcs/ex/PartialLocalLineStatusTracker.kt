@@ -33,6 +33,7 @@ import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
@@ -67,6 +68,9 @@ class PartialLocalLineStatusTracker(project: Project,
   private val lstManager = LineStatusTrackerManager.getInstance(project) as LineStatusTrackerManager
   private val undoManager = UndoManager.getInstance(project)
 
+  private val undoStateRecordingEnabled = Registry.`is`("vcs.enable.partial.changelists.undo")
+  private val redoStateRecordingEnabled = Registry.`is`("vcs.enable.partial.changelists.redo")
+
   override val renderer = MyLineStatusMarkerRenderer(this)
 
   private var defaultMarker: ChangeListMarker
@@ -86,9 +90,11 @@ class PartialLocalLineStatusTracker(project: Project,
     defaultMarker = ChangeListMarker(changeListManager.defaultChangeList)
     affectedChangeLists.add(defaultMarker.changelistId)
 
-    document.addDocumentListener(MyUndoDocumentListener(), disposable)
-    CommandProcessor.getInstance().addCommandListener(MyUndoCommandListener(), disposable)
-    Disposer.register(disposable, Disposable { dropExistingUndoActions() })
+    if (undoStateRecordingEnabled) {
+      document.addDocumentListener(MyUndoDocumentListener(), disposable)
+      CommandProcessor.getInstance().addCommandListener(MyUndoCommandListener(), disposable)
+      Disposer.register(disposable, Disposable { dropExistingUndoActions() })
+    }
 
     assert(blocks.isEmpty())
   }
@@ -279,7 +285,9 @@ class PartialLocalLineStatusTracker(project: Project,
       if (hasUndoInCommand) {
         hasUndoInCommand = false
 
-        registerUndoAction(false)
+        if (redoStateRecordingEnabled) {
+          registerUndoAction(false)
+        }
       }
     }
   }
