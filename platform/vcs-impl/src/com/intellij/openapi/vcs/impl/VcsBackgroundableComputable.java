@@ -125,6 +125,15 @@ public class VcsBackgroundableComputable<T> extends Task.Backgroundable {
     }
   }
 
+  @Override
+  public void onThrowable(@NotNull Throwable error) {
+    myException = new VcsException(error);
+    commonFinish();
+    if (myAwtErrorContinuation != null) {
+      myAwtErrorContinuation.run();
+    }
+  }
+
   private void commonFinish() {
     myLock.unlock();
 
