@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.CommonBundle;
 import com.intellij.diff.util.DiffPlaces;
 import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.DiffUtil;
@@ -29,6 +30,7 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction;
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool;
 import com.intellij.openapi.vcs.checkin.*;
+import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker;
 import com.intellij.openapi.vcs.impl.CheckinHandlersManager;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import com.intellij.openapi.vcs.impl.PartialChangesUtil;
@@ -100,6 +102,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @NotNull private final List<CheckinHandler> myHandlers = newArrayList();
   private final boolean myAllOfDefaultChangeListChangesIncluded;
   @NotNull private final String myCommitActionName;
+  private final boolean myEnablePartialCommit;
 
   @NotNull private final Map<String, String> myListComments;
   @NotNull private final List<CommitExecutorAction> myExecutorActions;
@@ -290,7 +293,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myIsAlien = isAlien;
     myResultHandler = customResultHandler;
     myListComments = newHashMap();
-    myDiffDetails = new MyChangeProcessor(myProject);
 
     if (!myShowVcsCommit && isEmpty(executors)) {
       throw new IllegalArgumentException("nothing found to execute commit with");
@@ -313,7 +315,10 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
     myHelpId = myShowVcsCommit ? HELP_ID : getHelpId(executors);
 
+    myEnablePartialCommit = ContainerUtil.exists(getAffectedVcses(), AbstractVcs::arePartialChangelistsSupported) &&
+                            (myShowVcsCommit || ContainerUtil.exists(myExecutors, executor -> executor.supportsPartialCommit()));
 
+    myDiffDetails = new MyChangeProcessor(myProject, myEnablePartialCommit);
     myCommitMessageArea = new CommitMessage(project, true, true, myShowVcsCommit);
 
     if (myIsAlien) {
@@ -329,7 +334,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     else {
       LineStatusTrackerManager.getInstanceImpl(myProject).resetExcludedFromCommitMarkers();
 
-      MultipleLocalChangeListsBrowser browser = new MultipleLocalChangeListsBrowser(project, true, true, myShowVcsCommit);
+      MultipleLocalChangeListsBrowser browser = new MultipleLocalChangeListsBrowser(project, true, true,
+                                                                                    myShowVcsCommit, myEnablePartialCommit);
       myBrowser = browser;
 
       if (initialSelection != null) browser.setSelectedChangeList(initialSelection);
@@ -627,6 +633,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       return;
     }
 
+    if (!checkCommitOptionsSupported(commitExecutor)) return;
     if (!saveDialogState()) return;
     saveComments(true);
 
@@ -896,6 +903,25 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myListComments.forEach((changeListName, comment) -> changeListManager.editComment(changeListName, comment));
   }
 
+  private boolean checkCommitOptionsSupported(@NotNull CommitExecutor commitExecutor) {
+    if (myIsAlien) return true;
+
+    if (!commitExecutor.supportsPartialCommit()) {
+      boolean hasPartialChanges = ContainerUtil.exists(getIncludedChanges(), change -> {
+        PartialLocalLineStatusTracker tracker = PartialChangesUtil.getPartialTracker(myProject, change);
+        return tracker != null && tracker.hasPartialChangesToCommit();
+      });
+      if (hasPartialChanges) {
+        return Messages.YES ==
+               Messages.showYesNoDialog(myProject,
+                                        message("commit.dialog.partial.commit.warning.body", getExecutorPresentableText(commitExecutor)),
+                                        message("commit.dialog.partial.commit.warning.title"),
+                                        commitExecutor.getActionText(), CommonBundle.getCancelButtonText(), Messages.getWarningIcon());
+      }
+    }
+    return true;
+  }
+
   @Override
   public void doCancelAction() {
     myCommitOptions.saveChangeListComponentsState();
@@ -1151,11 +1177,11 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   private class MyChangeProcessor extends ChangeViewDiffRequestProcessor {
-    public MyChangeProcessor(@NotNull Project project) {
+    public MyChangeProcessor(@NotNull Project project, boolean enablePartialCommit) {
       super(project, DiffPlaces.COMMIT_DIALOG);
 
       putContextUserData(DiffUserDataKeysEx.SHOW_READ_ONLY_LOCK, true);
-      putContextUserData(LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT, true);
+      putContextUserData(LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT, enablePartialCommit);
     }
 
     @Override
