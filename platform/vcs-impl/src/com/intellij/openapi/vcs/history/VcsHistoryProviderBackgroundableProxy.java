@@ -26,8 +26,7 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.ItemLatestState;
-import com.intellij.openapi.vcs.impl.BackgroundableActionEnabledHandler;
-import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
+import com.intellij.openapi.vcs.impl.BackgroundableActionLock;
 import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.openapi.vcs.impl.VcsBackgroundableComputable;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -78,19 +77,18 @@ public class VcsHistoryProviderBackgroundableProxy {
   }
 
   public void createSessionFor(final VcsKey vcsKey, final FilePath filePath, final Consumer<VcsHistorySession> continuation,
-                               @Nullable VcsBackgroundableActions actionKey,
+                               @NotNull VcsBackgroundableActions actionKey,
                                final boolean silent,
                                @Nullable final Consumer<VcsHistorySession> backgroundSpecialization) {
     final ThrowableComputable<VcsHistorySession, VcsException> throwableComputable =
       myHistoryComputerFactory.create(filePath, backgroundSpecialization, vcsKey);
-    final VcsBackgroundableActions resultingActionKey = actionKey == null ? VcsBackgroundableActions.CREATE_HISTORY_SESSION : actionKey;
     final Object key = VcsBackgroundableActions.keyFrom(filePath);
 
     if (silent) {
-      VcsBackgroundableComputable.createAndRunSilent(myProject, resultingActionKey, key, VcsBundle.message("loading.file.history.progress"),
+      VcsBackgroundableComputable.createAndRunSilent(myProject, actionKey, key, VcsBundle.message("loading.file.history.progress"),
                                                      throwableComputable, continuation);
     } else {
-      VcsBackgroundableComputable.createAndRun(myProject, resultingActionKey, key, VcsBundle.message("loading.file.history.progress"),
+      VcsBackgroundableComputable.createAndRun(myProject, actionKey, key, VcsBundle.message("loading.file.history.progress"),
                                                VcsBundle.message("message.title.could.not.load.file.history"), throwableComputable, continuation, null);
     }
   }
@@ -122,13 +120,10 @@ public class VcsHistoryProviderBackgroundableProxy {
       }
     }
 
-    final ProjectLevelVcsManagerImpl vcsManager = (ProjectLevelVcsManagerImpl) ProjectLevelVcsManager.getInstance(myProject);
-
-    BackgroundableActionEnabledHandler handler = vcsManager.getBackgroundableActionHandler(VcsBackgroundableActions.CREATE_HISTORY_SESSION);
-    // fo not start same action twice
-    Object key = VcsBackgroundableActions.keyFrom(filePath);
-    if (handler.isInProgress(key)) return;
-    handler.register(key);
+    BackgroundableActionLock lock =
+      BackgroundableActionLock.getLock(myProject, VcsBackgroundableActions.CREATE_HISTORY_SESSION, filePath.getPath());
+    if (lock.isLocked()) return;
+    lock.lock();
 
     final VcsAppendableHistorySessionPartner cachedPartner;
     if (myCachesHistory && startRevisionNumber == null) {
@@ -142,7 +137,7 @@ public class VcsHistoryProviderBackgroundableProxy {
     } else {
       cachedPartner = partner;
     }
-    reportHistory(filePath, startRevisionNumber, vcsKey, key, handler, cachedPartner, canUseLastRevisionCheck);
+    reportHistory(filePath, startRevisionNumber, vcsKey, lock, cachedPartner, canUseLastRevisionCheck);
   }
 
   private VcsAbstractHistorySession getFullHistoryFromCache(VcsKey vcsKey, FilePath filePath) {
@@ -163,8 +158,7 @@ public class VcsHistoryProviderBackgroundableProxy {
 
   private void reportHistory(final FilePath filePath, @Nullable final VcsRevisionNumber startRevisionNumber,
                              final VcsKey vcsKey,
-                             final Object resultingActionKey,
-                             final BackgroundableActionEnabledHandler handler,
+                             @NotNull BackgroundableActionLock lock,
                              final VcsAppendableHistorySessionPartner cachedPartner, final boolean canUseLastRevisionCheck) {
     ProgressManager.getInstance().run(new Task.Backgroundable(myProject, VcsBundle.message("loading.file.history.progress"), true) {
       public void run(@NotNull ProgressIndicator indicator) {
@@ -188,7 +182,7 @@ public class VcsHistoryProviderBackgroundableProxy {
         }
         finally {
           cachedPartner.finished();
-          ApplicationManager.getApplication().invokeLater(() -> handler.completed(resultingActionKey), ModalityState.NON_MODAL);
+          ApplicationManager.getApplication().invokeLater(lock::unlock, ModalityState.NON_MODAL);
         }
       }
     });

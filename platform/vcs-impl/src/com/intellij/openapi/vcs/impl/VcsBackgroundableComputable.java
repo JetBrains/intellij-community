@@ -20,7 +20,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
@@ -31,8 +30,7 @@ public class VcsBackgroundableComputable<T> extends Task.Backgroundable {
 
   private boolean mySilent;
   private final Project myProject;
-  private final BackgroundableActionEnabledHandler myHandler;
-  private final Object myActionParameter;
+  @NotNull private final BackgroundableActionLock myLock;
   private final ThrowableComputable<T, VcsException> myBackgroundable;
 
   private final Consumer<T> myAwtSuccessContinuation;
@@ -42,20 +40,18 @@ public class VcsBackgroundableComputable<T> extends Task.Backgroundable {
   private T myResult;
 
   private VcsBackgroundableComputable(final Project project, final String title,
-                                  final String errorTitle,
-                                  final ThrowableComputable<T, VcsException> backgroundable,
-                                  final Consumer<T> awtSuccessContinuation,
-                                  final Runnable awtErrorContinuation,
-                                  final BackgroundableActionEnabledHandler handler,
-                                  final Object actionParameter) {
+                                      final String errorTitle,
+                                      final ThrowableComputable<T, VcsException> backgroundable,
+                                      final Consumer<T> awtSuccessContinuation,
+                                      final Runnable awtErrorContinuation,
+                                      @NotNull BackgroundableActionLock lock) {
     super(project, title, true);
     myErrorTitle = errorTitle;
     myBackgroundable = backgroundable;
     myAwtSuccessContinuation = awtSuccessContinuation;
     myAwtErrorContinuation = awtErrorContinuation;
     myProject = project;
-    myHandler = handler;
-    myActionParameter = actionParameter;
+    myLock = lock;
   }
 
   public static <T> void createAndRunSilent(final Project project, @Nullable final VcsBackgroundableActions actionKey,
@@ -90,23 +86,14 @@ public class VcsBackgroundableComputable<T> extends Task.Backgroundable {
                                  final ThrowableComputable<T, VcsException> backgroundable,
                                  @Nullable final Consumer<T> awtSuccessContinuation,
                                  @Nullable final Runnable awtErrorContinuation, final boolean silent) {
-    final ProjectLevelVcsManagerImpl vcsManager = (ProjectLevelVcsManagerImpl) ProjectLevelVcsManager.getInstance(project);
-    final BackgroundableActionEnabledHandler handler;
-    if (actionKey != null) {
-      handler = vcsManager.getBackgroundableActionHandler(actionKey);
-      // fo not start same action twice
-      if (handler.isInProgress(actionParameter)) return;
-    } else {
-      handler = null;
-    }
+    BackgroundableActionLock lock = BackgroundableActionLock.getLock(project, actionKey, actionParameter);
+    if (lock.isLocked()) return;
 
     final VcsBackgroundableComputable<T> backgroundableComputable =
       new VcsBackgroundableComputable<>(project, title, errorTitle, backgroundable, awtSuccessContinuation, awtErrorContinuation,
-                                        handler, actionParameter);
+                                        lock);
     backgroundableComputable.setSilent(silent);
-    if (handler != null) {
-      handler.register(actionParameter);
-    }
+    lock.lock();
     ProgressManager.getInstance().run(backgroundableComputable);
   }
 
@@ -139,10 +126,8 @@ public class VcsBackgroundableComputable<T> extends Task.Backgroundable {
   }
 
   private void commonFinish() {
-    if (myHandler != null) {
-      myHandler.completed(myActionParameter);
-    }
-    
+    myLock.unlock();
+
     if ((! mySilent) && (myException != null)) {
       AbstractVcsHelperImpl.getInstance(myProject).showError(myException, myErrorTitle);
     }
