@@ -18,7 +18,6 @@ class DockedModeGuiTest : GuiTestCase() {
     DOCKED_MODE("Docked Mode")
   }
 
-
   @Test
   fun testDockerMode() {
     CommunityProjectCreator.importCommandLineAppAndOpenMain()
@@ -37,14 +36,6 @@ class DockedModeGuiTest : GuiTestCase() {
   @After
   fun tearDown() {
     ideFrame { setProjectViewMode(ToolWindowModes.DOCKED_MODE, true) }
-//    ideFrame {
-//      if (!projectView.isVisible) {
-//        projectView.activate()
-//        Pause.pause(2000) // pause to wait when project view is appeared
-//      }
-//      Pause.pause(720000) // pause to wait when project view is appeared
-//
-//    }
   }
 
   private fun IdeFrameFixture.setProjectViewMode(toolWindowMode: ToolWindowModes, flag: Boolean) {
