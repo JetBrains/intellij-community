@@ -1087,6 +1087,12 @@ public class ChangeListWorker {
     }
 
     public void addChangeToCorrespondingList(@NotNull Change change, AbstractVcs vcs) {
+      ListData listData = guessListForChange(change);
+      addChangeToList(listData, change, vcs);
+    }
+
+    @NotNull
+    private ListData guessListForChange(@NotNull Change change) {
       if (LOG.isDebugEnabled()) {
         final String path = ChangesUtil.getFilePath(change).getPath();
         LOG.debug("[addChangeToCorrespondingList] for change " + path + " type: " + change.getType() +
@@ -1099,15 +1105,14 @@ public class ChangeListWorker {
           if (LOG.isDebugEnabled()) {
             LOG.debug("[addChangeToCorrespondingList] matched: " + list.name);
           }
-          addChangeToList(list, change, vcs);
-          return;
+          return list;
         }
       }
 
       if (LOG.isDebugEnabled()) {
         LOG.debug("[addChangeToCorrespondingList] added to default list");
       }
-      addChangeToList(myWorker.myDefault, change, vcs);
+      return myWorker.myDefault;
     }
 
     private void addChangeToList(@NotNull ListData list, @NotNull Change change, AbstractVcs vcs) {
