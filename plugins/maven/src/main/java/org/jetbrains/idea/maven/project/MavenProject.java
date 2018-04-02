@@ -21,7 +21,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
@@ -30,11 +29,8 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.util.Consumer;
-import com.intellij.util.PathsList;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jdom.Element;
@@ -48,6 +44,7 @@ import org.jetbrains.idea.maven.plugins.api.MavenModelPropertiesPatcher;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.utils.*;
+import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.*;
 import java.util.*;
@@ -892,20 +889,9 @@ public class MavenProject {
         if (annotationProcessorModule != null) {
           OrderEnumerator enumerator = orderEntries(annotationProcessorModule).withoutSdk().productionOnly().runtimeOnly().recursively();
 
-          PathsList pathsList = enumerator.getPathsList();
-          for (String path : pathsList.getPathList()) {
-            resultAppender.consume(path);
+          for (String url : enumerator.classes().getUrls()) {
+            resultAppender.consume(JpsPathUtil.urlToPath(url));
           }
-
-          // module output folders might not be created yet and hence be absent from pathsList
-          enumerator.forEachModule(m -> {
-            CompilerModuleExtension compilerModuleExtension = CompilerModuleExtension.getInstance(m);
-            if (compilerModuleExtension != null) {
-              VirtualFilePointer compilerOutputPointer = compilerModuleExtension.getCompilerOutputPointer();
-              resultAppender.consume(VfsUtil.urlToPath(compilerOutputPointer.getUrl()));
-            }
-            return true;
-          });
         }
       }
     }
