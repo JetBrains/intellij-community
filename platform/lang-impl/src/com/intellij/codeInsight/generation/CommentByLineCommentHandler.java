@@ -16,9 +16,11 @@
 
 package com.intellij.codeInsight.generation;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CommentUtil;
 import com.intellij.codeInsight.actions.MultiCaretCodeInsightActionHandler;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.formatting.IndentData;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Commenter;
@@ -39,7 +41,9 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.source.tree.injected.InjectedCaret;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
@@ -57,7 +61,6 @@ import java.util.Map;
 
 public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHandler {
   private Project                                         myProject;
-  private CodeStyleManager                                myCodeStyleManager;
 
   private final List<Block> myBlocks = new ArrayList<>();
 
@@ -146,7 +149,6 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
   public void postInvoke() {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.comment.line");
 
-    myCodeStyleManager = CodeStyleManager.getInstance(myProject);
     CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(myProject);
 
     // second pass - determining whether we need to comment or to uncomment
@@ -405,20 +407,19 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
     return PsiUtilCore.getLanguageAtOffset(file, lineEndOffset);
   }
 
-  private Indent computeMinIndent(Editor editor, PsiFile psiFile, int line1, int line2, FileType fileType) {
+  private static IndentData computeMinIndent(Editor editor, PsiFile psiFile, int line1, int line2) {
     Document document = editor.getDocument();
-    Indent minIndent = CommentUtil.getMinLineIndent(myProject, document, line1, line2, fileType);
+    IndentData minIndent = CommentUtil.getMinLineIndent(document, line1, line2, psiFile);
     if (line1 > 0) {
       int commentOffset = getCommentStart(editor, psiFile, line1 - 1);
       if (commentOffset >= 0) {
         int lineStart = document.getLineStartOffset(line1 - 1);
-        String space = document.getCharsSequence().subSequence(lineStart, commentOffset).toString();
-        Indent indent = myCodeStyleManager.getIndent(space, fileType);
-        minIndent = minIndent != null ? indent.min(minIndent) : indent;
+        IndentData indent = IndentData.createFrom(document.getCharsSequence(), lineStart, commentOffset, CodeStyle.getIndentOptions(psiFile).TAB_SIZE);
+        minIndent = IndentData.min(minIndent, indent);
       }
     }
     if (minIndent == null) {
-      minIndent = myCodeStyleManager.zeroIndent();
+      minIndent = new IndentData(0);
     }
     return minIndent;
   }
@@ -446,11 +447,11 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
       });
   }
 
-  private void doIndentCommenting(final Block block) {
+  private static void doIndentCommenting(final Block block) {
     final Document document = block.editor.getDocument();
     final CharSequence chars = document.getCharsSequence();
-    final FileType fileType = block.psiFile.getFileType();
-    final Indent minIndent = computeMinIndent(block.editor, block.psiFile, block.startLine, block.endLine, fileType);
+    final IndentData minIndent = computeMinIndent(block.editor, block.psiFile, block.startLine, block.endLine);
+    final CommonCodeStyleSettings.IndentOptions indentOptions = CodeStyle.getIndentOptions(block.psiFile);
 
     DocumentUtil.executeInBulk(
       document, block.endLine - block.startLine > Registry.intValue("comment.by.line.bulk.lines.trigger"), () -> {
@@ -459,12 +460,11 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
           int offset = lineStart;
           final StringBuilder buffer = new StringBuilder();
           while (true) {
-            String space = buffer.toString();
-            Indent indent = myCodeStyleManager.getIndent(space, fileType);
-            if (indent.isGreaterThan(minIndent) || indent.equals(minIndent)) break;
+            IndentData indent = IndentData.createFrom(buffer.toString(), 0, buffer.length(), indentOptions.TAB_SIZE);
+            if (indent.getIndentSpaces() >= minIndent.getIndentSpaces()) break;
             char c = chars.charAt(offset);
             if (c != ' ' && c != '\t') {
-              String newSpace = myCodeStyleManager.fillIndent(minIndent, fileType);
+              String newSpace = minIndent.createIndentInfo().generateNewWhiteSpace(indentOptions);
               document.replaceString(lineStart, offset, newSpace);
               offset = lineStart + newSpace.length();
               break;
