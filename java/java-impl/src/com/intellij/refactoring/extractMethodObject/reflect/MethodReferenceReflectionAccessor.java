@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethodObject.reflect;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.refactoring.extractMethodObject.ItemToReplaceDescriptor;
 import com.intellij.refactoring.extractMethodObject.reflect.ConstructorReflectionAccessor.ConstructorDescriptor;
@@ -15,6 +16,8 @@ import static com.intellij.refactoring.extractMethodObject.reflect.ConstructorRe
  */
 public class MethodReferenceReflectionAccessor
   extends ReferenceReflectionAccessorBase<MethodReferenceReflectionAccessor.MethodReferenceDescriptor> {
+  private static final Logger LOG = Logger.getInstance(MethodReferenceReflectionAccessor.class);
+
   private final MethodReflectionAccessor myMethodAccessor;
   private final ConstructorReflectionAccessor myConstructorReflectionAccessor;
   public MethodReferenceReflectionAccessor(@NotNull PsiClass psiClass,
@@ -43,12 +46,15 @@ public class MethodReferenceReflectionAccessor
   @Override
   protected void grantAccess(@NotNull MethodReferenceDescriptor descriptor) {
     PsiLambdaExpression lambda = LambdaRefactoringUtil.convertMethodReferenceToLambda(descriptor.expression, false, true);
-    if (lambda != null) {
-      PsiElement lambdaBody = lambda.getBody();
+    PsiElement lambdaBody = lambda == null ? null : lambda.getBody();
+    if (lambdaBody != null) {
       if (lambdaBody instanceof PsiNewExpression) {
         ConstructorDescriptor constructorDescriptor = createIfInaccessible((PsiNewExpression)lambdaBody);
         if (constructorDescriptor != null) {
           myConstructorReflectionAccessor.grantAccess(constructorDescriptor);
+        }
+        else {
+          LOG.warn("Inaccessible constructor not found. Method reference: " + descriptor.expression.getText());
         }
       }
       else if (lambdaBody instanceof PsiMethodCallExpression) {
@@ -57,7 +63,16 @@ public class MethodReferenceReflectionAccessor
         if (method != null) {
           myMethodAccessor.grantAccess(new MethodReflectionAccessor.MethodCallDescriptor(callExpression, method));
         }
+        else {
+          LOG.warn("Could not resolve method from expression: " + callExpression.getText());
+        }
       }
+      else {
+        LOG.warn("Unexpected type of lambda body: " + lambdaBody.getClass().getCanonicalName());
+      }
+    }
+    else {
+      LOG.warn("Could not replace method reference with lambda: " + descriptor.expression.getText());
     }
   }
 
