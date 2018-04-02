@@ -396,6 +396,16 @@ public class PythonHighlightingTest extends PyTestCase {
     doTest(LanguageLevel.PYTHON37, false, true);
   }
 
+  // PY-28313
+  public void testVarargs() {
+    doTest();
+  }
+
+  // PY-28313
+  public void testKwargs() {
+    doTest();
+  }
+
   @NotNull
   private static EditorColorsScheme createTemporaryColorScheme() {
     EditorColorsManager manager = EditorColorsManager.getInstance();
