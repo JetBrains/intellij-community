@@ -1,12 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api.data;
 
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.io.mandatory.Mandatory;
 import org.jetbrains.io.mandatory.RestModel;
 
-import java.util.Date;
-
 //https://developer.github.com/v3/users/
+//region GithubAuthenticatedUser
 //region GithubUserDetailed
 //region GithubUser
 /*
@@ -45,32 +44,41 @@ import java.util.Date;
   "updated_at":"2008-01-14T04:33:35Z"
 */
 //endregion
+/*
+  "total_private_repos": 100,
+  "owned_private_repos": 100,
+  "private_gists": 81,
+  "disk_usage": 10000,
+  "collaborators": 8,
+  "two_factor_authentication": true,
+  "plan": {
+      "name": "Medium",
+      "space": 400,
+      "private_repos": 20,
+      "collaborators": 0
+  }
+*/
+//endregion
 @RestModel
 @SuppressWarnings("UnusedDeclaration")
-public class GithubUserDetailed extends GithubUser {
-  private String name;
-  private String company;
-  private String blog;
-  private String location;
-  private String email;
-  private Boolean hireable;
-  private String bio;
+public class GithubAuthenticatedUser extends GithubUserDetailed {
+  private Integer totalPrivateRepos;
+  private Integer ownedPrivateRepos;
+  private Integer privateGists;
+  private Long diskUsage;
+  private Integer collaborators;
+  private Boolean twoFactorAuthentication;
+  private UserPlan plan;
 
-  private Integer publicRepos;
-  private Integer publicGists;
-  private Integer followers;
-  private Integer following;
-
-  private Date createdAt;
-  private Date updatedAt;
-
-  @Nullable
-  public String getName() {
-    return name;
+  @RestModel
+  static class UserPlan {
+    private String name;
+    private Long space;
+    @Mandatory private Long privateRepos;
+    private Long collaborators;
   }
 
-  @Nullable
-  public String getEmail() {
-    return email;
+  public boolean canCreatePrivateRepo() {
+    return plan == null || ownedPrivateRepos == null || plan.privateRepos > ownedPrivateRepos;
   }
 }

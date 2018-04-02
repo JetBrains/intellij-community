@@ -58,6 +58,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
 import org.jetbrains.plugins.github.api.GithubFullPath;
+import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser;
 import org.jetbrains.plugins.github.api.data.GithubRepo;
 import org.jetbrains.plugins.github.api.data.GithubUserDetailed;
 import org.jetbrains.plugins.github.exceptions.GithubStatusCodeException;
@@ -255,7 +256,7 @@ public class GithubShareAction extends DumbAwareAction {
         // get existing github repos (network) and validate auth data
         return GithubUtil.runTask(project, authHolder, indicator, connection -> {
           // check access to private repos (network)
-          GithubUserDetailed userInfo = GithubApiUtil.getCurrentUser(connection);
+          GithubAuthenticatedUser userInfo = GithubApiUtil.getCurrentUser(connection);
 
           HashSet<String> names = new HashSet<>();
           for (GithubRepo info : GithubApiUtil.getUserRepos(connection)) {
@@ -456,16 +457,16 @@ public class GithubShareAction extends DumbAwareAction {
   }
 
   private static class GithubInfo {
-    @NotNull private final GithubUserDetailed myUser;
+    @NotNull private final GithubAuthenticatedUser myUser;
     @NotNull private final HashSet<String> myRepositoryNames;
 
-    GithubInfo(@NotNull GithubUserDetailed user, @NotNull HashSet<String> repositoryNames) {
+    GithubInfo(@NotNull GithubAuthenticatedUser user, @NotNull HashSet<String> repositoryNames) {
       myUser = user;
       myRepositoryNames = repositoryNames;
     }
 
     @NotNull
-    public GithubUserDetailed getUser() {
+    public GithubAuthenticatedUser getUser() {
       return myUser;
     }
 
