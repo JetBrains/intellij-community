@@ -70,7 +70,16 @@ public class VcsHistoryProviderBackgroundableProxy {
     ThrowableComputable<VcsHistorySession, VcsException> throwableComputable;
     VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession> factory = getCacheableFactory();
     if (factory != null) {
-      throwableComputable = new CachingHistoryComputer(filePath, vcsKey, factory);
+      throwableComputable = () -> {
+        // we check for the last revision, since requests to this exact method at the moment only request history once, and no refresh is possible later
+        VcsAbstractHistorySession session = getSessionFromCacheWithLastRevisionCheck(filePath, vcsKey, factory);
+        if (session == null) {
+          session = createSessionWithLimitCheck(filePath);
+          FilePath correctedPath = factory.getUsedFilePath(session);
+          myVcsHistoryCache.put(filePath, correctedPath, vcsKey, (VcsAbstractHistorySession)session.copy(), factory, true);
+        }
+        return session;
+      };
     }
     else {
       throwableComputable = () -> createSessionWithLimitCheck(filePath);
@@ -292,32 +301,6 @@ public class VcsHistoryProviderBackgroundableProxy {
     @Override
     public void forceRefresh() {
       myPartner.forceRefresh();
-    }
-  }
-
-  private class CachingHistoryComputer implements ThrowableComputable<VcsHistorySession, VcsException> {
-    @NotNull private final FilePath myFilePath;
-    @NotNull private final VcsKey myVcsKey;
-    @NotNull private final VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession> myFactory;
-
-    private CachingHistoryComputer(@NotNull FilePath filePath,
-                                   @NotNull VcsKey vcsKey,
-                                   @NotNull VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession> cacheableFactory) {
-      myFilePath = filePath;
-      myVcsKey = vcsKey;
-      myFactory = cacheableFactory;
-    }
-
-    @Override
-    public VcsHistorySession compute() throws VcsException {
-      // we check for the last revision, since requests to this exact method at the moment only request history once, and no refresh is possible later
-      VcsAbstractHistorySession session = getSessionFromCacheWithLastRevisionCheck(myFilePath, myVcsKey, myFactory);
-      if (session == null) {
-        session = createSessionWithLimitCheck(myFilePath);
-        FilePath correctedPath = myFactory.getUsedFilePath(session);
-        myVcsHistoryCache.put(myFilePath, correctedPath, myVcsKey, (VcsAbstractHistorySession)session.copy(), myFactory, true);
-      }
-      return session;
     }
   }
 }
