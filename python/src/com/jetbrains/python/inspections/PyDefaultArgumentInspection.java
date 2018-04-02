@@ -20,7 +20,9 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.inspections.quickfix.PyDefaultArgumentQuickFix;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyNamedParameter;
+import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,16 +53,9 @@ public class PyDefaultArgumentInspection extends PyInspection {
 
     @Override
     public void visitPyNamedParameter(PyNamedParameter node) {
-      PyExpression defaultValue = node.getDefaultValue();
-      if (defaultValue != null) {
-        if (defaultValue instanceof PyListLiteralExpression || defaultValue instanceof PyDictLiteralExpression) {
-          registerProblem(defaultValue, "Default argument value is mutable", new PyDefaultArgumentQuickFix());
-        }
-        if (defaultValue instanceof PyCallExpression) {
-          PyExpression callee = ((PyCallExpression)defaultValue).getCallee();
-          if (callee != null && "dict".equals(callee.getText()))
-            registerProblem(defaultValue, "Default argument value is mutable", new PyDefaultArgumentQuickFix());
-        }
+      final PyExpression defaultValue = node.getDefaultValue();
+      if (PyUtil.isForbiddenMutableDefault(defaultValue, myTypeEvalContext)) {
+        registerProblem(defaultValue, "Default argument value is mutable", new PyDefaultArgumentQuickFix());
       }
     }
   }

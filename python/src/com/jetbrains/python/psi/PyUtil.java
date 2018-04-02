@@ -1872,6 +1872,25 @@ public class PyUtil {
     return loop;
   }
 
+  public static boolean isForbiddenMutableDefault(@Nullable PyTypedElement value, @NotNull TypeEvalContext context) {
+    if (value == null) return false;
+
+    final PyClassType type = as(context.getType(value), PyClassType.class);
+    if (type != null && !type.isDefinition()) {
+      final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(value);
+      final Set<PyClass> forbiddenClasses = StreamEx
+        .of(builtinCache.getListType(), builtinCache.getSetType(), builtinCache.getDictType())
+        .nonNull()
+        .map(PyClassType::getPyClass)
+        .toSet();
+
+      final PyClass cls = type.getPyClass();
+      return forbiddenClasses.contains(cls) || ContainerUtil.exists(cls.getAncestorClasses(context), forbiddenClasses::contains);
+    }
+
+    return false;
+  }
+
   /**
    * This helper class allows to collect various information about AST nodes composing {@link PyStringLiteralExpression}.
    */
