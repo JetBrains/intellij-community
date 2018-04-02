@@ -55,9 +55,6 @@ public class MavenAnnotationProcessorTarget extends JVMModuleBuildTarget<BuildRo
   /**
    * Creates list of {@link ModuleBuildTarget} targets according to list of annotation processors, declared in
    * {@link JpsMavenModuleExtension}
-   * @param targetRegistry the registry of all targets existing in the project.
-   * @param outputIndex    the index of output files by target.
-   * @return
    */
   @Override
   public Collection<BuildTarget<?>> computeDependencies(BuildTargetRegistry targetRegistry, TargetOutputIndex outputIndex) {

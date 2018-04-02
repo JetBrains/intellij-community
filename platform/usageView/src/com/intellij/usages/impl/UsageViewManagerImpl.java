@@ -76,8 +76,9 @@ public class UsageViewManagerImpl extends UsageViewManager {
           usageView.waitForUpdateRequestsCompletion();
         }
       });
-      usageView.setSearchInProgress(false);
     }
+    usageView.setSearchInProgress(false);
+
 
     return usageView;
   }
