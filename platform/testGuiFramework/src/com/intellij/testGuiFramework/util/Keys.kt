@@ -250,3 +250,8 @@ operator fun Shortcut.plus(shortcut: Shortcut): Shortcut {
   val newKey = if (this.key != null) this.key else shortcut.key
   return Shortcut(unionOfModifier, newKey)
 }
+
+fun resolveKey(inputString: String): Key {
+  return if (Regex("\\d]").matches(inputString)) Key.valueOf("d$inputString")
+  else Key.valueOf("d$inputString")
+}
