@@ -15,8 +15,13 @@
  */
 package org.jetbrains.plugins.github.util;
 
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -54,6 +59,18 @@ public class GithubNotifications {
     VcsNotifier.getInstance(project).notifyImportantWarning(title, getErrorTextFromException(e));
   }
 
+  public static void showWarning(@NotNull Project project, @NotNull String title, @NotNull String message, @Nullable AnAction... actions) {
+    LOG.info(title + "; " + message);
+    Notification notification =
+      new Notification(VcsNotifier.IMPORTANT_ERROR_NOTIFICATION.getDisplayId(), title, message, NotificationType.WARNING);
+    if (actions != null) {
+      for (AnAction action : actions) {
+        notification.addAction(action);
+      }
+    }
+    notification.notify(project);
+  }
+
   public static void showError(@NotNull Project project, @NotNull String title, @NotNull String message) {
     LOG.info(title + "; " + message);
     VcsNotifier.getInstance(project).notifyError(title, message);
@@ -73,7 +90,7 @@ public class GithubNotifications {
   public static void showInfoURL(@NotNull Project project, @NotNull String title, @NotNull String message, @NotNull String url) {
     LOG.info(title + "; " + message + "; " + url);
     VcsNotifier.getInstance(project)
-      .notifyImportantInfo(title, "<a href='" + url + "'>" + message + "</a>", NotificationListener.URL_OPENING_LISTENER);
+               .notifyImportantInfo(title, "<a href='" + url + "'>" + message + "</a>", NotificationListener.URL_OPENING_LISTENER);
   }
 
   public static void showWarningURL(@NotNull Project project,
@@ -152,5 +169,12 @@ public class GithubNotifications {
                                         @NotNull String message,
                                         @NotNull DialogWrapper.DoNotAskOption doNotAskOption) {
     return Messages.YES == Messages.showYesNoDialog(project, message, title, Messages.getQuestionIcon(), doNotAskOption);
+  }
+
+  @NotNull
+  public static AnAction getConfigureAction(@NotNull Project project) {
+    return NotificationAction.createSimple("Configure...", () -> {
+      ShowSettingsUtil.getInstance().showSettingsDialog(project, GithubUtil.SERVICE_DISPLAY_NAME);
+    });
   }
 }

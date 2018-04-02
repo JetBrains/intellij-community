@@ -71,6 +71,7 @@ import java.util.concurrent.TimeUnit;
 public class GithubUtil {
 
   public static final Logger LOG = Logger.getInstance("github");
+  public static final String SERVICE_DISPLAY_NAME = "GitHub";
 
   // TODO: Consider sharing of GithubAuthData between actions (as member of GithubSettings)
   public static <T> T runTask(@NotNull Project project,
@@ -138,7 +139,7 @@ public class GithubUtil {
   }
 
   @NotNull
-  private static ScheduledFuture<?> addCancellationListener(@NotNull Runnable run) {
+  public static ScheduledFuture<?> addCancellationListener(@NotNull Runnable run) {
     return JobScheduler.getScheduler().scheduleWithFixedDelay(run, 1000, 300, TimeUnit.MILLISECONDS);
   }
 

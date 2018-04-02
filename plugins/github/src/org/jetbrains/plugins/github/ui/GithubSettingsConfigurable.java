@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsConfigurableProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.github.util.GithubUtil;
 
 import javax.swing.*;
 
@@ -36,7 +37,7 @@ public class GithubSettingsConfigurable implements SearchableConfigurable, VcsCo
 
   @NotNull
   public String getDisplayName() {
-    return "GitHub";
+    return GithubUtil.SERVICE_DISPLAY_NAME;
   }
 
   @Override
