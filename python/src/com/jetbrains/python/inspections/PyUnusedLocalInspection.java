@@ -17,6 +17,7 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.ui.ListEditForm;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElementVisitor;
@@ -25,6 +26,9 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author oleg
@@ -35,7 +39,9 @@ public class PyUnusedLocalInspection extends PyInspection {
   public boolean ignoreTupleUnpacking = true;
   public boolean ignoreLambdaParameters = true;
   public boolean ignoreLoopIterationVariables = true;
-  public boolean ignoreVariablesStartingWithUnderscore = true;
+
+  @NotNull
+  public final List<String> ignoreVariablesStartingWith = new ArrayList<>();
 
   @Override
   @NotNull
@@ -52,7 +58,7 @@ public class PyUnusedLocalInspection extends PyInspection {
                                                                                       ignoreTupleUnpacking,
                                                                                       ignoreLambdaParameters,
                                                                                       ignoreLoopIterationVariables,
-                                                                                      ignoreVariablesStartingWithUnderscore);
+                                                                                      ignoreVariablesStartingWith);
     // buildVisitor() will be called on injected files in the same session - don't overwrite if we already have one
     final PyUnusedLocalInspectionVisitor existingVisitor = session.getUserData(KEY);
     if (existingVisitor == null) {
@@ -72,11 +78,16 @@ public class PyUnusedLocalInspection extends PyInspection {
 
   @Override
   public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox("Ignore variables used in tuple unpacking", "ignoreTupleUnpacking");
-    panel.addCheckbox("Ignore lambda parameters", "ignoreLambdaParameters");
-    panel.addCheckbox("Ignore range iteration variables", "ignoreLoopIterationVariables");
-    panel.addCheckbox("Ignore variables starting with '_'", "ignoreVariablesStartingWithUnderscore");
-    return panel;
+    final JPanel rootPanel = new JPanel(new BorderLayout());
+
+    final MultipleCheckboxOptionsPanel checkboxes = new MultipleCheckboxOptionsPanel(this);
+    checkboxes.addCheckbox("Ignore variables used in tuple unpacking", "ignoreTupleUnpacking");
+    checkboxes.addCheckbox("Ignore lambda parameters", "ignoreLambdaParameters");
+    checkboxes.addCheckbox("Ignore range iteration variables", "ignoreLoopIterationVariables");
+    rootPanel.add(checkboxes, BorderLayout.NORTH);
+
+    rootPanel.add(new ListEditForm("Ignore variables starting with", ignoreVariablesStartingWith).getContentPanel(), BorderLayout.CENTER);
+
+    return rootPanel;
   }
 }

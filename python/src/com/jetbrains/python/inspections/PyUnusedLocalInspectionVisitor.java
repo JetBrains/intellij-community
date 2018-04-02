@@ -62,8 +62,14 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
   private final boolean myIgnoreTupleUnpacking;
   private final boolean myIgnoreLambdaParameters;
   private final boolean myIgnoreRangeIterationVariables;
-  private final boolean myIgnoreVariablesStartingWithUnderscore;
+
+  @NotNull
+  private final List<String> myIgnoreVariablesStartingWith;
+
+  @NotNull
   private final HashSet<PsiElement> myUnusedElements;
+
+  @NotNull
   private final HashSet<PsiElement> myUsedElements;
 
   public PyUnusedLocalInspectionVisitor(@NotNull ProblemsHolder holder,
@@ -71,12 +77,12 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
                                         boolean ignoreTupleUnpacking,
                                         boolean ignoreLambdaParameters,
                                         boolean ignoreRangeIterationVariables,
-                                        boolean ignoreVariablesStartingWithUnderscore) {
+                                        @NotNull List<String> ignoreVariablesStartingWith) {
     super(holder, session);
     myIgnoreTupleUnpacking = ignoreTupleUnpacking;
     myIgnoreLambdaParameters = ignoreLambdaParameters;
     myIgnoreRangeIterationVariables = ignoreRangeIterationVariables;
-    myIgnoreVariablesStartingWithUnderscore = ignoreVariablesStartingWithUnderscore;
+    myIgnoreVariablesStartingWith = ignoreVariablesStartingWith;
     myUnusedElements = new HashSet<>();
     myUsedElements = new HashSet<>();
   }
@@ -339,12 +345,11 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
       }
       else {
         // Local variable or parameter
-        String name = element.getText();
         if (element instanceof PyNamedParameter || element.getParent() instanceof PyNamedParameter) {
-          PyNamedParameter namedParameter = element instanceof PyNamedParameter
-                                            ? (PyNamedParameter) element
-                                            : (PyNamedParameter) element.getParent();
-          name = namedParameter.getName();
+          final PyNamedParameter namedParameter = element instanceof PyNamedParameter
+                                                  ? (PyNamedParameter)element
+                                                  : (PyNamedParameter)element.getParent();
+          final String name = namedParameter.getName();
           // When function is inside a class, first parameter may be either self or cls which is always 'used'.
           if (namedParameter.isSelf()) {
             continue;
@@ -354,7 +359,7 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
           }
           boolean mayBeField = false;
           PyClass containingClass = null;
-          PyParameterList paramList = PsiTreeUtil.getParentOfType(element, PyParameterList.class);
+          final PyParameterList paramList = PsiTreeUtil.getParentOfType(element, PyParameterList.class);
           if (paramList != null && paramList.getParent() instanceof PyFunction) {
             final PyFunction func = (PyFunction) paramList.getParent();
             containingClass = func.getContainingClass();
@@ -375,7 +380,7 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
               }
             }
           }
-          boolean canRemove = !(PsiTreeUtil.getPrevSiblingOfType(element, PyParameter.class) instanceof PySingleStarParameter) ||
+          final boolean canRemove = !(PsiTreeUtil.getPrevSiblingOfType(element, PyParameter.class) instanceof PySingleStarParameter) ||
             PsiTreeUtil.getNextSiblingOfType(element, PyParameter.class) != null;
 
           final List<LocalQuickFix> fixes = new ArrayList<>();
@@ -391,6 +396,7 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
           if (myIgnoreTupleUnpacking && isTupleUnpacking(element)) {
             continue;
           }
+          final String name = element.getText();
           final PyForStatement forStatement = PyForStatementNavigator.getPyForStatementByIterable(element);
           if (forStatement != null) {
             if (!myIgnoreRangeIterationVariables || !isRangeIteration(forStatement)) {
@@ -398,7 +404,7 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
                               ProblemHighlightType.LIKE_UNUSED_SYMBOL, null, new ReplaceWithWildCard());
             }
           }
-          else if (!myIgnoreVariablesStartingWithUnderscore || !name.startsWith(PyNames.UNDERSCORE)) {
+          else if (!ContainerUtil.exists(myIgnoreVariablesStartingWith, prefix -> name.startsWith(prefix))) {
             registerWarning(element, PyBundle.message("INSP.unused.locals.local.variable.isnot.used", name), new PyRemoveStatementQuickFix());
           }
         }

@@ -87,7 +87,6 @@ public class PyUnusedLocalInspectionTest extends PyInspectionTestCase {
   }
 
   // PY-3996
-  // PY-27435
   public void testUnderscorePrefixed() {
     doTest();
   }
@@ -103,9 +102,11 @@ public class PyUnusedLocalInspectionTest extends PyInspectionTestCase {
   }
 
   // PY-27435
-  public void testVariableStartingWithUnderscore() {
+  // PY-29246
+  public void testIgnoreVariablesStartingWith() {
     final PyUnusedLocalInspection inspection = new PyUnusedLocalInspection();
-    inspection.ignoreVariablesStartingWithUnderscore = false;
+    inspection.ignoreVariablesStartingWith.add("_");
+    inspection.ignoreVariablesStartingWith.add("unused");
     doTest(inspection);
   }
 
