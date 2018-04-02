@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs
 
 import com.intellij.ide.file.BatchFileChangeListener
+import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.CommandProcessor
@@ -32,6 +33,9 @@ import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcsUtil.VcsUtil
 import org.mockito.Mockito
+import java.lang.IllegalStateException
+import java.util.concurrent.Semaphore
+import java.util.concurrent.TimeUnit
 
 abstract class BaseLineStatusTrackerManagerTest : LightPlatformTestCase() {
   protected lateinit var vcs: MyMockVcs
@@ -282,7 +286,10 @@ abstract class BaseLineStatusTrackerManagerTest : LightPlatformTestCase() {
   }
 
 
-  protected class MyMockChangeProvider : ChangeProvider {
+  protected inner class MyMockChangeProvider : ChangeProvider {
+    private val semaphore = Semaphore(1)
+    private val markerSemaphore = Semaphore(0)
+
     val changes = mutableMapOf<FilePath, ContentRevision?>()
     val files = mutableSetOf<VirtualFile>()
 
@@ -290,16 +297,24 @@ abstract class BaseLineStatusTrackerManagerTest : LightPlatformTestCase() {
                             builder: ChangelistBuilder,
                             progress: ProgressIndicator,
                             addGate: ChangeListManagerGate) {
-      for ((filePath, beforeRevision) in changes) {
-        val file = files.find { VcsUtil.getFilePath(it) == filePath }
-        val afterContent: ContentRevision? = when (file) {
-          null -> null
-          else -> CurrentContentRevision(filePath)
+      markerSemaphore.release()
+      semaphore.acquireOrThrow()
+      try {
+        for ((filePath, beforeRevision) in changes) {
+          val file = files.find { VcsUtil.getFilePath(it) == filePath }
+          val afterContent: ContentRevision? = when (file) {
+            null -> null
+            else -> CurrentContentRevision(filePath)
+          }
+
+          val change = Change(beforeRevision, afterContent)
+
+          builder.processChange(change, MockAbstractVcs.getKey())
         }
-
-        val change = Change(beforeRevision, afterContent)
-
-        builder.processChange(change, MockAbstractVcs.getKey())
+      }
+      finally {
+        semaphore.release()
+        markerSemaphore.acquireOrThrow()
       }
     }
 
@@ -308,6 +323,27 @@ abstract class BaseLineStatusTrackerManagerTest : LightPlatformTestCase() {
     }
 
     override fun doCleanup(files: List<VirtualFile>) {
+    }
+
+    fun awaitAndBlockRefresh(): AccessToken {
+      semaphore.acquireOrThrow()
+
+      dirtyScopeManager.markEverythingDirty()
+      clm.scheduleUpdate()
+
+      markerSemaphore.acquireOrThrow()
+      markerSemaphore.release()
+
+      return object : AccessToken() {
+        override fun finish() {
+          semaphore.release()
+        }
+      }
+    }
+
+    private fun Semaphore.acquireOrThrow() {
+      val success = this.tryAcquire(10000, TimeUnit.MILLISECONDS)
+      if (!success) throw IllegalStateException()
     }
   }
 

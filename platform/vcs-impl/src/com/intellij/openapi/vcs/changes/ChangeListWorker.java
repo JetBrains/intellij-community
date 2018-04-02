@@ -632,7 +632,7 @@ public class ChangeListWorker {
 
         ListData newList = null;
         if (oldList == null) {
-          if (updatedWorker.myPartialChangeTrackers.isEmpty()) {
+          if (updatedWorker.getChangeTrackerFor(change) == null) {
             LOG.error("Change mapping not found");
           }
         }
@@ -994,10 +994,7 @@ public class ChangeListWorker {
                                        @NotNull List<Change> addedChanges) {
       OpenTHashSet<Change> changesBeforeUpdate = myChangesBeforeUpdateMap.get(list.id);
 
-      Set<Change> listChanges = new HashSet<>();
-      myWorker.myChangeMappings.forEach((change, mappedList) -> {
-        if (mappedList == list) listChanges.add(change);
-      });
+      Set<Change> listChanges = new HashSet<>(myWorker.getChangesIn(list));
 
       for (Change newChange : listChanges) {
         Change oldChange = findOldChange(changesBeforeUpdate, newChange);
@@ -1091,7 +1088,7 @@ public class ChangeListWorker {
       addChangeToList(listData, change, vcs);
     }
 
-    @NotNull
+    @Nullable
     private ListData guessListForChange(@NotNull Change change) {
       if (LOG.isDebugEnabled()) {
         final String path = ChangesUtil.getFilePath(change).getPath();
@@ -1109,20 +1106,29 @@ public class ChangeListWorker {
         }
       }
 
+      ContentRevision revision = change.getAfterRevision();
+      if (revision != null && myWorker.myPartialChangeTrackers.get(revision.getFile()) != null) {
+        LOG.debug("[addChangeToCorrespondingList] partial tracker found");
+        return null;
+      }
+
       if (LOG.isDebugEnabled()) {
         LOG.debug("[addChangeToCorrespondingList] added to default list");
       }
       return myWorker.myDefault;
     }
 
-    private void addChangeToList(@NotNull ListData list, @NotNull Change change, AbstractVcs vcs) {
+    private void addChangeToList(@Nullable ListData list, @NotNull Change change, AbstractVcs vcs) {
       if (myWorker.myIdx.getChanges().contains(change)) {
         LOG.warn(String.format("Multiple equal changes added: %s", change));
         return;
       }
 
       myWorker.myIdx.changeAdded(change, vcs);
-      myWorker.putChangeMapping(change, list);
+      if (list != null) {
+        myWorker.putChangeMapping(change, list);
+      }
+      myWorker.myReadOnlyChangesCache = null;
     }
 
     public void removeRegisteredChangeFor(@Nullable FilePath filePath) {
