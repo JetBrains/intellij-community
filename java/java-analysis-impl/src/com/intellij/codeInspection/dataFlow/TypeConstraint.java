@@ -20,6 +20,7 @@ import com.intellij.psi.LambdaUtil;
 import com.intellij.psi.PsiIntersectionType;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
@@ -196,10 +197,11 @@ public final class TypeConstraint {
   }
 
   private static Set<DfaPsiType> withSuper(Set<DfaPsiType> instanceofValues) {
-    return StreamEx.of(instanceofValues)
-                   .flatMap(type -> StreamEx.ofTree(type.getPsiType(), t -> StreamEx.of(t.getSuperTypes()))
-                                            .map(type.getFactory()::createDfaType))
-                   .toSet();
+    Set<DfaPsiType> result = new HashSet<>(instanceofValues);
+    for (DfaPsiType type : instanceofValues) {
+      InheritanceUtil.processSuperTypes(type.getPsiType(), false, t -> result.add(type.getFactory().createDfaType(t)));
+    }
+    return result;
   }
 
   @NotNull
