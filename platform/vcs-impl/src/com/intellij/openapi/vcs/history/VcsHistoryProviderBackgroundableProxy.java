@@ -73,7 +73,7 @@ public class VcsHistoryProviderBackgroundableProxy {
       throwableComputable = new CachingHistoryComputer(filePath, vcsKey, factory);
     }
     else {
-      throwableComputable = new SimpleHistoryComputer(filePath);
+      throwableComputable = () -> createSessionWithLimitCheck(filePath);
     }
 
     String title = VcsBundle.message("loading.file.history.progress");
@@ -292,19 +292,6 @@ public class VcsHistoryProviderBackgroundableProxy {
     @Override
     public void forceRefresh() {
       myPartner.forceRefresh();
-    }
-  }
-
-  private class SimpleHistoryComputer implements ThrowableComputable<VcsHistorySession, VcsException> {
-    private final FilePath myFilePath;
-
-    private SimpleHistoryComputer(FilePath filePath) {
-      myFilePath = filePath;
-    }
-
-    @Override
-    public VcsHistorySession compute() throws VcsException {
-      return createSessionWithLimitCheck(myFilePath);
     }
   }
 
