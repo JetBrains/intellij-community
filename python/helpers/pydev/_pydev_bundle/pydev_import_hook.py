@@ -1,5 +1,6 @@
 
 import sys
+import traceback
 from types import ModuleType
 
 
@@ -23,6 +24,7 @@ class ImportHookManager(ModuleType):
                 activate_func() #call activate function
         except:
             sys.stderr.write("Matplotlib support failed\n")
+            traceback.print_exc()
         return module
 
 if sys.version_info[0] >= 3:
