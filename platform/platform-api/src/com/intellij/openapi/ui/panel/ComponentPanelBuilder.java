@@ -6,7 +6,6 @@ import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ContextHelpLabel;
-import com.intellij.ui.Gray;
 import com.intellij.ui.TextComponent;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -344,28 +343,30 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
       gc.gridx += myLabelOnTop ? 0 : 1;
       gc.weightx = 1.0;
       gc.insets = JBUI.emptyInsets();
-
-      JPanel componentPanel = new NonOpaquePanel();
-      componentPanel.setLayout(new BoxLayout(componentPanel, BoxLayout.X_AXIS));
-      componentPanel.add(myComponent);
-
-      myComponent.putClientProperty(DECORATED_PANEL_PROPERTY, this);
-
-      if (StringUtil.isNotEmpty(myHTDescription)) {
-        ContextHelpLabel lbl = StringUtil.isNotEmpty(myHTLinkText) && myHTAction != null ?
-                               ContextHelpLabel.createWithLink(null, myHTDescription, myHTLinkText, myHTAction) :
-                               ContextHelpLabel.create(myHTDescription);
-        componentPanel.add(Box.createRigidArea(JBUI.size(7, 0)));
-        componentPanel.add(lbl);
-      }
-      else if (!myCommentBelow) {
-        comment.setBorder(getCommentBorder());
-        componentPanel.add(comment);
-      }
-
       gc.fill = myResizeY ? GridBagConstraints.BOTH : myResizeX ? GridBagConstraints.HORIZONTAL: GridBagConstraints.NONE;
       gc.weighty = myResizeY ? 1.0 : 0.0;
-      panel.add(componentPanel, gc);
+
+      if (StringUtil.isNotEmpty(myHTDescription) || !myCommentBelow) {
+        JPanel componentPanel = new JPanel();
+        componentPanel.setLayout(new BoxLayout(componentPanel, BoxLayout.X_AXIS));
+        componentPanel.add(myComponent);
+
+        if (StringUtil.isNotEmpty(myHTDescription)) {
+          ContextHelpLabel lbl = StringUtil.isNotEmpty(myHTLinkText) && myHTAction != null ?
+                                 ContextHelpLabel.createWithLink(null, myHTDescription, myHTLinkText, myHTAction) :
+                                 ContextHelpLabel.create(myHTDescription);
+          componentPanel.add(Box.createRigidArea(JBUI.size(7, 0)));
+          componentPanel.add(lbl);
+        }
+        else if (!myCommentBelow) {
+          comment.setBorder(getCommentBorder());
+          componentPanel.add(comment);
+        }
+
+        panel.add(componentPanel, gc);
+      } else {
+        panel.add(myComponent, gc);
+      }
 
       gc.fill = GridBagConstraints.HORIZONTAL;
       gc.weighty = 0.0;
@@ -380,6 +381,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
         panel.add(comment, gc);
       }
 
+      myComponent.putClientProperty(DECORATED_PANEL_PROPERTY, this);
       gc.gridy++;
     }
   }
