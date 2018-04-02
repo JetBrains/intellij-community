@@ -573,7 +573,10 @@ class BaseInterpreterInterface:
         env_key = "PYDEVD_EXTRA_ENVS"
         if env_key in debugger_options:
             for (env_name, value) in dict_iter_items(debugger_options[env_key]):
-                os.environ[env_name] = value
+                if env_name.upper() in ('PATH', 'PYTHONPATH'):
+                    merge_env(env_name, value)
+                else:
+                    os.environ[env_name] = value
             del debugger_options[env_key]
         def do_connect_to_debugger():
             try:
@@ -657,7 +660,12 @@ class BaseInterpreterInterface:
     def get_ipython_hidden_vars_dict(self):
         return None
 
-
+def merge_env(env_key, value):
+    existing_value = os.environ.get(env_key, None)
+    if existing_value:
+        os.environ[env_key] = "%s%c%s" % (existing_value, os.path.pathsep, value)
+    else:
+        os.environ[env_key] = value
 # =======================================================================================================================
 # FakeFrame
 # =======================================================================================================================
