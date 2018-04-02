@@ -53,7 +53,6 @@ public class VcsHistoryProviderBackgroundableProxy {
   @NotNull private final VcsType myType;
   private final DiffProvider myDiffProvider;
   private final boolean myIsCachedHistory;
-  @NotNull private final HistoryComputerFactory myHistoryComputerFactory;
 
   public VcsHistoryProviderBackgroundableProxy(@NotNull AbstractVcs vcs,
                                                @NotNull VcsHistoryProvider historyProvider,
@@ -65,25 +64,18 @@ public class VcsHistoryProviderBackgroundableProxy {
     myType = vcs.getType();
     myDiffProvider = diffProvider;
     myIsCachedHistory = myHistoryProvider instanceof VcsCacheableHistorySessionFactory;
-    myHistoryComputerFactory = new HistoryComputerFactory() {
-      @Override
-      public ThrowableComputable<VcsHistorySession, VcsException> create(FilePath filePath,
-                                                                         Consumer<VcsHistorySession> consumer,
-                                                                         VcsKey vcsKey) {
-        if (myIsCachedHistory) {
-          return new CachingHistoryComputer(filePath, consumer, vcsKey);
-        }
-        else {
-          return new SimpleHistoryComputer(filePath, consumer);
-        }
-      }
-    };
   }
 
   @CalledInAwt
   public void createSessionFor(@NotNull VcsKey vcsKey, @NotNull FilePath filePath, @NotNull Consumer<VcsHistorySession> continuation,
                                @NotNull VcsBackgroundableActions actionKey, boolean silent) {
-    ThrowableComputable<VcsHistorySession, VcsException> throwableComputable = myHistoryComputerFactory.create(filePath, null, vcsKey);
+    ThrowableComputable<VcsHistorySession, VcsException> throwableComputable;
+    if (myIsCachedHistory) {
+      throwableComputable = new CachingHistoryComputer(filePath, null, vcsKey);
+    }
+    else {
+      throwableComputable = new SimpleHistoryComputer(filePath, null);
+    }
 
     String title = VcsBundle.message("loading.file.history.progress");
     String errorTitle = silent ? null : VcsBundle.message("message.title.could.not.load.file.history");
@@ -239,10 +231,6 @@ public class VcsHistoryProviderBackgroundableProxy {
     public void forceRefresh() {
       myPartner.forceRefresh();
     }
-  }
-
-  private interface HistoryComputerFactory {
-    ThrowableComputable<VcsHistorySession, VcsException> create(FilePath filePath, Consumer<VcsHistorySession> consumer, VcsKey vcsKey);
   }
 
   private class SimpleHistoryComputer implements ThrowableComputable<VcsHistorySession, VcsException> {
