@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface JvmAnnotatedElement extends JvmElement {
+public interface JvmAnnotatedElement extends JvmElement, JvmAnnotationTreeElement {
 
   @NotNull
   JvmAnnotation[] getAnnotations();

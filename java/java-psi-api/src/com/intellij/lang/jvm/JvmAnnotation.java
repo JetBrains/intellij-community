@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-public interface JvmAnnotation extends JvmElement {
+public interface JvmAnnotation extends JvmElement, JvmAnnotationTreeElement {
 
   /**
    * Returns the fully qualified name of the annotation class.
@@ -38,4 +38,13 @@ public interface JvmAnnotation extends JvmElement {
     return Collections.emptyList();
   }
 
+  @Nullable
+  default JvmAnnotationAttributeValue findDeclaredJvmAttributeValue(String config) {
+    return getAttributes().stream().filter(e -> e.getName().equals(config)).findAny().map(a -> a.getValue()).orElse(null);
+  }
+
+  @Nullable
+  default JvmAnnotationAttributeValue findJvmAttributeValue(String name) {
+    return findDeclaredJvmAttributeValue(name);
+  }
 }
