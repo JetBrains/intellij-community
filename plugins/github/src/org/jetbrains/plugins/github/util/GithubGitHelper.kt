@@ -6,7 +6,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import git4idea.GitUtil
 import git4idea.repo.GitRepository
+import org.jetbrains.plugins.github.api.GithubApiUtil
 import org.jetbrains.plugins.github.api.GithubFullPath
+import org.jetbrains.plugins.github.api.GithubRepositoryPath
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 
@@ -15,6 +17,7 @@ import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
  */
 class GithubGitHelper(private val githubSettings: GithubSettings,
                       private val authenticationManager: GithubAuthenticationManager) {
+  private val DEFAULT_SERVER = GithubServerPath(GithubApiUtil.DEFAULT_GITHUB_HOST)
 
   fun getRemoteUrl(server: GithubServerPath, repoPath: GithubFullPath): String {
     return getRemoteUrl(server, repoPath.user, repoPath.repository)
@@ -38,6 +41,18 @@ class GithubGitHelper(private val githubSettings: GithubSettings,
   }
 
   private fun isRemoteUrlAccessible(url: String) = authenticationManager.getAccounts().find { it.server.matches(url) } != null
+
+  fun getPossibleRepositories(repository: GitRepository): Set<GithubRepositoryPath> {
+    val registeredServers = (authenticationManager.getAccounts().map { it.server } + DEFAULT_SERVER)
+    val repositoryPaths = mutableSetOf<GithubRepositoryPath>()
+    for (url in repository.remotes.map { it.urls }.flatten()) {
+      registeredServers.filter { it.matches(url) }
+        .mapNotNullTo(repositoryPaths, { server ->
+          GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(url)?.let { GithubRepositoryPath(server, it) }
+        })
+    }
+    return repositoryPaths
+  }
 
   companion object {
     @JvmStatic
