@@ -53,6 +53,7 @@ import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.regex.Pattern;
 
 import static com.intellij.ide.plugins.PluginManagerCore.getPlugins;
@@ -84,7 +85,9 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
   private TopComponentController myTopController;
   private final SearchTextField mySearchTextField;
 
-  private final InstalledPluginsTableModel myPluginsModel = new InstalledPluginsTableModel();
+  private final MyPluginModel myPluginsModel = new MyPluginModel();
+
+  private Runnable myShutdownCallback;
 
   public PluginManagerConfigurableNew() {
     myTagBuilder = new TagBuilder() {
@@ -273,8 +276,95 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
   }
 
   @Override
+  public void disposeUIResources() {
+    if (myShutdownCallback != null) {
+      myShutdownCallback.run();
+      myShutdownCallback = null;
+    }
+  }
+
+  @Override
   public void apply() throws ConfigurationException {
-    // TODO: Auto-generated method stub
+    Map<PluginId, Set<PluginId>> dependencies = new HashMap<>(myPluginsModel.getDependentToRequiredListMap());
+
+    for (Iterator<Entry<PluginId, Set<PluginId>>> I = dependencies.entrySet().iterator(); I.hasNext(); ) {
+      Entry<PluginId, Set<PluginId>> entry = I.next();
+      boolean hasNonModuleDeps = false;
+
+      for (PluginId pluginId : entry.getValue()) {
+        if (!PluginManagerCore.isModuleDependency(pluginId)) {
+          hasNonModuleDeps = true;
+          break;
+        }
+      }
+      if (!hasNonModuleDeps) {
+        I.remove();
+      }
+    }
+
+    if (!dependencies.isEmpty()) {
+      throw new ConfigurationException("<html><body style=\"padding: 5px;\">Unable to apply changes: plugin" +
+                                       (dependencies.size() == 1 ? " " : "s ") +
+                                       StringUtil.join(dependencies.keySet(), pluginId -> {
+                                         IdeaPluginDescriptor descriptor = PluginManager.getPlugin(pluginId);
+                                         return "\"" + (descriptor == null ? pluginId.getIdString() : descriptor.getName()) + "\"";
+                                       }, ", ") +
+                                       " won't be able to load.</body></html>");
+    }
+
+    int rowCount = myPluginsModel.getRowCount();
+    for (int i = 0; i < rowCount; i++) {
+      IdeaPluginDescriptor descriptor = myPluginsModel.getObjectAt(i);
+      descriptor.setEnabled(myPluginsModel.isEnabled(descriptor.getPluginId()));
+    }
+
+    List<String> disableIds = new ArrayList<>();
+    for (Entry<PluginId, Boolean> entry : myPluginsModel.getEnabledMap().entrySet()) {
+      Boolean enabled = entry.getValue();
+      if (enabled != null && !enabled) {
+        disableIds.add(entry.getKey().getIdString());
+      }
+    }
+
+    try {
+      PluginManagerCore.saveDisabledPlugins(disableIds, false);
+    }
+    catch (IOException e) {
+      PluginManagerMain.LOG.error(e);
+    }
+
+    if (myShutdownCallback == null) {
+      myShutdownCallback = () -> ApplicationManager.getApplication().invokeLater(
+        () -> PluginManagerConfigurable.shutdownOrRestartApp(IdeBundle.message("update.notifications.title")));
+    }
+  }
+
+  @Override
+  public boolean isModified() {
+    List<String> disabledPlugins = PluginManagerCore.getDisabledPlugins();
+    int rowCount = myPluginsModel.getRowCount();
+
+    for (int i = 0; i < rowCount; i++) {
+      IdeaPluginDescriptor descriptor = myPluginsModel.getObjectAt(i);
+      PluginId pluginId = descriptor.getPluginId();
+      boolean enabledInTable = myPluginsModel.isEnabled(pluginId);
+
+      if (descriptor.isEnabled() != enabledInTable) {
+        if (enabledInTable && !disabledPlugins.contains(pluginId.getIdString())) {
+          continue; // was disabled automatically on startup
+        }
+        return true;
+      }
+    }
+
+    for (Entry<PluginId, Boolean> entry : myPluginsModel.getEnabledMap().entrySet()) {
+      Boolean enabled = entry.getValue();
+      if (enabled != null && !enabled && !disabledPlugins.contains(entry.getKey().getIdString())) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   @NotNull
@@ -1473,7 +1563,7 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
   }
 
   private static class ListPluginComponent extends CellPluginComponent {
-    private final InstalledPluginsTableModel myPluginsModel;
+    private final MyPluginModel myPluginsModel;
 
     private JLabel myVersion;
     private JLabel myLastUpdated;
@@ -1484,9 +1574,10 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
     private JPanel myVersionPanel;
     private JPanel myErrorPanel;
 
-    public ListPluginComponent(@NotNull InstalledPluginsTableModel pluginsModel, @NotNull IdeaPluginDescriptor plugin, boolean update) {
+    public ListPluginComponent(@NotNull MyPluginModel pluginsModel, @NotNull IdeaPluginDescriptor plugin, boolean update) {
       super(plugin);
       myPluginsModel = pluginsModel;
+      pluginsModel.addComponent(this);
 
       JPanel buttons = new NonOpaquePanel(new HorizontalLayout(JBUI.scale(6)));
       if (update) {
@@ -1495,16 +1586,17 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
         myMouseComponents.add(myUpdateButton);
       }
       if (plugin.isBundled()) {
-        myEnableDisableButton = new JButton(plugin.isEnabled() ? "Disable" : "Enable");
+        myEnableDisableButton = new JButton(getEnabledTitle());
+        myEnableDisableButton.addActionListener(e -> handleEnableDisable());
         setWidth72(myEnableDisableButton);
         buttons.add(myEnableDisableButton);
         myMouseComponents.add(myEnableDisableButton);
       }
       else {
-        AbstractAction enableDisableAction = new AbstractAction(plugin.isEnabled() ? "Disable" : "Enable") {
+        AbstractAction enableDisableAction = new AbstractAction(getEnabledTitle()) {
           @Override
           public void actionPerformed(ActionEvent e) {
-            // TODO: Auto-generated method stub
+            handleEnableDisable();
           }
         };
         AbstractAction uninstallAction = new AbstractAction("Uninstall") {
@@ -1717,6 +1809,25 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
           removeMouseListeners(button, listener);
         }
       }
+    }
+
+    @NotNull
+    private String getEnabledTitle() {
+      return myPluginsModel.isEnabled(myPlugin.getPluginId()) ? "Disable" : "Enable";
+    }
+
+    private void handleEnableDisable() {
+      myPluginsModel.enableRows(new IdeaPluginDescriptor[]{myPlugin}, !myPluginsModel.isEnabled(myPlugin.getPluginId()));
+    }
+
+    public void updateEnabledState() {
+      if (myEnableDisableButton != null) {
+        myEnableDisableButton.setText(getEnabledTitle());
+      }
+      if (myEnableDisableUninstallButton != null) {
+        myEnableDisableUninstallButton.setText(getEnabledTitle());
+      }
+      updateErrors();
     }
   }
 
@@ -2128,6 +2239,22 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
       }
     }
     button.setPreferredSize(new Dimension(width, button.getPreferredSize().height));
+  }
+
+  private static class MyPluginModel extends InstalledPluginsTableModel {
+    private final List<ListPluginComponent> myComponents = new ArrayList<>();
+
+    public void addComponent(@NotNull ListPluginComponent component) {
+      myComponents.add(component);
+    }
+
+    @Override
+    public void enableRows(IdeaPluginDescriptor[] ideaPluginDescriptors, Boolean value) {
+      super.enableRows(ideaPluginDescriptors, value);
+      for (ListPluginComponent component : myComponents) {
+        component.updateEnabledState();
+      }
+    }
   }
 
   @Nullable
