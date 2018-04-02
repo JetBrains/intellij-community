@@ -16,7 +16,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DefaultCustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
-import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
@@ -42,7 +41,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.pom.Navigatable;
@@ -158,16 +156,6 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     initByModel();
 
     ApplicationManager.getApplication().invokeLater(this::scheduleResultsUpdate, ModalityState.any());
-    if (SystemInfo.isWindows) {
-      ApplicationManager.getApplication().getMessageBus()
-                        .connect(myDisposable).subscribe(ApplicationActivationListener.TOPIC,
-                                                         new ApplicationActivationListener() {
-                                                           @Override
-                                                           public void applicationDeactivated(IdeFrame ideFrame) {
-                                                             closeImmediately();
-                                                           }
-                                                         });
-    }
   }
 
   @Override
@@ -266,8 +254,8 @@ public class FindPopupPanel extends JBPanel implements FindUI {
   protected boolean canBeClosed() {
     if (!myCanClose.get()) return false;
     if (myIsPinned.get()) return false;
-    if (!ApplicationManager.getApplication().isActive()) return SystemInfo.isWindows;
-    if (KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() == null) return SystemInfo.isWindows;
+    if (!ApplicationManager.getApplication().isActive()) return false;
+    if (KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() == null) return false;
     if (myFileMaskField.isPopupVisible()) {
       myFileMaskField.setPopupVisible(false);
       return false;
