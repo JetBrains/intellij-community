@@ -31,6 +31,7 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
+import java.util.Arrays;
 
 public class ComponentPanelTestAction extends DumbAwareAction {
   @Override
@@ -120,7 +121,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         withTooltip("Help tooltip description").createPanel());
 
       panel.add(UI.PanelFactory.panel(new JButton("Abracadabra")).
-        withComment("Abradabra comment").createPanel());
+        withComment("Abradabra comment").resizeX(false).createPanel());
 
       String[] items = new String[]{ "One", "Two", "Three", "Four", "Five", "Six" };
       panel.add(UI.PanelFactory.panel(new JComboBox<>(items)).
@@ -158,14 +159,12 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       JBScrollPane pane = new JBScrollPane(new JTextArea(3, 40));
       pane.putClientProperty(UIUtil.KEEP_BORDER_SIDES, SideBorder.ALL);
 
-      DropDownLink linkLabel =
-        new DropDownLink("Drop down link label", () -> System.out.println("Drop down link label clicked")).
-          addDropItem("Label 1", ()-> System.out.println("Action 1")).
-          addDropItem("Label 2 long long long long long long label", ()-> System.out.println("Action 2")).
-          addDropItem("Label 3", ()-> System.out.println("Action 3")).
-          addDropItem("Label 4", ()-> System.out.println("Action 4")).
-          addDropItem("Label 5", ()-> System.out.println("Action 5")).
-          addDropItem("Label 6", ()-> System.out.println("Action 6"));
+      DropDownLink<String> linkLabel =
+        new DropDownLink<>("Drop down link label",
+                           Arrays.asList("Label 1",
+                                         "Label 2 long long long long long long label",
+                                         "Label 3", "Label 4", "Label 5", "Label 6"),
+                           t -> System.out.println("[" + t + "] selected"), false);
 
       JPanel p1 = UI.PanelFactory.grid().
       add(UI.PanelFactory.panel(new JTextField()).
@@ -190,7 +189,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         withLabel("Text area:").
         anchorLabelOn(UI.Anchor.Top).
         withComment("Text area comment").
-        //moveLabelOnTop().
+        moveLabelOnTop().
         withTopRightComponent(linkLabel)
       ).createPanel();
 
