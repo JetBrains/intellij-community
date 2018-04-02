@@ -25,6 +25,7 @@ import com.intellij.testGuiFramework.generators.Generators
 import com.intellij.testGuiFramework.recorder.ui.KeyUtil
 import com.intellij.testGuiFramework.util.Key
 import com.intellij.testGuiFramework.util.Modifier
+import com.intellij.testGuiFramework.util.resolveKey
 import com.intellij.ui.KeyStrokeAdapter
 import java.awt.Component
 import java.awt.Point
@@ -116,7 +117,7 @@ private fun convertKeyStrokeToEnums(keyStroke: KeyStroke): String {
   var key: Key? = null
   modifiersAndKeys.forEach {
     if (hasModifiers) try { modifiers.add(Modifier.valueOf(it)) } catch (e: IllegalArgumentException) {}
-    try { key = Key.valueOf(it) } catch (e: IllegalArgumentException) {}
+    try { key = resolveKey(it) } catch (e: IllegalArgumentException) {}
   }
   val sb = StringBuffer()
   modifiers.forEach { sb.append(it.name); sb.append(" + ") }
