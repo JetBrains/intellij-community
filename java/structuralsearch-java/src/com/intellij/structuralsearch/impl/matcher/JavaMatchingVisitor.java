@@ -381,7 +381,10 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
   private static PsiElement getElementToMatch(PsiElement element) {
     if (element instanceof PsiCodeBlock) {
-      element = PsiTreeUtil.getChildOfAnyType(element, PsiStatement.class, PsiComment.class);
+      final List<PsiElement> list = PsiTreeUtil.getChildrenOfAnyType(element, PsiStatement.class, PsiComment.class);
+      if (list.isEmpty()) return null;
+      element = list.get(0);
+      if (list.size() > 1) return element;
     }
     if (element instanceof PsiExpressionStatement) {
       element = ((PsiExpressionStatement)element).getExpression();
