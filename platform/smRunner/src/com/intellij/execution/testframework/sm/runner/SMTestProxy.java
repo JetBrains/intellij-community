@@ -11,7 +11,6 @@ import com.intellij.execution.testframework.sm.runner.events.TestFailedEvent;
 import com.intellij.execution.testframework.sm.runner.states.*;
 import com.intellij.execution.testframework.sm.runner.ui.TestsPresentationUtil;
 import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
-import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -614,7 +613,7 @@ public class SMTestProxy extends AbstractTestProxy {
   public void addOutput(@NotNull String output, @NotNull Key outputType) {
     addAfterLastPassed(new Printable() {
       public void printOn(@NotNull Printer printer) {
-        printer.print(output, ConsoleViewContentType.getConsoleViewType(outputType));
+        printer.printWithAnsiColoring(output, outputType);
       }
     });
   }
