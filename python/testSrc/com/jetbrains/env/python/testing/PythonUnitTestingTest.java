@@ -150,6 +150,21 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
     });
   }
 
+  @Test
+  public void testDiff() {
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/testDiff", "test_test.py") {
+
+      @Override
+      protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
+                                      @NotNull final String stdout,
+                                      @NotNull final String stderr,
+                                      @NotNull final String all) {
+        Assert.assertThat("No expected", stdout, Matchers.containsString("expected='1'"));
+        Assert.assertThat("No actual", stdout, Matchers.containsString("actual='2'"));
+      }
+    });
+  }
+
   @Override
   PyUnitTestProcessRunner createTestRunner(@NotNull final TestRunnerConfig config) {
     return new PyUnitTestProcessRunner(config.getScriptName(), config.getRerunFailedTests());
