@@ -17,7 +17,7 @@ package com.intellij.lang.jvm;
 
 import org.jetbrains.annotations.NotNull;
 
-public interface JvmAnnotatedElement extends JvmElement {
+public interface JvmAnnotatedElement extends JvmElement, JvmAnnotationTreeElement {
 
   @NotNull
   JvmAnnotation[] getAnnotations();

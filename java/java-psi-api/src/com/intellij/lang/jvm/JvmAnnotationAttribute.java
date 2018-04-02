@@ -3,7 +3,7 @@ package com.intellij.lang.jvm;
 
 import org.jetbrains.annotations.NotNull;
 
-public interface JvmAnnotationAttribute {
+public interface JvmAnnotationAttribute extends JvmAnnotationTreeElement {
 
   @NotNull
   String getName();
