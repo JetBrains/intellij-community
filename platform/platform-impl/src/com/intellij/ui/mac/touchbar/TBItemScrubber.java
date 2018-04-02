@@ -31,6 +31,7 @@ public class TBItemScrubber extends TBItem {
     myActions = (int index) -> { executeAt(index); };
   }
 
+  public void clear() { myItems.clear(); }
   public void addItem(Icon icon, String text, NSTLibrary.Action action) {
     myItems.add(new ItemData(icon, text, action));
   }
