@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.api
 
 import com.intellij.openapi.application.invokeAndWaitIfNeed
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.ui.Messages
@@ -90,6 +91,11 @@ class GithubApiTaskExecutor(private val authenticationManager: GithubAuthenticat
       if (code == null) throw GithubOperationCanceledException("Can't get two factor authentication code")
 
       return originalAuth.copyWithTwoFactorCode(code)
+    }
+
+    @JvmStatic
+    fun getInstance(): GithubApiTaskExecutor {
+      return service()
     }
   }
 }

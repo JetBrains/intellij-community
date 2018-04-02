@@ -25,6 +25,7 @@
     <applicationService serviceImplementation="org.jetbrains.plugins.github.authentication.GithubAuthenticationManager"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.github.api.GithubApiTaskExecutor"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.github.util.GithubGitHelper"/>
     <projectService serviceInterface="org.jetbrains.plugins.github.util.GithubProjectSettings"
                     serviceImplementation="org.jetbrains.plugins.github.util.GithubProjectSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder"/>
