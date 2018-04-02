@@ -41,6 +41,7 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 
 public class TestDataUtil {
   private static final String TESTDATA_FILE_AFTER_MARKER = "after";
@@ -98,6 +99,10 @@ public class TestDataUtil {
     if (file1 == null || file2 == null) {
       return null;
     }
+    if (!Objects.equals(file1.getParent(), file2.getParent())) {
+      return null;
+    }
+
     @NonNls String file1Name = file1.getName();
     @NonNls String file2Name = file2.getName();
 

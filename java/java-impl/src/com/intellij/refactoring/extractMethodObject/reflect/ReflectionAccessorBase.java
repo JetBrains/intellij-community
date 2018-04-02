@@ -17,9 +17,9 @@ import java.util.List;
  * @author Vitaliy.Bibaev
  */
 public abstract class ReflectionAccessorBase<T extends ItemToReplaceDescriptor> implements ReflectionAccessor {
-  private static final Logger LOG = Logger.getInstance(ReferenceReflectionAccessorBase.class);
   private final PsiClass myPsiClass;
   private final PsiElementFactory myElementFactory;
+  private final Logger log = Logger.getInstance(getClass());
 
   protected ReflectionAccessorBase(@NotNull PsiClass psiClass, @NotNull PsiElementFactory elementFactory) {
     myPsiClass = psiClass;
@@ -29,13 +29,14 @@ public abstract class ReflectionAccessorBase<T extends ItemToReplaceDescriptor> 
   @Override
   public void accessThroughReflection(@NotNull PsiElement element) {
     List<T> toReplace = findItemsToReplace(element);
+    log.info("Found " + toReplace.size() + " items to replace");
     for (T item : toReplace) {
       grantAccess(item);
     }
 
     List<T> remaining = findItemsToReplace(element);
     if (!remaining.isEmpty()) {
-      LOG.warn("Some inaccessible items were not replaced");
+      log.warn("Some inaccessible items were not replaced");
     }
   }
 

@@ -23,6 +23,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
+ * Class is used to provide implicit dependencies between modules. It is used in cases when one module uses other project modules as
+ * annotation processors, which is possible using "annotationProcessorPaths" option of "maven-compiler-plugin"
  * @author ibessonov
  */
 public class MavenAnnotationProcessorTarget extends JVMModuleBuildTarget<BuildRootDescriptor> {
@@ -50,6 +52,13 @@ public class MavenAnnotationProcessorTarget extends JVMModuleBuildTarget<BuildRo
     return true;
   }
 
+  /**
+   * Creates list of {@link ModuleBuildTarget} targets according to list of annotation processors, declared in
+   * {@link JpsMavenModuleExtension}
+   * @param targetRegistry the registry of all targets existing in the project.
+   * @param outputIndex    the index of output files by target.
+   * @return
+   */
   @Override
   public Collection<BuildTarget<?>> computeDependencies(BuildTargetRegistry targetRegistry, TargetOutputIndex outputIndex) {
     JpsMavenModuleExtension moduleExtension = JpsMavenExtensionService.getInstance().getExtension(myModule);
@@ -57,11 +66,10 @@ public class MavenAnnotationProcessorTarget extends JVMModuleBuildTarget<BuildRo
 
     Set<String> names = new HashSet<>(moduleExtension.getAnnotationProcessorModules());
     JavaModuleBuildTargetType javaModuleBuildTargetType = JavaModuleBuildTargetType.getInstance(isTests());
-    return targetRegistry.getAllTargets(myTargetType).stream()
-                         .map(MavenAnnotationProcessorTarget::getModule)
-                         .filter(module -> names.contains(module.getName()))
-                         .map(module -> new ModuleBuildTarget(module, javaModuleBuildTargetType))
-                         .collect(Collectors.toList());
+    return myModule.getProject().getModules().stream()
+                   .filter(module -> names.contains(module.getName()))
+                   .map(module -> new ModuleBuildTarget(module, javaModuleBuildTargetType))
+                   .collect(Collectors.toList());
   }
 
   @NotNull
