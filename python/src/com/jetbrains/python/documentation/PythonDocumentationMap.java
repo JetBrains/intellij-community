@@ -2,6 +2,7 @@
 package com.jetbrains.python.documentation;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
@@ -16,10 +17,17 @@ import com.jetbrains.python.psi.PyFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author yole
@@ -36,6 +44,28 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
 
   public static PythonDocumentationMap getInstance() {
     return ServiceManager.getService(PythonDocumentationMap.class);
+  }
+
+  private static class ScipyExternalDocumentationMap {
+    private static final Map<String, String> nameToWebpageName = ((Supplier<Map<String, String>>)() -> {
+      final ImmutableMap.Builder<String, String> b = ImmutableMap.builder();
+      try (final BufferedReader inputStream = new BufferedReader(
+        new InputStreamReader(
+          ScipyExternalDocumentationMap.class
+            .getResourceAsStream("/com/jetbrains/python/documentation/scipyNameMapping.tsv"),
+          StandardCharsets.US_ASCII
+        )
+      )) {
+        inputStream.lines().forEach(line -> {
+          final String[] kv = line.split("\t");
+          b.put(kv[0], kv[1]);
+        });
+      }
+      catch (final IOException e) {
+        throw new RuntimeException(e);
+      }
+      return b.build();
+    }).get();
   }
 
   public static class Entry {
@@ -96,8 +126,8 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
       addEntry("PySide", "http://pyside.github.io/docs/pyside/{module.name.slashes}/{class.name}.html#{module.name}.{element.qname}");
       addEntry("gtk", "http://library.gnome.org/devel/pygtk/stable/class-gtk{class.name.lower}.html#method-gtk{class.name.lower}--{function.name.dashes}");
       addEntry("wx", "http://www.wxpython.org/docs/api/{module.name}.{class.name}-class.html#{function.name}");
-      addEntry("numpy", "http://docs.scipy.org/doc/numpy/reference/{}generated/{module.name}.{element.name}.html");
-      addEntry("scipy", "http://docs.scipy.org/doc/scipy/reference/{}generated/{module.name}.{element.name}.html");
+      addEntry("numpy", "https://docs.scipy.org/doc/numpy/reference/{}generated/{module.name}.{element.name}.html");
+      addEntry("scipy", "https://docs.scipy.org/doc/scipy/reference/{}generated/{module.name}.{element.name}.html");
       addEntry("kivy", "http://kivy.org/docs/api-{module.name}.html");
     }
 
@@ -194,6 +224,10 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
     final String pattern = transformPattern(urlPattern, macros);
     if (pattern == null) {
       return rootForPattern(urlPattern);
+    }
+    final Matcher match = Pattern.compile("\\A(.+/)((?:numpy|scipy)\\..+)\\.html\\Z").matcher(pattern);
+    if (match.find()) {
+      return match.group(1) + ScipyExternalDocumentationMap.nameToWebpageName.getOrDefault(match.group(2), match.group(2)) + ".html";
     }
     return pattern;
   }
