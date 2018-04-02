@@ -34,6 +34,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.vcs.history.VcsHistoryProviderEx;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,6 +78,7 @@ public class VcsHistoryProviderBackgroundableProxy {
     };
   }
 
+  @CalledInAwt
   public void createSessionFor(@NotNull VcsKey vcsKey, @NotNull FilePath filePath, @NotNull Consumer<VcsHistorySession> continuation,
                                @NotNull VcsBackgroundableActions actionKey, boolean silent) {
     ThrowableComputable<VcsHistorySession, VcsException> throwableComputable = myHistoryComputerFactory.create(filePath, null, vcsKey);
@@ -94,6 +96,7 @@ public class VcsHistoryProviderBackgroundableProxy {
     ProgressManager.getInstance().run(computable);
   }
 
+  @CalledInAwt
   public void executeAppendableSession(final VcsKey vcsKey, final FilePath filePath, final VcsAppendableHistorySessionPartner partner,
                                        boolean canUseCache, boolean canUseLastRevisionCheck) {
     doExecuteAppendableSession(vcsKey, filePath, null, partner, canUseCache, canUseLastRevisionCheck);
@@ -103,12 +106,14 @@ public class VcsHistoryProviderBackgroundableProxy {
    * @throws UnsupportedOperationException if this proxy was created for {@link VcsHistoryProvider} instance,
    *                                       that doesn't implement {@link VcsHistoryProviderEx}
    */
+  @CalledInAwt
   public void executeAppendableSession(final VcsKey vcsKey, final FilePath filePath, @Nullable VcsRevisionNumber startRevisionNumber,
                                        final VcsAppendableHistorySessionPartner partner) {
     if (!(myDelegate instanceof VcsHistoryProviderEx)) throw new UnsupportedOperationException();
     doExecuteAppendableSession(vcsKey, filePath, startRevisionNumber, partner, false, false);
   }
 
+  @CalledInAwt
   private void doExecuteAppendableSession(final VcsKey vcsKey, final FilePath filePath, @Nullable VcsRevisionNumber startRevisionNumber,
                                           final VcsAppendableHistorySessionPartner partner,
                                           boolean canUseCache, boolean canUseLastRevisionCheck) {
