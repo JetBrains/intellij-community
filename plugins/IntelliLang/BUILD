@@ -11,10 +11,13 @@ iml_module(
         "//tools/idea/xml/xml-structure-view-impl",
         "//tools/idea/spellchecker",
         "//tools/idea/images",
+        "//tools/idea/java/execution/impl:execution-impl",
+        "//tools/idea/platform/external-system-impl",
     ],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     runtime_deps = [
+        "//tools/idea/plugins/IntelliLang/intellilang-jps-plugin",
         "//tools/idea/xml/xml-analysis-impl",
         "//tools/idea/platform/xdebugger-impl",
         "//tools/idea/platform/lvcs-impl",
@@ -25,6 +28,8 @@ iml_module(
         "//tools/idea/json",
         "//tools/idea/xml/relaxng",
         "//tools/idea/xml/dom-impl",
+        "//tools/idea/java/compiler/instrumentation-util-8",
+        "//tools/idea/java/java-runtime",
     ],
     # do not sort: must match IML order
     deps = [
@@ -57,6 +62,7 @@ iml_module(
         "//tools/idea/json",
         "//tools/idea/xml/relaxng",
         "//tools/idea/java/compiler/instrumentation-util-8",
+        "//tools/idea/plugins/IntelliLang/intellilang-jps-plugin",
     ],
     # do not sort: must match IML order
     deps = [
@@ -81,6 +87,8 @@ iml_module(
     test_runtime_deps = [
         "//tools/idea/spellchecker",
         "//tools/idea/images",
+        "//tools/idea/java/execution/impl:execution-impl",
+        "//tools/idea/platform/external-system-impl",
     ],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
@@ -93,6 +101,9 @@ iml_module(
         "//tools/idea/json",
         "//tools/idea/xml/relaxng",
         "//tools/idea/xml/dom-impl",
+        "//tools/idea/plugins/IntelliLang/intellilang-jps-plugin",
+        "//tools/idea/java/compiler/instrumentation-util-8",
+        "//tools/idea/java/java-runtime",
     ],
     # do not sort: must match IML order
     deps = [

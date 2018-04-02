@@ -11,6 +11,5 @@ iml_module(
     deps = [
         "//tools/idea/.idea/libraries:JUnit4[test]",
         "//tools/idea/platform/annotations[module]",
-        "//tools/idea/platform/util[module, test]",
     ],
 )

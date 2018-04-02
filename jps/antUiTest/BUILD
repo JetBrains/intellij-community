@@ -7,6 +7,7 @@ iml_module(
     tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = [
+        "//tools/idea/plugins/IntelliLang/intellilang-jps-plugin",
         "//tools/adt/idea/adt-branding",
         "//tools/vendor/intellij/cidr:doxygen",
     ],

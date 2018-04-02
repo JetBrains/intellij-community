@@ -14,6 +14,7 @@ iml_module(
         "//tools/idea/platform/external-system-impl",
         "//tools/idea/java/compiler/instrumentation-util-8",
         "//tools/idea:java-tests",
+        "//tools/idea/plugins/IntelliLang/intellilang-jps-plugin",
     ],
     test_srcs = ["test"],
     test_tags = ["manual"],  # fails after IDEA 181.2784.17 merge
@@ -21,7 +22,6 @@ iml_module(
     # do not sort: must match IML order
     deps = [
         "//tools/idea/java/openapi[module, test]",
-        "//tools/idea/plugins/groovy/rt:groovy_rt[module, test]",
         "//tools/idea/platform/lang-api[module, test]",
         "//tools/idea/plugins/groovy/groovy-psi[module, test]",
         "//tools/idea/uast/uast-tests[module, test]",

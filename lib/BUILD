@@ -300,8 +300,8 @@ java_import(
 )
 
 java_import(
-    name = "ecj-4.6.2",
-    jars = ["ecj-4.6.2.jar"],
+    name = "ecj-4.7.2",
+    jars = ["ecj-4.7.2.jar"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )

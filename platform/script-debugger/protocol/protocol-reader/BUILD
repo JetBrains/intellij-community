@@ -33,7 +33,6 @@ iml_module(
         "//tools/idea/.idea/libraries:Trove4j",
         "//tools/idea/.idea/libraries:gson",
         "//tools/idea/platform/script-debugger/protocol/protocol-reader-runtime[module]",
-        "//tools/idea/platform/annotations[module]",
         "//tools/idea/platform/platform-impl[module]",
         "//tools/idea/.idea/libraries:KotlinJavaRuntime",
     ],

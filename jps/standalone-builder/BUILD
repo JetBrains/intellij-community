@@ -16,7 +16,11 @@ iml_module(
         "//tools/idea/platform/credential-store",
     ],
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/jps/model-serialization:jps-model-serialization"],
+    # do not sort: must match IML order
+    exports = [
+        "//tools/idea:jps-builders_and_others",
+        "//tools/idea/jps/model-serialization:jps-model-serialization",
+    ],
     # do not sort: must match IML order
     runtime_deps = [
         "//tools/idea/java/compiler/instrumentation-util-8",

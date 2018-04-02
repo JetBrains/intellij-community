@@ -15,6 +15,7 @@ iml_module(
         "//tools/idea/xml/relaxng",
         "//tools/idea/java/compiler/instrumentation-util-8",
         "//tools/idea/plugins/devkit/jps-plugin:devkit-jps-plugin",
+        "//tools/idea/plugins/IntelliLang/intellilang-jps-plugin",
     ],
     # do not sort: must match IML order
     deps = [

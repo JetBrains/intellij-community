@@ -237,6 +237,7 @@ iml_project(
         "//tools/idea/platform/boot",
         "//tools/idea/platform/bootstrap",
         "//tools/idea/platform/build-scripts/testFramework:buildScripts-testFramework",
+        "//tools/idea/platform/build-scripts/tests:platform-build-scripts-tests",
         "//tools/idea/platform/build-scripts:images-build-scripts",
         "//tools/idea/platform/build-scripts:platform-build-scripts",
         "//tools/idea/platform/built-in-server",
@@ -625,6 +626,7 @@ iml_module(
         "//tools/idea/json",
         "//tools/idea/xml/relaxng",
         "//tools/idea/java/compiler/instrumentation-util-8",
+        "//tools/idea/plugins/IntelliLang/intellilang-jps-plugin",
     ],
     # do not sort: must match IML order
     deps = [
@@ -685,6 +687,7 @@ iml_module(
         "//tools/idea/jps/javac-ref-scanner-8",
         "//tools/idea/platform/credential-store",
         "//tools/idea/java/compiler/instrumentation-util-8",
+        "//tools/idea/plugins/IntelliLang/intellilang-jps-plugin",
         "//tools/vendor/intellij/cidr:doxygen",
         "//tools/idea/plugins/settings-repository",
     ],

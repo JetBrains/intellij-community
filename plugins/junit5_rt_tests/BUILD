@@ -10,6 +10,7 @@ iml_module(
         "//tools/idea/platform/tasks-platform-impl",
         "//tools/idea/platform/credential-store",
         "//tools/idea/java/compiler/instrumentation-util-8",
+        "//tools/idea/plugins/IntelliLang/intellilang-jps-plugin",
     ],
     test_srcs = ["test"],
     test_tags = ["manual"],

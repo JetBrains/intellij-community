@@ -10,6 +10,7 @@ iml_module(
         "//tools/idea/json",
         "//tools/idea/platform/tasks-platform-impl",
         "//tools/idea/platform/credential-store",
+        "//tools/idea/plugins/IntelliLang/intellilang-jps-plugin",
         "//tools/idea/java/compiler/instrumentation-util-8",
     ],
     visibility = ["//visibility:public"],

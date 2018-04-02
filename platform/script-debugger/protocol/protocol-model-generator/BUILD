@@ -37,7 +37,6 @@ iml_module(
         "//tools/idea/platform/script-debugger/protocol/schema-reader-generator[module]",
         "//tools/idea/platform/script-debugger/protocol/protocol-reader[module]",
         "//tools/idea/.idea/libraries:Trove4j",
-        "//tools/idea/platform/annotations[module]",
         "//tools/idea/platform/util-rt[module]",
         "//tools/idea/platform/platform-impl[module]",
         "//tools/idea/.idea/libraries:KotlinJavaRuntime",

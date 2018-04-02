@@ -17,6 +17,7 @@ iml_module(
         "//tools/idea/java/compiler/instrumentation-util-8",
         "//tools/idea/java/execution/impl:execution-impl",
         "//tools/idea/platform/external-system-impl",
+        "//tools/idea/plugins/IntelliLang/intellilang-jps-plugin",
     ],
     # do not sort: must match IML order
     deps = [
