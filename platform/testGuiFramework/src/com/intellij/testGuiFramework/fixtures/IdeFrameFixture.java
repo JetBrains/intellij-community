@@ -343,6 +343,15 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
   }
 
   /**
+   * Returns a JMenuItem for a corresponding path
+   *
+   * @param path the series of menu names, e.g. {@link invokeActionByMenuPath("Build", "Make Project")}
+   */
+  public MenuFixture.MenuItemFixture getMenuPath(@NotNull String... path) {
+    return getMenuFixture().getMenuItemFixture(path);
+  }
+
+  /**
    * Invokes an action from main menu
    *
    * @param mainMenuAction is the typical AnAction with ActionPlaces.MAIN_MENU
