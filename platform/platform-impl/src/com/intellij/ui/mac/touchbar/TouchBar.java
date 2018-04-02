@@ -91,8 +91,10 @@ public class TouchBar implements NSTLibrary.ItemCreator {
 
     final String[] ids = new String[myItems.size()];
     int c = 0;
-    for (TBItem item : myItems)
-      ids[c++] = item.myUid;
+    for (TBItem item : myItems) {
+      if (item.isVisible())
+        ids[c++] = item.myUid;
+    }
 
     NST.selectItemsToShow(myNativePeer, ids, ids.length);
   }

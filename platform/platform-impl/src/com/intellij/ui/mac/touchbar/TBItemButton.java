@@ -31,6 +31,12 @@ public class TBItemButton extends TBItem {
     updateNativePeer();
   }
 
+  public void update(Icon icon, String text) {
+    myIcon = icon;
+    myText = text;
+    updateNativePeer();
+  }
+
   @Override
   protected void _updateNativePeer() {
     NST.updateButton(myNativePeer, myWidth, myText, getRaster(myIcon), getIconW(myIcon), getIconH(myIcon), myAction);

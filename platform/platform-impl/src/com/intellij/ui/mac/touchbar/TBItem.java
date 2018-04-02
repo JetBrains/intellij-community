@@ -12,8 +12,12 @@ import java.awt.image.*;
 abstract class TBItem {
   final String myUid;
   protected ID myNativePeer = ID.NIL; // java wrapper holds native object
+  protected boolean myIsVisible = true;
 
   TBItem(@NotNull String uid) { myUid = uid; }
+
+  void setVisible(boolean visible) { myIsVisible = visible; }
+  boolean isVisible() { return myIsVisible; }
 
   ID getNativePeer() {
     if (myNativePeer == ID.NIL)
