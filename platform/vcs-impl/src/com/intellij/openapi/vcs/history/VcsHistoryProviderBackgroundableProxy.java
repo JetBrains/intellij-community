@@ -98,24 +98,6 @@ public class VcsHistoryProviderBackgroundableProxy {
   @CalledInAwt
   public void executeAppendableSession(final VcsKey vcsKey, final FilePath filePath, final VcsAppendableHistorySessionPartner partner,
                                        boolean canUseCache, boolean canUseLastRevisionCheck) {
-    doExecuteAppendableSession(vcsKey, filePath, null, partner, canUseCache, canUseLastRevisionCheck);
-  }
-
-  /**
-   * @throws UnsupportedOperationException if this proxy was created for {@link VcsHistoryProvider} instance,
-   *                                       that doesn't implement {@link VcsHistoryProviderEx}
-   */
-  @CalledInAwt
-  public void executeAppendableSession(final VcsKey vcsKey, final FilePath filePath, @Nullable VcsRevisionNumber startRevisionNumber,
-                                       final VcsAppendableHistorySessionPartner partner) {
-    if (!(myDelegate instanceof VcsHistoryProviderEx)) throw new UnsupportedOperationException();
-    doExecuteAppendableSession(vcsKey, filePath, startRevisionNumber, partner, false, false);
-  }
-
-  @CalledInAwt
-  private void doExecuteAppendableSession(final VcsKey vcsKey, final FilePath filePath, @Nullable VcsRevisionNumber startRevisionNumber,
-                                          final VcsAppendableHistorySessionPartner partner,
-                                          boolean canUseCache, boolean canUseLastRevisionCheck) {
     if (myCachesHistory && canUseCache) {
       final VcsAbstractHistorySession session = getFullHistoryFromCache(vcsKey, filePath);
       if (session != null) {
@@ -131,7 +113,7 @@ public class VcsHistoryProviderBackgroundableProxy {
     lock.lock();
 
     VcsAppendableHistorySessionPartner cachedPartner = partner;
-    if (myCachesHistory && startRevisionNumber == null) {
+    if (myCachesHistory) {
       cachedPartner = new HistoryPartnerProxy(partner, session -> {
         if (session == null) return;
         VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession> delegate =
@@ -141,7 +123,24 @@ public class VcsHistoryProviderBackgroundableProxy {
       });
     }
 
-    reportHistory(filePath, startRevisionNumber, vcsKey, lock, cachedPartner, canUseLastRevisionCheck);
+    reportHistory(filePath, null, vcsKey, lock, cachedPartner, canUseLastRevisionCheck);
+  }
+
+  /**
+   * @throws UnsupportedOperationException if this proxy was created for {@link VcsHistoryProvider} instance,
+   *                                       that doesn't implement {@link VcsHistoryProviderEx}
+   */
+  @CalledInAwt
+  public void executeAppendableSession(final VcsKey vcsKey, final FilePath filePath, @NotNull VcsRevisionNumber startRevisionNumber,
+                                       final VcsAppendableHistorySessionPartner partner) {
+    if (!(myDelegate instanceof VcsHistoryProviderEx)) throw new UnsupportedOperationException();
+
+    BackgroundableActionLock lock =
+      BackgroundableActionLock.getLock(myProject, VcsBackgroundableActions.CREATE_HISTORY_SESSION, filePath.getPath());
+    if (lock.isLocked()) return;
+    lock.lock();
+
+    reportHistory(filePath, startRevisionNumber, vcsKey, lock, partner, false);
   }
 
   private VcsAbstractHistorySession getFullHistoryFromCache(VcsKey vcsKey, FilePath filePath) {
