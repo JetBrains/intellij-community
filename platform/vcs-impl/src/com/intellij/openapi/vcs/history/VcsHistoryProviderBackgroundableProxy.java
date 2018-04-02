@@ -194,6 +194,62 @@ public class VcsHistoryProviderBackgroundableProxy {
     });
   }
 
+  private VcsAbstractHistorySession createSessionWithLimitCheck(@NotNull FilePath filePath) throws VcsException {
+    final LimitHistoryCheck check = new LimitHistoryCheck(myProject, filePath.getPath());
+    final VcsAppendableHistoryPartnerAdapter partner = new VcsAppendableHistoryPartnerAdapter() {
+      @Override
+      public void acceptRevision(VcsFileRevision revision) {
+        check.checkNumber();
+        super.acceptRevision(revision);
+      }
+    };
+    try {
+      myHistoryProvider.reportAppendableHistory(filePath, partner);
+    }
+    catch (ProcessCanceledException e) {
+      if (!check.isOver()) throw e;
+    }
+    return partner.getSession();
+  }
+
+  @Nullable
+  private VcsAbstractHistorySession getSessionFromCacheWithLastRevisionCheck(@NotNull FilePath filePath,
+                                                                             @NotNull VcsKey vcsKey,
+                                                                             @NotNull VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession> cacheableFactory) {
+    final ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
+    if (pi != null) {
+      pi.setText2("Checking last revision");
+    }
+    VcsAbstractHistorySession cached = getFullHistoryFromCache(vcsKey, filePath, cacheableFactory);
+    if (cached == null) return null;
+    FilePath correctedFilePath = cacheableFactory.getUsedFilePath(cached);
+
+    if (VcsType.distributed.equals(myType)) {
+      final FilePath path = correctedFilePath != null ? correctedFilePath : filePath;
+      VirtualFile virtualFile = path.getVirtualFile();
+      if (virtualFile == null) {
+        virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path.getPath());
+      }
+      if (virtualFile != null) {
+        final VcsRevisionNumber currentRevision = myDiffProvider.getCurrentRevision(virtualFile);
+        final List<VcsFileRevision> revisionList = cached.getRevisionList();
+        if (!revisionList.isEmpty() && revisionList.get(0).getRevisionNumber().equals(currentRevision)) {
+          return cached;
+        }
+      }
+    }
+    else {
+      final ItemLatestState lastRevision = myDiffProvider.getLastRevision(correctedFilePath != null ? correctedFilePath : filePath);
+      if (lastRevision != null && !lastRevision.isDefaultHead() && lastRevision.isItemExists()) {
+        final List<VcsFileRevision> revisionList = cached.getRevisionList();
+        if (!revisionList.isEmpty() && revisionList.get(0).getRevisionNumber().equals(lastRevision.getNumber())) {
+          return cached;
+        }
+      }
+    }
+    return null;
+  }
+
   private static class HistoryPartnerProxy implements VcsAppendableHistorySessionPartner {
     private final VcsAppendableHistorySessionPartner myPartner;
     private final Consumer<VcsAbstractHistorySession> myFinish;
@@ -251,24 +307,6 @@ public class VcsHistoryProviderBackgroundableProxy {
     }
   }
 
-  private VcsAbstractHistorySession createSessionWithLimitCheck(@NotNull FilePath filePath) throws VcsException {
-    final LimitHistoryCheck check = new LimitHistoryCheck(myProject, filePath.getPath());
-    final VcsAppendableHistoryPartnerAdapter partner = new VcsAppendableHistoryPartnerAdapter() {
-      @Override
-      public void acceptRevision(VcsFileRevision revision) {
-        check.checkNumber();
-        super.acceptRevision(revision);
-      }
-    };
-    try {
-      myHistoryProvider.reportAppendableHistory(filePath, partner);
-    }
-    catch (ProcessCanceledException e) {
-      if (!check.isOver()) throw e;
-    }
-    return partner.getSession();
-  }
-
   private class CachingHistoryComputer implements ThrowableComputable<VcsHistorySession, VcsException> {
     @NotNull private final FilePath myFilePath;
     @NotNull private final VcsKey myVcsKey;
@@ -293,43 +331,5 @@ public class VcsHistoryProviderBackgroundableProxy {
       }
       return session;
     }
-  }
-
-  @Nullable
-  private VcsAbstractHistorySession getSessionFromCacheWithLastRevisionCheck(@NotNull FilePath filePath,
-                                                                             @NotNull VcsKey vcsKey,
-                                                                             @NotNull VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession> cacheableFactory) {
-    final ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
-    if (pi != null) {
-      pi.setText2("Checking last revision");
-    }
-    VcsAbstractHistorySession cached = getFullHistoryFromCache(vcsKey, filePath, cacheableFactory);
-    if (cached == null) return null;
-    FilePath correctedFilePath = cacheableFactory.getUsedFilePath(cached);
-
-    if (VcsType.distributed.equals(myType)) {
-      final FilePath path = correctedFilePath != null ? correctedFilePath : filePath;
-      VirtualFile virtualFile = path.getVirtualFile();
-      if (virtualFile == null) {
-        virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path.getPath());
-      }
-      if (virtualFile != null) {
-        final VcsRevisionNumber currentRevision = myDiffProvider.getCurrentRevision(virtualFile);
-        final List<VcsFileRevision> revisionList = cached.getRevisionList();
-        if (!revisionList.isEmpty() && revisionList.get(0).getRevisionNumber().equals(currentRevision)) {
-          return cached;
-        }
-      }
-    }
-    else {
-      final ItemLatestState lastRevision = myDiffProvider.getLastRevision(correctedFilePath != null ? correctedFilePath : filePath);
-      if (lastRevision != null && !lastRevision.isDefaultHead() && lastRevision.isItemExists()) {
-        final List<VcsFileRevision> revisionList = cached.getRevisionList();
-        if (!revisionList.isEmpty() && revisionList.get(0).getRevisionNumber().equals(lastRevision.getNumber())) {
-          return cached;
-        }
-      }
-    }
-    return null;
   }
 }
