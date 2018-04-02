@@ -54,7 +54,7 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
   @get:OptionTag("REUSE_NOT_MODIFIED_TABS") var reuseNotModifiedTabs by property(false)
   @get:OptionTag("ANIMATE_WINDOWS") var animateWindows by property(true)
   @get:OptionTag("SHOW_TOOL_WINDOW_NUMBERS") var showToolWindowsNumbers by property(true)
-  @get:OptionTag("HIDE_TOOL_STRIPES") var hideToolStripes by property(true)
+  @get:OptionTag("HIDE_TOOL_STRIPES") var hideToolStripes by property(false)
   @get:OptionTag("WIDESCREEN_SUPPORT") var wideScreenSupport by property(false)
   @get:OptionTag("LEFT_HORIZONTAL_SPLIT") var leftHorizontalSplit by property(false)
   @get:OptionTag("RIGHT_HORIZONTAL_SPLIT") var rightHorizontalSplit by property(false)
