@@ -167,7 +167,7 @@ class UndoableGroup implements Dumpable {
   public String dumpState() {
     return "UndoableGroup[project=" + myProject + ", name=" + myCommandName + ", global=" + myGlobal + ", transparent=" + myTransparent +
            ", stamp=" + myCommandTimestamp + ", policy=" + myConfirmationPolicy + ", temporary=" + myTemporary + ", valid=" + myValid +
-           ", actions=" + myActions + "]";
+           ", actions=" + myActions + ", documents=" + getAffectedDocuments() + "]";
   }
 
   private static DocumentEx getDocumentToSetBulkMode(UndoableAction action) {
