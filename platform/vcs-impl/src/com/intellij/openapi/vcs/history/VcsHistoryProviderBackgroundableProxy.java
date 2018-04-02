@@ -86,8 +86,7 @@ public class VcsHistoryProviderBackgroundableProxy {
     String title = VcsBundle.message("loading.file.history.progress");
     String errorTitle = silent ? null : VcsBundle.message("message.title.could.not.load.file.history");
 
-    Object key = VcsBackgroundableActions.keyFrom(filePath);
-    BackgroundableActionLock lock = BackgroundableActionLock.getLock(myProject, actionKey, key);
+    BackgroundableActionLock lock = BackgroundableActionLock.getLock(myProject, actionKey, filePath.getPath());
     if (lock.isLocked()) return;
 
     VcsBackgroundableComputable<VcsHistorySession> computable =
