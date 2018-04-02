@@ -58,11 +58,11 @@ public class WSLDistribution {
   @NotNull private final Description myDescription;
   @NotNull private final Path myExecutablePath;
 
-  public WSLDistribution(@NotNull WSLDistribution dist) {
+  protected WSLDistribution(@NotNull WSLDistribution dist) {
     this(dist.myDescription, dist.myExecutablePath);
   }
 
-  public WSLDistribution(@NotNull Description description, @NotNull Path executablePath) {
+  WSLDistribution(@NotNull Description description, @NotNull Path executablePath) {
     myDescription = description;
     myExecutablePath = executablePath;
   }
@@ -75,6 +75,9 @@ public class WSLDistribution {
     return myExecutablePath;
   }
 
+  /**
+   * @return identification data of WSL distribution.
+   */
   @Nullable
   public String readReleaseInfo() {
     try {

@@ -24,7 +24,7 @@ public class WSLUtilTest {
 
   @Before
   public void setUp() throws Exception {
-    myLegacyWSL = WSLDistributionLegacy.getAvailableLegacyDistribution();
+    myLegacyWSL = WSLDistributionLegacy.getInstance();
   }
 
   @Test

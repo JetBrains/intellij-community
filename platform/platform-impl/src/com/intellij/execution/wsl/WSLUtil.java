@@ -83,7 +83,7 @@ public class WSLUtil {
       }
     }
     // add legacy WSL if it's available
-    ContainerUtil.addIfNotNull(result, WSLDistributionLegacy.getAvailableLegacyDistribution());
+    ContainerUtil.addIfNotNull(result, WSLDistributionLegacy.getInstance());
 
     return Collections.unmodifiableList(result);
   }

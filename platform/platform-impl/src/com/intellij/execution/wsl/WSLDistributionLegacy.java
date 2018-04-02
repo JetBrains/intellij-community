@@ -32,8 +32,11 @@ public class WSLDistributionLegacy extends WSLDistribution {
     return StringUtil.isEmpty(windir) ? null : Paths.get(windir, "System32");
   }
 
+  /**
+   * @return legacy WSL ("Bash-on-Windows") if it's available, <code>null</code> otherwise
+   */
   @Nullable
-  static WSLDistribution getAvailableLegacyDistribution() {
+  static WSLDistribution getInstance() {
     final Path executableRoot = getExecutableRootPath();
     if (executableRoot == null) return null;
 
