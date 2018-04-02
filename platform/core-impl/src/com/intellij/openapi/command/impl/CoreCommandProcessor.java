@@ -315,6 +315,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
       action.run();
     }
     finally {
+      if (myUndoTransparentCount == 1) fireBeforeUndoTransparentFinished();
       if (--myUndoTransparentCount == 0) fireUndoTransparentFinished();
     }
   }
@@ -362,6 +363,17 @@ public class CoreCommandProcessor extends CommandProcessorEx {
     for (CommandListener listener : myListeners) {
       try {
         listener.undoTransparentActionStarted();
+      }
+      catch (Throwable e) {
+        CommandLog.LOG.error(e);
+      }
+    }
+  }
+
+  private void fireBeforeUndoTransparentFinished() {
+    for (CommandListener listener : myListeners) {
+      try {
+        listener.beforeUndoTransparentActionFinished();
       }
       catch (Throwable e) {
         CommandLog.LOG.error(e);
