@@ -15,6 +15,7 @@ import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -158,16 +159,16 @@ public class TouchBarGeneral extends TouchBar {
 
       _updateSelectedConf();
 
-      myScrubberRunConf.clear();
+      List<TBItemScrubber.ItemData> scrubberItems = new ArrayList<>();
       for (RunnerAndConfigurationSettings rc : allRunCongigs) {
         final Icon iconRc = rc.getConfiguration().getIcon();
-        myScrubberRunConf.addItem(iconRc, rc.getName(), () -> {
+        scrubberItems.add(new TBItemScrubber.ItemData(iconRc, rc.getName(), () -> {
           // NOTE: executed at AppKit-thread
           ApplicationManager.getApplication().invokeLater(()->{ rm.setSelectedConfiguration(rc); });
           myPopoverRunConf.dismiss();
-        });
+        }));
       }
-      myScrubberRunConf.updateNativePeer();
+      myScrubberRunConf.setItems(scrubberItems);
     }
     selectAllItemsToShow();
   }

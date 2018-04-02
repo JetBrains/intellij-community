@@ -8,88 +8,91 @@ static const NSUserInterfaceItemIdentifier g_scrubberItemIdentifier = @"scrubber
 static const int g_heightOfTouchBar = 30;
 static const int g_interItemSpacings = 5;
 
-@interface NSScrubberContainer : NSCustomTouchBarItem<NSScrubberDataSource, NSScrubberDelegate, NSScrubberFlowLayoutDelegate>
-@property (nonatomic) requestScrubberItem jsource;
-@property (nonatomic) getScrubberItemsCount jcount;
-@property (nonatomic) executeAt jactions;
+@interface ScrubberItem : NSObject
+@property (retain, nonatomic) NSString * text;
+@property (retain, nonatomic) NSImage * img;
+@property (nonatomic) execute jaction;
 @end
+
+@implementation ScrubberItem
+@end
+
+@interface NSScrubberContainer : NSCustomTouchBarItem<NSScrubberDataSource, NSScrubberDelegate, NSScrubberFlowLayoutDelegate>
+@property (retain, nonatomic) NSMutableArray * items;
+@end
+
+static NSMutableArray * _convertItems(ScrubberItemData * items, int count) {
+    NSMutableArray * nsarray = [[[NSMutableArray alloc] initWithCapacity:count] autorelease];
+    for (int c = 0; c < count; ++c) {
+        ScrubberItem * si = [[[ScrubberItem alloc] init] autorelease];
+        si.text = getText(&items[c]);
+        si.img = getImg(&items[c]);
+        si.jaction = items[c].action;
+        [nsarray addObject:si];
+    }
+    return nsarray;
+}
 
 @implementation NSScrubberContainer
 
 - (NSInteger)numberOfItemsForScrubber:(NSScrubber *)scrubber {
     // NOTE: called from AppKit
-    const int result = self.jcount ? (*self.jcount)() : 0;
-    nstrace(@"scrubber [%@]: items count %d", self.identifier, result);
-    return result;
+    nstrace(@"scrubber [%@]: items count %d", self.identifier, self.items.count);
+    return self.items.count;
 }
 
 - (NSScrubberItemView *)scrubber:(NSScrubber *)scrubber viewForItemAtIndex:(NSInteger)itemIndex {
     // NOTE: called from AppKit
-    if (!self.jsource) {
-        nserror(@"scrubber [%@]: called viewForItemAtIndex %d but scrubber hasn't items source", self.identifier, itemIndex);
-        return nil;
-    }
-
     nstrace(@"scrubber [%@]: create viewForItemAtIndex %d", self.identifier, itemIndex);
     ScrubberItemView *itemView = [scrubber makeItemWithIdentifier:g_scrubberItemIdentifier owner:nil];
 
-    ScrubberItemData itemData;
-    const int result = (*self.jsource)((int)itemIndex, &itemData);
-    if (result != 0) {
-        nserror(@"scrubber [%@]: can't obtain item-data at index %d", self.identifier, itemIndex);
+    ScrubberItem * itemData = [self.items objectAtIndex:itemIndex];
+    if (itemData == nil) {
+        nserror(@"scrubber [%@]: null item-data at index %d", self.identifier, itemIndex);
         return nil;
     }
 
-    [itemView setImgAndText:getImg(&itemData) text:getText(&itemData)];
+    [itemView setImgAndText:itemData.img text:itemData.text];
     return itemView;
 }
 
 - (NSSize)scrubber:(NSScrubber *)scrubber layout:(NSScrubberFlowLayout *)layout sizeForItemAtIndex:(NSInteger)itemIndex {
     // NOTE: called from AppKit (when update layout)
-    if (!self.jsource) {
-        nserror(@"scrubber [%@]: called sizeForItemAtIndex %d but scrubber hasn't items source", self.identifier, itemIndex);
+    ScrubberItem * itemData = [self.items objectAtIndex:itemIndex];
+    if (itemData == nil) {
+        nserror(@"scrubber [%@]: null item-data at index %d", self.identifier, itemIndex);
         return NSMakeSize(0, 0);
     }
-
-    ScrubberItemData itemData;
-    const int result = (*self.jsource)((int)itemIndex, &itemData);
-    if (result != 0) {
-        nserror(@"scrubber [%@]: can't obtain item-data at index %d", self.identifier, itemIndex);
-        return NSMakeSize(0, 0);
-    }
-
-    NSString * text = getText(&itemData);
-    const int imgW = itemData.rasterW > 0 ? itemData.rasterW : 0;
 
     NSFont * font = [NSFont systemFontOfSize:0]; // Specify a system font size of 0 to automatically use the appropriate size.
-    NSSize txtSize = [text sizeWithAttributes:@{ NSFontAttributeName:font }];
-    CGFloat width = txtSize.width + imgW + 2*g_marginBorders + g_marginImgText + 13/*empiric diff for textfield paddings*/; // TODO: get rid of empiric, use size obtained from NSTextField
+    const int imgW = itemData.img != nil ? itemData.img.size.width : 0;
+    NSSize txtSize = itemData.text != nil ? [itemData.text sizeWithAttributes:@{ NSFontAttributeName:font }] : NSMakeSize(0, 0);
 
-    nstrace(@"scrubber [%@]: sizeForItemAtIndex %d: txt='%@', iconW=%d, txt size = %1.2f, %1.2f, result width = %1.2f", self.identifier, itemIndex, text, imgW, txtSize.width, txtSize.height, width);
+    CGFloat width = txtSize.width + imgW + 2*g_marginBorders + g_marginImgText + 13/*empiric diff for textfield paddings*/; // TODO: get rid of empiric, use size obtained from NSTextField
+    nstrace(@"scrubber [%@]: sizeForItemAtIndex %d: txt='%@', iconW=%d, txt size = %1.2f, %1.2f, result width = %1.2f, font = %@", self.identifier, itemIndex, itemData.text, imgW, txtSize.width, txtSize.height, width, font);
     return NSMakeSize(width, g_heightOfTouchBar);
 }
 
 - (void)scrubber:(NSScrubber *)scrubber didSelectItemAtIndex:(NSInteger)selectedIndex {
-    if (!self.jactions) {
-        nserror(@"scrubber [%@]: called didSelectItemAtIndex %d but scrubber hasn't actions callback", self.identifier, selectedIndex);
+    ScrubberItem * itemData = [self.items objectAtIndex:selectedIndex];
+    if (itemData == nil) {
+        nserror(@"scrubber [%@]: called didSelectItemAtIndex %d, but item-data at this index is null", self.identifier, selectedIndex);
         return;
     }
 
     nstrace(@"scrubber [%@]: perform action of scrubber item at %d", self.identifier, selectedIndex);
-    (*self.jactions)((int)selectedIndex);
+    (*itemData.jaction)();
 }
 
 @end
 
 // NOTE: called from AppKit (when TB becomes visible)
-id createScrubber(const char* uid, int itemWidth, requestScrubberItem jsource, getScrubberItemsCount jcount, executeAt jactions) {
+id createScrubber(const char* uid, int itemWidth, ScrubberItemData * items, int count) {
     NSString * nsid = [NSString stringWithUTF8String:uid];
-    nstrace(@"create scrubber [%@]", nsid);
+    nstrace(@"create scrubber [%@] (thread: %@)", nsid, [NSThread currentThread]);
 
     NSScrubberContainer * scrubberItem = [[NSScrubberContainer alloc] initWithIdentifier:nsid]; // create non-autorelease object to be owned by java-wrapper
-    scrubberItem.jsource = jsource;
-    scrubberItem.jcount = jcount;
-    scrubberItem.jactions = jactions;
+    scrubberItem.items = _convertItems(items, count);
 
     NSScrubber *scrubber = [[[NSScrubber alloc] initWithFrame:NSMakeRect(0, 0, itemWidth, g_heightOfTouchBar)] autorelease];
 
@@ -113,4 +116,21 @@ id createScrubber(const char* uid, int itemWidth, requestScrubberItem jsource, g
 
     scrubberItem.view = scrubber;
     return scrubberItem;
+}
+
+void updateScrubber(id scrubObj, int itemWidth, ScrubberItemData * items, int count) {
+    // NOTE: called from EDT (when update UI)
+    NSScrubberContainer * container = scrubObj; // TODO: check types
+    nstrace(@"async update scrubber [%@] (thread: %@)", container.identifier, [NSThread currentThread]);
+    NSAutoreleasePool * edtPool = [[NSAutoreleasePool alloc] init];
+    NSMutableArray * nsitems = _convertItems(items, count);
+    dispatch_async(dispatch_get_main_queue(), ^{
+        container.items = nsitems;
+        NSScrubber * scrubber = container.view;     // TODO: check types
+//        nstrace(@"\tinvalidate layout of scrubber [%@] (thread: %@)", container.identifier, [NSThread currentThread]);
+        [scrubber.scrubberLayout invalidateLayout];
+//        nstrace(@"\treload scrubber [%@] (thread: %@)", container.identifier, [NSThread currentThread]);
+        [scrubber reloadData];
+    });
+    [edtPool release];
 }

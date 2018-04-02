@@ -20,9 +20,9 @@ abstract class TBItem {
   boolean isVisible() { return myIsVisible; }
 
   ID getNativePeer() {
+    // called from AppKit (when NSTouchBarDelegate create items)
     if (myNativePeer == ID.NIL)
       myNativePeer = _createNativePeer();
-
     return myNativePeer;
   }
   final void updateNativePeer() {

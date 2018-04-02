@@ -6,6 +6,8 @@ import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class TouchbarTest {
   public static void main(String[] args) {
@@ -28,13 +30,14 @@ public class TouchbarTest {
 
         expandTB.addButton(AllIcons.Toolwindows.ToolWindowDebugger, null, createPrintTextCallback("pressed pimage button"));
         final TBItemScrubber scrubber = expandTB.addScrubber(450);
+        List<TBItemScrubber.ItemData> scrubberItems = new ArrayList<>();
         for (int c = 0; c < 15; ++c) {
           String txt;
           if (c == 7)           txt = "very very long configuration name (debugging type)";
           else                  txt = String.format("r%1.2f", Math.random());
           int finalC = c;
-          scrubber.addItem(AllIcons.Toolwindows.ToolWindowPalette, txt,
-                           () -> System.out.println("JAVA: performed action of scrubber item at index " + finalC + " [thread:" + Thread.currentThread() + "]"));
+          scrubberItems.add(new TBItemScrubber.ItemData(AllIcons.Toolwindows.ToolWindowPalette, txt,
+                            () -> System.out.println("JAVA: performed action of scrubber item at index " + finalC + " [thread:" + Thread.currentThread() + "]")));
         }
         expandTB.selectAllItemsToShow();
 

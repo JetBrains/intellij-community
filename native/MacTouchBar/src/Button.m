@@ -18,7 +18,7 @@
 }
 @end
 
-static void _setButtonData(NSButtonJAction * button, int buttonWidth, const char * text, const char * raster4ByteRGBA, int w, int h, execute jaction) {
+static void _setButtonData(NSButtonJAction * button, int buttonWidth, NSString * nstext, NSImage * img, execute jaction) {
     button.jaction = jaction;
     if (jaction) {
         [button setTarget:button];
@@ -30,8 +30,6 @@ static void _setButtonData(NSButtonJAction * button, int buttonWidth, const char
         [button setEnabled: NO];
     }
 
-    NSImage * img = createImgFrom4ByteRGBA((const unsigned char *)raster4ByteRGBA, w, h);
-    NSString * nstext = getString(text);
     if (nstext == nil)
         [button setImagePosition:NSImageOnly];
     else {
@@ -48,11 +46,13 @@ static void _setButtonData(NSButtonJAction * button, int buttonWidth, const char
 // NOTE: called from AppKit (creation when TB becomes visible)
 id createButton(const char * uid, int buttonWidth, const char * text, const char * raster4ByteRGBA, int w, int h, execute jaction) {
     NSString * nsUid = getString(uid);
-    nstrace(@"create button [%@]", nsUid);
+    nstrace(@"create button [%@] (thread: %@)", nsUid, [NSThread currentThread]);
 
     NSCustomTouchBarItem * customItemForButton = [[NSCustomTouchBarItem alloc] initWithIdentifier:nsUid]; // create non-autorelease object to be owned by java-wrapper
     NSButtonJAction * button = [[[NSButtonJAction alloc] init] autorelease];
-    _setButtonData(button, buttonWidth, text, raster4ByteRGBA, w, h, jaction);
+    NSImage * img = createImgFrom4ByteRGBA((const unsigned char *)raster4ByteRGBA, w, h);
+    NSString * nstext = getString(text);
+    _setButtonData(button, buttonWidth, nstext, img, jaction);
     customItemForButton.view = button; // NOTE: view is strong
     return customItemForButton;
 }
@@ -60,9 +60,15 @@ id createButton(const char * uid, int buttonWidth, const char * text, const char
 // NOTE: called from EDT (when update UI)
 void updateButton(id buttObj, int buttonWidth, const char * text, const char * raster4ByteRGBA, int w, int h, execute jaction) {
     NSCustomTouchBarItem * container = buttObj; // TODO: check types
-    nstrace(@"update button [%@]", container.identifier);
-
+    nstrace(@"async update button [%@] (thread: %@)", container.identifier, [NSThread currentThread]);
     NSButtonJAction * button = (container).view; // TODO: check types
-    _setButtonData(button, buttonWidth, text, raster4ByteRGBA, w, h, jaction);
+    NSAutoreleasePool * edtPool = [[NSAutoreleasePool alloc] init];
+    NSImage * img = createImgFrom4ByteRGBA((const unsigned char *)raster4ByteRGBA, w, h);
+    NSString * nstext = getString(text);
+    dispatch_async(dispatch_get_main_queue(), ^{
+        // NOTE: block is copied, img/text objects is automatically retained
+//        nstrace(@"\tperform update button [%@] (thread: %@)", container.identifier, [NSThread currentThread]);
+        _setButtonData(button, buttonWidth, nstext, img, jaction);
+    });
+    [edtPool release];
 }
-

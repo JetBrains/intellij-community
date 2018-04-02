@@ -25,15 +25,18 @@ public class TBItemButton extends TBItem {
   }
 
   public void update(Icon icon, String text, NSTLibrary.Action action) {
-    myIcon = icon;
-    myText = text;
-    myAction = action;
-    updateNativePeer();
+    update(icon, text, action, myWidth);
   }
 
   public void update(Icon icon, String text) {
+    update(icon, text, myAction, myWidth);
+  }
+
+  synchronized private void update(Icon icon, String text, NSTLibrary.Action action, int buttWidth) {
     myIcon = icon;
     myText = text;
+    myAction = action;
+    myWidth = buttWidth;
     updateNativePeer();
   }
 
@@ -43,7 +46,7 @@ public class TBItemButton extends TBItem {
   }
 
   @Override
-  protected ID _createNativePeer() {
+  synchronized protected ID _createNativePeer() {
     return NST.createButton(myUid, myWidth, myText, getRaster(myIcon), getIconW(myIcon), getIconH(myIcon), myAction);
   }
 }
