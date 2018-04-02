@@ -365,7 +365,11 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         //noinspection HardCodedStringLiteral
         stepRequest.putProperty("hint", hint);
       }
-      stepRequest.enable();
+      try {
+        stepRequest.enable();
+      } catch (IllegalThreadStateException e) { // thread is already dead
+        requestManager.deleteEventRequest(stepRequest);
+      }
     }
     catch (ObjectCollectedException ignored) {
 
