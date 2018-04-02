@@ -204,7 +204,7 @@ public class FoldingUpdate {
    * @param file the file to test
    * @return true  if folding initialization available in the Dumb Mode
    */
-  static boolean supportsDumbModeFolding(@NotNull PsiFile file) {
+  private static boolean supportsDumbModeFolding(@NotNull PsiFile file) {
     final FileViewProvider viewProvider = file.getViewProvider();
     for (final Language language : viewProvider.getLanguages()) {
       final FoldingBuilder foldingBuilder = LanguageFolding.INSTANCE.forLanguage(language);
@@ -215,10 +215,10 @@ public class FoldingUpdate {
   }
 
   static List<RegionInfo> getFoldingsFor(@NotNull PsiFile file, @NotNull Document document, boolean quick) {
-    List<RegionInfo> foldingMap = new ArrayList<>();
     if (file instanceof PsiCompiledFile) {
       file = ((PsiCompiledFile)file).getDecompiledPsiFile();
     }
+    List<RegionInfo> foldingMap = new ArrayList<>();
     getFoldingsFor(file, document, foldingMap, quick);
     return foldingMap;
   }
@@ -270,13 +270,13 @@ public class FoldingUpdate {
     public final FoldingDescriptor descriptor;
     public final PsiElement element;
     public final String signature;
-    public final boolean collapsedByDefault;
+    final boolean collapsedByDefault;
 
     private RegionInfo(@NotNull FoldingDescriptor descriptor, @NotNull PsiElement psiElement) {
       this.descriptor = descriptor;
-      this.element = psiElement;
-      this.collapsedByDefault = FoldingPolicy.isCollapseByDefault(psiElement);
-      this.signature = createSignature(psiElement);
+      element = psiElement;
+      collapsedByDefault = FoldingPolicy.isCollapseByDefault(psiElement);
+      signature = createSignature(psiElement);
     }
 
     private static String createSignature(@NotNull PsiElement element) {
