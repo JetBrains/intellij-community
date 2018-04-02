@@ -446,7 +446,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
   public static ArrayReference mirrorOfArray(@NotNull ArrayType arrayType, int dimension, EvaluationContext context)
     throws EvaluateException {
-    return computeAndKeep(() -> arrayType.newInstance(dimension), context);
+    return computeAndKeep(() -> context.getDebugProcess().newInstance(arrayType, dimension), context);
   }
 
   public static <T extends Value> T computeAndKeep(EvaluatingComputable<T> computable, EvaluationContext context) throws EvaluateException {
