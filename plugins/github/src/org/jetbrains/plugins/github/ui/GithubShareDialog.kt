@@ -1,105 +1,94 @@
-package org.jetbrains.plugins.github.ui;
+package org.jetbrains.plugins.github.ui
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.TestOnly;
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.components.JBScrollPane
+import com.intellij.ui.components.JBTextField
+import com.intellij.util.ui.JBDimension
+import com.intellij.util.ui.JBUI.Panels.simplePanel
+import com.intellij.util.ui.UI.PanelFactory.grid
+import com.intellij.util.ui.UI.PanelFactory.panel
+import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.TestOnly
+import java.util.regex.Pattern
+import javax.swing.BorderFactory
+import javax.swing.JComponent
+import javax.swing.JTextArea
 
-import javax.swing.*;
-import java.util.Set;
-import java.util.regex.Pattern;
+class GithubShareDialog(project: Project,
+                        private val existingRepos: Set<String>,
+                        private val existingRemotes: Set<String>,
+                        privateRepoAllowed: Boolean) : DialogWrapper(project) {
+  private val GITHUB_REPO_PATTERN = Pattern.compile("[a-zA-Z0-9_.-]+")
 
-/**
- * @author oleg
- * @date 10/22/10
- */
-public class GithubShareDialog extends DialogWrapper {
-  private static final Pattern GITHUB_REPO_PATTERN = Pattern.compile("[a-zA-Z0-9_.-]+");
-  private final GithubSharePanel myGithubSharePanel;
-  private final Set<String> myAvailableNames;
-  private final Set<String> myAvailableRemotes;
+  private val repositoryTextField = JBTextField(project.name)
+  private val privateCheckBox = JBCheckBox("Private", privateRepoAllowed).apply {
+    toolTipText = "Your account doesn't support private repositories"
+  }
+  private val remoteTextField = JBTextField(if (existingRemotes.isEmpty()) "origin" else "github")
+  private val descriptionTextArea = JTextArea()
 
-  public GithubShareDialog(Project project, Set<String> availableNames, Set<String> availableRemotes, boolean privateRepoAllowed) {
-    super(project);
-    myAvailableNames = availableNames;
-    myAvailableRemotes = availableRemotes;
-    myGithubSharePanel = new GithubSharePanel(this);
-    init();
-    setTitle("Share Project On GitHub");
-    setOKButtonText("Share");
-    myGithubSharePanel.setRepositoryName(project.getName());
-    myGithubSharePanel.setRemoteName(availableRemotes.isEmpty() ? "origin" : "github");
-    myGithubSharePanel.setPrivateRepoAvailable(privateRepoAllowed);
-    init();
-    updateOkButton();
+  init {
+    title = "Share Project On GitHub"
+    setOKButtonText("Share")
+    init()
   }
 
-  @Override
-  protected String getHelpId() {
-    return "github.share";
+  override fun createCenterPanel(): JComponent? {
+    val descriptionPane = JBScrollPane(descriptionTextArea)
+    descriptionPane.minimumSize = JBDimension(150, 50)
+    descriptionPane.preferredSize = JBDimension(150, 50)
+    descriptionPane.border = BorderFactory.createEtchedBorder()
+
+    return grid()
+      .add(panel(simplePanel(UIUtil.DEFAULT_HGAP, 0).addToCenter(repositoryTextField).addToRight(privateCheckBox))
+             .withLabel("Repository name:"))
+      .add(panel(remoteTextField).withLabel("Remote:"))
+      .add(panel(descriptionPane).withLabel("Description:"))
+      .createPanel()
   }
 
-  @Override
-  protected String getDimensionServiceKey() {
-    return "Github.ShareDialog";
+  override fun doValidateAll(): List<ValidationInfo> {
+    val repositoryName = repositoryTextField.text
+    return listOf(
+      {
+        if (repositoryName.isNullOrBlank()) ValidationInfo("No repository name selected",
+                                                           repositoryTextField)
+        else null
+      },
+      {
+        if (existingRepos.contains(repositoryName)) ValidationInfo("Repository with selected name already exists",
+                                                                   repositoryTextField)
+        else null
+      },
+      {
+        if (existingRemotes.contains(getRemoteName())) ValidationInfo("Remote with selected name already exists",
+                                                                      remoteTextField)
+        else null
+      },
+      {
+        if (!GITHUB_REPO_PATTERN.matcher(repositoryName).matches()) ValidationInfo(
+          "Invalid repository name. Name should consist of letters, numbers, dashes, dots and underscores",
+          repositoryTextField)
+        else null
+      }
+
+    ).mapNotNull { it() }
   }
 
-  @Override
-  protected JComponent createCenterPanel() {
-    return myGithubSharePanel.getPanel();
-  }
+  override fun getHelpId() = "github.share"
+  override fun getDimensionServiceKey() = "Github.ShareDialog"
+  override fun getPreferredFocusedComponent() = repositoryTextField
 
-  @Override
-  public JComponent getPreferredFocusedComponent() {
-    return myGithubSharePanel.getPreferredFocusComponent();
-  }
-
-  public void updateOkButton() {
-    String repositoryName = getRepositoryName();
-    String remoteName = getRemoteName();
-    if (StringUtil.isEmpty(repositoryName)){
-      setErrorText("No repository name selected", myGithubSharePanel.getPanel());
-      setOKActionEnabled(false);
-      return;
-    }
-    if (myAvailableNames.contains(repositoryName)){
-      setErrorText("Repository with selected name already exists", myGithubSharePanel.getPanel());
-      setOKActionEnabled(false);
-      return;
-    }
-    if (myAvailableRemotes.contains(remoteName)) {
-      setErrorText("Remote with selected name already exists", myGithubSharePanel.getPanel());
-      setOKActionEnabled(false);
-      return;
-    }
-    if (!GITHUB_REPO_PATTERN.matcher(repositoryName).matches()){
-      setErrorText("Invalid repository name. Name should consist of letters, numbers, dashes, dots and underscores", myGithubSharePanel.getPanel());
-      setOKActionEnabled(false);
-      return;
-    }
-    setErrorText(null);
-    setOKActionEnabled(true);
-  }
-
-  public String getRepositoryName() {
-    return myGithubSharePanel.getRepositoryName();
-  }
-
-  public boolean isPrivate() {
-    return myGithubSharePanel.isPrivate();
-  }
-
-  public String getDescription() {
-    return myGithubSharePanel.getDescription();
-  }
-
-  public String getRemoteName() {
-    return myGithubSharePanel.getRemoteName();
-  }
+  fun getRepositoryName(): String = repositoryTextField.text
+  fun getRemoteName(): String = remoteTextField.text
+  fun isPrivate(): Boolean = privateCheckBox.isSelected
+  fun getDescription(): String = descriptionTextArea.text
 
   @TestOnly
-  public void testSetRepositoryName(@NotNull String name) {
-    myGithubSharePanel.setRepositoryName(name);
+  fun testSetRepositoryName(name: String) {
+    repositoryTextField.text = name
   }
 }
