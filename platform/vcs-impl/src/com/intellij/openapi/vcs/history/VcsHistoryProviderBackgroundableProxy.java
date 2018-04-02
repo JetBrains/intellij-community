@@ -71,10 +71,10 @@ public class VcsHistoryProviderBackgroundableProxy {
                                @NotNull VcsBackgroundableActions actionKey, boolean silent) {
     ThrowableComputable<VcsHistorySession, VcsException> throwableComputable;
     if (myIsCachedHistory) {
-      throwableComputable = new CachingHistoryComputer(filePath, null, vcsKey);
+      throwableComputable = new CachingHistoryComputer(filePath, vcsKey);
     }
     else {
-      throwableComputable = new SimpleHistoryComputer(filePath, null);
+      throwableComputable = new SimpleHistoryComputer(filePath);
     }
 
     String title = VcsBundle.message("loading.file.history.progress");
@@ -235,20 +235,14 @@ public class VcsHistoryProviderBackgroundableProxy {
 
   private class SimpleHistoryComputer implements ThrowableComputable<VcsHistorySession, VcsException> {
     private final FilePath myFilePath;
-    private final Consumer<VcsHistorySession> myConsumer;
 
-    private SimpleHistoryComputer(FilePath filePath, Consumer<VcsHistorySession> consumer) {
+    private SimpleHistoryComputer(FilePath filePath) {
       myFilePath = filePath;
-      myConsumer = consumer;
     }
 
     @Override
     public VcsHistorySession compute() throws VcsException {
-      VcsHistorySession session = createSessionWithLimitCheck(myFilePath);
-      if (myConsumer != null) {
-        myConsumer.consume(session);
-      }
-      return session;
+      return createSessionWithLimitCheck(myFilePath);
     }
   }
 
@@ -272,12 +266,10 @@ public class VcsHistoryProviderBackgroundableProxy {
 
   private class CachingHistoryComputer implements ThrowableComputable<VcsHistorySession, VcsException> {
     private final FilePath myFilePath;
-    private final Consumer<VcsHistorySession> myConsumer;
     private final VcsKey myVcsKey;
 
-    private CachingHistoryComputer(FilePath filePath, Consumer<VcsHistorySession> consumer, VcsKey vcsKey) {
+    private CachingHistoryComputer(FilePath filePath, VcsKey vcsKey) {
       myFilePath = filePath;
-      myConsumer = consumer;
       myVcsKey = vcsKey;
     }
 
@@ -292,9 +284,6 @@ public class VcsHistoryProviderBackgroundableProxy {
           (VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession>)myHistoryProvider;
         FilePath correctedPath = delegate.getUsedFilePath(session);
         myVcsHistoryCache.put(myFilePath, correctedPath, myVcsKey, (VcsAbstractHistorySession)session.copy(), delegate, true);
-      }
-      if (myConsumer != null) {
-        myConsumer.consume(session);
       }
       return session;
     }
