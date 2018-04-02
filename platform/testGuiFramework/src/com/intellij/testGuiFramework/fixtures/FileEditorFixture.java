@@ -5,6 +5,7 @@ package com.intellij.testGuiFramework.fixtures;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -12,13 +13,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.fest.swing.core.Robot;
-import org.fest.swing.edt.GuiActionRunner;
 import org.fest.swing.edt.GuiQuery;
 import org.fest.swing.edt.GuiTask;
 import org.fest.swing.timing.Condition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,8 +31,6 @@ import static org.fest.swing.edt.GuiActionRunner.execute;
 import static org.fest.swing.timing.Pause.pause;
 import static org.fest.util.Strings.quote;
 import static org.junit.Assert.*;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 
 public class FileEditorFixture extends EditorFixture {
 
@@ -339,6 +338,22 @@ public class FileEditorFixture extends EditorFixture {
   public FileEditorFixture selectTab(@NotNull final String tabName) {
     tabs.waitTab(tabName, 30).selectTab(tabName);
     return this;
+  }
+
+  /**
+   * Clicks to the editor's center to get focus to the editor
+   */
+  public void clickCenter() {
+    Editor selectedTextEditor = execute(new GuiQuery<Editor>() {
+                                          @Override
+                                          protected Editor executeInEDT() throws Throwable {
+                                            return myManager.getSelectedTextEditor();
+                                          }
+                                        }
+    );
+    assert selectedTextEditor != null;
+    JComponent contentComponent = selectedTextEditor.getContentComponent();
+    robot.click(contentComponent);
   }
 
   /**
