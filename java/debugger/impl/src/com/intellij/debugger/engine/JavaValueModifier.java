@@ -11,6 +11,7 @@ import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.openapi.progress.util.ProgressWindow;
@@ -110,7 +111,7 @@ public abstract class JavaValueModifier extends XValueModifier {
     if (value != null && JAVA_LANG_STRING.equals(varType.name()) && !(value instanceof StringReference)) {
       String v = DebuggerUtils.getValueAsString(context, value);
       if (v != null) {
-        value = context.getSuspendContext().getDebugProcess().getVirtualMachineProxy().mirrorOf(v);
+        value = DebuggerUtilsEx.mirrorOfString(v, context.getDebugProcess().getVirtualMachineProxy(), context);
       }
     }
     if (value instanceof DoubleValue) {
