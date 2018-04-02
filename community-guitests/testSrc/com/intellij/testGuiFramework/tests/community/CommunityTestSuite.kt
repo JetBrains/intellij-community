@@ -21,11 +21,13 @@ import com.intellij.testGuiFramework.framework.GuiTestSuite
 import com.intellij.testGuiFramework.framework.RunWithIde
 import com.intellij.testGuiFramework.launcher.ide.CommunityIde
 import com.intellij.testGuiFramework.launcher.ide.CommunityIdeFirstStart
+import com.intellij.testGuiFramework.tests.community.toolWindow.DockedModeGuiTest
 import org.junit.runner.RunWith
 import org.junit.runners.Suite
 
 @RunWith(GuiTestSuite::class)
 @RunWithIde(CommunityIde::class)
 @FirstStartWith(CommunityIdeFirstStart::class)
-@Suite.SuiteClasses(CommandLineProjectGuiTest::class)
+@Suite.SuiteClasses(CommandLineProjectGuiTest::class,
+                    DockedModeGuiTest::class)
 class CommunityTestSuite

@@ -328,15 +328,15 @@ public abstract class MavenTestCase extends UsefulTestCase {
     }
   }
 
-  protected VirtualFile createProjectPom(@NotNull @Language("xml") String xml) {
+  protected VirtualFile createProjectPom(@NotNull @Language(value="XML", prefix="<project>", suffix="</project>") String xml) {
     return myProjectPom = createPomFile(myProjectRoot, xml);
   }
 
-  protected VirtualFile createModulePom(String relativePath, @Language("xml") String xml) {
+  protected VirtualFile createModulePom(String relativePath, @Language(value="XML", prefix="<project>", suffix="</project>") String xml) {
     return createPomFile(createProjectSubDir(relativePath), xml);
   }
 
-  protected VirtualFile createPomFile(final VirtualFile dir, String xml) {
+  protected VirtualFile createPomFile(final VirtualFile dir, @Language(value="XML", prefix="<project>", suffix="</project>") String xml) {
     VirtualFile f = dir.findChild("pom.xml");
     if (f == null) {
       try {
@@ -355,7 +355,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
   }
 
   @NonNls @Language(value="XML")
-  public static String createPomXml(@NonNls @Language(value="XML", prefix="<xml>", suffix="</xml>") String xml) {
+  public static String createPomXml(@NonNls @Language(value="XML", prefix="<project>", suffix="</project>") String xml) {
     return "<?xml version=\"1.0\"?>" +
            "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"" +
            "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"" +

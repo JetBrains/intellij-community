@@ -185,7 +185,7 @@ public class FindUsagesManager {
     return null;
   }
 
-  public void findUsages(@NotNull PsiElement psiElement, final PsiFile scopeFile, final FileEditor editor, boolean showDialog, @Nullable("null means default (stored in options)") SearchScope searchScope) {
+  public void findUsages(@NotNull PsiElement psiElement, @Nullable PsiFile scopeFile, final FileEditor editor, boolean showDialog, @Nullable("null means default (stored in options)") SearchScope searchScope) {
     FindUsagesHandler handler = getFindUsagesHandler(psiElement, false);
     if (handler == null) return;
 
@@ -494,7 +494,8 @@ public class FindUsagesManager {
     }
   }
 
-  private static String getNoUsagesFoundMessage(PsiElement psiElement) {
+  @NotNull
+  private static String getNoUsagesFoundMessage(@NotNull PsiElement psiElement) {
     String elementType = UsageViewUtil.getType(psiElement);
     String elementName = UsageViewUtil.getShortName(psiElement);
     return FindBundle.message("find.usages.of.element_type.element_name.not.found.message", elementType, elementName);
@@ -504,7 +505,8 @@ public class FindUsagesManager {
     StatusBar.Info.set("", myProject);
   }
 
-  private static String getSearchAgainMessage(PsiElement element, final FileSearchScope direction) {
+  @NotNull
+  private static String getSearchAgainMessage(@NotNull PsiElement element, @NotNull FileSearchScope direction) {
     String message = getNoUsagesFoundMessage(element);
     if (direction == FileSearchScope.AFTER_CARET) {
       AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_FIND_NEXT);
@@ -529,7 +531,7 @@ public class FindUsagesManager {
     return message;
   }
 
-  private void showHintOrStatusBarMessage(String message, FileEditor fileEditor) {
+  private void showHintOrStatusBarMessage(@NotNull String message, FileEditor fileEditor) {
     if (fileEditor instanceof TextEditor) {
       TextEditor textEditor = (TextEditor)fileEditor;
       showEditorHint(message, textEditor.getEditor());
@@ -589,6 +591,7 @@ public class FindUsagesManager {
     return foundUsage.get();
   }
 
+  @NotNull
   private static PsiElement2UsageTargetAdapter convertToUsageTarget(@NotNull PsiElement elementToSearch,
                                                                     @NotNull FindUsagesOptions findUsagesOptions) {
     if (elementToSearch instanceof NavigationItem) {
@@ -602,7 +605,7 @@ public class FindUsagesManager {
     return selectedOptions.generateUsagesString();
   }
 
-  private static void showEditorHint(String message, final Editor editor) {
+  private static void showEditorHint(@NotNull String message, @NotNull Editor editor) {
     JComponent component = HintUtil.createInformationLabel(message);
     final LightweightHint hint = new LightweightHint(component);
     HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, HintManager.UNDER,
@@ -611,7 +614,7 @@ public class FindUsagesManager {
                                                      HintManager.HIDE_BY_SCROLLING, 0, false);
   }
 
-  public static String getHelpID(PsiElement element) {
+  public static String getHelpID(@NotNull PsiElement element) {
     return LanguageFindUsages.INSTANCE.forLanguage(element.getLanguage()).getHelpId(element);
   }
 

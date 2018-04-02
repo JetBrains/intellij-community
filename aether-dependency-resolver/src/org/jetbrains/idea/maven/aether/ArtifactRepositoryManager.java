@@ -119,7 +119,7 @@ public class ArtifactRepositoryManager {
   }
 
   /**
-   * Returns list
+   * Returns list of classes corresponding to classpath entries for this this module.
    */
   @SuppressWarnings("UnnecessaryFullyQualifiedName")
   public static List<Class> getClassesFromDependencies() {

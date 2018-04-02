@@ -69,22 +69,6 @@ def _internal_set_trace(tracing_func):
         TracingFunctionHolder._original_tracing(tracing_func)
 
 
-@contextmanager
-def _do_not_trace_ctx():
-    current_thread = threading.currentThread()
-    do_not_trace_before = getattr(current_thread, 'pydev_do_not_trace', None)
-    if do_not_trace_before:
-        yield
-        return
-    current_thread.pydev_do_not_trace = True
-    try:
-        yield
-    except:
-        pass
-    finally:
-        current_thread.pydev_do_not_trace = do_not_trace_before
-
-
 def SetTrace(tracing_func, frame_eval_func=None, dummy_tracing_func=None):
     if tracing_func is not None and frame_eval_func is not None:
         # There is no need to set tracing function if frame evaluation is available
@@ -96,14 +80,19 @@ def SetTrace(tracing_func, frame_eval_func=None, dummy_tracing_func=None):
         sys.settrace(tracing_func)
         return
 
-    with _do_not_trace_ctx():
+    current_thread = threading.currentThread()
+    do_not_trace_before = getattr(current_thread, 'pydev_do_not_trace', None)
+    if do_not_trace_before:
+        return
+    try:
         TracingFunctionHolder._lock.acquire()
-        try:
-            TracingFunctionHolder._warn = False
-            _internal_set_trace(tracing_func)
-            TracingFunctionHolder._warn = True
-        finally:
-            TracingFunctionHolder._lock.release()
+        current_thread.pydev_do_not_trace = True  # avoid settrace reentering
+        TracingFunctionHolder._warn = False
+        _internal_set_trace(tracing_func)
+        TracingFunctionHolder._warn = True
+    finally:
+        TracingFunctionHolder._lock.release()
+        current_thread.pydev_do_not_trace = do_not_trace_before
 
 
 def replace_sys_set_trace_func():

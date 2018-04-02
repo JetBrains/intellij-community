@@ -16,9 +16,13 @@
 
 package com.intellij.formatting;
 
+import com.intellij.openapi.util.InvalidDataException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 public class IndentData {
-  private int myIndentSpaces = 0;
-  private int mySpaces = 0;
+  private final int myIndentSpaces;
+  private final int mySpaces;
 
   public IndentData(final int indentSpaces, final int spaces) {
     myIndentSpaces = indentSpaces;
@@ -60,5 +64,30 @@ public class IndentData {
   @Override
   public String toString() {
     return "spaces=" + mySpaces + ", indent spaces=" + myIndentSpaces;
+  }
+
+  public static IndentData createFrom(@NotNull CharSequence chars, int startOffset, int endOffset, int tabSize) {
+    int count = 0;
+    for (int i = startOffset; i < Math.min(chars.length(), endOffset); i ++) {
+      char c = chars.charAt(i);
+      switch (c) {
+        case ' ':
+          count ++;
+          break;
+        case '\t':
+          count += tabSize;
+          break;
+        default:
+          throw new InvalidDataException("Unexpected indent character: '" + c + "'");
+      }
+    }
+    return new IndentData(count);
+  }
+
+  @Nullable
+  public static IndentData min(@Nullable IndentData first, @Nullable IndentData second) {
+    if (first == null) return second;
+    if (second == null) return first;
+    return first.getIndentSpaces() < second.getIndentSpaces() ? first : second;
   }
 }

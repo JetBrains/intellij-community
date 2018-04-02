@@ -28,6 +28,22 @@ public class TestDataUtilTest extends TestDataPathTestCase {
 
     assertNotNull(TestDataUtil.getTestDataGroup(beforeSomething, afterSomething));
     assertNotNull(TestDataUtil.getTestDataGroup(afterSomething, beforeSomething));
+
+
+    String somethingInDir1 = myFixture.copyFileToProject("something.txt", "dir1/something.txt").getPath();
+    String somethingAfterInDir2 = myFixture.copyFileToProject("something_after.txt", "dir2/something_after.txt").getPath();
+    String somethingBeforeInDir1 = myFixture.copyFileToProject("something_before.txt", "dir1/something_before.txt").getPath();
+    String afterSomethingInDir2 = myFixture.copyFileToProject("afterSomething.txt", "dir2/afterSomething.txt").getPath();
+    String beforeSomethingInDir1 = myFixture.copyFileToProject("beforeSomething.txt", "dir1/beforeSomething.txt").getPath();
+
+    assertNull(TestDataUtil.getTestDataGroup(somethingInDir1, somethingAfterInDir2));
+    assertNull(TestDataUtil.getTestDataGroup(somethingAfterInDir2, somethingInDir1));
+
+    assertNull(TestDataUtil.getTestDataGroup(somethingBeforeInDir1, somethingAfterInDir2));
+    assertNull(TestDataUtil.getTestDataGroup(somethingAfterInDir2, somethingBeforeInDir1));
+
+    assertNull(TestDataUtil.getTestDataGroup(beforeSomethingInDir1, afterSomethingInDir2));
+    assertNull(TestDataUtil.getTestDataGroup(afterSomethingInDir2, beforeSomethingInDir1));
   }
 
   // https://youtrack.jetbrains.com/issue/IDEA-179740
