@@ -35,8 +35,10 @@ import com.jetbrains.python.testing.PyUnitTestConfiguration;
 import com.jetbrains.python.testing.PyUnitTestFactory;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
 import com.jetbrains.python.tools.sdkTools.SdkCreationType;
+import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -134,6 +136,21 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
           console.flushDeferredText();
           assertEquals("TC messages filtered in wrong way", "Hello\nI am\nPyCharm", console.getText());
         });
+      }
+    });
+  }
+
+  @Test
+  public void testDiff() {
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/testDiff", "test_test.py") {
+
+      @Override
+      protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
+                                      @NotNull final String stdout,
+                                      @NotNull final String stderr,
+                                      @NotNull final String all) {
+        Assert.assertThat("No expected", stdout, Matchers.containsString("expected='1'"));
+        Assert.assertThat("No actual", stdout, Matchers.containsString("actual='2'"));
       }
     });
   }
