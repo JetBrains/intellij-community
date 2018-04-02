@@ -48,7 +48,7 @@ public class ConstructorReflectionAccessor extends ReflectionAccessorBase<Constr
     String returnType = PsiReflectionAccessUtil.getAccessibleReturnType(descriptor.psiClass);
     PsiExpressionList argumentList = descriptor.newExpression.getArgumentList();
     if (className == null || argumentList == null || returnType == null) {
-      LOG.debug("expression is incomplete");
+      LOG.warn("code is incomplete: " + descriptor.newExpression);
       return;
     }
 

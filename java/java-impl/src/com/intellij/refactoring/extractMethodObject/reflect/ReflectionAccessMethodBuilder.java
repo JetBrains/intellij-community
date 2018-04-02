@@ -76,6 +76,9 @@ public class ReflectionAccessMethodBuilder {
   }
 
   private void checkRequirements() {
+    if (myMemberAccessor == null) {
+      LOG.error("Accessed member not specified");
+    }
   }
 
   public ReflectionAccessMethodBuilder accessedMethod(@NotNull String jvmClassName, @NotNull String methodName) {
@@ -124,7 +127,7 @@ public class ReflectionAccessMethodBuilder {
       String jvmType = erasedType != null ? extractJvmType(erasedType) : typeName;
 
       if (name == null) {
-        LOG.info("Parameter name not found, index = " + i + ", type = " + typeName);
+        LOG.warn("Parameter name not found, index = " + i + ", type = " + typeName);
         name = "arg" + i;
       }
 
@@ -143,7 +146,7 @@ public class ReflectionAccessMethodBuilder {
         typeName = typeName.substring(0, typeParameterIndex);
       }
 
-      LOG.info("Type erasure failed, the following type used instead: " + typeName);
+      LOG.warn("Type erasure failed, the following type used instead: " + typeName);
       return typeName;
     }
 
