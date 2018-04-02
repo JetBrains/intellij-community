@@ -17,6 +17,7 @@
 
 package com.intellij.testGuiFramework.generators
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.PluginTable
 import com.intellij.ide.projectView.impl.ProjectViewTree
 import com.intellij.openapi.actionSystem.impl.ActionButton
@@ -52,6 +53,7 @@ import com.intellij.testGuiFramework.impl.GuiTestUtilKt.onHeightCenter
 import com.intellij.ui.CheckboxTree
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.HyperlinkLabel
+import com.intellij.ui.InplaceButton
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.labels.ActionLink
@@ -93,6 +95,16 @@ private fun MouseEvent.isRightButton() = (this.button == rightButton)
 class JButtonGenerator : ComponentCodeGenerator<JButton> {
   override fun accept(cmp: Component) = cmp is JButton
   override fun generate(cmp: JButton, me: MouseEvent, cp: Point) = """button("${cmp.text}").click()"""
+}
+
+class InplaceButtonGenerator: ComponentCodeGenerator<InplaceButton> {
+  override fun accept(cmp: Component) = cmp is InplaceButton
+  override fun generate(cmp: InplaceButton, me: MouseEvent, cp: Point) = """inplaceButton(${getIconClassName(cmp)}).click()"""
+  private fun getIconClassName(inplaceButton: InplaceButton): String {
+    val icon = inplaceButton.icon
+    val iconField = AllIcons::class.java.classes.flatMap { it.fields.filter { it.type == Icon::class.java } }.firstOrNull { it.get(null) is Icon && (it.get(null) as Icon) == icon } ?: return "REPLACE IT WITH ICON $icon"
+    return "${iconField.declaringClass?.canonicalName}.${iconField.name}"
+  }
 }
 
 class JSpinnerGenerator : ComponentCodeGenerator<JButton> {
@@ -333,7 +345,7 @@ class ActionMenuItemGenerator : ComponentCodeGenerator<ActionMenuItem> {
   override fun accept(cmp: Component) = cmp is ActionMenuItem
 
   override fun generate(cmp: ActionMenuItem, me: MouseEvent, cp: Point) =
-    "popup(${buildPath(activatedActionMenuItem = cmp).joinToString(separator = ", ") { str -> "\"$str\"" }})"
+    "menu(${buildPath(activatedActionMenuItem = cmp).joinToString(separator = ", ") { str -> "\"$str\"" }}).click()"
 
 
   //for buildnig a path of actionMenus and actionMenuItem we need to scan all JBPopup and find a consequence of actions from a tail. Each discovered JBPopupMenu added to hashSet to avoid double sacnning and multiple component finding results
