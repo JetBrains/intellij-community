@@ -2915,4 +2915,16 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("Find continue break statements", 1, findMatchesCount(s2, "continue '_label;"));
     assertEquals("Find outer continue statement", 1, findMatchesCount(s2, "continue outer;"));
   }
+
+  public void testFindVarStatement() {
+    final String s = "class X {" +
+                     "  void m() {" +
+                     "    var s = \"hi\";" +
+                     "    String t = \"bye\";" +
+                     "  }" +
+                     "}";
+    assertEquals("find var statement", 1, findMatchesCount(s, "var '_x;"));
+    assertEquals("find String variables", 2, findMatchesCount(s, "String '_x;"));
+    assertEquals("find String variables 2", 2, findMatchesCount(s, "var '_x = \"'_y\";"));
+  }
 }
