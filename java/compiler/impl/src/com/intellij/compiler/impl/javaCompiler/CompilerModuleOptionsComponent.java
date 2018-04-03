@@ -53,13 +53,15 @@ public class CompilerModuleOptionsComponent extends JPanel {
     moduleColumn.setHeaderValue("Module");
     moduleColumn.setCellRenderer(new ModuleTableCellRenderer());
 
-    final TableColumn targetLevelColumn = myTable.getColumnModel().getColumn(1);
+    final TableColumn optionsColumn = myTable.getColumnModel().getColumn(1);
     final String columnTitle = "Compilation options";
-    targetLevelColumn.setHeaderValue(columnTitle);
+    optionsColumn.setHeaderValue(columnTitle);
     final int width = myTable.getFontMetrics(myTable.getFont()).stringWidth(columnTitle) + 10;
-    targetLevelColumn.setPreferredWidth(width);
-    targetLevelColumn.setMinWidth(width);
-    //targetLevelColumn.setMaxWidth(width);
+    optionsColumn.setPreferredWidth(width);
+    optionsColumn.setMinWidth(width);
+    final RawCommandLineEditor editor = new RawCommandLineEditor();
+    editor.setDescriptor(null, false);
+    optionsColumn.setCellEditor(new DefaultCellEditor(editor.getTextField()));
     new TableSpeedSearch(myTable);
 
     final JPanel table = ToolbarDecorator.createDecorator(myTable)
