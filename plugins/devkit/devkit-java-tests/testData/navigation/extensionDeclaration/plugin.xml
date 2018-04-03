@@ -1,0 +1,13 @@
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint name="myEp"/>
+  </extensionPoints>
+
+  <wrongTag>
+    <myEp class="MyInvalidExtension"/>
+  </wrongTag>
+
+  <extensions>
+    <myEp implementation="MyExtension"/>
+  </extensions>
+</idea-plugin>
