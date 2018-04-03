@@ -138,18 +138,24 @@ public class DefUseUtil {
     }
   }
 
-  @Nullable
-  public static List<Info> getUnusedDefs(PsiCodeBlock body, Set<PsiVariable> outUsedVariables) {
+  @NotNull
+  public static List<Info> getUnusedDefs(@Nullable PsiCodeBlock body,
+                                         @NotNull Set<PsiVariable> outUsedVariables,
+                                         @Nullable Boolean isStatic) {
     if (body == null) {
-      return null;
+      return Collections.emptyList();
     }
 
     ControlFlow flow;
     try {
-      flow = ControlFlowFactory.getInstance(body.getProject()).getControlFlow(body, ourPolicy);
+      ControlFlowPolicy policy = ourLocalsOnlyPolicy;
+      if (isStatic != null) {
+        policy = isStatic ? ourWithStaticFieldsPolicy : ourWithInstanceFieldsPolicy;
+      }
+      flow = ControlFlowFactory.getInstance(body.getProject()).getControlFlow(body, policy);
     }
     catch (AnalysisCanceledException e) {
-      return null;
+      return Collections.emptyList();
     }
     List<Instruction> instructions = flow.getInstructions();
     if (LOG.isDebugEnabled()) {
@@ -182,7 +188,7 @@ public class DefUseUtil {
     }
     catch (InstructionKey.OverflowException e) {
       LOG.error("Failed to compute paths in the control flow graph", e, flow.toString());
-      return null;
+      return Collections.emptyList();
     }
     InstructionState[] states = stateMap.values().toArray(new InstructionState[0]);
     Arrays.sort(states);
@@ -390,7 +396,7 @@ public class DefUseUtil {
 
     RefsDefs(@NotNull PsiCodeBlock body) throws AnalysisCanceledException {
       this.body = body;
-      flow = ControlFlowFactory.getInstance(body.getProject()).getControlFlow(body, ourPolicy);
+      flow = ControlFlowFactory.getInstance(body.getProject()).getControlFlow(body, ourLocalsOnlyPolicy);
       instructions = flow.getInstructions();
     }
 
@@ -599,7 +605,11 @@ public class DefUseUtil {
     }
   }
 
-  private static final ControlFlowPolicy ourPolicy = new ControlFlowPolicy() {
+  private static final ControlFlowPolicy ourLocalsOnlyPolicy = new LocalsOnlyPolicy();
+  private static final ControlFlowPolicy ourWithInstanceFieldsPolicy = new WithInstanceFieldsPolicy();
+  private static final ControlFlowPolicy ourWithStaticFieldsPolicy = new WithStaticFieldsPolicy();
+
+  private static class LocalsOnlyPolicy implements ControlFlowPolicy {
     @Override
     public PsiVariable getUsedVariable(@NotNull PsiReferenceExpression refExpr) {
       if (refExpr.isQualified()) return null;
@@ -621,5 +631,64 @@ public class DefUseUtil {
     public boolean isLocalVariableAccepted(@NotNull PsiLocalVariable psiVariable) {
       return true;
     }
-  };
+  }
+
+  private static class WithInstanceFieldsPolicy extends LocalsOnlyPolicy {
+    @Override
+    public PsiVariable getUsedVariable(@NotNull PsiReferenceExpression refExpr) {
+      PsiVariable variable = super.getUsedVariable(refExpr);
+      if (variable != null) {
+        return variable;
+      }
+      PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(refExpr.getQualifierExpression());
+      if (qualifier == null || qualifier instanceof PsiThisExpression) {
+        PsiElement resolved = refExpr.resolve();
+        if (resolved instanceof PsiField) {
+          PsiField field = (PsiField)resolved;
+          if (!(field).hasModifierProperty(PsiModifier.STATIC)) {
+            return field;
+          }
+        }
+      }
+      return null;
+    }
+  }
+
+  private static class WithStaticFieldsPolicy extends LocalsOnlyPolicy {
+    @Override
+    public PsiVariable getUsedVariable(@NotNull PsiReferenceExpression refExpr) {
+      PsiVariable variable = super.getUsedVariable(refExpr);
+      if (variable != null) {
+        return variable;
+      }
+      PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(refExpr.getQualifierExpression());
+      PsiClass qualifierClass = null;
+      if (qualifier != null) {
+        qualifierClass = getQualifierClass(qualifier);
+        if (qualifierClass == null) {
+          return null;
+        }
+      }
+      PsiElement resolved = refExpr.resolve();
+      if (resolved instanceof PsiField) {
+        PsiField field = (PsiField)resolved;
+        if (field.hasModifierProperty(PsiModifier.STATIC) &&
+            (qualifierClass == null || qualifierClass == field.getContainingClass())) {
+          return field;
+        }
+      }
+      return null;
+    }
+
+    @Nullable
+    private static PsiClass getQualifierClass(@NotNull PsiExpression qualifier) {
+      if (qualifier instanceof PsiJavaCodeReferenceElement) {
+        PsiElement resolved = ((PsiJavaCodeReferenceElement)qualifier).resolve();
+        if (resolved instanceof PsiClass) {
+          return (PsiClass)resolved;
+        }
+      }
+      return null;
+    }
+  }
 }
