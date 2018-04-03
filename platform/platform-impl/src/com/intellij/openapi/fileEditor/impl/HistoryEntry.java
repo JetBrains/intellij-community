@@ -18,7 +18,7 @@ import com.intellij.openapi.vfs.impl.LightFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;

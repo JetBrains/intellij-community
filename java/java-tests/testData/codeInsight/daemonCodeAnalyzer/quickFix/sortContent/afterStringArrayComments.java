@@ -7,7 +7,7 @@ public class Main {
     new String[]{
             "aaa", // a
             "bbb", // b
-            "ccc" /* c */
+            "ccc"/* c */
     };
   }
 }

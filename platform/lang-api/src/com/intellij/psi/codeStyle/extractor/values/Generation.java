@@ -79,16 +79,17 @@ public class Generation {
     }
   }
 
+  @NotNull
   public static Generation createZeroGeneration(@NotNull Gens gens) {
     return new Generation(gens);
   }
 
-  public static Generation createNextGeneration(Differ differ, @NotNull Generation previous) {
+  public static Generation createNextGeneration(@NotNull Differ differ, @NotNull Generation previous) {
     final int parentKind = previous.reduceToSize(differ, (int)(0.2 * previous.myGensPool.size()));
     return previous.tryAgain() ? new Generation(previous, parentKind) : previous;
   }
 
-  private int reduceToSize(Differ differ, int newPoolSize) {
+  private int reduceToSize(@NotNull Differ differ, int newPoolSize) {
     List<Pair<Integer, Integer>> ranges = new ArrayList<>(myGensPool.size());
 
     int i = 0;
@@ -102,7 +103,7 @@ public class Generation {
       }
     }
 
-    Collections.sort(ranges, (o1, o2) -> o1.first - o2.first);
+    Collections.sort(ranges, Comparator.comparingInt(o -> o.first));
 
     final ArrayList<Gens> gensPool = new ArrayList<>(newPoolSize);
     int count = 0;

@@ -98,11 +98,6 @@ public class JavaScratchConfiguration extends ApplicationConfiguration {
     return new JavaScratchConfigurable(getProject());
   }
 
-  @Override
-  public boolean isCompileBeforeLaunchAddedByDefault() {
-    return true;
-  }
-
   @Nullable
   public String getScratchFileUrl() {
     final VirtualFile vFile = getScratchVirtualFile();

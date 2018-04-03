@@ -269,6 +269,6 @@ public class GrAnnotationNameValuePairImpl extends GrStubElementBase<GrNameValue
       }
     }
 
-    return result.toArray(new GroovyResolveResult[result.size()]);
+    return result.toArray(GroovyResolveResult.EMPTY_ARRAY);
   }
 }

@@ -20,7 +20,6 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.fixes.DeleteCatchSectionFix;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -42,7 +41,7 @@ public class ConvertCatchToThrowsIntention extends Intention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element) {
     final PsiCatchSection catchSection = (PsiCatchSection)element.getParent();
     final NavigatablePsiElement owner = PsiTreeUtil.getParentOfType(catchSection, PsiMethod.class, PsiLambdaExpression.class);
     final PsiMethod method;

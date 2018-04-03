@@ -68,7 +68,7 @@ public class CompositeFoldingBuilder extends FoldingBuilderEx implements Possibl
       }
     }
 
-    return descriptors.toArray(new FoldingDescriptor[descriptors.size()]);
+    return descriptors.toArray(FoldingDescriptor.EMPTY);
   }
 
   @Override

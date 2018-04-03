@@ -15,11 +15,11 @@
  */
 package com.intellij.uiDesigner.lw;
 
-import org.jdom.Element;
 import com.intellij.uiDesigner.UIFormXmlConstants;
+import org.jdom.Element;
 
-import java.util.Iterator;
 import java.util.ArrayList;
+import java.util.Iterator;
 
 /**
  * @author yole
@@ -43,7 +43,7 @@ public class LwButtonGroup implements IButtonGroup {
   }
 
   public String[] getComponentIds() {
-    return (String[])myComponentIds.toArray(new String[myComponentIds.size()]);
+    return (String[])myComponentIds.toArray(new String[0]);
   }
 
   public boolean isBound() {

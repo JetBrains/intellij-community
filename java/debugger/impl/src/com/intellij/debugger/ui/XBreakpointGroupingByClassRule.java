@@ -34,11 +34,6 @@ class XBreakpointGroupingByClassRule<B> extends XBreakpointGroupingRule<B, XBrea
   }
 
   @Override
-  public boolean isAlwaysEnabled() {
-    return false;
-  }
-
-  @Override
   public int getPriority() {
     return XBreakpointsGroupingPriorities.BY_CLASS;
   }

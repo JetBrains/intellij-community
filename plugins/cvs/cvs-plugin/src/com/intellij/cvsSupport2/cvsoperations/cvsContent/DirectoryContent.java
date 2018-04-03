@@ -15,12 +15,11 @@
  */
 package com.intellij.cvsSupport2.cvsoperations.cvsContent;
 
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 
 public class DirectoryContent {
   private final Collection<String> mySubDirectories = new HashSet<>();

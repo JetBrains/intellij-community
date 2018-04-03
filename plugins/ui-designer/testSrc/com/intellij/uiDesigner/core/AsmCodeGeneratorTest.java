@@ -83,7 +83,7 @@ public class AsmCodeGeneratorTest extends TestCase {
     appendPath(cp, KDeclarationContainer.class);
     myClassFinder = new MyClassFinder(
       new URL[] {new File(swingPath).toURI().toURL()},
-      cp.toArray(new URL[cp.size()])
+      cp.toArray(new URL[0])
     );
   }
 

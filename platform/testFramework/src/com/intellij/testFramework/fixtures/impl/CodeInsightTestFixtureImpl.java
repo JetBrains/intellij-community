@@ -137,6 +137,7 @@ import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.ComparisonFailure;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -405,7 +406,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public void enableInspections(@NotNull Collection<Class<? extends LocalInspectionTool>> inspections) {
     List<InspectionProfileEntry> tools = InspectionTestUtil.instantiateTools(inspections);
-    enableInspections(tools.toArray(new InspectionProfileEntry[tools.size()]));
+    enableInspections(tools.toArray(new InspectionProfileEntry[0]));
   }
 
   @Override
@@ -1126,7 +1127,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }
     else {
       final List<LookupElement> list = lookup.getItems();
-      return list.toArray(new LookupElement[list.size()]);
+      return list.toArray(LookupElement.EMPTY_ARRAY);
     }
   }
 
@@ -1642,12 +1643,21 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @NotNull
   public String getFoldingDescription(boolean withCollapseStatus) {
-    CodeFoldingManager.getInstance(getProject()).buildInitialFoldings(myEditor);
-    return getTagsFromSegments(myEditor.getDocument().getText(),
-                               Arrays.asList(myEditor.getFoldingModel().getAllFoldRegions()),
+    final Editor topEditor = getTopEditor(myEditor);
+    CodeFoldingManager.getInstance(getProject()).buildInitialFoldings(topEditor);
+    return getTagsFromSegments(topEditor.getDocument().getText(),
+                               Arrays.asList(topEditor.getFoldingModel().getAllFoldRegions()),
                                FOLD,
                                foldRegion -> "text=\'" + foldRegion.getPlaceholderText() + "\'"
                                              + (withCollapseStatus ? " expand=\'" + foldRegion.isExpanded() + "\'" : ""));
+  }
+
+  @Contract("null -> null")
+  private static Editor getTopEditor(Editor editor) {
+    while(editor instanceof EditorWindow) {
+      editor = ((EditorWindow)editor).getDelegate();
+    }
+    return editor;
   }
 
   @NotNull

@@ -96,7 +96,7 @@ public class JpsContentEntry implements ContentEntry, Disposable {
   @NotNull
   @Override
   public SourceFolder[] getSourceFolders() {
-    return mySourceFolders.toArray(new SourceFolder[mySourceFolders.size()]);
+    return mySourceFolders.toArray(new SourceFolder[0]);
   }
 
   @NotNull
@@ -137,7 +137,7 @@ public class JpsContentEntry implements ContentEntry, Disposable {
   @NotNull
   @Override
   public ExcludeFolder[] getExcludeFolders() {
-    return myExcludeFolders.toArray(new ExcludeFolder[myExcludeFolders.size()]);
+    return myExcludeFolders.toArray(new ExcludeFolder[0]);
   }
 
   @NotNull

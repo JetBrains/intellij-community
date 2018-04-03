@@ -57,7 +57,7 @@ public class MultipleRepositoryUrlsFix extends GroovyFix {
       }
     }
 
-    myClosure.removeElements(elements.toArray(new PsiElement[elements.size()]));
+    myClosure.removeElements(elements.toArray(PsiElement.EMPTY_ARRAY));
     GrClosableBlock closableBlock = PsiTreeUtil.getParentOfType(myClosure, GrClosableBlock.class);
     if (closableBlock == null) return;
 

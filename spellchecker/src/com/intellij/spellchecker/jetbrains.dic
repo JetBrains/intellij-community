@@ -127,6 +127,8 @@ customizer
 customizers
 cyclomatic
 cygwin
+dataclass
+dataclasses
 datafile
 datafiles
 datetime

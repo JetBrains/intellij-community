@@ -4,7 +4,9 @@
 package com.intellij.testFramework;
 
 import com.intellij.GroupBasedTestClassFilter;
+import com.intellij.PatternListTestClassFilter;
 import com.intellij.TestClassesFilter;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import org.junit.Test;
 
@@ -84,6 +86,14 @@ public class TestClassesFilterTest {
   public void allExcluded() throws Exception {
     checkForAllExcludedDefinedGroup(createOn(getReader(FILTER_TEXT),
                                              Collections.singletonList(GroupBasedTestClassFilter.ALL_EXCLUDE_DEFINED)));
+  }
+
+  @Test
+  public void justClassName() {
+    PatternListTestClassFilter myTestClassesFilter =
+      new PatternListTestClassFilter(StringUtil.split("com.intellij.database.DatabaseParametrizedTestSuite", ";"));
+
+    assertTrue(myTestClassesFilter.matches("com.intellij.database.DatabaseParametrizedTestSuite", null));
   }
 
   @Test

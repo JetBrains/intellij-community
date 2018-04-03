@@ -175,9 +175,4 @@ public class InsertRequiredAttributeFix extends LocalQuickFixAndIntentionActionO
       runnable.run();
     }
   }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
 }

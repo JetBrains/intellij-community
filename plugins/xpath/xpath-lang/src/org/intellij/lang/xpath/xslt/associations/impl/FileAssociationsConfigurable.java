@@ -114,7 +114,7 @@ public class FileAssociationsConfigurable implements SearchableConfigurable, Con
         }
 
         @Override
-        public void loadState(TreeState state) {
+        public void loadState(@NotNull TreeState state) {
             this.state = state;
         }
     }

@@ -69,7 +69,7 @@ public class Utils {
 
   @NotNull
   public static CustomShortcutSet shortcutSetOf(@NotNull List<Shortcut> shortcuts) {
-    return new CustomShortcutSet(shortcuts.toArray(new Shortcut[shortcuts.size()]));
+    return new CustomShortcutSet(shortcuts.toArray(Shortcut.EMPTY_ARRAY));
   }
 
   @NotNull

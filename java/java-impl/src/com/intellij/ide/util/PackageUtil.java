@@ -217,7 +217,7 @@ public class PackageUtil {
           directoryList.add(directory);
         }
       }
-      PsiDirectory[] sourceDirectories = directoryList.toArray(new PsiDirectory[directoryList.size()]);
+      PsiDirectory[] sourceDirectories = directoryList.toArray(PsiDirectory.EMPTY_ARRAY);
       psiDirectory = DirectoryChooserUtil.selectDirectory(project, sourceDirectories, baseDir,
                                      File.separatorChar + packageName.replace('.', File.separatorChar));
       if (psiDirectory == null) return null;
@@ -278,7 +278,7 @@ public class PackageUtil {
           result.add(moduleDirectory);
         }
       }
-      moduleDirectories = result.toArray(new PsiDirectory[result.size()]);
+      moduleDirectories = result.toArray(PsiDirectory.EMPTY_ARRAY);
     }
     return moduleDirectories;
   }

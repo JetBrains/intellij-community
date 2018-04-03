@@ -15,10 +15,9 @@
  */
 package com.intellij.internal.statistic.customUsageCollectors.ideSettings;
 
-import com.intellij.util.containers.HashSet;
-
 import javax.swing.*;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 public final class IdeInitialConfigButtonUsages {

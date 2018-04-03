@@ -6,11 +6,18 @@ import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.reference.RefModule;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Key;
-import com.intellij.psi.PsiElement;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public class UnnecessaryModuleDependencyAnnotator extends RefGraphAnnotator {
   public static final Key<Set<Module>> DEPENDENCIES = Key.create("inspection.dependencies");
@@ -23,31 +30,117 @@ public class UnnecessaryModuleDependencyAnnotator extends RefGraphAnnotator {
 
   @Override
   public void onMarkReferenced(PsiElement what, PsiElement from, boolean referencedFromClassInitializer) {
-    onReferenced(what, from);
+    if (what != null && from != null){
+      //from should be always in sources
+      final Module fromModule = ModuleUtilCore.findModuleForFile(from.getContainingFile());
+      final Set<Module> onModules = getAllPossibleWhatModules(what);
+      if (onModules != null && fromModule != null){
+        final RefModule refModule = myManager.getRefModule(fromModule);
+        if (refModule != null) {
+          HashSet<Module> modules = new HashSet<>(onModules);
+          collectRequiredModulesInHierarchy(what, modules);
+          modules.remove(fromModule);
+          getModules(refModule).addAll(modules);
+        }
+      }
+    }
   }
 
   @Override
   public void onMarkReferenced(RefElement refWhat, RefElement refFrom, boolean referencedFromClassInitializer) {
-    final PsiElement onElement = refWhat.getElement();
-    final PsiElement fromElement = refFrom.getElement();
-    onReferenced(onElement, fromElement);
-  }
-
-  private void onReferenced(PsiElement onElement, PsiElement fromElement) {
-    if (onElement != null && fromElement!= null){
-      final Module onModule = ModuleUtilCore.findModuleForPsiElement(onElement);
-      final Module fromModule = ModuleUtilCore.findModuleForPsiElement(fromElement);
-      if (onModule != null && fromModule != null && onModule != fromModule){
-        final RefModule refModule = myManager.getRefModule(fromModule);
-        if (refModule != null) {
-          Set<Module> modules = refModule.getUserData(DEPENDENCIES);
-          if (modules == null){
-            modules = new HashSet<>();
-            refModule.putUserData(DEPENDENCIES, modules);
-          }
-          modules.add(onModule);
-        }
+    //case when both from and what are located in the scope, no library dependency expected
+    RefModule fromModule = refFrom.getModule();
+    RefModule whatModule = refWhat.getModule();
+    if (fromModule != null && whatModule != null) {
+      Set<Module> currentFromModules = getModules(fromModule);
+      currentFromModules.add(whatModule.getModule());
+      Set<Module> modules = refWhat.getUserData(DEPENDENCIES);
+      if (modules != null) {
+        currentFromModules.addAll(modules);
       }
     }
+  }
+
+  @Override
+  public void onInitialize(RefElement refElement) {
+    PsiElement element = refElement.getElement();
+    RefModule refModule = refElement.getModule();
+    if (refModule != null) {
+      HashSet<Module> modules = new HashSet<>();
+      collectRequiredModulesInHierarchy(element, modules);
+      modules.remove(refModule.getModule());
+      if (!modules.isEmpty()) {
+        refElement.putUserData(DEPENDENCIES, modules);
+        getModules(refModule).addAll(modules);
+      }
+    }
+  }
+
+  private static void collectRequiredModulesInHierarchy(PsiElement element, Set<Module> modules) {
+    if (element instanceof PsiClass) {
+      processClassHierarchy((PsiClass)element, modules);
+    }
+    else if (element instanceof PsiMethod) {
+      PsiMethod method = (PsiMethod)element;
+      Set<PsiClass> classes = new HashSet<>();
+      processTypeHierarchy(classes, method.getReturnType(), modules);
+      for (PsiParameter parameter : method.getParameterList().getParameters()) {
+        processTypeHierarchy(classes, parameter.getType(), modules);
+      }
+    }
+    else if (element instanceof PsiField) {
+      PsiClass aClass = PsiUtil.resolveClassInType(((PsiField)element).getType());
+      if (aClass != null) {
+        processClassHierarchy(aClass, modules);
+      }
+    }
+  }
+
+  private static void processTypeHierarchy(Set<PsiClass> classes, PsiType returnType, Set<Module> modules) {
+    PsiClass aClass = PsiUtil.resolveClassInType(returnType);
+    if (aClass != null && classes.add(aClass)) {
+      processClassHierarchy(aClass, modules);
+    }
+  }
+
+  private static void processClassHierarchy(PsiClass currentClass, Set<Module> modules) {
+    LinkedHashSet<PsiClass> superClasses = new LinkedHashSet<>();
+    InheritanceUtil.getSuperClasses(currentClass, superClasses, false);
+    for (PsiClass superClass : superClasses) {
+      Set<Module> onModules = getAllPossibleWhatModules(superClass);
+      if (onModules != null) modules.addAll(onModules);
+    }
+  }
+
+  /**
+   * Returns all owner modules for a library or single module set for a source outside of the inspecting scope
+   */
+  private static Set<Module> getAllPossibleWhatModules(@NotNull PsiElement what) {
+    VirtualFile vFile = PsiUtilCore.getVirtualFile(what);
+    if (vFile == null) return null;
+    Project project = what.getProject();
+    final ProjectFileIndex fileIndex = ProjectFileIndex.SERVICE.getInstance(project);
+    if (fileIndex.isInLibrarySource(vFile) || fileIndex.isInLibraryClasses(vFile)) {
+      final List<OrderEntry> orderEntries = fileIndex.getOrderEntriesForFile(vFile);
+      if (orderEntries.isEmpty()) {
+        return null;
+      }
+      Set<Module> modules = new HashSet<>();
+      for (OrderEntry orderEntry : orderEntries) {
+        modules.add(orderEntry.getOwnerModule());
+      }
+      return modules;
+    }
+    Module module = ModuleUtilCore.findModuleForFile(vFile, project);
+    return module != null ? Collections.singleton(module) : null;
+  }
+
+  private static Set<Module> getModules(RefModule refModule) {
+    Set<Module> modules = refModule.getUserData(DEPENDENCIES);
+    if (modules == null){
+      modules = new HashSet<>();
+      refModule.putUserData(DEPENDENCIES, modules);
+    }
+    return modules;
   }
 }

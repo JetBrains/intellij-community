@@ -314,7 +314,7 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
         result.add(newParm);
       }
     }
-    return result.toArray(new ParameterInfoImpl[result.size()]);
+    return result.toArray(new ParameterInfoImpl[0]);
   }
 
   @Nullable

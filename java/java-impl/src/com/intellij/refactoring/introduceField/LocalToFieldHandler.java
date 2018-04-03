@@ -95,7 +95,7 @@ public abstract class LocalToFieldHandler {
       final boolean isStatic = tempIsStatic;
       final PsiClass firstClass = classes.get(0);
       final PsiClass preselection = AnonymousTargetClassPreselectionUtil.getPreselection(classes, firstClass);
-      NavigationUtil.getPsiElementPopup(classes.toArray(new PsiClass[classes.size()]), new PsiClassListCellRenderer(), "Choose class to introduce " + (myIsConstant ? "constant" : "field"), new PsiElementProcessor<PsiClass>() {
+      NavigationUtil.getPsiElementPopup(classes.toArray(PsiClass.EMPTY_ARRAY), new PsiClassListCellRenderer(), "Choose class to introduce " + (myIsConstant ? "constant" : "field"), new PsiElementProcessor<PsiClass>() {
         @Override
         public boolean execute(@NotNull PsiClass aClass) {
           AnonymousTargetClassPreselectionUtil.rememberSelection(aClass, aClass);

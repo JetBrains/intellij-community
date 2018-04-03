@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,12 +93,12 @@ public class AssertionCanBeIfInspection extends BaseInspection {
         element instanceof PsiKeyword ? (PsiAssertStatement)element.getParent() : (PsiAssertStatement)element;
       final PsiExpression condition = assertStatement.getAssertCondition();
       CommentTracker tracker = new CommentTracker();
-      @NonNls final StringBuilder newStatement =
-        new StringBuilder("if(").append(BoolUtils.getNegatedExpressionText(condition,
-                                                                           tracker)).append(") throw new java.lang.AssertionError(");
+      final StringBuilder newStatement = new StringBuilder("if(");
+      newStatement.append(BoolUtils.getNegatedExpressionText(condition, tracker));
+      newStatement.append(") throw new java.lang.AssertionError(");
       final PsiExpression description = assertStatement.getAssertDescription();
       if (description != null) {
-        newStatement.append(tracker.markUnchanged(description).getText());
+        newStatement.append(tracker.text(description));
       }
       newStatement.append(");");
       PsiReplacementUtil.replaceStatement(assertStatement, newStatement.toString(), tracker);

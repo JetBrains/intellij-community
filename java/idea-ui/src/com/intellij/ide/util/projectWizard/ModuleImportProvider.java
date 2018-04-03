@@ -45,11 +45,6 @@ public class ModuleImportProvider extends ProjectImportProvider {
     return false;
   }
 
-  @Override
-  public ModuleWizardStep[] createSteps(WizardContext context) {
-    return ModuleWizardStep.EMPTY_ARRAY;
-  }
-
   @Nullable
   @Override
   public String getFileSample() {

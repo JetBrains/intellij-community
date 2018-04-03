@@ -140,7 +140,7 @@ public class VariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement
                                                                             false, null,
                                                                             psiMethod.getName(),
                                                                             psiMethod.getReturnType(),
-                                                                            infos.toArray(new ParameterInfoImpl[infos.size()]));
+                                                                            infos.toArray(new ParameterInfoImpl[0]));
           processor.run();
         }
         return true;

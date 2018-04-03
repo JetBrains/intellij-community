@@ -43,7 +43,7 @@ import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

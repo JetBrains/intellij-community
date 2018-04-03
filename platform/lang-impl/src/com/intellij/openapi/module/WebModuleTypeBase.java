@@ -26,7 +26,7 @@ import javax.swing.*;
 /**
  * @author yole
  */
-public abstract class WebModuleTypeBase<T extends ModuleBuilder> extends ModuleType<T> {
+public abstract class WebModuleTypeBase<T extends ModuleBuilder> extends ModuleType<T> implements ModuleTypeWithWebFeatures {
   @NonNls public static final String WEB_MODULE = ModuleTypeId.WEB_MODULE;
 
   public WebModuleTypeBase() {
@@ -50,7 +50,15 @@ public abstract class WebModuleTypeBase<T extends ModuleBuilder> extends ModuleT
     return AllIcons.Nodes.Module;
   }
 
+  /**
+   * @deprecated Use {@link ModuleTypeWithWebFeatures#isAvailable}
+   */
+  @Deprecated
   public static boolean isWebModule(@NotNull Module module) {
+    return ModuleTypeWithWebFeatures.isAvailable(module);
+  }
+
+  public boolean hasWebFeatures(@NotNull Module module) {
     return WEB_MODULE.equals(ModuleType.get(module).getId());
   }
 }

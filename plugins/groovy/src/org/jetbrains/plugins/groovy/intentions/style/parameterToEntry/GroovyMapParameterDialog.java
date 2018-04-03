@@ -112,11 +112,6 @@ public class GroovyMapParameterDialog extends DialogWrapper {
   }
 
   @Override
-  public void doCancelAction() {
-    super.doCancelAction();
-  }
-
-  @Override
   protected JComponent createCenterPanel() {
     return contentPane;
   }

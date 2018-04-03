@@ -71,7 +71,7 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
         elementTypes.add(elementType);
       }
     }
-    return elementTypes.toArray(new PackagingElementType[elementTypes.size()]);
+    return elementTypes.toArray(new PackagingElementType[0]);
   }
 
   @Override
@@ -83,7 +83,7 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
         types.add((ComplexPackagingElementType)type);
       }
     }
-    return types.toArray(new ComplexPackagingElementType[types.size()]);
+    return types.toArray(new ComplexPackagingElementType[0]);
   }
 
   @NotNull
@@ -95,7 +95,7 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
         elementTypes.add((CompositePackagingElementType)elementType);
       }
     }
-    return elementTypes.toArray(new CompositePackagingElementType[elementTypes.size()]);
+    return elementTypes.toArray(new CompositePackagingElementType[0]);
   }
 
   @Override

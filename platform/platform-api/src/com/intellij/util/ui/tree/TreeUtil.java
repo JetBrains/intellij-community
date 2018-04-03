@@ -305,7 +305,7 @@ public final class TreeUtil {
     for (final TreePath path : paths) {
       if (!result.contains(path)) result.add(path);
     }
-    return result.toArray(new TreePath[result.size()]);
+    return result.toArray(new TreePath[0]);
   }
 
   @NotNull
@@ -316,9 +316,9 @@ public final class TreeUtil {
     for (final TreePath path : noDuplicates) {
       final ArrayList<TreePath> otherPaths = new ArrayList<>(Arrays.asList(noDuplicates));
       otherPaths.remove(path);
-      if (!isDescendants(path, otherPaths.toArray(new TreePath[otherPaths.size()]))) result.add(path);
+      if (!isDescendants(path, otherPaths.toArray(new TreePath[0]))) result.add(path);
     }
-    return result.toArray(new TreePath[result.size()]);
+    return result.toArray(new TreePath[0]);
   }
 
   public static void sort(@NotNull final DefaultTreeModel model, @Nullable Comparator comparator) {
@@ -368,7 +368,7 @@ public final class TreeUtil {
 
   public static void selectPaths(@NotNull JTree tree, @NotNull Collection<TreePath> paths) {
     if (paths.isEmpty()) return;
-    selectPaths(tree, paths.toArray(new TreePath[paths.size()]));
+    selectPaths(tree, paths.toArray(new TreePath[0]));
   }
 
   public static void selectPaths(@NotNull JTree tree, @NotNull TreePath... paths) {

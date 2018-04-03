@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -126,21 +126,16 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
           final PsiJavaToken sign = assignmentExpression.getOperationSign();
           if (!JavaTokenType.EQ.equals(sign.getTokenType())) {
             CommentTracker commentTracker = new CommentTracker();
-            final String lhsText = commentTracker.markUnchanged(assignmentExpression.getLExpression()).getText();
+            final String lhsText = commentTracker.text(assignmentExpression.getLExpression());
             final String newExpressionText =
-              lhsText + "=(" + expectedType.getCanonicalText() + ")(" + lhsText + sign.getText().charAt(0) + commentTracker.markUnchanged(expression).getText() + ')';
+              lhsText + "=(" + expectedType.getCanonicalText() + ")(" + lhsText + sign.getText().charAt(0) + commentTracker.text(expression) + ')';
             PsiReplacementUtil.replaceExpression(assignmentExpression, newExpressionText, commentTracker);
             return;
           }
         }
         CommentTracker commentTracker = new CommentTracker();
-        final String castExpression;
-        if (ParenthesesUtils.getPrecedence(expression) <= ParenthesesUtils.TYPE_CAST_PRECEDENCE) {
-          castExpression = '(' + expectedType.getCanonicalText() + ')' + commentTracker.markUnchanged(expression).getText();
-        }
-        else {
-          castExpression = '(' + expectedType.getCanonicalText() + ")(" + commentTracker.markUnchanged(expression).getText() + ')';
-        }
+        final String castExpression =
+          '(' + expectedType.getCanonicalText() + ')' + commentTracker.text(expression, ParenthesesUtils.TYPE_CAST_PRECEDENCE);
         PsiReplacementUtil.replaceExpression(expression, castExpression, commentTracker);
       }
     }

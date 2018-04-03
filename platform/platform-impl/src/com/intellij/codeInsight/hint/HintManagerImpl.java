@@ -32,7 +32,6 @@ import com.intellij.util.Alarm;
 import com.intellij.util.BitUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
-import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -168,7 +167,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
 
   @NotNull
   private HintInfo[] getHintsStackArray() {
-    return myHintsStack.toArray(new HintInfo[myHintsStack.size()]);
+    return myHintsStack.toArray(new HintInfo[0]);
   }
 
   public boolean performCurrentQuestionAction() {

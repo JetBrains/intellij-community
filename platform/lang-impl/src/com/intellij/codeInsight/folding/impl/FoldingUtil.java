@@ -62,7 +62,7 @@ public class FoldingUtil {
       }
     }
 
-    FoldRegion[] regions = list.toArray(new FoldRegion[list.size()]);
+    FoldRegion[] regions = list.toArray(FoldRegion.EMPTY_ARRAY);
     Arrays.sort(regions, Collections.reverseOrder(RangeMarker.BY_START_OFFSET));
     return regions;
   }

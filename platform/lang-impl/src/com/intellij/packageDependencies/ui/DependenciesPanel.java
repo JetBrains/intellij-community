@@ -623,11 +623,6 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
       mySettings.UI_GROUP_BY_SCOPE_TYPE = flag;
       rebuild();
     }
-
-    @Override
-    public void update(final AnActionEvent e) {
-      super.update(e);
-    }
   }
 
 

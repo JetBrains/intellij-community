@@ -100,7 +100,7 @@ public final class InjectedLanguage {
         initLanguageCache();
       }
       final Collection<Language> keys = ourLanguageCache.values();
-      return keys.toArray(new Language[keys.size()]);
+      return keys.toArray(new Language[0]);
     }
   }
 

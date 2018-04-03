@@ -201,7 +201,7 @@ class OfflineDescriptorResolveResult {
         addFix(descriptor, fixes, hint, presentation);
       }
     }
-    return fixes.isEmpty() ? null : fixes.toArray(new LocalQuickFix[fixes.size()]);
+    return fixes.isEmpty() ? null : fixes.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
   private static void addFix(@NotNull CommonProblemDescriptor descriptor, final List<LocalQuickFix> fixes, String hint, InspectionToolPresentation presentation) {

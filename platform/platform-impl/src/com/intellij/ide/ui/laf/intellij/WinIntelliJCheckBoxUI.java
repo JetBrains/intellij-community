@@ -27,6 +27,7 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public class WinIntelliJCheckBoxUI extends IntelliJCheckBoxUI {
+  private static final Icon DEFAULT_ICON = JBUI.scale(EmptyIcon.create(13)).asUIResource();
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
@@ -45,9 +46,7 @@ public class WinIntelliJCheckBoxUI extends IntelliJCheckBoxUI {
     Icon icon = MacIntelliJIconCache.getIcon(iconName, false, selected || isIndeterminate(b), focused, enabled, pressed);
 
     if (icon != null) {
-      int x = (iconRect.width - icon.getIconWidth()) / 2 + iconRect.x;
-      int y = (iconRect.height - icon.getIconHeight()) / 2 + iconRect.y + JBUI.scale(1);
-      icon.paintIcon(c, g, x, y);
+      icon.paintIcon(c, g, iconRect.x, iconRect.y + JBUI.scale(1));
     }
   }
 
@@ -63,7 +62,7 @@ public class WinIntelliJCheckBoxUI extends IntelliJCheckBoxUI {
 
   @Override
   public Icon getDefaultIcon() {
-    return JBUI.scale(EmptyIcon.create(18)).asUIResource();
+    return DEFAULT_ICON;
   }
 
   @Override

@@ -62,7 +62,7 @@ public abstract class BuildArtifactsBeforeRunTaskProviderBase<T extends BuildArt
           for (T task : tasks) {
             final String artifactName = artifact.getName();
             final List<ArtifactPointer> pointersList = task.getArtifactPointers();
-            final ArtifactPointer[] pointers = pointersList.toArray(new ArtifactPointer[pointersList.size()]);
+            final ArtifactPointer[] pointers = pointersList.toArray(new ArtifactPointer[0]);
             for (ArtifactPointer pointer : pointers) {
               if (pointer.getArtifactName().equals(artifactName) &&
                   ArtifactManager.getInstance(myProject).findArtifact(artifactName) == null) {

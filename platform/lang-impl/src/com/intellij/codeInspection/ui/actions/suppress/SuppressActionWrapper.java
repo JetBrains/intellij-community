@@ -23,7 +23,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -82,7 +82,7 @@ public class SuppressActionWrapper extends ActionGroup implements CompactActionG
         final InspectionToolWrapper wrapper = view.getTree().getSelectedToolWrapper(true);
         LOG.assertTrue(wrapper != null);
         final Set<SuppressableInspectionTreeNode> nodesAsSet = getNodesToSuppress(view);
-        final SuppressableInspectionTreeNode[] nodes = nodesAsSet.toArray(new SuppressableInspectionTreeNode[nodesAsSet.size()]);
+        final SuppressableInspectionTreeNode[] nodes = nodesAsSet.toArray(new SuppressableInspectionTreeNode[0]);
         CommandProcessor.getInstance().executeCommand(project, () -> {
           CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
           final SequentialModalProgressTask progressTask =

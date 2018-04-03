@@ -3,6 +3,7 @@ package com.jetbrains.python.packaging;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -34,6 +35,11 @@ public class PyPIPackageCache extends PyAbstractPackageCache {
     ourInstance = new PyPIPackageCache(packageNames);
     store(ourInstance, CACHE_FILE_NAME);
     return ourInstance;
+  }
+
+  @TestOnly
+  static synchronized void reset() {
+    ourInstance = null;
   }
 
   private PyPIPackageCache() {

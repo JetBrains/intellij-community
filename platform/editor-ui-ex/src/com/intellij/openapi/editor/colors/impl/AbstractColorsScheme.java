@@ -35,7 +35,6 @@ import com.intellij.util.JdomKt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtilRt;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.JBIterable;
 import gnu.trove.THashMap;
 import org.jdom.Element;

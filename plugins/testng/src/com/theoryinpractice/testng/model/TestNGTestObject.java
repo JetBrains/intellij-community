@@ -178,7 +178,7 @@ public abstract class TestNGTestObject {
           }
         }));
       }
-      psiClasses = containingClasses.toArray(new PsiClass[containingClasses.size()]);
+      psiClasses = containingClasses.toArray(PsiClass.EMPTY_ARRAY);
     } else {
       psiClasses = classes;
     }

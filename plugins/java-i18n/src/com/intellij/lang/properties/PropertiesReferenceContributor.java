@@ -90,7 +90,7 @@ public class PropertiesReferenceContributor extends PsiReferenceContributor{
               return true;
             });
         }
-        return references.toArray(new PsiReference[references.size()]);
+        return references.toArray(PsiReference.EMPTY_ARRAY);
       }
     });
 

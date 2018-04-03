@@ -693,7 +693,7 @@ abstract class NullityInterpreter extends BasicInterpreter {
       case INVOKESTATIC:
       case INVOKEVIRTUAL:
         MethodInsnNode methodNode = (MethodInsnNode)insn;
-        methodCall(opcode, new Method(methodNode.owner, methodNode.name, methodNode.desc), values);
+        methodCall(opcode, new Member(methodNode.owner, methodNode.name, methodNode.desc), values);
         break;
       case INVOKEDYNAMIC:
         LambdaIndy lambda = LambdaIndy.from((InvokeDynamicInsnNode)insn);
@@ -708,7 +708,7 @@ abstract class NullityInterpreter extends BasicInterpreter {
     return super.naryOperation(insn, values);
   }
 
-  private void methodCall(int opcode, Method method, List<? extends BasicValue> values) throws AnalyzerException {
+  private void methodCall(int opcode, Member method, List<? extends BasicValue> values) throws AnalyzerException {
     if (opcode != INVOKESTATIC && values.remove(0) instanceof ParamValue) {
       subResult = NPE;
     }

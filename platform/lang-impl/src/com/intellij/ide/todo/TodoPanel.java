@@ -659,11 +659,6 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
     }
 
     @Override
-    public void update(AnActionEvent e) {
-      super.update(e);
-    }
-
-    @Override
     public boolean isSelected(AnActionEvent e) {
       return mySettings.showPreview;
     }

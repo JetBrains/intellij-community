@@ -107,7 +107,7 @@ public class RedundantThrowsDeclarationInspection extends GlobalJavaBatchInspect
       }
 
       if (problems != null) {
-        return problems.toArray(new CommonProblemDescriptor[problems.size()]);
+        return problems.toArray(CommonProblemDescriptor.EMPTY_ARRAY);
       }
     }
 

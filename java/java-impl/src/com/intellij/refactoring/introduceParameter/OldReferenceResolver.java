@@ -28,7 +28,7 @@ import com.intellij.refactoring.IntroduceParameterRefactoring;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;

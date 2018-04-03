@@ -35,7 +35,7 @@ abstract class XsltInspection extends LocalInspectionTool implements CustomSuppr
   @NotNull
   public SuppressIntentionAction[] getSuppressActions(@Nullable PsiElement psiElement) {
     final List<SuppressIntentionAction> actions = InspectionUtil.getSuppressActions(this, false);
-    return actions.toArray(new SuppressIntentionAction[actions.size()]);
+    return actions.toArray(new SuppressIntentionAction[0]);
   }
 
   @Override

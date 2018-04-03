@@ -180,7 +180,7 @@ class MarkerCache {
       @NotNull
       @Override
       public Language getFileLanguage() {
-        return null;
+        throw new IllegalStateException();
       }
 
       @Override
@@ -193,16 +193,21 @@ class MarkerCache {
     boolean greedy = info.isGreedy();
     int start = info.getPsiStartOffset();
     int end = info.getPsiEndOffset();
-    boolean surviveOnExternalChange = events.stream().anyMatch(event->((DocumentEventImpl)event).getInitialStartOffset() == 0 && ((DocumentEventImpl)event).getInitialOldLength() == frozen.getTextLength());
+    boolean surviveOnExternalChange = events.stream().anyMatch(event-> isWholeDocumentReplace(frozen, (DocumentEventImpl)event));
     ManualRangeMarker marker = new ManualRangeMarker(start, end, greedy, greedy, surviveOnExternalChange, null);
 
     UpdatedRanges ranges = new UpdatedRanges(0, frozen, infos, new ManualRangeMarker[]{marker});
     // NB: convert events from completion to whole doc change event to more precise translation
     List<DocumentEvent> newEvents =
-    events.stream().map(event -> ((DocumentEventImpl)event).getInitialStartOffset() == 0 && ((DocumentEventImpl)event).getInitialOldLength() == frozen.getTextLength() ? new DocumentEventImpl(event.getDocument(), event.getOffset(), event.getOldFragment(), event.getNewFragment(), event.getOldTimeStamp(), true, ((DocumentEventImpl)event).getInitialStartOffset(), ((DocumentEventImpl)event).getInitialOldLength()) : event)
+    events.stream().map(event -> isWholeDocumentReplace(frozen, (DocumentEventImpl)event)
+                                 ? new DocumentEventImpl(event.getDocument(), event.getOffset(), event.getOldFragment(), event.getNewFragment(), event.getOldTimeStamp(), true, ((DocumentEventImpl)event).getInitialStartOffset(), ((DocumentEventImpl)event).getInitialOldLength()) : event)
       .collect(Collectors.toList());
     UpdatedRanges updated = applyEvents(newEvents, ranges);
     return updated.myMarkers[0];
+  }
+
+  private static boolean isWholeDocumentReplace(@NotNull FrozenDocument frozen, @NotNull DocumentEventImpl event) {
+    return event.getInitialStartOffset() == 0 && event.getInitialOldLength() == frozen.getTextLength();
   }
 
   void rangeChanged() {

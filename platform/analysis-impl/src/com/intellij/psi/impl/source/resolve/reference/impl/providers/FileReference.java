@@ -562,7 +562,7 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
     for (final FileReferenceHelper helper : getHelpers()) {
       result.addAll(helper.registerFixes(this));
     }
-    return result.toArray(new LocalQuickFix[result.size()]);
+    return result.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
   @Override

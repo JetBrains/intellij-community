@@ -24,10 +24,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
+import java.util.HashSet;
 import java.util.Set;
 
 /**

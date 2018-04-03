@@ -154,7 +154,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
 
     actions.add(getCancelAction());
 
-    return actions.toArray(new Action[actions.size()]);
+    return actions.toArray(new Action[0]);
   }
 
   @Override

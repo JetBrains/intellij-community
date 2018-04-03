@@ -75,7 +75,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
       rules.add(new FileGroupingRule(project));
     }
 
-    return rules.toArray(new UsageGroupingRule[rules.size()]);
+    return rules.toArray(UsageGroupingRule.EMPTY_ARRAY);
   }
 
   @Override
@@ -117,7 +117,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
       ContainerUtil.addIfNotNull(result, groupByPackageAction);
       ContainerUtil.addIfNotNull(result, groupByFileStructureAction);
     }
-    return result.toArray(new AnAction[result.size()]);
+    return result.toArray(AnAction.EMPTY_ARRAY);
   }
 
   public static GroupByFileStructureAction createGroupByFileStructureAction(UsageViewImpl impl) {

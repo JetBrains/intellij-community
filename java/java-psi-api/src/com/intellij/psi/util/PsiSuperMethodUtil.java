@@ -19,7 +19,7 @@ import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -97,7 +97,7 @@ public class PsiSuperMethodUtil {
     if (inRawContext) {
       Set<PsiTypeParameter> typeParams = superSubstitutor.getSubstitutionMap().keySet();
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(superClass.getProject());
-      superSubstitutor = factory.createRawSubstitutor(derivedSubstitutor, typeParams.toArray(new PsiTypeParameter[typeParams.size()]));
+      superSubstitutor = factory.createRawSubstitutor(derivedSubstitutor, typeParams.toArray(PsiTypeParameter.EMPTY_ARRAY));
     }
     Map<PsiTypeParameter, PsiType> map = null;
     for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(superClass)) {

@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package org.jetbrains.plugins.groovy.compiler
 
@@ -46,6 +34,7 @@ import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.PathKt
+import com.intellij.util.lang.JavaVersion
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
@@ -53,6 +42,7 @@ import org.jetbrains.plugins.groovy.config.GroovyFacetUtil
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfigurationType
 import org.jetbrains.plugins.groovy.util.Slow
+
 /**
  * @author aalmiray
  * @author peter
@@ -81,7 +71,7 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
 
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
-    moduleBuilder.setLanguageLevel(JavaSdkVersion.fromVersionString(SystemProperties.javaVersion).maxLanguageLevel)
+    moduleBuilder.setLanguageLevel(JavaSdkVersion.fromJavaVersion(JavaVersion.current()).maxLanguageLevel)
     def javaHome = FileUtil.toSystemIndependentName(SystemProperties.javaHome)
     moduleBuilder.addJdk(StringUtil.trimEnd(StringUtil.trimEnd(javaHome, '/'), '/jre'))
     super.tuneFixture(moduleBuilder)
@@ -223,9 +213,9 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
     }, ProgramRunner.PROGRAM_RUNNER_EP.findExtension(DefaultJavaProgramRunner.class))
     process.waitFor()
     def output = StringUtil.convertLineSeparators(sb.toString().trim()).readLines()
-    output = output.findAll { line -> 
-      !StringUtil.containsIgnoreCase(line, "illegal") && 
-      !line.contains("consider reporting this to the maintainers of org.codehaus.groovy.reflection.CachedClass") 
+    output = output.findAll { line ->
+      !StringUtil.containsIgnoreCase(line, "illegal") &&
+      !line.contains("consider reporting this to the maintainers of org.codehaus.groovy.reflection.CachedClass")
     }
     assertEquals(expected.trim(), output.join("\n"))
   }

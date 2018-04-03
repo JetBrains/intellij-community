@@ -175,7 +175,7 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
       }
       if (!problemDescriptors.isEmpty()) {
         processor.addProblemElement(refManager.getReference(file),
-                                    problemDescriptors.toArray(new ProblemDescriptor[problemDescriptors.size()]));
+                                    problemDescriptors.toArray(ProblemDescriptor.EMPTY_ARRAY));
       }
     }, progress);
   }

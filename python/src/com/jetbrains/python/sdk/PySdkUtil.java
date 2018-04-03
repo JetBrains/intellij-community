@@ -35,7 +35,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.remote.RemoteSdkAdditionalData;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.jetbrains.python.run.CommandLinePatcher;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NonNls;

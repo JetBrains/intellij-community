@@ -25,7 +25,7 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 import org.jetbrains.annotations.NotNull;
@@ -230,7 +230,7 @@ public class DiffFilesTest extends TestSuite {
   }
 
   /**
-   * The reverse of the formula in {@link TextDiffType#getMiddleColor(java.awt.Color, java.awt.Color, double)} to let the test
+   * The reverse of the formula in {@link TextDiffType#getMiddleColor(Color, Color, double)} to let the test
    * identify and ignore highlighters of inline diff wrappers.
    */
   @Nullable

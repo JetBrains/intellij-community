@@ -59,7 +59,7 @@ public class ClassArrayConverterImpl extends ClassArrayConverter {
           pos = nextPos;
         }
       }
-      return list.toArray(new PsiReference[list.size()]);
+      return list.toArray(PsiReference.EMPTY_ARRAY);
     }
     return PsiReference.EMPTY_ARRAY;
   }

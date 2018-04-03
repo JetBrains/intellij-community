@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties;
 
 import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
@@ -267,7 +265,7 @@ public class ResourceBundleManager implements PersistentStateComponent<ResourceB
   }
 
   @Override
-  public void loadState(ResourceBundleManagerState state) {
+  public void loadState(@NotNull ResourceBundleManagerState state) {
     myState = state.removeNonExistentFiles();
   }
 

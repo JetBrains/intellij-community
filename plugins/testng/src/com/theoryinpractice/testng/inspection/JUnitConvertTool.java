@@ -13,7 +13,7 @@ import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;

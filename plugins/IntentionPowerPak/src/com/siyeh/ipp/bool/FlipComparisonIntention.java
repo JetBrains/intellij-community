@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -57,8 +56,7 @@ public class FlipComparisonIntention extends MutablyNamedIntention {
     return new ComparisonPredicate();
   }
 
-  public void processIntention(@NotNull PsiElement element)
-    throws IncorrectOperationException {
+  public void processIntention(@NotNull PsiElement element) {
     final PsiBinaryExpression expression =
       (PsiBinaryExpression)element;
     final PsiExpression lhs = expression.getLOperand();
@@ -66,9 +64,9 @@ public class FlipComparisonIntention extends MutablyNamedIntention {
     final IElementType tokenType = expression.getOperationTokenType();
     assert rhs != null;
     CommentTracker commentTracker = new CommentTracker();
-    final String expString = commentTracker.markUnchanged(rhs).getText() +
+    final String expString = commentTracker.text(rhs) +
                              ComparisonUtils.getFlippedComparison(tokenType) +
-                             commentTracker.markUnchanged(lhs).getText();
+                             commentTracker.text(lhs);
     PsiReplacementUtil.replaceExpression(expression, expString, commentTracker);
   }
 }

@@ -2,6 +2,10 @@
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.util.FileTypeUtils;
@@ -14,8 +18,12 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.AddToIgnoreIfAnnotatedByListQuickFix;
 import com.siyeh.ig.ui.ExternalizableStringSet;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class EmptyClassInspectionBase extends BaseInspection {
   @SuppressWarnings("PublicField")
@@ -63,7 +71,12 @@ public class EmptyClassInspectionBase extends BaseInspection {
     if (!(info instanceof PsiModifierListOwner)) {
       return InspectionGadgetsFix.EMPTY_ARRAY;
     }
-    return AddToIgnoreIfAnnotatedByListQuickFix.build((PsiModifierListOwner)info, ignorableAnnotations);
+    List<InspectionGadgetsFix> fixes =
+      AddToIgnoreIfAnnotatedByListQuickFix.build((PsiModifierListOwner)info, ignorableAnnotations, new ArrayList<>());
+    if (info instanceof PsiAnonymousClass) {
+      fixes.add(0, new ConvertEmptyAnonymousToNewFix());
+    }
+    return fixes.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
   }
 
   @Override
@@ -72,7 +85,6 @@ public class EmptyClassInspectionBase extends BaseInspection {
   }
 
   private class EmptyClassVisitor extends BaseInspectionVisitor {
-
     @Override
     public void visitFile(PsiFile file) {
       super.visitFile(file);
@@ -177,6 +189,35 @@ public class EmptyClassInspectionBase extends BaseInspection {
         }
       }
       return false;
+    }
+  }
+
+  private static class ConvertEmptyAnonymousToNewFix extends InspectionGadgetsFix {
+    @Override
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
+      PsiElement element = descriptor.getPsiElement();
+      if (element == null) return;
+      PsiElement parent = element.getParent();
+      if (!(parent instanceof PsiAnonymousClass)) return;
+      PsiAnonymousClass aClass = (PsiAnonymousClass)parent;
+      PsiElement lBrace = aClass.getLBrace();
+      PsiElement rBrace = aClass.getRBrace();
+      if (lBrace != null && rBrace != null) {
+        WriteCommandAction.runWriteCommandAction(project, ()-> {
+          PsiElement prev = lBrace.getPrevSibling();
+          PsiElement start = prev instanceof PsiWhiteSpace ? prev : lBrace;
+          Document document = PsiDocumentManager.getInstance(project).getDocument(aClass.getContainingFile());
+          if (document == null) return;
+          document.deleteString(start.getTextRange().getStartOffset(), rBrace.getTextRange().getEndOffset());
+        });
+      }
+    }
+
+    @Nls
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Remove '{}'";
     }
   }
 }

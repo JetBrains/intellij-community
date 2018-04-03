@@ -68,7 +68,7 @@ public class ProcessCandidateParameterTypeInferencePolicy extends DefaultParamet
   protected PsiSubstitutor getSubstitutor(PsiCallExpression contextCall, PsiExpression[] expressions, int i, JavaResolveResult result) {
     if (result instanceof MethodCandidateInfo) {
       List<PsiExpression> leftArgs = getExpressions(expressions, i);
-      return ((MethodCandidateInfo)result).inferSubstitutorFromArgs(this, leftArgs.toArray(new PsiExpression[leftArgs.size()]));
+      return ((MethodCandidateInfo)result).inferSubstitutorFromArgs(this, leftArgs.toArray(PsiExpression.EMPTY_ARRAY));
     }
     else {
       return result.getSubstitutor();

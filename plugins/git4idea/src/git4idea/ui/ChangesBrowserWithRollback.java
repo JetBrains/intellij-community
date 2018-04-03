@@ -24,7 +24,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
 import com.intellij.openapi.vcs.changes.ui.RemoteStatusChangeNodeDecorator;
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;

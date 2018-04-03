@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.intellij.codeInsight.folding.impl;
@@ -22,6 +22,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
@@ -280,7 +281,7 @@ public class FoldingUpdate {
 
     private static String createSignature(@NotNull PsiElement element) {
       String signature = FoldingPolicy.getSignature(element);
-      if (signature != null) {
+      if (signature != null && Registry.is("folding.signature.validation")) {
         PsiFile containingFile = element.getContainingFile();
         PsiElement restoredElement = FoldingPolicy.restoreBySignature(containingFile, signature);
         if (!element.equals(restoredElement)) {

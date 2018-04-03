@@ -43,13 +43,7 @@ public abstract class RegExpElementImpl extends ASTWrapperPsiElement implements 
         return RegExpLanguage.INSTANCE;
     }
 
-    @NotNull
-    @SuppressWarnings({ "ConstantConditions", "EmptyMethod" })
-    public ASTNode getNode() {
-        return super.getNode();
-    }
-
-    public String toString() {
+  public String toString() {
         return getClass().getSimpleName() + ": <" + getText() + ">";
     }
 

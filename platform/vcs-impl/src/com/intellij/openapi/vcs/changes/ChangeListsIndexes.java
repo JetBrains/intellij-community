@@ -25,7 +25,7 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.BeforeAfter;
 import com.intellij.util.ThreeState;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

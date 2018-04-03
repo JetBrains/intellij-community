@@ -54,7 +54,7 @@ import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

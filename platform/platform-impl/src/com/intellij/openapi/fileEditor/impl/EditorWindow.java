@@ -875,7 +875,7 @@ public class EditorWindow {
         }
       }
     }
-    return res.toArray(new EditorWindow[res.size()]);
+    return res.toArray(new EditorWindow[0]);
   }
 
   void changeOrientation() {

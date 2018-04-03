@@ -57,7 +57,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.Chunk;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.text.DateFormatUtil;

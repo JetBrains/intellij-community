@@ -105,7 +105,7 @@ public class AnnotatedMacro extends Macro {
         set.add(LookupElementBuilder.create(name));
       }
 
-      return set.toArray(new LookupElement[set.size()]);
+      return set.toArray(LookupElement.EMPTY_ARRAY);
     }
     return LookupElement.EMPTY_ARRAY;
   }

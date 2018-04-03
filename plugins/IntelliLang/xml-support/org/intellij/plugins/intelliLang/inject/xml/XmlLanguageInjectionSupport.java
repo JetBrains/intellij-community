@@ -19,7 +19,6 @@ package org.intellij.plugins.intelliLang.inject.xml;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -275,10 +274,6 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
     else {
       return new BaseInjection(XML_SUPPORT_ID);
     }
-  }
-
-  public Configurable[] createSettings(final Project project, final Configuration configuration) {
-    return new Configurable[0];
   }
 
   private static boolean doInjectInXmlText(final XmlText host, final String languageId) {

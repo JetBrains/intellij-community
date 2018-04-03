@@ -77,7 +77,7 @@ public abstract class NonCodeMembersContributor {
     }
 
     Collection<NonCodeMembersContributor> allTypeContributors = contributorMap.remove(null);
-    ourAllTypeContributors = allTypeContributors.toArray(new NonCodeMembersContributor[allTypeContributors.size()]);
+    ourAllTypeContributors = allTypeContributors.toArray(new NonCodeMembersContributor[0]);
     ourClassSpecifiedContributors = contributorMap;
   }
 

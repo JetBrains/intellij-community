@@ -343,7 +343,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
         throw new RuntimeException("Null highlighter from " + textEditor + "; loaded: " + AsyncEditorLoader.isEditorLoaded(editor));
       }
       final List<TextEditorHighlightingPass> passes = highlighter.getPasses(toIgnore);
-      HighlightingPass[] array = passes.toArray(new HighlightingPass[passes.size()]);
+      HighlightingPass[] array = passes.toArray(HighlightingPass.EMPTY_ARRAY);
       assert array.length != 0 : "Highlighting is disabled for the file " + file;
       map.put(textEditor, array);
     }

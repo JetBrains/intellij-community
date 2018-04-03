@@ -229,7 +229,4 @@ final class StatusMessageParser extends AbstractMessageParser {
 		BugLog.getInstance().assertTrue(file != null, "Wrong algorithm for detecting file name (" + fileName + ")");
 		return file;
 	}
-
-        public void binaryMessageSent(final byte[] bytes) {
-        }
 }

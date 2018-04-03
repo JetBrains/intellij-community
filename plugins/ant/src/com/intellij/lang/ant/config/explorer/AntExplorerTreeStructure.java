@@ -103,7 +103,7 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
       Collections.sort(metaTargets, ourTargetComparator);
       targets.addAll(metaTargets);
 
-      return targets.toArray(new AntBuildTarget[targets.size()]);
+      return targets.toArray(new AntBuildTarget[0]);
     }
 
     return ArrayUtil.EMPTY_OBJECT_ARRAY;

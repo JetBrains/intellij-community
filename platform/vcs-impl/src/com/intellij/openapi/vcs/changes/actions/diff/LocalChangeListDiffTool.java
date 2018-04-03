@@ -18,16 +18,14 @@ package com.intellij.openapi.vcs.changes.actions.diff;
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.DiffTool;
 import com.intellij.diff.FrameDiffTool;
-import com.intellij.diff.SuppressiveDiffTool;
+import com.intellij.diff.impl.DiffToolSubstitutor;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.simple.SimpleDiffTool;
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
-public class LocalChangeListDiffTool implements FrameDiffTool, SuppressiveDiffTool {
+public class LocalChangeListDiffTool implements FrameDiffTool, DiffToolSubstitutor {
   @NotNull
   @Override
   public DiffViewer createComponent(@NotNull DiffContext context, @NotNull DiffRequest request) {
@@ -48,8 +46,11 @@ public class LocalChangeListDiffTool implements FrameDiffTool, SuppressiveDiffTo
     return SimpleDiffTool.INSTANCE.getName();
   }
 
+  @Nullable
   @Override
-  public List<Class<? extends DiffTool>> getSuppressedTools() {
-    return ContainerUtil.list(SimpleDiffTool.class);
+  public DiffTool getReplacement(@NotNull DiffTool tool, @NotNull DiffContext context, @NotNull DiffRequest request) {
+    if (tool != SimpleDiffTool.INSTANCE) return null;
+    if (!canShow(context, request)) return null;
+    return this;
   }
 }

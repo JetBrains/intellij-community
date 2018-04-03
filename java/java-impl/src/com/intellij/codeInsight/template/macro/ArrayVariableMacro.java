@@ -50,6 +50,6 @@ public class ArrayVariableMacro extends VariableTypeMacroBase {
         array.add(variable);
       }
     }
-    return array.toArray(new PsiVariable[array.size()]);
+    return array.toArray(new PsiVariable[0]);
   }
 }

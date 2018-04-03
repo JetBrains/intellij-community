@@ -55,12 +55,12 @@ public class SelectInManager  {
 
   public SelectInTarget[] getTargets() {
     checkLoadExtensions();
-    SelectInTarget[] targets = myTargets.toArray(new SelectInTarget[myTargets.size()]);
+    SelectInTarget[] targets = myTargets.toArray(new SelectInTarget[0]);
     Arrays.sort(targets, new SelectInTargetComparator());
 
     if (DumbService.getInstance(myProject).isDumb()) {
       final List<SelectInTarget> awareList = (List)ContainerUtil.findAll(targets, DumbAware.class);
-      return awareList.toArray(new SelectInTarget[awareList.size()]);
+      return awareList.toArray(new SelectInTarget[0]);
     }
 
     return targets;

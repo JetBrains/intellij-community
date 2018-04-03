@@ -196,7 +196,7 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
             super(new GridBagLayout());
 
             final Collection<TemplateResource> templates = ToStringTemplatesManager.getInstance().getAllTemplates();
-            final TemplateResource[] all = templates.toArray(new TemplateResource[templates.size()]);
+            final TemplateResource[] all = templates.toArray(new TemplateResource[0]);
 
             final JButton settingsButton = new JButton("Settings");
             settingsButton.setMnemonic(KeyEvent.VK_S);

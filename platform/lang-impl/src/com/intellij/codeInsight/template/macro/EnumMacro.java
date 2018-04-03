@@ -61,7 +61,7 @@ public class EnumMacro extends Macro {
         set.add(LookupElementBuilder.create(object.toString()));
       }
     }
-    return set.toArray(new LookupElement[set.size()]);
+    return set.toArray(LookupElement.EMPTY_ARRAY);
   }
 
 }

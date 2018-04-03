@@ -16,6 +16,7 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.PathUtilRt
 import com.intellij.util.SystemProperties
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
@@ -208,7 +209,7 @@ class CompilationContextImpl implements CompilationContext {
 
     String baseArtifactsOutput = "$paths.buildOutputRoot/$projectArtifactsDirName"
     JpsArtifactService.instance.getArtifacts(project).each {
-      it.outputPath = "$baseArtifactsOutput/$it.name"
+      it.outputPath = "$baseArtifactsOutput/${PathUtilRt.getFileName(it.outputPath)}"
     }
     if (options.compiledArtifacts != null) {
       copyArtifacts(messages, ant, project, options)

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.framework.detection.impl.exclude;
 
 import com.intellij.framework.FrameworkType;
@@ -185,7 +183,7 @@ public class DetectionExcludesConfigurationImpl extends DetectionExcludesConfigu
   }
 
   @Override
-  public void loadState(@Nullable ExcludesConfigurationState state) {
+  public void loadState(@NotNull ExcludesConfigurationState state) {
     doLoadState(state);
     if (!myExcludedFiles.isEmpty() || !myExcludedFrameworks.isEmpty() || !myDetectionEnabled) {
       markAsConverted();

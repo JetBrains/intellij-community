@@ -261,11 +261,6 @@ public class NavBarUpdateQueue extends MergingUpdateQueue {
     });
   }
 
-  @Override
-  public void dispose() {
-    super.dispose();
-  }
-
   public void queueTypeAheadDone(final ActionCallback done) {
     queue(new AfterModelUpdate(ID.TYPE_AHEAD_FINISHED) {
       @Override

@@ -35,7 +35,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;

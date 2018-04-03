@@ -25,7 +25,9 @@ import com.intellij.util.xml.*;
 import com.intellij.xml.util.XmlEnumeratedValueReferenceProvider;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author peter
@@ -112,7 +114,7 @@ public class GenericValueReferenceProvider extends PsiReferenceProvider {
 
     Collections.addAll(result, doCreateReferences(domValue, psiElement, converter, context));
 
-    return result.toArray(new PsiReference[result.size()]);
+    return result.toArray(PsiReference.EMPTY_ARRAY);
   }
 
   @NotNull

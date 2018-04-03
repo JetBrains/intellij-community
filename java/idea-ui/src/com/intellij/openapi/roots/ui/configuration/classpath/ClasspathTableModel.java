@@ -136,7 +136,7 @@ class ClasspathTableModel extends ListTableModel<ClasspathTableItem<?>> implemen
   public void exchangeRows(int idx1, int idx2) {
     super.exchangeRows(idx1, idx2);
     List<OrderEntry> entries = getEntries();
-    myState.getRootModel().rearrangeOrderEntries(entries.toArray(new OrderEntry[entries.size()]));
+    myState.getRootModel().rearrangeOrderEntries(entries.toArray(OrderEntry.EMPTY_ARRAY));
   }
 
   public void clear() {
@@ -177,11 +177,6 @@ class ClasspathTableModel extends ListTableModel<ClasspathTableItem<?>> implemen
     @Override
     public ClasspathTableItem<?> valueOf(ClasspathTableItem<?> item) {
       return item;
-    }
-
-    @Override
-    public boolean isCellEditable(ClasspathTableItem<?> item) {
-      return false;
     }
 
     @Override

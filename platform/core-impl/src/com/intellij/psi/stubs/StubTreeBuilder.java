@@ -99,7 +99,7 @@ public class StubTreeBuilder {
                 stubs.add((PsiFileStub)element);
               }
             }
-            final PsiFileStub[] stubsArray = stubs.toArray(new PsiFileStub[stubs.size()]);
+            final PsiFileStub[] stubsArray = stubs.toArray(PsiFileStub.EMPTY_ARRAY);
             for (PsiFileStub stub : stubsArray) {
               if (stub instanceof PsiFileStubImpl) {
                 ((PsiFileStubImpl)stub).setStubRoots(stubsArray);

@@ -69,6 +69,6 @@ public final class TypeHierarchyTreeStructure extends SubtypesHierarchyTreeStruc
       aClass = superType;
     }
 
-    return superClasses.toArray(new PsiClass[superClasses.size()]);
+    return superClasses.toArray(PsiClass.EMPTY_ARRAY);
   }
 }

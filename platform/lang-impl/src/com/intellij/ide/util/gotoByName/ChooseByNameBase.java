@@ -1635,7 +1635,7 @@ public abstract class ChooseByNameBase {
                                @NotNull UsageViewPresentation presentation) {
       UsageTarget[] usageTargets = targets.isEmpty() ? UsageTarget.EMPTY_ARRAY :
                                    PsiElement2UsageTargetAdapter.convert(PsiUtilCore.toPsiElementArray(targets));
-      UsageViewManager.getInstance(myProject).showUsages(usageTargets, usages.toArray(new Usage[usages.size()]), presentation);
+      UsageViewManager.getInstance(myProject).showUsages(usageTargets, usages.toArray(Usage.EMPTY_ARRAY), presentation);
     }
 
     @Override

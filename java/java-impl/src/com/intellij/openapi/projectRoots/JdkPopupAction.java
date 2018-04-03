@@ -125,7 +125,7 @@ public class JdkPopupAction extends AnAction {
               }
             });
           }
-          return result.toArray(new AnAction[result.size()]);
+          return result.toArray(AnAction.EMPTY_ARRAY);
         }
       });
     JPopupMenu menuComponent = menu.getComponent();

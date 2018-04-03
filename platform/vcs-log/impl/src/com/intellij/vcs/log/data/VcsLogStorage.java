@@ -16,7 +16,9 @@
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Function;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsRef;
@@ -50,12 +52,35 @@ public interface VcsLogStorage {
   CommitId getCommitId(int commitIndex);
 
   /**
+   * Iterates over known commit ids. Stops when consumer returns true.
+   */
+  void iterateCommits(@NotNull Function<CommitId, Boolean> consumer);
+
+  /**
+   * Checks whether the storage contains the commit.
+   *
+   * @param id commit to check
+   * @return true if storage contains the commit, false otherwise
+   */
+  boolean containsCommit(@NotNull CommitId id);
+
+  /**
    * Iterates over known commit ids to find the first one which satisfies given condition.
    *
    * @return matching commit or null if no commit matches the given condition
    */
   @Nullable
-  CommitId findCommitId(@NotNull Condition<CommitId> condition);
+  default CommitId findCommitId(@NotNull Condition<CommitId> condition) {
+    Ref<CommitId> hashRef = Ref.create();
+    iterateCommits(commitId -> {
+      boolean matches = condition.value(commitId);
+      if (matches) {
+        hashRef.set(commitId);
+      }
+      return matches;
+    });
+    return hashRef.get();
+  }
 
   /**
    * Returns an integer index that is a unique identifier for a reference.

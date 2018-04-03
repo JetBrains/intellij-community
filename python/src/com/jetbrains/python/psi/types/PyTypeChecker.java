@@ -247,6 +247,12 @@ public class PyTypeChecker {
       final Set<String> actualAttributes = actualClassType.getMemberNames(true, context);
       return actualAttributes.containsAll(((PyStructuralType)expected).getAttributeNames());
     }
+    if (expected instanceof PyStructuralType && actual instanceof PyModuleType) {
+      final PyFile module = ((PyModuleType)actual).getModule();
+      if (module.getLanguageLevel().isAtLeast(LanguageLevel.PYTHON37) && definesGetAttr(module, context)) {
+        return true;
+      }
+    }
     if (expected instanceof PyStructuralType) {
       final Set<String> expectedAttributes = ((PyStructuralType)expected).getAttributeNames();
       final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
@@ -702,29 +708,36 @@ public class PyTypeChecker {
     return false;
   }
 
-  public static boolean overridesGetAttr(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
-    PsiElement method = resolveClassMember(cls, PyNames.GETATTR, context);
-    if (method != null) {
-      return true;
+  public static boolean definesGetAttr(@NotNull PyFile file, @NotNull TypeEvalContext context) {
+    if (file instanceof PyTypedElement) {
+      final PyType type = context.getType((PyTypedElement)file);
+      if (type != null) {
+        return resolveTypeMember(type, PyNames.GETATTR, context) != null;
+      }
     }
-    method = resolveClassMember(cls, PyNames.GETATTRIBUTE, context);
-    if (method != null && !PyBuiltinCache.getInstance(cls).isBuiltin(method)) {
-      return true;
+
+    return false;
+  }
+
+  public static boolean overridesGetAttr(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
+    final PyType type = context.getType(cls);
+    if (type != null) {
+      if (resolveTypeMember(type, PyNames.GETATTR, context) != null) {
+        return true;
+      }
+      final PsiElement method = resolveTypeMember(type, PyNames.GETATTRIBUTE, context);
+      if (method != null && !PyBuiltinCache.getInstance(cls).isBuiltin(method)) {
+        return true;
+      }
     }
     return false;
   }
 
   @Nullable
-  private static PsiElement resolveClassMember(@NotNull PyClass cls, @NotNull String name, @NotNull TypeEvalContext context) {
-    final PyType type = context.getType(cls);
-    if (type != null) {
-      final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
-      final List<? extends RatedResolveResult> results = type.resolveMember(name, null, AccessDirection.READ, resolveContext);
-      if (results != null && !results.isEmpty()) {
-        return results.get(0).getElement();
-      }
-    }
-    return null;
+  private static PsiElement resolveTypeMember(@NotNull PyType type, @NotNull String name, @NotNull TypeEvalContext context) {
+    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+    final List<? extends RatedResolveResult> results = type.resolveMember(name, null, AccessDirection.READ, resolveContext);
+    return !ContainerUtil.isEmpty(results) ? results.get(0).getElement() : null;
   }
 
   @Nullable

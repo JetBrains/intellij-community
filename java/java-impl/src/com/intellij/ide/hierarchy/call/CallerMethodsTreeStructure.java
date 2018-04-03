@@ -24,7 +24,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;

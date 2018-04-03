@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.model.java;
 
 import com.intellij.util.lang.JavaVersion;
@@ -40,5 +38,15 @@ public class JpsJavaSdkType extends JpsSdkType<JpsDummyElement> implements JpsEl
   public static int parseVersion(String javaVersionString) {
     JavaVersion version = JavaVersion.tryParse(javaVersionString);
     return version != null ? version.feature : 0;
+  }
+
+  /**
+   * A value to pass with "-source", "-target" and "--release" compiler options.
+   * Should work for Javac as well as ECJ-based compilers.
+   */
+  @NotNull
+  public static String complianceOption(@NotNull JavaVersion version) {
+    // for "-source" and "-target" options, a compiler accepts both "x" and "1.x" formats; for "--release" - only "x"
+    return version.feature < 5 ? "1." + version.feature : String.valueOf(version.feature);
   }
 }

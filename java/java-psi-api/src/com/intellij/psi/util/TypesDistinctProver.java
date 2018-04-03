@@ -17,7 +17,7 @@ package com.intellij.psi.util;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 
 import java.util.Set;
 

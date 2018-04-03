@@ -831,7 +831,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
     };
     processTagsInNamespace(new String[] {ELEMENT_TAG_NAME}, processor);
 
-    return processor.result.toArray(new XmlElementDescriptor[processor.result.size()]);
+    return processor.result.toArray(XmlElementDescriptor.EMPTY_ARRAY);
   }
 
   public XmlAttributeDescriptor[] getRootAttributeDescriptors(final XmlTag context) {
@@ -848,7 +848,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
     CollectAttributesProcessor processor = new CollectAttributesProcessor();
     processTagsInNamespace(new String[] {ATTRIBUTE_TAG_NAME}, processor);
 
-    return processor.result.toArray(new XmlAttributeDescriptor[processor.result.size()]);
+    return processor.result.toArray(XmlAttributeDescriptor.EMPTY);
   }
 
   @Override
@@ -877,7 +877,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
       }
     }
 
-    return result.toArray(new XmlElementDescriptor[result.size()]);
+    return result.toArray(XmlElementDescriptor.EMPTY_ARRAY);
   }
 
   private boolean initSubstitutes() {

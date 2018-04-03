@@ -96,7 +96,7 @@ public class AutomaticRenamingDialog extends DialogWrapper {
       if (newName != null) temp.add(namedElement);
     }
 
-    myRenames = temp.toArray(new PsiNamedElement[temp.size()]);
+    myRenames = temp.toArray(PsiNamedElement.EMPTY_ARRAY);
     Arrays.sort(myRenames, (e1, e2) -> Comparing.compare(e1.getName(), e2.getName()));
 
     myNewNames = new String[myRenames.length];

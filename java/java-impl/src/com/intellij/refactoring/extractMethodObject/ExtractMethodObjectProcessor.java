@@ -144,7 +144,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
         }
       }
     }
-    UsageInfo[] usageInfos = result.toArray(new UsageInfo[result.size()]);
+    UsageInfo[] usageInfos = result.toArray(UsageInfo.EMPTY_ARRAY);
     return UsageViewUtil.removeDuplicatedUsages(usageInfos);
   }
 
@@ -818,10 +818,6 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       PsiExpression expression = processMethodDeclaration(methodCallExpression.getArgumentList());
 
       return methodCallExpression.replace(expression);
-    }
-
-    public PsiVariable[] getOutputVariables() {
-      return myOutputVariables;
     }
 
     @Override

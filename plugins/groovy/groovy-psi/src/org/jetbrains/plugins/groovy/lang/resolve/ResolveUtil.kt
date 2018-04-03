@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("LoopToCallChain")
 
 package org.jetbrains.plugins.groovy.lang.resolve
@@ -67,6 +65,8 @@ fun PsiScopeProcessor.shouldProcessDynamicProperties(): Boolean {
 }
 
 fun PsiScopeProcessor.shouldProcessLocals(): Boolean = shouldProcess(GroovyResolveKind.VARIABLE)
+
+fun PsiScopeProcessor.shouldProcessFields(): Boolean = shouldProcess(GroovyResolveKind.FIELD)
 
 fun PsiScopeProcessor.shouldProcessMethods(): Boolean {
   return ResolveUtil.shouldProcessMethods(getHint(ElementClassHint.KEY))

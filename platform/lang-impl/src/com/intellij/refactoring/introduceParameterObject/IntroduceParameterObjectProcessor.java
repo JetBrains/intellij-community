@@ -146,7 +146,7 @@ public class IntroduceParameterObjectProcessor<M extends PsiNamedElement, P exte
     }
 
     ChangeSignatureProcessorBase
-      .collectConflictsFromExtensions(new Ref<>(changeSignatureUsages.toArray(new UsageInfo[changeSignatureUsages.size()])), conflicts,
+      .collectConflictsFromExtensions(new Ref<>(changeSignatureUsages.toArray(UsageInfo.EMPTY_ARRAY)), conflicts,
                                       myChangeInfo);
 
     return showConflicts(conflicts, usageInfos);
@@ -171,7 +171,7 @@ public class IntroduceParameterObjectProcessor<M extends PsiNamedElement, P exte
         }
       }
       ChangeSignatureProcessorBase
-        .doChangeSignature(myChangeInfo, changeSignatureUsages.toArray(new UsageInfo[changeSignatureUsages.size()]));
+        .doChangeSignature(myChangeInfo, changeSignatureUsages.toArray(UsageInfo.EMPTY_ARRAY));
     }
   }
 

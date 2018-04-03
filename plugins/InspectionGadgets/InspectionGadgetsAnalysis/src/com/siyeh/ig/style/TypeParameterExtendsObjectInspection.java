@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -76,9 +75,7 @@ public class TypeParameterExtendsObjectInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(@NotNull Project project,
-                      ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    public void doFix(@NotNull Project project, ProblemDescriptor descriptor) {
       final PsiElement identifier = descriptor.getPsiElement();
       final PsiElement parent = identifier.getParent();
       if (parent instanceof PsiTypeParameter) {

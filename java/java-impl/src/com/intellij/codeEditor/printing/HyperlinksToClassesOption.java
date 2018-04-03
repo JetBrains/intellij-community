@@ -87,8 +87,5 @@ public class HyperlinksToClassesOption extends PrintOption {
     public void reset() {
       myCbGenerateHyperlinksToClasses.setSelected(isGenerateHyperlinksToClasses);
     }
-
-    public void disposeUIResources() {
-    }
   }
 }

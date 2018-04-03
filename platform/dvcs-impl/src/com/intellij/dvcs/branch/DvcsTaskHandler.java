@@ -118,7 +118,7 @@ public abstract class DvcsTaskHandler<R extends Repository> extends VcsTaskHandl
       return new TaskInfo[] { tasks.values().iterator().next() };
     }
     else {
-      return tasks.values().toArray(new TaskInfo[tasks.values().size()]);
+      return tasks.values().toArray(new TaskInfo[0]);
     }
   }
 

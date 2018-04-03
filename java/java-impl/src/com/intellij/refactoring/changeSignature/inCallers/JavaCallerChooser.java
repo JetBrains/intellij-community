@@ -20,10 +20,10 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.changeSignature.MemberNodeBase;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashSet;
 import java.util.Set;
 
 public class JavaCallerChooser extends AbstractJavaMemberCallerChooser<PsiMethod> {

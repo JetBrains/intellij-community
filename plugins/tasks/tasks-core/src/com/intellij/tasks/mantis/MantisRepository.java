@@ -124,7 +124,7 @@ public class MantisRepository extends BaseRepositoryImpl {
       }
       pageNumber++;
     }
-    return tasks.toArray(new Task[tasks.size()]);
+    return tasks.toArray(Task.EMPTY_ARRAY);
   }
 
   private List<Task> getIssuesFromPage(@NotNull MantisConnectPortType soap, int pageNumber, int pageSize) throws Exception {

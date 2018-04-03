@@ -3,7 +3,6 @@ package com.intellij.spellchecker.dictionary;
 
 
 import com.intellij.spellchecker.inspection.SpellcheckerInspectionTestCase;
-import com.intellij.util.containers.HashSet;
 
 import java.util.*;
 

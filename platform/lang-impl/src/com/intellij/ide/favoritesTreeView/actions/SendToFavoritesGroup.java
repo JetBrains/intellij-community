@@ -50,7 +50,7 @@ public class SendToFavoritesGroup extends ActionGroup implements DumbAware {
     }
     actions.add(Separator.getInstance());
     actions.add(new SendToNewFavoritesListAction());
-    return actions.toArray(new AnAction[actions.size()]);
+    return actions.toArray(AnAction.EMPTY_ARRAY);
   }
 
   @Override

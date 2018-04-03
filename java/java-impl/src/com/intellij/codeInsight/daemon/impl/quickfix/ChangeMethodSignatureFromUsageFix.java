@@ -179,7 +179,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
     final List<ParameterInfoImpl> parameterInfos =
       performChange(project, editor, file, method, myMinUsagesNumberToShowDialog, myNewParametersInfo, myChangeAllUsages, false, null);
     if (parameterInfos != null) {
-      myNewParametersInfo = parameterInfos.toArray(new ParameterInfoImpl[parameterInfos.size()]);
+      myNewParametersInfo = parameterInfos.toArray(new ParameterInfoImpl[0]);
     }
   }
 
@@ -359,7 +359,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
       }
       if (isSilly) return null;
     }
-    return result.toArray(new ParameterInfoImpl[result.size()]);
+    return result.toArray(new ParameterInfoImpl[0]);
   }
 
   protected static String escapePresentableType(PsiType exprType) {

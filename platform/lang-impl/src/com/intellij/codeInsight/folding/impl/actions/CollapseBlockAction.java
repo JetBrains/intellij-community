@@ -6,6 +6,8 @@ package com.intellij.codeInsight.folding.impl.actions;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.folding.CollapseBlockHandler;
+import com.intellij.injected.editor.EditorWindow;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
@@ -13,23 +15,45 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class CollapseBlockAction  extends BaseCodeInsightAction {
+public class CollapseBlockAction extends BaseCodeInsightAction {
   @NotNull
   @Override
   protected CodeInsightActionHandler getHandler() {
     return new CodeInsightActionHandler() {
       public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
-        getHandlersForFile(file).forEach(handler->handler.invoke(project, editor, file));
+        executor(project, editor, file, true);
       }
     };
   }
 
   protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    return !getHandlersForFile(file).isEmpty();
+    return executor(project, editor, file, false);
   }
 
-  @NotNull
-  private static List<CollapseBlockHandler> getHandlersForFile(@NotNull PsiFile file) {
-    return CollapseBlockHandler.EP_NAME.allForLanguage(file.getLanguage());
+  private static boolean executor(@NotNull final Project project,
+                                  @NotNull Editor editor,
+                                  @NotNull PsiFile file,
+                                  boolean executeAction) {
+    final InjectedLanguageManager instance = InjectedLanguageManager.getInstance(project);
+    while (true) {
+      final List<CollapseBlockHandler> handlers = CollapseBlockHandler.EP_NAME.allForLanguage(file.getLanguage());
+      if (handlers.isEmpty()) {
+        if (!instance.isInjectedFragment(file) || !(editor instanceof EditorWindow)) {
+          return false;
+        }
+        file = instance.getTopLevelFile(file);
+        if (file == null) {
+          return false;
+        }
+        editor = ((EditorWindow)editor).getDelegate();
+        continue;
+      }
+      if (executeAction) {
+        final Editor finalEditor = editor;
+        final PsiFile finalFile = file;
+        handlers.forEach(handler -> handler.invoke(project, finalEditor, finalFile));
+      }
+      return true;
+    }
   }
 }

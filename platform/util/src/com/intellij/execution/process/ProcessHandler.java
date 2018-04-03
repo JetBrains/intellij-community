@@ -268,7 +268,7 @@ public abstract class ProcessHandler extends UserDataHolderBase {
     private void runPendingTasks() {
       final Runnable[] tasks;
       synchronized (myPendingTasks) {
-        tasks = myPendingTasks.toArray(new Runnable[myPendingTasks.size()]);
+        tasks = myPendingTasks.toArray(new Runnable[0]);
         myPendingTasks.clear();
       }
       for (Runnable task : tasks) {

@@ -35,7 +35,6 @@ import com.intellij.util.*;
 import com.intellij.util.concurrency.LockToken;
 import com.intellij.util.concurrency.QueueProcessor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.enumeration.EnumerationCopy;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -982,7 +981,7 @@ public class AbstractTreeUi {
   }
 
   private static void processDeferredActions(@NotNull Set<Runnable> actions) {
-    final Runnable[] runnables = actions.toArray(new Runnable[actions.size()]);
+    final Runnable[] runnables = actions.toArray(new Runnable[0]);
     actions.clear();
     for (Runnable runnable : runnables) {
       runnable.run();
@@ -1915,7 +1914,7 @@ public class AbstractTreeUi {
 
     DefaultMutableTreeNode[] uc;
     synchronized (myUpdatingChildren) {
-      uc = myUpdatingChildren.toArray(new DefaultMutableTreeNode[myUpdatingChildren.size()]);
+      uc = myUpdatingChildren.toArray(new DefaultMutableTreeNode[0]);
     }
     for (DefaultMutableTreeNode each : uc) {
       resetIncompleteNode(each);
@@ -2168,14 +2167,14 @@ public class AbstractTreeUi {
   }
 
   private void flushPendingNodeActions() {
-    final DefaultMutableTreeNode[] nodes = myPendingNodeActions.toArray(new DefaultMutableTreeNode[myPendingNodeActions.size()]);
+    final DefaultMutableTreeNode[] nodes = myPendingNodeActions.toArray(new DefaultMutableTreeNode[0]);
     myPendingNodeActions.clear();
 
     for (DefaultMutableTreeNode each : nodes) {
       processNodeActionsIfReady(each);
     }
 
-    final Runnable[] actions = myYieldingDoneRunnables.toArray(new Runnable[myYieldingDoneRunnables.size()]);
+    final Runnable[] actions = myYieldingDoneRunnables.toArray(new Runnable[0]);
     for (Runnable each : actions) {
       if (!isYeildingNow()) {
         myYieldingDoneRunnables.remove(each);

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.model;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,7 +14,7 @@ import java.io.*;
 import java.util.*;
 
 /**
- * This class provides a generic graph infrastructure with ability to store particular data. The main purpose is to 
+ * This class provides a generic graph infrastructure with ability to store particular data. The main purpose is to
  * allow easy extensible data domain construction.
  * <p/>
  * Example: we might want to describe project model like 'project' which has multiple 'module' children where every
@@ -44,7 +30,6 @@ public class DataNode<T> implements Serializable, UserDataHolderEx {
 
   private static final long serialVersionUID = 1L;
   private static final Logger LOG = Logger.getInstance(DataNode.class);
-  private static final boolean AT_LEAST_JAVA_9 = SystemInfo.isJavaVersionAtLeast("9");
 
   @NotNull private final List<DataNode<?>> myChildren = ContainerUtilRt.newArrayList();
   @NotNull private transient List<DataNode<?>> myChildrenView = Collections.unmodifiableList(myChildren);
@@ -109,7 +94,7 @@ public class DataNode<T> implements Serializable, UserDataHolderEx {
    * the right class loader.
    * <p/>
    * This method is a no-op if the content is already built.
-   *  
+   *
    * @param loaders  class loaders which are assumed to be able to build object of the target content class
    */
   @SuppressWarnings({"unchecked", "IOResourceOpenedButNotSafelyClosed"})
@@ -275,7 +260,7 @@ public class DataNode<T> implements Serializable, UserDataHolderEx {
   private DataNodeSerializer<T> getSerializer() {
     switch (Registry.stringValue("ext.project.data.serializer")) {
       case "auto":
-        if (AT_LEAST_JAVA_9) {
+        if (SystemInfo.IS_AT_LEAST_JAVA9) {
           return JDKSerializer.getInstance();
         } else {
           return FSTSerializer.getInstance();

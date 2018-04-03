@@ -114,7 +114,7 @@ public class XPathLanguageInjector implements MultiHostInjector {
         }
 
         if (avtRanges.size() > 0) {
-          ranges = avtRanges.toArray(new TextRange[avtRanges.size()]);
+          ranges = avtRanges.toArray(new TextRange[0]);
         } else {
           ranges = EMPTY_ARRAY;
         }

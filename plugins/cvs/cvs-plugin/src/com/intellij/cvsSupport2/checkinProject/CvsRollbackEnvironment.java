@@ -82,7 +82,7 @@ public class CvsRollbackEnvironment extends DefaultRollbackEnvironment {
 
   public void rollbackMissingFileDeletion(List<FilePath> filePaths, final List<VcsException> exceptions,
                                           final RollbackProgressListener listener) {
-    final CvsHandler cvsHandler = CommandCvsHandler.createCheckoutFileHandler(filePaths.toArray(new FilePath[filePaths.size()]),
+    final CvsHandler cvsHandler = CommandCvsHandler.createCheckoutFileHandler(filePaths.toArray(new FilePath[0]),
                                                                               CvsConfiguration.getInstance(myProject), null);
     final CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
     executor.performActionSync(cvsHandler, CvsOperationExecutorCallback.EMPTY);

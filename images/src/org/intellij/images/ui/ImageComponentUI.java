@@ -55,7 +55,7 @@ public class ImageComponentUI extends ComponentUI {
                 if (ic.isFileSizeVisible()) paintBorder(g, ic);
 
                 Dimension size = ic.getCanvasSize();
-                Graphics igc = g.create(2, 2, size.width, size.height);
+                Graphics igc = g.create(ImageComponent.IMAGE_INSETS, ImageComponent.IMAGE_INSETS, size.width, size.height);
 
                 // Transparency chessboard
                 if (ic.isTransparencyChessboardVisible() && image.getTransparency() != Transparency.OPAQUE) {

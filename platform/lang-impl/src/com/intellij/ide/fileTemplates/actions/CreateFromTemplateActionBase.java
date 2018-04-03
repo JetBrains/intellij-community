@@ -69,7 +69,7 @@ public abstract class CreateFromTemplateActionBase extends AnAction {
         PsiElement createdElement = dialog.create();
         if (createdElement != null) {
           elementCreated(dialog, createdElement);
-          selectElement(createdElement, dir, view);
+          view.selectElement(createdElement);
           if (selectedTemplate.isLiveTemplateEnabled() && createdElement instanceof PsiFile) {
             Map<String, String> defaultValues = getLiveTemplateDefaults(dataContext, ((PsiFile)createdElement));
             startLiveTemplate((PsiFile)createdElement, notNull(defaultValues, Collections.emptyMap()));
@@ -127,10 +127,6 @@ public abstract class CreateFromTemplateActionBase extends AnAction {
   }
 
   protected void elementCreated(CreateFromTemplateDialog dialog, PsiElement createdElement) { }
-
-  protected void selectElement(@NotNull PsiElement element, @NotNull PsiDirectory directory, @NotNull IdeView view) {
-    view.selectElement(element);
-  }
 
   @Nullable
   protected Map<String, String> getLiveTemplateDefaults(DataContext dataContext, @NotNull PsiFile file) {

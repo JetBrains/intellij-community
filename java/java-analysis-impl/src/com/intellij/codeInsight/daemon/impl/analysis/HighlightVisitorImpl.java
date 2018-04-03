@@ -1308,6 +1308,12 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         type = ((PsiCapturedWildcardType)type).getUpperBound();
       }
       PsiClass psiClass = PsiUtil.resolveClassInType(type);
+      if (psiClass == null && qualifierExpression instanceof PsiReferenceExpression) {
+        PsiElement resolve = ((PsiReferenceExpression)qualifierExpression).resolve();
+        if (resolve instanceof PsiClass) {
+          psiClass = (PsiClass)resolve;
+        }
+      }
       if (psiClass != null) {
         if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkClassSupersAccessibility(psiClass, expression));
         if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkMemberSignatureTypesAccessibility(expression));

@@ -37,7 +37,7 @@ public class LoadingOrderTest {
     target.add(createElement(LoadingOrder.FIRST, null, "1"));
     target.add(createElement(LoadingOrder.LAST, null, "2"));
     target.add(createElement(LoadingOrder.ANY, null, "Any"));
-    LoadingOrder.Orderable[] array = target.toArray(new LoadingOrder.Orderable[target.size()]);
+    LoadingOrder.Orderable[] array = target.toArray(new LoadingOrder.Orderable[0]);
     assertSequence(array, "1AnyAny2");
   }
 
@@ -48,7 +48,7 @@ public class LoadingOrderTest {
     target.add(createElement(LoadingOrder.ANY, null, "2"));
     target.add(createElement(LoadingOrder.ANY, null, "3"));
     target.add(createElement(LoadingOrder.ANY, null, "4"));
-    LoadingOrder.Orderable[] array = target.toArray(new LoadingOrder.Orderable[target.size()]);
+    LoadingOrder.Orderable[] array = target.toArray(new LoadingOrder.Orderable[0]);
     assertSequence(array, "1234");
   }
 
@@ -63,7 +63,7 @@ public class LoadingOrderTest {
     target.add(createElement(LoadingOrder.after(idTwo), null, "4"));
     target.add(createElement(LoadingOrder.ANY, idTwo, "3"));
     target.add(createElement(LoadingOrder.before(idOne), null, "1"));
-    LoadingOrder.Orderable[] array = target.toArray(new LoadingOrder.Orderable[target.size()]);
+    LoadingOrder.Orderable[] array = target.toArray(new LoadingOrder.Orderable[0]);
     assertSequence(array, "012345");
   }
 
@@ -77,7 +77,7 @@ public class LoadingOrderTest {
     target.add(createElement(LoadingOrder.ANY, idOne, "3"));
     target.add(createElement(LoadingOrder.ANY, null, "5"));
     target.add(createElement(LoadingOrder.LAST, null, "6"));
-    LoadingOrder.Orderable[] array = target.toArray(new LoadingOrder.Orderable[target.size()]);
+    LoadingOrder.Orderable[] array = target.toArray(new LoadingOrder.Orderable[0]);
     assertSequence(array, "123456");
   }
 
@@ -102,7 +102,7 @@ public class LoadingOrderTest {
     target.add(createElement(LoadingOrder.FIRST, "first", "bad"));
     target.add(createElement(LoadingOrder.LAST, null, "good"));
     target.add(createElement(LoadingOrder.before("first"), null, "bad"));
-    LoadingOrder.Orderable[] array = target.toArray(new LoadingOrder.Orderable[target.size()]);
+    LoadingOrder.Orderable[] array = target.toArray(new LoadingOrder.Orderable[0]);
     checkSortingFailure(array);
   }
 
@@ -113,7 +113,7 @@ public class LoadingOrderTest {
     target.add(createElement(LoadingOrder.FIRST, "first", "1"));
     target.add(createElement(LoadingOrder.LAST, null, "3"));
     target.add(createElement(LoadingOrder.FIRST, null, "1"));
-    LoadingOrder.Orderable[] array = target.toArray(new LoadingOrder.Orderable[target.size()]);
+    LoadingOrder.Orderable[] array = target.toArray(new LoadingOrder.Orderable[0]);
     assertSequence(array, "1123");
   }
 
@@ -137,7 +137,7 @@ public class LoadingOrderTest {
     target.add(createElement(LoadingOrder.FIRST, null, "good"));
     target.add(createElement(LoadingOrder.LAST, "last", "bad"));
     target.add(createElement(LoadingOrder.ANY, null, "good"));
-    LoadingOrder.Orderable[] array = target.toArray(new LoadingOrder.Orderable[target.size()]);
+    LoadingOrder.Orderable[] array = target.toArray(new LoadingOrder.Orderable[0]);
     checkSortingFailure(array);
   }
 
@@ -148,7 +148,7 @@ public class LoadingOrderTest {
     target.add(createElement(LoadingOrder.FIRST, null, "1"));
     target.add(createElement(LoadingOrder.LAST, "last", "3"));
     target.add(createElement(LoadingOrder.ANY, null, "2"));
-    LoadingOrder.Orderable[] array = target.toArray(new LoadingOrder.Orderable[target.size()]);
+    LoadingOrder.Orderable[] array = target.toArray(new LoadingOrder.Orderable[0]);
     assertSequence(array, "1233");
   }
 
@@ -158,7 +158,7 @@ public class LoadingOrderTest {
     target.add(createElement(LoadingOrder.after("2"), "1", "bad"));
     target.add(createElement(LoadingOrder.after("3"), "2", "bad"));
     target.add(createElement(LoadingOrder.after("1"), "3", "bad"));
-    LoadingOrder.Orderable[] array = target.toArray(new LoadingOrder.Orderable[target.size()]);
+    LoadingOrder.Orderable[] array = target.toArray(new LoadingOrder.Orderable[0]);
     checkSortingFailure(array);
   }
 

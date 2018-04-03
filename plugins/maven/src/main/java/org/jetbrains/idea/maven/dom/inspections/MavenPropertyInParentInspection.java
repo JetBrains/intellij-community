@@ -82,7 +82,7 @@ public class MavenPropertyInParentInspection extends XmlSuppressableInspectionTo
         validate(manager, isOnTheFly, problems, mavenParent.getVersion());
 
         if (problems.isEmpty()) return ProblemDescriptor.EMPTY_ARRAY;
-        return problems.toArray(new ProblemDescriptor[problems.size()]);
+        return problems.toArray(ProblemDescriptor.EMPTY_ARRAY);
       }
     }
 

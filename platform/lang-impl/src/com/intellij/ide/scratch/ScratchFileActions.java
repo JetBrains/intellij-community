@@ -26,8 +26,8 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileTypes.InternalFileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -35,7 +35,10 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.SyntaxTraverser;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
@@ -57,6 +60,14 @@ import static com.intellij.openapi.util.Conditions.notNull;
  */
 public class ScratchFileActions {
 
+  private static int ourCurrentBuffer = 0;
+
+  private static int nextBufferIndex() {
+    ourCurrentBuffer = (ourCurrentBuffer % Registry.intValue("ide.scratch.buffers")) + 1;
+    return ourCurrentBuffer;
+  }
+
+
   public static class NewFileAction extends DumbAwareAction {
     private static final Icon ICON = LayeredIcon.create(AllIcons.FileTypes.Text, AllIcons.Actions.Scratch);
 
@@ -67,8 +78,7 @@ public class ScratchFileActions {
     private final String myActionText;
 
     public NewFileAction() {
-      final Presentation templatePresentation = getTemplatePresentation();
-      templatePresentation.setIcon(ICON);
+      getTemplatePresentation().setIcon(ICON);
       // A hacky way for customizing text in IDEs without File->New-> submenu
       myActionText = (isIdeWithoutNewSubmenu() ? "New " : "") + ActionsBundle.actionText(ACTION_ID);
     }
@@ -88,21 +98,18 @@ public class ScratchFileActions {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      final Project project = e.getProject();
+      Project project = e.getProject();
       if (project == null) return;
 
-      PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
-      Editor editor = e.getData(CommonDataKeys.EDITOR);
-
-      String eventText = getSelectionText(editor);
-      if (eventText == null) {
-        eventText = e.getData(PlatformDataKeys.PREDEFINED_TEXT);
-      }
-      final String text = StringUtil.notNullize(eventText);
-      Language language = text.isEmpty() ? null : detectLanguageFromSelection(project, editor, file, text);
-      Consumer<Language> consumer = language1 -> doCreateNewScratch(project, false, language1, text);
-      if (language != null) {
-        consumer.consume(language);
+      ScratchFileCreationHelper.Context context = createContext(project, e);
+      Consumer<Language> consumer = l -> {
+        context.language = l;
+        ScratchFileCreationHelper.EXTENSION.forLanguage(context.language).prepareText(
+          project, context, DataContext.EMPTY_CONTEXT);
+        doCreateNewScratch(project, context);
+      };
+      if (context.language != null) {
+        consumer.consume(context.language);
       }
       else {
         LRUPopupBuilder.forFileLanguages(project, null, consumer).showCenteredInCurrentWindow(project);
@@ -126,20 +133,6 @@ public class ScratchFileActions {
     }
   }
 
-  @Nullable
-  private static Language detectLanguageFromSelection(Project project, Editor editor, PsiFile file, String text) {
-    Language language = getLanguageFromCaret(project, editor, file);
-    FileType fileType = LanguageUtil.getLanguageFileType(language);
-    if (fileType == null) return null;
-
-    CharSequence fileSnippet = text.subSequence(0, Math.min(text.length(), 10 * 1024));
-    PsiFileFactory fileFactory = PsiFileFactory.getInstance(file.getProject());
-    PsiFile psiFile = fileFactory.createFileFromText("a." + fileType.getDefaultExtension(), language, fileSnippet);
-    PsiErrorElement firstError = SyntaxTraverser.psiTraverser(psiFile).traverse().filter(PsiErrorElement.class).first();
-    // heuristics: first error must not be right under the file PSI
-    return firstError == null || firstError.getParent() != psiFile ? language : null;
-  }
-
   public static class NewBufferAction extends DumbAwareAction {
 
     @Override
@@ -152,34 +145,65 @@ public class ScratchFileActions {
     public void actionPerformed(@NotNull AnActionEvent e) {
       Project project = e.getProject();
       if (project == null) return;
-
-      PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
-      Editor editor = e.getData(CommonDataKeys.EDITOR);
-
-      String text = StringUtil.notNullize(getSelectionText(editor));
-      Language language = text.isEmpty() ? null : detectLanguageFromSelection(project, editor, file, text);
-
-      doCreateNewScratch(project, true, ObjectUtils.notNull(language, StdLanguages.TEXT), text);
+      ScratchFileCreationHelper.Context context = createContext(project, e);
+      context.filePrefix = "buffer";
+      context.createOption = ScratchFileService.Option.create_if_missing;
+      context.fileCounter = ScratchFileActions::nextBufferIndex;
+      if (context.language == null) context.language = StdLanguages.TEXT;
+      doCreateNewScratch(project, context);
     }
   }
 
-  static void doCreateNewScratch(@NotNull Project project, boolean buffer, @NotNull Language language, @NotNull String text) {
+  @NotNull
+  static ScratchFileCreationHelper.Context createContext(@NotNull Project project, @NotNull AnActionEvent e) {
+    PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
+    Editor editor = e.getData(CommonDataKeys.EDITOR);
+
+    ScratchFileCreationHelper.Context context = new ScratchFileCreationHelper.Context();
+    context.text = StringUtil.notNullize(getSelectionText(editor));
+    if (!context.text.isEmpty()) {
+      context.language = getLanguageFromCaret(project, editor, file);
+      checkLanguageAndTryToFixText(project, context, e.getDataContext());
+    }
+    else {
+      context.text = StringUtil.notNullize(e.getData(PlatformDataKeys.PREDEFINED_TEXT));
+    }
+    return context;
+  }
+
+  static void doCreateNewScratch(@NotNull Project project, @NotNull ScratchFileCreationHelper.Context context) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("scratch");
+    Language language = ObjectUtils.notNull(context.language);
+    if (context.fileExtension == null) {
+      LanguageFileType fileType = language.getAssociatedFileType();
+      context.fileExtension = fileType == null ? "" : fileType.getDefaultExtension();
+    }
+    ScratchFileCreationHelper.EXTENSION.forLanguage(language).beforeCreate(project, context);
 
-    LanguageFileType fileType = language.getAssociatedFileType();
-    String ext = buffer || fileType == null? "" : fileType.getDefaultExtension();
-    String fileName = buffer ? "buffer" + nextBufferIndex() : "scratch";
-    ScratchFileService.Option option = buffer ? ScratchFileService.Option.create_if_missing : ScratchFileService.Option.create_new_always;
-    VirtualFile f = ScratchRootType.getInstance().createScratchFile(project, PathUtil.makeFileName(fileName, ext), language, text, option);
+    String fileName = PathUtil.makeFileName(ObjectUtils.notNull(context.filePrefix, "scratch") +
+                                            (context.fileCounter != null ? context.fileCounter.create() : ""),
+                                            context.fileExtension);
+    VirtualFile f = ScratchRootType.getInstance().createScratchFile(
+      project, fileName, language, context.text, context.createOption);
     if (f != null) {
-      FileEditorManager.getInstance(project).openFile(f, true);
+      new OpenFileDescriptor(project, f, context.caretOffset).navigate(true);
     }
   }
 
-  private static int ourCurrentBuffer = 0;
-  private static int nextBufferIndex() {
-    ourCurrentBuffer = (ourCurrentBuffer % Registry.intValue("ide.scratch.buffers")) + 1;
-    return ourCurrentBuffer;
+  private static void checkLanguageAndTryToFixText(@NotNull Project project,
+                                                   @NotNull ScratchFileCreationHelper.Context context,
+                                                   @NotNull DataContext dataContext) {
+    if (context.language == null) return;
+    ScratchFileCreationHelper handler = ScratchFileCreationHelper.EXTENSION.forLanguage(context.language);
+    if (handler.prepareText(project, context, dataContext)) return;
+
+    PsiFile psiFile = ScratchFileCreationHelper.parseHeader(project, context.language, context.text);
+    PsiErrorElement firstError = SyntaxTraverser.psiTraverser(psiFile).traverse().filter(PsiErrorElement.class).first();
+    // heuristics: first error must not be right under the file PSI
+    // otherwise let the user choose the language manually
+    if (firstError != null && firstError.getParent() == psiFile) {
+      context.language = null;
+    }
   }
 
   @Nullable
@@ -197,7 +221,11 @@ public class ScratchFileActions {
     int offset = caret.getOffset();
     PsiElement element = InjectedLanguageManager.getInstance(project).findInjectedElementAt(psiFile, offset);
     PsiFile file = element != null ? element.getContainingFile() : psiFile;
-    return file.getLanguage();
+    Language language = file.getLanguage();
+    if (language == StdLanguages.TEXT && file.getFileType() instanceof InternalFileType) {
+      return StdLanguages.XML;
+    }
+    return language;
   }
 
   public static class LanguageAction extends DumbAwareAction {

@@ -119,7 +119,7 @@ public class CreateNewLibraryAction extends DumbAwareAction {
         actions.add(new CreateNewLibraryAction(actionName, type.getIcon(null), type, librariesConfigurable, project));
       }
     }
-    return actions.toArray(new AnAction[actions.size()]);
+    return actions.toArray(AnAction.EMPTY_ARRAY);
   }
 
   @Override

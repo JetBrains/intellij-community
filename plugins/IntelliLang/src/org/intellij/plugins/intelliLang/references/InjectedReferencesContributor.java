@@ -110,7 +110,7 @@ public class InjectedReferencesContributor extends PsiReferenceContributor {
                     });
           }
         }
-        PsiReference[] array = references.toArray(new PsiReference[references.size()]);
+        PsiReference[] array = references.toArray(PsiReference.EMPTY_ARRAY);
         element.putUserData(INJECTED_REFERENCES, injected.get() ? array : null);
         return array;
       }

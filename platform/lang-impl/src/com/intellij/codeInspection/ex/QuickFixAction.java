@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.ex;
 
@@ -14,6 +12,7 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.codeInspection.ui.InspectionResultsView;
+import com.intellij.codeInspection.ui.InspectionResultsViewComparator;
 import com.intellij.codeInspection.ui.InspectionTree;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
@@ -35,7 +34,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.ui.ClickListener;
 import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.ui.JBUI;
@@ -112,7 +110,6 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
     try {
       Ref<CommonProblemDescriptor[]> descriptors = Ref.create();
       Set<VirtualFile> readOnlyFiles = new THashSet<>();
-      //TODO revise when jdk9 arrives. Until then this redundant cast is a workaround to compile under jdk9 b169
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ReadAction.run(() -> {
         final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
         indicator.setText("Checking problem descriptors...");
@@ -237,34 +234,11 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
 
   @NotNull
   private static RefEntity[] getSelectedElements(InspectionResultsView view) {
-    if (view == null) return new RefElement[0];
-    List<RefEntity> selection = new ArrayList<>(Arrays.asList(view.getTree().getSelectedElements()));
+    if (view == null) return RefEntity.EMPTY_ELEMENTS_ARRAY;
+    RefEntity[] selection = view.getTree().getSelectedElements();
     PsiDocumentManager.getInstance(view.getProject()).commitAllDocuments();
-    Collections.sort(selection, (o1, o2) -> {
-      if (o1 instanceof RefElement && o2 instanceof RefElement) {
-        RefElement r1 = (RefElement)o1;
-        RefElement r2 = (RefElement)o2;
-        final PsiElement element1 = r1.getElement();
-        final PsiElement element2 = r2.getElement();
-        final PsiFile containingFile1 = element1.getContainingFile();
-        final PsiFile containingFile2 = element2.getContainingFile();
-        if (containingFile1 == containingFile2) {
-          int i1 = element1.getTextOffset();
-          int i2 = element2.getTextOffset();
-          return Integer.compare(i2, i1);
-        }
-        return containingFile1.getName().compareTo(containingFile2.getName());
-      }
-      if (o1 instanceof RefElement) {
-        return 1;
-      }
-      if (o2 instanceof RefElement) {
-        return -1;
-      }
-      return o1.getName().compareTo(o2.getName());
-    });
-
-    return selection.toArray(new RefEntity[selection.size()]);
+    Arrays.sort(selection, InspectionResultsViewComparator::compareEntities);
+    return selection;
   }
 
   private static void refreshViews(@NotNull Project project, @NotNull Set<PsiElement> resolvedElements, @NotNull InspectionToolWrapper toolWrapper) {

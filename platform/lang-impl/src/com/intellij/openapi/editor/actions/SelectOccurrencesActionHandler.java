@@ -29,7 +29,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.LightweightHint;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;

@@ -19,11 +19,15 @@ import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.impl.cache.RecordUtil;
+import com.intellij.psi.impl.source.FileLocalResolver;
 import com.intellij.psi.impl.source.JavaLightTreeUtil;
 import com.intellij.psi.impl.source.PsiMethodImpl;
 import com.intellij.psi.impl.source.tree.LightTreeUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.java.IKeywordElementType;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.containers.ContainerUtil;
@@ -60,6 +64,7 @@ public class PurityInference {
     private final LighterASTNode body;
     private List<LighterASTNode> mutatedRefs = new ArrayList<>();
     private boolean hasReturns;
+    private boolean hasVolatileReads;
     private List<LighterASTNode> calls = new ArrayList<>();
 
     PurityInferenceVisitor(LighterAST tree, LighterASTNode body) {
@@ -81,6 +86,23 @@ public class PurityInference {
       else if (isCall(element, type)) {
         calls.add(element);
       }
+      else if (type == REFERENCE_EXPRESSION) {
+        LighterASTNode qualifier = JavaLightTreeUtil.findExpressionChild(tree, element);
+        if (qualifier == null || qualifier.getTokenType() == THIS_EXPRESSION) {
+          LighterASTNode target = new FileLocalResolver(tree).resolveLocally(element).getTarget();
+          if (target != null && target.getTokenType() == FIELD) {
+            LighterASTNode modifierList = LightTreeUtil.firstChildOfType(tree, target, MODIFIER_LIST);
+            if (modifierList != null) {
+              for (LighterASTNode modifier : tree.getChildren(modifierList)) {
+                if (modifier.getTokenType() == JavaTokenType.VOLATILE_KEYWORD) {
+                  hasVolatileReads = true;
+                  break;
+                }
+              }
+            }
+          }
+        }
+      }
     }
 
     private boolean isCall(@NotNull LighterASTNode element, IElementType type) {
@@ -95,7 +117,7 @@ public class PurityInference {
 
     @Nullable
     PurityInferenceResult getResult() {
-      if (calls.size() > 1 || !hasReturns) return null;
+      if (calls.size() > 1 || !hasReturns || hasVolatileReads) return null;
 
       int bodyStart = body.getStartOffset();
       return new PurityInferenceResult(ContainerUtil.map(mutatedRefs, node -> ExpressionRange.create(node, bodyStart)),

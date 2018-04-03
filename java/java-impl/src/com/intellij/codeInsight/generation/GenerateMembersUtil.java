@@ -40,7 +40,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;

@@ -58,10 +58,6 @@ public class VcsRootScanner implements BulkFileListener, ModuleRootListener, Vcs
   }
 
   @Override
-  public void before(@NotNull List<? extends VFileEvent> events) {
-  }
-
-  @Override
   public void after(@NotNull List<? extends VFileEvent> events) {
     for (VFileEvent event : events) {
       String filePath = event.getPath();

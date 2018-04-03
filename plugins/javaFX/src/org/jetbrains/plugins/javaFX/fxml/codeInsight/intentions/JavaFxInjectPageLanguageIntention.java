@@ -76,7 +76,7 @@ public class JavaFxInjectPageLanguageIntention extends PsiElementBaseIntentionAc
         LOG.info(e1);
       }
     }
-    return new URLClassLoader(urls.toArray(new URL[urls.size()]));
+    return new URLClassLoader(urls.toArray(new URL[0]));
   }
 
   @Override

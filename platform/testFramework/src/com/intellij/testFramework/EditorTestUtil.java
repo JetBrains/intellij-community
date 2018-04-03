@@ -370,7 +370,7 @@ public class EditorTestUtil {
     if (blockSelectionStartMarker != null) {
       blockSelection = new TextRange(blockSelectionStartMarker.getStartOffset(), blockSelectionEndMarker.getStartOffset());
     }
-    return new CaretAndSelectionState(Arrays.asList(carets.toArray(new CaretInfo[carets.size()])), blockSelection);
+    return new CaretAndSelectionState(Arrays.asList(carets.toArray(new CaretInfo[0])), blockSelection);
   }
 
   /**

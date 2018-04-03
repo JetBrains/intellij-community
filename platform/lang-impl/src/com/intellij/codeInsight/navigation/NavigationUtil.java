@@ -494,7 +494,7 @@ public final class NavigationUtil {
         items.addAll(provider.getItems(dataContext));
       }
     }
-    GotoRelatedItem[] result = items.toArray(new GotoRelatedItem[items.size()]);
+    GotoRelatedItem[] result = items.toArray(new GotoRelatedItem[0]);
     Arrays.sort(result, (i1, i2) -> {
       String o1 = i1.getGroup();
       String o2 = i2.getGroup();

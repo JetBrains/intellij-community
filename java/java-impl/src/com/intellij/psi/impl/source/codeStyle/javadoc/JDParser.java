@@ -409,7 +409,7 @@ public class JDParser {
     StringBuilder sb = new StringBuilder();
     List<Boolean> markers = new ArrayList<>();
     List<String> list = toArray(s, markers);
-    Boolean[] marks = markers.toArray(new Boolean[markers.size()]);
+    Boolean[] marks = markers.toArray(new Boolean[0]);
     markers.clear();
     assert list != null;
     for (int i = 0; i < list.size(); i++) {

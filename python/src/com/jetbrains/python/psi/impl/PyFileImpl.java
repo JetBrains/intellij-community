@@ -440,7 +440,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   @Nullable
   public PsiElement getElementNamed(final String name) {
     final List<RatedResolveResult> results = multiResolveName(name);
-    final List<PsiElement> elements = PyUtil.filterTopPriorityResults(results.toArray(new ResolveResult[results.size()]));
+    final List<PsiElement> elements = PyUtil.filterTopPriorityResults(results.toArray(ResolveResult.EMPTY_ARRAY));
     final PsiElement element = elements.isEmpty() ? null : elements.get(elements.size() - 1);
     if (element != null) {
       if (!element.isValid()) {

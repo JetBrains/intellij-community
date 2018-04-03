@@ -178,7 +178,7 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
       Navigatable navigatable = each.getNavigatable();
       if (navigatable != null) navigatables.add(navigatable);
     }
-    return navigatables.isEmpty() ? null : navigatables.toArray(new Navigatable[navigatables.size()]);
+    return navigatables.isEmpty() ? null : navigatables.toArray(new Navigatable[0]);
   }
 
   private Object extractLocation() {

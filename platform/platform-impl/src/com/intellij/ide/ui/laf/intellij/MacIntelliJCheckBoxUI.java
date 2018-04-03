@@ -26,7 +26,7 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public class MacIntelliJCheckBoxUI extends IntelliJCheckBoxUI {
-  public static final Icon DEFAULT_ICON = JBUI.scale(EmptyIcon.create(20));
+  public static final Icon DEFAULT_ICON = JBUI.scale(EmptyIcon.create(22));
 
   public MacIntelliJCheckBoxUI(JCheckBox c) {
     c.setOpaque(false);

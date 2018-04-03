@@ -55,9 +55,6 @@ public class CustomizationConfigurable extends BaseConfigurable implements Searc
     return myPanel.isModified();
   }
 
-  public void disposeUIResources() {
-  }
-
   @NotNull
   public String getId() {
     return getHelpTopic();

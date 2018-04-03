@@ -24,7 +24,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.KeyedLazyInstanceEP;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Array;

@@ -173,7 +173,7 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
       if (result.isEmpty()) {
         return null;
       }
-      methods = result.toArray(new PsiMethod[result.size()]);
+      methods = result.toArray(PsiMethod.EMPTY_ARRAY);
     }
     else if (isConstructor()) {
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(getProject());

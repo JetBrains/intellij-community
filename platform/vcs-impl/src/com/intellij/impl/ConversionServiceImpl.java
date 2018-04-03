@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.impl;
 
@@ -22,9 +20,9 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.graph.*;
 import com.intellij.util.xmlb.XmlSerializer;
-import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
+import com.intellij.util.xmlb.annotations.XMap;
 import org.jdom.Document;
 import org.jetbrains.annotations.NotNull;
 
@@ -354,9 +352,7 @@ public class ConversionServiceImpl extends ConversionService {
     @XCollection(elementName = "converter", valueAttributeName = "id")
     public Set<String> myAppliedConverters = new HashSet<>();
 
-    @Tag("project-files")
-    @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false, entryTagName = "file",
-                   keyAttributeName = "path", valueAttributeName = "timestamp")
+    @XMap(propertyElementName = "project-files", entryTagName = "file", keyAttributeName = "path", valueAttributeName = "timestamp")
     public Map<String, Long> myProjectFilesTimestamps = new HashMap<>();
   }
 

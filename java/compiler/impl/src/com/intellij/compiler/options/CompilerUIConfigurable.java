@@ -329,9 +329,6 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     return myPanel;
   }
 
-  public void disposeUIResources() {
-  }
-
   private void createUIComponents() {
     myResourcePatternsField = new RawCommandLineEditor(ParametersListUtil.COLON_LINE_PARSER, ParametersListUtil.COLON_LINE_JOINER);
     myResourcePatternsField.setDialogCaption("Resource patterns");

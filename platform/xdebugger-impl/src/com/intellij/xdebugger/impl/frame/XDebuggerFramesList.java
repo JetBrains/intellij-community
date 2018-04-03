@@ -14,7 +14,7 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.FileColorManager;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerBundle;

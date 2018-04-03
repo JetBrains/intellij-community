@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -104,13 +104,8 @@ public class EqualityToEqualsFix extends InspectionGadgetsFix {
     if (JavaTokenType.NE.equals(expression.getOperationTokenType())) {
       newExpression.append('!');
     }
-    if (ParenthesesUtils.getPrecedence(lhs) > ParenthesesUtils.METHOD_CALL_PRECEDENCE) {
-      newExpression.append('(').append(commentTracker.markUnchanged(lhs).getText()).append(')');
-    }
-    else {
-      newExpression.append(commentTracker.markUnchanged(lhs).getText());
-    }
-    newExpression.append(".equals(").append(commentTracker.markUnchanged(rhs).getText()).append(')');
+    newExpression.append(commentTracker.text(lhs, ParenthesesUtils.METHOD_CALL_PRECEDENCE));
+    newExpression.append(".equals(").append(commentTracker.text(rhs)).append(')');
 
     PsiReplacementUtil.replaceExpressionAndShorten(expression, newExpression.toString(), commentTracker);
   }

@@ -442,7 +442,7 @@ public class ParameterInfoComponent extends JPanel {
       add(component, new GridBagConstraints(0, index, 1, 1, 1, 0, GridBagConstraints.WEST,
                                             GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
       components.add(component);
-      myOneLineComponents = components.toArray(new OneLineComponent[components.size()]);
+      myOneLineComponents = components.toArray(new OneLineComponent[0]);
       return buf.toString();
     }
   }

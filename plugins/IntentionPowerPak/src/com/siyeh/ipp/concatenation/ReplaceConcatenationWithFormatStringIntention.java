@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2017 Bas Leijdekkers
+ * Copyright 2008-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ public class ReplaceConcatenationWithFormatStringIntention extends Intention {
     newExpression.append('\"');
     for (PsiExpression formatParameter : formatParameters) {
       newExpression.append(", ");
-      newExpression.append(commentTracker.markUnchanged(formatParameter).getText());
+      newExpression.append(commentTracker.text(formatParameter));
     }
     newExpression.append(')');
     PsiReplacementUtil.replaceExpression(expression, newExpression.toString(), commentTracker);
@@ -102,7 +102,7 @@ public class ReplaceConcatenationWithFormatStringIntention extends Intention {
     final StringBuilder newExpression = new StringBuilder();
     final PsiExpression qualifier = methodExpression.getQualifierExpression();
     if (qualifier != null) {
-      newExpression.append(commentTracker.markUnchanged(qualifier).getText()).append('.');
+      newExpression.append(commentTracker.text(qualifier)).append('.');
     }
     newExpression.append("printf(\"").append(formatString);
     if (insertNewline) {
@@ -110,7 +110,7 @@ public class ReplaceConcatenationWithFormatStringIntention extends Intention {
     }
     newExpression.append('\"');
     for (PsiExpression formatParameter : formatParameters) {
-      newExpression.append(", ").append(commentTracker.markUnchanged(formatParameter).getText());
+      newExpression.append(", ").append(commentTracker.text(formatParameter));
     }
     newExpression.append(')');
     PsiReplacementUtil.replaceExpression(methodCallExpression, newExpression.toString(), commentTracker);

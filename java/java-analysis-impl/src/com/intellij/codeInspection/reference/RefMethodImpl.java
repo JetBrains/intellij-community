@@ -609,7 +609,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
       PsiClass element = facade.findClass(exception, GlobalSearchScope.allScope(myManager.getProject()));
       if (element != null) result.add(element);
     }
-    return result.toArray(new PsiClass[result.size()]);
+    return result.toArray(PsiClass.EMPTY_ARRAY);
   }
 
 

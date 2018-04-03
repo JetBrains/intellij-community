@@ -128,7 +128,7 @@ public class ClassTypeArgumentMigrationProcessor {
 
       final List<PsiReference> refs = TypeMigrationLabeler.filterReferences(psiClass, ReferencesSearch.search(element, psiClass.getUseScope()));
 
-      roots.put(element, Pair.create(myLabeler.markRootUsages(element, memberType, refs.toArray(new PsiReference[refs.size()])), memberType));
+      roots.put(element, Pair.create(myLabeler.markRootUsages(element, memberType, refs.toArray(PsiReference.EMPTY_ARRAY)), memberType));
     }
   }
 

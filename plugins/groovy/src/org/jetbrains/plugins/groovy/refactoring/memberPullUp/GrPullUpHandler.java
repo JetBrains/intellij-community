@@ -138,7 +138,7 @@ public class GrPullUpHandler implements RefactoringActionHandler, GrPullUpDialog
   public boolean checkConflicts(final GrPullUpDialog dialog) {
     /*                         todo */
     List<GrMemberInfo> _infos = dialog.getSelectedMemberInfos();
-    final GrMemberInfo[] infos = _infos.toArray(new GrMemberInfo[_infos.size()]);
+    final GrMemberInfo[] infos = _infos.toArray(new GrMemberInfo[0]);
     final PsiClass superClass = dialog.getSuperClass();
     if (!checkWritable(superClass, infos)) return false;
     final MultiMap<PsiElement, String> conflicts = new MultiMap<>();

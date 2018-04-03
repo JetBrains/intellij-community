@@ -28,10 +28,6 @@ public class BegListUI extends BasicListUI {
     return new PatchedInputHandler(this.list);
   }
 
-  protected int convertYToRow(int y) {
-    return super.convertYToRow(y);
-  }
-
   public class PatchedInputHandler extends MouseInputHandler {
     private final JList myList;
 

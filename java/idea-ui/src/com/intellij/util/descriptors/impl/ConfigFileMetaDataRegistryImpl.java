@@ -22,10 +22,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author nik
@@ -47,7 +47,7 @@ public class ConfigFileMetaDataRegistryImpl implements ConfigFileMetaDataRegistr
   @NotNull
   public ConfigFileMetaData[] getMetaData() {
     if (myCachedMetaData == null) {
-      myCachedMetaData = myMetaData.toArray(new ConfigFileMetaData[myMetaData.size()]);
+      myCachedMetaData = myMetaData.toArray(new ConfigFileMetaData[0]);
     }
     return myCachedMetaData;
   }

@@ -190,7 +190,7 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
   }
 
   private void clearUnusedHightlighters() {
-    Set<RangeHighlighter> unused = new com.intellij.util.containers.HashSet<>();
+    Set<RangeHighlighter> unused = new HashSet<>();
     for (RangeHighlighter highlighter : myHighlighters) {
       if (highlighter.getUserData(MARKER_USED) == null) {
         unused.add(highlighter);

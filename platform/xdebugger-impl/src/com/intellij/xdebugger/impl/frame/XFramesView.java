@@ -14,7 +14,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.panels.Wrapper;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.intellij.util.containers.TransferToEDTQueue;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.frame.XExecutionStack;

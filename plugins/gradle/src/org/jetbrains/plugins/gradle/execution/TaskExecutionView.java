@@ -269,7 +269,7 @@ public class TaskExecutionView implements ConsoleView, DataProvider {
             }
           }
         }
-        return locations.isEmpty() ? null : locations.toArray(new Location[locations.size()]);
+        return locations.isEmpty() ? null : locations.toArray(new Location[0]);
       }
     }
 
@@ -284,7 +284,7 @@ public class TaskExecutionView implements ConsoleView, DataProvider {
         }
         return executionInfos.isEmpty()
                ? null
-               : GradleRunnerUtil.getTaskLocation(myProject, executionInfos.toArray(new ExecutionInfo[executionInfos.size()]));
+               : GradleRunnerUtil.getTaskLocation(myProject, executionInfos.toArray(new ExecutionInfo[0]));
       }
     }
 

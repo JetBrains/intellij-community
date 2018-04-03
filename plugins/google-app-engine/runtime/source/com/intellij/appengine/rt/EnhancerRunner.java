@@ -46,7 +46,7 @@ public class EnhancerRunner {
     argsFile.delete();
 
     final Class<?> delegate = Class.forName(className);
-    final String[] allArgs = argsList.toArray(new String[argsList.size()]);
+    final String[] allArgs = argsList.toArray(new String[0]);
     delegate.getMethod("main", String[].class).invoke(null, (Object)allArgs);
   }
 }

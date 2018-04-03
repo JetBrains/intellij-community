@@ -19,10 +19,10 @@ import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.panel.JBPanelFactory;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UI;
 import com.intellij.util.ui.VcsExecutablePathSelector;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NotNull;
@@ -52,13 +52,13 @@ public class HgConfigurationProjectPanel implements ConfigurableUi<HgProjectConf
     panel.add(myExecutablePathSelector.getMainPanel());
 
     myCheckIncomingOutgoingCbx = new JBCheckBox(HgVcsMessages.message("hg4idea.configuration.check.incoming.outgoing"));
-    panel.add(JBPanelFactory.panel(myCheckIncomingOutgoingCbx).createPanel());
+    panel.add(UI.PanelFactory.panel(myCheckIncomingOutgoingCbx).createPanel());
 
     myIgnoredWhitespacesInAnnotationsCbx = new JBCheckBox(HgVcsMessages.message("hg4idea.configuration.ignore.whitespace.in.annotate"));
-    panel.add(JBPanelFactory.panel(myIgnoredWhitespacesInAnnotationsCbx).createPanel());
+    panel.add(UI.PanelFactory.panel(myIgnoredWhitespacesInAnnotationsCbx).createPanel());
 
     mySyncControl = new JBCheckBox(DvcsBundle.getString("sync.setting"));
-    JPanel mySyncControlPanel = ObjectUtils.notNull(JBPanelFactory.panel(mySyncControl)
+    JPanel mySyncControlPanel = ObjectUtils.notNull(UI.PanelFactory.panel(mySyncControl)
       .withTooltip(DvcsBundle.message("sync.setting.description", "Mercurial"))
       .createPanel());
     if (!project.isDefault()) {

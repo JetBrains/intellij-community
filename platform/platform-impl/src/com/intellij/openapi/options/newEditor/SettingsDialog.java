@@ -153,7 +153,7 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
     if (topic != null) {
       actions.add(getHelpAction());
     }
-    return actions.toArray(new Action[actions.size()]);
+    return actions.toArray(new Action[0]);
   }
 
   protected String getHelpTopic() {

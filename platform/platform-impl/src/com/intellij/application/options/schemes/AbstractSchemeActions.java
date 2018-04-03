@@ -287,7 +287,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
       for (String actionName : myActionNames) {
         namedActions.add(createAction(actionName));
       }
-      return namedActions.toArray(new AnAction[namedActions.size()]);
+      return namedActions.toArray(AnAction.EMPTY_ARRAY);
     }
 
     @NotNull

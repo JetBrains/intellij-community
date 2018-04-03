@@ -272,6 +272,6 @@ public class MakeMethodStaticTest extends LightRefactoringTestCase {
             method,
             new Settings(true, addClassParameter ? "anObject" : null,
                          parametersForFields.toArray(
-                           new VariableData[parametersForFields.size()]), delegate)).run();
+                           new VariableData[0]), delegate)).run();
   }
 }

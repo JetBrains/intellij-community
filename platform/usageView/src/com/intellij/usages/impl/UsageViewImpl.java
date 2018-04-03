@@ -580,7 +580,7 @@ public class UsageViewImpl implements UsageView {
     for (UsageFilteringRuleProvider provider : providers) {
       ContainerUtil.addAll(list, provider.getActiveRules(project));
     }
-    return list.toArray(new UsageFilteringRule[list.size()]);
+    return list.toArray(UsageFilteringRule.EMPTY_ARRAY);
   }
 
   @NotNull
@@ -592,7 +592,7 @@ public class UsageViewImpl implements UsageView {
     }
 
     Collections.sort(list, Comparator.comparingInt(UsageGroupingRule::getRank));
-    return list.toArray(new UsageGroupingRule[list.size()]);
+    return list.toArray(UsageGroupingRule.EMPTY_ARRAY);
   }
 
   private void initTree() {
@@ -860,7 +860,7 @@ public class UsageViewImpl implements UsageView {
     for (UsageGroupingRuleProvider provider : providers) {
       ContainerUtil.addAll(list, provider.createGroupingActions(this));
     }
-    return list.toArray(new AnAction[list.size()]);
+    return list.toArray(AnAction.EMPTY_ARRAY);
   }
 
   private boolean shouldTreeReactNowToRuleChanges() {
@@ -898,7 +898,7 @@ public class UsageViewImpl implements UsageView {
       }
     });
     if (myTree != null) {
-      excludeUsages(excludedUsages.toArray(new Usage[excludedUsages.size()]));
+      excludeUsages(excludedUsages.toArray(Usage.EMPTY_ARRAY));
     }
     if (myCentralPanel != null) {
       setupCentralPanel();
@@ -1501,7 +1501,7 @@ public class UsageViewImpl implements UsageView {
         result.add(node);
       }
     }
-    return result.isEmpty() ? null : result.toArray(new Node[result.size()]);
+    return result.isEmpty() ? null : result.toArray(new Node[0]);
   }
 
   @Override
@@ -1580,7 +1580,7 @@ public class UsageViewImpl implements UsageView {
       }
     }
 
-    return targets.isEmpty() ? null : targets.toArray(new UsageTarget[targets.size()]);
+    return targets.isEmpty() ? null : targets.toArray(UsageTarget.EMPTY_ARRAY);
   }
 
   @Nullable
@@ -1610,7 +1610,7 @@ public class UsageViewImpl implements UsageView {
         result.add((Navigatable)userObject);
       }
     }
-    return result.toArray(new Navigatable[result.size()]);
+    return result.toArray(new Navigatable[0]);
   }
 
   boolean areTargetsValid() {
@@ -1714,7 +1714,7 @@ public class UsageViewImpl implements UsageView {
 
       else if (key == USAGES_KEY) {
         final Set<Usage> selectedUsages = getSelectedUsages();
-        sink.put(USAGES_KEY, selectedUsages.toArray(new Usage[selectedUsages.size()]));
+        sink.put(USAGES_KEY, selectedUsages.toArray(Usage.EMPTY_ARRAY));
       }
 
       else if (key == USAGE_TARGETS_KEY) {
@@ -1723,7 +1723,7 @@ public class UsageViewImpl implements UsageView {
 
       else if (key == CommonDataKeys.VIRTUAL_FILE_ARRAY) {
         final Set<Usage> usages = ApplicationManager.getApplication().isDispatchThread() ? getSelectedUsages() : null;
-        Usage[] ua = usages == null ? null : usages.toArray(new Usage[usages.size()]);
+        Usage[] ua = usages == null ? null : usages.toArray(Usage.EMPTY_ARRAY);
         UsageTarget[] usageTargets = ApplicationManager.getApplication().isDispatchThread() ? getSelectedUsageTargets() : null;
         VirtualFile[] data = UsageDataUtil.provideVirtualFileArray(ua, usageTargets);
         sink.put(CommonDataKeys.VIRTUAL_FILE_ARRAY, data);

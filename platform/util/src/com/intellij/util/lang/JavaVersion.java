@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -102,13 +100,15 @@ public final class JavaVersion implements Comparable<JavaVersion> {
     StringBuilder sb = new StringBuilder();
     if (feature > 8) {
       sb.append(feature);
-      if (minor > 0 || update > 0) sb.append('.').append(minor).append('.').append(update);
+      if (minor > 0 || update > 0) sb.append('.').append(minor);
+      if (update > 0) sb.append('.').append(update);
       if (ea) sb.append("-ea");
       if (build > 0) sb.append('+').append(build);
     }
     else {
-      sb.append("1.").append(feature).append('.').append(minor);
-      if (update > 0 || ea) sb.append('_').append(update);
+      sb.append("1.").append(feature);
+      if (minor > 0 || update > 0 || ea || build > 0) sb.append('.').append(minor);
+      if (update > 0) sb.append('_').append(update);
       if (ea) sb.append("-ea");
       if (build > 0) sb.append("-b").append(build);
     }
@@ -126,6 +126,10 @@ public final class JavaVersion implements Comparable<JavaVersion> {
     if (update < 0) throw new IllegalArgumentException();
     if (build < 0) throw new IllegalArgumentException();
     return new JavaVersion(feature, minor, update, build, ea);
+  }
+
+  public static @NotNull JavaVersion compose(int feature) {
+    return compose(feature, 0, 0, 0, false);
   }
 
   private static JavaVersion current;
@@ -212,8 +216,8 @@ public final class JavaVersion implements Comparable<JavaVersion> {
         int feature = Integer.parseInt(numbers.get(0)), minor = 0, update = 0, build = 0;
         boolean ea = false;
 
-        if (feature > 8 && feature < MAX_ACCEPTED_VERSION) {
-          // Java 9+
+        if (feature >= 5 && feature < MAX_ACCEPTED_VERSION) {
+          // Java 9+; Java 5+ (short format)
           p = 1;
           while (p < separators.size() && ".".equals(separators.get(p))) p++;
           if (p > 1 && numbers.size() > 2) {
@@ -236,7 +240,7 @@ public final class JavaVersion implements Comparable<JavaVersion> {
           return new JavaVersion(feature, minor, update, build, ea);
         }
         else if (feature == 1 && numbers.size() > 1 && separators.size() > 1 && ".".equals(separators.get(1))) {
-          // Java 1.0 .. 1.8
+          // Java 1.0 .. 1.4; Java 5+ (prefixed format)
           feature = Integer.parseInt(numbers.get(1));
           if (feature <= MAX_ACCEPTED_VERSION) {
             if (numbers.size() > 2 && separators.size() > 2 && ".".equals(separators.get(2))) {

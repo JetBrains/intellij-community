@@ -90,13 +90,13 @@ class SmartWaitRobot() : BasicRobot(null, ExistingHierarchy()) {
   //smooth mouse move for find and click actions
   override fun click(c: Component, where: Point, button: MouseButton, times: Int) {
     moveMouse(c, where.x, where.y)
-    myEdtAwareClick(button, times)
+    myEdtAwareClick(button, times, where, c)
   }
 
   //we are replacing BasicRobot click with our click because the original one cannot handle double click rightly (BasicRobot creates unnecessary move event between click event which breaks clickCount from 2 to 1)
   override fun click(where: Point, button: MouseButton, times: Int) {
     moveMouse(where.x, where.y)
-    myEdtAwareClick(button, times)
+    myEdtAwareClick(button, times, where, null)
   }
 
 
@@ -110,13 +110,11 @@ class SmartWaitRobot() : BasicRobot(null, ExistingHierarchy()) {
     if (mouseLocation.x != p1.x || mouseLocation.y != p1.y) moveMouseWithAttempts(c, x, y, attempts - 1)
   }
 
-  private fun myInnerClick(button: MouseButton, times: Int) {
-    val robot = java.awt.Robot()
-    robot.autoDelay = 50
-    for (i in 1..times) {
-      robot.mousePress(button.mask)
-      robot.mouseRelease(button.mask)
-    }
+  private fun myInnerClick(button: MouseButton, times: Int, point: Point, component: Component?) {
+    if (component == null)
+      super.click(point, button, times)
+    else
+      super.click(component, point, button, times)
   }
 
   private fun waitFor(condition: () -> Boolean) {
@@ -138,10 +136,10 @@ class SmartWaitRobot() : BasicRobot(null, ExistingHierarchy()) {
     }
   }
 
-  private fun myEdtAwareClick(button: MouseButton, times: Int) {
+  private fun myEdtAwareClick(button: MouseButton, times: Int, point: Point, component: Component?) {
     awareClick {
       performOnEdt {
-        myInnerClick(button, times)
+        myInnerClick(button, times, point, component)
       }
     }
     waitForIdle()

@@ -28,7 +28,7 @@ import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.rename.ResolveSnapshotProvider;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Query;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.PyNames;
@@ -62,7 +62,7 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
         usages.add(new UsageInfo(function));
         usages.addAll(PyRefactoringUtil.findUsages(function, true));
       }
-      return usages.toArray(new UsageInfo[usages.size()]);
+      return usages.toArray(UsageInfo.EMPTY_ARRAY);
     }
     return UsageInfo.EMPTY_ARRAY;
   }

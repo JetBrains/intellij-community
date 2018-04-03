@@ -19,7 +19,7 @@ import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyModuleNameIndex;
 import org.jetbrains.annotations.NotNull;
@@ -46,6 +46,6 @@ public class PyGotoClassContributor implements ChooseByNameContributor {
     final List<NavigationItem> results = new ArrayList<>();
     results.addAll(PyClassNameIndex.find(name, project, includeNonProjectItems));
     results.addAll(PyModuleNameIndex.find(name, project, includeNonProjectItems));
-    return results.toArray(new NavigationItem[results.size()]);
+    return results.toArray(NavigationItem.EMPTY_NAVIGATION_ITEM_ARRAY);
   }
 }

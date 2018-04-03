@@ -15,13 +15,17 @@
  */
 package com.intellij.openapi.vcs;
 
+import com.intellij.ide.IdeView;
 import com.intellij.ide.impl.dataRules.GetDataRule;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDirectory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class VirtualFileStreamRule implements GetDataRule {
@@ -38,6 +42,11 @@ public class VirtualFileStreamRule implements GetDataRule {
       return Stream.of(file);
     }
 
+    IdeView view = LangDataKeys.IDE_VIEW.getData(dataProvider);
+    PsiDirectory[] directories = view == null ? PsiDirectory.EMPTY_ARRAY : view.getDirectories();
+    if (directories.length > 0) {
+      return Stream.of(directories).map(o -> o.getVirtualFile()).collect(Collectors.toList()).stream();
+    }
     return null;
   }
 }

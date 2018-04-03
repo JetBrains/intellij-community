@@ -221,10 +221,6 @@ public class QuickFixPreviewPanelFactory {
         }
       });
     }
-
-    @Override
-    public void dispose() {
-    }
   }
 
   @NotNull

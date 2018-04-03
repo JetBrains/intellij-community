@@ -64,6 +64,7 @@ public abstract class InjectedLanguageManager {
   @TestOnly
   public abstract void registerMultiHostInjector(@NotNull MultiHostInjector injector, @NotNull Disposable parentDisposable);
 
+  @NotNull
   public abstract String getUnescapedText(@NotNull PsiElement injectedNode);
 
   @NotNull
@@ -89,10 +90,6 @@ public abstract class InjectedLanguageManager {
 
   @NotNull
   public abstract List<DocumentWindow> getCachedInjectedDocumentsInRange(@NotNull PsiFile hostPsiFile, @NotNull TextRange range);
-
-  public abstract void startRunInjectorsInRange(@NotNull Document hostDocument,
-                                                @NotNull TextRange range,
-                                                boolean synchronously);
 
   public abstract void enumerate(@NotNull PsiElement host, @NotNull PsiLanguageInjectionHost.InjectedPsiVisitor visitor);
   public abstract void enumerateEx(@NotNull PsiElement host, @NotNull PsiFile containingFile, boolean probeUp, @NotNull PsiLanguageInjectionHost.InjectedPsiVisitor visitor);

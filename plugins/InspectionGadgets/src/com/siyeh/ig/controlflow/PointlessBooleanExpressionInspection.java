@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ConstantExpressionUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -104,7 +103,7 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
       out.append(')');
     }
     else if (expression != null) {
-      out.append(tracker.markUnchanged(expression).getText());
+      out.append(tracker.text(expression));
     }
     return out;
   }
@@ -195,7 +194,7 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
       buildSimplifiedExpression(expressions, "==", negate, out, tracker);
     }
     else {
-      out.append(tracker.markUnchanged(expression).getText());
+      out.append(tracker.text(expression));
     }
   }
 
@@ -207,7 +206,7 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
     if (expressions.size() == 1) {
       final PsiExpression expression = expressions.get(0);
       if (!negate) {
-        out.append(tracker.markUnchanged(expression).getText());
+        out.append(tracker.text(expression));
         return;
       }
       if (ComparisonUtils.isComparison(expression)) {
@@ -216,15 +215,10 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
         final PsiExpression lhs = binaryExpression.getLOperand();
         final PsiExpression rhs = binaryExpression.getROperand();
         assert rhs != null;
-        out.append(tracker.markUnchanged(lhs).getText()).append(negatedComparison).append(tracker.markUnchanged(rhs).getText());
+        out.append(tracker.text(lhs)).append(negatedComparison).append(tracker.text(rhs));
       }
       else {
-        if (ParenthesesUtils.getPrecedence(expression) > ParenthesesUtils.PREFIX_PRECEDENCE) {
-          out.append("!(").append(tracker.markUnchanged(expression).getText()).append(')');
-        }
-        else {
-          out.append('!').append(tracker.markUnchanged(expression).getText());
-        }
+        out.append('!').append(tracker.text(expression, ParenthesesUtils.PREFIX_PRECEDENCE));
       }
     }
     else {
@@ -334,14 +328,18 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
         return;
       }
       final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)element;
+      final PsiElement parent = assignmentExpression.getParent();
+      assert parent instanceof PsiStatement;
       final List<PsiExpression> sideEffects = SideEffectChecker.extractSideEffectExpressions(assignmentExpression.getLExpression());
-      assert sideEffects.size() < 2;
-      if (!sideEffects.isEmpty()) {
-        CommentTracker.replaceWithSubexpressionAndRestoreComments(assignmentExpression, sideEffects.get(0));
+      final CommentTracker commentTracker = new CommentTracker();
+      for (PsiExpression sideEffect : sideEffects) {
+        commentTracker.markUnchanged(sideEffect);
       }
-      else {
-        new CommentTracker().deleteAndRestoreComments(element.getParent());
+      final PsiStatement[] statements = StatementExtractor.generateStatements(sideEffects, assignmentExpression);
+      if (statements.length > 0) {
+        BlockUtils.addBefore((PsiStatement)parent, statements);
       }
+      commentTracker.deleteAndRestoreComments(parent);
     }
   }
 
@@ -368,7 +366,7 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       if (!(element instanceof PsiExpression)) {
         return;

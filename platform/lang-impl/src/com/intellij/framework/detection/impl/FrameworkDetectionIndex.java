@@ -100,7 +100,7 @@ public class FrameworkDetectionIndex extends ScalarIndexExtension<Integer> {
     for (FrameworkDetector detector : FrameworkDetector.EP_NAME.getExtensions()) {
       acceptedTypes.add(detector.getFileType());
     }
-    return new DefaultFileTypeSpecificInputFilter(acceptedTypes.toArray(new FileType[acceptedTypes.size()]));
+    return new DefaultFileTypeSpecificInputFilter(acceptedTypes.toArray(FileType.EMPTY_ARRAY));
   }
 
   @Override

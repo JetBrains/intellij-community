@@ -20,7 +20,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.ConstantEvaluationOverflowException;
 import com.intellij.psi.util.ConstantExpressionUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.intellij.util.containers.StringInterner;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;

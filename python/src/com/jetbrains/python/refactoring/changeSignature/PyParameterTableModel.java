@@ -66,7 +66,7 @@ public class PyParameterTableModel extends ParameterTableModelBase<PyParameterIn
     final Collection<ColumnInfo> result = new ArrayList<>();
     result.add(new PyParameterColumn(project));
     result.add(new PyDefaultValueColumn(project));
-    return result.toArray(new ColumnInfo[result.size()]);
+    return result.toArray(ColumnInfo.EMPTY_ARRAY);
   }
 
   @Override

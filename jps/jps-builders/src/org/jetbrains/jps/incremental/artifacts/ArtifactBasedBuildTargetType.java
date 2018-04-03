@@ -26,8 +26,8 @@ import org.jetbrains.jps.model.artifact.JpsArtifact;
 import java.util.*;
 
 public abstract class ArtifactBasedBuildTargetType<T extends ArtifactBasedBuildTarget> extends BuildTargetType<T> {
-  protected ArtifactBasedBuildTargetType(String typeId, boolean based) {
-    super(typeId, based);
+  protected ArtifactBasedBuildTargetType(String typeId, boolean fileBased) {
+    super(typeId, fileBased);
   }
 
   @NotNull

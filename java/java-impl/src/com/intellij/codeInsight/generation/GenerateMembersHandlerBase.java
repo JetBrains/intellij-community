@@ -151,7 +151,7 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
         }
       }
 
-      GlobalInspectionContextBase.cleanupElements(project, null, elements.toArray(new PsiElement[elements.size()]));
+      GlobalInspectionContextBase.cleanupElements(project, null, elements.toArray(PsiElement.EMPTY_ARRAY));
     }
 
     final ArrayList<TemplateGenerationInfo> templates = new ArrayList<>();
@@ -241,7 +241,7 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
     chooser.show();
     myToCopyJavaDoc = chooser.isCopyJavadoc();
     final List<ClassMember> list = chooser.getSelectedElements();
-    return list == null ? null : list.toArray(new ClassMember[list.size()]);
+    return list == null ? null : list.toArray(ClassMember.EMPTY_ARRAY);
   }
 
   protected MemberChooser<ClassMember> createMembersChooser(ClassMember[] members,

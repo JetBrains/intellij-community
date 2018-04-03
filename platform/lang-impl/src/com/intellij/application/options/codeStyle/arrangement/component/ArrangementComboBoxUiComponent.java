@@ -27,7 +27,6 @@ import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -41,7 +40,7 @@ public class ArrangementComboBoxUiComponent extends AbstractArrangementUiCompone
   @SuppressWarnings("unchecked")
   public ArrangementComboBoxUiComponent(@NotNull List<ArrangementSettingsToken> tokens) {
     super(tokens);
-    ArrangementSettingsToken[] tokensArray = tokens.toArray(new ArrangementSettingsToken[tokens.size()]);
+    ArrangementSettingsToken[] tokensArray = tokens.toArray(new ArrangementSettingsToken[0]);
     Arrays.sort(tokensArray, (t1, t2) -> t1.getRepresentationValue().compareTo(t2.getRepresentationValue()));
     myComboBox = new JComboBox(tokensArray);
     myComboBox.setRenderer(new ListCellRendererWrapper() {

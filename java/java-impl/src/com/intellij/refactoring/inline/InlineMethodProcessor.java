@@ -45,7 +45,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.SideEffectChecker;
@@ -169,7 +169,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    return usages.toArray(new UsageInfo[usages.size()]);
+    return usages.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
   @Override
@@ -479,7 +479,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
               GenericInlineHandler.inlineReference(usage, myMethod, myInliners);
             }
           }
-          PsiReferenceExpression[] refs = refExprList.toArray(new PsiReferenceExpression[refExprList.size()]);
+          PsiReferenceExpression[] refs = refExprList.toArray(new PsiReferenceExpression[0]);
           refs = addBracesWhenNeeded(refs);
           for (PsiReferenceExpression ref : refs) {
             if (ref instanceof PsiMethodReferenceExpression) {
@@ -1408,8 +1408,8 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       ref.putCopyableUserData(MARK_KEY, null);
     }
 
-    myAddedBraces = addedBracesVector.toArray(new PsiCodeBlock[addedBracesVector.size()]);
-    return refsVector.toArray(new PsiReferenceExpression[refsVector.size()]);
+    myAddedBraces = addedBracesVector.toArray(PsiCodeBlock.EMPTY_ARRAY);
+    return refsVector.toArray(new PsiReferenceExpression[0]);
   }
 
   private void inlineEnumConstantParameter(final List<PsiReferenceExpression> refsVector,

@@ -128,7 +128,7 @@ public class BaseInjectionPanel extends AbstractInjectionPanel<BaseInjection> {
         }
       }
     }
-    other.setInjectionPlaces(places.toArray(new InjectionPlace[places.size()]));
+    other.setInjectionPlaces(places.toArray(InjectionPlace.EMPTY_ARRAY));
   }
 
   protected void resetImpl() {

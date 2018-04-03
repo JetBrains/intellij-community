@@ -823,7 +823,7 @@ public class HighlightMethodUtil {
       MethodCandidateInfo candidate = (MethodCandidateInfo)result;
       if (candidate.isAccessible()) candidateList.add(candidate);
     }
-    return candidateList.toArray(new MethodCandidateInfo[candidateList.size()]);
+    return candidateList.toArray(new MethodCandidateInfo[0]);
   }
 
   private static void registerMethodCallIntentions(@Nullable HighlightInfo highlightInfo,

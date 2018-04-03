@@ -239,7 +239,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
     myEditorComponent = myEditor.createComponent();
     myEditorComponent.setBorder(JBUI.Borders.empty(10, 0, 10, 10));
 
-    myTabs = allTabs.toArray(new FileTemplateTab[allTabs.size()]);
+    myTabs = allTabs.toArray(new FileTemplateTab[0]);
     myTabbedPane = new TabbedPaneWrapper(myUIDisposable);
     myTabbedPane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
     myLeftPanel = new JPanel(new CardLayout());

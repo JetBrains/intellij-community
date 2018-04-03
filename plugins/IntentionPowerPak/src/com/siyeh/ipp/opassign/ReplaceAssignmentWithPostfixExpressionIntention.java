@@ -1,5 +1,5 @@
 /*
- * Copyright 2009 Bas Leijdekkers
+ * Copyright 2009-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.siyeh.ipp.opassign;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -62,13 +61,12 @@ public class ReplaceAssignmentWithPostfixExpressionIntention
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element)
-    throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element) {
     final PsiAssignmentExpression assignmentExpression =
       (PsiAssignmentExpression)element;
     final PsiExpression lhs = assignmentExpression.getLExpression();
     CommentTracker commentTracker = new CommentTracker();
-    final String lhsText = commentTracker.markUnchanged(lhs).getText();
+    final String lhsText = commentTracker.text(lhs);
     final PsiExpression rhs = assignmentExpression.getRExpression();
     if (!(rhs instanceof PsiBinaryExpression)) {
       return;

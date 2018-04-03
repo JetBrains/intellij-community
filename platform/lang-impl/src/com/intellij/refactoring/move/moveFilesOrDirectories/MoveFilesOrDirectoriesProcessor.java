@@ -109,7 +109,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
       findElementUsages(result, element);
     }
 
-    return result.toArray(new UsageInfo[result.size()]);
+    return result.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
   private void findElementUsages(ArrayList<UsageInfo> result, PsiElement element) {
@@ -295,7 +295,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
       MoveFileHandler.forElement(movedFile).retargetUsages(myFoundUsages.get(movedFile), oldToNewMap);
     }
 
-    myNonCodeUsages = nonCodeUsages.toArray(new NonCodeUsageInfo[nonCodeUsages.size()]);
+    myNonCodeUsages = nonCodeUsages.toArray(new NonCodeUsageInfo[0]);
   }
 
   @NotNull

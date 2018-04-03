@@ -19,7 +19,6 @@ import com.intellij.reference.SoftLazyValue;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +41,7 @@ public class PropertiesUtil {
     protected Set<String> compute() {
       final HashSet<String> locales =
         new HashSet<>(ContainerUtil.flatten(ContainerUtil.map(Locale.getAvailableLocales(),
-                                                              (Function<Locale, List<String>>)locale -> {
+                                                                        (Function<Locale, List<String>>)locale -> {
                                                                 final ArrayList<String> languages =
                                                                   ContainerUtil.newArrayList(locale.getLanguage());
                                                                 try {

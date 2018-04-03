@@ -241,7 +241,7 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
   }
 
   public Collection<ProjectStructureElementUsage> getUsages(ProjectStructureElement selected) {
-    ProjectStructureElement[] elements = myElementWithNotCalculatedUsages.toArray(new ProjectStructureElement[myElementWithNotCalculatedUsages.size()]);
+    ProjectStructureElement[] elements = myElementWithNotCalculatedUsages.toArray(new ProjectStructureElement[0]);
     for (ProjectStructureElement element : elements) {
       updateUsages(element, getUsagesInElement(element));
     }

@@ -42,7 +42,7 @@ public class ControlFlow {
   }
 
   public Instruction[] getInstructions(){
-    return myInstructions.toArray(new Instruction[myInstructions.size()]);
+    return myInstructions.toArray(new Instruction[0]);
   }
 
   public int getInstructionCount() {

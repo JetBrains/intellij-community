@@ -1236,4 +1236,15 @@ public class PyResolveTest extends PyResolveTestCase {
     final PyFunction function = assertInstanceOf(doResolve(), PyFunction.class);
     assertEquals(4, function.getTextOffset());
   }
+
+  // PY-23259
+  public void testTypingListInheritor() {
+    assertResolvesTo(PyFunction.class, "append");
+  }
+
+  // PY-23259
+  public void testImportedTypingListInheritor() {
+    myFixture.copyDirectoryToProject("resolve/" + getTestName(false), "");
+    assertResolvesTo(PyFunction.class, "append");
+  }
 }

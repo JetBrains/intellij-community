@@ -784,7 +784,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
                                            PsiElement anchorStatement) {
     if (allOccurrences) {
       if (hasWriteAccess) {
-        return RefactoringUtil.getAnchorElementForMultipleExpressions(nonWrite.toArray(new PsiExpression[nonWrite.size()]), null);
+        return RefactoringUtil.getAnchorElementForMultipleExpressions(nonWrite.toArray(PsiExpression.EMPTY_ARRAY), null);
       }
       else {
         return anchorStatementIfAll;

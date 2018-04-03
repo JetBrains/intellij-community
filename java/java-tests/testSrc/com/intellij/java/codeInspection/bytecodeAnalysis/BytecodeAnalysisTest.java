@@ -99,7 +99,7 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
   }
 
   private static void checkLeakingParameters(Class<?> jClass) throws IOException {
-    final HashMap<Method, boolean[]> map = new HashMap<>();
+    final HashMap<Member, boolean[]> map = new HashMap<>();
 
     // collecting leakedParameters
     final ClassReader classReader = new ClassReader(jClass.getResourceAsStream("/" + jClass.getName().replace('.', '/') + ".class"));
@@ -107,7 +107,7 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
       @Override
       public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
         final MethodNode node = new MethodNode(Opcodes.API_VERSION, access, name, desc, signature, exceptions);
-        final Method method = new Method(classReader.getClassName(), name, desc);
+        final Member method = new Member(classReader.getClassName(), name, desc);
         return new MethodVisitor(Opcodes.API_VERSION, node) {
           @Override
           public void visitEnd() {
@@ -122,7 +122,7 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
     }, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
 
     for (java.lang.reflect.Method jMethod : jClass.getDeclaredMethods()) {
-      Method method = new Method(Type.getType(jClass).getInternalName(), jMethod.getName(), Type.getMethodDescriptor(jMethod));
+      Member method = new Member(Type.getType(jClass).getInternalName(), jMethod.getName(), Type.getMethodDescriptor(jMethod));
       Annotation[][] annotations = jMethod.getParameterAnnotations();
       for (int i = 0; i < annotations.length; i++) {
         boolean isLeaking = false;
@@ -211,16 +211,16 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
 
     for (java.lang.reflect.Method javaMethod : javaClass.getDeclaredMethods()) {
       if(javaMethod.isSynthetic()) continue; // skip lambda runtime representation
-      Method method = new Method(Type.getType(javaClass).getInternalName(), javaMethod.getName(), Type.getMethodDescriptor(javaMethod));
+      Member method = new Member(Type.getType(javaClass).getInternalName(), javaMethod.getName(), Type.getMethodDescriptor(javaMethod));
       boolean noKey = javaMethod.getAnnotation(ExpectNoPsiKey.class) != null;
       PsiMethod[] methods = psiClass.findMethodsByName(javaMethod.getName(), false);
-      assertTrue("Must be single method: "+javaMethod, methods.length == 1);
+      assertEquals("Must be single method: " + javaMethod, 1, methods.length);
       PsiMethod psiMethod = methods[0];
       checkCompoundId(method, psiMethod, noKey);
     }
 
     for (Constructor<?> constructor : javaClass.getDeclaredConstructors()) {
-      Method method = new Method(Type.getType(javaClass).getInternalName(), "<init>", Type.getConstructorDescriptor(constructor));
+      Member method = new Member(Type.getType(javaClass).getInternalName(), "<init>", Type.getConstructorDescriptor(constructor));
       boolean noKey = constructor.getAnnotation(ExpectNoPsiKey.class) != null;
       PsiMethod[] constructors = psiClass.getConstructors();
       PsiMethod psiMethod = constructors[0];
@@ -228,7 +228,7 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
     }
   }
 
-  private void checkCompoundId(Method method, PsiMethod psiMethod, boolean noKey) {
+  private void checkCompoundId(Member method, PsiMethod psiMethod, boolean noKey) {
     /*
     System.out.println();
     System.out.println(method.internalClassName);
@@ -239,11 +239,11 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
 
     EKey psiKey = BytecodeAnalysisConverter.psiKey(psiMethod, Direction.Out);
     if (noKey) {
-      assertTrue(null == psiKey);
+      assertNull(psiKey);
       return;
     }
     else {
-      assertFalse(null == psiKey);
+      assertNotNull(psiKey);
     }
     EKey asmKey = new EKey(method, Direction.Out, true);
     Assert.assertEquals(asmKey, psiKey);

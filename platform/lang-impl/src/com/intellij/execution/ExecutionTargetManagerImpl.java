@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
 import com.intellij.execution.compound.CompoundRunConfiguration;
@@ -88,7 +88,7 @@ public class ExecutionTargetManagerImpl extends ExecutionTargetManager implement
   }
 
   @Override
-  public void loadState(Element state) {
+  public void loadState(@NotNull Element state) {
     synchronized (myActiveTargetLock) {
       if (myActiveTarget == null && mySavedActiveTargetId == null) {
         mySavedActiveTargetId = state.getAttributeValue("SELECTED_TARGET");

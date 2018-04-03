@@ -249,8 +249,8 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       }
     }
 
-    myDependencies = dependentPlugins.isEmpty() ? PluginId.EMPTY_ARRAY : dependentPlugins.toArray(new PluginId[dependentPlugins.size()]);
-    myOptionalDependencies = optionalDependentPlugins.isEmpty() ? PluginId.EMPTY_ARRAY : optionalDependentPlugins.toArray(new PluginId[optionalDependentPlugins.size()]);
+    myDependencies = dependentPlugins.isEmpty() ? PluginId.EMPTY_ARRAY : dependentPlugins.toArray(PluginId.EMPTY_ARRAY);
+    myOptionalDependencies = optionalDependentPlugins.isEmpty() ? PluginId.EMPTY_ARRAY : optionalDependentPlugins.toArray(PluginId.EMPTY_ARRAY);
 
     if (pluginBean.helpSets == null || pluginBean.helpSets.length == 0) {
       myHelpSets = HelpSetPath.EMPTY;

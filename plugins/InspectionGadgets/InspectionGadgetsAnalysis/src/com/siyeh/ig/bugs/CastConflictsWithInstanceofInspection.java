@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -144,8 +143,8 @@ public class CastConflictsWithInstanceofInspection extends BaseInspection {
     }
 
     @Override
-    protected final void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
-        final PsiElement element = descriptor.getPsiElement();
+    protected final void doFix(Project project, ProblemDescriptor descriptor) {
+      final PsiElement element = descriptor.getPsiElement();
       final PsiTypeElement castTypeElement;
       final PsiReferenceExpression reference;
       if (element instanceof PsiTypeCastExpression) {

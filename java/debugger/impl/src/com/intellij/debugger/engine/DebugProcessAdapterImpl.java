@@ -15,11 +15,6 @@
  */
 package com.intellij.debugger.engine;
 
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.configurations.RemoteConnection;
-import com.intellij.execution.configurations.RunProfileState;
-import com.sun.jdi.ThreadReference;
-
 /**
  * @author lex
  */
@@ -44,10 +39,6 @@ public class DebugProcessAdapterImpl implements DebugProcessListener {
     processAttached(((DebugProcessImpl)process));
   }
 
-  //executed in manager thread
-  public void connectorIsReady() {
-  }
-
   public void paused(SuspendContextImpl suspendContext) {
   }
 
@@ -61,16 +52,5 @@ public class DebugProcessAdapterImpl implements DebugProcessListener {
 
   //executed in manager thread
   public void processAttached(DebugProcessImpl process) {
-  }
-
-  //executed in manager thread
-  public void threadStarted(DebugProcess proc, ThreadReference thread) {
-  }
-
-  //executed in manager thread
-  public void threadStopped(DebugProcess proc, ThreadReference thread) {
-  }
-
-  public void attachException(RunProfileState state, ExecutionException exception, RemoteConnection remoteConnection) {
   }
 }

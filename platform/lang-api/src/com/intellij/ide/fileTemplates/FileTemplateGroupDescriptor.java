@@ -43,7 +43,7 @@ public class FileTemplateGroupDescriptor extends FileTemplateDescriptor {
   }
 
   public FileTemplateDescriptor[] getTemplates() {
-    return myTemplates.toArray(new FileTemplateDescriptor[myTemplates.size()]);
+    return myTemplates.toArray(new FileTemplateDescriptor[0]);
   }
 
   @Override

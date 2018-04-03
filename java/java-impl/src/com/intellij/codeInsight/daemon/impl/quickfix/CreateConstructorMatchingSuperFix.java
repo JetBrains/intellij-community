@@ -86,7 +86,7 @@ public class CreateConstructorMatchingSuperFix extends BaseIntentionAction {
                                                 List<PsiMethodMember> baseConstructors,
                                                 PsiMethod[] baseConstrs,
                                                 final PsiClass targetClass) {
-    PsiMethodMember[] constructors = baseConstructors.toArray(new PsiMethodMember[baseConstructors.size()]);
+    PsiMethodMember[] constructors = baseConstructors.toArray(new PsiMethodMember[0]);
     if (constructors.length == 0) {
       constructors = new PsiMethodMember[baseConstrs.length];
       for (int i = 0; i < baseConstrs.length; i++) {

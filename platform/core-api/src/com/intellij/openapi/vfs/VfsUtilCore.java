@@ -29,8 +29,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 
-import static com.intellij.openapi.vfs.VirtualFileVisitor.VisitorException;
-
 public class VfsUtilCore {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.VfsUtilCore");
 
@@ -96,9 +94,7 @@ public class VfsUtilCore {
     if (StringUtil.endsWithChar(ancestorUrl, '/')) {
       return fileUrl.startsWith(ancestorUrl);
     }
-    else {
-      return StringUtil.startsWithConcatenation(fileUrl, ancestorUrl, "/");
-    }
+    return StringUtil.startsWithConcatenation(fileUrl, ancestorUrl, "/");
   }
 
   public static boolean isAncestor(@NotNull File ancestor, @NotNull File file, boolean strict) {
@@ -294,7 +290,8 @@ public class VfsUtilCore {
   @SuppressWarnings({"UnsafeVfsRecursion", "Duplicates"})
   @NotNull
   public static VirtualFileVisitor.Result visitChildrenRecursively(@NotNull VirtualFile file,
-                                                                   @NotNull VirtualFileVisitor<?> visitor) throws VisitorException {
+                                                                   @NotNull VirtualFileVisitor<?> visitor) throws
+                                                                                                           VirtualFileVisitor.VisitorException {
     boolean pushed = false;
     try {
       final boolean visited = visitor.allowVisitFile(file);
@@ -353,7 +350,7 @@ public class VfsUtilCore {
     try {
       return visitChildrenRecursively(file, visitor);
     }
-    catch (VisitorException e) {
+    catch (VirtualFileVisitor.VisitorException e) {
       final Throwable cause = e.getCause();
       if (eClass.isInstance(cause)) {
         throw eClass.cast(cause);
@@ -384,12 +381,8 @@ public class VfsUtilCore {
 
   @NotNull
   public static String loadText(@NotNull VirtualFile file, int length) throws IOException {
-    InputStreamReader reader = new InputStreamReader(file.getInputStream(), file.getCharset());
-    try {
+    try (InputStreamReader reader = new InputStreamReader(file.getInputStream(), file.getCharset())) {
       return StringFactory.createShared(FileUtil.loadText(reader, length));
-    }
-    finally {
-      reader.close();
     }
   }
 
@@ -402,8 +395,7 @@ public class VfsUtilCore {
 
   @NotNull
   public static VirtualFile[] toVirtualFileArray(@NotNull Collection<? extends VirtualFile> files) {
-    if (files.size() == 0) return VirtualFile.EMPTY_ARRAY;
-    return files.toArray(VirtualFile.EMPTY_ARRAY);
+    return files.isEmpty() ? VirtualFile.EMPTY_ARRAY : files.toArray(VirtualFile.EMPTY_ARRAY);
   }
 
   @NotNull
@@ -434,7 +426,7 @@ public class VfsUtilCore {
   @NotNull
   public static String toIdeaUrl(@NotNull String url, boolean removeLocalhostPrefix) {
     int index = url.indexOf(":/");
-    if (index < 0 || (index + 2) >= url.length()) {
+    if (index < 0 || index + 2 >= url.length()) {
       return url;
     }
 
@@ -453,8 +445,8 @@ public class VfsUtilCore {
         return prefix + ":///" + suffix;
       }
     }
-    else if (SystemInfoRt.isWindows && (index + 3) < url.length() && url.charAt(index + 3) == '/' &&
-             url.regionMatches(0, StandardFileSystems.FILE_PROTOCOL_PREFIX, 0, StandardFileSystems.FILE_PROTOCOL_PREFIX.length())) {
+    if (SystemInfoRt.isWindows && index + 3 < url.length() && url.charAt(index + 3) == '/' &&
+        url.regionMatches(0, StandardFileSystems.FILE_PROTOCOL_PREFIX, 0, StandardFileSystems.FILE_PROTOCOL_PREFIX.length())) {
       // file:///C:/test/file.js -> file://C:/test/file.js
       for (int i = index + 4; i < url.length(); i++) {
         char c = url.charAt(i);
@@ -545,9 +537,7 @@ public class VfsUtilCore {
       if (protocol.equals(StandardFileSystems.FILE_PROTOCOL)) {
         return new URL(StandardFileSystems.FILE_PROTOCOL, "", path);
       }
-      else {
-        return UrlClassLoader.internProtocol(new URL(vfsUrl));
-      }
+      return UrlClassLoader.internProtocol(new URL(vfsUrl));
     }
     catch (MalformedURLException e) {
       LOG.debug("MalformedURLException occurred:" + e.getMessage());

@@ -39,7 +39,7 @@ import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;

@@ -29,7 +29,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.inspections.quickfix.AddGlobalQuickFix;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;

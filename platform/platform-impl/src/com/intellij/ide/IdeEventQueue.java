@@ -44,7 +44,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.UIUtil;
 import one.util.streamex.StreamEx;
@@ -1007,7 +1007,7 @@ public class IdeEventQueue extends EventQueue {
   public void maybeReady() {
     if (myReady.isEmpty() || !isReady()) return;
 
-    Runnable[] ready = myReady.toArray(new Runnable[myReady.size()]);
+    Runnable[] ready = myReady.toArray(new Runnable[0]);
     myReady.clear();
 
     for (Runnable each : ready) {

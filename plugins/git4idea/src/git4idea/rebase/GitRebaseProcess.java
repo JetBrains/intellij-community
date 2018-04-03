@@ -18,7 +18,10 @@ package git4idea.rebase;
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.repo.Repository;
-import com.intellij.notification.*;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationAction;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
@@ -450,7 +453,8 @@ public class GitRebaseProcess {
     if (somethingWasRebased || !successful.isEmpty()) actions.add(ABORT_ACTION);
     if (mySaver.wereChangesSaved()) actions.add(VIEW_STASH_ACTION);
     GitUntrackedFilesHelper.notifyUntrackedFilesOverwrittenBy(myProject, currentRepository.getRoot(), untrackedPaths,
-                                                              "rebase", message, new RebaseNotificationListener(skippedCommits), actions.toArray(new NotificationAction[actions.size()]));
+                                                              "rebase", message, new RebaseNotificationListener(skippedCommits), actions.toArray(
+        new NotificationAction[0]));
   }
 
   @NotNull

@@ -120,7 +120,7 @@ public class DescendantClassesEnumMacro extends Macro {
       }
     }
 
-    return set.toArray(new LookupElement[set.size()]);
+    return set.toArray(LookupElement.EMPTY_ARRAY);
   }
 
   private static boolean isAbstractOrInterface(final PsiClass psiClass) {

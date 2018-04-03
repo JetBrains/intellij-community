@@ -13,7 +13,6 @@
     <orderEntry type="module" module-name="xdebugger-api" scope="TEST" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="spellchecker" scope="TEST" />
-    <orderEntry type="module" module-name="python-community-ide" />
     <orderEntry type="module" module-name="python-helpers" scope="RUNTIME" />
     <orderEntry type="library" name="Groovy" level="project" />
     <orderEntry type="module" module-name="xdebugger-impl" scope="TEST" />
@@ -22,7 +21,6 @@
     <orderEntry type="library" scope="TEST" name="mockito" level="project" />
     <orderEntry type="library" scope="TEST" name="Mocks" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="hamcrest" level="project" />
-    <orderEntry type="module" module-name="xml-openapi" />
     <orderEntry type="module" module-name="lang-tests" scope="TEST" />
     <orderEntry type="module" module-name="python-community-tools" scope="TEST" />
   </component>

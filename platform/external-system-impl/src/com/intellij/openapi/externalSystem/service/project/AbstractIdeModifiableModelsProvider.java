@@ -422,7 +422,7 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
       getModifiableProjectLibrariesModel().commit();
 
       Collection<ModifiableRootModel> rootModels = myModifiableRootModels.values();
-      ModifiableRootModel[] rootModels1 = rootModels.toArray(new ModifiableRootModel[rootModels.size()]);
+      ModifiableRootModel[] rootModels1 = rootModels.toArray(new ModifiableRootModel[0]);
       for (ModifiableRootModel model : rootModels1) {
         assert !model.isDisposed() : "Already disposed: " + model;
       }

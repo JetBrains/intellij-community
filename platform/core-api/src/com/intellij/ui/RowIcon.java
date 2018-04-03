@@ -19,7 +19,6 @@ package com.intellij.ui;
 import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBUI.CachingScalableJBIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -105,7 +104,7 @@ public class RowIcon extends CachingScalableJBIcon<RowIcon> {
   @NotNull
   Icon[] getAllIcons() {
     List<Icon> icons = ContainerUtil.packNullables(myIcons);
-    return icons.toArray(new Icon[icons.size()]);
+    return icons.toArray(new Icon[0]);
   }
 
   public int hashCode() {

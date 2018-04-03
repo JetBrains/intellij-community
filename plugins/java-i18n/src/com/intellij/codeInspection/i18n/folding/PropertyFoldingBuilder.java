@@ -70,7 +70,7 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
       }
     });
 
-    return result.toArray(new FoldingDescriptor[result.size()]);
+    return result.toArray(FoldingDescriptor.EMPTY);
   }
 
   private static boolean isFoldingsOn() {

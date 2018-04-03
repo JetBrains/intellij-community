@@ -59,7 +59,7 @@ abstract class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
 
   @Override
   protected JavaMethodNode createTreeNodeFor(PsiMethod nodeMethod,
-                                             com.intellij.util.containers.HashSet<PsiMethod> called,
+                                             HashSet<PsiMethod> called,
                                              Runnable cancelCallback) {
     final SafeDeleteJavaMethodNode node = new SafeDeleteJavaMethodNode(nodeMethod, called, cancelCallback, getParameterIdx(),
                                                                        nodeMethod != null ? nodeMethod.getProject() : myProject);

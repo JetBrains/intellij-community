@@ -50,7 +50,6 @@ public class CopyConstructorMissesFieldInspection extends BaseInspection {
       return InspectionGadgetsBundle.message("copy.constructor.misses.field.problem.descriptor.3",
                                              fields.get(0).getName(), fields.get(1).getName(), fields.get(2).getName());
     }
-    System.out.println("fields = " + fields);
     return InspectionGadgetsBundle.message("copy.constructor.misses.field.problem.descriptor.many", fields.size());
   }
 

@@ -217,7 +217,7 @@ public class IterationState {
                                                                       EditorUtil.attributesImpactFontStyleOrColor(ex.getTextAttributes()));
                                                             }
                                                           });
-      highlighters = list.isEmpty() ? RangeHighlighterEx.EMPTY_ARRAY : list.toArray(new RangeHighlighterEx[list.size()]);
+      highlighters = list.isEmpty() ? RangeHighlighterEx.EMPTY_ARRAY : list.toArray(RangeHighlighterEx.EMPTY_ARRAY);
       Arrays.sort(highlighters, myReverseIteration ? BY_AFFECTED_END_OFFSET_REVERSED : RangeHighlighterEx.BY_AFFECTED_START_OFFSET);
 
       while (i < highlighters.length) {

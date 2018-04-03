@@ -37,10 +37,10 @@ import com.intellij.refactoring.util.usageInfo.NoConstructorClassUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -62,7 +62,7 @@ class JavaChangeSignatureUsageSearcher {
 
       findSimpleUsages(method, result);
 
-      final UsageInfo[] usageInfos = result.toArray(new UsageInfo[result.size()]);
+      final UsageInfo[] usageInfos = result.toArray(UsageInfo.EMPTY_ARRAY);
       return UsageViewUtil.removeDuplicatedUsages(usageInfos);
     }
     return UsageInfo.EMPTY_ARRAY;

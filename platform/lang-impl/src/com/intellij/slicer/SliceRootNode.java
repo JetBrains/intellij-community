@@ -15,7 +15,6 @@
  */
 package com.intellij.slicer;
 
-import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
@@ -59,14 +58,6 @@ public class SliceRootNode extends SliceNode {
       switchToAllLeavesTogether(myRootUsage);
     }
     return myCachedChildren;
-  }
-
-  @Override
-  protected void update(PresentationData presentation) {
-    if (presentation != null) {
-      presentation.setChanged(presentation.isChanged() || changed);
-      changed = false;
-    }
   }
 
 

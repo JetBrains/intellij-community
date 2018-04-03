@@ -27,14 +27,16 @@ import com.intellij.ui.EditorSettingsProvider;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.AbstractTableCellEditor;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.MouseEventHandler;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TIntObjectProcedure;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.Timer;
 import javax.swing.event.ChangeEvent;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
@@ -320,16 +322,6 @@ public abstract class JBListTable {
     }
 
     @Override
-    public void editingStopped(ChangeEvent e) {
-      super.editingStopped(e);
-    }
-
-    @Override
-    public void editingCanceled(ChangeEvent e) {
-      super.editingCanceled(e);
-    }
-
-    @Override
     protected void processKeyEvent(KeyEvent e) {
       myMouseEvent = null;
 
@@ -485,11 +477,6 @@ public abstract class JBListTable {
       Object value = getValueAt(row, column);
       boolean isSelected = isCellSelected(row, column);
       return editor.getTableCellEditorComponent(this, value, isSelected, row, column);
-    }
-
-    @Override
-    public void addNotify() {
-      super.addNotify();
     }
 
     @Override

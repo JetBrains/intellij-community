@@ -66,6 +66,18 @@ public interface PyTargetExpression extends PyQualifiedExpression, PsiNamedEleme
   @Nullable
   QualifiedName getCalleeName();
 
+  @Override
   @NotNull
   PsiReference getReference();
+
+  /**
+   * Checks if target has assigned value.
+   *
+   * This method does not access AST if underlying PSI is stub based.
+   *
+   * @return true if target has assigned expression, false otherwise (e.g. in type declaration statement).
+   */
+  default boolean hasAssignedValue() {
+    return true;
+  }
 }

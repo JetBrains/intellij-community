@@ -18,7 +18,7 @@ package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;

@@ -19,7 +19,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 
@@ -35,12 +34,6 @@ public class ChangeFormatDialog extends UpgradeFormatDialog {
     myWcRootIsAbove = wcRootIsAbove;
     setTitle(SvnBundle.message("action.change.wcopy.format.task.title"));
     init();
-  }
-
-  @NotNull
-  @Override
-  protected Action[] createActions() {
-    return new Action[]{getOKAction(),getCancelAction()};
   }
 
   @Nullable

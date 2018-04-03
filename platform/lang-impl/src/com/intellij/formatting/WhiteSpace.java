@@ -670,7 +670,7 @@ public class WhiteSpace {
       }
     }
     result.add(currentLine);
-    return result.toArray(new CharSequence[result.size()]);
+    return result.toArray(new CharSequence[0]);
   }
 
   /**

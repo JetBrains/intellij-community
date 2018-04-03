@@ -19,7 +19,6 @@ import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicInternalFrameTitlePane;
 import javax.swing.plaf.basic.BasicInternalFrameUI;
-import java.awt.*;
 
 /**
  * @author Konstantin Bulenkov
@@ -38,15 +37,7 @@ public class DarculaInternalFrameUI extends BasicInternalFrameUI {
   @Override
   protected JComponent createNorthPane(JInternalFrame w) {
     this.titlePane = new BasicInternalFrameTitlePane(w) {
-      @Override
-      protected void paintBorder(Graphics g) {
-        super.paintBorder(g);
-      }
 
-      @Override
-      public void paintComponent(Graphics g) {
-        super.paintComponent(g);
-      }
     };
     return this.titlePane;
   }

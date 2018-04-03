@@ -163,7 +163,7 @@ public class DualView extends JPanel {
       if (column.shouldBeShownIsTheTree()) result.add(column);
     }
 
-    return result.toArray(new ColumnInfo[result.size()]);
+    return result.toArray(ColumnInfo.EMPTY_ARRAY);
   }
 
   public void switchToTheFlatMode() {
@@ -232,7 +232,7 @@ public class DualView extends JPanel {
       }
     }
 
-    ListTableModel flatModel = new ListTableModel(shownColumns.toArray(new ColumnInfo[shownColumns.size()]));
+    ListTableModel flatModel = new ListTableModel(shownColumns.toArray(ColumnInfo.EMPTY_ARRAY));
     //noinspection unchecked
     myFlatView = new TableView(flatModel) {
       public TableCellRenderer getCellRenderer(int row, int column) {

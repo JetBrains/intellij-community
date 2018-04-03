@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.debugger.breakpoints.properties;
 
 import com.intellij.debugger.InstanceFilter;
@@ -10,6 +8,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.XCollection;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -83,7 +82,7 @@ public class JavaBreakpointProperties<T extends JavaBreakpointProperties> extend
   }
 
   @Override
-  public void loadState(T state) {
+  public void loadState(@NotNull T state) {
     setCOUNT_FILTER_ENABLED(state.isCOUNT_FILTER_ENABLED());
     setCOUNT_FILTER(state.getCOUNT_FILTER());
 

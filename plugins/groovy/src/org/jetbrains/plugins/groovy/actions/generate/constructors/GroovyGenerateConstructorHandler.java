@@ -58,7 +58,7 @@ public class GroovyGenerateConstructorHandler extends GenerateConstructorHandler
       }
     }
 
-    return res.toArray(new ClassMember[res.size()]);
+    return res.toArray(ClassMember.EMPTY_ARRAY);
   }
 
   @Nullable

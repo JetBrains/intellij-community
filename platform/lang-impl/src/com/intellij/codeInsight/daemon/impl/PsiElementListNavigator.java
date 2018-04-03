@@ -182,7 +182,7 @@ public class PsiElementListNavigator {
     if (findUsagesTitle != null) {
       popupChooserBuilder = popupChooserBuilder.setCouldPin(popup -> {
         final List<NavigatablePsiElement> items = model.getItems();
-        usageView.set(FindUtil.showInUsageView(null, items.toArray(new PsiElement[items.size()]), findUsagesTitle, targets[0].getProject()));
+        usageView.set(FindUtil.showInUsageView(null, items.toArray(PsiElement.EMPTY_ARRAY), findUsagesTitle, targets[0].getProject()));
         popup.cancel();
         return false;
       });

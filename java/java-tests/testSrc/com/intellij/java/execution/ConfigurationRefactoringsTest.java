@@ -22,7 +22,7 @@ import com.intellij.refactoring.move.moveMembers.MockMoveMembersOptions;
 import com.intellij.refactoring.move.moveMembers.MoveMembersProcessor;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.testFramework.MapDataContext;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;

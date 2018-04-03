@@ -32,7 +32,7 @@ public abstract class VcsTaskHandler {
   public static VcsTaskHandler[] getAllHandlers(final Project project) {
     VcsTaskHandler[] extensions = EXTENSION_POINT_NAME.getExtensions(project);
     List<VcsTaskHandler> handlers = ContainerUtil.filter(extensions, handler -> handler.isEnabled());
-    return handlers.toArray(new VcsTaskHandler[handlers.size()]);
+    return handlers.toArray(new VcsTaskHandler[0]);
   }
 
   public static class TaskInfo implements Comparable<TaskInfo> {

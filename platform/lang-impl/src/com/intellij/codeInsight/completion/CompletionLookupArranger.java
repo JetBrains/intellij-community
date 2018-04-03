@@ -25,7 +25,10 @@ import com.intellij.codeInsight.template.impl.LiveTemplateLookupElement;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.util.ProcessingContext;
@@ -346,7 +349,7 @@ public class CompletionLookupArranger extends LookupArranger {
       byClassifier.add(myClassifiers.get(sorter).classify(inputBySorter.get(sorter), context));
     }
     //noinspection unchecked
-    Iterable<LookupElement> result = ContainerUtil.concat(byClassifier.toArray(new Iterable[byClassifier.size()]));
+    Iterable<LookupElement> result = ContainerUtil.concat(byClassifier.toArray(new Iterable[0]));
     return myFinalSorter.sort(result, myParameters);
   }
   

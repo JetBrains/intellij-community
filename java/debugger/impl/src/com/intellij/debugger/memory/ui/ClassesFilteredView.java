@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.memory.ui;
 
 import com.intellij.debugger.DebuggerManager;
@@ -79,8 +65,8 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
   private static final double MAX_DELAY_MILLIS = TimeUnit.SECONDS.toMillis(2);
   private static final int DEFAULT_BATCH_SIZE = Integer.MAX_VALUE;
   private static final String EMPTY_TABLE_CONTENT_WHEN_RUNNING = "The application is running";
-  private static final String EMPTY_TABLE_CONTENT_WHEN_SUSPENDED = "Nothing to show";
   private static final String EMPTY_TABLE_CONTENT_WHEN_STOPPED = "Classes are not available";
+  private static final String CLICKABLE_TABLE_CONTENT = "Click to load the classes list";
 
   private final Project myProject;
   private final SingleAlarmWithMutableDelay mySingleAlarm;
@@ -257,6 +243,9 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
       myTable.setFilteringByDiffNonZero(state.isShowWithDiffOnly);
       myTable.setFilteringByInstanceExists(state.isShowWithInstancesOnly);
       myTable.setFilteringByTrackingState(state.isShowTrackedOnly);
+      if (state.isAutoUpdateModeOn && myTable.isInClickableMode()) {
+        updateClassesAndCounts(true);
+      }
     };
 
     MemoryViewManager.getInstance().addMemoryViewManagerListener(memoryViewManagerListener, this);
@@ -343,7 +332,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
     myConstructorTrackedClasses.values().forEach(ConstructorInstancesTracker::commitTracked);
   }
 
-  private void updateClassesAndCounts() {
+  private void updateClassesAndCounts(boolean immediate) {
     ApplicationManager.getApplication().invokeLater(() -> {
       final XDebugSession debugSession = XDebuggerManager.getInstance(myProject).getCurrentSession();
       if (debugSession != null) {
@@ -353,11 +342,16 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
           final DebugProcessImpl process = (DebugProcessImpl)debugProcess;
           final SuspendContextImpl context = process.getDebuggerContext().getSuspendContext();
           if (context != null) {
-            mySingleAlarm.cancelAndRequest(context);
+            if (immediate) {
+              mySingleAlarm.cancelAndRequestImmediate(context);
+            }
+            else {
+              mySingleAlarm.cancelAndRequest(context);
+            }
           }
         }
       }
-    }, x -> myProject.isDisposed());
+    }, myProject.getDisposed());
   }
 
   private static ActionPopupMenu createContextMenu() {
@@ -395,8 +389,18 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
     myConstructorTrackedClasses.values().forEach(x -> x.setBackgroundMode(false));
 
     if (isNeedUpdateView()) {
-      updateClassesAndCounts();
+      if (MemoryViewManager.getInstance().isAutoUpdateModeEnabled()) {
+        updateClassesAndCounts(true);
+      }
+      else {
+        makeTableClickable();
+      }
     }
+  }
+
+  private void makeTableClickable() {
+    ApplicationManager.getApplication().invokeLater(
+      () -> myTable.makeClickable(CLICKABLE_TABLE_CONTENT, () -> updateClassesAndCounts(true)));
   }
 
   private void doPause() {
@@ -542,6 +546,8 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
 
     @Override
     public void mouseMoved(MouseEvent e) {
+      if (myTable.isInClickableMode()) return;
+
       if (isShowNewInstancesEvent(e)) {
         myTable.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
       }
@@ -577,10 +583,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
     public void sessionResumed() {
       if (myIsActive) {
         myConstructorTrackedClasses.values().forEach(ConstructorInstancesTracker::obsolete);
-        ApplicationManager.getApplication().invokeLater(() -> {
-          myTable.getEmptyText().setText(EMPTY_TABLE_CONTENT_WHEN_RUNNING);
-          myTable.hideContent();
-        });
+        ApplicationManager.getApplication().invokeLater(() -> myTable.hideContent(EMPTY_TABLE_CONTENT_WHEN_RUNNING));
 
         mySingleAlarm.cancelAllRequests();
       }
@@ -591,20 +594,20 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
       myConstructorTrackedClasses.values().forEach(Disposer::dispose);
       myConstructorTrackedClasses.clear();
       mySingleAlarm.cancelAllRequests();
-      ApplicationManager.getApplication().invokeLater(() -> {
-        myTable.getEmptyText().setText(EMPTY_TABLE_CONTENT_WHEN_STOPPED);
-        myTable.clean();
-      });
+      ApplicationManager.getApplication().invokeLater(() -> myTable.clean(EMPTY_TABLE_CONTENT_WHEN_STOPPED));
     }
 
     @Override
     public void sessionPaused() {
-      if (myIsActive) {
-        ApplicationManager.getApplication().invokeLater(() -> myTable.getEmptyText().setText(EMPTY_TABLE_CONTENT_WHEN_SUSPENDED));
-        updateClassesAndCounts();
-      }
-
       myTime.incrementAndGet();
+      if (myIsActive) {
+        if (MemoryViewManager.getInstance().isAutoUpdateModeEnabled()) {
+          updateClassesAndCounts(false);
+        }
+        else {
+          makeTableClickable();
+        }
+      }
     }
   }
 }

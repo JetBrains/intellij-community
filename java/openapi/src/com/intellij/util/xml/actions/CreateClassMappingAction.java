@@ -25,7 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.actions.generate.DomTemplateRunner;
 import com.intellij.util.xml.ui.actions.generate.CreateDomElementAction;

@@ -31,7 +31,7 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -264,7 +264,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
       }
     }
 
-    return result.isEmpty() ? PsiClass.EMPTY_ARRAY : result.toArray(new PsiClass[result.size()]);
+    return result.isEmpty() ? PsiClass.EMPTY_ARRAY : result.toArray(PsiClass.EMPTY_ARRAY);
   }
 
   private static VirtualFile getJarFile(@NotNull PsiClass aClass) {

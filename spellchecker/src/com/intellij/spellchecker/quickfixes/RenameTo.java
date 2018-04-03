@@ -30,7 +30,7 @@ import com.intellij.refactoring.actions.RenameElementAction;
 import com.intellij.refactoring.rename.NameSuggestionProvider;
 import com.intellij.refactoring.rename.RenameHandlerRegistry;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

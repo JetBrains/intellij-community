@@ -26,7 +26,7 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
 import com.intellij.refactoring.listeners.UndoRefactoringElementListener;
 import com.intellij.refactoring.listeners.impl.RefactoringTransaction;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;

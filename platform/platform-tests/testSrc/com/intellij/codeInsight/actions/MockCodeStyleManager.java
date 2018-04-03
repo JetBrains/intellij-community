@@ -30,7 +30,7 @@ import com.intellij.psi.codeStyle.Indent;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

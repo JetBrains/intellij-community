@@ -18,10 +18,10 @@ package com.intellij.coverage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.rt.coverage.instrumentation.SourceLineCounter;
-import com.intellij.util.containers.HashSet;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 

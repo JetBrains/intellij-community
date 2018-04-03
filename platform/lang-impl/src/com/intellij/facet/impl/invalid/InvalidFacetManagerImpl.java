@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.facet.impl.invalid;
 
 import com.intellij.facet.ProjectFacetManager;
@@ -41,7 +39,7 @@ public class InvalidFacetManagerImpl extends InvalidFacetManager implements Pers
   }
 
   @Override
-  public void loadState(InvalidFacetManagerState state) {
+  public void loadState(@NotNull InvalidFacetManagerState state) {
     myState = state;
   }
 

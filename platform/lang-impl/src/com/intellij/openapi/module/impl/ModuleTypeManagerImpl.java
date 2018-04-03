@@ -61,7 +61,7 @@ public class ModuleTypeManagerImpl extends ModuleTypeManager {
       result.add(moduleTypeEP.getModuleType());
     }
 
-    return result.toArray(new ModuleType[result.size()]);
+    return result.toArray(new ModuleType[0]);
   }
 
   @Override

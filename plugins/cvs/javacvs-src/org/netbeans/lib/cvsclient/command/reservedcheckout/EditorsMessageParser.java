@@ -139,7 +139,4 @@ final class EditorsMessageParser extends AbstractMessageParser {
 
 		return DATE_FORMAT.parse(dateString);
 	}
-
-        public void binaryMessageSent(final byte[] bytes) {
-        }
 }

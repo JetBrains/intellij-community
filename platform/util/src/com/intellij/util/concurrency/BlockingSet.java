@@ -15,7 +15,7 @@
  */
 package com.intellij.util.concurrency;
 
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;

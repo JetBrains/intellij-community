@@ -47,8 +47,8 @@ import com.intellij.psi.xml.*;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
-import com.intellij.util.containers.HashSet;
+import java.util.HashMap;
+
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;

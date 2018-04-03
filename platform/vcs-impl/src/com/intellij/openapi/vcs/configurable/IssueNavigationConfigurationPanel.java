@@ -184,7 +184,4 @@ public class IssueNavigationConfigurationPanel extends JPanel implements Searcha
   public JComponent createComponent() {
     return this;
   }
-
-  public void disposeUIResources() {
-  }
 }

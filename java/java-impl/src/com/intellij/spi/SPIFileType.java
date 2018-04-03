@@ -78,11 +78,6 @@ public class SPIFileType extends LanguageFileType implements FileTypeIdentifiabl
     return AllIcons.FileTypes.Text;
   }
 
-  @Override
-  public boolean isReadOnly() {
-    return false;
-  }
-
   @Nullable
   @Override
   public String getCharset(@NotNull VirtualFile file, @NotNull byte[] content) {

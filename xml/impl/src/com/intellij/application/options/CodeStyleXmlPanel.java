@@ -22,7 +22,6 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.xml.XmlCodeStyleSettings;
@@ -184,11 +183,6 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
   @NotNull
   protected FileType getFileType() {
     return StdFileTypes.XML;
-  }
-
-  @Override
-  protected void prepareForReformat(final PsiFile psiFile) {
-    //psiFile.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, LanguageLevel.HIGHEST);
   }
 
   private void createUIComponents() {

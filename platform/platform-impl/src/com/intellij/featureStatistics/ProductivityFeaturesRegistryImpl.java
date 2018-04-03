@@ -207,7 +207,7 @@ public class ProductivityFeaturesRegistryImpl extends ProductivityFeaturesRegist
         filters.add(pair.getSecond());
       }
     }
-    return filters.toArray(new ApplicabilityFilter[filters.size()]);
+    return filters.toArray(new ApplicabilityFilter[0]);
   }
 
   @Override

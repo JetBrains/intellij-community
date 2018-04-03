@@ -18,7 +18,7 @@ package com.intellij.util.xml.ui;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 
 import javax.swing.*;
 import java.awt.*;

@@ -27,7 +27,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.java.generate.GenerationUtil;
 import org.jetbrains.java.generate.template.TemplateResource;

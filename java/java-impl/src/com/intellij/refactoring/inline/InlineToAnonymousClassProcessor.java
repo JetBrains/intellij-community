@@ -96,7 +96,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
       usages.addAll(nonCodeUsages);
     }
 
-    return usages.toArray(new UsageInfo[usages.size()]);
+    return usages.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
   @NotNull

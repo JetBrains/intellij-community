@@ -38,7 +38,7 @@ import com.intellij.psi.util.ParameterizedCachedValue;
 import com.intellij.psi.util.ParameterizedCachedValueProvider;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;

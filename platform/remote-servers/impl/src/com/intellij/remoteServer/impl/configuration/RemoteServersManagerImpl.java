@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remoteServer.impl.configuration;
 
 import com.intellij.configurationStore.ComponentSerializationUtil;
@@ -104,7 +104,7 @@ public class RemoteServersManagerImpl extends RemoteServersManager implements Pe
   }
 
   @Override
-  public void loadState(RemoteServersManagerState state) {
+  public void loadState(@NotNull RemoteServersManagerState state) {
     myUnknownServers.clear();
     myServers.clear();
     for (RemoteServerState server : state.myServers) {

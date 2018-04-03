@@ -29,10 +29,10 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.packaging.PyCondaPackageManagerImpl
 import com.jetbrains.python.packaging.PyCondaPackageService
+import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.associateWithProject
 import com.jetbrains.python.sdk.createSdkByGenerateTask
 import com.jetbrains.python.sdk.flavors.CondaEnvSdkFlavor
-import com.jetbrains.python.validation.UnsupportedFeaturesUtil
 import icons.PythonIcons
 import java.awt.BorderLayout
 import java.awt.Dimension
@@ -61,8 +61,13 @@ class PyAddNewCondaEnvPanel(private val project: Project?,
 
   init {
     layout = BorderLayout()
-    val languageLevels = UnsupportedFeaturesUtil.ALL_LANGUAGE_LEVELS.reversed()
-    languageLevelsField = JComboBox(languageLevels.toTypedArray()).apply {
+
+    // https://conda.io/docs/user-guide/install/index.html#system-requirements
+    val supportedLanguageLevels =
+      listOf(LanguageLevel.PYTHON36, LanguageLevel.PYTHON35, LanguageLevel.PYTHON34, LanguageLevel.PYTHON27)
+        .map { it.toString() }
+
+    languageLevelsField = JComboBox(supportedLanguageLevels.toTypedArray()).apply {
       selectedItem = if (itemCount > 0) getItemAt(0) else null
       preferredSize = Dimension(Int.MAX_VALUE, preferredSize.height)
     }
@@ -75,9 +80,7 @@ class PyAddNewCondaEnvPanel(private val project: Project?,
   }
 
   override fun validateAll() =
-    listOf(validateAnacondaPresense(pathField),
-           validateEmptyOrNonExistingDirectoryLocation(pathField))
-      .filterNotNull()
+    listOfNotNull(validateAnacondaPresense(pathField), validateEmptyOrNonExistingDirectoryLocation(pathField))
 
   override fun getOrCreateSdk(): Sdk? {
     val task = object : Task.WithResult<String, ExecutionException>(project, "Creating Conda Environment", false) {

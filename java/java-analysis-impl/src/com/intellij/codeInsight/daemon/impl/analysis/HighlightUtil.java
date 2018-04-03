@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.ContainerProvider;
@@ -2917,7 +2917,8 @@ public class HighlightUtil extends HighlightUtilBase {
 
   private static String getUnsupportedFeatureMessage(PsiElement element, Feature feature, LanguageLevel level, PsiFile file) {
     String name = JavaErrorMessages.message(feature.key);
-    String message = JavaErrorMessages.message("insufficient.language.level", name, level.getCompilerComplianceDefaultOption());
+    String version = JavaSdkVersion.fromLanguageLevel(level).getDescription();
+    String message = JavaErrorMessages.message("insufficient.language.level", name, version);
 
     Module module = ModuleUtilCore.findModuleForPsiElement(element);
     if (module != null) {

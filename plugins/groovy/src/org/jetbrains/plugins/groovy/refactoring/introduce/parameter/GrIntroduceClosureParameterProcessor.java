@@ -215,7 +215,7 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
       }
     }
 
-    final UsageInfo[] usageInfos = result.toArray(new UsageInfo[result.size()]);
+    final UsageInfo[] usageInfos = result.toArray(UsageInfo.EMPTY_ARRAY);
     return UsageViewUtil.removeDuplicatedUsages(usageInfos);
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2011 Bas Leijdekkers
+ * Copyright 2007-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -126,10 +126,10 @@ public class ImplicitArrayToStringInspection extends BaseInspection {
         if (qualifier == null) {
           return;
         }
-        expressionText = commentTracker.markUnchanged(qualifier).getText();
+        expressionText = commentTracker.text(qualifier);
       }
       else {
-        expressionText = commentTracker.markUnchanged(expression).getText();
+        expressionText = commentTracker.text(expression);
       }
       @NonNls final String newExpressionText;
       if (deepString) {

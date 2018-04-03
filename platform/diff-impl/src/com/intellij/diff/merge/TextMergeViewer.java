@@ -1279,7 +1279,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     }
 
     private class MyLineStatusMarkerRenderer extends LineStatusMarkerPopupRenderer {
-      public MyLineStatusMarkerRenderer(@NotNull LineStatusTrackerBase tracker) {
+      public MyLineStatusMarkerRenderer(@NotNull LineStatusTrackerBase<?> tracker) {
         super(tracker);
       }
 

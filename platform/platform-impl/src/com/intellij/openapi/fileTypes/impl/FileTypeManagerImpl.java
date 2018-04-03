@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -955,7 +955,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   @NotNull
   public FileType[] getRegisteredFileTypes() {
     Collection<FileType> fileTypes = mySchemeManager.getAllSchemes();
-    return fileTypes.toArray(new FileType[fileTypes.size()]);
+    return fileTypes.toArray(FileType.EMPTY_ARRAY);
   }
 
   @Override
@@ -1056,7 +1056,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @Override
-  public void loadState(Element state) {
+  public void loadState(@NotNull Element state) {
     int savedVersion = StringUtilRt.parseInt(state.getAttributeValue(ATTRIBUTE_VERSION), 0);
 
     for (Element element : state.getChildren()) {

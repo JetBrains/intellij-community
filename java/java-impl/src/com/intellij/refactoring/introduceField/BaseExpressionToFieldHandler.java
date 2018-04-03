@@ -126,7 +126,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     }
     else if (!classes.isEmpty()){
       PsiClass selection = AnonymousTargetClassPreselectionUtil.getPreselection(classes, myParentClass);
-      NavigationUtil.getPsiElementPopup(classes.toArray(new PsiClass[classes.size()]), new PsiClassListCellRenderer(),
+      NavigationUtil.getPsiElementPopup(classes.toArray(PsiClass.EMPTY_ARRAY), new PsiClassListCellRenderer(),
                                         "Choose class to introduce " + (myIsConstant ? "constant" : "field"),
                                         new PsiElementProcessor<PsiClass>() {
                                           @Override

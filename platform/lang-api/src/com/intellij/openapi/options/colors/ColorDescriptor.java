@@ -57,12 +57,6 @@ public final class ColorDescriptor extends AbstractKeyDescriptor<ColorKey> {
 
   @NotNull
   @Override
-  public String getDisplayName() {
-    return super.getDisplayName();
-  }
-
-  @NotNull
-  @Override
   public ColorKey getKey() {
     return super.getKey();
   }

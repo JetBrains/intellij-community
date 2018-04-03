@@ -120,7 +120,7 @@ public abstract class ContentRootPanel extends JPanel {
       Collection<SourceFolder> folders = folderByType.get(editor.getRootType());
       if (folders.isEmpty()) continue;
 
-      ContentFolder[] foldersArray = folders.toArray(new ContentFolder[folders.size()]);
+      ContentFolder[] foldersArray = folders.toArray(new ContentFolder[0]);
       final JComponent sourcesComponent = createFolderGroupComponent(editor.getRootsGroupTitle(), foldersArray, editor.getRootsGroupColor(),
                                                                      editor);
       add(sourcesComponent, constraints);

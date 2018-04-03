@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -59,8 +58,7 @@ public class RandomDoubleForRandomIntegerInspection
     return new RandomDoubleForRandomIntegerFix();
   }
 
-  private static class RandomDoubleForRandomIntegerFix
-    extends InspectionGadgetsFix {
+  private static class RandomDoubleForRandomIntegerFix extends InspectionGadgetsFix {
 
     @Override
     @NotNull
@@ -70,10 +68,8 @@ public class RandomDoubleForRandomIntegerInspection
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
-      final PsiIdentifier name =
-        (PsiIdentifier)descriptor.getPsiElement();
+    public void doFix(Project project, ProblemDescriptor descriptor) {
+      final PsiIdentifier name = (PsiIdentifier)descriptor.getPsiElement();
       final PsiReferenceExpression expression =
         (PsiReferenceExpression)name.getParent();
       if (expression == null) {
@@ -84,9 +80,7 @@ public class RandomDoubleForRandomIntegerInspection
       if (qualifier == null) {
         return;
       }
-      final String qualifierText = qualifier.getText();
-      final PsiBinaryExpression multiplication =
-        (PsiBinaryExpression)getContainingExpression(call);
+      final PsiBinaryExpression multiplication = (PsiBinaryExpression)getContainingExpression(call);
       if (multiplication == null) {
         return;
       }
@@ -94,23 +88,13 @@ public class RandomDoubleForRandomIntegerInspection
       if (cast == null) {
         return;
       }
-      CommentTracker commentTracker = new CommentTracker();
-      final PsiExpression multiplierExpression;
       final PsiExpression lhs = multiplication.getLOperand();
-      final PsiExpression strippedLhs =
-        ParenthesesUtils.stripParentheses(lhs);
-      if (call.equals(strippedLhs)) {
-        multiplierExpression = multiplication.getROperand();
-      }
-      else {
-        multiplierExpression = lhs;
-      }
+      final PsiExpression strippedLhs = ParenthesesUtils.stripParentheses(lhs);
+      final PsiExpression multiplierExpression = call.equals(strippedLhs) ? multiplication.getROperand() : lhs;
       assert multiplierExpression != null;
-      final String multiplierText = commentTracker.markUnchanged(multiplierExpression).getText();
-      @NonNls final String nextInt = ".nextInt((int) ";
-      commentTracker.markUnchanged(qualifier);
-      PsiReplacementUtil.replaceExpression(cast, qualifierText + nextInt + multiplierText +
-                                                 ')', commentTracker);
+      CommentTracker commentTracker = new CommentTracker();
+      final String multiplierText = commentTracker.text(multiplierExpression);
+      PsiReplacementUtil.replaceExpression(cast, commentTracker.text(qualifier) + ".nextInt((int) " + multiplierText + ')', commentTracker);
     }
   }
 

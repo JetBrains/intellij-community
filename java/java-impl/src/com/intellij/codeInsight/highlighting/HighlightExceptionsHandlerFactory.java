@@ -56,7 +56,7 @@ public class HighlightExceptionsHandlerFactory extends HighlightUsagesHandlerFac
     if (tryBlock == null) return null;
 
     Collection<PsiClassType> unhandled = ExceptionUtil.collectUnhandledExceptions(tryBlock, tryBlock);
-    PsiClassType[] types = unhandled.toArray(new PsiClassType[unhandled.size()]);
+    PsiClassType[] types = unhandled.toArray(PsiClassType.EMPTY_ARRAY);
     return new HighlightExceptionsHandler(editor, file, target, types, tryBlock, null, Conditions.alwaysTrue());
   }
 
@@ -98,7 +98,7 @@ public class HighlightExceptionsHandlerFactory extends HighlightUsagesHandlerFac
     if (body == null) return null;
 
     Collection<PsiClassType> unhandled = ExceptionUtil.collectUnhandledExceptions(body, body);
-    PsiClassType[] types = unhandled.toArray(new PsiClassType[unhandled.size()]);
+    PsiClassType[] types = unhandled.toArray(PsiClassType.EMPTY_ARRAY);
     return new HighlightExceptionsHandler(editor, file, target, types, body, null, Conditions.alwaysTrue());
   }
 }

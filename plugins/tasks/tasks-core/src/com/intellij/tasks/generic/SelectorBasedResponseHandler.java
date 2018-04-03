@@ -199,7 +199,7 @@ public abstract class SelectorBasedResponseHandler extends ResponseHandler {
       }
       result.add(task);
     }
-    return result.toArray(new Task[result.size()]);
+    return result.toArray(Task.EMPTY_ARRAY);
   }
 
   @Nullable

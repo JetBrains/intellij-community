@@ -24,6 +24,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.HashSet;
 
 /**
  * @author peter
@@ -67,7 +68,7 @@ public class PathInternerTest extends TestCase {
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   public static void main(String[] args) throws IOException {
-    final HashSet<String> hs = new HashSet<>();
+    final java.util.HashSet<String> hs = new java.util.HashSet<>();
     FileUtil.processFilesRecursively(new File(PathManager.getHomePath()), file -> {
       hs.add(file.getPath());
       return true;
@@ -115,7 +116,7 @@ public class PathInternerTest extends TestCase {
     }
   }
 
-  private static void checkTrove(HashSet<String> hs, THashSet<String> thm) {
+  private static void checkTrove(java.util.HashSet<String> hs, THashSet<String> thm) {
     for (String s : hs) {
       if (!thm.contains(new String(s))) {
         throw new AssertionError();

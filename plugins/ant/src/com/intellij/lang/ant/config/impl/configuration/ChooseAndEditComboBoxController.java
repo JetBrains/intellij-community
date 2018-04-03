@@ -19,7 +19,7 @@ import com.intellij.ui.SortedComboBoxModel;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;

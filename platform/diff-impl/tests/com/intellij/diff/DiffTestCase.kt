@@ -25,7 +25,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.LocalFilePath
 import com.intellij.testFramework.UsefulTestCase
-import com.intellij.util.containers.HashMap
 import com.intellij.util.text.CharSequenceSubSequence
 import junit.framework.ComparisonFailure
 import junit.framework.TestCase

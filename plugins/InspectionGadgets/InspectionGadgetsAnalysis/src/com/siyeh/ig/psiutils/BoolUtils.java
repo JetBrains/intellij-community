@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,7 +89,7 @@ public class BoolUtils {
     if (expression instanceof PsiConditionalExpression) {
       final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)expression;
       final boolean needParenthesis = ParenthesesUtils.getPrecedence(conditionalExpression) >= precedence;
-      final String text = tracker.markUnchanged(conditionalExpression.getCondition()).getText() +
+      final String text = tracker.text(conditionalExpression.getCondition()) +
                           '?' + getNegatedExpressionText(conditionalExpression.getThenExpression(), tracker) +
                           ':' + getNegatedExpressionText(conditionalExpression.getElseExpression(), tracker);
       return needParenthesis ? "(" + text + ")" : text;
@@ -125,7 +125,7 @@ public class BoolUtils {
               result.append(negatedComparison);
             }
           }
-          result.append(tracker.markUnchanged(operand).getText());
+          result.append(tracker.text(operand));
         }
         return result.toString();
       }
@@ -144,7 +144,7 @@ public class BoolUtils {
           if (child instanceof PsiExpression) {
             return getNegatedExpressionText((PsiExpression)child, newPrecedence, tracker);
           }
-          return child instanceof PsiJavaToken ? targetToken : tracker.markUnchanged(child).getText();
+          return child instanceof PsiJavaToken ? targetToken : tracker.text(child);
         };
         final String join = StringUtil.join(polyadicExpression.getChildren(), replacer, "");
         return (newPrecedence > precedence) ? '(' + join + ')' : join;

@@ -39,7 +39,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 

@@ -55,7 +55,7 @@ public class CommonShortcuts {
       if (isCtrlEnter(shortcut)) continue;
       shortcuts.add(shortcut);
     }
-    return new CustomShortcutSet(shortcuts.toArray(new Shortcut[shortcuts.size()]));
+    return new CustomShortcutSet(shortcuts.toArray(Shortcut.EMPTY_ARRAY));
   }
 
   private static boolean isCtrlEnter(Shortcut shortcut) {

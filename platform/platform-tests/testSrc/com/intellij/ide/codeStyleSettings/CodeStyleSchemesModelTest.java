@@ -39,7 +39,7 @@ public class CodeStyleSchemesModelTest extends CodeStyleTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
-      for (CodeStyleScheme scheme : myModel.getSchemes().toArray(new CodeStyleScheme[myModel.getSchemes().size()])) {
+      for (CodeStyleScheme scheme : myModel.getSchemes().toArray(new CodeStyleScheme[0])) {
         if (myModel.canDeleteScheme(scheme)) {
           myModel.removeScheme(scheme);
         }

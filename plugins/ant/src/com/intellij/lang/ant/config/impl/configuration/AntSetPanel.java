@@ -29,7 +29,6 @@ import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBSplitter;
 import com.intellij.util.config.AbstractProperty;
-import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 

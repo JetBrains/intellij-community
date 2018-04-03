@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,11 +95,11 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
       final PsiElement[] children = block.getChildren();
       for (int i = 1; i < children.length - 1; i++) {
         //skip the braces
-        newStatement.append(tracker.markUnchanged(children[i]).getText());
+        newStatement.append(tracker.text(children[i]));
       }
     }
     else {
-      newStatement.append(tracker.markUnchanged(body).getText());
+      newStatement.append(tracker.text(body));
     }
     newStatement.append('}');
     PsiReplacementUtil.replaceStatementAndShortenClassNames(statement, newStatement.toString(), tracker);
@@ -219,7 +219,7 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
       }
       return createVariable(variableName, expression, context);
     }
-    return tracker.markUnchanged(expression).getText();
+    return tracker.text(expression);
   }
 
   private static String createVariable(String variableNameRoot,

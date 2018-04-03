@@ -395,9 +395,6 @@ public class NavBarListener extends WolfTheProblemSolver.ProblemListener
   public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {}
 
   @Override
-  public void beforeEditorTyping(char c, DataContext dataContext) {}
-
-  @Override
   public void beforeChildAddition(@NotNull PsiTreeChangeEvent event) {}
 
   @Override

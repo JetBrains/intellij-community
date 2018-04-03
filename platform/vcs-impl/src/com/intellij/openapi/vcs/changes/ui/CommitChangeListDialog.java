@@ -46,7 +46,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.SplitterWithSecondHideable;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBDimension;

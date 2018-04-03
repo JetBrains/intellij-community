@@ -245,10 +245,12 @@ public class PluginNode implements IdeaPluginDescriptor {
   /**
    * Methods below implement PluginDescriptor and IdeaPluginDescriptor interface
    */
+  @Override
   public PluginId getPluginId() {
     return id;
   }
 
+  @Override
   @Nullable
   public ClassLoader getPluginClassLoader() {
     return null;

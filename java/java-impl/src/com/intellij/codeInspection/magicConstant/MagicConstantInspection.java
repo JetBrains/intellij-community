@@ -380,7 +380,7 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
     }
     if (constants.isEmpty()) return null;
 
-    return constants.toArray(new PsiAnnotationMemberValue[constants.size()]);
+    return constants.toArray(PsiAnnotationMemberValue.EMPTY_ARRAY);
   }
 
   @Nullable
@@ -487,7 +487,7 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
       values.add(expr);
     }
     if (values.isEmpty()) return null;
-    PsiAnnotationMemberValue[] array = values.toArray(new PsiAnnotationMemberValue[values.size()]);
+    PsiAnnotationMemberValue[] array = values.toArray(PsiAnnotationMemberValue.EMPTY_ARRAY);
     return new AllowedValues(array, false);
   }
 

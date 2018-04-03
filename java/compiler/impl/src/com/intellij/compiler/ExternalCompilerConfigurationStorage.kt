@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler
 
 import com.intellij.openapi.components.PersistentStateComponent
@@ -55,6 +53,10 @@ internal class ExternalCompilerConfigurationStorage(private val project: Project
 }
 
 internal fun getFilteredModuleNameList(project: Project, map: Map<String, String>, isExternal: Boolean): List<String> {
+  if (map.isEmpty()) {
+    return emptyList()
+  }
+
   if (!project.isExternalStorageEnabled) {
     return map.keys.toList()
   }

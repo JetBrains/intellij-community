@@ -409,12 +409,7 @@
     </action>
 
     <group id="ToolbarFindGroup">
-      <separator/>
-
-      <reference ref="Find"/>
-      <reference ref="Replace"/>
-
-      <add-to-group group-id="MainToolBar" relative-to-action="$Paste" anchor="after"/>
+      <add-to-group group-id="MainToolBar" relative-to-action="Back" anchor="before"/>
     </group>
 
     <group id="ToolbarRunGroup">

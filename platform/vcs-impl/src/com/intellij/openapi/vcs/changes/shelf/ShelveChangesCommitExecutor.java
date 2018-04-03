@@ -76,7 +76,7 @@ public class ShelveChangesCommitExecutor extends LocalCommitExecutor {
         final ShelvedChangeList list = ShelveChangesManager.getInstance(myProject).shelveChanges(changes, commitMessage, true);
         ShelvedChangesViewManager.getInstance(myProject).activateView(list);
 
-        Change[] changesArray = changes.toArray(new Change[changes.size()]);
+        Change[] changesArray = changes.toArray(new Change[0]);
         // todo better under lock   
         ChangeList changeList = ChangesUtil.getChangeListIfOnlyOne(myProject, changesArray);
         if (changeList instanceof LocalChangeList) {
@@ -91,10 +91,6 @@ public class ShelveChangesCommitExecutor extends LocalCommitExecutor {
         WaitForProgressToShow.runOrInvokeLaterAboveProgress(
           () -> Messages.showErrorDialog(myProject, VcsBundle.message("create.patch.error.title", ex.getMessage()), CommonBundle.getErrorTitle()), ModalityState.NON_MODAL, myProject);
       }
-    }
-
-    @Override
-    public void executionCanceled() {
     }
 
     @Override

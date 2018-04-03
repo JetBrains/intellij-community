@@ -128,7 +128,7 @@ public class GrReflectedMethodImpl extends LightMethodBuilder implements GrRefle
 
     LOG.assertTrue(optionalParams == 0);
 
-    mySkippedParameters = skipped.toArray(new GrParameter[skipped.size()]);
+    mySkippedParameters = skipped.toArray(GrParameter.EMPTY_ARRAY);
   }
 
   private GrLightParameter createLightParameter(GrParameter parameter) {

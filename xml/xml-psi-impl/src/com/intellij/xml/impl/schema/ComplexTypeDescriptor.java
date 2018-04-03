@@ -144,7 +144,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
     addSubstitutionGroups(map, myDocumentDescriptor, new HashSet<>());
     filterAbstractElements(map);
     return map.values().toArray(
-      new XmlElementDescriptor[map.values().size()]
+      XmlElementDescriptor.EMPTY_ARRAY
     );
   }
 
@@ -257,7 +257,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
       }
     };
     processor.startProcessing(myTag);
-    return result.toArray(new XmlAttributeDescriptor[result.size()]);
+    return result.toArray(XmlAttributeDescriptor.EMPTY);
   }
 
   public XmlNSDescriptorImpl getNsDescriptor() {

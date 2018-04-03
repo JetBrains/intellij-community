@@ -16,7 +16,6 @@
 package com.intellij.vcs.log.graph
 
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.containers.HashMap
 import com.intellij.util.containers.MultiMap
 import com.intellij.vcs.log.graph.BaseTestGraphBuilder.SimpleEdge
 import com.intellij.vcs.log.graph.BaseTestGraphBuilder.SimpleNode

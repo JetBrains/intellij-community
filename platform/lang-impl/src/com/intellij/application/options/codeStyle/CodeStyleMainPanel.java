@@ -188,7 +188,7 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
 
   public NewCodeStyleSettingsPanel[] getPanels() {
     final Collection<NewCodeStyleSettingsPanel> panels = mySettingsPanels.values();
-    return panels.toArray(new NewCodeStyleSettingsPanel[panels.size()]);
+    return panels.toArray(new NewCodeStyleSettingsPanel[0]);
   }
 
   public boolean isModified() {

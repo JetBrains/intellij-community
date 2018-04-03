@@ -29,6 +29,8 @@ public interface ImageZoomModel {
 
     void setZoomFactor(double zoomFactor);
 
+    void fitZoomToWindow();
+
     void zoomOut();
 
     void zoomIn();
@@ -55,6 +57,10 @@ public interface ImageZoomModel {
 
         @Override
         public void zoomIn() {
+        }
+
+        @Override
+        public void fitZoomToWindow() {
         }
 
         @Override

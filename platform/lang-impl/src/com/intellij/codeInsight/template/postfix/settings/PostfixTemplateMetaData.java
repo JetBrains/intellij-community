@@ -81,7 +81,7 @@ public final class PostfixTemplateMetaData extends BeforeAfterActionMetaData {
         }
       });
     }
-    return list.toArray(new TextDescriptor[list.size()]);
+    return list.toArray(new TextDescriptor[0]);
   }
 
   @NotNull

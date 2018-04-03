@@ -65,7 +65,7 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
         result.add((PsiAnnotation)child);
       }
     }
-    return result == null ? PsiAnnotation.EMPTY_ARRAY : result.toArray(new PsiAnnotation[result.size()]);
+    return result == null ? PsiAnnotation.EMPTY_ARRAY : result.toArray(PsiAnnotation.EMPTY_ARRAY);
   }
 
   @Override

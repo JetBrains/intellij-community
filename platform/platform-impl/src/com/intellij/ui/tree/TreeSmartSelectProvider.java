@@ -21,9 +21,9 @@ import com.intellij.openapi.ide.SmartSelectProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JTree;
+import javax.swing.*;
 import javax.swing.tree.TreePath;
-import java.awt.Component;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -123,7 +123,7 @@ public class TreeSmartSelectProvider implements SmartSelectProvider<JTree> {
       return true; // visit all descendants
     });
     if (list.isEmpty()) return false; // selection is not changed
-    consumer.accept(list.toArray(new TreePath[list.size()]));
+    consumer.accept(list.toArray(new TreePath[0]));
     return true;
   }
 }

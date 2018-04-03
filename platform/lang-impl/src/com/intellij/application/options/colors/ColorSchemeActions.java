@@ -237,11 +237,6 @@ public abstract class ColorSchemeActions extends AbstractSchemeActions<EditorCol
       return location;
     }
 
-    @Override
-    protected void createDefaultActions() {
-      super.createDefaultActions();
-    }
-
     @Nullable
     @Override
     protected JComponent createCenterPanel() {

@@ -178,7 +178,7 @@ public class NewMappings {
           list.add(vcs);
         }
       }
-      myActiveVcses = list.toArray(new AbstractVcs[list.size()]);
+      myActiveVcses = list.toArray(new AbstractVcs[0]);
     }
   }
 

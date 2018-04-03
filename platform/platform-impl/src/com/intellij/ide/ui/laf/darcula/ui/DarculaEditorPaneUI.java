@@ -33,10 +33,4 @@ public class DarculaEditorPaneUI extends BasicEditorPaneUI {
   public static ComponentUI createUI(JComponent comp) {
     return new DarculaEditorPaneUI(comp);
   }
-
-  @Override
-  protected void installDefaults() {
-    super.installDefaults();
-  }
-
 }

@@ -75,7 +75,7 @@ public class PsiTodoSearchHelperImpl implements PsiTodoSearchHelper {
       }
     }
 
-    return items.toArray(new TodoItem[items.size()]);
+    return items.toArray(new TodoItem[0]);
   }
 
   @NotNull

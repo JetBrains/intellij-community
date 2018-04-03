@@ -947,7 +947,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
 
     protected final void flushDelayedMessages() {
       if (!myDelayedMessages.isEmpty()) {
-        final AntMessage[] messages = myDelayedMessages.toArray(new AntMessage[myDelayedMessages.size()]);
+        final AntMessage[] messages = myDelayedMessages.toArray(new AntMessage[0]);
         myDelayedMessages.clear();
         myTreeView.addMessages(messages);
         myPlainTextView.addMessages(messages);

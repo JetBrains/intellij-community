@@ -52,6 +52,6 @@ public class DetachFacetConversionProcessor extends ConversionProcessor<ModuleSe
 
   private static Element[] getElements(ModuleSettings moduleSettings, String facetName) {
     Collection<? extends Element> elements = moduleSettings.getFacetElements(facetName);
-    return elements.toArray(new Element[elements.size()]);
+    return elements.toArray(new Element[0]);
   }
 }

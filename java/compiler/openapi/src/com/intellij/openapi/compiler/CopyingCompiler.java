@@ -78,7 +78,7 @@ public abstract class CopyingCompiler implements PackagingCompiler{
         );
       }
     }
-    return successfullyProcessed.toArray(new ProcessingItem[successfullyProcessed.size()]);
+    return successfullyProcessed.toArray(ProcessingItem.EMPTY_ARRAY);
   }
 
   @NotNull

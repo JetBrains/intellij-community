@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2017 Bas Leijdekkers
+ * Copyright 2008-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,7 +80,7 @@ public class ExtractParameterAsLocalVariableFix extends InspectionGadgetsFix {
     final JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(project);
     final String variableName = javaCodeStyleManager.suggestUniqueVariableName(parameterName, body, true);
     CommentTracker tracker = new CommentTracker();
-    final String initializerText = (rhs == null) ? parameterName : tracker.markUnchanged(rhs).getText();
+    final String initializerText = (rhs == null) ? parameterName : tracker.text(rhs);
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     PsiDeclarationStatement newStatement = (PsiDeclarationStatement)
       factory.createStatementFromText(parameter.getType().getCanonicalText() + ' ' + variableName + '=' + initializerText + ';', body);

@@ -80,7 +80,7 @@ public abstract class ContentEntryEditingAction extends ToggleAction implements 
         selected.add(file);
       }
     }
-    return selected.toArray(new VirtualFile[selected.size()]);
+    return selected.toArray(VirtualFile.EMPTY_ARRAY);
   }
 
   @Override

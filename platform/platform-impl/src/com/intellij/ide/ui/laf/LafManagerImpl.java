@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf;
 
 import com.intellij.CommonBundle;
@@ -100,8 +98,9 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   public static boolean useIntelliJInsteadOfAqua() {
-    return Registry.is("ide.mac.yosemite.laf") && isIntelliJLafEnabled() && SystemInfo.isJavaVersionAtLeast("1.8") && SystemInfo.isMacOSYosemite;
+    return Registry.is("ide.mac.yosemite.laf") && isIntelliJLafEnabled() && SystemInfo.isMacOSYosemite;
   }
+
   /**
    * Invoked via reflection.
    */
@@ -134,7 +133,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     lafList.add(new DarculaLookAndFeelInfo());
 
-    myLaFs = lafList.toArray(new UIManager.LookAndFeelInfo[lafList.size()]);
+    myLaFs = lafList.toArray(new UIManager.LookAndFeelInfo[0]);
 
     if (!SystemInfo.isMac) {
       // do not sort LaFs on mac - the order is determined as Default, Darcula.
@@ -220,7 +219,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   @Override
-  public void loadState(final Element element) {
+  public void loadState(@NotNull final Element element) {
     String className = null;
     Element lafElement = element.getChild(ELEMENT_LAF);
     if (lafElement != null) {

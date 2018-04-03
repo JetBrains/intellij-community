@@ -291,7 +291,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         LocalInspectionTool e = ((LocalInspectionToolWrapper)tool).getTool();
         locals.add(e);
       });
-      return locals.toArray(new LocalInspectionTool[locals.size()]);
+      return locals.toArray(LocalInspectionTool.EMPTY_ARRAY);
     }
     return new LocalInspectionTool[]{
       new FieldCanBeLocalInspection(),

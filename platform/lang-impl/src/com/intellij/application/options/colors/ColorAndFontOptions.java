@@ -518,7 +518,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     initPluggedDescriptions(descriptions, scheme);
     initScopesDescriptors(descriptions, scheme);
 
-    scheme.setDescriptors(descriptions.toArray(new EditorSchemeAttributeDescriptor[descriptions.size()]));
+    scheme.setDescriptors(descriptions.toArray(new EditorSchemeAttributeDescriptor[0]));
   }
 
   private static void initPluggedDescriptions(@NotNull List<EditorSchemeAttributeDescriptor> descriptions,

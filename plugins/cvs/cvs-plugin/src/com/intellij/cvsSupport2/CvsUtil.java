@@ -840,7 +840,7 @@ public class CvsUtil {
   }
 
   private static class Conflicts {
-    private final Map<String, Conflict> myNameToConflict = new com.intellij.util.containers.HashMap<>();
+    private final Map<String, Conflict> myNameToConflict = new HashMap<>();
 
     @NotNull
     public static Conflicts readFrom(File file) throws IOException {

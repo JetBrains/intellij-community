@@ -38,7 +38,7 @@ import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog;
 import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.DialogManager;
 import git4idea.GitLocalBranch;

@@ -83,7 +83,7 @@ public class PrepareToDeployAction extends AnAction {
     final List<String> successMessages = new ArrayList<>();
 
     final CompilerManager compilerManager = CompilerManager.getInstance(project);
-    compilerManager.make(compilerManager.createModulesCompileScope(pluginModules.toArray(new Module[pluginModules.size()]), true),
+    compilerManager.make(compilerManager.createModulesCompileScope(pluginModules.toArray(Module.EMPTY_ARRAY), true),
                          new CompileStatusNotification() {
                            public void finished(final boolean aborted,
                                                 final int errors,

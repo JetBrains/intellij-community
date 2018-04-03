@@ -24,21 +24,21 @@ import java.security.MessageDigest;
  */
 public final class EKey {
   @NotNull
-  final MethodDescriptor method;
+  final MemberDescriptor member;
   final int dirKey;
   final boolean stable;
   final boolean negated;
 
-  public EKey(@NotNull MethodDescriptor method, Direction direction, boolean stable) {
-    this(method, direction, stable, false);
+  public EKey(@NotNull MemberDescriptor member, Direction direction, boolean stable) {
+    this(member, direction, stable, false);
   }
 
-  EKey(@NotNull MethodDescriptor method, Direction direction, boolean stable, boolean negated) {
-    this(method, direction.asInt(), stable, negated);
+  EKey(@NotNull MemberDescriptor member, Direction direction, boolean stable, boolean negated) {
+    this(member, direction.asInt(), stable, negated);
   }
 
-  EKey(@NotNull MethodDescriptor method, int dirKey, boolean stable, boolean negated) {
-    this.method = method;
+  EKey(@NotNull MemberDescriptor member, int dirKey, boolean stable, boolean negated) {
+    this.member = member;
     this.dirKey = dirKey;
     this.stable = stable;
     this.negated = negated;
@@ -54,13 +54,13 @@ public final class EKey {
     if (stable != key.stable) return false;
     if (negated != key.negated) return false;
     if (dirKey != key.dirKey) return false;
-    if (!method.equals(key.method)) return false;
+    if (!member.equals(key.member)) return false;
     return true;
   }
 
   @Override
   public int hashCode() {
-    int result = method.hashCode();
+    int result = member.hashCode();
     result = 31 * result + dirKey;
     result = 31 * result + (stable ? 1 : 0);
     result = 31 * result + (negated ? 1 : 0);
@@ -68,15 +68,15 @@ public final class EKey {
   }
 
   EKey invertStability() {
-    return new EKey(method, dirKey, !stable, negated);
+    return new EKey(member, dirKey, !stable, negated);
   }
 
   EKey mkStable() {
-    return stable ? this : new EKey(method, dirKey, true, negated);
+    return stable ? this : new EKey(member, dirKey, true, negated);
   }
 
   EKey mkUnstable() {
-    return stable ? new EKey(method, dirKey, false, negated) : this;
+    return stable ? new EKey(member, dirKey, false, negated) : this;
   }
 
   public EKey mkBase() {
@@ -84,16 +84,16 @@ public final class EKey {
   }
 
   EKey withDirection(Direction dir) {
-    return dirKey == dir.asInt() ? this : new EKey(method, dir, stable, false);
+    return dirKey == dir.asInt() ? this : new EKey(member, dir, stable, false);
   }
 
   EKey negate() {
-    return new EKey(method, dirKey, stable, true);
+    return new EKey(member, dirKey, stable, true);
   }
 
   public EKey hashed(MessageDigest md) {
-    HMethod hmethod = method.hashed(md);
-    return hmethod == method ? this : new EKey(hmethod, dirKey, stable, negated);
+    HMember hMember = member.hashed(md);
+    return hMember == member ? this : new EKey(hMember, dirKey, stable, negated);
   }
 
   public Direction getDirection() {
@@ -102,6 +102,6 @@ public final class EKey {
 
   @Override
   public String toString() {
-    return "Key [" + method + "|" + (stable ? "S" : "-") + (negated ? "N" : "-") + "|" + Direction.fromInt(dirKey) + "]";
+    return "Key [" + member + "|" + (stable ? "S" : "-") + (negated ? "N" : "-") + "|" + Direction.fromInt(dirKey) + "]";
   }
 }

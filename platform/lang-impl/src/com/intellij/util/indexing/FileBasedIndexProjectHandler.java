@@ -53,8 +53,6 @@ public class FileBasedIndexProjectHandler implements IndexableFileSet, Disposabl
 
     if (ApplicationManager.getApplication().isInternal()) {
       project.getMessageBus().connect(this).subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
-        @Override
-        public void enteredDumbMode() { }
 
         @Override
         public void exitDumbMode() {
@@ -122,7 +120,7 @@ public class FileBasedIndexProjectHandler implements IndexableFileSet, Disposabl
   @Nullable
   public static DumbModeTask createChangedFilesIndexingTask(final Project project) {
     final FileBasedIndex i = FileBasedIndex.getInstance();
-    if (!(i instanceof FileBasedIndexImpl)) {
+    if (!(i instanceof FileBasedIndexImpl) || !IndexInfrastructure.hasIndices()) {
       return null;
     }
 

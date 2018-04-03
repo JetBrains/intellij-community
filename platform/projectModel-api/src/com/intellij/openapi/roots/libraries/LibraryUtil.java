@@ -26,7 +26,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.intellij.util.text.StringTokenizer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;

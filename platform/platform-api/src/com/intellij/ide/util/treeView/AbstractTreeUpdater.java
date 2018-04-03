@@ -417,7 +417,7 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
   public void reset() {
     TreeUpdatePass[] passes;
     synchronized (this) {
-      passes = myNodeQueue.toArray(new TreeUpdatePass[myNodeQueue.size()]);
+      passes = myNodeQueue.toArray(new TreeUpdatePass[0]);
       myNodeQueue.clear();
     }
     myUpdateQueue.cancelAllUpdates();

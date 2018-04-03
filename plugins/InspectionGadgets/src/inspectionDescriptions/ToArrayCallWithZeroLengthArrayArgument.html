@@ -8,10 +8,10 @@ There are two styles to convert collection to array: either using a pre-sized ar
   call which is necessary to create an array of proper size was quite slow.
   However since late updates of OpenJDK 6 this call was intrinsified making
   the performance of the empty array version the same and sometimes even better, comparing
-  to the pre-sized version. Also passing pre-sized array is dangerous for concurrent or
+  to the pre-sized version. Also passing pre-sized array is dangerous for a concurrent or
   synchronized collection as data race is possible between the <b>size</b> and <b>toArray</b>
   call which may result in extra nulls at the end of the array if the collection was concurrently
-  shrinked during the operation.
+  shrunk during the operation.
 </p>
 <p>
   This inspection allows to follow the uniform style: either using an empty array

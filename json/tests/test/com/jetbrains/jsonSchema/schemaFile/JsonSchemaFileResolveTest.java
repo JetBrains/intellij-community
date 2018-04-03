@@ -4,7 +4,6 @@
 package com.jetbrains.jsonSchema.schemaFile;
 
 import com.intellij.openapi.vfs.VfsUtilCore;
-
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;

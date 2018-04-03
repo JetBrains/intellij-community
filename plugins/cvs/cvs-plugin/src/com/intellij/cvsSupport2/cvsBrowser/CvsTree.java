@@ -104,7 +104,7 @@ public class CvsTree extends JPanel implements CvsTabbedWindow.DeactivateListene
         selection.add(cvsElement);
       }
     }
-    myCurrentSelection = selection.toArray(new CvsElement[selection.size()]);
+    myCurrentSelection = selection.toArray(new CvsElement[0]);
     mySelectionObservable.notifyObservers(SELECTION_CHANGED);
   }
 

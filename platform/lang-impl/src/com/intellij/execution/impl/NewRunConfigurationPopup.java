@@ -58,11 +58,6 @@ public class NewRunConfigurationPopup {
       }
 
       @Override
-      public boolean canBeHidden(ConfigurationType value) {
-        return true;
-      }
-
-      @Override
       public Icon getIconFor(final ConfigurationType type) {
         return type != null ? type.getIcon() : EmptyIcon.ICON_16;
       }

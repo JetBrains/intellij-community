@@ -132,7 +132,7 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
       }
 
       final ProblemDescriptor descriptor = manager.createProblemDescriptor(refMethod.getElement().getNavigationElement(), message, false,
-                                                                           fixes.toArray(new LocalQuickFix[fixes.size()]),
+                                                                           fixes.toArray(LocalQuickFix.EMPTY_ARRAY),
                                                                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
       return new ProblemDescriptor[]{descriptor};
     }
@@ -332,7 +332,7 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
 
     private void deleteHierarchy(RefMethod refMethod, List<PsiElement> result) {
       Collection<RefMethod> derivedMethods = refMethod.getDerivedMethods();
-      RefMethod[] refMethods = derivedMethods.toArray(new RefMethod[derivedMethods.size()]);
+      RefMethod[] refMethods = derivedMethods.toArray(new RefMethod[0]);
       for (RefMethod refDerived : refMethods) {
         deleteMethod(refDerived, result);
       }

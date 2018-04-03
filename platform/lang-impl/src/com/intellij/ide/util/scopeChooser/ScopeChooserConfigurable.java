@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.intellij.ide.util.scopeChooser;
@@ -21,7 +21,7 @@ import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.IconUtil;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.xmlb.annotations.XCollection;
@@ -185,8 +185,8 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
         sharedScopes.add(namedScope);
       }
     }
-    myLocalScopesManager.setScopes(localScopes.toArray(new NamedScope[localScopes.size()]));
-    mySharedScopesManager.setScopes(sharedScopes.toArray(new NamedScope[sharedScopes.size()]));
+    myLocalScopesManager.setScopes(localScopes.toArray(new NamedScope[0]));
+    mySharedScopesManager.setScopes(sharedScopes.toArray(new NamedScope[0]));
   }
 
   private void loadStateOrder() {
@@ -236,11 +236,6 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     new TreeSpeedSearch(myTree, treePath -> ((MyNode)treePath.getLastPathComponent()).getDisplayName(), true);
 
     myTree.getEmptyText().setText(IdeBundle.message("scopes.no.scoped"));
-  }
-
-  @Override
-  protected void processRemovedItems() {
-    //do nothing
   }
 
   @Override
@@ -413,7 +408,6 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
       return 0;
     }
   }
-
 
   private class MyMoveAction extends AnAction {
     private final int myDirection;

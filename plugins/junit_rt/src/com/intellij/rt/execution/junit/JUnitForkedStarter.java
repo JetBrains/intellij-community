@@ -30,7 +30,7 @@ public class JUnitForkedStarter {
       }
       argList.add(args[i]);
     }
-    args = (String[])argList.toArray(new String[argList.size()]);
+    args = (String[])argList.toArray(new String[0]);
     final String[] childTestDescription = {args[0]};
     final String argentName = args[1];
     final ArrayList listeners = new ArrayList();

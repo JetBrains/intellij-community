@@ -17,7 +17,7 @@ package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.IntelliJLaf;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;

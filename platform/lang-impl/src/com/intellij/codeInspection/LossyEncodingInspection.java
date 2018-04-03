@@ -103,7 +103,7 @@ public class LossyEncodingInspection extends LocalInspectionTool {
       checkIfCharactersWillBeLostAfterSave(file, manager, isOnTheFly, text, charset, descriptors);
     }
 
-    return descriptors.toArray(new ProblemDescriptor[descriptors.size()]);
+    return descriptors.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
   private static boolean checkFileLoadedInWrongEncoding(@NotNull PsiFile file,

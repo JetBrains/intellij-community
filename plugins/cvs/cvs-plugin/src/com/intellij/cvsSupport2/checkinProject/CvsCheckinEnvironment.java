@@ -88,7 +88,7 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
                                    @NotNull NullableFunction<Object, Object> parametersHolder,
                                    Set<String> feedback) {
     final Collection<FilePath> filesList = ChangesUtil.getPaths(changes);
-    FilePath[] files = filesList.toArray(new FilePath[filesList.size()]);
+    FilePath[] files = filesList.toArray(new FilePath[0]);
     final CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
     executor.setShowErrors(false);
 

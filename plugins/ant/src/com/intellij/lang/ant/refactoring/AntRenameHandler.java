@@ -51,11 +51,7 @@ public final class AntRenameHandler extends PsiElementRenameHandler {
     }
   }
 
-  public void invoke(@NotNull final Project project, @NotNull final PsiElement[] elements, final DataContext dataContext) {
-    super.invoke(project, elements, dataContext);
-  }
-
-  @Nullable 
+  @Nullable
   private static PsiElement[] getElements(DataContext dataContext) {
     final PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(dataContext);
     if (!(psiFile instanceof XmlFile && AntDomFileDescription.isAntFile((XmlFile)psiFile))) {

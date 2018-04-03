@@ -157,7 +157,7 @@ public class LabelPainter {
 
     for (RefGroup group : refGroups) {
       List<Color> colors = group.getColors();
-      LabelIcon labelIcon = new LabelIcon(height, background, colors.toArray(new Color[colors.size()]));
+      LabelIcon labelIcon = new LabelIcon(height, background, colors.toArray(new Color[0]));
       int newWidth = width + labelIcon.getIconWidth() + (group != ContainerUtil.getLastItem(refGroups) ? COMPACT_MIDDLE_PADDING : 0);
 
       String text = shortenRefName(group.getName(), fontMetrics, availableWidth - newWidth);
@@ -191,7 +191,7 @@ public class LabelPainter {
       }
 
       List<Color> colors = group.getColors();
-      LabelIcon labelIcon = new LabelIcon(height, background, colors.toArray(new Color[colors.size()]));
+      LabelIcon labelIcon = new LabelIcon(height, background, colors.toArray(new Color[0]));
       int newWidth = width + labelIcon.getIconWidth() + (i != refGroups.size() - 1 ? MIDDLE_PADDING : 0);
 
       String text = getGroupText(group, fontMetrics, availableWidth - newWidth - doNotFitWidth);
@@ -234,7 +234,7 @@ public class LabelPainter {
       }
     }
 
-    return result.toArray(new Color[result.size()]);
+    return result.toArray(new Color[0]);
   }
 
   @NotNull

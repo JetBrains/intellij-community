@@ -39,7 +39,7 @@ import com.intellij.util.NullableFunction;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -199,7 +199,7 @@ public class GroovyMarkerTypes {
 
         Set<PsiMethod> superMethods = collectSuperMethods(method);
         if (superMethods.isEmpty()) return;
-        PsiElementListNavigator.openTargets(e, superMethods.toArray(new NavigatablePsiElement[superMethods.size()]),
+        PsiElementListNavigator.openTargets(e, superMethods.toArray(new NavigatablePsiElement[0]),
                     DaemonBundle.message("navigation.title.super.method", method.getName()),
                     DaemonBundle.message("navigation.findUsages.title.super.method", method.getName()),
                     new MethodCellRenderer(true));

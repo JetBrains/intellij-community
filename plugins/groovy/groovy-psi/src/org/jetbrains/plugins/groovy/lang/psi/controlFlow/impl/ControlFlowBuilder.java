@@ -150,7 +150,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     checkPending(end); //collect return edges
 
 
-    return assertValidPsi(myInstructions.toArray(new Instruction[myInstructions.size()]));
+    return assertValidPsi(myInstructions.toArray(new Instruction[0]));
   }
 
   public static Instruction[] assertValidPsi(Instruction[] instructions) {

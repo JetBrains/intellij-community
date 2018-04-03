@@ -111,6 +111,6 @@ public class AntMultiPathStringConverter extends Converter<List<File>> implement
       }
     }
 
-    return result.toArray(new PsiReference[result.size()]);
+    return result.toArray(PsiReference.EMPTY_ARRAY);
   }
 }

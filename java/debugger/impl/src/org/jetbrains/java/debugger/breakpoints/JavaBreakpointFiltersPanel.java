@@ -261,21 +261,21 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
   }
 
   private static String concatWithEx(List<String> s, String concator, int N, String NthConcator) {
-    String result = "";
+    StringBuilder result = new StringBuilder();
     int i = 1;
     for (Iterator iterator = s.iterator(); iterator.hasNext(); i++) {
       String str = (String) iterator.next();
-      result += str;
+      result.append(str);
       if(iterator.hasNext()){
         if(i % N == 0){
-          result += NthConcator;
+          result.append(NthConcator);
         }
         else {
-          result += concator;
+          result.append(concator);
         }
       }
     }
-    return result;
+    return result.toString();
   }
 
   protected ClassFilter createClassConditionFilter() {

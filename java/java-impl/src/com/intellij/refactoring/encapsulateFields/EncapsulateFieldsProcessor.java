@@ -36,7 +36,7 @@ import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -258,7 +258,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
         }
       }
     }
-    EncapsulateFieldUsageInfo[] usageInfos = array.toArray(new EncapsulateFieldUsageInfo[array.size()]);
+    EncapsulateFieldUsageInfo[] usageInfos = array.toArray(new EncapsulateFieldUsageInfo[0]);
     return UsageViewUtil.removeDuplicatedUsages(usageInfos);
   }
 
@@ -338,7 +338,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
 
     for (List<EncapsulateFieldUsageInfo> usageInfos : usagesInFiles.values()) {
       //this is to avoid elements to become invalid as a result of processUsage
-      final EncapsulateFieldUsageInfo[] infos = usageInfos.toArray(new EncapsulateFieldUsageInfo[usageInfos.size()]);
+      final EncapsulateFieldUsageInfo[] infos = usageInfos.toArray(new EncapsulateFieldUsageInfo[0]);
       CommonRefactoringUtil.sortDepthFirstRightLeftOrder(infos);
 
       for (EncapsulateFieldUsageInfo info : infos) {

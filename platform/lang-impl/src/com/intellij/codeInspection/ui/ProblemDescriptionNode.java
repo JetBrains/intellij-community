@@ -21,8 +21,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.IntSupplier;
 
-import static com.intellij.codeInspection.ProblemDescriptorUtil.TRIM_AT_TREE_END;
-
 /**
  * @author max
  */
@@ -50,7 +48,9 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
     myLevel = descriptor instanceof ProblemDescriptor
               ? profile.getErrorLevel(HighlightDisplayKey.find(shortName), ((ProblemDescriptor)descriptor).getStartElement())
               : profile.getTools(shortName, presentation.getContext().getProject()).getLevel();
-    myLineNumber = myDescriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)myDescriptor).getLineNumber() : (lineNumberCounter == null ? -1 : lineNumberCounter.getAsInt());
+    myLineNumber = myDescriptor instanceof ProblemDescriptor
+                   ? ((ProblemDescriptor)myDescriptor).getLineNumber()
+                   : lineNumberCounter == null ? -1 : lineNumberCounter.getAsInt();
   }
 
   @Nullable
@@ -81,11 +81,13 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
     return getPresentation().getToolWrapper();
   }
 
+  @Override
   @Nullable
   public RefEntity getElement() {
     return myElement;
   }
 
+  @Override
   @Nullable
   public CommonProblemDescriptor getDescriptor() {
     return myDescriptor;
@@ -130,7 +132,7 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
     return getPresentation().isExcluded(getDescriptor());
   }
 
-  private final static WeakStringInterner NAME_INTERNER = new WeakStringInterner();
+  private static final WeakStringInterner NAME_INTERNER = new WeakStringInterner();
 
   @NotNull
   @Override
@@ -139,12 +141,14 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
     if (descriptor == null) return "";
     PsiElement element = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;
 
-    return NAME_INTERNER.intern(XmlStringUtil.stripHtml(ProblemDescriptorUtil.renderDescriptionMessage(descriptor, element, TRIM_AT_TREE_END)));
+    String name = XmlStringUtil.stripHtml(ProblemDescriptorUtil.renderDescriptionMessage(descriptor, element,
+                                                                                         ProblemDescriptorUtil.TRIM_AT_TREE_END));
+    return NAME_INTERNER.intern(name);
   }
 
   @Override
   public boolean isQuickFixAppliedFromView() {
-    return (myDescriptor != null && getPresentation().isProblemResolved(myDescriptor)) && !isAlreadySuppressedFromView();
+    return myDescriptor != null && getPresentation().isProblemResolved(myDescriptor) && !isAlreadySuppressedFromView();
   }
 
   @Nullable

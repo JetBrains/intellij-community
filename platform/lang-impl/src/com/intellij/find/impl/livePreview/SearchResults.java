@@ -22,7 +22,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.FutureResult;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;

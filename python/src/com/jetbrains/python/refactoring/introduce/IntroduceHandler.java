@@ -690,7 +690,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
                                        IntroduceOperation operation,
                                        List<PsiElement> occurrences) {
       super(target, operation.getEditor(), operation.getProject(), "Introduce Variable",
-            occurrences.toArray(new PsiElement[occurrences.size()]), null);
+            occurrences.toArray(PsiElement.EMPTY_ARRAY), null);
       myTarget = target;
     }
 

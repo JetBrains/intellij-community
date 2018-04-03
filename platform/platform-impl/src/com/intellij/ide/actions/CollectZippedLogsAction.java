@@ -26,6 +26,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.settingsSummary.ProblemType;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.io.ZipUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -80,6 +81,9 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
       ZipUtil.addFileOrDirRecursively(zipOutputStream, null, new File(PathManager.getLogPath()), "", null, null);
       settingsTempFile = dumpSettingsToFile(project);
       ZipUtil.addFileToZip(zipOutputStream, settingsTempFile, "settings.txt", null, null);
+      for (File javaErrorLog : getJavaErrorLogs()) {
+        ZipUtil.addFileToZip(zipOutputStream, javaErrorLog, javaErrorLog.getName(), null, null);
+      }
     }
     catch (final IOException exception) {
       //noinspection ResultOfMethodCallIgnored
@@ -93,6 +97,10 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
       }
     }
     return zippedLogsFile;
+  }
+
+  private static File[] getJavaErrorLogs() {
+    return new File(SystemProperties.getUserHome()).listFiles(file -> file.isFile() && file.getName().startsWith("java_error_in"));
   }
 
   @NotNull

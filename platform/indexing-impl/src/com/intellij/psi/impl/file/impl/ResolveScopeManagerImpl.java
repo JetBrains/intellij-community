@@ -172,6 +172,9 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
       if (virtualFile instanceof VirtualFileWindow) {
         return GlobalSearchScope.fileScope(myProject, ((VirtualFileWindow)virtualFile).getDelegate());
       }
+      if ("Scratch".equals(virtualFile.getFileType().getName())) {
+        return GlobalSearchScope.fileScope(myProject, virtualFile);
+      }
       vDirectory = virtualFile.getParent();
     }
 

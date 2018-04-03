@@ -69,7 +69,7 @@ public class CleanupInspectionUtilImpl implements CleanupInspectionUtil {
           for (QuickFix fix : representative.getFixes()) {
             if (fix != null && fix.getClass().isAssignableFrom(myQuickfixClass)) {
               ((BatchQuickFix)fix).applyFix(myProject,
-                  myBatchModeDescriptors.toArray(new ProblemDescriptor[myBatchModeDescriptors.size()]),
+                  myBatchModeDescriptors.toArray(ProblemDescriptor.EMPTY_ARRAY),
                   new ArrayList<>(),
                   null);
               break;

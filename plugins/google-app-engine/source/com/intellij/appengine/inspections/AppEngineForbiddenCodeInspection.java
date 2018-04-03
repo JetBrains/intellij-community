@@ -123,7 +123,7 @@ public class AppEngineForbiddenCodeInspection extends AbstractBaseJavaLocalInspe
         super.visitReferenceElement(reference);
       }
     });
-    return problems.toArray(new ProblemDescriptor[problems.size()]);
+    return problems.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
   private static boolean isNativeMethodAllowed(PsiMethod method) {

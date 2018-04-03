@@ -109,7 +109,7 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix{
 
       @Override
       public PsiExpression[] getParameters() {
-        return args.toArray(new PsiExpression[args.size()]);
+        return args.toArray(PsiExpression.EMPTY_ARRAY);
       }
 
       @Override

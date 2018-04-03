@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.jarRepository;
 
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -60,7 +58,7 @@ public class RemoteRepositoriesConfiguration implements PersistentStateComponent
   }
 
   @Override
-  public void loadState(RemoteRepositoriesConfiguration.State state) {
+  public void loadState(@NotNull RemoteRepositoriesConfiguration.State state) {
     final List<RemoteRepositoryDescription> loaded = new SmartList<>();
     if (state.data != null) {
       for (State.Repo repo : state.data) {

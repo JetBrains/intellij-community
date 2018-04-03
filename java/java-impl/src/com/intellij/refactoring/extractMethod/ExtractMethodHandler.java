@@ -142,7 +142,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
     }
 
     final List<PsiExpression> expressions = IntroduceVariableBase.collectExpressions(file, editor, editor.getCaretModel().getOffset());
-    return expressions.toArray(new PsiElement[expressions.size()]);
+    return expressions.toArray(PsiElement.EMPTY_ARRAY);
   }
 
   private static void invokeOnElements(final Project project, final Editor editor, PsiFile file, PsiElement[] elements) {

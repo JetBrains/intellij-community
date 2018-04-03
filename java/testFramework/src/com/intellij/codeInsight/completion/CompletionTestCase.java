@@ -69,7 +69,7 @@ public abstract class CompletionTestCase extends DaemonAnalyzerTestCase {
       .getEditorForInjectedLanguageNoCommit(myEditor, getFile()), time);
 
     LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(myEditor);
-    myItems = lookup == null ? null : lookup.getItems().toArray(new LookupElement[lookup.getItems().size()]);
+    myItems = lookup == null ? null : lookup.getItems().toArray(LookupElement.EMPTY_ARRAY);
     myPrefix = lookup == null ? "" : lookup.itemPattern(lookup.getItems().get(0));
   }
 

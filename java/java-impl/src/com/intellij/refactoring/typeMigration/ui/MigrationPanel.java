@@ -51,7 +51,7 @@ import com.intellij.usages.TextChunk;
 import com.intellij.usages.UsageInfoToUsageConverter;
 import com.intellij.usages.UsagePresentation;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -317,7 +317,7 @@ public class MigrationPanel extends JPanel implements Disposable {
             collectInfos(usageInfos, (MigrationNode)userObject);
           }
         }
-        return usageInfos.toArray(new TypeMigrationUsageInfo[usageInfos.size()]);
+        return usageInfos.toArray(new TypeMigrationUsageInfo[0]);
       }
       return null;
     }

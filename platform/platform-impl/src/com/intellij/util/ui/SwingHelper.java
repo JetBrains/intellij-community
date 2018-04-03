@@ -101,7 +101,7 @@ public class SwingHelper {
 
   @NotNull
   public static JPanel newVerticalPanel(float childAlignmentX, @NotNull Collection<Component> children) {
-    return newVerticalPanel(childAlignmentX, children.toArray(new Component[children.size()]));
+    return newVerticalPanel(childAlignmentX, children.toArray(new Component[0]));
   }
 
   /**

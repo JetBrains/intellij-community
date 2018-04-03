@@ -164,7 +164,7 @@ public class PyRedeclarationInspection extends PyInspection {
                           PyBundle.message("INSP.redeclared.name", name),
                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                           null,
-                          quickFixes.toArray(new LocalQuickFix[quickFixes.size()]));
+                          quickFixes.toArray(LocalQuickFix.EMPTY_ARRAY));
         }
       }
     }

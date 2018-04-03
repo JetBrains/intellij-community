@@ -166,7 +166,7 @@ public class MavenProjectsManagerWatcher {
             final Document[] copy;
 
             synchronized (myChangedDocuments) {
-              copy = myChangedDocuments.toArray(new Document[myChangedDocuments.size()]);
+              copy = myChangedDocuments.toArray(Document.EMPTY_ARRAY);
               myChangedDocuments.clear();
             }
 

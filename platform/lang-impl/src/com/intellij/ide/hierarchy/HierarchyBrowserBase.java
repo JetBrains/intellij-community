@@ -190,7 +190,7 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
         }
       }
     }
-    return list.toArray(new HierarchyNodeDescriptor[list.size()]);
+    return list.toArray(new HierarchyNodeDescriptor[0]);
   }
 
   @NotNull
@@ -215,7 +215,7 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
         result.add(navigatable);
       }
     }
-    return result.toArray(new Navigatable[result.size()]);
+    return result.toArray(new Navigatable[0]);
   }
 
   private Navigatable getNavigatable(HierarchyNodeDescriptor descriptor) {

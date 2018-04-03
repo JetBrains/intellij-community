@@ -428,7 +428,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     if (listOwner != null) {
       Collections.addAll(params, listOwner.getTypeParameters());
     }
-    return params.toArray(new PsiTypeParameter[params.size()]);
+    return params.toArray(PsiTypeParameter.EMPTY_ARRAY);
   }
 
 

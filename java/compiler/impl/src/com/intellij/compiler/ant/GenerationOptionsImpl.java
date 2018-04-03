@@ -218,7 +218,7 @@ public class GenerationOptionsImpl extends GenerationOptions {
     final Map<ModuleChunk, Chunk<Module>> reverseMap = new HashMap<>();
     for (final Chunk<Module> chunk : chunkGraph.getNodes()) {
       final Set<Module> modules = chunk.getNodes();
-      final ModuleChunk moduleChunk = new ModuleChunk(modules.toArray(new Module[modules.size()]));
+      final ModuleChunk moduleChunk = new ModuleChunk(modules.toArray(Module.EMPTY_ARRAY));
       for (final Module module : modules) {
         if (mainModuleNames.contains(module.getName())) {
           moduleChunk.setMainModule(module);
@@ -253,14 +253,14 @@ public class GenerationOptionsImpl extends GenerationOptions {
       }
     }));
     final Collection<ModuleChunk> nodes = moduleChunkGraph.getNodes();
-    final ModuleChunk[] moduleChunks = nodes.toArray(new ModuleChunk[nodes.size()]);
+    final ModuleChunk[] moduleChunks = nodes.toArray(new ModuleChunk[0]);
     for (ModuleChunk moduleChunk : moduleChunks) {
       final Iterator<ModuleChunk> depsIterator = moduleChunkGraph.getIn(moduleChunk);
       List<ModuleChunk> deps = new ArrayList<>();
       while (depsIterator.hasNext()) {
         deps.add(depsIterator.next());
       }
-      moduleChunk.setDependentChunks(deps.toArray(new ModuleChunk[deps.size()]));
+      moduleChunk.setDependentChunks(deps.toArray(new ModuleChunk[0]));
       ContainerUtil.addAll(myCustomCompilers, moduleChunk.getCustomCompilers());
     }
     Arrays.sort(moduleChunks, new ChunksComparator());
@@ -277,7 +277,7 @@ public class GenerationOptionsImpl extends GenerationOptions {
    * {@inheritDoc}
    */
   public ChunkCustomCompilerExtension[] getCustomCompilers() {
-    ChunkCustomCompilerExtension[] sorted = myCustomCompilers.toArray(new ChunkCustomCompilerExtension[myCustomCompilers.size()]);
+    ChunkCustomCompilerExtension[] sorted = myCustomCompilers.toArray(new ChunkCustomCompilerExtension[0]);
     Arrays.sort(sorted, ChunkCustomCompilerExtension.COMPARATOR);
     return sorted;
   }

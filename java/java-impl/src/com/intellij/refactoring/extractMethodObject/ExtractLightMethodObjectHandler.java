@@ -309,7 +309,7 @@ public class ExtractLightMethodObjectHandler {
     @Override
     public VariableData[] getChosenParameters() {
       final InputVariables inputVariables = myProcessor.getExtractProcessor().getInputVariables();
-      return inputVariables.getInputVariables().toArray(new VariableData[inputVariables.getInputVariables().size()]);
+      return inputVariables.getInputVariables().toArray(new VariableData[0]);
     }
 
     @NotNull

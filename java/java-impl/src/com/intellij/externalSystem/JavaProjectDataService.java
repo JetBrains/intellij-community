@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.externalSystem;
 
@@ -24,10 +12,7 @@ import com.intellij.openapi.externalSystem.service.project.manage.AbstractProjec
 import com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
-import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.pom.java.LanguageLevel;
@@ -35,14 +20,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.List;
 
 /**
  * @author Denis Zhdanov
  * @since 4/15/13 12:09 PM
  */
 public class JavaProjectDataService extends AbstractProjectDataService<JavaProjectData, Project> {
-
   @NotNull
   @Override
   public Key<JavaProjectData> getTargetDataKey() {
@@ -91,7 +74,7 @@ public class JavaProjectDataService extends AbstractProjectDataService<JavaProje
   }
 
   private static void updateSdk(@NotNull final Project project, @NotNull final JavaSdkVersion version) {
-    final Sdk sdk = findJdk(version);
+    Sdk sdk = JavaSdkVersionUtil.findJdkByVersion(version);
     if (sdk == null) return;
 
     ExternalSystemApiUtil.executeProjectChangeAction(new DisposeAwareProjectChange(project) {
@@ -107,23 +90,6 @@ public class JavaProjectDataService extends AbstractProjectDataService<JavaProje
     });
   }
 
-  @Nullable
-  private static Sdk findJdk(@NotNull JavaSdkVersion version) {
-    JavaSdk javaSdk = JavaSdk.getInstance();
-    List<Sdk> javaSdks = ProjectJdkTable.getInstance().getSdksOfType(javaSdk);
-    Sdk candidate = null;
-    for (Sdk sdk : javaSdks) {
-      JavaSdkVersion v = javaSdk.getVersion(sdk);
-      if (v == version) {
-        return sdk;
-      }
-      if (candidate == null && v != null && version.getMaxLanguageLevel().isAtLeast(version.getMaxLanguageLevel())) {
-        candidate = sdk;
-      }
-    }
-    return candidate;
-  }
-
   @SuppressWarnings("MethodMayBeStatic")
   public void setLanguageLevel(@NotNull final LanguageLevel languageLevel, @NotNull Project project) {
     final LanguageLevelProjectExtension languageLevelExtension = LanguageLevelProjectExtension.getInstance(project);
@@ -137,5 +103,4 @@ public class JavaProjectDataService extends AbstractProjectDataService<JavaProje
       }
     });
   }
-  
 }

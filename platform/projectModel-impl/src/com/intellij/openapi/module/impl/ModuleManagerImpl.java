@@ -40,7 +40,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.intellij.util.containers.StringInterner;
 import com.intellij.util.graph.*;
 import com.intellij.util.messages.MessageBus;
@@ -678,7 +678,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
       Module[] cache = myModulesCache;
       if (cache == null) {
         Collection<Module> modules = myModules.values();
-        myModulesCache = cache = modules.toArray(new Module[modules.size()]);
+        myModulesCache = cache = modules.toArray(Module.EMPTY_ARRAY);
       }
       return cache;
     }

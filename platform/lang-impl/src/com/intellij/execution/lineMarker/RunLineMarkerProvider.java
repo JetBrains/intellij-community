@@ -25,6 +25,8 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.editor.markup.MarkupEditorFilter;
+import com.intellij.openapi.editor.markup.MarkupEditorFilterFactory;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
@@ -129,6 +131,12 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor {
             return actionGroup;
           }
         };
+      }
+
+      @NotNull
+      @Override
+      public MarkupEditorFilter getEditorFilter() {
+        return MarkupEditorFilterFactory.createIsNotDiffFilter();
       }
     };
   }

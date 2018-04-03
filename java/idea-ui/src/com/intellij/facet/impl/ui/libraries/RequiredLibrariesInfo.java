@@ -80,7 +80,7 @@ public class RequiredLibrariesInfo {
     if (infos.isEmpty()) {
       return null;
     }
-    return new RequiredClassesNotFoundInfo(ArrayUtil.toStringArray(classes), infos.toArray(new LibraryInfo[infos.size()]));
+    return new RequiredClassesNotFoundInfo(ArrayUtil.toStringArray(classes), infos.toArray(LibraryInfo.EMPTY_ARRAY));
   }
 
   @Nullable

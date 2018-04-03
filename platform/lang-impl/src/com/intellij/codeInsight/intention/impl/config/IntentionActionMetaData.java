@@ -34,7 +34,7 @@ public final class IntentionActionMetaData extends BeforeAfterActionMetaData {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.config.IntentionActionMetaData");
   @NotNull private final IntentionAction myAction;
   @NotNull public final String[] myCategory;
-  private URL myDirURL = null;
+  private URL myDirURL;
   @NonNls private static final String INTENTION_DESCRIPTION_FOLDER = "intentionDescriptions";
 
   public IntentionActionMetaData(@NotNull IntentionAction action,
@@ -49,9 +49,9 @@ public final class IntentionActionMetaData extends BeforeAfterActionMetaData {
 
   public IntentionActionMetaData(@NotNull final IntentionAction action,
                                  @NotNull final String[] category,
-                                 final TextDescriptor description,
-                                 final TextDescriptor[] exampleUsagesBefore,
-                                 final TextDescriptor[] exampleUsagesAfter) {
+                                 @NotNull TextDescriptor description,
+                                 @NotNull TextDescriptor[] exampleUsagesBefore,
+                                 @NotNull TextDescriptor[] exampleUsagesAfter) {
     super(description, exampleUsagesBefore, exampleUsagesAfter);
 
     myAction = action;
@@ -99,6 +99,7 @@ public final class IntentionActionMetaData extends BeforeAfterActionMetaData {
     return myAction;
   }
 
+  @Override
   @NotNull
   protected URL getDirURL() {
     if (myDirURL == null) {

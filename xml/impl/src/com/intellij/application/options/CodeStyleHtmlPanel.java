@@ -26,7 +26,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings;
@@ -309,11 +308,6 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
   @NotNull
   protected FileType getFileType() {
     return StdFileTypes.HTML;
-  }
-
-  @Override
-  protected void prepareForReformat(final PsiFile psiFile) {
-    //psiFile.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, LanguageLevel.HIGHEST);
   }
 
   private static <T extends Enum<T>> void fillEnumCombobox(JComboBox combo, Class<T> enumClass) {

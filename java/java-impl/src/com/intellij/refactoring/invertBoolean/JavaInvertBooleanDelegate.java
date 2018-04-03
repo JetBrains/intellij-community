@@ -30,7 +30,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Query;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.psiutils.BoolUtils;
 import org.jetbrains.annotations.NotNull;

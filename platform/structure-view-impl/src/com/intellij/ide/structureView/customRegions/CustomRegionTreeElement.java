@@ -116,7 +116,7 @@ public class CustomRegionTreeElement implements StructureViewTreeElement {
   @Override
   public TreeElement[] getChildren() {
     if (mySubRegions == null || mySubRegions.isEmpty()) {
-      return myChildElements.toArray(new StructureViewTreeElement[myChildElements.size()]);
+      return myChildElements.toArray(StructureViewTreeElement.EMPTY_ARRAY);
     }
     StructureViewTreeElement[] allElements = new StructureViewTreeElement[myChildElements.size() + mySubRegions.size()];
     int index = 0;

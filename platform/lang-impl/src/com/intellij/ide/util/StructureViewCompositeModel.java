@@ -97,7 +97,7 @@ public class StructureViewCompositeModel extends StructureViewModelBase
       @Override
       public TreeElement[] getChildren() {
         List<TreeElement> elements = children.toList();
-        return elements.toArray(new TreeElement[elements.size()]);
+        return elements.toArray(TreeElement.EMPTY_ARRAY);
       }
     };
   }
@@ -112,7 +112,7 @@ public class StructureViewCompositeModel extends StructureViewModelBase
   @Override
   public Filter[] getFilters() {
     Set<Filter> filters = getModels().flatMap(o -> JBIterable.of(o.getFilters())).toSet();
-    return filters.toArray(new Filter[filters.size()]);
+    return filters.toArray(Filter.EMPTY_ARRAY);
   }
 
   @Override

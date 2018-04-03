@@ -6,9 +6,9 @@ import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.utils.StatisticsUtilKt;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashSet;
 import java.util.Set;
 
 /**

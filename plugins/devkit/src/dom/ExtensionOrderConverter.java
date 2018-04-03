@@ -22,7 +22,7 @@ import com.intellij.psi.util.ReferenceSetBase;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import org.jetbrains.annotations.NotNull;
@@ -227,7 +227,7 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
 
       Map<Extension, String> targetExtensionsWithMarks = filterAndMarkExtensions(extensionsForThisEp, project);
       List<LookupElement> idCompletionVariants = getLookupElements(targetExtensionsWithMarks);
-      return idCompletionVariants.toArray(new LookupElement[idCompletionVariants.size()]);
+      return idCompletionVariants.toArray(LookupElement.EMPTY_ARRAY);
     }
 
     @NotNull

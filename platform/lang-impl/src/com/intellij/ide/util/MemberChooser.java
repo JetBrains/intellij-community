@@ -37,7 +37,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.FactoryMap;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -192,7 +192,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     setOKActionEnabled(myAllowEmptySelection || myElements != null && myElements.length > 0);
 
     if (selectedElements != null) {
-      selectElements(selectedElements.toArray(new ClassMember[selectedElements.size()]));
+      selectElements(selectedElements.toArray(ClassMember.EMPTY_ARRAY));
     }
     if (mySelectedElements == null || mySelectedElements.isEmpty()) {
       expandFirst();
@@ -261,7 +261,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
         selectionPaths.add(new TreePath(((DefaultMutableTreeNode)treeNode).getPath()));
       }
     }
-    final TreePath[] paths = selectionPaths.toArray(new TreePath[selectionPaths.size()]);
+    final TreePath[] paths = selectionPaths.toArray(new TreePath[0]);
     myTree.setSelectionPaths(paths);
 
     if (paths.length > 0) {
@@ -282,7 +282,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     if (getHelpId() != null) {
       actions.add(getHelpAction());
     }
-    return actions.toArray(new Action[actions.size()]);
+    return actions.toArray(new Action[0]);
   }
 
   @Override
@@ -667,7 +667,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     }
 
     if (!toSelect.isEmpty()) {
-      myTree.setSelectionPaths(toSelect.toArray(new TreePath[toSelect.size()]));
+      myTree.setSelectionPaths(toSelect.toArray(new TreePath[0]));
     }
 
     ElementNode leadNode = pair.first;

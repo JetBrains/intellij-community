@@ -138,7 +138,7 @@ public class GroovyStaticTypeCheckVisitor extends GroovyTypeCheckVisitor {
         });
       }
     }
-    registerError(location, description, intentions.toArray(new IntentionAction[intentions.size()]), highlightType);
+    registerError(location, description, intentions.toArray(IntentionAction.EMPTY_ARRAY), highlightType);
   }
 
   protected void registerError(@NotNull final PsiElement location,

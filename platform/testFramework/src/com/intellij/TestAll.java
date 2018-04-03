@@ -140,7 +140,7 @@ public class TestAll implements Test {
         try {
           final Method declaredMethod = loaderClass.getDeclaredMethod("getBaseUrls");
           final List<URL> urls = (List<URL>)declaredMethod.invoke(loader);
-          return getClassRoots(urls.toArray(new URL[urls.size()]));
+          return getClassRoots(urls.toArray(new URL[0]));
         }
         catch (Throwable ignore) {}
       }

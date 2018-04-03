@@ -90,7 +90,7 @@ public class ExtractClosureFromClosureProcessor extends ExtractClosureProcessorB
 
         result.add(new ExternalUsageInfo(element));
       }
-      return result.toArray(new UsageInfo[result.size()]);
+      return result.toArray(UsageInfo.EMPTY_ARRAY);
     }
     return UsageInfo.EMPTY_ARRAY;
   }

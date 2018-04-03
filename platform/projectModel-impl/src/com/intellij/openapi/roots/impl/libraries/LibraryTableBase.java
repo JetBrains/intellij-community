@@ -19,7 +19,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -272,7 +272,7 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
     @Override
     @NotNull
     public Library[] getLibraries() {
-      return myLibraries.toArray(new Library[myLibraries.size()]);
+      return myLibraries.toArray(Library.EMPTY_ARRAY);
     }
 
     private void assertWritable() {

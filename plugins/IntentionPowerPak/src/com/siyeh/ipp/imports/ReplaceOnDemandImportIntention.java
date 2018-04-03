@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Bas Leijdekkers
+ * Copyright 2006-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.siyeh.ipp.imports;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -35,8 +34,7 @@ public class ReplaceOnDemandImportIntention extends Intention {
     return new OnDemandImportPredicate();
   }
 
-  protected void processIntention(@NotNull PsiElement element)
-    throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element) {
     final PsiImportStatementBase importStatementBase = (PsiImportStatementBase)element;
     if (importStatementBase instanceof PsiImportStatement) {
       final PsiImportStatement importStatement = (PsiImportStatement)importStatementBase;
@@ -94,7 +92,7 @@ public class ReplaceOnDemandImportIntention extends Intention {
     }
 
     public PsiClass[] getImportedClasses() {
-      return importedClasses.toArray(new PsiClass[importedClasses.size()]);
+      return importedClasses.toArray(PsiClass.EMPTY_ARRAY);
     }
   }
 

@@ -32,9 +32,7 @@ import com.maddyhome.idea.copyright.CopyrightProfile;
 import com.maddyhome.idea.copyright.pattern.EntityUtil;
 import com.maddyhome.idea.copyright.pattern.VelocityHelper;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -108,13 +106,6 @@ public class CopyrightConfigurable extends NamedConfigurable<CopyrightProfile> {
   @Nls
   public String getDisplayName() {
     return myCopyrightProfile.getName();
-  }
-
-  @Override
-  @Nullable
-  @NonNls
-  public String getHelpTopic() {
-    return null;
   }
 
   @Override

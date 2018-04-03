@@ -94,9 +94,6 @@ public class CodeStyleGenerationConfigurable implements CodeStyleConfigurable {
     return myPanel;
   }
 
-  public void disposeUIResources() {
-  }
-
   public String getDisplayName() {
     return ApplicationBundle.message("title.code.generation");
   }

@@ -116,7 +116,7 @@ public class CreateFromTemplateGroup extends ActionGroup implements DumbAware {
       result.add(new EditFileTemplatesAction(IdeBundle.message("action.edit.file.templates")));
     }
 
-    return result.toArray(new AnAction[result.size()]);
+    return result.toArray(AnAction.EMPTY_ARRAY);
 }
 
   private static AnAction replaceAction(final FileTemplate template) {

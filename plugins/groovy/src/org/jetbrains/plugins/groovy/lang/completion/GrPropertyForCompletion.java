@@ -80,12 +80,6 @@ public class GrPropertyForCompletion extends LightFieldBuilder {
     return visibilityModifier;
   }
 
-  @NotNull
-  @Override
-  public String getName() {
-    return super.getName();
-  }
-
   @Override
   public String toString() {
     return getName();

@@ -104,7 +104,7 @@ public abstract class PsiTypeMapper extends PsiTypeVisitorEx<PsiType> {
 
       substituted.add(mapped);
     }
-    return PsiIntersectionType.createIntersection(false, substituted.toArray(new PsiType[substituted.size()]));
+    return PsiIntersectionType.createIntersection(false, substituted.toArray(PsiType.EMPTY_ARRAY));
   }
 
   @Override

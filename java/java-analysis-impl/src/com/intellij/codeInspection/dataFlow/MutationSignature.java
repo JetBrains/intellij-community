@@ -43,7 +43,10 @@ public class MutationSignature {
    * @return a parsed mutation signature
    * @throws IllegalArgumentException if signature is invalid
    */
-  public static MutationSignature parse(String signature) {
+  public static MutationSignature parse(@NotNull String signature) {
+    if (signature.trim().isEmpty()) {
+      return UNKNOWN;
+    }
     boolean mutatesThis = false;
     boolean[] args = {};
     for (String part : signature.split(",")) {

@@ -203,7 +203,7 @@ public class DependencyResolverImpl implements DependencyResolver {
 
         Set<ComponentArtifactsResult> componentResults = dependencyHandler.createArtifactResolutionQuery()
           .forComponents(components)
-          .withArtifacts(jvmLibrary, artifactTypes.toArray(new Class[artifactTypes.size()]))
+          .withArtifacts(jvmLibrary, artifactTypes.toArray(new Class[0]))
           .execute()
           .getResolvedComponents();
 

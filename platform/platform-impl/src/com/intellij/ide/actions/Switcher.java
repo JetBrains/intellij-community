@@ -101,7 +101,7 @@ public class Switcher extends AnAction implements DumbAware {
       if (shortcut.equals(recentFiles)) continue;
       shortcuts.add(shortcut);
     }
-    TW_SHORTCUT = new CustomShortcutSet(shortcuts.toArray(new Shortcut[shortcuts.size()]));
+    TW_SHORTCUT = new CustomShortcutSet(shortcuts.toArray(Shortcut.EMPTY_ARRAY));
 
     IdeEventQueue.getInstance().addPostprocessor(new IdeEventQueue.EventDispatcher() {
       @Override

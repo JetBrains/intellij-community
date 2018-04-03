@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.openapi.wm;
 
 import com.intellij.openapi.util.ActionCallback;
@@ -149,9 +151,7 @@ public interface ToolWindow extends BusyObject {
    */
   JComponent getComponent();
 
-
   ContentManager getContentManager();
-
 
   void setDefaultState(@Nullable ToolWindowAnchor anchor, @Nullable ToolWindowType type, @Nullable Rectangle floatingBounds);
 

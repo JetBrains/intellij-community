@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -79,7 +78,7 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(@NotNull Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    public void doFix(@NotNull Project project, ProblemDescriptor descriptor) {
       final PsiCallExpression expression = (PsiCallExpression)descriptor.getPsiElement();
       final PsiExpressionList argumentList = expression.getArgumentList();
       if (argumentList == null) {
@@ -125,10 +124,10 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
       if (unboxedType == null) {
         return null;
       }
-      final String text = commentTracker.markUnchanged(unboxedExpression).getText();
+      final String text = commentTracker.text(unboxedExpression);
       if (expressionType.equals(unboxedType)) {
         final PsiElement parent = boxedExpression.getParent();
-        if (parent instanceof PsiExpression && ParenthesesUtils.areParenthesesNeeded(unboxedExpression, (PsiExpression) parent, false)) {
+        if (parent instanceof PsiExpression && ParenthesesUtils.areParenthesesNeeded(unboxedExpression, (PsiExpression)parent, false)) {
           return '(' + text + ')';
         }
         else {

@@ -77,7 +77,7 @@ public class ModuleLibraryTable implements LibraryTable, LibraryTableBase.Modifi
     final ArrayList<Library> result = new ArrayList<>();
     final Iterator<Library> libraryIterator = getLibraryIterator();
     ContainerUtil.addAll(result, libraryIterator);
-    return result.toArray(new Library[result.size()]);
+    return result.toArray(Library.EMPTY_ARRAY);
   }
 
   @NotNull

@@ -181,7 +181,7 @@ public class JavaGenerateMemberCompletionContributor {
         }
       }
 
-      GlobalInspectionContextBase.cleanupElements(context.getProject(), null, elements.toArray(new PsiElement[elements.size()]));
+      GlobalInspectionContextBase.cleanupElements(context.getProject(), null, elements.toArray(PsiElement.EMPTY_ARRAY));
       newInfos.get(0).positionCaret(context.getEditor(), true);
     }
   }

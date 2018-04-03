@@ -32,7 +32,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.FactoryMap;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TIntArrayList;
@@ -151,7 +151,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     int conflictsCount = conflicts.size();
     // Specifics
     if (applicable) {
-      final CandidateInfo[] newConflictsArray = conflicts.toArray(new CandidateInfo[conflicts.size()]);
+      final CandidateInfo[] newConflictsArray = conflicts.toArray(CandidateInfo.EMPTY_ARRAY);
       for (int i = 1; i < conflictsCount; i++) {
         final CandidateInfo method = newConflictsArray[i];
         for (int j = 0; j < i; j++) {

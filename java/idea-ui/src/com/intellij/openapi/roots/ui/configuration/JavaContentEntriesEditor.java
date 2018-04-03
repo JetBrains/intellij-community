@@ -58,7 +58,7 @@ public class JavaContentEntriesEditor extends CommonContentEntriesEditor {
   protected List<ContentEntry> addContentEntries(VirtualFile[] files) {
     List<ContentEntry> contentEntries = super.addContentEntries(files);
     if (!contentEntries.isEmpty()) {
-      final ContentEntry[] contentEntriesArray = contentEntries.toArray(new ContentEntry[contentEntries.size()]);
+      final ContentEntry[] contentEntriesArray = contentEntries.toArray(new ContentEntry[0]);
       addSourceRoots(myProject, contentEntriesArray, () -> addContentEntryPanels(contentEntriesArray));
     }
     return contentEntries;

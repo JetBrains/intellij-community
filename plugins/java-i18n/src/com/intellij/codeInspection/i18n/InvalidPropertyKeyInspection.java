@@ -84,7 +84,7 @@ public class InvalidPropertyKeyInspection extends AbstractBaseJavaLocalInspectio
       }
     }
 
-    return result.isEmpty() ? null : result.toArray(new ProblemDescriptor[result.size()]);
+    return result.isEmpty() ? null : result.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
   @Override
@@ -96,7 +96,7 @@ public class InvalidPropertyKeyInspection extends AbstractBaseJavaLocalInspectio
     if (field instanceof PsiEnumConstant) {
       appendProblems(manager, isOnTheFly, result, ((PsiEnumConstant)field).getArgumentList());
     }
-    return result.isEmpty() ? null : result.toArray(new ProblemDescriptor[result.size()]);
+    return result.isEmpty() ? null : result.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
   private static void appendProblems(InspectionManager manager, boolean isOnTheFly, List<ProblemDescriptor> result, PsiElement element) {

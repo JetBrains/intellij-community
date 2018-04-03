@@ -94,7 +94,4 @@ public class JavacConfigurable implements Configurable{
     myAdditionalOptionsField.setText(myJavacSettings.ADDITIONAL_OPTIONS_STRING);
     myOptionsOverride.setModuleOptionsMap(myJavacSettings.ADDITIONAL_OPTIONS_OVERRIDE);
   }
-
-  public void disposeUIResources() {
-  }
 }

@@ -55,7 +55,7 @@ public class HgProjectSettings implements PersistentStateComponent<HgProjectSett
     return myState;
   }
 
-  public void loadState(State state) {
+  public void loadState(@NotNull State state) {
     myState = state;
     if (state.CHECK_INCOMING_OUTGOING == null) {
       state.CHECK_INCOMING_OUTGOING = state.myCheckIncoming || state.myCheckOutgoing;

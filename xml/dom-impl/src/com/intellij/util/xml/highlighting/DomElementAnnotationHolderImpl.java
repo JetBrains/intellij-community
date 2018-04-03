@@ -139,7 +139,7 @@ public class DomElementAnnotationHolderImpl extends SmartList<DomElementProblemD
         ContainerUtil.addAll(result, localQuickFixes);
       }
     }
-    return result.isEmpty() ? LocalQuickFix.EMPTY_ARRAY : result.toArray(new LocalQuickFix[result.size()]);
+    return result.isEmpty() ? LocalQuickFix.EMPTY_ARRAY : result.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
   public <T extends DomElementProblemDescriptor> T addProblem(final T problemDescriptor) {

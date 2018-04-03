@@ -15,11 +15,11 @@
  */
 package com.jetbrains.python.validation;
 
-import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.ParamHelper;
 
+import java.util.HashSet;
 import java.util.Set;
 
 /**

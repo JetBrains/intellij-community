@@ -59,7 +59,7 @@ public class MoveModuleToGroupTopLevel extends ActionGroup {
     for (String name : topLevelGroupNames) {
       result.add(new MoveModuleToGroup(new ModuleGroup(Collections.singletonList(name))));
     }
-    return result.toArray(new AnAction[result.size()]);
+    return result.toArray(AnAction.EMPTY_ARRAY);
   }
 
   private static Collection<String> getTopLevelGroupNames(ModuleGrouper grouper) {

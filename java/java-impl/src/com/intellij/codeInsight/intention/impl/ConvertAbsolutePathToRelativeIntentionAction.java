@@ -79,9 +79,4 @@ public class ConvertAbsolutePathToRelativeIntentionAction extends BaseIntentionA
   public String getText() {
     return "Convert path to " + (isConvertToRelative() ? "relative" : "absolute");
   }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
 }

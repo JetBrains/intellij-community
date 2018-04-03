@@ -17,7 +17,7 @@ package org.jetbrains.idea.maven.utils.library;
 
 import com.intellij.jarRepository.RepositoryLibraryDefinition;
 import com.intellij.openapi.roots.DependencyScope;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import icons.OpenapiIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

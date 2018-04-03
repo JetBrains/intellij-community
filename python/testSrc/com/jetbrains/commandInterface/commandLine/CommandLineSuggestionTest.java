@@ -16,7 +16,7 @@
 package com.jetbrains.commandInterface.commandLine;
 
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.jetbrains.python.fixtures.PyTestCase;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;

@@ -121,7 +121,7 @@ public final class TodoFileNode extends PsiFileNode implements HighlightedRegion
         super.visitElement(element);
       }
     });
-    return todoItems.toArray(new TodoItem[todoItems.size()]);
+    return todoItems.toArray(new TodoItem[0]);
   }
 
   private Collection<AbstractTreeNode> createGeneralList() {

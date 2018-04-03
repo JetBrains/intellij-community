@@ -136,7 +136,7 @@ public class PyRenameUnresolvedRefQuickFix implements LocalQuickFix {
         items.add(LookupElementBuilder.create(name));
     }
 
-    return items.toArray(new LookupElement[items.size()]);
+    return items.toArray(LookupElement.EMPTY_ARRAY);
   }
 
   private class ReferenceNameExpression extends Expression {

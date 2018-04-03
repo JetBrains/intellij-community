@@ -1,22 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/**
- * @author cdr
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties.structureView;
 
 import com.intellij.lang.properties.IProperty;
@@ -28,10 +10,10 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.intellij.util.containers.SoftFactoryMap;
-import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Property;
+import com.intellij.util.xmlb.annotations.XMap;
 import gnu.trove.TIntLongHashMap;
 import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
@@ -51,7 +33,6 @@ public class PropertiesSeparatorManager implements PersistentStateComponent<Prop
   private PropertiesSeparatorManagerState myUserDefinedSeparators = new PropertiesSeparatorManagerState();
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   private final SoftFactoryMap<ResourceBundleImpl, String> myGuessedSeparators = new SoftFactoryMap<ResourceBundleImpl, String>() {
-    @Nullable
     @Override
     protected String create(ResourceBundleImpl resourceBundle) {
       return guessSeparator(resourceBundle);
@@ -114,7 +95,7 @@ public class PropertiesSeparatorManager implements PersistentStateComponent<Prop
     }
   }
 
-  public void loadState(final PropertiesSeparatorManagerState state) {
+  public void loadState(@NotNull final PropertiesSeparatorManagerState state) {
     myUserDefinedSeparators = state.decode(myProject);
   }
 
@@ -126,12 +107,7 @@ public class PropertiesSeparatorManager implements PersistentStateComponent<Prop
 
   public static class PropertiesSeparatorManagerState {
     @Property(surroundWithTag = false)
-    @MapAnnotation(surroundWithTag = false,
-                   surroundKeyWithTag = false,
-                   surroundValueWithTag = false,
-                   keyAttributeName = "url",
-                   valueAttributeName = "separator",
-                   entryTagName = "file")
+    @XMap(keyAttributeName = "url", valueAttributeName = "separator", entryTagName = "file")
     public Map<String, String> mySeparators = new HashMap<>();
 
     public Map<String, String> getSeparators() {

@@ -1,15 +1,16 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package org.jetbrains.plugins.groovy.transformations
 
 import com.intellij.testFramework.LightProjectDescriptor
 import groovy.transform.CompileStatic
-import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.resolve.GroovyResolveTestCase
 
-import static com.intellij.testFramework.PlatformTestUtil.registerExtension
+import static org.jetbrains.plugins.groovy.util.ThrowingTransformation.disableTransformations
 
 @CompileStatic
 class GrNoTransformationsTest extends GroovyResolveTestCase {
@@ -19,7 +20,7 @@ class GrNoTransformationsTest extends GroovyResolveTestCase {
   @Override
   void setUp() {
     super.setUp()
-    disableTransformations()
+    disableTransformations testRootDisposable
     addSomeClasses()
   }
 
@@ -122,14 +123,5 @@ package foo.bar
 class Hello {}
 class World {}
 '''
-  }
-
-  private void disableTransformations() {
-    registerExtension AstTransformationSupport.EP_NAME, new AstTransformationSupport() {
-      @Override
-      void applyTransformation(@NotNull TransformationContext context) {
-        assert false: "Transformation of $context.codeClass.name was requested. Transformations are not allowed"
-      }
-    }, testRootDisposable
   }
 }

@@ -210,7 +210,7 @@ public class Tool implements SchemeElement {
   }
 
   public FilterInfo[] getOutputFilters() {
-    return myOutputFilters.toArray(new FilterInfo[myOutputFilters.size()]);
+    return myOutputFilters.toArray(new FilterInfo[0]);
   }
 
   public void copyFrom(Tool source) {

@@ -9,7 +9,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 
 import java.util.Map;
 

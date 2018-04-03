@@ -63,9 +63,5 @@ public abstract class BindableConfigurable implements UnnamedConfigurable {
   protected ControlBinder getBinder() {
     return myBinder;
   }
-
-  public void disposeUIResources() {
-
-  }
 }
                                         

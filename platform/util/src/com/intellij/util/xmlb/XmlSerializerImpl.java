@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.JDOMExternalizableStringList;
@@ -73,10 +71,13 @@ public final class XmlSerializerImpl {
         }
         return new CollectionBinding((ParameterizedType)originalType, accessor);
       }
+
+      if (Map.class.isAssignableFrom(aClass) && originalType instanceof ParameterizedType) {
+        //noinspection unchecked
+        return new MapBinding(accessor, (Class<? extends Map>)aClass);
+      }
+
       if (accessor != null) {
-        if (Map.class.isAssignableFrom(aClass) && originalType instanceof ParameterizedType) {
-          return new MapBinding(accessor);
-        }
         if (Element.class.isAssignableFrom(aClass)) {
           return new JDOMElementBinding(accessor);
         }
@@ -258,6 +259,13 @@ public final class XmlSerializerImpl {
       for (Object enumConstant : valueClass.getEnumConstants()) {
         if (enumConstant.toString().equals(value)) {
           deserializedValue = enumConstant;
+        }
+      }
+      if (deserializedValue == null) {
+        for (Object enumConstant : valueClass.getEnumConstants()) {
+          if (enumConstant.toString().equalsIgnoreCase(value)) {
+            deserializedValue = enumConstant;
+          }
         }
       }
       accessor.set(host, deserializedValue);

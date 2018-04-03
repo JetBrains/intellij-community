@@ -143,11 +143,6 @@ public class GroovyTypeParameterInfoHandler implements ParameterInfoHandlerWithT
   }
 
   @Override
-  public boolean tracksParameterIndex() {
-    return false;
-  }
-
-  @Override
   public void updateUI(PsiTypeParameter p, @NotNull ParameterInfoUIContext context) {
     @NonNls StringBuilder buffer = new StringBuilder();
     buffer.append(p.getName());

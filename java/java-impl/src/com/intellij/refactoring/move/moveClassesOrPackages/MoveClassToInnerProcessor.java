@@ -102,7 +102,7 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
       final String newName = myTargetClass.getQualifiedName() + "." + classToMove.getName();
       Collections.addAll(usages, MoveClassesOrPackagesUtil.findUsages(classToMove, mySearchInComments, mySearchInNonJavaFiles, newName));
     }
-    return usages.toArray(new UsageInfo[usages.size()]);
+    return usages.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
   protected boolean preprocessUsages(@NotNull final Ref<UsageInfo[]> refUsages) {
@@ -130,7 +130,7 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
       importStatements.addAll(handler.filterImports(usageList, myProject));
     }
 
-    usages = usageList.toArray(new UsageInfo[usageList.size()]);
+    usages = usageList.toArray(UsageInfo.EMPTY_ARRAY);
 
     saveNonCodeUsages(usages);
     final Map<PsiElement, PsiElement> oldToNewElementsMapping = new HashMap<>();

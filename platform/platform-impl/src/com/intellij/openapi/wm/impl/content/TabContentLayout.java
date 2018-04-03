@@ -45,7 +45,7 @@ class TabContentLayout extends ContentLayout {
   ArrayList<ContentTabLabel> myTabs = new ArrayList<>();
   final Map<Content, ContentTabLabel> myContent2Tabs = new HashMap<>();
 
-  private Map<String, BufferedImage> myCached = new com.intellij.util.containers.HashMap<>();
+  private Map<String, BufferedImage> myCached = new HashMap<>();
 
   private final MoreIcon myMoreIcon = new MoreIcon() {
     protected Rectangle getIconRec() {

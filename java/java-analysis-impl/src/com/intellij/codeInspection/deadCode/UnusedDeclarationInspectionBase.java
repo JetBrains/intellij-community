@@ -46,7 +46,7 @@ import com.intellij.psi.search.PsiNonJavaFileReferenceProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -706,12 +706,12 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     }
 
     private void processDelayedMethods() {
-      RefClass[] instClasses = myInstantiatedClasses.toArray(new RefClass[myInstantiatedClasses.size()]);
+      RefClass[] instClasses = myInstantiatedClasses.toArray(new RefClass[0]);
       for (RefClass refClass : instClasses) {
         if (isClassInstantiated(refClass)) {
           Set<RefMethod> methods = myClassIDtoMethods.get(refClass);
           if (methods != null) {
-            RefMethod[] arMethods = methods.toArray(new RefMethod[methods.size()]);
+            RefMethod[] arMethods = methods.toArray(new RefMethod[0]);
             for (RefMethod arMethod : arMethods) {
               arMethod.accept(this);
             }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -94,20 +93,12 @@ public class MultiplyOrDivideByPowerOfTwoInspection
 
     if (!(rhs instanceof PsiLiteralExpression)) return null;
 
-    commentTracker.markUnchanged(lhs);
-    final String lhsText;
-    if (ParenthesesUtils.getPrecedence(lhs) > ParenthesesUtils.SHIFT_PRECEDENCE) {
-      lhsText = '(' + lhs.getText() + ')';
-    }
-    else {
-      lhsText = lhs.getText();
-    }
+    final String lhsText = commentTracker.text(lhs, ParenthesesUtils.SHIFT_PRECEDENCE);
     String expString = lhsText + operator + ShiftUtils.getLogBaseTwo((PsiLiteralExpression)rhs);
     final PsiElement parent = expression.getParent();
     if (parent instanceof PsiExpression) {
       if (!(parent instanceof PsiParenthesizedExpression) &&
-          ParenthesesUtils.getPrecedence((PsiExpression)parent) <
-          ParenthesesUtils.SHIFT_PRECEDENCE) {
+          ParenthesesUtils.getPrecedence((PsiExpression)parent) < ParenthesesUtils.SHIFT_PRECEDENCE) {
         expString = '(' + expString + ')';
       }
     }
@@ -144,8 +135,7 @@ public class MultiplyOrDivideByPowerOfTwoInspection
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiExpression expression = (PsiExpression)descriptor.getPsiElement();
       CommentTracker commentTracker = new CommentTracker();
       final String newExpression = calculateReplacementShift(expression, commentTracker);

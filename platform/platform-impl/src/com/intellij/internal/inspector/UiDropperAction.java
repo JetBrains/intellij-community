@@ -42,7 +42,7 @@ import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -515,11 +515,6 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
           Component result = super.getTableCellEditorComponent(table, value, isSelected, row, column);
           ((JComponent)result).setBorder(BorderFactory.createLineBorder(JBColor.GRAY, 1));
           return result;
-        }
-
-        @Override
-        public Object getCellEditorValue() {
-          return super.getCellEditorValue();
         }
       });
 

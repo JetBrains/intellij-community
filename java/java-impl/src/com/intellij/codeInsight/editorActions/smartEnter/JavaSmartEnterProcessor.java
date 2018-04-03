@@ -98,7 +98,7 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
     fixers.add(new MissingArrayInitializerBraceFixer());
     fixers.add(new MissingArrayConstructorBracketFixer());
     fixers.add(new EnumFieldFixer());
-    ourFixers = fixers.toArray(new Fixer[fixers.size()]);
+    ourFixers = fixers.toArray(new Fixer[0]);
   }
 
   private int myFirstErrorOffset = Integer.MAX_VALUE;

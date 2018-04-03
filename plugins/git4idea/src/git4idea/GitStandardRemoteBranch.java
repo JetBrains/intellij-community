@@ -70,11 +70,6 @@ public class GitStandardRemoteBranch extends GitRemoteBranch {
     return result;
   }
 
-  @Override
-  public String toString() {
-    return super.toString();
-  }
-
   @NotNull
   @Override
   public String getNameForRemoteOperations() {

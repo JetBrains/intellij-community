@@ -29,8 +29,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.List;
 
-import static com.intellij.psi.PsiJvmConversionHelper.*;
-
 /**
  * Represents a Java class or interface.
  *
@@ -51,6 +49,7 @@ public interface PsiClass
    *
    * @return the qualified name of the class, or null for anonymous and local classes, and for type parameters
    */
+  @Override
   @Nullable
   String getQualifiedName();
 
@@ -103,7 +102,7 @@ public interface PsiClass
    * Returns the list of class types for the interfaces that this class implements.
    *
    * @return the list of extended class types, or an empty list for anonymous classes,
-   *         enums and annotation types
+   * enums and annotation types
    */
   @NotNull
   PsiClassType[] getImplementsListTypes();
@@ -112,7 +111,7 @@ public interface PsiClass
    * Returns the base class of this class.
    *
    * @return the base class. May return null when jdk is not configured, so no java.lang.Object is found,
-   *         or for java.lang.Object itself
+   * or for java.lang.Object itself
    */
   @Nullable
   PsiClass getSuperClass();
@@ -129,7 +128,7 @@ public interface PsiClass
    * Returns the list of classes and interfaces extended or implemented by the class.
    *
    * @return the list of classes or interfaces. May return zero elements when jdk is
-   *         not configured, so no java.lang.Object is found
+   * not configured, so no java.lang.Object is found
    */
   @NotNull
   PsiClass[] getSupers();
@@ -139,16 +138,18 @@ public interface PsiClass
    * implemented by the class.
    *
    * @return the list of class types for the classes or interfaces.
-   *         For the class with no explicit extends list, the returned list always contains at least one element for the java.lang.Object type.
-   *         If psiClass is java.lang.Object, returned list is empty.
+   * For the class with no explicit extends list, the returned list always contains at least one element for the java.lang.Object type.
+   * If psiClass is java.lang.Object, returned list is empty.
    */
-  @NotNull PsiClassType[] getSuperTypes();
+  @NotNull
+  PsiClassType[] getSuperTypes();
 
   /**
    * Returns the list of fields in the class.
    *
    * @return the list of fields.
    */
+  @Override
   @NotNull
   PsiField[] getFields();
 
@@ -157,6 +158,7 @@ public interface PsiClass
    *
    * @return the list of methods.
    */
+  @Override
   @NotNull
   PsiMethod[] getMethods();
 
@@ -173,35 +175,41 @@ public interface PsiClass
    *
    * @return the list of inner classes.
    */
-  @NotNull PsiClass[] getInnerClasses();
+  @Override
+  @NotNull
+  PsiClass[] getInnerClasses();
 
   /**
    * Returns the list of class initializers for the class.
    *
    * @return the list of class initializers.
    */
-  @NotNull PsiClassInitializer[] getInitializers();
+  @NotNull
+  PsiClassInitializer[] getInitializers();
 
   /**
    * Returns the list of fields in the class and all its superclasses.
    *
    * @return the list of fields.
    */
-  @NotNull PsiField[] getAllFields();
+  @NotNull
+  PsiField[] getAllFields();
 
   /**
    * Returns the list of methods in the class and all its superclasses.
    *
    * @return the list of methods.
    */
-  @NotNull PsiMethod[] getAllMethods();
+  @NotNull
+  PsiMethod[] getAllMethods();
 
   /**
    * Returns the list of inner classes for the class and all its superclasses.
    *
    * @return the list of inner classes.
    */
-  @NotNull PsiClass[] getAllInnerClasses();
+  @NotNull
+  PsiClass[] getAllInnerClasses();
 
   /**
    * Searches the class (and optionally its superclasses) for the field with the specified name.
@@ -314,7 +322,7 @@ public interface PsiClass
    * Checks if this class is an inheritor of the specified base class.
    * Only java inheritance rules are considered.
    * Note that {@link com.intellij.psi.search.searches.ClassInheritorsSearch}
-   *  may return classes that are inheritors in broader, e.g. in ejb sense, but not in java sense.
+   * may return classes that are inheritors in broader, e.g. in ejb sense, but not in java sense.
    *
    * @param baseClass the base class to check the inheritance.
    * @param checkDeep if false, only direct inheritance is checked; if true, the base class is
@@ -328,10 +336,10 @@ public interface PsiClass
    * when checking inheritance chain.
    * Only java inheritance rules are considered.
    * Note that {@link com.intellij.psi.search.searches.ClassInheritorsSearch}
-   *  may return classes that are inheritors in broader, e.g. in ejb sense, but not in java sense.
+   * may return classes that are inheritors in broader, e.g. in ejb sense, but not in java sense.
    *
-   * @param baseClass the base class to check the inheritance.
-   *                  searched in the entire inheritance chain
+   * @param baseClass     the base class to check the inheritance.
+   *                      searched in the entire inheritance chain
    * @param classToByPass class to bypass the inheratance check for
    * @return true if the class is an inheritor, false otherwise
    */
@@ -362,18 +370,18 @@ public interface PsiClass
   @NotNull
   @Override
   default JvmClassKind getClassKind() {
-    return getJvmClassKind(this);
+    return PsiJvmConversionHelper.getJvmClassKind(this);
   }
 
   @Nullable
   @Override
   default JvmReferenceType getSuperClassType() {
-    return getClassSuperType(this);
+    return PsiJvmConversionHelper.getClassSuperType(this);
   }
 
   @NotNull
   @Override
   default JvmReferenceType[] getInterfaceTypes() {
-    return getClassInterfaces(this);
+    return PsiJvmConversionHelper.getClassInterfaces(this);
   }
 }

@@ -527,7 +527,7 @@ class InOutInterpreter extends BasicInterpreter {
         case INVOKEINTERFACE:
           boolean stable = opCode == INVOKESTATIC || opCode == INVOKESPECIAL;
           MethodInsnNode mNode = (MethodInsnNode)insn;
-          Method method = new Method(mNode.owner, mNode.name, mNode.desc);
+          Member method = new Member(mNode.owner, mNode.name, mNode.desc);
           Type retType = Type.getReturnType(mNode.desc);
           boolean isRefRetType = retType.getSort() == Type.OBJECT || retType.getSort() == Type.ARRAY;
           if (!Type.VOID_TYPE.equals(retType)) {

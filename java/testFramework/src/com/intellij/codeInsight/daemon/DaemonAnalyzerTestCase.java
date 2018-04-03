@@ -174,7 +174,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
         }
       }
     }
-    return result.toArray(new LocalInspectionTool[result.size()]);
+    return result.toArray(LocalInspectionTool.EMPTY_ARRAY);
   }
 
   protected void doTest(@NonNls @NotNull String filePath, boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings) throws Exception {

@@ -84,10 +84,6 @@ public class JavaAutoImportOptions implements AutoImportOptionsProvider {
     myExcludePackagesTable.reset();
   }
 
-  public void disposeUIResources() {
-
-  }
-
   public void apply() {
     CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
     DaemonCodeAnalyzerSettings daemonSettings = DaemonCodeAnalyzerSettings.getInstance();

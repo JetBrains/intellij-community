@@ -39,9 +39,9 @@ import java.util.List;
 import static com.intellij.diff.util.DiffDrawUtil.lineToY;
 
 public abstract class LineStatusMarkerRenderer {
-  @NotNull protected final LineStatusTrackerBase myTracker;
+  @NotNull protected final LineStatusTrackerBase<?> myTracker;
 
-  public LineStatusMarkerRenderer(@NotNull LineStatusTrackerBase tracker) {
+  public LineStatusMarkerRenderer(@NotNull LineStatusTrackerBase<?> tracker) {
     myTracker = tracker;
   }
 

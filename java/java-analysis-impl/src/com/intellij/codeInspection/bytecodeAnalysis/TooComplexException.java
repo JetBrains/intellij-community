@@ -2,11 +2,11 @@
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 class TooComplexException extends RuntimeException {
-  TooComplexException(Method method, int steps) {
+  TooComplexException(Member method, int steps) {
     super("limit is reached, steps: " + steps + " in method " + method);
   }
 
-  static void check(Method method, int steps) {
+  static void check(Member method, int steps) {
     if(steps >= Analysis.STEPS_LIMIT) {
       throw new TooComplexException(method, steps);
     }

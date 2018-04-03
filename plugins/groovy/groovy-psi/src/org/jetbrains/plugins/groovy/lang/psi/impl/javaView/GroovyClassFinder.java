@@ -48,7 +48,7 @@ public class GroovyClassFinder extends PsiElementFinder {
   @NotNull
   public PsiClass[] findClasses(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
     final Collection<PsiClass> classes = myCache.getClassesByFQName(qualifiedName, scope, true);
-    return classes.isEmpty() ? PsiClass.EMPTY_ARRAY : classes.toArray(new PsiClass[classes.size()]);
+    return classes.isEmpty() ? PsiClass.EMPTY_ARRAY : classes.toArray(PsiClass.EMPTY_ARRAY);
   }
 
 }

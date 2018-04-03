@@ -41,10 +41,10 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-
-import static com.sun.corba.se.spi.extension.RequestPartitioningPolicy.DEFAULT_VALUE;
+import java.util.Map;
 
 /**
  * @author dsl
@@ -177,7 +177,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     }
     ChangeClassSignatureProcessor processor =
       new ChangeClassSignatureProcessor(myClass.getProject(), myClass,
-                                        myTypeParameterInfos.toArray(new TypeParameterInfo[myTypeParameterInfos.size()]));
+                                        myTypeParameterInfos.toArray(new TypeParameterInfo[0]));
     invokeRefactoring(processor);
   }
 

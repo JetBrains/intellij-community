@@ -4,9 +4,9 @@ import com.intellij.lang.ImportOptimizer;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashSet;
 import java.util.Set;
 
 public class MockPlainTextImportOptimizer implements ImportOptimizer {

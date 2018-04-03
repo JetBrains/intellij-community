@@ -459,11 +459,6 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
         }
         return super.prepareEditor(editor, row, column);
       }
-
-      @Override
-      public void editingCanceled(ChangeEvent e) {
-        super.editingCanceled(e);
-      }
     };
 
     myParametersTable.setCellSelectionEnabled(true);

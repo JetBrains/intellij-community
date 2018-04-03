@@ -173,7 +173,7 @@ public class GroovyTypeCheckVisitorHelper {
         if (type != null) fixes.add(new ParameterCastFix(error.first, type));
       }
     }
-    return fixes.toArray(new LocalQuickFix[fixes.size()]);
+    return fixes.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
   @NotNull

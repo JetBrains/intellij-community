@@ -121,7 +121,7 @@ public class CommandMerger {
   void flushCurrentCommand() {
     if (hasActions()) {
       if (!myAdditionalAffectedDocuments.isEmpty()) {
-        DocumentReference[] refs = myAdditionalAffectedDocuments.toArray(new DocumentReference[myAdditionalAffectedDocuments.size()]);
+        DocumentReference[] refs = myAdditionalAffectedDocuments.toArray(DocumentReference.EMPTY_ARRAY);
         myCurrentActions.add(new BasicUndoableAction(refs) {
           @Override
           public void undo() {

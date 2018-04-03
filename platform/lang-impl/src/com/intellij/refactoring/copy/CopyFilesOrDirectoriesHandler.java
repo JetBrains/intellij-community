@@ -17,6 +17,7 @@ package com.intellij.refactoring.copy;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.CopyPasteDelegator;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.PlatformPackageUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -89,7 +90,7 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
 
   @Nullable
   private static PsiDirectory tryNotNullizeDirectory(@NotNull Project project, @Nullable PsiDirectory defaultTargetDirectory) {
-    if (defaultTargetDirectory == null) {
+    if (defaultTargetDirectory == null || ScratchFileService.isInScratchRoot(defaultTargetDirectory.getVirtualFile())) {
       VirtualFile root = ArrayUtil.getFirstElement(ProjectRootManager.getInstance(project).getContentRoots());
       if (root == null) root = project.getBaseDir();
       if (root == null) root = VfsUtil.getUserHomeDir();

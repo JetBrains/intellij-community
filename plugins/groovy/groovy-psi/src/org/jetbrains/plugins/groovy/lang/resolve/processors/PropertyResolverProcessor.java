@@ -49,7 +49,7 @@ public class PropertyResolverProcessor extends ResolverProcessorImpl implements 
         return new GroovyResolveResult[]{candidate};
       }
     }
-    return candidates.toArray(new GroovyResolveResult[candidates.size()]);
+    return candidates.toArray(GroovyResolveResult.EMPTY_ARRAY);
   }
 
   private static boolean isCorrectLocalVarOrParam(GroovyResolveResult last) {

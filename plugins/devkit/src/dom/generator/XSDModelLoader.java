@@ -22,20 +22,20 @@
  */
 package org.jetbrains.idea.devkit.dom.generator;
 
-import org.apache.xerces.xs.*;
-import org.apache.xerces.impl.xs.XSComplexTypeDecl;
-import org.apache.xerces.impl.xs.XSParticleDecl;
-import org.apache.xerces.impl.xs.XSAttributeGroupDecl;
-import org.apache.xerces.impl.xs.XSElementDecl;
-import org.apache.xerces.impl.xs.util.XSObjectListImpl;
 import org.apache.xerces.impl.dv.XSSimpleType;
 import org.apache.xerces.impl.dv.xs.XSSimpleTypeDecl;
+import org.apache.xerces.impl.xs.XSAttributeGroupDecl;
+import org.apache.xerces.impl.xs.XSComplexTypeDecl;
+import org.apache.xerces.impl.xs.XSElementDecl;
+import org.apache.xerces.impl.xs.XSParticleDecl;
+import org.apache.xerces.impl.xs.util.XSObjectListImpl;
 import org.apache.xerces.xni.parser.XMLEntityResolver;
-import org.w3c.dom.bootstrap.DOMImplementationRegistry;
+import org.apache.xerces.xs.*;
 import org.w3c.dom.DOMConfiguration;
-import org.w3c.dom.DOMErrorHandler;
 import org.w3c.dom.DOMError;
+import org.w3c.dom.DOMErrorHandler;
 import org.w3c.dom.TypeInfo;
+import org.w3c.dom.bootstrap.DOMImplementationRegistry;
 
 import javax.xml.namespace.QName;
 import java.io.File;
@@ -632,7 +632,7 @@ public class XSDModelLoader implements ModelLoader {
         }
       }
     }
-    td.supers = supers.toArray(new TypeDesc[supers.size()]);
+    td.supers = supers.toArray(new TypeDesc[0]);
   }
   public static String parseAnnotationString(String title, String str) {
     if (str == null) return null;

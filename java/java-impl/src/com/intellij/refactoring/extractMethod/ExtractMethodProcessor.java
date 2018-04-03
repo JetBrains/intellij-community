@@ -316,7 +316,7 @@ public class ExtractMethodProcessor implements MatchProvider {
                                                                                           elements);
     }
     List<PsiClassType> exceptions = ExceptionUtil.getThrownCheckedExceptions(myElements);
-    myThrownExceptions = exceptions.toArray(new PsiClassType[exceptions.size()]);
+    myThrownExceptions = exceptions.toArray(PsiClassType.EMPTY_ARRAY);
 
     if (container instanceof PsiMethod) {
       checkLocalClasses((PsiMethod) container);
@@ -648,7 +648,7 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   public void setDataFromInputVariables() {
     final List<VariableData> variables = myInputVariables.getInputVariables();
-    myVariableDatum = variables.toArray(new VariableData[variables.size()]);
+    myVariableDatum = variables.toArray(new VariableData[0]);
   }
 
   public PsiExpression[] findOccurrences() {
@@ -663,7 +663,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
     final List<PsiStatement> filter = ContainerUtil.filter(myExitStatements, statement -> statement instanceof PsiReturnStatement && ((PsiReturnStatement)statement).getReturnValue() != null);
     final List<PsiExpression> map = ContainerUtil.map(filter, statement -> ((PsiReturnStatement)statement).getReturnValue());
-    return map.toArray(new PsiExpression[map.size()]);
+    return map.toArray(PsiExpression.EMPTY_ARRAY);
   }
 
   private Nullness initNullness() {
@@ -1962,7 +1962,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   private void showMultipleExitPointsMessage() {
     if (myShowErrorDialogs) {
       HighlightManager highlightManager = HighlightManager.getInstance(myProject);
-      PsiStatement[] exitStatementsArray = myExitStatements.toArray(new PsiStatement[myExitStatements.size()]);
+      PsiStatement[] exitStatementsArray = myExitStatements.toArray(PsiStatement.EMPTY_ARRAY);
       EditorColorsManager manager = EditorColorsManager.getInstance();
       TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
       highlightManager.addOccurrenceHighlights(myEditor, exitStatementsArray, attributes, true, null);

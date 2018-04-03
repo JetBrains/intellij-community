@@ -35,7 +35,7 @@ public class UninitializedReadCollector {
 
   @NotNull
   public PsiExpression[] getUninitializedReads() {
-    return uninitializedReads.toArray(new PsiExpression[uninitializedReads.size()]);
+    return uninitializedReads.toArray(PsiExpression.EMPTY_ARRAY);
   }
 
   public boolean blockAssignsVariable(@Nullable PsiCodeBlock block, @NotNull PsiVariable variable) {

@@ -1,9 +1,9 @@
 class CompoundAssignmentSideEffect {
 
   void m() {
-    createSomeObject(/*1*/)// 2
-    /*3*//*4*/
-    ;
+      createSomeObject(/*1*/);// 2
+      /*3*/
+      /*4*/
   }
 
   X createSomeObject() {

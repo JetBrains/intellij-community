@@ -119,7 +119,7 @@ public abstract class LanguageCodeStyleSettingsProvider {
     for (LanguageCodeStyleSettingsProvider provider : Extensions.getExtensions(EP_NAME)) {
       languages.add(provider.getLanguage());
     }
-    return languages.toArray(new Language[languages.size()]);
+    return languages.toArray(new Language[0]);
   }
 
   @Nullable

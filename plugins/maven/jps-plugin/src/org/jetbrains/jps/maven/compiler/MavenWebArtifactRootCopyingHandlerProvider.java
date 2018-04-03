@@ -254,7 +254,7 @@ public class MavenWebArtifactRootCopyingHandlerProvider extends ArtifactRootCopy
       myFileFilter = new MavenResourceFileFilter(root, myRootConfiguration);
 
       //for additional resource directory 'exclude' means 'exclude from copying' but for the default webapp resource it mean 'exclude from filtering'
-      myMainWebAppRoot = artifactConfiguration.warSourceDirectory.equals(trimEnd(rootConfiguration.directory, "/"));
+      myMainWebAppRoot = FileUtil.pathsEqual(artifactConfiguration.warSourceDirectory, rootConfiguration.directory);
     }
 
     @Override

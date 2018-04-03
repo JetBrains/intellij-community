@@ -96,7 +96,7 @@ abstract class SafeDeleteJavaCalleeChooser extends AbstractJavaMemberCallerChoos
 
   @Override
   protected JavaMemberNode<PsiMember> createTreeNodeFor(PsiMember nodeMethod,
-                                                        com.intellij.util.containers.HashSet<PsiMember> callees,
+                                                        HashSet<PsiMember> callees,
                                                         Runnable cancelCallback) {
     final SafeDeleteJavaMemberNode node = new SafeDeleteJavaMemberNode(nodeMethod, callees, cancelCallback, nodeMethod != null ? nodeMethod.getProject() : myProject);
     if (getTopMember().equals(nodeMethod)) {

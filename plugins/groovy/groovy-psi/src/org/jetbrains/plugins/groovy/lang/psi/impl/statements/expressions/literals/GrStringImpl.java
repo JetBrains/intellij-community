@@ -75,13 +75,13 @@ public class GrStringImpl extends GrAbstractLiteral implements GrString {
   @Override
   public GrStringContent[] getContents() {
     final List<PsiElement> parts = findChildrenByType(GroovyElementTypes.GSTRING_CONTENT);
-    return parts.toArray(new GrStringContent[parts.size()]);
+    return parts.toArray(new GrStringContent[0]);
   }
 
   @Override
   public GroovyPsiElement[] getAllContentParts() {
     final List<PsiElement> result = findChildrenByType(TokenSets.GSTRING_CONTENT_PARTS);
-    return result.toArray(new GroovyPsiElement[result.size()]);
+    return result.toArray(GroovyPsiElement.EMPTY_ARRAY);
   }
 
   @Override

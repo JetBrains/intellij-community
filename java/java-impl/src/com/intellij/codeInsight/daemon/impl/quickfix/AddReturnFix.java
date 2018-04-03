@@ -139,7 +139,7 @@ public class AddReturnFix implements IntentionAction {
     }
     PsiParameter[] parameters = method.getParameterList().getParameters();
     ContainerUtil.addAll(variables, parameters);
-    return variables.toArray(new PsiVariable[variables.size()]);
+    return variables.toArray(new PsiVariable[0]);
   }
 
   @Override

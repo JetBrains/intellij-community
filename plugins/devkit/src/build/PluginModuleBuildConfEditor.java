@@ -138,9 +138,4 @@ public class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
   public String getHelpTopic() {
     return "plugin.configuring";
   }
-
-  @Override
-  public void moduleStateChanged() {
-  }
-
 }

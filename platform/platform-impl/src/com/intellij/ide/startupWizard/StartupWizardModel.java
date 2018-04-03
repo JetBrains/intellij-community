@@ -25,7 +25,7 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.ui.wizard.WizardModel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Nullable;
 

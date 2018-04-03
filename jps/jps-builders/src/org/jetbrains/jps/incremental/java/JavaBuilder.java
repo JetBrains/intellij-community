@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.java;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -217,9 +215,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
         return true;
       });
 
-
       int javaModulesCount = 0;
-      if ((!filesToCompile.isEmpty() || dirtyFilesHolder.hasRemovedFiles()) && getTargetPlatformLanguageVersion(chunk.representativeTarget().getModule()) >= 9) {
+      if ((!filesToCompile.isEmpty() || dirtyFilesHolder.hasRemovedFiles()) &&
+          getTargetPlatformLanguageVersion(chunk.representativeTarget().getModule()) >= 9) {
         for (ModuleBuildTarget target : chunk.getTargets()) {
           if (JavaBuilderUtil.findModuleInfoFile(context, target) != null) {
             javaModulesCount++;
@@ -362,7 +360,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
                               DiagnosticOutputConsumer diagnosticSink,
                               OutputFileConsumer outputSink,
                               JavaCompilingTool compilingTool,
-                              boolean hasModules) throws Exception {
+                              boolean hasModules) {
     final Semaphore counter = new Semaphore();
     COUNTER_KEY.set(context, counter);
 
@@ -895,79 +893,78 @@ public class JavaBuilder extends ModuleLevelBuilder {
       context.getProjectDescriptor().getProject()
     );
 
-    final String langLevel = getLanguageLevel(chunk.getModules().iterator().next());
+    final int languageLevel = getLanguageLevel(chunk.representativeTarget().getModule());
     final int chunkSdkVersion = getChunkSdkVersion(chunk);
 
-    String bytecodeTarget = null;
+    int bytecodeTarget = 0;
     for (JpsModule module : chunk.getModules()) {
-      final String moduleTarget = compilerConfiguration.getByteCodeTargetLevel(module.getName());
-      if (moduleTarget == null) {
-        continue;
-      }
-      if (bytecodeTarget == null) {
+      // use the lower possible target among modules that form the chunk
+      final int moduleTarget = JpsJavaSdkType.parseVersion(compilerConfiguration.getByteCodeTargetLevel(module.getName()));
+      if (moduleTarget > 0 && (bytecodeTarget == 0 || moduleTarget < bytecodeTarget)) {
         bytecodeTarget = moduleTarget;
       }
-      else {
-        if (moduleTarget.compareTo(bytecodeTarget) < 0) {
-          bytecodeTarget = moduleTarget; // use the lower possible target among modules that form the chunk
-        }
-      }
     }
-
-    if (bytecodeTarget == null) {
-      if (!StringUtil.isEmpty(langLevel)) {
+    if (bytecodeTarget == 0) {
+      if (languageLevel > 0) {
         // according to IDEA rule: if not specified explicitly, set target to be the same as source language level
-        bytecodeTarget = langLevel;
+        bytecodeTarget = languageLevel;
       }
       else {
         // last resort and backward compatibility:
         // check if user explicitly defined bytecode target in additional compiler options
-        bytecodeTarget = USER_DEFINED_BYTECODE_TARGET.get(context);
+        String value = USER_DEFINED_BYTECODE_TARGET.get(context);
+        if (value != null) {
+          bytecodeTarget = JpsJavaSdkType.parseVersion(value);
+        }
       }
     }
 
-    final int targetPlatformVersion = JpsJavaSdkType.parseVersion(bytecodeTarget);
-    if (shouldUseReleaseOption(context, compilerSdkVersion, chunkSdkVersion, targetPlatformVersion)) {
+    if (shouldUseReleaseOption(context, compilerSdkVersion, chunkSdkVersion, bytecodeTarget)) {
       options.add("--release");
-      options.add(String.valueOf(targetPlatformVersion));
+      options.add(complianceOption(bytecodeTarget));
       return;
     }
 
     // using older -source, -target and -bootclasspath options
-    if (!StringUtil.isEmpty(langLevel)) {
+    if (languageLevel > 0) {
       options.add("-source");
-      options.add(langLevel);
+      options.add(complianceOption(languageLevel));
     }
 
-    if (bytecodeTarget != null) {
-      options.add("-target");
+    if (bytecodeTarget > 0) {
       if (chunkSdkVersion > 0 && compilerSdkVersion > chunkSdkVersion) {
         // if compiler is newer than module JDK
-        if (targetPlatformVersion > 0 && targetPlatformVersion <= compilerSdkVersion) {
+        if (compilerSdkVersion >= bytecodeTarget) {
           // if user-specified bytecode version can be determined and is supported by compiler
-          if (targetPlatformVersion > chunkSdkVersion) {
+          if (bytecodeTarget > chunkSdkVersion) {
             // and user-specified bytecode target level is higher than the highest one supported by the target JDK,
             // force compiler to use highest-available bytecode target version that is supported by the chunk JDK.
-            bytecodeTarget = "1." + chunkSdkVersion;
+            bytecodeTarget = chunkSdkVersion;
           }
         }
         // otherwise let compiler display compilation error about incorrectly set bytecode target version
       }
-      options.add(bytecodeTarget);
     }
     else {
       if (chunkSdkVersion > 0 && compilerSdkVersion > chunkSdkVersion) {
-        // force lower bytecode target level to match the version of sdk assigned to this chunk
-        options.add("-target");
-        options.add("1." + chunkSdkVersion);
+        // force lower bytecode target level to match the version of the chunk JDK
+        bytecodeTarget = chunkSdkVersion;
       }
+    }
+
+    if (bytecodeTarget > 0) {
+      options.add("-target");
+      options.add(complianceOption(bytecodeTarget));
     }
   }
 
-  @Nullable
-  private static String getLanguageLevel(@NotNull JpsModule module) {
+  private static String complianceOption(int major) {
+    return JpsJavaSdkType.complianceOption(JavaVersion.compose(major));
+  }
+
+  private static int getLanguageLevel(@NotNull JpsModule module) {
     final LanguageLevel level = JpsJavaExtensionService.getInstance().getLanguageLevel(module);
-    return level != null ? level.getComplianceOption() : null;
+    return level != null ? level.toJavaVersion().feature : 0;
   }
 
   /**
@@ -977,12 +974,12 @@ public class JavaBuilder extends ModuleLevelBuilder {
    * If no JDK is associated, returns 0.
    */
   private static int getTargetPlatformLanguageVersion(@NotNull JpsModule module) {
-    final String level = getLanguageLevel(module);
-    if (level != null) {
-      return JpsJavaSdkType.parseVersion(level);
+    final int level = getLanguageLevel(module);
+    if (level > 0) {
+      return level;
     }
     // when compiling, if language level is not explicitly set, it is assumed to be equal to
-    // the highest possible language level, that target JDK supports
+    // the highest possible language level supported by target JDK
     final JpsSdk<JpsDummyElement> sdk = module.getSdk(JpsJavaSdkType.INSTANCE);
     if (sdk != null) {
       return JpsJavaSdkType.getJavaVersion(sdk);

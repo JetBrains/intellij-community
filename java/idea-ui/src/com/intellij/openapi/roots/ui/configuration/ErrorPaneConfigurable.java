@@ -215,11 +215,6 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
   }
 
   @Override
-  public void reset() {
-
-  }
-
-  @Override
   public void disposeUIResources() {
     Disposer.dispose(this);
   }

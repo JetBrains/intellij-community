@@ -7,11 +7,16 @@ import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.util.containers.ContainerUtil
+import com.jetbrains.python.codeInsight.stdlib.DATACLASSES_INITVAR_TYPE
+import com.jetbrains.python.codeInsight.stdlib.DUNDER_POST_INIT
+import com.jetbrains.python.codeInsight.stdlib.DataclassParameters
 import com.jetbrains.python.codeInsight.stdlib.parseDataclassParameters
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper
+import com.jetbrains.python.psi.impl.stubs.PyDataclassFieldStubImpl
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.*
 
@@ -44,39 +49,39 @@ class PyDataclassInspection : PyInspection() {
         val dataclassParameters = parseDataclassParameters(node, myTypeEvalContext)
 
         if (dataclassParameters != null) {
-          if (!dataclassParameters.eq && dataclassParameters.order) {
-            val eqArgument = dataclassParameters.eqArgument
-            if (eqArgument != null) {
-              registerProblem(eqArgument, "eq must be true if order is true", ProblemHighlightType.GENERIC_ERROR)
-            }
-          }
+          processDataclassParameters(dataclassParameters)
+
+          val postInit = node.findMethodByName(DUNDER_POST_INIT, false, myTypeEvalContext)
+          val initVars = mutableListOf<PyTargetExpression>()
 
           node.processClassLevelDeclarations { element, _ ->
-            if (element is PyTargetExpression && element.annotationValue != null) {
-              val annotation = element.annotation
-
-              if (annotation != null && !PyTypingTypeProvider.isClassVarAnnotation(annotation, myTypeEvalContext)) {
-                val value = element.findAssignedValue()
-                val cls = getInstancePyClass(value)
-
-                if (cls != null) {
-                  val builtinCache = PyBuiltinCache.getInstance(node)
-
-                  if (cls == builtinCache.listType?.pyClass ||
-                      cls == builtinCache.setType?.pyClass ||
-                      cls == builtinCache.tupleType?.pyClass) {
-                    registerProblem(value,
-                                    "mutable default '${cls.name}' is not allowed",
-                                    ProblemHighlightType.GENERIC_ERROR)
-                  }
-                }
-              }
+            if (element is PyTargetExpression && !PyTypingTypeProvider.isClassVar(element, myTypeEvalContext)) {
+              processDefaultFieldValue(element)
+              processAsInitVar(element, postInit)?.let { initVars.add(it) }
+              processFieldFunctionCall(element)
             }
 
             true
           }
 
-          PyNamedTupleInspection.inspectFieldsOrder(node, myTypeEvalContext, this::registerProblem)
+          if (postInit != null) {
+            processPostInitDefinition(postInit, dataclassParameters, initVars)
+          }
+
+          PyNamedTupleInspection.inspectFieldsOrder(
+            node,
+            this::registerProblem,
+            { !PyTypingTypeProvider.isClassVar(it, myTypeEvalContext) },
+            {
+              val fieldStub = PyDataclassFieldStubImpl.create(it)
+              if (fieldStub != null) {
+                fieldStub.hasDefault() || fieldStub.hasDefaultFactory()
+              }
+              else {
+                it.hasAssignedValue()
+              }
+            }
+          )
         }
       }
     }
@@ -94,13 +99,13 @@ class PyDataclassInspection : PyInspection() {
             leftDataclassParameters != null &&
             parseDataclassParameters(rightClass, myTypeEvalContext) != null) {
           registerProblem(node.psiOperator,
-                          "${node.referencedName} not supported between instances of '${leftClass.name}' and '${rightClass.name}'",
+                          "'${node.referencedName}' not supported between instances of '${leftClass.name}' and '${rightClass.name}'",
                           ProblemHighlightType.GENERIC_ERROR)
         }
 
         if (leftClass == rightClass && leftDataclassParameters?.order == false) {
           registerProblem(node.psiOperator,
-                          "${node.referencedName} not supported between instances of '${leftClass.name}'",
+                          "'${node.referencedName}' not supported between instances of '${leftClass.name}'",
                           ProblemHighlightType.GENERIC_ERROR)
         }
       }
@@ -126,9 +131,110 @@ class PyDataclassInspection : PyInspection() {
       }
     }
 
+    override fun visitPyReferenceExpression(node: PyReferenceExpression?) {
+      super.visitPyReferenceExpression(node)
+
+      if (node != null && node.isQualified) {
+        val cls = getInstancePyClass(node.qualifier) ?: return
+
+        if (parseDataclassParameters(cls, myTypeEvalContext) != null) {
+          cls.processClassLevelDeclarations { element, _ ->
+            if (element is PyTargetExpression && element.name == node.name) {
+              val type = myTypeEvalContext.getType(element)
+
+              if (type is PyClassType && type.classQName == DATACLASSES_INITVAR_TYPE) {
+                registerProblem(node.lastChild,
+                                "'${cls.name}' object could have no attribute '${element.name}' because it is declared as init-only",
+                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
+
+                return@processClassLevelDeclarations false
+              }
+            }
+
+            true
+          }
+        }
+      }
+    }
+
     private fun getInstancePyClass(element: PyTypedElement?): PyClass? {
       val type = element?.let { myTypeEvalContext.getType(it) } as? PyClassType
       return if (type != null && !type.isDefinition) type.pyClass else null
+    }
+
+    private fun processDataclassParameters(dataclassParameters: DataclassParameters) {
+      if (!dataclassParameters.eq && dataclassParameters.order) {
+        val eqArgument = dataclassParameters.eqArgument
+        if (eqArgument != null) {
+          registerProblem(eqArgument, "'eq' must be true if 'order' is true", ProblemHighlightType.GENERIC_ERROR)
+        }
+      }
+    }
+
+    private fun processDefaultFieldValue(field: PyTargetExpression) {
+      val value = field.findAssignedValue()
+      val valueClass = getInstancePyClass(value)
+
+      if (valueClass != null) {
+        val builtinCache = PyBuiltinCache.getInstance(field)
+
+        if (valueClass == builtinCache.listType?.pyClass ||
+            valueClass == builtinCache.setType?.pyClass ||
+            valueClass == builtinCache.tupleType?.pyClass) {
+          registerProblem(value,
+                          "Mutable default '${valueClass.name}' is not allowed",
+                          ProblemHighlightType.GENERIC_ERROR)
+        }
+      }
+    }
+
+    private fun processAsInitVar(field: PyTargetExpression, postInit: PyFunction?): PyTargetExpression? {
+      val type = myTypeEvalContext.getType(field)
+
+      if (type is PyClassType && type.classQName == DATACLASSES_INITVAR_TYPE) {
+        if (postInit == null) {
+          registerProblem(field,
+                          "Attribute '${field.name}' is useless until '${DUNDER_POST_INIT}' is declared",
+                          ProblemHighlightType.LIKE_UNUSED_SYMBOL)
+        }
+
+        return field
+      }
+
+      return null
+    }
+
+    private fun processFieldFunctionCall(field: PyTargetExpression) {
+      val fieldStub = PyDataclassFieldStubImpl.create(field)
+      if (fieldStub != null && fieldStub.hasDefault() && fieldStub.hasDefaultFactory()) {
+        val call = field.findAssignedValue() as? PyCallExpression ?: return
+
+        registerProblem(call.argumentList, "Cannot specify both 'default' and 'default_factory'", ProblemHighlightType.GENERIC_ERROR)
+      }
+    }
+
+    private fun processPostInitDefinition(postInit: PyFunction,
+                                          dataclassParameters: DataclassParameters,
+                                          initVars: List<PyTargetExpression>) {
+      if (!dataclassParameters.init) {
+        registerProblem(postInit.nameIdentifier,
+                        "'${DUNDER_POST_INIT}' would not be called until 'init' parameter is set to True",
+                        ProblemHighlightType.LIKE_UNUSED_SYMBOL)
+      }
+
+      val parameters = ContainerUtil.subList(postInit.getParameters(myTypeEvalContext), 1)
+      val message = "'${DUNDER_POST_INIT}' should take all init-only variables in the same order as they are defined"
+
+      if (parameters.size != initVars.size) {
+        registerProblem(postInit.parameterList, message, ProblemHighlightType.GENERIC_ERROR)
+      }
+      else {
+        parameters
+          .asSequence()
+          .zip(initVars.asSequence())
+          .all { it.first.name == it.second.name }
+          .also { if (!it) registerProblem(postInit.parameterList, message) }
+      }
     }
 
     private fun processHelperDataclassArgument(argument: PyExpression?, calleeQName: String) {

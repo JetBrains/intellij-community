@@ -34,7 +34,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
@@ -240,7 +240,7 @@ public class PathEditor {
   }
 
   public void removePaths(VirtualFile... paths) {
-    final Set<VirtualFile> pathsSet = new java.util.HashSet<>(Arrays.asList(paths));
+    final Set<VirtualFile> pathsSet = new HashSet<>(Arrays.asList(paths));
     int size = getRowCount();
     final TIntArrayList indicesToRemove = new TIntArrayList(paths.length);
     for (int idx = 0; idx < size; idx++) {

@@ -23,7 +23,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.JavaUnresolvableLocalCollisionDetector;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.occurrences.ExpressionOccurrenceManager;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.intellij.util.containers.MultiMap;
 
 public class InputValidator implements IntroduceVariableBase.Validator {

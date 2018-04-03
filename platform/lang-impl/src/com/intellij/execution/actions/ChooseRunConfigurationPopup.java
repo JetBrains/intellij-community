@@ -593,7 +593,7 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
         });
       }
 
-      return result.toArray(new ActionWrapper[result.size()]);
+      return result.toArray(new ActionWrapper[0]);
     }
 
     @Override
@@ -1024,7 +1024,7 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
       populateWithDynamicRunners(result, wrappedExisting, project, RunManagerEx.getInstanceEx(project), selectedConfiguration);
     }
     result.addAll(wrappedExisting.values());
-    return result.toArray(new ItemWrapper[result.size()]);
+    return result.toArray(new ItemWrapper[0]);
   }
 
   @NotNull

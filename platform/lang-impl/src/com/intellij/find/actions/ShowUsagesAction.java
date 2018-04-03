@@ -401,7 +401,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
         }
       };
       List<ColumnInfo<UsageNode, UsageNode>> list = Collections.nCopies(cols, o);
-      return list.toArray(new ColumnInfo[list.size()]);
+      return list.toArray(ColumnInfo.EMPTY_ARRAY);
     }
 
     @Override
@@ -974,8 +974,8 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
 
   // returns new selection
   private static int updateModel(@NotNull MyModel tableModel, @NotNull List<UsageNode> listOld, @NotNull List<UsageNode> listNew, int oldSelection) {
-    UsageNode[] oa = listOld.toArray(new UsageNode[listOld.size()]);
-    UsageNode[] na = listNew.toArray(new UsageNode[listNew.size()]);
+    UsageNode[] oa = listOld.toArray(new UsageNode[0]);
+    UsageNode[] na = listNew.toArray(new UsageNode[0]);
     List<ModelDiff.Cmd> cmds = ModelDiff.createDiffCmds(tableModel, oa, na);
     int selection = oldSelection;
     if (cmds != null) {

@@ -27,7 +27,7 @@ import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -83,7 +83,7 @@ public class GrChangeSignatureProcessor extends ChangeSignatureProcessorBase {
         return false;
       }
     }
-    refUsages.set(usagesSet.toArray(new UsageInfo[usagesSet.size()]));
+    refUsages.set(usagesSet.toArray(UsageInfo.EMPTY_ARRAY));
     prepareSuccessful();
     return true;
   }

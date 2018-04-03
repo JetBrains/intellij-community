@@ -22,7 +22,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.*;
@@ -44,7 +46,6 @@ import javax.swing.*;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -918,40 +919,47 @@ public class AbstractPopup implements JBPopup {
 
     final Window window = getContentWindow(myContent);
 
+    window.setFocusableWindowState(myRequestFocus);
+    window.setFocusable(myRequestFocus);
+    // temporary w/a (will be brought back in jdk)
+    window.setType(Window.Type.POPUP);
+    // Swing popup default always on top state is set in true
+    window.setAlwaysOnTop(false);
+
     if (myFocusable) {
-      window.setFocusableWindowState(true);
-      window.setFocusable(true);
       window.setFocusTraversalPolicy(new FocusTraversalPolicy() {
         @Override
         public Component getComponentAfter(Container aContainer, Component aComponent) {
-          return myPreferredFocusedComponent;
+          return getComponent();
+        }
+
+        private Component getComponent() {
+          return myPreferredFocusedComponent == null ? myComponent : myPreferredFocusedComponent;
         }
 
         @Override
         public Component getComponentBefore(Container aContainer, Component aComponent) {
-          return myPreferredFocusedComponent;
+          return getComponent();
         }
 
         @Override
         public Component getFirstComponent(Container aContainer) {
-          return myPreferredFocusedComponent;
+          return getComponent();
         }
 
         @Override
         public Component getLastComponent(Container aContainer) {
-          return myPreferredFocusedComponent;
+          return getComponent();
         }
 
         @Override
         public Component getDefaultComponent(Container aContainer) {
-          return myPreferredFocusedComponent;
+          return getComponent();
         }
       });
     }
 
-    if (!myRequestFocus) {
-      window.setAutoRequestFocus(false);
-    }
+    window.setAutoRequestFocus(myRequestFocus);
 
     myPopup.show();
 
@@ -998,8 +1006,10 @@ public class AbstractPopup implements JBPopup {
         _requestFocus();
       }
 
-      window.setAutoRequestFocus(true);
 
+      window.setAutoRequestFocus(myRequestFocus);
+
+      SwingUtilities.invokeLater(afterShow);
       delayKeyEventsUntilFocusSettlesDown();
     } else {
       //noinspection SSBasedInspection
@@ -1328,31 +1338,6 @@ public class AbstractPopup implements JBPopup {
       return;
     }
 
-    if (myFinalRunnable != null) {
-      final ActionCallback typeAheadDone = new ActionCallback();
-      IdeFocusManager.getInstance(myProject).typeAheadUntil(typeAheadDone);
-
-      ModalityState modalityState = ModalityState.current();
-      Runnable finalRunnable = myFinalRunnable;
-
-      getFocusManager().doWhenFocusSettlesDown(() -> {
-        //noinspection SSBasedInspection
-
-        if (ModalityState.current().equals(modalityState)) {
-          ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(finalRunnable);
-        } else {
-          System.err.println("Final runnable of popup is skipped");
-        }
-        // Otherwise the UI has changed unexpectedly and the action is likely not applicable.
-        // And we don't want finalRunnable to perform potentially destructive actions
-        //   in the context of a suddenly appeared modal dialog.
-      });
-      //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(typeAheadDone.createSetDoneRunnable());
-      myFinalRunnable = null;
-
-    }
-
     debugState("dispose popup", State.INIT, State.CANCEL);
     myState = State.DISPOSE;
 
@@ -1394,6 +1379,31 @@ public class AbstractPopup implements JBPopup {
       }
     }
     myMouseOutCanceller = null;
+
+    if (myFinalRunnable != null) {
+      final ActionCallback typeAheadDone = new ActionCallback();
+      IdeFocusManager.getInstance(myProject).typeAheadUntil(typeAheadDone, "Abstract Popup Disposal");
+
+      ModalityState modalityState = ModalityState.current();
+      Runnable finalRunnable = myFinalRunnable;
+
+      getFocusManager().doWhenFocusSettlesDown(() -> {
+        //noinspection SSBasedInspection
+
+        if (ModalityState.current().equals(modalityState)) {
+          //noinspection SSBasedInspection
+          typeAheadDone.setDone();
+          ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(finalRunnable);
+        } else {
+          typeAheadDone.setRejected();
+          LOG.debug("Final runnable of popup is skipped");
+        }
+        // Otherwise the UI has changed unexpectedly and the action is likely not applicable.
+        // And we don't want finalRunnable to perform potentially destructive actions
+        //   in the context of a suddenly appeared modal dialog.
+      });
+      myFinalRunnable = null;
+    }
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("stop disposing content");

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2015 Bas Leijdekkers
+ * Copyright 2007-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,7 +68,7 @@ public class UnnecessaryUnaryMinusInspection extends BaseInspection {
       if (parentExpression instanceof PsiAssignmentExpression) {
         final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parentExpression;
         final PsiExpression lhs = assignmentExpression.getLExpression();
-        newExpression.append(commentTracker.markUnchanged(lhs).getText());
+        newExpression.append(commentTracker.text(lhs));
         final IElementType tokenType = assignmentExpression.getOperationTokenType();
         if (tokenType.equals(JavaTokenType.PLUSEQ)) {
           newExpression.append("-=");
@@ -80,7 +80,7 @@ public class UnnecessaryUnaryMinusInspection extends BaseInspection {
       else if (parentExpression instanceof PsiBinaryExpression) {
         final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)parentExpression;
         final PsiExpression lhs = binaryExpression.getLOperand();
-        newExpression.append(commentTracker.markUnchanged(lhs).getText());
+        newExpression.append(commentTracker.text(lhs));
         final IElementType tokenType = binaryExpression.getOperationTokenType();
         if (tokenType.equals(JavaTokenType.PLUS)) {
           newExpression.append('-');
@@ -94,7 +94,7 @@ public class UnnecessaryUnaryMinusInspection extends BaseInspection {
         return;
       }
 
-      newExpression.append(commentTracker.markUnchanged(operand).getText());
+      newExpression.append(commentTracker.text(operand));
       PsiReplacementUtil.replaceExpression(parentExpression, newExpression.toString(), commentTracker);
     }
   }

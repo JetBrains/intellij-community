@@ -455,4 +455,19 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testCallableInstanceAgainstCallable() {
     runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
   }
+
+  // PY-26163
+  public void testTypingNTAgainstStructural() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
+  // PY-26163
+  public void testDefinitionAgainstStructural() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
+  // PY-28017
+  public void testModuleWithGetAttr() {
+    runWithLanguageLevel(LanguageLevel.PYTHON37, this::doMultiFileTest);
+  }
 }

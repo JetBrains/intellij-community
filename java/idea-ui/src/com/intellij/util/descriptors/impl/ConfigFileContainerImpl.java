@@ -83,7 +83,7 @@ public class ConfigFileContainerImpl extends SimpleModificationTracker implement
   public ConfigFile[] getConfigFiles() {
     if (myCachedConfigFiles == null) {
       final Collection<ConfigFile> descriptors = myConfigFiles.values();
-      myCachedConfigFiles = descriptors.toArray(new ConfigFile[descriptors.size()]);
+      myCachedConfigFiles = descriptors.toArray(ConfigFile.EMPTY_ARRAY);
     }
     return myCachedConfigFiles;
   }

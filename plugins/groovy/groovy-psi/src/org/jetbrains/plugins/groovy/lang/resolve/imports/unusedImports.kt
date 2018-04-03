@@ -7,7 +7,6 @@ package org.jetbrains.plugins.groovy.lang.resolve.imports
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor
-import com.intellij.util.containers.HashSet
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement

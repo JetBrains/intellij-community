@@ -83,7 +83,7 @@ public class GrDocMethodParamsImpl extends GroovyDocPsiElementImpl implements Gr
     for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
       if (GrDocMethodParameter.class.isInstance(cur)) result.add((GrDocMethodParameter)cur);
     }
-    return result.toArray(new GrDocMethodParameter[result.size()]);
+    return result.toArray(new GrDocMethodParameter[0]);
   }
 
   @Override

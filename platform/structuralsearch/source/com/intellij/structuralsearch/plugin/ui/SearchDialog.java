@@ -190,7 +190,7 @@ public class SearchDialog extends DialogWrapper {
     }
     Collections.sort(types, (o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
 
-    final DefaultComboBoxModel<FileType> comboBoxModel = new DefaultComboBoxModel<>(types.toArray(new FileType[types.size()]));
+    final DefaultComboBoxModel<FileType> comboBoxModel = new DefaultComboBoxModel<>(types.toArray(FileType.EMPTY_ARRAY));
     fileTypes = new ComboBox<>(comboBoxModel);
     fileTypes.setRenderer(new FileTypeRenderer());
     new ComboboxSpeedSearch(fileTypes) {

@@ -128,7 +128,7 @@ public final class DevkitActionsUtil {
       for (OrderEntry orderEntry : orderEntries) {
         modules.add(orderEntry.getOwnerModule());
       }
-      Module[] candidates = modules.toArray(new Module[modules.size()]);
+      Module[] candidates = modules.toArray(Module.EMPTY_ARRAY);
       Arrays.sort(candidates, ModuleManager.getInstance(project).moduleDependencyComparator());
       return candidates[0];
     }

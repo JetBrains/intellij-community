@@ -74,7 +74,7 @@ public class TurnRefsToSuperProcessor extends TurnRefsToSuperProcessorBase {
 
     final ArrayList<UsageInfo> result = detectTurnToSuperRefs(refs, new ArrayList<>());
 
-    final UsageInfo[] usageInfos = result.toArray(new UsageInfo[result.size()]);
+    final UsageInfo[] usageInfos = result.toArray(UsageInfo.EMPTY_ARRAY);
     return UsageViewUtil.removeDuplicatedUsages(usageInfos);
   }
 

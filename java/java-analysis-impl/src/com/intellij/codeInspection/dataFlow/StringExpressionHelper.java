@@ -61,7 +61,7 @@ public class StringExpressionHelper {
       if (element instanceof PsiMethod) {
         PsiCodeBlock body = ((PsiMethod)element).getBody();
         if (body != null) {
-          final Set<PsiExpression> returns = new com.intellij.util.containers.HashSet<>();
+          final Set<PsiExpression> returns = new java.util.HashSet<>();
 
           body.accept(new JavaRecursiveElementWalkingVisitor() {
             @Override
@@ -149,7 +149,7 @@ public class StringExpressionHelper {
   public static Set<Pair<PsiElement, String>> searchStringExpressions(@NotNull final PsiMethod psiMethod,
                                                                       @NotNull SearchScope searchScope,
                                                                       int expNum) {
-    Set<Pair<PsiElement, String>> pairs = new com.intellij.util.containers.HashSet<>();
+    Set<Pair<PsiElement, String>> pairs = new java.util.HashSet<>();
     for (PsiMethodCallExpression methodCallExpression : searchMethodCalls(psiMethod, searchScope)) {
       final PsiExpression[] expressions = methodCallExpression.getArgumentList().getExpressions();
       if (expressions.length > expNum) {
@@ -166,7 +166,7 @@ public class StringExpressionHelper {
 
   @NotNull
   public static Set<PsiMethodCallExpression> searchMethodCalls(@NotNull final PsiMethod psiMethod, @NotNull SearchScope searchScope) {
-    final Set<PsiMethodCallExpression> callExpressions = new com.intellij.util.containers.HashSet<>();
+    final Set<PsiMethodCallExpression> callExpressions = new java.util.HashSet<>();
     final CommonProcessors.CollectUniquesProcessor<PsiReference> consumer = new CommonProcessors.CollectUniquesProcessor<>();
 
     MethodReferencesSearch.search(psiMethod, searchScope, true).forEach(consumer);

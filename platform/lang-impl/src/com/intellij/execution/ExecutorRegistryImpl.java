@@ -107,7 +107,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable
   @Override
   @NotNull
   public synchronized Executor[] getRegisteredExecutors() {
-    return myExecutors.toArray(new Executor[myExecutors.size()]);
+    return myExecutors.toArray(new Executor[0]);
   }
 
   @Override

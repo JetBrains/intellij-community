@@ -136,7 +136,7 @@ public abstract class RootModelBase implements ModuleRootModel {
   @Override
   public ContentEntry[] getContentEntries() {
     final Collection<ContentEntry> content = getContent();
-    return content.toArray(new ContentEntry[content.size()]);
+    return content.toArray(new ContentEntry[0]);
   }
 
   protected abstract Collection<ContentEntry> getContent();

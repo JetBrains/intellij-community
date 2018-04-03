@@ -28,7 +28,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.jetbrains.python.fixtures.LightMarkedTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyArgumentList;
@@ -641,24 +641,19 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
 
   // PY-22249
   public void testInitializingCollectionsNamedTuple() {
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON35,
-      () -> {
-        final Map<String, PsiElement> test = loadTest(2);
+    final Map<String, PsiElement> test = loadTest(2);
 
-        for (int offset : StreamEx.of(test.values()).map(PsiElement::getTextOffset)) {
-          final List<String> texts = Collections.singletonList("bar, baz");
-          final List<String[]> highlighted = Collections.singletonList(new String[]{"bar, "});
+    for (int offset : StreamEx.of(test.values()).map(PsiElement::getTextOffset)) {
+      final List<String> texts = Collections.singletonList("bar, baz");
+      final List<String[]> highlighted = Collections.singletonList(new String[]{"bar, "});
 
-          feignCtrlP(offset).check(texts, highlighted, Collections.singletonList(ArrayUtil.EMPTY_STRING_ARRAY));
-        }
-      }
-    );
+      feignCtrlP(offset).check(texts, highlighted, Collections.singletonList(ArrayUtil.EMPTY_STRING_ARRAY));
+    }
   }
 
   public void testInitializingTypingNamedTuple() {
     runWithLanguageLevel(
-      LanguageLevel.PYTHON35,
+      LanguageLevel.PYTHON36,
       () -> {
         final Map<String, PsiElement> test = loadTest(7);
 
@@ -696,6 +691,29 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     );
   }
 
+  // PY-27148
+  public void testCollectionsNamedTupleReplace() {
+    final Map<String, PsiElement> test = loadTest(2);
+
+    for (int offset : StreamEx.of(test.values()).map(PsiElement::getTextOffset)) {
+      feignCtrlP(offset).check("*, bar=..., baz=...", ArrayUtil.EMPTY_STRING_ARRAY);
+    }
+  }
+
+  // PY-27148
+  public void testTypingNamedTupleReplace() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> {
+        final Map<String, PsiElement> test = loadTest(2);
+
+        for (int offset : StreamEx.of(test.values()).map(PsiElement::getTextOffset)) {
+          feignCtrlP(offset).check("*, bar: int=..., baz: str=...", ArrayUtil.EMPTY_STRING_ARRAY);
+        }
+      }
+    );
+  }
+
   // PY-26582
   public void testStructuralType() {
     runWithLanguageLevel(
@@ -713,7 +731,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     runWithLanguageLevel(
       LanguageLevel.PYTHON37,
       () -> {
-        final Map<String, PsiElement> marks = loadMultiFileTest(7);
+        final Map<String, PsiElement> marks = loadMultiFileTest(8);
 
         feignCtrlP(marks.get("<arg1>").getTextOffset()).check("x: int, y: str, z: float=0.0", new String[]{"x: int, "});
         feignCtrlP(marks.get("<arg2>").getTextOffset()).check("x: int, y: str, z: float=0.0", new String[]{"x: int, "});
@@ -728,6 +746,24 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
         feignCtrlP(marks.get("<arg5>").getTextOffset()).check("b: int", new String[]{"b: int"});
         feignCtrlP(marks.get("<arg6>").getTextOffset()).check("b: int", new String[]{"b: int"});
         feignCtrlP(marks.get("<arg7>").getTextOffset()).check("a: int, b: int", new String[]{"a: int, "});
+
+        feignCtrlP(marks.get("<arg8>").getTextOffset()).check("a: int, b: int, d: int=..., e: int=...", new String[]{"a: int, "});
+      }
+    );
+  }
+
+  // EA-102450
+  public void testKeywordOnlyWithFilledPositional() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON30,
+      () -> {
+        final Map<String, PsiElement> test = loadTest(4);
+
+        feignCtrlP(test.get("<arg1>").getTextOffset()).check("*, kw1, kw2", ArrayUtil.EMPTY_STRING_ARRAY);
+        feignCtrlP(test.get("<arg2>").getTextOffset()).check("*, kw1, kw2", ArrayUtil.EMPTY_STRING_ARRAY);
+
+        feignCtrlP(test.get("<arg3>").getTextOffset()).check("*, kw1, kw2", new String[]{"kw1, "});
+        feignCtrlP(test.get("<arg4>").getTextOffset()).check("*, kw1, kw2", new String[]{"kw2"});
       }
     );
   }
@@ -876,7 +912,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     @Override
     @NotNull
     public Color getDefaultParameterColor() {
-      return java.awt.Color.BLACK;
+      return Color.BLACK;
     }
 
     @Override

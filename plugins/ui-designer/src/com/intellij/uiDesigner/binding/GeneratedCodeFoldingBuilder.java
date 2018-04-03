@@ -37,7 +37,7 @@ public class GeneratedCodeFoldingBuilder extends FoldingBuilderEx {
   public FoldingDescriptor[] buildFoldRegions(@NotNull PsiElement root, @NotNull Document document, boolean quick) {
     MyFoldingVisitor visitor = new MyFoldingVisitor();
     root.accept(visitor);
-    return visitor.myFoldingData.toArray(new FoldingDescriptor[visitor.myFoldingData.size()]);
+    return visitor.myFoldingData.toArray(FoldingDescriptor.EMPTY);
   }
 
   public String getPlaceholderText(@NotNull ASTNode node) {

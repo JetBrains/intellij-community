@@ -46,7 +46,10 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 public class JdkChooserPanel extends JPanel {
   private JList myList = null;
@@ -182,7 +185,7 @@ public class JdkChooserPanel extends JPanel {
         compatibleJdks.add(projectJdk);
       }
     }
-    return compatibleJdks.toArray(new Sdk[compatibleJdks.size()]);
+    return compatibleJdks.toArray(new Sdk[0]);
   }
 
   private boolean isCompatibleJdk(final Sdk projectJdk, final @Nullable SdkType type) {

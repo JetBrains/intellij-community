@@ -67,7 +67,7 @@ public class PackageEntryTable implements JDOMExternalizable, Cloneable {
   }
 
   public PackageEntry[] getEntries() {
-    return myEntries.toArray(new PackageEntry[myEntries.size()]);
+    return myEntries.toArray(new PackageEntry[0]);
   }
 
   public void insertEntryAt(PackageEntry entry, int i) {

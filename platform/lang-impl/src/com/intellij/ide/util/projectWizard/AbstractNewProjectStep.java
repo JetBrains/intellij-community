@@ -115,7 +115,7 @@ public class AbstractNewProjectStep<T> extends DefaultActionGroup implements Dum
           LOG.error("Broken project generator " + projectGenerator, throwable);
         }
       }
-      return actions.toArray(new AnAction[actions.size()]);
+      return actions.toArray(AnAction.EMPTY_ARRAY);
     }
 
     @NotNull

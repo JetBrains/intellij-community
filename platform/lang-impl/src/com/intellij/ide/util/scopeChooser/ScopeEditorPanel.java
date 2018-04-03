@@ -59,6 +59,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -210,6 +211,11 @@ public class ScopeEditorPanel {
     else if (!invalidScopeInside(myCurrentScope)){
       myErrorMessage = null;
     }
+  }
+
+  private void createUIComponents() {
+    myPatternField = new RawCommandLineEditor(text -> Arrays.asList(text.split("\\|\\|")),
+                                              strings -> StringUtil.join(strings, "||")); 
   }
 
   private static boolean invalidScopeInside(PackageSet currentScope) {

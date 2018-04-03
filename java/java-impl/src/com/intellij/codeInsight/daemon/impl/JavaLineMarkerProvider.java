@@ -50,7 +50,6 @@ import com.intellij.util.Function;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import one.util.streamex.StreamEx;

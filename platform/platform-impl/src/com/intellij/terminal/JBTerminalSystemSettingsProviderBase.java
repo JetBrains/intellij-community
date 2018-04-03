@@ -28,8 +28,8 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.containers.HashMap;
-import com.intellij.util.containers.HashSet;
+import java.util.HashMap;
+
 import com.intellij.util.messages.MessageBusConnection;
 import com.jediterm.terminal.TerminalColor;
 import com.jediterm.terminal.TextStyle;
@@ -115,7 +115,7 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
       }
     }
 
-    return keyStrokes.toArray(new KeyStroke[keyStrokes.size()]);
+    return keyStrokes.toArray(new KeyStroke[0]);
   }
 
   @Override

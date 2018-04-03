@@ -38,7 +38,7 @@ public class WinIntelliJButtonUI extends DarculaButtonUI {
     public void propertyChange(PropertyChangeEvent evt) {
       final Object source = evt.getSource();
       if (source instanceof AbstractButton) {
-        if (isHelpButton((JComponent)source)) {
+        if (UIUtil.isHelpButton((JComponent)source)) {
           ((AbstractButton)source).setOpaque(false);
         }
       }
@@ -65,7 +65,7 @@ public class WinIntelliJButtonUI extends DarculaButtonUI {
 
   @Override
   public void paint(Graphics g, JComponent c) {
-    if (isHelpButton(c)) {
+    if (UIUtil.isHelpButton(c)) {
       Icon help = MacIntelliJIconCache.getIcon("winHelp");
       Insets i = c.getInsets();
       help.paintIcon(c, g, i.left, i.top + (c.getHeight() - help.getIconHeight()) / 2);
@@ -126,7 +126,7 @@ public class WinIntelliJButtonUI extends DarculaButtonUI {
 
   @Override
   public Dimension getPreferredSize(JComponent c) {
-    if (isHelpButton(c)) {
+    if (UIUtil.isHelpButton(c)) {
       Icon icon = MacIntelliJIconCache.getIcon("winHelp");
       Insets i = c.getInsets();
       return new Dimension(icon.getIconWidth() + i.left + i.right, JBUI.scale(24));

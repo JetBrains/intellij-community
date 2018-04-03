@@ -90,7 +90,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
   }
 
   private void updateFileTypeList() {
-    FileType[] types = myTempFileTypes.toArray(new FileType[myTempFileTypes.size()]);
+    FileType[] types = myTempFileTypes.toArray(FileType.EMPTY_ARRAY);
     Arrays.sort(types, (o1, o2) -> {
       FileType fileType1 = (FileType)o1;
       FileType fileType2 = (FileType)o2;
@@ -106,7 +106,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
     for (FileType fileType : registeredFileTypes) {
       if (!fileType.isReadOnly()) result.add(fileType);
     }
-    return result.toArray(new FileType[result.size()]);
+    return result.toArray(FileType.EMPTY_ARRAY);
   }
 
   @Override

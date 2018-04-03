@@ -65,7 +65,7 @@ public class StructuralSearchUtil {
         }
       }
       list.add(new XmlStructuralSearchProfile());
-      ourNewStyleProfiles = list.toArray(new StructuralSearchProfile[list.size()]);
+      ourNewStyleProfiles = list.toArray(new StructuralSearchProfile[0]);
     }
     return ourNewStyleProfiles;
   }
@@ -138,7 +138,7 @@ public class StructuralSearchUtil {
       }
     }
 
-    return result.toArray(new FileType[result.size()]);
+    return result.toArray(FileType.EMPTY_ARRAY);
   }
 
   public static boolean containsRegExpMetaChar(String s) {

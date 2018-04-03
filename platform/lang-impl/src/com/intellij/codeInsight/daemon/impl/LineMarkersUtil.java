@@ -23,10 +23,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
-import com.intellij.openapi.editor.markup.HighlighterLayer;
-import com.intellij.openapi.editor.markup.HighlighterTargetArea;
-import com.intellij.openapi.editor.markup.MarkupModel;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
@@ -105,6 +102,10 @@ class LineMarkersUtil {
     RangeHighlighter highlighter = toReuse == null ? null : toReuse.pickupHighlighterFromGarbageBin(info.startOffset, info.endOffset, HighlighterLayer.ADDITIONAL_SYNTAX);
     if (highlighter == null) {
       highlighter = markupModel.addRangeHighlighter(info.startOffset, info.endOffset, HighlighterLayer.ADDITIONAL_SYNTAX, null, HighlighterTargetArea.LINES_IN_RANGE);
+      MarkupEditorFilter editorFilter = info.getEditorFilter();
+      if (editorFilter != MarkupEditorFilter.EMPTY) {
+        highlighter.setEditorFilter(editorFilter);
+      }
     }
     highlighter.putUserData(LINE_MARKER_INFO, info);
     LineMarkerInfo.LineMarkerGutterIconRenderer newRenderer = (LineMarkerInfo.LineMarkerGutterIconRenderer)info.createGutterRenderer();

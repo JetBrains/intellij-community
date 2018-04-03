@@ -78,9 +78,6 @@ public abstract class ModuleElementsEditor implements ModuleConfigurationEditor 
   @Override
   public void apply() throws ConfigurationException {}
 
-  @Override
-  public void reset() {}
-
   public void moduleCompileOutputChanged(final String baseUrl, final String moduleName) {}
 
   @Override

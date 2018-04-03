@@ -49,7 +49,7 @@ public class HighlightersActionGroup extends ActionGroup {
       }
     }
 
-    return actions.toArray(new AnAction[actions.size()]);
+    return actions.toArray(AnAction.EMPTY_ARRAY);
   }
 
   private static class EnableHighlighterAction extends BooleanPropertyToggleAction {

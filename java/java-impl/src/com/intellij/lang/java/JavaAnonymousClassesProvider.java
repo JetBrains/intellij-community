@@ -57,7 +57,7 @@ public class JavaAnonymousClassesProvider implements AnonymousElementProvider {
         });
 
         if (! elements.isEmpty()) {
-          return elements.toArray(new PsiElement[elements.size()]);
+          return elements.toArray(PsiElement.EMPTY_ARRAY);
         }
       }
     }

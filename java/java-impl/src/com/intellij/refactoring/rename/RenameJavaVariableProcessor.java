@@ -187,7 +187,7 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
         }
         validGetters.add(getter);
       }
-      getters = validGetters.isEmpty() ? null : validGetters.toArray(new PsiMethod[validGetters.size()]);
+      getters = validGetters.isEmpty() ? null : validGetters.toArray(PsiMethod.EMPTY_ARRAY);
     }
 
     String newSetterName = "";

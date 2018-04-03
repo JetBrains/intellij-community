@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 Bas Leijdekkers
+ * Copyright 2009-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +66,7 @@ public class DynamicRegexReplaceableByCompiledPatternInspection extends DynamicR
         new StringBuilder("private static final java.util.regex.Pattern PATTERN = java.util.regex.Pattern.compile(");
       final int expressionsLength = expressions.length;
       if (expressionsLength > 0) {
-        fieldText.append(commentTracker.markUnchanged(expressions[0]).getText());
+        fieldText.append(commentTracker.text(expressions[0]));
       }
       @NonNls final String methodName = methodExpression.getReferenceName();
       final boolean literalReplacement = "replace".equals(methodName);
@@ -77,13 +77,13 @@ public class DynamicRegexReplaceableByCompiledPatternInspection extends DynamicR
 
       @NonNls final StringBuilder expressionText = new StringBuilder("PATTERN.");
       final PsiExpression qualifier = methodExpression.getQualifierExpression();
-      @NonNls final String qualifierText = (qualifier == null) ? "this" : commentTracker.markUnchanged(qualifier).getText();
+      @NonNls final String qualifierText = (qualifier == null) ? "this" : commentTracker.text(qualifier);
       if ("split".equals(methodName)) {
         expressionText.append(methodName);
         expressionText.append('(');
         expressionText.append(qualifierText);
         for (int i = 1; i < expressionsLength; i++) {
-          expressionText.append(',').append(commentTracker.markUnchanged(expressions[i]).getText());
+          expressionText.append(',').append(commentTracker.text(expressions[i]));
         }
         expressionText.append(')');
       }
@@ -100,9 +100,9 @@ public class DynamicRegexReplaceableByCompiledPatternInspection extends DynamicR
           expressionText.append("java.util.regex.Matcher.quoteReplacement(");
         }
         if (expressionsLength > 1) {
-          expressionText.append(commentTracker.markUnchanged(expressions[1]).getText());
+          expressionText.append(commentTracker.text(expressions[1]));
           for (int i = 2; i < expressionsLength; i++) {
-            expressionText.append(',').append(commentTracker.markUnchanged(expressions[i]).getText());
+            expressionText.append(',').append(commentTracker.text(expressions[i]));
           }
         }
         if (literalReplacement) {

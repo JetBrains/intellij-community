@@ -112,7 +112,7 @@ public class ChangeClassSignatureProcessor extends BaseRefactoringProcessor {
         }
       }
     }
-    return result.toArray(new UsageInfo[result.size()]);
+    return result.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
   protected void performRefactoring(@NotNull UsageInfo[] usages) {

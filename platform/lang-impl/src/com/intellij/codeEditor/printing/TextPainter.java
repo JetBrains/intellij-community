@@ -127,7 +127,7 @@ class TextPainter extends BasePainter {
     myShortFileName = shortFileName;
     myRangeToPrint = editorDocument.createRangeMarker(0, myDocument.getTextLength());
     myFileType = fileType;
-    myMethodSeparators = separators != null ? separators.toArray(new LineMarkerInfo[separators.size()]) : new LineMarkerInfo[0];
+    myMethodSeparators = separators != null ? separators.toArray(new LineMarkerInfo[0]) : new LineMarkerInfo[0];
     myCurrentMethodSeparator = 0;
     Date date = new Date();
     myPrintDate = new SimpleDateFormat(DATE_FORMAT).format(date);

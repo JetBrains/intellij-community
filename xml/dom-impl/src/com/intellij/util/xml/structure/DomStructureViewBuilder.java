@@ -53,11 +53,6 @@ public class DomStructureViewBuilder extends TreeBasedStructureViewBuilder {
   }
 
   @Override
-  public boolean isRootNodeShown() {
-    return true;
-  }
-
-  @Override
   @NotNull
   public StructureView createStructureView(final FileEditor fileEditor, @NotNull final Project project) {
     return new StructureViewComponent(fileEditor, createStructureViewModel(fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null), project, true) {

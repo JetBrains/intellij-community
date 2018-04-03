@@ -10,6 +10,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -51,8 +52,8 @@ public class InspectionAutomaticRenamerFactory implements AutomaticRenamerFactor
     String inspectionClassName = inspectionClass.getName();
     return inspectionClassName != null &&
            inspectionClassName.endsWith(INSPECTION_CLASS_SUFFIX) &&
-           !isGetShortNameMethodOverridden(inspectionClass) &&
-           InheritanceUtil.isInheritor(inspectionClass, DescriptionType.INSPECTION.getClassName());
+           InheritanceUtil.isInheritor(inspectionClass, DescriptionType.INSPECTION.getClassName()) &&
+           !isGetShortNameMethodOverridden(inspectionClass);
   }
 
   @Nls
@@ -195,6 +196,9 @@ public class InspectionAutomaticRenamerFactory implements AutomaticRenamerFactor
         }
 
         Module module = ModuleUtilCore.findModuleForPsiElement(element);
+        if (module == null) {
+          continue;
+        }
         PsiClass inspectionClass = (PsiClass)element;
         InspectionDescriptionInfo descriptionInfo = InspectionDescriptionInfo.create(module, inspectionClass);
         PsiFile descriptionFile = descriptionInfo.getDescriptionFile();
@@ -218,10 +222,10 @@ public class InspectionAutomaticRenamerFactory implements AutomaticRenamerFactor
         }
 
         String newName = getDescriptionFileName(entry.getValue());
-        TextRange range = shortNameValue.getTextRange();
+        TextRange range = ElementManipulators.getValueTextRange(shortNameValue).shiftRight(shortNameValue.getTextRange().getStartOffset());
         result.add(NonCodeUsageInfo.create(pluginXmlFile,
-                                           range.getStartOffset() + 1, // quotes
-                                           range.getEndOffset() - 1,
+                                           range.getStartOffset(), // quotes
+                                           range.getEndOffset(),
                                            shortNameValue,
                                            newName));
         break;

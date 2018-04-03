@@ -142,7 +142,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
       restartActions = AnAction.EMPTY_ARRAY;
     }
     else {
-      restartActions = restartActionsList.toArray(new AnAction[restartActionsList.size()]);
+      restartActions = restartActionsList.toArray(AnAction.EMPTY_ARRAY);
     }
 
     myRunContentDescriptor = new RunContentDescriptor(myConsole, session.getDebugProcess().getProcessHandler(),

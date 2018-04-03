@@ -284,7 +284,7 @@ public class DtdReferencesProvider extends PsiReferenceProvider {
           super.visitElement(child);
         }
       });
-      return psiRefs.toArray(new PsiReference[psiRefs.size()]);
+      return psiRefs.toArray(PsiReference.EMPTY_ARRAY);
     }
 
     if (nameElement != null) {

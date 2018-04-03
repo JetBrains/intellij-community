@@ -32,7 +32,7 @@ import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -171,7 +171,7 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
       askToRemoveCovariantOverriders(usagesSet);
     }
 
-    refUsages.set(usagesSet.toArray(new UsageInfo[usagesSet.size()]));
+    refUsages.set(usagesSet.toArray(UsageInfo.EMPTY_ARRAY));
     prepareSuccessful();
     return true;
   }

@@ -243,7 +243,7 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
         .collect(Collectors.toList());
 
       final ComboBox<PsiFileSystemItem> resourceBundleComboBox =
-        new ComboBox<>(resourceBundlesAsFileSystemItems.toArray(new PsiFileSystemItem[resourceBundlesAsFileSystemItems.size()]));
+        new ComboBox<>(resourceBundlesAsFileSystemItems.toArray(new PsiFileSystemItem[0]));
       new ComboboxSpeedSearch(resourceBundleComboBox) {
         @Override
         protected String getElementText(Object element) {

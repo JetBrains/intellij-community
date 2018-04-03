@@ -1,11 +1,15 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.lambda;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -73,7 +77,8 @@ public class RedundantLambdaParameterTypeInspection extends AbstractBaseJavaLoca
       }
       final PsiLambdaExpression expression = (PsiLambdaExpression)JavaPsiFacade.getElementFactory(lambdaExpression.getProject())
         .createExpressionFromText(text + "->{}", lambdaExpression);
-      lambdaExpression.getParameterList().replace(expression.getParameterList());
+      CommentTracker tracker = new CommentTracker();
+      tracker.replaceAndRestoreComments(lambdaExpression.getParameterList(), expression.getParameterList());
     }
   }
 

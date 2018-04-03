@@ -564,7 +564,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
     registerError(
       toHighlight,
       message,
-      fixes.toArray(new LocalQuickFix[fixes.size()]),
+      fixes.toArray(LocalQuickFix.EMPTY_ARRAY),
       result == ConversionResult.ERROR ? ProblemHighlightType.GENERIC_ERROR : ProblemHighlightType.GENERIC_ERROR_OR_WARNING
     );
   }

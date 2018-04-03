@@ -152,11 +152,6 @@ public abstract class DfaFactType<T> extends Key<T> {
       LongRangeSet intersection = left.intersect(right);
       return intersection.isEmpty() ? null : intersection;
     }
-
-    @Override
-    String toString(@NotNull LongRangeSet fact) {
-      return fact.toString();
-    }
   };
   /**
    * This fact represents a set of possible types of this value

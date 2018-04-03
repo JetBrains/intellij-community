@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.images.search;
 
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -13,6 +11,7 @@ import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -66,7 +65,7 @@ public class ImageTagManager implements PersistentStateComponent<ImageTagManager
   }
 
   @Override
-  public void loadState(State state) {
+  public void loadState(@NotNull State state) {
     myState = state;
   }
 

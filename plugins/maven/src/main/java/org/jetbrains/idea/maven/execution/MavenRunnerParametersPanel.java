@@ -119,7 +119,7 @@ public class MavenRunnerParametersPanel implements PanelWithAnchor {
       if (pomFileNameIndex < commandLine.size()) {
         data.setPomFileName(commandLine.remove(pomFileNameIndex));
       }
-      commandLine.remove(pomFileNameIndex);
+      commandLine.remove(pomFileNameIndex - 1);
     }
 
     data.setGoals(commandLine);

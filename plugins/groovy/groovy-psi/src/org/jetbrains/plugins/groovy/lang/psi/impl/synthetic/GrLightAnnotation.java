@@ -179,7 +179,7 @@ public class GrLightAnnotation extends LightElement implements GrAnnotation {
     public GrAnnotationNameValuePair[] getAttributes() {
       if (myCachedAttributes == null) {
         assert myAttributes != null;
-        myCachedAttributes = myAttributes.toArray(new GrAnnotationNameValuePair[myAttributes.size()]);
+        myCachedAttributes = myAttributes.toArray(GrAnnotationNameValuePair.EMPTY_ARRAY);
       }
       return myCachedAttributes;
     }

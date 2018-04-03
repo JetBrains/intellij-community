@@ -24,7 +24,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceOwner;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileReference;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 
 import java.util.Map;
 

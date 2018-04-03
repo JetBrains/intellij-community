@@ -112,7 +112,7 @@ public class GroovyAnnotationAttributeInfoHandler implements ParameterInfoHandle
       PsiMethod[] methods = o.getMethods();
       if (methods.length > 0) {
         List<PsiAnnotationMethod> annotationMethods = ContainerUtil.findAll(methods, PsiAnnotationMethod.class);
-        return annotationMethods.toArray(new PsiAnnotationMethod[annotationMethods.size()]);
+        return annotationMethods.toArray(PsiAnnotationMethod.EMPTY_ARRAY);
       }
     }
     return PsiAnnotationMethod.EMPTY_ARRAY;

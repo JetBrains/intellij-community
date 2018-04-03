@@ -76,7 +76,7 @@ public class JavadocManagerImpl implements JavadocManager {
       }
     }
 
-    return result.toArray(new JavadocTagInfo[result.size()]);
+    return result.toArray(new JavadocTagInfo[0]);
   }
 
   @Override

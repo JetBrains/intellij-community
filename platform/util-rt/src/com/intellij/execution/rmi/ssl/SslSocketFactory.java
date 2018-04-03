@@ -75,7 +75,7 @@ public class SslSocketFactory extends SSLSocketFactory {
       if (token == null || token.trim().length() == 0) continue;
       result.add(new MyTrustManager(readCertificate(stringStream(token + END_CERTIFICATE))));
     }
-    return new TrustManager[]{new CompositeX509TrustManager(result.toArray(new TrustManager[result.size()]))};
+    return new TrustManager[]{new CompositeX509TrustManager(result.toArray(new TrustManager[0]))};
   }
 
   @NotNull

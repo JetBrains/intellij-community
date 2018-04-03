@@ -439,7 +439,7 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
     for (String name : moduleNames) {
       modules.add(getModule(name));
     }
-    return new ModuleCompileScope(myProject, modules.toArray(new Module[modules.size()]), false);
+    return new ModuleCompileScope(myProject, modules.toArray(Module.EMPTY_ARRAY), false);
   }
 
   private CompileScope createArtifactsScope(String[] artifactNames) {

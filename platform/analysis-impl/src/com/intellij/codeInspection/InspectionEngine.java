@@ -21,7 +21,10 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiRecursiveVisitor;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -182,7 +185,7 @@ public class InspectionEngine {
             @Nullable
             @Override
             public CommonProblemDescriptor[] getDescriptions(@NotNull RefEntity refEntity) {
-              return descriptors.toArray(new CommonProblemDescriptor[descriptors.size()]);
+              return descriptors.toArray(CommonProblemDescriptor.EMPTY_ARRAY);
             }
 
             @Override

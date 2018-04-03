@@ -87,10 +87,7 @@ public class CommentTracker {
    * @param element element to delete
    */
   public void delete(@NotNull PsiElement element) {
-    if (element instanceof PsiExpression && element.getParent() instanceof PsiExpressionStatement) {
-      element = element.getParent();
-    }
-    grabComments(element);
+    grabCommentsOnDelete(element);
     element.delete();
   }
 
@@ -114,7 +111,7 @@ public class CommentTracker {
    * @param element element to delete
    */
   public void deleteAndRestoreComments(@NotNull PsiElement element) {
-    grabComments(element);
+    grabCommentsOnDelete(element);
     insertCommentsBefore(element instanceof PsiVariable ? element.getParent() : element);
     element.delete();
   }
@@ -172,26 +169,6 @@ public class CommentTracker {
     if (anchor == null) anchor = result;
     insertCommentsBefore(anchor);
     return result;
-  }
-
-  public static @NotNull PsiElement replaceWithSubexpressionAndRestoreComments(@NotNull PsiExpression expression,
-                                                                               @NotNull PsiExpression replacement) {
-    if (!PsiTreeUtil.isAncestor(expression, replacement, true)) throw new IllegalArgumentException("replacement is not a subexpression");
-    final CommentTracker tracker = new CommentTracker();
-    tracker.markUnchanged(replacement);
-    tracker.grabComments(expression);
-    final PsiElement parent = expression.getParent();
-    final int limit = replacement.getTextOffset();
-    PsiElement anchor = expression;
-    for (PsiComment comment : tracker.comments) {
-      if (comment.getTextOffset() < limit) {
-        parent.addBefore(comment, anchor);
-      }
-      else {
-        anchor = parent.addAfter(comment, anchor);
-      }
-    }
-    return expression.replace(replacement);
   }
 
   /**
@@ -282,6 +259,25 @@ public class CommentTracker {
 
   private boolean shouldIgnore(PsiComment comment) {
     return ignoredParents.stream().anyMatch(p -> PsiTreeUtil.isAncestor(p, comment, false));
+  }
+
+  private void grabCommentsOnDelete(PsiElement element) {
+    if (element instanceof PsiExpression && element.getParent() instanceof PsiExpressionStatement) {
+      element = element.getParent();
+    }
+    if (element.getParent() instanceof PsiJavaCodeReferenceElement) {
+      PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)element.getParent();
+      if (element == ref.getQualifier()) {
+        for (PsiElement child : ref.getChildren()) {
+          if(child.textMatches(".")) {
+            break;
+          }
+          grabComments(child);
+        }
+        return;
+      }
+    }
+    grabComments(element);
   }
 
   private void grabComments(PsiElement element) {

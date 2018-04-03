@@ -35,8 +35,11 @@ import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.AddSingleMemberStaticImportAction");
@@ -99,7 +102,7 @@ public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntenti
                     final PsiElement currentFileResolveScope = resolveResult.getCurrentFileResolveScope();
                     if (currentFileResolveScope instanceof PsiImportStaticStatement) {
                       //don't hide another on-demand import and don't create ambiguity
-                      if (MethodSignatureUtil.areSignaturesEqual((PsiMethod)method, (PsiMethod)resolved)) {
+                      if (resolved instanceof PsiMethod && MethodSignatureUtil.areSignaturesEqual((PsiMethod)method, (PsiMethod)resolved)) {
                         return null;
                       }
                     }
@@ -268,7 +271,7 @@ public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntenti
                 }
                 if (aClass instanceof PsiClass && InheritanceUtil.isInheritorOrSelf((PsiClass)aClass, resolvedClass, true)) {
                   try {
-                    qualifierExpression.delete();
+                    new CommentTracker().deleteAndRestoreComments(qualifierExpression);
                   }
                   catch (IncorrectOperationException e) {
                     LOG.error(e);
@@ -293,7 +296,8 @@ public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntenti
     PsiElementFactory factory = JavaPsiFacade.getInstance(reference.getProject()).getElementFactory();
     PsiReferenceExpression copy = (PsiReferenceExpression)factory.createExpressionFromText("A." + reference.getReferenceName(), null);
     reference = (PsiReferenceExpression)reference.replace(copy);
-    ((PsiReferenceExpression)reference.getQualifier()).bindToElement(targetClass);
+    PsiReferenceExpression qualifier = Objects.requireNonNull((PsiReferenceExpression)reference.getQualifier());
+    qualifier.bindToElement(targetClass);
     return reference;
   }
 

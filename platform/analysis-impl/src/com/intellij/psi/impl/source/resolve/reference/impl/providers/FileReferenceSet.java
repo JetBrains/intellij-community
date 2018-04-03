@@ -210,7 +210,7 @@ public class FileReferenceSet {
 
   protected void reparse() {
     List<FileReference> referencesList = reparse(myPathStringNonTrimmed, myStartInElement);
-    myReferences = referencesList.toArray(new FileReference[referencesList.size()]);
+    myReferences = referencesList.toArray(FileReference.EMPTY);
   }
 
   protected List<FileReference> reparse(String str, int startInElement) {

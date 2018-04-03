@@ -161,7 +161,7 @@ public class FilenameIndex {
       return ArrayUtil.toObjectArray(result, PsiFileSystemItem.class);
     }
     //noinspection SuspiciousToArrayCall
-    return result.toArray(new PsiFile[result.size()]);
+    return result.toArray(PsiFile.EMPTY_ARRAY);
   }
 
   /**

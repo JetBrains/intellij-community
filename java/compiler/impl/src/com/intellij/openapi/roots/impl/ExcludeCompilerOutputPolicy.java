@@ -62,6 +62,6 @@ public class ExcludeCompilerOutputPolicy implements DirectoryIndexExcludePolicy 
       ContainerUtil.addIfNotNull(result, extension.getCompilerOutputPointer());
       ContainerUtil.addIfNotNull(result, extension.getCompilerOutputForTestsPointer());
     }
-    return result.isEmpty() ? VirtualFilePointer.EMPTY_ARRAY : result.toArray(new VirtualFilePointer[result.size()]);
+    return result.isEmpty() ? VirtualFilePointer.EMPTY_ARRAY : result.toArray(VirtualFilePointer.EMPTY_ARRAY);
   }
 }

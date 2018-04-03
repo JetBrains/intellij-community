@@ -21,9 +21,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.ArrayList;
 
 /**
  * @author peter
@@ -62,6 +62,6 @@ public class ExcludingActionGroup extends ActionGroup {
         result.add(action);
       }
     }
-    return result.toArray(new AnAction[result.size()]);
+    return result.toArray(AnAction.EMPTY_ARRAY);
   }
 }

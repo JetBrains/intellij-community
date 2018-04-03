@@ -193,7 +193,7 @@ public class ImplementationViewComponent extends JPanel {
       gc.fill = GridBagConstraints.HORIZONTAL;
       gc.weightx = 1;
       myLabel = new JLabel();
-      myFileChooser = new ComboBox(fileDescriptors.toArray(new FileDescriptor[fileDescriptors.size()]), 250);
+      myFileChooser = new ComboBox(fileDescriptors.toArray(new FileDescriptor[0]), 250);
       myFileChooser.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -290,7 +290,7 @@ public class ImplementationViewComponent extends JPanel {
         myCountLabel.setVisible(true);
         myLabel.setVisible(false);
 
-        myFileChooser.setModel(new DefaultComboBoxModel(fileDescriptors.toArray(new FileDescriptor[fileDescriptors.size()])));
+        myFileChooser.setModel(new DefaultComboBoxModel(fileDescriptors.toArray(new FileDescriptor[0])));
         updateRenderer(project);
       }
       else {

@@ -112,8 +112,4 @@ public class RmicConfigurable implements SearchableConfigurable, Configurable.No
     myCbGenerateNoWarnings.setSelected(myRmicSettings.GENERATE_NO_WARNINGS);
     myAdditionalOptionsField.setText(myRmicSettings.ADDITIONAL_OPTIONS_STRING);
   }
-
-  public void disposeUIResources() {
-  }
-
 }

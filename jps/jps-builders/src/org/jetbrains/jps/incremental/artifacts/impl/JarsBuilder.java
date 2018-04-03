@@ -129,7 +129,7 @@ public class JarsBuilder {
       return null;
     }
 
-    JarInfo[] jars = myJarsToBuild.toArray(new JarInfo[myJarsToBuild.size()]);
+    JarInfo[] jars = myJarsToBuild.toArray(new JarInfo[0]);
     Arrays.sort(jars, builder.comparator());
     jars = ArrayUtil.reverseArray(jars);
     return jars;

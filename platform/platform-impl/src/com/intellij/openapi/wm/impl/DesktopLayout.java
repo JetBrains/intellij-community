@@ -10,7 +10,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -197,7 +197,7 @@ public final class DesktopLayout {
         list.add(info);
       }
     }
-    infos = list.toArray(new WindowInfoImpl[list.size()]);
+    infos = list.toArray(new WindowInfoImpl[0]);
     Arrays.sort(infos, ourWindowInfoComparator);
     return infos;
   }

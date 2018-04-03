@@ -374,7 +374,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
         }
 
         synchronized (processors) {
-          UsagesProcessor[] processorsArrayed = processors.toArray(new UsagesProcessor[processors.size()]);
+          UsagesProcessor[] processorsArrayed = processors.toArray(new UsagesProcessor[0]);
           for (UsagesProcessor processor : processorsArrayed) {
             if (!processor.process(reference)) {
               processors.remove(processor);
@@ -411,7 +411,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
 
     do {
       processSearchRequests(context);
-      InspectionToolWrapper[] requestors = needRepeatSearchRequest.toArray(new InspectionToolWrapper[needRepeatSearchRequest.size()]);
+      InspectionToolWrapper[] requestors = needRepeatSearchRequest.toArray(InspectionToolWrapper.EMPTY_ARRAY);
       InspectionManager inspectionManager = InspectionManager.getInstance(context.getProject());
       for (InspectionToolWrapper toolWrapper : requestors) {
         boolean result = false;

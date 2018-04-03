@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -199,7 +199,7 @@ public class TailRecursionInspection extends BaseInspection {
         if (thisVariableName != null) {
           out.append(thisVariableName).append('.');
         }
-        out.append(tracker.markUnchanged(element).getText());
+        out.append(tracker.text(element));
       }
       else if (element instanceof PsiThisExpression || element instanceof PsiSuperExpression) {
         if (thisVariableName == null) {
@@ -294,7 +294,7 @@ public class TailRecursionInspection extends BaseInspection {
       else {
         final PsiElement[] children = element.getChildren();
         if (children.length == 0) {
-          out.append(tracker.markUnchanged(element).getText());
+          out.append(tracker.text(element));
         }
         else {
           for (final PsiElement child : children) {
@@ -312,7 +312,7 @@ public class TailRecursionInspection extends BaseInspection {
         final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
         final PsiElement target = referenceExpression.resolve();
         final String replacement = replacements.get(target);
-        out.append(replacement != null ? replacement : tracker.markUnchanged(element).getText());
+        out.append(replacement != null ? replacement : tracker.text(element));
         return;
       }
       final PsiElement[] children = element.getChildren();
@@ -322,7 +322,7 @@ public class TailRecursionInspection extends BaseInspection {
         }
       }
       else {
-        out.append(tracker.markUnchanged(element).getText());
+        out.append(tracker.text(element));
       }
     }
 

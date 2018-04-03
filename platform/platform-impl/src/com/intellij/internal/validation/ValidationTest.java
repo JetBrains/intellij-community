@@ -54,11 +54,6 @@ public class ValidationTest extends DialogWrapper {
 
 
   @Override
-  protected boolean postponeValidation() {
-    return true;
-  }
-
-  @Override
   public JComponent getPreferredFocusedComponent() {
     return myPanel.field2;
   }

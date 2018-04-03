@@ -79,7 +79,7 @@ public class DependencyInspectionBase extends AbstractBaseJavaLocalInspectionToo
       }
     });
 
-    return problems.isEmpty() ? null : problems.toArray(new ProblemDescriptor[problems.size()]);
+    return problems.isEmpty() ? null : problems.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
   protected LocalQuickFix[] createEditDependencyFixes(DependencyRule dependencyRule) {

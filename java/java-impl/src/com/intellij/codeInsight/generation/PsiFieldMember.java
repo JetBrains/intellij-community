@@ -80,7 +80,7 @@ public class PsiFieldMember extends PsiElementClassMember<PsiField> implements P
         methods.add(new PsiGenerationInfo(method));
       }
     }
-    return methods.isEmpty() ? null : methods.toArray(new GenerationInfo[methods.size()]);
+    return methods.isEmpty() ? null : methods.toArray(GenerationInfo.EMPTY_ARRAY);
   }
 
   @Nullable

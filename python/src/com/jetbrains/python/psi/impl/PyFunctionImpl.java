@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl;
 
+import com.google.common.collect.ImmutableMap;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.extensions.Extensions;
@@ -744,13 +745,19 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   @Override
   public boolean isAsyncAllowed() {
     final LanguageLevel languageLevel = LanguageLevel.forElement(this);
+    if (languageLevel.isOlderThan(LanguageLevel.PYTHON35)) return false;
+
     final String functionName = getName();
 
-    return languageLevel.isAtLeast(LanguageLevel.PYTHON35) && (
-      functionName == null ||
-      ArrayUtil.contains(functionName, PyNames.AITER, PyNames.ANEXT, PyNames.AENTER, PyNames.AEXIT, PyNames.CALL) ||
-      !PyNames.getBuiltinMethods(languageLevel).containsKey(functionName)
-    );
+    if (functionName == null ||
+        ArrayUtil.contains(functionName, PyNames.AITER, PyNames.ANEXT, PyNames.AENTER, PyNames.AEXIT, PyNames.CALL)) {
+      return true;
+    }
+
+    final ImmutableMap<String, PyNames.BuiltinDescription> builtinMethods =
+      asMethod() != null ? PyNames.getBuiltinMethods(languageLevel) : PyNames.getModuleBuiltinMethods(languageLevel);
+
+    return !builtinMethods.containsKey(functionName);
   }
 
   @Override

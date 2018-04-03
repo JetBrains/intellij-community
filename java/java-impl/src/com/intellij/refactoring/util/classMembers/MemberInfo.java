@@ -20,7 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 
 import java.util.ArrayList;
 import java.util.List;

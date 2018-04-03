@@ -12,7 +12,6 @@ import com.intellij.codeInsight.daemon.ProblemHighlightFilter;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoProcessor;
 import com.intellij.codeInsight.daemon.impl.LocalInspectionsPass;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.actions.CleanupInspectionIntention;
 import com.intellij.codeInspection.actions.CleanupInspectionUtil;
 import com.intellij.codeInspection.lang.GlobalInspectionContextExtension;
 import com.intellij.codeInspection.reference.RefElement;
@@ -65,8 +64,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.TripleFunction;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
-import com.intellij.util.containers.HashSet;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -775,7 +772,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
   private void appendPairedInspectionsForUnfairTools(@NotNull List<Tools> globalTools,
                                                      @NotNull List<Tools> globalSimpleTools,
                                                      @NotNull List<Tools> localTools) {
-    Tools[] larray = localTools.toArray(new Tools[localTools.size()]);
+    Tools[] larray = localTools.toArray(new Tools[0]);
     for (Tools tool : larray) {
       LocalInspectionToolWrapper toolWrapper = (LocalInspectionToolWrapper)tool.getTool();
       LocalInspectionTool localTool = toolWrapper.getTool();

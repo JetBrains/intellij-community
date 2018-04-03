@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.ide.IdeEventQueue;
@@ -38,8 +24,10 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -58,8 +46,7 @@ public class LaterInvocator {
     @NotNull private final Condition<?> expired;
     @Nullable private final ActionCallback callback;
 
-    @Debugger.Capture
-    RunnableInfo(@NotNull Runnable runnable,
+    RunnableInfo(@Debugger.Capture @NotNull Runnable runnable,
                  @NotNull ModalityState modalityState,
                  @NotNull Condition<?> expired,
                  @Nullable ActionCallback callback) {
@@ -435,14 +422,13 @@ public class LaterInvocator {
       }
     }
 
-    @Debugger.Insert(keyExpression = "lastInfo", group = "com.intellij.openapi.application.impl.LaterInvocator$RunnableInfo.<init>")
     private boolean runNextEvent() {
       final RunnableInfo lastInfo = getNextEvent(true);
       myLastInfo = lastInfo;
 
       if (lastInfo != null) {
         try {
-          lastInfo.runnable.run();
+          doRun(lastInfo.runnable);
           lastInfo.markDone();
         }
         catch (ProcessCanceledException ignored) { }
@@ -454,6 +440,11 @@ public class LaterInvocator {
         }
       }
       return lastInfo != null;
+    }
+
+    // Extracted to have a capture point
+    private static void doRun(@Debugger.Insert Runnable runnable) {
+      runnable.run();
     }
 
     @Override

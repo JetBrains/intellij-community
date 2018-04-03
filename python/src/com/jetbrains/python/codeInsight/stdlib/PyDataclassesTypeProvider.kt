@@ -7,7 +7,9 @@ import com.intellij.openapi.util.Ref
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyCallExpressionNavigator
+import com.jetbrains.python.psi.impl.stubs.PyDataclassFieldStubImpl
 import com.jetbrains.python.psi.resolve.PyResolveContext
+import com.jetbrains.python.psi.stubs.PyDataclassFieldStub
 import com.jetbrains.python.psi.types.*
 
 class PyDataclassesTypeProvider : PyTypeProviderBase() {
@@ -60,20 +62,41 @@ class PyDataclassesTypeProvider : PyTypeProviderBase() {
     }
 
     val parameters = ArrayList<PyCallableParameter>()
+    val ellipsis = PyElementGenerator.getInstance(cls.project).createEllipsis()
 
     cls.processClassLevelDeclarations { element, _ ->
-      if (element is PyTargetExpression && element.annotationValue != null) {
-        val annotation = element.annotation
-
-        if (annotation != null && !PyTypingTypeProvider.isClassVarAnnotation(annotation, context)) {
-          parameters.add(PyCallableParameterImpl.nonPsi(element.name, getTypeForParameter(element, context), element.findAssignedValue()))
-        }
+      if (element is PyTargetExpression && !PyTypingTypeProvider.isClassVar(element, context)) {
+        fieldToParameter(element, ellipsis, context)?.also { parameters.add(it) }
       }
 
       true
     }
 
     return PyCallableTypeImpl(parameters, context.getType(cls))
+  }
+
+  private fun fieldToParameter(field: PyTargetExpression,
+                               ellipsis: PyNoneLiteralExpression,
+                               context: TypeEvalContext): PyCallableParameter? {
+    val stub = field.stub
+    val fieldStub = if (stub == null) PyDataclassFieldStubImpl.create(field) else stub.getCustomStub(PyDataclassFieldStub::class.java)
+
+    return if (fieldStub == null) {
+      val value = when {
+        context.maySwitchToAST(field) -> field.findAssignedValue()
+        field.hasAssignedValue() -> ellipsis
+        else -> null
+      }
+
+      PyCallableParameterImpl.nonPsi(field.name, getTypeForParameter(field, context), value)
+    }
+    else if (!fieldStub.initValue()) {
+      null
+    }
+    else {
+      val value = if (fieldStub.hasDefault() || fieldStub.hasDefaultFactory()) ellipsis else null
+      PyCallableParameterImpl.nonPsi(field.name, getTypeForParameter(field, context), value)
+    }
   }
 
   private fun getTypeForParameter(element: PyTargetExpression, context: TypeEvalContext): PyType? {

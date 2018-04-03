@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.FrameStateManager;
@@ -44,7 +42,6 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.EdtInvocationManager;
@@ -464,20 +461,20 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private void registerToolWindowsFromBeans(List<FinalizableCommand> list) {
     ToolWindowEP[] beans = Extensions.getExtensions(ToolWindowEP.EP_NAME);
     for (ToolWindowEP bean : beans) {
-      Condition<Project> condition = bean.getCondition();
-      if (condition == null || condition.value(myProject)) {
-        list.add(new FinalizableCommand(EmptyRunnable.INSTANCE) {
-          @Override
-          public void run() {
-            initToolWindow(bean);
-          }
-        });
-      }
+      list.add(new FinalizableCommand(EmptyRunnable.INSTANCE) {
+        @Override
+        public void run() {
+          initToolWindow(bean);
+        }
+      });
     }
   }
 
   @Override
   public void initToolWindow(@NotNull ToolWindowEP bean) {
+    Condition<Project> condition = bean.getCondition();
+    if (condition != null && !condition.value(myProject)) return;
+
     WindowInfoImpl before = myLayout.getInfo(bean.id, false);
     boolean visible = before != null && before.isVisible();
     JLabel label = createInitializingLabel();
@@ -885,7 +882,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
       myActiveStack.remove(id, false); // hidden window should be at the top of stack
 
-      if (wasActive && moveFocus) {
+      if (wasActive && moveFocus && !myActiveStack.isEmpty()) {
         final String toBeActivatedId = myActiveStack.pop();
         if (getInfo(toBeActivatedId).isVisible() || isStackEnabled()) {
           activateToolWindowImpl(toBeActivatedId, commandList, false, true);
@@ -1782,7 +1779,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   @Override
-  public void loadState(Element state) {
+  public void loadState(@NotNull Element state) {
     for (Element e : state.getChildren()) {
       if (DesktopLayout.TAG.equals(e.getName())) {
         myLayout.readExternal(e);

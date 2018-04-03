@@ -135,7 +135,7 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
         references.add(createPsiReference(element, start + 1, end + 1, context, genericDomValue, delimitersOnly));
       }
     }.processText(text);
-    return references.toArray(new PsiReference[references.size()]);
+    return references.toArray(PsiReference.EMPTY_ARRAY);
   }
 
   @NotNull

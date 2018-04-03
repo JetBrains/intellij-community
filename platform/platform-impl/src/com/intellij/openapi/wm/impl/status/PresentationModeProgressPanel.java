@@ -22,6 +22,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.TransparentPanel;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -49,6 +50,7 @@ public class PresentationModeProgressPanel {
     myText2.setIcon(JBUI.scale(EmptyIcon.create(1, 16)));
     myEastButtons = myProgress.createEastButtons();
     myButtonPanel.add(InlineProgressIndicator.createButtonPanel(myEastButtons.map(b -> b.button)));
+    myRootPanel.setPreferredSize(new JBDimension(250, 60));
   }
 
   @NotNull

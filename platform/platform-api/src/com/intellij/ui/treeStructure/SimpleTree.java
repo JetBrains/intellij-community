@@ -37,7 +37,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.plaf.basic.BasicTreeUI;
-import javax.swing.text.Position;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -109,12 +108,6 @@ public class SimpleTree extends Tree implements CellEditorListener {
 
   protected void configureUiHelper(final TreeUIHelper helper) {
     helper.installTreeSpeedSearch(this);
-  }
-
-  @Override
-  public TreePath getNextMatch(final String prefix, final int startingRow, final Position.Bias bias) {
-    // turn JTree Speed Search off
-    return null;
   }
 
   public boolean accept(AbstractTreeBuilder builder, final SimpleNodeVisitor visitor) {
@@ -193,7 +186,7 @@ public class SimpleTree extends Tree implements CellEditorListener {
         lastNode = nodeFor;
       }
     }
-    return result.toArray(new SimpleNode[result.size()]);
+    return result.toArray(new SimpleNode[0]);
   }
 
   public void setSelectedNode(AbstractTreeBuilder builder, SimpleNode node, boolean expand) {

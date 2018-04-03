@@ -81,7 +81,7 @@ public class ScriptSupportUtil {
               XmlPsiUtil.processXmlElements(document, psiElementProcessor, true);
             }
 
-            return new CachedValueProvider.Result<>(scriptTags.toArray(new XmlTag[scriptTags.size()]), element);
+            return new CachedValueProvider.Result<>(scriptTags.toArray(XmlTag.EMPTY), element);
           }, false);
       element.putUserData(CachedScriptTagsKey, myCachedScriptTags);
     }

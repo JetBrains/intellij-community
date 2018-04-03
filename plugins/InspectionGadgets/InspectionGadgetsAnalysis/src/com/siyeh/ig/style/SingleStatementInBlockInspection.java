@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.siyeh.ig.style;
 
@@ -66,7 +54,7 @@ public class SingleStatementInBlockInspection extends BaseInspection {
     final PsiStatement[] statements = codeBlock.getStatements();
 
     CommentTracker commentTracker = new CommentTracker();
-    final String text = commentTracker.markUnchanged(statements[0]).getText();
+    final String text = commentTracker.text(statements[0]);
     PsiElement parent = blockStatement.getParent();
     final Project project = blockStatement.getProject();
     final PsiElement replacementExp = commentTracker.replace(blockStatement, text);
@@ -156,7 +144,7 @@ public class SingleStatementInBlockInspection extends BaseInspection {
   private static class SingleStatementInBlockFix extends InspectionGadgetsFix {
     private final String myKeywordText;
 
-    private SingleStatementInBlockFix(String keywordText) {
+    SingleStatementInBlockFix(String keywordText) {
       myKeywordText = keywordText;
     }
 

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.ide.StartupProgress;
@@ -56,7 +54,7 @@ public class Splash extends JDialog implements StartupProgress {
       myProgressTail = appInfo.getProgressTailIcon();
     }
     setUndecorated(true);
-    if (!(SystemInfo.isLinux && SystemInfo.isJavaVersionAtLeast("1.7"))) {
+    if (!(SystemInfo.isLinux)) {
       setResizable(false);
     }
     setFocusableWindowState(false);

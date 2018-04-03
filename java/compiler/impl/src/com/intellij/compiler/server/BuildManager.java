@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.server;
 
 import com.intellij.ProjectTopics;
@@ -222,7 +220,7 @@ public class BuildManager implements Disposable {
     final String fallbackSdkHome = getFallbackSdkHome();
     if (fallbackSdkHome != null) {
       myFallbackJdkParams.add("-D" + GlobalOptions.FALLBACK_JDK_HOME + "=" + fallbackSdkHome);
-      myFallbackJdkParams.add("-D" + GlobalOptions.FALLBACK_JDK_VERSION + "=" + SystemProperties.getJavaVersion());
+      myFallbackJdkParams.add("-D" + GlobalOptions.FALLBACK_JDK_VERSION + "=" + SystemInfo.JAVA_VERSION);
     }
 
     MessageBusConnection connection = application.getMessageBus().connect();

@@ -149,9 +149,6 @@ public class JavaCompilersTab implements SearchableConfigurable, Configurable.No
     myTargetLevelComponent.setModuleTargetLevels(myCompilerConfiguration.getModulesBytecodeTargetMap());
   }
 
-  public void disposeUIResources() {
-  }
-
   private void selectCompiler(BackendCompiler compiler) {
     if(compiler == null) {
       compiler = myDefaultCompiler;

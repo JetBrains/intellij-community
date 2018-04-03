@@ -47,7 +47,7 @@ public class ChangeCompareModeGroup extends ComboBoxAction implements ShortcutPr
       getTemplatePresentation().setVisible(false);
       getTemplatePresentation().setEnabled(false);
     }
-    myGroup = new DefaultActionGroup(actions.toArray(new ChangeCompareModeAction[actions.size()]));
+    myGroup = new DefaultActionGroup(actions.toArray(new ChangeCompareModeAction[0]));
   }
 
   @Override

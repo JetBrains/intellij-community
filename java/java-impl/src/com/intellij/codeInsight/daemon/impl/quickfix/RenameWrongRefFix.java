@@ -121,7 +121,7 @@ public class RenameWrongRefFix implements IntentionAction {
       }
     }
 
-    return items.toArray(new LookupElement[items.size()]);
+    return items.toArray(LookupElement.EMPTY_ARRAY);
   }
 
   @Override

@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.openapi.ui;
 
@@ -37,7 +25,6 @@ import com.intellij.ui.navigation.Place;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -78,10 +65,6 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     public ActionCallback navigateTo(@Nullable final Place place, final boolean requestFocus) {
       return null;
     }
-
-    @Override
-    public void queryPlace(@NotNull final Place place) {
-    }
   });
   private JComponent myMaster;
 
@@ -92,21 +75,20 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   protected final MasterDetailsState myState;
 
   protected final Runnable TREE_UPDATER = new Runnable() {
-      @Override
-      public void run() {
-        final TreePath selectionPath = myTree.getSelectionPath();
-        if (selectionPath == null) return;
+    @Override
+    public void run() {
+      final TreePath selectionPath = myTree.getSelectionPath();
+      if (selectionPath == null) return;
 
-        MyNode node = (MyNode)selectionPath.getLastPathComponent();
-        if (node == null) return;
+      MyNode node = (MyNode)selectionPath.getLastPathComponent();
+      if (node == null) return;
 
-        myState.setLastEditedConfigurable(getNodePathString(node)); //survive after rename;
-        myDetails.setText(node.getConfigurable().getBannerSlogan());
-        node.reloadNode((DefaultTreeModel)myTree.getModel());
-        fireItemsChangedExternally();
-      }
-    };
-
+      myState.setLastEditedConfigurable(getNodePathString(node)); //survive after rename;
+      myDetails.setText(node.getConfigurable().getBannerSlogan());
+      node.reloadNode((DefaultTreeModel)myTree.getModel());
+      fireItemsChangedExternally();
+    }
+  };
 
   protected MyNode myRoot = new MyRootNode();
   protected Tree myTree = new Tree();
@@ -128,8 +110,8 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     this(new MasterDetailsState());
   }
 
-  protected MasterDetailsComponent(MasterDetailsState state) {
-    myState = state;
+  protected MasterDetailsComponent(@Nullable MasterDetailsState state) {
+    myState = state == null ? new MasterDetailsState() : state;
 
     mySplitter = new OnePixelSplitter(false, .2f);
     mySplitter.setSplitterProportionKey("ProjectStructure.SecondLevelElements");
@@ -266,7 +248,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   }
 
   protected DefaultActionGroup createToolbarActionGroup() {
-    final ArrayList<AnAction> actions = createActions(false);
+    final List<AnAction> actions = createActions(false);
     if (actions != null) {
       final DefaultActionGroup group = new DefaultActionGroup();
       for (AnAction action : actions) {
@@ -334,9 +316,12 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     myHasDeletedItems = false;
   }
 
-  protected abstract void processRemovedItems();
+  protected void processRemovedItems() {
+  }
 
-  protected abstract boolean wasObjectStored(Object editableObject);
+  protected boolean wasObjectStored(Object editableObject) {
+    return false;
+  }
 
   @Override
   public void reset() {
@@ -346,6 +331,10 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     //myTree.requestFocus();
     myState.getProportions().restoreSplitterProportions(myWholePanel);
 
+    restoreLastSelection();
+  }
+
+  protected final void restoreLastSelection() {
     final Enumeration enumeration = myRoot.breadthFirstEnumeration();
     boolean selected = false;
     while (enumeration.hasMoreElements()) {
@@ -439,10 +428,9 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   }
 
   @Nullable
-  protected ArrayList<AnAction> createActions(final boolean fromPopup) {
+  protected List<AnAction> createActions(boolean fromPopup) {
     return null;
   }
-
 
   protected void initTree() {
     ((DefaultTreeModel)myTree.getModel()).setRoot(myRoot);
@@ -474,7 +462,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
         }
       }
     });
-    ArrayList<AnAction> actions = createActions(true);
+    List<AnAction> actions = createActions(true);
     if (actions != null) {
       final DefaultActionGroup group = new DefaultActionGroup();
       for (AnAction action : actions) {
@@ -917,13 +905,16 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   protected interface ItemsChangeListener {
     void itemChanged(@Nullable Object deletedItem);
 
-    void itemsExternallyChanged();
+    default void itemsExternallyChanged() {
+    }
   }
 
   public interface ActionGroupWithPreselection {
     ActionGroup getActionGroup();
 
-    int getDefaultIndex();
+    default int getDefaultIndex() {
+      return 0;
+    }
   }
 
   protected class MyActionGroupWrapper extends AnAction implements DumbAware {

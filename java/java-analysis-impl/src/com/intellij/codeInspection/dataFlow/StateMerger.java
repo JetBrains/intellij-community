@@ -21,7 +21,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.intellij.util.containers.MultiMap;
 import one.util.streamex.LongStreamEx;
 import one.util.streamex.StreamEx;

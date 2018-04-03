@@ -505,7 +505,7 @@ public class ExceptionUtil {
             }
             retainExceptions(ex, collectSubstituted(pair.second, exceptions, scope));
           }
-          return getUnhandledExceptions(methodCall, topElement, PsiSubstitutor.EMPTY, ex.toArray(new PsiClassType[ex.size()]));
+          return getUnhandledExceptions(methodCall, topElement, PsiSubstitutor.EMPTY, ex.toArray(PsiClassType.EMPTY_ARRAY));
         }
       }
       catch (MethodProcessorSetupFailedException ignore) {
@@ -572,7 +572,7 @@ public class ExceptionUtil {
   @NotNull
   public static List<PsiClassType> getUnhandledCloserExceptions(PsiElement place, @Nullable PsiElement topElement, PsiType type) {
     List<PsiClassType> ex = type instanceof PsiClassType ? getExceptionsFromClose(type, place.getResolveScope()) : null;
-    return ex != null ? getUnhandledExceptions(place, topElement, PsiSubstitutor.EMPTY, ex.toArray(new PsiClassType[ex.size()])) : Collections.emptyList();
+    return ex != null ? getUnhandledExceptions(place, topElement, PsiSubstitutor.EMPTY, ex.toArray(PsiClassType.EMPTY_ARRAY)) : Collections.emptyList();
   }
 
   private static List<PsiClassType> getExceptionsFromClose(PsiResourceListElement resource) {

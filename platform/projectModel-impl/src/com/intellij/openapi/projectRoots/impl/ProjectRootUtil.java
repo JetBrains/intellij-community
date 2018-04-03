@@ -58,7 +58,7 @@ public class ProjectRootUtil {
       }
     }
 
-    return dirs.toArray(new PsiDirectory[dirs.size()]);
+    return dirs.toArray(PsiDirectory.EMPTY_ARRAY);
   }
 
   @NotNull

@@ -325,7 +325,7 @@ public class FindUtil {
     if (usages == null) return;
     final UsageTarget[] usageTargets = {new FindInProjectUtil.StringUsageTarget(project, findModel)};
     final UsageViewPresentation usageViewPresentation = FindInProjectUtil.setupViewPresentation(false, findModel);
-    UsageViewManager.getInstance(project).showUsages(usageTargets, usages.toArray(new Usage[usages.size()]), usageViewPresentation);
+    UsageViewManager.getInstance(project).showUsages(usageTargets, usages.toArray(Usage.EMPTY_ARRAY), usageViewPresentation);
   }
 
   public static void searchBack(Project project, FileEditor fileEditor, @Nullable DataContext dataContext) {

@@ -170,6 +170,6 @@ public class ChooseTypeExpression extends Expression {
       }
     }
 
-    return result.toArray(new LookupElement[result.size()]);
+    return result.toArray(LookupElement.EMPTY_ARRAY);
   }
 }

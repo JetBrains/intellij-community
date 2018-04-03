@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 Bas Leijdekkers
+ * Copyright 2011-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -73,7 +72,7 @@ public class MathRandomCastToIntInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       PsiElement parent = element.getParent();
       while (parent instanceof PsiPrefixExpression) {
@@ -106,10 +105,10 @@ public class MathRandomCastToIntInspection extends BaseInspection {
           newExpression.append(token.getText());
         }
         if (typeCastExpression.equals(expression)) {
-          newExpression.append(commentTracker.markUnchanged(operand).getText());
+          newExpression.append(commentTracker.text(operand));
         }
         else {
-          newExpression.append(commentTracker.markUnchanged(expression).getText());
+          newExpression.append(commentTracker.text(expression));
         }
       }
       newExpression.append(')');

@@ -93,7 +93,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
 
   public XmlElementDescriptor[] getElements() {
     final Collection<XmlElementDescriptor> declarations = buildDeclarationMap().values();
-    return declarations.toArray(new XmlElementDescriptor[declarations.size()]);
+    return declarations.toArray(XmlElementDescriptor.EMPTY_ARRAY);
   }
 
   private Map<String,XmlElementDescriptor> buildDeclarationMap() {
@@ -204,7 +204,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
         }
       }, false);
       XmlUtil.doDuplicationCheckForElements(
-        decls.toArray(new XmlElementDecl[decls.size()]),
+        decls.toArray(new XmlElementDecl[0]),
         new HashMap<>(decls.size()),
         XML_ELEMENT_DECL_PROVIDER,
         host

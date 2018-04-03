@@ -152,7 +152,7 @@ public class ClassInnerStuffCache {
     Map<String, PsiMethod[]> cachedMethods = ContainerUtil.newTroveMap();
     for (Map.Entry<String, List<PsiMethod>> entry : collectedMethods.entrySet()) {
       List<PsiMethod> list = entry.getValue();
-      cachedMethods.put(entry.getKey(), list.toArray(new PsiMethod[list.size()]));
+      cachedMethods.put(entry.getKey(), list.toArray(PsiMethod.EMPTY_ARRAY));
     }
     return cachedMethods;
   }

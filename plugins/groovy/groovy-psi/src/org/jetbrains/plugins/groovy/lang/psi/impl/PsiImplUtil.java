@@ -750,7 +750,7 @@ public class PsiImplUtil {
         result.add((GrStatement)cur);
       }
     }
-    return result.toArray(new GrStatement[result.size()]);
+    return result.toArray(GrStatement.EMPTY_ARRAY);
   }
 
   public static GrNamedArgument findNamedArgument(final GrNamedArgumentsOwner namedArgumentOwner,

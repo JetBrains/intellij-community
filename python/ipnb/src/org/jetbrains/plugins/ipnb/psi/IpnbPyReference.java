@@ -78,7 +78,7 @@ public class IpnbPyReference extends PyReferenceImpl {
           final List<RatedResolveResult> resultList = getResultsFromProcessor(referencedName, processor, psiFile, psiFile);
           if (resultList.size() > 0) {
             List<RatedResolveResult> ret = RatedResolveResult.sorted(resultList);
-            return ret.toArray(new RatedResolveResult[ret.size()]);
+            return ret.toArray(RatedResolveResult.EMPTY_ARRAY);
           }
         }
       }

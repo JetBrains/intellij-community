@@ -38,7 +38,7 @@ import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.paint.GraphCellPainter;
 import com.intellij.vcs.log.paint.PositionUtil;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
-import com.intellij.vcs.log.ui.frame.CommitPanel;
+import com.intellij.vcs.log.ui.frame.CommitPresentationUtil;
 import com.intellij.vcs.log.ui.render.GraphCommitCellRenderer;
 import com.intellij.vcs.log.ui.render.SimpleColoredComponentLinkMouseListener;
 import com.intellij.vcs.log.util.VcsUserUtil;
@@ -179,7 +179,7 @@ public class GraphTableController {
                     StringUtil.shortenTextWithEllipsis(details.getSubject(), 50, 0, "...") +
                     "\"</b> by " +
                     VcsUserUtil.getShortPresentation(details.getAuthor()) +
-                    CommitPanel.formatDateTime(details.getAuthorTime());
+                    CommitPresentationUtil.formatDateTime(details.getAuthorTime());
     }
     return balloonText;
   }

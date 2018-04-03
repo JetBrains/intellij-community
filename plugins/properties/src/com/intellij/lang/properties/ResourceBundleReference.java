@@ -127,7 +127,7 @@ public class ResourceBundleReference extends PsiReferenceBase<PsiElement>
     };
 
     referenceManager.processPropertiesFiles(myElement.getResolveScope(), processor, this);
-    return variants.toArray(new LookupElement[variants.size()]);
+    return variants.toArray(LookupElement.EMPTY_ARRAY);
   }
 
   @Override

@@ -21,7 +21,6 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.WaitFor;
-import com.intellij.util.containers.HashMap;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

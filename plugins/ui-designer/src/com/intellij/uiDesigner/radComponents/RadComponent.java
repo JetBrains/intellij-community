@@ -40,9 +40,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.Dimension;
-import java.awt.Point;
-import java.awt.Rectangle;
+import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -667,7 +665,7 @@ public abstract class RadComponent implements IComponent {
         result.add(prop);
       }
     }
-    return result.toArray(new IProperty[result.size()]);
+    return result.toArray(new IProperty[0]);
   }
 
   public IContainer getParentContainer() {

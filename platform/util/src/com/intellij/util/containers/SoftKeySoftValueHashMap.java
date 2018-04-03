@@ -15,15 +15,31 @@
  */
 package com.intellij.util.containers;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
 import java.util.*;
 
-final class SoftKeySoftValueHashMap<K,V> implements Map<K,V>{
+/**
+ * @deprecated use {@link ContainerUtil#createSoftKeySoftValueMap()} instead
+ */
+@Deprecated
+public final class SoftKeySoftValueHashMap<K,V> implements Map<K,V>{
+  private static final Logger LOG = Logger.getInstance(SoftKeySoftValueHashMap.class);
   private final RefHashMap<K, ValueReference<K,V>> mySoftKeyMap = (RefHashMap<K, ValueReference<K,V>>)ContainerUtil.<K, ValueReference<K,V>>createSoftMap();
   private final ReferenceQueue<V> myQueue = new ReferenceQueue<V>();
+
+  @Deprecated
+  public SoftKeySoftValueHashMap() {
+    LOG.warn("This class is deprecated. Please use {@link ContainerUtil#createSoftKeySoftValueMap()} instead.", new IncorrectOperationException());
+  }
+
+  SoftKeySoftValueHashMap(boolean goodConstructor) {
+  }
+
 
   private static class ValueReference<K,V> extends SoftReference<V> {
     private final RefHashMap.Key<K> key;
@@ -38,6 +54,7 @@ final class SoftKeySoftValueHashMap<K,V> implements Map<K,V>{
   boolean processQueue() {
     boolean processed = mySoftKeyMap.processQueue();
     while(true) {
+      @SuppressWarnings("unchecked")
       ValueReference<K,V> ref = (ValueReference<K, V>)myQueue.poll();
       if (ref == null) break;
       RefHashMap.Key<K> key = ref.key;

@@ -187,7 +187,7 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
       }
     }
 
-    final PredefinedLogFile[] unresolved = myUnresolvedPredefined.toArray(new PredefinedLogFile[myUnresolvedPredefined.size()]);
+    final PredefinedLogFile[] unresolved = myUnresolvedPredefined.toArray(new PredefinedLogFile[0]);
     for (PredefinedLogFile logFile : unresolved) {
       final LogFileOptions options = configurationBase.getOptionsForPredefinedLogFile(logFile);
       if (options != null) {

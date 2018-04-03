@@ -49,7 +49,7 @@ public class MacIntelliJTextFieldUI extends DarculaTextFieldUI {
 
   @Override
   protected int getMinimumHeight() {
-    return DarculaEditorTextFieldBorder.isComboBoxEditor(getComponent()) ? JBUI.scale(18) : JBUI.scale(28);
+    return DarculaEditorTextFieldBorder.isComboBoxEditor(getComponent()) ? JBUI.scale(18) : JBUI.scale(26);
   }
 
   @Override

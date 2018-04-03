@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packageDependencies;
 
 import com.intellij.icons.AllIcons;
@@ -115,7 +113,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
         result.add(dependencyRule);
       }
     }
-    return result.toArray(new DependencyRule[result.size()]);
+    return result.toArray(new DependencyRule[0]);
   }
 
   @NotNull
@@ -127,7 +125,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
         result.add(dependencyRule);
       }
     }
-    return result.toArray(new DependencyRule[result.size()]);
+    return result.toArray(new DependencyRule[0]);
   }
 
   @Override
@@ -150,7 +148,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   @Override
   public DependencyRule[] getAllRules() {
     List<DependencyRule> rules = myState.rules;
-    return rules.toArray(new DependencyRule[rules.size()]);
+    return rules.toArray(new DependencyRule[0]);
   }
 
   @Override
@@ -189,7 +187,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   }
 
   @Override
-  public void loadState(Element element) {
+  public void loadState(@NotNull Element element) {
     Element option = element.getChild("option");
     if (option != null && "SKIP_IMPORT_STATEMENTS".equals(option.getAttributeValue("name"))) {
       mySkipImportStatementsWasSpecified = !myProject.isDefault();

@@ -25,7 +25,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.PathUtil;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.xml.Attribute;
 import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.DomTarget;
@@ -37,6 +36,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 

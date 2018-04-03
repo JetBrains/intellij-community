@@ -244,7 +244,7 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
     final List<String> generatedFilePaths = new ArrayList<>();
-    myProject.getMessageBus().connect(getTestRootDisposable()).subscribe(CompilerTopics.COMPILATION_STATUS, new CompilationStatusAdapter() {
+    myProject.getMessageBus().connect(getTestRootDisposable()).subscribe(CompilerTopics.COMPILATION_STATUS, new CompilationStatusListener() {
       @Override
       public void fileGenerated(String outputRoot, String relativePath) {
         generatedFilePaths.add(relativePath);

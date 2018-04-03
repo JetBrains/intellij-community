@@ -70,7 +70,7 @@ public class XmlAttlistDeclImpl extends XmlElementImpl implements XmlAttlistDecl
         return true;
       }
     }, this);
-    return result.toArray(new XmlAttributeDecl[result.size()]);
+    return result.toArray(new XmlAttributeDecl[0]);
   }
 
   @Override

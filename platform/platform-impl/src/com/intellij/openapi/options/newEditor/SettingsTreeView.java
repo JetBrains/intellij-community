@@ -63,10 +63,7 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.IdentityHashMap;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -477,7 +474,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
           list.add(new MyNode(this, configurable, 0));
         }
       }
-      return list.toArray(new SimpleNode[list.size()]);
+      return list.toArray(new SimpleNode[0]);
     }
   }
 

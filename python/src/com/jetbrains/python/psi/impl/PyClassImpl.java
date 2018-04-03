@@ -331,7 +331,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
         result.add(((PyClassType)type).getPyClass());
       }
     }
-    return result.toArray(new PyClass[result.size()]);
+    return result.toArray(PyClass.EMPTY_ARRAY);
   }
 
   @Override
@@ -1064,6 +1064,12 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
           if (target instanceof PyTargetExpression) {
             result.add((PyTargetExpression)target);
           }
+        }
+      }
+      else if (psiElement instanceof PyTypeDeclarationStatement) {
+        final PyExpression target = ((PyTypeDeclarationStatement)psiElement).getTarget();
+        if (target instanceof PyTargetExpression) {
+          result.add((PyTargetExpression)target);
         }
       }
     }

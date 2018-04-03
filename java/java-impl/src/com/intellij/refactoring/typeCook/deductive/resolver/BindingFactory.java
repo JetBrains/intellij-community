@@ -73,7 +73,7 @@ public class BindingFactory {
       }
     }.getGreatestLowerClasses(aClass, bClass, descendants);
 
-    return descendants.toArray(new PsiClass[descendants.size()]);
+    return descendants.toArray(PsiClass.EMPTY_ARRAY);
   }
 
   private class BindingImpl extends Binding {

@@ -1,7 +1,6 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.reflection
 
-import com.intellij.util.containers.HashMap
 import java.beans.Introspector
 import java.beans.PropertyDescriptor
 import java.lang.ref.SoftReference

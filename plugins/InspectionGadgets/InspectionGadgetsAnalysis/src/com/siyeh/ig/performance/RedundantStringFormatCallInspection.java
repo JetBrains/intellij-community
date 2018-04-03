@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2017 Bas Leijdekkers
+ * Copyright 2008-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,9 +77,9 @@ public class RedundantStringFormatCallInspection extends BaseInspection {
       @NonNls final StringBuilder newExpression = new StringBuilder();
       final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
       if (qualifierExpression != null) {
-        newExpression.append(commentTracker.markUnchanged(qualifierExpression).getText()).append('.');
+        newExpression.append(commentTracker.text(qualifierExpression)).append('.');
       }
-      newExpression.append("print").append(commentTracker.markUnchanged(methodCallExpression.getArgumentList()).getText());
+      newExpression.append("print").append(commentTracker.text(methodCallExpression.getArgumentList()));
       PsiReplacementUtil.replaceExpression(methodCallExpression, newExpression.toString(), commentTracker);
     }
   }

@@ -205,7 +205,7 @@ public class IntroduceParameterObjectDialog extends AbstractIntroduceParameterOb
         parameters.add(new ParameterInfoImpl(parameterList.getParameterIndex((PsiParameter)data.variable), data.name, data.type));
       }
     }
-    final ParameterInfoImpl[] infos = parameters.toArray(new ParameterInfoImpl[parameters.size()]);
+    final ParameterInfoImpl[] infos = parameters.toArray(new ParameterInfoImpl[0]);
     return new JavaIntroduceParameterObjectClassDescriptor(className, packageName, moveDestination, useExistingClass, createInnerClass,
                                                            newVisibility, infos, mySourceMethod,
                                                            myGenerateAccessorsCheckBox.isSelected());

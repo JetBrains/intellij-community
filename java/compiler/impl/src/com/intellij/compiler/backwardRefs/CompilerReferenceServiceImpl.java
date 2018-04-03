@@ -524,7 +524,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
 
     return getScopeRestrictedByFileTypes(new ScopeWithoutReferencesOnCompilation(referentFileIds, myProjectFileIndex).intersectWith(notScope(
       myDirtyScopeHolder.getDirtyScope())),
-                                         myFileTypes.toArray(new FileType[myFileTypes.size()]));
+                                         myFileTypes.toArray(FileType.EMPTY_ARRAY));
   }
 
   @Nullable

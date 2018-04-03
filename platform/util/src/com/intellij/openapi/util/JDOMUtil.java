@@ -140,7 +140,7 @@ public class JDOMUtil {
   @Deprecated
   public static Element[] getElements(@NotNull Element m) {
     List<Element> list = m.getChildren();
-    return list.toArray(new Element[list.size()]);
+    return list.toArray(new Element[0]);
   }
 
   /**

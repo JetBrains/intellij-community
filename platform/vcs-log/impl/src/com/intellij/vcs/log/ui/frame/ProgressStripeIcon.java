@@ -171,7 +171,7 @@ public abstract class ProgressStripeIcon implements Icon {
     }
 
     Icon passive = result.get(0);
-    AsyncProcessIcon icon = new AsyncProcessIcon("ProgressWithStripes", result.toArray(new Icon[result.size()]), passive) {
+    AsyncProcessIcon icon = new AsyncProcessIcon("ProgressWithStripes", result.toArray(new Icon[0]), passive) {
       @Override
       public Dimension getPreferredSize() {
         return new Dimension(component.getWidth(), passive.getIconHeight());

@@ -1447,8 +1447,8 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> List<T> concat(@NotNull final List<List<? extends T>> lists) {
-    @SuppressWarnings("unchecked") List<? extends T>[] array = lists.toArray(new List[lists.size()]);
-    return (List<T>) concat(array);
+    @SuppressWarnings("unchecked") List<? extends T>[] array = lists.toArray(new List[0]);
+    return concat(array);
   }
 
   /**
@@ -2789,7 +2789,7 @@ public class ContainerUtil extends ContainerUtilRt {
   }
   @NotNull
   public static <K,V> Map<K,V> createSoftKeySoftValueMap() {
-    return new SoftKeySoftValueHashMap<K, V>();
+    return new SoftKeySoftValueHashMap<K, V>(true);
   }
 
   /**

@@ -33,25 +33,24 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.reflect.Field;
 import java.util.*;
 
-/**
- * @author Roman.Shein
- * @since 04.08.2015.
- */
 public abstract class CodeStyleDeriveProcessor {
-
   protected final LangCodeStyleExtractor myLangExtractor;
 
-  protected CodeStyleDeriveProcessor(LangCodeStyleExtractor langExtractor) {
+  protected CodeStyleDeriveProcessor(@NotNull LangCodeStyleExtractor langExtractor) {
     myLangExtractor = langExtractor;
   }
 
-  public abstract ValuesExtractionResult runWithProgress(Project project, CodeStyleSettings settings, PsiFile file,
-                                    ProgressIndicator indicator);
+  public abstract ValuesExtractionResult runWithProgress(
+    Project project,
+    CodeStyleSettings settings,
+    PsiFile file,
+    ProgressIndicator indicator);
 
-  public Map<Value, Object> backupValues(CodeStyleSettings settings, Language language) {
+  @NotNull
+  public Map<Value, Object> backupValues(@NotNull CodeStyleSettings settings, @NotNull Language language) {
     List<Value> baseValues = getFormattingValues(settings, language);
     Map<Value, Object> res = ContainerUtil.newHashMap();
-    for (Value baseValue: baseValues) {
+    for (Value baseValue : baseValues) {
       res.put(baseValue, baseValue.value);
     }
     return res;
@@ -66,7 +65,7 @@ public abstract class CodeStyleDeriveProcessor {
   }
 
   @NotNull
-  private Value.VAR_KIND getVarKind(@NotNull String name,  @NotNull Object value) {
+  private Value.VAR_KIND getVarKind(@NotNull String name, @NotNull Object value) {
     for (Value.VAR_KIND varKind : getVarKinds()) {
       if (varKind.accepts(name, value)) {
         return varKind;
@@ -95,8 +94,8 @@ public abstract class CodeStyleDeriveProcessor {
 
   @NotNull
   private Value buildFValue(@NotNull Field field,
-                             @NotNull Object instance,
-                             @NotNull ClassSerializer serializer) throws IllegalAccessException {
+                            @NotNull Object instance,
+                            @NotNull ClassSerializer serializer) throws IllegalAccessException {
     String name = field.getName();
     Object value = field.get(instance);
     Value.VAR_KIND varKind = getVarKind(name, value);
@@ -105,7 +104,6 @@ public abstract class CodeStyleDeriveProcessor {
 
   @NotNull
   protected List<Value> getFormattingValues(CodeStyleSettings settings, Language language) {
-
     final CommonCodeStyleSettings commonSettings = settings.getCommonSettings(language);
     CommonCodeStyleSettings.IndentOptions indentOptions = commonSettings.getIndentOptions();
     if (indentOptions == null) {
@@ -116,7 +114,7 @@ public abstract class CodeStyleDeriveProcessor {
 
     List<Value> values = readAll("commonSettings", commonSettings);
     if (languageSettings != null) {
-      values.addAll(readAll("ocSettings", languageSettings));
+      values.addAll(readAll("languageSettings", languageSettings));
     }
     final LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(language);
     if (provider != null) {
@@ -134,10 +132,13 @@ public abstract class CodeStyleDeriveProcessor {
       List<Value> valuesOrder = readAll("indentOptions", indentOptions);
       valuesOrder.addAll(values);
       return valuesOrder;
-    } else {
-      Utils.logError("Not indent options detected.");
+    }
+    else {
+      Utils.logError("Indent options were not detected.");
       return values;
     }
   }
 
+  @NotNull
+  public abstract String getHTMLReport();
 }

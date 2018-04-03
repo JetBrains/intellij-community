@@ -25,12 +25,12 @@ import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
-import com.intellij.util.containers.HashSet;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectIntHashMap;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 

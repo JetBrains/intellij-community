@@ -1,0 +1,9 @@
+TryWithResources -> UClass (name = TryWithResources)
+foo -> UMethod (name = foo)
+    BufferedReader -> USimpleNameReferenceExpression (identifier = BufferedReader)
+    br -> ULocalVariable (name = br)
+    BufferedReader -> USimpleNameReferenceExpression (identifier = BufferedReader)
+    FileReader -> USimpleNameReferenceExpression (identifier = FileReader)
+    path -> USimpleNameReferenceExpression (identifier = path)
+        br -> USimpleNameReferenceExpression (identifier = br)
+        readLine -> UQualifiedReferenceExpression

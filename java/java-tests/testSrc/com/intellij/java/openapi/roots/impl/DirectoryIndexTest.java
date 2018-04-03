@@ -468,7 +468,7 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
   }
 
   private static OrderEntry[] toArray(Collection<OrderEntry> orderEntries) {
-    return orderEntries.toArray(new OrderEntry[orderEntries.size()]);
+    return orderEntries.toArray(OrderEntry.EMPTY_ARRAY);
   }
 
   public void testModuleSourceAsLibrarySource() {

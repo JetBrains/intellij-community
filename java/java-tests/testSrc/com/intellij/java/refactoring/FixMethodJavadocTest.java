@@ -18,12 +18,12 @@ package com.intellij.java.refactoring;
 import com.intellij.FileSetTestCase;
 import com.intellij.psi.*;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.util.containers.HashSet;
 import junit.framework.Test;
 
 import java.io.File;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 
 /**

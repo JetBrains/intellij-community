@@ -68,7 +68,7 @@ public class GrCaseSectionImpl extends GroovyPsiElementImpl implements GrCaseSec
   @Override
   public GrCaseLabel[] getCaseLabels() {
     final List<GrCaseLabel> labels = findChildrenByType(GroovyElementTypes.CASE_LABEL);
-    return labels.toArray(new GrCaseLabel[labels.size()]);
+    return labels.toArray(new GrCaseLabel[0]);
   }
 
   @Override

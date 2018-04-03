@@ -56,10 +56,7 @@ import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseWheelEvent;
-import java.awt.event.MouseWheelListener;
+import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.beans.PropertyChangeEvent;
@@ -182,6 +179,13 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
     add(topPanel, BorderLayout.NORTH);
     add(contentPanel, BorderLayout.CENTER);
 
+    myScrollPane.addComponentListener(new ComponentAdapter() {
+      @Override
+      public void componentResized(ComponentEvent e) {
+        updateZoomFactor();
+      }
+    });
+
     updateInfo();
   }
 
@@ -263,25 +267,22 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
     document.setValue(imageProvider);
     if (imageProvider == null) return;
     document.setFormat(format);
-    ImageZoomModel zoomModel = getZoomModel();
+
     if (previousImage == null || !zoomModel.isZoomLevelChanged()) {
-      // Set smart zooming behaviour on open
-      Options options = OptionsManager.getInstance().getOptions();
-      ZoomOptions zoomOptions = options.getEditorOptions().getZoomOptions();
-      // Open as actual size
       zoomModel.setZoomFactor(1.0d);
 
-      if (zoomOptions.isSmartZooming()) {
-        BufferedImage image = imageProvider.apply(zoomModel.getZoomFactor());
-        Dimension prefferedSize = zoomOptions.getPrefferedSize();
-        if (prefferedSize.width > image.getWidth() && prefferedSize.height > image.getHeight()) {
-          // Resize to preffered size
-          // Calculate zoom factor
+      updateZoomFactor();
+    }
+  }
 
-          double factor =
-            (prefferedSize.getWidth() / (double)image.getWidth() + prefferedSize.getHeight() / (double)image.getHeight()) / 2.0d;
-          zoomModel.setZoomFactor(Math.ceil(factor));
-        }
+  private void updateZoomFactor() {
+    Options options = OptionsManager.getInstance().getOptions();
+    ZoomOptions zoomOptions = options.getEditorOptions().getZoomOptions();
+
+    if (zoomOptions.isSmartZooming() && !zoomModel.isZoomLevelChanged()) {
+      Double smartZoomFactor = getSmartZoomFactor(zoomOptions);
+      if (smartZoomFactor != null) {
+        zoomModel.setZoomFactor(smartZoomFactor);
       }
     }
   }
@@ -402,6 +403,19 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
       return image != null ? 1.0d / image.getWidth() : 0.0d;
     }
 
+    public void fitZoomToWindow() {
+      Options options = OptionsManager.getInstance().getOptions();
+      ZoomOptions zoomOptions = options.getEditorOptions().getZoomOptions();
+
+      Double smartZoomFactor = getSmartZoomFactor(zoomOptions);
+      if (smartZoomFactor != null) {
+        zoomModel.setZoomFactor(smartZoomFactor);
+      }
+      else {
+        zoomModel.setZoomFactor(1.0d);
+      }
+    }
+
     public void zoomOut() {
       double factor = getZoomFactor();
       if (factor > 1.0d) {
@@ -451,6 +465,36 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
     public boolean isZoomLevelChanged() {
       return myZoomLevelChanged;
     }
+  }
+
+  @Nullable
+  private Double getSmartZoomFactor(@NotNull ZoomOptions zoomOptions) {
+    Dimension canvasSize = myScrollPane.getViewport().getExtentSize();
+    canvasSize.height -= ImageComponent.IMAGE_INSETS * 2;
+    canvasSize.width -= ImageComponent.IMAGE_INSETS * 2;
+    if (canvasSize.width <= 0 || canvasSize.height <= 0) return null;
+
+    BufferedImage image = imageComponent.getDocument().getValue();
+    if (image == null) return null;
+
+    if (canvasSize.width < image.getWidth() ||
+        canvasSize.height < image.getHeight()) {
+      return Math.min((double)canvasSize.height / image.getHeight(),
+                      (double)canvasSize.width / image.getWidth());
+    }
+
+    Dimension preferredMinimumSize = zoomOptions.getPrefferedSize();
+    preferredMinimumSize.width = Math.min(preferredMinimumSize.width, canvasSize.width);
+    preferredMinimumSize.height = Math.min(preferredMinimumSize.height, canvasSize.height);
+
+    if (image.getWidth() < preferredMinimumSize.width &&
+        image.getHeight() < preferredMinimumSize.height) {
+      double factor = (preferredMinimumSize.getWidth() / (double)image.getWidth() +
+                       preferredMinimumSize.getHeight() / (double)image.getHeight()) / 2.0d;
+      return Math.ceil(factor);
+    }
+
+    return 1.0d;
   }
 
   private class DocumentChangeListener implements ChangeListener {

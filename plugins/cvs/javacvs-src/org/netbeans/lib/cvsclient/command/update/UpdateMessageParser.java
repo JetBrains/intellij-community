@@ -211,8 +211,5 @@ public final class UpdateMessageParser extends AbstractMessageParser implements 
     // HACK - will create a non-cvs status in order to be able to have consistent info format
     fileInfo.setType("Y");
   }
-
-  public void binaryMessageSent(final byte[] bytes) {
-  }
 }
 

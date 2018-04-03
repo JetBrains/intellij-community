@@ -341,7 +341,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
         editors.add(composite.getSelectedEditor());
       }
     }
-    return editors.toArray(new FileEditor[editors.size()]);
+    return editors.toArray(new FileEditor[0]);
   }
 
   public void updateFileIcon(@NotNull final VirtualFile file) {
@@ -656,7 +656,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       final EditorWithProviderComposite[] editors = myWindow.getEditors();
       ContainerUtil.addAll(res, editors);
     }
-    return res.toArray(new EditorWithProviderComposite[res.size()]);
+    return res.toArray(new EditorWithProviderComposite[0]);
   }
 
   //---------------------------------------------------------
@@ -685,7 +685,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   }
 
   @NotNull public EditorWindow [] getWindows() {
-    return myWindows.toArray(new EditorWindow [myWindows.size()]);
+    return myWindows.toArray(new EditorWindow[0]);
   }
 
   @NotNull
@@ -721,7 +721,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     }
 
     LOG.assertTrue(res.size() == myWindows.size());
-    return res.toArray(new EditorWindow [res.size()]);
+    return res.toArray(new EditorWindow[0]);
   }
 
   @Nullable

@@ -16,6 +16,7 @@ import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.util.loadElement
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.write
@@ -57,6 +58,9 @@ class LoadModuleRenamingSchemeAction(private val dialog: ConvertModuleGroupsToQu
     }
 
     dialog.importRenamingScheme(renamingState.oldToNewName)
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown {
+      IdeFocusManager.getGlobalInstance().requestFocus(dialog.preferredFocusedComponent, true)
+    }
   }
 }
 
@@ -85,6 +89,7 @@ internal fun saveModuleRenamingScheme(dialog: ConvertModuleGroupsToQualifiedName
     state.oldToNewName.putAll(dialog.getRenamingScheme())
     try {
       XmlSerializer.serialize(state).write(fileWrapper.file.toPath())
+      fileWrapper.virtualFile?.refresh(true, false)
       return true
     }
     catch (e: Exception) {
@@ -96,7 +101,7 @@ internal fun saveModuleRenamingScheme(dialog: ConvertModuleGroupsToQualifiedName
   return false
 }
 
-private val EXPORTED_PATH_PROPERTY = "module.renaming.scheme.file"
+private const val EXPORTED_PATH_PROPERTY = "module.renaming.scheme.file"
 
 private fun saveDefaultRenamingSchemeFilePath(project: Project, filePath: String?) {
   PropertiesComponent.getInstance(project).setValue(EXPORTED_PATH_PROPERTY, filePath)

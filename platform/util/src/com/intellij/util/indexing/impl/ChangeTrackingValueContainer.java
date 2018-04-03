@@ -23,7 +23,6 @@ import com.intellij.util.io.DataInputOutputUtil;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.DataOutput;
 import java.io.IOException;
@@ -157,11 +156,7 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
            (myInvalidated != null && !myInvalidated.isEmpty()) ||
            needsCompacting();
   }
-
-  public @Nullable UpdatableValueContainer<Value> getAddedDelta() {
-    return myAdded;
-  }
-
+  
   @Override
   public void saveTo(DataOutput out, DataExternalizer<Value> externalizer) throws IOException {
     if (needsCompacting()) {
@@ -174,7 +169,7 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
         }
       }
 
-      final UpdatableValueContainer<Value> toAppend = getAddedDelta();
+      final UpdatableValueContainer<Value> toAppend = myAdded;
       if (toAppend != null && toAppend.size() > 0) {
         toAppend.saveTo(out, externalizer);
       }

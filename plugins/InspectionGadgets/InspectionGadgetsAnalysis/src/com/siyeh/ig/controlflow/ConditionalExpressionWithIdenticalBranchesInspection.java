@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +66,7 @@ public class ConditionalExpressionWithIdenticalBranchesInspection extends BaseIn
       final PsiExpression elseExpression = conditionalExpression.getElseExpression();
       if (EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(thenExpression, elseExpression)) {
         CommentTracker commentTracker = new CommentTracker();
-        PsiReplacementUtil.replaceExpression(conditionalExpression, commentTracker.markUnchanged(thenExpression).getText(), commentTracker);
+        PsiReplacementUtil.replaceExpression(conditionalExpression, commentTracker.text(thenExpression), commentTracker);
       }
     }
   }

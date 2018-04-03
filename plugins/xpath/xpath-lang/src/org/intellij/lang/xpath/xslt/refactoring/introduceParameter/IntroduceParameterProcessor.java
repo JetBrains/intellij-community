@@ -102,12 +102,7 @@ class IntroduceParameterProcessor extends BaseRefactoringProcessor {
         return usageInfos;
     }
 
-    @Override
-    protected void refreshElements(@NotNull PsiElement[] psiElements) {
-        // TODO When's that called? What should it do?
-    }
-
-    protected void performRefactoring(@NotNull UsageInfo[] usageInfos) {
+  protected void performRefactoring(@NotNull UsageInfo[] usageInfos) {
         XmlTag tag;
         if (myTemplate != null) {
             tag = myTemplate.getTag();

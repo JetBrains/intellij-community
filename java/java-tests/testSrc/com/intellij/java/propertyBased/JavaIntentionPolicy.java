@@ -89,7 +89,8 @@ class JavaCommentingStrategy extends JavaIntentionPolicy {
                                      intentionText.startsWith("Remove unnecessary") ||
                                      intentionText.contains("'ordering inconsistent with equals'") || //javadoc will be changed
                                      intentionText.matches("Simplify '.*' to .*") ||
-                                     intentionText.matches("Move '.*' to Javadoc ''@throws'' tag")
+                                     intentionText.matches("Move '.*' to Javadoc ''@throws'' tag") ||
+                                     intentionText.matches("Remove '.*' from '.*' throws list")
       ;
     return !commentChangingActions;
   }

@@ -49,7 +49,7 @@ import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;

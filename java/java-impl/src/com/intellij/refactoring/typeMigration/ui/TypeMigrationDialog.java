@@ -213,7 +213,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
         }
       }
       try {
-        final PsiExpression[] occurrences = expressions.toArray(new PsiExpression[expressions.size()]);
+        final PsiExpression[] occurrences = expressions.toArray(PsiExpression.EMPTY_ARRAY);
         final PsiType[] psiTypes = new TypeSelectorManagerImpl(project, myTypeCodeFragment.getType(), occurrences).getTypesForAll();
         if (psiTypes.length > 0) {
           final String[] history = new String[psiTypes.length];

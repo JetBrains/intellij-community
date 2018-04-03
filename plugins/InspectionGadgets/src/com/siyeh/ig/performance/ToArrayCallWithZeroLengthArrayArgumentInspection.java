@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2015 Bas Leijdekkers
+ * Copyright 2007-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -30,8 +29,6 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
-import one.util.streamex.StreamEx;
-import org.jdom.Element;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -41,7 +38,8 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection extends BaseInspec
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_COLLECTION, "size").parameterCount(0);
   private static final CallMatcher COLLECTION_TO_ARRAY =
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_COLLECTION, "toArray").parameterCount(1);
-  private static final String PREFER_EMPTY_ARRAY_SETTING = "PreferEmptyArray";
+
+  private static final PreferEmptyArray DEFAULT_MODE = PreferEmptyArray.ALWAYS;
 
   public enum PreferEmptyArray {
     ALWAYS("Always"), BY_LEVEL("According to language level"), NEVER("Never (prefer pre-sized array)");
@@ -62,15 +60,10 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection extends BaseInspec
           return PsiUtil.isLanguageLevel7OrHigher(expression);
       }
     }
-
-    @NotNull
-    static PreferEmptyArray from(String name) {
-      return StreamEx.of(values()).filterBy(PreferEmptyArray::name, name).findFirst().orElse(ALWAYS);
-    }
   }
 
   @NotNull
-  public PreferEmptyArray myMode = PreferEmptyArray.ALWAYS;
+  public PreferEmptyArray myMode = DEFAULT_MODE;
 
   @Nullable
   @Override
@@ -101,21 +94,6 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection extends BaseInspec
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message("to.array.call.style.display.name");
-  }
-
-  @Override
-  public void readSettings(@NotNull Element node) {
-    Element element = node.getChild(PREFER_EMPTY_ARRAY_SETTING);
-    if (element != null) {
-      myMode = PreferEmptyArray.from(element.getAttributeValue("value"));
-    }
-  }
-
-  @Override
-  public void writeSettings(@NotNull Element node) {
-    Element element = new Element(PREFER_EMPTY_ARRAY_SETTING);
-    element.setAttribute("value", myMode.toString());
-    node.addContent(element);
   }
 
   @Override
@@ -175,7 +153,7 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection extends BaseInspec
   }
 
   private static class ToArrayCallWithZeroLengthArrayArgumentFix extends InspectionGadgetsFix {
-    private boolean myEmptyPreferred;
+    private final boolean myEmptyPreferred;
 
     public ToArrayCallWithZeroLengthArrayArgumentFix(boolean emptyPreferred) {
       myEmptyPreferred = emptyPreferred;
@@ -197,7 +175,7 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection extends BaseInspec
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
       final PsiElement grandParent = parent.getParent();
@@ -234,7 +212,7 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection extends BaseInspec
       PsiDeclarationStatement declarationStatement = factory.createVariableDeclarationStatement("var", qualifierType, qualifier);
       PsiElement statementParent = statement.getParent();
       while (statementParent instanceof PsiLoopStatement || statementParent instanceof PsiIfStatement) {
-        statement = (PsiStatement) statementParent;
+        statement = (PsiStatement)statementParent;
         statementParent = statement.getParent();
       }
       final String toArrayText = "var.toArray(new " + typeText + "[var.size()])";

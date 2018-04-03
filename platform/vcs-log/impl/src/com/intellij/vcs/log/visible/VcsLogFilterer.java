@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.*;
@@ -31,8 +30,8 @@ import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.VisibleGraph;
 import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl.VcsLogFilterCollectionBuilder;
 import com.intellij.vcs.log.impl.VcsLogHashFilterImpl;
-import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.util.StopWatch;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,7 +65,7 @@ public class VcsLogFilterer {
                                                        @NotNull CommitCountStage commitCount) {
     long start = System.currentTimeMillis();
 
-    VcsLogHashFilter hashFilter = filters.getHashFilter();
+    VcsLogHashFilter hashFilter = filters.get(VcsLogFilterCollection.HASH_FILTER);
     if (hashFilter != null && !hashFilter.getHashes().isEmpty()) { // hashes should be shown, no matter if they match other filters or not
       return Pair.create(applyHashFilter(dataPack, hashFilter.getHashes(), sortType), commitCount);
     }
@@ -174,18 +173,33 @@ public class VcsLogFilterer {
     });
     VisibleGraph<Integer> visibleGraph = dataPack.getPermanentGraph().createVisibleGraph(sortType, null, indices);
     return new VisiblePack(dataPack, visibleGraph, false,
-                           new VcsLogFilterCollectionBuilder().with(new VcsLogHashFilterImpl(hashes)).build());
+                           new VcsLogFilterCollectionBuilder(new VcsLogHashFilterImpl(hashes)).build());
   }
 
   @Nullable
   protected Set<Integer> getMatchingHeads(@NotNull VcsLogRefs refs,
                                           @NotNull Collection<VirtualFile> roots,
                                           @NotNull VcsLogFilterCollection filters) {
-    VcsLogBranchFilter branchFilter = filters.getBranchFilter();
-    VcsLogRootFilter rootFilter = filters.getRootFilter();
-    VcsLogStructureFilter structureFilter = filters.getStructureFilter();
+    VcsLogBranchFilter branchFilter = filters.get(VcsLogFilterCollection.BRANCH_FILTER);
+    VcsLogRevisionFilter revisionFilter = filters.get(VcsLogFilterCollection.REVISION_FILTER);
 
-    if (branchFilter == null && rootFilter == null && structureFilter == null) return null;
+    if (branchFilter == null &&
+        revisionFilter == null &&
+        filters.get(VcsLogFilterCollection.ROOT_FILTER) == null &&
+        filters.get(VcsLogFilterCollection.STRUCTURE_FILTER) == null) {
+      return null;
+    }
+
+    if (revisionFilter != null) {
+      if (branchFilter == null) {
+        return getMatchingHeads(roots, revisionFilter);
+      }
+
+      Set<Integer> filteredByFile = getMatchingHeads(refs, roots);
+      Set<Integer> filteredByBranch = getMatchingHeads(refs, branchFilter);
+      return new HashSet<>(ContainerUtil.union(ContainerUtil.intersection(filteredByBranch, filteredByFile),
+                                               getMatchingHeads(roots, revisionFilter)));
+    }
 
     Set<Integer> filteredByFile = getMatchingHeads(refs, roots);
     if (branchFilter == null) return filteredByFile;
@@ -199,6 +213,16 @@ public class VcsLogFilterer {
     return ContainerUtil.map2SetNotNull(refs.getBranches(), ref -> {
       boolean acceptRef = filter.matches(ref.getName());
       return acceptRef ? myStorage.getCommitIndex(ref.getCommitHash(), ref.getRoot()) : null;
+    });
+  }
+
+  @NotNull
+  private Set<Integer> getMatchingHeads(@NotNull Collection<VirtualFile> roots, @NotNull VcsLogRevisionFilter filter) {
+    return ContainerUtil.map2SetNotNull(filter.getHeads(), commit -> {
+      if (roots.contains(commit.getRoot())) {
+        return myStorage.getCommitIndex(commit.getHash(), commit.getRoot());
+      }
+      return null;
     });
   }
 
@@ -269,14 +293,15 @@ public class VcsLogFilterer {
     for (Map.Entry<VirtualFile, VcsLogProvider> entry : providers.entrySet()) {
       final VirtualFile root = entry.getKey();
 
+      VcsLogUserFilter userFilter = filterCollection.get(VcsLogFilterCollection.USER_FILTER);
       if (!visibleRoots.contains(root) ||
-          (filterCollection.getUserFilter() != null && filterCollection.getUserFilter().getUsers(root).isEmpty())) {
+          (userFilter != null && userFilter.getUsers(root).isEmpty())) {
         // there is a structure or user filter, but it doesn't match this root
         continue;
       }
 
       VcsLogFilterCollection rootSpecificCollection = filterCollection;
-      if (rootSpecificCollection.getStructureFilter() != null) {
+      if (rootSpecificCollection.get(VcsLogFilterCollection.ROOT_FILTER) != null) {
         rootSpecificCollection = new VcsLogFilterCollectionBuilder(filterCollection)
           .with(new VcsLogStructureFilterImpl(ContainerUtil.newHashSet(VcsLogUtil.getFilteredFilesForRoot(root, filterCollection))))
           .build();

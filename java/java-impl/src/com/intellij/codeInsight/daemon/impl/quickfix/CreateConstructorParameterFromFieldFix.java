@@ -174,7 +174,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
         }
 
         addParameterToConstructor(project, file, editor, constructor, filtered.size() == constructors.length
-                                                                      ? fields.toArray(new PsiField[fields.size()])
+                                                                      ? fields.toArray(PsiField.EMPTY_ARRAY)
                                                                       : new PsiField[]{getField()}, cleanupElements);
       }
       finally {

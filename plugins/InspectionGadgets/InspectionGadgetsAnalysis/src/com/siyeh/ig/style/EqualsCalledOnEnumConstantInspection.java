@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2015 Bas Leijdekkers
+ * Copyright 2008-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,22 +100,12 @@ public class EqualsCalledOnEnumConstantInspection extends BaseInspection {
         not = false;
       }
       CommentTracker commentTracker = new CommentTracker();
-      newExpression.append(commentTracker.markUnchanged(qualifier).getText());
-      if (not) {
-        newExpression.append("!=");
-      }
-      else {
-        newExpression.append("==");
-      }
+      newExpression.append(commentTracker.text(qualifier));
+      newExpression.append(not ? "!=" : "==");
       if (arguments.length == 1) {
-        newExpression.append(commentTracker.markUnchanged(arguments[0]).getText());
+        newExpression.append(commentTracker.text(arguments[0]));
       }
-      if (not) {
-        PsiReplacementUtil.replaceExpression(prefixExpression, newExpression.toString(), commentTracker);
-      }
-      else {
-        PsiReplacementUtil.replaceExpression(methodCallExpression, newExpression.toString(), commentTracker);
-      }
+      PsiReplacementUtil.replaceExpression(not ? prefixExpression : methodCallExpression, newExpression.toString(), commentTracker);
     }
   }
 
@@ -134,7 +124,7 @@ public class EqualsCalledOnEnumConstantInspection extends BaseInspection {
       }
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
       final PsiExpression qualifier = methodExpression.getQualifierExpression();
-      if (qualifier == null || !TypeUtils.expressionHasTypeOrSubtype(qualifier, CommonClassNames.JAVA_LANG_ENUM)) {
+      if (!TypeUtils.expressionHasTypeOrSubtype(qualifier, CommonClassNames.JAVA_LANG_ENUM)) {
         return;
       }
       final PsiExpressionList argumentList = expression.getArgumentList();

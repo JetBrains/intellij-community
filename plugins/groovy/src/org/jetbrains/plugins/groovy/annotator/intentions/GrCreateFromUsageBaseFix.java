@@ -70,11 +70,6 @@ public abstract class GrCreateFromUsageBaseFix extends Intention {
     return !targetClasses.isEmpty();
   }
 
-  @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
-
 
   @Override
   protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.siyeh.ig.fixes;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.FinalUtils;
@@ -65,8 +64,7 @@ public class MakeFieldStaticFinalFix extends InspectionGadgetsFix {
   }
 
   @Override
-  protected void doFix(Project project, ProblemDescriptor descriptor)
-    throws IncorrectOperationException {
+  protected void doFix(Project project, ProblemDescriptor descriptor) {
     final PsiElement element = descriptor.getPsiElement();
     final PsiElement parent = element.getParent();
     if (!(parent instanceof PsiField)) {

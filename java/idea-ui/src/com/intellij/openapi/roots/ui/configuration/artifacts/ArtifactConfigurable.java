@@ -98,10 +98,6 @@ public class ArtifactConfigurable extends ArtifactConfigurableBase {
   }
 
   @Override
-  public void reset() {
-  }
-
-  @Override
   public String getHelpTopic() {
     return getEditor().getHelpTopic();
   }

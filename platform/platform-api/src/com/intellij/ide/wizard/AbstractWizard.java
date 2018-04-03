@@ -169,7 +169,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
 
       layout.setHorizontalGroup(hGroup);
       layout.setVerticalGroup(vGroup);
-      layout.linkSize(buttons.toArray(new Component[buttons.size()]));
+      layout.linkSize(buttons.toArray(new Component[0]));
     }
 
     myPreviousButton.setEnabled(false);

@@ -117,7 +117,7 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
       fireNodesInserted(newChildren);
       if (last && myTemporaryMessageChildren != null) {
         final int[] ints = getNodesIndices(myTemporaryMessageChildren);
-        final TreeNode[] removed = myTemporaryMessageChildren.toArray(new TreeNode[myTemporaryMessageChildren.size()]);
+        final TreeNode[] removed = myTemporaryMessageChildren.toArray(new TreeNode[0]);
         myCachedAllChildren = null;
         myTemporaryMessageChildren = null;
         fireNodesRemoved(ints, removed);
@@ -198,7 +198,7 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
     myCachedAllChildren = null;
     List<MessageTreeNode> toDelete = temporary ? myTemporaryMessageChildren : myMessageChildren;
     if (toDelete != null) {
-      fireNodesRemoved(getNodesIndices(toDelete), toDelete.toArray(new TreeNode[toDelete.size()]));
+      fireNodesRemoved(getNodesIndices(toDelete), toDelete.toArray(new TreeNode[0]));
     }
     if (temporary) {
       myTemporaryMessageChildren = messages;

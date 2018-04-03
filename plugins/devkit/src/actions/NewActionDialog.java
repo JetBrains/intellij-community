@@ -105,7 +105,7 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
         }
       }
     }
-    myGroupList.setListData(actionGroups.toArray(new ActionGroup[actionGroups.size()]));
+    myGroupList.setListData(actionGroups.toArray(new ActionGroup[0]));
     myGroupList.setCellRenderer(new MyActionRenderer());
     myGroupList.addListSelectionListener(new ListSelectionListener() {
       @Override
@@ -123,7 +123,7 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
               realActions.add(action);
             }
           }
-          myActionList.setListData(realActions.toArray(new AnAction[realActions.size()]));
+          myActionList.setListData(realActions.toArray(AnAction.EMPTY_ARRAY));
         }
       }
     });

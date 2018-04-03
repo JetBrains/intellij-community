@@ -210,7 +210,7 @@ public class SameParameterValueInspection extends SameParameterValueInspectionBa
       }
 
       new ChangeSignatureProcessor(method.getProject(), method, false, null, method.getName(), method.getReturnType(),
-                                   psiParameters.toArray(new ParameterInfoImpl[psiParameters.size()])).run();
+                                   psiParameters.toArray(new ParameterInfoImpl[0])).run();
     }
 
     public String getValue() {

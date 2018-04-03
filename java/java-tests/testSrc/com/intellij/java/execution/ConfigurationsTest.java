@@ -173,7 +173,10 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     List<String> lines = extractAllInPackageTests(parameters, psiPackage);
     Assertion.compareUnordered(
       //category, filters, classNames...
-      new Object[]{"", "", psiClass.getQualifiedName(), derivedTest.getQualifiedName(), RT_INNER_TEST_NAME,
+      new Object[]{"", "", psiClass.getQualifiedName(),
+        psiClass2.getQualifiedName(),
+        derivedTest.getQualifiedName(), RT_INNER_TEST_NAME,
+        "test1.nested.TestA",
         testB.getQualifiedName()},
       lines);
   }

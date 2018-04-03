@@ -99,7 +99,7 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
     });
 
     if (problems.isEmpty()) return null;
-    return problems.toArray(new ProblemDescriptor[problems.size()]);
+    return problems.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
   private static void checkCallExpression(final PsiJavaCodeReferenceElement reference,

@@ -39,6 +39,8 @@ import java.util.List;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 public class ImageComponent extends JComponent {
+    public static final int IMAGE_INSETS = 2;
+
     @NonNls
     public static final String TRANSPARENCY_CHESSBOARD_CELL_SIZE_PROP = "TransparencyChessboard.cellSize";
     @NonNls
@@ -220,7 +222,7 @@ public class ImageComponent extends JComponent {
     }
 
     public void setCanvasSize(int width, int height) {
-        setSize(width + 4, height + 4);
+        setSize(width + IMAGE_INSETS * 2, height + IMAGE_INSETS * 2);
     }
 
     public void setCanvasSize(Dimension dimension) {
@@ -229,7 +231,7 @@ public class ImageComponent extends JComponent {
 
     public Dimension getCanvasSize() {
         Dimension size = getSize();
-        return new Dimension(size.width - 4, size.height - 4);
+        return new Dimension(size.width - IMAGE_INSETS * 2, size.height - IMAGE_INSETS * 2);
     }
 
     public String getUIClassID() {

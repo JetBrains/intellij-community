@@ -36,7 +36,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.SimpleColoredText;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import org.jetbrains.annotations.NotNull;

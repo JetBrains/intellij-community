@@ -81,7 +81,7 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
         result.add(aClass);
       }
     }
-    PsiMember[] array = result.toArray(new PsiMember[result.size()]);
+    PsiMember[] array = result.toArray(PsiMember.EMPTY_ARRAY);
     Arrays.sort(array, MyComparator.INSTANCE);
     return array;
   }

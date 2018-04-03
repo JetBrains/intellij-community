@@ -98,7 +98,7 @@ public class TempWithQueryHandler implements RefactoringActionHandler {
         array.add(ref);
       }
       if (!array.isEmpty()) {
-        PsiReference[] refsForWriting = array.toArray(new PsiReference[array.size()]);
+        PsiReference[] refsForWriting = array.toArray(PsiReference.EMPTY_ARRAY);
         highlightManager.addOccurrenceHighlights(editor, refsForWriting, attributes, true, null);
         String message =  RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("variable.is.accessed.for.writing", localName));
         CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.REPLACE_TEMP_WITH_QUERY);

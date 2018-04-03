@@ -58,7 +58,7 @@ public class GroovyGoToSymbolContributor implements ChooseByNameContributor {
     symbols.addAll(StubIndex.getElements(GrMethodNameIndex.KEY, name, project, scope, GrMethod.class));
     symbols.addAll(StubIndex.getElements(GrAnnotationMethodNameIndex.KEY, name, project, scope, GrAnnotationMethod.class));
 
-    return symbols.toArray(new NavigationItem[symbols.size()]);
+    return symbols.toArray(NavigationItem.EMPTY_NAVIGATION_ITEM_ARRAY);
   }
 
 }

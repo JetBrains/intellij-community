@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.siyeh.ipp.trivialif;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +29,7 @@ public class SplitElseIfIntention extends Intention {
     return new SplitElseIfPredicate();
   }
 
-  public void processIntention(PsiElement element) throws IncorrectOperationException {
+  public void processIntention(PsiElement element) {
     final PsiJavaToken token = (PsiJavaToken)element;
     final PsiIfStatement parentStatement = (PsiIfStatement)token.getParent();
     if (parentStatement == null) {

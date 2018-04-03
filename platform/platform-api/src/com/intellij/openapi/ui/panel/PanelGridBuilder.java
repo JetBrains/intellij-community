@@ -1,31 +1,27 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui.panel;
 
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Panel grid represents a series of panels of the same type laid out according to the
- * specific design specs (usually vertically).
- */
-public interface PanelGridBuilder extends PanelBuilder {
+import javax.swing.*;
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
+
+public class PanelGridBuilder implements PanelBuilder {
+  private boolean expand;
+  private final List<GridBagPanelBuilder> builders = new ArrayList<>();
+
   /**
    * Adds a single panel builder to grid.
    * @param builder single row panel builder
    * @return <code>this</code>
    */
-  PanelGridBuilder add(@NotNull PanelBuilder builder);
+  public PanelGridBuilder add(@NotNull PanelBuilder builder) {
+    builders.add((GridBagPanelBuilder)builder);
+    return this;
+  }
 
   /**
    * Turns on vertical resizing of grid rows when the panel is resized. Grid components
@@ -34,5 +30,41 @@ public interface PanelGridBuilder extends PanelBuilder {
    *
    * @return <code>this</code>
    */
-  PanelGridBuilder expandVertically();
+  public PanelGridBuilder expandVertically() {
+    this.expand = true;
+    return this;
+  }
+
+
+  @NotNull
+  public JPanel createPanel() {
+    JPanel panel = new JPanel(new GridBagLayout());
+    GridBagConstraints gc = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, GridBagConstraints.HORIZONTAL,
+                                                   null, 0, 0);
+
+    addToPanel(panel, gc);
+    return panel;
+  }
+
+  public boolean constrainsValid() {
+    return builders.stream().allMatch(b -> b.constrainsValid());
+  }
+
+  private int gridWidth() {
+    return builders.stream().map(b -> b.gridWidth()).max(Integer::compareTo).orElse(0);
+  }
+
+  private void addToPanel(JPanel panel, GridBagConstraints gc) {
+    builders.stream().filter(b -> b.constrainsValid()).forEach(b -> b.addToPanel(panel, gc));
+
+    if (!expand) {
+      gc.gridx = 0;
+      gc.anchor = GridBagConstraints.PAGE_END;
+      gc.fill = GridBagConstraints.BOTH;
+      gc.weighty = 1.0;
+      gc.insets = JBUI.insets(0);
+      gc.gridwidth = gridWidth();
+      panel.add(new JPanel(), gc);
+    }
+  }
 }

@@ -25,7 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.intellij.util.descriptors.ConfigFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -117,7 +117,7 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
 
   public static List<Module> getCandidateModules(Module module) {
     if (PsiUtil.isIdeaProject(module.getProject())) {
-      Set<Module> dependents = new java.util.HashSet<>();
+      Set<Module> dependents = new HashSet<>();
       ModuleUtilCore.collectModulesDependsOn(module, dependents);
       return new ArrayList<>(dependents);
     }

@@ -89,7 +89,7 @@ public class RenameAliasImportedMethodProcessor extends RenameJavaMethodProcesso
       }
     }
 
-    super.renameElement(psiElement, newName, methodAccess.toArray(new UsageInfo[methodAccess.size()]), listener);
+    super.renameElement(psiElement, newName, methodAccess.toArray(UsageInfo.EMPTY_ARRAY), listener);
 
     final String propertyName;
     if (isGetter) {

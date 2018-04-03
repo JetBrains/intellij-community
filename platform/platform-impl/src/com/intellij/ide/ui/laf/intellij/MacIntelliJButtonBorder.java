@@ -16,8 +16,8 @@
 package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
-import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -33,7 +33,7 @@ public class MacIntelliJButtonBorder implements Border, UIResource {
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
     if (!c.hasFocus() ||
-        c instanceof JComponent && DarculaButtonUI.isHelpButton((JComponent)c)) return;
+        c instanceof JComponent && UIUtil.isHelpButton((JComponent)c)) return;
 
     Graphics2D g2 = (Graphics2D)g.create();
     try {

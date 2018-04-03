@@ -134,9 +134,4 @@ public class ChangeClassParametersIntention extends PsiElementBaseIntentionActio
       }
     }
   }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
 }

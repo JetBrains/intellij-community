@@ -34,6 +34,14 @@ public interface SettingsStep {
   void addExpertPanel(@NotNull JComponent panel);
   void addExpertField(@NotNull String label, @NotNull JComponent field);
 
+  /**
+   * @deprecated use {@link #getModuleNameLocationSettings()} instead
+   */
   @Nullable
   JTextField getModuleNameField();
+
+  @Nullable
+  default ModuleNameLocationSettings getModuleNameLocationSettings() {
+    return null;
+  }
 }

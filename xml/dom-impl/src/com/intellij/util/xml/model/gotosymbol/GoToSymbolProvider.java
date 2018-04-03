@@ -22,7 +22,6 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -88,7 +87,7 @@ public abstract class GoToSymbolProvider implements ChooseByNameContributor {
     for (Module module : getAcceptableModules(project)) {
       addItems(module, name, result);
     }
-    return result.toArray(new NavigationItem[result.size()]);
+    return result.toArray(NavigationItem.EMPTY_NAVIGATION_ITEM_ARRAY);
   }
 
   @Nullable

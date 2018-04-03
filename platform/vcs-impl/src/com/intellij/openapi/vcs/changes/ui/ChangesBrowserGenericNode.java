@@ -81,8 +81,4 @@ public class ChangesBrowserGenericNode extends ChangesBrowserNode<Object> implem
   public int compareTo(@NotNull ChangesBrowserGenericNode o) {
     return myFilePath.getPath().compareToIgnoreCase(o.myFilePath.getPath());
   }
-
-  public int compareUserObjects(final Object o2) {
-    return 0;
-  }
 }

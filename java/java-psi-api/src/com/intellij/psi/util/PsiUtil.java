@@ -28,7 +28,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.EmptyIterable;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import gnu.trove.THashSet;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Contract;
@@ -1268,7 +1268,7 @@ public final class PsiUtil extends PsiUtilCore {
     if (body != null) {
       addReturnStatements(vector, body);
     }
-    return vector.toArray(new PsiReturnStatement[vector.size()]);
+    return vector.toArray(PsiReturnStatement.EMPTY_ARRAY);
   }
 
   private static void addReturnStatements(ArrayList<PsiReturnStatement> vector, PsiElement element) {

@@ -17,7 +17,10 @@
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.Expression;
+import com.intellij.codeInsight.template.ExpressionContext;
+import com.intellij.codeInsight.template.Macro;
+import com.intellij.codeInsight.template.Result;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -40,23 +43,23 @@ public class MacroCallNode extends Expression {
 
   @Override
   public Result calculateResult(ExpressionContext context) {
-    Expression[] parameters = myParameters.toArray(new Expression[myParameters.size()]);
+    Expression[] parameters = myParameters.toArray(new Expression[0]);
     return getMacro().calculateResult(parameters, context);
   }
 
   @Override
   public Result calculateQuickResult(ExpressionContext context) {
-    Expression[] parameters = myParameters.toArray(new Expression[myParameters.size()]);
+    Expression[] parameters = myParameters.toArray(new Expression[0]);
     return getMacro().calculateQuickResult(parameters, context);
   }
 
   @Override
   public LookupElement[] calculateLookupItems(ExpressionContext context) {
-    Expression[] parameters = myParameters.toArray(new Expression[myParameters.size()]);
+    Expression[] parameters = myParameters.toArray(new Expression[0]);
     return getMacro().calculateLookupItems(parameters, context);
   }
 
   public Expression[] getParameters() {
-    return myParameters.toArray(new Expression[myParameters.size()]);
+    return myParameters.toArray(new Expression[0]);
   }
 }

@@ -63,7 +63,7 @@ public class GrMultiSignatureImpl implements GrMultiSignature {
         newClosures.addAll(Arrays.asList(((GrMultiSignature)curried).getAllSignatures()));
       }
     }
-    return new GrMultiSignatureImpl(newClosures.toArray(new GrClosureSignature[newClosures.size()]));
+    return new GrMultiSignatureImpl(newClosures.toArray(GrClosureSignature.EMPTY_ARRAY));
   }
 
   @Override

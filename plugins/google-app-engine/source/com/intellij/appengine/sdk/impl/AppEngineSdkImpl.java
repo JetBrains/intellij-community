@@ -105,7 +105,7 @@ public class AppEngineSdkImpl implements AppEngineSdk {
         }
       }
     }
-    return jars.toArray(new File[jars.size()]);
+    return jars.toArray(new File[0]);
   }
 
   @NotNull

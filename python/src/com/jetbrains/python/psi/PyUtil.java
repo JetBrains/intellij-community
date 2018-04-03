@@ -48,7 +48,7 @@ import com.intellij.psi.util.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.jetbrains.NotNullPredicate;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;

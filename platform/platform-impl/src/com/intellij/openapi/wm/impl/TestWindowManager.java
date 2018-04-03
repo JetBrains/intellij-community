@@ -58,11 +58,6 @@ public final class TestWindowManager extends WindowManagerEx {
   public final void doNotSuggestAsParent(final Window window) { }
 
   @Override
-  public StatusBar getStatusBar(@NotNull Component c, @Nullable Project project) {
-    return null;
-  }
-
-  @Override
   public StatusBar getStatusBar(@NotNull Component c) {
     return null;
   }

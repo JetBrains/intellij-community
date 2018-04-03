@@ -25,7 +25,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.Function;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.plugins.relaxNG.model.Define;
@@ -82,7 +81,7 @@ class OverridingDefineRenderer extends GutterIconRenderer implements DumbAware {
       final Navigatable n = (Navigatable)set.iterator().next().getPsiElement();
       OpenSourceUtil.navigate(true, n);
     } else {
-      final Define[] array = set.toArray(new Define[set.size()]);
+      final Define[] array = set.toArray(new Define[0]);
       NavigationUtil.getPsiElementPopup(ContainerUtil.map(array, define -> define.getPsiElement(), PsiElement.EMPTY_ARRAY), title).show(new RelativePoint((MouseEvent)e.getInputEvent()));
     }
   }

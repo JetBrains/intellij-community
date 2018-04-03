@@ -1,6 +1,20 @@
 from collections import namedtuple
 
-i = namedtuple('Point', ['x', 'y'], verbose=True)
-i._replace( **{"a":"a"})
+
+class Cat1(namedtuple("Cat", "name age")):
+    pass
+c1 = Cat1("name", 5)
+print(c1._make)
+print(c1._asdict)
+print(c1._replace)
+print(c1._source)
+print(c1._fields)
 
 
+Cat2 = namedtuple("Cat2", "name age")
+c2 = Cat2("name", 5)
+print(c2._make)
+print(c2._asdict)
+print(c2._replace)
+print(c2._source)
+print(c2._fields)

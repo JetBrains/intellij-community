@@ -22,8 +22,6 @@ import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.impl.JavaTemplateUtil;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.text.BlockSupport;
@@ -66,7 +64,7 @@ public class ExpectedTypeMacro extends Macro {
     for (PsiType type : types) {
       JavaTemplateUtil.addTypeLookupItem(set, type);
     }
-    return set.toArray(new LookupElement[set.size()]);
+    return set.toArray(LookupElement.EMPTY_ARRAY);
   }
 
   @Nullable

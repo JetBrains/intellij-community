@@ -358,7 +358,4 @@ final public class LogMessageParser extends AbstractMessageParser {
   private File createFile(String fileName) {
     return cvsFileSystem.getLocalFileSystem().getFile(fileName);
   }
-
-  public void binaryMessageSent(final byte[] bytes) {
-  }
 }

@@ -60,7 +60,7 @@ import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.*;
 import com.intellij.uiDesigner.make.PreviewNestedFormLoader;
 import com.intellij.util.PathsList;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -102,7 +102,7 @@ public final class PreviewFormAction extends AnAction{
         throw new RuntimeException(exc);
       }
     }
-    return new InstrumentationClassFinder(urls.toArray(new URL[urls.size()]));
+    return new InstrumentationClassFinder(urls.toArray(new URL[0]));
   }
 
   public void actionPerformed(final AnActionEvent e) {
@@ -251,7 +251,7 @@ public final class PreviewFormAction extends AnAction{
             }
           }
         }
-        FileSetCompileScope scope = new FileSetCompileScope(virtualFiles, modules.toArray(new Module[modules.size()]));
+        FileSetCompileScope scope = new FileSetCompileScope(virtualFiles, modules.toArray(Module.EMPTY_ARRAY));
 
         CompilerManager.getInstance(module.getProject()).make(scope, new CompileStatusNotification() {
           public void finished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {

@@ -117,7 +117,7 @@ class NoNamespaceConfigImpl extends NoNamespaceConfig implements PersistentState
   }
 
   @Override
-  public void loadState(Mappings state) {
+  public void loadState(@NotNull Mappings state) {
     reset();
 
     final VirtualFilePointerManager manager = VirtualFilePointerManager.getInstance();

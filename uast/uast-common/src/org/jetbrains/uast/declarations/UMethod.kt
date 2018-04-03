@@ -113,3 +113,8 @@ interface UAnnotationMethod : UMethod, PsiAnnotationMethod {
 
   override fun asLogString() = log("name = $name")
 }
+
+@Deprecated("transitional interface, don't rely on it", ReplaceWith("UMethod"))
+interface UMethodTypeSpecific : UMethod {
+  override val javaPsi: PsiMethod
+}

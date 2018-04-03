@@ -18,7 +18,7 @@ package com.intellij.codeEditor.printing;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.JdomKt;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 

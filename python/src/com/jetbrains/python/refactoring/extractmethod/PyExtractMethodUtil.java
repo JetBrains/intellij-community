@@ -605,7 +605,7 @@ public class PyExtractMethodUtil {
         d.passAsParameter = true;
         data.add(d);
       }
-      return Pair.create(name, data.toArray(new AbstractVariableData[data.size()]));
+      return Pair.create(name, data.toArray(new AbstractVariableData[0]));
     }
 
     final boolean isMethod = PyPsiUtils.isMethodContext(element);

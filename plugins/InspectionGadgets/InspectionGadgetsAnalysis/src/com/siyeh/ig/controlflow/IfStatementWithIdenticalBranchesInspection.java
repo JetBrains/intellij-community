@@ -718,8 +718,8 @@ public class IfStatementWithIdenticalBranchesInspection extends BaseJavaBatchLoc
         });
 
       List<ExtractionUnit> headCommonParts = new ArrayList<>();
-      Set<PsiVariable> extractedVariables = new com.intellij.util.containers.HashSet<>();
-      Set<PsiVariable> notEquivalentVariableDeclarations = new com.intellij.util.containers.HashSet<>(0);
+      Set<PsiVariable> extractedVariables = new HashSet<>();
+      Set<PsiVariable> notEquivalentVariableDeclarations = new HashSet<>(0);
 
       extractHeadCommonParts(thenBranch, elseBranch, isOnTheFly, equivalence, minStmtCount, conditionVariables, headCommonParts,
                              extractedVariables, notEquivalentVariableDeclarations);
@@ -902,7 +902,7 @@ public class IfStatementWithIdenticalBranchesInspection extends BaseJavaBatchLoc
                                                                    Map<PsiLocalVariable, String> substitutionTable) {
       if (!substitutionTable.isEmpty()) {
         int firstTailCommonStatementIndex = elseLen - tailCommonParts.size();
-        com.intellij.util.containers.HashSet<String> names = new com.intellij.util.containers.HashSet<>(substitutionTable.values());
+        HashSet<String> names = new HashSet<>(substitutionTable.values());
         for (int i = headCommonParts.size(); i < firstTailCommonStatementIndex; i++) {
           if (StreamEx.ofTree((PsiElement)elseBranch[i], e -> StreamEx.of(e.getChildren()))
             .select(PsiVariable.class)
@@ -955,7 +955,7 @@ public class IfStatementWithIdenticalBranchesInspection extends BaseJavaBatchLoc
       PsiStatement elseIfElseBranch = elseIf.getElseBranch();
       if (elseIfElseBranch == null) return null;
       if (elseIfThen.length != thenStatements.length) return null;
-      Set<PsiLocalVariable> variables = new com.intellij.util.containers.HashSet<>();
+      Set<PsiLocalVariable> variables = new HashSet<>();
       addLocalVariables(variables, Arrays.asList(thenStatements));
       addLocalVariables(variables, Arrays.asList(elseIfThen));
       LocalEquivalenceChecker equivalence = new LocalEquivalenceChecker(variables);

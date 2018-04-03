@@ -54,7 +54,7 @@ public class GenerateGetterAndSetterHandler extends GenerateGetterSetterHandlerB
       Collections.addAll(array, setters);
     }
 
-    return array.toArray(new GenerationInfo[array.size()]);
+    return array.toArray(GenerationInfo.EMPTY_ARRAY);
   }
 
   @Override

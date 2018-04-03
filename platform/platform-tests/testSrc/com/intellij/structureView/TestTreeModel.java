@@ -50,7 +50,7 @@ public class TestTreeModel implements StructureViewModel{
   @Override
   @NotNull
   public Filter[] getFilters() {
-    return myFilters.toArray(new Filter[myFilters.size()]);
+    return myFilters.toArray(Filter.EMPTY_ARRAY);
   }
 
   @Override
@@ -63,7 +63,7 @@ public class TestTreeModel implements StructureViewModel{
   @Override
   @NotNull
   public Sorter[] getSorters() {
-    return mySorters.toArray(new Sorter[mySorters.size()]);
+    return mySorters.toArray(Sorter.EMPTY_ARRAY);
   }
 
   public void addFlter(Filter filter) {
@@ -85,7 +85,7 @@ public class TestTreeModel implements StructureViewModel{
     @NotNull
     @Override
     public StructureViewTreeElement[] getChildren() {
-      return myChildren.toArray(new StructureViewTreeElement[myChildren.size()]);
+      return myChildren.toArray(StructureViewTreeElement.EMPTY_ARRAY);
 
     }
 

@@ -81,7 +81,7 @@ public abstract class PsiPackageBase extends PsiElementBase implements PsiDirect
         result.add(directory);
       }
     }
-    return result == null ? PsiDirectory.EMPTY_ARRAY : result.toArray(new PsiDirectory[result.size()]);
+    return result == null ? PsiDirectory.EMPTY_ARRAY : result.toArray(PsiDirectory.EMPTY_ARRAY);
   }
 
   @Override
@@ -260,11 +260,6 @@ public abstract class PsiPackageBase extends PsiElementBase implements PsiDirect
       if (!dir.isWritable()) return false;
     }
     return true;
-  }
-
-  @Override
-  public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitElement(this);
   }
 
   public String toString() {

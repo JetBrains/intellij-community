@@ -161,7 +161,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
       }
 
       if (set.size() < 2) return null;
-      return set.toArray(new LookupElement[set.size()]);
+      return set.toArray(LookupElement.EMPTY_ARRAY);
     }
   }
 

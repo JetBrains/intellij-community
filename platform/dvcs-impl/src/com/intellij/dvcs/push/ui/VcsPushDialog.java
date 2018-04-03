@@ -101,7 +101,7 @@ public class VcsPushDialog extends DialogWrapper {
     actions.add(myPushAction);
     actions.add(getCancelAction());
     actions.add(getHelpAction());
-    return actions.toArray(new Action[actions.size()]);
+    return actions.toArray(new Action[0]);
   }
 
   private boolean canPush() {

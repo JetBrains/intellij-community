@@ -17,7 +17,8 @@ package com.intellij.codeInsight.generation.actions;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.util.containers.HashSet;
+
+import java.util.HashSet;
 
 /**
  * @author Konstantin Bulenkov

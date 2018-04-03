@@ -44,7 +44,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -132,7 +132,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
     }
     MoveClassesOrPackagesUtil.findNonCodeUsages(mySearchInComments, mySearchInNonJavaFiles,
                                                 myInnerClass, newQName, usageInfos);
-    return usageInfos.toArray(new UsageInfo[usageInfos.size()]);
+    return usageInfos.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
   @Override
@@ -292,7 +292,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
           nonCodeUsages.add((NonCodeUsageInfo)usage);
         }
       }
-      myNonCodeUsages = nonCodeUsages.toArray(new NonCodeUsageInfo[nonCodeUsages.size()]);
+      myNonCodeUsages = nonCodeUsages.toArray(new NonCodeUsageInfo[0]);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.psi.PsiBinaryExpression;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiJavaToken;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ComparisonUtils;
@@ -55,14 +54,11 @@ public class NegateComparisonIntention extends MutablyNamedIntention {
     return new ComparisonPredicate();
   }
 
-  public void processIntention(PsiElement element)
-    throws IncorrectOperationException {
-    final PsiBinaryExpression expression =
-      (PsiBinaryExpression)element;
+  public void processIntention(PsiElement element) {
+    final PsiBinaryExpression expression = (PsiBinaryExpression)element;
     final PsiExpression lhs = expression.getLOperand();
     final PsiExpression rhs = expression.getROperand();
-    final String negatedOperator =
-      ComparisonUtils.getNegatedComparison(expression.getOperationTokenType());
+    final String negatedOperator = ComparisonUtils.getNegatedComparison(expression.getOperationTokenType());
     final String lhsText = lhs.getText();
     assert rhs != null;
     final String rhsText = rhs.getText();

@@ -49,7 +49,7 @@ public abstract class ConfigurablesGroupBase implements ConfigurableGroup {
 
       ConfigurableEP<Configurable>[] extensions = myComponentManager.getExtensions(myConfigurablesExtensionPoint);
       List<Configurable> result = ConfigurableExtensionPointUtil.buildConfigurablesList(extensions, getConfigurableFilter());
-      myChildren = result.toArray(new Configurable[result.size()]);
+      myChildren = result.toArray(new Configurable[0]);
     }
     return myChildren;
   }

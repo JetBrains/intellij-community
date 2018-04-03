@@ -1,7 +1,7 @@
 import dataclasses
 
 
-@dataclasses.dataclass(<error descr="eq must be true if order is true">eq=False</error>, order=True)
+@dataclasses.dataclass(<error descr="'eq' must be true if 'order' is true">eq=False</error>, order=True)
 class A1:
     x: int
 

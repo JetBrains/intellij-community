@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2015 Bas Leijdekkers
+ * Copyright 2006-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -125,8 +124,7 @@ public class ManualArrayToCollectionCopyInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement forElement = descriptor.getPsiElement();
       final PsiElement parent = forElement.getParent();
       final String newExpression;
@@ -153,9 +151,7 @@ public class ManualArrayToCollectionCopyInspection extends BaseInspection {
     }
 
     @Nullable
-    private static String getCollectionsAddAllText(
-      PsiForeachStatement foreachStatement)
-      throws IncorrectOperationException {
+    private static String getCollectionsAddAllText(PsiForeachStatement foreachStatement) {
       final PsiStatement body = getBody(foreachStatement);
       if (!(body instanceof PsiExpressionStatement)) {
         return null;
@@ -196,9 +192,7 @@ public class ManualArrayToCollectionCopyInspection extends BaseInspection {
     }
 
     @Nullable
-    private static String getCollectionsAddAllText(
-      PsiForStatement forStatement)
-      throws IncorrectOperationException {
+    private static String getCollectionsAddAllText(PsiForStatement forStatement) {
       final PsiExpression expression = forStatement.getCondition();
       final PsiBinaryExpression condition =
         (PsiBinaryExpression)ParenthesesUtils.stripParentheses(
@@ -446,9 +440,7 @@ public class ManualArrayToCollectionCopyInspection extends BaseInspection {
       return " + " + expressionText;
     }
 
-    private static String collapseConstant(String expressionText,
-                                           PsiElement context)
-      throws IncorrectOperationException {
+    private static String collapseConstant(String expressionText, PsiElement context) {
       final Object fromOffsetConstant = computeConstant(expressionText, context);
       return fromOffsetConstant != null ? fromOffsetConstant.toString() : expressionText;
     }

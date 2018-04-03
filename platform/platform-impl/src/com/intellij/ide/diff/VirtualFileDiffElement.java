@@ -106,7 +106,7 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
         elements.add(new VirtualFileDiffElement(file));
       }
     }
-    return elements.toArray(new VirtualFileDiffElement[elements.size()]);
+    return elements.toArray(new VirtualFileDiffElement[0]);
   }
 
   @Nullable

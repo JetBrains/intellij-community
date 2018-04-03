@@ -101,10 +101,6 @@ public class ActionTracer implements UiDebuggerExtension, AnActionListener {
   }
 
   @Override
-  public void beforeEditorTyping(char c, DataContext dataContext) {
-  }
-
-  @Override
   public void disposeUiResources() {
     ActionManager.getInstance().removeAnActionListener(this);
     myComponent = null;

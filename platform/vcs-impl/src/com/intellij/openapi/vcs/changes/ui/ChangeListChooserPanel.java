@@ -133,7 +133,7 @@ public class ChangeListChooserPanel extends JPanel {
   }
 
   public void setChangeLists(Collection<? extends ChangeList> changeLists) {
-    myExistingListsCombo.setModel(new DefaultComboBoxModel<>(changeLists.toArray(new ChangeList[changeLists.size()])));
+    myExistingListsCombo.setModel(new DefaultComboBoxModel<>(changeLists.toArray(new ChangeList[0])));
   }
 
   public void setSuggestedName(@NotNull String name) {

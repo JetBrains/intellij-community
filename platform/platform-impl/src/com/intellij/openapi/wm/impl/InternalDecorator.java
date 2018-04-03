@@ -655,11 +655,6 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     public final void setSelected(final AnActionEvent event, final boolean flag) {
       fireSideStatusChanged(flag);
     }
-
-    @Override
-    public void update(@NotNull final AnActionEvent e) {
-      super.update(e);
-    }
   }
 
   private final class RemoveStripeButtonAction extends AnAction implements DumbAware {

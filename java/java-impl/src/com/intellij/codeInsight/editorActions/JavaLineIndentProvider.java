@@ -25,7 +25,7 @@ import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.codeStyle.SemanticEditorPosition;
 import com.intellij.psi.impl.source.codeStyle.lineIndent.JavaLikeLangLineIndentProvider;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

@@ -92,7 +92,7 @@ public class CreateInnerClassFromUsageFix extends CreateClassFromUsageBaseFix {
       contextMember = PsiTreeUtil.getParentOfType(run, PsiMember.class);
     }
 
-    return result.isEmpty() ? PsiClass.EMPTY_ARRAY : result.toArray(new PsiClass[result.size()]);
+    return result.isEmpty() ? PsiClass.EMPTY_ARRAY : result.toArray(PsiClass.EMPTY_ARRAY);
   }
 
   private static boolean isUsedInExtends(PsiElement element, PsiClass psiClass) {

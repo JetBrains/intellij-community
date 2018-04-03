@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2017 Bas Leijdekkers
+ * Copyright 2010-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -236,7 +236,7 @@ public class IfCanBeAssertionInspection extends BaseInspection {
       if (arguments.length < 1) {
         return null;
       }
-      return tracker.markUnchanged(arguments[0]).getText();
+      return tracker.text(arguments[0]);
     }
   }
 }

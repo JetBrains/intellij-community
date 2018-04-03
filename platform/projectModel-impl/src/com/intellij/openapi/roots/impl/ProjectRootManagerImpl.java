@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.roots.impl;
 
@@ -25,8 +25,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jdom.Element;
@@ -249,7 +247,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   }
 
   @Override
-  public void loadState(Element element) {
+  public void loadState(@NotNull Element element) {
     for (ProjectExtension extension : Extensions.getExtensions(ProjectExtension.EP_NAME, myProject)) {
       extension.readExternal(element);
     }
@@ -504,7 +502,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
 
     private synchronized LibraryTable.Listener[] getListeners() {
       if (myListenersArray == null) {
-        myListenersArray = myListeners.toArray(new LibraryTable.Listener[myListeners.size()]);
+        myListenersArray = myListeners.toArray(new LibraryTable.Listener[0]);
       }
       return myListenersArray;
     }
@@ -564,7 +562,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
 
     private synchronized ProjectJdkTable.Listener[] getListeners() {
       if (myListenersArray == null) {
-        myListenersArray = myListeners.toArray(new ProjectJdkTable.Listener[myListeners.size()]);
+        myListenersArray = myListeners.toArray(new ProjectJdkTable.Listener[0]);
       }
       return myListenersArray;
     }

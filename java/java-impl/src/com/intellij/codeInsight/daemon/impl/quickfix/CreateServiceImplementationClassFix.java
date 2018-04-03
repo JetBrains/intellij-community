@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -14,7 +12,6 @@ import com.intellij.openapi.module.impl.scopes.ModulesScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBoxWithWidePopup;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.panel.JBPanelFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -22,6 +19,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.components.JBRadioButton;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.UI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -196,14 +194,14 @@ public class CreateServiceImplementationClassFix extends CreateServiceClassFixBa
     @Nullable
     @Override
     protected JComponent createNorthPanel() {
-      JPanel radioButtons = JBPanelFactory.grid()
-        .add(JBPanelFactory.panel(mySubclassButton))
-        .add(JBPanelFactory.panel(myProviderButton))
+      JPanel radioButtons = UI.PanelFactory.grid()
+        .add(UI.PanelFactory.panel(mySubclassButton))
+        .add(UI.PanelFactory.panel(myProviderButton))
         .createPanel();
 
-      return JBPanelFactory.grid()
-        .add(JBPanelFactory.panel(radioButtons).withLabel("Implementation:"))
-        .add(JBPanelFactory.panel(myRootDirCombo).withLabel("Source root:"))
+      return UI.PanelFactory.grid()
+        .add(UI.PanelFactory.panel(radioButtons).withLabel("Implementation:"))
+        .add(UI.PanelFactory.panel(myRootDirCombo).withLabel("Source root:"))
         .createPanel();
     }
 

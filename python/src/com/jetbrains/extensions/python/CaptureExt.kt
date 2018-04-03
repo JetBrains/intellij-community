@@ -15,4 +15,12 @@ import com.jetbrains.python.psi.PyFunction
 fun PsiElementPattern.Capture<*>.afterDefInMethod() =
   withLanguage(PythonLanguage.getInstance())
     .and(psiElement().inside(psiElement(PyFunction::class.java).inside(psiElement(PyClass::class.java))))
-                               .and(psiElement().afterLeaf("def"))
+    .and(psiElement().afterLeaf("def"))
+
+/**
+ * Place right after "def" in function or method. Useful to provide custom completions
+ */
+fun PsiElementPattern.Capture<*>.afterDefInFunction() =
+  withLanguage(PythonLanguage.getInstance())
+    .and(psiElement().inside(psiElement(PyFunction::class.java)))
+    .and(psiElement().afterLeaf("def"))

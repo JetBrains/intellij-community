@@ -8,20 +8,20 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.PsiScopeProcessor
-import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
+import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyTargetExpression
-import com.jetbrains.python.psi.types.PyClassLikeType
-import com.jetbrains.python.psi.types.TypeEvalContext
 import java.util.*
 
 class PyNamedTupleInspection : PyInspection() {
 
   companion object {
-    fun inspectFieldsOrder(cls: PyClass, context: TypeEvalContext, callback: (PsiElement, String, ProblemHighlightType) -> Unit) {
-      val fieldsProcessor = FieldsProcessor(context)
+    fun inspectFieldsOrder(cls: PyClass,
+                           callback: (PsiElement, String, ProblemHighlightType) -> Unit,
+                           filter: (PyTargetExpression) -> Boolean = { true },
+                           hasAssignedValue: (PyTargetExpression) -> Boolean = PyTargetExpression::hasAssignedValue) {
+      val fieldsProcessor = FieldsProcessor(filter, hasAssignedValue)
 
       cls.processClassLevelDeclarations(fieldsProcessor)
 
@@ -52,20 +52,16 @@ class PyNamedTupleInspection : PyInspection() {
     override fun visitPyClass(node: PyClass?) {
       super.visitPyClass(node)
 
-      if (node != null && LanguageLevel.forElement(node).isAtLeast(LanguageLevel.PYTHON36) && isTypingNTInheritor(node)) {
-        inspectFieldsOrder(node, myTypeEvalContext, this::registerProblem)
+      if (node != null &&
+          LanguageLevel.forElement(node).isAtLeast(LanguageLevel.PYTHON36) &&
+          PyStdlibTypeProvider.isTypingNamedTupleDirectInheritor(node, myTypeEvalContext)) {
+        inspectFieldsOrder(node, this::registerProblem)
       }
-    }
-
-    private fun isTypingNTInheritor(cls: PyClass): Boolean {
-      val isTypingNT: (PyClassLikeType?) -> Boolean =
-        { it != null && it !is PyNamedTupleType && PyTypingTypeProvider.NAMEDTUPLE == it.classQName }
-
-      return cls.getSuperClassTypes(myTypeEvalContext).find(isTypingNT) != null
     }
   }
 
-  private class FieldsProcessor(private val context: TypeEvalContext) : PsiScopeProcessor {
+  private class FieldsProcessor(private val filter: (PyTargetExpression) -> Boolean,
+                                private val hasAssignedValue: (PyTargetExpression) -> Boolean) : PsiScopeProcessor {
 
     val lastFieldWithoutDefaultValue: PyTargetExpression?
       get() = lastFieldWithoutDefaultValueBox.result
@@ -80,14 +76,9 @@ class PyNamedTupleInspection : PyInspection() {
     }
 
     override fun execute(element: PsiElement, state: ResolveState): Boolean {
-      if (element is PyTargetExpression) {
-        val annotation = element.annotation
-        if (annotation != null && PyTypingTypeProvider.isClassVarAnnotation(annotation, context)) {
-          return true
-        }
-
+      if (element is PyTargetExpression && filter(element)) {
         when {
-          element.findAssignedValue() != null -> fieldsWithDefaultValue.add(element)
+          hasAssignedValue(element) -> fieldsWithDefaultValue.add(element)
           else -> lastFieldWithoutDefaultValueBox.apply(element)
         }
       }

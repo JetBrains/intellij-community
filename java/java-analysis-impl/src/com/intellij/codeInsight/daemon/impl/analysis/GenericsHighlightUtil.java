@@ -28,8 +28,8 @@ import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
-import com.intellij.util.containers.HashSet;
+import java.util.HashMap;
+import java.util.HashSet;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -1432,7 +1432,7 @@ public class GenericsHighlightUtil {
       if (checkReferenceTypeArgumentList(aClass, parameterList, PsiSubstitutor.EMPTY, false, version) == null) {
         PsiType[] actualTypeParameters = parameterList.getTypeArguments();
         PsiTypeParameter[] classTypeParameters = aClass.getTypeParameters();
-        Map<PsiTypeParameter, PsiType> map = new java.util.HashMap<>();
+        Map<PsiTypeParameter, PsiType> map = new HashMap<>();
         for (int j = 0; j < classTypeParameters.length; j++) {
           PsiTypeParameter classTypeParameter = classTypeParameters[j];
           PsiType actualTypeParameter = actualTypeParameters[j];
@@ -1466,7 +1466,10 @@ public class GenericsHighlightUtil {
   }
 
   static HighlightInfo checkClassSupersAccessibility(@NotNull PsiClass aClass, @NotNull PsiReferenceExpression ref) {
-    return checkClassSupersAccessibility(aClass, ref.getResolveScope(), ref.getTextRange(), false);
+    if (ref.getParent() instanceof PsiMethodCallExpression) {
+      return checkClassSupersAccessibility(aClass, ref.getResolveScope(), ref.getTextRange(), false);
+    }
+    return null;
   }
 
   private static HighlightInfo checkClassSupersAccessibility(PsiClass aClass,
@@ -1561,12 +1564,13 @@ public class GenericsHighlightUtil {
           }
         }
 
-        boolean isInLibrary = !index.isInContent(vFile);
-        for (PsiClassType superType : aClass.getSuperTypes()) {
-          final String notAccessibleMessage = isTypeAccessible(superType, classes, !isInLibrary, resolveScope, factory);
-          if (notAccessibleMessage != null) {
-            return notAccessibleMessage;
-          }
+      }
+
+      boolean isInLibrary = !index.isInContent(vFile);
+      for (PsiClassType superType : aClass.getSuperTypes()) {
+        final String notAccessibleMessage = isTypeAccessible(superType, classes, checkParameters && !isInLibrary, resolveScope, factory);
+        if (notAccessibleMessage != null) {
+          return notAccessibleMessage;
         }
       }
     }

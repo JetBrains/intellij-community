@@ -339,10 +339,6 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     }
 
     if (ok[0]) {
-      // otherwise changes maybe not synced to the document yet, and injectors will crash
-      if (!mySynchronizer.isDocumentAffectedByTransactions(document)) {
-        //InjectedLanguageManager.getInstance(myProject).startRunInjectorsInRange(document, changedRange, synchronously);
-      }
       // run after commit actions outside write action
       runAfterCommitActions(document);
       if (DebugUtil.DO_EXPENSIVE_CHECKS && !ApplicationInfoImpl.isInStressTest()) {

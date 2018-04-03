@@ -232,7 +232,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
           list.add(TextRange.from(psi.getStartOffsetInParent(), psi.getTextLength()));
         }
       }
-      myTextElements = elements = list.toArray(new TextRange[list.size()]);
+      myTextElements = elements = list.toArray(new TextRange[0]);
     }
     return elements;
   }

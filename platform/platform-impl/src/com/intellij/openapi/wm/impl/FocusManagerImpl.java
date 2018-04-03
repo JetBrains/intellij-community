@@ -29,14 +29,15 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.impl.ServiceManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.FocusRequestor;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
@@ -54,7 +55,6 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 import java.util.stream.Collectors;
 
 public class FocusManagerImpl extends IdeFocusManager implements Disposable {
@@ -381,9 +381,6 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   }
 
   private class AppListener implements ApplicationActivationListener {
-
-    @Override
-    public void applicationActivated(final IdeFrame ideFrame) {}
 
     @Override
     public void delayedApplicationDeactivated(IdeFrame ideFrame) {

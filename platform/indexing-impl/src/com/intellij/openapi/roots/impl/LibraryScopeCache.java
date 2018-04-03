@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots.impl;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -29,7 +30,6 @@ import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ConcurrentFactoryMap;
-import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
@@ -204,7 +204,7 @@ public class LibraryScopeCache {
       united.add(GlobalSearchScope.moduleWithDependentsScope(module));
     }
 
-    return GlobalSearchScope.union(united.toArray(new GlobalSearchScope[united.size()]));
+    return GlobalSearchScope.union(united.toArray(new GlobalSearchScope[0]));
   }
 
   private static class LibrariesOnlyScope extends GlobalSearchScope {

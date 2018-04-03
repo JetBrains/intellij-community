@@ -431,15 +431,15 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
       @Override
       public RelativePoint recalculateLocation(Balloon object) {
         Component c = getAnchor(pane);
-        int y = c.getHeight() - 45;
+        int y = c.getHeight() - JBUI.scale(45);
         if (balloonLayout != null && !isBottomSideToolWindowsVisible(pane)) {
           Component component = balloonLayout.getTopBalloonComponent();
           if (component != null) {
-            y = SwingUtilities.convertPoint(component, 0, -45, c).y;
+            y = SwingUtilities.convertPoint(component, 0, -JBUI.scale(45), c).y;
           }
         }
 
-        return new RelativePoint(c, new Point(c.getWidth() - 150, y));
+        return new RelativePoint(c, new Point(c.getWidth() - JBUI.scale(150), y));
       }
     }, Balloon.Position.above);
   }

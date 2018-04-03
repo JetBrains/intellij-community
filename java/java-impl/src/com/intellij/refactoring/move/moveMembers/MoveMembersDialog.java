@@ -227,7 +227,7 @@ public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOpti
     for (MemberInfo selectedMemberInfo : selectedMemberInfos) {
       list.add(selectedMemberInfo.getMember());
     }
-    return list.toArray(new PsiMember[list.size()]);
+    return list.toArray(PsiMember.EMPTY_ARRAY);
   }
 
   @Override

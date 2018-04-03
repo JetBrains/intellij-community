@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,14 +44,14 @@ public class DetailExceptionsIntention extends Intention {
     final Set<PsiClassType> exceptionsThrown = new HashSet<>();
     final PsiResourceList resourceList = tryStatement.getResourceList();
     if (resourceList != null) {
-      newTryStatement.append(commentTracker.markUnchanged(resourceList).getText());
+      newTryStatement.append(commentTracker.text(resourceList));
       ExceptionUtils.calculateExceptionsThrown(resourceList, exceptionsThrown);
     }
     final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
     if (tryBlock == null) {
       return;
     }
-    final String tryBlockText = commentTracker.markUnchanged(tryBlock).getText();
+    final String tryBlockText = commentTracker.text(tryBlock);
     newTryStatement.append(tryBlockText);
     ExceptionUtils.calculateExceptionsThrown(tryBlock, exceptionsThrown);
     final Comparator<PsiType> comparator = new HierarchicalTypeComparator();
@@ -85,13 +85,13 @@ public class DetailExceptionsIntention extends Intention {
         }
         for (PsiClassType thrownType : exceptionsToExpand) {
           newTryStatement.append("catch(").append(thrownType.getCanonicalText()).append(' ').append(parameter.getName()).append(')');
-          newTryStatement.append(commentTracker.markUnchanged(block).getText());
+          newTryStatement.append(commentTracker.text(block));
         }
       }
     }
     final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
     if (finallyBlock != null) {
-      newTryStatement.append("finally").append(commentTracker.markUnchanged(finallyBlock).getText());
+      newTryStatement.append("finally").append(commentTracker.text(finallyBlock));
     }
     final String newStatement = newTryStatement.toString();
 

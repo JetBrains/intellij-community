@@ -34,11 +34,6 @@ public class ConvertToStaticAction extends BaseRefactoringAction {
   }
 
   @Override
-  protected boolean isEnabledOnDataContext(DataContext dataContext) {
-    return super.isEnabledOnDataContext(dataContext);
-  }
-
-  @Override
   protected boolean isAvailableInEditorOnly() {
     return false;
   }

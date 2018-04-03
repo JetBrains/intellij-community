@@ -139,7 +139,7 @@ public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
       return;
     }
 
-    final JList list = new JBList(frameworks.toArray(new TestFramework[frameworks.size()]));
+    final JList list = new JBList(frameworks.toArray(new TestFramework[0]));
     list.setCellRenderer(new DefaultListCellRenderer() {
       @Override
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {

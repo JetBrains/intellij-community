@@ -200,8 +200,16 @@ public abstract class DiffRequestProcessor implements Disposable {
     List<FrameDiffTool> result = new ArrayList<>();
     for (DiffTool tool : tools) {
       try {
-        if (tool instanceof FrameDiffTool && tool.canShow(myContext, myActiveRequest)) {
-          result.add((FrameDiffTool)tool);
+        if (tool instanceof FrameDiffTool) {
+          if (tool.canShow(myContext, myActiveRequest)) {
+            result.add((FrameDiffTool)tool);
+          }
+          else {
+            DiffTool substitutor = DiffUtil.findToolSubstitutor(tool, myContext, myActiveRequest);
+            if (substitutor instanceof FrameDiffTool) {
+              result.add((FrameDiffTool)tool);
+            }
+          }
         }
       }
       catch (Throwable e) {
@@ -210,6 +218,13 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
 
     return DiffUtil.filterSuppressedTools(result);
+  }
+
+  @NotNull
+  private FrameDiffTool findToolSubstitutor(@NotNull FrameDiffTool tool) {
+    DiffTool substitutor = DiffUtil.findToolSubstitutor(tool, myContext, myActiveRequest);
+    if (substitutor instanceof FrameDiffTool) return (FrameDiffTool)substitutor;
+    return tool;
   }
 
   private void moveToolOnTop(@NotNull DiffTool tool) {
@@ -228,7 +243,7 @@ public abstract class DiffRequestProcessor implements Disposable {
 
   @NotNull
   private ViewerState createState() {
-    FrameDiffTool frameTool = getFittedTool();
+    FrameDiffTool frameTool = findToolSubstitutor(getFittedTool());
 
     DiffViewer viewer = frameTool.createComponent(myContext, myActiveRequest);
 

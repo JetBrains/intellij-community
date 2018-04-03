@@ -56,11 +56,6 @@ public class UnknownBeforeRunTaskProvider extends BeforeRunTaskProvider<UnknownB
   }
 
   @Override
-  public boolean configureTask(@NotNull RunConfiguration runConfiguration, @NotNull UnknownTask task) {
-    return false;
-  }
-
-  @Override
   public boolean canExecuteTask(@NotNull RunConfiguration configuration, @NotNull UnknownTask task) {
     return false;
   }
@@ -99,11 +94,6 @@ public class UnknownBeforeRunTaskProvider extends BeforeRunTaskProvider<UnknownB
           element.addContent(((Element)child).clone());
         }
       }
-    }
-
-    @Override
-    public BeforeRunTask clone() {
-      return super.clone();
     }
 
     public boolean equals(Object o) {

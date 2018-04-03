@@ -318,7 +318,7 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
     if (key == CommonDataKeys.NAVIGATABLE_ARRAY) {
       List<Navigatable> navigatables = getNavigatables();
       if (!navigatables.isEmpty()) {
-        sink.put(CommonDataKeys.NAVIGATABLE_ARRAY, navigatables.toArray(new Navigatable[navigatables.size()]));
+        sink.put(CommonDataKeys.NAVIGATABLE_ARRAY, navigatables.toArray(new Navigatable[0]));
       }
     }
   }

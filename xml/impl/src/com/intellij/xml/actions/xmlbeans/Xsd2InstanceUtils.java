@@ -89,7 +89,7 @@ public class Xsd2InstanceUtils {
         }
       }
 
-        XmlObject[] schemas = (XmlObject[]) sdocs.toArray(new XmlObject[sdocs.size()]);
+        XmlObject[] schemas = (XmlObject[]) sdocs.toArray(new XmlObject[0]);
 
         SchemaTypeSystem sts = null;
         if (schemas.length > 0)

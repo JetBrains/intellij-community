@@ -64,7 +64,6 @@ class FileEncodingConfigurable extends PerFileConfigurableBase<Charset> {
   FileEncodingConfigurable(@NotNull Project project) {
     super(project, createMappings(project));
     myBOMForUTF8Combo.setModel(new EnumComboBoxModel<>(EncodingProjectManagerImpl.BOMForNewUTF8Files.class));
-    myBOMForUTF8Combo.setRenderer((list, value, index, isSelected, cellHasFocus) -> new JLabel(value.toString()));
     myBOMForUTF8Combo.addItemListener(e -> updateExplanationLabelText());
     myExplanationLabel.setHyperlinkTarget("https://en.wikipedia.org/wiki/Byte_order_mark#UTF-8");
   }

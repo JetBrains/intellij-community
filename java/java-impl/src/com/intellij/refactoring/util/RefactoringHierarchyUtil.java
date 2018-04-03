@@ -24,7 +24,6 @@ import com.intellij.psi.search.PsiElementProcessorAdapter;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -197,7 +196,7 @@ public class RefactoringHierarchyUtil {
         }
       }
     }
-    return result.toArray(new PsiClass[result.size()]);
+    return result.toArray(PsiClass.EMPTY_ARRAY);
   }
 
   private static void _findImplementingClasses(PsiClass anInterface, final Set<PsiClass> visited, final Collection<PsiClass> result) {

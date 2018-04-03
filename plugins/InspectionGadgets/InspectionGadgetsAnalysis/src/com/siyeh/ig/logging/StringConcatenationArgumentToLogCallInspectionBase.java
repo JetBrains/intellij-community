@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -100,7 +99,7 @@ public class StringConcatenationArgumentToLogCallInspectionBase extends BaseInsp
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement grandParent = element.getParent().getParent();
       if (!(grandParent instanceof PsiMethodCallExpression)) {
@@ -208,7 +207,7 @@ public class StringConcatenationArgumentToLogCallInspectionBase extends BaseInsp
             newMethodCall.append(',');
           }
           else {
-            comma =true;
+            comma = true;
           }
           if (newArgument != null) {
             newMethodCall.append(newArgument.getText());

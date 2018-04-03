@@ -321,7 +321,7 @@ abstract class LineLayout {
         if (run.startOffset >= endOffset) break;
         runList.add(run.subRun(view, line, startOffset, endOffset, quickEvaluationListener));
       }
-      runs = runList.toArray(new BidiRun[runList.size()]);
+      runs = runList.toArray(BidiRun.EMPTY_ARRAY);
       if (runs.length > 1) {
         reorderRunsVisually(runs);
       }
@@ -575,7 +575,7 @@ abstract class LineLayout {
         if (chunk.startOffset >= end) break;
         subChunks.add(chunk.subChunk(view, this, line, start, end, quickEvaluationListener));
       }
-      subRun.chunks = subChunks.toArray(new Chunk[subChunks.size()]);
+      subRun.chunks = subChunks.toArray(new Chunk[0]);
       subRun.visualStartLogicalColumn = (subRun.isRtl() ? end == endOffset : start == startOffset) ? visualStartLogicalColumn :
                                         view.getLogicalPositionCache().offsetToLogicalColumn(line, subRun.isRtl() ? end : start);
       return subRun;

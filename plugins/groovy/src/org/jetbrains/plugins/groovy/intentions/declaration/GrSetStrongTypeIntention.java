@@ -121,7 +121,7 @@ public class GrSetStrongTypeIntention extends Intention {
     final TypeInfo typeInfo = getOrCreateTypeElement(parent, elementToBuildTemplate);
     final PsiElement replaceElement = typeInfo.elementToReplace;
 
-    TypeConstraint[] constraints = types.toArray(new TypeConstraint[types.size()]);
+    TypeConstraint[] constraints = types.toArray(TypeConstraint.EMPTY_ARRAY);
     ChooseTypeExpression chooseTypeExpression = new ChooseTypeExpression(constraints, element.getManager(), replaceElement.getResolveScope());
 
     TemplateBuilderImpl builder = new TemplateBuilderImpl(elementToBuildTemplate);

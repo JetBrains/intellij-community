@@ -145,6 +145,6 @@ public class AllVcses implements AllVcsesI, Disposable {
       result.add(vcsEP.createDescriptor());
     }
     Collections.sort(result);
-    return result.toArray(new VcsDescriptor[result.size()]);
+    return result.toArray(new VcsDescriptor[0]);
   }
 }

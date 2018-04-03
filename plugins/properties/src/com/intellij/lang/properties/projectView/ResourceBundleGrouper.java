@@ -8,7 +8,6 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.lang.properties.*;
-import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ReadAction;
@@ -22,7 +21,10 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 public class ResourceBundleGrouper implements TreeStructureProvider, DumbAware {
   private final static Logger LOG = Logger.getInstance(ResourceBundleGrouper.class);
@@ -115,7 +117,7 @@ public class ResourceBundleGrouper implements TreeStructureProvider, DumbAware {
           selectedElements.add((ResourceBundle)value);
         }
       }
-      return selectedElements.isEmpty() ? null : selectedElements.toArray(new ResourceBundle[selectedElements.size()]);
+      return selectedElements.isEmpty() ? null : selectedElements.toArray(new ResourceBundle[0]);
     }
     return null;
   }

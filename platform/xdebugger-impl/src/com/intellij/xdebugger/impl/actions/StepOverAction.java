@@ -27,9 +27,4 @@ public class StepOverAction extends XDebuggerActionBase implements DumbAware {
   protected DebuggerActionHandler getHandler(@NotNull final DebuggerSupport debuggerSupport) {
     return debuggerSupport.getStepOverHandler();
   }
-
-  @Override
-  public boolean isDumbAware() {
-    return true;
-  }
 }

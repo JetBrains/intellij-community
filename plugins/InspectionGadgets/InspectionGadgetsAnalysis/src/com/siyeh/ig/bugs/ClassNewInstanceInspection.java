@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2017 Bas Leijdekkers
+ * Copyright 2009-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -128,8 +127,7 @@ public class ClassNewInstanceInspection extends BaseInspection {
       }
     }
 
-    protected static void addCatchBlock(PsiTryStatement tryStatement,
-                                        String... exceptionNames) throws IncorrectOperationException {
+    protected static void addCatchBlock(PsiTryStatement tryStatement, String... exceptionNames) {
       final Project project = tryStatement.getProject();
       final PsiParameter[] parameters = tryStatement.getCatchBlockParameters();
       final Set<String> presentExceptionNames = new HashSet<>();

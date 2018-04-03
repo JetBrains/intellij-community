@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,7 +76,7 @@ public class FlipAssertLiteralIntention extends MutablyNamedIntention {
       }
     }
     else {
-      newCall.append(tracker.markUnchanged(qualifier).getText()).append('.');
+      newCall.append(tracker.text(qualifier)).append('.');
     }
     newCall.append(toMethodName).append('(');
     final PsiExpressionList argumentList = call.getArgumentList();
@@ -86,7 +86,7 @@ public class FlipAssertLiteralIntention extends MutablyNamedIntention {
       newCall.append(BoolUtils.getNegatedExpressionText(arguments[0], tracker));
     }
     else {
-      newCall.append(tracker.markUnchanged(arguments[0]).getText()).append(',');
+      newCall.append(tracker.text(arguments[0])).append(',');
       newCall.append(BoolUtils.getNegatedExpressionText(arguments[1], tracker));
     }
     newCall.append(')');

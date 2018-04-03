@@ -534,7 +534,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
     }
 
     List<Document> list = new ArrayList<>(myUnsavedDocuments);
-    return list.toArray(new Document[list.size()]);
+    return list.toArray(Document.EMPTY_ARRAY);
   }
 
   @Override

@@ -286,7 +286,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
 
     ShowSchemesActionsListAction(Collection<AnAction> actions, Component component) {
       myParentComponent = component;
-      myActionGroup = new DefaultActionGroup(actions.toArray(new AnAction[actions.size()]));
+      myActionGroup = new DefaultActionGroup(actions.toArray(AnAction.EMPTY_ARRAY));
     }
 
     @Override

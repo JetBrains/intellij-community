@@ -48,7 +48,7 @@ public class RedundantExplicitVariableTypeInspection extends AbstractBaseJavaLoc
            replaceExplicitTypeWithVar(typeElementCopy, variable);
            if (variable.getType().equals(copyVariable.getType())) {
              holder.registerProblem(element2Highlight,
-                                    "Explicit type of local variable is redundant",
+                                    "Explicit type of local variable can be omitted",
                                     ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                                     new ReplaceWithVarFix());
            }

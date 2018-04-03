@@ -22,7 +22,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -211,7 +211,7 @@ public class GenericsUtil {
     Set<PsiClass> supers = new LinkedHashSet<>();
     Set<PsiClass> visited = new HashSet<>();
     getLeastUpperClassesInner(aClass, bClass, supers, visited);
-    return supers.toArray(new PsiClass[supers.size()]);
+    return supers.toArray(PsiClass.EMPTY_ARRAY);
   }
 
   private static void getLeastUpperClassesInner(PsiClass aClass, PsiClass bClass, Set<PsiClass> supers, Set<PsiClass> visited) {

@@ -69,7 +69,7 @@ public class LocalDescriptorsUtil {
     for (Map.Entry<RefElement, List<ProblemDescriptor>> entry : problems.entrySet()) {
       final List<ProblemDescriptor> problemDescriptors = entry.getValue();
       RefElement refElement = entry.getKey();
-      CommonProblemDescriptor[] descriptions = problemDescriptors.toArray(new CommonProblemDescriptor[problemDescriptors.size()]);
+      CommonProblemDescriptor[] descriptions = problemDescriptors.toArray(CommonProblemDescriptor.EMPTY_ARRAY);
       dpi.addProblemElement(refElement, filterSuppressed, descriptions);
     }
   }

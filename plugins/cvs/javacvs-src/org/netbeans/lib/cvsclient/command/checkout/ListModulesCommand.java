@@ -132,9 +132,6 @@ public class ListModulesCommand extends Command {
     }
 
     @Override
-    public void binaryMessageSent(final byte[] bytes) {}
-
-    @Override
     public void outputDone() {}
   }
 

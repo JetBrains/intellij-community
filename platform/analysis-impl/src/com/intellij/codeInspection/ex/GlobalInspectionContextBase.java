@@ -39,7 +39,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
@@ -415,7 +415,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
       }
       GlobalInspectionContextBase globalContext = (GlobalInspectionContextBase)InspectionManager.getInstance(project).createNewGlobalContext(false);
       final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
-      AnalysisScope analysisScope = new AnalysisScope(new LocalSearchScope(psiElements.toArray(new PsiElement[psiElements.size()])), project);
+      AnalysisScope analysisScope = new AnalysisScope(new LocalSearchScope(psiElements.toArray(PsiElement.EMPTY_ARRAY)), project);
       globalContext.codeCleanup(analysisScope, profile, null, runnable, true);
     };
 

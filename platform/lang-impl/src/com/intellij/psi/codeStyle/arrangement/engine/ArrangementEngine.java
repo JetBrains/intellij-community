@@ -37,7 +37,7 @@ import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsAwa
 import com.intellij.psi.codeStyle.arrangement.std.CustomArrangementOrderToken;
 import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens;
 import com.intellij.util.containers.*;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.TIntArrayList;

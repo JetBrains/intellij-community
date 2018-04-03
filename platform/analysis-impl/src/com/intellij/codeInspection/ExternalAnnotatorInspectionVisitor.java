@@ -120,7 +120,7 @@ public class ExternalAnnotatorInspectionVisitor extends PsiElementVisitor {
                                                                      false);
       problems.add(descriptor);
     }
-    return problems.toArray(new ProblemDescriptor[problems.size()]);
+    return problems.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
   @NotNull

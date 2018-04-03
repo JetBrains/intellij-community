@@ -255,7 +255,7 @@ public class ReachingDefinitionsCollector {
         result.add(info);
       }
     }
-    return result.toArray(new VariableInfo[result.size()]);
+    return result.toArray(new VariableInfo[0]);
   }
 
   private static LinkedHashSet<Integer> getFragmentInstructions(GrStatement first, GrStatement last, Instruction[] flow) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2016 Bas Leijdekkers
+ * Copyright 2006-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.RefactoringUIUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.base.Intention;
@@ -49,7 +48,7 @@ public class ConvertInterfaceToClassIntention extends Intention {
     return false;
   }
 
-  public static void changeInterfaceToClass(PsiClass anInterface) throws IncorrectOperationException {
+  public static void changeInterfaceToClass(PsiClass anInterface) {
     final PsiIdentifier nameIdentifier = anInterface.getNameIdentifier();
     assert nameIdentifier != null;
     final PsiElement whiteSpace = nameIdentifier.getPrevSibling();
@@ -108,7 +107,7 @@ public class ConvertInterfaceToClassIntention extends Intention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element) {
     final PsiClass anInterface = (PsiClass)element.getParent();
     final SearchScope searchScope = anInterface.getUseScope();
     final Collection<PsiClass> inheritors = ClassInheritorsSearch.search(anInterface, searchScope, false).findAll();
@@ -133,13 +132,16 @@ public class ConvertInterfaceToClassIntention extends Intention {
     final PsiFunctionalExpression functionalExpression = FunctionalExpressionSearch.search(anInterface, searchScope).findFirst();
     if (functionalExpression != null) {
       final String conflictMessage = ClassPresentationUtil.getFunctionalExpressionPresentation(functionalExpression, true) +
-                           " will not compile after converting " + RefactoringUIUtil.getDescription(anInterface, false) + " to a class";
+                                     " will not compile after converting " +
+                                     RefactoringUIUtil.getDescription(anInterface, false) +
+                                     " to a class";
       conflicts.putValue(functionalExpression, conflictMessage);
     }
     final boolean conflictsDialogOK;
     if (conflicts.isEmpty()) {
       conflictsDialogOK = true;
-    } else {
+    }
+    else {
       final Application application = ApplicationManager.getApplication();
       if (application.isUnitTestMode()) {
         throw new BaseRefactoringProcessor.ConflictsInTestsException(conflicts.values());
@@ -173,7 +175,7 @@ public class ConvertInterfaceToClassIntention extends Intention {
     return new ConvertInterfaceToClassPredicate();
   }
 
-  private static void moveExtendsToImplements(PsiClass anInterface) throws IncorrectOperationException {
+  private static void moveExtendsToImplements(PsiClass anInterface) {
     final PsiReferenceList extendsList = anInterface.getExtendsList();
     final PsiReferenceList implementsList = anInterface.getImplementsList();
     assert extendsList != null;
@@ -200,8 +202,9 @@ public class ConvertInterfaceToClassIntention extends Intention {
     }
   }
 
-  private static void moveReference(@NotNull PsiReferenceList source, @Nullable PsiReferenceList target,
-                                    @NotNull PsiJavaCodeReferenceElement reference) throws IncorrectOperationException {
+  private static void moveReference(@NotNull PsiReferenceList source,
+                                    @Nullable PsiReferenceList target,
+                                    @NotNull PsiJavaCodeReferenceElement reference) {
     final PsiJavaCodeReferenceElement[] implementsReferences = source.getReferenceElements();
     final String qualifiedName = reference.getQualifiedName();
     for (PsiJavaCodeReferenceElement implementsReference : implementsReferences) {
@@ -211,7 +214,7 @@ public class ConvertInterfaceToClassIntention extends Intention {
           final PsiJavaCodeReferenceElement[] referenceElements = target.getReferenceElements();
           if (referenceElements.length > 0) {
             final PsiElement aClass = referenceElements[0].resolve();
-            if (aClass instanceof PsiClass && CommonClassNames.JAVA_LANG_OBJECT.equals(((PsiClass) aClass).getQualifiedName())) {
+            if (aClass instanceof PsiClass && CommonClassNames.JAVA_LANG_OBJECT.equals(((PsiClass)aClass).getQualifiedName())) {
               referenceElements[0].delete();
             }
           }

@@ -483,18 +483,6 @@ public class MethodCallUtils {
     }
 
     @Override
-    public void visitClass(PsiClass aClass) {
-      // anonymous and inner classes inside methods are visited to reduce false positives
-      super.visitClass(aClass);
-    }
-
-    @Override
-    public void visitLambdaExpression(PsiLambdaExpression expression) {
-      // lambda's are visited to reduce false positives
-      super.visitLambdaExpression(expression);
-    }
-
-    @Override
     public void visitIfStatement(PsiIfStatement statement) {
       final PsiExpression condition = statement.getCondition();
       final Object result = ExpressionUtils.computeConstantExpression(condition);

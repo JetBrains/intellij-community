@@ -30,7 +30,9 @@ import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.fragments.MergeLineFragment;
 import com.intellij.diff.fragments.MergeWordFragment;
 import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings;
+import com.intellij.diff.impl.DiffToolSubstitutor;
 import com.intellij.diff.requests.ContentDiffRequest;
+import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.util.DiffNotifications;
 import com.intellij.diff.tools.util.FoldingModelSupport;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
@@ -1556,6 +1558,23 @@ public class DiffUtil {
 
     List<T> filteredTools = ContainerUtil.filter(tools, tool -> !suppressedTools.contains(tool.getClass()));
     return filteredTools.isEmpty() ? tools : filteredTools;
+  }
+
+  @Nullable
+  public static DiffTool findToolSubstitutor(@NotNull DiffTool tool, @NotNull DiffContext context, @NotNull DiffRequest request) {
+    for (DiffToolSubstitutor substitutor : DiffToolSubstitutor.EP_NAME.getExtensions()) {
+      DiffTool replacement = substitutor.getReplacement(tool, context, request);
+      if (replacement == null) continue;
+
+      boolean canShow = replacement.canShow(context, request);
+      if (!canShow) {
+        LOG.error("DiffTool substitutor returns invalid tool");
+        continue;
+      }
+
+      return replacement;
+    }
+    return null;
   }
 
   //

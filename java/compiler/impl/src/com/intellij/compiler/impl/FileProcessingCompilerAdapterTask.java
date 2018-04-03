@@ -24,7 +24,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ThrowableRunnable;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -91,7 +90,7 @@ public class FileProcessingCompilerAdapterTask implements CompileTask {
         return true;
       }
 
-      final FileProcessingCompiler.ProcessingItem[] array = toProcess.toArray(new FileProcessingCompiler.ProcessingItem[toProcess.size()]);
+      final FileProcessingCompiler.ProcessingItem[] array = toProcess.toArray(FileProcessingCompiler.ProcessingItem.EMPTY_ARRAY);
       final FileProcessingCompiler.ProcessingItem[] processed = myCompiler.process(context, array);
       if (processed.length == 0) {
         return true;

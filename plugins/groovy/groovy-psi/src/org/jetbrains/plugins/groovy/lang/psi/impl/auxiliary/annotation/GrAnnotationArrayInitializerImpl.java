@@ -53,7 +53,7 @@ public class GrAnnotationArrayInitializerImpl extends GroovyPsiElementImpl imple
     for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
       if (cur instanceof GrAnnotationMemberValue) result.add((GrAnnotationMemberValue)cur);
     }
-    return result.toArray(new GrAnnotationMemberValue[result.size()]);
+    return result.toArray(new GrAnnotationMemberValue[0]);
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.siyeh.ipp.chartostring;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -32,10 +31,8 @@ public class StringToCharIntention extends Intention {
   }
 
   @Override
-  public void processIntention(PsiElement element)
-    throws IncorrectOperationException {
-    final PsiLiteralExpression stringLiteral =
-      (PsiLiteralExpression)element;
+  public void processIntention(PsiElement element) {
+    final PsiLiteralExpression stringLiteral = (PsiLiteralExpression)element;
     final String stringLiteralText = stringLiteral.getText();
     final String charLiteral = charForStringLiteral(stringLiteralText);
     PsiReplacementUtil.replaceExpression(stringLiteral, charLiteral);
@@ -49,9 +46,7 @@ public class StringToCharIntention extends Intention {
       return "'\"'";
     }
     else {
-      return '\'' +
-             stringLiteral.substring(1, stringLiteral.length() - 1) +
-             '\'';
+      return '\'' + stringLiteral.substring(1, stringLiteral.length() - 1) + '\'';
     }
   }
 }

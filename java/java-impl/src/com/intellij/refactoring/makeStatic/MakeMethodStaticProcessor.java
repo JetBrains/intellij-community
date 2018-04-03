@@ -162,7 +162,7 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
                                                                                 myMember,
                                                                                 myMember.getName(),
                                                                                 CanonicalTypes.createTypeWrapper(returnType),
-                                                                                params.toArray(new ParameterInfoImpl[params.size()]),
+                                                                                params.toArray(new ParameterInfoImpl[0]),
                                                                                 new ThrownExceptionInfo[0],
                                                                                 false,
                                                                                 Collections.emptySet(),

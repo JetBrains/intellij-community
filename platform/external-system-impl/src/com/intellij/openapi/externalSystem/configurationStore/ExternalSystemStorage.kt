@@ -1,14 +1,14 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.configurationStore
 
 import com.intellij.configurationStore.*
 import com.intellij.openapi.components.RoamingType
-import com.intellij.openapi.components.StateSplitterEx
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMUtil
 import org.jdom.Element
+import org.jetbrains.jps.model.serialization.SerializationConstants
 
 internal class ExternalModuleStorage(private val module: Module, storageManager: StateStorageManager) : XmlElementStorage(StoragePathMacros.MODULE_FILE, "module", storageManager.macroSubstitutor, RoamingType.DISABLED) {
   private val manager = StreamProviderFactory.EP_NAME.getExtensions(module.project).first { it is ExternalSystemStreamProviderFactory } as ExternalSystemStreamProviderFactory
@@ -48,4 +48,4 @@ internal class ExternalProjectFilteringStorage(fileSpec: String, project: Projec
   }
 }
 
-private fun Element.isMarkedAsExternal() = getAttribute(StateSplitterEx.EXTERNAL_SYSTEM_ID_ATTRIBUTE) != null
+private fun Element.isMarkedAsExternal() = getAttribute(SerializationConstants.EXTERNAL_SYSTEM_ID_ATTRIBUTE) != null

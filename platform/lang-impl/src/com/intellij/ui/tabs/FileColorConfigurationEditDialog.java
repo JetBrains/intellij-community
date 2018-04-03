@@ -27,7 +27,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.FileColorManager;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

@@ -122,7 +122,7 @@ public class PlatformPackageUtil {
           ContainerUtil
             .mapNotNull(ProjectRootManager.getInstance(project).getContentSourceRoots(),
                         virtualFile -> scope_.contains(virtualFile) ? PsiManager.getInstance(project).findDirectory(virtualFile) : null);
-        psiDirectory = DirectoryChooserUtil.selectDirectory(project, dirs.toArray(new PsiDirectory[dirs.size()]), baseDir,
+        psiDirectory = DirectoryChooserUtil.selectDirectory(project, dirs.toArray(PsiDirectory.EMPTY_ARRAY), baseDir,
                                                             File.separatorChar + packageName.replace('.', File.separatorChar));
         if (psiDirectory == null) return null;
         final VirtualFile sourceRoot = ProjectRootManager.getInstance(project).getFileIndex().getSourceRootForFile(psiDirectory.getVirtualFile());
@@ -202,7 +202,7 @@ public class PlatformPackageUtil {
     query = new FilteredQuery<>(query, scope::contains);
 
     List<PsiDirectory> directories = ContainerUtil.mapNotNull(query.findAll(), manager::findDirectory);
-    return directories.toArray(new PsiDirectory[directories.size()]);
+    return directories.toArray(PsiDirectory.EMPTY_ARRAY);
   }
 
   private static boolean checkSourceRootsConfigured(final Module module) {

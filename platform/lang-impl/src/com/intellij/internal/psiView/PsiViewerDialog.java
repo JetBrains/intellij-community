@@ -249,11 +249,6 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
       protected Color getEmptySpaceColor() {
         return UIUtil.getBgFillColor(getParent());
       }
-
-      @Override
-      protected void paintSelectionAndBorder(Graphics2D g2d) {
-        super.paintSelectionAndBorder(g2d);
-      }
     };
   }
 

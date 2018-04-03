@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.facet;
 
@@ -287,12 +273,19 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
   }
 
   @Override
-  public void loadState(final FacetManagerState state) {
+  public void noStateLoaded() {
+    doLoadState(null);
+  }
+
+  @Override
+  public void loadState(@NotNull FacetManagerState state) {
+    doLoadState(state);
+  }
+
+  protected void doLoadState(@Nullable FacetManagerState state) {
     ModifiableFacetModel model = new FacetModelImpl(this);
     FacetManagerState importedFacetsState = FacetFromExternalSourcesStorage.getInstance(myModule).getLoadedState();
-
-    addFacets(ContainerUtil.concat(state.getFacets(), importedFacetsState.getFacets()), null, model);
-
+    addFacets(ContainerUtil.concat(state == null ? Collections.emptyList() : state.getFacets(), importedFacetsState.getFacets()), null, model);
     commit(model, false);
   }
 
@@ -434,7 +427,7 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
       for (FacetRenameInfo info : toRename) {
         info.myFacet.setName(info.myNewName);
       }
-      myModel.setAllFacets(newFacets.toArray(new Facet[newFacets.size()]));
+      myModel.setAllFacets(newFacets.toArray(Facet.EMPTY_ARRAY));
     }
     finally {
       myInsideCommit = false;

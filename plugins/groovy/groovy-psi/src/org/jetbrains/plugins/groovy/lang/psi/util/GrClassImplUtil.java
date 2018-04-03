@@ -1,5 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,10 +36,12 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.GrTypeDefinitionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrScriptField;
 import org.jetbrains.plugins.groovy.lang.resolve.CollectClassMembersUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.CompilationPhaseHint;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.*;
 
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyClassImplUtilKt.processPhase;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.isAnnotationResolve;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.shouldProcessTypeParameters;
 
@@ -129,7 +130,7 @@ public class GrClassImplUtil {
       List<PsiMethod> list = ContainerUtil.newArrayList();
       getAllMethodsInner(grType, list, new HashSet<>());
       return CachedValueProvider.Result
-        .create(list.toArray(new PsiMethod[list.size()]), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, grType);
+        .create(list.toArray(PsiMethod.EMPTY_ARRAY), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, grType);
     });
   }
 
@@ -175,7 +176,7 @@ public class GrClassImplUtil {
       final PsiClass psiClass = type.resolve();
       if (psiClass != null) result.add(psiClass);
     }
-    return result.toArray(new PsiClass[result.size()]);
+    return result.toArray(PsiClass.EMPTY_ARRAY);
   }
 
   @NotNull
@@ -189,7 +190,7 @@ public class GrClassImplUtil {
       }
     }
 
-    return result.toArray(new PsiClass[result.size()]);
+    return result.toArray(PsiClass.EMPTY_ARRAY);
   }
 
   public static boolean processDeclarations(@NotNull GrTypeDefinition grType,
@@ -198,6 +199,10 @@ public class GrClassImplUtil {
                                             @Nullable PsiElement lastParent,
                                             @NotNull PsiElement place) {
     if (isAnnotationResolve(processor)) return true; //don't process class members while resolving annotation
+
+    if (processor.getHint(CompilationPhaseHint.HINT_KEY) != null) {
+      return processPhase(grType, processor, state);
+    }
 
     if (shouldProcessTypeParameters(processor)) {
       for (final PsiTypeParameter typeParameter : grType.getTypeParameters()) {
@@ -408,7 +413,7 @@ public class GrClassImplUtil {
         if (name.equals(method.getName())) result.add(method);
       }
 
-      return result.toArray(new PsiMethod[result.size()]);
+      return result.toArray(PsiMethod.EMPTY_ARRAY);
     }
 
     Map<String, List<CandidateInfo>> methodsMap = CollectClassMembersUtil.getAllMethods(grType, includeSyntheticAccessors);
@@ -442,7 +447,7 @@ public class GrClassImplUtil {
         result.add(method);
       }
     }
-    return result.toArray(new PsiMethod[result.size()]);
+    return result.toArray(PsiMethod.EMPTY_ARRAY);
   }
 
   @Nullable

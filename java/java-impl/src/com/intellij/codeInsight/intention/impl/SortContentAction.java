@@ -11,6 +11,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import gnu.trove.TIntArrayList;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
@@ -328,14 +329,76 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
   }
 
 
+  /**
+   * Class to manage \n placement
+   * It tries to preserve entry count on line as it was before sort
+   */
+  private static class LineLayout {
+    private TIntArrayList myEntryCountOnLines;
+    private int myCurrentLine = 0;
+    private int myCurrentPosition = 0; // position of next element to place
+
+    public LineLayout(TIntArrayList entryCountOnLines) {
+      myEntryCountOnLines = entryCountOnLines;
+    }
+
+    @NotNull
+    static LineLayout from(final PsiElement startingElement, Predicate<PsiElement> endPredicate) {
+      PsiElement current = startingElement;
+      TIntArrayList entryCountOnLines = new TIntArrayList();
+      int currentEntryCount = 0;
+      while (!(current instanceof PsiExpression)) {
+        current = current.getNextSibling();
+      }
+      while (current != null && !endPredicate.test(current)) {
+        if (current instanceof PsiExpression) {
+          currentEntryCount++;
+        }
+        if (current instanceof PsiWhiteSpace) {
+          int newLineCount = (int)current.getText().chars().filter(value -> value == '\n').count();
+          for (int i = 0; i < newLineCount; i++) {
+            entryCountOnLines.add(currentEntryCount);
+            currentEntryCount = 0;
+          }
+        }
+        current = current.getNextSibling();
+      }
+      entryCountOnLines.add(currentEntryCount);
+      return new LineLayout(entryCountOnLines);
+    }
+
+    private void generate(StringBuilder sb, List<SortableEntry> entries) {
+      int entryIndex = 0;
+      int lines = myEntryCountOnLines.size();
+      int currentEntryIndex = 0;
+      int entryCount = entries.size();
+      for (int rowIndex = 0; rowIndex < lines; rowIndex++) {
+        int entryCountOnRow = myEntryCountOnLines.get(rowIndex);
+        if (entryCountOnRow == 0) {
+          sb.append("\n");
+          continue;
+        }
+        for (int rowPosition = 0; rowPosition < entryCountOnRow; rowPosition++) {
+          currentEntryIndex++;
+          boolean isLastInRow = rowPosition + 1 == entryCountOnRow && rowPosition + 1 != lines;
+          entries.get(entryIndex).generate(sb, isLastInRow, currentEntryIndex == entryCount);
+          entryIndex++;
+        }
+      }
+    }
+  }
+
   private static class EntryListContext {
     private final @NotNull List<PsiElement> myBeforeFirst;
     private final @NotNull List<SortableEntry> myEntries;
+    private final @NotNull LineLayout myLineLayout;
 
     private EntryListContext(@NotNull List<PsiElement> first,
-                             @NotNull List<SortableEntry> entries) {
+                             @NotNull List<SortableEntry> entries,
+                             @NotNull LineLayout layout) {
       myBeforeFirst = first;
       myEntries = entries;
+      myLineLayout = layout;
     }
 
     @Nullable("when failed to extract")
@@ -351,11 +414,10 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
       }
       List<SortableEntry> entries = extractEntries(current, expressionPredicate, separatorPredicate, endPredicate);
       if (entries == null || entries.size() < MIN_EXPRESSION_COUNT) return null;
-      SortableEntry last = entries.get(entries.size() - 1);
-      last.myIsLast = true;
-      return new EntryListContext(beforeFirst, entries);
+      return new EntryListContext(beforeFirst, entries, LineLayout.from(startingElement, endPredicate));
     }
 
+    @Contract("_, null -> false")
     private static boolean testWhenExpression(Predicate<PsiExpression> expressionPredicate, PsiElement current) {
       return current instanceof PsiExpression && expressionPredicate.test((PsiExpression)current);
     }
@@ -379,7 +441,7 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
         if (!testWhenExpression(expressionPredicate, current)) return null;
         PsiExpression expression = (PsiExpression)current;
         current = current.getNextSibling();
-        List<PsiElement> beforeSeparator = new ArrayList<>();
+        List<PsiComment> beforeSeparator = new ArrayList<>();
         while (current != null) {
           if (separatorPredicate.test(current)) {
             current = current.getNextSibling();
@@ -389,13 +451,17 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
             entries.add(new SortableEntry(expression, beforeSeparator, new ArrayList<>()));
             return entries;
           }
-          beforeSeparator.add(current);
+          if (current instanceof PsiComment) {
+            beforeSeparator.add((PsiComment)current);
+          }
           current = current.getNextSibling();
         }
-        List<PsiElement> afterSeparator = new ArrayList<>();
+        List<PsiComment> afterSeparator = new ArrayList<>();
         while (current != null && !testWhenExpression(expressionPredicate, current)) {
           if (endPredicate.test(current)) break;
-          afterSeparator.add(current);
+          if (current instanceof PsiComment) {
+            afterSeparator.add((PsiComment)current);
+          }
           current = current.getNextSibling();
         }
         entries.add(new SortableEntry(expression, beforeSeparator, afterSeparator));
@@ -410,28 +476,22 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
       for (PsiElement element : myBeforeFirst) {
         sb.append(element.getText());
       }
-      long newLinesCount = StreamEx.of(myEntries).filter(SortableEntry::hasNewLineAfterSeparator).count();
-      for (int i = 0, size = myEntries.size(); i < size; i++) {
-        SortableEntry entry = myEntries.get(i);
-        entry.generate(sb, newLinesCount >= 2, i == size - 1);
-      }
+      myLineLayout.generate(sb, myEntries);
       return sb.toString();
     }
   }
 
   private static class SortableEntry {
     private final @NotNull PsiExpression myExpression;
-    private final @NotNull List<PsiElement> myBeforeSeparator;
-    private final @NotNull List<PsiElement> myAfterSeparator;
-    private boolean myIsLast;
+    private final @NotNull List<PsiComment> myBeforeSeparator;
+    private final @NotNull List<PsiComment> myAfterSeparator;
 
     private SortableEntry(@NotNull PsiExpression expression,
-                          @NotNull List<PsiElement> beforeSeparator,
-                          @NotNull List<PsiElement> afterSeparator) {
+                          @NotNull List<PsiComment> beforeSeparator,
+                          @NotNull List<PsiComment> afterSeparator) {
       myExpression = expression;
       myBeforeSeparator = beforeSeparator;
       myAfterSeparator = afterSeparator;
-      myIsLast = false;
     }
 
     @Nullable
@@ -447,29 +507,27 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
       return Comparator.comparing(entry -> (PsiExpression)entry.myExpression, comparator);
     }
 
-    public boolean hasNewLineAfterSeparator() {
-      for (PsiElement element : myAfterSeparator) {
-        PsiWhiteSpace space = tryCast(element, PsiWhiteSpace.class);
-        if (space == null) continue;
-        if (space.getText().contains("\n")) {
-          return true;
-        }
-      }
-      return false;
-    }
-
-    void generate(StringBuilder sb, boolean anotherEntriesWithEnters, boolean isLastNow) {
+    void generate(StringBuilder sb, boolean isLastInRow, boolean isLast) {
       sb.append(myExpression.getText());
       for (PsiElement element : myBeforeSeparator) {
         sb.append(element.getText());
       }
-      if (!isLastNow) {
+      if (!isLast) {
         sb.append(",");
       }
-      for (PsiElement element : myAfterSeparator) {
-        sb.append(element.getText());
+      boolean newLineSet = false;
+      for (PsiComment comment : myAfterSeparator) {
+        sb.append(" ")
+          .append(comment.getText());
+        if (comment.getText().contains("//")) {
+          sb.append("\n");
+          newLineSet = true;
+        }
+        else {
+          newLineSet = false;
+        }
       }
-      if (myIsLast != isLastNow && !hasNewLineAfterSeparator() && anotherEntriesWithEnters) {
+      if (isLastInRow && !newLineSet && !isLast) {
         sb.append("\n");
       }
     }

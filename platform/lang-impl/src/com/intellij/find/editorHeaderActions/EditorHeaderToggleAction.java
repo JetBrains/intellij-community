@@ -20,11 +20,6 @@ public abstract class EditorHeaderToggleAction extends CheckboxAction implements
   }
 
   @Override
-  public void update(AnActionEvent e) {
-    super.update(e);
-  }
-
-  @Override
   public JComponent createCustomComponent(Presentation presentation) {
     final JComponent customComponent = super.createCustomComponent(presentation);
     customComponent.setFocusable(false);

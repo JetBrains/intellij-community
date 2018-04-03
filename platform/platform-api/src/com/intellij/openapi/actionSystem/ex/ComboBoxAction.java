@@ -118,10 +118,6 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     myPopupTitle = popupTitle;
   }
 
-  @Override
-  public void update(AnActionEvent e) {
-  }
-
   protected boolean shouldShowDisabledActions() {
     return false;
   }

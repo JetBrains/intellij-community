@@ -38,7 +38,7 @@ public class FindSuperElementsHelper {
       PsiClass aClass = (PsiClass) element;
       List<PsiClass> allSupers = new ArrayList<>(Arrays.asList(aClass.getSupers()));
       allSupers.removeIf(superClass -> CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName()));
-      return allSupers.toArray(new PsiClass[allSupers.size()]);
+      return allSupers.toArray(PsiClass.EMPTY_ARRAY);
     }
     if (element instanceof PsiMethod) {
       PsiMethod method = (PsiMethod) element;
