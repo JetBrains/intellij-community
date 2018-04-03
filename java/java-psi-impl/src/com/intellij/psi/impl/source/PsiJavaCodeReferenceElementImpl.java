@@ -1018,6 +1018,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     return childByRole.getText();
   }
 
+  @NotNull
   @Override
   public final TextRange getRangeInElement() {
     return calcRangeInElement(this);
@@ -1031,6 +1032,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     return parameterList.getTypeArguments();
   }
 
+  @NotNull
   @Override
   public final PsiElement getElement() {
     return this;

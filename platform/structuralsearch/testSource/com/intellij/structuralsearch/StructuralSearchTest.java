@@ -925,6 +925,12 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       fail("Catch RuntimeExceptions from Groovy runtime");
     }
 
+    String source3 = "class X {{" +
+                     "  new String();" +
+                     "}}";
+    assertEquals("Variables initialized to null even when not present in search results", 1,
+                 findMatchesCount(source3, "[script(\"args == null\")]new String('_args*)"));
+
   }
 
   public void testCheckScriptValidation() {
@@ -967,32 +973,13 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
   }
 
   public void testInterfaceImplementationsSearch() {
-    String in = "class A implements Cloneable {\n" +
-                "    \n" +
-                "  }\n" +
-                "  \n" +
-                "  class B implements Serializable {\n" +
-                "    \n" +
-                "  }\n" +
-                "  \n" +
-                "  class C implements Cloneable,Serializable {\n" +
-                "    \n" +
-                "  }\n" +
-                "  class C2 implements Serializable,Cloneable {\n" +
-                "    \n" +
-                "  }\n" +
-                "  \n" +
-                "  class E extends B implements Cloneable {\n" +
-                "    \n" +
-                "  }\n" +
-                "  \n" +
-                "  class F extends A implements Serializable {\n" +
-                "    \n" +
-                "  }\n" +
-                "  \n" +
-                "  class D extends C {\n" +
-                "    \n" +
-                "  }";
+    String in = "class A implements Cloneable {}" +
+                "class B implements Serializable {}" +
+                "class C implements Cloneable,Serializable {}" +
+                "class C2 implements Serializable,Cloneable {}" +
+                "class E extends B implements Cloneable {}" +
+                "class F extends A implements Serializable {}" +
+                "class D extends C {}";
     assertEquals("search interface within hierarchy", 5,
                  findMatchesCount(in, "class 'A implements '_B:*Serializable , '_C:*Cloneable {}"));
   }
@@ -2302,6 +2289,30 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     String pattern6 = "('_Parameter+) -> System.out.println()";
     assertEquals("should find lambdas with at least one parameter and matching body", 0, findMatchesCount(source, pattern6));
+
+    String source2 = "import java.util.function.Function;\n" +
+                     "public class Test {\n" +
+                     "   public static void main(String[] args) {\n" +
+                     "      System.out.println(Function.<String>identity().andThen((a) -> {\n" +
+                     "         String prefix = a;\n" +
+                     "         return new Function<String, String>() {\n" +
+                     "            @Override\n" +
+                     "            public String apply(String b) {\n" +
+                     "               return prefix + b;\n" +
+                     "            }\n" +
+                     "         };\n" +
+                     "      }).apply(\"a\").apply(\"b\"));\n" +
+                     "   }\n" +
+                     "}";
+    String pattern7 = "(a) -> {\n" +
+                      "   $Statement$;\n" +
+                      "   return new Function<String, String>() {\n" +
+                      "      public String apply(String b) {\n" +
+                      "         $Statement$;\n" +
+                      "      }\n" +
+                      "   };\n" +
+                      "}";
+    assertEquals("match statement body correctly", 1, findMatchesCount(source2, pattern7));
   }
 
   public void testFindDefaultMethods() {

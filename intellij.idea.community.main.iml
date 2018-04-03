@@ -123,5 +123,6 @@
     <orderEntry type="module" module-name="intellij.statsCollector" />
     <orderEntry type="module" module-name="intellij.java.debugger.streams" />
     <orderEntry type="module" module-name="intellij.tools.jetCheck" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.devkit.java.tests" scope="TEST" />
   </component>
 </module>

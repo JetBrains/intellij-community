@@ -106,7 +106,7 @@ fun alignFieldsInTheNestedGrid(): JPanel {
         RadioButton("In KeePass")()
         row("Database:") {
           JTextField()()
-          gearButton()
+            gearButton()
         }
         row("Master Password:") {
           JBPasswordField()(comment = "Stored using weak encryption.")

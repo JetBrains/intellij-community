@@ -303,7 +303,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       registerFileTypeWithoutNotification(pair.fileType, pair.matchers, true);
     }
 
-    if (PlatformUtils.isDatabaseIDE() || PlatformUtils.isCidr()) {
+    if (PlatformUtils.isDataGrip() || PlatformUtils.isCidr()) {
       // build scripts are correct, but it is required to run from sources
       return;
     }
@@ -1450,7 +1450,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
 
   @NotNull
-  FileTypeAssocTable getExtensionMap() {
+  FileTypeAssocTable<FileType> getExtensionMap() {
     return myPatternsTable;
   }
 

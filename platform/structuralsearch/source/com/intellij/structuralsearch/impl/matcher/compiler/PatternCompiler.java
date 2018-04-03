@@ -360,6 +360,7 @@ public class PatternCompiler {
     final String text = template.getTemplateText();
     int prevOffset = 0;
     final Set<String> seen = new HashSet<>();
+    final Set<String> variableNames = Collections.unmodifiableSet(seen);
 
     for(int i = 0; i < segmentsCount; i++) {
       final int offset = template.getSegmentOffset(i);
@@ -373,7 +374,7 @@ public class PatternCompiler {
       final String compiledName = prefix + name;
       buf.append(text, prevOffset, offset).append(compiledName);
 
-      if (seen.add(compiledName)) {
+      if (seen.add(name)) {
         // the same variable can occur multiple times in a single template
         // no need to process it more than once
 
@@ -426,7 +427,7 @@ public class PatternCompiler {
         }
 
         addExtensionPredicates(options, constraint, handler);
-        addScriptConstraint(project, name, constraint, handler);
+        addScriptConstraint(project, name, constraint, handler, variableNames);
 
         if (!StringUtil.isEmptyOrSpaces(constraint.getContainsConstraint())) {
           MatchPredicate predicate = new ContainsPredicate(name, constraint.getContainsConstraint());
@@ -463,7 +464,7 @@ public class PatternCompiler {
       }
 
       addExtensionPredicates(options, constraint, handler);
-      addScriptConstraint(project, Configuration.CONTEXT_VAR_NAME, constraint, handler);
+      addScriptConstraint(project, Configuration.CONTEXT_VAR_NAME, constraint, handler, variableNames);
     }
 
     buf.append(text.substring(prevOffset));
@@ -502,7 +503,8 @@ public class PatternCompiler {
     }
   }
 
-  private static void addScriptConstraint(Project project, String name, MatchVariableConstraint constraint, SubstitutionHandler handler)
+  private static void addScriptConstraint(Project project, String name, MatchVariableConstraint constraint,
+                                          SubstitutionHandler handler, Set<String> variableNames)
     throws MalformedPatternException {
     if (constraint.getScriptCodeConstraint()!= null && constraint.getScriptCodeConstraint().length() > 2) {
       final String script = StringUtil.unquoteString(constraint.getScriptCodeConstraint());
@@ -510,7 +512,7 @@ public class PatternCompiler {
       if (problem != null) {
         throw new MalformedPatternException("Script constraint for " + constraint.getName() + " has problem " + problem);
       }
-      addPredicate(handler, new ScriptPredicate(project, name, script));
+      addPredicate(handler, new ScriptPredicate(project, name, script, variableNames));
     }
   }
 

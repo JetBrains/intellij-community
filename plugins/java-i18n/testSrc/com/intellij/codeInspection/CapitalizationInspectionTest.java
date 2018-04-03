@@ -89,6 +89,6 @@ public class CapitalizationInspectionTest extends LightCodeInsightFixtureTestCas
 
   @Override
   protected String getBasePath() {
-    return PluginPathManager.getPluginHomePathRelative("devkit") + "/testData/inspections/capitalization";
+    return PluginPathManager.getPluginHomePathRelative("java-i18n") + "/testData/inspections/capitalization";
   }
 }

@@ -83,7 +83,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
    */
   public ComponentPanelBuilder moveLabelOnTop() {
     myLabelOnTop = true;
-    valid = StringUtil.isNotEmpty(myCommentText) && StringUtil.isEmpty(myHTDescription);
+    valid = StringUtil.isEmpty(myCommentText) || StringUtil.isEmpty(myHTDescription);
     return this;
   }
 
@@ -98,7 +98,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
    */
   public ComponentPanelBuilder withComment(@NotNull String comment) {
     myCommentText = comment;
-    valid = StringUtil.isNotEmpty(comment) && StringUtil.isEmpty(myHTDescription);
+    valid = StringUtil.isEmpty(comment) || StringUtil.isEmpty(myHTDescription);
     return this;
   }
 
@@ -112,7 +112,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
    */
   public ComponentPanelBuilder withTopRightComponent(@NotNull JComponent topRightComponent) {
     myTopRightComponent = topRightComponent;
-    valid = StringUtil.isNotEmpty(myCommentText) && StringUtil.isEmpty(myHTDescription);
+    valid = StringUtil.isEmpty(myCommentText) || StringUtil.isEmpty(myHTDescription);
     return this;
   }
 
@@ -134,7 +134,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
    */
   public ComponentPanelBuilder withTooltip(@NotNull String description) {
     myHTDescription = description;
-    valid = StringUtil.isEmpty(myCommentText) && StringUtil.isNotEmpty(description);
+    valid = StringUtil.isEmpty(myCommentText) || StringUtil.isEmpty(description);
     return this;
   }
 

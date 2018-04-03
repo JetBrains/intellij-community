@@ -1,10 +1,9 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.codeInsight.template.impl.TemplateImplUtil;
-import com.intellij.codeInsight.template.impl.Variable;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -14,18 +13,20 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.structuralsearch.MatchVariableConstraint;
 import com.intellij.structuralsearch.NamedScriptableDefinition;
 import com.intellij.structuralsearch.SSRBundle;
+import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.ui.HintHint;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
+import java.util.List;
 
 public class SubstitutionShortInfoHandler implements DocumentListener, EditorMouseMotionListener, CaretListener {
   private static final Key<SubstitutionShortInfoHandler> LISTENER_KEY = Key.create("sslistener.key");
   private static final TooltipGroup SS_INFO_TOOLTIP_GROUP = new TooltipGroup("SS_INFO_TOOLTIP_GROUP", 0);
   private long modificationTimeStamp;
-  private final ArrayList<Variable> variables = new ArrayList<>();
+  private final List<String> variables = new SmartList<>();
   private final Editor editor;
   public static final Key<Configuration> CURRENT_CONFIGURATION_KEY = Key.create("SS.CurrentConfiguration");
 
@@ -47,8 +48,9 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
     }
     checkModelValidity();
     final int offset = editor.logicalPositionToOffset(position);
-    final int length = editor.getDocument().getTextLength();
-    final CharSequence elements = editor.getDocument().getCharsSequence();
+    final Document document = editor.getDocument();
+    final int length = document.getTextLength();
+    final CharSequence elements = document.getCharsSequence();
 
     int start = offset-1;
     while(start >=0 && Character.isJavaIdentifierPart(elements.charAt(start)) && elements.charAt(start)!='$') start--;
@@ -58,20 +60,16 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
     if (start >= 0 && elements.charAt(start) == '$') {
       end = offset;
 
-      while(end < length && Character.isJavaIdentifierPart(elements.charAt(end)) && elements.charAt(end)!='$') end++;
+      while (end < length && Character.isJavaIdentifierPart(elements.charAt(end)) && elements.charAt(end) != '$') end++;
       if (end < length && elements.charAt(end) == '$') {
-        String varname = elements.subSequence(start + 1, end).toString();
-        Variable foundVar = null;
+        String variableName = elements.subSequence(start + 1, end).toString();
 
-        for (final Variable var : variables) {
-          if (var.getName().equals(varname)) {
-            foundVar = var;
-            break;
-          }
-        }
-
-        if (foundVar != null) {
-          text = getShortParamString(configuration, varname);
+        if (variables.contains(variableName)) {
+          final NamedScriptableDefinition variable = configuration.findVariable(variableName);
+          text = getShortParamString(variable);
+          configuration.setCurrentVariableName(variable == null && configuration instanceof ReplaceConfiguration
+                                               ? variableName + ReplaceConfiguration.REPLACEMENT_VARIABLE_SUFFIX
+                                               : variableName);
         }
       }
     }
@@ -88,7 +86,7 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
     Document document = editor.getDocument();
     if (modificationTimeStamp != document.getModificationStamp()) {
       variables.clear();
-      variables.addAll(TemplateImplUtil.parseVariables(document.getCharsSequence()).values());
+      variables.addAll(TemplateImplUtil.parseVariables(document.getCharsSequence()).keySet());
       modificationTimeStamp = document.getModificationStamp();
     }
   }
@@ -102,15 +100,9 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
     handleInputFocusMovement(e.getNewPosition());
   }
 
-  public ArrayList<Variable> getVariables() {
+  public List<String> getVariables() {
     checkModelValidity();
     return variables;
-  }
-
-  private static String getShortParamString(Configuration config, String varname) {
-    if (config == null) return "";
-
-    return getShortParamString(config.findVariable(varname));
   }
 
   @NotNull

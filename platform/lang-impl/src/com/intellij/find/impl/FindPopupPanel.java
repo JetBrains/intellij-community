@@ -183,6 +183,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
           }
           return canBeClosed;
         })
+        .addUserData("SIMPLE_WINDOW")
         .createPopup();
       Disposer.register(myBalloon, myDisposable);
       registerCloseAction(myBalloon);

@@ -170,11 +170,13 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
     return childByRole.getText();
   }
 
+  @NotNull
   @Override
   public PsiElement getElement() {
     return this;
   }
 
+  @NotNull
   @Override
   public TextRange getRangeInElement() {
     TreeElement nameChild = (TreeElement)findChildByRole(ChildRole.REFERENCE_NAME);

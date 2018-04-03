@@ -220,11 +220,13 @@ public class PsiEnumConstantImpl extends JavaStubPsiElement<PsiFieldStub> implem
   }
 
   private class MyReference implements PsiJavaReference {
+    @NotNull
     @Override
     public PsiElement getElement() {
       return PsiEnumConstantImpl.this;
     }
 
+    @NotNull
     @Override
     public TextRange getRangeInElement() {
       PsiIdentifier nameIdentifier = getNameIdentifier();

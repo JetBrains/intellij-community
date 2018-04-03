@@ -192,7 +192,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     }
 
     if (comment != null && comment.isNotEmpty()) {
-      gapAfter = "${spacing.unitSize}px!"
+      gapAfter = "${spacing.commentVerticalTopGap}px!"
 
       val isParentRowLabeled = labeled
       // create comment in a new sibling row (developer is still able to create sub rows because rows is not stored in a flat list)

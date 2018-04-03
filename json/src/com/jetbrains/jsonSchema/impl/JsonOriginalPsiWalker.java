@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl;
 
+import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.json.JsonDialectUtil;
 import com.intellij.json.JsonElementTypes;
 import com.intellij.json.psi.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -28,7 +30,9 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
   public static final JsonOriginalPsiWalker INSTANCE = new JsonOriginalPsiWalker();
 
   public boolean handles(@NotNull PsiElement element) {
-    return element instanceof JsonElement || element instanceof LeafPsiElement && element.getParent() instanceof JsonElement;
+    PsiElement parent = element.getParent();
+    return parent != null && (element instanceof JsonElement || element instanceof LeafPsiElement && parent instanceof JsonElement)
+           && JsonDialectUtil.isStandardJson(CompletionUtil.getOriginalOrSelf(parent));
   }
 
   @Override
@@ -138,7 +142,7 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
     final JsonObject object = PsiTreeUtil.getParentOfType(element, JsonObject.class);
     if (object != null) {
       return object.getPropertyList().stream()
-        .filter(p -> p.getNameElement() instanceof JsonStringLiteral)
+        .filter(p -> !isNameQuoted() || p.getNameElement() instanceof JsonStringLiteral)
         .map(p -> StringUtil.unquoteString(p.getName())).collect(Collectors.toSet());
     }
     return Collections.emptySet();

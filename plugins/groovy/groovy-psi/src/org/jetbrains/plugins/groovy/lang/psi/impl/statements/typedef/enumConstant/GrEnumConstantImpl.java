@@ -206,11 +206,13 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
       return GrEnumConstantImpl.this.multiResolve(false);
     }
 
+    @NotNull
     @Override
     public PsiElement getElement() {
       return GrEnumConstantImpl.this;
     }
 
+    @NotNull
     @Override
     public TextRange getRangeInElement() {
       return getNameIdentifierGroovy().getTextRange().shiftRight(-getTextOffset());

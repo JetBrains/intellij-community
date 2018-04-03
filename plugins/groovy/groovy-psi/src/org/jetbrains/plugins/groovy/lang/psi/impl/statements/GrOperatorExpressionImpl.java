@@ -45,11 +45,13 @@ abstract public class GrOperatorExpressionImpl extends GrExpressionImpl implemen
     return getOperationToken().getNode().getElementType();
   }
 
+  @NotNull
   @Override
   public PsiElement getElement() {
     return this;
   }
 
+  @NotNull
   @Override
   public TextRange getRangeInElement() {
     final PsiElement token = getOperationToken();

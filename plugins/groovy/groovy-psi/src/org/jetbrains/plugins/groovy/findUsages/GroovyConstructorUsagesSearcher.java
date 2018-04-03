@@ -250,11 +250,13 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
     PsiManager manager = constructor.getManager();
     if (manager.areElementsEquivalent(usage, constructor) || manager.areElementsEquivalent(constructor.getContainingClass(), usage.getContainingClass())) return;
     processor.process(new LightMemberReference(manager, usage, PsiSubstitutor.EMPTY) {
+      @NotNull
       @Override
       public PsiElement getElement() {
         return usage;
       }
 
+      @NotNull
       @Override
       public TextRange getRangeInElement() {
         if (usage instanceof PsiClass) {

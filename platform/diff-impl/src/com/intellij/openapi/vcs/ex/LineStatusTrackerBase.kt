@@ -19,6 +19,8 @@ import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.Side
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.undo.UndoConstants
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
@@ -133,14 +135,22 @@ abstract class LineStatusTrackerBase<R : Range> {
 
   @CalledInAwt
   protected fun updateDocument(side: Side, commandName: String?, task: (Document) -> Unit): Boolean {
-    val doc = side[vcsDocument, document]
-
-    if (side.isLeft) doc.setReadOnly(false)
-    try {
-      return DiffUtil.executeWriteCommand(doc, project, commandName, { task(doc) })
+    if (side.isLeft) {
+      vcsDocument.setReadOnly(false)
+      try {
+        runWriteAction {
+          CommandProcessor.getInstance().runUndoTransparentAction {
+            task(vcsDocument)
+          }
+        }
+        return true
+      }
+      finally {
+        vcsDocument.setReadOnly(true)
+      }
     }
-    finally {
-      if (side.isLeft) doc.setReadOnly(true)
+    else {
+      return DiffUtil.executeWriteCommand(document, project, commandName, { task(document) })
     }
   }
 

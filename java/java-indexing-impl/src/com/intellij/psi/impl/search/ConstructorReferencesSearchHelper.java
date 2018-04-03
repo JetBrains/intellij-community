@@ -251,11 +251,13 @@ class ConstructorReferencesSearchHelper {
       return true;
     }
     return processor.process(new LightMemberReference(myManager, usage, PsiSubstitutor.EMPTY) {
+      @NotNull
       @Override
       public PsiElement getElement() {
         return usage;
       }
 
+      @NotNull
       @Override
       public TextRange getRangeInElement() {
         if (usage instanceof PsiNameIdentifierOwner) {

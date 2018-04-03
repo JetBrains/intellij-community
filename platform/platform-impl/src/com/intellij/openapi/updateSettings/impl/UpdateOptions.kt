@@ -22,7 +22,7 @@ class UpdateOptions : BaseState() {
   val externalUpdateChannels by map<String, String>()
 
   @get:OptionTag("CHECK_NEEDED")
-  var isCheckNeeded by property(false)
+  var isCheckNeeded by property(true)
 
   @get:OptionTag("LAST_TIME_CHECKED")
   var lastTimeChecked by property(0L)

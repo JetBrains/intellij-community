@@ -54,10 +54,9 @@ public class JsonSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
     return new MyHighlighter();
   }
 
-  private static class MyHighlighter extends SyntaxHighlighterBase {
-    private static final Map<IElementType, TextAttributesKey> ourAttributes = new HashMap<>();
-
-    static {
+  private class MyHighlighter extends SyntaxHighlighterBase {
+    private final Map<IElementType, TextAttributesKey> ourAttributes = new HashMap<>();
+    {
       fillMap(ourAttributes, JSON_BRACES, JsonElementTypes.L_CURLY, JsonElementTypes.R_CURLY);
       fillMap(ourAttributes, JSON_BRACKETS, JsonElementTypes.L_BRACKET, JsonElementTypes.R_BRACKET);
       fillMap(ourAttributes, JSON_COMMA, JsonElementTypes.COMMA);
@@ -80,10 +79,10 @@ public class JsonSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
     @NotNull
     @Override
     public Lexer getHighlightingLexer() {
-      LayeredLexer layeredLexer = new LayeredLexer(new JsonLexer());
-      layeredLexer.registerSelfStoppingLayer(new StringLiteralLexer('\"', JsonElementTypes.DOUBLE_QUOTED_STRING, false, "/", false, false),
+      LayeredLexer layeredLexer = new LayeredLexer(getLexer());
+      layeredLexer.registerSelfStoppingLayer(new StringLiteralLexer('\"', JsonElementTypes.DOUBLE_QUOTED_STRING, isCanEscapeEol(), "/", false, false),
                                              new IElementType[]{JsonElementTypes.DOUBLE_QUOTED_STRING}, IElementType.EMPTY_ARRAY);
-      layeredLexer.registerSelfStoppingLayer(new StringLiteralLexer('\'', JsonElementTypes.SINGLE_QUOTED_STRING, false, "/", false, false),
+      layeredLexer.registerSelfStoppingLayer(new StringLiteralLexer('\'', JsonElementTypes.SINGLE_QUOTED_STRING, isCanEscapeEol(), "/", false, false),
                                              new IElementType[]{JsonElementTypes.SINGLE_QUOTED_STRING}, IElementType.EMPTY_ARRAY);
       return layeredLexer;
     }
@@ -93,5 +92,14 @@ public class JsonSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
     public TextAttributesKey[] getTokenHighlights(IElementType type) {
       return pack(ourAttributes.get(type));
     }
+  }
+
+  @NotNull
+  protected Lexer getLexer() {
+    return new JsonLexer();
+  }
+
+  protected boolean isCanEscapeEol() {
+    return false;
   }
 }

@@ -532,11 +532,13 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
               myTrackerExclusionStates.remove(change);
 
               ExclusionState exclusionState = ((PartialLocalLineStatusTracker)tracker).getExcludedFromCommitState(myChangeList.getId());
-              if (exclusionState != ExclusionState.ALL_EXCLUDED) {
-                myIncludedChanges.add(change);
-              }
-              else {
-                myIncludedChanges.remove(change);
+              if (exclusionState != ExclusionState.NO_CHANGES) {
+                if (exclusionState != ExclusionState.ALL_EXCLUDED) {
+                  myIncludedChanges.add(change);
+                }
+                else {
+                  myIncludedChanges.remove(change);
+                }
               }
 
               scheduleExclusionStatesUpdate();
