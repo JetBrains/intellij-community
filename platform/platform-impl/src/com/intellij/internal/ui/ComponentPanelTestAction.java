@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.ui;
 
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ModalityState;
@@ -25,9 +26,12 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
@@ -81,6 +85,8 @@ public class ComponentPanelTestAction extends DumbAwareAction {
           }
         }
       });
+
+      tabs.addTab(new TabInfo(createButtonsTab())).setText("Buttons");
 
       return tabs;
     }
@@ -224,6 +230,16 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       return panel;
     }
 
+    private JComponent createButtonsTab() {
+      JSpinner spinner = new JSpinner(new SpinnerNumberModel(DarculaUIUtil.buttonArc(), 0, 20, 1));
+      spinner.addChangeListener(new RadiusListener(() -> repaint()));
+
+      return UI.PanelFactory.grid().
+        add(UI.PanelFactory.panel(spinner).withLabel("Darcula button radius").moveLabelOnTop().resizeX(false)).
+        add(UI.PanelFactory.panel(new JButton("Test button")).resizeX(false).withComment("Button comment")).
+        createPanel();
+    }
+
     private class ProgressTimerRequest implements Runnable {
       private final JProgressBar myProgressBar;
 
@@ -250,6 +266,20 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       private boolean canPlay() {
         ProgressPanel progressPanel = ProgressPanel.getProgressPanel(myProgressBar);
         return progressPanel != null && progressPanel.getState() == ProgressPanel.State.PLAYING;
+      }
+    }
+
+    private static class RadiusListener extends DarculaUIUtil implements ChangeListener {
+      private final @NotNull Runnable repaintAction;
+
+      private RadiusListener(@NotNull Runnable repaintAction) {
+        this.repaintAction = repaintAction;
+      }
+
+      @Override
+      public void stateChanged(ChangeEvent e) {
+        BUTTON_ARC =  Double.valueOf(((JSpinner)e.getSource()).getValue().toString()).floatValue();
+        repaintAction.run();
       }
     }
 
