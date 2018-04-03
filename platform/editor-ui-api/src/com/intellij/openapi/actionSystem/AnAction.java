@@ -307,11 +307,6 @@ public abstract class AnAction implements PossiblyDumbAware {
     return this instanceof TransparentUpdate;
   }
 
-  @Override
-  public boolean isDumbAware() {
-    return this instanceof DumbAware;
-  }
-
   /**
    * @return whether this action should be wrapped into a single transaction. PSI/VFS-related actions
    * that can show progresses or modal dialogs should return true. The default value is false, to prevent
