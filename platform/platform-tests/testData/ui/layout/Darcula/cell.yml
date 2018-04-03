@@ -16,7 +16,7 @@ rowConstraints:
   constraints:
   - align: {horizontal: false, unit: 6, value: 0.0}
     gapAfter:
-      max: &id003 {horizontal: true, value: 4.0}
+      max: &id003 {horizontal: true, value: 6.0}
       min: *id003
       preferred: *id003
   - {}
@@ -67,5 +67,5 @@ bounds:
 - [0, 0, 70, 24]
 - [76, 0, 396, 24]
 - [76, 0, 396, 24]
-- [76, 28, 404, 14]
-- [0, 52, 480, 258]
+- [76, 30, 404, 14]
+- [0, 54, 480, 256]

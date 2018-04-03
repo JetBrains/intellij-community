@@ -35,6 +35,8 @@ fun createIntelliJSpacingConfiguration(): SpacingConfiguration {
 
     override val dialogTopBottom = JBUI.scale(8)
     override val dialogLeftRight = JBUI.scale(12)
+
+    override val commentVerticalTopGap = JBUI.scale(6)
   }
 }
 
@@ -94,6 +96,8 @@ interface SpacingConfiguration {
 
   // row comment top gap or gear icon left gap
   val unitSize: Int
+
+  val commentVerticalTopGap: Int
 
   val dialogTopBottom: Int
   val dialogLeftRight: Int

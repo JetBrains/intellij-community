@@ -17,7 +17,7 @@ rowConstraints:
   - align: {horizontal: false, unit: 6, value: 0.0}
   - {}
   - gapAfter:
-      max: &id003 {horizontal: true, value: 4.0}
+      max: &id003 {horizontal: true, value: 6.0}
       min: *id003
       preferred: *id003
   - {}
@@ -52,27 +52,25 @@ componentConstrains:
     split: 2
   'JLabel #3':
     horizontal:
-      gapBefore:
-        min: &id008 {horizontal: true, value: 4.0}
-        preferred: *id008
+      gapBefore: {gapPush: true}
     spanX: 2097051
     wrap: true
   'Master Password:':
     horizontal:
       gapBefore:
-        min: &id009 {horizontal: true, value: 24.0}
-        preferred: *id009
+        min: &id008 {horizontal: true, value: 24.0}
+        preferred: *id008
     vertical:
       gapBefore:
-        max: &id010 {horizontal: false, value: 2.0}
-        min: *id010
-        preferred: *id010
+        max: &id009 {horizontal: false, value: 2.0}
+        min: *id009
+        preferred: *id009
   'JBPasswordField #5': {spanX: 2097051, wrap: true}
   Stored using weak encryption.:
     horizontal:
       gapBefore:
-        min: &id011 {horizontal: true, value: 1.0}
-        preferred: *id011
+        min: &id010 {horizontal: true, value: 1.0}
+        preferred: *id010
     skip: 1
     spanX: 2097051
     wrap: true
@@ -83,4 +81,4 @@ bounds:
 - [140, 31, 332, 21]
 - [0, 62, 134, 21]
 - [140, 62, 340, 21]
-- [140, 87, 340, 14]
+- [140, 89, 340, 14]
