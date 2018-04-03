@@ -94,6 +94,10 @@ public class StartupUtil {
       System.exit(Main.JDK_CHECK_FAILED);
     }
 
+    if (SystemInfo.isLinux) {
+      System.setProperty("jbre.popupwindow.settype", "true");
+    }
+
     // avoiding "log4j:WARN No appenders could be found"
     System.setProperty("log4j.defaultInitOverride", "true");
     try {
