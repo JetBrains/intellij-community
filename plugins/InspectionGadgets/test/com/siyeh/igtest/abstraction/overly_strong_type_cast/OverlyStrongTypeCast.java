@@ -93,3 +93,18 @@ interface Closeable extends AutoCloseable {
 
   public void close() throws java.io.IOException;
 }
+
+interface IndexerFunction<K, V> {
+    IndexerFunction<Long, String> indexer = (IndexerFunction.LongKey<String>) value -> value.length();
+    
+    K getObjectKey(V value);
+
+    interface LongKey<V> extends IndexerFunction<Long, V> {
+        long getNumberKey(V value);
+
+        @Override
+        default Long getObjectKey(V value) {
+            return getNumberKey(value);
+        }
+    }
+}
