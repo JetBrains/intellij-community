@@ -136,6 +136,9 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
       if (parent instanceof PsiCallExpression) {
         usages.add(new UnwrapCall((PsiCallExpression)parent, myUnwrapMethodName));
       }
+      else if (referenceElement instanceof PsiMethodReferenceExpression) {
+        usages.add(new UnwrapCall((PsiMethodReferenceExpression)referenceElement, myUnwrapMethodName));
+      }
     }
     final String returnType = calculateReturnTypeString();
     usages.add(new ChangeReturnType(psiMethod, returnType));
