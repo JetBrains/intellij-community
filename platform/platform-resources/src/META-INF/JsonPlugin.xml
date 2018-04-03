@@ -16,9 +16,12 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <fileTypeFactory implementation="com.intellij.json.JsonFileTypeFactory"/>
+    <fileTypeFactory implementation="com.intellij.json.json5.Json5FileTypeFactory"/>
     <iconProvider implementation="com.jetbrains.jsonSchema.JsonSchemaIconProvider"/>
     <lang.parserDefinition language="JSON" implementationClass="com.intellij.json.JsonParserDefinition"/>
+    <lang.parserDefinition language="JSON5" implementationClass="com.intellij.json.json5.Json5ParserDefinition"/>
     <lang.syntaxHighlighterFactory language="JSON" implementationClass="com.intellij.json.highlighting.JsonSyntaxHighlighterFactory"/>
+    <lang.syntaxHighlighterFactory language="JSON5" implementationClass="com.intellij.json.json5.highlighting.Json5SyntaxHighlightingFactory"/>
     <psi.treeChangePreprocessor implementation="com.intellij.json.psi.impl.JsonTreeChangePreprocessor"/>
 
     <!-- Code style and formatting -->
@@ -48,6 +51,9 @@
     <extendWordSelectionHandler implementation="com.intellij.json.editor.selection.JsonStringLiteralSelectionHandler"/>
     <basicWordSelectionFilter implementation="com.intellij.json.editor.selection.JsonBasicWordSelectionFilter"/>
 
+    <json.jsonLiteralChecker implementation="com.intellij.json.codeinsight.StandardJsonLiteralChecker"/>
+    <json.jsonLiteralChecker implementation="com.intellij.json.json5.codeinsight.Json5JsonLiteralChecker"/>
+
     <!-- Annotators -->
     <annotator language="JSON" implementationClass="com.intellij.json.codeinsight.JsonLiteralAnnotator"/>
 
@@ -56,6 +62,10 @@
                      bundle="com.intellij.json.JsonBundle" key="inspection.compliance.name" groupKey="json.inspection.group"
                      enabledByDefault="true" level="ERROR"
                      implementationClass="com.intellij.json.codeinsight.JsonStandardComplianceInspection"/>
+    <localInspection language="JSON5" shortName="Json5StandardCompliance"
+                     bundle="com.intellij.json.JsonBundle" key="inspection.compliance5.name" groupKey="json.inspection5.group"
+                     enabledByDefault="true" level="ERROR"
+                     implementationClass="com.intellij.json.json5.codeinsight.Json5StandardComplianceInspection"/>
     <localInspection language="JSON" shortName="JsonDuplicatePropertyKeys"
                      bundle="com.intellij.json.JsonBundle" key="inspection.duplicate.keys.name" groupKey="json.inspection.group"
                      enabledByDefault="true" level="WARNING"
@@ -83,11 +93,16 @@
     <JsonSchema.ProviderFactory implementation="com.jetbrains.jsonSchema.extension.JsonSchemaProjectSelfProviderFactory"/>
   </extensions>
 
+  <extensions defaultExtensionNs="Json">
+    <Like.Psi.Walker.Factory implementation="com.intellij.json.json5.Json5PsiWalkerFactory"/>
+  </extensions>
+
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.json.jsonStandardComplianceProvider"
                     interface="com.intellij.json.codeinsight.JsonStandardComplianceProvider"/>
     <extensionPoint qualifiedName="JavaScript.JsonSchema.ProviderFactory" interface="com.jetbrains.jsonSchema.extension.JsonSchemaProviderFactory"/>
     <extensionPoint qualifiedName="Json.Like.Psi.Walker.Factory" interface="com.jetbrains.jsonSchema.extension.JsonLikePsiWalkerFactory"/>
+    <extensionPoint qualifiedName="com.intellij.json.jsonLiteralChecker" interface="com.intellij.json.codeinsight.JsonLiteralChecker"/>
   </extensionPoints>
 
 </idea-plugin>
