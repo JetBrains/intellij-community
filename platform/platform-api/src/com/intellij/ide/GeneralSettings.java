@@ -48,7 +48,7 @@ public class GeneralSettings implements PersistentStateComponent<GeneralSettings
   private boolean myUseDefaultBrowser = true;
   private boolean mySearchInBackground;
   private boolean myConfirmExit = true;
-  private boolean myShowWelcomeScreen = !PlatformUtils.isDatabaseIDE();
+  private boolean myShowWelcomeScreen = !PlatformUtils.isDataGrip();
   private int myConfirmOpenNewProject = OPEN_PROJECT_ASK;
   private ProcessCloseConfirmation myProcessCloseConfirmation = ProcessCloseConfirmation.ASK;
 
