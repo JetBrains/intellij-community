@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.command.UndoConfirmationPolicy;
@@ -58,7 +56,6 @@ public class CommandMerger {
     // we do not want to spoil redo stack in situation, when some 'transparent' actions occurred right after undo.
     if (!nextCommandToMerge.isTransparent() && nextCommandToMerge.hasActions()) {
       clearRedoStacks(nextCommandToMerge);
-      convertTemporaryActionsToNormal(nextCommandToMerge);
     }
 
     if (!shouldMerge(groupId, nextCommandToMerge)) {
@@ -163,10 +160,6 @@ public class CommandMerger {
 
   private void clearRedoStacks(@NotNull CommandMerger nextMerger) {
     myManager.getRedoStacksHolder().clearStacks(nextMerger.isGlobal(), nextMerger.myAllAffectedDocuments);
-  }
-
-  private void convertTemporaryActionsToNormal(@NotNull CommandMerger nextMerger) {
-    myManager.getUndoStacksHolder().convertTemporaryActionsToPermanent(nextMerger.isGlobal(), nextMerger.myAllAffectedDocuments);
   }
 
   boolean isGlobal() {
