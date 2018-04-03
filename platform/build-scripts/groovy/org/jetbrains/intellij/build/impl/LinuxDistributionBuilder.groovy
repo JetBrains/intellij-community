@@ -244,7 +244,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         arg(value: "--volume=${unixDistPath}:/build/dist.unix:ro")
         arg(value: "--volume=${jreDirectoryPath}:/build/jre:ro")
         arg(value: "--workdir=/build")
-        arg(value: "snapcore/snapcraft:latest")
+        arg(value: "jetbrainsinfra/snapcraft:2.35")
         arg(value: "snapcraft")
         arg(value: "snap")
         arg(value: "-o")
