@@ -38,6 +38,25 @@ public class GithubUrlUtil {
     return url;
   }
 
+  /**
+   * Will only work correctly after {@link #removeProtocolPrefix(String)}
+   */
+  @NotNull
+  public static String removePort(@NotNull String url) {
+    int index = url.indexOf(':');
+    if (index == -1) return url;
+    int slashIndex = url.indexOf('/');
+    if (slashIndex != -1 && slashIndex < index) return url;
+
+    String beforePort = url.substring(0, index);
+    if (slashIndex == -1) {
+      return beforePort;
+    }
+    else {
+      return beforePort + url.substring(slashIndex);
+    }
+  }
+
   @NotNull
   public static String removeTrailingSlash(@NotNull String s) {
     if (s.endsWith("/")) {

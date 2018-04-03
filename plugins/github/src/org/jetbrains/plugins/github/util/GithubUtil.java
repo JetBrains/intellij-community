@@ -386,7 +386,7 @@ public class GithubUtil {
   }
 
   @NotNull
-  public static String getErrorTextFromException(@NotNull Exception e) {
+  public static String getErrorTextFromException(@NotNull Throwable e) {
     if (e instanceof UnknownHostException) {
       return "Unknown host: " + e.getMessage();
     }

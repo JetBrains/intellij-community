@@ -35,6 +35,7 @@ import org.jetbrains.plugins.github.api.GithubApiUtil;
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager;
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount;
 import org.jetbrains.plugins.github.util.GithubAuthData;
+import org.jetbrains.plugins.github.util.GithubGitHelper;
 import org.jetbrains.plugins.github.util.GithubSettings;
 import org.jetbrains.plugins.github.util.GithubUtil;
 
@@ -162,7 +163,7 @@ public abstract class GithubTest extends GitPlatformTest {
   protected void checkRemoteConfigured() {
     assertNotNull(myRepository);
 
-    assertNotNull("GitHub remote is not configured", GithubUtil.findGithubRemoteUrl(myRepository));
+    assertTrue("GitHub remote is not configured", !GithubGitHelper.getInstance().getAccessibleRemoteUrls(myRepository).isEmpty());
   }
 
   protected void checkLastCommitPushed() {

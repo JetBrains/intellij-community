@@ -16,6 +16,15 @@ object DialogValidationUtils {
    * Chains the [validators] so that if one of them returns non-null [ValidationInfo] the rest of them are not checked
    */
   fun chain(vararg validators: Validator): Validator = { validators.asSequence().mapNotNull { it() }.firstOrNull() }
+
+  /**
+   * Stateful validator that checks that contents of [textField] are unique among [records]
+   */
+  class RecordUniqueValidator(private val textField: JTextField, private val message: String) : Validator {
+    var records = setOf<String>()
+
+    override fun invoke(): ValidationInfo? = if (records.contains(textField.text)) ValidationInfo(message, textField) else null
+  }
 }
 
 typealias Validator = () -> ValidationInfo?

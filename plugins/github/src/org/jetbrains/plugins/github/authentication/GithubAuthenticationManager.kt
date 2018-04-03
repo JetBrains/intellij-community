@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.authentication
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import git4idea.DialogManager
 import com.intellij.openapi.components.service
@@ -10,6 +11,7 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager
+import org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
 import org.jetbrains.plugins.github.authentication.ui.GithubLoginDialog
 
@@ -58,6 +60,19 @@ class GithubAuthenticationManager internal constructor(private val accountManage
   fun clearAccounts() {
     for (account in accountManager.accounts) accountManager.updateAccountToken(account, null)
     accountManager.accounts = emptySet()
+  }
+
+  fun getDefaultAccount(project: Project): GithubAccount? {
+    return project.service<GithubProjectDefaultAccountHolder>().account
+  }
+
+  fun ensureHasAccounts(project: Project): Boolean {
+    if (!hasAccounts()) {
+      if (requestNewAccount(project) == null) {
+        return false
+      }
+    }
+    return true
   }
 
   companion object {

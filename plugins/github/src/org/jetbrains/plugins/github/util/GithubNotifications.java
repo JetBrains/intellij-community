@@ -38,7 +38,7 @@ import static org.jetbrains.plugins.github.util.GithubUtil.getErrorTextFromExcep
 public class GithubNotifications {
   private static final Logger LOG = GithubUtil.LOG;
 
-  private static boolean isOperationCanceled(@NotNull Exception e) {
+  private static boolean isOperationCanceled(@NotNull Throwable e) {
     return e instanceof GithubOperationCanceledException ||
            e instanceof ProcessCanceledException;
   }
@@ -81,7 +81,7 @@ public class GithubNotifications {
     VcsNotifier.getInstance(project).notifyError(title, message);
   }
 
-  public static void showError(@NotNull Project project, @NotNull String title, @NotNull Exception e) {
+  public static void showError(@NotNull Project project, @NotNull String title, @NotNull Throwable e) {
     LOG.warn(title + "; ", e);
     if (isOperationCanceled(e)) return;
     VcsNotifier.getInstance(project).notifyError(title, getErrorTextFromException(e));
@@ -140,13 +140,13 @@ public class GithubNotifications {
     Messages.showErrorDialog(project, message, title);
   }
 
-  public static void showErrorDialog(@Nullable Project project, @NotNull String title, @NotNull Exception e) {
+  public static void showErrorDialog(@Nullable Project project, @NotNull String title, @NotNull Throwable e) {
     LOG.warn(title, e);
     if (isOperationCanceled(e)) return;
     Messages.showErrorDialog(project, getErrorTextFromException(e), title);
   }
 
-  public static void showErrorDialog(@NotNull Component component, @NotNull String title, @NotNull Exception e) {
+  public static void showErrorDialog(@NotNull Component component, @NotNull String title, @NotNull Throwable e) {
     LOG.info(title, e);
     if (isOperationCanceled(e)) return;
     Messages.showErrorDialog(component, getErrorTextFromException(e), title);

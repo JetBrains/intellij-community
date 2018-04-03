@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.exceptions.GithubParseException;
+import org.jetbrains.plugins.github.util.GithubUrlUtil;
 
 import java.util.Objects;
 import java.util.regex.Matcher;
@@ -54,6 +55,11 @@ public class GithubServerPath {
   @Nullable
   public String getSuffix() {
     return mySuffix;
+  }
+
+  public boolean matches(@NotNull String gitRemoteUrl) {
+    String url = GithubUrlUtil.removePort(GithubUrlUtil.removeProtocolPrefix(gitRemoteUrl));
+    return StringUtil.startsWithIgnoreCase(url, myHost + StringUtil.notNullize(mySuffix));
   }
 
   // 2 - host, 4 - port, 5 - path
