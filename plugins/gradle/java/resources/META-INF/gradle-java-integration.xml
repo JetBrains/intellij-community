@@ -2,7 +2,11 @@
 
   <module value="org.jetbrains.plugins.gradle.java"/>
 
-  <depends>org.jetbrains.plugins.gradle</depends>
+  <depends>com.intellij.modules.java</depends>
+
+  <depends optional="true" config-file="gradle-maven-integration.xml">org.jetbrains.idea.maven</depends>
+  <depends optional="true" config-file="gradle-coverage-integration.xml">com.intellij.modules.coverage</depends>
+  <depends optional="true" config-file="gradle-groovy-integration.xml">org.intellij.groovy</depends>
 
   <extensionPoints>
     <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.frameworkSupport" interface="org.jetbrains.plugins.gradle.frameworkSupport.GradleFrameworkSupportProvider"/>

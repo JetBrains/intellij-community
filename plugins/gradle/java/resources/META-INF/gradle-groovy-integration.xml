@@ -1,10 +1,4 @@
 <idea-plugin>
-
-  <module value="org.jetbrains.plugins.gradle.groovy"/>
-
-  <depends>org.jetbrains.plugins.gradle</depends>
-  <depends>org.intellij.groovy</depends>
-
   <extensionPoints>
     <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.resolve.contributor" interface="org.jetbrains.plugins.gradle.service.resolve.GradleMethodContextContributor"/>
     <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.pluginDescriptions" interface="org.jetbrains.plugins.gradle.codeInsight.GradlePluginDescriptionsExtension"/>
