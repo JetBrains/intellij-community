@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
+import com.intellij.lang.jvm.JvmAnnotatedElement;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
@@ -234,6 +235,10 @@ public class AnnotationUtil {
   public static final int CHECK_EXTERNAL = 0x02;
   public static final int CHECK_INFERRED = 0x04;
   public static final int CHECK_TYPE = 0x08;
+
+  public static boolean isAnnotatedJvm(JvmAnnotatedElement member, String anno, int checkHierarchy) {
+    return Arrays.stream(member.getAnnotations()).anyMatch(annotation -> Objects.equals(annotation.getQualifiedName(), anno));
+  }
 
   @MagicConstant(flags = {CHECK_HIERARCHY, CHECK_EXTERNAL, CHECK_INFERRED, CHECK_TYPE})
   @Target({ElementType.PARAMETER, ElementType.METHOD})
