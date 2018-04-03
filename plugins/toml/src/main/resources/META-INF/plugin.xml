@@ -12,7 +12,7 @@
 
     <change-notes><![CDATA[
         <ul>
-            <li>Detect <i>.cargo/config</i> as toml file.</li>
+            <li>Correctly parse <b>Z</b> suffix of date values.</li>
         </ul>
     ]]>
     </change-notes>
