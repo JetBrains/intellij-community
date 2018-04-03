@@ -34,7 +34,6 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
 
   @NotNull private final MyComponent myComponent;
   @NotNull private final MyComponent myTemplateComponent;
-  @NotNull private final LabelPainter myTooltipPainter;
 
   public GraphCommitCellRenderer(@NotNull VcsLogData logData,
                                  @NotNull GraphCellPainter painter,
@@ -44,7 +43,6 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     myLogData = logData;
     myGraphTable = table;
 
-    myTooltipPainter = new LabelPainter(myLogData, compact, showTagNames);
     myComponent = new MyComponent(logData, painter, table, compact, showTagNames);
     myTemplateComponent = new MyComponent(logData, painter, table, compact, showTagNames);
   }
@@ -65,17 +63,15 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     GraphCommitCell cell = getValue(value);
     Collection<VcsRef> refs = cell.getRefsToThisCommit();
     if (!refs.isEmpty()) {
-      myTooltipPainter.customizePainter(myComponent, refs, myComponent.getBackground(), myComponent.getForeground(),
-                                        true/*counterintuitive, but true*/, getColumnWidth());
-      if (myTooltipPainter.isLeftAligned()) {
+      if (myComponent.getReferencePainter().isLeftAligned()) {
         double distance = point.getX() - myTemplateComponent.getGraphWidth(cell.getPrintElements());
         if (distance > 0 && distance <= getReferencesWidth(row, cell)) {
-          return new TooltipReferencesPanel(myLogData, myTooltipPainter, refs);
+          return new TooltipReferencesPanel(myLogData, refs);
         }
       }
       else {
         if (getColumnWidth() - point.getX() <= getReferencesWidth(row, cell)) {
-          return new TooltipReferencesPanel(myLogData, myTooltipPainter, refs);
+          return new TooltipReferencesPanel(myLogData, refs);
         }
       }
     }

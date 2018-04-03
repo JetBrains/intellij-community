@@ -365,7 +365,7 @@ public class LabelPainter {
     return Registry.is("vcs.log.labels.left.aligned");
   }
 
-  public Font getReferenceFont() {
+  public static Font getReferenceFont() {
     Font font = RectanglePainter.getFont();
     return font.deriveFont(font.getSize() - 1f);
   }
