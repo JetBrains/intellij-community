@@ -125,7 +125,7 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
     if (myComponent == null) {
       myComponent = new MyComponent();
     }
-    myComponent.myShowWelcomeScreen.setVisible(PlatformUtils.isDatabaseIDE());
+    myComponent.myShowWelcomeScreen.setVisible(PlatformUtils.isDataGrip());
 
     myComponent.myChkAutoSaveIfInactive.addChangeListener(
       e -> myComponent.myTfInactiveTimeout.setEditable(myComponent.myChkAutoSaveIfInactive.isSelected()));

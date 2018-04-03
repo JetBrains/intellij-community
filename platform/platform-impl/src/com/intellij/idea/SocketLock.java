@@ -27,7 +27,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.BuiltInServer;
 import org.jetbrains.io.MessageDecoder;
 
-import java.io.*;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.net.ConnectException;
 import java.net.InetAddress;
@@ -142,7 +145,7 @@ public final class SocketLock {
 
       myToken = UUID.randomUUID().toString();
       String[] lockedPaths = {myConfigPath, mySystemPath};
-      int workerCount = PlatformUtils.isIdeaCommunity() || PlatformUtils.isDatabaseIDE() || PlatformUtils.isCidr() ? 1 : 2;
+      int workerCount = PlatformUtils.isIdeaCommunity() || PlatformUtils.isDataGrip() || PlatformUtils.isCidr() ? 1 : 2;
       NotNullProducer<ChannelHandler> handler = () -> new MyChannelInboundHandler(lockedPaths, myActivateListener, myToken);
       myServer = BuiltInServer.startNioOrOio(workerCount, 6942, 50, false, handler);
 
