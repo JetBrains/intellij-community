@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -82,10 +81,6 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
       .sorted(RunDashboardGroupingRule.PRIORITY_COMPARATOR)
       .map(RunDashboardGrouper::new)
       .collect(Collectors.toList());
-  }
-
-  private static boolean isDashboardEnabled() {
-    return Registry.is("ide.run.dashboard");
   }
 
   private void initToolWindowContentListeners() {
@@ -182,7 +177,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
 
   @Override
   public boolean isToolWindowAvailable() {
-    return isDashboardEnabled() && hasContent();
+    return hasContent();
   }
 
   @Override
@@ -304,10 +299,6 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
   @Override
   @Nullable
   public RunDashboardContributor getContributor(@NotNull ConfigurationType type) {
-    if (!Registry.is("ide.run.dashboard")) {
-      return null;
-    }
-
     for (RunDashboardContributor contributor : RunDashboardContributor.EP_NAME.getExtensions()) {
       if (type.equals(contributor.getType())) {
         return contributor;
