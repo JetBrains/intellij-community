@@ -1240,11 +1240,12 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
     EqClass eqClass = myEqClasses.get(eqClassIndex);
     if (eqClass == null) return false;
-    if (eqClass.findConstant(true) != null) return true;
+    DfaConstValue nullConst = myFactory.getConstFactory().getNull();
+    if (eqClass.findConstant(true) == nullConst) return true;
 
     for (DistinctPairSet.DistinctPair pair : getDistinctClassPairs()) {
       EqClass otherClass = pair.getOtherClass(eqClassIndex);
-      if (otherClass != null && otherClass.findConstant(true) != null) {
+      if (otherClass != null && otherClass.findConstant(true) == nullConst) {
         return true;
       }
     }
