@@ -415,7 +415,6 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
     final PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(project);
     final List<BooleanRunnable> finishProcessors = new SmartList<>();
     List<BooleanRunnable> reparseInjectedProcessors = new SmartList<>();
-    Ref<ProperTextRange> changedRange = new Ref<>();
     Runnable runnable = () -> {
       myApplication.assertReadAccessAllowed();
       if (project.isDisposed()) return;
@@ -446,12 +445,10 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
           if (file.isValid()) {
             FileASTNode oldFileNode = pair.second;
             ProperTextRange changedPsiRange = ChangedPsiRangeUtil
-              .getChangedPsiRange(file, task.document, task.myLastCommittedText, document.getImmutableCharSequence()
-            );
+              .getChangedPsiRange(file, task.document, task.myLastCommittedText, document.getImmutableCharSequence());
             if (changedPsiRange != null) {
               BooleanRunnable finishProcessor = doCommit(task, file, oldFileNode, changedPsiRange, reparseInjectedProcessors);
               finishProcessors.add(finishProcessor);
-              changedRange.set(changedRange.get() == null ? changedPsiRange : changedRange.get().union(changedPsiRange));
             }
           }
           else {
@@ -482,8 +479,7 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
       return new Pair<>(null, "Indicator was canceled");
     }
 
-    ProperTextRange range = changedRange.isNull() ? ProperTextRange.create(0, document.getTextLength()) : changedRange.get();
-    Runnable result = createFinishCommitInEDTRunnable(task, synchronously, finishProcessors, reparseInjectedProcessors, range);
+    Runnable result = createFinishCommitInEDTRunnable(task, synchronously, finishProcessors, reparseInjectedProcessors);
     return Pair.create(result, null);
   }
 
@@ -491,8 +487,7 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
   private Runnable createFinishCommitInEDTRunnable(@NotNull final CommitTask task,
                                                    final boolean synchronously,
                                                    @NotNull List<BooleanRunnable> finishProcessors,
-                                                   @NotNull List<BooleanRunnable> reparseInjectedProcessors,
-                                                   @NotNull ProperTextRange changedRange) {
+                                                   @NotNull List<BooleanRunnable> reparseInjectedProcessors) {
     return () -> {
       myApplication.assertIsDispatchThread();
       Document document = task.getDocument();
@@ -508,7 +503,8 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
       }
 
       boolean changeStillValid = task.isStillValid();
-      boolean success = changeStillValid && documentManager.finishCommit(document, finishProcessors, reparseInjectedProcessors, changedRange, synchronously, task.reason);
+      boolean success = changeStillValid && documentManager.finishCommit(document, finishProcessors, reparseInjectedProcessors,
+                                                                         synchronously, task.reason);
       if (synchronously) {
         assert success;
       }
