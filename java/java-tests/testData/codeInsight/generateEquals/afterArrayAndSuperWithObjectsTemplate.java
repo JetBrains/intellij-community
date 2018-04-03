@@ -23,7 +23,6 @@ class A extends I {
 
     @Override
     public int hashCode() {
-
         int result = super.hashCode();
         result = 31 * result + Arrays.hashCode(a1);
         return result;
