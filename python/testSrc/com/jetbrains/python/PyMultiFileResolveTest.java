@@ -468,7 +468,8 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
   }
 
   // PY-28321
-  public void testImportManySourceRootsReverseRootOrder() {
+  // TODO: The test should be turned on as soon as PY-16688 and PY-23087 are implemented
+  public void ignoreTestImportManySourceRootsReverseRootOrder() {
     myFixture.copyDirectoryToProject("importManySourceRoots", "");
     withSourceRoots(Lists.newArrayList(myFixture.findFileInTempDir("root1"), myFixture.findFileInTempDir("root2")), () -> {
       final PsiFile psiFile = myFixture.configureByFile("root1/pkg/a.py");
