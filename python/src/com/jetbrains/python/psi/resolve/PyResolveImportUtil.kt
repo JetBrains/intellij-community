@@ -101,7 +101,8 @@ private fun resolveQualifiedName(name: QualifiedName,
 
   val foreignResults = foreignResults(name, context)
   val pythonResults = listOf(relativeResults,
-                             resolveFromRoots(name, context),
+                             // TODO: replace with resolveFromRoots when namespace package magic features PY-16688, PY-23087 are implemented
+                             resultsFromRoots(name, context),
                              relativeResultsFromSkeletons(name, context)).flatten().distinct()
   val allResults = pythonResults + foreignResults
   val results = if (name.componentCount > 0) findFirstResults(pythonResults, context.module) + foreignResults else allResults
