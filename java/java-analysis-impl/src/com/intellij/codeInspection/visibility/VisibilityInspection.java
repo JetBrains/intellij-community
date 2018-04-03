@@ -482,7 +482,7 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
                                                 @NotNull final GlobalJavaInspectionContext globalContext,
                                                 @NotNull final ProblemDescriptionsProcessor processor) {
     final EntryPointsManager entryPointsManager = globalContext.getEntryPointsManager(manager);
-    for (RefElement entryPoint : entryPointsManager.getEntryPoints()) {
+    for (RefElement entryPoint : entryPointsManager.getEntryPoints(manager)) {
       //don't ignore entry points with explicit visibility requirements
       if (entryPoint instanceof RefJavaElement && getMinVisibilityLevel((RefJavaElement)entryPoint) > 0) {
         continue;
