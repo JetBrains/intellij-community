@@ -124,6 +124,7 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
           @Override
           void stop() {
             for (HandlerItem item : handlerItems.first) {
+              if(item == this) continue;
               item.stop();
             }
           }
