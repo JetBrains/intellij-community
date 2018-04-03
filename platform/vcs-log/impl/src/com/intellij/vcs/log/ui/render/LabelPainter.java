@@ -163,7 +163,7 @@ public class LabelPainter {
 
     for (RefGroup group : refGroups) {
       List<Color> colors = group.getColors();
-      LabelIcon labelIcon = getIcon(fontMetrics.getHeight(), background, colors.toArray(new Color[0]));
+      LabelIcon labelIcon = getIcon(fontMetrics.getHeight(), background, colors);
       int newWidth = width + labelIcon.getIconWidth() + (group != ContainerUtil.getLastItem(refGroups) ? COMPACT_MIDDLE_PADDING : 0);
 
       String text = shortenRefName(group.getName(), fontMetrics, availableWidth - newWidth);
@@ -197,7 +197,7 @@ public class LabelPainter {
       }
 
       List<Color> colors = group.getColors();
-      LabelIcon labelIcon = getIcon(height, background, colors.toArray(new Color[0]));
+      LabelIcon labelIcon = getIcon(height, background, colors);
       int newWidth = width + labelIcon.getIconWidth() + (i != refGroups.size() - 1 ? MIDDLE_PADDING : 0);
 
       String text = getGroupText(group, fontMetrics, availableWidth - newWidth - doNotFitWidth);
@@ -220,12 +220,12 @@ public class LabelPainter {
   }
 
   @NotNull
-  private LabelIcon getIcon(int height, @NotNull Color background, Color[] colors) {
+  private LabelIcon getIcon(int height, @NotNull Color background, @NotNull List<Color> colors) {
     return myIconCache.getIcon(myComponent, height, background, colors);
   }
 
   @NotNull
-  private static Color[] getColors(@NotNull Collection<RefGroup> groups) {
+  private static List<Color> getColors(@NotNull Collection<RefGroup> groups) {
     LinkedHashMap<Color, Integer> usedColors = ContainerUtil.newLinkedHashMap();
 
     for (RefGroup group : groups) {
@@ -245,7 +245,7 @@ public class LabelPainter {
       }
     }
 
-    return result.toArray(new Color[0]);
+    return result;
   }
 
   @NotNull

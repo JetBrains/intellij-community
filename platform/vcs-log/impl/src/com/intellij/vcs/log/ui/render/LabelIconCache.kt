@@ -9,11 +9,11 @@ import javax.swing.JComponent
 class LabelIconCache {
   private val cache = SLRUMap<LabelIconId, LabelIcon>(40, 20)
 
-  fun getIcon(component: JComponent, height: Int, bgColor: Color, vararg colors: Color): LabelIcon {
-    val id = LabelIconId(JBUI.sysScale(component.graphicsConfiguration), height, bgColor, listOf(*colors))
+  fun getIcon(component: JComponent, height: Int, bgColor: Color, colors: List<Color>): LabelIcon {
+    val id = LabelIconId(JBUI.sysScale(component.graphicsConfiguration), height, bgColor, colors)
     var icon = cache.get(id)
     if (icon == null) {
-      icon = LabelIcon(component, height, bgColor, *colors)
+      icon = LabelIcon(component, height, bgColor, colors)
       cache.put(id, icon)
     }
     return icon
