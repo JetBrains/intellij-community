@@ -868,12 +868,33 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
       return node;
     }
 
+    @Nullable
+    private Group getSingleGroup() {
+      if (!roots.isEmpty() || groups.size() != 1) return null;
+      return groups.values().stream().findFirst().orElse(null);
+    }
+
     @NotNull
     Collection<AbstractTreeNode> createChildren(@NotNull Node parent, @NotNull Collection<AbstractTreeNode> old) {
       Mapper<GroupNode, Object> mapper = new Mapper<>(GroupNode::new, GroupNode.class, old);
+      ModuleManager manager = getModuleManager(parent.getProject());
+      char separator = manager != null && manager.hasModuleGroups() ? VFS_SEPARATOR_CHAR : '.';
+      boolean hideEmptyMiddlePackages = parent.getSettings().isHideEmptyMiddlePackages();
       List<AbstractTreeNode> children = new SmartList<>();
       for (Group group : groups.values()) {
-        GroupNode node = mapper.apply(parent, group.id);
+        Object id = group.id;
+        Group single = !hideEmptyMiddlePackages ? null : group.getSingleGroup();
+        if (single != null) {
+          StringBuilder sb = new StringBuilder(id.toString());
+          do {
+            group = single;
+            sb.append(separator).append(group.id);
+            single = single.getSingleGroup();
+          }
+          while (single != null);
+          id = sb.toString();
+        }
+        GroupNode node = mapper.apply(parent, id);
         node.setGroup(group);
         children.add(node);
       }
