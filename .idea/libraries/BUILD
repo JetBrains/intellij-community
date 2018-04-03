@@ -1,5 +1,5 @@
 java_library(
-    name = "javax_inject_javax_inject",
+    name = "javax-inject",
     tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/javax/inject/javax.inject/1:jar"],
