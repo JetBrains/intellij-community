@@ -46,6 +46,16 @@ public class TouchBar implements NSTLibrary.ItemCreator {
     myNativePeer = ID.NIL;
   }
 
+  public void closeAndRelease() {
+    TouchBarsManager.closeTouchBar(this);
+    release();
+  }
+
+  public void show() {
+    selectVisibleItemsToShow();
+    TouchBarsManager.pushTouchBar(this);
+  }
+
   //
   // NOTE: must call 'selectVisibleItemsToShow' after touchbar filling
   //
