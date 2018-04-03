@@ -349,7 +349,7 @@ public class SystemHealthMonitor implements ApplicationComponent {
           .setStudioCrash(StudioCrash.newBuilder()
             .addDetails(StudioExceptionDetails.newBuilder()
               .setHash(stackTrace.md5string())
-              .setCount(stackTrace.count())
+              .setCount(stackTrace.getCount())
               .setSummary(stackTrace.summarize(20))
               .build()));
       logUsageOnlyIfNotInternalApplication(stackTrace.timeOfFirstHitMs(), crashEventBuilder);

@@ -33,7 +33,7 @@ import java.io.StringWriter
 /** Represents a stacktrace reported to the [ExceptionRegistry] */
 interface StackTrace : Comparable<StackTrace> {
   /** Returns the frequency of this stack trace */
-  fun count(): Int
+  val count: Int
 
   /** Returns the MD5 hashcode as a string */
   fun md5string(): String
@@ -107,7 +107,7 @@ interface StackTrace : Comparable<StackTrace> {
 object ExceptionRegistry {
   var count = 0
   private val root: StackFrame = StackFrame(StackTraceElement("ROOT", "", "", 0), null)
-  private val leafFrames = mutableListOf<LeafFrame>()
+  private val leafNodes = mutableListOf<LeafNode>()
   @VisibleForTesting
   var dateProvider = DateProvider.SYSTEM!!
 
@@ -128,10 +128,10 @@ object ExceptionRegistry {
    */
   fun getMostFrequent(): StackTrace? {
     synchronized(this) {
-      if (leafFrames.isEmpty()) {
+      if (leafNodes.isEmpty()) {
         return null
       }
-      return leafFrames.maxBy { it.count } as StackTrace
+      return leafNodes.maxBy { it.count } as StackTrace
     }
   }
 
@@ -141,14 +141,14 @@ object ExceptionRegistry {
       count = 0
       root.firstChild = null
       root.nextSibling = null
-      leafFrames.clear()
+      leafNodes.clear()
     }
   }
 
   /** Returns all discovered stack traces in order of descending frequency */
   fun getStackTraces(threshold: Int = 0): List<StackTrace> {
     synchronized(this) {
-      val list: MutableList<StackTrace> = leafFrames.filter { it.count() >= threshold }.toMutableList()
+      val list: MutableList<StackTrace> = leafNodes.filter { it.count >= threshold }.toMutableList()
       list.sort()
       return list
     }
@@ -159,19 +159,21 @@ object ExceptionRegistry {
     var curr = root
 
     val stackTrace = throwable.stackTrace
-    val max = stackTrace.size - 1
-    @Suppress("LoopToCallChain")
-    for (index in max downTo 1) {
-      val element = stackTrace[index]
-      curr = curr.addChild(element)
+    if (stackTrace.isEmpty()) {
+      curr = curr.addChild(StackTraceElement(throwable.javaClass.name, "", "", 0))
+    } else {
+      val max = stackTrace.size - 1
+      @Suppress("LoopToCallChain")
+      for (index in max downTo 0) {
+        val element = stackTrace[index]
+        curr = curr.addChild(element)
+      }
     }
 
     // Last frame: use a leaf frame instead at the end so we can store the java class name
-    val leaf = curr.addLeaf(
-        if (stackTrace.isNotEmpty()) stackTrace[0] else StackTraceElement(throwable.javaClass.name, "", "", 0),
-        throwable.javaClass)
+    val leaf = curr.addLeaf(throwable.javaClass, dateProvider.now().time)
     if (leaf.count == 1) {
-      leafFrames.add(leaf)
+      leafNodes.add(leaf)
     }
 
     return leaf
@@ -180,21 +182,21 @@ object ExceptionRegistry {
   /** Finds the stacktrace with the given MD5 */
   fun find(md5: String): StackTrace? {
     synchronized(this) {
-      return leafFrames.firstOrNull { md5 == it.md5string() }
+      return leafNodes.firstOrNull { md5 == it.md5string() }
     }
   }
 
   /**
    * Represents a single stack frame (class, method, line number). For the leaf frames we use a
-   * [LeafFrame] instead which carries extra data.
+   * [LeafNode] instead which carries extra data.
    */
   private open class StackFrame(val frame: StackTraceElement, val parent: StackFrame?) {
-    var count = 1
-
     // Linked list of children: first points to first child; nextSibling *in that child* points to next sibling
     var firstChild: StackFrame? = null
 
     var nextSibling: StackFrame? = null
+
+    var leafNode: LeafNode? = null
 
     /**
      * Adds the given stack frame as a child of this one. If already exists, bump its frequency count and return it,
@@ -212,7 +214,6 @@ object ExceptionRegistry {
         var curr: StackFrame? = firstChild
         while (curr != null) {
           if (curr.matches(frame)) {
-            curr.count++
             return curr
           }
           prev = curr
@@ -225,49 +226,54 @@ object ExceptionRegistry {
       }
     }
 
-    /** Like [addChild] but adds in a [LeafFrame] instead */
-    fun addLeaf(frame: StackTraceElement, cls: Class<Any>): LeafFrame {
-      val currentTimestampMs = dateProvider.now().time
-      if (firstChild == null) {
-        val child = LeafFrame(cls, frame, this, currentTimestampMs)
-        firstChild = child
-        return child
+    /** Adds in a [LeafNode] which marks this [StackFrame] as a last frame. */
+    fun addLeaf(cls: Class<Any>, currentTimestampMs :Long): LeafNode {
+      var localLeafFrame = leafNode
+      if (localLeafFrame == null) {
+        localLeafFrame = LeafNode(cls, this, currentTimestampMs)
+        leafNode = localLeafFrame
+      } else {
+        localLeafFrame.incrementCount()
       }
-      else {
-        // Try to match
-        var prev: StackFrame? = null
-        var curr: StackFrame? = firstChild
-        while (curr != null) {
-          if (curr.matches(frame)) {
-            val leaf = curr as LeafFrame
-            leaf.count++
-            return leaf
-          }
-          prev = curr
-          curr = curr.nextSibling
-        }
-
-        val child = LeafFrame(cls, frame, this, currentTimestampMs)
-        prev!!.nextSibling = child
-        return child
-      }
+      return localLeafFrame
     }
 
     /** Whether the given [element] matches the stack trace element in this frame */
     private fun matches(element: StackTraceElement) = element == frame
+
+    fun compareTo(otherFrame: ExceptionRegistry.StackFrame): Int {
+      var delta = frame.className.compareTo(otherFrame.frame.className)
+      if (delta != 0) {
+        return delta
+      }
+
+      delta = frame.methodName.compareTo(otherFrame.frame.methodName)
+      if (delta != 0) {
+        return delta
+      }
+
+      val fileName = frame.fileName ?: ""
+      val otherFileName = otherFrame.frame.fileName ?: ""
+      delta = fileName.compareTo(otherFileName)
+      if (delta != 0) {
+        return delta
+      }
+
+      return frame.lineNumber - otherFrame.frame.lineNumber
+    }
   }
 
   /**
    * Class used for the leaf frames in a stack tree. This carries extra data, such as the name of the
    * class, and has methods for operating on the stack trace as a whole (e.g. summarizing it, hashing it, etc.)
    */
-  private class LeafFrame(
-      val cls: Class<Any>,
-      frame: StackTraceElement,
-      parent: StackFrame?,
-      val timeOfFirstHitMs : Long) : StackFrame(frame, parent), StackTrace {
+  private class LeafNode(
+    val cls: Class<Any>,
+    val parent: StackFrame,
+    val timeOfFirstHitMs : Long) : StackTrace {
 
-    override fun count(): Int = count
+    override var count = 1
+      private set
     override fun timeOfFirstHitMs(): Long = timeOfFirstHitMs
 
     /** Summarizes the stack trace */
@@ -385,34 +391,22 @@ object ExceptionRegistry {
 
     /** Sort by frequency, and then alphabetically by package, class, method, filename, line */
     override fun compareTo(other: StackTrace): Int {
-      val otherFrame = other as LeafFrame
-      var delta = otherFrame.count.compareTo(count)
-      if (delta != 0) {
-        return delta
-      }
-      delta = frame.className.compareTo(otherFrame.frame.className)
+      val otherLeaf = other as LeafNode
+      val delta = otherLeaf.count.compareTo(count)
       if (delta != 0) {
         return delta
       }
 
-      delta = frame.methodName.compareTo(otherFrame.frame.methodName)
-      if (delta != 0) {
-        return delta
-      }
-
-      val fileName = frame.fileName ?: ""
-      val otherFileName = otherFrame.frame.fileName ?: ""
-      delta = fileName.compareTo(otherFileName)
-      if (delta != 0) {
-        return delta
-      }
-
-      return frame.lineNumber - otherFrame.frame.lineNumber
+      return parent.compareTo(otherLeaf.parent)
     }
 
     /** Generates a sequence which iterates from the leaf up to the root (but doesn't include the root) */
     private fun frameSequence(): Sequence<StackFrame> {
-      return generateSequence(this as StackFrame) { if (it.parent?.parent != null) it.parent else null }
+      return generateSequence(parent) { if (it.parent?.parent != null) it.parent else null }
+    }
+
+    fun incrementCount() {
+      count++
     }
   }
 }

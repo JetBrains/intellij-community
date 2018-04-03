@@ -20,6 +20,7 @@ import com.android.testutils.VirtualTimeScheduler
 import junit.framework.TestCase
 import java.io.IOException
 import com.intellij.ide.ExceptionTestUtils.createExceptionFromDesc
+import org.junit.Assert
 import java.util.concurrent.TimeUnit
 
 class ExceptionRegistryTest : TestCase() {
@@ -43,7 +44,7 @@ class ExceptionRegistryTest : TestCase() {
    * @param threshold        the minimum number of repeats a given stacktrace must have to be included in the report
    * @return the report as a string
    */
-  fun getFrequencyReport(
+  private fun getFrequencyReport(
       includeSummaries: Boolean = true,
       maxWidth: Int = 300,
       threshold: Int = 0): String {
@@ -51,7 +52,7 @@ class ExceptionRegistryTest : TestCase() {
     synchronized(this) {
       val frames = ExceptionRegistry.getStackTraces()
       for (frame in frames) {
-        val count = frame.count()
+        val count = frame.count
         if (count < threshold) {
           break
         }
@@ -83,7 +84,7 @@ class ExceptionRegistryTest : TestCase() {
       for (exception in exceptions) {
         val stackTrace = ExceptionRegistry.register(exception)
 
-        if (stackTrace.count() == 1) {
+        if (stackTrace.count == 1) {
           resultsMap[stackTrace] = ExceptionRegistry.dateProvider.now().time
         }
 
@@ -99,6 +100,27 @@ class ExceptionRegistryTest : TestCase() {
     } finally {
       ExceptionRegistry.dateProvider = previousProvider
     }
+  }
+
+  fun testInsertLeafIntoExistingChain() {
+    val exception1 = createExceptionFromDesc(
+      "java.io.FileNotFoundException: \n" +
+      "\tat java.io.FileInputStream.open0(Native Method)\n" +
+      "\tat java.io.FileInputStream.open(FileInputStream.java:195)\n" +
+      "\tat java.io.FileInputStream.<init>(FileInputStream.java:138)\n" +
+      "\tat org.jetbrains.jps.backwardRefs.CompilerBackwardReferenceIndex.versionDiffers(CompilerBackwardReferenceIndex.java:162)\n")
+
+    val exception2 = createExceptionFromDesc(
+      "java.io.FileNotFoundException: \n" +
+      "\tat java.io.FileInputStream.<init>(FileInputStream.java:138)\n" +
+      "\tat org.jetbrains.jps.backwardRefs.CompilerBackwardReferenceIndex.versionDiffers(CompilerBackwardReferenceIndex.java:162)\n")
+    ExceptionRegistry.register(exception1)
+    ExceptionRegistry.register(exception2)
+    assertEquals(2, ExceptionRegistry.count)
+    assertEquals("""
+      1 D87EAC8D812C55A8D17A67B0B92CB256
+      1 5F9398ED7E33CC842D5AB04622C18F8C
+      """.trimIndent(), getFrequencyReport(false).trimIndent())
   }
 
   fun test() {
@@ -141,11 +163,11 @@ class ExceptionRegistryTest : TestCase() {
         getFrequencyReport(includeSummaries = false).trimIndent())
 
     val mostFrequent = ExceptionRegistry.getMostFrequent()
-    assertEquals(11, mostFrequent?.count())
+    assertEquals(11, mostFrequent?.count)
 
     // Only one match for a threshold of 10
     val first = ExceptionRegistry.getStackTraces(10).first()
-    assertEquals(11, first.count())
+    assertEquals(11, first.count)
 
 
     assertEquals("""
