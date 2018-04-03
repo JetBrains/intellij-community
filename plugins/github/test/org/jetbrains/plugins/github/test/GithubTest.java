@@ -163,7 +163,7 @@ public abstract class GithubTest extends GitPlatformTest {
   protected void checkRemoteConfigured() {
     assertNotNull(myRepository);
 
-    assertTrue("GitHub remote is not configured", !GithubGitHelper.getInstance().getAccessibleRemoteUrls(myRepository).isEmpty());
+    assertTrue("GitHub remote is not configured", GithubGitHelper.getInstance().hasAccessibleRemotes(myRepository));
   }
 
   protected void checkLastCommitPushed() {
@@ -224,6 +224,7 @@ public abstract class GithubTest extends GitPlatformTest {
   protected final void tearDown() throws Exception {
     try {
       afterTest();
+      myAuthenticationManager.setDefaultAccount(myProject, null);
       myAuthenticationManager.clearAccounts();
     }
     finally {

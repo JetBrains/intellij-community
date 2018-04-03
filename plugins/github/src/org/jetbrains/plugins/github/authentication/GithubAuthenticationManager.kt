@@ -4,7 +4,6 @@ package org.jetbrains.plugins.github.authentication
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import git4idea.DialogManager
-import com.intellij.openapi.components.service
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.annotations.TestOnly
@@ -12,8 +11,8 @@ import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder
-import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
 import org.jetbrains.plugins.github.authentication.ui.GithubLoginDialog
+import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
 
 /**
  * Entry point for interactions with Github authentication subsystem
@@ -66,6 +65,11 @@ class GithubAuthenticationManager internal constructor(private val accountManage
     return project.service<GithubProjectDefaultAccountHolder>().account
   }
 
+  @TestOnly
+  fun setDefaultAccount(project: Project, account: GithubAccount?) {
+    project.service<GithubProjectDefaultAccountHolder>().account = account
+  }
+
   fun ensureHasAccounts(project: Project): Boolean {
     if (!hasAccounts()) {
       if (requestNewAccount(project) == null) {
@@ -73,6 +77,13 @@ class GithubAuthenticationManager internal constructor(private val accountManage
       }
     }
     return true
+  }
+
+  fun getSingleOrDefaultAccount(project: Project): GithubAccount? {
+    project.service<GithubProjectDefaultAccountHolder>().account?.let { return it }
+    val accounts = accountManager.accounts
+    if (accounts.size == 1) return accounts.first()
+    return null
   }
 
   companion object {

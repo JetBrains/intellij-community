@@ -282,37 +282,6 @@ public class GithubUtil {
     });
   }
 
-  public static <T> T computeValueInModal(@NotNull Project project,
-                                          @NotNull String caption,
-                                          @NotNull final Convertor<ProgressIndicator, T> task) {
-    return computeValueInModal(project, caption, true, task);
-  }
-
-  public static <T> T computeValueInModal(@NotNull Project project,
-                                          @NotNull String caption,
-                                          boolean canBeCancelled,
-                                          @NotNull final Convertor<ProgressIndicator, T> task) {
-    return ProgressManager.getInstance().run(new Task.WithResult<T, RuntimeException>(project, caption, canBeCancelled) {
-      @Override
-      protected T compute(@NotNull ProgressIndicator indicator) {
-        return task.convert(indicator);
-      }
-    });
-  }
-
-  public static void computeValueInModal(@NotNull Project project,
-                                         @NotNull String caption,
-                                         boolean canBeCancelled,
-                                         @NotNull final Consumer<ProgressIndicator> task) {
-    ProgressManager.getInstance().run(new Task.WithResult<Void, RuntimeException>(project, caption, canBeCancelled) {
-      @Override
-      protected Void compute(@NotNull ProgressIndicator indicator) {
-        task.consume(indicator);
-        return null;
-      }
-    });
-  }
-
   public static <T> T runInterruptable(@NotNull final ProgressIndicator indicator,
                                        @NotNull ThrowableComputable<T, IOException> task) throws IOException {
     ScheduledFuture<?> future = null;
