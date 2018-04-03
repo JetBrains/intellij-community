@@ -5,8 +5,13 @@ import com.intellij.ide.file.BatchFileChangeListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.command.impl.UndoManagerImpl
+import com.intellij.openapi.command.undo.DocumentReferenceManager
+import com.intellij.openapi.command.undo.DocumentReferenceProvider
+import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
@@ -26,6 +31,7 @@ import com.intellij.testFramework.RunAll
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcsUtil.VcsUtil
+import org.mockito.Mockito
 
 abstract class BaseLineStatusTrackerManagerTest : LightPlatformTestCase() {
   protected lateinit var vcs: MyMockVcs
@@ -38,6 +44,7 @@ abstract class BaseLineStatusTrackerManagerTest : LightPlatformTestCase() {
   protected lateinit var testRoot: VirtualFile
 
   protected lateinit var vcsManager: ProjectLevelVcsManagerImpl
+  protected lateinit var undoManager: UndoManagerImpl
 
   protected var arePartialChangelistsSupported: Boolean = true
 
@@ -61,6 +68,8 @@ abstract class BaseLineStatusTrackerManagerTest : LightPlatformTestCase() {
     vcsManager.directoryMappings = listOf(VcsDirectoryMapping(testRoot.path, vcs.name))
     vcsManager.waitForInitialized()
     assertTrue(vcsManager.hasActiveVcss())
+
+    undoManager = UndoManager.getInstance(getProject()) as UndoManagerImpl
 
     try {
       resetTestState()
@@ -186,10 +195,28 @@ abstract class BaseLineStatusTrackerManagerTest : LightPlatformTestCase() {
   protected fun VirtualFile.assertAffectedChangeLists(vararg expectedNames: String) {
     assertSameElements(clm.getChangeLists(this).map { it.name }, *expectedNames)
   }
-  protected open fun runCommand(task: () -> Unit) {
+
+  protected open fun runCommand(groupId: String? = null, task: () -> Unit) {
     CommandProcessor.getInstance().executeCommand(getProject(), {
       ApplicationManager.getApplication().runWriteAction(task)
-    }, "", null)
+    }, "", groupId)
+  }
+
+  protected fun undo(document: Document) {
+    val editor = createMockFileEditor(document)
+    undoManager.undo(editor)
+  }
+
+  protected fun redo(document: Document) {
+    val editor = createMockFileEditor(document)
+    undoManager.redo(editor)
+  }
+
+  private fun createMockFileEditor(document: Document): FileEditor {
+    val editor = Mockito.mock(FileEditor::class.java, Mockito.withSettings().extraInterfaces(DocumentReferenceProvider::class.java))
+    val references = listOf(DocumentReferenceManager.getInstance().create(document))
+    Mockito.`when`((editor as DocumentReferenceProvider).documentReferences).thenReturn(references);
+    return editor
   }
 
   protected fun String.asListNameToList(): LocalChangeList = clm.changeLists.find { it.name == this }!!
@@ -202,6 +229,14 @@ abstract class BaseLineStatusTrackerManagerTest : LightPlatformTestCase() {
 
   protected fun PartialLocalLineStatusTracker.assertAffectedChangeLists(vararg expectedNames: String) {
     assertSameElements(this.affectedChangeListsIds.asListIdsToNames(), *expectedNames)
+  }
+
+  protected fun LineStatusTracker<*>.assertTextContentIs(expected: String) {
+    assertEquals(parseInput(expected), document.text)
+  }
+
+  protected fun LineStatusTracker<*>.assertBaseTextContentIs(expected: String) {
+    assertEquals(parseInput(expected), vcsDocument.text)
   }
 
   protected fun Range.assertChangeList(listName: String) {

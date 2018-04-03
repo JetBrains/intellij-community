@@ -21,13 +21,9 @@ import com.intellij.diff.tools.util.text.LineOffsetsUtil
 import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.Side
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.command.undo.DocumentReferenceManager
-import com.intellij.openapi.command.undo.DocumentReferenceProvider
-import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.text.StringUtil
@@ -37,8 +33,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightPlatformTestCase.assertOrderedEquals
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.containers.ContainerUtil
-import org.mockito.Mockito
-import org.mockito.Mockito.withSettings
 import java.util.*
 
 abstract class BaseLineStatusTrackerTestCase : BaseLineStatusTrackerManagerTest() {
@@ -114,11 +108,11 @@ abstract class BaseLineStatusTrackerTestCase : BaseLineStatusTrackerManagerTest(
     }
 
     fun assertTextContentIs(expected: String) {
-      assertEquals(parseInput(expected), document.text)
+      tracker.assertTextContentIs(expected)
     }
 
     fun assertBaseTextContentIs(expected: String) {
-      assertEquals(parseInput(expected), vcsDocument.text)
+      tracker.assertBaseTextContentIs(expected)
     }
 
     fun assertRangesEmpty() {
@@ -137,7 +131,7 @@ abstract class BaseLineStatusTrackerTestCase : BaseLineStatusTrackerManagerTest(
 
 
     fun runCommandVerify(task: () -> Unit) {
-      this@BaseLineStatusTrackerTestCase.runCommand(task)
+      this@BaseLineStatusTrackerTestCase.runCommand(null, task)
       verify()
     }
 
@@ -378,8 +372,6 @@ abstract class BaseLineStatusTrackerTestCase : BaseLineStatusTrackerManagerTest(
   }
 
   protected inner class PartialTest(val partialTracker: PartialLocalLineStatusTracker) : Test(partialTracker) {
-    val undoManager = UndoManager.getInstance(getProject())
-
     fun assertAffectedChangeLists(vararg expected: String) {
       partialTracker.assertAffectedChangeLists(*expected)
     }
@@ -407,20 +399,11 @@ abstract class BaseLineStatusTrackerTestCase : BaseLineStatusTrackerManagerTest(
 
 
     fun undo() {
-      val editor = createMockFileEditor()
-      undoManager.undo(editor)
+      undo(document)
     }
 
     fun redo() {
-      val editor = createMockFileEditor()
-      undoManager.redo(editor)
-    }
-
-    private fun createMockFileEditor(): FileEditor {
-      val editor = Mockito.mock(FileEditor::class.java, withSettings().extraInterfaces(DocumentReferenceProvider::class.java))
-      val references = listOf(DocumentReferenceManager.getInstance().create(document))
-      Mockito.`when`((editor as DocumentReferenceProvider).documentReferences).thenReturn(references);
-      return editor
+      redo(document)
     }
   }
 

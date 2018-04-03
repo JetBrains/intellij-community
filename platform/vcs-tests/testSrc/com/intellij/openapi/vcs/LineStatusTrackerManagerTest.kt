@@ -448,4 +448,48 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
     file.assertAffectedChangeLists("Test")
     assertNull(file.tracker)
   }
+
+  fun `test tracker initialisation does not disrupt command group`() {
+    val file = addLocalFile(FILE_1, "a_b_c_d_e")
+    val document = file.document
+    assertNull(file.tracker)
+
+    fun typing(text: String) {
+      runCommand("typing") {
+        document.insertString(0, text)
+      }
+    }
+
+    typing("a")
+    typing("a")
+    typing("a")
+
+    file.withOpenedEditor {
+      typing("b")
+      typing("b")
+      typing("b")
+
+      setBaseVersion(FILE_1, "a_b_c_d_e2")
+      refreshCLM()
+
+      typing("c")
+      typing("c")
+      typing("c")
+
+      lstm.waitUntilBaseContentsLoaded()
+      file.tracker!!.assertBaseTextContentIs("a_b_c_d_e2")
+
+      typing("d")
+      typing("d")
+      typing("d")
+
+      undo(document)
+      file.tracker!!.assertTextContentIs("a_b_c_d_e")
+      file.tracker!!.assertBaseTextContentIs("a_b_c_d_e2")
+
+      redo(document)
+      file.tracker!!.assertTextContentIs("dddcccbbbaaaa_b_c_d_e")
+      file.tracker!!.assertBaseTextContentIs("a_b_c_d_e2")
+    }
+  }
 }
