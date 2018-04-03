@@ -2,7 +2,6 @@
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.template.impl.Variable;
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindSettings;
 import com.intellij.ide.IdeBundle;
@@ -11,7 +10,6 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -49,7 +47,6 @@ import com.intellij.ui.TitledSeparator;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -619,11 +616,11 @@ public class SearchDialog extends DialogWrapper {
     return panel;
   }
 
-  protected List<Variable> getVariablesFromListeners() {
+  protected List<String> getVariablesFromListeners() {
     return getVarsFrom(searchCriteriaEdit);
   }
 
-  protected static List<Variable> getVarsFrom(Editor searchCriteriaEdit) {
+  protected static List<String> getVarsFrom(Editor searchCriteriaEdit) {
     SubstitutionShortInfoHandler handler = SubstitutionShortInfoHandler.retrieve(searchCriteriaEdit);
     return (handler == null) ? new ArrayList<>() : new ArrayList<>(handler.getVariables());
   }
@@ -690,7 +687,7 @@ public class SearchDialog extends DialogWrapper {
     findSettings.setShowResultsInSeparateView(openInNewTab.isSelected());
 
     try {
-      filterOutUnusedVariableConstraints(myConfiguration);
+      removeUnusedVariableConstraints(myConfiguration);
       ConfigurationManager.getInstance(getProject()).addHistoryConfiguration(myConfiguration);
 
       startSearching();
@@ -700,18 +697,13 @@ public class SearchDialog extends DialogWrapper {
     }
   }
 
-  private void filterOutUnusedVariableConstraints(Configuration configuration) {
-    final List<Variable> variables = getVariablesFromListeners();
-    final List<String> variableNames = new ArrayList<>();
-    for (Variable variable : variables) {
-      variableNames.add(variable.getName());
-    }
-    variableNames.add(Configuration.CONTEXT_VAR_NAME);
+  private void removeUnusedVariableConstraints(Configuration configuration) {
+    final List<String> variableNames = getVariablesFromListeners();
     configuration.getMatchOptions().retainVariableConstraints(variableNames);
   }
 
   public Configuration getConfiguration() {
-    filterOutUnusedVariableConstraints(myConfiguration);
+    removeUnusedVariableConstraints(myConfiguration);
     setValuesToConfig(myConfiguration);
     return myConfiguration;
   }

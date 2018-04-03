@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
-import com.intellij.codeInsight.template.impl.Variable;
 import com.intellij.find.impl.RegExHelpPopup;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.HighlighterFactory;
@@ -47,6 +46,7 @@ import com.intellij.ui.components.fields.IntegerField;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -71,15 +71,14 @@ class EditVarConstraintsDialog extends DialogWrapper {
   private EditorTextField regexp;
   private IntegerField minoccurs;
   private JPanel mainForm;
-  private JList<Variable> parameterList;
+  private JList<String> parameterList;
   private JCheckBox partOfSearchResults;
   private JCheckBox notExprType;
   private EditorTextField regexprForExprType;
   private final Configuration myConfiguration;
   private JCheckBox exprTypeWithinHierarchy;
 
-  private final List<Variable> variables;
-  private Variable current;
+  private final List<String> variables;
   private JCheckBox wholeWordsOnly;
   private JCheckBox formalArgTypeWithinHierarchy;
   private JCheckBox invertFormalArgType;
@@ -99,7 +98,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
 
   private final Project myProject;
 
-  EditVarConstraintsDialog(final Project project, Configuration configuration, List<Variable> _variables, final FileType fileType) {
+  EditVarConstraintsDialog(final Project project, Configuration configuration, List<String> _variables, final FileType fileType) {
     super(project, true);
     myProject = project;
     variables = _variables;
@@ -135,15 +134,8 @@ class EditVarConstraintsDialog extends DialogWrapper {
     refererenceTargetTextField.setAutoCompletionItems(names);
     refererenceTargetTextField.addActionListener(new SelectTemplateListener(project, refererenceTargetTextField));
 
-    boolean hasContextVar = false;
-    for (Variable var : variables) {
-      if (Configuration.CONTEXT_VAR_NAME.equals(var.getName())) {
-        hasContextVar = true; break;
-      }
-    }
-
-    if (!hasContextVar) {
-      variables.add(new Variable(Configuration.CONTEXT_VAR_NAME, "", "", true));
+    if (!variables.contains(Configuration.CONTEXT_VAR_NAME)) {
+      variables.add(Configuration.CONTEXT_VAR_NAME);
     }
 
     if (fileType == StdFileTypes.JAVA) {
@@ -169,9 +161,9 @@ class EditVarConstraintsDialog extends DialogWrapper {
     }
 
     parameterList.setModel(
-      new AbstractListModel<Variable>() {
+      new AbstractListModel<String>() {
         @Override
-        public Variable getElementAt(int index) {
+        public String getElementAt(int index) {
           return variables.get(index);
         }
 
@@ -195,14 +187,14 @@ class EditVarConstraintsDialog extends DialogWrapper {
             rollingBackSelection=false;
             return;
           }
-          final Variable var = parameterList.getSelectedValue();
+          final String var = parameterList.getSelectedValue();
           if (validateParameters()) {
-            if (current!=null) copyValuesFromUI(current);
+            copyValuesFromUI(myConfiguration.getCurrentVariableName());
             ApplicationManager.getApplication().runWriteAction(() -> copyValuesToUI(var));
-            current = var;
+            myConfiguration.setCurrentVariableName(var);
           } else {
             rollingBackSelection = true;
-            parameterList.setSelectedIndex(e.getFirstIndex()==parameterList.getSelectedIndex()?e.getLastIndex():e.getFirstIndex());
+            parameterList.setSelectedIndex((e.getFirstIndex() == parameterList.getSelectedIndex()) ? e.getLastIndex() : e.getFirstIndex());
           }
         }
       }
@@ -212,7 +204,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
       new DefaultListCellRenderer() {
         @Override
         public Component getListCellRendererComponent(@NotNull JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-          String name = ((Variable)value).getName();
+          String name = (String)value;
           if (Configuration.CONTEXT_VAR_NAME.equals(name)) name = SSRBundle.message("complete.match.variable.name");
           if (isReplacementVariable(name)) {
             name = stripReplacementVarDecoration(name);
@@ -237,16 +229,9 @@ class EditVarConstraintsDialog extends DialogWrapper {
     init();
 
     if (!variables.isEmpty()) {
-      int selectedIndex = 0;
       final String variableName = configuration.getCurrentVariableName();
-      if (variableName != null) {
-        for (int i = 0, size = variables.size(); i < size; i++) {
-          if (variables.get(i).getName().equals(variableName)) {
-            selectedIndex = i;
-            break;
-          }
-        }
-      }
+      configuration.setCurrentVariableName(null);
+      final int selectedIndex = variableName != null ? variables.indexOf(variableName) : 0;
       parameterList.setSelectedIndex(selectedIndex);
     }
   }
@@ -278,14 +263,13 @@ class EditVarConstraintsDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     if(validateParameters()) {
-      if (current!=null) copyValuesFromUI(current);
+      copyValuesFromUI(myConfiguration.getCurrentVariableName());
       super.doOKAction();
     }
   }
 
-  void copyValuesFromUI(Variable var) {
-    final String varName = var.getName();
-
+  void copyValuesFromUI(@Nullable String varName) {
+    if (varName == null) return;
     if (isReplacementVariable(varName)) {
       saveScriptInfo(getOrAddReplacementVariableDefinition(varName, myConfiguration));
       return;
@@ -352,9 +336,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
     varInfo.setScriptCodeConstraint("\"" + customScriptCode.getChildComponent().getText() + "\"");
   }
 
-  void copyValuesToUI(Variable var) {
-    final String varName = var.getName();
-
+  void copyValuesToUI(String varName) {
     if (isReplacementVariable(varName)) {
       final ReplacementVariableDefinition definition =
         ((ReplaceConfiguration)myConfiguration).getReplaceOptions().getVariableDefinition(stripReplacementVarDecoration(varName));
@@ -425,7 +407,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
       invertReferenceTarget.setSelected(varInfo.isInvertReference());
     }
 
-    final boolean contextVar = Configuration.CONTEXT_VAR_NAME.equals(var.getName());
+    final boolean contextVar = Configuration.CONTEXT_VAR_NAME.equals(varName);
     containedInConstraints.setVisible(contextVar);
     textConstraintsPanel.setVisible(!contextVar);
     partOfSearchResults.setEnabled(!contextVar);
