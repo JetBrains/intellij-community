@@ -14,7 +14,6 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.util.ui.JBSwingUtilities;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -100,22 +99,23 @@ final class Stripe extends JPanel implements UISettingsListener {
       }
     }
 
+    @SuppressWarnings("UseDPIAwareInsets")
     @Override
     public Insets getBorderInsets(Component c) {
       Stripe stripe = (Stripe)c;
       ToolWindowAnchor anchor = stripe.getAnchor();
 
       if (anchor == ToolWindowAnchor.LEFT) {
-        return JBUI.insets(1, 0, 0, 1);
+        return new Insets(1, 0, 0, 1);
       }
       else if (anchor == ToolWindowAnchor.RIGHT) {
-        return JBUI.insets(1, 1, 0, 0);
+        return new Insets(1, 1, 0, 0);
       }
       else if (anchor == ToolWindowAnchor.TOP) {
-        return JBUI.insets(1, 0, 0, 0);
+        return new Insets(1, 0, 0, 0);
       }
       else {
-        return JBUI.insets(1, 0, 0, 0);
+        return new Insets(1, 0, 0, 0);
       }
     }
 
