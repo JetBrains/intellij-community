@@ -90,11 +90,13 @@ public class GrDocParameterReferenceImpl extends GroovyDocPsiElementImpl impleme
     return ResolveResult.EMPTY_ARRAY;
   }
 
+  @NotNull
   @Override
   public PsiElement getElement() {
     return this;
   }
 
+  @NotNull
   @Override
   public TextRange getRangeInElement() {
     return new TextRange(0, getTextLength());

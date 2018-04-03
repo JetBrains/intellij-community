@@ -370,6 +370,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
       return getManager().areElementsEquivalent(resolve(), element);
     }
 
+    @NotNull
     @Override
     public TextRange getRangeInElement() {
       final ASTNode sharp = findChildByType(DOC_TAG_VALUE_SHARP_TOKEN);
@@ -383,6 +384,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
       return new TextRange(getTextLength(), getTextLength());
     }
 
+    @NotNull
     @Override
     public PsiElement getElement() {
       return PsiDocMethodOrFieldRef.this;

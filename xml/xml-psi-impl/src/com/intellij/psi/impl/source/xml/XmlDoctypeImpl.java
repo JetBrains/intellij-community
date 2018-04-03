@@ -245,6 +245,7 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype {
       public String getCanonicalText() {
         return extractValue(dtdUrlElement);
       }
+      @NotNull
       @Override
       public TextRange getRangeInElement() {
         return TextRange.from(dtdUrlElement.getTextRange().getStartOffset() - getTextRange().getStartOffset() + 1, Math.max(dtdUrlElement.getTextRange().getLength() - 2, 0));

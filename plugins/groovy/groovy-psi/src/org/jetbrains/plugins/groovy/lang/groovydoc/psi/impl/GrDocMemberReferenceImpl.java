@@ -110,6 +110,7 @@ public abstract class GrDocMemberReferenceImpl extends GroovyDocPsiElementImpl i
     return token;
   }
 
+  @NotNull
   @Override
   public PsiElement getElement() {
     return this;
@@ -120,6 +121,7 @@ public abstract class GrDocMemberReferenceImpl extends GroovyDocPsiElementImpl i
     return this;
   }
 
+  @NotNull
   @Override
   public TextRange getRangeInElement() {
     final PsiElement refNameElement = getReferenceNameElement();
