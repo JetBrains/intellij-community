@@ -11,11 +11,17 @@ import java.util.regex.Pattern;
 public class StandardJsonLiteralChecker implements JsonLiteralChecker {
   private static final Pattern VALID_ESCAPE = Pattern.compile("\\\\([\"\\\\/bfnrt]|u[0-9a-fA-F]{4})");
   private static final Pattern VALID_NUMBER_LITERAL = Pattern.compile("-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?");
+  public static final String INF = "Infinity";
+  public static final String MINUS_INF = "-Infinity";
+  public static final String NAN = "NaN";
 
   @Nullable
   @Override
   public String getErrorForNumericLiteral(String literalText) {
-    if (!VALID_NUMBER_LITERAL.matcher(literalText).matches()) {
+    if (!INF.equals(literalText) &&
+        !MINUS_INF.equals(literalText) &&
+        !NAN.equals(literalText) &&
+        !VALID_NUMBER_LITERAL.matcher(literalText).matches()) {
       return JsonBundle.message("syntax.error.illegal.floating.point.literal");
     }
     return null;

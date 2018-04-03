@@ -52,6 +52,11 @@ public class Json5StandardComplianceInspection extends JsonStandardComplianceIns
       return true;
     }
 
+    @Override
+    protected boolean allowNanInfinity() {
+      return true;
+    }
+
     protected boolean isValidPropertyName(@NotNull PsiElement literal) {
       if (literal instanceof JsonLiteral) {
         String textWithoutHostEscaping = JsonPsiUtil.getElementTextWithoutHostEscaping(literal);

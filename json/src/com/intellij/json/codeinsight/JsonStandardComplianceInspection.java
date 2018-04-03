@@ -51,6 +51,7 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(JsonStandardComplianceInspection.class);
 
   public boolean myWarnAboutComments = true;
+  public boolean myWarnAboutNanInfinity = true;
   public boolean myWarnAboutMultipleTopLevelValues = true;
 
   @NotNull
@@ -90,6 +91,7 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
     final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
     optionsPanel.addCheckbox(JsonBundle.message("inspection.compliance.option.comments"), "myWarnAboutComments");
     optionsPanel.addCheckbox(JsonBundle.message("inspection.compliance.option.multiple.top.level.values"), "myWarnAboutMultipleTopLevelValues");
+    optionsPanel.addCheckbox(JsonBundle.message("inspection.compliance.option.nan.infinity"), "myWarnAboutNanInfinity");
     return optionsPanel;
   }
 
@@ -179,7 +181,21 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
       if (JsonPsiUtil.isPropertyKey(literal) && !isValidPropertyName(literal)) {
         myHolder.registerProblem(literal, JsonBundle.message("inspection.compliance.msg.illegal.property.key"), new AddDoubleQuotesFix());
       }
+
+      // for standard JSON, the inspection for NaN, Infinity and -Infinity is now configurable
+      if (!allowNanInfinity() && literal instanceof JsonNumberLiteral && myWarnAboutNanInfinity) {
+        final String text = JsonPsiUtil.getElementTextWithoutHostEscaping(literal);
+        if (StandardJsonLiteralChecker.INF.equals(text) ||
+            StandardJsonLiteralChecker.MINUS_INF.equals(text) ||
+            StandardJsonLiteralChecker.NAN.equals(text)) {
+          myHolder.registerProblem(literal, JsonBundle.message("syntax.error.illegal.floating.point.literal"));
+        }
+      }
       super.visitLiteral(literal);
+    }
+
+    protected boolean allowNanInfinity() {
+      return false;
     }
 
     @Override
