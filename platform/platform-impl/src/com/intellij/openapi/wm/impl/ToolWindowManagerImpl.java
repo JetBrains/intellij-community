@@ -1196,14 +1196,11 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   public void setLayout(@NotNull final DesktopLayout layout) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     List<FinalizableCommand> commandList = new ArrayList<>();
-    // hide tool window that are invisible in new layout
+    // hide tool window that are invisible or its info is not presented in new layout
     final WindowInfoImpl[] currentInfos = myLayout.getInfos();
     for (final WindowInfoImpl currentInfo : currentInfos) {
       final WindowInfoImpl info = layout.getInfo(currentInfo.getId(), false);
-      if (info == null) {
-        continue;
-      }
-      if (currentInfo.isVisible() && !info.isVisible()) {
+      if (currentInfo.isVisible() && (info == null || !info.isVisible())) {
         deactivateToolWindowImpl(currentInfo.getId(), true, commandList);
       }
     }

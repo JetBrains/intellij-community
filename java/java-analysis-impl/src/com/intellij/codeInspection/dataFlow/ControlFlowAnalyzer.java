@@ -1778,9 +1778,27 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       if (!myTrapStack.isEmpty()) {
         addMethodThrows(constructor, expression);
       }
+      setEmptyCollectionSize(expression);
     }
 
     finishElement(expression);
+  }
+
+  private void setEmptyCollectionSize(PsiNewExpression expression) {
+    DfaVariableValue var = getTargetVariable(expression);
+    if (var != null && ConstructionUtils.isEmptyCollectionInitializer(expression)) {
+      addInstruction(new PopInstruction());
+      addInstruction(new PushInstruction(var, null, true));
+      addInstruction(new PushInstruction(myFactory.withFact(
+        myFactory.createTypeValue(expression.getType(), Nullness.NOT_NULL), DfaFactType.LOCALITY, true), null));
+      addInstruction(new AssignInstruction(null, null));
+      SpecialField sizeField =
+        InheritanceUtil.isInheritor(expression.getType(), JAVA_UTIL_MAP) ? SpecialField.MAP_SIZE : SpecialField.COLLECTION_SIZE;
+      addInstruction(new PushInstruction(sizeField.createValue(myFactory, var), null, true));
+      addInstruction(new PushInstruction(myFactory.getInt(0), null));
+      addInstruction(new AssignInstruction(null, null));
+      addInstruction(new PopInstruction());
+    }
   }
 
   private void initializeSmallArray(PsiArrayType type, DfaVariableValue var, PsiExpression[] dimensions) {

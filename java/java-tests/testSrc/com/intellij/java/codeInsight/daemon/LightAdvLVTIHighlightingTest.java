@@ -49,7 +49,7 @@ public class LightAdvLVTIHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testUpwardProjection() { doTest(); }
 
   public void testVarInLambdaParameters() {
-    setLanguageLevel(LanguageLevel.JDK_X);
+    setLanguageLevel(LanguageLevel.JDK_11);
     doTest();
   }
 

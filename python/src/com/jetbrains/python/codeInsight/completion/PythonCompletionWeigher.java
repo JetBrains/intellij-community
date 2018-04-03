@@ -33,6 +33,7 @@ public class PythonCompletionWeigher extends CompletionWeigher {
 
   public static final int WEIGHT_DELTA = 5;
 
+  @NonNls private static final String SINGLE_UNDER = "_";
   @NonNls private static final String DOUBLE_UNDER = "__";
 
   @Override
@@ -48,8 +49,11 @@ public class PythonCompletionWeigher extends CompletionWeigher {
       return element.getLookupString().length();
     }
     if (name.startsWith(DOUBLE_UNDER)) {
-      if (name.endsWith(DOUBLE_UNDER)) return -2 * WEIGHT_DELTA; // __foo__ is lowest
-      else return -WEIGHT_DELTA; // __foo is lower than normal
+      if (name.endsWith(DOUBLE_UNDER)) return -4 * WEIGHT_DELTA; // __foo__ is lowest
+      else return -2 * WEIGHT_DELTA; // __foo is lower than normal
+    }
+    if (name.startsWith(SINGLE_UNDER)) {
+      return -1 * WEIGHT_DELTA;
     }
     return 0; // default
   }

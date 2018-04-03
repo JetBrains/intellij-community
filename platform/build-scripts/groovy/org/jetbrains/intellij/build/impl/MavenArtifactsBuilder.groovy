@@ -7,6 +7,7 @@ import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import groovy.transform.Immutable
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaDependencyScope
@@ -117,17 +118,34 @@ ${it.includeTransitiveDeps ? "" : """
 """.readLines().findAll {!it.trim().isEmpty()}.join("\n")
   }
 
-  private MavenCoordinates generateMavenCoordinates(JpsModule module) {
-    def names = module.name.split("\\.")
+  static MavenCoordinates generateMavenCoordinates(String moduleName, BuildMessages messages, String version) {
+    def names = moduleName.split("\\.")
     if (names.size() < 2) {
-      buildContext.messages.error("Cannot generate Maven artifacts: incorrect module name '$module.name'")
+      messages.error("Cannot generate Maven artifacts: incorrect module name '${moduleName}'")
     }
     String groupId = "com.jetbrains.${names.take(2).join(".")}"
     def firstMeaningful = names.size() > 2 && COMMON_GROUP_NAMES.contains(names[1]) ? 2 : 1
     String artifactId = names.drop(firstMeaningful).collectMany {
-      NameUtil.splitNameIntoWords(it).toList().collect {it.toLowerCase(Locale.US)}
+      splitByCamelHumpsMergingNumbers(it).collect {it.toLowerCase(Locale.US)}
     }.join("-")
-    return new MavenCoordinates(groupId, artifactId, buildContext.buildNumber)
+    return new MavenCoordinates(groupId, artifactId, version)
+  }
+
+  private static List<String> splitByCamelHumpsMergingNumbers(String s) {
+    def words = NameUtil.splitNameIntoWords(s)
+    def result = new ArrayList<String>()
+    for (int i = 0; i < words.length; i++) {
+      String next;
+      if (i < words.length - 1 && Character.isDigit(words[i + 1].charAt(0))) {
+        next = words[i] + words[i+1]
+        i++
+      }
+      else {
+        next = words[i]
+      }
+      result << next
+    }
+    return result
   }
 
   private Map<JpsModule, MavenArtifactData> generateMavenArtifactData(List<String> moduleNames) {
@@ -221,7 +239,7 @@ ${it.includeTransitiveDeps ? "" : """
       nonMavenizableModules << module
       return null
     }
-    def artifactData = new MavenArtifactData(generateMavenCoordinates(module), dependencies)
+    def artifactData = new MavenArtifactData(generateMavenCoordinates(module.name, buildContext.messages, buildContext.buildNumber), dependencies)
     results[module] = artifactData
     return artifactData
   }
@@ -242,7 +260,7 @@ ${it.includeTransitiveDeps ? "" : """
   }
 
   @Immutable
-  private static class MavenCoordinates {
+  static class MavenCoordinates {
     String groupId
     String artifactId
     String version

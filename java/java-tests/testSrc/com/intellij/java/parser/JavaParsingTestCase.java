@@ -51,9 +51,13 @@ public abstract class JavaParsingTestCase extends ParsingTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myLanguageLevel = LanguageLevel.JDK_X;
+    myLanguageLevel = getHighestLanguageLevel();
     getProject().registerService(LanguageLevelProjectExtension.class, new LanguageLevelProjectExtensionImpl(getProject()));
     addExplicitExtension(LanguageASTFactory.INSTANCE, JavaLanguage.INSTANCE, new JavaASTFactory());
+  }
+
+  protected LanguageLevel getHighestLanguageLevel() {
+    return LanguageLevel.HIGHEST;
   }
 
   @Override

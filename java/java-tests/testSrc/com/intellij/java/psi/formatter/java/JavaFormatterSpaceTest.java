@@ -16,7 +16,7 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    LanguageLevelProjectExtension.getInstance(LightPlatformTestCase.getProject()).setLanguageLevel(LanguageLevel.JDK_X);
+    LanguageLevelProjectExtension.getInstance(LightPlatformTestCase.getProject()).setLanguageLevel(LanguageLevel.HIGHEST);
   }
 
   public void testSpacingBetweenTypeParameters() {

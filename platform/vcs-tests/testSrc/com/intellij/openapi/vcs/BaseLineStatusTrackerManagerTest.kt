@@ -206,7 +206,7 @@ abstract class BaseLineStatusTrackerManagerTest : LightPlatformTestCase() {
 
   protected fun Range.assertChangeList(listName: String) {
     val localRange = this as PartialLocalLineStatusTracker.LocalRange
-    assertEquals(localRange.changelistId, listName.asListNameToId())
+    assertEquals(listName, localRange.changelistId.asListIdToName())
   }
 
 
