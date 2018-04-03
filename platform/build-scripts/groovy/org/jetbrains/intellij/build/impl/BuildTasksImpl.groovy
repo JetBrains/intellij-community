@@ -575,12 +575,12 @@ idea.fatal.error.notification=disabled
       // The SDK updater is a zip containing a jar and source.properties
       // We'll make the complete jar in build.xml, but here we create the initial part and move source.properties into place
       jar("patcher-partial.jar") {
-        module("updater-ui")
-        module("updater")
+        module("intellij.android.updater.ui")
+        module("intellij.platform.updater")
       }
     }
 
-    def updaterModule = buildContext.findModule("updater-ui")
+    def updaterModule = buildContext.findModule("intellij.android.updater.ui")
     def urls = updaterModule.getContentRootsList().getUrls()
     def uri = new URI(urls.get(0))
     buildContext.ant.copy(todir: "$buildContext.paths.buildOutputRoot/sdk-patcher") {

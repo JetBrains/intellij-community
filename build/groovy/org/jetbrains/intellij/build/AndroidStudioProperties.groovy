@@ -34,7 +34,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     baseFileName = "studio"
     platformPrefix = "AndroidStudio"
     productCode = "AI"
-    applicationInfoModule = "adt-branding"
+    applicationInfoModule = "intellij.android.adt.branding"
     additionalIDEPropertiesFilePaths = ["$home/build/conf/ideaCE.properties".toString()]
     toolsJarRequired = true
     buildCrossPlatformDistribution = true
@@ -57,24 +57,24 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     productLayout.productImplementationModules = JAVA_IMPLEMENTATION_MODULES +
                                                   [
                                                     // Android Studio: CIDR/CLion: Must be included here to be packaged into core, not as separate plugins
-                                                    "cidr-common",
-                                                    "cidr-debugger",
-                                                    "cidr-ide",
-                                                    "cidr-lang",
-                                                    "cidr-lang-dfa",
-                                                    "cidr-util",
-                                                    "clion",
-                                                    "doxygen",
+                                                    "intellij.cidr.common",
+                                                    "intellij.cidr.debugger",
+                                                    "intellij.cidr.ide",
+                                                    "intellij.c",
+                                                    "intellij.c.dfa",
+                                                    "intellij.cidr.util",
+                                                    "intellij.clion",
+                                                    "intellij.c.doxygen",
                                                   ] +
-                                                  ["duplicates-analysis", "structuralsearch", "structuralsearch-java", "typeMigration", "platform-main"] -
-                                                  ["jps-model-impl", "jps-model-serialization"]
-    productLayout.additionalPlatformJars.putAll("resources.jar", "community-resources", "adt-branding")
+                                                  ["intellij.platform.duplicates.analysis", "intellij.platform.structuralSearch", "intellij.java.structuralSearch", "intellij.java.typeMigration", "intellij.platform.main"] -
+                                                  ["intellij.platform.jps.model.impl", "intellij.platform.jps.model.serialization"]
+    productLayout.additionalPlatformJars.putAll("resources.jar", "intellij.idea.community.resources", "intellij.android.adt.branding")
 
     // Android Studio: including the common base library to avoid classloader issues (?)
-    productLayout.additionalPlatformJars.put("android-base-common.jar", "common")
+    productLayout.additionalPlatformJars.put("android-base-common.jar", "android.sdktools.common")
     // Android Studio: include metrics libraries in $install/lib
     productLayout.additionalPlatformJars.putAll("google-analytics-library.jar",
-                                                "android-annotations",
+                                                "android.sdktools.android-annotations",
                                                 "analytics-protos",
                                                 "analytics-shared",
                                                 "analytics-tracker",
@@ -95,62 +95,62 @@ class AndroidStudioProperties extends BaseIdeaProperties {
                                            "google-cloud-tools-core-as",
                                            "google-samples",
                                            "google-services",
-                                           "smali",
+                                           "intellij.android.smali",
                                            "test-recorder",
                                            "url-assistant",
                                          ]
-    productLayout.mainModules = ["community-main"]
+    productLayout.mainModules = ["intellij.idea.community.main"]
     productLayout.allNonTrivialPlugins = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS + [
       androidPluginInStudio([:]),
       CommunityRepositoryModules.groovyPlugin([])
     ]
     if (buildOptions.includeUiTests) {
-      modulesToCompileTests += ["android-uitests", "uitest-framework", "uitest-framework-gradle", "uitest-framework-bazel", "android-test-framework"]
+      modulesToCompileTests += ["intellij.android.guiTests", "intellij.android.guiTestFramework", "uitest-framework-gradle", "uitest-framework-bazel", "intellij.android.testFramework"]
       productLayout.allNonTrivialPlugins.add(uitestPlugin())
       productLayout.allNonTrivialPlugins.add(plugin("uitest-framework-bazel") { withTestModule("uitest-framework-bazel") })
       productLayout.allNonTrivialPlugins.add(plugin("uitest-framework-gradle") { withTestModule("uitest-framework-gradle") })
-      productLayout.bundledPluginModules += ["uitest-framework", "uitest-framework-gradle", "uitest-framework-bazel"]
+      productLayout.bundledPluginModules += ["intellij.android.guiTestFramework", "uitest-framework-gradle", "uitest-framework-bazel"]
     }
     productLayout.classesLoadingOrderFilePath = "$home/build/order.txt"
   }
 
   static PluginLayout uitestPlugin () {
-    plugin("uitest-framework") {
-      withTestModule("uitest-framework")
-      withTestModule("android-uitests")
+    plugin("intellij.android.guiTestFramework") {
+      withTestModule("intellij.android.guiTestFramework")
+      withTestModule("intellij.android.guiTests")
       withModule("fest-swing")
-      withTestModule("testutils")
-      withTestModule("android-test-framework")
-      withModule("testFramework")
-      withTestModule("observable")
+      withTestModule("android.sdktools.testutils")
+      withTestModule("intellij.android.testFramework")
+      withModule("intellij.platform.testFramework")
+      withTestModule("intellij.android.observable")
     }
   }
 
   static PluginLayout androidPluginInStudio(Map<String, String> additionalModulesToJars) {
-    plugin("android-plugin") {
+    plugin("intellij.android.plugin") {
       directoryName = "android"
       mainJarName = "android.jar"
-      withModule("android-common", "android-common.jar", false)
-      withModule("build-common", "build-common.jar", false)
-      withModule("android-rt", "android-rt.jar", false)
+      withModule("intellij.android.common", "android-common.jar", false)
+      withModule("intellij.android.buildCommon", "build-common.jar", false)
+      withModule("intellij.android.rt", "android-rt.jar", false)
 
-      withModule("android", "android.jar", false)
+      withModule("intellij.android", "android.jar", false)
       withModule("android-adb", "android.jar")
       withModule("android-debuggers", "android.jar")
       withModule("android-lang", "android.jar")
-      withModule("android-plugin", "android.jar")
-      withModule("artwork")
-      withModule("observable", "android.jar")
-      withModule("observable-ui", "android.jar")
-      withModule("flags", "android.jar")
-      withModule("designer", "android.jar")
-      withModule("sdk-updates", "android.jar")
-      withModule("wizard", "android.jar")
-      withModule("wizard-model", "android.jar")
-      withModule("profilers-android", "android.jar")
-      withModule("perfd-host", "android-profilers.jar")
-      withModule("profilers", "android-profilers.jar")
-      withModule("profilers-ui", "android-profilers.jar")
+      withModule("intellij.android.plugin", "android.jar")
+      withModule("intellij.android.artwork")
+      withModule("intellij.android.observable", "android.jar")
+      withModule("intellij.android.observable.ui", "android.jar")
+      withModule("intellij.android.flags", "android.jar")
+      withModule("intellij.android.designer", "android.jar")
+      withModule("intellij.android.sdkUpdates", "android.jar")
+      withModule("intellij.android.wizard", "android.jar")
+      withModule("intellij.android.wizard.model", "android.jar")
+      withModule("intellij.android.profilersAndroid", "android.jar")
+      withModule("intellij.android.perfdHost", "android-profilers.jar")
+      withModule("intellij.android.profilers", "android-profilers.jar")
+      withModule("intellij.android.profilers.ui", "android-profilers.jar")
       withModule("profilers-atrace", "android-profilers.jar")
       withModule("native-symbolizer", "android.jar")
       withModule("apkanalyzer", "android.jar")
@@ -160,40 +160,40 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       withModule("assistant", "android.jar")
       withModule("connection-assistant", "android.jar")
       withModule("whats-new-assistant", "android.jar")
-      withModule("adt-ui", "adt-ui.jar")
-      withModule("adt-ui-model", "adt-ui.jar")
-      withModule("repository")
+      withModule("intellij.android.adt.ui", "adt-ui.jar")
+      withModule("intellij.android.adt.ui.model", "adt-ui.jar")
+      withModule("android.sdktools.repository")
       withModule("db-baseLibrary", "data-binding.jar")
       withModule("db-compilerCommon", "data-binding.jar")
       withModule("db-compiler", "data-binding.jar")
-      withModule("sdklib", "sdklib.jar")
-      withModule("sdk-common", "sdk-common.jar")
-      withModule("layoutlib-api", "layoutlib-api.jar")
-      withModule("layoutlib", "layoutlib-loader.jar")
-      withModule("manifest-merger", "manifest-merger.jar")
-      withModule("chunkio", "pixelprobe.jar")
-      withModule("pixelprobe", "pixelprobe.jar")
+      withModule("android.sdktools.sdklib", "sdklib.jar")
+      withModule("android.sdktools.sdk-common", "sdk-common.jar")
+      withModule("android.sdktools.layoutlib-api", "layoutlib-api.jar")
+      withModule("intellij.android.layoutlib", "layoutlib-loader.jar")
+      withModule("android.sdktools.manifest-merger", "manifest-merger.jar")
+      withModule("android.sdktools.chunkio", "pixelprobe.jar")
+      withModule("android.sdktools.pixelprobe", "pixelprobe.jar")
 
-      withModule("binary-resources", "sdk-tools.jar")
-      withModule("analyzer", "sdk-tools.jar")
-      withModule("ddmlib", "sdk-tools.jar")
-      withModule("dvlib", "sdk-tools.jar")
-      withModule("draw9patch", "sdk-tools.jar")
-      withModule("instant-run-client", "sdk-tools.jar")
-      withModule("instant-run-common", "sdk-tools.jar")
-      withModule("lint-api", "sdk-tools.jar")
-      withModule("lint-checks", "sdk-tools.jar")
-      withModule("ninepatch", "sdk-tools.jar")
-      withModule("perflib", "sdk-tools.jar")
-      withModule("builder-model", "sdk-tools.jar")
-      withModule("builder-test-api", "sdk-tools.jar")
-      withModule("android-annotations", "sdk-tools.jar")
-      withModule("layoutinspector", "sdk-tools.jar")
-      withModule("java-lib-model", "sdk-tools.jar")
-      withModule("java-lib-model-builder", "sdk-tools.jar")
+      withModule("android.sdktools.binary-resources", "sdk-tools.jar")
+      withModule("intellij.android.analyzer", "sdk-tools.jar")
+      withModule("android.sdktools.ddmlib", "sdk-tools.jar")
+      withModule("android.sdktools.dvlib", "sdk-tools.jar")
+      withModule("android.sdktools.draw9patch", "sdk-tools.jar")
+      withModule("android.sdktools.instant-run-client", "sdk-tools.jar")
+      withModule("android.sdktools.instant-run-common", "sdk-tools.jar")
+      withModule("android.sdktools.lint-api", "sdk-tools.jar")
+      withModule("android.sdktools.lint-checks", "sdk-tools.jar")
+      withModule("android.sdktools.ninepatch", "sdk-tools.jar")
+      withModule("android.sdktools.perflib", "sdk-tools.jar")
+      withModule("android.sdktools.builder-model", "sdk-tools.jar")
+      withModule("android.sdktools.builder-test-api", "sdk-tools.jar")
+      withModule("android.sdktools.android-annotations", "sdk-tools.jar")
+      withModule("intellij.android.layoutInspector", "sdk-tools.jar")
+      withModule("intellij.android.javaLibModel", "sdk-tools.jar")
+      withModule("intellij.android.javaLibModel.builder", "sdk-tools.jar")
       withModule("usb-devices", "sdk-tools.jar")
 
-      withJpsModule("android-jps-plugin")
+      withJpsModule("intellij.android.jps")
 
       withProjectLibrary("freemarker") //todo[nik] move to module libraries
       //withProjectLibrary("builder-model") //todo[nik] move to module libraries
@@ -201,18 +201,18 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       withProjectLibrary("kxml2") //todo[nik] move to module libraries
       withProjectLibrary("layoutlib") //todo[nik] move to module libraries
 
-      withResourceFromModule("android","lib/antlr4-runtime-4.5.3.jar", "lib")
-      withResourceFromModule("android","lib/asm-5.0.3.jar", "lib")
-      withResourceFromModule("android","lib/asm-analysis-5.0.3.jar", "lib")
-      withResourceFromModule("android","lib/asm-tree-5.0.3.jar", "lib")
-      withResourceFromModule("android","lib/commons-compress-1.8.1.jar", "lib")
-      withResourceFromModule("android","lib/javawriter-2.2.1.jar", "lib")
-      withResourceFromModule("android","lib/juniversalchardet-1.0.3.jar", "lib")
+      withResourceFromModule("intellij.android", "lib/antlr4-runtime-4.5.3.jar", "lib")
+      withResourceFromModule("intellij.android", "lib/asm-5.0.3.jar", "lib")
+      withResourceFromModule("intellij.android", "lib/asm-analysis-5.0.3.jar", "lib")
+      withResourceFromModule("intellij.android", "lib/asm-tree-5.0.3.jar", "lib")
+      withResourceFromModule("intellij.android", "lib/commons-compress-1.8.1.jar", "lib")
+      withResourceFromModule("intellij.android", "lib/javawriter-2.2.1.jar", "lib")
+      withResourceFromModule("intellij.android", "lib/juniversalchardet-1.0.3.jar", "lib")
 
-      withResourceFromModule("android","lib/androidWidgets", "lib/androidWidgets")
-      withResourceFromModule("artwork","resources/device-art-resources", "lib/device-art-resources")
-      withResourceFromModule("android","lib/sampleData", "lib/sampleData")
-      withResourceArchiveFromModule("android", "annotations", "lib/androidAnnotations.jar")
+      withResourceFromModule("intellij.android", "lib/androidWidgets", "lib/androidWidgets")
+      withResourceFromModule("intellij.android.artwork", "resources/device-art-resources", "lib/device-art-resources")
+      withResourceFromModule("intellij.android", "lib/sampleData", "lib/sampleData")
+      withResourceArchiveFromModule("intellij.android", "annotations", "lib/androidAnnotations.jar")
 
       additionalModulesToJars.entrySet().each {
         withModule(it.key, it.value)
@@ -221,7 +221,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
   }
 
   static String getGradleVersionToBundle(BuildContext buildContext) {
-    File sdkConstants = buildContext.findFileInModuleSources("common", "com/android/SdkConstants.java")
+    File sdkConstants = buildContext.findFileInModuleSources("android.sdktools.common", "com/android/SdkConstants.java")
     if (sdkConstants != null && sdkConstants.exists()) {
       return sdkConstants.readLines().find { line -> line =~ ".*GRADLE_MINIMUM_VERSION.*" }.split("\"")[1]
     }

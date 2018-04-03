@@ -648,7 +648,7 @@
       <module fileurl="file://$PROJECT_DIR$/../analytics-library/protos/analytics-protos.iml" filepath="$PROJECT_DIR$/../analytics-library/protos/analytics-protos.iml" group="android/sdktools/analytics-library" />
       <module fileurl="file://$PROJECT_DIR$/../analytics-library/publisher/analytics-publisher.iml" filepath="$PROJECT_DIR$/../analytics-library/publisher/analytics-publisher.iml" group="android/sdktools/analytics-library" />
       <module fileurl="file://$PROJECT_DIR$/../analytics-library/shared/analytics-shared.iml" filepath="$PROJECT_DIR$/../analytics-library/shared/analytics-shared.iml" group="android/sdktools/analytics-library" />
-      <module fileurl="file://$PROJECT_DIR$/../analytics-library/testing/analytics-testing.iml" filepath="$PROJECT_DIR$/../analytics-library/testing/analytics-testing.iml" group="android/sdktools/analytics-library" />
+      <module fileurl="file://$PROJECT_DIR$/../analytics-library/testing/android.sdktools.analytics-testing.iml" filepath="$PROJECT_DIR$/../analytics-library/testing/android.sdktools.analytics-testing.iml" group="android/sdktools/analytics-library" />
       <module fileurl="file://$PROJECT_DIR$/../analytics-library/tracker/analytics-tracker.iml" filepath="$PROJECT_DIR$/../analytics-library/tracker/analytics-tracker.iml" group="android/sdktools/analytics-library" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-adb/android-adb.iml" filepath="$PROJECT_DIR$/../adt/idea/android-adb/android-adb.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-adb/android-adb-tests.iml" filepath="$PROJECT_DIR$/../adt/idea/android-adb/android-adb-tests.iml" group="android" />
@@ -674,15 +674,15 @@
       <module fileurl="file://$PROJECT_DIR$/../vendor/google3/blaze/java/com/google/devtools/intellij/blaze/plugin/base/blaze-base-google3.iml" filepath="$PROJECT_DIR$/../vendor/google3/blaze/java/com/google/devtools/intellij/blaze/plugin/base/blaze-base-google3.iml" group="plugins/Google/Blaze/Google3" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/google3/blaze/java/com/google/devtools/intellij/blaze/plugin/aswb/blaze-integration-tests.iml" filepath="$PROJECT_DIR$/../vendor/google3/blaze/java/com/google/devtools/intellij/blaze/plugin/aswb/blaze-integration-tests.iml" group="plugins/Google/Blaze" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/google3/blaze/java/com/google/devtools/intellij/blaze/plugin/java/blaze-java-google3.iml" filepath="$PROJECT_DIR$/../vendor/google3/blaze/java/com/google/devtools/intellij/blaze/plugin/java/blaze-java-google3.iml" group="plugins/Google/Blaze/Google3" />
-      <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-common/cidr-common.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-common/cidr-common.iml" group="java" />
-      <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-debugger/cidr-debugger.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-debugger/cidr-debugger.iml" group="java" />
-      <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-ide/cidr-ide.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-ide/cidr-ide.iml" group="java" />
-      <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-lang/cidr-lang.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-lang/cidr-lang.iml" group="java" />
-      <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-lang-dfa/cidr-lang-dfa.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-lang-dfa/cidr-lang-dfa.iml" group="java" />
-      <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-util/cidr-util.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-util/cidr-util.iml" group="java" />
-      <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/clion/clion.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/clion/clion.iml" group="java" />
-      <module fileurl="file://$PROJECT_DIR$/../base/common/common-tests.iml" filepath="$PROJECT_DIR$/../base/common/common-tests.iml" group="android/sdktools" />
-      <module fileurl="file://$PROJECT_DIR$/community-main-tests/community-main-tests.iml" filepath="$PROJECT_DIR$/community-main-tests/community-main-tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-common/intellij.cidr.common.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-common/intellij.cidr.common.iml" group="java" />
+      <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-debugger/intellij.cidr.debugger.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-debugger/intellij.cidr.debugger.iml" group="java" />
+      <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-ide/intellij.cidr.ide.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-ide/intellij.cidr.ide.iml" group="java" />
+      <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-lang/intellij.c.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-lang/intellij.c.iml" group="java" />
+      <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-lang-dfa/intellij.c.dfa.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-lang-dfa/intellij.c.dfa.iml" group="java" />
+      <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-util/intellij.cidr.util.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-util/intellij.cidr.util.iml" group="java" />
+      <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/clion/intellij.clion.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/clion/intellij.clion.iml" group="java" />
+      <module fileurl="file://$PROJECT_DIR$/../base/common/android.sdktools.common.tests.iml" filepath="$PROJECT_DIR$/../base/common/android.sdktools.common.tests.iml" group="android/sdktools" />
+      <module fileurl="file://$PROJECT_DIR$/community-main-tests/intellij.idea.community.main.tests.iml" filepath="$PROJECT_DIR$/community-main-tests/intellij.idea.community.main.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/connection-assistant/connection-assistant.iml" filepath="$PROJECT_DIR$/../adt/idea/connection-assistant/connection-assistant.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/connection-assistant/connection-assistant-test.iml" filepath="$PROJECT_DIR$/../adt/idea/connection-assistant/connection-assistant-test.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/../data-binding/baseLibrary/db-baseLibrary.iml" filepath="$PROJECT_DIR$/../data-binding/baseLibrary/db-baseLibrary.iml" group="android/data-binding" />
@@ -690,7 +690,7 @@
       <module fileurl="file://$PROJECT_DIR$/../data-binding/compiler/db-compiler.iml" filepath="$PROJECT_DIR$/../data-binding/compiler/db-compiler.iml" group="android/data-binding" />
       <module fileurl="file://$PROJECT_DIR$/../data-binding/compilerCommon/db-compilerCommon.iml" filepath="$PROJECT_DIR$/../data-binding/compilerCommon/db-compilerCommon.iml" group="android/data-binding" />
       <module fileurl="file://$PROJECT_DIR$/../base/devicelib/devicelib.iml" filepath="$PROJECT_DIR$/../base/devicelib/devicelib.iml" group="android/sdktools" />
-      <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/doxygen/doxygen.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/doxygen/doxygen.iml" group="java" />
+      <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/doxygen/intellij.c.doxygen.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/doxygen/intellij.c.doxygen.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/../swing-testing/fest-swing/fest-swing.iml" filepath="$PROJECT_DIR$/../swing-testing/fest-swing/fest-swing.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/google/firebase/firebase.iml" filepath="$PROJECT_DIR$/../vendor/google/firebase/firebase.iml" group="plugins/Google" />
       <module fileurl="file://$PROJECT_DIR$/../studio/google/cloud/testing/firebase-testing/firebase-testing.iml" filepath="$PROJECT_DIR$/../studio/google/cloud/testing/firebase-testing/firebase-testing.iml" group="plugins/Google" />
@@ -711,13 +711,13 @@
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/project-system-gradle/project-system-gradle.iml" filepath="$PROJECT_DIR$/../adt/idea/project-system-gradle/project-system-gradle.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/project-system-gradle/project-system-gradle-tests.iml" filepath="$PROJECT_DIR$/../adt/idea/project-system-gradle/project-system-gradle-tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/project-system/project-system-tests.iml" filepath="$PROJECT_DIR$/../adt/idea/project-system/project-system-tests.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../adt/idea/sdk-updates/sdk-updates-tests.iml" filepath="$PROJECT_DIR$/../adt/idea/sdk-updates/sdk-updates-tests.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/clion/lib/ssh.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/clion/lib/ssh.iml" group="java" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/sdk-updates/intellij.android.sdkUpdates.tests.iml" filepath="$PROJECT_DIR$/../adt/idea/sdk-updates/intellij.android.sdkUpdates.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/clion/lib/intellij.platform.ssh.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/clion/lib/intellij.platform.ssh.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/../studio/google/cloud/testing/test-recorder/test-recorder.iml" filepath="$PROJECT_DIR$/../studio/google/cloud/testing/test-recorder/test-recorder.iml" group="plugins/Google" />
       <module fileurl="file://$PROJECT_DIR$/../base/testutils/testutils-tests.iml" filepath="$PROJECT_DIR$/../base/testutils/testutils-tests.iml" group="android/sdktools" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/uitest-framework-bazel/uitest-framework-bazel.iml" filepath="$PROJECT_DIR$/../adt/idea/uitest-framework-bazel/uitest-framework-bazel.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/uitest-framework-gradle/uitest-framework-gradle.iml" filepath="$PROJECT_DIR$/../adt/idea/uitest-framework-gradle/uitest-framework-gradle.iml" group="android" />
-      <module fileurl="file://$PROJECT_DIR$/../adt/idea/updater-ui/updater-ui.iml" filepath="$PROJECT_DIR$/../adt/idea/updater-ui/updater-ui.iml" group="android" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/updater-ui/intellij.android.updater.ui.iml" filepath="$PROJECT_DIR$/../adt/idea/updater-ui/intellij.android.updater.ui.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/google/url-assistant/url-assistant.iml" filepath="$PROJECT_DIR$/../vendor/google/url-assistant/url-assistant.iml" group="plugins/Google" />
       <module fileurl="file://$PROJECT_DIR$/../base/usb-devices/usb-devices.iml" filepath="$PROJECT_DIR$/../base/usb-devices/usb-devices.iml" group="android/sdktools" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/whats-new-assistant/whats-new-assistant.iml" filepath="$PROJECT_DIR$/../adt/idea/whats-new-assistant/whats-new-assistant.iml" group="android" />

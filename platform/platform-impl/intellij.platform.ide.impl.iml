@@ -48,7 +48,7 @@
     <orderEntry type="module" module-name="analytics-tracker" />
     <orderEntry type="module" module-name="analytics-shared" />
     <orderEntry type="module" module-name="analytics-publisher" />
-    <orderEntry type="module" module-name="common" />
+    <orderEntry type="module" module-name="android.sdktools.common" />
     <orderEntry type="module" module-name="analytics-protos" />
     <orderEntry type="library" name="pty4j" level="project" />
     <orderEntry type="module" module-name="intellij.platform.credentialStore" scope="RUNTIME" />

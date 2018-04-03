@@ -34,7 +34,7 @@ class IdeaCommunityBuilder {
 
   void buildFullUpdater() {
     def tasks = BuildTasks.create(buildContext)
-    tasks.compileModules(["updater"])
+    tasks.compileModules(["intellij.platform.updater"])
     tasks.buildFullUpdaterJar()
   }
 

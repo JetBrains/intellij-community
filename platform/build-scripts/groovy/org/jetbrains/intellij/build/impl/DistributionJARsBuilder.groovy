@@ -161,7 +161,7 @@ class DistributionJARsBuilder {
    */
   static List<String> getToolModules() {
     ["intellij.java.rt", "intellij.platform.main", /*required to build searchable options index*/ "intellij.platform.updater",
-     "updater-ui"]  // Android Studio: added by Change If9fe9db0 / commit 520343f
+     "intellij.android.updater.ui"]  // Android Studio: added by Change If9fe9db0 / commit 520343f
   }
 
   static List<String> getPlatformApiModules(ProductModulesLayout productLayout) {
