@@ -10,7 +10,6 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -54,7 +53,7 @@ public class LanguageFolding extends LanguageExtension<FoldingBuilder> {
   @Override
   public List<FoldingBuilder> allForLanguage(@NotNull Language language) {
     for (Language l = language; l != null; l = l.getBaseLanguage()) {
-      List<FoldingBuilder> extensions = new ArrayList<>(forKey(l));
+      List<FoldingBuilder> extensions = forKey(l);
       if (!extensions.isEmpty()) {
         return extensions;
       }
