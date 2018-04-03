@@ -37,6 +37,7 @@ import org.apache.maven.artifact.resolver.ArtifactNotFoundException;
 import org.apache.maven.artifact.resolver.ArtifactResolutionException;
 import org.apache.maven.artifact.resolver.ArtifactResolver;
 import org.apache.maven.artifact.resolver.ResolutionListener;
+import org.apache.maven.bridge.MavenRepositorySystem;
 import org.apache.maven.cli.MavenCli;
 import org.apache.maven.execution.*;
 import org.apache.maven.model.Activation;
@@ -137,6 +138,9 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
   private boolean myAlwaysUpdateSnapshots;
 
   @Nullable private Properties myUserProperties;
+
+  @NotNull private final MavenRepositorySystem myRepositorySystem;
+  @NotNull private final LegacySupport myLegacySupport;
 
   public Maven3ServerEmbedderImpl(MavenEmbedderSettings settings) throws RemoteException {
     super(settings.getSettings());
@@ -255,6 +259,9 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
                                     ReflectionUtil.getField(cliRequestClass, cliRequest, Properties.class, "userProperties"));
 
     myLocalRepository = createLocalRepository();
+
+    myRepositorySystem = getComponent(MavenRepositorySystem.class);
+    myLegacySupport = getComponent(LegacySupport.class);
   }
 
   private static Settings buildSettings(SettingsBuilder builder,
@@ -1251,6 +1258,12 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
       catch (InvalidRepositoryException e) {
         Maven3ServerGlobals.getLogger().warn(e);
       }
+    }
+    RepositorySystemSession session = myLegacySupport.getRepositorySession();
+    if (session != null) {
+      myRepositorySystem.injectMirror(session, result);
+      myRepositorySystem.injectProxy(session, result);
+      myRepositorySystem.injectAuthentication(session, result);
     }
     return result;
   }
