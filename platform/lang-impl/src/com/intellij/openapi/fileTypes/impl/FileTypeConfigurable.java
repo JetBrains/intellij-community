@@ -35,7 +35,6 @@ import com.intellij.psi.templateLanguages.TemplateDataLanguagePatterns;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.JBDimension;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,7 +58,6 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
   private HashSet<FileType> myTempFileTypes;
   private final FileTypeManagerImpl myManager;
   private FileTypeAssocTable<FileType> myTempPatternsTable;
-  private final Map<FileNameMatcher, FileType> myReassigned = new THashMap<>();
   private FileTypeAssocTable<Language> myTempTemplateDataLanguages;
   private final Map<UserFileType, UserFileType> myOriginalToEditedMap = new HashMap<>();
 
@@ -121,9 +119,10 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
       if (!myManager.isIgnoredFilesListEqualToCurrent(myFileTypePanel.myIgnoreFilesField.getText())) {
         myManager.setIgnoredFilesList(myFileTypePanel.myIgnoreFilesField.getText());
       }
+      Map<FileNameMatcher, FileType> removedMappings = myManager.getExtensionMap().getRemovedMappings(myTempPatternsTable, myTempFileTypes);
       myManager.setPatternsTable(myTempFileTypes, myTempPatternsTable);
-      for (FileNameMatcher matcher : myReassigned.keySet()) {
-        myManager.getRemovedMappings().put(matcher, Pair.create(myReassigned.get(matcher), true));
+      for (FileNameMatcher matcher : removedMappings.keySet()) {
+        myManager.getRemovedMappings().put(matcher, Pair.create(removedMappings.get(matcher), true));
       }
 
       TemplateDataLanguagePatterns.getInstance().setAssocTable(myTempTemplateDataLanguages);
@@ -279,7 +278,6 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
             if (oldLanguage != null) {
               myTempTemplateDataLanguages.removeAssociation(matcher, oldLanguage);
             }
-            myReassigned.put(matcher, registeredFileType);
           }
           else {
             return;

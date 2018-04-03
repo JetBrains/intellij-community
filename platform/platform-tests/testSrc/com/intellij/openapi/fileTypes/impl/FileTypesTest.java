@@ -396,6 +396,16 @@ public class FileTypesTest extends PlatformTestCase {
     assertTrue(pair.second);
   }
 
+  public void testGetRemovedMappings() {
+    FileTypeAssocTable<FileType> table = myFileTypeManager.getExtensionMap().copy();
+    ArchiveFileType fileType = ArchiveFileType.INSTANCE;
+    FileNameMatcher matcher = table.getAssociations(fileType).get(0);
+    table.removeAssociation(matcher, fileType);
+    Map<FileNameMatcher, FileType> reassigned =
+      myFileTypeManager.getExtensionMap().getRemovedMappings(table, Arrays.asList(myFileTypeManager.getRegisteredFileTypes()));
+    assertEquals(1, reassigned.size());
+  }
+
   public void testRenamedPropertiesToUnknownAndBack() throws Exception {
     FileType propFileType = myFileTypeManager.getFileTypeByFileName("xx.properties");
     assertEquals("Properties", propFileType.getName());
