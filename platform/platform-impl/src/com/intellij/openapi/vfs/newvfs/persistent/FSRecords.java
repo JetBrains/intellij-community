@@ -1022,8 +1022,8 @@ public class FSRecords {
   @Nullable
   static VirtualFileSystemEntry findFileById(int id, @NotNull ConcurrentIntObjectMap<VirtualFileSystemEntry> idCache) {
     class ParentFinder implements ThrowableComputable<Void, Throwable> {
-      @Nullable TIntArrayList path = null;
-      VirtualFileSystemEntry foundParent;
+      @Nullable private TIntArrayList path;
+      private VirtualFileSystemEntry foundParent;
       
       @Override
       public Void compute() {
@@ -1048,7 +1048,7 @@ public class FSRecords {
         }
       }
 
-      VirtualFileSystemEntry findDescendantByIdPath() {
+      private VirtualFileSystemEntry findDescendantByIdPath() {
         VirtualFileSystemEntry parent = foundParent;
         if (path != null) {
           for (int i = path.size() - 1; i >= 0; i--) {

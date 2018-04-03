@@ -301,13 +301,11 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     return viewProvider != null && viewProvider.isEventSystemEnabled() && !AbstractFileViewProvider.isFreeThreaded(viewProvider);
   }
 
-  // public for Upsource
-  public boolean finishCommit(@NotNull final Document document,
-                              @NotNull List<BooleanRunnable> finishProcessors,
-                              @NotNull List<BooleanRunnable> reparseInjectedProcessors,
-                              @NotNull ProperTextRange changedRange,
-                              final boolean synchronously,
-                              @NotNull final Object reason) {
+  boolean finishCommit(@NotNull final Document document,
+                       @NotNull List<BooleanRunnable> finishProcessors,
+                       @NotNull List<BooleanRunnable> reparseInjectedProcessors,
+                       final boolean synchronously,
+                       @NotNull final Object reason) {
     assert !myProject.isDisposed() : "Already disposed";
     ApplicationManager.getApplication().assertIsDispatchThread();
     final boolean[] ok = {true};
@@ -485,12 +483,12 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       return;
     }
 
-    if (ApplicationManager.getApplication().isReadAccessAllowed()) {
-      LOG.error("Don't call commitAndRunReadAction inside ReadAction, it will cause a deadlock otherwise. "+Thread.currentThread());
+    if (application.isReadAccessAllowed()) {
+      LOG.error("Don't call commitAndRunReadAction inside ReadAction, it will cause a deadlock. "+Thread.currentThread());
     }
 
     while (true) {
-      boolean executed = application.runReadAction((Computable<Boolean>)() -> {
+      boolean executed = ReadAction.compute(() -> {
         if (myUncommittedDocuments.isEmpty()) {
           runnable.run();
           return true;

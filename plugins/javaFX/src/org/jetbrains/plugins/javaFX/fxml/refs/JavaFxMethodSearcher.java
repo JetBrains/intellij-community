@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.javaFX.fxml.refs;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -27,7 +26,6 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.XmlAttribute;
@@ -95,9 +93,8 @@ public class JavaFxMethodSearcher implements QueryExecutor<PsiReference, Referen
       if (ArrayUtil.isEmpty(filteredFiles)) return;
 
       final GlobalSearchScope filteredScope = GlobalSearchScope.filesScope(project, ContainerUtil.newHashSet(filteredFiles));
-      ApplicationManager.getApplication().runReadAction(
-        (Runnable)() -> CacheManager.SERVICE.getInstance(project).processFilesWithWord(
-          file -> searchMethodInFile(psiMethod, file, consumer), propertyName, UsageSearchContext.IN_PLAIN_TEXT, filteredScope, true));
+      ReadAction.run(() -> CacheManager.SERVICE.getInstance(project).processFilesWithWord(
+        file -> searchMethodInFile(psiMethod, file, consumer), propertyName, UsageSearchContext.IN_PLAIN_TEXT, filteredScope, true));
     }
   }
 
