@@ -126,7 +126,7 @@ public class DfaExpressionFactory {
         target = ObjectUtils.tryCast(qualifier.resolve(), PsiClass.class);
       }
       else {
-        target = getContainingClass(expression);
+        target = ClassUtils.getContainingClass(expression);
       }
       return target == null
              ? myFactory.createTypeValue(expression.getType(), Nullness.NOT_NULL)
@@ -186,7 +186,7 @@ public class DfaExpressionFactory {
       PsiElement element = refExpr.resolve();
       if (element instanceof PsiMember && !((PsiMember)element).hasModifierProperty(PsiModifier.STATIC)) {
         PsiClass currentClass;
-        currentClass = getContainingClass(refExpr);
+        currentClass = ClassUtils.getContainingClass(refExpr);
         PsiClass memberClass = ((PsiMember)element).getContainingClass();
         if (memberClass != null && currentClass != null) {
           PsiClass target;
@@ -201,20 +201,6 @@ public class DfaExpressionFactory {
       }
     }
     return getQualifierVariable(qualifierExpression);
-  }
-
-  @Nullable
-  private static PsiClass getContainingClass(PsiElement anchor) {
-    PsiClass currentClass;
-    while (true) {
-      currentClass = ClassUtils.getContainingClass(anchor);
-      if (currentClass instanceof PsiAnonymousClass &&
-          PsiTreeUtil.isAncestor(((PsiAnonymousClass)currentClass).getArgumentList(), anchor, true)) {
-        anchor = currentClass;
-      } else {
-        return currentClass;
-      }
-    }
   }
 
   @Nullable
