@@ -48,9 +48,10 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     myLogData = logData;
     myGraphTable = table;
 
-    myTooltipPainter = new LabelPainter(myLogData, compact, showTagNames);
-    myComponent = new MyComponent(logData, painter, table, compact, showTagNames);
-    myTemplateComponent = new MyComponent(logData, painter, table, compact, showTagNames);
+    LabelIconCache iconCache = new LabelIconCache();
+    myTooltipPainter = new LabelPainter(myLogData, table, iconCache, compact, showTagNames);
+    myComponent = new MyComponent(logData, painter, table, iconCache, compact, showTagNames);
+    myTemplateComponent = new MyComponent(logData, painter, table, iconCache, compact, showTagNames);
   }
 
   @Override
@@ -69,7 +70,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     GraphCommitCell cell = getValue(value);
     Collection<VcsRef> refs = cell.getRefsToThisCommit();
     if (!refs.isEmpty()) {
-      myTooltipPainter.customizePainter(myComponent, refs, myComponent.getBackground(), myComponent.getForeground(),
+      myTooltipPainter.customizePainter(refs, myComponent.getBackground(), myComponent.getForeground(),
                                         true/*counterintuitive, but true*/, getColumnWidth());
       if (myTooltipPainter.isLeftAligned()) {
         double distance = point.getX() - myTemplateComponent.getGraphWidth(cell.getPrintElements());
@@ -149,13 +150,14 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     public MyComponent(@NotNull VcsLogData data,
                        @NotNull GraphCellPainter painter,
                        @NotNull VcsLogGraphTable table,
+                       @NotNull LabelIconCache iconCache,
                        boolean compact,
                        boolean showTags) {
       myLogData = data;
       myPainter = painter;
       myGraphTable = table;
 
-      myReferencePainter = new LabelPainter(myLogData, compact, showTags);
+      myReferencePainter = new LabelPainter(myLogData, table, iconCache, compact, showTags);
       myIssueLinkRenderer = new IssueLinkRenderer(myLogData.getProject(), this);
 
       myFont = RectanglePainter.getFont();
@@ -214,7 +216,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
 
       append(""); // appendTextPadding wont work without this
       if (myReferencePainter.isLeftAligned()) {
-        myReferencePainter.customizePainter(myGraphTable, refs, getBackground(), baseForeground, isSelected,
+        myReferencePainter.customizePainter(refs, getBackground(), baseForeground, isSelected,
                                             getAvailableWidth(column, myGraphImage.getWidth()));
 
         appendTextPadding(myGraphImage.getWidth() + myReferencePainter.getSize().width + LabelPainter.RIGHT_PADDING);
@@ -223,7 +225,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
       else {
         appendTextPadding(myGraphImage.getWidth());
         appendText(cell, style, isSelected);
-        myReferencePainter.customizePainter(myGraphTable, refs, getBackground(), baseForeground, isSelected,
+        myReferencePainter.customizePainter(refs, getBackground(), baseForeground, isSelected,
                                             getAvailableWidth(column, myGraphImage.getWidth()));
       }
     }
