@@ -63,7 +63,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   private final ExceptionTransfer myError;
   private final PsiType myAssertionError;
   private InlinedBlockContext myInlinedBlockContext;
-  private final boolean myThisReadOnly;
 
   ControlFlowAnalyzer(final DfaValueFactory valueFactory, @NotNull PsiElement codeFragment, boolean ignoreAssertions, boolean inlining) {
     myInlining = inlining;
@@ -75,8 +74,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     myRuntimeException = new ExceptionTransfer(myFactory.createDfaType(createClassType(scope, JAVA_LANG_RUNTIME_EXCEPTION)));
     myError = new ExceptionTransfer(myFactory.createDfaType(createClassType(scope, JAVA_LANG_ERROR)));
     myAssertionError = createClassType(scope, JAVA_LANG_ASSERTION_ERROR);
-    PsiElement member = PsiTreeUtil.getParentOfType(codeFragment, PsiMember.class, PsiLambdaExpression.class);
-    myThisReadOnly = member instanceof PsiMethod && MutationSignature.fromMethod((PsiMethod)member).preservesThis();
   }
 
   private void buildClassInitializerFlow(PsiClass psiClass, boolean isStatic) {
@@ -721,8 +718,33 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private void handleEscapedVariables(PsiElement element) {
-    Set<PsiVariable> variables = VariableAccessUtils.collectUsedVariables(element);
+    Set<PsiLocalVariable> variables = new HashSet<>();
     Set<DfaVariableValue> escapedVars = new HashSet<>();
+    element.accept(new JavaRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitReferenceExpression(PsiReferenceExpression expression) {
+        super.visitReferenceExpression(expression);
+        final PsiElement target = expression.resolve();
+        if (target instanceof PsiLocalVariable) {
+          variables.add((PsiLocalVariable)target);
+        }
+        if (target instanceof PsiMember && !((PsiMember)target).hasModifierProperty(PsiModifier.STATIC)) {
+          DfaVariableValue qualifier = getFactory().getExpressionFactory().getQualifierOrThisVariable(expression);
+          if (qualifier != null) {
+            escapedVars.add(qualifier);
+          }
+        }
+      }
+
+      @Override
+      public void visitThisExpression(PsiThisExpression expression) {
+        super.visitThisExpression(expression);
+        DfaValue value = getFactory().createValue(expression);
+        if (value instanceof DfaVariableValue) {
+          escapedVars.add((DfaVariableValue)value);
+        }
+      }
+    });
     for (DfaValue value : getFactory().getValues()) {
       if(value instanceof DfaVariableValue && !((DfaVariableValue)value).isNegated()) {
         PsiModifierListOwner var = ((DfaVariableValue)value).getPsiVariable();
@@ -1581,10 +1603,14 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     if (qualifierExpression != null) {
       qualifierExpression.accept(this);
     }
-    else if (myThisReadOnly) {
-      addInstruction(new PushInstruction(myFactory.getFactValue(DfaFactType.MUTABILITY, Mutability.UNMODIFIABLE), null));
-    } else {
-      pushUnknown();
+    else {
+      DfaValue thisVariable = myFactory.getExpressionFactory().getQualifierOrThisVariable(methodExpression);
+      if (thisVariable != null) {
+        addInstruction(new PushInstruction(thisVariable, null));
+      }
+      else {
+        pushUnknown();
+      }
     }
 
     PsiExpression[] expressions = expression.getArgumentList().getExpressions();
@@ -1880,22 +1906,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     boolean writing = PsiUtil.isAccessedForWriting(expression) && !PsiUtil.isAccessedForReading(expression);
     addInstruction(new PushInstruction(myFactory.createValue(expression), expression, writing));
 
-    finishElement(expression);
-  }
-
-  @Override public void visitSuperExpression(PsiSuperExpression expression) {
-    startElement(expression);
-    addInstruction(new PushInstruction(myFactory.createTypeValue(expression.getType(), Nullness.NOT_NULL), expression));
-    finishElement(expression);
-  }
-
-  @Override public void visitThisExpression(PsiThisExpression expression) {
-    startElement(expression);
-    DfaValue value = myFactory.createTypeValue(expression.getType(), Nullness.NOT_NULL);
-    if (myThisReadOnly) {
-      value = myFactory.withFact(value, DfaFactType.MUTABILITY, Mutability.UNMODIFIABLE);
-    }
-    addInstruction(new PushInstruction(value, expression));
     finishElement(expression);
   }
 

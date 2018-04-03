@@ -4,6 +4,7 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInspection.dataFlow.inference.InferenceFromSourceUtil;
 import com.intellij.codeInspection.dataFlow.instructions.*;
+import com.intellij.codeInspection.dataFlow.value.DfaExpressionFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
@@ -274,6 +275,11 @@ public class DfaUtil {
            (ExpressionUtils.isLiteral(initializer, Boolean.TRUE) || ExpressionUtils.isLiteral(initializer, Boolean.FALSE));
   }
 
+  static boolean isEffectivelyUnqualified(DfaVariableValue variableValue) {
+    return variableValue.getQualifier() == null ||
+     variableValue.getQualifier().getSource() instanceof DfaExpressionFactory.ThisSource;
+  }
+
   private static class ValuableInstructionVisitor extends StandardInstructionVisitor {
     final Map<PsiElement, PlaceResult> myResults = ContainerUtil.newHashMap();
 
@@ -291,7 +297,7 @@ public class DfaUtil {
         ((ValuableDataFlowRunner.MyDfaMemoryState)memState).forVariableStates((variableValue, value) -> {
           ValuableDataFlowRunner.ValuableDfaVariableState state = (ValuableDataFlowRunner.ValuableDfaVariableState)value;
           final FList<PsiExpression> concatenation = state.myConcatenation;
-          if (!concatenation.isEmpty() && variableValue.getQualifier() == null) {
+          if (!concatenation.isEmpty() && isEffectivelyUnqualified(variableValue)) {
             PsiModifierListOwner element = variableValue.getPsiVariable();
             if (element instanceof PsiVariable) {
               result.myValues.put((PsiVariable)element, concatenation);
@@ -299,7 +305,7 @@ public class DfaUtil {
           }
         });
         DfaValue value = instruction.getValue();
-        if (value instanceof DfaVariableValue && ((DfaVariableValue)value).getQualifier() == null) {
+        if (value instanceof DfaVariableValue && isEffectivelyUnqualified((DfaVariableValue)value)) {
           PsiModifierListOwner element = ((DfaVariableValue)value).getPsiVariable();
           if (element instanceof PsiVariable) {
             if (memState.isNotNull(value)) {

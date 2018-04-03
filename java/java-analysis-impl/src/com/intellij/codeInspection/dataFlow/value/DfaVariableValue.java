@@ -22,14 +22,12 @@ import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.codeInspection.dataFlow.NullnessUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Trinity;
-import com.intellij.psi.PsiEllipsisType;
-import com.intellij.psi.PsiModifierListOwner;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiVariable;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,7 +49,23 @@ public class DfaVariableValue extends DfaValue {
       if (varType instanceof PsiEllipsisType) {
         varType = ((PsiEllipsisType)varType).toArrayType();
       }
-      return createVariableValue(new DfaExpressionFactory.PlainSource(variable), varType);
+      DfaVariableValue qualifier = null;
+      if (variable instanceof PsiField && !(variable.hasModifierProperty(PsiModifier.STATIC))) {
+        qualifier = createThisValue(((PsiField)variable).getContainingClass());
+      }
+      return createVariableValue(new DfaExpressionFactory.PlainSource(variable), varType, qualifier);
+    }
+
+    /**
+     * Creates a variable representing "this" value with given class as a context
+     * @param aClass a class to bind "this" value to
+     * @return a DFA variable
+     */
+    @Contract("null -> null; !null -> !null")
+    public DfaVariableValue createThisValue(@Nullable PsiClass aClass) {
+      if (aClass == null) return null;
+      PsiClassType type = JavaPsiFacade.getElementFactory(aClass.getProject()).createType(aClass);
+      return createVariableValue(new DfaExpressionFactory.ThisSource(aClass), type);
     }
 
     @NotNull
@@ -83,11 +97,6 @@ public class DfaVariableValue extends DfaValue {
         qualifier = qualifier.getQualifier();
       }
       return result;
-    }
-
-    @NotNull
-    public List<DfaVariableValue> getAllQualifiedBy(@NotNull DfaVariableValue value) {
-      return value.myDependents;
     }
   }
 
@@ -151,6 +160,11 @@ public class DfaVariableValue extends DfaValue {
       return myNegatedValue;
     }
     return myNegatedValue = myFactory.getVarFactory().createVariableValue(mySource, myVarType, !myIsNegated, myQualifier);
+  }
+
+  @NotNull
+  public List<DfaVariableValue> getAllQualifiedBy() {
+    return myDependents;
   }
 
   @NotNull

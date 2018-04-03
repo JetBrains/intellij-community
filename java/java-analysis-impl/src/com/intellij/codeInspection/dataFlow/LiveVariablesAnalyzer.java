@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.instructions.*;
+import com.intellij.codeInspection.dataFlow.value.DfaExpressionFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
@@ -156,7 +157,7 @@ public class LiveVariablesAnalyzer {
       if (written != null) {
         liveVars = (BitSet)liveVars.clone();
         liveVars.clear(written.getID());
-        for (DfaVariableValue var : myFactory.getVarFactory().getAllQualifiedBy(written)) {
+        for (DfaVariableValue var : written.getAllQualifiedBy()) {
           liveVars.clear(var.getID());
         }
       } else {
@@ -207,8 +208,8 @@ public class LiveVariablesAnalyzer {
     if (ok) {
       for (FinishElementInstruction instruction : toFlush.keySet()) {
         Collection<DfaVariableValue> values = toFlush.get(instruction);
-        // Do not flush special values as they could be used implicitly
-        values.removeIf(var -> var.getSource() instanceof SpecialField);
+        // Do not flush special values and this value as they could be used implicitly
+        values.removeIf(var -> var.getSource() instanceof SpecialField || var.getSource() instanceof DfaExpressionFactory.ThisSource);
         instruction.getVarsToFlush().addAll(values);
       }
     }

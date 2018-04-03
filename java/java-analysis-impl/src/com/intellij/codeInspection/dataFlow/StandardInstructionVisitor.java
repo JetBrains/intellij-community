@@ -61,7 +61,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       memState.push(dfaDest);
       return nextInstruction(instruction, runner, memState);
     }
-    memState.dropFact(dfaSource, DfaFactType.LOCALITY);
+    dropLocality(dfaSource, memState);
 
     PsiExpression lValue = PsiUtil.skipParenthesizedExprDown(instruction.getLExpression());
     PsiExpression rValue = instruction.getRExpression();
@@ -84,6 +84,11 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       }
       else if (forceDeclaredNullity && var.getInherentNullability() == Nullness.NOT_NULL) {
         checkNotNullable(memState, dfaSource, kind.problem(rValue));
+      }
+      if (dfaSource instanceof DfaFactMapValue &&
+          var.getQualifier() != null &&
+          !Boolean.TRUE.equals(memState.getValueFact(var.getQualifier(), DfaFactType.LOCALITY))) {
+        dfaSource = ((DfaFactMapValue)dfaSource).withFact(DfaFactType.LOCALITY, null);
       }
       if (!(psi instanceof PsiField) || !psi.hasModifierProperty(PsiModifier.VOLATILE)) {
         memState.setVarValue(var, dfaSource);
@@ -133,6 +138,21 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   }
 
   protected void processArrayStoreTypeMismatch(PsiAssignmentExpression assignmentExpression, PsiType fromType, PsiType toType) {
+  }
+
+  @Override
+  public DfaInstructionState[] visitEscapeInstruction(EscapeInstruction instruction, DataFlowRunner runner, DfaMemoryState state) {
+    instruction.getEscapedVars().forEach(var -> dropLocality(var, state));
+    return super.visitEscapeInstruction(instruction, runner, state);
+  }
+
+  private static void dropLocality(DfaValue value, DfaMemoryState state) {
+    if (!(value instanceof DfaVariableValue)) return;
+    DfaVariableValue var = (DfaVariableValue)value;
+    state.dropFact(var, DfaFactType.LOCALITY);
+    for (DfaVariableValue v : new ArrayList<>(var.getAllQualifiedBy())) {
+      dropLocality(v, state);
+    }
   }
 
   @Override
@@ -187,6 +207,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     final DfaValue qualifier = dereference(memState, memState.pop(), NullabilityProblemKind.fieldAccessNPE.problem(expression));
     PsiElement parent = expression.getParent();
     if (parent instanceof PsiMethodReferenceExpression) {
+      dropLocality(qualifier, memState);
       handleMethodReference(qualifier, (PsiMethodReferenceExpression)parent, runner, memState);
     }
 
@@ -379,7 +400,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       DfaValue arg = memState.pop();
       int paramIndex = argCount - i - 1;
 
-      memState.dropFact(arg, DfaFactType.LOCALITY);
+      dropLocality(arg, memState);
       PsiElement anchor = instruction.getArgumentAnchor(paramIndex);
       Nullness requiredNullability = instruction.getArgRequiredNullability(paramIndex);
       if (requiredNullability == Nullness.NOT_NULL) {
@@ -412,6 +433,13 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       reportMutabilityViolation(true, instruction.getContext());
       if (value instanceof DfaVariableValue) {
         memState.forceVariableFact((DfaVariableValue)value, DfaFactType.MUTABILITY, Mutability.MUTABLE);
+      }
+    }
+    if (value instanceof DfaVariableValue && !(((DfaVariableValue)value).getVariableType() instanceof PsiArrayType)) {
+      if (instruction.shouldFlushFields() || !(instruction.getResultType() instanceof PsiPrimitiveType)) {
+        // For now drop locality on every qualified call except primitive returning pure calls
+        // as value might escape through the return value
+        dropLocality(value, memState);
       }
     }
     return value;

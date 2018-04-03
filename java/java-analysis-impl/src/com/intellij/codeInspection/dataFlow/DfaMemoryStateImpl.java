@@ -103,11 +103,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   @Override
   public DfaMemoryStateImpl createClosureState() {
     DfaMemoryStateImpl copy = createCopy();
-    copy.flushFields();
-    Set<DfaVariableValue> vars = new HashSet<>(copy.myVariableStates.keySet());
-    for (DfaVariableValue value : vars) {
-      copy.flushDependencies(value);
+    for (DfaVariableValue value : new ArrayList<>(copy.myVariableStates.keySet())) {
+      copy.dropFact(value, DfaFactType.LOCALITY);
     }
+    copy.flushFields();
     copy.emptyStack();
     return copy;
   }
@@ -270,7 +269,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private DfaValue handleFlush(DfaVariableValue flushed, DfaValue value) {
-    if (value instanceof DfaVariableValue && (value == flushed || myFactory.getVarFactory().getAllQualifiedBy(flushed).contains(value))) {
+    if (value instanceof DfaVariableValue && (value == flushed || flushed.getAllQualifiedBy().contains(value))) {
       Nullness nullability = isNotNull(value) ? Nullness.NOT_NULL :
                              isUnknownState(value) ? Nullness.UNKNOWN : ((DfaVariableValue)value).getInherentNullability();
       return myFactory.createTypeValue(((DfaVariableValue)value).getVariableType(), nullability);
@@ -1268,28 +1267,23 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     doFlush(variable, false);
     flushDependencies(variable);
     myUnknownVariables.remove(variable);
-    myUnknownVariables.removeAll(myFactory.getVarFactory().getAllQualifiedBy(variable));
+    myUnknownVariables.removeAll(variable.getAllQualifiedBy());
     myCachedHash = null;
   }
 
   void flushDependencies(@NotNull DfaVariableValue variable) {
-    for (DfaVariableValue dependent : myFactory.getVarFactory().getAllQualifiedBy(variable)) {
+    for (DfaVariableValue dependent : variable.getAllQualifiedBy()) {
       doFlush(dependent, false);
     }
   }
 
   private void flushQualifiedMethods(@NotNull DfaVariableValue variable) {
     PsiModifierListOwner psiVariable = variable.getPsiVariable();
-    if (psiVariable instanceof PsiField) {
-      StreamEx<DfaVariableValue> toFlush;
+    DfaVariableValue qualifier = variable.getQualifier();
+    if (psiVariable instanceof PsiField && qualifier != null) {
       // Flush method results on field write
-      if (variable.getQualifier() != null) {
-        toFlush = StreamEx.of(myFactory.getVarFactory().getAllQualifiedBy(variable.getQualifier()));
-      } else {
-        toFlush = StreamEx.of(myFactory.getValues()).select(DfaVariableValue.class).without(variable)
-                          .filterBy(DfaVariableValue::getQualifier, null);
-      }
-      toFlush.filter(DfaVariableValue::containsCalls).forEach(val -> doFlush(val, shouldMarkUnknown(val)));
+      qualifier.getAllQualifiedBy().stream().filter(DfaVariableValue::containsCalls)
+               .forEach(val -> doFlush(val, shouldMarkUnknown(val)));
     }
   }
 

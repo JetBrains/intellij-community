@@ -3,6 +3,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.instructions.*;
+import com.intellij.codeInspection.dataFlow.value.DfaExpressionFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
@@ -143,11 +144,7 @@ public class DataFlowRunner {
       if (flow == null) return RunnerResult.NOT_APPLICABLE;
       int[] loopNumber = LoopAnalyzer.calcInLoop(flow);
 
-      Map<DfaVariableValue, DfaValue> initialValues = StreamEx.of(flow.accessedVariables())
-        .mapToEntry(var -> makeInitialValue(var, psiBlock)).nonNullValues().toMap();
-      for (DfaMemoryState state : initialStates) {
-        initialValues.forEach(state::setVarValue);
-      }
+      initializeVariables(psiBlock, initialStates, flow);
 
       int endOffset = flow.getInstructionCount();
       myInstructions = flow.getInstructions();
@@ -285,12 +282,42 @@ public class DataFlowRunner {
     return ref.get();
   }
 
+  private void initializeVariables(@NotNull PsiElement psiBlock,
+                                   @NotNull Collection<? extends DfaMemoryState> initialStates,
+                                   ControlFlow flow) {
+    if (psiBlock instanceof PsiClass) {
+      DfaVariableValue thisValue = getFactory().getVarFactory().createThisValue((PsiClass)psiBlock);
+      // In class initializer this variable is local until escaped
+      for (DfaMemoryState state : initialStates) {
+        state.applyFact(thisValue, DfaFactType.LOCALITY, true);
+      }
+      return;
+    }
+    PsiElement parent = psiBlock.getParent();
+    if (parent instanceof PsiMethod && !(((PsiMethod)parent).isConstructor())) {
+      Map<DfaVariableValue, DfaValue> initialValues = StreamEx.of(flow.accessedVariables()).mapToEntry(
+        var -> makeInitialValue(var, (PsiMethod)parent)).nonNullValues().toMap();
+      for (DfaMemoryState state : initialStates) {
+        initialValues.forEach(state::setVarValue);
+      }
+    }
+  }
+
   @Nullable
-  private static DfaValue makeInitialValue(DfaVariableValue var, PsiElement block) {
-    if(var.getQualifier() != null) return null;
+  private static DfaValue makeInitialValue(DfaVariableValue var, @NotNull PsiMethod method) {
+    DfaValueFactory factory = var.getFactory();
+    if (var.getSource() instanceof DfaExpressionFactory.ThisSource) {
+      PsiClass aClass = ((DfaExpressionFactory.ThisSource)var.getSource()).getPsiElement();
+      DfaValue value = factory.createTypeValue(var.getVariableType(), Nullness.NOT_NULL);
+      if (method.getContainingClass() == aClass && MutationSignature.fromMethod(method).preservesThis()) {
+        return factory.withFact(value, DfaFactType.MUTABILITY, Mutability.UNMODIFIABLE);
+      }
+      return null;
+    }
+    if (!DfaUtil.isEffectivelyUnqualified(var)) return null;
     PsiField field = ObjectUtils.tryCast(var.getPsiVariable(), PsiField.class);
     if (field == null || DfaUtil.ignoreInitializer(field) || DfaUtil.hasInitializationHacks(field)) return null;
-    return DfaUtil.getPossiblyNonInitializedValue(var.getFactory(), field, block);
+    return DfaUtil.getPossiblyNonInitializedValue(factory, field, method);
   }
 
   private static boolean containsState(Collection<DfaMemoryState> processed,

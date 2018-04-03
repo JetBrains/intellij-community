@@ -52,7 +52,7 @@ public abstract class InstructionVisitor {
       PsiExpression array = arrayAccess.getArrayExpression();
       DfaValue value = factory.createValue(array);
       if (value instanceof DfaVariableValue) {
-        for (DfaVariableValue qualified : factory.getVarFactory().getAllQualifiedBy((DfaVariableValue)value)) {
+        for (DfaVariableValue qualified : ((DfaVariableValue)value).getAllQualifiedBy()) {
           if (qualified.isFlushableByCalls()) {
             memState.flushVariable(qualified);
           }
@@ -77,6 +77,10 @@ public abstract class InstructionVisitor {
   }
 
   public DfaInstructionState[] visitEndOfInitializer(EndOfInitializerInstruction instruction, DataFlowRunner runner, DfaMemoryState state) {
+    return nextInstruction(instruction, runner, state);
+  }
+
+  public DfaInstructionState[] visitEscapeInstruction(EscapeInstruction instruction, DataFlowRunner runner, DfaMemoryState state) {
     return nextInstruction(instruction, runner, state);
   }
 

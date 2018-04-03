@@ -69,7 +69,10 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
   private static boolean isAssignmentToDefaultValueInConstructor(AssignInstruction instruction, DataFlowRunner runner, DfaValue target) {
     if (!(target instanceof DfaVariableValue)) return false;
     DfaVariableValue var = (DfaVariableValue)target;
-    if (var.getQualifier() != null || !(var.getPsiVariable() instanceof PsiField)) return false;
+    if (!(var.getPsiVariable() instanceof PsiField) || var.getQualifier() == null ||
+        !(var.getQualifier().getSource() instanceof DfaExpressionFactory.ThisSource)) {
+      return false;
+    }
 
     // chained assignment like this.a = this.b = 0; is also supported
     PsiExpression rExpression = instruction.getRExpression();
