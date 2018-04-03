@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.application.QueryExecutorBase;
@@ -13,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ConstructorReferencesSearcher extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
   @Override
-  public void processQuery(@NotNull final ReferencesSearch.SearchParameters p, @NotNull Processor<PsiReference> consumer) {
+  public void processQuery(@NotNull final ReferencesSearch.SearchParameters p, @NotNull Processor<? super PsiReference> consumer) {
     final PsiElement element = p.getElementToSearch();
     if (!(element instanceof PsiMethod)) {
       return;

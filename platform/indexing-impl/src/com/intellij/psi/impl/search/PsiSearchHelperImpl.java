@@ -560,16 +560,16 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
   private static class RequestWithProcessor {
     @NotNull private final PsiSearchRequest request;
-    @NotNull private Processor<PsiReference> refProcessor;
+    @NotNull private Processor<? super PsiReference> refProcessor;
 
-    private RequestWithProcessor(@NotNull PsiSearchRequest request, @NotNull Processor<PsiReference> processor) {
+    private RequestWithProcessor(@NotNull PsiSearchRequest request, @NotNull Processor<? super PsiReference> processor) {
       this.request = request;
       refProcessor = processor;
     }
 
     private boolean uniteWith(@NotNull final RequestWithProcessor another) {
       if (request.equals(another.request)) {
-        final Processor<PsiReference> myProcessor = refProcessor;
+        final Processor<? super PsiReference> myProcessor = refProcessor;
         if (myProcessor != another.refProcessor) {
           refProcessor = psiReference -> myProcessor.process(psiReference) && another.refProcessor.process(psiReference);
         }
@@ -585,8 +585,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   @Override
-  public boolean processRequests(@NotNull SearchRequestCollector collector, @NotNull Processor<PsiReference> processor) {
-    final Map<SearchRequestCollector, Processor<PsiReference>> collectors = ContainerUtil.newHashMap();
+  public boolean processRequests(@NotNull SearchRequestCollector collector, @NotNull Processor<? super PsiReference> processor) {
+    final Map<SearchRequestCollector, Processor<? super PsiReference>> collectors = ContainerUtil.newHashMap();
     collectors.put(collector, processor);
 
     ProgressIndicator progress = getOrCreateIndicator();
@@ -621,11 +621,11 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
   @NotNull
   @Override
-  public AsyncFuture<Boolean> processRequestsAsync(@NotNull SearchRequestCollector collector, @NotNull Processor<PsiReference> processor) {
+  public AsyncFuture<Boolean> processRequestsAsync(@NotNull SearchRequestCollector collector, @NotNull Processor<? super PsiReference> processor) {
     return AsyncUtil.wrapBoolean(processRequests(collector, processor));
   }
 
-  private static boolean appendCollectorsFromQueryRequests(@NotNull Map<SearchRequestCollector, Processor<PsiReference>> collectors) {
+  private static boolean appendCollectorsFromQueryRequests(@NotNull Map<SearchRequestCollector, Processor<? super PsiReference>> collectors) {
     boolean changed = false;
     Deque<SearchRequestCollector> queue = new LinkedList<>(collectors.keySet());
     while (!queue.isEmpty()) {
@@ -736,7 +736,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
   @NotNull
   private static BulkOccurrenceProcessor adaptProcessor(@NotNull PsiSearchRequest singleRequest,
-                                                       @NotNull Processor<PsiReference> consumer) {
+                                                       @NotNull Processor<? super PsiReference> consumer) {
     final SearchScope searchScope = singleRequest.searchScope;
     final boolean ignoreInjectedPsi = searchScope instanceof LocalSearchScope && ((LocalSearchScope)searchScope).isIgnoreInjectedPsi();
     final RequestResultProcessor wrapped = singleRequest.processor;
@@ -864,15 +864,15 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return GlobalSearchScope.union(scopes.toArray(new GlobalSearchScope[0]));
   }
 
-  private static void distributePrimitives(@NotNull Map<SearchRequestCollector, Processor<PsiReference>> collectors,
+  private static void distributePrimitives(@NotNull Map<SearchRequestCollector, Processor<? super PsiReference>> collectors,
                                            @NotNull Set<RequestWithProcessor> locals,
                                            @NotNull MultiMap<Set<IdIndexEntry>, RequestWithProcessor> globals,
                                            @NotNull List<Computable<Boolean>> customs,
                                            @NotNull Map<RequestWithProcessor, Processor<PsiElement>> localProcessors,
                                            @NotNull ProgressIndicator progress) {
-    for (final Map.Entry<SearchRequestCollector, Processor<PsiReference>> entry : collectors.entrySet()) {
+    for (final Map.Entry<SearchRequestCollector, Processor<? super PsiReference>> entry : collectors.entrySet()) {
       ProgressManager.checkCanceled();
-      final Processor<PsiReference> processor = entry.getValue();
+      final Processor<? super PsiReference> processor = entry.getValue();
       SearchRequestCollector collector = entry.getKey();
       for (final PsiSearchRequest primitive : collector.takeSearchRequests()) {
         ProgressManager.checkCanceled();
@@ -885,7 +885,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
           registerRequest(globals.getModifiable(key), primitive, processor);
         }
       }
-      for (final Processor<Processor<PsiReference>> customAction : collector.takeCustomSearchActions()) {
+      for (final Processor<Processor<? super PsiReference>> customAction : collector.takeCustomSearchActions()) {
         ProgressManager.checkCanceled();
         customs.add(() -> customAction.process(processor));
       }
@@ -909,7 +909,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
   private static void registerRequest(@NotNull Collection<RequestWithProcessor> collection,
                                       @NotNull PsiSearchRequest primitive,
-                                      @NotNull Processor<PsiReference> processor) {
+                                      @NotNull Processor<? super PsiReference> processor) {
     RequestWithProcessor singleRequest = new RequestWithProcessor(primitive, processor);
 
     for (RequestWithProcessor existing : collection) {
@@ -921,7 +921,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     collection.add(singleRequest);
   }
 
-  private boolean processSingleRequest(@NotNull PsiSearchRequest single, @NotNull Processor<PsiReference> consumer) {
+  private boolean processSingleRequest(@NotNull PsiSearchRequest single, @NotNull Processor<? super PsiReference> consumer) {
     final EnumSet<Options> options = EnumSet.of(Options.PROCESS_ONLY_JAVA_IDENTIFIERS_IF_POSSIBLE);
     if (single.caseSensitive) options.add(Options.CASE_SENSITIVE_SEARCH);
     if (shouldProcessInjectedPsi(single.searchScope)) options.add(Options.PROCESS_INJECTED_PSI);

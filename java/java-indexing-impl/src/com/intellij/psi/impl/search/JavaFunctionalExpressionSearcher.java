@@ -51,7 +51,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
   public static final int SMART_SEARCH_THRESHOLD = 5;
 
   @Override
-  public void processQuery(@NotNull SearchParameters p, @NotNull Processor<PsiFunctionalExpression> consumer) {
+  public void processQuery(@NotNull SearchParameters p, @NotNull Processor<? super PsiFunctionalExpression> consumer) {
     List<SamDescriptor> descriptors = calcDescriptors(p);
     Project project = PsiUtilCore.getProjectInReadAction(p.getElementToSearch());
     if (project == null) return;
@@ -178,7 +178,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
                                  : ContainerUtil.filter(occurrences, it -> it.canHaveType(samClasses, vFile)));
   }
 
-  private static boolean processFile(@NotNull Processor<PsiFunctionalExpression> consumer,
+  private static boolean processFile(@NotNull Processor<? super PsiFunctionalExpression> consumer,
                                      List<SamDescriptor> descriptors,
                                      VirtualFile vFile, Collection<Integer> offsets) {
     return ReadAction.compute(() -> {
@@ -332,7 +332,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
   private static boolean performSearchUsingCompilerIndices(@NotNull List<SamDescriptor> descriptors,
                                                            @NotNull GlobalSearchScope searchScope,
                                                            @NotNull Project project,
-                                                           @NotNull Processor<PsiFunctionalExpression> consumer) {
+                                                           @NotNull Processor<? super PsiFunctionalExpression> consumer) {
     CompilerReferenceService compilerReferenceService = CompilerReferenceService.getInstance(project);
     if (compilerReferenceService == null) return true;
     for (SamDescriptor descriptor : descriptors) {
@@ -354,7 +354,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
 
   private static boolean processFunctionalExpressions(@Nullable CompilerDirectHierarchyInfo funExprInfo,
                                                       @NotNull SamDescriptor descriptor,
-                                                      @NotNull Processor<PsiFunctionalExpression> consumer) {
+                                                      @NotNull Processor<? super PsiFunctionalExpression> consumer) {
     if (funExprInfo != null) {
       if (!ContainerUtil.process(funExprInfo.getHierarchyChildren().iterator(), fe -> consumer.process((PsiFunctionalExpression)fe))) return false;
       GlobalSearchScope dirtyScope = funExprInfo.getDirtyScope();
