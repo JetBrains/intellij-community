@@ -1229,12 +1229,10 @@ public class IdeEventQueue extends EventQueue {
   private static boolean doesFocusGoIntoPopupFromWindowEvent(AWTEvent e) {
     if (e.getID() == WindowEvent.WINDOW_GAINED_FOCUS ||
         (SystemInfo.isLinux && e.getID() == WindowEvent.WINDOW_OPENED)) {
-      WindowEvent windowEvent = (WindowEvent)e;
-      Window eventWindow = windowEvent.getWindow();
-        if (eventWindow.getClass().getName().contains("HeavyWeightWindow")) {
-          TYPEAHEAD_LOG.debug("Focus goes into HeavyWeightWindow");
-          return true;
-        }
+      if (UIUtil.isTypeAheadAware(((WindowEvent)e).getWindow())) {
+        TYPEAHEAD_LOG.debug("Focus goes into TypeAhead aware window");
+        return true;
+      }
     }
     return false;
   }

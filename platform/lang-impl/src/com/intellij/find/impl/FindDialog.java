@@ -144,6 +144,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
 
   public FindDialog(FindUIHelper helper){
     super(helper.getProject(), true);
+    UIUtil.markAsTypeAheadAware(getWindow());
     myHelper = helper;
     myProject = myHelper.getProject();
 
