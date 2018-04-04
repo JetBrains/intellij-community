@@ -76,10 +76,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -938,21 +935,17 @@ public class UsageViewImpl implements UsageViewEx {
         ((MergeableUsage)usage).reset();
       }
     }
-    appendUsagesInBulk(allUsages);
-    if (myTree != null) {
-      excludeUsages(excludedUsages.toArray(Usage.EMPTY_ARRAY));
-    }
+    //noinspection SSBasedInspection
+    appendUsagesInBulk(allUsages).thenRun(()-> SwingUtilities.invokeLater(() -> {
+      if (isDisposed) return;
+      if (myTree != null) {
+        excludeUsages(excludedUsages.toArray(Usage.EMPTY_ARRAY));
+        restoreUsageExpandState(states);
+        updateImmediately();
+      }}));
     if (myCentralPanel != null) {
       setupCentralPanel();
     }
-    //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(() -> {
-      if (isDisposed) return;
-      if (myTree != null) {
-        restoreUsageExpandState(states);
-        updateImmediately();
-      }
-    });
   }
 
   private void captureUsagesExpandState(@NotNull TreePath pathFrom, @NotNull Collection<UsageState> states) {
@@ -1159,13 +1152,23 @@ public class UsageViewImpl implements UsageViewEx {
     }
   }
 
+  @NotNull
   @Override
-  public void appendUsagesInBulk(@NotNull Collection<Usage> usages) {
+  public CompletableFuture<?> appendUsagesInBulk(@NotNull Collection<Usage> usages) {
+    CompletableFuture<Object> result = new CompletableFuture<>();
     addUpdateRequest(ApplicationManager.getApplication().executeOnPooledThread(() -> ReadAction.run(() -> {
-      for (Usage usage : usages) {
-        doAppendUsage(usage);
+      try {
+        for (Usage usage : usages) {
+          doAppendUsage(usage);
+        }
+        result.complete(null);
+      }
+      catch (Exception e) {
+        result.completeExceptionally(e);
+        throw e;
       }
     })));
+    return result;
   }
 
   public UsageNode doAppendUsage(@NotNull Usage usage) {

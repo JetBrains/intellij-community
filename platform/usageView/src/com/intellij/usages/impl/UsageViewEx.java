@@ -7,6 +7,7 @@ import com.intellij.usages.UsageView;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.concurrent.CompletableFuture;
 
 public interface UsageViewEx extends UsageView {
   boolean searchHasBeenCancelled();
@@ -17,7 +18,8 @@ public interface UsageViewEx extends UsageView {
 
   void waitForUpdateRequestsCompletion();
 
-  void appendUsagesInBulk(@NotNull Collection<Usage> usages);
+  @NotNull
+  CompletableFuture<?> appendUsagesInBulk(@NotNull Collection<Usage> usages);
 
   void setSearchInProgress(boolean searchInProgress);
 
