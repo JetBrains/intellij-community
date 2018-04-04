@@ -540,7 +540,7 @@ public class FSRecords {
 
   private static ResizeableMappedFile getRecords() {
     ResizeableMappedFile records = DbConnection.myRecords;
-    assert records != null : "Vfs should be initialized";
+    assert records != null : "Vfs must be initialized";
     return records;
   }
 
@@ -1133,7 +1133,11 @@ public class FSRecords {
   }
 
   static int getFlags(int id) {
-    return readAndHandleErrors(() -> getRecordInt(id, FLAGS_OFFSET));
+    return readAndHandleErrors(() -> doGetFlags(id));
+  }
+
+  private static int doGetFlags(int id) {
+    return getRecordInt(id, FLAGS_OFFSET);
   }
 
   static void setFlags(int id, int flags, final boolean markAsChange) {
@@ -1272,7 +1276,7 @@ public class FSRecords {
     });
   }
 
-  // should be called under r or w lock
+  // must be called under r or w lock
   @Nullable
   private static DataInputStream readAttribute(int fileId, FileAttribute attribute) throws IOException {
     checkFileIsValid(fileId);
@@ -1393,7 +1397,7 @@ public class FSRecords {
     assert expectedFileId == fileId || expectedFileId == 0;
   }
 
-  private static void writeRecordHeader(int recordTag, int fileId, DataOutputStream appender) throws IOException {
+  private static void writeRecordHeader(int recordTag, int fileId, @NotNull DataOutputStream appender) throws IOException {
     DataInputOutputUtil.writeINT(appender, recordTag);
     DataInputOutputUtil.writeINT(appender, fileId);
   }
@@ -1402,7 +1406,7 @@ public class FSRecords {
     assert fileId > 0 : fileId;
     // TODO: This assertion is a bit timey, will remove when bug is caught.
     if (!lazyVfsDataCleaning) {
-      assert !BitUtil.isSet(getFlags(fileId), FREE_RECORD_FLAG) : "Accessing attribute of a deleted page: " + fileId + ":" + doGetNameSequence(fileId);
+      assert !BitUtil.isSet(doGetFlags(fileId), FREE_RECORD_FLAG) : "Accessing attribute of a deleted page: " + fileId + ":" + doGetNameSequence(fileId);
     }
   }
 
