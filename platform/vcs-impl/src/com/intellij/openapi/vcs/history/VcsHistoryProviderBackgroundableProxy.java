@@ -82,7 +82,21 @@ public class VcsHistoryProviderBackgroundableProxy {
           }
 
           if (session == null) {
-            session = createSessionWithLimitCheck(filePath);
+            LimitHistoryCheck check = new LimitHistoryCheck(myProject, filePath.getPath());
+            VcsAppendableHistoryPartnerAdapter partner = new VcsAppendableHistoryPartnerAdapter() {
+              @Override
+              public void acceptRevision(VcsFileRevision revision) {
+                check.checkNumber();
+                super.acceptRevision(revision);
+              }
+            };
+            try {
+              myHistoryProvider.reportAppendableHistory(filePath, partner);
+            }
+            catch (ProcessCanceledException e) {
+              if (!check.isOver()) throw e;
+            }
+            session = partner.getSession();
             if (factory != null) {
               FilePath correctedPath = factory.getUsedFilePath(session);
               myVcsHistoryCache.put(filePath, correctedPath, vcsKey, (VcsAbstractHistorySession)session.copy(), factory, true);
@@ -218,24 +232,6 @@ public class VcsHistoryProviderBackgroundableProxy {
         }
       }
     });
-  }
-
-  private VcsAbstractHistorySession createSessionWithLimitCheck(@NotNull FilePath filePath) throws VcsException {
-    LimitHistoryCheck check = new LimitHistoryCheck(myProject, filePath.getPath());
-    VcsAppendableHistoryPartnerAdapter partner = new VcsAppendableHistoryPartnerAdapter() {
-      @Override
-      public void acceptRevision(VcsFileRevision revision) {
-        check.checkNumber();
-        super.acceptRevision(revision);
-      }
-    };
-    try {
-      myHistoryProvider.reportAppendableHistory(filePath, partner);
-    }
-    catch (ProcessCanceledException e) {
-      if (!check.isOver()) throw e;
-    }
-    return partner.getSession();
   }
 
   @Nullable
