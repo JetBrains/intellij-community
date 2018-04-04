@@ -359,15 +359,16 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     setTitle(myShowVcsCommit ? TITLE : trimEllipsis(executors.get(0).getActionText()));
     myCommitActionName = getCommitActionName(myAffectedVcses);
-    myCommitAction = myShowVcsCommit ? new CommitAction(myCommitActionName) : null;
     myExecutorActions = createExecutorActions(executors);
-    if (myCommitAction != null) {
+    if (myShowVcsCommit) {
+      myCommitAction = new CommitAction(myCommitActionName);
       myCommitAction.setOptions(myExecutorActions);
     }
     else {
+      myCommitAction = null;
       myExecutorActions.get(0).putValue(DEFAULT_ACTION, Boolean.TRUE);
     }
-    myHelpId = myCommitAction != null ? HELP_ID : getHelpId(executors);
+    myHelpId = myShowVcsCommit ? HELP_ID : getHelpId(executors);
 
     myWarningLabel = new JBLabel();
     myWarningLabel.setForeground(JBColor.RED);
