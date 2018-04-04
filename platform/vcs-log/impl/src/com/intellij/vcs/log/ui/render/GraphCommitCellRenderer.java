@@ -246,7 +246,8 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     @NotNull
     private GraphImage getGraphImage(@NotNull Collection<? extends PrintElement> printElements) {
       double maxIndex = getMaxGraphElementIndex(printElements);
-      BufferedImage image = UIUtil.createImage((int)(PaintParameters.getNodeWidth(myGraphTable.getRowHeight()) * (maxIndex + 2)),
+      BufferedImage image = UIUtil.createImage(myGraphTable,
+                                               (int)(PaintParameters.getNodeWidth(myGraphTable.getRowHeight()) * (maxIndex + 2)),
                                                myGraphTable.getRowHeight(),
                                                BufferedImage.TYPE_INT_ARGB);
       Graphics2D g2 = image.createGraphics();

@@ -120,8 +120,7 @@ public class LabelPainter {
 
     myGreyBackground = calculateGreyBackground(refGroups, background, isSelected, myCompact);
     Pair<List<Pair<String, LabelIcon>>, Integer> presentation =
-      calculatePresentation(refGroups, metrics, metrics.getHeight(), myGreyBackground != null ? myGreyBackground : myBackground, availableWidth,
-                            myCompact);
+      calculatePresentation(refGroups, component, metrics, myGreyBackground != null ? myGreyBackground : myBackground, availableWidth, myCompact);
 
     myLabels = presentation.first;
     myWidth = presentation.second;
@@ -129,8 +128,8 @@ public class LabelPainter {
 
   @NotNull
   private static Pair<List<Pair<String, LabelIcon>>, Integer> calculatePresentation(@NotNull List<RefGroup> refGroups,
+                                                                                    @NotNull JComponent component,
                                                                                     @NotNull FontMetrics fontMetrics,
-                                                                                    int height,
                                                                                     @NotNull Color background,
                                                                                     int availableWidth,
                                                                                     boolean compact) {
@@ -139,15 +138,15 @@ public class LabelPainter {
     List<Pair<String, LabelIcon>> labels = ContainerUtil.newArrayList();
     if (refGroups.isEmpty()) return Pair.create(labels, width);
 
-    if (compact) return calculateCompactPresentation(refGroups, fontMetrics, height, background, availableWidth);
-    return calculateLongPresentation(refGroups, fontMetrics, height, background, availableWidth);
+    if (compact) return calculateCompactPresentation(refGroups, component, fontMetrics, background, availableWidth);
+    return calculateLongPresentation(refGroups, component, fontMetrics, background, availableWidth);
   }
 
 
   @NotNull
   private static Pair<List<Pair<String, LabelIcon>>, Integer> calculateCompactPresentation(@NotNull List<RefGroup> refGroups,
+                                                                                           @NotNull JComponent component,
                                                                                            @NotNull FontMetrics fontMetrics,
-                                                                                           int height,
                                                                                            @NotNull Color background,
                                                                                            int availableWidth) {
     int width = LEFT_PADDING + RIGHT_PADDING;
@@ -157,7 +156,7 @@ public class LabelPainter {
 
     for (RefGroup group : refGroups) {
       List<Color> colors = group.getColors();
-      LabelIcon labelIcon = new LabelIcon(height, background, colors.toArray(new Color[0]));
+      LabelIcon labelIcon = new LabelIcon(component, fontMetrics.getHeight(), background, colors.toArray(new Color[0]));
       int newWidth = width + labelIcon.getIconWidth() + (group != ContainerUtil.getLastItem(refGroups) ? COMPACT_MIDDLE_PADDING : 0);
 
       String text = shortenRefName(group.getName(), fontMetrics, availableWidth - newWidth);
@@ -172,8 +171,8 @@ public class LabelPainter {
 
   @NotNull
   private static Pair<List<Pair<String, LabelIcon>>, Integer> calculateLongPresentation(@NotNull List<RefGroup> refGroups,
+                                                                                        @NotNull JComponent component,
                                                                                         @NotNull FontMetrics fontMetrics,
-                                                                                        int height,
                                                                                         @NotNull Color background,
                                                                                         int availableWidth) {
     int width = LEFT_PADDING + RIGHT_PADDING;
@@ -181,24 +180,25 @@ public class LabelPainter {
     List<Pair<String, LabelIcon>> labels = ContainerUtil.newArrayList();
     if (refGroups.isEmpty()) return Pair.create(labels, width);
 
+    int height = fontMetrics.getHeight();
     for (int i = 0; i < refGroups.size(); i++) {
       RefGroup group = refGroups.get(i);
 
       int doNotFitWidth = 0;
       if (i < refGroups.size() - 1) {
-        LabelIcon lastIcon = new LabelIcon(height, background, getColors(refGroups.subList(i + 1, refGroups.size())));
+        LabelIcon lastIcon = new LabelIcon(component, height, background, getColors(refGroups.subList(i + 1, refGroups.size())));
         doNotFitWidth = lastIcon.getIconWidth();
       }
 
       List<Color> colors = group.getColors();
-      LabelIcon labelIcon = new LabelIcon(height, background, colors.toArray(new Color[0]));
+      LabelIcon labelIcon = new LabelIcon(component, height, background, colors.toArray(new Color[0]));
       int newWidth = width + labelIcon.getIconWidth() + (i != refGroups.size() - 1 ? MIDDLE_PADDING : 0);
 
       String text = getGroupText(group, fontMetrics, availableWidth - newWidth - doNotFitWidth);
       newWidth += fontMetrics.stringWidth(text);
 
       if (availableWidth - newWidth - doNotFitWidth < 0) {
-        LabelIcon lastIcon = new LabelIcon(height, background, getColors(refGroups.subList(i, refGroups.size())));
+        LabelIcon lastIcon = new LabelIcon(component, height, background, getColors(refGroups.subList(i, refGroups.size())));
         String name = labels.isEmpty() ? text : "";
         labels.add(Pair.create(name, lastIcon));
         width += fontMetrics.stringWidth(name) + lastIcon.getIconWidth();
