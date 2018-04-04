@@ -22,12 +22,12 @@ data class NGram(val elements: List<String>) {
 
         val N = 5
 
-        fun processFile(psiFile: PsiFile): HashMap<NGram, Int> {
+        fun processFile(psiFile: PsiFile, content: CharSequence): HashMap<NGram, Int> {
             val result = HashMap<NGram, Int>()
             val elements = TreeTraversal.getElements(psiFile)
             if (elements.size > N) {
                 for (i in N until elements.size) {
-                    if (NGramElementProvider.shouldIndex(elements[i])) {
+                    if (NGramElementProvider.shouldIndex(elements[i], content)) {
                         val nGramElements = ArrayList<String>()
                         for (j in 1..N) {
                             nGramElements.add(NGramElementProvider.getElementRepresentation(elements[i - j]))
@@ -48,13 +48,13 @@ data class NGram(val elements: List<String>) {
 
         fun getNGramForElement(element: PsiElement) : NGram {
             val elements = TreeTraversal.getElements(element.containingFile ?: return NGram.INVALID)
-            val index = elements.indexOf(element.parent)
+            val index = elements.indexOf(element.parent.node)
             if (index == -1) {
                 return NGram.INVALID
             }
             val nGramElements = ArrayList<String>()
             for (i in 1..NGram.N) {
-                nGramElements.add(elements[index - i].node.elementType.toString())
+                nGramElements.add(elements[index - i].elementType.toString())
             }
             return NGram(nGramElements)
         }

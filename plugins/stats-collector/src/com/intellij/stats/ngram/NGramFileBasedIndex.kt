@@ -1,7 +1,7 @@
 package com.intellij.stats.ngram
 
+import com.intellij.lang.ASTNode
 import com.intellij.openapi.module.ModuleUtil
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.psi.search.GlobalSearchScope
@@ -53,28 +53,35 @@ class NGramFileBasedIndex : FileBasedIndexExtension<NGram, Int>() {
 }
 
 private object NGramIndexer : DataIndexer<NGram, Int, FileContent> {
-    override fun map(fileContent: FileContent): MutableMap<NGram, Int> {
+    override fun map(fileContent: FileContent): Map<NGram, Int> {
         if (ModuleUtil.findModuleForFile(fileContent.file, fileContent.project) == null) {
-            return HashMap()
+            return emptyMap()
         }
-        return NGram.processFile(fileContent.psiFile)
+        return NGram.processFile(fileContent.psiFile, fileContent.contentAsText)
     }
 }
 
 class TreeTraversal : PsiRecursiveElementVisitor() {
-    val elements = ArrayList<PsiElement>()
+    val elements = ArrayList<ASTNode>()
 
-
-    override fun visitElement(element: PsiElement?) {
-        element?.let { if (it.children.isNotEmpty()) elements.add(it) }
-        super.visitElement(element)
+    private fun dfs(node: ASTNode) {
+        var start = node.firstChildNode
+        if (start != null) {
+            elements.add(node)
+        }
+        while (start != null) {
+            dfs(start)
+            start = start.treeNext
+        }
     }
 
+
     companion object {
-        fun getElements(file: PsiFile): List<PsiElement> {
-            val visitor = TreeTraversal()
-            file.accept(visitor)
-            return visitor.elements
+        fun getElements(file: PsiFile): ArrayList<ASTNode> {
+            val start = file.node
+            val treeTraversal = TreeTraversal()
+            treeTraversal.dfs(start)
+            return treeTraversal.elements
         }
     }
 }

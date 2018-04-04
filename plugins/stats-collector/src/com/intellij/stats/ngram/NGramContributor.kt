@@ -11,10 +11,11 @@ import com.intellij.psi.search.GlobalSearchScope
 
 class NGramContributor : CompletionContributor() {
     override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
+        val naiveNGramWeigher = NaiveNGramWeigher(parameters)
         result.runRemainingContributors(parameters, { completionResult ->
             val wrapped = CompletionResult.wrap(completionResult.lookupElement,
                     completionResult.prefixMatcher,
-                    completionResult.sorter.weigh(NaiveNGramWeigher(parameters)))
+                    completionResult.sorter.weigh(naiveNGramWeigher))
             if (wrapped != null) {
                 result.passResult(wrapped)
             }
@@ -35,7 +36,7 @@ abstract class NGramWeigher(parameters: CompletionParameters, name : String) : L
 }
 
 
-private class NaiveNGramWeigher(parameters: CompletionParameters) : NGramWeigher(parameters,"naive ngram weigher") {
+private class NaiveNGramWeigher(parameters: CompletionParameters) : NGramWeigher(parameters,"naiveNGramWeigher") {
 
     override fun weigh(element: LookupElement): Comparable<*> {
         if (nGram == NGram.INVALID) {
@@ -49,6 +50,6 @@ private class NaiveNGramWeigher(parameters: CompletionParameters) : NGramWeigher
             sum += rate / (coefficient + 0.0)
             currentNGram = currentNGram.dropHead()
         }
-        return sum // put your score evaluation here
+        return sum
     }
 }
