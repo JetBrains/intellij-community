@@ -179,10 +179,13 @@ public class VcsHistoryProviderBackgroundableProxy {
         indicator.setText(VcsUtil.getPathForProgressPresentation(filePath.getIOFile()));
         indicator.setIndeterminate(true);
         try {
-          VcsAbstractHistorySession cachedSession;
+          VcsAbstractHistorySession cachedSession = null;
           VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession> cacheableFactory = getCacheableFactory();
-          if (canUseLastRevisionCheck && cacheableFactory != null &&
-              (cachedSession = getSessionFromCacheWithLastRevisionCheck(filePath, vcsKey, cacheableFactory)) != null) {
+          if (canUseLastRevisionCheck && cacheableFactory != null) {
+            cachedSession = getSessionFromCacheWithLastRevisionCheck(filePath, vcsKey, cacheableFactory);
+          }
+
+          if (cachedSession != null) {
             partner.reportCreatedEmptySession(cachedSession);
           }
           else if (myHistoryProvider instanceof VcsHistoryProviderEx) {
