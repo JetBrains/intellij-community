@@ -41,6 +41,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.openapi.vcs.impl.BackgroundableActionLock.getLock;
+
 /**
  * also uses memory cache
  */
@@ -66,7 +68,7 @@ public class VcsHistoryProviderBackgroundableProxy {
   @CalledInAwt
   public void createSessionFor(@NotNull VcsKey vcsKey, @NotNull FilePath filePath, @NotNull Consumer<VcsHistorySession> continuation,
                                @NotNull VcsBackgroundableActions actionKey, boolean silent) {
-    BackgroundableActionLock lock = BackgroundableActionLock.getLock(myProject, actionKey, filePath.getPath());
+    BackgroundableActionLock lock = getLock(myProject, actionKey, filePath.getPath());
     if (lock.isLocked()) return;
     lock.lock();
 
@@ -90,8 +92,7 @@ public class VcsHistoryProviderBackgroundableProxy {
       }
     }
 
-    BackgroundableActionLock lock =
-      BackgroundableActionLock.getLock(myProject, VcsBackgroundableActions.CREATE_HISTORY_SESSION, filePath.getPath());
+    BackgroundableActionLock lock = getLock(myProject, VcsBackgroundableActions.CREATE_HISTORY_SESSION, filePath.getPath());
     if (lock.isLocked()) return;
     lock.lock();
 
@@ -116,8 +117,7 @@ public class VcsHistoryProviderBackgroundableProxy {
                                        @NotNull VcsAppendableHistorySessionPartner partner) {
     if (!(myHistoryProvider instanceof VcsHistoryProviderEx)) throw new UnsupportedOperationException();
 
-    BackgroundableActionLock lock =
-      BackgroundableActionLock.getLock(myProject, VcsBackgroundableActions.CREATE_HISTORY_SESSION, filePath.getPath());
+    BackgroundableActionLock lock = getLock(myProject, VcsBackgroundableActions.CREATE_HISTORY_SESSION, filePath.getPath());
     if (lock.isLocked()) return;
     lock.lock();
 
