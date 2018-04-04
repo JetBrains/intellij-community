@@ -14,51 +14,51 @@ bounds:
   x: 8
   y: 46
 -
-  height: 26
+  height: 27
   location: {x: 8, y: 86}
-  size: {height: 26, width: 82}
+  size: {height: 27, width: 82}
   width: 82
   x: 8
   y: 86
 -
-  height: 26
-  location: {x: 8, y: 122}
-  size: {height: 26, width: 82}
-  width: 82
-  x: 8
-  y: 122
--
   height: 27
-  location: {x: 8, y: 158}
+  location: {x: 8, y: 123}
   size: {height: 27, width: 82}
   width: 82
   x: 8
-  y: 158
--
-  height: 26
-  location: {x: 8, y: 195}
-  size: {height: 26, width: 82}
-  width: 82
-  x: 8
-  y: 195
--
-  height: 26
-  location: {x: 8, y: 231}
-  size: {height: 26, width: 82}
-  width: 82
-  x: 8
-  y: 231
+  y: 123
 -
   height: 27
-  location: {x: 8, y: 267}
+  location: {x: 8, y: 160}
   size: {height: 27, width: 82}
   width: 82
   x: 8
-  y: 267
+  y: 160
 -
   height: 26
-  location: {x: 8, y: 304}
+  location: {x: 8, y: 197}
   size: {height: 26, width: 82}
   width: 82
   x: 8
-  y: 304
+  y: 197
+-
+  height: 26
+  location: {x: 8, y: 233}
+  size: {height: 26, width: 82}
+  width: 82
+  x: 8
+  y: 233
+-
+  height: 27
+  location: {x: 8, y: 269}
+  size: {height: 27, width: 82}
+  width: 82
+  x: 8
+  y: 269
+-
+  height: 27
+  location: {x: 8, y: 306}
+  size: {height: 27, width: 82}
+  width: 82
+  x: 8
+  y: 306
