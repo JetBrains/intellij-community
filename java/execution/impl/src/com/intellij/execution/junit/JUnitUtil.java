@@ -19,6 +19,7 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.*;
 import com.intellij.testIntegration.JavaTestFramework;
 import com.intellij.testIntegration.TestFramework;
+import com.intellij.util.ArrayUtil;
 import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -134,7 +135,7 @@ public class JUnitUtil {
     if (checkClass && checkRunWith) {
       PsiAnnotation annotation = getRunWithAnnotation(aClass);
       if (annotation != null) {
-        return !isInheritorOrSelfRunner(annotation, RUNNERS_REQUIRE_ANNOTATION_ON_TEST_METHOD);
+        return !isOneOf(annotation, RUNNERS_REQUIRE_ANNOTATION_ON_TEST_METHOD);
       }
     }
     if (!psiMethod.getParameterList().isEmpty()) return false;
@@ -424,7 +425,7 @@ public class JUnitUtil {
   }
 
   public static boolean isParameterized(PsiAnnotation annotation) {
-    return isInheritorOrSelfRunner(annotation, "org.junit.runners.Parameterized");
+    return isOneOf(annotation, "org.junit.runners.Parameterized");
   }
 
   public static boolean isInheritorOrSelfRunner(PsiAnnotation annotation, String... runners) {
@@ -433,6 +434,19 @@ public class JUnitUtil {
       final PsiTypeElement operand = ((PsiClassObjectAccessExpression)value).getOperand();
       final PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(operand.getType());
       return psiClass != null && Arrays.stream(runners).anyMatch(runner -> InheritanceUtil.isInheritor(psiClass, runner));
+    }
+    return false;
+  }
+
+  public static boolean isOneOf(PsiAnnotation annotation, String... runners) {
+    final PsiAnnotationMemberValue value = annotation.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
+    if (value instanceof PsiClassObjectAccessExpression) {
+      final PsiTypeElement operand = ((PsiClassObjectAccessExpression)value).getOperand();
+      final PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(operand.getType());
+      if (psiClass != null) {
+        String qualifiedName = psiClass.getQualifiedName();
+        if (qualifiedName != null && ArrayUtil.find(runners, qualifiedName) > -1) return true;
+      }
     }
     return false;
   }
