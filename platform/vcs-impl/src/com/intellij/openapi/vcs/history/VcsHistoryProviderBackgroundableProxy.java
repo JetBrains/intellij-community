@@ -71,42 +71,7 @@ public class VcsHistoryProviderBackgroundableProxy {
     lock.lock();
 
     CollectingHistoryPartner partner = new CollectingHistoryPartner(filePath, vcsKey, continuation, silent);
-    ProgressManager.getInstance().run(new Task.Backgroundable(myProject, VcsBundle.message("loading.file.history.progress"), true) {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        try {
-          VcsAbstractHistorySession cachedSession = null;
-          VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession> factory = getCacheableFactory();
-          if (factory != null) {
-            // we check for the last revision, since requests to this exact method at the moment only request history once, and no refresh is possible later
-            cachedSession = getSessionFromCacheWithLastRevisionCheck(filePath, vcsKey, factory);
-          }
-
-          if (cachedSession != null) {
-            partner.reportCreatedEmptySession(cachedSession);
-          }
-          else {
-            myHistoryProvider.reportAppendableHistory(filePath, partner);
-          }
-          partner.finished();
-        }
-        catch (ProcessCanceledException e) {
-          throw e;
-        }
-        catch (VcsFileHistoryLimitReachedException ignored) {
-          partner.finished();
-        }
-        catch (VcsException e) {
-          partner.reportException(e);
-        }
-        catch (Throwable t) {
-          partner.reportException(new VcsException(t));
-        }
-        finally {
-          ApplicationManager.getApplication().invokeLater(lock::unlock, ModalityState.NON_MODAL);
-        }
-      }
-    });
+    reportHistory(filePath, null, vcsKey, lock, partner, true);
   }
 
   @CalledInAwt
