@@ -140,7 +140,6 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
   @Nullable private Properties myUserProperties;
 
   @NotNull private final MavenRepositorySystem myRepositorySystem;
-  @NotNull private final LegacySupport myLegacySupport;
 
   public Maven3ServerEmbedderImpl(MavenEmbedderSettings settings) throws RemoteException {
     super(settings.getSettings());
@@ -261,7 +260,6 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
     myLocalRepository = createLocalRepository();
 
     myRepositorySystem = getComponent(MavenRepositorySystem.class);
-    myLegacySupport = getComponent(LegacySupport.class);
   }
 
   private static Settings buildSettings(SettingsBuilder builder,
@@ -1259,8 +1257,11 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
         Maven3ServerGlobals.getLogger().warn(e);
       }
     }
-    RepositorySystemSession session = myLegacySupport.getRepositorySession();
-    if (session != null) {
+    if (getComponent(LegacySupport.class).getRepositorySession() == null) {
+      final MavenExecutionRequest request = createRequest(null, null, null, null);
+      DefaultMaven maven = (DefaultMaven)getComponent(Maven.class);
+
+      RepositorySystemSession session = maven.newRepositorySession(request);
       myRepositorySystem.injectMirror(session, result);
       myRepositorySystem.injectProxy(session, result);
       myRepositorySystem.injectAuthentication(session, result);
