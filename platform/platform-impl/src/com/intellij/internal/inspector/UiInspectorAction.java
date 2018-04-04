@@ -32,6 +32,7 @@ import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.paint.RectanglePainter;
+import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Function;
@@ -1478,6 +1479,10 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     }
 
     private static List<PropertyBean> findActionsFor(Object object) {
+      if (object instanceof PopupFactoryImpl.ActionItem) {
+        AnAction action = ((PopupFactoryImpl.ActionItem)object).getAction();
+        return Collections.singletonList(new PropertyBean("action", action.getClass().getName(), true));
+      }
       if (object instanceof QuickFixWrapper) {
         return findActionsFor(((QuickFixWrapper)object).getFix());
       } else if (object instanceof IntentionActionDelegate) {
