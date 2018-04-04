@@ -17,12 +17,14 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
 import com.intellij.codeInspection.dataFlow.inliner.*;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
@@ -42,6 +44,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 import static com.intellij.psi.CommonClassNames.*;
 
@@ -78,8 +81,20 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   private void buildClassInitializerFlow(PsiClass psiClass, boolean isStatic) {
     for (PsiElement element : psiClass.getChildren()) {
-      if ((element instanceof PsiField || element instanceof PsiClassInitializer) &&
-          ((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.STATIC) == isStatic) {
+      if (element instanceof PsiField &&
+          !((PsiField)element).hasInitializer() &&
+          ((PsiField)element).hasModifierProperty(PsiModifier.STATIC) == isStatic) {
+        visitField((PsiField)element);
+      }
+    }
+    if (!isStatic &&
+        Stream.of(Extensions.getExtensions(ImplicitUsageProvider.EP_NAME)).anyMatch(p -> p.isClassWithCustomizedInitialization(psiClass))) {
+      addInstruction(new EscapeInstruction(Collections.singleton(getFactory().getVarFactory().createThisValue(psiClass))));
+      addInstruction(new FlushFieldsInstruction());
+    }
+    for (PsiElement element : psiClass.getChildren()) {
+      if (((element instanceof PsiField && ((PsiField)element).hasInitializer()) || element instanceof PsiClassInitializer) &&
+          ((PsiMember)element).hasModifierProperty(PsiModifier.STATIC) == isStatic) {
         element.accept(this);
       }
     }
