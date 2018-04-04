@@ -169,6 +169,7 @@ public class ClipboardSynchronizer implements Disposable, ApplicationComponent {
 
   @Nullable
   private static Clipboard getClipboard() {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) return null;
     try {
       return Toolkit.getDefaultToolkit().getSystemClipboard();
     }
