@@ -13,7 +13,8 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.fields.IntegerField;
 import com.intellij.ui.components.labels.DropDownLink;
 import com.intellij.util.ui.JBUI;
@@ -70,7 +71,7 @@ public class RemoteConfigurable2 extends SettingsEditor<RemoteConfiguration> {
 
       @Override
       public String toString() {
-        return "9 and later";
+        return "JDK 9 or later";
       }
     },
     JDK5to8(JavaSdkVersion.JDK_1_5)  {
@@ -81,7 +82,7 @@ public class RemoteConfigurable2 extends SettingsEditor<RemoteConfiguration> {
 
       @Override
       public String toString() {
-        return "5 - 8";
+        return "JDK 5 - 8";
       }
     },
     JDK1_4(JavaSdkVersion.JDK_1_4) {
@@ -92,7 +93,7 @@ public class RemoteConfigurable2 extends SettingsEditor<RemoteConfiguration> {
 
       @Override
       public String toString() {
-        return "1.4.x";
+        return "JDK 1.4.x";
       }
     },
     JDK1_3(JavaSdkVersion.JDK_1_3) {
@@ -103,7 +104,7 @@ public class RemoteConfigurable2 extends SettingsEditor<RemoteConfiguration> {
 
       @Override
       public String toString() {
-        return "1.3.x or earlier";
+        return "JDK 1.3.x or earlier";
       }
     };
 
@@ -125,24 +126,13 @@ public class RemoteConfigurable2 extends SettingsEditor<RemoteConfiguration> {
 
   private final JTextField myHostName = new JTextField();
   private final JTextField myAddress = new JTextField();
-  private final IntegerField myPort = new IntegerField("Port:", 0, 0xFFFF) {
-    @Override
-    public Dimension getPreferredSize() {
-      if (isPreferredSizeSet()) {
-        return super.getPreferredSize();
-      } else {
-        int value = getValue();
-        setValue(getMaxValue());
-
-        Dimension result = super.getPreferredSize();
-        setValue(value);
-        return result;
-      }
-    }
-  };
+  private final IntegerField myPort = new IntegerField("Port:", 0, 0xFFFF);
 
   public RemoteConfigurable2(Project project) {
     myTransportCombo.setSelectedItem(Transport.SOCKET);
+
+    myPort.setValue(myPort.getMaxValue());
+    myPort.setMinimumSize(myPort.getPreferredSize());
 
     GridBagConstraints gc = new GridBagConstraints(0, 0, 2, 1, 0, 0, GridBagConstraints.LINE_START, GridBagConstraints.NONE,
                                                    JBUI.insets(4, 0, 0, 8), 0, 0);
@@ -157,32 +147,25 @@ public class RemoteConfigurable2 extends SettingsEditor<RemoteConfiguration> {
     myArgsArea.setWrapStyleWord(true);
     myArgsArea.setRows(2);
     myArgsArea.setEditable(false);
+    myArgsArea.setBorder(new SideBorder(JBColor.border(), SideBorder.ALL));
+    myArgsArea.setMinimumSize(myArgsArea.getPreferredSize());
 
     updateArgsText(vi);
 
     DropDownLink<JDKVersionItem> ddl = new DropDownLink<>(vi, Arrays.asList(JDKVersionItem.values()), i -> updateArgsText(i), true);
-    ddl.setToolTipText("JVM Arguments format");
+    ddl.setToolTipText("JVM arguments format");
 
     gc.gridx = 0;
     gc.gridy++;
     gc.gridwidth = 5;
+    gc.weightx = 1.0;
     gc.fill = GridBagConstraints.HORIZONTAL;
     gc.weightx = 0;
     gc.insets = JBUI.insetsTop(10);
 
-    JScrollPane sp = new JBScrollPane(myArgsArea,
-                                      ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                      ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-
-    mainPanel.add(UI.PanelFactory.panel(sp).withLabel("Command line arguments for remote JVM:").
+    mainPanel.add(UI.PanelFactory.panel(myArgsArea).withLabel("Command line arguments for remote JVM:").
       moveLabelOnTop().withTopRightComponent(ddl).
                                withComment("Copy and paste the arguments to the command line when JVM is started").createPanel(), gc);
-
-    gc.gridx += gc.gridwidth;
-    gc.fill = GridBagConstraints.REMAINDER;
-    gc.weightx = 1.0;
-    gc.gridwidth = 1;
-    mainPanel.add(new JPanel(), gc);
 
     ModuleDescriptionsComboBox myModuleCombo = new ModuleDescriptionsComboBox();
     myModuleCombo.allowEmptySelection("<whole project>");
@@ -191,17 +174,12 @@ public class RemoteConfigurable2 extends SettingsEditor<RemoteConfiguration> {
     gc.gridx = 0;
     gc.gridy++;
     gc.gridwidth = 5;
+    gc.weightx = 1.0;
     gc.fill = GridBagConstraints.HORIZONTAL;
     gc.weightx = 0;
     gc.insets = JBUI.insetsTop(21);
     mainPanel.add(UI.PanelFactory.panel(myModuleCombo).withLabel("Use module classpath:").
       withComment("First search for sources of the debugged classes in the selected module classpath").createPanel(), gc);
-
-    gc.gridx += gc.gridwidth;
-    gc.fill = GridBagConstraints.REMAINDER;
-    gc.gridwidth = 1;
-    gc.weightx = 1.0;
-    mainPanel.add(new JPanel(), gc);
 
     DocumentListener textUpdateListener = new DocumentAdapter() {
       @Override
@@ -288,7 +266,6 @@ public class RemoteConfigurable2 extends SettingsEditor<RemoteConfiguration> {
     JLabel transportLabel = new JLabel("Transport:");
     JLabel hostLabel = new JLabel("Host:");
     JLabel portLabel = new JLabel(myPort.getValueName());
-    JPanel blankPanel = new JPanel();
 
     panel.add(modeLabel, gc);
 
@@ -305,11 +282,9 @@ public class RemoteConfigurable2 extends SettingsEditor<RemoteConfiguration> {
 
     if (SystemInfo.isWindows) {
       JLabel addressLabel = new JLabel("Address:");
-      JPanel blankPanel2 = new JPanel();
 
       addressLabel.setVisible(false);
       myAddress.setVisible(false);
-      blankPanel2.setVisible(false);
 
       gc.gridx = 0;
       gc.gridy++;
@@ -345,12 +320,6 @@ public class RemoteConfigurable2 extends SettingsEditor<RemoteConfiguration> {
       gc.fill = GridBagConstraints.HORIZONTAL;
       panel.add(myAddress, gc);
 
-      gc.gridx +=2;
-      gc.weightx = 1.0;
-      gc.gridwidth = 2;
-      gc.fill = GridBagConstraints.REMAINDER;
-      panel.add(blankPanel2, gc);
-
       myTransportCombo.addActionListener(e -> {
         boolean isShmem = myTransportCombo.getSelectedItem() == Transport.SHMEM;
 
@@ -358,11 +327,9 @@ public class RemoteConfigurable2 extends SettingsEditor<RemoteConfiguration> {
         myPort.setVisible(!isShmem);
         myHostName.setVisible(!isShmem);
         portLabel.setVisible(!isShmem);
-        blankPanel.setVisible(!isShmem);
 
         addressLabel.setVisible(isShmem);
         myAddress.setVisible(isShmem);
-        blankPanel2.setVisible(isShmem);
       });
     }
 
@@ -389,11 +356,6 @@ public class RemoteConfigurable2 extends SettingsEditor<RemoteConfiguration> {
     gc.gridx++;
     gc.insets = JBUI.insetsTop(4);
     panel.add(myPort, gc);
-
-    gc.gridx++;
-    gc.fill = GridBagConstraints.REMAINDER;
-    gc.weightx = 1.0;
-    panel.add(blankPanel, gc);
 
     return panel;
   }
