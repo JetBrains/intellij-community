@@ -22,7 +22,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.ItemLatestState;
@@ -66,24 +65,6 @@ public class VcsHistoryProviderBackgroundableProxy {
   @CalledInAwt
   public void createSessionFor(@NotNull VcsKey vcsKey, @NotNull FilePath filePath, @NotNull Consumer<VcsHistorySession> continuation,
                                @NotNull VcsBackgroundableActions actionKey, boolean silent) {
-    ThrowableComputable<VcsHistorySession, VcsException> throwableComputable;
-    VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession> factory = getCacheableFactory();
-    if (factory != null) {
-      throwableComputable = () -> {
-        // we check for the last revision, since requests to this exact method at the moment only request history once, and no refresh is possible later
-        VcsAbstractHistorySession session = getSessionFromCacheWithLastRevisionCheck(filePath, vcsKey, factory);
-        if (session == null) {
-          session = createSessionWithLimitCheck(filePath);
-          FilePath correctedPath = factory.getUsedFilePath(session);
-          myVcsHistoryCache.put(filePath, correctedPath, vcsKey, (VcsAbstractHistorySession)session.copy(), factory, true);
-        }
-        return session;
-      };
-    }
-    else {
-      throwableComputable = () -> createSessionWithLimitCheck(filePath);
-    }
-
     BackgroundableActionLock lock = BackgroundableActionLock.getLock(myProject, actionKey, filePath.getPath());
     if (lock.isLocked()) return;
     lock.lock();
@@ -92,8 +73,24 @@ public class VcsHistoryProviderBackgroundableProxy {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
-          VcsHistorySession session = throwableComputable.compute();
-          ApplicationManager.getApplication().invokeLater(() -> continuation.consume(session), ModalityState.defaultModalityState());
+          VcsAbstractHistorySession session = null;
+
+          VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession> factory = getCacheableFactory();
+          if (factory != null) {
+            // we check for the last revision, since requests to this exact method at the moment only request history once, and no refresh is possible later
+            session = getSessionFromCacheWithLastRevisionCheck(filePath, vcsKey, factory);
+          }
+
+          if (session == null) {
+            session = createSessionWithLimitCheck(filePath);
+            if (factory != null) {
+              FilePath correctedPath = factory.getUsedFilePath(session);
+              myVcsHistoryCache.put(filePath, correctedPath, vcsKey, (VcsAbstractHistorySession)session.copy(), factory, true);
+            }
+          }
+
+          VcsAbstractHistorySession finalSession = session;
+          ApplicationManager.getApplication().invokeLater(() -> continuation.consume(finalSession), ModalityState.defaultModalityState());
         }
         catch (VcsException e) {
           if (!silent) {
