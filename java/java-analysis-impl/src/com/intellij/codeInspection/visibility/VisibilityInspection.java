@@ -157,9 +157,12 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     if (refElement instanceof RefParameter) return null;
     if (refElement.isSyntheticJSP()) return null;
 
-    //if (!SUGGEST_FOR_CONSTANTS && refEntity instanceof RefField && PsiUtil.isConstantField(refElement.getElement())) {
-    //  return null;
-    //}
+    if (!SUGGEST_FOR_CONSTANTS && refEntity instanceof RefField) {
+      RefField refField = (RefField)refEntity;
+      if (refField.isFinal() && refField.isStatic() && refField.isOnlyAssignedInInitializer()) {
+        return null;
+      }
+    }
 
     int minLevel = -1;
     //ignore entry points.
