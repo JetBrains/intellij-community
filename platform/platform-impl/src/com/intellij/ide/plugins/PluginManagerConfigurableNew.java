@@ -8,11 +8,15 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.options.*;
+import com.intellij.openapi.options.newEditor.SettingsDialog;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -22,6 +26,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBOptionButton;
@@ -334,7 +339,7 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
       PluginManagerMain.LOG.error(e);
     }
 
-    if (myShutdownCallback == null) {
+    if (myShutdownCallback == null && myPluginsModel.createShutdownCallback) {
       myShutdownCallback = () -> ApplicationManager.getApplication().invokeLater(
         () -> PluginManagerConfigurable.shutdownOrRestartApp(IdeBundle.message("update.notifications.title")));
     }
@@ -381,8 +386,9 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
 
   @NotNull
   private JComponent createTrendingPanel(@NotNull LinkListener<Pair<IdeaPluginDescriptor, Integer>> listener) {
-    PluginsGroupComponent panel = new PluginsGroupComponent(new PluginsGridLayout(), (aSource, aLinkData) -> listener
-      .linkSelected(aSource, new Pair<>(aLinkData, 0)), descriptor -> new GridCellPluginComponent(descriptor, myTagBuilder));
+    PluginsGroupComponent panel =
+      new PluginsGroupComponent(new PluginsGridLayout(), (aSource, aLinkData) -> listener.linkSelected(aSource, new Pair<>(aLinkData, 0)),
+                                descriptor -> new GridCellPluginComponent(myPluginsModel, descriptor, myTagBuilder));
     panel.getEmptyText().setText("Trending plugins are not loaded.")
          .appendSecondaryText("Check the interner connection.", StatusText.DEFAULT_ATTRIBUTES, null);
 
@@ -1393,7 +1399,7 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
     private JPanel createButtons(boolean update) {
       JPanel buttons = new NonOpaquePanel(new HorizontalLayout(JBUI.scale(6)));
       if (myPlugin instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)myPlugin).isDeleted()) {
-        myRestartButton = new RestartButton();
+        myRestartButton = new RestartButton(myPluginsModel);
         buttons.add(myRestartButton);
         myMouseComponents.add(myRestartButton);
       }
@@ -1420,7 +1426,7 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
           AbstractAction uninstallAction = new AbstractAction("Uninstall") {
             @Override
             public void actionPerformed(ActionEvent e) {
-              doUninstall();
+              myPluginsModel.doUninstall(ListPluginComponent.this, myPlugin, null);
             }
           };
           myEnableDisableUninstallButton = new MyOptionButton(enableDisableAction, uninstallAction);
@@ -1479,7 +1485,7 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
       }
     }
 
-    private void updateErrors() {
+    public void updateErrors() {
       if (PluginManagerCore.isIncompatible(myPlugin) || myPluginsModel.hasProblematicDependencies(myPlugin.getPluginId())) {
         if (myErrorPanel == null) {
           myErrorPanel = createNameBaselinePanel();
@@ -1619,8 +1625,10 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
       return myPluginsModel.getEnabledTitle(myPlugin);
     }
 
-    private void doUninstall() {
-      myPluginsModel.doUninstall(this, myPlugin);
+    public void updateAfterUninstall() {
+      if (myEnableDisableUninstallButton == null) {
+        return;
+      }
 
       Container parent = myEnableDisableUninstallButton.getParent();
 
@@ -1634,12 +1642,12 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
         myUpdateButton = null;
       }
       if (myRestartButton == null) {
-        myRestartButton = new RestartButton();
+        myRestartButton = new RestartButton(myPluginsModel);
         parent.add(myRestartButton);
         myMouseComponents.add(myRestartButton);
       }
 
-      parent.doLayout();
+      doLayout();
     }
 
     public void updateEnabledState() {
@@ -1659,8 +1667,11 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
     private JLabel myRating;
     private final JButton myInstallButton;
 
-    public GridCellPluginComponent(@NotNull IdeaPluginDescriptor plugin, @NotNull TagBuilder tagBuilder) {
+    public GridCellPluginComponent(@NotNull MyPluginModel pluginsModel,
+                                   @NotNull IdeaPluginDescriptor plugin,
+                                   @NotNull TagBuilder tagBuilder) {
       super(plugin);
+      pluginsModel.addComponent(this);
 
       JPanel container = new NonOpaquePanel();
       JPanel centerPanel = createPanel(container, JBUI.scale(10), offset5(), JBUI.scale(180));
@@ -1780,6 +1791,10 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
         myRating.setForeground(grayedFg);
       }
     }
+
+    public void updateAfterUninstall() {
+      // XXX
+    }
   }
 
   private static int offset5() {
@@ -1859,7 +1874,7 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
       buttons.setBorder(JBUI.Borders.emptyTop(1));
 
       if (myPlugin instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)myPlugin).isDeleted()) {
-        buttons.add(myRestartButton = new RestartButton());
+        buttons.add(myRestartButton = new RestartButton(myPluginsModel));
       }
       else {
         if (update) {
@@ -2070,26 +2085,26 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
     }
 
     private void doUninstall() {
-      myPluginsModel.doUninstall(this, myPlugin);
+      myPluginsModel.doUninstall(this, myPlugin, () -> {
+        Container parent = myEnableDisableUninstallButton.getParent();
 
-      Container parent = myEnableDisableUninstallButton.getParent();
+        parent.remove(myEnableDisableUninstallButton);
+        myEnableDisableUninstallButton = null;
 
-      parent.remove(myEnableDisableUninstallButton);
-      myEnableDisableUninstallButton = null;
+        if (myUpdateButton != null) {
+          parent.remove(myUpdateButton);
+          myUpdateButton = null;
+        }
+        if (myInstallButton != null) {
+          parent.remove(myInstallButton);
+          myInstallButton = null;
+        }
+        if (myRestartButton == null) {
+          parent.add(myRestartButton = new RestartButton(myPluginsModel));
+        }
 
-      if (myUpdateButton != null) {
-        parent.remove(myUpdateButton);
-        myUpdateButton = null;
-      }
-      if (myInstallButton != null) {
-        parent.remove(myInstallButton);
-        myInstallButton = null;
-      }
-      if (myRestartButton == null) {
-        parent.add(myRestartButton = new RestartButton());
-      }
-
-      parent.doLayout();
+        doLayout();
+      });
     }
   }
 
@@ -2267,8 +2282,18 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
   }
 
   private static class RestartButton extends InstallButton {
-    public RestartButton() {
+    public RestartButton(@NotNull MyPluginModel pluginModel) {
       super(true);
+      addActionListener(e -> IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+        pluginModel.needRestart = true;
+        pluginModel.createShutdownCallback = false;
+
+        DialogWrapper settings = DialogWrapper.findInstance(IdeFocusManager.findInstance().getFocusOwner());
+        assert settings instanceof SettingsDialog : settings;
+        ((SettingsDialog)settings).doOKAction();
+
+        ((ApplicationImpl)ApplicationManager.getApplication()).exit(true, false, true);
+      }, ModalityState.current()));
     }
 
     @Override
@@ -2373,12 +2398,21 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
   }
 
   private static class MyPluginModel extends InstalledPluginsTableModel {
-    private final List<ListPluginComponent> myComponents = new ArrayList<>();
+    private final List<ListPluginComponent> myListComponents = new ArrayList<>();
+    private final Map<String, ListPluginComponent> myListMap = new HashMap<>();
+    private final Map<String, GridCellPluginComponent> myGridMap = new HashMap<>();
 
     public boolean needRestart;
+    public boolean createShutdownCallback = true;
 
-    public void addComponent(@NotNull ListPluginComponent component) {
-      myComponents.add(component);
+    public void addComponent(@NotNull CellPluginComponent component) {
+      if (component instanceof ListPluginComponent) {
+        myListComponents.add((ListPluginComponent)component);
+        myListMap.put(component.myPlugin.getPluginId().getIdString(), (ListPluginComponent)component);
+      }
+      else {
+        myGridMap.put(component.myPlugin.getPluginId().getIdString(), (GridCellPluginComponent)component);
+      }
     }
 
     @NotNull
@@ -2389,12 +2423,12 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
     public void changeEnableDisable(@NotNull IdeaPluginDescriptor plugin) {
       enableRows(new IdeaPluginDescriptor[]{plugin}, !isEnabled(plugin.getPluginId()));
 
-      for (ListPluginComponent component : myComponents) {
+      for (ListPluginComponent component : myListComponents) {
         component.updateEnabledState();
       }
     }
 
-    public void doUninstall(@NotNull Component uiParent, @NotNull IdeaPluginDescriptor plugin) {
+    public void doUninstall(@NotNull Component uiParent, @NotNull IdeaPluginDescriptor plugin, @Nullable Runnable update) {
       if (!dependent((IdeaPluginDescriptorImpl)plugin).isEmpty()) {
         String message = IdeBundle.message("several.plugins.depend.on.0.continue.to.remove", plugin.getName());
         String title = IdeBundle.message("title.plugin.uninstall");
@@ -2410,6 +2444,26 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
       }
       catch (IOException e) {
         PluginManagerMain.LOG.error(e);
+      }
+
+      if (update != null) {
+        update.run();
+      }
+
+      String id = plugin.getPluginId().getIdString();
+
+      ListPluginComponent listComponent = myListMap.get(id);
+      if (listComponent != null) {
+        listComponent.updateAfterUninstall();
+      }
+
+      GridCellPluginComponent gridComponent = myGridMap.get(id);
+      if (gridComponent != null) {
+        gridComponent.updateAfterUninstall();
+      }
+
+      for (ListPluginComponent component : myListComponents) {
+        component.updateErrors();
       }
     }
   }
