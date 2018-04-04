@@ -352,7 +352,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       setComment(initialSelection, comment);
     }
 
-    initCheckinHandlers(project);
+    myHandlers.addAll(createCheckinHandlers(project, this, myCommitContext));
     myCommitOptions = new CommitOptionsPanel(this, myHandlers, getAffectedVcses());
     restoreState();
 
@@ -444,13 +444,18 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     showDetailsIfSaved();
   }
 
-  private void initCheckinHandlers(@NotNull Project project) {
+  @NotNull
+  private static List<CheckinHandler> createCheckinHandlers(@NotNull Project project,
+                                                            @NotNull CheckinProjectPanel checkinPanel,
+                                                            @NotNull CommitContext commitContext) {
+    List<CheckinHandler> handlers = new ArrayList<>();
     for (BaseCheckinHandlerFactory factory : getCheckInFactories(project)) {
-      CheckinHandler handler = factory.createHandler(this, myCommitContext);
+      CheckinHandler handler = factory.createHandler(checkinPanel, commitContext);
       if (!CheckinHandler.DUMMY.equals(handler)) {
-        myHandlers.add(handler);
+        handlers.add(handler);
       }
     }
+    return handlers;
   }
 
   @NotNull
