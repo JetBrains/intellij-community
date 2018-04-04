@@ -331,6 +331,7 @@ class BuildContextImpl extends BuildContext {
     // Android Studio: set JVM args to be included in studio.sh when bundling UI tests
     if (options.includeUiTests) {
       jvmArgs += " -Ddisable.config.import=true"
+      jvmArgs += " -Didea.gui.test.running.on.release=true"
     }
     return jvmArgs.trim()
   }
