@@ -1307,7 +1307,8 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
             if (event.getID() == WindowEvent.WINDOW_OPENED ||event.getID() == WindowEvent.WINDOW_ACTIVATED) {
               if (!result.isProcessed()) {
                 final WindowEvent we = (WindowEvent)event;
-                IdeFocusManager.findInstanceByComponent(we.getWindow()).doWhenFocusSettlesDown(result.createSetDoneRunnable());
+                IdeFocusManager.findInstanceByComponent(we.getWindow()).doWhenFocusSettlesDown(result.createSetDoneRunnable(),
+                                                                                               ModalityState.defaultModalityState());
               }
             }
           }
@@ -1317,7 +1318,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
         result.setDone();
         queueActionPerformedEvent(action, context, event);
       }
-    ));
+    ), ModalityState.defaultModalityState());
   }
 
   private class MyTimer extends Timer implements ActionListener {
