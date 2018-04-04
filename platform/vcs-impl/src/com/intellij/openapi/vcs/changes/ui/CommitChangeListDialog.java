@@ -99,6 +99,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @NotNull private final List<CommitExecutor> myExecutors;
   @NotNull private final List<CheckinHandler> myHandlers = newArrayList();
   private final boolean myAllOfDefaultChangeListChangesIncluded;
+  @NotNull private final String myCommitActionName;
 
   @NotNull private final Map<String, String> myListComments;
   @NotNull private final List<CommitExecutorAction> myExecutorActions;
@@ -357,7 +358,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     restoreState();
 
     setTitle(myShowVcsCommit ? TITLE : trimEllipsis(executors.get(0).getActionText()));
-    myCommitAction = myShowVcsCommit ? new CommitAction(getCommitActionName()) : null;
+    myCommitActionName = getCommitActionName(myAffectedVcses);
+    myCommitAction = myShowVcsCommit ? new CommitAction(myCommitActionName) : null;
     myExecutorActions = createExecutorActions(executors);
     if (myCommitAction != null) {
       myCommitAction.setOptions(myExecutorActions);
@@ -751,10 +753,16 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     PropertiesComponent.getInstance().setValue(DETAILS_SHOW_OPTION, myDetailsSplitter.isOn(), DETAILS_SHOW_OPTION_DEFAULT);
   }
 
+  @NotNull
   @Override
   public String getCommitActionName() {
+    return myCommitActionName;
+  }
+
+  @NotNull
+  private static String getCommitActionName(@NotNull Collection<AbstractVcs> affectedVcses) {
     String name = null;
-    for (AbstractVcs vcs : myAffectedVcses) {
+    for (AbstractVcs vcs : affectedVcses) {
       CheckinEnvironment checkinEnvironment = vcs.getCheckinEnvironment();
       if (name == null && checkinEnvironment != null) {
         name = checkinEnvironment.getCheckinOperationName();
