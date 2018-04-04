@@ -775,8 +775,8 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     checkboxesToolbar.setForceShowFirstComponent(true);
     checkboxesToolbar.setSkipWindowAdjustments(true);
 
-    add(myTitlePanel, "sx 2, growx, growx 200, growy");
-    add(checkboxesToolbar, "gapright 8");
+    add(myTitlePanel, "sx 2, growx, growx, growy");
+    add(checkboxesToolbar, "gapright 8, growx 200, pushx, wmax pref, ax right");
     add(myCbFileFilter);
     add(myFileMaskField, "gapleft 4, gapright 16");
     if (Registry.is("ide.find.as.popup.allow.pin") || ApplicationManager.getApplication().isInternal()) {
