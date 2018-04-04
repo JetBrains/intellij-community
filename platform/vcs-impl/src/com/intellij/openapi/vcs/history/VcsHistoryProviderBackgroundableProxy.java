@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.history;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -69,53 +70,37 @@ public class VcsHistoryProviderBackgroundableProxy {
     if (lock.isLocked()) return;
     lock.lock();
 
+    CollectingHistoryPartner partner = new CollectingHistoryPartner(filePath, vcsKey, continuation, silent);
     ProgressManager.getInstance().run(new Task.Backgroundable(myProject, VcsBundle.message("loading.file.history.progress"), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
-          VcsAbstractHistorySession session = null;
-
+          VcsAbstractHistorySession cachedSession = null;
           VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession> factory = getCacheableFactory();
           if (factory != null) {
             // we check for the last revision, since requests to this exact method at the moment only request history once, and no refresh is possible later
-            session = getSessionFromCacheWithLastRevisionCheck(filePath, vcsKey, factory);
+            cachedSession = getSessionFromCacheWithLastRevisionCheck(filePath, vcsKey, factory);
           }
 
-          if (session == null) {
-            LimitHistoryCheck check = new LimitHistoryCheck(myProject, filePath.getPath());
-            VcsAppendableHistoryPartnerAdapter partner = new VcsAppendableHistoryPartnerAdapter() {
-              @Override
-              public void acceptRevision(VcsFileRevision revision) {
-                check.checkNumber();
-                super.acceptRevision(revision);
-              }
-            };
-            try {
-              myHistoryProvider.reportAppendableHistory(filePath, partner);
-            }
-            catch (VcsFileHistoryLimitReachedException ignored) {
-            }
-            session = partner.getSession();
-            if (factory != null) {
-              FilePath correctedPath = factory.getUsedFilePath(session);
-              myVcsHistoryCache.put(filePath, correctedPath, vcsKey, (VcsAbstractHistorySession)session.copy(), factory, true);
-            }
+          if (cachedSession != null) {
+            partner.reportCreatedEmptySession(cachedSession);
           }
-
-          VcsAbstractHistorySession finalSession = session;
-          ApplicationManager.getApplication().invokeLater(() -> continuation.consume(finalSession), ModalityState.defaultModalityState());
+          else {
+            myHistoryProvider.reportAppendableHistory(filePath, partner);
+          }
+          partner.finished();
+        }
+        catch (ProcessCanceledException e) {
+          throw e;
+        }
+        catch (VcsFileHistoryLimitReachedException ignored) {
+          partner.finished();
         }
         catch (VcsException e) {
-          if (!silent) {
-            AbstractVcsHelper.getInstance(getProject()).showError(e,
-                                                                  VcsBundle.message("message.title.could.not.load.file.history"));
-          }
+          partner.reportException(e);
         }
         catch (Throwable t) {
-          if (!silent) {
-            AbstractVcsHelper.getInstance(getProject()).showError(new VcsException(t),
-                                                                  VcsBundle.message("message.title.could.not.load.file.history"));
-          }
+          partner.reportException(new VcsException(t));
         }
         finally {
           ApplicationManager.getApplication().invokeLater(lock::unlock, ModalityState.NON_MODAL);
@@ -272,6 +257,53 @@ public class VcsHistoryProviderBackgroundableProxy {
       }
     }
     return null;
+  }
+
+  private class CollectingHistoryPartner extends VcsAppendableHistoryPartnerAdapter {
+    @NotNull private final FilePath myFilePath;
+    @NotNull private final VcsKey myVcsKey;
+    @NotNull private final Consumer<VcsHistorySession> myContinuation;
+    private final boolean mySilent;
+    @NotNull private final LimitHistoryCheck myCheck;
+
+    private CollectingHistoryPartner(@NotNull FilePath path,
+                                     @NotNull VcsKey key,
+                                     @NotNull Consumer<VcsHistorySession> continuation,
+                                     boolean silent) {
+      myFilePath = path;
+      myVcsKey = key;
+      myContinuation = continuation;
+      mySilent = silent;
+      myCheck = new LimitHistoryCheck(myProject, myFilePath.getPath());
+    }
+
+    @Override
+    public void acceptRevision(VcsFileRevision revision) {
+      myCheck.checkNumber();
+      super.acceptRevision(revision);
+    }
+
+    @Override
+    public void reportException(VcsException exception) {
+      if (!mySilent) {
+        AbstractVcsHelper.getInstance(myProject).showError(exception,
+                                                           VcsBundle.message("message.title.could.not.load.file.history"));
+      }
+      super.reportException(exception);
+    }
+
+    @Override
+    public void finished() {
+      VcsAbstractHistorySession session = getSession();
+      if (session != null) {
+        VcsCacheableHistorySessionFactory<? extends Serializable, VcsAbstractHistorySession> factory = getCacheableFactory();
+        if (factory != null) {
+          FilePath correctedPath = factory.getUsedFilePath(session);
+          myVcsHistoryCache.put(myFilePath, correctedPath, myVcsKey, (VcsAbstractHistorySession)session.copy(), factory, true);
+        }
+        ApplicationManager.getApplication().invokeLater(() -> myContinuation.consume(session), ModalityState.defaultModalityState());
+      }
+    }
   }
 
   private static class HistoryPartnerProxy implements VcsAppendableHistorySessionPartner {
