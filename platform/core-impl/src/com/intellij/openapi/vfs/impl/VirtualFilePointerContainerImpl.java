@@ -399,7 +399,7 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
   @Override
   public void dispose() {
     assert !myDisposed;
-    //myDisposed = true;
+    myDisposed = true;
     kill(null);
     clear();
   }

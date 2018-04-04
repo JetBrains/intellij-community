@@ -140,7 +140,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   public void dispose() {
     checkDisposed();
 
-    //myDisposed = true;
+    myDisposed = true;
     kill(null);
   }
 
