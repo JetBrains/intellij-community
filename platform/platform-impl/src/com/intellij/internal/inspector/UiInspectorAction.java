@@ -11,6 +11,7 @@ import com.intellij.notification.Notifications;
 import com.intellij.notification.NotificationsManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
@@ -1150,7 +1151,19 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     private void addActionInfo(Object component) {
       if (component instanceof ActionButton) {
         myProperties.add(new PropertyBean("action", ((ActionButton)component).getAction().getClass().getName(), true));
+      } else if (component instanceof JComponent) {
+        Component comp = UIUtil.findParentByCondition((Component)component,
+                                                           (c) -> c instanceof JComponent &&
+                                                                  ((JComponent)c).getClientProperty(
+                                                                    CustomComponentAction.CUSTOM_COMPONENT_ACTION_PROPERTY) instanceof AnAction);
+        if (comp instanceof JComponent) {
+          Object action = ((JComponent)comp).getClientProperty(CustomComponentAction.CUSTOM_COMPONENT_ACTION_PROPERTY);
+          if (action instanceof AnAction) {
+            myProperties.add(new PropertyBean("action", action.getClass().getName(), true));
+          }
+        }
       }
+
     }
 
     private void addLayoutProperties(@NotNull Container component) {
