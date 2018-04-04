@@ -1,35 +1,34 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
 iml_module(
-    name = "maven-jps-plugin",
+    name = "intellij.maven.jps",
     srcs = ["src"],
-    iml_files = ["maven-jps-plugin.iml"],
+    iml_files = ["intellij.maven.jps.iml"],
     tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea/java/execution/impl:execution-impl",
-        "//tools/idea/platform/external-system-impl",
-        "//tools/idea/platform/lvcs-impl",
-        "//tools/idea/json",
-        "//tools/idea/platform/tasks-platform-impl",
-        "//tools/idea/platform/credential-store",
+        "//tools/idea/platform/external-system-impl:intellij.platform.externalSystem.impl",
+        "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
+        "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
+        "//tools/idea/json:intellij.json",
+        "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
     ],
     test_srcs = ["testSrc"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/idea/java/compiler/instrumentation-util-8",
-        "//tools/idea/java/java-runtime",
+        "//tools/idea/java/compiler/instrumentation-util-8:intellij.java.compiler.instrumentationUtil.java8",
+        "//tools/idea/java/java-runtime:intellij.java.rt",
     ],
     # do not sort: must match IML order
     deps = [
-        "//tools/idea/jps/model-api:jps-model-api[module]",
-        "//tools/idea/jps/model-impl:jps-model-impl[module]",
-        "//tools/idea/platform/util[module]",
-        "//tools/idea:jps-builders_and_others[module]",
-        "//tools/idea/jps/model-serialization:jps-model-serialization[module]",
+        "//tools/idea/jps/model-api:intellij.platform.jps.model[module]",
+        "//tools/idea/jps/model-impl:intellij.platform.jps.model.impl[module]",
+        "//tools/idea/platform/util:intellij.platform.util[module]",
+        "//tools/idea:intellij.platform.jps.build_and_others[module]",
+        "//tools/idea/jps/model-serialization:intellij.platform.jps.model.serialization[module]",
         "//tools/idea/plugins/maven/lib:plexus-utils-2.0.6",
-        "//tools/idea/jps/model-serialization:jps-serialization-tests[module, test]",
+        "//tools/idea/jps/model-serialization:intellij.platform.jps.model.serialization.tests[module, test]",
     ],
 )

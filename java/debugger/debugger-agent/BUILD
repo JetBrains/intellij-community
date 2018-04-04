@@ -1,15 +1,15 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
 iml_module(
-    name = "debugger-agent",
+    name = "intellij.java.debugger.agent",
     srcs = ["src"],
-    iml_files = ["debugger-agent.iml"],
+    iml_files = ["intellij.java.debugger.agent.iml"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     deps = [
         "//tools/idea/.idea/libraries:ASM",
-        "//tools/idea/java/debugger/debugger-agent-storage[module]",
+        "//tools/idea/java/debugger/debugger-agent-storage:intellij.java.debugger.agent.storage[module]",
     ],
 )
 

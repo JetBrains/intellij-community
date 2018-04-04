@@ -1,37 +1,37 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
 iml_module(
-    name = "xml-analysis-impl",
+    name = "intellij.xml.analysis.impl",
     srcs = ["src"],
-    iml_files = ["xml-analysis-impl.iml"],
+    iml_files = ["intellij.xml.analysis.impl.iml"],
     resources = ["resources"],
     tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea/xml/xml-structure-view-impl",
-        "//tools/idea/spellchecker",
-        "//tools/idea/images",
+        "//tools/idea/images:intellij.platform.images",
+        "//tools/idea/platform/testFramework/extensions:intellij.platform.testExtensions",
     ],
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/xml/xml-analysis-api"],
+    exports = ["//tools/idea/xml/xml-analysis-api:intellij.xml.analysis"],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/idea/platform/xdebugger-impl",
-        "//tools/idea/platform/lvcs-impl",
-        "//tools/idea/platform/credential-store",
-        "//tools/idea/platform/configuration-store-impl",
-        "//tools/idea/platform/built-in-server",
-        "//tools/idea/platform/tasks-platform-impl",
-        "//tools/idea/json",
-        "//tools/idea/xml/relaxng",
-        "//tools/idea/xml/dom-impl",
+        "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
+        "//tools/idea/xml/xml-structure-view-impl:intellij.xml.structureView.impl",
+        "//tools/idea/xml/dom-impl:intellij.xml.dom.impl",
+        "//tools/idea/spellchecker:intellij.spellchecker",
+        "//tools/idea/xml/relaxng:intellij.relaxng",
+        "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
+        "//tools/idea/json:intellij.json",
+        "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
+        "//tools/idea/platform/configuration-store-impl:intellij.platform.configurationStore.impl",
+        "//tools/idea/platform/built-in-server:intellij.platform.builtInServer.impl",
     ],
     # do not sort: must match IML order
     deps = [
-        "//tools/idea/xml/xml-psi-impl[module]",
-        "//tools/idea/platform/analysis-impl[module]",
-        "//tools/idea/platform/core-impl[module]",
-        "//tools/idea/xml/xml-analysis-api[module]",
-        "//tools/idea/platform/projectModel-api[module]",
+        "//tools/idea/xml/xml-psi-impl:intellij.xml.psi.impl[module]",
+        "//tools/idea/platform/analysis-impl:intellij.platform.analysis.impl[module]",
+        "//tools/idea/platform/core-impl:intellij.platform.core.impl[module]",
+        "//tools/idea/xml/xml-analysis-api:intellij.xml.analysis[module]",
+        "//tools/idea/platform/projectModel-api:intellij.platform.projectModel[module]",
     ],
 )

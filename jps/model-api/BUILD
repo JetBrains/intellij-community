@@ -1,14 +1,14 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
 iml_module(
-    name = "jps-model-api",
+    name = "intellij.platform.jps.model",
     srcs = ["src"],
-    iml_files = ["jps-model-api.iml"],
+    iml_files = ["intellij.platform.jps.model.iml"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     deps = [
-        "//tools/idea/platform/annotations[module]",
-        "//tools/idea/platform/util[module]",
+        "//tools/idea/platform/annotations:intellij.platform.annotations.java5[module]",
+        "//tools/idea/platform/util:intellij.platform.util[module]",
     ],
 )

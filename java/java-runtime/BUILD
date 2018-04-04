@@ -1,9 +1,9 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
 iml_module(
-    name = "java-runtime",
+    name = "intellij.java.rt",
     srcs = ["src"],
-    iml_files = ["java-runtime.iml"],
+    iml_files = ["intellij.java.rt.iml"],
     javacopts = ["-XepAllErrorsAsWarnings"],
     tags = ["managed"],
     visibility = ["//visibility:public"],

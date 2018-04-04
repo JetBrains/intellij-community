@@ -341,12 +341,16 @@ java_library(
         "//tools/idea/lib:coverage-agent",
         "//tools/idea/lib:coverage-instrumenter",
         "//tools/idea/lib:coverage-util",
+        "//tools/idea/lib:test-discovery-agent",
+        "//tools/idea/lib:test-discovery-instrumenter",
     ],
     # do not sort: must match IML order
     runtime_deps = [
         "//tools/idea/lib:coverage-agent",
         "//tools/idea/lib:coverage-instrumenter",
         "//tools/idea/lib:coverage-util",
+        "//tools/idea/lib:test-discovery-agent",
+        "//tools/idea/lib:test-discovery-instrumenter",
     ],
 )
 

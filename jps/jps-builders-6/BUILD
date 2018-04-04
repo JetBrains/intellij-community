@@ -1,20 +1,20 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
 iml_module(
-    name = "jps-builders-6",
+    name = "intellij.platform.jps.build.javac.rt",
     srcs = ["src"],
     exclude = [
         "src/org/jetbrains/jps/javac/OptimizedFileManager.java",
         "src/org/jetbrains/jps/javac/OptimizedFileManager17.java",
     ],
-    iml_files = ["jps-builders-6.iml"],
+    iml_files = ["intellij.platform.jps.build.javac.rt.iml"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
     runtime_deps = ["//tools/idea/jps/lib:optimizedFileManager"],
     # do not sort: must match IML order
     deps = [
-        "//tools/idea/platform/annotations[module]",
-        "//tools/idea/platform/util-rt[module]",
+        "//tools/idea/platform/annotations:intellij.platform.annotations.java5[module]",
+        "//tools/idea/platform/util-rt:intellij.platform.util.rt[module]",
         "//tools/idea/.idea/libraries:Netty",
         "//tools/idea/.idea/libraries:Log4J",
         "//tools/idea/.idea/libraries:protobuf",

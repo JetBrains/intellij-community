@@ -1,9 +1,9 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
 iml_module(
-    name = "jshell-protocol",
+    name = "intellij.java.jshell.protocol",
     srcs = ["src"],
-    iml_files = ["jshell-protocol.iml"],
+    iml_files = ["intellij.java.jshell.protocol.iml"],
     tags = ["managed"],
     test_srcs = ["testStrc"],
     visibility = ["//visibility:public"],

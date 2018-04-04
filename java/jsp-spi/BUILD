@@ -1,40 +1,40 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
 iml_module(
-    name = "jsp-spi",
+    name = "intellij.jsp.spi",
     srcs = ["src"],
-    iml_files = ["jsp-spi.iml"],
+    iml_files = ["intellij.jsp.spi.iml"],
     tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea/xml/xml-structure-view-impl",
-        "//tools/idea/spellchecker",
-        "//tools/idea/images",
+        "//tools/idea/xml/xml-analysis-impl:intellij.xml.analysis.impl",
+        "//tools/idea/images:intellij.platform.images",
+        "//tools/idea/platform/testFramework/extensions:intellij.platform.testExtensions",
     ],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//tools/idea/java/jsp-openapi",
-        "//tools/idea/java/openapi",
+        "//tools/idea/java/jsp-openapi:intellij.jsp",
+        "//tools/idea/java/openapi:intellij.java",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/idea/RegExpSupport",
-        "//tools/idea/xml/xml-analysis-impl",
-        "//tools/idea/platform/xdebugger-impl",
-        "//tools/idea/platform/lvcs-impl",
-        "//tools/idea/platform/credential-store",
-        "//tools/idea/platform/configuration-store-impl",
-        "//tools/idea/platform/built-in-server",
-        "//tools/idea/platform/tasks-platform-impl",
-        "//tools/idea/json",
-        "//tools/idea/xml/relaxng",
-        "//tools/idea/xml/dom-impl",
+        "//tools/idea/platform/usageView:intellij.platform.usageView",
+        "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
+        "//tools/idea/xml/xml-structure-view-impl:intellij.xml.structureView.impl",
+        "//tools/idea/xml/dom-impl:intellij.xml.dom.impl",
+        "//tools/idea/spellchecker:intellij.spellchecker",
+        "//tools/idea/xml/relaxng:intellij.relaxng",
+        "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
+        "//tools/idea/json:intellij.json",
+        "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
+        "//tools/idea/platform/configuration-store-impl:intellij.platform.configurationStore.impl",
+        "//tools/idea/platform/built-in-server:intellij.platform.builtInServer.impl",
     ],
     # do not sort: must match IML order
     deps = [
-        "//tools/idea/java/jsp-openapi[module]",
-        "//tools/idea/java/openapi[module]",
-        "//tools/idea/java/jsp-base-openapi[module]",
+        "//tools/idea/java/jsp-openapi:intellij.jsp[module]",
+        "//tools/idea/java/openapi:intellij.java[module]",
+        "//tools/idea/java/jsp-base-openapi:intellij.jsp.base[module]",
     ],
 )

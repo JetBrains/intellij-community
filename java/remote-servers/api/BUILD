@@ -1,35 +1,31 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
 iml_module(
-    name = "remote-servers-java-api",
+    name = "intellij.java.remoteServers",
     srcs = ["src"],
-    iml_files = ["remote-servers-java-api.iml"],
+    iml_files = ["intellij.java.remoteServers.iml"],
     tags = ["managed"],
-    # do not sort: must match IML order
-    test_runtime_deps = [
-        "//tools/idea/java/execution/impl:execution-impl",
-        "//tools/idea/platform/external-system-impl",
-    ],
+    test_runtime_deps = ["//tools/idea/platform/external-system-impl:intellij.platform.externalSystem.impl"],
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/platform/remote-servers/api:remote-servers-api"],
+    exports = ["//tools/idea/platform/remote-servers/api:intellij.platform.remoteServers"],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/idea/platform/lvcs-impl",
-        "//tools/idea/platform/credential-store",
-        "//tools/idea/platform/configuration-store-impl",
-        "//tools/idea/platform/tasks-platform-impl",
-        "//tools/idea/json",
-        "//tools/idea/xml/relaxng",
-        "//tools/idea/java/compiler/instrumentation-util-8",
+        "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
+        "//tools/idea/xml/relaxng:intellij.relaxng",
+        "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
+        "//tools/idea/json:intellij.json",
+        "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
+        "//tools/idea/platform/configuration-store-impl:intellij.platform.configurationStore.impl",
+        "//tools/idea/java/compiler/instrumentation-util-8:intellij.java.compiler.instrumentationUtil.java8",
     ],
     # do not sort: must match IML order
     deps = [
-        "//tools/idea/platform/remote-servers/api:remote-servers-api[module]",
-        "//tools/idea:jps-builders_and_others[module]",
-        "//tools/idea/platform/core-api[module]",
-        "//tools/idea/platform/lang-api[module]",
-        "//tools/idea/platform/xdebugger-api[module]",
-        "//tools/idea/platform/lang-impl[module]",
-        "//tools/idea/java/execution/openapi:execution-openapi[module]",
+        "//tools/idea/platform/remote-servers/api:intellij.platform.remoteServers[module]",
+        "//tools/idea:intellij.platform.jps.build_and_others[module]",
+        "//tools/idea/platform/core-api:intellij.platform.core[module]",
+        "//tools/idea/platform/lang-api:intellij.platform.lang[module]",
+        "//tools/idea/platform/xdebugger-api:intellij.platform.debugger[module]",
+        "//tools/idea/platform/lang-impl:intellij.platform.lang.impl[module]",
+        "//tools/idea/java/execution/openapi:intellij.java.execution[module]",
     ],
 )

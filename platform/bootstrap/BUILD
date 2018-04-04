@@ -1,10 +1,10 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
 iml_module(
-    name = "bootstrap",
+    name = "intellij.platform.bootstrap",
     srcs = ["src"],
-    iml_files = ["bootstrap.iml"],
+    iml_files = ["intellij.platform.bootstrap.iml"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    deps = ["//tools/idea/platform/util[module]"],
+    deps = ["//tools/idea/platform/util:intellij.platform.util[module]"],
 )

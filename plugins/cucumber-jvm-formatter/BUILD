@@ -1,9 +1,9 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
 iml_module(
-    name = "cucumber-jvm-formatter",
+    name = "intellij.cucumber.jvmFormatter",
     srcs = ["src"],
-    iml_files = ["cucumber-jvm-formatter.iml"],
+    iml_files = ["intellij.cucumber.jvmFormatter.iml"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order

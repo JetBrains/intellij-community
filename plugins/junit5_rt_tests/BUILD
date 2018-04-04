@@ -1,29 +1,29 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
 iml_module(
-    name = "junit5_rt_tests",
-    iml_files = ["junit5_rt_tests.iml"],
+    name = "intellij.junit.v5.rt.tests",
+    iml_files = ["intellij.junit.v5.rt.tests.iml"],
     tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea/json",
-        "//tools/idea/platform/tasks-platform-impl",
-        "//tools/idea/platform/credential-store",
-        "//tools/idea/java/compiler/instrumentation-util-8",
-        "//tools/idea/plugins/IntelliLang/intellilang-jps-plugin",
+        "//tools/idea/java/compiler/instrumentation-util-8:intellij.java.compiler.instrumentationUtil.java8",
+        "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
+        "//tools/idea/json:intellij.json",
+        "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
+        "//tools/idea/plugins/IntelliLang/intellilang-jps-plugin:intellij.java.langInjection.jps",
     ],
     test_srcs = ["test"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     deps = [
-        "//tools/idea/plugins/junit5_rt[module]",
-        "//tools/idea:jps-builders_and_others[module, test]",
-        "//tools/idea/java/execution/impl:execution-impl[module, test]",
-        "//tools/idea/plugins/junit[module, test]",
-        "//tools/idea:java-tests[module, test]",
-        "//tools/idea/aether-dependency-resolver[module, test]",
-        "//tools/idea/java/compiler/openapi:compiler-openapi[module, test]",
+        "//tools/idea/plugins/junit5_rt:intellij.junit.v5.rt[module]",
+        "//tools/idea:intellij.platform.jps.build_and_others[module, test]",
+        "//tools/idea/java/execution/impl:intellij.java.execution.impl[module, test]",
+        "//tools/idea/plugins/junit:intellij.junit[module, test]",
+        "//tools/idea:intellij.java.tests[module, test]",
+        "//tools/idea/aether-dependency-resolver:intellij.java.aetherDependencyResolver[module, test]",
+        "//tools/idea/java/compiler/openapi:intellij.java.compiler[module, test]",
         "//tools/idea/.idea/libraries:JUnit5[test]",
         "//tools/idea/.idea/libraries:junit5_rt[test]",
         "//prebuilts/tools/common/m2/repository/org/apiguardian/apiguardian-api/1.0.0:jar[test]",

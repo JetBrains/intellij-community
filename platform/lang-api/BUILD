@@ -1,32 +1,32 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
 iml_module(
-    name = "lang-api",
+    name = "intellij.platform.lang",
     srcs = ["src"],
-    iml_files = ["lang-api.iml"],
+    iml_files = ["intellij.platform.lang.iml"],
     javacopts = ["-Xep:MissingCasesInEnumSwitch:WARN"],
     tags = ["managed"],
     test_srcs = ["testSources"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//tools/idea/platform/platform-api",
-        "//tools/idea/platform/lvcs-api",
+        "//tools/idea/platform/platform-api:intellij.platform.ide",
+        "//tools/idea/platform/lvcs-api:intellij.platform.lvcs",
         "//tools/idea/.idea/libraries:NanoXML",
-        "//tools/idea/platform/indexing-api",
-        "//tools/idea/platform/projectModel-api",
-        "//tools/idea/platform/analysis-api",
+        "//tools/idea/platform/indexing-api:intellij.platform.indexing",
+        "//tools/idea/platform/projectModel-api:intellij.platform.projectModel",
+        "//tools/idea/platform/analysis-api:intellij.platform.analysis",
     ],
     # do not sort: must match IML order
     deps = [
-        "//tools/idea/platform/platform-api[module]",
-        "//tools/idea/platform/lvcs-api[module]",
+        "//tools/idea/platform/platform-api:intellij.platform.ide[module]",
+        "//tools/idea/platform/lvcs-api:intellij.platform.lvcs[module]",
         "//tools/idea/.idea/libraries:NanoXML",
-        "//tools/idea/platform/indexing-api[module]",
-        "//tools/idea/platform/projectModel-api[module]",
+        "//tools/idea/platform/indexing-api:intellij.platform.indexing[module]",
+        "//tools/idea/platform/projectModel-api:intellij.platform.projectModel[module]",
         "//tools/idea/.idea/libraries:JUnit4[test]",
         "//tools/idea/.idea/libraries:Mocks[test]",
-        "//tools/idea/platform/analysis-api[module]",
+        "//tools/idea/platform/analysis-api:intellij.platform.analysis[module]",
         "//tools/idea/.idea/libraries:KotlinJavaRuntime",
     ],
 )

@@ -1,9 +1,9 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
 iml_module(
-    name = "instrumentation-util",
+    name = "intellij.java.compiler.instrumentationUtil",
     srcs = ["src"],
-    iml_files = ["instrumentation-util.iml"],
+    iml_files = ["intellij.java.compiler.instrumentationUtil.iml"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
     deps = ["//tools/idea/.idea/libraries:ASM"],

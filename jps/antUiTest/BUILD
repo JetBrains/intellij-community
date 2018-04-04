@@ -7,25 +7,24 @@ iml_module(
     tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea/plugins/IntelliLang/intellilang-jps-plugin",
-        "//tools/adt/idea/adt-branding",
-        "//tools/vendor/intellij/cidr:doxygen",
+        "//tools/idea/plugins/IntelliLang/intellilang-jps-plugin:intellij.java.langInjection.jps",
+        "//tools/adt/idea/adt-branding:intellij.android.adt.branding",
     ],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/idea/platform/lvcs-impl",
-        "//tools/idea/platform/credential-store",
-        "//tools/idea/platform/configuration-store-impl",
-        "//tools/idea/platform/tasks-platform-impl",
-        "//tools/idea/json",
-        "//tools/idea/xml/relaxng",
-        "//tools/idea/java/compiler/instrumentation-util-8",
+        "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
+        "//tools/idea/xml/relaxng:intellij.relaxng",
+        "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
+        "//tools/idea/json:intellij.json",
+        "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
+        "//tools/idea/platform/configuration-store-impl:intellij.platform.configurationStore.impl",
+        "//tools/idea/java/compiler/instrumentation-util-8:intellij.java.compiler.instrumentationUtil.java8",
     ],
     # do not sort: must match IML order
     deps = [
-        "//tools/idea/plugins/ant[module]",
-        "//tools/adt/idea/uitest-framework[module, test]",
+        "//tools/idea/plugins/ant:intellij.ant[module]",
+        "//tools/adt/idea/uitest-framework:intellij.android.guiTestFramework[module, test]",
         "//tools/idea/.idea/libraries:JUnit4[test]",
         "//tools/idea/.idea/libraries:Guava[test]",
         "//tools/idea/.idea/libraries:truth[test]",

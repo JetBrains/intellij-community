@@ -1,9 +1,9 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
 iml_module(
-    name = "forms_rt",
+    name = "intellij.java.guiForms.rt",
     srcs = ["src"],
-    iml_files = ["forms_rt.iml"],
+    iml_files = ["intellij.java.guiForms.rt.iml"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )

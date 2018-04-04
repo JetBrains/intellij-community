@@ -1,24 +1,24 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
 iml_module(
-    name = "core-api",
+    name = "intellij.platform.core",
     srcs = ["src"],
-    iml_files = ["core-api.iml"],
+    iml_files = ["intellij.platform.core.iml"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//tools/idea/platform/util",
-        "//tools/idea/platform/extensions",
+        "//tools/idea/platform/util:intellij.platform.util",
+        "//tools/idea/platform/extensions:intellij.platform.extensions",
         "//tools/idea/.idea/libraries:picocontainer",
-        "//tools/idea/platform/platform-resources-en",
+        "//tools/idea/platform/platform-resources-en:intellij.platform.resources.en",
     ],
     # do not sort: must match IML order
     deps = [
-        "//tools/idea/platform/util[module]",
-        "//tools/idea/platform/extensions[module]",
+        "//tools/idea/platform/util:intellij.platform.util[module]",
+        "//tools/idea/platform/extensions:intellij.platform.extensions[module]",
         "//tools/idea/.idea/libraries:picocontainer",
-        "//tools/idea/platform/platform-resources-en[module]",
+        "//tools/idea/platform/platform-resources-en:intellij.platform.resources.en[module]",
         "//tools/idea/.idea/libraries:automaton",
         "//tools/idea/.idea/libraries:CGLIB",
     ],

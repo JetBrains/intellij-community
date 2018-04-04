@@ -1,29 +1,25 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
 iml_module(
-    name = "remote-servers-git-java",
+    name = "intellij.java.remoteServers.git",
     srcs = ["src"],
-    iml_files = ["remote-servers-git-java.iml"],
+    iml_files = ["intellij.java.remoteServers.git.iml"],
     tags = ["managed"],
-    # do not sort: must match IML order
-    test_runtime_deps = [
-        "//tools/idea/java/execution/impl:execution-impl",
-        "//tools/idea/platform/external-system-impl",
-    ],
+    test_runtime_deps = ["//tools/idea/platform/external-system-impl:intellij.platform.externalSystem.impl"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/idea/platform/lvcs-impl",
-        "//tools/idea/platform/credential-store",
-        "//tools/idea/platform/configuration-store-impl",
-        "//tools/idea/json",
-        "//tools/idea/xml/relaxng",
-        "//tools/idea/java/compiler/instrumentation-util-8",
+        "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
+        "//tools/idea/xml/relaxng:intellij.relaxng",
+        "//tools/idea/json:intellij.json",
+        "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
+        "//tools/idea/platform/configuration-store-impl:intellij.platform.configurationStore.impl",
+        "//tools/idea/java/compiler/instrumentation-util-8:intellij.java.compiler.instrumentationUtil.java8",
     ],
     # do not sort: must match IML order
     deps = [
-        "//tools/idea/plugins/git4idea/remote-servers-git[module]",
-        "//tools/idea:jps-builders_and_others[module]",
-        "//tools/idea/java/openapi[module]",
+        "//tools/idea/plugins/git4idea/remote-servers-git:intellij.platform.remoteServers.git[module]",
+        "//tools/idea:intellij.platform.jps.build_and_others[module]",
+        "//tools/idea/java/openapi:intellij.java[module]",
     ],
 )

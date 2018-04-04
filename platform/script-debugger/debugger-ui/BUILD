@@ -1,40 +1,36 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
 iml_module(
-    name = "script-debugger-ui",
+    name = "intellij.platform.scriptDebugger.ui",
     srcs = ["src"],
-    iml_files = ["script-debugger-ui.iml"],
+    iml_files = ["intellij.platform.scriptDebugger.ui.iml"],
     package_prefixes = {"testSrc": "org.jetbrains.debugger"},
     tags = ["managed"],
-    # do not sort: must match IML order
-    test_runtime_deps = [
-        "//tools/idea/spellchecker",
-        "//tools/idea/images",
-    ],
+    test_runtime_deps = ["//tools/idea/images:intellij.platform.images"],
     test_srcs = ["testSrc"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/idea/RegExpSupport",
-        "//tools/idea/xml/xml-analysis-impl",
-        "//tools/idea/platform/lvcs-impl",
-        "//tools/idea/platform/credential-store",
-        "//tools/idea/platform/configuration-store-impl",
-        "//tools/idea/platform/built-in-server",
-        "//tools/idea/platform/tasks-platform-impl",
-        "//tools/idea/json",
-        "//tools/idea/xml/relaxng",
-        "//tools/idea/xml/dom-impl",
+        "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
+        "//tools/idea/xml/xml-structure-view-impl:intellij.xml.structureView.impl",
+        "//tools/idea/xml/dom-impl:intellij.xml.dom.impl",
+        "//tools/idea/spellchecker:intellij.spellchecker",
+        "//tools/idea/xml/relaxng:intellij.relaxng",
+        "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
+        "//tools/idea/json:intellij.json",
+        "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
+        "//tools/idea/platform/configuration-store-impl:intellij.platform.configurationStore.impl",
+        "//tools/idea/platform/built-in-server:intellij.platform.builtInServer.impl",
     ],
     # do not sort: must match IML order
     deps = [
-        "//tools/idea/platform/xdebugger-api[module]",
-        "//tools/idea/platform/platform-impl[module]",
-        "//tools/idea/platform/script-debugger/backend:script-debugger-backend[module]",
-        "//tools/idea/platform/xdebugger-impl[module]",
+        "//tools/idea/platform/xdebugger-api:intellij.platform.debugger[module]",
+        "//tools/idea/platform/platform-impl:intellij.platform.ide.impl[module]",
+        "//tools/idea/platform/script-debugger/backend:intellij.platform.scriptDebugger.backend[module]",
+        "//tools/idea/platform/xdebugger-impl:intellij.platform.debugger.impl[module]",
         "//tools/idea/.idea/libraries:Netty",
         "//tools/idea/.idea/libraries:Guava",
-        "//tools/idea/platform/lang-impl[module]",
+        "//tools/idea/platform/lang-impl:intellij.platform.lang.impl[module]",
     ],
 )

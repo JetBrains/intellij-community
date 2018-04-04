@@ -1,16 +1,16 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
 iml_module(
-    name = "gradle-tooling-extension-impl",
+    name = "intellij.gradle.toolingExtension.impl",
     srcs = ["src"],
-    iml_files = ["gradle-tooling-extension-impl.iml"],
+    iml_files = ["intellij.gradle.toolingExtension.impl.iml"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     deps = [
-        "//tools/idea/platform/annotations[module]",
-        "//tools/idea/platform/external-system-rt[module]",
-        "//tools/idea/plugins/gradle/tooling-extension-api:gradle-tooling-extension-api[module]",
+        "//tools/idea/platform/annotations:intellij.platform.annotations.java5[module]",
+        "//tools/idea/platform/external-system-rt:intellij.platform.externalSystem.rt[module]",
+        "//tools/idea/plugins/gradle/tooling-extension-api:intellij.gradle.toolingExtension[module]",
         "//tools/idea/.idea/libraries:Gradle",
         "//tools/idea/.idea/libraries:Groovy",
         "//tools/idea/.idea/libraries:gson",
@@ -18,8 +18,8 @@ iml_module(
 )
 
 iml_module(
-    name = "gradle-tooling-extension-tests",
-    iml_files = ["gradle-tooling-extension-tests.iml"],
+    name = "intellij.gradle.toolingExtension.tests",
+    iml_files = ["intellij.gradle.toolingExtension.tests.iml"],
     tags = ["managed"],
     test_resources = ["testData"],
     test_srcs = ["testSources"],
@@ -27,17 +27,17 @@ iml_module(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/idea/platform/credential-store",
-        "//tools/idea/platform/tasks-platform-impl",
-        "//tools/idea/json",
-        "//tools/idea/xml/relaxng",
-        "//tools/idea/java/compiler/instrumentation-util-8",
-        "//tools/idea/plugins/IntelliLang/intellilang-jps-plugin",
+        "//tools/idea/xml/relaxng:intellij.relaxng",
+        "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
+        "//tools/idea/json:intellij.json",
+        "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
+        "//tools/idea/java/compiler/instrumentation-util-8:intellij.java.compiler.instrumentationUtil.java8",
+        "//tools/idea/plugins/IntelliLang/intellilang-jps-plugin:intellij.java.langInjection.jps",
     ],
     # do not sort: must match IML order
     deps = [
-        "//tools/idea/plugins/gradle/tooling-extension-impl:gradle-tooling-extension-impl[module]",
-        "//tools/idea/plugins/gradle[module]",
-        "//tools/idea:jps-builders_and_others[module, test]",
+        "//tools/idea/plugins/gradle/tooling-extension-impl:intellij.gradle.toolingExtension.impl[module]",
+        "//tools/idea/plugins/gradle:intellij.gradle[module]",
+        "//tools/idea:intellij.platform.jps.build_and_others[module, test]",
     ],
 )

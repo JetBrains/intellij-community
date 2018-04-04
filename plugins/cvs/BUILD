@@ -1,23 +1,23 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
 iml_module(
-    name = "javacvs-src",
+    name = "intellij.vcs.cvs.javacvs",
     srcs = ["javacvs-src"],
-    iml_files = ["javacvs-src/javacvs-src.iml"],
+    iml_files = ["javacvs-src/intellij.vcs.cvs.javacvs.iml"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    deps = ["//tools/idea/platform/util[module]"],
+    deps = ["//tools/idea/platform/util:intellij.platform.util[module]"],
 )
 
 iml_module(
-    name = "smartcvs-src",
+    name = "intellij.vcs.cvs.smartcvs",
     srcs = ["smartcvs-src"],
-    iml_files = ["smartcvs-src/smartcvs-src.iml"],
+    iml_files = ["smartcvs-src/intellij.vcs.cvs.smartcvs.iml"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     deps = [
-        "//tools/idea/plugins/cvs:javacvs-src[module]",
-        "//tools/idea/platform/util[module]",
+        "//tools/idea/plugins/cvs:intellij.vcs.cvs.javacvs[module]",
+        "//tools/idea/platform/util:intellij.platform.util[module]",
     ],
 )

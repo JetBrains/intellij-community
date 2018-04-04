@@ -1,9 +1,9 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
 iml_module(
-    name = "extensions",
+    name = "intellij.platform.extensions",
     srcs = ["src"],
-    iml_files = ["extensions.iml"],
+    iml_files = ["intellij.platform.extensions.iml"],
     tags = ["managed"],
     test_srcs = ["testSrc"],
     visibility = ["//visibility:public"],
@@ -17,7 +17,7 @@ iml_module(
         "//tools/idea/.idea/libraries:XStream",
         "//tools/idea/.idea/libraries:JDOM",
         "//tools/idea/.idea/libraries:picocontainer",
-        "//tools/idea/platform/util[module]",
+        "//tools/idea/platform/util:intellij.platform.util[module]",
         "//tools/idea/.idea/libraries:JUnit4[test]",
         "//tools/idea/.idea/libraries:Xerces[test]",
         "//tools/idea/.idea/libraries:hamcrest[test]",

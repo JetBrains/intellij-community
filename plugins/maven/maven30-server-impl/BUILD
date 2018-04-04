@@ -1,23 +1,23 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
 iml_module(
-    name = "maven30-server-impl",
+    name = "intellij.maven.server.m30.impl",
     srcs = ["src"],
-    iml_files = ["maven30-server-impl.iml"],
+    iml_files = ["intellij.maven.server.m30.impl.iml"],
     tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea/json",
-        "//tools/idea/platform/tasks-platform-impl",
-        "//tools/idea/platform/credential-store",
-        "//tools/idea/plugins/IntelliLang/intellilang-jps-plugin",
-        "//tools/idea/java/compiler/instrumentation-util-8",
+        "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
+        "//tools/idea/json:intellij.json",
+        "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
+        "//tools/idea/plugins/IntelliLang/intellilang-jps-plugin:intellij.java.langInjection.jps",
+        "//tools/idea/java/compiler/instrumentation-util-8:intellij.java.compiler.instrumentationUtil.java8",
     ],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     deps = [
-        "//tools/idea/plugins/maven/maven-server-api[module]",
-        "//tools/idea/platform/util[module]",
+        "//tools/idea/plugins/maven/maven-server-api:intellij.maven.server[module]",
+        "//tools/idea/platform/util:intellij.platform.util[module]",
         "//tools/idea/.idea/libraries:commons-logging",
         "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/boot:plexus-classworlds-2.4",
         "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:aether-api-1.13.1",
@@ -51,7 +51,7 @@ iml_module(
         "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:wagon-http-2.8-shaded",
         "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:wagon-http-shared-2.8",
         "//tools/idea/plugins/maven/maven30-server-impl/lib/maven3/lib:wagon-provider-api-2.8",
-        "//tools/idea/plugins/maven[module, test]",
-        "//tools/idea/plugins/maven/maven3-server-common[module]",
+        "//tools/idea/plugins/maven:intellij.maven[module, test]",
+        "//tools/idea/plugins/maven/maven3-server-common:intellij.maven.server.m3.common[module]",
     ],
 )

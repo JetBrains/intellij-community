@@ -1,7 +1,7 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
 iml_module(
-    name = "build",
+    name = "intellij.idea.community.build",
     # do not sort: must match IML order
     srcs = [
         "scripts",
@@ -14,28 +14,27 @@ iml_module(
         "conf/**/*",
         "*.txt",
     ]),
-    iml_files = ["build.iml"],
+    iml_files = ["intellij.idea.community.build.iml"],
     tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea/java/execution/impl:execution-impl",
-        "//tools/idea/platform/external-system-impl",
-        "//tools/idea/platform/lvcs-impl",
-        "//tools/idea/json",
-        "//tools/idea/platform/tasks-platform-impl",
-        "//tools/idea/platform/credential-store",
+        "//tools/idea/platform/external-system-impl:intellij.platform.externalSystem.impl",
+        "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
+        "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
+        "//tools/idea/json:intellij.json",
+        "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
     ],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
         "//tools/idea/.idea/libraries:Groovy",
         "//tools/idea/.idea/libraries:Ant",
-        "//tools/idea/jps/model-api:jps-model-api",
-        "//tools/idea/jps/standalone-builder:jps-standalone-builder",
+        "//tools/idea/jps/model-api:intellij.platform.jps.model",
+        "//tools/idea/jps/standalone-builder:intellij.tools.jps.build.standalone",
         "//prebuilts/tools/common/m2/repository/commons-cli/commons-cli/1.2:jar",
-        "//tools/idea/jps/antLayout:antlayout",
-        "//tools/idea/platform/util",
-        "//tools/idea/platform/build-scripts:platform-build-scripts",
+        "//tools/idea/jps/antLayout:intellij.tools.jps.antTasks",
+        "//tools/idea/platform/util:intellij.platform.util",
+        "//tools/idea/platform/build-scripts:intellij.platform.buildScripts",
     ],
     # do not sort: must match IML order
     runtime_deps = [
@@ -47,28 +46,28 @@ iml_module(
         "//tools/idea/.idea/libraries:Log4J",
         "//tools/idea/.idea/libraries:jna",
         "//tools/idea/.idea/libraries:Trove4j",
-        "//tools/idea/plugins/ui-designer/jps-plugin:ui-designer-jps-plugin",
-        "//tools/idea/plugins/groovy/jps-plugin:groovy-jps-plugin",
-        "//tools/idea/plugins/groovy/rt:groovy_rt",
-        "//tools/idea/java/compiler/instrumentation-util-8",
-        "//tools/idea/java/java-runtime",
+        "//tools/idea/plugins/ui-designer/jps-plugin:intellij.java.guiForms.jps",
+        "//tools/idea/plugins/groovy/jps-plugin:intellij.groovy.jps",
+        "//tools/idea/plugins/groovy/rt:intellij.groovy.rt",
+        "//tools/idea/java/compiler/instrumentation-util-8:intellij.java.compiler.instrumentationUtil.java8",
+        "//tools/idea/java/java-runtime:intellij.java.rt",
     ],
     # do not sort: must match IML order
     deps = [
         "//tools/idea/.idea/libraries:Groovy",
         "//tools/idea/.idea/libraries:Ant",
-        "//tools/idea/jps/model-api:jps-model-api[module]",
-        "//tools/idea/jps/standalone-builder:jps-standalone-builder[module]",
+        "//tools/idea/jps/model-api:intellij.platform.jps.model[module]",
+        "//tools/idea/jps/standalone-builder:intellij.tools.jps.build.standalone[module]",
         "//prebuilts/tools/common/m2/repository/commons-cli/commons-cli/1.2:jar",
-        "//tools/idea/jps/antLayout:antlayout[module]",
-        "//tools/idea/platform/util[module]",
-        "//tools/idea/platform/build-scripts:platform-build-scripts[module]",
+        "//tools/idea/jps/antLayout:intellij.tools.jps.antTasks[module]",
+        "//tools/idea/platform/util:intellij.platform.util[module]",
+        "//tools/idea/platform/build-scripts:intellij.platform.buildScripts[module]",
     ],
 )
 
 iml_module(
-    name = "dependencies",
-    iml_files = ["dependencies/dependencies.iml"],
+    name = "intellij.tools.dependencies",
+    iml_files = ["dependencies/intellij.tools.dependencies.iml"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )

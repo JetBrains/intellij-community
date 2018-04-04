@@ -1,9 +1,9 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
 iml_module(
-    name = "update-server-mock",
+    name = "intellij.tools.updateServerMock",
     srcs = ["src/main/java"],
-    iml_files = ["update-server-mock.iml"],
+    iml_files = ["intellij.tools.updateServerMock.iml"],
     resources = ["src/main/resources"],
     tags = ["managed"],
     test_srcs = ["src/test/java"],

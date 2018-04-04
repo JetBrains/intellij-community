@@ -1,36 +1,35 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
 iml_module(
-    name = "gradle-jps-plugin",
+    name = "intellij.gradle.jps",
     srcs = ["src"],
-    iml_files = ["gradle-jps-plugin.iml"],
+    iml_files = ["intellij.gradle.jps.iml"],
     tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea/java/execution/impl:execution-impl",
-        "//tools/idea/platform/external-system-impl",
-        "//tools/idea/platform/lvcs-impl",
-        "//tools/idea/json",
-        "//tools/idea/platform/tasks-platform-impl",
-        "//tools/idea/platform/credential-store",
+        "//tools/idea/platform/external-system-impl:intellij.platform.externalSystem.impl",
+        "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
+        "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
+        "//tools/idea/json:intellij.json",
+        "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
     ],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/.idea/libraries:Ant"],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/idea/java/compiler/instrumentation-util-8",
-        "//tools/idea/java/java-runtime",
+        "//tools/idea/java/compiler/instrumentation-util-8:intellij.java.compiler.instrumentationUtil.java8",
+        "//tools/idea/java/java-runtime:intellij.java.rt",
     ],
     # do not sort: must match IML order
     deps = [
-        "//tools/idea/platform/util[module]",
-        "//tools/idea:jps-builders_and_others[module]",
-        "//tools/idea/jps/model-impl:jps-model-impl[module]",
-        "//tools/idea/jps/model-api:jps-model-api[module]",
-        "//tools/idea/jps/model-serialization:jps-model-serialization[module]",
+        "//tools/idea/platform/util:intellij.platform.util[module]",
+        "//tools/idea:intellij.platform.jps.build_and_others[module]",
+        "//tools/idea/jps/model-impl:intellij.platform.jps.model.impl[module]",
+        "//tools/idea/jps/model-api:intellij.platform.jps.model[module]",
+        "//tools/idea/jps/model-serialization:intellij.platform.jps.model.serialization[module]",
         "//tools/idea/.idea/libraries:Gradle",
         "//tools/idea/.idea/libraries:Ant",
         "//tools/idea/.idea/libraries:gson",
-        "//tools/idea/plugins/groovy/jps-plugin:groovy-jps-plugin[module]",
+        "//tools/idea/plugins/groovy/jps-plugin:intellij.groovy.jps[module]",
     ],
 )

@@ -1,46 +1,41 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
 iml_module(
-    name = "eclipse",
+    name = "intellij.eclipse",
     # do not sort: must match IML order
     srcs = [
         "src",
         "gen",
     ],
-    iml_files = ["eclipse.iml"],
+    iml_files = ["intellij.eclipse.iml"],
     resources = ["resources"],
     tags = ["managed"],
-    # do not sort: must match IML order
-    test_runtime_deps = [
-        "//tools/idea/java/execution/impl:execution-impl",
-        "//tools/idea/platform/external-system-impl",
-    ],
+    test_runtime_deps = ["//tools/idea/platform/external-system-impl:intellij.platform.externalSystem.impl"],
     test_srcs = ["testSources"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/idea/platform/xdebugger-impl",
-        "//tools/idea/platform/lvcs-impl",
-        "//tools/idea/platform/credential-store",
-        "//tools/idea/platform/configuration-store-impl",
-        "//tools/idea/platform/tasks-platform-impl",
-        "//tools/idea/json",
-        "//tools/idea/xml/relaxng",
-        "//tools/idea/java/compiler/instrumentation-util-8",
+        "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
+        "//tools/idea/xml/relaxng:intellij.relaxng",
+        "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
+        "//tools/idea/json:intellij.json",
+        "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
+        "//tools/idea/platform/configuration-store-impl:intellij.platform.configurationStore.impl",
+        "//tools/idea/java/compiler/instrumentation-util-8:intellij.java.compiler.instrumentationUtil.java8",
     ],
     # do not sort: must match IML order
     deps = [
         "//tools/idea/.idea/libraries:JDOM",
-        "//tools/idea/java/openapi[module]",
-        "//tools/idea/platform/bootstrap[module]",
+        "//tools/idea/java/openapi:intellij.java[module]",
+        "//tools/idea/platform/bootstrap:intellij.platform.bootstrap[module]",
         "//tools/idea/.idea/libraries:JUnit4[test]",
-        "//tools/idea:jps-builders_and_others[module]",
-        "//tools/idea/java/compiler/openapi:compiler-openapi[module]",
-        "//tools/idea/platform/annotations[module]",
-        "//tools/idea:java-impl[module]",
-        "//tools/idea/plugins/eclipse/jps-plugin:eclipse-jps-plugin[module]",
-        "//tools/idea/plugins/eclipse/common-eclipse-util[module]",
-        "//tools/idea/platform/testFramework/extensions:testExtensions[module, test]",
+        "//tools/idea:intellij.platform.jps.build_and_others[module]",
+        "//tools/idea/java/compiler/openapi:intellij.java.compiler[module]",
+        "//tools/idea/platform/annotations:intellij.platform.annotations.java5[module]",
+        "//tools/idea:intellij.java.impl[module]",
+        "//tools/idea/plugins/eclipse/jps-plugin:intellij.eclipse.jps[module]",
+        "//tools/idea/plugins/eclipse/common-eclipse-util:intellij.eclipse.common[module]",
+        "//tools/idea/platform/testFramework/extensions:intellij.platform.testExtensions[module, test]",
     ],
 )

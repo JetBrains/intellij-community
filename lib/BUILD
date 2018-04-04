@@ -407,3 +407,17 @@ java_import(
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )
+
+java_import(
+    name = "test-discovery-agent",
+    jars = ["test-discovery-agent.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "test-discovery-instrumenter",
+    jars = ["test-discovery-instrumenter.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)

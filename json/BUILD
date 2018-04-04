@@ -1,36 +1,39 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
 iml_module(
-    name = "json",
+    name = "intellij.json",
     # do not sort: must match IML order
     srcs = [
         "src",
         "gen",
     ],
-    iml_files = ["json.iml"],
+    iml_files = ["intellij.json.iml"],
     javacopts = ["-XepAllErrorsAsWarnings"],
     resources = ["resources"],
     tags = ["managed"],
-    test_runtime_deps = ["//tools/idea/images"],
+    # do not sort: must match IML order
+    test_runtime_deps = [
+        "//tools/idea/images:intellij.platform.images",
+        "//tools/idea/platform/testFramework/extensions:intellij.platform.testExtensions",
+    ],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/idea/platform/xdebugger-impl",
-        "//tools/idea/platform/lvcs-impl",
-        "//tools/idea/platform/credential-store",
-        "//tools/idea/platform/configuration-store-impl",
-        "//tools/idea/platform/built-in-server",
-        "//tools/idea/platform/tasks-platform-impl",
-        "//tools/idea/xml/relaxng",
-        "//tools/idea/xml/dom-impl",
+        "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
+        "//tools/idea/xml/dom-impl:intellij.xml.dom.impl",
+        "//tools/idea/xml/relaxng:intellij.relaxng",
+        "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
+        "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
+        "//tools/idea/platform/configuration-store-impl:intellij.platform.configurationStore.impl",
+        "//tools/idea/platform/built-in-server:intellij.platform.builtInServer.impl",
     ],
     # do not sort: must match IML order
     deps = [
-        "//tools/idea/platform/core-api[module]",
-        "//tools/idea/platform/platform-api[module]",
-        "//tools/idea/platform/lang-impl[module]",
-        "//tools/idea/xml/openapi:xml-openapi[module]",
-        "//tools/idea/spellchecker[module]",
+        "//tools/idea/platform/core-api:intellij.platform.core[module]",
+        "//tools/idea/platform/platform-api:intellij.platform.ide[module]",
+        "//tools/idea/platform/lang-impl:intellij.platform.lang.impl[module]",
+        "//tools/idea/xml/openapi:intellij.xml[module]",
+        "//tools/idea/spellchecker:intellij.spellchecker[module]",
         "//tools/idea/.idea/libraries:Guava",
         "//tools/idea/.idea/libraries:gson",
     ],

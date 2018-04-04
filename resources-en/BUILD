@@ -1,9 +1,9 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
 iml_module(
-    name = "resources-en",
+    name = "intellij.java.resources.en",
     srcs = ["src"],
-    iml_files = ["resources-en.iml"],
+    iml_files = ["intellij.java.resources.en.iml"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )

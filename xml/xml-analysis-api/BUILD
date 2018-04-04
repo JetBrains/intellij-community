@@ -1,27 +1,27 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
 iml_module(
-    name = "xml-analysis-api",
+    name = "intellij.xml.analysis",
     srcs = ["src"],
-    iml_files = ["xml-analysis-api.iml"],
+    iml_files = ["intellij.xml.analysis.iml"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//tools/idea/xml/xml-psi-api",
-        "//tools/idea/platform/analysis-api",
-        "//tools/idea/platform/annotations",
-        "//tools/idea/platform/core-api",
-        "//tools/idea/platform/extensions",
-        "//tools/idea/platform/util",
+        "//tools/idea/xml/xml-psi-api:intellij.xml.psi",
+        "//tools/idea/platform/analysis-api:intellij.platform.analysis",
+        "//tools/idea/platform/annotations:intellij.platform.annotations.java5",
+        "//tools/idea/platform/core-api:intellij.platform.core",
+        "//tools/idea/platform/extensions:intellij.platform.extensions",
+        "//tools/idea/platform/util:intellij.platform.util",
     ],
     # do not sort: must match IML order
     deps = [
-        "//tools/idea/xml/xml-psi-api[module]",
-        "//tools/idea/platform/analysis-api[module]",
-        "//tools/idea/platform/annotations[module]",
-        "//tools/idea/platform/core-api[module]",
-        "//tools/idea/platform/extensions[module]",
-        "//tools/idea/platform/util[module]",
+        "//tools/idea/xml/xml-psi-api:intellij.xml.psi[module]",
+        "//tools/idea/platform/analysis-api:intellij.platform.analysis[module]",
+        "//tools/idea/platform/annotations:intellij.platform.annotations.java5[module]",
+        "//tools/idea/platform/core-api:intellij.platform.core[module]",
+        "//tools/idea/platform/extensions:intellij.platform.extensions[module]",
+        "//tools/idea/platform/util:intellij.platform.util[module]",
     ],
 )

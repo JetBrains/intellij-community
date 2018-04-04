@@ -1,17 +1,17 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
 iml_module(
-    name = "javac2",
+    name = "intellij.java.compiler.antTasks",
     srcs = ["src"],
-    iml_files = ["javac2.iml"],
+    iml_files = ["intellij.java.compiler.antTasks.iml"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     deps = [
         "//tools/idea/.idea/libraries:Ant",
-        "//tools/idea/java/compiler/forms-compiler[module]",
-        "//tools/idea/platform/forms_rt[module]",
+        "//tools/idea/java/compiler/forms-compiler:intellij.java.guiForms.compiler[module]",
+        "//tools/idea/platform/forms_rt:intellij.java.guiForms.rt[module]",
         "//tools/idea/.idea/libraries:ASM",
-        "//tools/idea/java/compiler/instrumentation-util[module]",
+        "//tools/idea/java/compiler/instrumentation-util:intellij.java.compiler.instrumentationUtil[module]",
     ],
 )

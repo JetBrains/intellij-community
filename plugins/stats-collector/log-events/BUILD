@@ -1,9 +1,9 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
 iml_module(
-    name = "log-events",
+    name = "intellij.statsCollector.logEvents",
     srcs = ["src"],
-    iml_files = ["log-events.iml"],
+    iml_files = ["intellij.statsCollector.logEvents.iml"],
     tags = ["managed"],
     test_resources = ["testResources"],
     test_srcs = ["test"],

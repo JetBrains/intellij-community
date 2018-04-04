@@ -1,9 +1,9 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
 iml_module(
-    name = "jps-launcher",
+    name = "intellij.platform.jps.build.launcher",
     srcs = ["src"],
-    iml_files = ["jps-launcher.iml"],
+    iml_files = ["intellij.platform.jps.build.launcher.iml"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )

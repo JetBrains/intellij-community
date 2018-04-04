@@ -1,16 +1,16 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
 iml_module(
-    name = "indexing-api",
+    name = "intellij.platform.indexing",
     srcs = ["src"],
-    iml_files = ["indexing-api.iml"],
+    iml_files = ["intellij.platform.indexing.iml"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/platform/core-api"],
+    exports = ["//tools/idea/platform/core-api:intellij.platform.core"],
     # do not sort: must match IML order
     deps = [
-        "//tools/idea/platform/core-api[module]",
-        "//tools/idea/platform/projectModel-api[module]",
+        "//tools/idea/platform/core-api:intellij.platform.core[module]",
+        "//tools/idea/platform/projectModel-api:intellij.platform.projectModel[module]",
         "//tools/idea/.idea/libraries:NanoXML",
     ],
 )

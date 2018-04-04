@@ -1,9 +1,9 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
 iml_module(
-    name = "appEngine-runtime",
+    name = "intellij.java.googleAppEngine.runtime",
     srcs = ["source"],
-    iml_files = ["appEngine-runtime.iml"],
+    iml_files = ["intellij.java.googleAppEngine.runtime.iml"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )

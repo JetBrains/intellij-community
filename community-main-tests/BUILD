@@ -1,23 +1,23 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
 iml_module(
-    name = "community-main-tests",
-    iml_files = ["community-main-tests.iml"],
+    name = "intellij.idea.community.main.tests",
+    iml_files = ["intellij.idea.community.main.tests.iml"],
     tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea/platform/credential-store",
-        "//tools/idea/java/compiler/instrumentation-util-8",
-        "//tools/idea/plugins/IntelliLang/intellilang-jps-plugin",
-        "//tools/vendor/intellij/cidr:doxygen",
-        "//tools/idea/plugins/settings-repository",
-        "//tools/idea/jps/javac-ref-scanner-8",
+        "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
+        "//tools/idea/java/compiler/instrumentation-util-8:intellij.java.compiler.instrumentationUtil.java8",
+        "//tools/idea/plugins/IntelliLang/intellilang-jps-plugin:intellij.java.langInjection.jps",
+        "//tools/vendor/intellij/cidr:intellij.c.doxygen",
+        "//tools/idea/plugins/settings-repository:intellij.settingsRepository",
+        "//tools/idea/jps/javac-ref-scanner-8:intellij.java.jps.javacRefScanner8",
     ],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     deps = [
-        "//tools/idea:community-main[module, test]",
-        "//tools/adt/idea/android:android-tests[module, test]",
-        "//tools/adt/idea/designer:designer-tests[module, test]",
+        "//tools/idea:intellij.idea.community.main[module, test]",
+        "//tools/adt/idea/android:intellij.android.tests[module, test]",
+        "//tools/adt/idea/designer:intellij.android.designer.tests[module, test]",
     ],
 )
