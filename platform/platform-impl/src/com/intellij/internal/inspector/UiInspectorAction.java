@@ -11,8 +11,8 @@ import com.intellij.notification.Notifications;
 import com.intellij.notification.NotificationsManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
+import com.intellij.openapi.actionSystem.impl.ActionMenuItem;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
@@ -64,6 +64,7 @@ import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.List;
 
+import static com.intellij.openapi.actionSystem.ex.CustomComponentAction.CUSTOM_COMPONENT_ACTION_PROPERTY;
 import static java.util.Locale.ENGLISH;
 
 public class UiInspectorAction extends ToggleAction implements DumbAware {
@@ -1149,21 +1150,22 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     }
 
     private void addActionInfo(Object component) {
+      AnAction action = null;
       if (component instanceof ActionButton) {
-        myProperties.add(new PropertyBean("action", ((ActionButton)component).getAction().getClass().getName(), true));
+        action = ((ActionButton)component).getAction();
       } else if (component instanceof JComponent) {
-        Component comp = UIUtil.findParentByCondition((Component)component,
-                                                           (c) -> c instanceof JComponent &&
-                                                                  ((JComponent)c).getClientProperty(
-                                                                    CustomComponentAction.CUSTOM_COMPONENT_ACTION_PROPERTY) instanceof AnAction);
-        if (comp instanceof JComponent) {
-          Object action = ((JComponent)comp).getClientProperty(CustomComponentAction.CUSTOM_COMPONENT_ACTION_PROPERTY);
-          if (action instanceof AnAction) {
-            myProperties.add(new PropertyBean("action", action.getClass().getName(), true));
-          }
+        if (component instanceof ActionMenuItem) {
+          action = ((ActionMenuItem)component).getAnAction();
+        } else {
+          action = getAction(
+            UIUtil.findParentByCondition((Component)component, c -> getAction(c) != null)
+          );
         }
       }
 
+      if (action != null) {
+        myProperties.add(new PropertyBean("action", action.getClass().getName(), true));
+      }
     }
 
     private void addLayoutProperties(@NotNull Container component) {
@@ -1357,6 +1359,17 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       fillTable();
       fireTableDataChanged();
     }
+  }
+
+  @Nullable
+  private static AnAction getAction(Component c) {
+    if (c instanceof JComponent) {
+      Object obj = ((JComponent)c).getClientProperty(CUSTOM_COMPONENT_ACTION_PROPERTY);
+      if (obj instanceof AnAction) {
+        return (AnAction)obj;
+      }
+    }
+    return null;
   }
 
   private static class UiInspector implements AWTEventListener, Disposable {
