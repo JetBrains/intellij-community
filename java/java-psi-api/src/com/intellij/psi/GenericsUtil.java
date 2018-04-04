@@ -22,7 +22,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -399,6 +398,9 @@ public class GenericsUtil {
     if (componentType instanceof PsiWildcardType) {
       componentType = ((PsiWildcardType)componentType).getExtendsBound();
       return PsiTypesUtil.createArrayType(componentType, transformed.getArrayDimensions());
+    }
+    if (transformed instanceof PsiEllipsisType) {
+      return ((PsiEllipsisType)transformed).toArrayType();
     }
 
     return transformed;

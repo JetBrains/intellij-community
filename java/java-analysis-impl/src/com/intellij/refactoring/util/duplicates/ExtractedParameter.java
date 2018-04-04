@@ -79,11 +79,7 @@ public class ExtractedParameter {
 
   @NotNull
   public String getLocalVariableTypeText() {
-    PsiType type = myType;
-    if (myType instanceof PsiEllipsisType) {
-      type = ((PsiEllipsisType)myType).toArrayType();
-    }
-    type = GenericsUtil.getVariableTypeByExpressionType(type);
+    PsiType type = GenericsUtil.getVariableTypeByExpressionType(myType);
     return type.getCanonicalText();
   }
 

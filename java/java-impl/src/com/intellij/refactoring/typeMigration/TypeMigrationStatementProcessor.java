@@ -639,10 +639,8 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
 
     public TypeView(@NotNull PsiExpression expr) {
       PsiType exprType = expr.getType();
-      exprType = exprType instanceof PsiEllipsisType ? ((PsiEllipsisType)exprType).toArrayType() : exprType;
       myOriginType = GenericsUtil.getVariableTypeByExpressionType(exprType);
       PsiType type = myTypeEvaluator.evaluateType(expr);
-      type = type instanceof PsiEllipsisType ? ((PsiEllipsisType)type).toArrayType() : type;
       myType = GenericsUtil.getVariableTypeByExpressionType(type);
       myChanged = !(myOriginType == null || myType == null) && !myType.equals(myOriginType);
     }
