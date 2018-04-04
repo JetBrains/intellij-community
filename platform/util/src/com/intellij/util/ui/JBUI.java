@@ -8,9 +8,11 @@ import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.LazyInitializer.NotNullValue;
 import com.intellij.util.LazyInitializer.NullableValue;
+import com.intellij.util.NotNullProducer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.components.BorderLayoutPanel;
@@ -1432,9 +1434,17 @@ public class JBUI {
     return getColor(propertyName, new Color(defaultColor));
   }
 
-  private static Color getColor(String propertyName, Color defaultColor) {
-    Color color = UIManager.getColor(propertyName);
-    return color == null ? defaultColor : color;
+  private static Color getColor(final String propertyName, final Color defaultColor) {
+    NotNullProducer<Color> function = new NotNullProducer<Color>() {
+      @NotNull
+      @Override
+      public Color produce() {
+        Color color = UIManager.getColor(propertyName);
+        return color == null ? defaultColor : color;
+      }
+    };
+
+    return new JBColor(function);
   }
 
   public static int getInt(String propertyName, int defaultValue) {
