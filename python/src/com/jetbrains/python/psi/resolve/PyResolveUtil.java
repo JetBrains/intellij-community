@@ -22,7 +22,6 @@ import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
-import com.jetbrains.extenstions.PsiElementExtKt;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
@@ -111,7 +110,12 @@ public class PyResolveUtil {
       if (scopeOwner == roof) {
         return;
       }
-      scopeOwner = ScopeUtil.getScopeOwner(scopeOwner);
+      if (scopeOwner instanceof PyClass && scopeOwner == originalScopeOwner) {
+        scopeOwner = PyUtil.as(scopeOwner.getContainingFile(), PyFile.class);
+      }
+      else {
+        scopeOwner = ScopeUtil.getScopeOwner(scopeOwner);
+      }
     }
   }
 

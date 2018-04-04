@@ -1286,4 +1286,13 @@ public class PyResolveTest extends PyResolveTestCase {
       () -> assertResolvesTo(PyClass.class, "A")
     );
   }
+
+  // PY-19890
+  public void testUnboundVariableOnClassLevel() {
+    final PyTargetExpression foo = assertResolvesTo(PyTargetExpression.class, "foo");
+
+    final PyExpression value = foo.findAssignedValue();
+    assertInstanceOf(value, PyStringLiteralExpression.class);
+    assertEquals("global", ((PyStringLiteralExpression)value).getStringValue());
+  }
 }

@@ -38,6 +38,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Supplier;
 
 /**
  * @author yole
@@ -265,11 +266,11 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
                                                                    @Nullable PsiElement realContext,
                                                                    @Nullable PsiElement resolveRoof) {
     boolean unreachableLocalDeclaration = false;
-    boolean resolveInParentScope = false;
+    Supplier<ScopeOwner> resolveInParentScope = null;
     final ResolveResultList resultList = new ResolveResultList();
     final ScopeOwner referenceOwner = ScopeUtil.getScopeOwner(realContext);
     final TypeEvalContext typeEvalContext = myContext.getTypeEvalContext();
-    ScopeOwner resolvedOwner = processor.getOwner();
+    final ScopeOwner resolvedOwner = processor.getOwner();
 
     final Collection<PsiElement> resolvedElements = processor.getElements();
     if (resolvedOwner != null && !resolvedElements.isEmpty() && !ControlFlowCache.getScope(resolvedOwner).isGlobal(referencedName)) {
@@ -290,8 +291,11 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
           return latestDefs;
         }
-        else if (resolvedOwner instanceof PyClass || instructions.isEmpty() && allInOwnScopeComprehensions(resolvedElements)) {
-          resolveInParentScope = true;
+        else if (resolvedOwner instanceof PyClass) {
+          resolveInParentScope = () -> PyUtil.as(resolvedOwner.getContainingFile(), PyFile.class);
+        }
+        else if (instructions.isEmpty() && allInOwnScopeComprehensions(resolvedElements)) {
+          resolveInParentScope = () -> ScopeUtil.getScopeOwner(resolvedOwner);
         }
         else {
           unreachableLocalDeclaration = true;
@@ -319,11 +323,11 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     // TODO: Try resolve to latest defs for outer scopes starting from the last element in CFG (=> no need for a special rate for globals)
 
     if (!unreachableLocalDeclaration) {
-      if (resolveInParentScope) {
+      if (resolveInParentScope != null) {
         processor = new PyResolveProcessor(referencedName);
-        resolvedOwner = ScopeUtil.getScopeOwner(resolvedOwner);
-        if (resolvedOwner != null) {
-          PyResolveUtil.scopeCrawlUp(processor, resolvedOwner, referencedName, resolveRoof);
+        final ScopeOwner parentScope = resolveInParentScope.get();
+        if (parentScope != null) {
+          PyResolveUtil.scopeCrawlUp(processor, parentScope, referencedName, resolveRoof);
         }
       }
 
