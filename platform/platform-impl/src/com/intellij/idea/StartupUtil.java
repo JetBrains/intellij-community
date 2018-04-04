@@ -21,7 +21,6 @@ import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.Consumer;
@@ -93,10 +92,6 @@ public class StartupUtil {
 
     if (!checkJdkVersion()) {
       System.exit(Main.JDK_CHECK_FAILED);
-    }
-
-    if ((SystemInfo.isLinux || SystemInfo.isMac) && Registry.is("ide.popup.enablePopupType")) {
-      System.setProperty("jbre.popupwindow.settype", "true");
     }
 
     // avoiding "log4j:WARN No appenders could be found"
