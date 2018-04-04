@@ -1491,9 +1491,8 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
 
     try {
       Replacer.testReplace(s1, s2, s3, options, getProject());
-      assertTrue("Undefined replace variable is not checked",false);
-    } catch(UnsupportedPatternException ignored) {
-    }
+      fail("Undefined replace variable is not checked");
+    } catch (MalformedPatternException ignored) {}
 
     String s4 = "a=a;";
     String s5 = "a=a;";
@@ -1501,15 +1500,13 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
 
     try {
       Replacer.testReplace(s4, s5, s6, options, getProject());
-      assertTrue("Undefined no ; in replace",false);
-    } catch(UnsupportedPatternException ignored) {
-    }
+      fail("Undefined no ; in replace");
+    } catch (UnsupportedPatternException ignored) {}
 
     try {
       Replacer.testReplace(s4, s6, s5, options, getProject());
-      assertTrue("Undefined no ; in search",false);
-    } catch(UnsupportedPatternException ignored) {
-    }
+      fail("Undefined no ; in search");
+    } catch (UnsupportedPatternException ignored) {}
   }
 
   public void testActualParameterReplacementInConstructorInvokation() {
