@@ -841,24 +841,6 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
     );
   }
 
-  @Test
-  public void testMultipleCases() {
-    runPythonTest(
-      new CreateConfigurationMultipleCasesTask<PyUnitTestConfiguration>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME,
-                                                                        PyUnitTestConfiguration.class) {
-        @Override
-        protected boolean configurationShouldBeProducedForElement(@NotNull final PsiElement element) {
-          // test_functions.py and test_foo do not contain any TestCase and can't be launched with unittest
-          final PsiFile file = element.getContainingFile();
-          if (file == null) {
-            return true;
-          }
-          final String name = file.getName();
-          return !(name.endsWith("test_functions.py") || name.endsWith("test_foo.py"));
-        }
-      });
-  }
-
 
   private abstract class PyUnitTestProcessWithConsoleTestTask extends PyUnitTestLikeProcessWithConsoleTestTask<PyUnitTestProcessRunner> {
     public PyUnitTestProcessWithConsoleTestTask(@NotNull String relativePathToTestData,

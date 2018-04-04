@@ -55,6 +55,7 @@ import com.jetbrains.extenstions.QNameResolveContext
 import com.jetbrains.extenstions.getElementAndResolvableName
 import com.jetbrains.extenstions.resolveToElement
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.PyNames
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyQualifiedNameOwner
@@ -101,7 +102,8 @@ internal fun getAdditionalArgumentsPropertyName() = com.jetbrains.python.testing
 /**
  * If runner name is here that means test runner only can run inheritors for TestCase
  */
-val RunnersThatRequireTestCaseClass = setOf(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME)
+val RunnersThatRequireTestCaseClass = setOf<String>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME,
+                                            PyTestFrameworkService.getSdkReadableNameByFramework(PyNames.TRIAL_TEST))
 
 /**
  * Checks if element could be test target
