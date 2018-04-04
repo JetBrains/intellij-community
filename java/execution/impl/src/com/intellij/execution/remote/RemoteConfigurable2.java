@@ -13,8 +13,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.SideBorder;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.fields.IntegerField;
 import com.intellij.ui.components.labels.DropDownLink;
 import com.intellij.util.ui.JBUI;
@@ -71,7 +70,7 @@ public class RemoteConfigurable2 extends SettingsEditor<RemoteConfiguration> {
 
       @Override
       public String toString() {
-        return "9 and after";
+        return "9 and later";
       }
     },
     JDK5to8(JavaSdkVersion.JDK_1_5)  {
@@ -126,15 +125,28 @@ public class RemoteConfigurable2 extends SettingsEditor<RemoteConfiguration> {
 
   private final JTextField myHostName = new JTextField();
   private final JTextField myAddress = new JTextField();
-  private final IntegerField myPort = new IntegerField("Port", 0, 0xFFFF);
+  private final IntegerField myPort = new IntegerField("Port:", 0, 0xFFFF) {
+    @Override
+    public Dimension getPreferredSize() {
+      if (isPreferredSizeSet()) {
+        return super.getPreferredSize();
+      } else {
+        int value = getValue();
+        setValue(getMaxValue());
+
+        Dimension result = super.getPreferredSize();
+        setValue(value);
+        return result;
+      }
+    }
+  };
 
   public RemoteConfigurable2(Project project) {
     myTransportCombo.setSelectedItem(Transport.SOCKET);
 
-    JPanel panel = new JPanel();
-    panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-    panel.add(createModePanel());
-    panel.add(Box.createRigidArea(JBUI.size(0, 10)));
+    GridBagConstraints gc = new GridBagConstraints(0, 0, 2, 1, 0, 0, GridBagConstraints.LINE_START, GridBagConstraints.NONE,
+                                                   JBUI.insets(4, 0, 0, 8), 0, 0);
+    mainPanel = createModePanel(gc);
 
     JavaSdkVersion version = JavaSdkVersionUtil.getJavaSdkVersion(ProjectRootManager.getInstance(project).getProjectSdk());
     JDKVersionItem vi = version != null ?
@@ -145,26 +157,51 @@ public class RemoteConfigurable2 extends SettingsEditor<RemoteConfiguration> {
     myArgsArea.setWrapStyleWord(true);
     myArgsArea.setRows(2);
     myArgsArea.setEditable(false);
-    myArgsArea.setBorder(new SideBorder(JBColor.border(), SideBorder.ALL));
+
     updateArgsText(vi);
 
-    DropDownLink<JDKVersionItem> ddl =
-      new DropDownLink<>(vi, Arrays.asList(JDKVersionItem.values()), i -> updateArgsText(i), true);
+    DropDownLink<JDKVersionItem> ddl = new DropDownLink<>(vi, Arrays.asList(JDKVersionItem.values()), i -> updateArgsText(i), true);
+    ddl.setToolTipText("JVM Arguments format");
 
-    panel.add(UI.PanelFactory.panel(myArgsArea).withLabel("Command line arguments for remote JVM:").
+    gc.gridx = 0;
+    gc.gridy++;
+    gc.gridwidth = 5;
+    gc.fill = GridBagConstraints.HORIZONTAL;
+    gc.weightx = 0;
+    gc.insets = JBUI.insetsTop(10);
+
+    JScrollPane sp = new JBScrollPane(myArgsArea,
+                                      ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                                      ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+
+    mainPanel.add(UI.PanelFactory.panel(sp).withLabel("Command line arguments for remote JVM:").
       moveLabelOnTop().withTopRightComponent(ddl).
-                               withComment("Copy and paste the arguments to the command line when JVM is started").createPanel());
+                               withComment("Copy and paste the arguments to the command line when JVM is started").createPanel(), gc);
 
-    panel.add(Box.createRigidArea(JBUI.size(0, 10)));
+    gc.gridx += gc.gridwidth;
+    gc.fill = GridBagConstraints.REMAINDER;
+    gc.weightx = 1.0;
+    gc.gridwidth = 1;
+    mainPanel.add(new JPanel(), gc);
 
     ModuleDescriptionsComboBox myModuleCombo = new ModuleDescriptionsComboBox();
     myModuleCombo.allowEmptySelection("<whole project>");
     myModuleSelector = new ConfigurationModuleSelector(project, myModuleCombo);
 
-    panel.add(UI.PanelFactory.panel(myModuleCombo).withLabel("Use module classpath:").
-      withComment("First search for sources of the debugged classes in the selected module classpath").createPanel());
+    gc.gridx = 0;
+    gc.gridy++;
+    gc.gridwidth = 5;
+    gc.fill = GridBagConstraints.HORIZONTAL;
+    gc.weightx = 0;
+    gc.insets = JBUI.insetsTop(21);
+    mainPanel.add(UI.PanelFactory.panel(myModuleCombo).withLabel("Use module classpath:").
+      withComment("First search for sources of the debugged classes in the selected module classpath").createPanel(), gc);
 
-    mainPanel = UI.Panels.simplePanel().addToTop(panel);
+    gc.gridx += gc.gridwidth;
+    gc.fill = GridBagConstraints.REMAINDER;
+    gc.gridwidth = 1;
+    gc.weightx = 1.0;
+    mainPanel.add(new JPanel(), gc);
 
     DocumentListener textUpdateListener = new DocumentAdapter() {
       @Override
@@ -244,10 +281,8 @@ public class RemoteConfigurable2 extends SettingsEditor<RemoteConfiguration> {
     return mainPanel;
   }
 
-  private JPanel createModePanel() {
+  private JPanel createModePanel(GridBagConstraints gc) {
     JPanel panel = new JPanel(new GridBagLayout());
-    GridBagConstraints gc = new GridBagConstraints(0, 0, 2, 1, 0, 0, GridBagConstraints.LINE_START, GridBagConstraints.NONE,
-                                                   JBUI.insetsRight(8), 0, 0);
 
     JLabel modeLabel = new JLabel("Debugger mode:");
     JLabel transportLabel = new JLabel("Transport:");
@@ -259,7 +294,7 @@ public class RemoteConfigurable2 extends SettingsEditor<RemoteConfiguration> {
 
     gc.gridx += 2;
     gc.gridwidth = 1;
-    gc.insets = JBUI.emptyInsets();
+    gc.insets = JBUI.insetsTop(4);
     panel.add(myModeCombo, gc);
 
     gc.gridx++;
@@ -281,13 +316,13 @@ public class RemoteConfigurable2 extends SettingsEditor<RemoteConfiguration> {
       gc.weightx = 0.0;
       gc.gridwidth = 2;
       gc.fill = GridBagConstraints.NONE;
-      gc.insets = JBUI.insetsRight(8);
+      gc.insets = JBUI.insets(4, 0, 0, 8);
       panel.add(transportLabel, gc);
 
       gc.gridx += 2;
       gc.gridwidth = 1;
       gc.fill = GridBagConstraints.HORIZONTAL;
-      gc.insets = JBUI.emptyInsets();
+      gc.insets = JBUI.insetsTop(4);
       panel.add(myTransportCombo, gc);
 
       gc.gridx++;
@@ -300,13 +335,13 @@ public class RemoteConfigurable2 extends SettingsEditor<RemoteConfiguration> {
       gc.gridx = 0;
       gc.weightx = 0.0;
       gc.gridwidth = 1;
-      gc.insets = JBUI.insetsRight(8);
+      gc.insets = JBUI.insets(4, 0, 0, 8);
       gc.fill = GridBagConstraints.NONE;
       panel.add(addressLabel, gc);
 
       gc.gridx++;
       gc.gridwidth = 2;
-      gc.insets = JBUI.emptyInsets();
+      gc.insets = JBUI.insetsTop(4);
       gc.fill = GridBagConstraints.HORIZONTAL;
       panel.add(myAddress, gc);
 
@@ -335,24 +370,24 @@ public class RemoteConfigurable2 extends SettingsEditor<RemoteConfiguration> {
     gc.gridx = 0;
     gc.weightx = 0.0;
     gc.gridwidth = 1;
-    gc.insets = JBUI.insetsRight(8);
+    gc.insets = JBUI.insets(4, 0, 0, 8);
     gc.fill = GridBagConstraints.NONE;
     panel.add(hostLabel, gc);
 
     gc.gridx++;
     gc.gridwidth = 2;
-    gc.insets = JBUI.emptyInsets();
+    gc.insets = JBUI.insetsTop(4);
     gc.fill = GridBagConstraints.HORIZONTAL;
     panel.add(myHostName, gc);
 
     gc.gridx += 2;
     gc.gridwidth = 1;
     gc.fill = GridBagConstraints.NONE;
-    gc.insets = JBUI.insets(0, 15, 0, 8);
+    gc.insets = JBUI.insets(4, 20, 0, 8);
     panel.add(portLabel, gc);
 
     gc.gridx++;
-    gc.insets = JBUI.emptyInsets();
+    gc.insets = JBUI.insetsTop(4);
     panel.add(myPort, gc);
 
     gc.gridx++;

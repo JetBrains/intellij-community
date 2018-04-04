@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.plaf.metal.MetalLabelUI;
 import java.awt.*;
 import java.util.List;
 
@@ -51,6 +52,16 @@ public class DropDownLink<T> extends LinkLabel<Object> {
     setIconTextGap(JBUI.scale(1));
     setHorizontalAlignment(SwingConstants.LEADING);
     setHorizontalTextPosition(SwingConstants.LEADING);
+
+    setUI(new MetalLabelUI() {
+      @Override
+      protected String layoutCL(JLabel label, FontMetrics fontMetrics, String text, Icon icon,
+                                Rectangle viewR, Rectangle iconR, Rectangle textR) {
+        String result = super.layoutCL(label, fontMetrics, text, icon, viewR, iconR, textR);
+        iconR.y += JBUI.scale(1);
+        return result;
+      }
+    });
   }
 
   public T getChosenItem() {
