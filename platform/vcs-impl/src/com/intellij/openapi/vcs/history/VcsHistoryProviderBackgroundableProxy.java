@@ -28,7 +28,6 @@ import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.ItemLatestState;
 import com.intellij.openapi.vcs.impl.BackgroundableActionLock;
 import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
-import com.intellij.openapi.vcs.impl.VcsBackgroundableComputable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
@@ -85,16 +84,34 @@ public class VcsHistoryProviderBackgroundableProxy {
       throwableComputable = () -> createSessionWithLimitCheck(filePath);
     }
 
-    String title = VcsBundle.message("loading.file.history.progress");
-    String errorTitle = silent ? null : VcsBundle.message("message.title.could.not.load.file.history");
-
     BackgroundableActionLock lock = BackgroundableActionLock.getLock(myProject, actionKey, filePath.getPath());
     if (lock.isLocked()) return;
-
-    VcsBackgroundableComputable<VcsHistorySession> computable =
-      new VcsBackgroundableComputable<>(myProject, title, errorTitle, throwableComputable, continuation, lock);
     lock.lock();
-    ProgressManager.getInstance().run(computable);
+
+    ProgressManager.getInstance().run(new Task.Backgroundable(myProject, VcsBundle.message("loading.file.history.progress"), true) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        try {
+          VcsHistorySession session = throwableComputable.compute();
+          ApplicationManager.getApplication().invokeLater(() -> continuation.consume(session), ModalityState.defaultModalityState());
+        }
+        catch (VcsException e) {
+          if (!silent) {
+            AbstractVcsHelper.getInstance(getProject()).showError(e,
+                                                                  VcsBundle.message("message.title.could.not.load.file.history"));
+          }
+        }
+        catch (Throwable t) {
+          if (!silent) {
+            AbstractVcsHelper.getInstance(getProject()).showError(new VcsException(t),
+                                                                  VcsBundle.message("message.title.could.not.load.file.history"));
+          }
+        }
+        finally {
+          ApplicationManager.getApplication().invokeLater(lock::unlock, ModalityState.NON_MODAL);
+        }
+      }
+    });
   }
 
   @CalledInAwt
