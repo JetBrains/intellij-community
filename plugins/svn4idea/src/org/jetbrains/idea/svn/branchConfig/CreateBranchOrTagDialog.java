@@ -1,10 +1,9 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.branchConfig;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -18,7 +17,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.RootUrlInfo;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Revision;
@@ -76,7 +75,6 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     myProject = project;
     setResizable(true);
     setTitle(message("dialog.title.branch"));
-    getHelpAction().setEnabled(true);
     myUseThisVariantToLabel.setBorder(JBUI.Borders.emptyBottom(10));
     myProjectButton.setIcon(AllIcons.Nodes.IdeaProject);
     myBranchTagBaseComboBox.setPreferredSize(new Dimension(myBranchTagBaseComboBox.getPreferredSize().width,
@@ -207,13 +205,10 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     getOKAction().setEnabled(isOKActionEnabled());
   }
 
-  @NotNull
-  protected Action[] createActions() {
-    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
-  }
-
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(HELP_ID);
+  @Nullable
+  @Override
+  protected String getHelpId() {
+    return HELP_ID;
   }
 
   protected void init() {
