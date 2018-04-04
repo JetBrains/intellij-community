@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.structuralsearch.MatchVariableConstraint;
 import com.intellij.structuralsearch.NamedScriptableDefinition;
+import com.intellij.structuralsearch.ReplacementVariableDefinition;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.ui.HintHint;
@@ -62,12 +63,14 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
 
       while (end < length && Character.isJavaIdentifierPart(elements.charAt(end)) && elements.charAt(end) != '$') end++;
       if (end < length && elements.charAt(end) == '$') {
-        String variableName = elements.subSequence(start + 1, end).toString();
+        final String variableName = elements.subSequence(start + 1, end).toString();
 
         if (variables.contains(variableName)) {
           final NamedScriptableDefinition variable = configuration.findVariable(variableName);
           text = getShortParamString(variable);
-          configuration.setCurrentVariableName(variable == null && configuration instanceof ReplaceConfiguration
+          final boolean replacementVariable =
+            variable instanceof ReplacementVariableDefinition || variable == null && configuration instanceof ReplaceConfiguration;
+          configuration.setCurrentVariableName(replacementVariable
                                                ? variableName + ReplaceConfiguration.REPLACEMENT_VARIABLE_SUFFIX
                                                : variableName);
         }
