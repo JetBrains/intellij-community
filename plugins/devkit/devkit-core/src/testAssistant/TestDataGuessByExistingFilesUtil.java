@@ -344,7 +344,7 @@ public class TestDataGuessByExistingFilesUtil {
       int currentWordsIndex = currentLcDir.lastIndexOf(currentNameLcSubstring);
       if (currentWordsIndex > 0) {
         currentWordsMatched = i + 1;
-        candidateMatchPosition = currentWordsIndex;
+        currentMatchPosition = currentWordsIndex;
       }
 
       if (candidateWordsMatched != currentWordsMatched) {
