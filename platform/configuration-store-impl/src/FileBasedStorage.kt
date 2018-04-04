@@ -40,8 +40,11 @@ open class FileBasedStorage(file: Path,
                             rootElementName: String?,
                             pathMacroManager: TrackingPathMacroSubstitutor? = null,
                             roamingType: RoamingType? = null,
-                            provider: StreamProvider? = null) : XmlElementStorage(fileSpec, rootElementName, pathMacroManager, roamingType, provider) {
-  private @Volatile var cachedVirtualFile: VirtualFile? = null
+                            provider: StreamProvider? = null) :
+  XmlElementStorage(fileSpec, rootElementName, pathMacroManager, roamingType, provider) {
+
+  @Volatile private var cachedVirtualFile: VirtualFile? = null
+
   protected var lineSeparator: LineSeparator? = null
   protected var blockSavingTheContent = false
 
@@ -67,7 +70,9 @@ open class FileBasedStorage(file: Path,
 
   override fun createSaveSession(states: StateMap) = FileSaveSession(states, this)
 
-  protected open class FileSaveSession(storageData: StateMap, storage: FileBasedStorage) : XmlElementStorage.XmlElementStorageSaveSession<FileBasedStorage>(storageData, storage) {
+  protected open class FileSaveSession(storageData: StateMap, storage: FileBasedStorage) :
+    XmlElementStorage.XmlElementStorageSaveSession<FileBasedStorage>(storageData, storage) {
+
     override fun save() {
       if (!storage.blockSavingTheContent) {
         super.save()
@@ -169,15 +174,21 @@ open class FileBasedStorage(file: Path,
 
   protected fun processReadException(e: Exception?) {
     val contentTruncated = e == null
-    blockSavingTheContent = !contentTruncated && (PROJECT_FILE == fileSpec || fileSpec.startsWith(PROJECT_CONFIG_DIR) || fileSpec == StoragePathMacros.MODULE_FILE || fileSpec == StoragePathMacros.WORKSPACE_FILE)
+
+    blockSavingTheContent = !contentTruncated &&
+      (PROJECT_FILE == fileSpec || fileSpec.startsWith(PROJECT_CONFIG_DIR) ||
+       fileSpec == StoragePathMacros.MODULE_FILE || fileSpec == StoragePathMacros.WORKSPACE_FILE)
+
     if (!ApplicationManager.getApplication().isUnitTestMode && !ApplicationManager.getApplication().isHeadlessEnvironment) {
       if (e != null) {
         LOG.info(e)
       }
+      val reason = if (contentTruncated) "content truncated" else e!!.message
+      val action = if (blockSavingTheContent) "Please correct the file content" else "File content will be recreated"
       Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID,
-        "Load Settings",
-        "Cannot load settings from file '$file': ${if (contentTruncated) "content truncated" else e!!.message}\n${if (blockSavingTheContent) "Please correct the file content" else "File content will be recreated"}",
-        NotificationType.WARNING)
+                   "Load Settings",
+                   "Cannot load settings from file '$file': $reason\n$action",
+                   NotificationType.WARNING)
         .notify(null)
     }
   }
@@ -185,7 +196,12 @@ open class FileBasedStorage(file: Path,
   override fun toString() = file.systemIndependentPath
 }
 
-internal fun writeFile(file: Path?, requestor: Any, virtualFile: VirtualFile?, element: Element, lineSeparator: LineSeparator, prependXmlProlog: Boolean): VirtualFile {
+internal fun writeFile(file: Path?,
+                       requestor: Any,
+                       virtualFile: VirtualFile?,
+                       element: Element,
+                       lineSeparator: LineSeparator,
+                       prependXmlProlog: Boolean): VirtualFile {
   val result = if (file != null && (virtualFile == null || !virtualFile.isValid)) {
     getOrCreateVirtualFile(requestor, file)
   }
@@ -196,7 +212,8 @@ internal fun writeFile(file: Path?, requestor: Any, virtualFile: VirtualFile?, e
   if ((LOG.isDebugEnabled || ApplicationManager.getApplication().isUnitTestMode) && !FileUtilRt.isTooLarge(result.length)) {
     val content = element.toBufferExposingByteArray(lineSeparator.separatorString)
     if (isEqualContent(result, lineSeparator, content, prependXmlProlog)) {
-      LOG.warn("Content equals, but it must be handled not on this level: file ${result.name}, content\n${content.toByteArray().toString(StandardCharsets.UTF_8)}")
+      val contentString = content.toByteArray().toString(StandardCharsets.UTF_8)
+      LOG.warn("Content equals, but it must be handled not on this level: file ${result.name}, content:\n$contentString")
     }
     else if (DEBUG_LOG != null && ApplicationManager.getApplication().isUnitTestMode) {
       DEBUG_LOG = "${result.path}:\n$content\nOld Content:\n${LoadTextUtil.loadText(result)}"
@@ -209,7 +226,10 @@ internal fun writeFile(file: Path?, requestor: Any, virtualFile: VirtualFile?, e
 
 internal val XML_PROLOG = """<?xml version="1.0" encoding="UTF-8"?>""".toByteArray()
 
-private fun isEqualContent(result: VirtualFile, lineSeparator: LineSeparator, content: BufferExposingByteArrayOutputStream, prependXmlProlog: Boolean): Boolean {
+private fun isEqualContent(result: VirtualFile,
+                           lineSeparator: LineSeparator,
+                           content: BufferExposingByteArrayOutputStream,
+                           prependXmlProlog: Boolean): Boolean {
   val headerLength = if (!prependXmlProlog) 0 else XML_PROLOG.size + lineSeparator.separatorBytes.size
   if (result.length.toInt() != (headerLength + content.size())) {
     return false
@@ -217,7 +237,8 @@ private fun isEqualContent(result: VirtualFile, lineSeparator: LineSeparator, co
 
   val oldContent = result.contentsToByteArray()
 
-  if (prependXmlProlog && (!ArrayUtil.startsWith(oldContent, XML_PROLOG) || !ArrayUtil.startsWith(oldContent, XML_PROLOG.size, lineSeparator.separatorBytes))) {
+  if (prependXmlProlog && (!ArrayUtil.startsWith(oldContent, XML_PROLOG) ||
+                           !ArrayUtil.startsWith(oldContent, XML_PROLOG.size, lineSeparator.separatorBytes))) {
     return false
   }
 
