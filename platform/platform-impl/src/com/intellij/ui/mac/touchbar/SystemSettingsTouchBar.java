@@ -7,6 +7,7 @@ import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 
@@ -15,7 +16,7 @@ import java.io.IOException;
 public class SystemSettingsTouchBar {
   private static final Logger LOG = Logger.getInstance(SystemSettingsTouchBar.class);
 
-  private static final String ourTBServerProcessName = "TouchBarServer";
+  private static final String ourTBServerProcessName = SystemInfo.isMacOSHighSierra ? "TouchBarServer" : "TouchBarAgent";
   private static final String ourDefaultsDomain = "com.apple.touchbar.agent";
   private static final String ourDefaultsNode = "PresentationModePerApp";
   private static final String ourDefaultsValue = "functionKeys";
