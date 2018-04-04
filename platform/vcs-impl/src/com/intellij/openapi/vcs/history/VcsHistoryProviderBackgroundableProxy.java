@@ -206,14 +206,21 @@ public class VcsHistoryProviderBackgroundableProxy {
           else {
             myHistoryProvider.reportAppendableHistory(filePath, partner);
           }
+          partner.finished();
+        }
+        catch (ProcessCanceledException e) {
+          throw e;
         }
         catch (VcsFileHistoryLimitReachedException ignored) {
+          partner.finished();
         }
         catch (VcsException e) {
           partner.reportException(e);
         }
+        catch (Throwable t) {
+          partner.reportException(new VcsException(t));
+        }
         finally {
-          partner.finished();
           ApplicationManager.getApplication().invokeLater(lock::unlock, ModalityState.NON_MODAL);
         }
       }
