@@ -11,6 +11,7 @@ import com.intellij.notification.Notifications;
 import com.intellij.notification.NotificationsManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
@@ -1110,6 +1111,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       Class<?> clazz0 = component.getClass();
       Class<?> clazz = clazz0.isAnonymousClass() ? clazz0.getSuperclass() : clazz0;
       myProperties.add(new PropertyBean(prefix + "class", clazz.getName()));
+      addActionInfo(component);
       StringBuilder classHierarchy = new StringBuilder();
       for (Class<?> cl = clazz.getSuperclass(); cl != null; cl = cl.getSuperclass()) {
         if (classHierarchy.length() > 0) classHierarchy.append(" -> ");
@@ -1142,6 +1144,12 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
         }
         catch (Exception ignored) {
         }
+      }
+    }
+
+    private void addActionInfo(Object component) {
+      if (component instanceof ActionButton) {
+        myProperties.add(new PropertyBean("action", ((ActionButton)component).getAction().getClass().getName(), true));
       }
     }
 
