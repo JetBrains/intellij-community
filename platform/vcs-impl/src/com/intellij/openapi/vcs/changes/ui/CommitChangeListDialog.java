@@ -513,7 +513,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   private void updateOnListSelection() {
     updateComment();
-    myCommitOptions.onChangeListSelected((LocalChangeList)myBrowser.getSelectedChangeList(),
+    myCommitOptions.onChangeListSelected(myBrowser.getSelectedChangeList(),
                                          ChangeListManagerImpl.getInstanceImpl(myProject).getUnversionedFiles());
   }
 
@@ -713,8 +713,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private void updateComment() {
     if (myVcsConfiguration.CLEAR_INITIAL_COMMIT_MESSAGE) return;
 
-    LocalChangeList list = (LocalChangeList)myBrowser.getSelectedChangeList();
-    if (list == null || list.getName().equals(myLastSelectedListName)) {
+    LocalChangeList list = myBrowser.getSelectedChangeList();
+    if (list.getName().equals(myLastSelectedListName)) {
       return;
     } else if (myLastSelectedListName != null) {
       saveCommentIntoChangeList();
@@ -1178,7 +1178,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     @Override
     protected void selectChange(@NotNull Wrapper change) {
       //noinspection unchecked
-      myBrowser.selectEntries((List)singletonList(change.getUserObject()));
+      myBrowser.selectEntries(singletonList(change.getUserObject()));
     }
 
     @NotNull
