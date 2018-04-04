@@ -593,6 +593,12 @@
   <action id="ChangesView.Revert">
     <keyboard-shortcut first-keystroke="control alt Z"/>
   </action>
+  <action id="Vcs.MoveChangedLinesToChangelist">
+    <keyboard-shortcut first-keystroke="alt shift M"/>
+  </action>
+  <action id="ChangesView.Move">
+    <keyboard-shortcut first-keystroke="alt shift M"/>
+  </action>
 
   <action id="GotoNextError">
     <keyboard-shortcut first-keystroke="F2"/>
