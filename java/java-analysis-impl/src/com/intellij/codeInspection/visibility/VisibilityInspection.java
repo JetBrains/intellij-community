@@ -171,6 +171,17 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
       if (minLevel <= 0) return null;
     }
 
+    if (refElement instanceof RefField) {
+      Boolean implicitlyWritten = refElement.getUserData(RefField.IMPLICITLY_WRITTEN);
+      if (implicitlyWritten != null && implicitlyWritten) {
+        return null;
+      }
+      Boolean implicitlyRead = refElement.getUserData(RefField.IMPLICITLY_READ);
+      if (implicitlyRead != null && implicitlyRead) {
+        return null;
+      }
+    }
+
     //ignore implicit constructors. User should not be able to see them.
     if (refElement instanceof RefImplicitConstructor) return null;
 
