@@ -21,7 +21,6 @@ java_test(
     ],
     jvm_flags = ["-Dtest.suite.jar=AndroidStudioBundleTest.jar"],
     tags = [
-        "no_foundry",  # b/73948555
         "no_windows",
     ],
     test_class = "com.android.testutils.JarTestSuite",
@@ -43,7 +42,6 @@ java_test(
         "//tools/idea:android-studio.tar.gz",
     ],
     tags = [
-        "no_foundry",  # b/73948555
         "no_test_mac",  # TODO: we run out of file handles on Mac, double-check whether 'sysctl kern.maxfiles' is sane
     ],
     deps = [
