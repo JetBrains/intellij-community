@@ -12,7 +12,10 @@ import com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.components.LegalNoticeDialog;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -65,7 +68,7 @@ public class AcceptedLanguageLevelsSettings implements PersistentStateComponent<
     return LanguageLevel.HIGHEST.compareTo(languageLevel) >= 0 || getSettings().acceptedNames.contains(languageLevel.name());
   }
 
-  public static void acceptLanguageLevel(LanguageLevel languageLevel) {
+  private static void acceptLanguageLevel(LanguageLevel languageLevel) {
     getSettings().acceptedNames.add(languageLevel.name());
   }
 
@@ -98,21 +101,32 @@ public class AcceptedLanguageLevelsSettings implements PersistentStateComponent<
   }
 
   /**
-   * Show legal dialog and set highest accepted level if dialog is rejected
+   * Shows a legal notice dialog and downgrades to the highest accepted level if the dialog is rejected.
    *
    * @return {@code null} if level was rejected
    */
   public static LanguageLevel checkAccepted(Component parent, LanguageLevel level) {
-    return level == null || isLanguageLevelAccepted(level) || new LegalNoticeDialog(parent, level).showAndGet() ? level : null;
+    return level == null || isLanguageLevelAccepted(level) || showDialog(parent, level) ? level : null;
   }
 
-  private static Notification createNotification(LanguageLevel l, Project project) {
-    String content = LegalNoticeDialog.getLegalNotice(l) + "<br/><a href='accept'>Accept</a>&nbsp;&nbsp;<a href='decline'>Decline</a>";
+  private static boolean showDialog(Component parent, LanguageLevel level) {
+    int result = LegalNoticeDialog.build(EXPERIMENTAL_FEATURE_ALERT, getLegalNotice(level)).withParent(parent).show();
+    if (result == DialogWrapper.OK_EXIT_CODE) {
+      acceptLanguageLevel(level);
+      return true;
+    }
+    else {
+      return false;
+    }
+  }
+
+  private static Notification createNotification(LanguageLevel level, Project project) {
+    String content = getLegalNotice(level) + "<br/><a href='accept'>Accept</a>&nbsp;&nbsp;<a href='decline'>Decline</a>";
     return NOTIFICATION_GROUP.createNotification(
-      LegalNoticeDialog.EXPERIMENTAL_FEATURE_ALERT, content, NotificationType.WARNING, (notification, event) -> {
+      EXPERIMENTAL_FEATURE_ALERT, content, NotificationType.WARNING, (notification, event) -> {
         if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
           switch (event.getDescription()) {
-            case "accept": acceptLanguageLevel(l); break;
+            case "accept": acceptLanguageLevel(level); break;
             case "decline": decreaseLanguageLevel(project); break;
           }
           notification.expire();
@@ -122,7 +136,7 @@ public class AcceptedLanguageLevelsSettings implements PersistentStateComponent<
 
   private static void decreaseLanguageLevel(Project project) {
     String message = UIUtil.toHtml("Support for experimental features was rejected.<br/>Language levels would be decreased accordingly");
-    Messages.showErrorDialog(project, message, LegalNoticeDialog.EXPERIMENTAL_FEATURE_ALERT);
+    Messages.showErrorDialog(project, message, EXPERIMENTAL_FEATURE_ALERT);
 
     WriteAction.run(() -> {
       LanguageLevel highestAcceptedLevel = getHighestAcceptedLevel();
@@ -140,5 +154,15 @@ public class AcceptedLanguageLevelsSettings implements PersistentStateComponent<
         projectExtension.setLanguageLevel(highestAcceptedLevel);
       }
     });
+  }
+
+  private static final String EXPERIMENTAL_FEATURE_ALERT = "Experimental Feature Alert";
+
+  private static String getLegalNotice(LanguageLevel level) {
+    return
+      "You must accept the terms of legal notice of the beta Java specification to enable support for " +
+      "\"" + StringUtil.substringAfter(level.getPresentableText(), " - ") + "\".<br/><br/>" +
+      "<b>The implementation of an early-draft specification developed under the Java Community Process (JCP) " +
+      "is made available for testing and evaluation purposes only and is not compatible with any specification of the JCP.</b>";
   }
 }
