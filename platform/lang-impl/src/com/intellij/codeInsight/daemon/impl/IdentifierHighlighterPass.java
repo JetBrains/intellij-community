@@ -34,6 +34,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+import static com.intellij.util.AstLoadingFilter.disableTreeLoading;
+
 /**
  * @author yole
  */
@@ -181,7 +183,12 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
   }
 
   private void highlightTargetUsages(@NotNull PsiElement target) {
-    final Couple<Collection<TextRange>> usages = getHighlightUsages(target, myFile, true);
+    final Couple<Collection<TextRange>> usages = disableTreeLoading(
+      () -> getHighlightUsages(target, myFile, true),
+      () -> "Currently highlighted file: \n" +
+            "psi file: " + myFile + ";\n" +
+            "virtual file: " + myFile.getVirtualFile()
+    );
     myReadAccessRanges.addAll(usages.first);
     myWriteAccessRanges.addAll(usages.second);
   }
