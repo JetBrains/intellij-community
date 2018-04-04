@@ -74,13 +74,13 @@ public class TouchBarGeneral extends TouchBar {
     mb.connect().subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionListener() {
       @Override
       public void processStarted(@NotNull String executorId, @NotNull ExecutionEnvironment env, @NotNull ProcessHandler handler) {
-        myButtonStop.update(AllIcons.Actions.Suspend, null, new PlatformAction("Stop"));
-        // TODO: implement other items update
+        _updateRunButtons();
       }
       @Override
       public void processTerminated(@NotNull String executorId, @NotNull ExecutionEnvironment env, @NotNull ProcessHandler handler, int exitCode) {
-        myButtonStop.update(IconLoader.getDisabledIcon(AllIcons.Actions.Suspend), null, (NSTLibrary.Action)null);
-        // TODO: implement other items update
+        ApplicationManager.getApplication().invokeLater(()->{
+          _updateRunButtons();
+        });
       }
     });
 
@@ -171,5 +171,22 @@ public class TouchBarGeneral extends TouchBar {
       myScrubberRunConf.setItems(scrubberItems);
     }
     selectAllItemsToShow();
+  }
+
+  private void _updateRunButtons() {
+    final ExecutionManager em = ExecutionManager.getInstance(myProject);
+    final ProcessHandler[] allRunning = em.getRunningProcesses();
+    int runningCount = 0;
+    for (ProcessHandler ph: allRunning)
+      if (!ph.isProcessTerminated() && !ph.isProcessTerminating())
+        ++runningCount;
+
+    if (runningCount == 0) {
+      myButtonStop.update(IconLoader.getDisabledIcon(AllIcons.Actions.Suspend), null, (NSTLibrary.Action)null);
+      myButtonRun.update(AllIcons.Toolwindows.ToolWindowRun, null, new PlatformAction(IdeActions.ACTION_DEFAULT_RUNNER));
+    } else {
+      myButtonStop.update(AllIcons.Actions.Suspend, null, new PlatformAction("Stop"));
+      myButtonRun.update(AllIcons.Actions.Rerun, null, new PlatformAction("Rerun"));
+    }
   }
 }
