@@ -78,7 +78,7 @@ public class TestPackage extends TestObject {
         myClassNames.clear();
         final SourceScope sourceScope = getSourceScope();
         final Module module = getConfiguration().getConfigurationModule().getModule();
-        if (sourceScope != null && !JUnitStarter.JUNIT5_PARAMETER.equals(getRunner())) {
+        if (sourceScope != null) {
           DumbService instance = DumbService.getInstance(myProject);
           try {
             instance.setAlternativeResolveEnabled(true);
@@ -106,6 +106,10 @@ public class TestPackage extends TestObject {
 
 
   protected void searchTests(Module module, TestClassFilter classFilter, Set<String> names) throws CantRunException {
+     if (JUnitStarter.JUNIT5_PARAMETER.equals(getRunner())) {
+       //junit 5 process tests automatically
+       return;
+     }
     Set<PsiClass> classes = new THashSet<>();
     if (Registry.is("junit4.search.4.tests.in.classpath", false)) {
       String packageName = getPackageName(getConfiguration().getPersistentData());
