@@ -27,6 +27,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -347,19 +348,13 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
 
   public static void processExternalUris(final MetaHandler metaHandler,
                                          final PsiFile file,
-                                         final ExternalUriProcessor processor,
-                                         final boolean showProgress) {
-    if (!showProgress || ApplicationManager.getApplication().isUnitTestMode()) {
-      processExternalUrisImpl(metaHandler, file, processor);
-    }
-    else {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(
-        () -> processExternalUrisImpl(metaHandler, file, processor),
-        XmlErrorMessages.message("finding.acceptable.uri"),
-        false,
-        file.getProject()
-      );
-    }
+                                         final ExternalUriProcessor processor) {
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      () -> ReadAction.run(() -> processExternalUrisImpl(metaHandler, file, processor)),
+      XmlErrorMessages.message("finding.acceptable.uri"),
+      false,
+      file.getProject()
+    );
   }
 
   public interface MetaHandler {
