@@ -169,8 +169,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                    options.contains(Options.PROCESS_ONLY_JAVA_IDENTIFIERS_IF_POSSIBLE));
 
       return processElementsWithTextInGlobalScope((GlobalSearchScope)searchScope, searcher, searchContext,
-                                                  options.contains(Options.CASE_SENSITIVE_SEARCH), containerName, progress, processor
-      );
+                                                  options.contains(Options.CASE_SENSITIVE_SEARCH), containerName, progress, processor);
     }
     LocalSearchScope scope = (LocalSearchScope)searchScope;
     PsiElement[] scopeElements = scope.getScope();
@@ -317,7 +316,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
   // Tries to run {@code localProcessor} for each file in {@code files} concurrently on ForkJoinPool.
   // When encounters write action request, stops all threads, waits for write action to finish and re-starts all threads again.
-  // {@localProcessor} must be as idempotent as possible.
+  // {@code localProcessor} must be as idempotent as possible.
   public static boolean processFilesConcurrentlyDespiteWriteActions(@NotNull Project project,
                                                                     @NotNull List<VirtualFile> files,
                                                                     @NotNull final ProgressIndicator progress,

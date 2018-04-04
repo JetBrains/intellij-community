@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.touchbar;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -13,7 +14,7 @@ import java.util.Map;
 
 public class NST {
   private static final Logger LOG = Logger.getInstance(NST.class);
-  private static final NSTLibrary ourNSTLibrary;
+  private static final NSTLibrary ourNSTLibrary; // NOTE: JNA is stateless (doesn't have any limitations of multi-threaded use)
 
   static {
     final boolean isSystemSupportTouchbar = SystemInfo.isMac && SystemInfo.isOsVersionAtLeast("10.12.2");
@@ -38,23 +39,23 @@ public class NST {
 
   public static boolean isAvailable() { return ourNSTLibrary != null; }
 
-  //
-  // TODO: syncronization between AppKit and EDT will be implemented in next commit
-  //
-
   public static ID createTouchBar(String name, NSTLibrary.ItemCreator creator) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     return ourNSTLibrary.createTouchBar(name, creator);
   }
 
   public static void releaseTouchBar(ID tbObj) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     ourNSTLibrary.releaseTouchBar(tbObj);
   }
 
   public static void setTouchBar(TouchBar tb) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     ourNSTLibrary.setTouchBar(tb == null ? ID.NIL : tb.getNativePeer());
   }
 
   public static void selectItemsToShow(ID tbObj, String[] ids, int count) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     ourNSTLibrary.selectItemsToShow(tbObj, ids, count);
   }
 
@@ -81,10 +82,9 @@ public class NST {
 
   public static ID createScrubber(String uid,
                                   int itemWidth,
-                                  NSTLibrary.ScrubberItemsSource source,
-                                  NSTLibrary.ScrubberItemsCount count,
-                                  NSTLibrary.ActionWithIndex actions) {
-    return ourNSTLibrary.createScrubber(uid, itemWidth, source, count, actions);
+                                  NSTLibrary.ScrubberItemData[] items,
+                                  int count) {
+    return ourNSTLibrary.createScrubber(uid, itemWidth, items, count);
   }
 
   public static void updateButton(ID buttonObj,
@@ -94,6 +94,7 @@ public class NST {
                                   int w,
                                   int h,
                                   NSTLibrary.Action action) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     ourNSTLibrary.updateButton(buttonObj, buttWidth, text, raster4ByteRGBA, w, h, action);
   }
 
@@ -104,6 +105,12 @@ public class NST {
                                    int w,
                                    int h,
                                    ID tbObjExpand, ID tbObjTapAndHold) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     ourNSTLibrary.updatePopover(popoverObj, itemWidth, text, raster4ByteRGBA, w, h, tbObjExpand, tbObjTapAndHold);
+  }
+
+  public static void updateScrubber(ID scrubObj, int itemWidth, NSTLibrary.ScrubberItemData[] items, int count) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    ourNSTLibrary.updateScrubber(scrubObj, itemWidth, items, count);
   }
 }

@@ -21,6 +21,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ChooseModulesDialog;
 import com.intellij.ui.*;
+import com.intellij.ui.components.fields.ExpandableTextField;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.ItemRemovable;
 import com.intellij.util.ui.JBUI;
@@ -59,9 +60,9 @@ public class CompilerModuleOptionsComponent extends JPanel {
     final int width = myTable.getFontMetrics(myTable.getFont()).stringWidth(columnTitle) + 10;
     optionsColumn.setPreferredWidth(width);
     optionsColumn.setMinWidth(width);
-    final RawCommandLineEditor editor = new RawCommandLineEditor();
-    editor.setDescriptor(null, false);
-    optionsColumn.setCellEditor(new DefaultCellEditor(editor.getTextField()));
+    final ExpandableTextField editor = new ExpandableTextField();
+    InsertPathAction.addTo(editor, null, false);
+    optionsColumn.setCellEditor(new DefaultCellEditor(editor));
     new TableSpeedSearch(myTable);
 
     final JPanel table = ToolbarDecorator.createDecorator(myTable)

@@ -37,7 +37,6 @@ import org.apache.maven.artifact.resolver.ArtifactNotFoundException;
 import org.apache.maven.artifact.resolver.ArtifactResolutionException;
 import org.apache.maven.artifact.resolver.ArtifactResolver;
 import org.apache.maven.artifact.resolver.ResolutionListener;
-import org.apache.maven.bridge.MavenRepositorySystem;
 import org.apache.maven.cli.MavenCli;
 import org.apache.maven.execution.*;
 import org.apache.maven.model.Activation;
@@ -139,8 +138,7 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
 
   @Nullable private Properties myUserProperties;
 
-  @NotNull private final MavenRepositorySystem myRepositorySystem;
-  @NotNull private final LegacySupport myLegacySupport;
+  @NotNull private final RepositorySystem myRepositorySystem;
 
   public Maven3ServerEmbedderImpl(MavenEmbedderSettings settings) throws RemoteException {
     super(settings.getSettings());
@@ -260,8 +258,7 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
 
     myLocalRepository = createLocalRepository();
 
-    myRepositorySystem = getComponent(MavenRepositorySystem.class);
-    myLegacySupport = getComponent(LegacySupport.class);
+    myRepositorySystem = getComponent(RepositorySystem.class);
   }
 
   private static Settings buildSettings(SettingsBuilder builder,
@@ -1259,11 +1256,10 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
         Maven3ServerGlobals.getLogger().warn(e);
       }
     }
-    RepositorySystemSession session = myLegacySupport.getRepositorySession();
-    if (session != null) {
-      myRepositorySystem.injectMirror(session, result);
-      myRepositorySystem.injectProxy(session, result);
-      myRepositorySystem.injectAuthentication(session, result);
+    if (getComponent(LegacySupport.class).getRepositorySession() == null) {
+      myRepositorySystem.injectMirror(result, myMavenSettings.getMirrors());
+      myRepositorySystem.injectProxy(result, myMavenSettings.getProxies());
+      myRepositorySystem.injectAuthentication(result, myMavenSettings.getServers());
     }
     return result;
   }

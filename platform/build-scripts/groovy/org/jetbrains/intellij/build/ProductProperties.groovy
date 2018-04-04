@@ -71,9 +71,9 @@ abstract class ProductProperties {
   boolean reassignAltClickToMultipleCarets = false
 
   /**
-   * @deprecated Now file containing information about third-party libraries is bundled and shown inside IDE.
+   * Now file containing information about third-party libraries is bundled and shown inside IDE.
+   * If {@code true} html file of third-party libraries will be placed alongside with build artifacts.
    */
-  @Deprecated
   boolean generateLibrariesLicensesTable = true
 
   /**

@@ -24,7 +24,7 @@ public class TBItemPopover extends TBItem {
     myTapAndHoldTB = tapAndHoldTB;
   }
 
-  public void update(Icon icon, String text) {
+  synchronized public void update(Icon icon, String text) {
     myIcon = icon;
     myText = text;
     updateNativePeer();
@@ -55,7 +55,7 @@ public class TBItemPopover extends TBItem {
   }
 
   @Override
-  protected ID _createNativePeer() {
+  synchronized protected ID _createNativePeer() {
     return NST.createPopover(myUid, myWidthPix, myText, getRaster(myIcon), getIconW(myIcon), getIconH(myIcon), getNativePeer(myExpandTB), getNativePeer(myTapAndHoldTB));
   }
 

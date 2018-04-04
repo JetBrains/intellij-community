@@ -20,10 +20,11 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.InputValidator;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.PairFunction;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +36,6 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.EventObject;
 
@@ -85,19 +85,29 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
         final JBTable table = new JBTable(new DefaultTableModel(data, new Object[]{"Name", "Value"}) {
           @Override
           public boolean isCellEditable(int row, int column) {
-            return column == 1 && getValueAt(row, column) instanceof Color;
+            Object value = getValueAt(row, column);
+            return column == 1 && (value instanceof Color || value instanceof Number);
           }
         }) {
           @Override
           public boolean editCellAt(int row, int column, EventObject e) {
             if (isCellEditable(row, column) && e instanceof MouseEvent) {
-              final Object color = getValueAt(row, column);
-              final Color newColor = ColorPicker.showDialog(this, "Choose Color", (Color)color, true, null, true);
-              if (newColor != null) {
-                final ColorUIResource colorUIResource = new ColorUIResource(newColor);
-                final Object key = getValueAt(row, 0);
-                UIManager.put(key, colorUIResource);
-                setValueAt(colorUIResource, row, column);
+              Object key = getValueAt(row, 0);
+              Object value = getValueAt(row, column);
+
+              if (value instanceof Color) {
+                Color newColor = ColorPicker.showDialog(this, "Choose Color", (Color)value, true, null, true);
+                if (newColor != null) {
+                  final ColorUIResource colorUIResource = new ColorUIResource(newColor);
+                  UIManager.put(key, colorUIResource);
+                  setValueAt(colorUIResource, row, column);
+                }
+              } else if (value instanceof Integer) {
+                Integer newValue = editNumber(key.toString(), value.toString());
+                if (newValue != null) {
+                  UIManager.put(key, newValue);
+                  setValueAt(newValue, row, column);
+                }
               }
             }
             return false;
@@ -117,7 +127,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
             if (value instanceof Color) {
               final Color c = (Color)value;
               label.setText(String.format("[r=%d,g=%d,b=%d] hex=0x%s", c.getRed(), c.getGreen(), c.getBlue(), ColorUtil.toHex(c)));
-              label.setForeground(ColorUtil.isDark(c) ? Color.white : Color.black);
+              label.setForeground(ColorUtil.isDark(c) ? JBColor.white : JBColor.black);
               panel.setBackground(c);
               return panel;
             } else if (value instanceof Icon) {
@@ -150,10 +160,32 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
         TableUtil.ensureSelectionExists(myTable);
         return panel;
       }
+
+      private @Nullable Integer editNumber(String key, String value) {
+        String newValue = Messages.showInputDialog(getRootPane(), "Enter new value for " + key, "Number Editor", null, value,
+                                   new InputValidator() {
+                                     @Override
+                                     public boolean checkInput(String inputString) {
+                                       try {
+                                         Integer.parseInt(inputString);
+                                         return true;
+                                       } catch (NumberFormatException nfe){
+                                         return false;
+                                       }
+                                     }
+
+                                     @Override
+                                     public boolean canClose(String inputString) {
+                                       return checkInput(inputString);
+                                     }
+                                   });
+
+        return newValue != null ? Integer.valueOf(newValue) : null;
+      }
     }.show();
   }
 
-  private class IconWrap implements Icon {
+  private static class IconWrap implements Icon {
     private final Icon myIcon;
 
     public IconWrap(Icon icon) {

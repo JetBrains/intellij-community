@@ -7,77 +7,76 @@ import com.sun.jna.Native;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.ArrayList;
 import java.util.List;
 
 public class TBItemScrubber extends TBItem {
-  private final List<ItemData> myItems = new ArrayList<>();
   private final int myWidth;
-
-  private final NSTLibrary.ScrubberItemsSource mySource;
-  private final NSTLibrary.ScrubberItemsCount myCount;
-  private final NSTLibrary.ActionWithIndex myActions;
+  private List<ItemData> myItems;
 
   // NOTE: make scrubber with 'flexible' width when scrubWidth <= 0
   public TBItemScrubber(@NotNull String uid, int scrubWidth) {
     super(uid);
     myWidth = scrubWidth;
-
-    // NOTE: don't mix JNA-interfaces in one class (causes broken JNA mapping)
-    // JNA docs says:
-    // Any derived interfaces must define a single public method (which may not be named "hashCode", "equals", or "toString"), or one public method named "callback".
-    mySource = (int index, NSTLibrary.ScrubberItemData.ByRef out) -> { return requestScrubberItem(index, out); };
-    myCount = () -> { return myItems.size(); };
-    myActions = (int index) -> { executeAt(index); };
   }
 
-  public void addItem(Icon icon, String text, NSTLibrary.Action action) {
-    myItems.add(new ItemData(icon, text, action));
+  synchronized public void setItems(List<ItemData> items) {
+    myItems = items;
+    updateNativePeer();
   }
 
   @Override
   protected void _updateNativePeer() {
-    // TODO: implement
+    final NSTLibrary.ScrubberItemData[] vals = makeItemsArray();
+    NST.updateScrubber(myNativePeer, myWidth, vals, vals != null ? vals.length : 0);
+    releaseItemsMem();
   }
 
   @Override
-  protected ID _createNativePeer() {
-    return NST.createScrubber(myUid, myWidth, mySource, myCount, myActions);
+  synchronized protected ID _createNativePeer() {
+    final NSTLibrary.ScrubberItemData[] vals = makeItemsArray();
+    final ID result = NST.createScrubber(myUid, myWidth, vals, vals != null ? vals.length : 0);
+    releaseItemsMem();
+    return result;
   }
 
-  public void executeAt(int index) {
-    final ItemData id = getItemData(index);
-    final NSTLibrary.Action act = (id != null ? id.myAction : null);
-    if (act != null)
-      act.execute();
+  private NSTLibrary.ScrubberItemData[] makeItemsArray() {
+    if (myItems == null)
+      return null;
+
+    final NSTLibrary.ScrubberItemData scitem = new NSTLibrary.ScrubberItemData();
+    // Structure.toArray allocates a contiguous block of memory internally (each array item is inside this block)
+    // note that for large arrays, this can be extremely slow
+    final NSTLibrary.ScrubberItemData[] vals = (NSTLibrary.ScrubberItemData[])scitem.toArray(myItems.size());
+    int c = 0;
+    for (ItemData id : myItems)
+      id.fill(vals[c++]);
+
+    return vals;
   }
 
-  public int requestScrubberItem(int index, @NotNull NSTLibrary.ScrubberItemData.ByRef out) {
-    final ItemData id = getItemData(index);
-    if (id == null)
-      return 1;
+  private void releaseItemsMem() {
+    if (myItems == null)
+      return;
 
-    id.fill(out);
-    return 0;
+    for (ItemData id: myItems)
+      id.releaseMem();
   }
 
-  private ItemData getItemData(int index) { return index >= myItems.size() ? null : myItems.get(index); }
-
-  private static class ItemData {
+  static class ItemData {
     final Icon myIcon;
     final String myText;
     final NSTLibrary.Action myAction;
 
-    private Memory myIconMem; // NOTE: must hold the memory to prevent dealloc until native caller of 'fill' finised his job
-    private Memory myTextMem; // TODO: make cleanup-callback (from native to java) or pass data from java to native (JNA will release temp objects after C-call finished)
+    private Memory myIconMem; // NOTE: must hold the memory to prevent dealloc until native caller of 'fill' finished his job
+    private Memory myTextMem;
 
-    public ItemData(Icon icon, String text, NSTLibrary.Action action) {
+    ItemData(Icon icon, String text, NSTLibrary.Action action) {
       this.myIcon = icon;
       this.myText = text;
       this.myAction = action;
     }
 
-    void fill(@NotNull NSTLibrary.ScrubberItemData.ByRef out) {
+    void fill(@NotNull NSTLibrary.ScrubberItemData out) {
       if (myText != null) {
         final byte[] data = Native.toByteArray(myText, "UTF8");
         myTextMem = new Memory(data.length + 1);
@@ -102,6 +101,12 @@ public class TBItemScrubber extends TBItem {
       }
 
       out.raster4ByteRGBA = myIconMem;
+      out.action = myAction;
+    }
+
+    void releaseMem() {
+      myIconMem = null;
+      myTextMem = null;
     }
   }
 }

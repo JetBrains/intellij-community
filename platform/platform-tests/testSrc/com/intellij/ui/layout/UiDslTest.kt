@@ -21,7 +21,7 @@ import kotlin.properties.Delegates
 /**
  * Set `test.update.snapshots=true` to automatically update snapshots if need.
  *
- * Checkout git@github.com:develar/intellij-ui-dsl-test-snapshots.git (or create own repo) to some local dir and set env LAYOUT_IMAGE_REPO
+ * Checkout git@github.com:develar/intellij-ui-dsl-test-snapshots.git (or create own repo) to some local dir and set env IMAGE_SNAPSHOT_REPO
  * to use image snapshots.
  */
 @RunWith(Parameterized::class)

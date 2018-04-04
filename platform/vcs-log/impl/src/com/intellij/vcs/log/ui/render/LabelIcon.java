@@ -17,6 +17,8 @@ package com.intellij.vcs.log.ui.render;
 
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.ImageUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,19 +34,28 @@ public class LabelIcon implements Icon {
   private final int mySize;
   @NotNull private final Color[] myColors;
   @NotNull private final Color myBgColor;
-  @NotNull private final BufferedImage myImage;
+  @NotNull private BufferedImage myImage;
 
-  public LabelIcon(int size, @NotNull Color bgColor, @NotNull Color... colors) {
+  public LabelIcon(@NotNull JComponent component, int size, @NotNull Color bgColor, @NotNull Color... colors) {
     mySize = size;
     myBgColor = bgColor;
     myColors = colors;
+    myImage = createImage(component, null);
+  }
 
-    myImage = UIUtil.createImage(getIconWidth(), getIconHeight(), BufferedImage.TYPE_INT_ARGB);
-    paintIcon(myImage.createGraphics());
+  private BufferedImage createImage(Component c, Graphics2D g) {
+    BufferedImage image = c != null ?
+                          UIUtil.createImage(c.getGraphicsConfiguration(), getIconWidth(), getIconHeight(), BufferedImage.TYPE_INT_ARGB) :
+                          UIUtil.createImage(g, getIconWidth(), getIconHeight(), BufferedImage.TYPE_INT_ARGB);
+    paintIcon(image.createGraphics());
+    return image;
   }
 
   @Override
   public void paintIcon(Component c, Graphics g, int x, int y) {
+    if (ImageUtil.getImageScale(myImage) != JBUI.sysScale((Graphics2D)g)) {
+      myImage = createImage(null, (Graphics2D)g);
+    }
     UIUtil.drawImage(g, myImage, x, y, null);
   }
 

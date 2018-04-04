@@ -18,7 +18,7 @@ package org.jetbrains.idea.devkit.testAssistant;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
-@TestDataPath("$CONTENT_ROOT/testData/completionTestDataPath")
+@TestDataPath("$CONTENT_ROOT/testData/completeTestDataPath")
 public class TestDataPathCompletionTest extends TestDataPathTestCase {
   public void testProjectRoot() {
     doTest();

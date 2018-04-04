@@ -219,7 +219,7 @@ public class FindInProjectUtil {
   }
 
   /**
-   * @deprecated to remove in IDEA 16
+   * @deprecated Use {@link #findUsages(FindModel, Project, Processor, FindUsagesProcessPresentation)} instead. To remove in IDEA 16
    */
   public static void findUsages(@NotNull FindModel findModel,
                                 @Nullable final PsiDirectory psiDirectory,

@@ -269,7 +269,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private DfaValue handleFlush(DfaVariableValue flushed, DfaValue value) {
-    if (value instanceof DfaVariableValue && (value == flushed || flushed.getAllQualifiedBy().contains(value))) {
+    if (value instanceof DfaVariableValue && (value == flushed || flushed.getDependentVariables().contains(value))) {
       Nullness nullability = isNotNull(value) ? Nullness.NOT_NULL :
                              isUnknownState(value) ? Nullness.UNKNOWN : ((DfaVariableValue)value).getInherentNullability();
       return myFactory.createTypeValue(((DfaVariableValue)value).getVariableType(), nullability);
@@ -1268,12 +1268,12 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     doFlush(variable, false);
     flushDependencies(variable);
     myUnknownVariables.remove(variable);
-    myUnknownVariables.removeAll(variable.getAllQualifiedBy());
+    myUnknownVariables.removeAll(variable.getDependentVariables());
     myCachedHash = null;
   }
 
   void flushDependencies(@NotNull DfaVariableValue variable) {
-    for (DfaVariableValue dependent : variable.getAllQualifiedBy()) {
+    for (DfaVariableValue dependent : variable.getDependentVariables()) {
       doFlush(dependent, false);
     }
   }
@@ -1283,7 +1283,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     DfaVariableValue qualifier = variable.getQualifier();
     if (psiVariable instanceof PsiField && qualifier != null) {
       // Flush method results on field write
-      qualifier.getAllQualifiedBy().stream().filter(DfaVariableValue::containsCalls)
+      qualifier.getDependentVariables().stream().filter(DfaVariableValue::containsCalls)
                .forEach(val -> doFlush(val, shouldMarkUnknown(val)));
     }
   }

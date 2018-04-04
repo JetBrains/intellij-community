@@ -141,12 +141,7 @@ public class AnActionEvent implements PlaceProvider<String> {
   @NonNls
   public static String injectedId(String dataId) {
     synchronized(ourInjectedIds) {
-      String injected = ourInjectedIds.get(dataId);
-      if (injected == null) {
-        injected = ourInjectedPrefix + dataId;
-        ourInjectedIds.put(dataId, injected);
-      }
-      return injected;
+      return ourInjectedIds.computeIfAbsent(dataId, i -> ourInjectedPrefix + i);
     }
   }
 
@@ -218,7 +213,7 @@ public class AnActionEvent implements PlaceProvider<String> {
    * or updated.
    *
    * @return the place identifier
-   * @see ActionPlaces
+   * @see com.intellij.openapi.actionSystem.ActionPlaces
    */
   @Override
   @NotNull

@@ -9,6 +9,7 @@ import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.memory.component.InstancesTracker;
 import com.intellij.debugger.memory.component.MemoryViewDebugProcessData;
 import com.intellij.debugger.memory.event.InstancesTrackerListener;
@@ -86,7 +87,7 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
 
   public void obsolete() {
     if (myNewObjects != null) {
-      myNewObjects.forEach(ObjectReference::enableCollection);
+      myNewObjects.forEach(DebuggerUtilsEx::enableCollection);
     }
 
     myNewObjects = null;
@@ -239,7 +240,7 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
           final MemoryViewDebugProcessData data = suspendContext.getDebugProcess().getUserData(MemoryViewDebugProcessData.KEY);
           ObjectReference thisRef = getThisObject(suspendContext, event);
           if (thisRef != null && thisRef.referenceType().name().equals(myClassName) && data != null) {
-            thisRef.disableCollection();
+            DebuggerUtilsEx.disableCollection(thisRef);
             myTrackedObjects.add(thisRef);
             data.getTrackedStacks().addStack(thisRef, StackFrameItem.createFrames(suspendContext, false));
           }

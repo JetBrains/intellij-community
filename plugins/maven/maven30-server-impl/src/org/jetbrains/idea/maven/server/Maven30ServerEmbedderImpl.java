@@ -1103,9 +1103,11 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
         Maven3ServerGlobals.getLogger().warn(e);
       }
     }
-    myRepositorySystem.injectMirror(result, myMavenSettings.getMirrors());
-    myRepositorySystem.injectProxy(result, myMavenSettings.getProxies());
-    myRepositorySystem.injectAuthentication(result, myMavenSettings.getServers());
+    if (getComponent(LegacySupport.class).getRepositorySession() == null) {
+      myRepositorySystem.injectMirror(result, myMavenSettings.getMirrors());
+      myRepositorySystem.injectProxy(result, myMavenSettings.getProxies());
+      myRepositorySystem.injectAuthentication(result, myMavenSettings.getServers());
+    }
     return result;
   }
 

@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.ui.*;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.paint.LinePainter2D;
+import com.intellij.ui.paint.PaintUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -1991,6 +1992,26 @@ public class UIUtil {
     }
     //noinspection UndesirableClassUsage
     return new BufferedImage(width, height, type);
+  }
+
+  /**
+   * Creates a HiDPI-aware BufferedImage in the graphics config scale.
+   *
+   * @param gc the graphics config
+   * @param width the width in user coordinate space
+   * @param height the height in user coordinate space
+   * @param type the type of the image
+   * @param rm the rounding mode to apply to width/height (for a HiDPI-aware image, the rounding is applied in the device space)
+   *
+   * @return a HiDPI-aware BufferedImage in the graphics scale
+   */
+  @NotNull
+  public static BufferedImage createImage(GraphicsConfiguration gc, double width, double height, int type, PaintUtil.RoundingMode rm) {
+    if (isJreHiDPI(gc)) {
+      return RetinaImage.create(gc, width, height, type, rm);
+    }
+    //noinspection UndesirableClassUsage
+    return new BufferedImage(rm.round(width), rm.round(height), type);
   }
 
   /**

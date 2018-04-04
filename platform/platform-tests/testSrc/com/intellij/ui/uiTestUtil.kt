@@ -8,10 +8,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.ui.layout.*
-import com.intellij.util.io.exists
-import com.intellij.util.io.outputStream
-import com.intellij.util.io.sanitizeFileName
-import com.intellij.util.io.write
+import com.intellij.util.io.*
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.UIUtil
 import io.netty.util.internal.SystemPropertyUtil
@@ -136,33 +133,42 @@ fun validateBounds(component: Container, snapshotDir: Path, snapshotName: String
       .replace(" !!java.awt.Rectangle", "")
   }
 
-  if (!snapshotFile.exists() || isUpdateSnapshots) {
+  if (!snapshotFile.exists()) {
+    System.out.println("Write a new bounds snapshot ${snapshotFile.fileName}")
     snapshotFile.write(actualSerializedLayout)
+    return
+  }
+
+  try {
+    assertThat(actualSerializedLayout).isEqualTo(snapshotFile)
+  }
+  catch (e: AssertionError) {
     if (isUpdateSnapshots) {
       System.out.println("UPDATED snapshot ${snapshotFile.fileName}")
+      snapshotFile.write(actualSerializedLayout)
     }
-  }
-  else {
-    assertThat(actualSerializedLayout).isEqualTo(snapshotFile)
+    else {
+      throw e
+    }
   }
 }
 
-private val imageDirDefault by lazy { System.getenv("LAYOUT_IMAGE_REPO")?.let { Paths.get(it) } }
+private val imageDirDefault by lazy { (System.getenv("IMAGE_SNAPSHOT_REPO") ?: System.getenv("LAYOUT_IMAGE_REPO"))?.let { Paths.get(it) } }
 
 fun validateUsingImage(component: Component, snapshotRelativePath: String, isUpdateSnapshots: Boolean = isUpdateSnapshotsGlobal, imageDir: Path? = imageDirDefault) {
   if (imageDir == null) {
-    System.out.println("Image validation is not used, set env LAYOUT_IMAGE_REPO to path to dir if need")
+    System.out.println("Image validation is not used, set env IMAGE_SNAPSHOT_REPO to path to dir if need")
     return
   }
 
   val imagePath = imageDir.resolve("$snapshotRelativePath.png")
   if (!imagePath.exists()) {
-    System.out.println("Write a new snapshot image ${imagePath.fileName}")
+    System.out.println("Write a new image snapshot ${imagePath.fileName}")
     component.writeAsImageToFile(imagePath)
     return
   }
 
-  val oldImage = ImageIO.read(imagePath.toFile())
+  val oldImage = imagePath.inputStream().use { ImageIO.read(ImageIO.createImageInputStream(it)) }
   @Suppress("UnnecessaryVariable")
   val snapshotComponent = component
   val newImage = componentToImage(snapshotComponent)

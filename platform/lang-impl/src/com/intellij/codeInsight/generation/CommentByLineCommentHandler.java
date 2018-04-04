@@ -460,8 +460,8 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
           int offset = lineStart;
           final StringBuilder buffer = new StringBuilder();
           while (true) {
-            IndentData indent = IndentData.createFrom(buffer.toString(), 0, buffer.length(), indentOptions.TAB_SIZE);
-            if (indent.getIndentSpaces() >= minIndent.getIndentSpaces()) break;
+            IndentData indent = IndentData.createFrom(buffer, 0, buffer.length(), indentOptions.TAB_SIZE);
+            if (indent.getTotalSpaces() >= minIndent.getTotalSpaces()) break;
             char c = chars.charAt(offset);
             if (c != ' ' && c != '\t') {
               String newSpace = minIndent.createIndentInfo().generateNewWhiteSpace(indentOptions);

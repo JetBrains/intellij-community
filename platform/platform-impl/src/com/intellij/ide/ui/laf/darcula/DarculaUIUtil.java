@@ -390,11 +390,8 @@ public class DarculaUIUtil {
     return JBUI.scale(5.0f);
   }
 
-  // TODO: remove after settling the arc radius. DO NOT rely on or use it.
-  protected static float BUTTON_ARC = 3.0f;
-
   public static float buttonArc() {
-    return JBUI.scale(BUTTON_ARC);
+    return JBUI.scale(JBUI.getInt("Button.arc", 0));
   }
 
   public static Color getOutlineColor(boolean enabled) {

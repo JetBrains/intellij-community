@@ -141,6 +141,7 @@ class UndoRedoStacksHolder {
       LOG.debug("Adding to " + getStacksDescription() + ": " + group.dumpState());
     }
     for (LinkedList<UndoableGroup> each : getAffectedStacks(group)) {
+      if (myUndo && !group.isTemporary()) convertTemporaryActionsToPermanent(each);
       doAddToStack(each, group, each == myGlobalStack ? UndoManagerImpl.getGlobalUndoLimit() : UndoManagerImpl.getDocumentUndoLimit());
     }
   }
@@ -178,16 +179,14 @@ class UndoRedoStacksHolder {
     cleanWeaklyTrackedEmptyStacks(myNonlocalVirtualFilesWithStacks);
   }
 
-  void convertTemporaryActionsToPermanent(boolean global, @NotNull Set<DocumentReference> affectedRefs) {
-    for (LinkedList<UndoableGroup> stack : getAffectedStacks(global, affectedRefs)) {
-      for (int i = stack.size() - 1; i >= 0; i--) {
-        UndoableGroup group = stack.get(i);
-        if (!group.isTemporary()) break;
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Converting to permanent: " + group);
-        }
-        group.makePermanent();
+  private static void convertTemporaryActionsToPermanent(LinkedList<UndoableGroup> each) {
+    for (int i = each.size() - 1; i >= 0; i--) {
+      UndoableGroup group1 = each.get(i);
+      if (!group1.isTemporary()) break;
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Converting to permanent: " + group1);
       }
+      group1.makePermanent();
     }
   }
 

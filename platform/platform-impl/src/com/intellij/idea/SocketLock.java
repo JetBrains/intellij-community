@@ -15,7 +15,6 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.NotNullProducer;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import io.netty.buffer.ByteBuf;
@@ -145,9 +144,8 @@ public final class SocketLock {
 
       myToken = UUID.randomUUID().toString();
       String[] lockedPaths = {myConfigPath, mySystemPath};
-      int workerCount = PlatformUtils.isIdeaCommunity() || PlatformUtils.isDataGrip() || PlatformUtils.isCidr() ? 1 : 2;
       NotNullProducer<ChannelHandler> handler = () -> new MyChannelInboundHandler(lockedPaths, myActivateListener, myToken);
-      myServer = BuiltInServer.startNioOrOio(workerCount, 6942, 50, false, handler);
+      myServer = BuiltInServer.startNioOrOio(2, 6942, 50, false, handler);
 
       byte[] portBytes = Integer.toString(myServer.getPort()).getBytes(CharsetToolkit.UTF8_CHARSET);
       FileUtil.writeToFile(portMarkerC, portBytes);

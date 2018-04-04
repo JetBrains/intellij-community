@@ -67,27 +67,43 @@ public class IndentData {
   }
 
   public static IndentData createFrom(@NotNull CharSequence chars, int startOffset, int endOffset, int tabSize) {
-    int count = 0;
+    assert tabSize > 0 : "Invalid tab size: " + tabSize;
+    int indent = 0;
+    int alignment = 0;
+    boolean hasTabs = false;
+    boolean isInAlignmentArea = false;
     for (int i = startOffset; i < Math.min(chars.length(), endOffset); i ++) {
       char c = chars.charAt(i);
       switch (c) {
         case ' ':
-          count ++;
+          if (hasTabs) {
+            isInAlignmentArea = true;
+            alignment++;
+          }
+          else {
+            indent++;
+          }
           break;
         case '\t':
-          count += tabSize;
+          if (isInAlignmentArea) {
+            alignment = (alignment / tabSize + 1) * tabSize;
+          }
+          else {
+            hasTabs = true;
+            indent += tabSize;
+          }
           break;
         default:
           throw new InvalidDataException("Unexpected indent character: '" + c + "'");
       }
     }
-    return new IndentData(count);
+    return new IndentData(indent, alignment);
   }
 
   @Nullable
   public static IndentData min(@Nullable IndentData first, @Nullable IndentData second) {
     if (first == null) return second;
     if (second == null) return first;
-    return first.getIndentSpaces() < second.getIndentSpaces() ? first : second;
+    return first.getTotalSpaces() < second.getTotalSpaces() ? first : second;
   }
 }

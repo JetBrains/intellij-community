@@ -150,8 +150,8 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     if (!(value instanceof DfaVariableValue)) return;
     DfaVariableValue var = (DfaVariableValue)value;
     state.dropFact(var, DfaFactType.LOCALITY);
-    for (DfaVariableValue v : new ArrayList<>(var.getAllQualifiedBy())) {
-      dropLocality(v, state);
+    for (DfaVariableValue v : new ArrayList<>(var.getDependentVariables())) {
+      state.dropFact(v, DfaFactType.LOCALITY);
     }
   }
 

@@ -19,13 +19,10 @@ public interface NSTLibrary extends Library {
   interface Action extends Callback {
     void execute();
   }
-  interface ActionWithIndex extends Callback {
-    void executeAt(int index);
-  }
 
   class ScrubberItemData extends Structure {
     @Override
-    protected List<String> getFieldOrder() { return Arrays.asList("text", "raster4ByteRGBA", "rasterW", "rasterH"); }
+    protected List<String> getFieldOrder() { return Arrays.asList("text", "raster4ByteRGBA", "rasterW", "rasterH", "action"); }
 
     public static class ByRef extends ScrubberItemData implements Structure.ByReference {
       public ByRef() {}
@@ -35,26 +32,22 @@ public interface NSTLibrary extends Library {
     public Pointer raster4ByteRGBA;
     public int rasterW;
     public int rasterH;
+    public Action action;
   }
 
   interface ItemCreator extends Callback {
     ID createItem(String uid);
-  }
-  interface ScrubberItemsSource extends Callback {
-    int requestScrubberItem(int index, ScrubberItemData.ByRef out);
-  }
-  interface ScrubberItemsCount extends Callback {
-    int getScrubberItemsCount();
   }
 
   // all creators are called from AppKit (when TB becomes visible and asks delegate to create objects) => autorelease objects are owned by default NSAutoReleasePool (of AppKit-thread)
   // creator returns non-autorelease obj to be owned by java-wrapper
   ID createButton(String uid, int buttWidth, String text, byte[] raster4ByteRGBA, int w, int h, Action action);
   ID createPopover(String uid, int itemWidth, String text, byte[] raster4ByteRGBA, int w, int h, ID tbObjExpand, ID tbObjTapAndHold);
-  ID createScrubber(String uid, int itemWidth, ScrubberItemsSource source, ScrubberItemsCount count, ActionWithIndex actions);
+  ID createScrubber(String uid, int itemWidth, ScrubberItemData[] items, int count);
 
   // all updaters are called from EDT (when update UI)
-  // must be enclosed with NSAutoReleasePool
+  // C-implementation creates NSAutoReleasePool internally
   void updateButton(ID buttonObj, int buttWidth, String text, byte[] raster4ByteRGBA, int w, int h, Action action);
   void updatePopover(ID popoverObj, int itemWidth, String text, byte[] raster4ByteRGBA, int w, int h, ID tbObjExpand, ID tbObjTapAndHold);
+  void updateScrubber(ID scrubObj, int itemWidth, ScrubberItemData[] items, int count);
 }

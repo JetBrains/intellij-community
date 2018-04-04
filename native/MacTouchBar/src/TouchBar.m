@@ -39,7 +39,8 @@
 //
 
 void selectItemsToShow(id touchBar, const char** ppIds, int count) {
-    NSMutableArray<NSTouchBarItemIdentifier> * all = [[NSMutableArray alloc] initWithCapacity:count];
+    NSAutoreleasePool * edtPool = [[NSAutoreleasePool alloc] init];
+    NSMutableArray<NSTouchBarItemIdentifier> * all = [[[NSMutableArray alloc] initWithCapacity:count] autorelease];
     for (int c = 0; c < count; ++c) {
         const char * pId = ppIds[c];
         if (!pId)
@@ -57,12 +58,17 @@ void selectItemsToShow(id touchBar, const char** ppIds, int count) {
     }
 
     TouchBar * tb = (TouchBar *)touchBar; // TODO: check types
-    [tb.touchBar setDefaultItemIdentifiers:all];
-    [all release];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [tb.touchBar setDefaultItemIdentifiers:all];
+    });
+    [edtPool release];
 }
 
 id createTouchBar(const char * name, createItem jcreator) {
-    return [[TouchBar alloc] init:getString(name) jcreator:jcreator]; // creates non-autorelease obj to be owned by java-wrapper
+    NSAutoreleasePool * edtPool = [[NSAutoreleasePool alloc] init];
+    TouchBar * result = [[TouchBar alloc] init:getString(name) jcreator:jcreator]; // creates non-autorelease obj to be owned by java-wrapper
+    [edtPool release];
+    return result;
 }
 
 void releaseTouchBar(id tbobj) {
@@ -70,5 +76,7 @@ void releaseTouchBar(id tbobj) {
 }
 
 void setTouchBar(id tb) {
-    [[NSApplication sharedApplication] setTouchBar:((TouchBar *)tb).touchBar];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [[NSApplication sharedApplication] setTouchBar:((TouchBar *) tb).touchBar];
+    });
 }

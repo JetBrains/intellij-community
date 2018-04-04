@@ -670,10 +670,19 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     if (!(element instanceof PsiTypeElement)) {
       return element;
     }
-    final PsiTypeElement typeElement = (PsiTypeElement)element;
+    PsiTypeElement typeElement = (PsiTypeElement)element;
     if (typeElement.getType() instanceof PsiDisjunctionType) {
       // getInnermostComponentReferenceElement() doesn't make sense for disjunction type
       return typeElement;
+    }
+    if (typeElement.isInferredType()) {
+      // replace inferred type with explicit type if possible
+      final PsiType type = typeElement.getType();
+      if (type == PsiType.NULL) {
+        return typeElement;
+      }
+      final String canonicalText = type.getCanonicalText();
+      typeElement = JavaPsiFacade.getElementFactory(typeElement.getProject()).createTypeElementFromText(canonicalText, typeElement);
     }
     final PsiJavaCodeReferenceElement referenceElement = typeElement.getInnermostComponentReferenceElement();
     return (referenceElement != null) ? referenceElement : getInnermostComponentTypeElement(typeElement);
@@ -733,7 +742,9 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
   private boolean matchType(final PsiElement patternType, final PsiElement matchedType) {
     PsiElement patternElement = getInnermostComponent(patternType);
-    PsiElement matchedElement = getInnermostComponent(matchedType);
+    PsiElement matchedElement = patternElement instanceof PsiTypeElement && ((PsiTypeElement)patternElement).isInferredType()
+                                ? matchedType
+                                : getInnermostComponent(matchedType);
 
     PsiElement[] typeParameters = null;
     if (matchedElement instanceof PsiJavaCodeReferenceElement) {
