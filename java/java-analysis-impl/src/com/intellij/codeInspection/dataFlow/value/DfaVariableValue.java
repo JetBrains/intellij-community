@@ -162,8 +162,11 @@ public class DfaVariableValue extends DfaValue {
     return myNegatedValue = myFactory.getVarFactory().createVariableValue(mySource, myVarType, !myIsNegated, myQualifier);
   }
 
+  /**
+   * @return list of all variables created within the same factory which are directly or indirectly qualified by this variable.
+   */
   @NotNull
-  public List<DfaVariableValue> getAllQualifiedBy() {
+  public List<DfaVariableValue> getDependentVariables() {
     return myDependents;
   }
 

@@ -157,7 +157,7 @@ public class LiveVariablesAnalyzer {
       if (written != null) {
         liveVars = (BitSet)liveVars.clone();
         liveVars.clear(written.getID());
-        for (DfaVariableValue var : written.getAllQualifiedBy()) {
+        for (DfaVariableValue var : written.getDependentVariables()) {
           liveVars.clear(var.getID());
         }
       } else {
