@@ -10,7 +10,8 @@ _PT = Tuple[str, int, str, Optional[str]]
 def print_tb(tb: Optional[TracebackType], limit: Optional[int] = ...,
              file: Optional[IO[str]] = ...) -> None: ...
 if sys.version_info >= (3,):
-    def print_exception(etype: Type[BaseException], value: BaseException,
+    def print_exception(etype: Optional[Type[BaseException]],
+                        value: Optional[BaseException],
                         tb: Optional[TracebackType], limit: Optional[int] = ...,
                         file: Optional[IO[str]] = ...,
                         chain: bool = ...) -> None: ...

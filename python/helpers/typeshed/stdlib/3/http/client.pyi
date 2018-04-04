@@ -125,7 +125,14 @@ else:
                      exc_tb: Optional[types.TracebackType]) -> bool: ...
 
 class HTTPConnection:
-    if sys.version_info >= (3, 4):
+    if sys.version_info >= (3, 7):
+        def __init__(
+            self,
+            host: str, port: Optional[int] = ...,
+            timeout: int = ...,
+            source_address: Optional[Tuple[str, int]] = ..., blocksize: int = ...
+        ) -> None: ...
+    elif sys.version_info >= (3, 4):
         def __init__(
             self,
             host: str, port: Optional[int] = ...,

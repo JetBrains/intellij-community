@@ -75,8 +75,8 @@ class ArgumentParser:
                      required: bool = ...,
                      help: _Text = ...,
                      metavar: Union[_Text, Tuple[_Text, ...]] = ...,
-                     dest: _Text = ...,
-                     version: _Text = ...) -> None: ...  # weirdly documented
+                     dest: Optional[_Text] = ...,
+                     version: _Text = ...) -> Action: ...
     def parse_args(self, args: Optional[Sequence[_Text]] = ...,
                    namespace: Optional[Namespace] = ...) -> Namespace: ...
     def add_subparsers(self, title: _Text = ...,
@@ -120,11 +120,12 @@ class Action:
     nargs: Optional[Union[int, _Text]]
     const: Any
     default: Any
-    type: Optional[Union[Callable[[str], Any], FileType]]
+    type: Union[Callable[[str], Any], FileType, None]
     choices: Optional[Iterable[Any]]
     required: bool
     help: Optional[_Text]
-    metavar: Optional[Union[_Text, Tuple[_Text, ...]]]
+    metavar: Union[_Text, Tuple[_Text, ...]]
+
     def __init__(self,
                  option_strings: Sequence[_Text],
                  dest: _Text = ...,
@@ -171,8 +172,8 @@ class _ArgumentGroup:
                      required: bool = ...,
                      help: _Text = ...,
                      metavar: Union[_Text, Tuple[_Text, ...]] = ...,
-                     dest: _Text = ...,
-                     version: _Text = ...) -> None: ...
+                     dest: Optional[_Text] = ...,
+                     version: _Text = ...) -> Action: ...
     def add_mutually_exclusive_group(self, required: bool = ...) -> _MutuallyExclusiveGroup: ...
 
 class _MutuallyExclusiveGroup(_ArgumentGroup): ...

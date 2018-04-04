@@ -187,7 +187,8 @@ class UserString(Sequence[str]):
 # methods did not exist).
 # But in practice it's not worth losing sleep over.
 class deque(MutableSequence[_T], Generic[_T]):
-    maxlen = ...  # type: Optional[int] # TODO readonly
+    @property
+    def maxlen(self) -> Optional[int]: ...
     def __init__(self, iterable: Iterable[_T] = ...,
                  maxlen: int = ...) -> None: ...
     def append(self, x: _T) -> None: ...
