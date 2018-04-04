@@ -6,6 +6,7 @@ import com.intellij.ide.ui.laf.darcula.DarculaLaf
 import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.ui.layout.*
 import com.intellij.util.io.*
@@ -67,8 +68,9 @@ class FrameRule : ExternalResource() {
 
   // must be called in EDT
   fun show(component: Component, minSize: Dimension? = JBDimension(480, 320)) {
-    wasFrameCreated = true
     frame = createTestFrame(minSize)
+    wasFrameCreated = true
+
     frame.contentPane.add(component, BorderLayout.CENTER)
 
     frame.pack()
@@ -155,13 +157,20 @@ fun validateBounds(component: Container, snapshotDir: Path, snapshotName: String
 
 private val imageDirDefault by lazy { (System.getenv("IMAGE_SNAPSHOT_REPO") ?: System.getenv("LAYOUT_IMAGE_REPO"))?.let { Paths.get(it) } }
 
-fun validateUsingImage(component: Component, snapshotRelativePath: String, isUpdateSnapshots: Boolean = isUpdateSnapshotsGlobal, imageDir: Path? = imageDirDefault) {
+fun validateUsingImage(component: Component, snapshotRelativePath: String, isUpdateSnapshots: Boolean = isUpdateSnapshotsGlobal, _imageDir: Path? = imageDirDefault) {
+  var imageDir = _imageDir
   if (imageDir == null) {
-    System.out.println("Image validation is not used, set env IMAGE_SNAPSHOT_REPO to path to dir if need")
-    return
+    val defaultDir = Paths.get(PlatformTestUtil.getPlatformTestDataPath(), "ui", "image-snapshots")
+    if (defaultDir.exists()) {
+      imageDir = defaultDir
+    }
+    else {
+      System.out.println("Image validation is not used, clone repo to community/platform/platform-tests/testData/ui/image-snapshots or set env IMAGE_SNAPSHOT_REPO to path to dir if need")
+      return
+    }
   }
 
-  val imagePath = imageDir.resolve("$snapshotRelativePath.png")
+  val imagePath = imageDir!!.resolve("$snapshotRelativePath.png")
   if (!imagePath.exists()) {
     System.out.println("Write a new image snapshot ${imagePath.fileName}")
     component.writeAsImageToFile(imagePath)
@@ -231,7 +240,8 @@ fun componentToImage(component: Component, type: Int = BufferedImage.TYPE_BYTE_G
   return invokeAndWaitIfNeed {
     // we don't need retina image
     val image = BufferedImage(component.width, component.height, type)
-    val g = image.graphics
+    val g = image.graphics as Graphics2D
+    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF)
     component.paint(g)
     g.dispose()
     image

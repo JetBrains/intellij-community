@@ -13,3 +13,4 @@ build/dependencies/build
 .idea/gradle_extensions.xml
 edu/dependencies/build
 edu/dependencies/.gradle
+platform/platform-tests/testData/ui/image-snapshots/

@@ -34,8 +34,8 @@ object MigLayoutTestApp {
 //      val panel = visualPaddingsPanelOnlyButton()
 //      val panel = visualPaddingsPanelOnlyComboBox()
 //      val panel = alignFieldsInTheNestedGrid()
-//      val panel = cellPanel()
-      val panel = visualPaddingsPanel()
+      val panel = cellPanel()
+//      val panel = visualPaddingsPanel()
 
       val editableCombobox = JComboBox<String>(arrayOf("one", "two"))
       editableCombobox.isEditable = true

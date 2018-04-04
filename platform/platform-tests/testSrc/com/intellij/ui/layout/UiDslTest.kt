@@ -5,7 +5,9 @@ import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.ui.*
+import com.intellij.util.ui.JBUI
 import net.miginfocom.layout.LayoutUtil
+import org.junit.After
 import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Rule
@@ -40,15 +42,17 @@ class UiDslTest {
   @JvmField
   val testName = TestName()
 
-  @Rule
-  @JvmField
-  val frameRule = FrameRule()
-
   @Before
   fun beforeMethod() {
     assumeTrue(!UsefulTestCase.IS_UNDER_TEAMCITY)
 
+    System.setProperty("idea.ui.comment.copyable", "false")
     changeLafIfNeed(lafName)
+  }
+
+  @After
+  fun afterMethod() {
+    System.clearProperty("idea.ui.comment.copyable")
   }
 
   @Test
@@ -83,11 +87,13 @@ class UiDslTest {
       LayoutUtil.setGlobalDebugMillis(1000)
 
       panel = panelCreator()
-      frameRule.show(panel)
+      val preferredSize = panel.preferredSize
+      panel.setBounds(0, 0, Math.max(preferredSize.width, JBUI.scale(480)), Math.max(preferredSize.height, 320))
+      panel.doLayout()
     }
 
     val snapshotName = testName.snapshotFileName
-    validateUsingImage(frameRule.frame, "layout${File.separatorChar}${getSnapshotRelativePath(lafName, isForImage = true)}${File.separatorChar}$snapshotName")
+    validateUsingImage(panel, "layout${File.separatorChar}${getSnapshotRelativePath(lafName, isForImage = true)}${File.separatorChar}$snapshotName")
     validateBounds(panel, Paths.get(PlatformTestUtil.getPlatformTestDataPath(), "ui", "layout", getSnapshotRelativePath(lafName, isForImage = false)), snapshotName)
   }
 }
