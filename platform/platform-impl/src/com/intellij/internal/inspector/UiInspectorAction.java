@@ -2,6 +2,10 @@
 package com.intellij.internal.inspector;
 
 import com.google.common.base.MoreObjects;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.IntentionActionDelegate;
+import com.intellij.codeInspection.QuickFix;
+import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
@@ -1436,6 +1440,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
           Component rendererComponent = list.getCellRenderer()
             .getListCellRendererComponent(list, list.getModel().getElementAt(row), row, list.getSelectionModel().isSelectedIndex(row),
                                           list.hasFocus());
+          clickInfo.addAll(findActionsFor(list.getModel().getElementAt(row)));
           clickInfo.add(new PropertyBean(RENDERER_BOUNDS, list.getUI().getCellBounds(list, row, row)));
           clickInfo.addAll(new InspectorTableModel(rendererComponent).myProperties);
           return clickInfo;
@@ -1470,6 +1475,23 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
         }
       }
       return null;
+    }
+
+    private static List<PropertyBean> findActionsFor(Object object) {
+      if (object instanceof QuickFixWrapper) {
+        return findActionsFor(((QuickFixWrapper)object).getFix());
+      } else if (object instanceof IntentionActionDelegate) {
+        IntentionAction delegate = ((IntentionActionDelegate)object).getDelegate();
+        if (delegate != object) {
+          return findActionsFor(delegate);
+        }
+      } else if (object instanceof IntentionAction) {
+        return Collections.singletonList(new PropertyBean("intention action", object.getClass().getName(), true));
+      } else if (object instanceof QuickFix) {
+        return Collections.singletonList(new PropertyBean("quick fix", object.getClass().getName(), true));
+      }
+
+      return Collections.emptyList();
     }
 
     private static void processContainerEvent(ContainerEvent event) {
