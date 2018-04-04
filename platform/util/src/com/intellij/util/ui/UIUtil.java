@@ -110,6 +110,17 @@ public class UIUtil {
     }
   }
 
+  // Here we setup window to be checked in IdeEventQueue and reset typeahead state when the window finally appears and gets focus
+  public static void markAsTypeAheadAware(Window window) {
+    if (window instanceof RootPaneContainer) {
+      ((RootPaneContainer)window).getRootPane().putClientProperty("TypeAheadAwareWindow", Boolean.TRUE);
+    }
+  }
+
+  public static boolean isTypeAheadAware(Window window) {
+    return (window instanceof RootPaneContainer && isClientPropertyTrue(((RootPaneContainer)window).getRootPane(), "TypeAheadAwareWindow"));
+  }
+
   private static void blockATKWrapper() {
     /*
      * The method should be called before java.awt.Toolkit.initAssistiveTechnologies()
