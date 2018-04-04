@@ -2,6 +2,7 @@
 package com.intellij.ui.layout
 
 import com.intellij.openapi.application.invokeAndWaitIfNeed
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.ui.changeLafIfNeed
@@ -40,7 +41,7 @@ class UiDslTest {
 
   @Before
   fun beforeMethod() {
-    assumeTrue(!UsefulTestCase.IS_UNDER_TEAMCITY)
+    assumeTrue(!UsefulTestCase.IS_UNDER_TEAMCITY || SystemInfoRt.isMac)
 
     System.setProperty("idea.ui.comment.copyable", "false")
     changeLafIfNeed(lafName)
