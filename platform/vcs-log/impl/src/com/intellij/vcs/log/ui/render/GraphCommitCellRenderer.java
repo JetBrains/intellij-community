@@ -27,6 +27,7 @@ import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.util.Collection;
+import java.util.Objects;
 
 public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphCommitCell> {
   private static final int MAX_GRAPH_WIDTH = 6;
@@ -143,7 +144,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     @NotNull protected GraphImage myGraphImage = new GraphImage(UIUtil.createImage(1, 1, BufferedImage.TYPE_INT_ARGB), 0);
     @NotNull private Font myFont;
     private int myHeight;
-    private GraphicsConfiguration myConfiguration;
+    private AffineTransform myAffineTransform;
 
     public MyComponent(@NotNull VcsLogData data,
                        @NotNull GraphCellPainter painter,
@@ -155,10 +156,11 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
       myGraphTable = table;
 
       myReferencePainter = new LabelPainter(myLogData, compact, showTags);
-
       myIssueLinkRenderer = new IssueLinkRenderer(myLogData.getProject(), this);
+
       myFont = RectanglePainter.getFont();
-      myConfiguration = myGraphTable.getGraphicsConfiguration();
+      GraphicsConfiguration configuration = myGraphTable.getGraphicsConfiguration();
+      myAffineTransform = configuration != null ? configuration.getDefaultTransform() : null;
       myHeight = calculateHeight();
     }
 
@@ -251,9 +253,9 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     public int getPreferredHeight() {
       Font font = RectanglePainter.getFont();
       GraphicsConfiguration configuration = myGraphTable.getGraphicsConfiguration();
-      if (myFont != font || myConfiguration != configuration) {
+      if (myFont != font || (configuration != null && !Objects.equals(myAffineTransform, configuration.getDefaultTransform()))) {
         myFont = font;
-        myConfiguration = configuration;
+        myAffineTransform = configuration != null ? configuration.getDefaultTransform() : null;
         myHeight = calculateHeight();
       }
       return myHeight;
