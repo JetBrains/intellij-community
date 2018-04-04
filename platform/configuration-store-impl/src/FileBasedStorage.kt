@@ -16,12 +16,14 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.SafeWriteRequestor.shallUseSafeStream
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ArrayUtil
 import com.intellij.util.LineSeparator
+import com.intellij.util.io.SafeFileOutputStream
+import com.intellij.util.io.createDirectories
 import com.intellij.util.io.readChars
 import com.intellij.util.io.systemIndependentPath
-import com.intellij.util.io.writeSafe
 import com.intellij.util.loadElement
 import com.intellij.util.toBufferExposingByteArray
 import org.jdom.Element
@@ -93,7 +95,8 @@ open class FileBasedStorage(file: Path,
         val file = storage.file
         LOG.debug { "Save $file" }
 
-        file.writeSafe { out ->
+        file.parent.createDirectories()
+        (if (shallUseSafeStream(this, file)) SafeFileOutputStream(file.toFile()) else Files.newOutputStream(file)).use { out ->
           JDOMUtil.write(element, out, lineSeparator.separatorString)
         }
       }
