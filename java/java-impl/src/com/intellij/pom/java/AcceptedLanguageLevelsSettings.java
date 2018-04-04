@@ -1,13 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.pom.java;
 
-
 import com.intellij.notification.*;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -35,8 +31,8 @@ import java.util.Set;
   storages = @Storage("acceptedLanguageLevels.xml")
 )
 public class AcceptedLanguageLevelsSettings implements PersistentStateComponent<AcceptedLanguageLevelsSettings>, StartupActivity {
-  private static final NotificationGroup
-    NOTIFICATION_GROUP = new NotificationGroup("Accepted language levels", NotificationDisplayType.STICKY_BALLOON, true);
+  private static final NotificationGroup NOTIFICATION_GROUP =
+    new NotificationGroup("Accepted language levels", NotificationDisplayType.STICKY_BALLOON, true);
 
   @XCollection(propertyElementName = "explicitly-accepted", elementName = "name", valueAttributeName = "")
   public List<String> acceptedNames = ContainerUtil.newArrayList();
@@ -45,7 +41,7 @@ public class AcceptedLanguageLevelsSettings implements PersistentStateComponent<
   public void runActivity(@NotNull Project project) {
     StartupManager.getInstance(project).runWhenProjectIsInitialized(() -> {
       if (!project.isDisposed()) {
-        Set<LanguageLevel> usedLevels = new HashSet<>();
+        @SuppressWarnings("SetReplaceableByEnumSet") Set<LanguageLevel> usedLevels = new HashSet<>();
         LanguageLevelProjectExtension projectExtension = LanguageLevelProjectExtension.getInstance(project);
         if (projectExtension != null) {
           usedLevels.add(projectExtension.getLanguageLevel());
@@ -65,11 +61,8 @@ public class AcceptedLanguageLevelsSettings implements PersistentStateComponent<
   }
 
   public static boolean isLanguageLevelAccepted(LanguageLevel languageLevel) {
-    if (!LanguageLevel.HIGHEST.isLessThan(languageLevel)) {
-      //officially supported language levels
-      return true;
-    }
-    return getSettings().acceptedNames.contains(languageLevel.name());
+    // language levels up to HIGHEST are officially supported
+    return LanguageLevel.HIGHEST.compareTo(languageLevel) >= 0 || getSettings().acceptedNames.contains(languageLevel.name());
   }
 
   public static void acceptLanguageLevel(LanguageLevel languageLevel) {
@@ -107,50 +100,35 @@ public class AcceptedLanguageLevelsSettings implements PersistentStateComponent<
   /**
    * Show legal dialog and set highest accepted level if dialog is rejected
    *
-   * @return null if level was rejected
+   * @return {@code null} if level was rejected
    */
   public static LanguageLevel checkAccepted(Component parent, LanguageLevel level) {
-    if (level == null || isLanguageLevelAccepted(level)) {
-      return level;
-    }
-    if (new LegalNoticeDialog(parent, level).showAndGet()) return level;
-    return null;
+    return level == null || isLanguageLevelAccepted(level) || new LegalNoticeDialog(parent, level).showAndGet() ? level : null;
   }
 
   private static Notification createNotification(LanguageLevel l, Project project) {
-    String content = LegalNoticeDialog.getLegalNotice(l);
-    content += "<br/>";
-    content += "<a href=\'accept\'>Accept</a>";
-    content += "&nbsp;&nbsp;";
-    content += "<a href=\'decline\'>Decline</a>";
-    return NOTIFICATION_GROUP.createNotification(LegalNoticeDialog.EXPERIMENTAL_FEATURE_ALERT, content, NotificationType.WARNING,
-                                                 new NotificationListener() {
-                                                   @Override
-                                                   public void hyperlinkUpdate(@NotNull Notification notification,
-                                                                               @NotNull HyperlinkEvent event) {
-                                                     if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-                                                       if ("accept".equals(event.getDescription())) {
-                                                         acceptLanguageLevel(l);
-                                                       }
-                                                       else if ("decline".equals(event.getDescription())) {
-                                                         decreaseLanguageLevel(project);
-                                                       }
-                                                       notification.expire();
-                                                     }
-                                                   }
-                                                 });
+    String content = LegalNoticeDialog.getLegalNotice(l) + "<br/><a href='accept'>Accept</a>&nbsp;&nbsp;<a href='decline'>Decline</a>";
+    return NOTIFICATION_GROUP.createNotification(
+      LegalNoticeDialog.EXPERIMENTAL_FEATURE_ALERT, content, NotificationType.WARNING, (notification, event) -> {
+        if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+          switch (event.getDescription()) {
+            case "accept": acceptLanguageLevel(l); break;
+            case "decline": decreaseLanguageLevel(project); break;
+          }
+          notification.expire();
+        }
+      });
   }
 
   private static void decreaseLanguageLevel(Project project) {
-    Messages.showErrorDialog(project, 
-                             UIUtil.toHtml("Support for experimental features was rejected.<br/>Language levels would be decreased accordingly"),
-                             LegalNoticeDialog.EXPERIMENTAL_FEATURE_ALERT);
+    String message = UIUtil.toHtml("Support for experimental features was rejected.<br/>Language levels would be decreased accordingly");
+    Messages.showErrorDialog(project, message, LegalNoticeDialog.EXPERIMENTAL_FEATURE_ALERT);
+
     WriteAction.run(() -> {
       LanguageLevel highestAcceptedLevel = getHighestAcceptedLevel();
       JavaProjectModelModificationService service = JavaProjectModelModificationService.getInstance(project);
       for (Module module : ModuleManager.getInstance(project).getModules()) {
-        LanguageLevel languageLevel =
-          LanguageLevelModuleExtensionImpl.getInstance(module).getLanguageLevel();
+        LanguageLevel languageLevel = LanguageLevelModuleExtensionImpl.getInstance(module).getLanguageLevel();
         if (languageLevel != null && !isLanguageLevelAccepted(languageLevel)) {
           LanguageLevel newLanguageLevel = highestAcceptedLevel.isAtLeast(languageLevel) ? LanguageLevel.HIGHEST : highestAcceptedLevel;
           service.changeLanguageLevel(module, newLanguageLevel);
