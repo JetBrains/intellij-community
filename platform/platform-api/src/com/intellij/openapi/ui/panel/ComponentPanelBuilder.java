@@ -9,6 +9,7 @@ import com.intellij.ui.ContextHelpLabel;
 import com.intellij.ui.TextComponent;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
@@ -230,11 +231,13 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
   }
 
   @NotNull
-  public static JBLabel createCommentComponent(@Nullable String commentText, boolean isCommentBelow) {
-    JBLabel component = new JBLabel("").setCopyable(true).setAllowAutoWrapping(true);
+  public static JLabel createCommentComponent(@Nullable String commentText, boolean isCommentBelow) {
+    // todo why our JBLabel cannot render html if render panel without frame (test only)
+    boolean isCopyable = SystemProperties.getBooleanProperty("idea.ui.comment.copyable", true);
+    JLabel component = new JBLabel("").setCopyable(isCopyable).setAllowAutoWrapping(true);
     component.setVerticalTextPosition(SwingConstants.TOP);
     component.setFocusable(false);
-    component.setForeground(Gray.x78);
+    component.setForeground(UIUtil.getContextHelpForeground());
     if (SystemInfo.isMac) {
       Font font = component.getFont();
       float size = font.getSize2D();
@@ -242,11 +245,16 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
       component.setFont(smallFont);
     }
 
-    setCommentText(component, commentText, isCommentBelow);
+    if (isCopyable) {
+      setCommentText(component, commentText, isCommentBelow);
+    }
+    else {
+      component.setText(commentText);
+    }
     return component;
   }
 
-  private static void setCommentText(@NotNull JBLabel component, @Nullable String commentText, boolean isCommentBelow) {
+  private static void setCommentText(@NotNull JLabel component, @Nullable String commentText, boolean isCommentBelow) {
     if (commentText != null) {
       if (commentText.length() > 70 && isCommentBelow) {
         int width = component.getFontMetrics(component.getFont()).stringWidth(commentText.substring(0, 70));
@@ -260,7 +268,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
 
   private class ComponentPanelImpl extends ComponentPanel {
     private final JLabel label;
-    private final JBLabel comment;
+    private final JLabel comment;
 
     private ComponentPanelImpl() {
       if ((StringUtil.isNotEmpty(myLabelText))) {
