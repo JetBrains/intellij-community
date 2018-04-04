@@ -642,4 +642,19 @@ public class PyEditingTest extends PyTestCase {
   public void testEnterInIncompleteParenthesizedGenerator() {
     doTypingTest("\nfoo");
   }
+
+  // PY-10972
+  public void testEnterInIncompleteNestedListLiteral() {
+    doTypingTest("\n'baz'");
+  }
+
+  // PY-10972
+  public void testEnterInIncompleteNestedTupleLiteral() {
+    doTypingTest("\n'baz'");
+  }
+
+  // PY-10972
+  public void testEnterInIncompleteNestedGluedStringInParentheses() {
+    doTypingTest("\n'baz'");
+  }
 }

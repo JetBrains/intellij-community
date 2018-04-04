@@ -891,7 +891,6 @@ public class PyBlock implements ASTBlock {
   @NotNull
   public ChildAttributes getChildAttributes(int newChildIndex) {
     int statementListsBelow = 0;
-    PyBlock incompleteAlignedBlock = null;
 
     if (newChildIndex > 0) {
       // always pass decision to a sane block from top level from file or definition
@@ -936,19 +935,6 @@ public class PyBlock implements ASTBlock {
         }
         lastChild = getLastNonSpaceChild(lastChild, true);
       }
-
-      if ((prevElt instanceof PySequenceExpression || prevElt instanceof PyComprehensionElement) &&
-          prevElt.getLastChild() instanceof PsiErrorElement) {
-        incompleteAlignedBlock = insertAfterBlock;
-      }
-      else if (prevElt instanceof PyParenthesizedExpression && prevElt.getLastChild() instanceof PsiErrorElement) {
-        final PyExpression contained = ((PyParenthesizedExpression)prevElt).getContainedExpression();
-        // In case of parenthesized string literal we can use both the alignment of the containing parenthesized expression
-        // and the literal itself, since it's not clear whether user is going to insert another string node or the closing parenthesis
-        if (contained instanceof PyTupleExpression || contained instanceof PyStringLiteralExpression) {
-          incompleteAlignedBlock = insertAfterBlock.getSubBlockByNode(contained.getNode());
-        }
-      }
     }
 
     // HACKETY-HACK
@@ -973,7 +959,7 @@ public class PyBlock implements ASTBlock {
 
 
     final Indent childIndent = getChildIndent(newChildIndex);
-    final Alignment childAlignment = incompleteAlignedBlock != null ? incompleteAlignedBlock.getChildAlignment() : getChildAlignment();
+    final Alignment childAlignment = getChildAlignment();
     return new ChildAttributes(childIndent, childAlignment);
   }
 
@@ -1140,7 +1126,7 @@ public class PyBlock implements ASTBlock {
       final PyArgumentList argumentList = (PyArgumentList)myNode.getPsi();
       return argumentList.getClosingParen() == null;
     }
-    if (isIncompleteCall(myNode)) {
+    if (isIncompleteCall(myNode) || isIncompleteExpressionWithBrackets(myNode.getPsi())) {
       return true;
     }
 
@@ -1154,6 +1140,14 @@ public class PyBlock implements ASTBlock {
       if (argumentList == null || argumentList.getClosingParen() == null) {
         return true;
       }
+    }
+    return false;
+  }
+
+  private static boolean isIncompleteExpressionWithBrackets(@NotNull PsiElement elem) {
+    if (elem instanceof PySequenceExpression || elem instanceof PyComprehensionElement || elem instanceof PyParenthesizedExpression) {
+      return PyTokenTypes.OPEN_BRACES.contains(elem.getFirstChild().getNode().getElementType()) &&
+             !PyTokenTypes.CLOSE_BRACES.contains(elem.getLastChild().getNode().getElementType());
     }
     return false;
   }
