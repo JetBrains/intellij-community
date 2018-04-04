@@ -173,7 +173,7 @@ public class VcsHistoryProviderBackgroundableProxy {
 
   private void reportHistory(@NotNull FilePath filePath, @Nullable VcsRevisionNumber startRevisionNumber,
                              @NotNull VcsKey vcsKey, @NotNull BackgroundableActionLock lock,
-                             @NotNull VcsAppendableHistorySessionPartner partner, boolean canUseLastRevisionCheck) {
+                             @NotNull VcsAppendableHistorySessionPartner partner, boolean canUseCache) {
     ProgressManager.getInstance().run(new Task.Backgroundable(myProject, VcsBundle.message("loading.file.history.progress"), true) {
       public void run(@NotNull ProgressIndicator indicator) {
         indicator.setText(VcsUtil.getPathForProgressPresentation(filePath.getIOFile()));
@@ -181,7 +181,7 @@ public class VcsHistoryProviderBackgroundableProxy {
         try {
           VcsAbstractHistorySession cachedSession = null;
           VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession> cacheableFactory = getCacheableFactory();
-          if (canUseLastRevisionCheck && cacheableFactory != null) {
+          if (canUseCache && cacheableFactory != null) {
             cachedSession = getSessionFromCacheWithLastRevisionCheck(filePath, vcsKey, cacheableFactory);
           }
 
