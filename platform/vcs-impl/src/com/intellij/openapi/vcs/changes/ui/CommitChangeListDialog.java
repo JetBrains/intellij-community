@@ -300,7 +300,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     myHandlers.addAll(createCheckinHandlers(project, this, myCommitContext));
 
-    setTitle(myShowVcsCommit ? TITLE : trimEllipsis(executors.get(0).getActionText()));
+    setTitle(myShowVcsCommit ? TITLE : getExecutorPresentableText(executors.get(0)));
     myCommitActionName = getCommitActionName(myAffectedVcses);
     myExecutorActions = createExecutorActions(executors);
     if (myShowVcsCommit) {
@@ -638,7 +638,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       JComponent configurationUI = SessionDialog.createConfigurationUI(session, getIncludedChanges(), getCommitMessage());
       if (configurationUI != null) {
         DialogWrapper sessionDialog =
-          new SessionDialog(commitExecutor.getActionText(), getProject(), session, getIncludedChanges(), getCommitMessage(),
+          new SessionDialog(getExecutorPresentableText(commitExecutor), getProject(), session, getIncludedChanges(), getCommitMessage(),
                             configurationUI);
         if (!sessionDialog.showAndGet()) {
           session.executionCanceled();
@@ -1085,8 +1085,13 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   @NotNull
+  static String getExecutorPresentableText(@NotNull CommitExecutor executor) {
+    return trimEllipsis(removeMnemonic(executor.getActionText()));
+  }
+
+  @NotNull
   static String trimEllipsis(@NotNull String title) {
-    return StringUtil.trimEnd(title, "...");
+    return StringUtil.trimEnd(StringUtil.trimEnd(title, "..."), "\u2026");
   }
 
   private void ensureDataIsActual(@NotNull Runnable runnable) {
