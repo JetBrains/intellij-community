@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.externalDependencies.impl;
 
 import com.intellij.externalDependencies.DependencyOnPlugin;
@@ -86,10 +72,12 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable,
   @Nullable
   @Override
   public JComponent createComponent() {
-    final JBList dependenciesList = new JBList();
-    dependenciesList.setCellRenderer(new ColoredListCellRendererWrapper<DependencyOnPlugin>() {
+    JBList<ProjectExternalDependency> dependenciesList = new JBList<>();
+    dependenciesList.setCellRenderer(new ColoredListCellRenderer<ProjectExternalDependency>() {
       @Override
-      protected void doCustomize(JList list, DependencyOnPlugin value, int index, boolean selected, boolean hasFocus) {
+      protected void customizeCellRenderer(@NotNull JList<? extends ProjectExternalDependency> list, ProjectExternalDependency dependency,
+                                           int index, boolean selected, boolean hasFocus) {
+        DependencyOnPlugin value = (DependencyOnPlugin)dependency;  //todo[nik] type arg mismatch in list/renderer/model
         if (value != null) {
           append(getPluginNameById(value.getPluginId()), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
           String minVersion = value.getMinVersion();
@@ -140,7 +128,7 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable,
         }
       })
       .createPanel();
-    
+
     String text = XmlStringUtil.wrapInHtml("Specify a list of plugins required for your project. " +
                                            ApplicationNamesInfo.getInstance().getFullProductName() + " will notify you if a required plugin is missing or needs an update. ");
     return JBUI.Panels.simplePanel(0, UIUtil.DEFAULT_VGAP).addToCenter(dependenciesPanel).addToTop(new JBLabel(text));
@@ -196,7 +184,7 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable,
     }
     Collections.sort(pluginIds, (o1, o2) -> getPluginNameById(o1).compareToIgnoreCase(getPluginNameById(o2)));
 
-    final ComboBox pluginChooser = new ComboBox(ArrayUtilRt.toStringArray(pluginIds), 250);
+    ComboBox<String> pluginChooser = new ComboBox<>(ArrayUtilRt.toStringArray(pluginIds), 250);
     pluginChooser.setRenderer(new ListCellRendererWrapper<String>() {
       @Override
       public void customize(JList list, String value, int index, boolean selected, boolean hasFocus) {
