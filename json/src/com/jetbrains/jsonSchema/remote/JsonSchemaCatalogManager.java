@@ -24,7 +24,7 @@ public class JsonSchemaCatalogManager {
   @NotNull private final ConcurrentMap<String, String> myResolvedMappings = ContainerUtil.newConcurrentMap();
   private static final String NO_CACHE = "$_$_WS_NO_CACHE_$_$";
   private static final String EMPTY = "$_$_WS_EMPTY_$_$";
-  private static final AtomicBoolean myIsEnabled = new AtomicBoolean(false);
+  private static final AtomicBoolean myIsEnabled = new AtomicBoolean(true);
 
   public JsonSchemaCatalogManager(@NotNull Project project) {
     myProject = project;
