@@ -66,6 +66,9 @@ public class AllIcons {
     public static final Icon FileStatus = IconLoader.getIcon("/actions/fileStatus.png"); // 16x16
     public static final Icon Filter_small = IconLoader.getIcon("/actions/filter_small.png"); // 16x16
     public static final Icon Find = IconLoader.getIcon("/actions/find.png"); // 16x16
+    
+    @SuppressWarnings("unused")
+    @Deprecated
     public static final Icon FindPlain = IconLoader.getIcon("/actions/findPlain.png"); // 16x16
     public static final Icon FindWhite = IconLoader.getIcon("/actions/findWhite.png"); // 16x16
     public static final Icon ForceRefresh = IconLoader.getIcon("/actions/forceRefresh.png"); // 16x16
@@ -88,6 +91,9 @@ public class AllIcons {
     public static final Icon Lightning = IconLoader.getIcon("/actions/lightning.png"); // 16x16
     public static final Icon ListChanges = IconLoader.getIcon("/actions/listChanges.png"); // 16x16
     public static final Icon Menu_cut = IconLoader.getIcon("/actions/menu-cut.png"); // 16x16
+    
+    @SuppressWarnings("unused")
+    @Deprecated
     public static final Icon Menu_find = IconLoader.getIcon("/actions/menu-find.png"); // 16x16
     
     @SuppressWarnings("unused")

@@ -40,7 +40,7 @@
     <action id="ShowIntentionActions" class="com.intellij.codeInsight.intention.actions.ShowIntentionActionsAction"/>
 
     <action id="TogglePopupHints" class="com.intellij.codeInsight.daemon.impl.TogglePopupHintsAction"/>
-    <action id="FindModal" class="com.intellij.openapi.editor.actions.FindAction" icon="AllIcons.Actions.Menu_find"/>
+    <action id="FindModal" class="com.intellij.openapi.editor.actions.FindAction" icon="AllIcons.Actions.Find"/>
 
     <action id="CodeInspection.OnEditor" class="com.intellij.codeInspection.actions.CodeInspectionOnEditorAction"/>
 

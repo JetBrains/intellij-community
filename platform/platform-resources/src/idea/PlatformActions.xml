@@ -324,7 +324,7 @@
         </group>
         <separator/>
         <group id="FindMenuGroup" popup="true">
-          <action id="Find" class="com.intellij.openapi.editor.actions.IncrementalFindAction" icon="AllIcons.Actions.Menu_find"/>
+          <action id="Find" class="com.intellij.openapi.editor.actions.IncrementalFindAction" icon="AllIcons.Actions.Find"/>
           <action id="Replace" class="com.intellij.openapi.editor.actions.ReplaceAction" icon="AllIcons.Actions.Menu_replace"/>
           <action id="FindNext" class="com.intellij.ide.actions.SearchAgainAction"/>
           <action id="FindPrevious" class="com.intellij.ide.actions.SearchBackAction"/>
