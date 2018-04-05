@@ -7,6 +7,7 @@ import com.intellij.externalDependencies.ProjectExternalDependency;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -39,6 +40,7 @@ import java.util.*;
  * @author nik
  */
 public class ExternalDependenciesConfigurable implements SearchableConfigurable, Configurable.NoScroll {
+  private static final Logger LOG = Logger.getInstance(ExternalDependenciesConfigurable.class);
   private final ExternalDependenciesManager myDependenciesManager;
   private final CollectionListModel<ProjectExternalDependency> myListModel = new CollectionListModel<>();
   private Map<String, String> myPluginNameById;
@@ -77,8 +79,8 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable,
       @Override
       protected void customizeCellRenderer(@NotNull JList<? extends ProjectExternalDependency> list, ProjectExternalDependency dependency,
                                            int index, boolean selected, boolean hasFocus) {
-        DependencyOnPlugin value = (DependencyOnPlugin)dependency;  //todo[nik] type arg mismatch in list/renderer/model
-        if (value != null) {
+        if (dependency instanceof DependencyOnPlugin) {
+          DependencyOnPlugin value = (DependencyOnPlugin)dependency;
           append(getPluginNameById(value.getPluginId()), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
           String minVersion = value.getMinVersion();
           String maxVersion = value.getMaxVersion();
@@ -102,6 +104,10 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable,
             append("at most ");
             append(maxVersion, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
           }
+        }
+        else {
+          LOG.error("Unsupported external dependency: " + dependency.getClass());
+          append(dependency.toString());
         }
       }
     });
