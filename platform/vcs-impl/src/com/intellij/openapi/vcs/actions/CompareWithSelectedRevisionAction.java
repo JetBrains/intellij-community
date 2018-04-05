@@ -25,7 +25,6 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.HistoryAsTreeProvider;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
-import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsHistoryProviderBackgroundableProxy;
 import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -50,6 +49,8 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
 import java.util.Date;
 import java.util.List;
+
+import static com.intellij.util.ObjectUtils.notNull;
 
 public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
 
@@ -120,11 +121,9 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
   protected void actionPerformed(@NotNull VcsContext vcsContext) {
     final VirtualFile file = vcsContext.getSelectedFiles()[0];
     final Project project = vcsContext.getProject();
-    final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file);
-    final VcsHistoryProvider vcsHistoryProvider = vcs.getVcsHistoryProvider();
+    final AbstractVcs vcs = notNull(ProjectLevelVcsManager.getInstance(project).getVcsFor(file));
 
-    new VcsHistoryProviderBackgroundableProxy(vcs, vcsHistoryProvider, vcs.getDiffProvider()).
-      createSessionFor(vcs.getKeyInstanceMethod(), VcsUtil.getFilePath(file),
+    VcsHistoryProviderBackgroundableProxy.collectInBackground(vcs, VcsUtil.getFilePath(file), VcsBackgroundableActions.COMPARE_WITH, false,
                        session -> {
                          if (session == null) return;
                          final List<VcsFileRevision> revisions = session.getRevisionList();
@@ -135,9 +134,9 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
                          else {
                            showListPopup(revisions, project,
                                          revision -> DiffActionExecutor.showDiff(vcs.getDiffProvider(), revision.getRevisionNumber(), file, project,
-                                                                                           VcsBackgroundableActions.COMPARE_WITH), true);
+                                                                                 VcsBackgroundableActions.COMPARE_WITH), true);
                          }
-                       }, VcsBackgroundableActions.COMPARE_WITH, false);
+                       });
   }
 
   private static void showTreePopup(final List<TreeItem<VcsFileRevision>> roots, final VirtualFile file, final Project project, final DiffProvider diffProvider) {
@@ -284,7 +283,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
         setResizable(true).
         setDimensionServiceKey("Vcs.CompareWithSelectedRevision.Popup").setMinSize(new JBDimension(300, 300));
     final JBPopup popup = builder.createPopup();
-    
+
     popup.showCenteredInCurrentWindow(project);
   }
 

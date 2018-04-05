@@ -42,6 +42,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.intellij.openapi.vcs.impl.BackgroundableActionLock.getLock;
+import static com.intellij.util.ObjectUtils.notNull;
 
 /**
  * also uses memory cache
@@ -54,9 +55,9 @@ public class VcsHistoryProviderBackgroundableProxy {
   @NotNull private final VcsType myType;
   private final DiffProvider myDiffProvider;
 
-  public VcsHistoryProviderBackgroundableProxy(@NotNull AbstractVcs vcs,
-                                               @NotNull VcsHistoryProvider historyProvider,
-                                               DiffProvider diffProvider) {
+  private VcsHistoryProviderBackgroundableProxy(@NotNull AbstractVcs vcs,
+                                                @NotNull VcsHistoryProvider historyProvider,
+                                                DiffProvider diffProvider) {
     myProject = vcs.getProject();
     myVcsHistoryCache = ProjectLevelVcsManager.getInstance(myProject).getVcsHistoryCache();
     myConfiguration = VcsConfiguration.getInstance(myProject);
@@ -66,8 +67,8 @@ public class VcsHistoryProviderBackgroundableProxy {
   }
 
   @CalledInAwt
-  public void createSessionFor(@NotNull VcsKey vcsKey, @NotNull FilePath filePath, @NotNull Consumer<VcsHistorySession> continuation,
-                               @NotNull VcsBackgroundableActions actionKey, boolean silent) {
+  private void createSessionFor(@NotNull VcsKey vcsKey, @NotNull FilePath filePath, @NotNull Consumer<VcsHistorySession> continuation,
+                                @NotNull VcsBackgroundableActions actionKey, boolean silent) {
     BackgroundableActionLock lock = getLock(myProject, actionKey, filePath.getPath());
     if (lock.isLocked()) return;
     lock.lock();
@@ -77,11 +78,11 @@ public class VcsHistoryProviderBackgroundableProxy {
   }
 
   @CalledInAwt
-  public void executeAppendableSession(@NotNull VcsKey vcsKey,
-                                       @NotNull FilePath filePath,
-                                       @NotNull VcsAppendableHistorySessionPartner partner,
-                                       boolean canUseCache,
-                                       boolean canUseLastRevisionCheck) {
+  private void executeAppendableSession(@NotNull VcsKey vcsKey,
+                                        @NotNull FilePath filePath,
+                                        @NotNull VcsAppendableHistorySessionPartner partner,
+                                        boolean canUseCache,
+                                        boolean canUseLastRevisionCheck) {
     VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession> cacheableFactory = getCacheableFactory();
     if (cacheableFactory != null && canUseCache) {
       VcsAbstractHistorySession session = getFullHistoryFromCache(vcsKey, filePath, cacheableFactory);
@@ -104,8 +105,8 @@ public class VcsHistoryProviderBackgroundableProxy {
    *                                       that doesn't implement {@link VcsHistoryProviderEx}
    */
   @CalledInAwt
-  public void executeAppendableSession(@NotNull VcsKey vcsKey, @NotNull FilePath filePath, @NotNull VcsRevisionNumber startRevisionNumber,
-                                       @NotNull VcsAppendableHistorySessionPartner partner) {
+  private void executeAppendableSession(@NotNull VcsKey vcsKey, @NotNull FilePath filePath, @NotNull VcsRevisionNumber startRevisionNumber,
+                                        @NotNull VcsAppendableHistorySessionPartner partner) {
     if (!(myHistoryProvider instanceof VcsHistoryProviderEx)) throw new UnsupportedOperationException();
 
     BackgroundableActionLock lock = getLock(myProject, VcsBackgroundableActions.CREATE_HISTORY_SESSION, filePath.getPath());
@@ -116,7 +117,7 @@ public class VcsHistoryProviderBackgroundableProxy {
   }
 
   @Nullable
-  protected VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession> getCacheableFactory() {
+  private VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession> getCacheableFactory() {
     if (!(myHistoryProvider instanceof VcsCacheableHistorySessionFactory)) return null;
     //noinspection unchecked
     return (VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession>)myHistoryProvider;
@@ -249,6 +250,37 @@ public class VcsHistoryProviderBackgroundableProxy {
       }
     }
     return null;
+  }
+
+  @CalledInAwt
+  public static void collectInBackground(@NotNull AbstractVcs vcs,
+                                         @NotNull FilePath filePath,
+                                         @NotNull VcsBackgroundableActions actionKey,
+                                         boolean silent,
+                                         @NotNull Consumer<VcsHistorySession> consumer) {
+    VcsHistoryProviderBackgroundableProxy proxy =
+      new VcsHistoryProviderBackgroundableProxy(vcs, notNull(vcs.getVcsHistoryProvider()), vcs.getDiffProvider());
+    proxy.createSessionFor(vcs.getKeyInstanceMethod(), filePath, consumer, actionKey, silent);
+  }
+
+  @CalledInAwt
+  public static void collectInBackground(@NotNull AbstractVcs vcs,
+                                         @NotNull FilePath filePath,
+                                         @NotNull VcsAppendableHistorySessionPartner partner,
+                                         boolean canUseCache,
+                                         boolean canUseLastRevisionCheck) {
+    VcsHistoryProviderBackgroundableProxy proxy =
+      new VcsHistoryProviderBackgroundableProxy(vcs, notNull(vcs.getVcsHistoryProvider()), vcs.getDiffProvider());
+    proxy.executeAppendableSession(vcs.getKeyInstanceMethod(), filePath, partner, canUseCache, canUseLastRevisionCheck);
+  }
+
+  @CalledInAwt
+  public static void collectInBackground(@NotNull AbstractVcs vcs,
+                                         @NotNull FilePath filePath, @NotNull VcsRevisionNumber startRevisionNumber,
+                                         @NotNull VcsAppendableHistorySessionPartner partner) {
+    VcsHistoryProviderBackgroundableProxy proxy =
+      new VcsHistoryProviderBackgroundableProxy(vcs, notNull(vcs.getVcsHistoryProvider()), vcs.getDiffProvider());
+    proxy.executeAppendableSession(vcs.getKeyInstanceMethod(), filePath, startRevisionNumber, partner);
   }
 
   private class CollectingHistoryPartner extends VcsAppendableHistoryPartnerAdapter {

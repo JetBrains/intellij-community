@@ -81,8 +81,8 @@ public class SelectedBlockHistoryAction extends AbstractVcsAction {
       final int selectionStart = selection.getSelectionStartLineNumber();
       final int selectionEnd = selection.getSelectionEndLineNumber();
 
-      new VcsHistoryProviderBackgroundableProxy(activeVcs, provider, activeVcs.getDiffProvider()).
-        createSessionFor(activeVcs.getKeyInstanceMethod(), VcsUtil.getFilePath(file),
+      VcsHistoryProviderBackgroundableProxy
+        .collectInBackground(activeVcs, VcsUtil.getFilePath(file), VcsBackgroundableActions.HISTORY_FOR_SELECTION, false,
                          session -> {
                            if (session == null) return;
                            final VcsSelectionHistoryDialog vcsHistoryDialog =
@@ -97,7 +97,7 @@ public class SelectedBlockHistoryAction extends AbstractVcsAction {
                                                            selection.getDialogTitle());
 
                            vcsHistoryDialog.show();
-                         }, VcsBackgroundableActions.HISTORY_FOR_SELECTION, false);
+                         });
     }
     catch (Exception exception) {
       reportError(exception);
