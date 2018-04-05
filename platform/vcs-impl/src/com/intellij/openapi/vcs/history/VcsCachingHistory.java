@@ -170,7 +170,7 @@ public class VcsCachingHistory {
       indicator.setText2("Checking last revision");
     }
     VcsAbstractHistorySession cached = getFullHistoryFromCache(vcsKey, filePath, cacheableFactory);
-    if (cached == null) return null;
+    if (cached == null || cached.getRevisionList().isEmpty()) return null;
 
     FilePath correctedFilePath = cacheableFactory.getUsedFilePath(cached);
     FilePath path = correctedFilePath != null ? correctedFilePath : filePath;
@@ -183,7 +183,7 @@ public class VcsCachingHistory {
       if (virtualFile != null) {
         VcsRevisionNumber currentRevision = myDiffProvider.getCurrentRevision(virtualFile);
         List<VcsFileRevision> revisionList = cached.getRevisionList();
-        if (!revisionList.isEmpty() && revisionList.get(0).getRevisionNumber().equals(currentRevision)) {
+        if (revisionList.get(0).getRevisionNumber().equals(currentRevision)) {
           return cached;
         }
       }
@@ -193,7 +193,7 @@ public class VcsCachingHistory {
     ItemLatestState lastRevision = myDiffProvider.getLastRevision(path);
     if (lastRevision != null && !lastRevision.isDefaultHead() && lastRevision.isItemExists()) {
       List<VcsFileRevision> revisionList = cached.getRevisionList();
-      if (!revisionList.isEmpty() && revisionList.get(0).getRevisionNumber().equals(lastRevision.getNumber())) {
+      if (revisionList.get(0).getRevisionNumber().equals(lastRevision.getNumber())) {
         return cached;
       }
     }
