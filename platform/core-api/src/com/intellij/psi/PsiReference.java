@@ -1,8 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
+import com.intellij.model.ModelElement;
 import com.intellij.model.ModelReference;
 import com.intellij.model.ModelResolveResult;
+import com.intellij.model.ModelService;
 import com.intellij.model.psi.PsiModelResolveResult;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.ArrayFactory;
@@ -122,5 +124,11 @@ public interface PsiReference extends ModelReference {
   default Iterable<? extends ModelResolveResult> resolve(boolean incomplete) {
     PsiElement resolved = resolve();
     return resolved == null ? Collections.emptyList() : Collections.singletonList(new PsiModelResolveResult(resolved));
+  }
+
+  @Override
+  default boolean references(@NotNull ModelElement target) {
+    PsiElement psi = ModelService.getPsiElement(target);
+    return psi == null ? ModelReference.super.references(target) : isReferenceTo(psi);
   }
 }

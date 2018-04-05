@@ -4,6 +4,7 @@ package com.intellij.model;
 import com.intellij.model.psi.PsiModelElement;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface ModelService {
 
@@ -15,5 +16,12 @@ public interface ModelService {
     else {
       return new PsiModelElement(element);
     }
+  }
+
+  @Nullable
+  static PsiElement getPsiElement(@NotNull ModelElement element) {
+    if (element instanceof PsiElement) return (PsiElement)element;
+    if (element instanceof PsiModelElement) return ((PsiModelElement)element).getElement();
+    return null;
   }
 }
