@@ -22,9 +22,10 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Provides high level API for number of tests calculations in {@link SMTestProxy}
+ *
  * @author Ilya.Kazakevich
  */
-final class SMRootTestsCounter {
+public final class SMRootTestsCounter {
   /**
    * Filter to exclude suites
    */
@@ -41,7 +42,7 @@ final class SMRootTestsCounter {
   /**
    * @param testProxy proxy to wrap
    */
-  SMRootTestsCounter(@NotNull final SMRootTestProxy testProxy) {
+  public SMRootTestsCounter(@NotNull final SMRootTestProxy testProxy) {
     myTestProxy = testProxy;
   }
 
@@ -53,18 +54,18 @@ final class SMRootTestsCounter {
   /**
    * @return number of failed tests
    */
-  int getFailedTestsCount() {
+  public int getFailedTestsCount() {
     return myTestProxy.collectChildren(NOT_SUIT.and(Filter.FAILED_OR_INTERRUPTED)).size();
   }
 
   /**
    * @return number of passed tests
    */
-  int getPassedTestsCount() {
+  public int getPassedTestsCount() {
     return myTestProxy.collectChildren(NOT_SUIT.and(Filter.PASSED)).size();
   }
 
-  int getIgnoredTestsCount() {
+  public int getIgnoredTestsCount() {
     return myTestProxy.collectChildren(NOT_SUIT.and(Filter.IGNORED)).size();
   }
 
@@ -72,7 +73,7 @@ final class SMRootTestsCounter {
   /**
    * @return number of all tests
    */
-  int getAllTestsCount() {
+  public int getAllTestsCount() {
     return myTestProxy.collectChildren(NOT_SUIT).size();
   }
 }
