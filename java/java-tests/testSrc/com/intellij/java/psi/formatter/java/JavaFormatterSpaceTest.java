@@ -1,8 +1,8 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi.formatter.java;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.LightPlatformTestCase;
 
@@ -16,7 +16,7 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    LanguageLevelProjectExtension.getInstance(LightPlatformTestCase.getProject()).setLanguageLevel(LanguageLevel.getHighestRegistered());
+    LanguageLevelProjectExtension.getInstance(LightPlatformTestCase.getProject()).setLanguageLevel(JavaTestUtil.getMaxRegisteredLanguageLevel());
   }
 
   public void testSpacingBetweenTypeParameters() {

@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.parser;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageASTFactory;
@@ -37,7 +38,7 @@ public abstract class JavaParsingTestCase extends ParsingTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myLanguageLevel = LanguageLevel.getHighestRegistered();
+    myLanguageLevel = JavaTestUtil.getMaxRegisteredLanguageLevel();
     getProject().registerService(LanguageLevelProjectExtension.class, new LanguageLevelProjectExtensionImpl(getProject()));
     addExplicitExtension(LanguageASTFactory.INSTANCE, JavaLanguage.INSTANCE, new JavaASTFactory());
   }

@@ -10,7 +10,6 @@ import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 /**
  * Represents a language level (i.e. features available) of a Java code.
@@ -47,12 +46,6 @@ public enum LanguageLevel {
     return this == JDK_X ? "Java X" :  "Java " + JavaSdkVersion.fromLanguageLevel(this).getDescription();
   }
 
-  @TestOnly
-  public static LanguageLevel getHighestRegistered() {
-    LanguageLevel[] values = values();
-    return values[values.length - 1];
-  }
-  
   @NotNull
   @Nls
   public String getPresentableText() {
