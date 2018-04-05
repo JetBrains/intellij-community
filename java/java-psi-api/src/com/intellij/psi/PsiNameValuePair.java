@@ -15,6 +15,7 @@
  */
 package com.intellij.psi;
 
+import com.intellij.lang.jvm.JvmAnnotationTreeElement;
 import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
  * @see PsiAnnotation
  * @see PsiAnnotationParameterList
  */
-public interface PsiNameValuePair extends PsiElement {
+public interface PsiNameValuePair extends PsiElement, JvmAnnotationTreeElement {
   /**
    * The empty array of PSI name/value pairs which can be reused to avoid unnecessary allocations.
    */
