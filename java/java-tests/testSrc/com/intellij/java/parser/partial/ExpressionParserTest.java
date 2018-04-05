@@ -3,7 +3,6 @@ package com.intellij.java.parser.partial;
 
 import com.intellij.java.parser.JavaParsingTestCase;
 import com.intellij.lang.java.parser.JavaParser;
-import com.intellij.pom.java.LanguageLevel;
 
 public class ExpressionParserTest extends JavaParsingTestCase {
   public ExpressionParserTest() {
@@ -144,11 +143,6 @@ public class ExpressionParserTest extends JavaParsingTestCase {
   public void testLambdaExpression25() { doParserTest("(var) -> var"); }
   public void testLambdaExpression26() { doParserTest("(var var) -> var"); }
   public void testAmbiguousLambdaExpression() { doParserTest("f( (x) < y , z > (w) -> v )"); }
-
-  @Override
-  protected LanguageLevel getHighestLanguageLevel() {
-    return LanguageLevel.JDK_11;
-  }
 
   private void doParserTest(String text) {
     doParserTest(text, builder -> JavaParser.INSTANCE.getExpressionParser().parse(builder));

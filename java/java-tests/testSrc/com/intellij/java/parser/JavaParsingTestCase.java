@@ -57,7 +57,7 @@ public abstract class JavaParsingTestCase extends ParsingTestCase {
   }
 
   protected LanguageLevel getHighestLanguageLevel() {
-    return LanguageLevel.HIGHEST;
+    return LanguageLevel.getHighestRegistered();
   }
 
   @Override
