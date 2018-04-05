@@ -7,8 +7,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Set;
 import java.util.function.Supplier;
 
 /**
@@ -35,18 +38,21 @@ import java.util.function.Supplier;
  *   // some deep trace
  *   ...
  *   doSomeOperation {
- *     // access tree, exception is thrown
+ *     // access file tree, exception is thrown
  *   }
- *   forceEnableTreeLoading {
+ *   forceEnableTreeLoading(file) {
  *     doSomeOperation {
- *       // access tree, no exception is thrown
+ *       // access file tree, no exception is thrown
+ *     }
+ *     doAnotherOperation {
+ *       // access another file tree, exception is thrown
  *     }
  *   }
- *   forceEnableTreeLoading {
+ *   forceEnableTreeLoading(file) {
  *     disableTreeLoading {
  *       doSomeOperation {
  *         // nested disabling has no effect in any case
- *         // access tree, no exception is thrown, access is still enabled
+ *         // access file tree, no exception is thrown, access is still enabled for file
  *       }
  *     }
  *   }
@@ -63,7 +69,8 @@ public class AstLoadingFilter {
    * Initial value is {@code null} meaning loading is enabled by default.
    */
   private static final ThreadLocal<Supplier<String>> myDisabledInfo = new ThreadLocal<>();
-  private static final ThreadLocal<Boolean> myForcedEnabled = ThreadLocal.withInitial(() -> false);
+  @SuppressWarnings("SSBasedInspection")
+  private static final ThreadLocal<Set<VirtualFile>> myForcedEnabledFiles = ThreadLocal.withInitial(() -> new THashSet<>());
 
   private AstLoadingFilter() {}
 
@@ -74,8 +81,8 @@ public class AstLoadingFilter {
     if (disabledInfo == null) {
       // loading was not disabled in current thread
     }
-    else if (myForcedEnabled.get()) {
-      // loading was disabled but then re-enabled
+    else if (myForcedEnabledFiles.get().contains(file)) {
+      // loading was disabled but then re-enabled for file
     }
     else {
       String debugInfo = disabledInfo.get();
@@ -117,26 +124,36 @@ public class AstLoadingFilter {
   }
 
   public static <E extends Throwable>
-  void forceEnableTreeLoading(@NotNull ThrowableRunnable<E> runnable) throws E {
-    forceEnableTreeLoading(toComputable(runnable));
+  void forceEnableTreeLoading(@NotNull PsiFile file, @NotNull ThrowableRunnable<E> runnable) throws E {
+    forceEnableTreeLoading(file.getVirtualFile(), runnable);
+  }
+
+  public static <E extends Throwable>
+  void forceEnableTreeLoading(@NotNull VirtualFile file, @NotNull ThrowableRunnable<E> runnable) throws E {
+    forceEnableTreeLoading(file, toComputable(runnable));
   }
 
   public static <T, E extends Throwable>
-  T forceEnableTreeLoading(@NotNull ThrowableComputable<T, E> computable) throws E {
+  T forceEnableTreeLoading(@NotNull PsiFile file, @NotNull ThrowableComputable<T, E> computable) throws E {
+    return forceEnableTreeLoading(file.getVirtualFile(), computable);
+  }
+
+  public static <T, E extends Throwable>
+  T forceEnableTreeLoading(@NotNull VirtualFile file, @NotNull ThrowableComputable<T, E> computable) throws E {
     if (myDisabledInfo.get() == null) {
       throw new IllegalStateException("It's not allowed to force enable loading before it has been disabled");
     }
-    if (myForcedEnabled.get()) {
-      return computable.compute();
-    }
-    else {
+    Set<VirtualFile> enabledFiles = myForcedEnabledFiles.get();
+    if (enabledFiles.add(file)) {
       try {
-        myForcedEnabled.set(true);
         return computable.compute();
       }
       finally {
-        myForcedEnabled.set(false);
+        enabledFiles.remove(file);
       }
+    }
+    else {
+      return computable.compute();
     }
   }
 

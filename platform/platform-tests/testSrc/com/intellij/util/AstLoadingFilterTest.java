@@ -1,10 +1,14 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.testFramework.exceptionCases.AbstractExceptionCase;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+
+import static com.intellij.util.AstLoadingFilter.disableTreeLoading;
+import static com.intellij.util.AstLoadingFilter.forceEnableTreeLoading;
 
 public class AstLoadingFilterTest extends LightPlatformCodeInsightFixtureTestCase {
 
@@ -24,50 +28,80 @@ public class AstLoadingFilterTest extends LightPlatformCodeInsightFixtureTestCas
     );
   }
 
+  private PsiFileImpl addAnotherFile() {
+    return (PsiFileImpl)myFixture.addFileToProject(
+      "classes2.java",
+      "class C {\n" +
+      "  void foo() {}\n" +
+      "}\n" +
+      "class D {}\n"
+    );
+  }
+
+  private static class AssertionCase extends AbstractExceptionCase<AssertionError> {
+
+    private final Runnable myRunnable;
+
+    private AssertionCase(Runnable runnable) {
+      myRunnable = runnable;
+    }
+
+    @Override
+    public Class<AssertionError> getExpectedExceptionClass() {
+      return AssertionError.class;
+    }
+
+    @Override
+    public void tryClosure() throws AssertionError {
+      myRunnable.run();
+    }
+  }
+
   public void testDisabledLoading() throws Throwable {
     PsiFileImpl file = addFile();
     assertFalse(file.isContentsLoaded());
-    assertException(new AbstractExceptionCase() {
-      @Override
-      public Class getExpectedExceptionClass() {
-        return AssertionError.class;
-      }
-
-      @Override
-      public void tryClosure() {
-        AstLoadingFilter.disableTreeLoading(() -> file.getNode());
-      }
-    });
+    assertException(new AssertionCase(
+      () -> disableTreeLoading(
+        () -> file.getNode()
+      )
+    ));
   }
 
   public void testForceEnableLoading() throws Throwable {
     PsiFileImpl file = addFile();
     assertFalse(file.isContentsLoaded());
-    assertNoException(new AbstractExceptionCase<Throwable>() {
-      @Override
-      public Class<Throwable> getExpectedExceptionClass() {
-        return Throwable.class;
-      }
-
-      @Override
-      public void tryClosure() throws Throwable {
-        AstLoadingFilter.disableTreeLoading(() -> AstLoadingFilter.forceEnableTreeLoading(() -> file.getNode()));
-      }
-    });
+    PsiFileImpl anotherFile = addAnotherFile();
+    assertFalse(anotherFile.isContentsLoaded());
+    assertNoException(new AssertionCase(
+      () -> disableTreeLoading(
+        () -> forceEnableTreeLoading(
+          file,                                                                 // enable for file
+          (ThrowableComputable<?, RuntimeException>)() -> file.getNode()        // access its node -> no exception
+        )
+      )
+    ));
+    assertException(new AssertionCase(
+      () -> disableTreeLoading(
+        () -> forceEnableTreeLoading(
+          file,                                                                 // enable for file
+          (ThrowableComputable<?, RuntimeException>)() -> anotherFile.getNode() // access another file node -> exception
+        )
+      )
+    ));
   }
 
   public void testForceEnableLoadingBeforeDisabling() throws Throwable {
     PsiFileImpl file = addFile();
     assertFalse(file.isContentsLoaded());
-    assertException(new AbstractExceptionCase() {
+    assertException(new AbstractExceptionCase<IllegalStateException>() {
       @Override
-      public Class<?> getExpectedExceptionClass() {
+      public Class<IllegalStateException> getExpectedExceptionClass() {
         return IllegalStateException.class;
       }
 
       @Override
-      public void tryClosure() throws Throwable {
-        AstLoadingFilter.forceEnableTreeLoading(() -> file.getNode());
+      public void tryClosure() throws IllegalStateException {
+        forceEnableTreeLoading(file, () -> file.getNode());
       }
     });
   }
