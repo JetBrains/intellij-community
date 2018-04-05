@@ -1914,7 +1914,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   @Nullable
-  private GutterMark getGutterRenderer(final Point p) {
+  public GutterMark getGutterRenderer(final Point p) {
     int line = convertPointToLineNumber(p);
     if (line == -1) return null;
     List<GutterMark> renderers = getGutterRenderers(line);
