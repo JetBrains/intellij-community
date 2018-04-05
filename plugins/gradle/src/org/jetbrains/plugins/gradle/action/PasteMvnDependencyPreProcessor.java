@@ -51,10 +51,19 @@ public class PasteMvnDependencyPreProcessor implements CopyPastePreProcessor {
     return text;
   }
 
-  private static String toGradleDependency(final String mavenDependency) {
+  @NotNull
+  protected String formatGradleDependency(@NotNull String groupId,
+                                          @NotNull String artifactId,
+                                          @NotNull String version,
+                                          @NotNull String scope,
+                                          @NotNull String gradleClassifier) {
+    return scope + "'" + groupId + ":" + artifactId + ":" + version + gradleClassifier + "'";
+  }
+
+  private String toGradleDependency(final String mavenDependency) {
     DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
     factory.setValidating(false);
-    
+
     try {
       DocumentBuilder builder = factory.newDocumentBuilder();
       try {
@@ -72,7 +81,7 @@ public class PasteMvnDependencyPreProcessor implements CopyPastePreProcessor {
   }
 
   @Nullable
-  private static String extractGradleDependency(Document document) {
+  private String extractGradleDependency(Document document) {
     String groupId = getGroupId(document);
     String artifactId = getArtifactId(document);
     String version = getVersion(document);
@@ -84,9 +93,10 @@ public class PasteMvnDependencyPreProcessor implements CopyPastePreProcessor {
     }
     String gradleClassifier = classifier.isEmpty() ? "" : ":" + classifier;
 
-    return scope + "'" + groupId + ":" + artifactId + ":" + version + gradleClassifier + "'";
+    return formatGradleDependency(groupId, artifactId, version, scope, gradleClassifier);
   }
 
+  @NotNull
   private static String getScope(@NotNull Document document) {
     String scope = firstOrEmpty(document.getElementsByTagName("scope"));
     switch (scope) {
