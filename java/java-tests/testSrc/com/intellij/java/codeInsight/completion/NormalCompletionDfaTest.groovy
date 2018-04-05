@@ -47,6 +47,7 @@ class NormalCompletionDfaTest extends NormalCompletionTestCase {
   void testAssignmentTwicePreciseTypeDfa() { doTest() }
   void testAssignmentParameterDfa() { doTest() }
   void testAssignmentNoPreciseTypeDfa() { doTest() }
+  void testAssignmentPrimitiveLiteral() { doTest() }
   void testDeclarationPreciseTypeDfa() { doTest() }
   void testInstanceOfAssignmentDfa() { doTest() }
   void testStreamDfa() { doTest() }
