@@ -9,7 +9,6 @@ import groovy.lang.Closure
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROJECT
 import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.patterns.groovyClosure
 import org.jetbrains.plugins.groovy.lang.psi.patterns.psiMethod
@@ -23,15 +22,15 @@ import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DelegatesToInfo
 class GradleIdeaPluginScriptContributor : GradleMethodContextContributor {
 
   companion object {
-    val IDEA_METHOD = "idea"
-    val IDEA_MODEL_FQN = "org.gradle.plugins.ide.idea.model.IdeaModel"
-    val IDEA_PROJECT_FQN = "org.gradle.plugins.ide.idea.model.IdeaProject"
-    val IDEA_MODULE_FQN = "org.gradle.plugins.ide.idea.model.IdeaModule"
-    val IDEA_MODULE_IML_FQN = "org.gradle.plugins.ide.idea.model.IdeaModuleIml"
-    val IDE_XML_MERGER_FQN = "org.gradle.plugins.ide.api.XmlFileContentMerger"
-    val IDE_FILE_MERGER_FQN = "org.gradle.plugins.ide.api.FileContentMerger"
-    val IDEA_XML_MODULE_FQN = "org.gradle.plugins.ide.idea.model.Module"
-    val IDEA_XML_PROJECT_FQN = "org.gradle.plugins.ide.idea.model.Project"
+    const val IDEA_METHOD = "idea"
+    const val IDEA_MODEL_FQN = "org.gradle.plugins.ide.idea.model.IdeaModel"
+    const val IDEA_PROJECT_FQN = "org.gradle.plugins.ide.idea.model.IdeaProject"
+    const val IDEA_MODULE_FQN = "org.gradle.plugins.ide.idea.model.IdeaModule"
+    const val IDEA_MODULE_IML_FQN = "org.gradle.plugins.ide.idea.model.IdeaModuleIml"
+    const val IDE_XML_MERGER_FQN = "org.gradle.plugins.ide.api.XmlFileContentMerger"
+    const val IDE_FILE_MERGER_FQN = "org.gradle.plugins.ide.api.FileContentMerger"
+    const val IDEA_XML_MODULE_FQN = "org.gradle.plugins.ide.idea.model.Module"
+    const val IDEA_XML_PROJECT_FQN = "org.gradle.plugins.ide.idea.model.Project"
     val ideaClosure = groovyClosure().inMethod(psiMethod(GRADLE_API_PROJECT, IDEA_METHOD))
     val ideaProjectClosure = groovyClosure().inMethod(psiMethod(IDEA_MODEL_FQN, "project"))
     val ideaIprClosure = groovyClosure().inMethod(psiMethod(IDEA_PROJECT_FQN, "ipr"))
@@ -64,9 +63,8 @@ class GradleIdeaPluginScriptContributor : GradleMethodContextContributor {
     }
     if (!processExtension(processor, state, place, ideaExtension)) return false
 
-    val psiManager = GroovyPsiManager.getInstance(place.project)
     if (psiElement().inside(ideaIprClosure).inside(ideaProjectClosure).accepts(place)) {
-        if (GradleResolverUtil.processDeclarations(processor, state, place, IDE_XML_MERGER_FQN)) return false
+      if (GradleResolverUtil.processDeclarations(processor, state, place, IDE_XML_MERGER_FQN)) return false
     }
     return true
   }
