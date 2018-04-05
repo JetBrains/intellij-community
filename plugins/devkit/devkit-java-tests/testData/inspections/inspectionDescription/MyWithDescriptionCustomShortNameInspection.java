@@ -6,3 +6,11 @@ public class MyWithDescriptionCustomShortNameInspection extends LocalInspectionT
     return "customShortName";
   }
 }
+
+class MyWithDescriptionCustomConstantShortNameInspection extends LocalInspectionTool {
+  private static final String SHORT_NAME = "customShortName";
+
+  public String getShortName() {
+    return SHORT_NAME;
+  }
+}

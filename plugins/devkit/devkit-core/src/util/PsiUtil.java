@@ -15,10 +15,12 @@
  */
 package org.jetbrains.idea.devkit.util;
 
+import com.intellij.codeInspection.dataFlow.StringExpressionHelper;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -80,6 +82,12 @@ public class PsiUtil {
     else if (value instanceof PsiMethodCallExpression) {
       if (isSimpleClassNameExpression((PsiMethodCallExpression)value)) {
         return cls.getName();
+      }
+    }
+    else if (value != null) {
+      Pair<PsiElement, String> evaluateResult = StringExpressionHelper.evaluateConstantExpression(value);
+      if (evaluateResult != null && value.equals(evaluateResult.first)) {
+        return evaluateResult.second;
       }
     }
     return null;
