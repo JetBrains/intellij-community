@@ -1,5 +1,5 @@
 deprecated: fileStatus.png
-deprecated: findPlain.png
-deprecated: menu-find.png
-deprecated: menu-help.png
-deprecated: synchronizeFS.png
+overridden: /actions/findPlain.png -> AllIcons.Actions.Find
+overridden: /actions/menu-find.png -> AllIcons.Actions.Find
+overridden: /actions/menu-help.png -> AllIcons.Actions.Help
+overridden: /actions/synchronizeFS.png -> AllIcons.Actions.Refresh

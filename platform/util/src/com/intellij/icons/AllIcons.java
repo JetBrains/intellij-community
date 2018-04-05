@@ -69,7 +69,7 @@ public class AllIcons {
     
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon FindPlain = IconLoader.getIcon("/actions/findPlain.png"); // 16x16
+    public static final Icon FindPlain = AllIcons.Actions.Find;
     public static final Icon FindWhite = IconLoader.getIcon("/actions/findWhite.png"); // 16x16
     public static final Icon ForceRefresh = IconLoader.getIcon("/actions/forceRefresh.png"); // 16x16
     public static final Icon Forward = IconLoader.getIcon("/actions/forward.png"); // 16x16
@@ -94,11 +94,11 @@ public class AllIcons {
     
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon Menu_find = IconLoader.getIcon("/actions/menu-find.png"); // 16x16
+    public static final Icon Menu_find = AllIcons.Actions.Find;
     
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon Menu_help = IconLoader.getIcon("/actions/menu-help.png"); // 16x16
+    public static final Icon Menu_help = AllIcons.Actions.Help;
     public static final Icon Menu_open = IconLoader.getIcon("/actions/menu-open.png"); // 16x16
     public static final Icon Menu_paste = IconLoader.getIcon("/actions/menu-paste.png"); // 16x16
     public static final Icon Menu_replace = IconLoader.getIcon("/actions/menu-replace.png"); // 16x16
@@ -175,7 +175,7 @@ public class AllIcons {
     
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon SynchronizeFS = IconLoader.getIcon("/actions/synchronizeFS.png"); // 16x16
+    public static final Icon SynchronizeFS = AllIcons.Actions.Refresh;
     public static final Icon SynchronizeScrolling = IconLoader.getIcon("/actions/synchronizeScrolling.png"); // 16x16
     public static final Icon SyncPanels = IconLoader.getIcon("/actions/syncPanels.png"); // 16x16
     public static final Icon ToggleSoftWrap = IconLoader.getIcon("/actions/toggleSoftWrap.png"); // 16x16
@@ -335,7 +335,7 @@ public class AllIcons {
       
       @SuppressWarnings("unused")
       @Deprecated
-      public static final Icon Paused = IconLoader.getIcon("/debugger/threadStates/paused.png"); // 16x16
+      public static final Icon Paused = AllIcons.Actions.Pause;
       public static final Icon Running = IconLoader.getIcon("/debugger/threadStates/running.png"); // 16x16
       public static final Icon Socket = IconLoader.getIcon("/debugger/threadStates/socket.png"); // 16x16
       public static final Icon Threaddump = IconLoader.getIcon("/debugger/threadStates/threaddump.png"); // 16x16
@@ -467,7 +467,7 @@ public class AllIcons {
     
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon Debug = IconLoader.getIcon("/general/debug.png"); // 16x16
+    public static final Icon Debug = AllIcons.Actions.StartDebugger;
     public static final Icon DefaultKeymap = IconLoader.getIcon("/general/defaultKeymap.png"); // 32x32
     public static final Icon Divider = IconLoader.getIcon("/general/divider.png"); // 2x19
     public static final Icon DownloadPlugin = IconLoader.getIcon("/general/downloadPlugin.png"); // 16x16
@@ -1026,14 +1026,14 @@ public class AllIcons {
     
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon TreeClosed = IconLoader.getIcon("/nodes/TreeClosed.png"); // 16x16
+    public static final Icon TreeClosed = AllIcons.Nodes.Folder;
     public static final Icon TreeCollapseNode = IconLoader.getIcon("/nodes/treeCollapseNode.png"); // 16x16
     public static final Icon TreeDownArrow = IconLoader.getIcon("/nodes/treeDownArrow.png"); // 11x11
     public static final Icon TreeExpandNode = IconLoader.getIcon("/nodes/treeExpandNode.png"); // 16x16
     
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon TreeOpen = IconLoader.getIcon("/nodes/TreeOpen.png"); // 16x16
+    public static final Icon TreeOpen = AllIcons.Nodes.Folder;
     public static final Icon TreeRightArrow = IconLoader.getIcon("/nodes/treeRightArrow.png"); // 11x11
     public static final Icon Undeploy = IconLoader.getIcon("/nodes/undeploy.png"); // 16x16
     public static final Icon UnknownJdk = IconLoader.getIcon("/nodes/unknownJdk.png"); // 16x16

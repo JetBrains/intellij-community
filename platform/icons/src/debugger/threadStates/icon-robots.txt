@@ -1,1 +1,1 @@
-deprecated: paused.png
+overridden: /debugger/threadStates/paused.png -> AllIcons.Actions.Pause
