@@ -28,10 +28,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.FileIndexFacade
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiDirectory
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFileSystemItem
-import com.intellij.psi.PsiManager
+import com.intellij.psi.*
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.QualifiedName
 import com.jetbrains.python.codeInsight.typing.PyTypeShed
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil
@@ -75,6 +73,22 @@ fun resolveQualifiedName(name: QualifiedName, context: PyQualifiedNameResolveCon
   return resolveQualifiedName(name, context, ::resolveModuleFromRoots)
 }
 
+private data class RelativeResults(val pythonResults: List<PsiElement>, val foreignResults: List<PsiElement>) {
+  companion object {
+
+    fun classify(name: QualifiedName, context: PyQualifiedNameResolveContext, results: List<PsiElement>): RelativeResults {
+      val relativeDirectory = context.containingDirectory
+
+      fun isPythonResult(result: PsiElement): Boolean {
+        val isRelative = relativeDirectory != null && isRelativeImportResult(name, relativeDirectory, result, context)
+        val isSkeleton = result.containingFile?.let { PyUserSkeletonsUtil.isUnderUserSkeletonsDirectory(it) } ?: false
+        return isRelative || isSkeleton
+      }
+      val (python, foreign) = results.partition(::isPythonResult)
+      return RelativeResults(python, foreign)
+    }
+  }
+}
 private fun resolveQualifiedName(name: QualifiedName,
                                  context: PyQualifiedNameResolveContext,
                                  resolveFromRoots: (QualifiedName, PyQualifiedNameResolveContext) -> List<PsiElement>): List<PsiElement> {
@@ -83,10 +97,8 @@ private fun resolveQualifiedName(name: QualifiedName,
     return emptyList()
   }
 
-  val relativeDirectory = context.containingDirectory
-  val relativeResults = resolveWithRelativeLevel(name, context)
-  val foundRelativeImport = relativeDirectory != null &&
-      relativeResults.any { isRelativeImportResult(name, relativeDirectory, it, context) }
+  val relativeResults = RelativeResults.classify(name, context, resolveWithRelativeLevel(name, context))
+  val foundRelativeImport = relativeResults.pythonResults.isNotEmpty()
 
   val cache = findCache(context)
   val mayCache = cache != null && !foundRelativeImport
@@ -95,12 +107,12 @@ private fun resolveQualifiedName(name: QualifiedName,
   if (mayCache) {
     val cachedResults = cache?.get(key)
     if (cachedResults != null) {
-      return relativeResults + cachedResults
+      return cachedResults
     }
   }
 
-  val foreignResults = foreignResults(name, context)
-  val pythonResults = listOf(relativeResults,
+  val foreignResults = (relativeResults.foreignResults + foreignResults(name, context)).distinct()
+  val pythonResults = listOf(relativeResults.pythonResults,
                              // TODO: replace with resolveFromRoots when namespace package magic features PY-16688, PY-23087 are implemented
                              resultsFromRoots(name, context),
                              relativeResultsFromSkeletons(name, context)).flatten().distinct()
@@ -381,8 +393,7 @@ private fun isRelativeImportResult(name: QualifiedName, directory: PsiDirectory,
   }
   else {
     val py2 = LanguageLevel.forElement(directory).isPython2
-    return context.relativeLevel == 0 && py2 && PyUtil.isPackage(directory, false, null) &&
-        result is PsiFileSystemItem && name != QualifiedNameFinder.findShortestImportableQName(result)
+    return context.relativeLevel == 0 && py2 && PsiTreeUtil.isAncestor(directory, result, true)
   }
 }
 
