@@ -120,7 +120,7 @@ private fun compareSnapshot(snapshotFile: Path, newData: String, isUpdateSnapsho
 }
 
 fun validateUsingImage(component: Component, snapshotDir: Path, snapshotName: String, isUpdateSnapshots: Boolean = isUpdateSnapshotsGlobal) {
-  compareSnapshot(snapshotDir.resolve("$snapshotName.svg"), SvgRenderer().render(component), isUpdateSnapshots)
+  compareSnapshot(snapshotDir.resolve("$snapshotName.svg"), SvgRenderer(snapshotDir).render(component), isUpdateSnapshots)
 }
 
 val TestName.snapshotFileName: String
