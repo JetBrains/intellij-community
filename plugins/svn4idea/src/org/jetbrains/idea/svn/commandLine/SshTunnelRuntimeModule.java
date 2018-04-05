@@ -10,6 +10,8 @@ import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnConfiguration.SshConnectionType;
 import org.jetbrains.idea.svn.SvnConfigurationState;
 
+import java.util.List;
+
 import static com.intellij.execution.CommandLineUtil.toCommandLine;
 import static com.intellij.openapi.util.io.FileUtil.getNameWithoutExtension;
 import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
@@ -47,7 +49,10 @@ public class SshTunnelRuntimeModule extends BaseCommandRuntimeModule {
     String sshPath = getState().sshExecutablePath;
     sshPath = !isEmpty(sshPath) ? sshPath : getExecutablePath(getConfiguration().getSshTunnelSetting());
 
-    return join(toCommandLine(sshPath, buildTunnelCommandLine(sshPath).getParametersList().getParameters()), " ");
+    List<String> parameters = toCommandLine(sshPath, buildTunnelCommandLine(sshPath).getParametersList().getParameters());
+    parameters.set(0, toSystemIndependentName(sshPath));
+
+    return join(parameters, " ");
   }
 
   @NotNull
