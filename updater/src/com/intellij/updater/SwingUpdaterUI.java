@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
 
 import javax.swing.*;
@@ -145,7 +131,8 @@ public class SwingUpdaterUI implements UpdaterUI {
 
   @Override
   public void showError(String message) {
-    invokeAndWait(() -> JOptionPane.showMessageDialog(myFrame, message, "Update Error", JOptionPane.ERROR_MESSAGE));
+    String html = "<html>" + message.replace("\n", "<br>") + "</html>";
+    invokeAndWait(() -> JOptionPane.showMessageDialog(myFrame, html, "Update Error", JOptionPane.ERROR_MESSAGE));
   }
 
   @Override
@@ -216,13 +203,13 @@ public class SwingUpdaterUI implements UpdaterUI {
 
       String message = "<html>Some conflicts were found in the installation area.<br><br>";
       if (canProceed) {
-        message += "Please select desired solutions from the " + MyTableModel.COLUMNS[MyTableModel.OPTIONS_COLUMN_INDEX] +
-                   " column and press " + PROCEED_BUTTON_TITLE + ".<br>" +
-                   "If you do not want to proceed with the update, please press " + CANCEL_BUTTON_TITLE + ".</html>";
+        message += "Please select desired solutions from the '" + MyTableModel.COLUMNS[MyTableModel.OPTIONS_COLUMN_INDEX] + "' " +
+                   "column and press '" + PROCEED_BUTTON_TITLE + "'.<br>" +
+                   "If you do not want to proceed with the update, please press '" + CANCEL_BUTTON_TITLE + "'.</html>";
       }
       else {
         message += "Some of the conflicts below do not have a solution, so the patch cannot be applied.<br>" +
-                   "Press " + CANCEL_BUTTON_TITLE + " to exit.</html>";
+                   "Press '" + CANCEL_BUTTON_TITLE + "' to exit.</html>";
       }
       JLabel label = new JLabel(message);
       label.setBorder(LABEL_BORDER);
@@ -240,6 +227,11 @@ public class SwingUpdaterUI implements UpdaterUI {
 
     checkCancelled();
     return result;
+  }
+
+  @Override
+  public String bold(String text) {
+    return "<b>" + text + "</b>";
   }
 
   @SuppressWarnings("SSBasedInspection")
