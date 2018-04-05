@@ -461,6 +461,9 @@ public class AllIcons {
     public static final Icon CopyHovered = IconLoader.getIcon("/general/copyHovered.png"); // 16x16
     public static final Icon CreateNewProject = IconLoader.getIcon("/general/createNewProject.png"); // 32x32
     public static final Icon CreateNewProjectfromExistingFiles = IconLoader.getIcon("/general/CreateNewProjectfromExistingFiles.png"); // 32x32
+    
+    @SuppressWarnings("unused")
+    @Deprecated
     public static final Icon Debug = IconLoader.getIcon("/general/debug.png"); // 16x16
     public static final Icon DefaultKeymap = IconLoader.getIcon("/general/defaultKeymap.png"); // 32x32
     public static final Icon Divider = IconLoader.getIcon("/general/divider.png"); // 2x19
