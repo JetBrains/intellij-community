@@ -28,7 +28,7 @@ abstract class VmConnection<T : Vm> : Disposable {
   @Volatile var vm: T? = null
     protected set
 
-  private val opened = AsyncPromise<Any?>()
+  private val opened = AsyncPromise<T>()
   private val closed = AtomicBoolean()
 
   val state: ConnectionState
@@ -41,8 +41,8 @@ abstract class VmConnection<T : Vm> : Disposable {
   @TestOnly
   fun opened(): Promise<*> = opened
 
-  fun executeOnStart(runnable: Runnable) {
-    opened.onSuccess { runnable.run() }
+  fun executeOnStart(consumer: (vm: T) -> Unit) {
+    opened.then(consumer)
   }
 
   protected fun setState(status: ConnectionStatus, message: String? = null, messageLinkListener: HyperlinkListener? = null) {
@@ -71,7 +71,7 @@ abstract class VmConnection<T : Vm> : Disposable {
     get() = dispatcher.multicaster
 
   protected open fun startProcessing() {
-    opened.setResult(null)
+    opened.setResult(vm!!)
   }
 
   fun close(message: String?, status: ConnectionStatus) {
