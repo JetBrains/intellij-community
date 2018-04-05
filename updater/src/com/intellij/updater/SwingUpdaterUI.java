@@ -5,7 +5,7 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -195,10 +195,11 @@ public class SwingUpdaterUI implements UpdaterUI {
 
       MyTableModel model = new MyTableModel(validationResults);
       table.setModel(model);
+      table.setRowHeight(new JLabel("X").getPreferredSize().height);
 
-      for (int i = 0; i < table.getColumnModel().getColumnCount(); i++) {
-        TableColumn each = table.getColumnModel().getColumn(i);
-        each.setPreferredWidth(MyTableModel.getColumnWidth(i, new Dimension(600, 400).width));
+      TableColumnModel columnModel = table.getColumnModel();
+      for (int i = 0; i < columnModel.getColumnCount(); i++) {
+        columnModel.getColumn(i).setPreferredWidth(MyTableModel.getColumnWidth(i, 1000));
       }
 
       String message = "<html>Some conflicts were found in the installation area.<br><br>";
@@ -218,7 +219,8 @@ public class SwingUpdaterUI implements UpdaterUI {
       dialog.add(new JScrollPane(table), BorderLayout.CENTER);
       dialog.add(buttonsPanel, BorderLayout.SOUTH);
       dialog.getRootPane().setBorder(FRAME_BORDER);
-      dialog.setSize(new Dimension(600, 400));
+      dialog.setPreferredSize(new Dimension(1000, 500));
+      dialog.pack();
       dialog.setLocationRelativeTo(null);
       dialog.setVisible(true);
 
@@ -251,6 +253,7 @@ public class SwingUpdaterUI implements UpdaterUI {
 
   private static class MyTableModel extends AbstractTableModel {
     public static final String[] COLUMNS = {"File", "Action", "Problem", "Solution"};
+    public static final double[] WIDTHS = {0.65, 0.1, 0.15, 0.1};
     public static final int OPTIONS_COLUMN_INDEX = 3;
 
     private final List<Item> myItems = new ArrayList<>();
@@ -272,12 +275,7 @@ public class SwingUpdaterUI implements UpdaterUI {
     }
 
     public static int getColumnWidth(int column, int totalWidth) {
-      switch (column) {
-        case 0:
-          return (int)(totalWidth * 0.6);
-        default:
-          return (int)(totalWidth * 0.15);
-      }
+      return (int)(totalWidth * WIDTHS[column]);
     }
 
     @Override
