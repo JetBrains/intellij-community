@@ -6,10 +6,12 @@ import com.intellij.find.findUsages.FindUsagesHandler;
 import com.intellij.find.findUsages.FindUsagesManager;
 import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.find.impl.FindManagerImpl;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -142,19 +144,20 @@ public class GradleFindUsagesTest extends GradleImportingTestCase {
     return ProgressManager.getInstance().run(new Task.WithResult<Collection<UsageInfo>, Exception>(resolved.getProject(), "", false) {
       @Override
       protected Collection<UsageInfo> compute(@NotNull ProgressIndicator indicator) {
-
-        FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(resolved.getProject())).getFindUsagesManager();
-        FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(resolved, false);
-        assertNotNull(handler);
-        final FindUsagesOptions options = handler.getFindUsagesOptions();
-        final CommonProcessors.CollectProcessor<UsageInfo> processor = new CommonProcessors.CollectProcessor<UsageInfo>();
-        for (PsiElement element : handler.getPrimaryElements()) {
-          handler.processElementUsages(element, processor, options);
-        }
-        for (PsiElement element : handler.getSecondaryElements()) {
-          handler.processElementUsages(element, processor, options);
-        }
-        return processor.getResults();
+        return ApplicationManager.getApplication().runReadAction((Computable<Collection<UsageInfo>>)() -> {
+          FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(resolved.getProject())).getFindUsagesManager();
+          FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(resolved, false);
+          assertNotNull(handler);
+          final FindUsagesOptions options = handler.getFindUsagesOptions();
+          final CommonProcessors.CollectProcessor<UsageInfo> processor = new CommonProcessors.CollectProcessor<UsageInfo>();
+          for (PsiElement element : handler.getPrimaryElements()) {
+            handler.processElementUsages(element, processor, options);
+          }
+          for (PsiElement element : handler.getSecondaryElements()) {
+            handler.processElementUsages(element, processor, options);
+          }
+          return processor.getResults();
+        });
       }
     });
   }
