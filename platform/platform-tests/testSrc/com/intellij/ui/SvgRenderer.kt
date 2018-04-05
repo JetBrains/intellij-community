@@ -3,6 +3,7 @@ package com.intellij.ui
 
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.ui.IconCache
 import org.apache.batik.dom.GenericDOMImplementation
 import org.apache.batik.svggen.ImageHandlerBase64Encoder
@@ -75,9 +76,9 @@ internal class SvgRenderer(private val svgFileDir: Path) {
                                              "intellij.platform.ide.impl" to "platform/platform-impl/src")) {
       val index = outputPath.indexOf(moduleName)
       if (index > 0) {
-        return svgFileDir
+        return FileUtilRt.toSystemIndependentName(svgFileDir
           .relativize(Paths.get(PathManagerEx.getCommunityHomePath(), relativePath, outputPath.substring(index + moduleName.length + 1 /* slash */)))
-          .toString()
+          .toString())
       }
     }
 
