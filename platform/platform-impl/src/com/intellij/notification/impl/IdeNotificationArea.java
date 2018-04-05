@@ -27,7 +27,6 @@ import com.intellij.notification.impl.ui.NotificationsUtil;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.IconLikeCustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
@@ -63,7 +62,8 @@ public class IdeNotificationArea extends JLabel implements UISettingsListener, C
     }.installOn(this);
 
     ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(LogModel.LOG_MODEL_CHANGED,
-                                                                                () -> ApplicationManager.getApplication().invokeLater(() -> updateStatus()));
+                                                                                () -> ApplicationManager.getApplication()
+                                                                                                        .invokeLater(() -> updateStatus()));
   }
 
   @Override
@@ -223,14 +223,10 @@ public class IdeNotificationArea extends JLabel implements UISettingsListener, C
 
       x += (getIconWidth() - myWidth) / 2;
       y += SimpleColoredComponent.getTextBaseLine(g.getFontMetrics(), getIconHeight());
+      y -= JBUI.scale(1);
 
-      if (SystemInfo.isLinux) {
-        if (myStr.length() == 1) {
-          x--;
-        }
-      }
-      else if (myStr.length() == 2) {
-        x++;
+      if (myStr.length() == 1) {
+        x += JBUI.scale(1);
       }
 
       g.setColor(myTextColor);
