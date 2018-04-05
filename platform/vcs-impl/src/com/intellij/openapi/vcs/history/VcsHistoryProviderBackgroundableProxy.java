@@ -73,7 +73,7 @@ public class VcsHistoryProviderBackgroundableProxy {
     lock.lock();
 
     CollectingHistoryPartner partner = new CollectingHistoryPartner(filePath, vcsKey, continuation, silent);
-    reportHistory(filePath, null, vcsKey, lock, partner, true);
+    reportHistoryInBackground(filePath, null, vcsKey, lock, partner, true);
   }
 
   @CalledInAwt
@@ -96,16 +96,23 @@ public class VcsHistoryProviderBackgroundableProxy {
     if (lock.isLocked()) return;
     lock.lock();
 
-    VcsAppendableHistorySessionPartner cachedPartner = partner;
+    VcsAppendableHistorySessionPartner cachingPartner = wrapPartnerToCachingPartner(vcsKey, filePath, partner);
+    reportHistoryInBackground(filePath, null, vcsKey, lock, cachingPartner, canUseLastRevisionCheck);
+  }
+
+  @NotNull
+  private VcsAppendableHistorySessionPartner wrapPartnerToCachingPartner(@NotNull VcsKey vcsKey,
+                                                                         @NotNull FilePath filePath,
+                                                                         @NotNull VcsAppendableHistorySessionPartner partner) {
+    VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession> cacheableFactory = getCacheableFactory();
     if (cacheableFactory != null) {
-      cachedPartner = new HistoryPartnerProxy(partner, session -> {
+      return new HistoryPartnerProxy(partner, session -> {
         if (session == null) return;
         FilePath correctedPath = cacheableFactory.getUsedFilePath(session);
         myVcsHistoryCache.put(filePath, correctedPath, vcsKey, (VcsAbstractHistorySession)session.copy(), cacheableFactory, true);
       });
     }
-
-    reportHistory(filePath, null, vcsKey, lock, cachedPartner, canUseLastRevisionCheck);
+    return partner;
   }
 
   /**
@@ -121,7 +128,7 @@ public class VcsHistoryProviderBackgroundableProxy {
     if (lock.isLocked()) return;
     lock.lock();
 
-    reportHistory(filePath, startRevisionNumber, vcsKey, lock, partner, false);
+    reportHistoryInBackground(filePath, startRevisionNumber, vcsKey, lock, partner, false);
   }
 
   @Nullable
@@ -148,48 +155,56 @@ public class VcsHistoryProviderBackgroundableProxy {
     return fullSession;
   }
 
-  private void reportHistory(@NotNull FilePath filePath, @Nullable VcsRevisionNumber startRevisionNumber,
-                             @NotNull VcsKey vcsKey, @NotNull BackgroundableActionLock lock,
-                             @NotNull VcsAppendableHistorySessionPartner partner, boolean canUseCache) {
+  private void reportHistoryInBackground(@NotNull FilePath filePath, @Nullable VcsRevisionNumber startRevisionNumber,
+                                         @NotNull VcsKey vcsKey, @NotNull BackgroundableActionLock lock,
+                                         @NotNull VcsAppendableHistorySessionPartner partner, boolean canUseCache) {
     ProgressManager.getInstance().run(new Task.Backgroundable(myProject, VcsBundle.message("loading.file.history.progress"), true) {
       public void run(@NotNull ProgressIndicator indicator) {
         indicator.setText(VcsUtil.getPathForProgressPresentation(filePath.getIOFile()));
         indicator.setIndeterminate(true);
         try {
-          VcsAbstractHistorySession cachedSession = null;
-          VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession> cacheableFactory = getCacheableFactory();
-          if (canUseCache && cacheableFactory != null) {
-            cachedSession = getSessionFromCacheWithLastRevisionCheck(filePath, vcsKey, cacheableFactory);
-          }
-
-          if (cachedSession != null) {
-            partner.reportCreatedEmptySession(cachedSession);
-          }
-          else if (myHistoryProvider instanceof VcsHistoryProviderEx) {
-            ((VcsHistoryProviderEx)myHistoryProvider).reportAppendableHistory(filePath, startRevisionNumber, partner);
-          }
-          else {
-            myHistoryProvider.reportAppendableHistory(filePath, partner);
-          }
-          partner.finished();
-        }
-        catch (ProcessCanceledException e) {
-          throw e;
-        }
-        catch (VcsFileHistoryLimitReachedException ignored) {
-          partner.finished();
-        }
-        catch (VcsException e) {
-          partner.reportException(e);
-        }
-        catch (Throwable t) {
-          partner.reportException(new VcsException(t));
+          reportHistory(filePath, startRevisionNumber, vcsKey, partner, canUseCache);
         }
         finally {
           ApplicationManager.getApplication().invokeLater(lock::unlock, ModalityState.NON_MODAL);
         }
       }
     });
+  }
+
+  private void reportHistory(@NotNull FilePath filePath, @Nullable VcsRevisionNumber startRevisionNumber,
+                             @NotNull VcsKey vcsKey, @NotNull VcsAppendableHistorySessionPartner partner, boolean canUseCache) {
+    try {
+      VcsAbstractHistorySession cachedSession = null;
+      VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession> cacheableFactory = getCacheableFactory();
+      if (canUseCache && cacheableFactory != null) {
+        cachedSession = getSessionFromCacheWithLastRevisionCheck(filePath, vcsKey, cacheableFactory);
+      }
+
+
+      if (cachedSession != null) {
+        partner.reportCreatedEmptySession(cachedSession);
+      }
+      else if (myHistoryProvider instanceof VcsHistoryProviderEx) {
+        ((VcsHistoryProviderEx)myHistoryProvider).reportAppendableHistory(filePath, startRevisionNumber, partner);
+      }
+      else {
+        myHistoryProvider.reportAppendableHistory(filePath, partner);
+      }
+      partner.finished();
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
+    catch (VcsFileHistoryLimitReachedException ignored) {
+      partner.finished();
+    }
+    catch (VcsException e) {
+      partner.reportException(e);
+    }
+    catch (Throwable t) {
+      partner.reportException(new VcsException(t));
+    }
   }
 
   @Nullable
