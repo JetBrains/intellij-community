@@ -8,7 +8,7 @@ import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.testDiscovery.TestDiscoveryDataSocketListener;
 import com.intellij.execution.testDiscovery.TestDiscoveryExtension;
 import com.intellij.execution.testDiscovery.TestDiscoveryIndex;
-import com.intellij.junit4.JUnitAbstractIntegrationTest;
+import com.intellij.java.execution.AbstractTestFrameworkIntegrationTest;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
@@ -27,14 +27,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 // TODO parametrize by 1) junit version 2) TD protocol
 // TODO get agent from sources
-public class TestDiscoveryJUnitIntegrationTest extends JUnitAbstractIntegrationTest {
+public class TestDiscoveryJUnitIntegrationTest extends AbstractTestFrameworkIntegrationTest {
   private static final String myJUnitVersion = "4.12";
   private CompilerTester myCompilerTester;
 

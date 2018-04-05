@@ -1,38 +1,19 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package com.intellij.junit4;
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.java.execution;
 
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.Executor;
-import com.intellij.execution.ProgramRunnerUtil;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
-import com.intellij.execution.junit.JUnitConfiguration;
-import com.intellij.execution.junit.TestObject;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.SearchForTestsTask;
-import com.intellij.java.execution.BaseConfigurationTestCase;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -56,7 +37,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public abstract class JUnitAbstractIntegrationTest extends BaseConfigurationTestCase {
+public abstract class AbstractTestFrameworkIntegrationTest extends BaseConfigurationTestCase {
   public static ProcessOutput doStartTestsProcess(RunConfiguration configuration) throws ExecutionException {
     Executor executor = DefaultRunExecutor.getRunExecutorInstance();
     Project project = configuration.getProject();
@@ -64,7 +45,7 @@ public abstract class JUnitAbstractIntegrationTest extends BaseConfigurationTest
       settings = new RunnerAndConfigurationSettingsImpl(RunManagerImpl.getInstanceImpl(project), configuration, false);
     ExecutionEnvironment
       environment = new ExecutionEnvironment(executor, ProgramRunnerUtil.getRunner(DefaultRunExecutor.EXECUTOR_ID, settings), settings, project);
-    TestObject state = ((JUnitConfiguration)configuration).getState(executor, environment);
+    JavaTestFrameworkRunnableState state = ((JavaTestConfigurationBase)configuration).getState(executor, environment);
     state.appendRepeatMode();
 
     JavaParameters parameters = state.getJavaParameters();
@@ -151,9 +132,9 @@ public abstract class JUnitAbstractIntegrationTest extends BaseConfigurationTest
   }
 
   public static class ProcessOutput {
-    List<String> out = new ArrayList<>();
+    public List<String> out = new ArrayList<>();
     public List<String> err = new ArrayList<>();
-    List<String> sys = new ArrayList<>();
-    List<ServiceMessage> messages = new ArrayList<>();
+    public List<String> sys = new ArrayList<>();
+    public List<ServiceMessage> messages = new ArrayList<>();
   }
 }

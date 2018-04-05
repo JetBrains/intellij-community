@@ -469,4 +469,5 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     }
   }
 
+  public void appendRepeatMode() throws ExecutionException { }
 }
