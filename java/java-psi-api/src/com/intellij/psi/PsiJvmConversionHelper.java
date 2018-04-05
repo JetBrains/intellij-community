@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
+import com.intellij.lang.jvm.JvmAnnotationAttribute;
 import com.intellij.lang.jvm.JvmClassKind;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.lang.jvm.types.JvmReferenceType;
@@ -109,4 +110,10 @@ class PsiJvmConversionHelper {
     if (referenceList == null) return JvmReferenceType.EMPTY_ARRAY;
     return referenceList.getReferencedTypes();
   }
+
+  @NotNull
+  static JvmAnnotationAttribute getAnnotationAttribute(PsiNameValuePair pair) {
+    return new JavaAnnotationAttribute(pair);
+  }
+
 }
