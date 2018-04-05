@@ -290,11 +290,11 @@ public class VcsCachingHistory {
   }
 
   private static class HistoryPartnerProxy implements VcsAppendableHistorySessionPartner {
-    private final VcsAppendableHistorySessionPartner myPartner;
-    private final Consumer<VcsAbstractHistorySession> myFinish;
+    @NotNull private final VcsAppendableHistorySessionPartner myPartner;
+    @NotNull private final Consumer<VcsAbstractHistorySession> myFinish;
     private VcsAbstractHistorySession myCopy;
 
-    private HistoryPartnerProxy(VcsAppendableHistorySessionPartner partner, final Consumer<VcsAbstractHistorySession> finish) {
+    private HistoryPartnerProxy(@NotNull VcsAppendableHistorySessionPartner partner, @NotNull Consumer<VcsAbstractHistorySession> finish) {
       myPartner = partner;
       myFinish = finish;
     }
