@@ -172,6 +172,9 @@ public class AllIcons {
     public static final Icon Submit1 = IconLoader.getIcon("/actions/submit1.png"); // 11x11
     public static final Icon Suspend = IconLoader.getIcon("/actions/suspend.png"); // 16x16
     public static final Icon SwapPanels = IconLoader.getIcon("/actions/swapPanels.png"); // 16x16
+    
+    @SuppressWarnings("unused")
+    @Deprecated
     public static final Icon SynchronizeFS = IconLoader.getIcon("/actions/synchronizeFS.png"); // 16x16
     public static final Icon SynchronizeScrolling = IconLoader.getIcon("/actions/synchronizeScrolling.png"); // 16x16
     public static final Icon SyncPanels = IconLoader.getIcon("/actions/syncPanels.png"); // 16x16

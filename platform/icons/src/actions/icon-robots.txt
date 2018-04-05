@@ -2,3 +2,4 @@ deprecated: fileStatus.png
 deprecated: findPlain.png
 deprecated: menu-find.png
 deprecated: menu-help.png
+deprecated: synchronizeFS.png
