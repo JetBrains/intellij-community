@@ -29,17 +29,6 @@ public interface JvmPsiConversionHelper {
     return jvmElement.getSourceElement().getProject();
   }
 
-  //TODO: this is a hack, will be removed when a better way will be found
-  @Deprecated
-  @NotNull
-  static Project getProject(@NotNull JvmAnnotationTreeElement jvmElement) {
-    if (jvmElement instanceof PsiElement) {
-      return ((PsiElement)jvmElement).getProject();
-    }
-    JvmAnnotation jvmAnnotation = JvmAnnotationTreeElement.getParentOfType(jvmElement, JvmAnnotation.class);
-    return ((PsiElement)jvmAnnotation).getProject();
-  }
-
   @Nullable
   PsiClass convertTypeDeclaration(@Nullable JvmTypeDeclaration typeDeclaration);
 
@@ -69,21 +58,16 @@ public interface JvmPsiConversionHelper {
   @NotNull
   PsiSubstitutor convertSubstitutor(@NotNull JvmSubstitutor substitutor);
 
-  @Nullable
-  static PsiElement convertATE(@NotNull JvmAnnotationTreeElement param) {
-    return getInstance(getProject(param)).convertJvmTreeElement(param);
-  }
-
 
   @Contract("null -> null; !null -> !null")
   static PsiAnnotation convertA(JvmAnnotation param) {
     if (param == null) return null;
-    return getInstance(getProject((JvmAnnotationTreeElement)param)).convertAnnotation(param);
+    return getInstance(getProject(param)).convertAnnotation(param);
   }
 
   static PsiClass convertC(JvmClass param) {
     if (param == null) return null;
-    return getInstance(getProject((JvmAnnotationTreeElement)param)).convertTypeDeclaration(param);
+    return getInstance(getProject(param)).convertTypeDeclaration(param);
   }
 }
 
