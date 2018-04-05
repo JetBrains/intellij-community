@@ -176,6 +176,17 @@ public class VcsCachingHistory {
     return null;
   }
 
+  @CalledInBackground
+  public static List<VcsFileRevision> collect(@NotNull AbstractVcs vcs,
+                                              @NotNull FilePath filePath,
+                                              @Nullable VcsRevisionNumber revision) throws VcsException {
+    VcsCachingHistory history = new VcsCachingHistory(vcs, notNull(vcs.getVcsHistoryProvider()), vcs.getDiffProvider());
+    VcsAppendableHistoryPartnerAdapter partner = new VcsAppendableHistoryPartnerAdapter();
+    history.reportHistory(filePath, revision, vcs.getKeyInstanceMethod(), partner, true);
+    partner.check();
+    return partner.getSession().getRevisionList();
+  }
+
   @CalledInAwt
   public static void collectInBackground(@NotNull AbstractVcs vcs,
                                          @NotNull FilePath filePath,
@@ -229,11 +240,13 @@ public class VcsCachingHistory {
     history.reportHistoryInBackground(filePath, startRevisionNumber, vcs.getKeyInstanceMethod(), lock, partner, false);
   }
 
-  private static class CollectingHistoryPartner extends VcsAppendableHistoryPartnerAdapter {
+  private static class CollectingHistoryPartner implements VcsAppendableHistorySessionPartner {
     @NotNull private final Project myProject;
     @NotNull private final FilePath myFilePath;
     @NotNull private final Consumer<VcsHistorySession> myContinuation;
     @NotNull private final LimitHistoryCheck myCheck;
+
+    private VcsAbstractHistorySession mySession;
 
     private CollectingHistoryPartner(@NotNull Project project, @NotNull FilePath path,
                                      @NotNull Consumer<VcsHistorySession> continuation) {
@@ -247,28 +260,34 @@ public class VcsCachingHistory {
     public void reportCreatedEmptySession(VcsAbstractHistorySession session) {
       List<VcsFileRevision> revisionList = session.getRevisionList();
       while (myCheck.isOver(revisionList.size())) revisionList.remove(revisionList.size() - 1);
-      super.reportCreatedEmptySession(session);
+      mySession = session;
     }
 
     @Override
     public void acceptRevision(VcsFileRevision revision) {
       myCheck.checkNumber();
-      super.acceptRevision(revision);
+      mySession.appendRevision(revision);
     }
 
     @Override
     public void reportException(VcsException exception) {
       AbstractVcsHelper.getInstance(myProject).showError(exception,
                                                          VcsBundle.message("message.title.could.not.load.file.history"));
-      super.reportException(exception);
     }
 
     @Override
     public void finished() {
-      VcsAbstractHistorySession session = getSession();
-      if (session != null) {
-        ApplicationManager.getApplication().invokeLater(() -> myContinuation.consume(session), ModalityState.defaultModalityState());
+      if (mySession != null) {
+        ApplicationManager.getApplication().invokeLater(() -> myContinuation.consume(mySession), ModalityState.defaultModalityState());
       }
+    }
+
+    @Override
+    public void forceRefresh() {
+    }
+
+    @Override
+    public void beforeRefresh() {
     }
   }
 
