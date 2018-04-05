@@ -4,7 +4,6 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.pom.java.AcceptedLanguageLevelsSettings;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -23,8 +22,7 @@ public class LocalVariableTypeInferenceUnresolvedFixProvider extends UnresolvedR
       if (LanguageLevel.HIGHEST.isAtLeast(LanguageLevel.JDK_11)) {
         targetLanguageLevel = LanguageLevel.JDK_11;
       }
-      else if (ApplicationManager.getApplication().isEAP() || 
-               AcceptedLanguageLevelsSettings.isLanguageLevelAccepted(LanguageLevel.JDK_11)) {
+      else if (AcceptedLanguageLevelsSettings.isLanguageLevelAccepted(LanguageLevel.JDK_11)) {
         targetLanguageLevel = LanguageLevel.JDK_11;
 
         //show module options with ability to explicitly agree with legal notice
