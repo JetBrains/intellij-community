@@ -66,31 +66,6 @@ public class VcsCachingHistory {
     myDiffProvider = diffProvider;
   }
 
-  @Nullable
-  private VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession> getCacheableFactory() {
-    if (!(myHistoryProvider instanceof VcsCacheableHistorySessionFactory)) return null;
-    //noinspection unchecked
-    return (VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession>)myHistoryProvider;
-  }
-
-  @Nullable
-  private VcsAbstractHistorySession getFullHistoryFromCache(@NotNull VcsKey vcsKey,
-                                                            @NotNull FilePath filePath,
-                                                            @NotNull VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession> cacheableFactory) {
-    VcsAbstractHistorySession fullSession = myVcsHistoryCache.getFull(filePath, vcsKey, cacheableFactory);
-    if (fullSession != null) {
-      if (myConfiguration.LIMIT_HISTORY) {
-        if (myConfiguration.MAXIMUM_HISTORY_ROWS < fullSession.getRevisionList().size()) {
-          final List<VcsFileRevision> list = fullSession.getRevisionList();
-          final List<VcsFileRevision> was = new ArrayList<>(list.subList(0, myConfiguration.MAXIMUM_HISTORY_ROWS));
-          list.clear();
-          list.addAll(was);
-        }
-      }
-    }
-    return fullSession;
-  }
-
   private void reportHistoryInBackground(@NotNull FilePath filePath, @Nullable VcsRevisionNumber startRevisionNumber,
                                          @NotNull VcsKey vcsKey, @NotNull BackgroundableActionLock lock,
                                          @NotNull VcsAppendableHistorySessionPartner partner, boolean canUseCache) {
@@ -145,6 +120,31 @@ public class VcsCachingHistory {
     catch (Throwable t) {
       partner.reportException(new VcsException(t));
     }
+  }
+
+  @Nullable
+  private VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession> getCacheableFactory() {
+    if (!(myHistoryProvider instanceof VcsCacheableHistorySessionFactory)) return null;
+    //noinspection unchecked
+    return (VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession>)myHistoryProvider;
+  }
+
+  @Nullable
+  private VcsAbstractHistorySession getFullHistoryFromCache(@NotNull VcsKey vcsKey,
+                                                            @NotNull FilePath filePath,
+                                                            @NotNull VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession> cacheableFactory) {
+    VcsAbstractHistorySession fullSession = myVcsHistoryCache.getFull(filePath, vcsKey, cacheableFactory);
+    if (fullSession != null) {
+      if (myConfiguration.LIMIT_HISTORY) {
+        if (myConfiguration.MAXIMUM_HISTORY_ROWS < fullSession.getRevisionList().size()) {
+          final List<VcsFileRevision> list = fullSession.getRevisionList();
+          final List<VcsFileRevision> was = new ArrayList<>(list.subList(0, myConfiguration.MAXIMUM_HISTORY_ROWS));
+          list.clear();
+          list.addAll(was);
+        }
+      }
+    }
+    return fullSession;
   }
 
   @NotNull
