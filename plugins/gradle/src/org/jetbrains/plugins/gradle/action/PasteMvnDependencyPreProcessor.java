@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -45,10 +46,14 @@ public class PasteMvnDependencyPreProcessor implements CopyPastePreProcessor {
   @NotNull
   @Override
   public String preprocessOnPaste(Project project, PsiFile file, Editor editor, String text, RawText rawText) {
-    if ("build.gradle".equals(file.getName()) && isMvnDependency(text)) {
+    if (isApplicable(file) && isMvnDependency(text)) {
       return toGradleDependency(text);
     }
     return text;
+  }
+
+  protected boolean isApplicable(PsiFile file) {
+    return file.getName().endsWith('.' + GradleConstants.EXTENSION);
   }
 
   @NotNull
