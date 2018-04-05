@@ -127,32 +127,33 @@ public class AstLoadingFilter {
   }
 
   public static <E extends Throwable>
-  void forceEnableTreeLoading(@NotNull PsiFile file, @NotNull ThrowableRunnable<E> runnable) throws E {
-    forceEnableTreeLoading(file.getVirtualFile(), runnable);
+  void forceEnableTreeLoading(@NotNull PsiFile psiFile, @NotNull ThrowableRunnable<E> runnable) throws E {
+    forceEnableTreeLoading(psiFile, toComputable(runnable));
   }
 
   public static <E extends Throwable>
-  void forceEnableTreeLoading(@NotNull VirtualFile file, @NotNull ThrowableRunnable<E> runnable) throws E {
-    forceEnableTreeLoading(file, toComputable(runnable));
+  void forceEnableTreeLoading(@NotNull VirtualFile virtualFile, @NotNull ThrowableRunnable<E> runnable) throws E {
+    forceEnableTreeLoading(virtualFile, toComputable(runnable));
   }
 
   public static <T, E extends Throwable>
-  T forceEnableTreeLoading(@NotNull PsiFile file, @NotNull ThrowableComputable<T, E> computable) throws E {
-    return forceEnableTreeLoading(file.getVirtualFile(), computable);
+  T forceEnableTreeLoading(@NotNull PsiFile psiFile, @NotNull ThrowableComputable<T, E> computable) throws E {
+    VirtualFile virtualFile = psiFile.getVirtualFile();
+    return virtualFile == null ? computable.compute() : forceEnableTreeLoading(virtualFile, computable);
   }
 
   public static <T, E extends Throwable>
-  T forceEnableTreeLoading(@NotNull VirtualFile file, @NotNull ThrowableComputable<T, E> computable) throws E {
+  T forceEnableTreeLoading(@NotNull VirtualFile virtualFile, @NotNull ThrowableComputable<T, E> computable) throws E {
     if (myDisabledInfo.get() == null) {
       throw new IllegalStateException("It's not allowed to force enable loading before it has been disabled");
     }
     Set<VirtualFile> enabledFiles = myForcedEnabledFiles.get();
-    if (enabledFiles.add(file)) {
+    if (enabledFiles.add(virtualFile)) {
       try {
         return computable.compute();
       }
       finally {
-        enabledFiles.remove(file);
+        enabledFiles.remove(virtualFile);
       }
     }
     else {
