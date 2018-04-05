@@ -1,0 +1,44 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.psi.impl.search;
+
+import com.intellij.model.ModelElement;
+import com.intellij.model.search.OccurenceSearchRequestor;
+import com.intellij.model.search.SearchWordRequestor;
+import com.intellij.model.search.TextOccurenceProcessorProvider;
+import com.intellij.psi.search.TextOccurenceProcessor;
+import org.jetbrains.annotations.NotNull;
+
+final class EmptySearchWordRequestor implements SearchWordRequestor {
+
+  static final SearchWordRequestor INSTANCE = new EmptySearchWordRequestor();
+
+  @NotNull
+  @Override
+  public SearchWordRequestor setCaseSensitive(boolean caseSensitive) {
+    return this;
+  }
+
+  @NotNull
+  @Override
+  public SearchWordRequestor setSearchContext(short searchContext) {
+    return this;
+  }
+
+  @NotNull
+  @Override
+  public SearchWordRequestor setTargetHint(@NotNull ModelElement target) {
+    return this;
+  }
+
+  @Override
+  public void searchRequests(@NotNull TextOccurenceProcessor processor) {}
+
+  @Override
+  public void searchRequests(@NotNull OccurenceSearchRequestor occurenceSearchRequestor) {}
+
+  @Override
+  public void search(@NotNull TextOccurenceProcessorProvider f) {}
+
+  @Override
+  public void search(@NotNull ModelElement target) {}
+}

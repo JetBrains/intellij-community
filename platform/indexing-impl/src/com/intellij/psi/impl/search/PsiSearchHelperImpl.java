@@ -154,11 +154,11 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                   offsetsInScope, processor));
   }
 
-  private boolean bulkProcessElementsWithWord(@NotNull SearchScope searchScope,
-                                              @NotNull final String text,
-                                              final short searchContext,
-                                              @NotNull EnumSet<Options> options,
-                                              @Nullable String containerName, @NotNull final BulkOccurrenceProcessor processor) {
+  boolean bulkProcessElementsWithWord(@NotNull SearchScope searchScope,
+                                      @NotNull final String text,
+                                      final short searchContext,
+                                      @NotNull EnumSet<Options> options,
+                                      @Nullable String containerName, @NotNull final BulkOccurrenceProcessor processor) {
     if (text.isEmpty()) {
       throw new IllegalArgumentException("Cannot search for elements with empty text");
     }
@@ -216,9 +216,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   @NotNull
-  private static Processor<PsiElement> localProcessor(@NotNull final ProgressIndicator progress,
-                                                      @NotNull final StringSearcher searcher,
-                                                      @NotNull final BulkOccurrenceProcessor processor) {
+  static Processor<PsiElement> localProcessor(@NotNull final ProgressIndicator progress,
+                                              @NotNull final StringSearcher searcher,
+                                              @NotNull final BulkOccurrenceProcessor processor) {
     return new ReadActionProcessor<PsiElement>() {
       @Override
       public boolean processInReadAction(PsiElement scopeElement) {
@@ -289,11 +289,11 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
    * @param alreadyProcessedFiles the number of files scanned in previous pass.
    * @return true if completed
    */
-  private boolean processPsiFileRoots(@NotNull List<VirtualFile> files,
-                                      final int totalSize,
-                                      int alreadyProcessedFiles,
-                                      @NotNull final ProgressIndicator progress,
-                                      @NotNull final Processor<? super PsiFile> localProcessor) {
+  boolean processPsiFileRoots(@NotNull List<VirtualFile> files,
+                              final int totalSize,
+                              int alreadyProcessedFiles,
+                              @NotNull final ProgressIndicator progress,
+                              @NotNull final Processor<? super PsiFile> localProcessor) {
     myManager.startBatchFilesProcessingMode();
     try {
       final AtomicInteger counter = new AtomicInteger(alreadyProcessedFiles);
@@ -717,7 +717,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   @NotNull
-  private static String getPresentableWordsDescription(@NotNull Set<String> allWords) {
+  static String getPresentableWordsDescription(@NotNull Set<String> allWords) {
     final StringBuilder result = new StringBuilder();
     for (String string : allWords) {
       ProgressManager.checkCanceled();
@@ -968,11 +968,11 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return filesCount.get() == 0 ? SearchCostResult.ZERO_OCCURRENCES : SearchCostResult.FEW_OCCURRENCES;
   }
 
-  private static boolean processFilesContainingAllKeys(@NotNull Project project,
-                                                       @NotNull final GlobalSearchScope scope,
-                                                       @Nullable final Condition<Integer> checker,
-                                                       @NotNull final Collection<IdIndexEntry> keys,
-                                                       @NotNull final Processor<VirtualFile> processor) {
+  static boolean processFilesContainingAllKeys(@NotNull Project project,
+                                               @NotNull final GlobalSearchScope scope,
+                                               @Nullable final Condition<Integer> checker,
+                                               @NotNull final Collection<IdIndexEntry> keys,
+                                               @NotNull final Processor<VirtualFile> processor) {
     final FileIndexFacade index = FileIndexFacade.getInstance(project);
     return DumbService.getInstance(project).runReadActionInSmartMode(
       () -> FileBasedIndex.getInstance().processFilesContainingAllKeys(IdIndex.NAME, keys, scope, checker,
@@ -980,7 +980,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   @NotNull
-  private static List<IdIndexEntry> getWordEntries(@NotNull String name, final boolean caseSensitively) {
+  static List<IdIndexEntry> getWordEntries(@NotNull String name, final boolean caseSensitively) {
     List<String> words = StringUtil.getWordsInStringLongestFirst(name);
     if (words.isEmpty()) {
       String trimmed = name.trim();
