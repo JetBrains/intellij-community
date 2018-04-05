@@ -28,8 +28,6 @@ import com.intellij.openapi.vcs.diff.ItemLatestState;
 import com.intellij.openapi.vcs.history.LimitHistoryCheck.VcsFileHistoryLimitReachedException;
 import com.intellij.openapi.vcs.impl.BackgroundableActionLock;
 import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.vcs.history.VcsHistoryProviderEx;
 import com.intellij.vcsUtil.VcsUtil;
@@ -176,16 +174,9 @@ public class VcsCachingHistory {
     FilePath path = correctedFilePath != null ? correctedFilePath : filePath;
 
     if (VcsType.distributed.equals(myType)) {
-      VirtualFile virtualFile = path.getVirtualFile();
-      if (virtualFile == null) {
-        virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path.getPath());
-      }
-      if (virtualFile != null) {
-        VcsRevisionNumber currentRevision = myDiffProvider.getCurrentRevision(virtualFile);
-        List<VcsFileRevision> revisionList = cached.getRevisionList();
-        if (revisionList.get(0).getRevisionNumber().equals(currentRevision)) {
-          return cached;
-        }
+      VcsRevisionNumber currentRevision = cached.calcCurrentRevisionNumber();
+      if (cached.getRevisionList().get(0).getRevisionNumber().equals(currentRevision)) {
+        return cached;
       }
       return null;
     }
