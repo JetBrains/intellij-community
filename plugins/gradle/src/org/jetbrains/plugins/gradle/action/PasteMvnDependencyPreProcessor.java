@@ -61,7 +61,8 @@ public class PasteMvnDependencyPreProcessor implements CopyPastePreProcessor {
                                           @NotNull String artifactId,
                                           @NotNull String version,
                                           @NotNull String scope,
-                                          @NotNull String gradleClassifier) {
+                                          @NotNull String classifier) {
+    String gradleClassifier = classifier.isEmpty() ? "" : ":" + classifier;
     return scope + "'" + groupId + ":" + artifactId + ":" + version + gradleClassifier + "'";
   }
 
@@ -96,9 +97,7 @@ public class PasteMvnDependencyPreProcessor implements CopyPastePreProcessor {
     if (groupId.isEmpty() || artifactId.isEmpty() || version.isEmpty()) {
       return null;
     }
-    String gradleClassifier = classifier.isEmpty() ? "" : ":" + classifier;
-
-    return formatGradleDependency(groupId, artifactId, version, scope, gradleClassifier);
+    return formatGradleDependency(groupId, artifactId, version, scope, classifier);
   }
 
   @NotNull
