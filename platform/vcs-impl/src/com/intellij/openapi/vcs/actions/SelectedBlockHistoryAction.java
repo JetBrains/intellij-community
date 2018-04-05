@@ -82,7 +82,7 @@ public class SelectedBlockHistoryAction extends AbstractVcsAction {
       final int selectionEnd = selection.getSelectionEndLineNumber();
 
       VcsCachingHistory
-        .collectInBackground(activeVcs, VcsUtil.getFilePath(file), VcsBackgroundableActions.HISTORY_FOR_SELECTION, false,
+        .collectInBackground(activeVcs, VcsUtil.getFilePath(file), VcsBackgroundableActions.HISTORY_FOR_SELECTION,
                          session -> {
                            if (session == null) return;
                            final VcsSelectionHistoryDialog vcsHistoryDialog =

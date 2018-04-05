@@ -123,7 +123,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
     final Project project = vcsContext.getProject();
     final AbstractVcs vcs = notNull(ProjectLevelVcsManager.getInstance(project).getVcsFor(file));
 
-    VcsCachingHistory.collectInBackground(vcs, VcsUtil.getFilePath(file), VcsBackgroundableActions.COMPARE_WITH, false,
+    VcsCachingHistory.collectInBackground(vcs, VcsUtil.getFilePath(file), VcsBackgroundableActions.COMPARE_WITH,
                        session -> {
                          if (session == null) return;
                          final List<VcsFileRevision> revisions = session.getRevisionList();

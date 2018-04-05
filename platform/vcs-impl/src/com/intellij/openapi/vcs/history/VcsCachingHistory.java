@@ -207,14 +207,13 @@ public class VcsCachingHistory {
   public static void collectInBackground(@NotNull AbstractVcs vcs,
                                          @NotNull FilePath filePath,
                                          @NotNull VcsBackgroundableActions actionKey,
-                                         boolean silent,
                                          @NotNull Consumer<VcsHistorySession> consumer) {
     BackgroundableActionLock lock = getLock(vcs.getProject(), actionKey, filePath.getPath());
     if (lock.isLocked()) return;
     lock.lock();
 
     VcsCachingHistory history = new VcsCachingHistory(vcs, notNull(vcs.getVcsHistoryProvider()), vcs.getDiffProvider());
-    CollectingHistoryPartner partner = new CollectingHistoryPartner(vcs.getProject(), filePath, consumer, silent);
+    CollectingHistoryPartner partner = new CollectingHistoryPartner(vcs.getProject(), filePath, consumer);
     history.reportHistoryInBackground(filePath, null, vcs.getKeyInstanceMethod(), lock, partner, true);
   }
 
@@ -261,16 +260,13 @@ public class VcsCachingHistory {
     @NotNull private final Project myProject;
     @NotNull private final FilePath myFilePath;
     @NotNull private final Consumer<VcsHistorySession> myContinuation;
-    private final boolean mySilent;
     @NotNull private final LimitHistoryCheck myCheck;
 
     private CollectingHistoryPartner(@NotNull Project project, @NotNull FilePath path,
-                                     @NotNull Consumer<VcsHistorySession> continuation,
-                                     boolean silent) {
+                                     @NotNull Consumer<VcsHistorySession> continuation) {
       myProject = project;
       myFilePath = path;
       myContinuation = continuation;
-      mySilent = silent;
       myCheck = new LimitHistoryCheck(myProject, myFilePath.getPath());
     }
 
@@ -282,10 +278,8 @@ public class VcsCachingHistory {
 
     @Override
     public void reportException(VcsException exception) {
-      if (!mySilent) {
-        AbstractVcsHelper.getInstance(myProject).showError(exception,
-                                                           VcsBundle.message("message.title.could.not.load.file.history"));
-      }
+      AbstractVcsHelper.getInstance(myProject).showError(exception,
+                                                         VcsBundle.message("message.title.could.not.load.file.history"));
       super.reportException(exception);
     }
 
