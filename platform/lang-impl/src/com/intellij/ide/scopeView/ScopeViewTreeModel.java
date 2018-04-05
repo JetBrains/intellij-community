@@ -225,6 +225,13 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
     find(file, null, found -> {
       if (found instanceof Node) {
         Node node = (Node)found;
+        if (file.isDirectory()) {
+          ViewSettings settings = root.getSettings();
+          if (settings.isFlattenPackages() || settings.isHideEmptyMiddlePackages()) {
+            AbstractTreeNode parent = node.getParent();
+            if (parent instanceof Node) node = (Node)parent;
+          }
+        }
         if (node.childrenValid) {
           node.childrenValid = false;
           update(node, true);
