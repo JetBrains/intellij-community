@@ -11,6 +11,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jvnet.winp.WinProcess;
 
 import java.lang.management.ManagementFactory;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class OSProcessUtil {
   private static final Logger LOG = Logger.getInstance(OSProcessUtil.class);
@@ -122,5 +125,14 @@ public class OSProcessUtil {
     }
 
     return String.valueOf(ourPid);
+  }
+
+  /** @deprecated trivial; use {@link #getProcessList()} directly (to be removed in IDEA 2019) */
+  public static List<String> getCommandLinesOfRunningProcesses() {
+    List<String> result = new ArrayList<>();
+    for (ProcessInfo each : getProcessList()) {
+      result.add(each.getCommandLine());
+    }
+    return Collections.unmodifiableList(result);
   }
 }
