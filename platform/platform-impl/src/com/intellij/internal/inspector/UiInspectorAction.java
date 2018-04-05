@@ -2,6 +2,7 @@
 package com.intellij.internal.inspector;
 
 import com.google.common.base.MoreObjects;
+import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInspection.QuickFix;
@@ -18,6 +19,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -74,6 +76,7 @@ import static java.util.Locale.ENGLISH;
 
 public class UiInspectorAction extends ToggleAction implements DumbAware {
   private static final String CLICK_INFO = "CLICK_INFO";
+  private static final String CLICK_INFO_POINT = "CLICK_INFO_POINT";
   private static final String RENDERER_BOUNDS = "clicked renderer";
   private UiInspector myInspector;
 
@@ -1119,6 +1122,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       Class<?> clazz = clazz0.isAnonymousClass() ? clazz0.getSuperclass() : clazz0;
       myProperties.add(new PropertyBean(prefix + "class", clazz.getName()));
       addActionInfo(component);
+      addGutterInfo(component);
       StringBuilder classHierarchy = new StringBuilder();
       for (Class<?> cl = clazz.getSuperclass(); cl != null; cl = cl.getSuperclass()) {
         if (classHierarchy.length() > 0) classHierarchy.append(" -> ");
@@ -1150,6 +1154,16 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
           myProperties.add(new PropertyBean(prefix + propertyName, propertyValue, changed));
         }
         catch (Exception ignored) {
+        }
+      }
+    }
+
+    private void addGutterInfo(Object component) {
+      if (component instanceof EditorGutterComponentEx && ((JComponent)component).getClientProperty(CLICK_INFO_POINT) instanceof Point) {
+        Point clickPoint = (Point)((JComponent)component).getClientProperty(CLICK_INFO_POINT);
+        GutterMark renderer = ((EditorGutterComponentEx)component).getGutterRenderer(clickPoint);
+        if (renderer != null) {
+          myProperties.add(new PropertyBean("gutter renderer", renderer.getClass().getName(), true));
         }
       }
     }
@@ -1424,6 +1438,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       if (component != null) {
         if (component instanceof JComponent) {
           ((JComponent)component).putClientProperty(CLICK_INFO, getClickInfo(me, component));
+          ((JComponent)component).putClientProperty(CLICK_INFO_POINT, me.getPoint());
         }
         showInspector(component);
       }
