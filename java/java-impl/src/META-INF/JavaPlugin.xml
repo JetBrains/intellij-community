@@ -220,6 +220,7 @@
     <fileStructureGroupRuleProvider implementation="com.intellij.usages.impl.rules.JavaMethodGroupRuleProvider"/>
     <fileStructureGroupRuleProvider implementation="com.intellij.usages.impl.rules.NonJavaFileGroupRuleProvider"/>
     <qualifiedNameProvider implementation="com.intellij.ide.actions.JavaQualifiedNameProvider"/>
+    <virtualFileQualifiedNameProvider implementation="com.intellij.ide.actions.JavaVirtualFileQualifiedNameProvider"/>
     <referenceImporter implementation="com.intellij.codeInsight.daemon.impl.JavaReferenceImporter"/>
     <elementDescriptionProvider implementation="com.intellij.ide.util.JavaDeleteTypeDescriptionProvider"/>
     <elementDescriptionProvider implementation="com.intellij.usageView.JavaUsageViewDescriptionProvider"/>
