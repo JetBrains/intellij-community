@@ -1,1 +1,2 @@
 deprecated: fileStatus.png
+deprecated: menu-help.png
