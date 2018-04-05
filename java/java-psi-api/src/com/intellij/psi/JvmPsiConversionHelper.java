@@ -30,7 +30,11 @@ public interface JvmPsiConversionHelper {
   @Deprecated
   @NotNull
   static Project getProject(@NotNull JvmAnnotationTreeElement jvmElement) {
-    return ((PsiElement)jvmElement).getProject();
+    if (jvmElement instanceof PsiElement) {
+      return ((PsiElement)jvmElement).getProject();
+    }
+    JvmAnnotation jvmAnnotation = JvmAnnotationTreeElement.getParentOfType(jvmElement, JvmAnnotation.class);
+    return ((PsiElement)jvmAnnotation).getProject();
   }
 
   @Nullable
