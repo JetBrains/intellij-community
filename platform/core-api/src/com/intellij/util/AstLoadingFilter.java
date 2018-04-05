@@ -144,9 +144,6 @@ public class AstLoadingFilter {
 
   public static <T, E extends Throwable>
   T forceEnableTreeLoading(@NotNull VirtualFile virtualFile, @NotNull ThrowableComputable<T, E> computable) throws E {
-    if (myDisabledInfo.get() == null) {
-      throw new IllegalStateException("It's not allowed to force enable loading before it has been disabled");
-    }
     Set<VirtualFile> enabledFiles = myForcedEnabledFiles.get();
     if (enabledFiles.add(virtualFile)) {
       try {

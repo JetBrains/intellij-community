@@ -89,20 +89,4 @@ public class AstLoadingFilterTest extends LightPlatformCodeInsightFixtureTestCas
       )
     ));
   }
-
-  public void testForceEnableLoadingBeforeDisabling() throws Throwable {
-    PsiFileImpl file = addFile();
-    assertFalse(file.isContentsLoaded());
-    assertException(new AbstractExceptionCase<IllegalStateException>() {
-      @Override
-      public Class<IllegalStateException> getExpectedExceptionClass() {
-        return IllegalStateException.class;
-      }
-
-      @Override
-      public void tryClosure() throws IllegalStateException {
-        forceEnableTreeLoading(file, () -> file.getNode());
-      }
-    });
-  }
 }
