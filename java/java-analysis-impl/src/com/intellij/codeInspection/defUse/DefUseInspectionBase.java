@@ -18,7 +18,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -39,19 +38,19 @@ public class DefUseInspectionBase extends AbstractBaseJavaLocalInspectionTool {
     return new JavaElementVisitor() {
       @Override
       public void visitMethod(PsiMethod method) {
-        checkCodeBlock(method.getBody(), holder, isOnTheFly, method.isConstructor() ? false : null);
+        checkCodeBlock(method.getBody(), holder, isOnTheFly);
       }
 
       @Override
       public void visitClassInitializer(PsiClassInitializer initializer) {
-        checkCodeBlock(initializer.getBody(), holder, isOnTheFly, initializer.hasModifierProperty(PsiModifier.STATIC));
+        checkCodeBlock(initializer.getBody(), holder, isOnTheFly);
       }
 
       @Override
       public void visitLambdaExpression(PsiLambdaExpression expression) {
         PsiElement body = expression.getBody();
         if (body instanceof PsiCodeBlock) {
-          checkCodeBlock((PsiCodeBlock)body, holder, isOnTheFly, null);
+          checkCodeBlock((PsiCodeBlock)body, holder, isOnTheFly);
         }
       }
 
@@ -64,13 +63,12 @@ public class DefUseInspectionBase extends AbstractBaseJavaLocalInspectionTool {
 
   private void checkCodeBlock(final PsiCodeBlock body,
                               final ProblemsHolder holder,
-                              final boolean isOnTheFly,
-                              @Nullable Boolean isStatic) {
+                              final boolean isOnTheFly) {
     if (body == null) return;
     final Set<PsiVariable> usedVariables = new THashSet<>();
-    List<DefUseUtil.Info> unusedDefs = DefUseUtil.getUnusedDefs(body, usedVariables, isStatic);
+    List<DefUseUtil.Info> unusedDefs = DefUseUtil.getUnusedDefs(body, usedVariables);
 
-    if (!unusedDefs.isEmpty()) {
+    if (unusedDefs != null && !unusedDefs.isEmpty()) {
       unusedDefs.sort(Comparator.comparingInt(o -> o.getContext().getTextOffset()));
 
       for (DefUseUtil.Info info : unusedDefs) {

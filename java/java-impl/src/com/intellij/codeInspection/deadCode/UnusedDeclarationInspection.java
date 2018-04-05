@@ -275,8 +275,9 @@ public class UnusedDeclarationInspection extends UnusedDeclarationInspectionBase
           List<CommonProblemDescriptor> descriptors = new ArrayList<>();
 
           final Set<PsiVariable> usedVariables = new THashSet<>();
-          List<DefUseUtil.Info> unusedDefs = DefUseUtil.getUnusedDefs(body, usedVariables, null);
-          if (!unusedDefs.isEmpty()) {
+          List<DefUseUtil.Info> unusedDefs = DefUseUtil.getUnusedDefs(body, usedVariables);
+
+          if (unusedDefs != null && !unusedDefs.isEmpty()) {
 
             for (DefUseUtil.Info info : unusedDefs) {
               PsiElement parent = info.getContext();
