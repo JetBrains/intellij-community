@@ -27,6 +27,7 @@ import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.StripeTable;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
@@ -141,6 +142,10 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
       setLayout(new BorderLayout());
       setTitle(component.getClass().getName());
+      Dimension size = DimensionService.getInstance().getSize(getDimensionServiceKey());
+      Point location = DimensionService.getInstance().getLocation(getDimensionServiceKey());
+      if (size != null) setSize(size);
+      if (location != null) setLocation(location);
 
       DefaultActionGroup actions = new DefaultActionGroup();
       actions.addAction(new IconWithTextAction("Highlight") {
@@ -220,6 +225,10 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "CLOSE");
     }
 
+    private static String getDimensionServiceKey() {
+      return "UiInspectorWindow";
+    }
+
     private static Window findWindow(Component component) {
       DialogWrapper dialogWrapper = DialogWrapper.findInstance(component);
       if (dialogWrapper != null) {
@@ -257,6 +266,8 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
     @Override
     public void dispose() {
+      DimensionService.getInstance().setSize(getDimensionServiceKey(), getSize());
+      DimensionService.getInstance().setLocation(getDimensionServiceKey(), getLocation());
       super.dispose();
       DialogWrapper.cleanupRootPane(rootPane);
       DialogWrapper.cleanupWindowListeners(this);
@@ -1408,7 +1419,9 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
     public void showInspector(@NotNull Component c) {
       Window window = new InspectorWindow(c);
-      window.pack();
+      if (DimensionService.getInstance().getSize(InspectorWindow.getDimensionServiceKey()) == null) {
+        window.pack();
+      }
       window.setVisible(true);
       window.toFront();
     }
