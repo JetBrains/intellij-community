@@ -101,20 +101,27 @@ def do_get_latest_version(urls, req):
                 return
     return ""
 
+
 def do_install(pkgs):
-    try:
-        import pip
-    except ImportError:
-        error_no_pip()
-    return pip.main(['install'] + pkgs)
+    return pip_main(['install'] + pkgs)
 
 
 def do_uninstall(pkgs):
+    return pip_main(['uninstall', '-y'] + pkgs)
+
+
+def pip_main(args):
     try:
         import pip
     except ImportError:
         error_no_pip()
-    return pip.main(['uninstall', '-y'] + pkgs)
+
+    try:
+        func = pip.main
+    except AttributeError:
+        from pip._internal import main as func
+
+    func(args)
 
 
 def do_pyvenv(path, system_site_packages):
