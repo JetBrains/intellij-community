@@ -2,4 +2,6 @@
 package com.intellij.model;
 
 public interface ModelElement {
+
+  boolean isValid();
 }

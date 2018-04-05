@@ -18,4 +18,9 @@ public final class PsiModelElement extends UserDataHolderBase implements ModelEl
   public PsiElement getElement() {
     return myElement;
   }
+
+  @Override
+  public boolean isValid() {
+    return myElement.isValid();
+  }
 }
