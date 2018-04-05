@@ -22,8 +22,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.history.VcsCachingHistory;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
-import com.intellij.openapi.vcs.history.VcsHistoryProviderBackgroundableProxy;
 import com.intellij.openapi.vcs.history.impl.VcsSelectionHistoryDialog;
 import com.intellij.openapi.vcs.impl.BackgroundableActionEnabledHandler;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
@@ -81,7 +81,7 @@ public class SelectedBlockHistoryAction extends AbstractVcsAction {
       final int selectionStart = selection.getSelectionStartLineNumber();
       final int selectionEnd = selection.getSelectionEndLineNumber();
 
-      VcsHistoryProviderBackgroundableProxy
+      VcsCachingHistory
         .collectInBackground(activeVcs, VcsUtil.getFilePath(file), VcsBackgroundableActions.HISTORY_FOR_SELECTION, false,
                          session -> {
                            if (session == null) return;

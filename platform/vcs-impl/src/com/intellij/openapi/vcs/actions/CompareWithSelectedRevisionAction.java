@@ -24,8 +24,8 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.HistoryAsTreeProvider;
+import com.intellij.openapi.vcs.history.VcsCachingHistory;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
-import com.intellij.openapi.vcs.history.VcsHistoryProviderBackgroundableProxy;
 import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
@@ -123,7 +123,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
     final Project project = vcsContext.getProject();
     final AbstractVcs vcs = notNull(ProjectLevelVcsManager.getInstance(project).getVcsFor(file));
 
-    VcsHistoryProviderBackgroundableProxy.collectInBackground(vcs, VcsUtil.getFilePath(file), VcsBackgroundableActions.COMPARE_WITH, false,
+    VcsCachingHistory.collectInBackground(vcs, VcsUtil.getFilePath(file), VcsBackgroundableActions.COMPARE_WITH, false,
                        session -> {
                          if (session == null) return;
                          final List<VcsFileRevision> revisions = session.getRevisionList();

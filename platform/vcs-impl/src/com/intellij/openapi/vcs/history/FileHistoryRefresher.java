@@ -85,10 +85,10 @@ public class FileHistoryRefresher implements FileHistoryRefresherI {
     myIsRefresh = isRefresh;
     mySessionPartner.beforeRefresh();
     if (myVcsHistoryProvider instanceof VcsHistoryProviderEx && myStartingRevisionNumber != null) {
-      VcsHistoryProviderBackgroundableProxy.collectInBackground(myVcs, myPath, myStartingRevisionNumber, mySessionPartner);
+      VcsCachingHistory.collectInBackground(myVcs, myPath, myStartingRevisionNumber, mySessionPartner);
     }
     else {
-      VcsHistoryProviderBackgroundableProxy.collectInBackground(myVcs, myPath, mySessionPartner, myCanUseCache, canUseLastRevision);
+      VcsCachingHistory.collectInBackground(myVcs, myPath, mySessionPartner, myCanUseCache, canUseLastRevision);
     }
     myCanUseCache = false;
   }
