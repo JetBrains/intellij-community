@@ -7,7 +7,10 @@ import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 class JavaAnnotationAttribute implements JvmAnnotationAttribute {
 
@@ -35,7 +38,11 @@ class JavaAnnotationAttribute implements JvmAnnotationAttribute {
   @NotNull
   @Override
   public JvmAnnotationAttributeValue getValue() {
-    PsiAnnotationMemberValue value = myPair.getValue();
+    return convertToJvm(myPair.getValue());
+  }
+
+  @NotNull
+  private JvmAnnotationAttributeValue convertToJvm(PsiAnnotationMemberValue value) {
     if (value instanceof PsiLiteralExpression) {
       if (Objects
         .equals(((PsiLiteralExpression)value).getType(), PsiType.getJavaLangString(myPair.getManager(), myPair.getResolveScope()))) {
@@ -53,6 +60,9 @@ class JavaAnnotationAttribute implements JvmAnnotationAttribute {
     }
     if (value instanceof PsiClassObjectAccessExpression) {
       return new MyJvmClassValue(((PsiClassObjectAccessExpression)value));
+    }
+    if (value instanceof PsiArrayInitializerMemberValue) {
+      return new MyJvmAnnotationArrayValue(((PsiArrayInitializerMemberValue)value));
     }
     throw new RuntimeExceptionWithAttachments("Not implemented: " + (value != null ? value.getClass() : null),
                                               new Attachment("text", value != null ? value.getText() : "null"));
@@ -164,6 +174,19 @@ class JavaAnnotationAttribute implements JvmAnnotationAttribute {
     @Override
     public JvmClass getValue() {
       return (JvmClass)myValue.getOperand().getInnermostComponentReferenceElement().getReference().resolve();
+    }
+  }
+
+  private class MyJvmAnnotationArrayValue extends MyValue<PsiArrayInitializerMemberValue> implements JvmAnnotationArrayValue {
+
+    public MyJvmAnnotationArrayValue(PsiArrayInitializerMemberValue value) {
+      super(value);
+    }
+
+    @NotNull
+    @Override
+    public List<JvmAnnotationAttributeValue> getValues() {
+      return Arrays.stream(myValue.getInitializers()).map(e -> convertToJvm(e)).collect(Collectors.toList());
     }
   }
 }
