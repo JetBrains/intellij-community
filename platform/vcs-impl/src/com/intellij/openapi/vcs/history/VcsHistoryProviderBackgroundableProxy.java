@@ -72,7 +72,7 @@ public class VcsHistoryProviderBackgroundableProxy {
     if (lock.isLocked()) return;
     lock.lock();
 
-    CollectingHistoryPartner partner = new CollectingHistoryPartner(filePath, vcsKey, continuation, silent);
+    CollectingHistoryPartner partner = new CollectingHistoryPartner(filePath, continuation, silent);
     reportHistoryInBackground(filePath, null, vcsKey, lock, partner, true);
   }
 
@@ -96,23 +96,7 @@ public class VcsHistoryProviderBackgroundableProxy {
     if (lock.isLocked()) return;
     lock.lock();
 
-    VcsAppendableHistorySessionPartner cachingPartner = wrapPartnerToCachingPartner(vcsKey, filePath, partner);
-    reportHistoryInBackground(filePath, null, vcsKey, lock, cachingPartner, canUseLastRevisionCheck);
-  }
-
-  @NotNull
-  private VcsAppendableHistorySessionPartner wrapPartnerToCachingPartner(@NotNull VcsKey vcsKey,
-                                                                         @NotNull FilePath filePath,
-                                                                         @NotNull VcsAppendableHistorySessionPartner partner) {
-    VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession> cacheableFactory = getCacheableFactory();
-    if (cacheableFactory != null) {
-      return new HistoryPartnerProxy(partner, session -> {
-        if (session == null) return;
-        FilePath correctedPath = cacheableFactory.getUsedFilePath(session);
-        myVcsHistoryCache.put(filePath, correctedPath, vcsKey, (VcsAbstractHistorySession)session.copy(), cacheableFactory, true);
-      });
-    }
-    return partner;
+    reportHistoryInBackground(filePath, null, vcsKey, lock, partner, canUseLastRevisionCheck);
   }
 
   /**
@@ -175,6 +159,10 @@ public class VcsHistoryProviderBackgroundableProxy {
   private void reportHistory(@NotNull FilePath filePath, @Nullable VcsRevisionNumber startRevisionNumber,
                              @NotNull VcsKey vcsKey, @NotNull VcsAppendableHistorySessionPartner partner, boolean canUseCache) {
     try {
+      if (startRevisionNumber == null) {
+        partner = wrapPartnerToCachingPartner(vcsKey, filePath, partner);
+      }
+
       VcsAbstractHistorySession cachedSession = null;
       VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession> cacheableFactory = getCacheableFactory();
       if (canUseCache && cacheableFactory != null) {
@@ -205,6 +193,23 @@ public class VcsHistoryProviderBackgroundableProxy {
     catch (Throwable t) {
       partner.reportException(new VcsException(t));
     }
+  }
+
+  @NotNull
+  private VcsAppendableHistorySessionPartner wrapPartnerToCachingPartner(@NotNull VcsKey vcsKey,
+                                                                         @NotNull FilePath filePath,
+                                                                         @NotNull VcsAppendableHistorySessionPartner partner) {
+    // this is what needs to be done to put computed file history in cache
+    // we can not retrieve a session from a partner in any other way
+    VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession> cacheableFactory = getCacheableFactory();
+    if (cacheableFactory != null) {
+      return new HistoryPartnerProxy(partner, session -> {
+        if (session == null) return;
+        FilePath correctedPath = cacheableFactory.getUsedFilePath(session);
+        myVcsHistoryCache.put(filePath, correctedPath, vcsKey, (VcsAbstractHistorySession)session.copy(), cacheableFactory, true);
+      });
+    }
+    return partner;
   }
 
   @Nullable
@@ -248,17 +253,14 @@ public class VcsHistoryProviderBackgroundableProxy {
 
   private class CollectingHistoryPartner extends VcsAppendableHistoryPartnerAdapter {
     @NotNull private final FilePath myFilePath;
-    @NotNull private final VcsKey myVcsKey;
     @NotNull private final Consumer<VcsHistorySession> myContinuation;
     private final boolean mySilent;
     @NotNull private final LimitHistoryCheck myCheck;
 
     private CollectingHistoryPartner(@NotNull FilePath path,
-                                     @NotNull VcsKey key,
                                      @NotNull Consumer<VcsHistorySession> continuation,
                                      boolean silent) {
       myFilePath = path;
-      myVcsKey = key;
       myContinuation = continuation;
       mySilent = silent;
       myCheck = new LimitHistoryCheck(myProject, myFilePath.getPath());
@@ -283,11 +285,6 @@ public class VcsHistoryProviderBackgroundableProxy {
     public void finished() {
       VcsAbstractHistorySession session = getSession();
       if (session != null) {
-        VcsCacheableHistorySessionFactory<? extends Serializable, VcsAbstractHistorySession> factory = getCacheableFactory();
-        if (factory != null) {
-          FilePath correctedPath = factory.getUsedFilePath(session);
-          myVcsHistoryCache.put(myFilePath, correctedPath, myVcsKey, (VcsAbstractHistorySession)session.copy(), factory, true);
-        }
         ApplicationManager.getApplication().invokeLater(() -> myContinuation.consume(session), ModalityState.defaultModalityState());
       }
     }
