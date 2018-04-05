@@ -74,8 +74,11 @@
     <lang.elementManipulator forClass="com.intellij.json.psi.JsonStringLiteral"
                              implementationClass="com.intellij.json.psi.JsonStringLiteralManipulator"/>
     <projectService serviceImplementation="com.jetbrains.jsonSchema.JsonSchemaMappingsProjectConfiguration"/>
+    <projectService serviceImplementation="com.jetbrains.jsonSchema.JsonSchemaCatalogProjectConfiguration"/>
     <projectConfigurable groupId="preferences.externalResources" id="settings.json.schema" displayName="JSON Schema"
                          instance="com.jetbrains.jsonSchema.JsonSchemaMappingsConfigurable" nonDefaultProject="true"/>
+    <projectConfigurable groupId="preferences.externalResources" id="settings.json.schema.catalog" displayName="JSON Schema Catalog"
+                         instance="com.jetbrains.jsonSchema.JsonSchemaCatalogConfigurable" nonDefaultProject="true"/>
     <projectService serviceInterface="com.jetbrains.jsonSchema.ide.JsonSchemaService"
                     serviceImplementation="com.jetbrains.jsonSchema.impl.JsonSchemaServiceImpl"/>
     <annotator language="JSON" implementationClass="com.jetbrains.jsonSchema.impl.JsonSchemaAnnotator"/>

@@ -47,6 +47,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
   private static final String BUILTIN_USAGE_KEY = "json.schema.builtin.completion";
   private static final String SCHEMA_USAGE_KEY = "json.schema.schema.completion";
   private static final String USER_USAGE_KEY = "json.schema.user.completion";
+  private static final String REMOTE_USAGE_KEY = "json.schema.remote.completion";
 
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
@@ -80,14 +81,22 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
   }
 
   private static void updateStat(@Nullable JsonSchemaFileProvider provider) {
+    // TODO: move to the new statistics engine
     if (provider == null) return;
     final SchemaType schemaType = provider.getSchemaType();
-    if (SchemaType.schema.equals(schemaType)) {
-      UsageTrigger.trigger(SCHEMA_USAGE_KEY);
-    } else if (SchemaType.embeddedSchema.equals(schemaType)) {
-      UsageTrigger.trigger(BUILTIN_USAGE_KEY);
-    } else if (SchemaType.userSchema.equals(schemaType)) {
-      UsageTrigger.trigger(USER_USAGE_KEY);
+    switch (schemaType) {
+      case schema:
+        UsageTrigger.trigger(SCHEMA_USAGE_KEY);
+        break;
+      case userSchema:
+        UsageTrigger.trigger(USER_USAGE_KEY);
+        break;
+      case embeddedSchema:
+        UsageTrigger.trigger(BUILTIN_USAGE_KEY);
+        break;
+      case remoteSchema:
+        UsageTrigger.trigger(REMOTE_USAGE_KEY);
+        break;
     }
   }
 

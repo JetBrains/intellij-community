@@ -3,7 +3,6 @@ package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.json.psi.*;
 import com.intellij.notification.NotificationGroup;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -11,11 +10,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PairConsumer;
-import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,20 +69,6 @@ public class JsonSchemaReader {
     return null;
   }
 
-  @Nullable
-  public static String readSchemaId(@NotNull final Project project, @NotNull final VirtualFile schemaFile) {
-    if (!schemaFile.isValid()) return null;
-    final PsiFile psiFile = PsiManager.getInstance(project).findFile(schemaFile);
-    if (!(psiFile instanceof JsonFile)) return null;
-
-    final CachedValueProvider<String> provider = () -> {
-      final JsonObject topLevelValue = ObjectUtils.tryCast(((JsonFile)psiFile).getTopLevelValue(), JsonObject.class);
-      if (topLevelValue == null) return null;
-      return CachedValueProvider.Result.create(readId(topLevelValue), psiFile);
-    };
-    return ReadAction.compute(() -> CachedValuesManager.getCachedValue(psiFile, provider));
-  }
-
   public JsonSchemaObject read(@NotNull final JsonObject object) {
     final JsonSchemaObject root = new JsonSchemaObject(object);
     myQueue.add(root);
@@ -109,15 +91,6 @@ public class JsonSchemaReader {
 
   public Map<String, JsonSchemaObject> getIds() {
     return myIds;
-  }
-
-  @Nullable
-  private static String readId(@NotNull final JsonObject object) {
-    final JsonProperty property = object.findProperty("id");
-    if (property != null && property.getValue() instanceof JsonStringLiteral) {
-      return JsonSchemaService.normalizeId(StringUtil.unquoteString(property.getValue().getText()));
-    }
-    return null;
   }
 
   private void readSingleDefinition(@NotNull String name, @NotNull JsonValue value, @NotNull JsonSchemaObject schema) {

@@ -43,6 +43,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static com.jetbrains.jsonSchema.JsonSchemaConfigurable.isHttpPath;
+
 /**
  * @author Irina.Chernushina on 2/2/2016.
  */
@@ -90,7 +92,7 @@ public class JsonSchemaMappingsView implements Disposable {
     SwingHelper.installFileCompletionAndBrowseDialog(myProject, mySchemaField, JsonBundle.message("json.schema.add.schema.chooser.title"),
                                                      FileChooserDescriptorFactory.createSingleFileDescriptor());
     attachNavigateToSchema();
-    myError = SwingHelper.createHtmlLabel("Warning: conflicting mappings. <a href=\"#\">Show details</a>", null, s -> {
+    myError = SwingHelper.createHtmlLabel(JsonBundle.message("json.schema.conflicting.mappings"), null, s -> {
       final BalloonBuilder builder = JBPopupFactory.getInstance().
         createHtmlTextBalloonBuilder(myErrorText, UIUtil.getBalloonWarningIcon(), MessageType.WARNING.getPopupBackground(), null);
       builder.setDisposable(this);
@@ -100,7 +102,7 @@ public class JsonSchemaMappingsView implements Disposable {
     });
 
     final FormBuilder builder = FormBuilder.createFormBuilder();
-    final JBLabel label = new JBLabel("JSON schema file:");
+    final JBLabel label = new JBLabel(JsonBundle.message("json.schema.file.selector.title"));
     builder.addLabeledComponent(label, mySchemaField);
     label.setBorder(JBUI.Borders.empty(0, 10));
     mySchemaField.setBorder(JBUI.Borders.emptyRight(10));
@@ -128,11 +130,11 @@ public class JsonSchemaMappingsView implements Disposable {
   private void attachNavigateToSchema() {
     DumbAwareAction.create(e -> {
       String pathToSchema = mySchemaField.getText();
-      if (StringUtil.isEmptyOrSpaces(pathToSchema)) return;
+      if (StringUtil.isEmptyOrSpaces(pathToSchema) || isHttpPath(pathToSchema)) return;
       VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(pathToSchema));
       if (virtualFile == null) {
         BalloonBuilder balloonBuilder = JBPopupFactory.getInstance()
-          .createHtmlTextBalloonBuilder("File not found", UIUtil.getBalloonErrorIcon(), MessageType.ERROR.getPopupBackground(), null);
+          .createHtmlTextBalloonBuilder(JsonBundle.message("json.schema.file.not.found"), UIUtil.getBalloonErrorIcon(), MessageType.ERROR.getPopupBackground(), null);
         Balloon balloon = balloonBuilder.setFadeoutTime(TimeUnit.SECONDS.toMillis(3)).createBalloon();
         balloon.showInCenterOf(mySchemaField);
         return;
@@ -157,7 +159,9 @@ public class JsonSchemaMappingsView implements Disposable {
   }
 
   public String getSchemaSubPath() {
-    return FileUtil.toSystemDependentName(getRelativePath(myProject, mySchemaField.getText()));
+    String schemaFieldText = mySchemaField.getText();
+    if (isHttpPath(schemaFieldText)) return schemaFieldText;
+    return FileUtil.toSystemDependentName(getRelativePath(myProject, schemaFieldText));
   }
 
   private static ColumnInfo[] createColumns() {
