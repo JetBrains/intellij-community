@@ -332,6 +332,9 @@ public class AllIcons {
       public static final Icon Idle = IconLoader.getIcon("/debugger/threadStates/idle.png"); // 16x16
       public static final Icon IO = IconLoader.getIcon("/debugger/threadStates/io.png"); // 16x16
       public static final Icon Locked = IconLoader.getIcon("/debugger/threadStates/locked.png"); // 16x16
+      
+      @SuppressWarnings("unused")
+      @Deprecated
       public static final Icon Paused = IconLoader.getIcon("/debugger/threadStates/paused.png"); // 16x16
       public static final Icon Running = IconLoader.getIcon("/debugger/threadStates/running.png"); // 16x16
       public static final Icon Socket = IconLoader.getIcon("/debugger/threadStates/socket.png"); // 16x16
