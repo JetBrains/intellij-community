@@ -29,6 +29,7 @@ import java.util.*
 class IconsClassGenerator(val projectHome: File, val util: JpsModule, val writeChangesToDisk: Boolean = true) {
   private var processedClasses = 0
   private var processedIcons = 0
+  private var processedOverriddenIcons = 0
   private var modifiedClasses = ArrayList<Pair<JpsModule, File>>()
 
   fun processModule(module: JpsModule) {
@@ -94,7 +95,7 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule, val writeC
 
   fun printStats() {
     println()
-    println("Generated classes: $processedClasses. Processed icons: $processedIcons")
+    println("Generated classes: $processedClasses. Processed icons: $processedIcons. Overridden icons: $processedOverriddenIcons")
   }
 
   fun getModifiedClasses() = modifiedClasses
@@ -143,11 +144,14 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule, val writeC
     }
 
     val imageCollector = ImageCollector(projectHome, true)
-    val images = imageCollector.collect(module)
+    imageCollector.collect(module)
+    val images = imageCollector.getImages()
+    val overriddenIcons = imageCollector.getOverriddenIcons()
+
     imageCollector.printUsedIconRobots()
 
     val inners = StringBuilder()
-    processIcons(images, inners, customLoad, 0)
+    processIcons(images, overriddenIcons, inners, customLoad, 0)
     if (inners.isEmpty()) return null
 
     answer.append(inners)
@@ -155,21 +159,28 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule, val writeC
     return answer.toString()
   }
 
-  private fun processIcons(images: List<ImagePaths>, answer: StringBuilder, customLoad: Boolean, depth: Int) {
+  private fun processIcons(images: List<ImagePaths>,
+                           overriddenIcons: List<OverriddenImage>,
+                           answer: StringBuilder,
+                           customLoad: Boolean,
+                           depth: Int) {
     val level = depth + 1
 
-    val (nodes, leafs) = images.partition { getImageId(it, depth).contains('/') }
-    val nodeMap = nodes.groupBy { getImageId(it, depth).substringBefore('/') }
-    val leafMap = ContainerUtil.newMapFromValues(leafs.iterator(), { getImageId(it, depth) })
+    val (nodeMap, leafMap) = partitionIntoGroups(images, depth, { it.id })
+    val (overriddenNodesMap, overriddenLeafsMap) = partitionIntoGroups(overriddenIcons, depth, { it.oldId })
 
-    val sortedKeys = (nodeMap.keys + leafMap.keys).sortedWith(NAME_COMPARATOR)
+    val sortedKeys = (nodeMap.keys + leafMap.keys + overriddenNodesMap.keys + overriddenLeafsMap.keys).sortedWith(NAME_COMPARATOR)
     sortedKeys.forEach { key ->
       val group = nodeMap[key]
       val image = leafMap[key]
+      val overriddenGroup = overriddenNodesMap[key]
+      val overriddenImage = overriddenLeafsMap[key]
 
-      if (group != null) {
+      assert(overriddenImage == null || image == null, { "Can't override existing icon: ${image!!.id}" })
+
+      if (group != null || overriddenGroup != null) {
         val inners = StringBuilder()
-        processIcons(group, inners, customLoad, depth + 1)
+        processIcons(group.orEmpty(), overriddenGroup.orEmpty(), inners, customLoad, depth + 1)
 
         if (inners.isNotEmpty()) {
           append(answer, "", level)
@@ -218,7 +229,34 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule, val writeC
           }
         }
       }
+
+      if (overriddenImage != null) {
+        processedOverriddenIcons++
+
+        append(answer, "", level)
+        append(answer, "@SuppressWarnings(\"unused\")", level)
+        append(answer, "@Deprecated", level)
+
+        val sourceRoot = overriddenImage.sourceRoot
+        var root_prefix: String = ""
+        if (sourceRoot.rootType == JavaSourceRootType.SOURCE) {
+          @Suppress("UNCHECKED_CAST")
+          val packagePrefix = (sourceRoot.properties as JpsSimpleElement<JavaSourceRootProperties>).data.packagePrefix
+          if (!packagePrefix.isEmpty()) root_prefix = "/" + packagePrefix.replace('.', '/')
+        }
+
+        val name = overriddenImage.oldId.substringAfterLast('/')
+        append(answer, "public static final Icon ${iconName(name)} = ${overriddenImage.newId};", level)
+      }
     }
+  }
+
+  private fun <T> IconsClassGenerator.partitionIntoGroups(images: List<T>, depth: Int, idGetter: (T) -> String)
+    : Pair<Map<String, List<T>>, MutableMap<String, T>> {
+    val (nodes, leafs) = images.partition { getImageId(idGetter(it), depth).contains('/') }
+    val nodeMap = nodes.groupBy { getImageId(idGetter(it), depth).substringBefore('/') }
+    val leafMap = ContainerUtil.newMapFromValues(leafs.iterator(), { getImageId(idGetter(it), depth) })
+    return Pair(nodeMap, leafMap)
   }
 
   private fun append(answer: StringBuilder, text: String, level: Int) {
@@ -226,9 +264,9 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule, val writeC
     answer.append(text).append("\n")
   }
 
-  private fun getImageId(image: ImagePaths, depth: Int): String {
-    val path = StringUtil.trimStart(image.id, "/").split("/")
-    if (path.size < depth) throw IllegalArgumentException("Can't get image ID - ${image.id}, $depth")
+  private fun getImageId(imageId: String, depth: Int): String {
+    val path = StringUtil.trimStart(imageId, "/").split("/")
+    if (path.size < depth) throw IllegalArgumentException("Can't get image ID - ${imageId}, $depth")
     return path.drop(depth).joinToString("/")
   }
 
@@ -268,7 +306,7 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule, val writeC
   }
 
   private fun iconName(name: String): String {
-    val id = capitalize(name.substring(0, name.lastIndexOf('.')))
+    val id = capitalize(name.substringBefore('.'))
     return toJavaIdentifier(id)
   }
 
