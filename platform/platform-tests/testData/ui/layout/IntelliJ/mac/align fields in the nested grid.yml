@@ -76,7 +76,7 @@ componentConstrains:
     skip: 1
     spanX: 2097051
     wrap: true
-bounds:
+cellBounds:
 - [0, 0, 480, 21]
 - [0, 31, 134, 21]
 - [140, 31, 332, 21]
@@ -84,3 +84,11 @@ bounds:
 - [0, 62, 134, 21]
 - [140, 62, 340, 21]
 - [140, 89, 340, 14]
+componentBounds:
+  In KeePass: [-3, -3, 93, 26]
+  'Database:': [24, 34, 61, 16]
+  'JTextField #2': [137, 28, 313, 27]
+  'JLabel #3': [451, 34, 21, 16]
+  'Master Password:': [24, 65, 110, 16]
+  'JBPasswordField #5': [137, 59, 256, 27]
+  Stored using weak encryption.: [141, 89, 155, 14]

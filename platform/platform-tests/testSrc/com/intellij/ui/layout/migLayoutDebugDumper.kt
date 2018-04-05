@@ -2,7 +2,8 @@
 package com.intellij.ui.layout
 
 import com.intellij.configurationStore.serialize
-import com.intellij.openapi.util.text.StringUtil
+import com.intellij.ui.dumpComponentBounds
+import com.intellij.ui.getComponentKey
 import com.intellij.util.xmlb.SkipDefaultsSerializationFilter
 import net.miginfocom.layout.*
 import net.miginfocom.swing.MigLayout
@@ -13,8 +14,7 @@ import org.yaml.snakeyaml.nodes.NodeTuple
 import org.yaml.snakeyaml.nodes.Tag
 import org.yaml.snakeyaml.representer.Representer
 import java.awt.Container
-import javax.swing.AbstractButton
-import javax.swing.JLabel
+import java.awt.Rectangle
 
 private val filter by lazy {
   object : Representer() {
@@ -28,6 +28,10 @@ private val filter by lazy {
 
     override fun representJavaBeanProperty(bean: Any, property: Property, propertyValue: Any?, customTag: Tag?): NodeTuple? {
       if (propertyValue == null || property.name == "animSpec") {
+        return null
+      }
+
+      if (bean is Rectangle && (!property.isWritable || property.name == "size" || property.name == "location")) {
         return null
       }
 
@@ -78,27 +82,19 @@ private val filter by lazy {
   }
 }
 
-private fun dumpComponentBounds(layout: MigLayout): Any {
+private fun dumpCellBounds(layout: MigLayout): Any {
   val gridField = MigLayout::class.java.getDeclaredField("grid")
   gridField.isAccessible = true
   return MigLayoutTestUtil.getRectangles(gridField.get(layout) as Grid)
 }
 
 @Suppress("UNCHECKED_CAST")
-internal fun serializeLayout(component: Container, isIncludeBounds: Boolean = true): String {
+internal fun serializeLayout(component: Container): String {
   val layout = component.layout as MigLayout
-  val rectangles = if (isIncludeBounds) dumpComponentBounds(layout) else null
 
   val componentConstrains = LinkedHashMap<String, Any>()
   for ((index, c) in component.components.withIndex()) {
-    var key = "${c.javaClass.simpleName} #${index}"
-    if (c is JLabel && c.text.isNotEmpty()) {
-      key = StringUtil.removeHtmlTags(c.text)
-    }
-    if (c is AbstractButton && c.text.isNotEmpty()) {
-      key = StringUtil.removeHtmlTags(c.text)
-    }
-    componentConstrains.put(key, layout.getComponentConstraints(c))
+    componentConstrains.put(getComponentKey(c, index), layout.getComponentConstraints(c))
   }
 
   val dumperOptions = DumperOptions()
@@ -110,7 +106,8 @@ internal fun serializeLayout(component: Container, isIncludeBounds: Boolean = tr
     "rowConstraints" to layout.rowConstraints,
     "columnConstraints" to layout.columnConstraints,
     "componentConstrains" to componentConstrains,
-    "bounds" to rectangles
+    "cellBounds" to dumpCellBounds(layout),
+    "componentBounds" to dumpComponentBounds(component)
   ))
     .replace("constaints", "constraints")
     .replace(" !!net.miginfocom.layout.CC", "")

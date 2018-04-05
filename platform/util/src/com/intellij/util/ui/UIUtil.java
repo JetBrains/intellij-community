@@ -517,7 +517,12 @@ public class UIUtil {
      * jdk is an Apple JDK or Oracle API has been changed.
      */
     private static boolean isMacRetina(Graphics2D g) {
-      GraphicsDevice device = g.getDeviceConfiguration().getDevice();
+      GraphicsConfiguration configuration = g.getDeviceConfiguration();
+      if (configuration == null) {
+        return false;
+      }
+
+      GraphicsDevice device = configuration.getDevice();
       return isOracleMacRetinaDevice(device);
     }
 

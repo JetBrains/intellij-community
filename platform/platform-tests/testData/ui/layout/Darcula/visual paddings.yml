@@ -159,7 +159,7 @@ componentConstrains:
     spanX: 2097051
     vertical: {grow: 100.0}
     wrap: true
-bounds:
+cellBounds:
 - [0, 0, 124, 24]
 - [130, 0, 516, 24]
 - [0, 34, 124, 24]
@@ -187,3 +187,30 @@ bounds:
 - [130, 306, 508, 24]
 - [0, 340, 124, 21]
 - [130, 340, 516, 21]
+componentBounds:
+  'Text field:': [0, 4, 61, 16]
+  'JTextField #1': [128, -2, 520, 28]
+  'Password:': [0, 38, 64, 16]
+  'JPasswordField #3': [128, 32, 254, 28]
+  'Combobox:': [0, 72, 71, 16]
+  'JComboBox #5': [127, 65, 522, 30]
+  'Combobox Editable:': [0, 106, 124, 16]
+  'JComboBox #7': [127, 99, 522, 30]
+  'Button:': [0, 140, 47, 16]
+  label: [128, 204, 51, 24]
+  'CheckBox:': [0, 174, 66, 16]
+  enabled: [128, 170, 71, 24]
+  'RadioButton:': [0, 208, 81, 16]
+  'Spinner:': [0, 242, 51, 16]
+  'JBIntSpinner #15': [127, 235, 72, 30]
+  'Text with browse:': [0, 276, 110, 16]
+  'TextFieldWithHistoryWithBrowseButton #17': [127, 269, 522, 30]
+  'All:': [0, 310, 19, 16]
+  'JTextField #19': [128, 304, 41, 28]
+  'JPasswordField #20': [173, 304, 254, 28]
+  'JComboBox #21': [430, 303, 53, 30]
+  b: [485, 303, 78, 30]
+  c: [566, 306, 30, 24]
+  rb: [602, 306, 36, 24]
+  'Scroll pane:': [0, 341, 72, 16]
+  'JBScrollPane #26': [130, 340, 516, 21]

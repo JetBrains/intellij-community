@@ -6,29 +6,33 @@ import com.intellij.ide.ui.laf.darcula.DarculaLaf
 import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.ui.layout.*
-import com.intellij.util.io.*
+import com.intellij.util.io.exists
+import com.intellij.util.io.sanitizeFileName
+import com.intellij.util.io.write
 import com.intellij.util.ui.JBDimension
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import io.netty.util.internal.SystemPropertyUtil
 import net.miginfocom.swing.MigLayout
-import org.assertj.core.data.Offset
-import org.assertj.swing.assertions.Assertions
+import org.apache.batik.dom.GenericDOMImplementation
+import org.apache.batik.svggen.SVGGraphics2D
 import org.junit.rules.ExternalResource
 import org.junit.rules.TestName
 import org.yaml.snakeyaml.DumperOptions
 import org.yaml.snakeyaml.Yaml
 import java.awt.*
-import java.awt.image.BufferedImage
 import java.io.File
+import java.io.StringWriter
 import java.nio.file.Path
-import java.nio.file.Paths
-import javax.imageio.ImageIO
-import javax.swing.JFrame
-import javax.swing.UIManager
+import javax.swing.*
 import javax.swing.plaf.metal.MetalLookAndFeel
+import javax.xml.transform.OutputKeys
+import javax.xml.transform.TransformerFactory
+import javax.xml.transform.dom.DOMSource
+import javax.xml.transform.stream.StreamResult
 import kotlin.properties.Delegates
 
 private val isUpdateSnapshotsGlobal by lazy { SystemPropertyUtil.getBoolean("test.update.snapshots", false) }
@@ -121,7 +125,6 @@ fun getSnapshotRelativePath(lafName: String, isForImage: Boolean): String {
 }
 
 fun validateBounds(component: Container, snapshotDir: Path, snapshotName: String, isUpdateSnapshots: Boolean = isUpdateSnapshotsGlobal) {
-  val snapshotFile = snapshotDir.resolve("$snapshotName.yml")
   val actualSerializedLayout: String
   if (component.layout is MigLayout) {
     actualSerializedLayout = serializeLayout(component)
@@ -135,19 +138,23 @@ fun validateBounds(component: Container, snapshotDir: Path, snapshotName: String
       .replace(" !!java.awt.Rectangle", "")
   }
 
+  compareSnapshot(snapshotDir.resolve("$snapshotName.yml"), actualSerializedLayout, isUpdateSnapshots)
+}
+
+private fun compareSnapshot(snapshotFile: Path, newData: String, isUpdateSnapshots: Boolean) {
   if (!snapshotFile.exists()) {
-    System.out.println("Write a new bounds snapshot ${snapshotFile.fileName}")
-    snapshotFile.write(actualSerializedLayout)
+    System.out.println("Write a new snapshot ${snapshotFile.fileName}")
+    snapshotFile.write(newData)
     return
   }
 
   try {
-    assertThat(actualSerializedLayout).isEqualTo(snapshotFile)
+    assertThat(newData).isEqualTo(snapshotFile)
   }
   catch (e: AssertionError) {
     if (isUpdateSnapshots) {
       System.out.println("UPDATED snapshot ${snapshotFile.fileName}")
-      snapshotFile.write(actualSerializedLayout)
+      snapshotFile.write(newData)
     }
     else {
       throw e
@@ -155,77 +162,30 @@ fun validateBounds(component: Container, snapshotDir: Path, snapshotName: String
   }
 }
 
-private val imageDirDefault by lazy { (System.getenv("IMAGE_SNAPSHOT_REPO") ?: System.getenv("LAYOUT_IMAGE_REPO"))?.let { Paths.get(it) } }
+private fun svgGraphicsToString(svgGenerator: SVGGraphics2D): String {
+  val transformer = TransformerFactory.newInstance().newTransformer()
+  transformer.setOutputProperty(OutputKeys.METHOD, "xml")
+  transformer.setOutputProperty(OutputKeys.INDENT, "yes")
+  transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes")
+  transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2")
+  transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8")
 
-fun validateUsingImage(component: Component, snapshotRelativePath: String, isUpdateSnapshots: Boolean = isUpdateSnapshotsGlobal, _imageDir: Path? = imageDirDefault) {
-  var imageDir = _imageDir
-  if (imageDir == null) {
-    val defaultDir = Paths.get(PlatformTestUtil.getPlatformTestDataPath(), "ui", "image-snapshots")
-    if (defaultDir.exists()) {
-      imageDir = defaultDir
-    }
-    else {
-      System.out.println("Image validation is not used, clone repo to community/platform/platform-tests/testData/ui/image-snapshots or set env IMAGE_SNAPSHOT_REPO to path to dir if need")
-      return
-    }
+  val writer = StringWriter()
+  writer.use {
+    transformer.transform(DOMSource(svgGenerator.root), StreamResult(writer))
   }
-
-  val imagePath = imageDir!!.resolve("$snapshotRelativePath.png")
-  if (!imagePath.exists()) {
-    System.out.println("Write a new image snapshot ${imagePath.fileName}")
-    component.writeAsImageToFile(imagePath)
-    return
-  }
-
-  val oldImage = imagePath.inputStream().use { ImageIO.read(ImageIO.createImageInputStream(it)) }
-  @Suppress("UnnecessaryVariable")
-  val snapshotComponent = component
-  val newImage = componentToImage(snapshotComponent)
-  try {
-    Assertions.assertThat(newImage).isEqualTo(oldImage, Offset.offset(32))
-  }
-  catch (e: AssertionError) {
-    if (oldImage.width == newImage.width && oldImage.height == newImage.height) {
-      getDifferenceImage(oldImage, newImage)!!.writeToFile(imageDir.resolve("$snapshotRelativePath-DIFF.png"))
-    }
-    if (isUpdateSnapshots) {
-      System.out.println("UPDATED snapshot image ${imagePath.fileName}")
-      newImage.writeToFile(imagePath)
-    }
-    else {
-      newImage.writeToFile(imageDir.resolve("$snapshotRelativePath-NEW.png"))
-      throw e
-    }
-  }
+  return writer
+    .toString()
+    // &#27;Remember
+    // no idea why transformer/batik doesn't escape it correctly
+    .replace(">&#27;", ">&amp")
 }
 
-// https://stackoverflow.com/a/25151302
-fun getDifferenceImage(img1: BufferedImage, img2: BufferedImage): BufferedImage? {
-  val w = img1.width
-  val h = img1.height
-
-  if (w != img2.width || h != img2.height) {
-    throw RuntimeException("Image sizes are not equal")
-  }
-
-  val highlight = Color.MAGENTA.rgb
-  val p1 = img1.getRGB(0, 0, w, h, null, 0, w)
-  val p2 = img2.getRGB(0, 0, w, h, null, 0, w)
-  var equals = true
-  for (i in p1.indices) {
-    if (p1[i] != p2[i]) {
-      p1[i] = highlight
-      equals = false
-    }
-  }
-
-  if (equals) {
-    return null
-  }
-
-  val out = BufferedImage(w, h, BufferedImage.TYPE_INT_RGB)
-  out.setRGB(0, 0, w, h, p1, 0, w)
-  return out
+fun validateUsingImage(component: Component, snapshotDir: Path, snapshotName: String, isUpdateSnapshots: Boolean = isUpdateSnapshotsGlobal) {
+  // jFreeSvg produces not so compact and readable SVG as batik
+  val svgGenerator = SVGGraphics2D(GenericDOMImplementation.getDOMImplementation().createDocument("http://www.w3.org/2000/svg", "svg", null))
+  component.paint(svgGenerator)
+  compareSnapshot(snapshotDir.resolve("$snapshotName.svg"), svgGraphicsToString(svgGenerator), isUpdateSnapshots)
 }
 
 val TestName.snapshotFileName: String
@@ -236,24 +196,32 @@ val TestName.snapshotFileName: String
     return sanitizeFileName(if (bracketIndex > 0) name.substring(0, bracketIndex) else name)
   }
 
-fun componentToImage(component: Component, type: Int = BufferedImage.TYPE_BYTE_GRAY): BufferedImage {
-  return invokeAndWaitIfNeed {
-    // we don't need retina image
-    val image = BufferedImage(component.width, component.height, type)
-    val g = image.graphics as Graphics2D
-    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF)
-    component.paint(g)
-    g.dispose()
-    image
+internal fun dumpComponentBounds(component: Container): Map<String, IntArray> {
+  val result = LinkedHashMap<String, IntArray>()
+  for ((index, c) in component.components.withIndex()) {
+    val bounds = c.bounds
+    result.put(getComponentKey(c, index), intArrayOf(bounds.x, bounds.y, bounds.width, bounds.height))
+  }
+  return result
+}
+
+internal fun getComponentKey(c: Component, index: Int): String {
+  if (c is JLabel && c.text.isNotEmpty()) {
+    return StringUtil.removeHtmlTags(c.text)
+  }
+  if (c is AbstractButton && c.text.isNotEmpty()) {
+    return StringUtil.removeHtmlTags(c.text)
+  }
+  else {
+    return "${c.javaClass.simpleName} #${index}"
   }
 }
 
-fun Component.writeAsImageToFile(file: Path) {
-  componentToImage(this).writeToFile(file)
-}
+fun validatePanel(panel: JPanel, testDataRoot: Path, snapshotName: String, lafName: String) {
+  val preferredSize = panel.preferredSize
+  panel.setBounds(0, 0, Math.max(preferredSize.width, JBUI.scale(480)), Math.max(preferredSize.height, 320))
+  panel.doLayout()
 
-fun BufferedImage.writeToFile(file: Path) {
-  file.outputStream().use {
-    ImageIO.write(this, "png", it)
-  }
+  validateUsingImage(panel, testDataRoot.resolve(getSnapshotRelativePath(lafName, isForImage = true)), snapshotName)
+  validateBounds(panel, testDataRoot.resolve(getSnapshotRelativePath(lafName, isForImage = false)), snapshotName)
 }

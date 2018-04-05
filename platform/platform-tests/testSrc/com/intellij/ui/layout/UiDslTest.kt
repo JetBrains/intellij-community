@@ -4,8 +4,9 @@ package com.intellij.ui.layout
 import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
-import com.intellij.ui.*
-import com.intellij.util.ui.JBUI
+import com.intellij.ui.changeLafIfNeed
+import com.intellij.ui.snapshotFileName
+import com.intellij.ui.validatePanel
 import net.miginfocom.layout.LayoutUtil
 import org.junit.After
 import org.junit.Assume.assumeTrue
@@ -15,16 +16,11 @@ import org.junit.Test
 import org.junit.rules.TestName
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
-import java.io.File
 import java.nio.file.Paths
 import javax.swing.JPanel
-import kotlin.properties.Delegates
 
 /**
  * Set `test.update.snapshots=true` to automatically update snapshots if need.
- *
- * Checkout git@github.com:develar/intellij-ui-dsl-test-snapshots.git (or create own repo) to some local dir and set env IMAGE_SNAPSHOT_REPO
- * to use image snapshots.
  */
 @RunWith(Parameterized::class)
 class UiDslTest {
@@ -81,19 +77,18 @@ class UiDslTest {
   }
 
   private fun doTest(panelCreator: () -> JPanel) {
-    var panel: JPanel by Delegates.notNull()
     invokeAndWaitIfNeed {
       // otherwise rectangles are not set
       LayoutUtil.setGlobalDebugMillis(1000)
-
-      panel = panelCreator()
-      val preferredSize = panel.preferredSize
-      panel.setBounds(0, 0, Math.max(preferredSize.width, JBUI.scale(480)), Math.max(preferredSize.height, 320))
-      panel.doLayout()
+      val panel = panelCreator()
+      try {
+        validatePanel(panel, Paths.get(PlatformTestUtil.getPlatformTestDataPath(), "ui", "layout"), testName.snapshotFileName, lafName)
+      }
+      finally {
+        LayoutUtil.setGlobalDebugMillis(0)
+        // as result, MigLayout will stop debug timer
+        panel.doLayout()
+      }
     }
-
-    val snapshotName = testName.snapshotFileName
-    validateUsingImage(panel, "layout${File.separatorChar}${getSnapshotRelativePath(lafName, isForImage = true)}${File.separatorChar}$snapshotName")
-    validateBounds(panel, Paths.get(PlatformTestUtil.getPlatformTestDataPath(), "ui", "layout", getSnapshotRelativePath(lafName, isForImage = false)), snapshotName)
   }
 }

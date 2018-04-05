@@ -63,9 +63,15 @@ componentConstrains:
     spanX: 2097051
     vertical: {grow: 100.0}
     wrap: true
-bounds:
+cellBounds:
 - [0, 0, 70, 21]
 - [76, 0, 396, 21]
 - [76, 0, 396, 21]
 - [76, 27, 404, 14]
 - [0, 51, 480, 259]
+componentBounds:
+  'Repository:': [0, 2, 70, 16]
+  'ComboBox #1': [73, -3, 49, 27]
+  Delete: [123, -3, 78, 27]
+  Use File -> Settings Repository... to configure: [78, 27, 233, 14]
+  'JBScrollPane #4': [0, 51, 480, 259]

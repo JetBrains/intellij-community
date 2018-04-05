@@ -62,9 +62,16 @@ componentConstrains:
         min: &id009 {horizontal: false, value: 12.0}
         preferred: *id009
     wrap: true
-bounds:
+cellBounds:
 - [0, 0, 480, 62]
 - [0, 72, 100, 21]
 - [106, 72, 374, 21]
 - [106, 103, 374, 21]
 - [0, 134, 480, 52]
+componentBounds:
+  Profiler requires access to the kernel-level API. Enter the sudo password to allow this.: [
+    0, 10, 287, 32]
+  'Sudo password:': [0, 75, 100, 16]
+  'JPasswordField #2': [103, 69, 256, 27]
+  !!binary "G1JlbWVtYmVy": [102, 100, 94, 26]
+  'SimpleColoredComponent #4': [0, 146, 316, 20]

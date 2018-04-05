@@ -6,10 +6,13 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
-import com.intellij.ui.*
+import com.intellij.ui.JBIntSpinner
+import com.intellij.ui.changeLafIfNeed
 import com.intellij.ui.components.CheckBox
 import com.intellij.ui.components.textFieldWithHistoryWithBrowseButton
 import com.intellij.ui.layout.*
+import com.intellij.ui.snapshotFileName
+import com.intellij.ui.validatePanel
 import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Rule
@@ -17,10 +20,8 @@ import org.junit.Test
 import org.junit.rules.TestName
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
-import java.io.File
 import java.nio.file.Paths
 import javax.swing.*
-import kotlin.properties.Delegates
 
 /**
  * Nor UI DSL, neither ComponentPanelBuilder should be used to create test panels.
@@ -41,10 +42,6 @@ class LafTest {
   @Rule
   @JvmField
   val testName = TestName()
-
-  @Rule
-  @JvmField
-  val frameRule = FrameRule()
 
   @Before
   fun beforeMethod() {
@@ -77,14 +74,8 @@ class LafTest {
   }
 
   private fun doTest(panelCreator: () -> JPanel) {
-    var panel: JPanel by Delegates.notNull()
     invokeAndWaitIfNeed {
-      panel = panelCreator()
-      frameRule.show(panel, minSize = null)
+      validatePanel(panelCreator(), Paths.get(PlatformTestUtil.getPlatformTestDataPath(), "ui", "laf"), testName.snapshotFileName, lafName)
     }
-
-    val snapshotName = testName.snapshotFileName
-    validateUsingImage(frameRule.frame, "laf${File.separatorChar}${getSnapshotRelativePath(lafName, isForImage = true)}${File.separatorChar}$snapshotName")
-    validateBounds(panel, Paths.get(PlatformTestUtil.getPlatformTestDataPath(), "ui", "laf", getSnapshotRelativePath(lafName, isForImage = false)), snapshotName)
   }
 }

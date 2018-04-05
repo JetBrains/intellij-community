@@ -2,63 +2,63 @@ bounds:
 -
   height: 26
   location: {x: 8, y: 10}
-  size: {height: 26, width: 82}
-  width: 82
+  size: {height: 26, width: 464}
+  width: 464
   x: 8
   y: 10
 -
   height: 30
   location: {x: 8, y: 46}
-  size: {height: 30, width: 82}
-  width: 82
+  size: {height: 30, width: 464}
+  width: 464
   x: 8
   y: 46
 -
-  height: 27
+  height: 26
   location: {x: 8, y: 86}
-  size: {height: 27, width: 82}
-  width: 82
+  size: {height: 26, width: 464}
+  width: 464
   x: 8
   y: 86
 -
-  height: 27
-  location: {x: 8, y: 123}
-  size: {height: 27, width: 82}
-  width: 82
+  height: 26
+  location: {x: 8, y: 122}
+  size: {height: 26, width: 464}
+  width: 464
   x: 8
-  y: 123
+  y: 122
 -
   height: 27
-  location: {x: 8, y: 160}
-  size: {height: 27, width: 82}
-  width: 82
+  location: {x: 8, y: 158}
+  size: {height: 27, width: 464}
+  width: 464
   x: 8
-  y: 160
+  y: 158
 -
   height: 26
-  location: {x: 8, y: 197}
-  size: {height: 26, width: 82}
-  width: 82
+  location: {x: 8, y: 195}
+  size: {height: 26, width: 464}
+  width: 464
   x: 8
-  y: 197
+  y: 195
 -
   height: 26
-  location: {x: 8, y: 233}
-  size: {height: 26, width: 82}
-  width: 82
+  location: {x: 8, y: 231}
+  size: {height: 26, width: 464}
+  width: 464
   x: 8
-  y: 233
+  y: 231
 -
   height: 27
-  location: {x: 8, y: 269}
-  size: {height: 27, width: 82}
-  width: 82
+  location: {x: 8, y: 267}
+  size: {height: 27, width: 464}
+  width: 464
   x: 8
-  y: 269
+  y: 267
 -
-  height: 27
-  location: {x: 8, y: 306}
-  size: {height: 27, width: 82}
-  width: 82
+  height: 26
+  location: {x: 8, y: 304}
+  size: {height: 26, width: 464}
+  width: 464
   x: 8
-  y: 306
+  y: 304
