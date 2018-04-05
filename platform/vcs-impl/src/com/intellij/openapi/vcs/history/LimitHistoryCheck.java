@@ -59,7 +59,11 @@ public class LimitHistoryCheck {
   }
 
   public boolean isOver() {
-    return myLimit > 0 && myLimit < myCnt;
+    return isOver(myCnt);
+  }
+
+  public boolean isOver(int count) {
+    return myLimit > 0 && myLimit < count;
   }
 
   public static class VcsFileHistoryLimitReachedException extends RuntimeException {

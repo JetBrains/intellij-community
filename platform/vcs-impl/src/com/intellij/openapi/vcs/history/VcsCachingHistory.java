@@ -32,11 +32,11 @@ import com.intellij.util.Consumer;
 import com.intellij.vcs.history.VcsHistoryProviderEx;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.CalledInAwt;
+import org.jetbrains.annotations.CalledInBackground;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.List;
 
 import static com.intellij.openapi.vcs.impl.BackgroundableActionLock.getLock;
@@ -45,7 +45,6 @@ import static com.intellij.util.ObjectUtils.notNull;
 public class VcsCachingHistory {
   @NotNull private final Project myProject;
   @NotNull private final VcsHistoryCache myVcsHistoryCache;
-  @NotNull private final VcsConfiguration myConfiguration;
   @NotNull private final VcsHistoryProvider myHistoryProvider;
   @NotNull private final VcsType myType;
   private final DiffProvider myDiffProvider;
@@ -55,7 +54,6 @@ public class VcsCachingHistory {
                             DiffProvider diffProvider) {
     myProject = vcs.getProject();
     myVcsHistoryCache = ProjectLevelVcsManager.getInstance(myProject).getVcsHistoryCache();
-    myConfiguration = VcsConfiguration.getInstance(myProject);
     myHistoryProvider = historyProvider;
     myType = vcs.getType();
     myDiffProvider = diffProvider;
@@ -124,22 +122,9 @@ public class VcsCachingHistory {
     return (VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession>)myHistoryProvider;
   }
 
-  @Nullable
-  private VcsAbstractHistorySession getFullHistoryFromCache(@NotNull VcsKey vcsKey,
-                                                            @NotNull FilePath filePath,
-                                                            @NotNull VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession> cacheableFactory) {
-    VcsAbstractHistorySession fullSession = myVcsHistoryCache.getFull(filePath, vcsKey, cacheableFactory);
-    if (fullSession != null) {
-      if (myConfiguration.LIMIT_HISTORY) {
-        if (myConfiguration.MAXIMUM_HISTORY_ROWS < fullSession.getRevisionList().size()) {
-          final List<VcsFileRevision> list = fullSession.getRevisionList();
-          final List<VcsFileRevision> was = new ArrayList<>(list.subList(0, myConfiguration.MAXIMUM_HISTORY_ROWS));
-          list.clear();
-          list.addAll(was);
-        }
-      }
-    }
-    return fullSession;
+  @NotNull
+  private VcsHistoryCache getHistoryCache() {
+    return myVcsHistoryCache;
   }
 
   @NotNull
@@ -167,7 +152,7 @@ public class VcsCachingHistory {
     if (indicator != null) {
       indicator.setText2("Checking last revision");
     }
-    VcsAbstractHistorySession cached = getFullHistoryFromCache(vcsKey, filePath, cacheableFactory);
+    VcsAbstractHistorySession cached = myVcsHistoryCache.getFull(filePath, vcsKey, cacheableFactory);
     if (cached == null || cached.getRevisionList().isEmpty()) return null;
 
     FilePath correctedFilePath = cacheableFactory.getUsedFilePath(cached);
@@ -215,7 +200,7 @@ public class VcsCachingHistory {
 
     VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession> cacheableFactory = history.getCacheableFactory();
     if (cacheableFactory != null && canUseCache) {
-      VcsAbstractHistorySession session = history.getFullHistoryFromCache(vcs.getKeyInstanceMethod(), filePath, cacheableFactory);
+      VcsAbstractHistorySession session = history.getHistoryCache().getFull(filePath, vcs.getKeyInstanceMethod(), cacheableFactory);
       if (session != null) {
         partner.reportCreatedEmptySession(session);
         partner.finished();
@@ -256,6 +241,13 @@ public class VcsCachingHistory {
       myFilePath = path;
       myContinuation = continuation;
       myCheck = new LimitHistoryCheck(myProject, myFilePath.getPath());
+    }
+
+    @Override
+    public void reportCreatedEmptySession(VcsAbstractHistorySession session) {
+      List<VcsFileRevision> revisionList = session.getRevisionList();
+      while (myCheck.isOver(revisionList.size())) revisionList.remove(revisionList.size() - 1);
+      super.reportCreatedEmptySession(session);
     }
 
     @Override
