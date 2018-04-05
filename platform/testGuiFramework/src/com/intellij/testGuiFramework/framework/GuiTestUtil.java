@@ -676,7 +676,7 @@ public final class GuiTestUtil {
     JRadioButton radioButton = waitUntilFound(robot, container, new GenericTypeMatcher<JRadioButton>(JRadioButton.class) {
       @Override
       protected boolean isMatching(@Nonnull JRadioButton button) {
-        return (button.getText() != null && button.getText().equals(text));
+        return (button.getText() != null && button.getText().equals(text)) && button.isShowing();
       }
     }, timeout);
     return new RadioButtonFixture(robot, radioButton);
