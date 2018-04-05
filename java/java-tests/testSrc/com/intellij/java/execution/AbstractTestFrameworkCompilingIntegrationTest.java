@@ -17,11 +17,7 @@ public abstract class AbstractTestFrameworkCompilingIntegrationTest extends Abst
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    ModuleRootModificationUtil.updateModel(myModule, 
-                                           model -> model.addContentEntry(getTestContentRoot())
-                                             .addSourceFolder(getTestContentRoot() + "/test", true));
-
-    setupLibraries();
+    setupModule();
     myCompilerTester = new CompilerTester(myModule);
     List<CompilerMessage> compilerMessages = myCompilerTester.rebuild();
     assertEmpty(compilerMessages.stream()
@@ -29,7 +25,12 @@ public abstract class AbstractTestFrameworkCompilingIntegrationTest extends Abst
                   .collect(Collectors.toSet()));
   }
 
-  protected void setupLibraries() throws Exception { }
+  protected void setupModule() throws Exception { 
+    ModuleRootModificationUtil.updateModel(myModule, 
+                                           model -> model.addContentEntry(getTestContentRoot())
+                                             .addSourceFolder(getTestContentRoot() + "/test", true));
+
+  }
 
   @Override
   protected void tearDown() throws Exception {

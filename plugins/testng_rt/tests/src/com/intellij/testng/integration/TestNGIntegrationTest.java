@@ -47,8 +47,9 @@ public class TestNGIntegrationTest extends AbstractTestFrameworkCompilingIntegra
   }
 
   @Override
-  protected void setupLibraries() throws Exception {
-     addLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("org.testng", "testng", myTestNGVersion), getRepoManager());
+  protected void setupModule() throws Exception {
+    super.setupModule();
+    addLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("org.testng", "testng", myTestNGVersion), getRepoManager());
   }
 
   @Override
