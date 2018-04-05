@@ -44,9 +44,6 @@ import java.util.List;
 import static com.intellij.openapi.vcs.impl.BackgroundableActionLock.getLock;
 import static com.intellij.util.ObjectUtils.notNull;
 
-/**
- * also uses memory cache
- */
 public class VcsCachingHistory {
   @NotNull private final Project myProject;
   @NotNull private final VcsHistoryCache myVcsHistoryCache;
