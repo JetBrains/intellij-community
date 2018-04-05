@@ -89,7 +89,7 @@ private fun dumpCellBounds(layout: MigLayout): Any {
 }
 
 @Suppress("UNCHECKED_CAST")
-internal fun serializeLayout(component: Container): String {
+internal fun serializeLayout(component: Container, isIncludeCellBounds: Boolean = true): String {
   val layout = component.layout as MigLayout
 
   val componentConstrains = LinkedHashMap<String, Any>()
@@ -106,7 +106,7 @@ internal fun serializeLayout(component: Container): String {
     "rowConstraints" to layout.rowConstraints,
     "columnConstraints" to layout.columnConstraints,
     "componentConstrains" to componentConstrains,
-    "cellBounds" to dumpCellBounds(layout),
+    "cellBounds" to if (isIncludeCellBounds) dumpCellBounds(layout) else null,
     "componentBounds" to dumpComponentBounds(component)
   ))
     .replace("constaints", "constraints")

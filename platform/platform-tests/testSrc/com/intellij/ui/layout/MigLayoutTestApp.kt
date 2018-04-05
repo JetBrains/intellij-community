@@ -34,8 +34,8 @@ object MigLayoutTestApp {
 //      val panel = visualPaddingsPanelOnlyButton()
 //      val panel = visualPaddingsPanelOnlyComboBox()
 //      val panel = alignFieldsInTheNestedGrid()
-      val panel = cellPanel()
-//      val panel = visualPaddingsPanel()
+//      val panel = cellPanel()
+      val panel = visualPaddingsPanel()
 
       val editableCombobox = JComboBox<String>(arrayOf("one", "two"))
       editableCombobox.isEditable = true
@@ -55,7 +55,7 @@ object MigLayoutTestApp {
 
       panel.preferredSize = Dimension(50, 50)
       if (panel.layout is MigLayout) {
-        Paths.get(System.getProperty("user.home"), "layout-dump.yml").write(serializeLayout(panel))
+        Paths.get(System.getProperty("user.home"), "layout-dump.yml").write(serializeLayout(panel, isIncludeCellBounds = false))
       }
 
       val screenDevices = GraphicsEnvironment.getLocalGraphicsEnvironment().screenDevices
