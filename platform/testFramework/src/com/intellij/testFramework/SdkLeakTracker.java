@@ -72,6 +72,7 @@ public class SdkLeakTracker {
 
           if (jdk instanceof Sdk) {
             leaked.remove(jdk);
+            WriteAction.run(() -> ProjectJdkTable.getInstance().removeJdk((Sdk) jdk));
           }
         } catch (ReflectiveOperationException ignored) {
         }
