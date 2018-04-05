@@ -7,16 +7,17 @@ import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ThreeState;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
-
-import static com.intellij.codeInsight.AnnotationUtil.CHECK_TYPE;
 
 /**
  * An immutable set of long values optimized for small number of ranges.
@@ -24,6 +25,22 @@ import static com.intellij.codeInsight.AnnotationUtil.CHECK_TYPE;
  * @author Tagir Valeev
  */
 public abstract class LongRangeSet {
+  private static final String JETBRAINS_RANGE = "org.jetbrains.annotations.Range";
+  private static final String CHECKER_RANGE = "org.checkerframework.common.value.qual.IntRange";
+  private static final String CHECKER_GTE_NEGATIVE_ONE = "org.checkerframework.checker.index.qual.GTENegativeOne";
+  private static final String CHECKER_NON_NEGATIVE = "org.checkerframework.checker.index.qual.NonNegative";
+  private static final String CHECKER_POSITIVE = "org.checkerframework.checker.index.qual.Positive";
+  private static final String JSR305_NONNEGATIVE = "javax.annotation.Nonnegative";
+  private static final String VALIDATION_MIN = "javax.validation.constraints.Min";
+  private static final String VALIDATION_MAX = "javax.validation.constraints.Max";
+  private static final List<String> ANNOTATIONS = Arrays.asList(CHECKER_RANGE,
+                                                                CHECKER_GTE_NEGATIVE_ONE,
+                                                                CHECKER_NON_NEGATIVE,
+                                                                CHECKER_POSITIVE,
+                                                                JSR305_NONNEGATIVE,
+                                                                VALIDATION_MIN,
+                                                                VALIDATION_MAX);
+
   LongRangeSet() {}
 
   /**
@@ -602,16 +619,40 @@ public abstract class LongRangeSet {
   @NotNull
   public static LongRangeSet fromPsiElement(PsiModifierListOwner owner) {
     if (owner == null) return all();
-    PsiAnnotation rangeAnnotation = AnnotationUtil.findAnnotation(owner, "org.jetbrains.annotations.Range");
-    if(rangeAnnotation != null) {
-      Long from = AnnotationUtil.getLongAttributeValue(rangeAnnotation, "from");
-      Long to = AnnotationUtil.getLongAttributeValue(rangeAnnotation, "to");
-      if(from != null && to != null && to >= from) {
-        return range(from, to);
-      }
-    }
-    if (AnnotationUtil.isAnnotated(owner, "javax.annotation.Nonnegative", CHECK_TYPE)) {
-      return range(0, Long.MAX_VALUE);
+    return StreamEx.ofNullable(AnnotationUtil.findAnnotation(owner, JETBRAINS_RANGE))
+                   .append(AnnotationUtil.findAnnotations(owner, ANNOTATIONS))
+                   .map(LongRangeSet::fromAnnotation).foldLeft(all(), LongRangeSet::intersect);
+  }
+
+  private static LongRangeSet fromAnnotation(PsiAnnotation annotation) {
+    switch (Objects.requireNonNull(annotation.getQualifiedName())) {
+      case JETBRAINS_RANGE:
+      case CHECKER_RANGE:
+        Long from = AnnotationUtil.getLongAttributeValue(annotation, "from");
+        Long to = AnnotationUtil.getLongAttributeValue(annotation, "to");
+        if(from != null && to != null && to >= from) {
+          return range(from, to);
+        }
+        break;
+      case VALIDATION_MIN:
+        Long minValue = AnnotationUtil.getLongAttributeValue(annotation, "value");
+        if (minValue != null && annotation.findDeclaredAttributeValue("groups") == null) {
+          return range(minValue, Long.MAX_VALUE);
+        }
+        break;
+      case VALIDATION_MAX:
+        Long maxValue = AnnotationUtil.getLongAttributeValue(annotation, "value");
+        if (maxValue != null && annotation.findDeclaredAttributeValue("groups") == null) {
+          return range(Long.MIN_VALUE, maxValue);
+        }
+        break;
+      case CHECKER_GTE_NEGATIVE_ONE:
+        return range(-1, Long.MAX_VALUE);
+      case JSR305_NONNEGATIVE:
+      case CHECKER_NON_NEGATIVE:
+        return range(0, Long.MAX_VALUE);
+      case CHECKER_POSITIVE:
+        return range(1, Long.MAX_VALUE);
     }
     return all();
   }
