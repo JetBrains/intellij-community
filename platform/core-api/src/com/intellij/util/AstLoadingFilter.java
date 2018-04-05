@@ -85,16 +85,19 @@ public class AstLoadingFilter {
       // loading was disabled but then re-enabled for file
     }
     else {
-      String debugInfo = disabledInfo.get();
-      String message = "Tree access disabled";
-      Attachment filePathAttachment = new Attachment(file.getPath(), "");
-      if (debugInfo == null) {
-        LOG.error(message, filePathAttachment);
-      }
-      else {
-        LOG.error(message, filePathAttachment, new Attachment("debugInfo", debugInfo));
-      }
+      LOG.error("Tree access disabled", new AstLoadingException(), new Attachment("debugInfo", buildDebugInfo(file, disabledInfo)));
     }
+  }
+
+  @NotNull
+  private static String buildDebugInfo(@NotNull VirtualFile file, @NotNull Supplier<String> disabledInfo) {
+    StringBuilder debugInfo = new StringBuilder();
+    debugInfo.append("Accessed file path: ").append(file.getPath());
+    String additionalInfo = disabledInfo.get();
+    if (additionalInfo != null) {
+      debugInfo.append('\n').append("Additional info: \n").append(additionalInfo);
+    }
+    return debugInfo.toString();
   }
 
   public static <E extends Throwable>
