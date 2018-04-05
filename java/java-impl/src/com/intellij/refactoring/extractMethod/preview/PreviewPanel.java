@@ -51,7 +51,7 @@ class PreviewPanel extends BorderLayoutPanel implements Disposable, DataProvider
     JScrollPane treePane = ScrollPaneFactory.createScrollPane(myTree.getComponent());
     treePane.putClientProperty(UIUtil.KEEP_BORDER_SIDES, SideBorder.RIGHT);
 
-    myDiffPanel = new PreviewDiffPanel(processor);
+    myDiffPanel = new PreviewDiffPanel(processor, myTree);
     myTree.addTreeListener(myDiffPanel);
 
     BorderLayoutPanel leftPanel = new BorderLayoutPanel();
@@ -110,7 +110,7 @@ class PreviewPanel extends BorderLayoutPanel implements Disposable, DataProvider
   }
 
   public void initLater() {
-    myDiffPanel.initLater(myTree.getAllDuplicates(), method -> myTree.updateMethod(method));
+    myDiffPanel.initLater();
   }
 
   @Override
@@ -125,7 +125,7 @@ class PreviewPanel extends BorderLayoutPanel implements Disposable, DataProvider
 
   private void doRefactor() {
     if (myTree.isValid()) {
-      myDiffPanel.doExtract(myTree.getEnabledDuplicates());
+      myDiffPanel.doExtract();
       close();
       return;
     }

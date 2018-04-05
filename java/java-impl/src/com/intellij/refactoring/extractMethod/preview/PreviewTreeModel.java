@@ -23,6 +23,7 @@ import java.util.List;
 class PreviewTreeModel extends DefaultTreeModel {
   private final DefaultMutableTreeNode myDuplicatesGroup;
   private final DefaultMutableTreeNode myMethodGroup;
+  private final PatternNode myPatternNode;
   private boolean myValid;
 
   public PreviewTreeModel(@NotNull ExtractMethodProcessor processor) {
@@ -38,7 +39,8 @@ class PreviewTreeModel extends DefaultTreeModel {
     DefaultMutableTreeNode originalGroup = new DefaultMutableTreeNode("Original code fragment");
     root.add(originalGroup);
     PsiElement[] elements = processor.getElements();
-    originalGroup.add(new PatternNode(elements));
+    myPatternNode = new PatternNode(elements);
+    originalGroup.add(myPatternNode);
 
     List<Match> duplicates = getDuplicates(processor);
     if (!ContainerUtil.isEmpty(duplicates)) {
@@ -58,12 +60,16 @@ class PreviewTreeModel extends DefaultTreeModel {
     return (DefaultMutableTreeNode)super.getRoot();
   }
 
-  void updateMethod(PsiMethod method) {
+  @NotNull
+  MethodNode updateMethod(PsiMethod method) {
     myMethodGroup.removeAllChildren();
-    myMethodGroup.add(new MethodNode(method));
+    MethodNode methodNode = new MethodNode(method);
+    myMethodGroup.add(methodNode);
     reload(myMethodGroup);
+    return methodNode;
   }
 
+  @NotNull
   public List<DuplicateNode> getEnabledDuplicates() {
     if (myDuplicatesGroup != null && myDuplicatesGroup.getChildCount() != 0) {
       List<DuplicateNode> duplicates = new ArrayList<>();
@@ -81,6 +87,7 @@ class PreviewTreeModel extends DefaultTreeModel {
     return Collections.emptyList();
   }
 
+  @NotNull
   public List<DuplicateNode> getAllDuplicates() {
     if (myDuplicatesGroup != null && myDuplicatesGroup.getChildCount() != 0) {
       List<DuplicateNode> duplicates = new ArrayList<>();
@@ -93,6 +100,11 @@ class PreviewTreeModel extends DefaultTreeModel {
       return duplicates;
     }
     return Collections.emptyList();
+  }
+
+  @NotNull
+  public PatternNode getPatternNode() {
+    return myPatternNode;
   }
 
   public synchronized boolean isValid() {
