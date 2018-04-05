@@ -23,7 +23,10 @@ public interface JvmPsiConversionHelper {
   @Deprecated
   @NotNull
   static Project getProject(@NotNull JvmElement jvmElement) {
-    return ((PsiElement)jvmElement).getProject();
+    if (jvmElement instanceof PsiElement) {
+      return ((PsiElement)jvmElement).getProject();
+    }
+    return jvmElement.getSourceElement().getProject();
   }
 
   @Nullable
