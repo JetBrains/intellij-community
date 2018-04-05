@@ -21,13 +21,11 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.codeStyle.NameUtil;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.*;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.PathUtil;
@@ -55,15 +53,22 @@ public class TestDataGuessByExistingFilesUtil {
   private TestDataGuessByExistingFilesUtil() {
   }
 
+
+  @NotNull
+  static List<String> collectTestDataByExistingFiles(@NotNull PsiMethod psiMethod) {
+    return collectTestDataByExistingFiles(psiMethod, null);
+  }
+
   /**
    * Tries to guess what test data files match to the given method if it's test method and there are existing test data
    * files for the target test class.
    *
    * @param psiMethod test method candidate
+   * @param testDataPath test data path if present (e.g. obtained from @TestDataPath annotation value)
    * @return List of paths to the test data files for the given test if it's possible to guess them; empty List otherwise
    */
   @NotNull
-  static List<String> collectTestDataByExistingFiles(@NotNull PsiMethod psiMethod) {
+  static List<String> collectTestDataByExistingFiles(@NotNull PsiMethod psiMethod, @Nullable String testDataPath) {
     Application application = ApplicationManager.getApplication();
     if (!application.isUnitTestMode() && application.isHeadlessEnvironment()) {
       // shouldn't be invoked under these conditions anyway, just for additional safety
@@ -71,7 +76,7 @@ public class TestDataGuessByExistingFilesUtil {
       return Collections.emptyList();
     }
 
-    TestDataDescriptor descriptor = buildDescriptorFromExistingTestData(psiMethod);
+    TestDataDescriptor descriptor = buildDescriptorFromExistingTestData(psiMethod, testDataPath);
     if (descriptor == null || !descriptor.isComplete()) {
       return Collections.emptyList();
     }
@@ -150,34 +155,36 @@ public class TestDataGuessByExistingFilesUtil {
   }
 
   @Nullable
-  private static TestDataDescriptor buildDescriptorFromExistingTestData(@NotNull final PsiMethod method) {
+  private static TestDataDescriptor buildDescriptorFromExistingTestData(@NotNull PsiMethod method, @Nullable String testDataPath) {
     final TestDataDescriptor cachedValue = CachedValuesManager.getCachedValue(method,
                                                                               () -> new CachedValueProvider.Result<>(
-                                                                                buildDescriptor(method),
+                                                                                buildDescriptor(method, testDataPath),
                                                                                 PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT));
     return cachedValue == TestDataDescriptor.NOTHING_FOUND ? null : cachedValue;
   }
 
-  private static TestDataDescriptor buildDescriptor(PsiMethod psiMethod) {
+  private static TestDataDescriptor buildDescriptor(@NotNull PsiMethod psiMethod, @Nullable String testDataPath) {
     PsiClass psiClass = PsiTreeUtil.getParentOfType(psiMethod, PsiClass.class);
     String testName = getTestName(psiMethod);
     if (testName == null || psiClass == null) return TestDataDescriptor.NOTHING_FOUND;
-    return buildDescriptor(testName, psiClass);
+    return buildDescriptor(testName, psiClass, testDataPath);
   }
 
   public static List<String> suggestTestDataFiles(@NotNull String testName,
                                                   String testDataPath,
                                                   @NotNull PsiClass psiClass){
-    return buildDescriptor(testName, psiClass).generate(testName, testDataPath);
+    return buildDescriptor(testName, psiClass, testDataPath).generate(testName, testDataPath);
   }
 
   @NotNull
   private static TestDataDescriptor buildDescriptor(@NotNull String test,
-                                                    @NotNull PsiClass psiClass)
-  {
+                                                    @NotNull PsiClass psiClass,
+                                                    @Nullable String testDataPath) {
+    String normalizedTestDataPath = testDataPath == null ? null : StringUtil.trimEnd(StringUtil.trimEnd(testDataPath, "/"), "\\");
+
     // PhpStorm has tests that use '$' symbol as a file path separator, e.g. 'test$while_stmt$declaration' test
     // stands for '/while_smt/declaration.php' file somewhere in a test data.
-    final String possibleFileName = ContainerUtil.getLastItem(StringUtil.split(test, "$"), test);
+    String possibleFileName = ContainerUtil.getLastItem(StringUtil.split(test, "$"), test);
     assert possibleFileName != null;
     if (possibleFileName.isEmpty()) {
       return TestDataDescriptor.NOTHING_FOUND;
@@ -186,11 +193,11 @@ public class TestDataGuessByExistingFilesUtil {
     Project project = psiClass.getProject();
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     GotoFileModel gotoModel = new GotoFileModel(project);
-    final String possibleFilePath = test.replace('$', '/');
+    String possibleFilePath = test.replace('$', '/');
     Map<String, TestLocationDescriptor> descriptorsByFileNames = new HashMap<>();
     boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       Module module = ReadAction.compute(() -> ModuleUtilCore.findModuleForPsiElement(psiClass));
-      final Collection<String> fileNames = getAllFileNames(possibleFileName, gotoModel);
+      Collection<String> fileNames = getAllFileNames(possibleFileName, gotoModel);
       ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
       indicator.setIndeterminate(false);
       ApplicationManager.getApplication().runReadAction(() -> {
@@ -198,21 +205,34 @@ public class TestDataGuessByExistingFilesUtil {
         double currentIndex = 0;
         for (String name : fileNames) {
           ProgressManager.checkCanceled();
-          final Object[] elements = gotoModel.getElementsByName(name, false, name);
+          Object[] elements = gotoModel.getElementsByName(name, false, name);
           for (Object element : elements) {
             if (!(element instanceof PsiFile)) {
               continue;
             }
-            final VirtualFile file = ((PsiFile)element).getVirtualFile();
+
+            PsiFile psiFile = (PsiFile)element;
+            if (normalizedTestDataPath != null) {
+              PsiDirectory containingDirectory = psiFile.getContainingDirectory();
+              if (containingDirectory != null) {
+                VirtualFile directoryVirtualFile = containingDirectory.getVirtualFile();
+                String normalizedDirPath = StringUtil.trimEnd(StringUtil.trimEnd(directoryVirtualFile.getPath(), "/"), "\\");
+                if (!normalizedDirPath.startsWith(normalizedTestDataPath)) {
+                  continue;
+                }
+              }
+            }
+
+            VirtualFile file = psiFile.getVirtualFile();
             if (file == null || fileIndex.isInSource(file) && !fileIndex.isUnderSourceRootOfType(file, JavaModuleSourceRootTypes.RESOURCES)) {
               continue;
             }
 
-            final String filePath = file.getPath();
+            String filePath = file.getPath();
             if (!StringUtil.containsIgnoreCase(filePath, possibleFilePath) && !StringUtil.containsIgnoreCase(filePath, test)) {
               continue;
             }
-            final String fileName = PathUtil.getFileName(filePath).toLowerCase();
+            String fileName = PathUtil.getFileName(filePath).toLowerCase();
             int i = fileName.indexOf(possibleFileName.toLowerCase());
             // Skip files that doesn't contain target test name and files that contain digit after target test name fragment.
             // Example: there are tests with names 'testEnter()' and 'testEnter2()' and we don't want test data file 'testEnter2'

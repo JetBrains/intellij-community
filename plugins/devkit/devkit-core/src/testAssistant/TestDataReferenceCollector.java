@@ -67,7 +67,7 @@ public class TestDataReferenceCollector {
     }
 
     if (collectByExistingFiles && result.isEmpty()) {
-      result = TestDataGuessByExistingFilesUtil.collectTestDataByExistingFiles(method);
+      result = TestDataGuessByExistingFilesUtil.collectTestDataByExistingFiles(method, myTestDataPath);
     }
     return result;
   }
