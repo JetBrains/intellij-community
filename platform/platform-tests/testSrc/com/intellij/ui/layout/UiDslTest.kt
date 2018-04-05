@@ -28,7 +28,7 @@ class UiDslTest {
   companion object {
     @JvmStatic
     @Parameterized.Parameters(name = "{0}")
-    fun lafNames() = listOf("IntelliJ", "Darcula")
+    fun lafNames() = listOf("Darcula", "IntelliJ")
   }
 
   @Suppress("MemberVisibilityCanBePrivate")

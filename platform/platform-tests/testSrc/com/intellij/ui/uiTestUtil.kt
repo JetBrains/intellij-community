@@ -5,37 +5,46 @@ import com.intellij.ide.ui.laf.IntelliJLaf
 import com.intellij.ide.ui.laf.darcula.DarculaLaf
 import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.ui.layout.*
 import com.intellij.util.io.exists
 import com.intellij.util.io.sanitizeFileName
 import com.intellij.util.io.write
-import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import io.netty.util.internal.SystemPropertyUtil
 import net.miginfocom.swing.MigLayout
-import org.apache.batik.dom.GenericDOMImplementation
-import org.apache.batik.svggen.SVGGraphics2D
-import org.junit.rules.ExternalResource
 import org.junit.rules.TestName
 import org.yaml.snakeyaml.DumperOptions
 import org.yaml.snakeyaml.Yaml
-import java.awt.*
+import java.awt.Component
+import java.awt.Container
 import java.io.File
-import java.io.StringWriter
 import java.nio.file.Path
-import javax.swing.*
+import javax.swing.AbstractButton
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.UIManager
 import javax.swing.plaf.metal.MetalLookAndFeel
-import javax.xml.transform.OutputKeys
-import javax.xml.transform.TransformerFactory
-import javax.xml.transform.dom.DOMSource
-import javax.xml.transform.stream.StreamResult
-import kotlin.properties.Delegates
 
 private val isUpdateSnapshotsGlobal by lazy { SystemPropertyUtil.getBoolean("test.update.snapshots", false) }
+
+//class RestoreLafRule : ExternalResource() {
+//  var oldLafName: String? = null
+//
+//  override fun before() {
+//    oldLafName = UIManager.getLookAndFeel().name
+//  }
+//
+//  override fun after() {
+//    val oldLafName = oldLafName
+//    if (oldLafName != null && oldLafName != UIManager.getLookAndFeel().name) {
+//      assertThat(oldLafName).isEqualTo("IntelliJ")
+//      UIManager.setLookAndFeel(IntelliJLaf())
+//    }
+//  }
+//}
 
 fun changeLafIfNeed(lafName: String) {
   if (UIManager.getLookAndFeel().name == lafName) {
@@ -53,57 +62,6 @@ fun changeLafIfNeed(lafName: String) {
       UIManager.getDefaults().put("javax.swing.JLabel.userStyleSheet", UIUtil.JBHtmlEditorKit.createStyleSheet())
     }
   }
-}
-
-class FrameRule : ExternalResource() {
-  var frame: JFrame by Delegates.notNull()
-    private set
-
-  private var wasFrameCreated = false
-
-  override fun after() {
-    if (wasFrameCreated) {
-      invokeAndWaitIfNeed {
-        frame.isVisible = false
-        frame.dispose()
-      }
-    }
-  }
-
-  // must be called in EDT
-  fun show(component: Component, minSize: Dimension? = JBDimension(480, 320)) {
-    frame = createTestFrame(minSize)
-    wasFrameCreated = true
-
-    frame.contentPane.add(component, BorderLayout.CENTER)
-
-    frame.pack()
-    frame.isVisible = true
-
-    // clear focus from first input field
-    frame.requestFocusInWindow()
-  }
-}
-
-private fun createTestFrame(minSize: Dimension?): JFrame {
-  val frame = JFrame()
-  frame.isUndecorated = true
-  if (minSize != null) {
-    frame.minimumSize = minSize
-  }
-
-  val screenDevices = GraphicsEnvironment.getLocalGraphicsEnvironment().screenDevices
-  if (SystemInfoRt.isMac && screenDevices != null && screenDevices.size > 1) {
-    // use non-Retina
-    for (screenDevice in screenDevices) {
-      if (!UIUtil.isRetina(screenDevice)) {
-        frame.setLocation(screenDevice.defaultConfiguration.bounds.x, frame.y)
-        break
-      }
-    }
-  }
-
-  return frame
 }
 
 fun getSnapshotRelativePath(lafName: String, isForImage: Boolean): String {
@@ -134,8 +92,7 @@ fun validateBounds(component: Container, snapshotDir: Path, snapshotName: String
     dumperOptions.lineBreak = DumperOptions.LineBreak.UNIX
     val yaml = Yaml(dumperOptions)
     actualSerializedLayout = yaml
-      .dump(linkedMapOf("bounds" to component.components.map { it.bounds }))
-      .replace(" !!java.awt.Rectangle", "")
+      .dump(linkedMapOf("bounds" to dumpComponentBounds(component)))
   }
 
   compareSnapshot(snapshotDir.resolve("$snapshotName.yml"), actualSerializedLayout, isUpdateSnapshots)
@@ -162,30 +119,8 @@ private fun compareSnapshot(snapshotFile: Path, newData: String, isUpdateSnapsho
   }
 }
 
-private fun svgGraphicsToString(svgGenerator: SVGGraphics2D): String {
-  val transformer = TransformerFactory.newInstance().newTransformer()
-  transformer.setOutputProperty(OutputKeys.METHOD, "xml")
-  transformer.setOutputProperty(OutputKeys.INDENT, "yes")
-  transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes")
-  transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2")
-  transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8")
-
-  val writer = StringWriter()
-  writer.use {
-    transformer.transform(DOMSource(svgGenerator.root), StreamResult(writer))
-  }
-  return writer
-    .toString()
-    // &#27;Remember
-    // no idea why transformer/batik doesn't escape it correctly
-    .replace(">&#27;", ">&amp")
-}
-
 fun validateUsingImage(component: Component, snapshotDir: Path, snapshotName: String, isUpdateSnapshots: Boolean = isUpdateSnapshotsGlobal) {
-  // jFreeSvg produces not so compact and readable SVG as batik
-  val svgGenerator = SVGGraphics2D(GenericDOMImplementation.getDOMImplementation().createDocument("http://www.w3.org/2000/svg", "svg", null))
-  component.paint(svgGenerator)
-  compareSnapshot(snapshotDir.resolve("$snapshotName.svg"), svgGraphicsToString(svgGenerator), isUpdateSnapshots)
+  compareSnapshot(snapshotDir.resolve("$snapshotName.svg"), SvgRenderer().render(component), isUpdateSnapshots)
 }
 
 val TestName.snapshotFileName: String

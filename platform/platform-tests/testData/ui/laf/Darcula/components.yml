@@ -1,64 +1,9 @@
 bounds:
--
-  height: 32
-  location: {x: 8, y: 10}
-  size: {height: 32, width: 464}
-  width: 464
-  x: 8
-  y: 10
--
-  height: 30
-  location: {x: 8, y: 52}
-  size: {height: 30, width: 464}
-  width: 464
-  x: 8
-  y: 52
--
-  height: 30
-  location: {x: 8, y: 92}
-  size: {height: 30, width: 464}
-  width: 464
-  x: 8
-  y: 92
--
-  height: 30
-  location: {x: 8, y: 132}
-  size: {height: 30, width: 464}
-  width: 464
-  x: 8
-  y: 132
--
-  height: 30
-  location: {x: 8, y: 172}
-  size: {height: 30, width: 464}
-  width: 464
-  x: 8
-  y: 172
--
-  height: 22
-  location: {x: 8, y: 212}
-  size: {height: 22, width: 464}
-  width: 464
-  x: 8
-  y: 212
--
-  height: 23
-  location: {x: 8, y: 244}
-  size: {height: 23, width: 464}
-  width: 464
-  x: 8
-  y: 244
--
-  height: 30
-  location: {x: 8, y: 277}
-  size: {height: 30, width: 464}
-  width: 464
-  x: 8
-  y: 277
--
-  height: 30
-  location: {x: 8, y: 317}
-  size: {height: 30, width: 464}
-  width: 464
-  x: 8
-  y: 317
+  'JTextField #0': [8, 10, 464, 32]
+  'JPasswordField #1': [8, 52, 464, 30]
+  'JComboBox #2': [8, 92, 464, 30]
+  'JComboBox #3': [8, 132, 464, 30]
+  label: [8, 244, 464, 23]
+  enabled: [8, 212, 464, 22]
+  'JBIntSpinner #7': [8, 277, 464, 30]
+  'TextFieldWithHistoryWithBrowseButton #8': [8, 317, 464, 30]
