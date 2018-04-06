@@ -23,7 +23,7 @@ class XThreadsView(val project: Project, session: XDebugSessionImpl) : XDebugVie
 
   override fun clear() {
     DebuggerUIUtil.invokeLater {
-      getTree().setRoot(object : XValueContainerNode<XValueContainer>(getTree(), null, object : XValueContainer() {}) {}, false)
+      getTree().setRoot(object : XValueContainerNode<XValueContainer>(getTree(), null, true, object : XValueContainer() {}) {}, false)
     }
   }
 
@@ -93,9 +93,5 @@ class XThreadsView(val project: Project, session: XDebugSessionImpl) : XDebugVie
   }
 
   class XThreadsRootNode(tree: XDebuggerTree, suspendContext: XSuspendContext) :
-    XValueContainerNode<ThreadsContainer>(tree, null, ThreadsContainer(suspendContext)) {
-    init {
-      isLeaf = false
-    }
-  }
+    XValueContainerNode<ThreadsContainer>(tree, null, false, ThreadsContainer(suspendContext))
 }
