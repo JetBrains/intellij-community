@@ -69,10 +69,7 @@ import org.fest.swing.core.ComponentMatcher
 import org.fest.swing.core.GenericTypeMatcher
 import org.fest.swing.core.Robot
 import org.fest.swing.exception.ComponentLookupException
-import java.awt.Component
-import java.awt.Container
-import java.awt.Point
-import java.awt.Rectangle
+import java.awt.*
 import java.awt.event.MouseEvent
 import java.io.File
 import java.net.URI
@@ -452,9 +449,9 @@ class ToolWindowGenerator : LocalContextCodeGenerator<Component>() {
     return rectangle.contains(locationOnScreen)
   }
 
-  private fun Component.centerOnScreen(): Point {
+  private fun Component.centerOnScreen(): Point? {
     val rectangle = this.bounds
-    rectangle.location = this.locationOnScreen
+    rectangle.location = try { this.locationOnScreen } catch (e: IllegalComponentStateException) { return null }
     return Point(rectangle.centerX.toInt(), rectangle.centerY.toInt())
   }
 
@@ -470,11 +467,17 @@ class ToolWindowGenerator : LocalContextCodeGenerator<Component>() {
   }
 
   override fun acceptor(): (Component) -> Boolean = { component ->
-    val tw = getToolWindow(component.centerOnScreen()); tw != null && component == tw.component
+    val centerOnScreen = component.centerOnScreen()
+    if (centerOnScreen != null) {
+      val tw = getToolWindow(centerOnScreen)
+      tw != null && component == tw.component
+    } else false
+
   }
 
   override fun generate(cmp: Component): String {
-    val toolWindow: ToolWindowImpl = getToolWindow(cmp.centerOnScreen())!!
+    val pointOnScreen = cmp.centerOnScreen() ?: throw IllegalComponentStateException("Unable to get center on screen for component: $cmp")
+    val toolWindow: ToolWindowImpl = getToolWindow(pointOnScreen)!!
     return """toolwindow(id = "${toolWindow.id}") {"""
   }
 
@@ -490,9 +493,9 @@ class ToolWindowContextGenerator : LocalContextCodeGenerator<Component>() {
     return rectangle.contains(locationOnScreen)
   }
 
-  private fun Component.centerOnScreen(): Point {
+  private fun Component.centerOnScreen(): Point? {
     val rectangle = this.bounds
-    rectangle.location = this.locationOnScreen
+    rectangle.location = try { this.locationOnScreen } catch (e: IllegalComponentStateException) { return null }
     return Point(rectangle.centerX.toInt(), rectangle.centerY.toInt())
   }
 
@@ -513,11 +516,15 @@ class ToolWindowContextGenerator : LocalContextCodeGenerator<Component>() {
   }
 
   override fun acceptor(): (Component) -> Boolean = { component ->
-    val tw = getToolWindow(component.centerOnScreen()); tw != null && tw.contentManager.selectedContent!!.component == component
+    val pointOnScreen = component.centerOnScreen()
+    if (pointOnScreen != null) {
+      val tw = getToolWindow(pointOnScreen)
+      tw != null && tw.contentManager.selectedContent!!.component == component
+    } else false
   }
 
   override fun generate(cmp: Component): String {
-    val toolWindow: ToolWindowImpl = getToolWindow(cmp.centerOnScreen())!!
+    val toolWindow: ToolWindowImpl = getToolWindow(cmp.centerOnScreen()!!)!!
     val tabName = toolWindow.contentManager.selectedContent?.tabName
     return if (tabName != null) """content(tabName = "${tabName}") {"""
     else "content {"
