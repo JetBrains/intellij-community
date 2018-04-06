@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.options.newEditor.SettingsDialog;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
@@ -78,11 +79,13 @@ public class PluginHeaderPanel {
     myName.setText("<html><body>" + plugin.getName() + "</body></html>");
     myCategory.setText(plugin.getCategory() == null ? "UNKNOWN" : plugin.getCategory().toUpperCase(Locale.US));
     final boolean hasNewerVersion = ourState.hasNewerVersion(plugin.getPluginId());
+    String versionText;
+    boolean showVersion = !plugin.isBundled() || plugin.allowBundledUpdate();
     if (plugin instanceof PluginNode) {
       final PluginNode node = (PluginNode)plugin;
       myRating.setRate(node.getRating());
       myDownloads.setText(node.getDownloads() + " downloads");
-      myVersion.setText("v" + node.getVersion());
+      versionText = showVersion ? "v" + node.getVersion() : null;
       myUpdated.setText("Updated " + DateFormatUtil.formatDate(node.getDate()));
       switch (node.getStatus()) {
         case PluginNode.STATUS_INSTALLED:
@@ -114,10 +117,13 @@ public class PluginHeaderPanel {
       myDownloadsPanel.setVisible(false);
       final String version = plugin.getVersion();
       if (ourState.wasUpdated(plugin.getPluginId())) {
-        myVersion.setText("New version will be available after restart");
+        versionText = "New version will be available after restart";
+      }
+      else if (version != null && showVersion) {
+        versionText = "Version: " + version;
       }
       else {
-        myVersion.setText("Version: " + (version == null ? "N/A" : version));
+        versionText = null;
       }
       myUpdated.setVisible(false);
       if (ourState.wasUpdated(plugin.getPluginId()) || ourState.wasInstalled(plugin.getPluginId())) {
@@ -138,6 +144,8 @@ public class PluginHeaderPanel {
         myActionId = null;
       }
     }
+    myVersion.setVisible(versionText != null);
+    myVersion.setText(StringUtil.notNullize(versionText));
     UIUtil.setEnabled(myButtonPanel, true, true);
     if (myManager == null || myActionId == null || (myManager.getInstalled() != myManager.getAvailable() && myActionId == ACTION_ID.UNINSTALL)) {
       myActionId = ACTION_ID.INSTALL;
