@@ -19,7 +19,6 @@ package com.intellij.ide.actions;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -35,14 +34,14 @@ public class NewElementSamePlaceAction extends NewElementAction {
     return LangDataKeys.IDE_VIEW.getData(e.getDataContext()) != null;
   }
 
-  protected void showPopup(DataContext context) {
-    ListPopup popup = createPopup(context);
-    Project project = CommonDataKeys.PROJECT.getData(context);
+  protected void showPopup(AnActionEvent e) {
+    ListPopup popup = createPopup(e);
+    Project project = e.getData(CommonDataKeys.PROJECT);
     if (project != null) {
       popup.showCenteredInCurrentWindow(project);
     }
     else {
-      popup.showInBestPositionFor(context);
+      popup.showInBestPositionFor(e.getDataContext());
     }
   }
 }

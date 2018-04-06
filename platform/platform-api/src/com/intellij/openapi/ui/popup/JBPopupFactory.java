@@ -97,24 +97,43 @@ public abstract class JBPopupFactory {
                                                Runnable onNo,
                                                int defaultOptionIndex);
 
+  @Deprecated
   @NotNull
-  public abstract ListPopupStep createActionsStep(@NotNull ActionGroup actionGroup,
-                                                  @NotNull DataContext dataContext,
-                                                  boolean showNumbers,
-                                                  boolean showDisabledActions,
-                                                  String title,
-                                                  Component component,
-                                                  boolean honorActionMnemonics);
+  public ListPopupStep createActionsStep(@NotNull ActionGroup actionGroup,
+                                         @NotNull DataContext dataContext,
+                                         boolean showNumbers,
+                                         boolean showDisabledActions,
+                                         String title,
+                                         Component component,
+                                         boolean honorActionMnemonics) {
+    return createActionsStep(actionGroup, dataContext, null, showNumbers, showDisabledActions, title, component, honorActionMnemonics, 0, false);
+  }
+
+  @Deprecated
+  @NotNull
+  public ListPopupStep createActionsStep(@NotNull ActionGroup actionGroup,
+                                         @NotNull DataContext dataContext,
+                                         boolean showNumbers,
+                                         boolean showDisabledActions,
+                                         String title,
+                                         Component component,
+                                         boolean honorActionMnemonics,
+                                         int defaultOptionIndex,
+                                         boolean autoSelectionEnabled) {
+    return createActionsStep(actionGroup, dataContext, null, showNumbers, showDisabledActions, title, component, honorActionMnemonics, defaultOptionIndex, autoSelectionEnabled);
+  }
 
   @NotNull
   public abstract ListPopupStep createActionsStep(@NotNull ActionGroup actionGroup,
                                                   @NotNull DataContext dataContext,
+                                                  @Nullable String actionPlace,
                                                   boolean showNumbers,
                                                   boolean showDisabledActions,
                                                   String title,
                                                   Component component,
                                                   boolean honorActionMnemonics,
-                                                  int defaultOptionIndex, final boolean autoSelectionEnabled);
+                                                  int defaultOptionIndex,
+                                                  boolean autoSelectionEnabled);
 
   @NotNull
   public abstract RelativePoint guessBestPopupLocation(@NotNull JComponent component);
