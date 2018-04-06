@@ -11,6 +11,11 @@ import java.io.*;
 import static com.intellij.CommonBundle.message;
 
 /**
+ * Takes extra caution w.r.t. an existing content. Specifically, if the operation fails for whatever reason
+ * (like not enough disk space left), the prior content shall not be overwritten.
+ *
+ * The class is not thread-safe - use try-with-resources or equivalent try/finally statements to handle.
+ *
  * @author max
  */
 public class SafeFileOutputStream extends OutputStream {
