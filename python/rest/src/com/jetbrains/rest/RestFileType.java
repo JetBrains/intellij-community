@@ -43,7 +43,7 @@ public class RestFileType extends LanguageFileType {
 
   @NotNull
   public String getDescription() {
-    return "reStructuredText files";
+    return "reStructuredText";
   }
 
   @Override
