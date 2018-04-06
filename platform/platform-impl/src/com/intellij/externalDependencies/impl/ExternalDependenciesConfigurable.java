@@ -124,7 +124,7 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable,
       .setAddAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
-          replaceDependency(new DependencyOnPlugin("", null, null, null), dependenciesList);
+          replaceDependency(new DependencyOnPlugin("", null, null), dependenciesList);
         }
       })
       .setEditAction(new AnActionButtonRunnable() {
@@ -207,17 +207,14 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable,
 
     final JBTextField minVersionField = new JBTextField(StringUtil.notNullize(original.getMinVersion()));
     final JBTextField maxVersionField = new JBTextField(StringUtil.notNullize(original.getMaxVersion()));
-    final JBTextField channelField = new JBTextField(StringUtil.notNullize(original.getChannel()));
     minVersionField.getEmptyText().setText("<any>");
     minVersionField.setColumns(10);
     maxVersionField.getEmptyText().setText("<any>");
     maxVersionField.setColumns(10);
-    channelField.setColumns(10);
     JPanel panel = FormBuilder.createFormBuilder()
       .addLabeledComponent("Plugin:", pluginChooser)
       .addLabeledComponent("Minimum version:", minVersionField)
       .addLabeledComponent("Maximum version:", maxVersionField)
-      .addLabeledComponent("Channel:", channelField)
       .getPanel();
     final DialogBuilder dialogBuilder = new DialogBuilder(parent).title("Required Plugin").centerPanel(panel);
     dialogBuilder.setPreferredFocusComponent(pluginChooser);
@@ -230,8 +227,7 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable,
     if (dialogBuilder.show() == DialogWrapper.OK_EXIT_CODE) {
       return new DependencyOnPlugin(((String)pluginChooser.getSelectedItem()),
                                     StringUtil.nullize(minVersionField.getText().trim()),
-                                    StringUtil.nullize(maxVersionField.getText().trim()),
-                                    StringUtil.nullize(channelField.getText().trim()));
+                                    StringUtil.nullize(maxVersionField.getText().trim()));
     }
     return null;
   }

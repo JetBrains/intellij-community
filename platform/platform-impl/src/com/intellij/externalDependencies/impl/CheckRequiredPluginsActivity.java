@@ -22,12 +22,10 @@ import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.PluginManagerMain;
 import com.intellij.notification.*;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
-import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.text.VersionComparatorUtil;
@@ -55,20 +53,11 @@ public class CheckRequiredPluginsActivity implements StartupActivity, DumbAware 
     List<DependencyOnPlugin> dependencies = ExternalDependenciesManager.getInstance(project).getDependencies(DependencyOnPlugin.class);
     if (dependencies.isEmpty()) return;
 
-    List<String> customRepositories = UpdateSettings.getInstance().getStoredPluginHosts();
-
     final List<String> errorMessages = new ArrayList<>();
-    final List<String> missingCustomRepositories = new ArrayList<>();
     final List<IdeaPluginDescriptor> disabled = new ArrayList<>();
     final List<PluginId> notInstalled = new ArrayList<>();
     for (DependencyOnPlugin dependency : dependencies) {
       PluginId pluginId = PluginId.getId(dependency.getPluginId());
-      String channel = dependency.getChannel();
-      String customRepository = getCustomRepository(pluginId, channel);
-      if (!StringUtil.isEmpty(channel) && customRepositoryNotSpecified(customRepositories, customRepository)) {
-        errorMessages.add("Custom repository '" + customRepository + "' required for '" + project.getName() + "' project isn't installed.");
-        missingCustomRepositories.add(customRepository);
-      }
       IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
       if (plugin == null) {
         errorMessages.add("Plugin '" + dependency.getPluginId() + "' required for '" + project.getName() + "' project isn't installed.");
@@ -91,10 +80,7 @@ public class CheckRequiredPluginsActivity implements StartupActivity, DumbAware 
     }
 
     if (!errorMessages.isEmpty()) {
-      if (!missingCustomRepositories.isEmpty()) {
-        errorMessages.add("<a href=\"addRepositories\">Add custom repositories and install required plugins</a>");
-      }
-      else if (!disabled.isEmpty() && notInstalled.isEmpty()) {
+      if (!disabled.isEmpty() && notInstalled.isEmpty()) {
         String plugins = disabled.size() == 1 ? disabled.get(0).getName() : "required plugins";
         errorMessages.add("<a href=\"enable\">Enable " + plugins + "</a>");
       }
@@ -108,9 +94,6 @@ public class CheckRequiredPluginsActivity implements StartupActivity, DumbAware 
                               public void hyperlinkUpdate(@NotNull final Notification notification,
                                                           @NotNull HyperlinkEvent event) {
                                 if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-                                  if ("addRepositories".equals(event.getDescription())) {
-                                    UpdateSettings.getInstance().getStoredPluginHosts().addAll(missingCustomRepositories);
-                                  }
                                   if ("enable".equals(event.getDescription())) {
                                     notification.expire();
                                     for (IdeaPluginDescriptor descriptor : disabled) {
@@ -118,7 +101,7 @@ public class CheckRequiredPluginsActivity implements StartupActivity, DumbAware 
                                     }
                                     PluginManagerMain.notifyPluginsUpdated(project);
                                   }
-                                  else if ("install".equals(event.getDescription()) || "addRepositories".equals(event.getDescription())) {
+                                  else {
                                     Set<String> pluginIds = new HashSet<>();
                                     for (IdeaPluginDescriptor descriptor : disabled) {
                                       pluginIds.add(descriptor.getPluginId().getIdString());
@@ -132,13 +115,5 @@ public class CheckRequiredPluginsActivity implements StartupActivity, DumbAware 
                               }
                             }).notify(project);
     }
-  }
-
-  private static boolean customRepositoryNotSpecified(List<String> repositories, String customRepository) {
-    return !repositories.contains(customRepository);
-  }
-
-  private static String getCustomRepository(PluginId id, String channel) {
-    return String.format(ApplicationInfoImpl.getShadowInstance().getPluginManagerUrl() + "/plugins/%s/%s", channel, id);
   }
 }
