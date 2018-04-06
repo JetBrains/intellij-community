@@ -66,7 +66,15 @@ public interface InlayModel {
    * Tells whether there exists an inline visual element at a given visual position.
    * Only visual position to the left of the element is recognized.
    */
-  boolean hasInlineElementAt(@NotNull VisualPosition visualPosition);
+  default boolean hasInlineElementAt(@NotNull VisualPosition visualPosition) {
+    return getInlineElementAt(visualPosition) != null;
+  }
+
+  /**
+   * Return a custom visual element at at a given visual position. Only visual position to the left of the element is recognized.
+   */
+  @Nullable
+  Inlay getInlineElementAt(@NotNull VisualPosition visualPosition);
 
   /**
    * Return a custom visual element at given coordinates in editor's coordinate space,
