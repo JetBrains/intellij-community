@@ -170,7 +170,10 @@ public class OptionalUtil {
               PsiMethod method = mappedStream.resolveMethod();
               if(method != null && method.getContainingClass() != null) {
                 String className = method.getContainingClass().getQualifiedName();
-                if(className != null && className.startsWith("java.util.stream.")) {
+                PsiParameter[] parameters = method.getParameterList().getParameters();
+                if(className != null && className.startsWith("java.util.stream.")
+                   && parameters.length == 1
+                   && !(parameters[0].getType() instanceof PsiArrayType)) {
                   PsiExpression arg = args[0];
                   if(ExpressionUtils.isReferenceTo(arg, var)) {
                     return qualifier + ".stream()";
