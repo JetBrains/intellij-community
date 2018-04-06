@@ -334,7 +334,7 @@ public class SettingsImpl implements EditorSettings {
     PsiFile file = getPsiFile(project);
     return file != null
            ? CodeStyle.getIndentOptions(file).USE_TAB_CHARACTER
-           : CodeStyle.getSettings(project).getIndentOptions(null).USE_TAB_CHARACTER;
+           : CodeStyle.getProjectOrDefaultSettings(project).getIndentOptions(null).USE_TAB_CHARACTER;
   }
 
   @Override
