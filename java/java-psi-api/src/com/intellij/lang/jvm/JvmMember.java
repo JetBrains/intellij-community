@@ -15,6 +15,13 @@ public interface JvmMember extends JvmModifiersOwner, JvmNamedElement {
   @Nullable
   JvmClass getContainingClass();
 
+  /**
+   * @see java.lang.reflect.Member#getName
+   */
+  @Nullable
+  @Override
+  String getName();
+
   @Override
   default <T> T accept(@NotNull JvmElementVisitor<T> visitor) {
     return visitor.visitMember(this);
