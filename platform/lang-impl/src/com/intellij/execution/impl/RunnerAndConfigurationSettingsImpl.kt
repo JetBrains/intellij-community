@@ -168,6 +168,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
 
     isEditBeforeRun = (element.getAttributeBooleanValue(EDIT_BEFORE_RUN))
     val value = element.getAttributeValue(ACTIVATE_TOOLWINDOW_BEFORE_RUN)
+    @Suppress("PlatformExtensionReceiverOfInline")
     isActivateToolWindowBeforeRun = value == null || value.toBoolean()
     folderName = element.getAttributeValue(FOLDER_NAME)
     val factory = manager.getFactory(element.getAttributeValue(CONFIGURATION_TYPE_ATTRIBUTE), element.getAttributeValue(FACTORY_NAME_ATTRIBUTE), !isTemplate) ?: return
@@ -183,7 +184,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
       }
       else {
         wasSingletonSpecifiedExplicitly = true
-        singleton = singletonStr.toBoolean()
+        singleton = singletonStr!!.toBoolean()
       }
     }
 
@@ -393,21 +394,12 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
   }
 
   override fun getSchemeState(): SchemeState? {
-    val configuration = configuration
-    if (configuration is UnknownRunConfiguration) {
-      return if (configuration.isDoNotStore) SchemeState.NON_PERSISTENT else SchemeState.UNCHANGED
+    val configuration = _configuration
+    return when (configuration) {
+      null -> SchemeState.UNCHANGED
+      is UnknownRunConfiguration -> if (configuration.isDoNotStore) SchemeState.NON_PERSISTENT else SchemeState.UNCHANGED
+      else -> null
     }
-    
-    if (isTemplate && _configuration != null) {
-      // todo optimize
-      val templateSettings = manager.createTemplateSettings(configuration.factory)
-      if (JDOMUtil.areElementsEqual(writeScheme(), templateSettings.writeScheme())) {
-        // this state doesn't mean that scheme will be removed - SchemeManager doesn't expect that scheme can be NON_PERSISTENT after UNCHANGED
-        // todo definitely, SchemeManager should be improved to support this case, but it is not safe to do right now
-        return SchemeState.NON_PERSISTENT
-      }
-    }
-    return null
   }
 
   private abstract inner class RunnerItem<T>(private val childTagName: String) {

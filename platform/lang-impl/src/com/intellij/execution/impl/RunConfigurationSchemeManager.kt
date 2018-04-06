@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl
 
 import com.intellij.configurationStore.LazySchemeProcessor
@@ -8,9 +6,11 @@ import com.intellij.configurationStore.SchemeContentChangedHandler
 import com.intellij.configurationStore.SchemeDataHolder
 import com.intellij.execution.RunConfigurationConverter
 import com.intellij.execution.configurations.ConfigurationType
+import com.intellij.execution.configurations.UnknownConfigurationType
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.util.InvalidDataException
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.attribute
 import org.jdom.Element
 import java.util.function.Function
@@ -54,7 +54,7 @@ internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl
       RunManagerImpl.LOG.error(e)
     }
 
-    var elementAfterStateLoaded = element
+    var elementAfterStateLoaded: Element? = element
     try {
       elementAfterStateLoaded = writeScheme(settings)
     }
@@ -102,12 +102,21 @@ internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl
     manager.removeConfiguration(scheme)
   }
 
-  override fun writeScheme(scheme: RunnerAndConfigurationSettingsImpl): Element {
-    val result = super.writeScheme(scheme)
+  override fun writeScheme(scheme: RunnerAndConfigurationSettingsImpl): Element? {
+    val result = super.writeScheme(scheme) ?: return null
     if (isShared && isWrapSchemeIntoComponentElement) {
       return Element("component")
         .attribute("name", "ProjectRunConfigurationManager")
         .addContent(result)
+    }
+    else if (scheme.isTemplate) {
+      val factory = scheme.factory
+      if (factory != UnknownConfigurationType.FACTORY) {
+        val templateSettings = manager.createTemplateSettings(factory)
+        if (JDOMUtil.areElementsEqual(result, templateSettings.writeScheme())) {
+          return null
+        }
+      }
     }
     return result
   }

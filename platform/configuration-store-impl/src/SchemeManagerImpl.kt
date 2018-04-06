@@ -425,8 +425,8 @@ class SchemeManagerImpl<T : Any, in MUTABLE_SCHEME : T>(val fileSpec: String,
       }
     }
 
-    override fun updateDigest(data: Element) {
-      externalInfo.digest = data.digest()
+    override fun updateDigest(data: Element?) {
+      externalInfo.digest = data?.digest() ?: ArrayUtilRt.EMPTY_BYTE_ARRAY
     }
   }
 
@@ -629,8 +629,7 @@ class SchemeManagerImpl<T : Any, in MUTABLE_SCHEME : T>(val fileSpec: String,
   private fun saveScheme(scheme: MUTABLE_SCHEME, nameGenerator: UniqueNameGenerator) {
     var externalInfo: ExternalInfo? = schemeToInfo.get(scheme)
     val currentFileNameWithoutExtension = externalInfo?.fileNameWithoutExtension
-    val parent = processor.writeScheme(scheme)
-    val element = parent as? Element ?: (parent as Document).detachRootElement()
+    val element = processor.writeScheme(scheme)?.let { it as? Element ?: (it as Document).detachRootElement() }
     if (element.isEmpty()) {
       externalInfo?.scheduleDelete()
       return
