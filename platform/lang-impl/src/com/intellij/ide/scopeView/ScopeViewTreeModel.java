@@ -583,7 +583,17 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
       String title = getTitle();
       presentation.setPresentableText(title != null ? title : toString());
       Icon icon = getIcon();
-      presentation.setIcon(icon != null ? icon : getFileIcon(node));
+      if (icon == null && node.isValid()) {
+        VirtualFile file = node.getVirtualFile();
+        if (file.isDirectory()) {
+          AbstractTreeNode parent = getParent();
+          icon = getFolderIcon(node, null, parent == null ? null : parent.getIcon());
+        }
+        else {
+          icon = file.getFileType().getIcon();
+        }
+      }
+      presentation.setIcon(icon);
       decorate(presentation);
     }
 
@@ -1035,15 +1045,6 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
   private static Module getModule(@NotNull VirtualFile file, @Nullable Project project) {
     ProjectFileIndex index = getProjectFileIndex(project);
     return index == null ? null : index.getModuleForFile(file);
-  }
-
-  @Nullable
-  private static Icon getFileIcon(@NotNull ProjectFileNode node) {
-    if (!node.isValid()) return null;
-    VirtualFile file = node.getVirtualFile();
-    return file.isDirectory()
-           ? getFolderIcon(node, null, null)
-           : file.getFileType().getIcon();
   }
 
   @NotNull
