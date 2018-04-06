@@ -86,6 +86,7 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
       if (controller.myLbraceMarker.getStartOffset() == offset) {
         if (controller.myKeepOnHintHidden || controller.myHint.isVisible()) return controller;
         Disposer.dispose(controller);
+        //noinspection AssignmentToForLoopParameter
         --i;
       }
     }
@@ -217,8 +218,8 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
 
     mySingleParameterInfo = singleParameterInfo && myKeepOnHintHidden;
     
-    Pair<Point, Short> pos = myProvider.getBestPointPosition(myHint, myComponent.getParameterOwner(), myLbraceMarker.getStartOffset(), 
-                                                             null, true, HintManager.ABOVE);
+    Pair<Point, Short> pos = myProvider.getBestPointPosition(myHint, myComponent.getParameterOwner(), myLbraceMarker.getStartOffset(),
+                                                             null, HintManager.ABOVE);
     HintHint hintHint = HintManagerImpl.createHintHint(myEditor, pos.getFirst(), myHint, pos.getSecond());
     hintHint.setExplicitClose(true);
     hintHint.setRequestFocus(requestFocus);
@@ -322,7 +323,7 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
                          : HintManager.ABOVE;
         Pair<Point, Short> pos = myProvider.getBestPointPosition(
           myHint, elementForUpdating instanceof PsiElement ? (PsiElement)elementForUpdating : null,
-          caretOffset, myEditor.getCaretModel().getVisualPosition(), true, position);
+          caretOffset, myEditor.getCaretModel().getVisualPosition(), position);
         HintManagerImpl.adjustEditorHintPosition(myHint, myEditor, pos.getFirst(), pos.getSecond());
       }
     }
@@ -491,13 +492,12 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
 
   /**
    * Returned Point is in layered pane coordinate system.
-   * Second value is a {@link com.intellij.codeInsight.hint.HintManager.PositionFlags position flag}.
+   * Second value is a {@link HintManager.PositionFlags position flag}.
    */
-  static Pair<Point, Short> chooseBestHintPosition(Project project,
-                                                   Editor editor,
+  static Pair<Point, Short> chooseBestHintPosition(Editor editor,
                                                    VisualPosition pos,
                                                    LightweightHint hint,
-                                                   boolean awtTooltip, short preferredPosition, boolean showLookupHint) {
+                                                   short preferredPosition, boolean showLookupHint) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return Pair.pair(new Point(), HintManager.DEFAULT);
 
     HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
@@ -514,13 +514,6 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
     else {
       p1 = HintManagerImpl.getHintPosition(hint, editor, pos, HintManager.UNDER);
       p2 = HintManagerImpl.getHintPosition(hint, editor, pos, HintManager.ABOVE);
-    }
-
-    if (!awtTooltip) {
-      p1.x = Math.min(p1.x, layeredPane.getWidth() - hintSize.width);
-      p1.x = Math.max(p1.x, 0);
-      p2.x = Math.min(p2.x, layeredPane.getWidth() - hintSize.width);
-      p2.x = Math.max(p2.x, 0);
     }
 
     boolean p1Ok = p1.y + hintSize.height < layeredPane.getHeight();
@@ -677,11 +670,10 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
 
     @NotNull
     private Pair<Point, Short> getBestPointPosition(LightweightHint hint,
-                                                   final PsiElement list,
-                                                   int offset,
-                                                   VisualPosition pos,
-                                                   final boolean awtTooltip,
-                                                   short preferredPosition) {
+                                                    final PsiElement list,
+                                                    int offset,
+                                                    VisualPosition pos,
+                                                    short preferredPosition) {
       if (list != null) {
         TextRange range = list.getTextRange();
         TextRange rangeWithoutParens = TextRange.from(range.getStartOffset() + 1, Math.max(range.getLength() - 2, 0));
@@ -700,7 +692,7 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
       Pair<Point, Short> position;
 
       if (!isMultiline) {
-        position = chooseBestHintPosition(myEditor.getProject(), myEditor, pos, hint, awtTooltip, preferredPosition, false);
+        position = chooseBestHintPosition(myEditor, pos, hint, preferredPosition, false);
       }
       else {
         Point p = HintManagerImpl.getHintPosition(hint, myEditor, pos, HintManager.ABOVE);
