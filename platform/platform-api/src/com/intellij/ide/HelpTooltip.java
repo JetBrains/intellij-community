@@ -27,6 +27,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.util.Alarm;
+import com.intellij.util.NotNullProducer;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -105,10 +106,10 @@ import java.util.*;
  */
 
 public class HelpTooltip implements Disposable {
-  private static final Color BACKGROUND_COLOR = new JBColor(() -> UIManager.getColor("HelpTooltip.backgroundColor"));
-  private static final Color FONT_COLOR = new JBColor(() -> UIManager.getColor("HelpTooltip.textColor"));
-  private static final Color SHORTCUT_COLOR = new JBColor(() -> UIManager.getColor("HelpTooltip.shortcutTextColor"));
-  private static final Color BORDER_COLOR = new JBColor(() -> UIManager.getColor("HelpTooltip.borderColor"));
+  private static final Color BACKGROUND_COLOR = new JBColor(new Producer("HelpTooltip.backgroundColor"));
+  private static final Color FONT_COLOR = new JBColor(new Producer("HelpTooltip.textColor"));
+  private static final Color SHORTCUT_COLOR = new JBColor(new Producer("HelpTooltip.shortcutTextColor"));
+  private static final Color BORDER_COLOR = new JBColor(new Producer("HelpTooltip.borderColor"));
 
   private static final String DOTS = "...";
   private static final String PARAGRAPH_SPLITTER = "<p/?>";
@@ -468,6 +469,21 @@ public class HelpTooltip implements Disposable {
   private static Font modifyFont(Font font) {
     int deltaSize = JBUI.scale(UIManager.getInt("HelpTooltip.fontSizeDelta"));
     return font.deriveFont((float)font.getSize() + deltaSize);
+  }
+
+  private static class Producer implements NotNullProducer<Color> {
+    private final String resourceName;
+
+    private Producer(String resourceName) {
+      this.resourceName = resourceName;
+    }
+
+    @NotNull
+    @Override
+    public Color produce() {
+      Color c = UIManager.getColor(resourceName);
+      return c != null ? c : JBColor.black; // Return bogus color in headless mode
+    }
   }
 
   private class Header extends JPanel {
