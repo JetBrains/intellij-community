@@ -336,7 +336,7 @@ public class FileEditorFixture extends EditorFixture {
    * Selects the editor with a given tab name.
    */
   public FileEditorFixture selectTab(@NotNull final String tabName) {
-    tabs.waitTab(tabName, 30).selectTab(tabName);
+    tabs.waitTab(tabName, 5).selectTab(tabName);
     return this;
   }
 
