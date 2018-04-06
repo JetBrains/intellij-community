@@ -13,25 +13,6 @@
     <isset property="intellij.build.output.root"/>
   </condition>
 
-  <!-- References to Bazel workspace and Bazel commandline to use -->
-  <dirname property="workspace" file="${project.home}/../"/>
-  <condition property="bazel" value="${workspace}/tools/base/bazel/bazel.cmd" else="${workspace}/tools/base/bazel/bazel">
-    <os family="windows" />
-  </condition>
-  <macrodef name="bazel">
-    <attribute name="action" />
-    <attribute name="target" />
-    <attribute name="config" />
-    <sequential>
-      <echo>${bazel} @{action} @{target} --config=@{config}</echo>
-      <exec executable="${bazel}" dir="${workspace}" failonerror="true" taskname="bazel">
-        <arg value="@{action}" />
-        <arg value="@{target}" />
-        <arg value="--config=@{config}" />
-      </exec>
-    </sequential>
-  </macrodef>
-
   <target name="init">
     <propertyset id="intellij.build.properties">
       <propertyref name="build.number"/>
@@ -71,10 +52,6 @@
   </macrodef>
 
   <target name="build" depends="init">
-    <bazel if:set="include.aswb"
-           action="build"
-           target="@blaze//java/com/google/devtools/intellij/blaze/plugin/aswb:aswb_blaze_zip"
-           config="release"/>
     <call_gant script="${project.home}/build/scripts/idea_community.gant"/>
   </target>
 
@@ -82,13 +59,7 @@
     <call_gant script="${project.home}/build/scripts/tests_in_community.gant"/>
   </target>
 
-  <target name="build-aswb" depends="init">
-    <bazel action="build"
-           target="//tools/adt/idea/android-uitests:aswb_plugin"
-           config="release"/>
-  </target>
-
-  <target name="uitest" depends="build-aswb">
+  <target name="uitest" depends="init">
     <call_gant script="${project.home}/build/scripts/uitests_in_studio.gant"/>
   </target>
 
