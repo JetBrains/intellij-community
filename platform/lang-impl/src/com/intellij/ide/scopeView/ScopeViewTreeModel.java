@@ -1056,20 +1056,22 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
     SourceFolder folder = findSourceFolder(module, file);
     if (folder != null) return getSourceRootIcon(folder);
     ProjectFileIndex index = getProjectFileIndex(module.getProject());
-    if (index != null) {
-      if (index.isExcluded(file)) return AllIcons.Modules.ExcludeRoot;
-      if (element == null) element = node.getPsiElement();
-      if (element instanceof PsiDirectory && element.isValid()) {
-        PsiDirectoryFactory factory = PsiDirectoryFactory.getInstance(module.getProject());
-        if (factory != null && factory.isPackage((PsiDirectory)element)) {
-          // IDEA-153822: temporary solution to distinguish META-INF from other packages
-          if (factory.isValidPackageName(factory.getQualifiedName((PsiDirectory)element, false))) {
-            return AllIcons.Nodes.Package;
-          }
-        }
+    if (index == null) return AllIcons.Nodes.Folder;
+    if (index.isExcluded(file)) return AllIcons.Modules.ExcludeRoot;
+    if (element == null) element = node.getPsiElement();
+    if (isPackage(element)) return AllIcons.Nodes.Package;
+    return AllIcons.Nodes.Folder;
+  }
+
+  private static boolean isPackage(@Nullable PsiElement element) {
+    if (element instanceof PsiDirectory && element.isValid()) {
+      PsiDirectoryFactory factory = PsiDirectoryFactory.getInstance(element.getProject());
+      if (factory != null && factory.isPackage((PsiDirectory)element)) {
+        // IDEA-153822: temporary solution to distinguish META-INF from other packages
+        return factory.isValidPackageName(factory.getQualifiedName((PsiDirectory)element, false));
       }
     }
-    return AllIcons.Nodes.Folder;
+    return false;
   }
 
   @NotNull
