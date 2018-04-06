@@ -53,9 +53,9 @@ public class JavaParameters extends SimpleJavaParameters {
   public static final int CLASSES_AND_TESTS = CLASSES_ONLY | TESTS_ONLY;
   public static final int JDK_AND_CLASSES_AND_PROVIDED = JDK_ONLY | CLASSES_ONLY | INCLUDE_PROVIDED;
 
-  public void configureByModule(final Module module,
-                                @MagicConstant(valuesFromClass = JavaParameters.class) final int classPathType,
-                                final Sdk jdk) throws CantRunException {
+  public void configureByModule(Module module,
+                                @MagicConstant(valuesFromClass = JavaParameters.class) int classPathType,
+                                Sdk jdk) throws CantRunException {
     if ((classPathType & JDK_ONLY) != 0) {
       if (jdk == null) {
         throw CantRunException.noJdkConfigured();
@@ -74,27 +74,21 @@ public class JavaParameters extends SimpleJavaParameters {
   }
 
   private void configureJavaEnablePreviewProperty(OrderEnumerator orderEnumerator, Sdk jdk) {
-    if (getVMParametersList().hasParameter(JAVA_ENABLE_PREVIEW_PROPERTY)) {
+    ParametersList vmParameters = getVMParametersList();
+    if (vmParameters.hasParameter(JAVA_ENABLE_PREVIEW_PROPERTY) || !JavaSdkVersionUtil.isAtLeast(jdk, JavaSdkVersion.JDK_11)) {
       return;
     }
-    if (jdk != null) {
-      JavaSdkVersion javaSdkVersion = JavaSdkVersionUtil.getJavaSdkVersion(jdk);
-      if (javaSdkVersion == null || !javaSdkVersion.isAtLeast(JavaSdkVersion.JDK_11)) {
-        return;
-      }
-    }
-    List<Module> modules = new ArrayList<>();
-    orderEnumerator.forEachModule(modules::add);
-    for (Module m : modules) {
-      LanguageLevelModuleExtensionImpl moduleExtension = LanguageLevelModuleExtensionImpl.getInstance(m);
+    orderEnumerator.forEachModule(module -> {
+      LanguageLevelModuleExtension moduleExtension = LanguageLevelModuleExtensionImpl.getInstance(module);
       if (moduleExtension != null) {
         LanguageLevel languageLevel = moduleExtension.getLanguageLevel();
         if (languageLevel != null && languageLevel.isPreview()) {
-          getVMParametersList().add(JAVA_ENABLE_PREVIEW_PROPERTY);
-          break;
+          vmParameters.add(JAVA_ENABLE_PREVIEW_PROPERTY);
+          return false;
         }
       }
-    }
+      return true;
+    });
   }
 
   private void configureJavaLibraryPath(OrderEnumerator enumerator) {
