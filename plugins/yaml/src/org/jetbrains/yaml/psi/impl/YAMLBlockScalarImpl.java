@@ -17,6 +17,7 @@ import java.util.List;
 
 public abstract class YAMLBlockScalarImpl extends YAMLScalarImpl {
   protected static final int DEFAULT_CONTENT_INDENT = 2;
+  private static final int IMPLICIT_INDENT = -1;
 
   public YAMLBlockScalarImpl(@NotNull ASTNode node) {
     super(node);
@@ -82,17 +83,57 @@ public abstract class YAMLBlockScalarImpl extends YAMLScalarImpl {
     return lastNonEmpty == -1 ? result : result.subList(0, lastNonEmpty + 1);
   }
 
-  protected int locateIndent() {
+  /** See <a href="http://www.yaml.org/spec/1.2/spec.html#id2793979">8.1.1.1. Block Indentation Indicator</a>*/
+  protected final int locateIndent() {
+    int indent = getExplicitIndent();
+    if (indent != IMPLICIT_INDENT) {
+      return indent;
+    }
+
+    ASTNode firstLine = getNthContentTypeChild(1);
+    if (firstLine != null) {
+      return YAMLUtil.getIndentInThisLine(firstLine.getPsi());
+    }
+    return 0;
+  }
+
+
+  @Nullable
+  private ASTNode getNthContentTypeChild(int nth) {
     int number = 0;
     for (ASTNode child = getNode().getFirstChildNode(); child != null; child = child.getTreeNext()) {
       if (child.getElementType() == getContentType()) {
-        number++;
-        if (number == 2) {
-          return YAMLUtil.getIndentInThisLine(child.getPsi());
+        if (number == nth) {
+          return child;
         }
+        number++;
       }
     }
-    return 0;
+    return null;
+  }
+
+  private int getExplicitIndent() {
+    ASTNode headerNode = getNthContentTypeChild(0);
+    assert headerNode != null;
+
+    String header = headerNode.getText();
+
+    for (int i = 0; i < header.length(); i++) {
+      if (Character.isDigit(header.charAt(i))) {
+        int k = i + 1;
+        // YAML 1.2 standard does not allow more then 1 symbol in indentation number
+        if (k < header.length() && Character.isDigit(header.charAt(k))) {
+          return IMPLICIT_INDENT;
+        }
+        int res = Integer.parseInt(header.substring(i, k));
+        if (res == 0) {
+          // zero is not allowed as c-indentation-indicator
+          return IMPLICIT_INDENT;
+        }
+        return res;
+      }
+    }
+    return IMPLICIT_INDENT;
   }
 
   private static boolean isEol(@Nullable ASTNode node) {

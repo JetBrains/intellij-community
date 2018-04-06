@@ -57,6 +57,11 @@ public class YAMLScalarContentTest extends LightPlatformCodeInsightFixtureTestCa
     doTest();
   }
 
+  // Test indentation indicator in literal style block scalar header
+  public void testLiteralStyleExplicitIndent() {
+    doTest();
+  }
+
   public void testFoldedStyle1() {
     doTest();
   }
@@ -93,6 +98,11 @@ public class YAMLScalarContentTest extends LightPlatformCodeInsightFixtureTestCa
   // Test scalar value in case of invalid symbols in literal style block scalar header
   // Now invalid symbols will be ignored in scalar value calculation
   public void testFoldedStyleHeaderError() {
+    doTest();
+  }
+
+  // Test indentation indicator in folded style block scalar header
+  public void testFoldedStyleExplicitIndent() {
     doTest();
   }
 

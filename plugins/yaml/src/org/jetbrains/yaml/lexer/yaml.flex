@@ -7,6 +7,8 @@ import org.jetbrains.yaml.YAMLTokenTypes;
 /* Auto generated File */
 %%
 
+// Language specification could be found here: http://www.yaml.org/spec/1.2/spec.html
+
 %class _YAMLLexer
 %implements FlexLexer, YAMLTokenTypes
 %unicode
@@ -160,7 +162,22 @@ C_NS_SHORTHAND_TAG = {C_TAG_HANDLE} {NS_TAG_CHAR}+
 C_NON_SPECIFIC_TAG = "!"
 C_NS_TAG_PROPERTY = {C_VERBATIM_TAG} | {C_NS_SHORTHAND_TAG} | {C_NON_SPECIFIC_TAG}
 
-SCALAR_BLOCK_ERR_WORD = [^ \t#\n] [^ \t\n]*
+BS_HEADER_ERR_WORD = [^ \t#\n] [^ \t\n]*
+
+/*
+[162] c-b-block-header(m,t) ::= ( (c-indentation-indicator(m) c-chomping-indicator(t))
+                                | (c-chomping-indicator(t) c-indentation-indicator(m)) )
+                                s-b-comment
+[163] c-indentation-indicator(m) ::= ns-dec-digit ⇒ m = ns-dec-digit - #x30
+                                        Empty     ⇒ m = auto-detect()
+[164] c-chomping-indicator(t) ::= “-”    ⇒ t = strip
+                                  “+”    ⇒ t = keep
+                                  Empty  ⇒ t = clip
+
+Better to support more general c-indentation-indicator as sequence of digits and check it later
+*/
+C_B_BLOCK_HEADER = ( [:digit:]* ( "-" | "+" )? ) | ( ( "-" | "+" )? [:digit:]* )
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////// STATES DECLARATIONS //////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -287,14 +304,19 @@ SCALAR_BLOCK_ERR_WORD = [^ \t#\n] [^ \t\n]*
 
 }
 
+// See 8.1 Block Scalar Styles
 <YYINITIAL, VALUE, VALUE_BRACE, VALUE_OR_KEY>{
 
-">"("-"|"+")?                   {   yyBegin(BS_HEADER_TAIL);
+// See 8.1.3. Folded Style
+// [174] 	c-l+folded(n) ::= “>” c-b-block-header(m,t) l-folded-content(n+m,t)
+">" {C_B_BLOCK_HEADER}          {   yyBegin(BS_HEADER_TAIL);
                                     valueTokenType = SCALAR_TEXT;
                                     return valueTokenType;
                                 }
 
-"|"("-"|"+")?                   {   yyBegin(BS_HEADER_TAIL);
+// See 8.1.2. Literal Style
+// [170] c-l+literal(n) ::= “|” c-b-block-header(m,t) l-literal-content(n+m,t)
+"|" {C_B_BLOCK_HEADER}          {   yyBegin(BS_HEADER_TAIL);
                                     valueTokenType = SCALAR_LIST;
                                     return valueTokenType;
                                 }
