@@ -125,7 +125,12 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
   }
 
   private void runStartupActivity() {
-    myEditorProvider = new FocusBasedCurrentEditorProvider();
+    myEditorProvider = myProject != null ? new CurrentEditorProvider() {
+      @Override
+      public FileEditor getCurrentEditor() {
+        return FileEditorManager.getInstance(myProject).getSelectedEditor();
+      }
+    } : new FocusBasedCurrentEditorProvider();
     myCommandProcessor.addCommandListener(new CommandListener() {
       private boolean myStarted;
 
@@ -584,7 +589,6 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
     myEditorProvider = p;
   }
 
-  @TestOnly
   @NotNull
   public CurrentEditorProvider getEditorProvider() {
     return myEditorProvider;
