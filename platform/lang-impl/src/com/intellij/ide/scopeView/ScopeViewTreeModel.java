@@ -1061,7 +1061,12 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
       if (element == null) element = node.getPsiElement();
       if (element instanceof PsiDirectory && element.isValid()) {
         PsiDirectoryFactory factory = PsiDirectoryFactory.getInstance(module.getProject());
-        if (factory != null && factory.isPackage((PsiDirectory)element)) return AllIcons.Nodes.Package;
+        if (factory != null && factory.isPackage((PsiDirectory)element)) {
+          // IDEA-153822: temporary solution to distinguish META-INF from other packages
+          if (factory.isValidPackageName(factory.getQualifiedName((PsiDirectory)element, false))) {
+            return AllIcons.Nodes.Package;
+          }
+        }
       }
     }
     return AllIcons.Nodes.Folder;
