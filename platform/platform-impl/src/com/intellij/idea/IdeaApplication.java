@@ -337,7 +337,7 @@ public class IdeaApplication {
       PluginManagerCore.dumpPluginClassStatistics();
 
       // Temporary check until the jre implementation has been checked and bundled
-      if ((SystemInfo.isLinux || SystemInfo.isMac) && Registry.is("ide.popup.enablePopupType")) {
+      if (Registry.is("ide.popup.enablePopupType")) {
         System.setProperty("jbre.popupwindow.settype", "true");
       }
 
