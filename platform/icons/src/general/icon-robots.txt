@@ -1,1 +1,1 @@
-overridden: /general/debug.png -> AllIcons.Actions.StartDebugger
+deprecated: debug.png

@@ -1,2 +1,2 @@
-overridden: /nodes/TreeClosed.png -> AllIcons.Nodes.Folder
-overridden: /nodes/TreeOpen.png -> AllIcons.Nodes.Folder
+deprecated: TreeClosed.png
+deprecated: TreeOpen.png
