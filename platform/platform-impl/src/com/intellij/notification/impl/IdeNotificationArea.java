@@ -227,7 +227,8 @@ public class IdeNotificationArea extends JLabel implements UISettingsListener, C
       x += (getIconWidth() - myWidth) / 2;
       y += SimpleColoredComponent.getTextBaseLine(g.getFontMetrics(), getIconHeight());
 
-      if (SystemInfo.isMac && myStr.length() == 1) {
+      int length = myStr.length();
+      if ((SystemInfo.isMac && length == 1) || ((SystemInfo.isLinux || SystemInfo.isWindows) && length == 2)) {
         x += JBUI.scale(1);
       }
 
