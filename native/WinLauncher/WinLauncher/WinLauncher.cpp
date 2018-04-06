@@ -30,6 +30,9 @@ JavaVM* jvm = NULL;
 JNIEnv* env = NULL;
 volatile bool terminating = false;
 
+//tools.jar doesn't exist in jdk 9 and later. So check it only for jdk 1.8 only.
+bool toolsArchiveExists = true;
+
 HANDLE hFileMapping;
 HANDLE hEvent;
 HANDLE hSingleInstanceWatcherThread;
@@ -227,8 +230,10 @@ bool FindJVMInRegistry()
   if (FindJVMInRegistryWithVersion("1.8", true))
     return true;
   if (FindJVMInRegistryWithVersion("9", true))
+    toolsArchiveExists = false;
     return true;
   if (FindJVMInRegistryWithVersion("10", true))
+    toolsArchiveExists = false;
     return true;
 
   //obsolete java versions
@@ -241,8 +246,10 @@ bool FindJVMInRegistry()
   if (FindJVMInRegistryWithVersion("1.8", false))
     return true;
   if (FindJVMInRegistryWithVersion("9", false))
+    toolsArchiveExists = false;
     return true;
   if (FindJVMInRegistryWithVersion("10", false))
+    toolsArchiveExists = false;
     return true;
 
   //obsolete java versions
@@ -427,11 +434,14 @@ std::string BuildClassPath()
   std::string classpathLibs = LoadStdString(IDS_CLASSPATH_LIBS);
   std::string result = CollectLibJars(classpathLibs);
 
-  std::string toolsJar = FindToolsJar();
-  if (toolsJar.size() > 0)
+  if (toolsArchiveExists)
   {
-    result += ";";
-    result += toolsJar;
+    std::string toolsJar = FindToolsJar();
+    if (toolsJar.size() > 0)
+    {
+      result += ";";
+      result += toolsJar;
+    }
   }
 
   return result;
