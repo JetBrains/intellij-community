@@ -15,66 +15,21 @@
  */
 package org.jetbrains.idea.devkit.navigation;
 
-import com.intellij.codeInsight.daemon.GutterMark;
-import com.intellij.icons.AllIcons;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.TestDataPath;
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.components.JBList;
-import com.intellij.util.PathUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
 @TestDataPath("$CONTENT_ROOT/testData/navigation/extensionDeclaration")
-public class ExtensionDeclarationRelatedItemLineMarkerProviderTest extends JavaCodeInsightFixtureTestCase {
-
+public class ExtensionDeclarationRelatedItemLineMarkerProviderTest extends ExtensionDeclarationRelatedItemLineMarkerProviderTestBase {
   @Override
   protected String getBasePath() {
     return DevkitJavaTestsUtil.TESTDATA_PATH + "navigation/extensionDeclaration";
   }
 
-  @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
-    String extensionsJar = PathUtil.getJarPathForClass(ExtensionPointName.class);
-    moduleBuilder.addLibrary("extensions", extensionsJar);
-    String platformApiJar = PathUtil.getJarPathForClass(JBList.class);
-    moduleBuilder.addLibrary("platform-api", platformApiJar);
-  }
-
-
   public void testInvalidExtension() {
     doTestInvalidExtension("MyInvalidExtension.java");
   }
 
-  private void doTestInvalidExtension(String file) {
-    myFixture.configureByFile("plugin.xml");
-    assertNull(myFixture.findGutter(file));
-  }
-
-
   public void testExtension() {
     doTestExtension("MyExtension.java", "<myEp implementation=\"MyExtension\"/>");
-  }
-
-  private void doTestExtension(String file, String xmlDeclarationText) {
-    PsiFile pluginXmlFile = myFixture.configureByFile("plugin.xml");
-    String pluginXmlPath = pluginXmlFile.getVirtualFile().getPath();
-
-    Module module = ModuleUtilCore.findModuleForPsiElement(pluginXmlFile);
-    assertNotNull(module);
-
-    String color = ColorUtil.toHex(UIUtil.getInactiveTextColor());
-    int expectedTagPosition = pluginXmlFile.getText().indexOf(xmlDeclarationText);
-    String expectedTooltip = "<html><body>&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"#navigation/" + pluginXmlPath
-                             + ":" + expectedTagPosition + "\">myEp</a> declaration in plugin.xml " +
-                             "<font color=" + color + ">[" + module.getName() + "]</font><br></body></html>";
-
-    GutterMark gutter = myFixture.findGutter(file);
-    DevKitGutterTargetsChecker.checkGutterTargets(gutter, expectedTooltip, AllIcons.Nodes.Plugin, "myEp");
   }
 }

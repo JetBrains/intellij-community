@@ -16,13 +16,8 @@
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.GutterMark;
-import com.intellij.codeInspection.LocalInspectionEP;
 import com.intellij.icons.AllIcons;
 import com.intellij.testFramework.TestDataPath;
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
-import com.intellij.ui.components.JBList;
-import com.intellij.util.PathUtil;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
 import java.util.Collections;
@@ -30,19 +25,10 @@ import java.util.Comparator;
 import java.util.List;
 
 @TestDataPath("$CONTENT_ROOT/testData/navigation/descriptionType")
-public class DescriptionTypeRelatedItemLineMarkerProviderTest extends JavaCodeInsightFixtureTestCase {
-
+public class DescriptionTypeRelatedItemLineMarkerProviderTest extends DescriptionTypeRelatedItemLineMarkerProviderTestBase {
   @Override
   protected String getBasePath() {
     return DevkitJavaTestsUtil.TESTDATA_PATH + "navigation/descriptionType";
-  }
-
-  @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
-    String pathForClass = PathUtil.getJarPathForClass(LocalInspectionEP.class);
-    moduleBuilder.addLibrary("lang-api", pathForClass);
-    String platformApiJar = PathUtil.getJarPathForClass(JBList.class);
-    moduleBuilder.addLibrary("platform-api", platformApiJar);
   }
 
   public void testInspectionDescription() {
@@ -51,12 +37,6 @@ public class DescriptionTypeRelatedItemLineMarkerProviderTest extends JavaCodeIn
 
   public void testInspectionDescriptionFromFieldReference() {
     doTestInspectionDescription("MyWithDescriptionFromFieldReferenceInspection.java", "MyWithDescriptionFromFieldReferenceInspection.html");
-  }
-
-  private void doTestInspectionDescription(String inspectionFile, String descriptionFile) {
-    myFixture.copyDirectoryToProject("inspectionDescriptions", "inspectionDescriptions");
-    GutterMark gutter = myFixture.findGutter(inspectionFile);
-    DevKitGutterTargetsChecker.checkGutterTargets(gutter, "Description", AllIcons.FileTypes.Html, descriptionFile);
   }
 
   public void testIntentionDescription() {
