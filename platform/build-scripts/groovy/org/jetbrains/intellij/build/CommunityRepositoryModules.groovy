@@ -238,11 +238,15 @@ class CommunityRepositoryModules {
       withModule("intellij.textmate.core")
       withResource("lib/bundles", "lib/bundles")
     },
+/* Android Studio: exclude Python
     PythonCommunityPluginModules.pythonCommunityPluginLayout(),
+Android Studio: exclude Python */
+/* Android Studio: exclude smali
     // required for android plugin
     plugin("intellij.android.smali") {
       withModule("intellij.android.smali")
     },
+Android Studio: exclude smali */
     plugin("intellij.statsCollector") {
       withModule("intellij.statsCollector.logEvents")
       withModule("intellij.statsCollector.completionRanker")
