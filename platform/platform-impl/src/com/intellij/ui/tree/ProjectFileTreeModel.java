@@ -139,11 +139,8 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
     ThreeState visibility = node.visibility;
     if (visibility == ThreeState.NO) return false;
     if (visibility == ThreeState.YES) return true;
-    boolean visible;
-    if (!node.file.isDirectory()) {
-      visible = filter.accept(node.file);
-    }
-    else {
+    boolean visible = filter.accept(node.file);
+    if (!visible && node.file.isDirectory()) {
       List<FileNode> children = node.getChildren();
       visible = !children.stream().allMatch(child -> child.visibility == ThreeState.NO) &&
                 (children.stream().anyMatch(child -> child.visibility == ThreeState.YES) ||
