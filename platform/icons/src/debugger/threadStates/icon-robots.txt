@@ -1,1 +1,1 @@
-deprecated: paused.png
+deprecated: paused.png -> /actions/pause.png

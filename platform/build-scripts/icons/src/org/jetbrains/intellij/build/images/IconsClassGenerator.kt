@@ -186,8 +186,9 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule, val writeC
           val used = image.used
           val deprecated = image.deprecated
           val deprecationComment = image.deprecationComment
+          val deprecationReplacement = image.deprecationReplacement
 
-          if (isIcon(file)) {
+          if (isIcon(file) || deprecationReplacement != null) {
             processedIcons++
 
             if (used || deprecated) {
@@ -209,9 +210,18 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule, val writeC
               if (!packagePrefix.isEmpty()) root_prefix = "/" + packagePrefix.replace('.', '/')
             }
 
-            val size = imageSize(file) ?: error("Can't get icon size: $file")
+            val imageFile: File
+            if (deprecationReplacement != null) {
+              imageFile = File(sourceRoot.file, deprecationReplacement)
+              assert(isIcon(imageFile), { "Overriding icon should be valid: $name - ${imageFile.path}" })
+            }
+            else {
+              imageFile = file
+            }
+
+            val size = imageSize(imageFile) ?: error("Can't get icon size: $imageFile")
             val method = if (customLoad) "load" else "IconLoader.getIcon"
-            val relativePath = root_prefix + "/" + FileUtil.getRelativePath(sourceRoot.file, file)!!.replace('\\', '/')
+            val relativePath = root_prefix + "/" + FileUtil.getRelativePath(sourceRoot.file, imageFile)!!.replace('\\', '/')
             append(answer,
                    "public static final Icon ${iconName(name)} = $method(\"$relativePath\"); // ${size.width}x${size.height}",
                    level)

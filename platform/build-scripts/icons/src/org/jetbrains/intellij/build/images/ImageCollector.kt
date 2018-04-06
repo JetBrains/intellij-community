@@ -27,7 +27,11 @@ import java.util.regex.Matcher
 import java.util.regex.Pattern
 import kotlin.collections.ArrayList
 
-internal class ImagePaths(val id: String, val sourceRoot: JpsModuleSourceRoot, val used: Boolean, val deprecated: Boolean,
+internal class ImagePaths(val id: String,
+                          val sourceRoot: JpsModuleSourceRoot,
+                          val used: Boolean,
+                          val deprecated: Boolean,
+                          val deprecationReplacement: String?,
                           val deprecationComment: String?) {
   var files: MutableMap<ImageType, File> = HashMap()
   var ambiguous: Boolean = false
@@ -93,7 +97,9 @@ internal class ImageCollector(val projectHome: File, val iconsOnly: Boolean = tr
     val flags = robotData.getImageFlags(file)
     if (flags.skipped) return
 
-    val iconPaths = result.computeIfAbsent(id, { ImagePaths(id, sourceRoot, flags.used, flags.deprecated, flags.deprecationComment) })
+    val iconPaths = result.computeIfAbsent(id, {
+      ImagePaths(id, sourceRoot, flags.used, flags.deprecated, flags.deprecationReplacement, flags.deprecationComment)
+    })
     if (type !in iconPaths.files) {
       iconPaths.files[type] = file
     }
@@ -134,9 +140,13 @@ internal class ImageCollector(val projectHome: File, val iconsOnly: Boolean = tr
     }
   }
 
-  class ImageFlags(val skipped: Boolean, val used: Boolean, val deprecated: Boolean, val deprecationComment: String?)
+  class ImageFlags(val skipped: Boolean,
+                   val used: Boolean,
+                   val deprecated: Boolean,
+                   val deprecationReplacement: String?,
+                   val deprecationComment: String?)
 
-  private class DeprecatedData(val matcher: Matcher, val comment: String?)
+  private class DeprecatedData(val matcher: Matcher, val replacement: String?, val comment: String?)
 
   private inner class IconRobotsData(private val parent: IconRobotsData? = null) {
     private val skip: MutableList<Matcher> = ArrayList()
@@ -147,13 +157,14 @@ internal class ImageCollector(val projectHome: File, val iconsOnly: Boolean = tr
       val isSkipped = !ignoreSkipTag && matches(file, skip)
       val isUsed = matches(file, used)
       val deprecationData = findDeprecatedData(file)
-      val ourFlags = ImageFlags(isSkipped, isUsed, deprecationData != null, deprecationData?.comment)
+      val ourFlags = ImageFlags(isSkipped, isUsed, deprecationData != null, deprecationData?.replacement, deprecationData?.comment)
 
-      val parentFlags = parent?.getImageFlags(file) ?: ImageFlags(false, false, false, null)
+      val parentFlags = parent?.getImageFlags(file) ?: ImageFlags(false, false, false, null, null)
 
       return ImageFlags(ourFlags.skipped || parentFlags.skipped,
                         ourFlags.used || parentFlags.used,
                         ourFlags.deprecated || parentFlags.deprecated,
+                        ourFlags.deprecationReplacement ?: parentFlags.deprecationReplacement,
                         ourFlags.deprecationComment ?: parentFlags.deprecationComment)
     }
 
@@ -170,8 +181,12 @@ internal class ImageCollector(val projectHome: File, val iconsOnly: Boolean = tr
             Pair("skip:", { value -> answer.skip += compilePattern(dir, root, value) }),
             Pair("used:", { value -> answer.used += compilePattern(dir, root, value) }),
             Pair("deprecated:", { value ->
-              val comment = if (";" in value) value.substringAfter(";").trim() else null
-              answer.deprecated += DeprecatedData(compilePattern(dir, root, value.substringBefore(";")), comment)
+              val comment = StringUtil.nullize(value.substringAfter(";", "").trim())
+              val valueWithoutComment = value.substringBefore(";")
+              val pattern = valueWithoutComment.substringBefore("->").trim()
+              val replacement = StringUtil.nullize(valueWithoutComment.substringAfter("->", "").trim())
+
+              answer.deprecated += DeprecatedData(compilePattern(dir, root, pattern), replacement, comment)
             }),
             Pair("name:", { value -> }), // ignore directive for IconsClassGenerator
             Pair("#", { value -> }) // comment
