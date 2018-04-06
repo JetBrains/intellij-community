@@ -36,13 +36,8 @@ internal class ImagePaths(val id: String, val sourceRoot: JpsModuleSourceRoot, v
   val presentablePath: File get() = file ?: files.values.first() ?: File("<unknown>")
 }
 
-internal class OverriddenImage(val oldId: String, val newId: String, val sourceRoot: JpsModuleSourceRoot) {
-}
-
-
 internal class ImageCollector(val projectHome: File, val iconsOnly: Boolean = true, val ignoreSkipTag: Boolean = false) {
   private val result = HashMap <String, ImagePaths>()
-  private val overriddenIcons = ArrayList<OverriddenImage>()
 
   private val usedIconsRobots: MutableSet<File> = HashSet()
 
@@ -50,17 +45,8 @@ internal class ImageCollector(val projectHome: File, val iconsOnly: Boolean = tr
     module.sourceRoots.forEach {
       processRoot(it)
     }
-    return getImages()
-  }
-
-  fun getImages(): List<ImagePaths> {
     return result.values.toList()
   }
-
-  fun getOverriddenIcons(): List<OverriddenImage> {
-    return overriddenIcons.toList()
-  }
-
 
   fun printUsedIconRobots() {
     usedIconsRobots.forEach {
@@ -73,13 +59,13 @@ internal class ImageCollector(val projectHome: File, val iconsOnly: Boolean = tr
     if (!root.exists()) return
     if (!JavaModuleSourceRootTypes.PRODUCTION.contains(sourceRoot.rootType)) return
 
-    val iconsRoot = downToRoot(root, sourceRoot)
+    val iconsRoot = downToRoot(root)
     if (iconsRoot == null) return
 
-    val rootRobotData = upToProjectHome(root, sourceRoot)
+    val rootRobotData = upToProjectHome(root)
     if (rootRobotData.isSkipped(root)) return
 
-    val robotData = rootRobotData.fork(iconsRoot, root, sourceRoot)
+    val robotData = rootRobotData.fork(iconsRoot, root)
 
     processDirectory(iconsRoot, sourceRoot, robotData, emptyList<String>())
   }
@@ -89,7 +75,7 @@ internal class ImageCollector(val projectHome: File, val iconsOnly: Boolean = tr
       if (robotData.isSkipped(file)) return@forEach
       if (file.isDirectory) {
         val root = sourceRoot.file
-        val childRobotData = robotData.fork(file, root, sourceRoot)
+        val childRobotData = robotData.fork(file, root)
         val childPrefix = prefix + file.name
         processDirectory(file, sourceRoot, childRobotData, childPrefix)
       }
@@ -116,26 +102,26 @@ internal class ImageCollector(val projectHome: File, val iconsOnly: Boolean = tr
     }
   }
 
-  private fun upToProjectHome(dir: File, sourceRoot: JpsModuleSourceRoot): IconRobotsData {
+  private fun upToProjectHome(dir: File): IconRobotsData {
     if (FileUtil.filesEqual(dir, projectHome)) return IconRobotsData()
     val parent = dir.parentFile ?: return IconRobotsData()
-    return upToProjectHome(parent, sourceRoot).fork(parent, projectHome, sourceRoot)
+    return upToProjectHome(parent).fork(parent, projectHome)
   }
 
-  private fun downToRoot(dir: File, sourceRoot: JpsModuleSourceRoot): File? {
-    val answer = downToRoot(dir, dir, null, IconRobotsData(), sourceRoot)
+  private fun downToRoot(dir: File): File? {
+    val answer = downToRoot(dir, dir, null, IconRobotsData())
     return if (answer == null || answer.isDirectory) answer else answer.parentFile
   }
 
-  private fun downToRoot(root: File, file: File, common: File?, robotData: IconRobotsData, sourceRoot: JpsModuleSourceRoot): File? {
+  private fun downToRoot(root: File, file: File, common: File?, robotData: IconRobotsData): File? {
     if (robotData.isSkipped(file)) return common
 
     if (file.isDirectory) {
-      val childRobotData = robotData.fork(file, root, sourceRoot)
+      val childRobotData = robotData.fork(file, root)
 
       var childCommon = common
       file.children.forEach {
-        childCommon = downToRoot(root, it, childCommon, childRobotData, sourceRoot)
+        childCommon = downToRoot(root, it, childCommon, childRobotData)
       }
       return childCommon
     }
@@ -173,7 +159,7 @@ internal class ImageCollector(val projectHome: File, val iconsOnly: Boolean = tr
 
     fun isSkipped(file: File): Boolean = getImageFlags(file).skipped
 
-    fun fork(dir: File, root: File, sourceRoot: JpsModuleSourceRoot): IconRobotsData {
+    fun fork(dir: File, root: File): IconRobotsData {
       val robots = File(dir, ROBOTS_FILE_NAME)
       if (!robots.exists()) return this
 
@@ -186,11 +172,6 @@ internal class ImageCollector(val projectHome: File, val iconsOnly: Boolean = tr
             Pair("deprecated:", { value ->
               val comment = if (";" in value) value.substringAfter(";").trim() else null
               answer.deprecated += DeprecatedData(compilePattern(dir, root, value.substringBefore(";")), comment)
-            }),
-            Pair("overridden:", { value ->
-              val paths = value.split("->")
-              assert(paths.size == 2, { "Invalid 'overridden' parameter. Use '/old/icon/path.txt -> replacement.icon.NewId' form." })
-              overriddenIcons += OverriddenImage(paths[0].trim(), paths[1].trim(), sourceRoot)
             }),
             Pair("name:", { value -> }), // ignore directive for IconsClassGenerator
             Pair("#", { value -> }) // comment
