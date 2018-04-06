@@ -6,6 +6,7 @@ import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBCheckBox;
@@ -24,9 +25,7 @@ import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
+import java.util.*;
 import java.util.List;
 
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED;
@@ -85,13 +84,18 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
     add(scrollPane);
   }
 
+  private static String getParagraphTag() {
+    return "<p style=\"margin-bottom:"+JBUI.scale(10)+"px;\">";
+  }
+
   @NotNull
   private JComponent createConsentElement(Consent consent, boolean addCheckBox) {
     //TODO: refactor DocumentationComponent to use external link marker here, there and everywhere
     final JPanel pane;
     if (addCheckBox) {
-      final JCheckBox cb = new JBCheckBox(consent.getName(), consent.isAccepted());
-      pane = UI.PanelFactory.panel(cb).withComment(StringUtil.replace(consent.getText(), "\n", "<br>")).createPanel();
+      final JCheckBox cb = new JBCheckBox(StringUtil.capitalize(consent.getName().toLowerCase(Locale.US)), consent.isAccepted());
+      pane = UI.PanelFactory.panel(cb).withComment(getParagraphTag()
+                                                   +StringUtil.replace(consent.getText(), "\n", "</p>"+getParagraphTag())+"</p>").createPanel();
       cb.setOpaque(false);
       consentMapping.add(Pair.create(cb, consent));
     } else {
@@ -114,7 +118,7 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
           }
         }
       });
-      viewer.setText("<html><body>" + StringUtil.replace(consent.getText(), "\n", "<br>") + "</body></html>");
+      viewer.setText("<html><body>"+getParagraphTag() + StringUtil.replace(consent.getText(), "\n", "</p>" + getParagraphTag()) + "</p></body></html>");
       StyleSheet styleSheet = ((HTMLDocument)viewer.getDocument()).getStyleSheet();
       //styleSheet.addRule("body {font-family: \"Segoe UI\", Tahoma, sans-serif;}");
       styleSheet.addRule("body {margin-top:0;padding-top:0;}");
@@ -124,6 +128,9 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
       styleSheet.addRule("p, h1 {margin-top:0;padding-top:"+JBUI.scaleFontSize(6)+"pt;}");
       styleSheet.addRule("li {margin-bottom:" + JBUI.scaleFontSize(6) + "pt;}");
       styleSheet.addRule("h2 {margin-top:0;padding-top:"+JBUI.scaleFontSize(13)+"pt;}");
+      styleSheet.addRule("a, a:link {color:#" + ColorUtil.toHex(JBColor.link()) + ";}");
+      styleSheet.addRule("a:hover {color:#" + ColorUtil.toHex(JBColor.linkHover()) + ";}");
+      styleSheet.addRule("a:active {color:#" + ColorUtil.toHex(JBColor.linkPressed()) + ";}");
       viewer.setCaretPosition(0);
       pane.add(viewer, BorderLayout.CENTER);
       consentMapping.add(Pair.create(null, consent));
