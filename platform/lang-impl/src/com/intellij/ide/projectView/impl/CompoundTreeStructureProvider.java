@@ -31,8 +31,8 @@ public final class CompoundTreeStructureProvider implements TreeStructureProvide
    * @return a shared instance for the specified project
    */
   @NotNull
-  public static TreeStructureProvider get(@NotNull Project project) {
-    if (project.isDisposed()) return EMPTY;
+  public static TreeStructureProvider get(@Nullable Project project) {
+    if (project == null || project.isDisposed()) return EMPTY;
     TreeStructureProvider provider = project.getUserData(KEY);
     if (provider != null) return provider;
     provider = new CompoundTreeStructureProvider(EP_NAME.getExtensions(project));
