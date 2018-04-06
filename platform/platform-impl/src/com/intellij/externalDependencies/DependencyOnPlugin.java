@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 
 /**
- * Describes a plugin (and optionally its versions range) which can be required for a project to operate normally.
+ * Describes a plugin (and optionally its versions range) which is required for a project to operate normally.
  *
  * @author nik
  */
