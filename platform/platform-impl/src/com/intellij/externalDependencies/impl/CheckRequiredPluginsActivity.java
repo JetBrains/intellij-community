@@ -27,6 +27,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser;
+import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.text.VersionComparatorUtil;
 import org.jetbrains.annotations.NotNull;
@@ -69,13 +70,30 @@ public class CheckRequiredPluginsActivity implements StartupActivity, DumbAware 
         disabled.add(plugin);
         continue;
       }
+
       String minVersion = dependency.getMinVersion();
-      if (minVersion != null && VersionComparatorUtil.compare(plugin.getVersion(), minVersion) < 0) {
-        errorMessages.add("Project '" + project.getName() + "' requires plugin  '" + plugin.getName() + "' version '" + minVersion + "' or higher, but '" + plugin.getVersion() + "' is installed.");
-      }
       String maxVersion = dependency.getMaxVersion();
-      if (maxVersion != null && VersionComparatorUtil.compare(plugin.getVersion(), maxVersion) > 0) {
-        errorMessages.add("Project '" + project.getName() + "' requires plugin  '" + plugin.getName() + "' version '" + maxVersion + "' or lower, but '" + plugin.getVersion() + "' is installed.");
+      String pluginVersion = plugin.getVersion();
+      BuildNumber currentIdeVersion = BuildNumber.currentVersion();
+      if (plugin.isBundled() && !plugin.allowBundledUpdate() && currentIdeVersion.asStringWithoutProductCode().equals(pluginVersion)) {
+        if (minVersion != null && currentIdeVersion.compareTo(BuildNumber.fromString(minVersion)) < 0) {
+          errorMessages.add("Project '" + project.getName() + "' requires plugin  '" + plugin.getName() + "' from '" + minVersion +
+                            "' or newer build of the IDE, but the current build is '" + pluginVersion + "'.");
+        }
+        if (maxVersion != null && currentIdeVersion.compareTo(BuildNumber.fromString(maxVersion)) > 0) {
+          errorMessages.add("Project '" + project.getName() + "' requires plugin  '" + plugin.getName() + "' from '" + maxVersion +
+                            "' or older build of the IDE, but the current build is '" + pluginVersion + "'.");
+        }
+      }
+      else {
+        if (minVersion != null && VersionComparatorUtil.compare(pluginVersion, minVersion) < 0) {
+          errorMessages.add("Project '" + project.getName() + "' requires plugin  '" + plugin.getName() + "' version '" + minVersion + "' or higher, but '" +
+                            pluginVersion + "' is installed.");
+        }
+        if (maxVersion != null && VersionComparatorUtil.compare(pluginVersion, maxVersion) > 0) {
+          errorMessages.add("Project '" + project.getName() + "' requires plugin  '" + plugin.getName() + "' version '" + maxVersion + "' or lower, but '" +
+                            pluginVersion + "' is installed.");
+        }
       }
     }
 
