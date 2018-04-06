@@ -20,7 +20,7 @@ class AnnotationHintsPassFactory(project: Project, registrar: TextEditorHighligh
   override fun createHighlightingPass(file: PsiFile, editor: Editor): TextEditorHighlightingPass? {
     if (editor.isOneLineMode ||
         file !is PsiJavaFile ||
-        modificationStampHolder.key.get(editor, 0) == ParameterHintsPassFactory.getCurrentModificationStamp(file)) return null
+        modificationStampHolder.isNotChanged(editor, file)) return null
     return AnnotationHintsPass(file, editor, modificationStampHolder)
   }
 

@@ -61,7 +61,7 @@ abstract class ElementProcessingHintPass(
   abstract val modificationStampHolder: ModificationStampHolder
 }
 
-class ModificationStampHolder (val key: Key<Long>) {
+class ModificationStampHolder (private val key: Key<Long>) {
   fun putCurrentModificationStamp(editor: Editor, file: PsiFile) {
     editor.putUserData<Long>(key, ParameterHintsPassFactory.getCurrentModificationStamp(file))
   }
@@ -72,5 +72,9 @@ class ModificationStampHolder (val key: Key<Long>) {
 
   fun forceHintsUpdateOnNextPass() {
     EditorFactory.getInstance().allEditors.forEach { forceHintsUpdateOnNextPass(it) }
+  }
+
+  fun isNotChanged(editor: Editor, file: PsiFile): Boolean {
+    return key.get(editor, 0) == ParameterHintsPassFactory.getCurrentModificationStamp(file)
   }
 }

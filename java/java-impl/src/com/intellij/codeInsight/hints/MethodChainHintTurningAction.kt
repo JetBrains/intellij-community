@@ -12,7 +12,7 @@ class MethodChainHintTurningAction : ToggleAction() {
 
   override fun setSelected(e: AnActionEvent?, state: Boolean) {
     CodeInsightSettings.getInstance().SHOW_METHOD_CHAIN_TYPES_INLINE = state
-    AnnotationHintsPassFactory.modificationStampHolder.forceHintsUpdateOnNextPass()
+    MethodChainHintsPassFactory.modificationStampHolder.forceHintsUpdateOnNextPass()
   }
 
 }
