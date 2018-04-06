@@ -3,6 +3,7 @@
  */
 package com.intellij.ide.scratch;
 
+import com.intellij.ide.IdeView;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -46,6 +47,7 @@ public abstract class ScratchFileCreationHelper {
     public String fileExtension;
     
     public ScratchFileService.Option createOption = ScratchFileService.Option.create_new_always;
+    public IdeView ideView;
   }
 
   @Nullable
