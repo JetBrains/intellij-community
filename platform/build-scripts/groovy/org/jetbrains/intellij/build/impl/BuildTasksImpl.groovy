@@ -572,20 +572,24 @@ idea.fatal.error.notification=disabled
           ant.zipfileset(src: file.absolutePath)
         }
       }
-      // The SDK updater is a zip containing a jar and source.properties
-      // We'll make the complete jar in build.xml, but here we create the initial part and move source.properties into place
-      jar("patcher-partial.jar") {
-        module("intellij.android.updater.ui")
-        module("intellij.platform.updater")
-      }
     }
 
-    def updaterModule = buildContext.findModule("intellij.android.updater.ui")
-    def urls = updaterModule.getContentRootsList().getUrls()
-    def uri = new URI(urls.get(0))
-    buildContext.ant.copy(todir: "$buildContext.paths.buildOutputRoot/sdk-patcher") {
-      fileset(file: "${uri.getPath()}/source.properties")
+    new LayoutBuilder(buildContext, false).layout("$buildContext.paths.buildOutputRoot/sdk-patcher") {
+      jar("patcher.jar") {
+        module("intellij.android.updater.ui")
+        module("intellij.platform.updater")
+        libraryFiles.each { file ->
+          ant.zipfileset(src: file.absolutePath)
+        }
+      }
     }
+    def modulePath = new URI(buildContext.findModule("intellij.android.updater.ui").getContentRootsList().getUrls().get(0)).getPath()
+    buildContext.ant.copy(file: "$modulePath/source.properties", todir: "$buildContext.paths.buildOutputRoot/sdk-patcher")
+    buildContext.ant.zip(
+        destfile: "$buildContext.paths.artifacts/sdk-patcher.zip",
+        basedir: "$buildContext.paths.buildOutputRoot",
+        includes: "sdk-patcher/*",
+    )
   }
 
   @Override

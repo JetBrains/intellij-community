@@ -90,7 +90,9 @@ echo "## JAVA_HOME: $JAVA_HOME"
 
 export PATH=$JDK_18_x64/bin:$PATH
 
-$ANT "-Dintellij.build.output.root=$OUT" "-Dbuild.number=$BNUM" "$ASWB_PROPERTY" "-Dbundle.ui.tests=$UITESTS" -Dbundle.gradle.release.plugin=true fullupdater
+$ANT "-Dintellij.build.output.root=$OUT" "-Dbuild.number=$BNUM" "$ASWB_PROPERTY" "-Dbundle.ui.tests=$UITESTS" -Dbundle.gradle.release.plugin=true build
+
+$ANT "-Dintellij.build.output.root=$OUT/updater" fullupdater
 
 echo "## Copying android-studio distribution files"
 mkdir -p "$DIST"
@@ -99,8 +101,8 @@ if [ "$ASWB" = true ]; then
 else
   cp -Rfv "$OUT"/artifacts/android-studio* "$DIST"
 
-  cp -Rfv "$OUT"/updater-full.jar "$DIST"/android-studio-updater.jar
-  cp -Rfv "$OUT"/sdk-patcher.zip "$DIST"/sdk-patcher.zip
+  cp -Rfv "$OUT"/updater/artifacts/updater-full.jar "$DIST"/android-studio-updater.jar
+  cp -Rfv "$OUT"/updater/artifacts/sdk-patcher.zip "$DIST"/sdk-patcher.zip
 
   # Artifact built with gradle. The ant build does not pass OUT_DIR or DIST_DIR
   # down to gradle, so it is relative to prog_dir.

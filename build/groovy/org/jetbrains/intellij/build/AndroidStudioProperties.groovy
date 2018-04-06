@@ -193,7 +193,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       withModule("intellij.android.javaLibModel.builder", "sdk-tools.jar")
       withModule("usb-devices", "sdk-tools.jar")
 
-      withJpsModule("intellij.android.jps")
+      withModule("intellij.android.jps", "jps/android-jps-plugin.jar")
 
       withProjectLibrary("freemarker") //todo[nik] move to module libraries
       //withProjectLibrary("builder-model") //todo[nik] move to module libraries
@@ -424,7 +424,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
         associateIpr = true
         enableYourkitAgentInEAP = false
         bundleIdentifier = "com.google.android.studio"
-        dmgImagePath = "$projectHome/build/conf/ideaCE/mac/images/communitydmg.png"
+        dmgImagePath = "$projectHome/build/conf/ideaCE/mac/images/dmg_background.tiff"
         // For now we have all 3 platform icons checked in and we change
         // the icons manually. Fix this when the other platforms have the
         // same mechanisms for our .ico and .svg files
