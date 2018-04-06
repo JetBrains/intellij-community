@@ -3202,6 +3202,22 @@ public class PyTypeTest extends PyTestCase {
            "    expr = y");
   }
 
+  // PY-28052
+  public void testClassAttributeAnnotatedAsAny() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTest("Any",
+                   "from typing import Any\n" +
+                   "\n" +
+                   "\n" +
+                   "class MyClass:\n" +
+                   "    arbitrary: Any = 42\n" +
+                   "\n" +
+                   "\n" +
+                   "expr = MyClass().arbitrary")
+    );
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());

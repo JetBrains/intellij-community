@@ -418,16 +418,16 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
   }
 
   @Override
-  public PyType getReferenceType(@NotNull PsiElement referenceTarget, TypeEvalContext context, @Nullable PsiElement anchor) {
+  public Ref<PyType> getReferenceType(@NotNull PsiElement referenceTarget, @NotNull TypeEvalContext context, @Nullable PsiElement anchor) {
     if (referenceTarget instanceof PyFunction) {
       if (NumpyUfuncs.isUFunc(((PyFunction)referenceTarget).getName()) && isInsideNumPy(referenceTarget)) {
         // we intentionally looking here for the user stub class
         final PyClass uFuncClass = PyPsiFacade.getInstance(referenceTarget.getProject()).findClass("numpy.core.ufunc");
         if (uFuncClass != null) {
-          return new PyClassTypeImpl(uFuncClass, false);
+          return Ref.create(new PyClassTypeImpl(uFuncClass, false));
         }
       }
     }
-    return super.getReferenceType(referenceTarget, context, anchor);
+    return null;
   }
 }

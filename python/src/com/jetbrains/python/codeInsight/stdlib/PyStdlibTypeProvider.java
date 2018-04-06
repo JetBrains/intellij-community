@@ -44,14 +44,14 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
   }
 
   @Override
-  public PyType getReferenceType(@NotNull PsiElement referenceTarget, @NotNull TypeEvalContext context, @Nullable PsiElement anchor) {
+  public Ref<PyType> getReferenceType(@NotNull PsiElement referenceTarget, @NotNull TypeEvalContext context, @Nullable PsiElement anchor) {
     PyType type = getBaseStringType(referenceTarget);
     if (type != null) {
-      return type;
+      return Ref.create(type);
     }
     type = getEnumType(referenceTarget, context, anchor);
     if (type != null) {
-      return type;
+      return Ref.create(type);
     }
     return null;
   }
