@@ -628,7 +628,7 @@ public class JBUI {
       return SystemInfo.isMac ? smallFont() : label();
     }
   }
-  
+
   private static final JBEmptyBorder SHARED_EMPTY_INSTANCE = new JBEmptyBorder(0);
 
   @SuppressWarnings("UseDPIAwareBorders")
@@ -965,9 +965,23 @@ public class JBUI {
     }
 
     /**
+     * Creates a context based on the component's (or graphics's) scale and sticks to it via the {@link #update()} method.
+     */
+    public static ScaleContext create(@Nullable Component component, @Nullable Graphics graphics) {
+      // Component is preferable to Graphics as a scale provider, as it lets the context stick
+      // to the comp's actual scale via the update method.
+      if (component == null || component.getGraphicsConfiguration() == null) {
+        return create((Graphics2D)graphics);
+      }
+      else {
+        return create(component);
+      }
+    }
+
+    /**
      * Creates a context based on the gc's system scale
      */
-    public static ScaleContext create(GraphicsConfiguration gc) {
+    public static ScaleContext create(@Nullable GraphicsConfiguration gc) {
       return new ScaleContext(SYS_SCALE.of(sysScale(gc)));
     }
 

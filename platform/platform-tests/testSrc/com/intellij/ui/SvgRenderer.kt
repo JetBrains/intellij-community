@@ -3,8 +3,10 @@ package com.intellij.ui
 
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.ui.IconCache
+import org.apache.batik.anim.dom.SVGDOMImplementation
 import org.apache.batik.dom.GenericDOMImplementation
 import org.apache.batik.svggen.ImageHandlerBase64Encoder
 import org.apache.batik.svggen.SVGGeneratorContext
@@ -13,7 +15,9 @@ import org.apache.batik.svggen.SVGSyntax
 import org.apache.xmlgraphics.java2d.GraphicsConfigurationWithTransparency
 import org.w3c.dom.Element
 import java.awt.Component
+import java.awt.GraphicsConfiguration
 import java.awt.Image
+import java.awt.Rectangle
 import java.io.StringWriter
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -23,13 +27,15 @@ import javax.xml.transform.dom.DOMSource
 import javax.xml.transform.stream.StreamResult
 
 // jFreeSvg produces not so compact and readable SVG as batik
-internal class SvgRenderer(private val svgFileDir: Path) {
+internal class SvgRenderer(val svgFileDir: Path) {
   private val xmlTransformer = TransformerFactory.newInstance().newTransformer()
 
   // todo check on Retina - does it works or not (is Retina disabled or not)
-  private val deviceConfiguration = GraphicsConfigurationWithTransparency()
+  val deviceConfiguration = object : GraphicsConfigurationWithTransparency() {
+    override fun getBounds() = Rectangle(0, 0, 1000, 1000)
+  }
 
-  private val xmlFactory = GenericDOMImplementation.getDOMImplementation().createDocument("http://www.w3.org/2000/svg", "svg", null)
+  private val xmlFactory = GenericDOMImplementation.getDOMImplementation().createDocument(SVGDOMImplementation.SVG_NAMESPACE_URI, "svg", null)
   private val context = SVGGeneratorContext.createDefault(xmlFactory)
 
   init {
@@ -91,27 +97,41 @@ internal class SvgRenderer(private val svgFileDir: Path) {
     val writer = StringWriter()
     writer.use {
       val root = svgGenerator.root
-
       root.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns", SVGSyntax.SVG_NAMESPACE_URI)
       root.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:xlink", "http://www.w3.org/1999/xlink")
 
-      val bounds = component.bounds
-      root.setAttributeNS(null, "viewBox", "${bounds.x} ${bounds.y} ${bounds.width} ${bounds.height}")
+      root.setAttributeNS(null, "viewBox", "0 0 ${component.width} ${component.height}")
 
       xmlTransformer.transform(DOMSource(root), StreamResult(writer))
     }
-    return writer
+    // xlink is not used in some files and optimize imports on commit can modify file, so, as simple solution, disable inspection
+    val result = "<!--suppress XmlUnusedNamespaceDeclaration -->\n" + writer
       .toString()
       // &#27;Remember
       // no idea why transformer/batik doesn't escape it correctly
       .replace(">&#27;", ">&amp;")
+    return if (SystemInfoRt.isWindows) FileUtilRt.toSystemIndependentName(result) else result
   }
 
   fun render(component: Component): String {
-    val svgGenerator = object : SVGGraphics2D(context, false) {
-      override fun getDeviceConfiguration() = this@SvgRenderer.deviceConfiguration
-    }
+    val svgGenerator = SvgGraphics2dWithDeviceConfiguration(context, deviceConfiguration)
     component.paint(svgGenerator)
     return svgGraphicsToString(svgGenerator, component)
   }
+}
+
+private class SvgGraphics2dWithDeviceConfiguration : SVGGraphics2D {
+  private val _deviceConfiguration: GraphicsConfiguration
+
+  constructor(context: SVGGeneratorContext, _deviceConfiguration: GraphicsConfiguration) : super(context, false) {
+    this._deviceConfiguration = _deviceConfiguration
+  }
+
+  private constructor(g: SvgGraphics2dWithDeviceConfiguration): super(g) {
+    this._deviceConfiguration = g._deviceConfiguration
+  }
+
+  override fun getDeviceConfiguration() = _deviceConfiguration
+
+  override fun create() = SvgGraphics2dWithDeviceConfiguration(this)
 }

@@ -6,20 +6,25 @@ import com.intellij.ide.ui.laf.darcula.DarculaLaf
 import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.ui.layout.*
 import com.intellij.util.io.exists
 import com.intellij.util.io.sanitizeFileName
 import com.intellij.util.io.write
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.TestScaleHelper
 import com.intellij.util.ui.UIUtil
 import io.netty.util.internal.SystemPropertyUtil
 import net.miginfocom.swing.MigLayout
+import org.junit.Assume
+import org.junit.rules.ExternalResource
 import org.junit.rules.TestName
 import org.yaml.snakeyaml.DumperOptions
 import org.yaml.snakeyaml.Yaml
 import java.awt.Component
 import java.awt.Container
+import java.awt.GraphicsEnvironment
 import java.io.File
 import java.nio.file.Path
 import javax.swing.AbstractButton
@@ -30,21 +35,32 @@ import javax.swing.plaf.metal.MetalLookAndFeel
 
 private val isUpdateSnapshotsGlobal by lazy { SystemPropertyUtil.getBoolean("test.update.snapshots", false) }
 
-//class RestoreLafRule : ExternalResource() {
-//  var oldLafName: String? = null
-//
-//  override fun before() {
-//    oldLafName = UIManager.getLookAndFeel().name
-//  }
-//
-//  override fun after() {
-//    val oldLafName = oldLafName
-//    if (oldLafName != null && oldLafName != UIManager.getLookAndFeel().name) {
-//      assertThat(oldLafName).isEqualTo("IntelliJ")
-//      UIManager.setLookAndFeel(IntelliJLaf())
-//    }
-//  }
-//}
+class NoScaleRule : ExternalResource() {
+  private var scaleHelper = TestScaleHelper()
+
+  override fun before() {
+    scaleHelper.setState()
+  }
+
+  override fun after() {
+    scaleHelper.restoreState()
+  }
+}
+
+class RequireHeadlessMode : ExternalResource() {
+  override fun before() {
+    // there is some difference if run as not headless (on retina monitor, at least), not yet clear why, so, just require to run in headless mode
+    if (UsefulTestCase.IS_UNDER_TEAMCITY) {
+      Assume.assumeTrue(GraphicsEnvironment.isHeadless())
+    }
+    else {
+      System.setProperty("java.awt.headless", "true")
+      if (!GraphicsEnvironment.isHeadless()) {
+        throw RuntimeException("must be headless")
+      }
+    }
+  }
+}
 
 fun changeLafIfNeed(lafName: String) {
   if (UIManager.getLookAndFeel().name == lafName) {
@@ -119,8 +135,8 @@ private fun compareSnapshot(snapshotFile: Path, newData: String, isUpdateSnapsho
   }
 }
 
-fun validateUsingImage(component: Component, snapshotDir: Path, snapshotName: String, isUpdateSnapshots: Boolean = isUpdateSnapshotsGlobal) {
-  compareSnapshot(snapshotDir.resolve("$snapshotName.svg"), SvgRenderer(snapshotDir).render(component), isUpdateSnapshots)
+internal fun validateUsingImage(component: Component, svgRenderer: SvgRenderer, snapshotName: String, isUpdateSnapshots: Boolean = isUpdateSnapshotsGlobal) {
+  compareSnapshot(svgRenderer.svgFileDir.resolve("$snapshotName.svg"), svgRenderer.render(component), isUpdateSnapshots)
 }
 
 val TestName.snapshotFileName: String
@@ -152,11 +168,28 @@ internal fun getComponentKey(c: Component, index: Int): String {
   }
 }
 
-fun validatePanel(panel: JPanel, testDataRoot: Path, snapshotName: String, lafName: String) {
-  val preferredSize = panel.preferredSize
-  panel.setBounds(0, 0, Math.max(preferredSize.width, JBUI.scale(480)), Math.max(preferredSize.height, 320))
-  panel.doLayout()
+fun validatePanel(userPanel: JPanel, testDataRoot: Path, snapshotName: String, lafName: String) {
+  val svgRenderer = SvgRenderer(testDataRoot.resolve(getSnapshotRelativePath(lafName, isForImage = true)))
 
-  validateUsingImage(panel, testDataRoot.resolve(getSnapshotRelativePath(lafName, isForImage = true)), snapshotName)
-  validateBounds(panel, testDataRoot.resolve(getSnapshotRelativePath(lafName, isForImage = false)), snapshotName)
+  // to run tests on retina monitor (@2x images must be not used and so on)
+  // Graphics2D.getDeviceConfiguration is not enough because our IconLoader.paintIcon uses component.getGraphicsConfiguration() instead of g.getDeviceConfiguration()
+//  val panel = object : JComponent() {
+//    override fun getGraphicsConfiguration() = svgRenderer.deviceConfiguration
+//
+//    override fun paint(g: Graphics) {
+//      // paint userPanel directly to ensure that SVG doesn't contain this wrapper
+//      userPanel.paint(g)
+//    }
+//  }
+
+//  panel.add(userPanel)
+
+//  panel.addNotify()
+  val preferredSize = userPanel.preferredSize
+//  panel.setBounds(0, 0, Math.max(preferredSize.width, JBUI.scale(480)), Math.max(preferredSize.height, 320))
+  userPanel.setBounds(0, 0, Math.max(preferredSize.width, JBUI.scale(480)), Math.max(preferredSize.height, 320))
+  userPanel.doLayout()
+
+  validateUsingImage(userPanel, svgRenderer, snapshotName)
+  validateBounds(userPanel, testDataRoot.resolve(getSnapshotRelativePath(lafName, isForImage = false)), snapshotName)
 }

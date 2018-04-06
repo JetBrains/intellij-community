@@ -515,10 +515,7 @@ public final class IconLoader {
 
     @Override
     public void paintIcon(Component c, Graphics g, int x, int y) {
-      // Component is preferable to Graphics as a scale provider, as it lets the context stick
-      // to the comp's actual scale via the update method.
-      ScaleContext ctx = c != null ? ScaleContext.create(c) : ScaleContext.create((Graphics2D)g);
-      getRealIcon(ctx).paintIcon(c, g, x, y);
+      getRealIcon(ScaleContext.create(c, g)).paintIcon(c, g, x, y);
     }
 
     @Override

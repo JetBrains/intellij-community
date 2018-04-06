@@ -5,15 +5,13 @@ import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.ui.RequireHeadlessMode
 import com.intellij.ui.changeLafIfNeed
 import com.intellij.ui.snapshotFileName
 import com.intellij.ui.validatePanel
 import net.miginfocom.layout.LayoutUtil
-import org.junit.After
+import org.junit.*
 import org.junit.Assume.assumeTrue
-import org.junit.Before
-import org.junit.Rule
-import org.junit.Test
 import org.junit.rules.TestName
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
@@ -29,6 +27,10 @@ class UiDslTest {
     @JvmStatic
     @Parameterized.Parameters(name = "{0}")
     fun lafNames() = listOf("Darcula", "IntelliJ")
+
+    @JvmField
+    @ClassRule
+    val requireHeadlessMode = RequireHeadlessMode()
   }
 
   @Suppress("MemberVisibilityCanBePrivate")

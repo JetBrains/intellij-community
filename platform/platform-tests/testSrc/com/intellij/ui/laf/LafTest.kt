@@ -6,15 +6,13 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
-import com.intellij.ui.JBIntSpinner
-import com.intellij.ui.changeLafIfNeed
+import com.intellij.ui.*
 import com.intellij.ui.components.CheckBox
 import com.intellij.ui.components.textFieldWithHistoryWithBrowseButton
 import com.intellij.ui.layout.*
-import com.intellij.ui.snapshotFileName
-import com.intellij.ui.validatePanel
 import org.junit.Assume.assumeTrue
 import org.junit.Before
+import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestName
@@ -33,6 +31,10 @@ class LafTest {
     @JvmStatic
     @Parameterized.Parameters(name = "{0}")
     fun lafNames() = listOf("Darcula", "IntelliJ")
+
+    @JvmField
+    @ClassRule
+    val requireHeadlessMode = RequireHeadlessMode()
   }
 
   @Suppress("MemberVisibilityCanBePrivate")
