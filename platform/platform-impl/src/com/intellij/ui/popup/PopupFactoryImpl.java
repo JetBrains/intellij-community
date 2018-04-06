@@ -251,14 +251,15 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                             boolean showDisabledActions,
                                             boolean honorActionMnemonics,
                                             Condition<AnAction> preselectActionCondition,
-                                            @Nullable String actionPlace, boolean autoSelection) {
+                                            @Nullable String actionPlace,
+                                            boolean autoSelection) {
       final Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
       LOG.assertTrue(component != null, "dataContext has no component for new ListPopupStep");
 
       List<ActionItem> items =
         getActionItems(actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics, actionPlace);
 
-      return new ActionPopupStep(items, title, getComponentContextSupplier(component), showNumbers || honorActionMnemonics && itemsHaveMnemonics(items),
+      return new ActionPopupStep(items, title, getComponentContextSupplier(component), actionPlace, showNumbers || honorActionMnemonics && itemsHaveMnemonics(items),
                                  preselectActionCondition, autoSelection, showDisabledActions);
     }
 
@@ -382,38 +383,21 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
   @NotNull
   @Override
-  public ListPopupStep createActionsStep(@NotNull final ActionGroup actionGroup,
-                                         @NotNull DataContext dataContext,
-                                         final boolean showNumbers,
-                                         final boolean showDisabledActions,
-                                         final String title,
-                                         final Component component,
-                                         final boolean honorActionMnemonics) {
-    return createActionsStep(actionGroup, dataContext, showNumbers, showDisabledActions, title, component, honorActionMnemonics, 0, false);
-  }
-
-  @NotNull
-  @Override
   public ListPopupStep createActionsStep(@NotNull ActionGroup actionGroup,
                                          @NotNull DataContext dataContext,
+                                         @Nullable String actionPlace,
                                          boolean showNumbers,
                                          boolean showDisabledActions,
                                          String title,
                                          Component component,
                                          boolean honorActionMnemonics,
                                          int defaultOptionIndex,
-                                         final boolean autoSelectionEnabled) {
-    return ActionPopupStep.createActionsStep(actionGroup,
-                                             dataContext,
-                                             showNumbers,
-                                             true,
-                                             showDisabledActions,
-                                             title,
-                                             honorActionMnemonics,
-                                             autoSelectionEnabled,
-                                             getComponentContextSupplier(component),
-                                             null,
-                                             defaultOptionIndex);
+                                         boolean autoSelectionEnabled) {
+    return ActionPopupStep.createActionsStep(
+      actionGroup, dataContext, showNumbers, true, showDisabledActions,
+      title, honorActionMnemonics, autoSelectionEnabled,
+      getComponentContextSupplier(component),
+      actionPlace, null, defaultOptionIndex);
   }
 
   private static boolean itemsHaveMnemonics(final List<ActionItem> items) {
