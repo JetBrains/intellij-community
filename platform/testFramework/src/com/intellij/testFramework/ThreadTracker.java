@@ -92,6 +92,7 @@ public class ThreadTracker {
     wellKnownOffenders.add("Signal Dispatcher");
     wellKnownOffenders.add("timer-int"); //serverImpl
     wellKnownOffenders.add("timer-sys"); //clientimpl
+    wellKnownOffenders.add("Timer");  // Android Studio: for failures after 181.3263.15 merge
     wellKnownOffenders.add("TimerQueue");
     wellKnownOffenders.add("UserActivityMonitor thread");
     wellKnownOffenders.add("VM Periodic Task Thread");
