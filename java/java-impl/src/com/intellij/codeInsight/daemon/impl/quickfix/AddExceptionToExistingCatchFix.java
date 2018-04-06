@@ -36,6 +36,8 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
+import static com.intellij.util.ObjectUtils.tryCast;
+
 public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionAction {
   private final PsiElement myErrorElement;
 
@@ -179,8 +181,12 @@ public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionActio
       }
       List<PsiClassType> unhandledExceptions = new ArrayList<>(ExceptionUtil.getOwnUnhandledExceptions(element));
       if (unhandledExceptions.isEmpty()) return null;
+      boolean containsInCatchOrFinally = containsInCatchOrFinally(element);
       List<PsiTryStatement> tryStatements =
         PsiTreeUtil.collectParentsOfType(element, PsiTryStatement.class, PsiLambdaExpression.class, PsiClass.class);
+      if (containsInCatchOrFinally) {
+        tryStatements.remove(0);
+      }
       List<PsiCatchSection> sections =
         tryStatements.stream()
                      .flatMap(stmt -> Arrays.stream(stmt.getCatchSections()))
@@ -192,6 +198,26 @@ public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionActio
                      .collect(Collectors.toList());
       if (sections.isEmpty()) return null;
       return new Context(sections, unhandledExceptions);
+    }
+
+    private static boolean containsInCatchOrFinally(@NotNull PsiElement element) {
+      PsiElement parent = element.getParent();
+      while (parent != null) {
+        if (parent instanceof PsiTryStatement) {
+          return false;
+        }
+        if (parent instanceof PsiCatchSection) {
+          return true;
+        }
+        if (parent instanceof PsiCodeBlock) {
+          PsiKeyword keyword = tryCast(PsiTreeUtil.skipWhitespacesAndCommentsBackward(parent), PsiKeyword.class);
+          if (keyword != null && keyword.getText().equals(PsiKeyword.FINALLY)) {
+            return true;
+          }
+        }
+        parent = parent.getParent();
+      }
+      return false;
     }
 
     private String getMessage() {
