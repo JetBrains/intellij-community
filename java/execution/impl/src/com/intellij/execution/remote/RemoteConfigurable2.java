@@ -181,6 +181,12 @@ public class RemoteConfigurable2 extends SettingsEditor<RemoteConfiguration> {
     mainPanel.add(UI.PanelFactory.panel(myModuleCombo).withLabel("Use module classpath:").
       withComment("First search for sources of the debugged classes in the selected module classpath").createPanel(), gc);
 
+    gc.gridy++;
+    gc.fill = GridBagConstraints.REMAINDER;
+    gc.insets = JBUI.emptyInsets();
+    gc.weighty = 1.0;
+    mainPanel.add(new JPanel(), gc);
+
     DocumentListener textUpdateListener = new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
