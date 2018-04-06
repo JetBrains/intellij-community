@@ -253,5 +253,5 @@ operator fun Shortcut.plus(shortcut: Shortcut): Shortcut {
 
 fun resolveKey(inputString: String): Key {
   return if (Regex("\\d]").matches(inputString)) Key.valueOf("d$inputString")
-  else Key.valueOf("d$inputString")
+  else Key.valueOf(inputString)
 }
