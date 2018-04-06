@@ -44,7 +44,6 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
   private final File mySrcFile;
   private Url mySrcURL;
   private final Project myProject;
-  private Url myURL;
 
   private TextFieldWithBrowseButton myToURLText;
 
@@ -219,14 +218,13 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     if (info != null) {
       mySrcURL = info.getURL();
       revStr = String.valueOf(info.getRevision());
-      myURL = mySrcURL;
     }
-    if (myURL == null) {
+    if (mySrcURL == null) {
       return;
     }
     myWorkingCopyField.setText(mySrcFile.toString());
     myRepositoryField.setText(mySrcURL.toString());
-    myToURLText.setText(myURL.toString());
+    myToURLText.setText(mySrcURL.toString());
     myRevisionPanel.setRevisionText(revStr);
     updateControls();
 
@@ -276,7 +274,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
 
   public boolean isOKActionEnabled() {
     myErrorLabel.setText(" ");
-    if (myURL == null) {
+    if (mySrcURL == null) {
       return false;
     }
     if (myBranchOrTagRadioButton.isSelected() && myBranchTagBaseComboBox.getComboBox().getSelectedItem() == null) {
