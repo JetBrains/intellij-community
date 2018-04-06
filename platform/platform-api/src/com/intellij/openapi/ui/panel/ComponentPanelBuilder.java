@@ -5,7 +5,9 @@ import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ContextHelpLabel;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.TextComponent;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -256,12 +258,18 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
 
   private static void setCommentText(@NotNull JLabel component, @Nullable String commentText, boolean isCommentBelow) {
     if (commentText != null) {
+      String css = "<head><style type=\"text/css\">\n" +
+                         "a, a:link {color:#" + ColorUtil.toHex(JBColor.link()) + ";}\n" +
+                         "a:visited {color:#" + ColorUtil.toHex(JBColor.linkVisited()) + ";}\n" +
+                         "a:hover {color:#" + ColorUtil.toHex(JBColor.linkHover()) + ";}\n" +
+                         "a:active {color:#" + ColorUtil.toHex(JBColor.linkPressed()) + ";}\n" +
+                         "</style>\n</head>";
       if (commentText.length() > 70 && isCommentBelow) {
         int width = component.getFontMetrics(component.getFont()).stringWidth(commentText.substring(0, 70));
-        component.setText(String.format("<html><div width=%d>%s</div></html>", width, commentText));
+        component.setText(String.format("<html>" + css + "<body><div width=%d>%s</div></body></html>", width, commentText));
       }
       else {
-        component.setText(String.format("<html><div>%s</div></html>", commentText));
+        component.setText(String.format("<html>" + css + "<body><div>%s</div></body></html>", commentText));
       }
     }
   }
