@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff.impl.patch;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,14 +23,12 @@ public class BaseRevisionTextPatchEP implements PatchEP {
   public static final Key<Map<String, String>> ourStoredTexts = Key.create("com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP.ourStoredTexts");
   private final static Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP");
 
-  private final Project myProject;
   private final ChangeListManager myChangeListManager;
   private final String myBaseDir;
 
   public BaseRevisionTextPatchEP(final Project project) {
-    myProject = project;
-    myBaseDir = myProject.getBaseDir().getPath();
-    myChangeListManager = ChangeListManager.getInstance(myProject);
+    myBaseDir = project.getBasePath();
+    myChangeListManager = ChangeListManager.getInstance(project);
   }
 
   @NotNull
@@ -64,8 +48,7 @@ public class BaseRevisionTextPatchEP implements PatchEP {
       if (change == null || change.getBeforeRevision() == null || paths == null || ! paths.contains(filePathOn)) return null;
 
       try {
-        final String content = change.getBeforeRevision().getContent();
-        return content;
+        return change.getBeforeRevision().getContent();
       }
       catch (VcsException e) {
         LOG.info(e);

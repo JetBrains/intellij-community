@@ -2,12 +2,8 @@
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.openapi.externalSystem.view.ExternalProjectsViewState;
-import com.intellij.openapi.project.ProjectUtilCore;
 import com.intellij.util.containers.FactoryMap;
-import com.intellij.util.xmlb.annotations.Attribute;
-import com.intellij.util.xmlb.annotations.MapAnnotation;
-import com.intellij.util.xmlb.annotations.Property;
-import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.*;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -20,8 +16,7 @@ public class ExternalProjectsState {
   private final Map<String, State> myExternalSystemsState = FactoryMap.create(key -> new State());
 
   @Property(surroundWithTag = false)
-  @MapAnnotation(surroundWithTag = false, surroundValueWithTag = false, surroundKeyWithTag = false,
-    keyAttributeName = "id", entryTagName = "system")
+  @XMap(keyAttributeName = "id", entryTagName = "system")
   public Map<String, State> getExternalSystemsState() {
     return myExternalSystemsState;
   }
@@ -31,7 +26,7 @@ public class ExternalProjectsState {
   }
 
   @Attribute
-  public boolean storeExternally = ProjectUtilCore.isUseExternalStorage();
+  public boolean storeExternally = false;
 
   @Tag("state")
   public static class State {

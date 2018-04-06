@@ -8,6 +8,8 @@ public interface CompilationPhaseHint {
 
   Key<CompilationPhaseHint> HINT_KEY = Key.create("groovy.compilation.phase");
 
+  CompilationPhaseHint BEFORE_TRANSFORMATION = () -> Phase.TRANSFORMATION;
+
   enum Phase {
     CONVERSION,
     TRANSFORMATION

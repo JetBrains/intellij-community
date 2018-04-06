@@ -48,7 +48,7 @@ import java.util.*;
 import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
 
 /**
- * @deprecated use {@link org.jetbrains.intellij.build.CompilationTasks} from platform-build-scripts module for building IDEs based
+ * @deprecated use {@link org.jetbrains.intellij.build.CompilationTasks} from intellij.platform.buildScripts module for building IDEs based
  * on IntelliJ Platform. If you need to build another project use {@link Standalone} directly.
  */
 public class JpsGantProjectBuilder {

@@ -32,6 +32,7 @@ public class MakeStaticAction extends BaseRefactoringAction {
     return (elements.length == 1) && (elements[0] instanceof PsiMethod) && !((PsiMethod)elements[0]).isConstructor();
   }
 
+  @Override
   protected boolean isAvailableOnElementInEditorAndFile(@NotNull PsiElement element, @NotNull final Editor editor, @NotNull PsiFile file, @NotNull DataContext context) {
     if (element instanceof PsiIdentifier) {
       element = element.getParent();

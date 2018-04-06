@@ -64,11 +64,11 @@ public class ComboBoxCompositeEditor<I, F extends JComponent> extends JPanel imp
     JComponent getDelegate();
   }
 
-  private ComboBoxCompositeEditorStrategy getStrategy(F focuasbleComponent) {
+  private ComboBoxCompositeEditorStrategy getStrategy(F focusableComponent) {
     ComboBoxCompositeEditorStrategy strategy = null;
-    if (focuasbleComponent instanceof JTextField) {
+    if (focusableComponent instanceof JTextField) {
       strategy = jTextFieldStrategy;
-    } else if (focuasbleComponent instanceof EditorTextField) {
+    } else if (focusableComponent instanceof EditorTextField) {
       strategy = editorTextFieldStrategy;
     }
     return strategy;
@@ -270,5 +270,19 @@ public class ComboBoxCompositeEditor<I, F extends JComponent> extends JPanel imp
   @Override
   public boolean isFocusable() {
     return false;
+  }
+
+  @Override
+  public Color getBackground() {
+    return myComponent == null ? super.getBackground() : myComponent.getDelegate().getBackground();
+  }
+
+  @Override
+  public void setBackground(Color color) {
+    if (myComponent == null) {
+      super.setBackground(color);
+    } else {
+      myComponent.getDelegate().setBackground(color);
+    }
   }
 }

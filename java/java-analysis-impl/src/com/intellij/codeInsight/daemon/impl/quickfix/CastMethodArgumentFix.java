@@ -31,7 +31,7 @@ public class CastMethodArgumentFix extends MethodArgumentFix implements HighPrio
   @Override
   @NotNull
   public String getText() {
-    if (myArgList.getExpressions().length == 1) {
+    if (myArgList.getExpressionCount() == 1) {
       return QuickFixBundle.message("cast.single.parameter.text", JavaHighlightUtil.formatType(myToType));
     }
 

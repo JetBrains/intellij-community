@@ -6,6 +6,7 @@ import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.persistence.ApplicationStatisticsPersistence;
 import com.intellij.internal.statistic.persistence.CollectedUsages;
+import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
@@ -27,7 +28,10 @@ import java.util.concurrent.TimeUnit;
 
 @State(
   name = "StatisticsApplicationUsages",
-  storages = @Storage(value = "statistics.application.usages.xml", roamingType = RoamingType.DISABLED)
+  storages = {
+    @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED),
+    @Storage(value = "statistics.application.usages.xml", roamingType = RoamingType.DISABLED, deprecated = true)
+  }
 )
 public class ApplicationStatisticsPersistenceComponent extends ApplicationStatisticsPersistence implements
                                                                                                 PersistentStateComponent<Element>,

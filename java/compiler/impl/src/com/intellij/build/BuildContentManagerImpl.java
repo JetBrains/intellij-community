@@ -57,6 +57,7 @@ import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
+import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -288,7 +289,10 @@ public class BuildContentManagerImpl implements BuildContentManager {
          icon to the left of the Build label, which indents 16 pixels. Reevaluate this
          after the next merge when more visual changes are coming in for the new Build window.
       content.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);
-      content.setIcon(ExecutionUtil.getLiveIndicator(pair.first));
+      if(pair.first == null) {
+        content.putUserData(Content.TAB_LABEL_ORIENTATION_KEY, ComponentOrientation.RIGHT_TO_LEFT);
+      }
+      content.setIcon(ExecutionUtil.getLiveIndicator(pair.first, 0, 13));
       JComponent component = content.getComponent();
       if (component != null) {
         component.invalidate();

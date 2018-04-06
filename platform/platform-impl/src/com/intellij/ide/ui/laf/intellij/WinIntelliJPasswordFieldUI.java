@@ -30,21 +30,17 @@ import static com.intellij.ide.ui.laf.intellij.WinIntelliJTextFieldUI.HOVER_PROP
 
 public class WinIntelliJPasswordFieldUI extends BasicPasswordFieldUI {
 
-  private final JPasswordField passwordField;
   private MouseListener hoverListener;
   private FocusListener focusListener;
 
-  public WinIntelliJPasswordFieldUI(JPasswordField passwordField) {
-    this.passwordField = passwordField;
-  }
-
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
-    return new WinIntelliJPasswordFieldUI((JPasswordField)c);
+    return new WinIntelliJPasswordFieldUI();
   }
 
   @Override public void installListeners() {
     super.installListeners();
+    JTextComponent passwordField = getComponent();
     hoverListener = new DarculaUIUtil.MouseHoverPropertyTrigger(passwordField, HOVER_PROPERTY);
     focusListener = new FocusListener() {
       @Override public void focusGained(FocusEvent e) {
@@ -62,6 +58,7 @@ public class WinIntelliJPasswordFieldUI extends BasicPasswordFieldUI {
 
   @Override public void uninstallListeners() {
     super.uninstallListeners();
+    JTextComponent passwordField = getComponent();
     if (hoverListener != null) {
       passwordField.removeMouseListener(hoverListener);
     }

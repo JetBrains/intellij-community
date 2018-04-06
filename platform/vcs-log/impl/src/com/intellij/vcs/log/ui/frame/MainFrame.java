@@ -67,6 +67,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   @NotNull private final Splitter myChangesBrowserSplitter;
   @NotNull private final SearchTextField myTextFilter;
   @NotNull private final MainVcsLogUiProperties myUiProperties;
+  private final MyCommitSelectionListenerForDiff mySelectionListenerForDiff;
 
   public MainFrame(@NotNull VcsLogData logData,
                    @NotNull VcsLogUiImpl ui,
@@ -106,7 +107,8 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myDetailsSplitter.setFirstComponent(myChangesLoadingPane);
     setupDetailsSplitter(myUiProperties.get(CommonUiProperties.SHOW_DETAILS));
 
-    myGraphTable.getSelectionModel().addListSelectionListener(new MyCommitSelectionListenerForDiff());
+    mySelectionListenerForDiff = new MyCommitSelectionListenerForDiff();
+    myGraphTable.getSelectionModel().addListSelectionListener(mySelectionListenerForDiff);
     myDetailsPanel.installCommitSelectionListener(myGraphTable);
     VcsLogUiUtil.installDetailsListeners(myGraphTable, myDetailsPanel, myLogData, this);
 
@@ -257,6 +259,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
   @Override
   public void dispose() {
+    myGraphTable.getSelectionModel().removeListSelectionListener(mySelectionListenerForDiff);
     myDetailsSplitter.dispose();
     myChangesBrowserSplitter.dispose();
   }

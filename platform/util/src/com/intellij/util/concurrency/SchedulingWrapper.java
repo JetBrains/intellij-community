@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.Debugger;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -290,7 +289,7 @@ class SchedulingWrapper implements ScheduledExecutorService {
 
   @NotNull
   @Override
-  public ScheduledFuture<?> schedule(@Debugger.Capture @NotNull Runnable command,
+  public ScheduledFuture<?> schedule(@NotNull Runnable command,
                                      long delay,
                                      @NotNull TimeUnit unit) {
     MyScheduledFutureTask<?> t = new MyScheduledFutureTask<Void>(command, null, triggerTime(delayQueue, delay, unit));
@@ -315,7 +314,7 @@ class SchedulingWrapper implements ScheduledExecutorService {
 
   @NotNull
   @Override
-  public <V> ScheduledFuture<V> schedule(@Debugger.Capture @NotNull Callable<V> callable,
+  public <V> ScheduledFuture<V> schedule(@NotNull Callable<V> callable,
                                          long delay,
                                          @NotNull TimeUnit unit) {
     MyScheduledFutureTask<V> t = new MyScheduledFutureTask<V>(callable, triggerTime(delayQueue, delay, unit));

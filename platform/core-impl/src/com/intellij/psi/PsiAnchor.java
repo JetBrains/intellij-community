@@ -25,7 +25,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.smartPointers.Identikit;
@@ -442,15 +441,13 @@ public abstract class PsiAnchor {
 
     @Override
     public PsiElement retrieve() {
-      return ApplicationManager.getApplication().runReadAction(
-        (NullableComputable<PsiElement>)() -> restoreFromStubIndex((PsiFileWithStubSupport)getFile(), myIndex, myElementType, false));
+      return ReadAction.compute(() -> restoreFromStubIndex((PsiFileWithStubSupport)getFile(), myIndex, myElementType, false));
     }
 
     public String diagnoseNull() {
-      final PsiFile file = ReadAction.compute(() -> getFile());
+      final PsiFile file = ReadAction.compute(this::getFile);
       try {
-        PsiElement element = ApplicationManager.getApplication().runReadAction(
-          (NullableComputable<PsiElement>)() -> restoreFromStubIndex((PsiFileWithStubSupport)file, myIndex, myElementType, true));
+        PsiElement element = ReadAction.compute(() -> restoreFromStubIndex((PsiFileWithStubSupport)file, myIndex, myElementType, true));
         return "No diagnostics, element=" + element + "@" + (element == null ? 0 : System.identityHashCode(element));
       }
       catch (AssertionError e) {

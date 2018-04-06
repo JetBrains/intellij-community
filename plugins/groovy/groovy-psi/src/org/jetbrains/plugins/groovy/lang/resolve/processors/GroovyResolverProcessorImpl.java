@@ -78,7 +78,7 @@ class GroovyResolverProcessorImpl extends GroovyResolverProcessor implements GrM
     }
 
     for (GroovyResolveKind kind : myAcceptableKinds) {
-      Collection<GroovyResolveResult> results = myInapplicableCandidates.get(kind);
+      Collection<GroovyResolveResult> results = getCandidates(false, kind);
       if (!results.isEmpty()) {
         return ContainerUtil.newArrayList(ResolveUtil.filterSameSignatureCandidates(
           filterCorrectParameterCount(results)

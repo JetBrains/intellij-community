@@ -15,6 +15,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,6 +35,7 @@ public abstract class RuntimeConfigurationProducer implements Comparable, Clonea
   private final ConfigurationFactory myConfigurationFactory;
   private RunnerAndConfigurationSettings myConfiguration;
   protected boolean isClone;
+  private SmartPsiElementPointer<PsiElement> myPointer;
 
   public RuntimeConfigurationProducer(final ConfigurationType configurationType) {
     this(configurationType.getConfigurationFactories()[0]);
@@ -53,13 +56,11 @@ public abstract class RuntimeConfigurationProducer implements Comparable, Clonea
         // replace with existing configuration if any
         final RunManager runManager = RunManager.getInstance(context.getProject());
         final ConfigurationType type = result.myConfiguration.getType();
-        RunnerAndConfigurationSettings configuration = null;
-        if (type != null) {
-          configuration = result.findExistingByElement(_location, runManager.getConfigurationSettingsList(type), context);
-        }
+        RunnerAndConfigurationSettings configuration = result.findExistingByElement(_location, runManager.getConfigurationSettingsList(type), context);
         if (configuration != null) {
           result.myConfiguration = configuration;
-        } else {
+        }
+        else {
           runManager.setUniqueNameIfNeed(result.myConfiguration);
         }
       }
@@ -77,6 +78,15 @@ public abstract class RuntimeConfigurationProducer implements Comparable, Clonea
   }
 
   public abstract PsiElement getSourceElement();
+
+  protected void storeSourceElement(@NotNull PsiElement e) {
+    myPointer = SmartPointerManager.createPointer(e);
+  }
+
+  @Nullable
+  protected PsiElement restoreSourceElement() {
+    return myPointer == null ? null : myPointer.getElement();
+  }
 
   public RunnerAndConfigurationSettings getConfiguration() {
     assert isClone;

@@ -541,8 +541,8 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     }
     catch (IOException e) {
       FSRecords.handleError(e);
-      return ArrayUtil.EMPTY_BYTE_ARRAY;
     }
+    return ArrayUtil.EMPTY_BYTE_ARRAY;
   }
 
   @Override

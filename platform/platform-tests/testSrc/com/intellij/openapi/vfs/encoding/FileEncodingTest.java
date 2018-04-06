@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.ide.impl.ProjectUtil;
@@ -64,6 +50,8 @@ import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Collections;
 
+import static com.intellij.testFramework.utils.EncodingManagerUtilKt.doEncodingTest;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertArrayEquals;
 
 @SuppressWarnings("HardCodedStringLiteral")
@@ -738,39 +726,22 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
     assertNull(file.getBOM());
   }
 
-  public void testNewFileCreatedInProjectEncoding() throws Exception {
-    String oldIDE = EncodingManager.getInstance().getDefaultCharsetName();
-    EncodingManager.getInstance().setDefaultCharsetName("UTF-8");
-    String oldProject = EncodingProjectManager.getInstance(getProject()).getDefaultCharsetName();
-    EncodingProjectManager.getInstance(getProject()).setDefaultCharsetName(WINDOWS_1251.name());
-    try {
+  public void testNewFileCreatedInProjectEncoding() {
+    doEncodingTest(myProject, () -> {
       PsiFile psiFile = createFile("x.txt", "xx");
       VirtualFile file = psiFile.getVirtualFile();
 
-      assertEquals(WINDOWS_1251, file.getCharset());
-    }
-    finally {
-      EncodingManager.getInstance().setDefaultCharsetName(oldIDE);
-      EncodingProjectManager.getInstance(getProject()).setDefaultCharsetName(oldProject);
-    }
+      assertThat(file.getCharset()).isEqualTo(WINDOWS_1251);
+    });
   }
 
-  public void testNewFileCreatedInProjectEncodingEvenIfItSetToDefault() throws Exception {
-    Charset defaultCharset = Charset.defaultCharset();
-    String oldIDE = EncodingManager.getInstance().getDefaultCharsetName();
-    EncodingManager.getInstance().setDefaultCharsetName(defaultCharset.name().equals("UTF-8") ? "windows-1251" : "UTF-8");
-    String oldProject = EncodingProjectManager.getInstance(getProject()).getDefaultCharsetName();
-    EncodingProjectManager.getInstance(getProject()).setDefaultCharsetName(""); // default charset
-    try {
+  public void testNewFileCreatedInProjectEncodingEvenIfItSetToDefault() {
+    doEncodingTest(myProject, Charset.defaultCharset().name().equals("UTF-8") ? "windows-1251" : "UTF-8", "", () -> {
       PsiFile psiFile = createFile("x.txt", "xx");
       VirtualFile file = psiFile.getVirtualFile();
 
-      assertEquals(EncodingManager.getInstance().getDefaultCharset(), file.getCharset());
-    }
-    finally {
-      EncodingManager.getInstance().setDefaultCharsetName(oldIDE);
-      EncodingProjectManager.getInstance(getProject()).setDefaultCharsetName(oldProject);
-    }
+      assertThat(file.getCharset()).isEqualTo(EncodingManager.getInstance().getDefaultCharset());
+    });
   }
 
   private PsiFile createFile(String fileName, String text) throws IOException {

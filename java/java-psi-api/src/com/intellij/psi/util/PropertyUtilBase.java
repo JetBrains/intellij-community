@@ -270,7 +270,7 @@ public class PropertyUtilBase {
 
   @Contract("null -> false")
   public static boolean isSimplePropertyGetter(@Nullable PsiMethod method) {
-    return hasGetterName(method) && method.getParameterList().getParametersCount() == 0;
+    return hasGetterName(method) && method.getParameterList().isEmpty();
   }
 
 

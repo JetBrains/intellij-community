@@ -16,16 +16,18 @@
 package com.intellij.psi.impl.source.text;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.pom.PomManager;
+import com.intellij.pom.PomModel;
+import com.intellij.pom.event.PomModelEvent;
+import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.pom.tree.TreeAspect;
+import com.intellij.pom.tree.TreeAspectEvent;
 import com.intellij.pom.tree.events.impl.TreeChangeEventImpl;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.DebugUtil;
-import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.psi.impl.PsiTreeChangeEventImpl;
+import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.FileElement;
@@ -262,5 +264,32 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
     void doActualPsiChange(@NotNull PsiFile file, @NotNull TreeChangeEventImpl event) {
       myOldRoot.replaceAllChildrenToChildrenOf(myNewRoot);
     }
+  }
+
+  public void doActualPsiChange(@NotNull PsiFile file) {
+    CodeStyleManager.getInstance(file.getProject()).performActionWithFormatterDisabled((Runnable)() -> {
+      FileViewProvider viewProvider = file.getViewProvider();
+      synchronized (((AbstractFileViewProvider)viewProvider).getFilePsiLock()) {
+        viewProvider.beforeContentsSynchronized();
+
+        final Document document = viewProvider.getDocument();
+        PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(file.getProject());
+        PsiToDocumentSynchronizer.DocumentChangeTransaction transaction = documentManager.getSynchronizer().getTransaction(document);
+
+        if (transaction == null) {
+          final PomModel model = PomManager.getModel(file.getProject());
+
+          model.runTransaction(new PomTransactionBase(file, model.getModelAspect(TreeAspect.class)) {
+            @Override
+            public PomModelEvent runInner() {
+              return new TreeAspectEvent(model, performActualPsiChange(file));
+            }
+          });
+        }
+        else {
+          performActualPsiChange(file);
+        }
+      }
+    });
   }
 }

@@ -101,7 +101,7 @@ public class JUnitUtil {
     if (!psiMethod.hasModifierProperty(PsiModifier.PUBLIC)) return false;
     if (!psiMethod.hasModifierProperty(PsiModifier.STATIC)) return false;
     if (psiMethod.isConstructor()) return false;
-    if (psiMethod.getParameterList().getParametersCount() > 0) return false;
+    if (!psiMethod.getParameterList().isEmpty()) return false;
     final PsiType returnType = psiMethod.getReturnType();
     if (returnType == null || returnType instanceof PsiPrimitiveType) return false;
     return returnType.equalsToText(TEST_INTERFACE) ||
@@ -137,7 +137,7 @@ public class JUnitUtil {
         return !isInheritorOrSelfRunner(annotation, RUNNERS_REQUIRE_ANNOTATION_ON_TEST_METHOD);
       }
     }
-    if (psiMethod.getParameterList().getParametersCount() > 0) return false;
+    if (!psiMethod.getParameterList().isEmpty()) return false;
     if (psiMethod.hasModifierProperty(PsiModifier.STATIC)) return false;
     if (!psiMethod.getName().startsWith("test")) return false;
     if (checkClass) {
@@ -166,14 +166,8 @@ public class JUnitUtil {
     final PsiClass topLevelClass = PsiTreeUtil.getTopmostParentOfType(psiClass, PsiClass.class);
     if (topLevelClass != null) {
       final PsiAnnotation annotation = AnnotationUtil.findAnnotationInHierarchy(topLevelClass, Collections.singleton(RUN_WITH));
-      if (annotation != null) {
-        final PsiAnnotationMemberValue attributeValue = annotation.findAttributeValue("value");
-        if (attributeValue instanceof PsiClassObjectAccessExpression) {
-          final String runnerName = ((PsiClassObjectAccessExpression)attributeValue).getOperand().getType().getCanonicalText();
-          if (!(PARAMETERIZED_CLASS_NAME.equals(runnerName) || SUITE_CLASS_NAME.equals(runnerName))) {
-            return true;
-          }
-        }
+      if (annotation != null && !isInheritorOrSelfRunner(annotation, RUNNERS_REQUIRE_ANNOTATION_ON_TEST_METHOD)) {
+        return true;
       }
     }
 

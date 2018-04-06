@@ -360,7 +360,7 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
 
   private static boolean isServiceProviderMethod(@NotNull PsiMethod method) {
     return "provider".equals(method.getName()) &&
-           method.getParameterList().getParametersCount() == 0 &&
+           method.getParameterList().isEmpty() &&
            method.hasModifierProperty(PsiModifier.PUBLIC) &&
            method.hasModifierProperty(PsiModifier.STATIC);
   }

@@ -109,7 +109,7 @@ public class JavaFxImplicitUsageProvider implements ImplicitUsageProvider {
 
   private static boolean isInvokedByFxmlLoader(@NotNull PsiMethod method) {
     return "initialize".equals(method.getName()) &&
-           method.getParameterList().getParametersCount() == 0 &&
+           method.getParameterList().isEmpty() &&
            isDeclaredInControllerClass(method);
   }
 

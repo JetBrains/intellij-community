@@ -15,6 +15,7 @@
  */
 package com.intellij.formatting.contextConfiguration;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.internal.statistic.UsageTrigger;
@@ -34,7 +35,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsCodeFragmentFilter;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
@@ -84,7 +84,7 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction {
     UsageTrigger.trigger(ID);
     SelectedTextFormatter textFormatter = new SelectedTextFormatter(project, editor, file);
     CodeStyleSettingsToShow settingsToShow = calculateAffectingSettings(editor, file);
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
+    CodeStyleSettings settings = CodeStyle.getSettings(file);
     new FragmentCodeStyleSettingsDialog(editor, textFormatter, file.getLanguage(), settings, settingsToShow).show();
   }
 

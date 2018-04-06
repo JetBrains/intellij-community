@@ -40,7 +40,7 @@ public class InspectionDescriptionNotFoundInspectionTest extends JavaCodeInsight
     moduleBuilder.addLibrary("core-api", PathUtil.getJarPathForClass(LanguageExtensionPoint.class));
     moduleBuilder.addLibrary("analysis-api", PathUtil.getJarPathForClass(LocalInspectionEP.class));
     moduleBuilder.addLibrary("platform-resources", Paths.get(PathUtil.getJarPathForClass(LocalInspectionEP.class))
-      .resolveSibling("platform-resources").toString());
+      .resolveSibling("intellij.platform.resources").toString());
   }
 
   @Override

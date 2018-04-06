@@ -38,7 +38,6 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Constructor;
 
 public interface JavaDocElementType {
-  @SuppressWarnings("deprecation")
   class JavaDocCompositeElementType extends IJavaDocElementType implements ICompositeElementType {
     private final Constructor<? extends ASTNode> myConstructor;
 

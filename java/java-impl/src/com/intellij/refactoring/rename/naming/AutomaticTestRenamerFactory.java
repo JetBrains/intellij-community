@@ -26,7 +26,7 @@ import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -69,10 +69,8 @@ public class AutomaticTestRenamerFactory implements AutomaticRenamerFactory {
         String klassName = aClass.getName();
         Pattern pattern = Pattern.compile(".*" + klassName + ".*");
 
-        HashSet<String> names = new HashSet<>();
-        cache.getAllClassNames(names);
         int count = 0;
-        for (String eachName : names) {
+        for (String eachName : ContainerUtil.newHashSet(cache.getAllClassNames())) {
           if (pattern.matcher(eachName).matches()) {
             if (count ++ > 1000) break;
             for (PsiClass eachClass : cache.getClassesByName(eachName, moduleScope)) {

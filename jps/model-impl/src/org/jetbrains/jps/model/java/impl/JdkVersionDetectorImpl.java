@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.model.java.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -70,7 +68,7 @@ public class JdkVersionDetectorImpl extends JdkVersionDetector {
           String versionString = manifest.getMainAttributes().getValue("Implementation-Version");
           if (versionString != null) {
             JavaVersion version = JavaVersion.parse(versionString);
-            boolean x64 = new File(rtFile.getParent(), "amd64").isDirectory();
+            boolean x64 = SystemInfo.isMac || new File(rtFile.getParent(), "amd64").isDirectory();
             return new JdkVersionInfo(version, x64 ? Bitness.x64 : Bitness.x32);
           }
         }

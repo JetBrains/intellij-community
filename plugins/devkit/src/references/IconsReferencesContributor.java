@@ -235,7 +235,10 @@ public class IconsReferencesContributor extends PsiReferenceContributor
         return new FileReferenceSet(element) {
           @Override
           protected Collection<PsiFileSystemItem> getExtraContexts() {
-            final Module icons = ModuleManager.getInstance(element.getProject()).findModuleByName("icons");
+            Module icons = ModuleManager.getInstance(element.getProject()).findModuleByName("icons");
+            if (icons == null) {
+              icons = ModuleManager.getInstance(element.getProject()).findModuleByName("intellij.platform.icons");
+            }
             if (icons != null) {
               final ArrayList<PsiFileSystemItem> result = new ArrayList<>();
               final VirtualFile[] roots = ModuleRootManager.getInstance(icons).getSourceRoots();
@@ -331,7 +334,7 @@ public class IconsReferencesContributor extends PsiReferenceContributor
   }
 
   private static boolean isIconsModule(Module module) {
-    return module != null && "icons".equals(module.getName())
+    return module != null && ("icons".equals(module.getName()) || "intellij.platform.icons".equals(module.getName()))
            && ModuleRootManager.getInstance(module).getSourceRoots().length == 1;
   }
 

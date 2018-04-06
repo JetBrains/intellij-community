@@ -21,7 +21,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashSet;
 import gnu.trove.TIntStack;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -819,7 +818,7 @@ public class PsiUtil {
       if (!modifiers.hasModifierProperty(PsiModifier.STATIC)
           && !modifiers.hasModifierProperty(PsiModifier.PRIVATE)
           && !modifiers.hasModifierProperty(PsiModifier.PROTECTED)
-          && method.getParameterList().getParametersCount() == 0) {
+          && method.getParameterList().isEmpty()) {
         final PsiType type = getSmartReturnType(method);
         if (type != null && (TypesUtil.isClassType(type, CommonClassNames.JAVA_LANG_OBJECT) || TypesUtil.isClassType(type,
                                                                                                                      GroovyCommonClassNames.GROOVY_LANG_CLOSURE))) {

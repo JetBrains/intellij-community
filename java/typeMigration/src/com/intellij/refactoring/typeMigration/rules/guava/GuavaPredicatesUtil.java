@@ -55,7 +55,7 @@ public class GuavaPredicatesUtil {
       return new TypeConversionDescriptorWithLocalVariable("equalTo", "$x$ -> java.util.Objects.equals($x$, $v$)");
     }
     if (!isConvertablePredicatesMethod(method, (PsiMethodCallExpression)context)) return null;
-    if (((PsiMethodCallExpression)context).getArgumentList().getExpressions().length == 0) {
+    if (((PsiMethodCallExpression)context).getArgumentList().isEmpty()) {
       return createConstantPredicate(name, name.equals("and"));
     }
     if (PREDICATES_AND_OR.contains(name) && canMigrateAndOrOr((PsiMethodCallExpression)context)) {
@@ -120,7 +120,7 @@ public class GuavaPredicatesUtil {
     if (method == null) return false;
     final PsiParameterList parameters = method.getParameterList();
     if (parameters.getParametersCount() != 1) {
-      return parameters.getParametersCount() != 0;
+      return !parameters.isEmpty();
     }
     final PsiParameter parameter = parameters.getParameters()[0];
     final PsiType type = parameter.getType();

@@ -83,7 +83,7 @@ public class SpockTestFramework extends GroovyTestFramework {
     if (!isTestClass(clazz, false)) return null;
 
     for (PsiMethod method : clazz.findMethodsByName(methodName, false)) {
-      if (method.getParameterList().getParametersCount() == 0) return method;
+      if (method.getParameterList().isEmpty()) return method;
     }
 
     return null;

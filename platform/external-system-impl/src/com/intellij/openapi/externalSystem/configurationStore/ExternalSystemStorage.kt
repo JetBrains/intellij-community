@@ -25,7 +25,7 @@ internal class ExternalModuleStorage(private val module: Module, storageManager:
 internal open class ExternalProjectStorage @JvmOverloads constructor(fileSpec: String, project: Project, storageManager: StateStorageManager, rootElementName: String? = ProjectStateStorageManager.ROOT_TAG_NAME /* several components per file */) : XmlElementStorage(fileSpec, rootElementName, storageManager.macroSubstitutor, RoamingType.DISABLED) {
   protected val manager = StreamProviderFactory.EP_NAME.getExtensions(project).first { it is ExternalSystemStreamProviderFactory } as ExternalSystemStreamProviderFactory
 
-  override final fun loadLocalData() = manager.fileStorage.read(fileSpec)
+  override fun loadLocalData() = manager.fileStorage.read(fileSpec)
 
   override fun createSaveSession(states: StateMap) = object : XmlElementStorageSaveSession<ExternalProjectStorage>(states, this) {
     override fun saveLocally(element: Element?) {
@@ -35,7 +35,14 @@ internal open class ExternalProjectStorage @JvmOverloads constructor(fileSpec: S
 }
 
 // for libraries only for now - we use null rootElementName because the only component is expected (libraryTable)
-internal class ExternalProjectFilteringStorage(fileSpec: String, project: Project, storageManager: StateStorageManager) : ExternalProjectStorage(fileSpec, project, storageManager, null /* the only component per file */) {
+internal class ExternalProjectFilteringStorage(fileSpec: String, project: Project, storageManager: StateStorageManager, private val componentName: String, private val inProjectStorage: DirectoryBasedStorage) : ExternalProjectStorage(fileSpec, project, storageManager,
+                                                                                                                                                                                                                                         rootElementName = null /* the only component per file */) {
+  override fun loadLocalData(): Element? {
+    val externalData = super.loadLocalData()
+    val internalData = inProjectStorage.getSerializedState(inProjectStorage.loadData(), null, componentName, true)
+    return JDOMUtil.merge(externalData, internalData)
+  }
+
   override fun createSaveSession(states: StateMap) = object : XmlElementStorageSaveSession<ExternalProjectStorage>(states, this) {
     override fun saveLocally(element: Element?) {
       if (element == null || !element.children.any { it.isMarkedAsExternal() }) {

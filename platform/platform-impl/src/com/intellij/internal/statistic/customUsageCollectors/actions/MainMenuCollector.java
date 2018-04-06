@@ -5,6 +5,7 @@ import com.intellij.internal.statistic.UsagesCollector;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
+import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.components.*;
@@ -28,7 +29,10 @@ import java.util.stream.Collectors;
  */
 @State(
   name = "MainMenuCollector",
-  storages = @Storage(value = "statistics.main_menu.xml", roamingType = RoamingType.DISABLED)
+  storages = {
+    @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED),
+    @Storage(value = "statistics.main_menu.xml", roamingType = RoamingType.DISABLED, deprecated = true)
+  }
 )
 public class MainMenuCollector implements PersistentStateComponent<MainMenuCollector.State> {
   private State myState = new State();

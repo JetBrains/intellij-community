@@ -109,7 +109,6 @@ class DocumentTracker : Disposable {
     }
   }
 
-  @CalledInAwt
   fun freeze(side: Side) {
     LOCK.write {
       freezeHelper.freeze(side)

@@ -20,7 +20,6 @@ import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
-import java.util.HashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -280,7 +279,7 @@ public class JavaI18nUtil extends I18nUtil {
           PsiMethod method = (PsiMethod)element;
           PsiType returnType = method.getReturnType();
           if (returnType != null && TypeConversionUtil.isAssignable(type, returnType)
-              && method.getParameterList().getParametersCount() == 0) {
+              && method.getParameterList().isEmpty()) {
             result.add(method.getName() + "()");
           }
         }

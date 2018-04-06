@@ -60,6 +60,7 @@ class FindPopupDirectoryChooser extends JPanel {
     myProject = panel.getProject();
     myFindPopupPanel = panel;
     myDirectoryComboBox = new ComboBox<>(200);
+    myDirectoryComboBox.setEditable(true);
 
     Component editorComponent = myDirectoryComboBox.getEditor().getEditorComponent();
     if (editorComponent instanceof JTextField) {
@@ -72,7 +73,6 @@ class FindPopupDirectoryChooser extends JPanel {
       });
       field.setColumns(40);
     }
-    myDirectoryComboBox.setEditable(true);
     myDirectoryComboBox.setMaximumRowCount(8);
 
     ActionListener restartSearchListener = e -> myFindPopupPanel.scheduleResultsUpdate();

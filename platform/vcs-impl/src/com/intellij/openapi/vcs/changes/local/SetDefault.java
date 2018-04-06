@@ -19,7 +19,7 @@ import com.intellij.openapi.vcs.changes.ChangeListListener;
 import com.intellij.openapi.vcs.changes.ChangeListWorker;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.util.EventDispatcher;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 public class SetDefault implements ChangeListCommand {
   private final String myNewDefaultName;
@@ -28,7 +28,7 @@ public class SetDefault implements ChangeListCommand {
   private LocalChangeList myOldDefaultListCopy;
   private LocalChangeList myNewDefaultListCopy;
 
-  public SetDefault(@Nullable String newDefaultName) {
+  public SetDefault(@NotNull String newDefaultName) {
     myNewDefaultName = newDefaultName;
   }
 

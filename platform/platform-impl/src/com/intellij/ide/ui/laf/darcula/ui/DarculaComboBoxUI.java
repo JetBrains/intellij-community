@@ -38,6 +38,7 @@ import java.awt.event.*;
 import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
+import java.beans.PropertyChangeListener;
 
 import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.*;
 
@@ -52,13 +53,42 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     return new DarculaComboBoxUI();
   }
 
-  protected KeyListener   editorKeyListener;
-  protected FocusListener editorFocusListener;
+  private KeyListener            editorKeyListener;
+  private FocusListener          editorFocusListener;
+  private PropertyChangeListener propertyListener;
 
   @Override
   protected void installDefaults() {
     super.installDefaults();
     comboBox.setBorder(this);
+  }
+
+  @Override protected void installListeners() {
+    super.installListeners();
+
+    propertyListener = createPropertyListener();
+    comboBox.addPropertyChangeListener(propertyListener);
+  }
+
+  @Override public void uninstallListeners() {
+    super.uninstallListeners();
+
+    if (propertyListener != null) {
+      comboBox.removePropertyChangeListener(propertyListener);
+      propertyListener = null;
+    }
+  }
+
+  protected PropertyChangeListener createPropertyListener() {
+    return e -> {
+      if ("enabled".equals(e.getPropertyName())) {
+        EditorTextField etf = UIUtil.findComponentOfType((JComponent)editor, EditorTextField.class);
+        if (etf != null) {
+          Color color = e.getNewValue() == Boolean.FALSE ? UIManager.getColor("ComboBox.disabledBackground") : null;
+          etf.setBackground(color);
+        }
+      }
+    };
   }
 
   protected JButton createArrowButton() {
@@ -96,25 +126,10 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
           g2.fill(new Rectangle2D.Float(0, bw + lw, lw(g2), getHeight() - (bw + lw) * 2));
 
           g2.setColor(new JBColor(Gray._255, comboBox.isEnabled() ? getForeground() : getOutlineColor(comboBox.isEnabled())));
-          g2.fill(getArrowShape());
+          g2.fill(getArrowShape(getWidth(), getHeight()));
         } finally {
           g2.dispose();
         }
-      }
-
-      private Shape getArrowShape() {
-        int tW = JBUI.scale(8);
-        int tH = JBUI.scale(6);
-        int xU = (getWidth() - tW) / 2 - JBUI.scale(1);
-        int yU = (getHeight() - tH) / 2 + JBUI.scale(1);
-
-        Path2D path = new Path2D.Float();
-        path.moveTo(xU, yU);
-        path.lineTo(xU + tW, yU);
-        path.lineTo(xU + tW/2, yU + tH);
-        path.lineTo(xU, yU);
-        path.closePath();
-        return path;
       }
 
       @Override
@@ -135,6 +150,22 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
   @Override
   protected Insets getInsets() {
     return JBUI.insets(3, 8, 3, 3).asUIResource();
+  }
+
+  @NotNull
+  public static Shape getArrowShape(int width, int height) {
+    int tW = JBUI.scale(8);
+    int tH = JBUI.scale(6);
+    int xU = (width - tW) / 2 - JBUI.scale(1);
+    int yU = (height - tH) / 2 + JBUI.scale(1);
+
+    Path2D path = new Path2D.Float();
+    path.moveTo(xU, yU);
+    path.lineTo(xU + tW, yU);
+    path.lineTo(xU + tW / 2, yU + tH);
+    path.lineTo(xU, yU);
+    path.closePath();
+    return path;
   }
 
   @Override

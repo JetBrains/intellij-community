@@ -795,7 +795,7 @@ public class JavaKeywordCompletion {
     if (superClass != null) {
       for (final PsiMethod psiMethod : superClass.getConstructors()) {
         final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(method.getProject()).getResolveHelper();
-        if (resolveHelper.isAccessible(psiMethod, method, null) && psiMethod.getParameterList().getParameters().length > 0) {
+        if (resolveHelper.isAccessible(psiMethod, method, null) && !psiMethod.getParameterList().isEmpty()) {
           return true;
         }
       }

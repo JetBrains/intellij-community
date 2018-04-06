@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.application.ApplicationManager
@@ -21,11 +7,11 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ArrayUtil
 import com.intellij.util.SystemProperties
+import com.intellij.util.isEmpty
 import gnu.trove.THashMap
 import org.iq80.snappy.SnappyFramedInputStream
 import org.iq80.snappy.SnappyFramedOutputStream
 import org.jdom.Element
-import org.jdom.JDOMInterner
 import java.io.ByteArrayInputStream
 import java.util.*
 import java.util.concurrent.atomic.AtomicReferenceArray
@@ -158,7 +144,7 @@ class StateMap private constructor(private val names: Array<String>, private val
       return null
     }
 
-    val prev = states.getAndUpdate(index, { state -> if (archive && state is Element) archiveState(state).toByteArray() else state });
+    val prev = states.getAndUpdate(index, { state -> if (archive && state is Element) archiveState(state).toByteArray() else state })
     return prev as? Element
   }
 
@@ -174,7 +160,7 @@ class StateMap private constructor(private val names: Array<String>, private val
 
 fun setStateAndCloneIfNeed(key: String, newState: Element?, oldStates: StateMap, newLiveStates: MutableMap<String, Element>? = null): MutableMap<String, Any>? {
   val oldState = oldStates.get(key)
-  if (newState == null || JDOMUtil.isEmpty(newState)) {
+  if (newState == null || newState.isEmpty()) {
     if (oldState == null) {
       return null
     }
@@ -207,7 +193,7 @@ internal fun updateState(states: MutableMap<String, Any>, key: String, newState:
     states.remove(key)
     return true
   }
-  var newStateInterned = JDOMUtil.internElement(newState)
+  val newStateInterned = JDOMUtil.internElement(newState)
   newLiveStates?.put(key, newStateInterned)
 
   val oldState = states.get(key)

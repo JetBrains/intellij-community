@@ -17,6 +17,8 @@ import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author yole
@@ -161,6 +163,39 @@ public class PyOverrideTest extends PyTestCase {
 
   public void testReturnAnnotation() {  // PY-2690
     doTest3k();
+  }
+
+  // PY-18553
+  public void testImportsForTypeAnnotations1() {
+    testImportsForTypeAnnotations(getTestName(true), 0);
+  }
+
+  public void testImportsForTypeAnnotations2() {
+    testImportsForTypeAnnotations(getTestName(true), 0);
+  }
+
+  public void testImportsForTypeAnnotations3() {
+    testImportsForTypeAnnotations(getTestName(true), 2);
+  }
+
+  private void testImportsForTypeAnnotations(String testName, int orderOfClassToOverride) {
+
+    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> {
+      final String initialFilePath = String.format("override/%s.py", testName);
+      final String importFilePath = String.format("override/%s_import.py", testName);
+      final String resultFilePath = String.format("override/%s_after.py", testName);
+
+      List<PyFile> pyFiles = Arrays.stream(
+          myFixture.configureByFiles(initialFilePath, importFilePath))
+        .map(PyFile.class::cast)
+        .collect(Collectors.toList());
+
+      PyFunction toOverride = pyFiles.get(1).getTopLevelClasses().get(orderOfClassToOverride).getMethods()[0];
+      PyOverrideImplementUtil.overrideMethods(myFixture.getEditor(), getTopLevelClass(0),
+                                              Collections.singletonList(new PyMethodMember(toOverride)), false);
+      myFixture.checkResultByFile(resultFilePath, true);
+    });
+
   }
 
   public void testSingleStar() {  // PY-6455

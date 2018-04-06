@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.psiutils;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -59,13 +60,7 @@ public class ConstructionUtils {
     if (!(construction instanceof PsiNewExpression)) return null;
     final PsiNewExpression newExpression = (PsiNewExpression)construction;
     final PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
-    if (classReference == null) return null;
-    final PsiElement target = classReference.resolve();
-    if (!(target instanceof PsiClass)) return null;
-    final PsiClass aClass = (PsiClass)target;
-    final String qualifiedName = aClass.getQualifiedName();
-    if (!CommonClassNames.JAVA_LANG_STRING_BUILDER.equals(qualifiedName) &&
-        !CommonClassNames.JAVA_LANG_STRING_BUFFER.equals(qualifiedName)) {
+    if (!isReferenceTo(classReference, CommonClassNames.JAVA_LANG_STRING_BUILDER, CommonClassNames.JAVA_LANG_STRING_BUFFER)) {
       return null;
     }
     final PsiExpressionList argumentList = newExpression.getArgumentList();
@@ -90,7 +85,7 @@ public class ConstructionUtils {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (expression instanceof PsiNewExpression) {
       PsiExpressionList argumentList = ((PsiNewExpression)expression).getArgumentList();
-      if (argumentList != null && argumentList.getExpressions().length == 0) {
+      if (argumentList != null && argumentList.isEmpty()) {
         PsiType type = expression.getType();
         return com.intellij.psi.util.InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_COLLECTION) ||
                com.intellij.psi.util.InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP);
@@ -100,9 +95,9 @@ public class ConstructionUtils {
       PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
       String name = call.getMethodExpression().getReferenceName();
       PsiExpressionList argumentList = call.getArgumentList();
-      if(name != null && name.startsWith("new") && argumentList.getExpressions().length == 0) {
+      if(name != null && name.startsWith("new") && argumentList.isEmpty()) {
         PsiMethod method = call.resolveMethod();
-        if(method != null && method.getParameterList().getParametersCount() == 0) {
+        if(method != null && method.getParameterList().isEmpty()) {
           PsiClass aClass = method.getContainingClass();
           if(aClass != null) {
             String qualifiedName = aClass.getQualifiedName();
@@ -127,7 +122,7 @@ public class ConstructionUtils {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (expression instanceof PsiNewExpression) {
       PsiExpressionList argumentList = ((PsiNewExpression)expression).getArgumentList();
-      if (argumentList == null || argumentList.getExpressions().length == 0) return false;
+      if (argumentList == null || argumentList.isEmpty()) return false;
       PsiMethod constructor = ((PsiNewExpression)expression).resolveConstructor();
       if (constructor == null) return false;
       PsiClass aClass = constructor.getContainingClass();
@@ -145,9 +140,9 @@ public class ConstructionUtils {
       if (ENUM_SET_NONE_OF.test(call)) return true;
       String name = call.getMethodExpression().getReferenceName();
       PsiExpressionList argumentList = call.getArgumentList();
-      if (name != null && name.startsWith("new") && argumentList.getExpressions().length > 0) {
+      if (name != null && name.startsWith("new") && !argumentList.isEmpty()) {
         PsiMethod method = call.resolveMethod();
-        if (method != null && method.getParameterList().getParametersCount() > 0) {
+        if (method != null && !method.getParameterList().isEmpty()) {
           PsiClass aClass = method.getContainingClass();
           if (aClass != null) {
             String qualifiedName = aClass.getQualifiedName();
@@ -183,5 +178,22 @@ public class ConstructionUtils {
       if (!"0".equals(dimensionText)) return false;
     }
     return true;
+  }
+
+  public static boolean isReferenceTo(PsiJavaCodeReferenceElement ref, String... classNames) {
+    if(ref == null) return false;
+    String name = ref.getReferenceName();
+    if (name == null) return false;
+    String qualifiedName = null;
+    for (String className : classNames) {
+      if(StringUtil.getShortName(className).equals(name)) {
+        if (qualifiedName == null) {
+          // Defer resolution if possible
+          qualifiedName = ref.getQualifiedName();
+        }
+        if (className.equals(qualifiedName)) return true;
+      }
+    }
+    return false;
   }
 }

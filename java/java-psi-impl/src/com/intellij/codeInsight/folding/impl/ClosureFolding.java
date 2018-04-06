@@ -170,7 +170,7 @@ class ClosureFolding {
 
   private static boolean hasNoArguments(PsiNewExpression expression) {
     PsiExpressionList argumentList = expression.getArgumentList();
-    return argumentList != null && argumentList.getExpressions().length == 0;
+    return argumentList != null && argumentList.isEmpty();
   }
 
   private static boolean hasOnlyOneLambdaMethod(@NotNull PsiAnonymousClass anonymousClass, boolean checkResolve) {

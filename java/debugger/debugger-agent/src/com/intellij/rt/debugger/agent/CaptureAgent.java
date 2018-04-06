@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.rt.debugger.agent;
 
 import org.jetbrains.org.objectweb.asm.*;
@@ -199,6 +197,7 @@ public class CaptureAgent {
     private final List<CapturePoint> myCapturePoints;
     private final List<InsertPoint> myInsertPoints;
     private final Map<String, String> myFields = new HashMap<String, String>();
+    private String mySuperName;
 
     public CaptureInstrumentor(int api, ClassVisitor cv, List<CapturePoint> capturePoints, List<InsertPoint> insertPoints) {
       super(api, cv);
@@ -212,6 +211,12 @@ public class CaptureAgent {
 
     private static String getMethodDisplayName(String className, String methodName, String desc) {
       return className + "." + methodName + desc;
+    }
+
+    @Override
+    public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+      mySuperName = superName;
+      super.visit(version, access, name, signature, superName, interfaces);
     }
 
     @Override
@@ -229,16 +234,19 @@ public class CaptureAgent {
             if (DEBUG) {
               System.out.println("Capture agent: instrumented capture point at " + methodDisplayName);
             }
-            // for constructors and "this" key - move capture to the end
+            // for constructors and "this" key - move capture to after the super constructor call
             if ("<init>".equals(name) && capturePoint.myKeyProvider == THIS_KEY_PROVIDER) {
               return new MethodVisitor(api, super.visitMethod(access, name, desc, signature, exceptions)) {
+                boolean captured = false;
+
                 @Override
-                public void visitInsn(int opcode) {
-                  if (opcode == Opcodes.RETURN) {
+                public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
+                  super.visitMethodInsn(opcode, owner, name, desc, itf);
+                  if (opcode == Opcodes.INVOKESPECIAL && !captured && owner.equals(mySuperName) && name.equals("<init>")) { // super constructor
                     capture(mv, capturePoint.myKeyProvider, (access & Opcodes.ACC_STATIC) != 0,
                             Type.getMethodType(desc).getArgumentTypes(), methodDisplayName);
+                    captured = true;
                   }
-                  super.visitInsn(opcode);
                 }
               };
             }

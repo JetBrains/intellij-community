@@ -37,7 +37,7 @@ public class JpsIdePluginManagerImpl extends JpsPluginManager {
 
   public JpsIdePluginManagerImpl() {
     ExtensionsArea rootArea = Extensions.getRootArea();
-    //todo[nik] get rid of this check: currently this class is used in jps-builders tests instead of JpsPluginManagerImpl because platform-impl module is added to classpath via testFramework
+    //todo[nik] get rid of this check: currently this class is used in intellij.platform.jps.build tests instead of JpsPluginManagerImpl because intellij.platform.ide.impl module is added to classpath via testFramework
     if (rootArea.hasExtensionPoint(JpsPluginBean.EP_NAME.getName())) {
       rootArea.getExtensionPoint(JpsPluginBean.EP_NAME).addExtensionPointListener(new ExtensionPointListener<JpsPluginBean>() {
         @Override

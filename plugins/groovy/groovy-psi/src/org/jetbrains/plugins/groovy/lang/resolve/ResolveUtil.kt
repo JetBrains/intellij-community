@@ -19,6 +19,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultConstructor
 import org.jetbrains.plugins.groovy.lang.psi.util.skipSameTypeParents
+import org.jetbrains.plugins.groovy.lang.resolve.imports.importedNameKey
 import org.jetbrains.plugins.groovy.lang.resolve.processors.DynamicMembersHint
 import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolveKind
 import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolverProcessor
@@ -142,4 +143,8 @@ fun PsiScopeProcessor.isNonAnnotationResolve(): Boolean {
 fun GrCodeReferenceElement.isAnnotationReference(): Boolean {
   val (possibleAnnotation, _) = skipSameTypeParents()
   return possibleAnnotation is GrAnnotation
+}
+
+fun getName(state: ResolveState, element: PsiNamedElement): String? {
+  return state[importedNameKey] ?: element.name
 }

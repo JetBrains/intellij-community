@@ -35,15 +35,13 @@ public class ConvertUsagesUtil {
 
 
   // @NotNull
-  public static <T extends UsageDescriptor> String convertUsages(Map<GroupDescriptor, Set<T>> map) {
+  public static <T extends UsageDescriptor> String convertUsages(Map<String, Set<T>> map) {
     assert map != null;
-    final Map<GroupDescriptor, Set<T>> sortedMap = sortDescriptorsByPriority(map);
-
     StringBuffer buffer = new StringBuffer();
-    for (Map.Entry<GroupDescriptor, Set<T>> entry : sortedMap.entrySet()) {
+    for (Map.Entry<String, Set<T>> entry : map.entrySet()) {
       String value = convertValueMap(entry.getValue());
       if (!StringUtil.isEmptyOrSpaces(value)) {
-        buffer.append(entry.getKey().getId());
+        buffer.append(entry.getKey());
         buffer.append(GROUP_SEPARATOR);
         buffer.append(value);
         buffer.append(GROUPS_SEPARATOR);

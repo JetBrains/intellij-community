@@ -59,6 +59,7 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
     return new PythonScriptCommandLineState(this, env);
   }
 
+  @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
     super.checkConfiguration();
 

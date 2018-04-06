@@ -20,7 +20,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import java.util.HashMap;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.Nullable;
@@ -202,7 +201,7 @@ public class ClassPath {
 
   private Loader createLoader(URL url, int index, File file, boolean processRecursively) throws IOException {
     if (file.isDirectory()) {
-      return new FileLoader(url, index, myCanHavePersistentIndex);
+      return new FileLoader(url, index, this);
     }
     if (file.isFile()) {
       Loader loader = new JarLoader(url, index, this);

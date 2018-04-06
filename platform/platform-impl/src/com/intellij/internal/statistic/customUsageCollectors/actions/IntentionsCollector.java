@@ -8,6 +8,7 @@ import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.internal.statistic.UsagesCollector;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
+import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.lang.Language;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -24,7 +25,10 @@ import java.util.*;
  */
 @State(
   name = "IntentionsCollector",
-  storages = @Storage(value = "statistics.intentions.xml", roamingType = RoamingType.DISABLED)
+  storages = {
+    @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED),
+    @Storage(value = "statistics.intentions.xml", roamingType = RoamingType.DISABLED, deprecated = true)
+  }
 )
 public class IntentionsCollector implements PersistentStateComponent<IntentionsCollector.State> {
   private State myState = new State();

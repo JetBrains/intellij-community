@@ -1078,7 +1078,7 @@ public class JavaDocInfoGenerator {
     PsiClass parentClass = method.getContainingClass();
     if (parentClass != null && parentClass.isEnum()) {
       PsiParameterList parameterList = method.getParameterList();
-      if (method.getName().equals("values") && parameterList.getParametersCount() == 0) {
+      if (method.getName().equals("values") && parameterList.isEmpty()) {
         return loadSyntheticDocComment(method, "/javadoc/EnumValues.java.template");
       }
       if (method.getName().equals("valueOf") &&

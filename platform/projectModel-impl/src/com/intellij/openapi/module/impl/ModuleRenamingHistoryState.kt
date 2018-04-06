@@ -10,5 +10,5 @@ class ModuleRenamingHistoryState {
   @Property(surroundWithTag = false)
   @XMap(entryTagName = "module", keyAttributeName = "old-name", valueAttributeName = "new-name")
   @JvmField
-  var oldToNewName = LinkedHashMap<String, String>()
+  var oldToNewName = HashMap<String, String>()
 }

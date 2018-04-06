@@ -48,6 +48,7 @@
     <stacktrace.fold substring="at org.junit.internal.runners."/>
     <stacktrace.fold substring="at org.junit.runners."/>
     <stacktrace.fold substring="at org.junit.runner.JUnitCore."/>
+    <stacktrace.fold substring="at org.junit.rules."/>
     <stacktrace.fold substring="at org.junit.Assert.fail("/>
     <stacktrace.fold substring="at org.junit.Assert.failNotSame("/>
     <stacktrace.fold substring="at org.junit.Assert.failSame("/>

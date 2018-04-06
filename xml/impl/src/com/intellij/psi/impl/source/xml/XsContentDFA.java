@@ -15,9 +15,7 @@
  */
 package com.intellij.psi.impl.source.xml;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.util.NullableComputable;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -63,7 +61,7 @@ class XsContentDFA extends XmlContentDFA {
   public static XmlContentDFA createContentDFA(@NotNull XmlTag parentTag) {
     final PsiFile file = parentTag.getContainingFile().getOriginalFile();
     if (!(file instanceof XmlFile)) return null;
-    XSModel xsModel = ApplicationManager.getApplication().runReadAction((NullableComputable<XSModel>)() -> getXSModel((XmlFile)file));
+    XSModel xsModel = ReadAction.compute(() -> getXSModel((XmlFile)file));
     if (xsModel == null) {
       return null;
     }

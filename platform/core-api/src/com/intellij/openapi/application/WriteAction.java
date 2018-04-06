@@ -22,7 +22,6 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 
-@SuppressWarnings("deprecation")
 public abstract class WriteAction<T> extends BaseActionRunnable<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.WriteAction");
 
@@ -48,7 +47,7 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
     }
 
     TransactionGuard.getInstance().submitTransactionAndWait(() -> {
-      AccessToken token = start(this.getClass());
+      AccessToken token = start(getClass());
       try {
         result.run();
       }

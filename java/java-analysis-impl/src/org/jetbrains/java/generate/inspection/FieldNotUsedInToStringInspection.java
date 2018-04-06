@@ -74,7 +74,7 @@ public class FieldNotUsedInToStringInspection extends AbstractToStringInspection
         return;
       }
       final PsiParameterList parameterList = method.getParameterList();
-      if (parameterList.getParametersCount() != 0) {
+      if (!parameterList.isEmpty()) {
         return;
       }
       final PsiType returnType = method.getReturnType();

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties.refactoring.rename;
 
 import com.intellij.lang.properties.IProperty;
@@ -31,8 +29,8 @@ public class RenamePropertyProcessor extends RenamePsiElementProcessor {
   }
 
   @Override
-  public void prepareRenaming(final PsiElement element, final String newName,
-                              final Map<PsiElement, String> allRenames) {
+  public void prepareRenaming(@NotNull final PsiElement element, @NotNull final String newName,
+                              @NotNull final Map<PsiElement, String> allRenames) {
     ResourceBundle resourceBundle = Objects.requireNonNull(PropertiesImplUtil.getProperty(element)).getPropertiesFile().getResourceBundle();
 
     final Map<PsiElement, String> allRenamesCopy = new LinkedHashMap<>(allRenames);
@@ -49,10 +47,10 @@ public class RenamePropertyProcessor extends RenamePsiElementProcessor {
   }
 
   @Override
-  public void findCollisions(PsiElement element,
-                             final String newName,
-                             Map<? extends PsiElement, String> allRenames,
-                             List<UsageInfo> result) {
+  public void findCollisions(@NotNull PsiElement element,
+                             @NotNull final String newName,
+                             @NotNull Map<? extends PsiElement, String> allRenames,
+                             @NotNull List<UsageInfo> result) {
     allRenames.forEach((key, value) -> {
       for (IProperty property : ((PropertiesFile)key.getContainingFile()).getProperties()) {
         if (Comparing.strEqual(value, property.getKey())) {
@@ -68,12 +66,12 @@ public class RenamePropertyProcessor extends RenamePsiElementProcessor {
   }
 
   @Override
-   public boolean isToSearchInComments(PsiElement element) {
+   public boolean isToSearchInComments(@NotNull PsiElement element) {
      return PropertiesRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS;
    }
  
    @Override
-   public void setToSearchInComments(PsiElement element, boolean enabled) {
+   public void setToSearchInComments(@NotNull PsiElement element, boolean enabled) {
      PropertiesRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS = enabled;
    }
 }

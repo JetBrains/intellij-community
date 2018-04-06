@@ -48,7 +48,7 @@ import java.util.Collections;
 import java.util.List;
 
 public abstract class BaseRefactoringAction extends AnAction {
-  private final Condition<Language> myLanguageCondition = language -> isAvailableForLanguage(language);
+  private final Condition<Language> myLanguageCondition = this::isAvailableForLanguage;
 
   protected abstract boolean isAvailableInEditorOnly();
 

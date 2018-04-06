@@ -642,7 +642,7 @@ public class HighlightMethodUtil {
     boolean isThisOrSuper = referenceToMethod.getReferenceNameElement() instanceof PsiKeyword;
     if (isThisOrSuper) {
       // super(..) or this(..)
-      if (list.getExpressions().length == 0) { // implicit ctr call
+      if (list.isEmpty()) { // implicit ctr call
         CandidateInfo[] candidates = resolveHelper.getReferencedMethodCandidates(methodCall, true);
         if (candidates.length == 1 && !candidates[0].getElement().isPhysical()) {
           isDummy = true;// dummy constructor
@@ -990,7 +990,7 @@ public class HighlightMethodUtil {
                                                              String methodName,
                                                              PsiSubstitutor substitutor,
                                                              PsiClass aClass) {
-    return Math.max(parameters.length, list.getExpressions().length) <= 2
+    return Math.max(parameters.length, list.getExpressionCount()) <= 2
            ? createShortMismatchedArgumentsHtmlTooltip(list, info, parameters, methodName, substitutor, aClass)
            : createLongMismatchedArgumentsHtmlTooltip(list, info, parameters, methodName, substitutor, aClass);
   }
@@ -1640,7 +1640,7 @@ public class HighlightMethodUtil {
     PsiMethod[] constructors = aClass.getConstructors();
 
     if (constructors.length == 0) {
-      if (list.getExpressions().length != 0) {
+      if (!list.isEmpty()) {
         String constructorName = aClass.getName();
         String argTypes = buildArgTypesList(list);
         String description = JavaErrorMessages.message("wrong.constructor.arguments", constructorName+"()", argTypes);

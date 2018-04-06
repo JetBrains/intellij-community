@@ -16,6 +16,7 @@ import javax.swing.event.TableModelListener;
 import java.awt.*;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Nikolay.Tropin
@@ -29,8 +30,8 @@ public abstract class AbstractGenerateEqualsWizard <C extends PsiElement, M exte
   protected final AbstractMemberSelectionPanel<M, I> myEqualsPanel;
   protected final AbstractMemberSelectionPanel<M, I> myHashCodePanel;
   protected final AbstractMemberSelectionPanel<M, I> myNonNullPanel;
-  protected final HashMap<M, I> myFieldsToHashCode;
-  protected final HashMap<M, I> myFieldsToNonNull;
+  protected final Map<M, I> myFieldsToHashCode;
+  protected final Map<M, I> myFieldsToNonNull;
 
   private int myNonNullStepCode;
   private int myEqualsStepCode;

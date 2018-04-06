@@ -16,10 +16,11 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.openapi.editor.Editor;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilCore;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -28,20 +29,23 @@ public final class CompletionParameters {
   private final PsiElement myPosition;
   private final PsiFile myOriginalFile;
   private final CompletionType myCompletionType;
-  private final Editor myEditor;
+  @Nullable private final Editor myEditor;
   private final int myOffset;
   private final int myInvocationCount;
+  private final CompletionProcess myProcess;
 
   CompletionParameters(@NotNull final PsiElement position, @NotNull final PsiFile originalFile,
-                       @NotNull CompletionType completionType, int offset, final int invocationCount, @NotNull Editor editor) {
+                       @NotNull CompletionType completionType, int offset, int invocationCount, @Nullable Editor editor,
+                       @NotNull CompletionProcess process) {
+    PsiUtilCore.ensureValid(position);
     assert position.getTextRange().containsOffset(offset) : position;
     myPosition = position;
-    assert position.isValid();
     myOriginalFile = originalFile;
     myCompletionType = completionType;
     myOffset = offset;
     myInvocationCount = invocationCount;
     myEditor = editor;
+    myProcess = process;
   }
 
   @NotNull
@@ -51,12 +55,12 @@ public final class CompletionParameters {
 
   @NotNull
   public CompletionParameters withType(@NotNull CompletionType type) {
-    return new CompletionParameters(myPosition, myOriginalFile, type, myOffset, myInvocationCount, myEditor);
+    return new CompletionParameters(myPosition, myOriginalFile, type, myOffset, myInvocationCount, myEditor, myProcess);
   }
 
   @NotNull
   public CompletionParameters withInvocationCount(int newCount) {
-    return new CompletionParameters(myPosition, myOriginalFile, myCompletionType, myOffset, newCount, myEditor);
+    return new CompletionParameters(myPosition, myOriginalFile, myCompletionType, myOffset, newCount, myEditor, myProcess);
   }
 
   @NotNull
@@ -99,15 +103,33 @@ public final class CompletionParameters {
 
   @NotNull
   public CompletionParameters withPosition(@NotNull PsiElement element, int offset) {
-    return new CompletionParameters(element, myOriginalFile, myCompletionType, offset, myInvocationCount, myEditor);
+    return new CompletionParameters(element, myOriginalFile, myCompletionType, offset, myInvocationCount, myEditor, myProcess);
   }
 
   public boolean isExtendedCompletion() {
     return myCompletionType == CompletionType.BASIC && myInvocationCount >= 2;
   }
 
+  /**
+   * @return the editor where the completion was started, or null if completion API was invoked in absence of editor.
+   * @see #hasEditor()
+   */
   @NotNull
   public Editor getEditor() {
+    if (myEditor == null) throw new CompletionWithoutEditorException(); 
     return myEditor;
+  }
+
+  /** 
+   * @return whether this completion was started within an editor
+   * @since 181.*
+   */
+  public boolean hasEditor() {
+    return myEditor != null;
+  }
+
+  @NotNull
+  public CompletionProcess getProcess() {
+    return myProcess;
   }
 }

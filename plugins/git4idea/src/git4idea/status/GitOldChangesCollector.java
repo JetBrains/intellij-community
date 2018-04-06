@@ -136,8 +136,7 @@ class GitOldChangesCollector extends GitChangesCollector {
     handler.addParameters("--refresh", "--ignore-missing");
     handler.setSilent(true);
     handler.setStdoutSuppressed(true);
-    handler.ignoreErrorCode(1);
-    Git.getInstance().runCommand(handler).getOutputOrThrow();
+    Git.getInstance().runCommand(handler).getOutputOrThrow(1);
   }
 
   /**

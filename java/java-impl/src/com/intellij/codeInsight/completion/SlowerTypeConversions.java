@@ -120,7 +120,7 @@ class SlowerTypeConversions implements Runnable {
       final PsiMethod method = (PsiMethod)o;
       final PsiType type = method.getReturnType();
       if (PsiType.VOID.equals(type) || PsiType.NULL.equals(type)) return null;
-      if (method.getParameterList().getParametersCount() > 0) return null;
+      if (!method.getParameterList().isEmpty()) return null;
       return method.getName() + "(" +
              getSpace(CodeStyleSettingsManager.getSettings(method.getProject())
                         .getCommonSettings(JavaLanguage.INSTANCE).SPACE_WITHIN_METHOD_CALL_PARENTHESES) + ")";

@@ -50,4 +50,9 @@ public class StatefulEpInspectionTest extends PluginModuleTestCase {
     setPluginXml("plugin.xml");
     myFixture.testHighlighting("ProjectConfigurable.java");
   }
+
+  public void testFakeFile() {
+    setPluginXml("plugin.xml");
+    myFixture.testHighlighting("FakeFile.java");
+  }
 }

@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,7 +56,10 @@ public class CompositeDocumentationProvider extends DocumentationProviderEx impl
 
   @NotNull
   public List<DocumentationProvider> getAllProviders() {
-    return ContainerUtil.concat(getProviders(), Arrays.asList(Extensions.getExtensions(EP_NAME)));
+    List<DocumentationProvider> result = new SmartList<>(getProviders());
+    result.addAll(Arrays.asList(Extensions.getExtensions(EP_NAME)));
+    ContainerUtil.removeDuplicates(result);
+    return result;
   }
 
   @NotNull
@@ -203,17 +207,9 @@ public class CompositeDocumentationProvider extends DocumentationProviderEx impl
   @Override
   public boolean hasDocumentationFor(PsiElement element, PsiElement originalElement) {
     for (DocumentationProvider provider : getAllProviders()) {
-      if (provider instanceof ExternalDocumentationProvider) {
-        if (((ExternalDocumentationProvider)provider).hasDocumentationFor(element, originalElement)) {
-          LOG.debug("hasDocumentationFor: ", provider);
-          return true;
-        }
-      }
-      else {
-        if (hasUrlsFor(provider, element, originalElement)) {
-          LOG.debug("handleExternal(hasUrlsFor): ", provider);
-          return true;
-        }
+      if (hasUrlsFor(provider, element, originalElement)) {
+        LOG.debug("handleExternal(hasUrlsFor): ", provider);
+        return true;
       }
     }
     return false;

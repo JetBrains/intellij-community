@@ -506,7 +506,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
           psiMethod != null &&
           !methodCallExpression.getMethodExpression().isQualified() &&
           "getClass".equals(psiMethod.getName()) &&
-          psiMethod.getParameterList().getParametersCount() == 0) {
+          psiMethod.getParameterList().isEmpty()) {
         myBodyContainsForbiddenRefs = true;
       }
     }

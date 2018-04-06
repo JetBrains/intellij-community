@@ -347,7 +347,7 @@ public class CreateSubclassAction extends BaseIntentionAction {
     boolean hasNonTrivialConstructor = false;
     final PsiMethod[] constructors = psiClass.getConstructors();
     for (PsiMethod constructor : constructors) {
-      if (constructor.getParameterList().getParametersCount() > 0) {
+      if (!constructor.getParameterList().isEmpty()) {
         hasNonTrivialConstructor = true;
         break;
       }

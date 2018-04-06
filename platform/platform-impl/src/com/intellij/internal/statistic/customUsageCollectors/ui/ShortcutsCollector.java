@@ -4,6 +4,7 @@ package com.intellij.internal.statistic.customUsageCollectors.ui;
 import com.intellij.internal.statistic.UsagesCollector;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
+import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.components.*;
@@ -34,7 +35,10 @@ import static java.awt.event.KeyEvent.*;
  */
 @State(
   name = "ShortcutsCollector",
-  storages = @Storage(value = "statistics.shortcuts.xml", roamingType = RoamingType.DISABLED)
+  storages = {
+    @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED),
+    @Storage(value = "statistics.shortcuts.xml", roamingType = RoamingType.DISABLED, deprecated = true)
+  }
 )
 public class ShortcutsCollector implements PersistentStateComponent<ShortcutsCollector.MyState> {
   final static class MyState {

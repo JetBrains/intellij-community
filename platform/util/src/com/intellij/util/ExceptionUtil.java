@@ -17,6 +17,7 @@ package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -159,6 +160,7 @@ public class ExceptionUtil {
     if (t instanceof RuntimeException) throw (RuntimeException)t;
   }
 
+  @Contract("!null->fail")
   public static void rethrowAll(@Nullable Throwable t) throws Exception {
     if (t != null) {
       rethrowUnchecked(t);
@@ -166,11 +168,13 @@ public class ExceptionUtil {
     }
   }
 
+  @Contract("_->fail")
   public static void rethrow(@Nullable Throwable throwable) {
     rethrowUnchecked(throwable);
     throw new RuntimeException(throwable);
   }
 
+  @Contract("!null->fail")
   public static void rethrowAllAsUnchecked(@Nullable Throwable t) {
     if (t != null) {
       rethrowUnchecked(t);

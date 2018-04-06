@@ -51,12 +51,11 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
   private volatile ProgressIndicator myIndicator;
 
   /**
-   * @deprecated, use {@link #BackgroundUpdaterTask(Project, String, Comparator)} instead
+   * @deprecated Use {@link #BackgroundUpdaterTask(Project, String, Comparator)} instead
    */
   @Deprecated
   public BackgroundUpdaterTask(Project project, @NotNull String title) {
-    super(project, title);
-    myData = ContainerUtil.newSmartList();
+    this(project, title, null);
   }
   
   public BackgroundUpdaterTask(@Nullable Project project, @NotNull String title, @Nullable Comparator<PsiElement> comparator) {
@@ -73,7 +72,7 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
   public abstract String getCaption(int size);
   protected abstract void replaceModel(@NotNull List<PsiElement> data);
 
-  public static Comparator<PsiElement> createComparatorWrapper(@NotNull Comparator<PsiElement> comparator) {
+  protected static Comparator<PsiElement> createComparatorWrapper(@NotNull Comparator comparator) {
     return (o1, o2) -> {
       int diff = comparator.compare(o1, o2);
       if (diff == 0) {
@@ -85,7 +84,7 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
 
   protected abstract void paintBusy(boolean paintBusy);
 
-  public boolean setCanceled() {
+  private boolean setCanceled() {
     boolean canceled = myCanceled;
     myCanceled = true;
     return canceled;
@@ -96,7 +95,7 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
   }
 
   /**
-   * @deprecated, use {@link #BackgroundUpdaterTask(Project, String, Comparator)} and {@link #updateComponent(PsiElement)} instead
+   * @deprecated Use {@link #BackgroundUpdaterTask(Project, String, Comparator)} and {@link #updateComponent(PsiElement)} instead
    */
   public boolean updateComponent(@NotNull PsiElement element, @Nullable Comparator comparator) {
     final UsageView view = myUsageView.get();
@@ -113,7 +112,7 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
       if (myData.contains(element)) return true;
       myData.add(element);
       if (comparator != null && myData instanceof List) {
-        Collections.sort(((List)myData), comparator);
+        Collections.sort((List)myData, comparator);
       }
     }
 

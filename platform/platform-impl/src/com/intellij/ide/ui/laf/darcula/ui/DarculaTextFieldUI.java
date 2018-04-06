@@ -94,7 +94,6 @@ public class DarculaTextFieldUI extends TextFieldWithPopupHandlerUI {
                           MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
 
       Rectangle r = new Rectangle(component.getWidth(), component.getHeight());
-      //JBInsets.removeFrom(r, JBUI.insets(1, 0));
       g2.translate(r.x, r.y);
 
       float arc = isSearchField(component) ? JBUI.scale(6f) : 0.0f;

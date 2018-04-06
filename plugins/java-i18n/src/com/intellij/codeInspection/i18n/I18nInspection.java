@@ -834,7 +834,7 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
     if (method == null) return false;
     final PsiType returnType = method.getReturnType();
     return TO_STRING.equals(method.getName())
-           && method.getParameterList().getParametersCount() == 0
+           && method.getParameterList().isEmpty()
            && returnType != null
            && "java.lang.String".equals(returnType.getCanonicalText());
   }

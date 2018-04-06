@@ -4,9 +4,9 @@ package com.intellij.codeInsight.documentation;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -73,14 +73,7 @@ public abstract class AbstractExternalFilter {
         prev = matcher.end(1) + 1;
         ready.append(before);
         ready.append("\"");
-        ready.append(ApplicationManager.getApplication().runReadAction(
-          new Computable<String>() {
-            @Override
-            public String compute() {
-              return convertReference(root, href.toString());
-            }
-          }
-        ));
+        ready.append(ReadAction.compute(() -> convertReference(root, href.toString())));
         ready.append("\"");
       }
 

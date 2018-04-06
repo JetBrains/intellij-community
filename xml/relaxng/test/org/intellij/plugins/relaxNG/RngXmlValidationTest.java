@@ -13,15 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.intellij.plugins.relaxNG;
 
-import com.intellij.javaee.ExternalResourceManager;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.javaee.ExternalResourceManagerExImpl;
 import org.intellij.plugins.testUtil.CopyFile;
 
 public class RngXmlValidationTest extends HighlightingTestBase {
-
   public void testValidDocument() {
     doTest("xslt.rng");
   }
@@ -81,12 +78,9 @@ public class RngXmlValidationTest extends HighlightingTestBase {
   @Override
   protected void init() {
     super.init();
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      final ExternalResourceManager mgr = ExternalResourceManager.getInstance();
-      mgr.addResource("urn:test:simple.rng", toAbsolutePath("validation/simple.rng"));
-      mgr.addResource("urn:test:simple.rnc", toAbsolutePath("validation/simple.rnc"));
-      //mgr.addResource("http://www.w3.org/1999/XSL/Transform", toAbsolutePath("validation/relaxng.rng"));
-    });
+
+    ExternalResourceManagerExImpl.registerResourceTemporarily("urn:test:simple.rng", toAbsolutePath("validation/simple.rng"), getTestRootDisposable());
+    ExternalResourceManagerExImpl.registerResourceTemporarily("urn:test:simple.rnc", toAbsolutePath("validation/simple.rnc"), getTestRootDisposable());
   }
 
   @Override

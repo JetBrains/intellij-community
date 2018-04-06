@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -92,7 +90,11 @@ class OptionTagBinding extends BasePrimitiveBinding {
         }
         else {
           assert myBinding != null;
-          myAccessor.set(context, Binding.deserializeList(myBinding, myAccessor.read(context), children));
+          Object oldValue = myAccessor.read(context);
+          Object newValue = Binding.deserializeList(myBinding, oldValue, children);
+          if (oldValue != newValue) {
+            myAccessor.set(context, newValue);
+          }
         }
       }
     }
@@ -100,8 +102,7 @@ class OptionTagBinding extends BasePrimitiveBinding {
       String value = valueAttribute.getValue();
       if (myConverter == null) {
         try {
-          XmlSerializerImpl
-            .doSet(context, value, myAccessor, XmlSerializerImpl.typeToClass(myAccessor.getGenericType()));
+          XmlSerializerImpl.doSet(context, value, myAccessor, XmlSerializerImpl.typeToClass(myAccessor.getGenericType()));
         }
         catch (Exception e) {
           throw new RuntimeException("Cannot set value for field " + myName, e);

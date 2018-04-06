@@ -228,7 +228,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
                                                           final MatchProvider matchProvider =
                                                             member instanceof PsiMethod ? new MethodDuplicatesMatchProvider((PsiMethod)member, matches)
                                                                                         : new ConstantMatchProvider(member, project, matches);
-                                                          DuplicatesImpl.invoke(project, matchProvider);
+                                                          DuplicatesImpl.invoke(project, matchProvider, true);
                                                         }), REFACTORING_NAME, REFACTORING_NAME);
 
           WindowManager.getInstance().getStatusBar(project).setInfo("");

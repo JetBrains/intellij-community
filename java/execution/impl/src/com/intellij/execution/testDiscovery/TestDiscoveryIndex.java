@@ -45,7 +45,6 @@ import java.util.List;
 public class TestDiscoveryIndex implements Disposable {
   static final Logger LOG = Logger.getInstance(TestDiscoveryIndex.class);
 
-  //private volatile TestInfoHolder mySystemHolder;
   private final TestDataController myLocalTestRunDataController;
   private final TestDataController myRemoteTestRunDataController;
 
@@ -62,10 +61,6 @@ public class TestDiscoveryIndex implements Disposable {
         myLocalTestRunDataController.getHolder(); // proactively init with maybe io costly compact
       }));
     }
-
-    //{
-    //  setRemoteTestRunDataPath("C:\\ultimate\\system\\testDiscovery\\145.save");
-    //}
   }
 
   public boolean hasTestTrace(@NotNull String testName) throws IOException {
@@ -151,7 +146,6 @@ public class TestDiscoveryIndex implements Disposable {
         final ArrayList<String> result = new ArrayList<>(localList.size());
         for (int testNameId : localList.toNativeArray()) {
           if (testNameId < 0) {
-            int a = 1;
             continue;
           }
           result.add(localHolder.myTestNameEnumerator.valueOf(testNameId));
@@ -160,7 +154,6 @@ public class TestDiscoveryIndex implements Disposable {
       }
     });
   }
-
 
   public Collection<String> getTestModulesByMethodName(@NotNull String classFQName, @NotNull String methodName, String prefix) throws IOException {
     return myLocalTestRunDataController.withTestDataHolder(new ThrowableConvertor<TestInfoHolder, Collection<String>, IOException>() {

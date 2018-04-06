@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.offlineViewer;
 
 import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil;
@@ -164,7 +162,7 @@ class OfflineDescriptorResolveResult {
       final int idx = offlineProblemDescriptor.getProblemIndex();
       int curIdx = 0;
       for (ProblemDescriptor descriptor : list) {
-        final PsiNamedElement member = LocalDescriptorsUtil.getContainerElement(descriptor.getPsiElement(), localTool, context);
+        final PsiNamedElement member = BatchModeDescriptorsUtil.getContainerElement(descriptor.getPsiElement(), localTool, context);
         if (psiElement instanceof PsiFile || member != null && member.equals(psiElement)) {
           if (curIdx == idx) {
             return descriptor;

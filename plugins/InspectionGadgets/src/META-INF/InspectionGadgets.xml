@@ -4,6 +4,7 @@
     <extensionPoint qualifiedName="com.intellij.naming.convention.class" interface="com.intellij.codeInspection.naming.NamingConvention"/>
     <extensionPoint qualifiedName="com.intellij.naming.convention.method" interface="com.intellij.codeInspection.naming.NamingConvention"/>
     <extensionPoint qualifiedName="com.intellij.naming.convention.field" interface="com.intellij.codeInspection.naming.NamingConvention"/>
+    <extensionPoint qualifiedName="com.intellij.implicit.resource.closer" interface="com.intellij.codeInspection.resources.ImplicitResourceCloser"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
 
@@ -2792,6 +2793,10 @@
                      bundle="com.siyeh.InspectionGadgetsBundle" key="variable.type.can.be.explicit.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.language.level.specific.issues.and.migration.aids10"
                      implementationClass="com.intellij.codeInspection.VariableTypeCanBeExplicitInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="ConstantExpression" enabledByDefault="true" level="INFORMATION"
+                     bundle="com.siyeh.InspectionGadgetsBundle" key="inspection.constant.expression.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues"
+                     implementationClass="com.siyeh.ig.style.ConstantExpressionInspection"/>
   </extensions>
 
 </idea-plugin>

@@ -25,6 +25,10 @@ target(compile: "Compile project") {
   new AndroidStudioBuilder(home).compileModules()
 }
 
+target('updater-full': 'Build updater-full.jar which includes IDE updater with its dependencies') {
+  new IdeaCommunityBuilder(home).buildFullUpdater()
+}
+
 target('default': 'The default target') {
   def options = new BuildOptions()
   new AndroidStudioBuilder(home, options).buildDistributions()

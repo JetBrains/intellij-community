@@ -60,7 +60,7 @@ public class PathInternerTest extends TestCase {
   }
 
   public void testContains() {
-    String path = "/home/peter/work/idea/community/out/production/vcs-impl/com/intellij/openapi/vcs/changes/committed/CommittedChangesViewManager$1.class";
+    String path = "/home/peter/work/idea/community/out/production/intellij.platform.vcs.impl/com/intellij/openapi/vcs/changes/committed/CommittedChangesViewManager$1.class";
     interner.addPath(path);
     assertTrue(interner.containsPath(path));
     assertFalse(interner.containsPath("/foo/foo"));

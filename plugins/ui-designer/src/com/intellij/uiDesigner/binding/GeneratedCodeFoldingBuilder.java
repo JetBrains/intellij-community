@@ -50,7 +50,7 @@ public class GeneratedCodeFoldingBuilder extends FoldingBuilderEx {
 
   private static boolean isGeneratedUIInitializer(PsiClassInitializer initializer) {
     PsiCodeBlock body = initializer.getBody();
-    if (body.getStatements().length != 1) return false;
+    if (body.getStatementCount() != 1) return false;
     PsiStatement statement = body.getStatements()[0];
     if (!(statement instanceof PsiExpressionStatement) ||
         !(((PsiExpressionStatement)statement).getExpression() instanceof PsiMethodCallExpression)) {

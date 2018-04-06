@@ -171,7 +171,7 @@ public class StubGenerator implements ClassItemGenerator {
     if (constructors.length == 0) return;
 
     for (PsiMethod method : constructors) {
-      if (method.getParameterList().getParameters().length == 0 && PsiUtil.isAccessible(method, containingClass, containingClass)) {
+      if (method.getParameterList().isEmpty() && PsiUtil.isAccessible(method, containingClass, containingClass)) {
         return; //default constructor exists
       }
     }

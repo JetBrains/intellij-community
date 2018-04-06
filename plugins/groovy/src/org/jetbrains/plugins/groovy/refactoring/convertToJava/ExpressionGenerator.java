@@ -319,7 +319,7 @@ public class ExpressionGenerator extends Generator {
     final GroovyResolveResult resolveResult = newExpression.advancedResolve();
     final PsiElement constructor = resolveResult.getElement();
     if (constructor instanceof PsiMethod) {
-      return ((PsiMethod)constructor).getParameterList().getParametersCount() == 0;
+      return ((PsiMethod)constructor).getParameterList().isEmpty();
     }
 
     final PsiElement resolved = refElement.resolve();

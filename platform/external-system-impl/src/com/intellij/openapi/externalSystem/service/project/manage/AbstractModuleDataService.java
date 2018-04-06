@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.compiler.CompilerConfiguration;
@@ -246,7 +244,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
           if (!ApplicationManager.getApplication().isHeadlessEnvironment() && syncType == SyncType.RE_IMPORT) {
             try {
               // we need to save module configuration before dispose, to get the up-to-date content of the unlinked module iml
-              ServiceKt.getStateStore(module).save(new ArrayList<>());
+              ServiceKt.getStateStore(module).save(new SmartList<>(), false);
               VirtualFile moduleFile = module.getModuleFile();
               if (moduleFile != null) {
                 Path orphanModulePath = unlinkedModulesDir.resolve(String.valueOf(path.hashCode()));

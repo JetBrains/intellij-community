@@ -16,12 +16,10 @@
 package com.intellij.psi.impl.search;
 
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -127,12 +125,11 @@ public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, O
 
   @NotNull
   private static Iterable<PsiMethod> compute(@NotNull PsiMethod method, @NotNull Project project) {
-    Application application = ApplicationManager.getApplication();
-    final PsiClass containingClass = application.runReadAction((Computable<PsiClass>)method::getContainingClass);
+    final PsiClass containingClass = ReadAction.compute(method::getContainingClass);
     assert containingClass != null;
     Collection<PsiMethod> result = new LinkedHashSet<>();
     Processor<PsiClass> inheritorsProcessor = inheritor -> {
-      PsiMethod found = application.runReadAction((Computable<PsiMethod>)() -> findOverridingMethod(inheritor, method, containingClass));
+      PsiMethod found = ReadAction.compute(() -> findOverridingMethod(inheritor, method, containingClass));
       if (found != null) {
         result.add(found);
       }

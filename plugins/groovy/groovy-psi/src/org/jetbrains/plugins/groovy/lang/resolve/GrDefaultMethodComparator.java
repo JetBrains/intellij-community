@@ -30,8 +30,8 @@ public class GrDefaultMethodComparator extends GrMethodComparator {
     final PsiType[] argTypes = context.getArgumentTypes();
 
     if (context.isConstructor() && argTypes != null && argTypes.length == 1) {
-      if (method1.getParameterList().getParametersCount() == 0) return true;
-      if (method2.getParameterList().getParametersCount() == 0) return false;
+      if (method1.getParameterList().isEmpty()) return true;
+      if (method2.getParameterList().isEmpty()) return false;
     }
 
     PsiParameter[] params1 = method1.getParameterList().getParameters();

@@ -108,7 +108,7 @@ public class IfCanBeAssertionInspection extends BaseInspection {
                                          GUAVA_PRECONDITIONS,
                                          null,
                                          GUAVA_CHECK_NON_NULL,
-                                         (PsiType[])null) && expression.getArgumentList().getExpressions().length <= 2) { // for parametrized messages we don't suggest anything
+                                         (PsiType[])null) && expression.getArgumentList().getExpressionCount() <= 2) { // for parametrized messages we don't suggest anything
         registerMethodCallError(expression, PsiUtil.isLanguageLevel7OrHigher(expression), false);
       }
     }

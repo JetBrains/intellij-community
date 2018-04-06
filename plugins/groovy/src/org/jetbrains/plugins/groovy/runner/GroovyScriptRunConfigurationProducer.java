@@ -44,15 +44,13 @@ import java.util.List;
  * @author ilyas
  */
 public class GroovyScriptRunConfigurationProducer extends RuntimeConfigurationProducer implements Cloneable {
-  protected PsiElement mySourceElement;
-
   public GroovyScriptRunConfigurationProducer() {
     super(GroovyScriptRunConfigurationType.getInstance());
   }
 
   @Override
   public PsiElement getSourceElement() {
-    return mySourceElement;
+    return restoreSourceElement();
   }
 
   @Override
@@ -72,7 +70,7 @@ public class GroovyScriptRunConfigurationProducer extends RuntimeConfigurationPr
     if (aClass instanceof GroovyScriptClass || GroovyRunnerPsiUtil.isRunnable(aClass)) {
       final RunnerAndConfigurationSettings settings = createConfiguration(aClass);
       if (settings != null) {
-        mySourceElement = element;
+        storeSourceElement(element);
         final GroovyScriptRunConfiguration configuration = (GroovyScriptRunConfiguration)settings.getConfiguration();
         GroovyScriptUtil.getScriptType(groovyFile).tuneConfiguration(groovyFile, configuration, location);
         return settings;
@@ -84,15 +82,13 @@ public class GroovyScriptRunConfigurationProducer extends RuntimeConfigurationPr
       ConfigurationFromContext settings = producer.createConfigurationFromContext(context);
       if (settings != null) {
         PsiElement src = settings.getSourceElement();
-        mySourceElement = src;
+        storeSourceElement(element);
         return createConfiguration(src instanceof PsiMethod ? ((PsiMethod)src).getContainingClass() : (PsiClass)src);
       }
 
       return null;
     }
-    else {
-      return null;
-    }
+    return null;
   }
 
   @Override

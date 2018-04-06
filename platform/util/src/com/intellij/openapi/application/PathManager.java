@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.util.Pair;
@@ -86,15 +84,16 @@ public class PathManager {
     }
 
     if (SystemInfo.isWindows) {
-      try {
-        ourHomePath = new File(ourHomePath).getCanonicalPath();
-      }
-      catch (IOException ignored) { }
+      ourHomePath = canonicalPath(ourHomePath);
     }
 
     ourBinDirectories = getBinDirectories(new File(ourHomePath));
 
     return ourHomePath;
+  }
+
+  public static boolean isUnderHomeDirectory(@NotNull String path) {
+    return FileUtil.isAncestor(canonicalPath(getHomePath()), canonicalPath(path), true);
   }
 
   @Nullable
@@ -491,9 +490,9 @@ public class PathManager {
   @NotNull
   public static Collection<String> getUtilClassPath() {
     final Class<?>[] classes = {
-      PathManager.class,            // module 'util'
-      Flow.class,                   // module 'annotations'
-      SystemInfoRt.class,           // module 'util-rt'
+      PathManager.class,            // module 'intellij.platform.util'
+      Flow.class,                   // module 'intellij.platform.annotations.common'
+      SystemInfoRt.class,           // module 'intellij.platform.util.rt'
       Document.class,               // jDOM
       Appender.class,               // log4j
       THashSet.class,               // trove4j
@@ -514,15 +513,15 @@ public class PathManager {
 
     final String annotationsRoot = getJarPathForClass(Flow.class);
     if (annotationsRoot != null && !annotationsRoot.endsWith(".jar")) {
-      // We're running IDEA built from sources. Flow.class is under annotations-common, and NotNull.class is under annotations. Add both
+      // We're running IDEA built from sources. Flow.class is under intellij.platform.annotations.common, and NotNull.class is under intellij.platform.annotations.java5. Add both
       // roots to classpath.
-      final File notNullRoot = new File(new File(annotationsRoot).getParentFile(), "annotations");
+      final File notNullRoot = new File(new File(annotationsRoot).getParentFile(), "intellij.platform.annotations.java5");
       if (notNullRoot.exists()) {
         classPath.add(notNullRoot.getAbsolutePath());
       }
     }
 
-    final String resourceRoot = getResourceRoot(PathManager.class, "/messages/CommonBundle.properties");  // platform-resources-en
+    final String resourceRoot = getResourceRoot(PathManager.class, "/messages/CommonBundle.properties");  // intellij.platform.resources.en
     if (resourceRoot != null) {
       classPath.add(new File(resourceRoot).getAbsolutePath());
     }
@@ -581,5 +580,14 @@ public class PathManager {
     }
 
     return SystemProperties.getUserHome() + File.separator + "." + selector + (!fallback.isEmpty() ? File.separator + fallback : "");
+  }
+
+  private static String canonicalPath(String path) {
+    try {
+      return new File(path).getCanonicalPath();
+    }
+    catch (IOException e) {
+      return path;
+    }
   }
 }

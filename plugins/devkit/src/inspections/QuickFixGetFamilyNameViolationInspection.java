@@ -46,7 +46,7 @@ public class QuickFixGetFamilyNameViolationInspection extends DevKitInspectionBa
   @Override
   public ProblemDescriptor[] checkMethod(@NotNull PsiMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if ("getFamilyName".equals(method.getName()) &&
-        method.getParameterList().getParametersCount() == 0 &&
+        method.getParameterList().isEmpty() &&
         !method.hasModifierProperty(PsiModifier.ABSTRACT)) {
       final PsiClass aClass = method.getContainingClass();
       if (InheritanceUtil.isInheritor(aClass, QuickFix.class.getName()) && doesMethodViolate(method, new THashSet<>())) {

@@ -134,13 +134,13 @@ public class Java9ModuleEntryPoint extends EntryPointWithVisibilityLevel {
 
   private static boolean isDefaultConstructor(@NotNull PsiMethod method) {
     return method.isConstructor() &&
-           method.getParameterList().getParametersCount() == 0 &&
+           method.getParameterList().isEmpty() &&
            method.hasModifierProperty(PsiModifier.PUBLIC);
   }
 
   private static boolean isProviderMethod(@NotNull PsiMethod method) {
     return "provider".equals(method.getName()) &&
-           method.getParameterList().getParametersCount() == 0 &&
+           method.getParameterList().isEmpty() &&
            method.hasModifierProperty(PsiModifier.PUBLIC) &&
            method.hasModifierProperty(PsiModifier.STATIC);
   }

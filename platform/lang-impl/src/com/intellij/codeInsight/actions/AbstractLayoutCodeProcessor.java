@@ -43,7 +43,6 @@ import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -541,8 +540,7 @@ public abstract class AbstractLayoutCodeProcessor {
     }
 
     private Boolean shouldProcessFile(PsiFile file) {
-      Computable<Boolean> computable = () -> file.isWritable() && canBeFormatted(file) && acceptedByFilters(file);
-      return ApplicationManager.getApplication().runReadAction(computable);
+      return ReadAction.compute(() -> file.isWritable() && canBeFormatted(file) && acceptedByFilters(file));
     }
 
     private void performFileProcessing(@NotNull PsiFile file) {

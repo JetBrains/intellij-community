@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -124,12 +124,12 @@ public abstract class StructuralSearchProfile {
     return null;
   }
 
-  @Nullable
+  @NotNull
   public abstract Class<? extends TemplateContextType> getTemplateContextTypeClass();
 
   public final TemplateContextType getTemplateContextType() {
     final Class<? extends TemplateContextType> clazz = getTemplateContextTypeClass();
-    return clazz != null ? ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), clazz) : null;
+    return ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), clazz);
   }
 
   @Nullable

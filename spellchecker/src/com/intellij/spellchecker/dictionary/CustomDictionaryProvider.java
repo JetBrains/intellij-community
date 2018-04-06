@@ -12,4 +12,9 @@ public interface CustomDictionaryProvider {
   Dictionary get(@NotNull String path);
 
   boolean isApplicable(@NotNull String path);
+  
+  @NotNull
+  default String getDictionaryType() {
+    return "";
+  }
 }

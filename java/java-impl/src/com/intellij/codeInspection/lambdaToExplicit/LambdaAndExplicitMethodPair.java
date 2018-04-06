@@ -27,12 +27,13 @@ class LambdaAndExplicitMethodPair {
     new LambdaAndExplicitMethodPair("java.util.Objects", "requireNonNullElseGet", "requireNonNullElse", 1, "T", true),
     new LambdaAndExplicitMethodPair("org.junit.jupiter.api.Assertions", "assert(?!Timeout).*|fail", "*", -1, JAVA_LANG_STRING, true),
     new LambdaAndExplicitMethodPair("org.junit.jupiter.api.Assertions", "assert(True|False)", "*", 0, JAVA_LANG_STRING, true),
+    new LambdaAndExplicitMethodPair(CommonClassNames.JAVA_UTIL_ARRAYS, "setAll", "fill", 1, null, true, "i")
   };
   private final @NotNull String myClass;
   private final @NotNull Pattern myLambdaMethod;
   private final @NotNull String myExplicitMethod;
   private final int myParameterIndex;
-  private final @NotNull String myExplicitParameterType;
+  private final @Nullable String myExplicitParameterType;
   private final boolean myCanUseReturnValue;
   private final @NotNull String[] myDefaultLambdaParameters;
 
@@ -42,14 +43,14 @@ class LambdaAndExplicitMethodPair {
    * @param explicitMethod        name of the equivalent method ("*" if name is the same as lambdaMethod)
    *                              accepting constant instead of lambda argument (all other args must be the same)
    * @param index                 index of lambda argument, zero-based, or -1 to denote the last argument
-   * @param explicitParameterType type of explicit parameter
+   * @param explicitParameterType type of explicit parameter (null if explicit -> lambda conversion is not applicable)
    * @param canUseReturnValue     true if method return value does not depend on whether lambda or constant version is used
    */
   LambdaAndExplicitMethodPair(@NotNull String aClass,
                               @NotNull @RegExp String lambdaMethod,
                               @NotNull String explicitMethod,
                               int index,
-                              @NotNull String explicitParameterType,
+                              @Nullable String explicitParameterType,
                               boolean canUseReturnValue,
                               @NotNull String... defaultLambdaParameters) {
     myClass = aClass;
@@ -79,6 +80,7 @@ class LambdaAndExplicitMethodPair {
   }
 
   PsiExpression getLambdaCandidateFromExplicitCall(PsiMethodCallExpression explicitCall) {
+    if (myExplicitParameterType == null) return null;
     String name = explicitCall.getMethodExpression().getReferenceName();
     if (name == null) return null;
     if (myExplicitMethod.equals("*")) {

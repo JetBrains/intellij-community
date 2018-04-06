@@ -13,6 +13,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -27,9 +28,13 @@ public class BuildConsoleUtils {
   private static final String A_CLOSING = "</a>";
   private static final Set<String> NEW_LINES = ContainerUtil.set("<br>", "</br>", "<br/>", "<p>", "</p>", "<p/>", "<pre>", "</pre>");
 
-  public static boolean printFailure(ConsoleView consoleView, Failure failure) {
-    String text = ObjectUtils.chooseNotNull(failure.getDescription(), failure.getMessage());
-    if (text == null && failure.getError() != null) {
+  public static boolean printDetails(ConsoleView consoleView, Failure failure) {
+    return printDetails(consoleView, failure, null);
+  }
+
+  public static boolean printDetails(ConsoleView consoleView, @Nullable Failure failure, @Nullable String details) {
+    String text = failure == null ? details : ObjectUtils.chooseNotNull(failure.getDescription(), failure.getMessage());
+    if (text == null && failure != null && failure.getError() != null) {
       text = failure.getError().getMessage();
     }
     if (text == null) return false;
@@ -52,6 +57,9 @@ public class BuildConsoleUtils {
           consoleView.printHyperlink(linkText, new HyperlinkInfo() {
             @Override
             public void navigate(Project project) {
+              if(failure == null) {
+                return;
+              }
               Notification notification = failure.getNotification();
               if (notification != null && notification.getListener() != null) {
                 notification.getListener().hyperlinkUpdate(

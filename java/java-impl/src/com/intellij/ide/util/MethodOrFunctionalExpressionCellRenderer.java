@@ -50,6 +50,7 @@ public class MethodOrFunctionalExpressionCellRenderer extends PsiElementListCell
                                         : PsiClassListCellRenderer.getContainerTextStatic(element);
   }
 
+  @Override
   public int getIconFlags() {
     return myClassListCellRenderer.getIconFlags();
   }

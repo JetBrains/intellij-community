@@ -36,7 +36,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.BooleanRunnable;
 import com.intellij.psi.impl.DebugUtil;
-import com.intellij.psi.impl.DocumentCommitThread;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.smartPointers.Identikit;
 import com.intellij.psi.impl.smartPointers.SelfElementInfo;
@@ -277,7 +276,7 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
       PsiFile psiFile = (PsiFile)parsedNode.getPsi();
       InjectedFileViewProvider viewProvider = (InjectedFileViewProvider)psiFile.getViewProvider();
 
-      cacheEverything(place, documentWindow, viewProvider, psiFile, documentManager);
+      cacheEverything(place, documentWindow, viewProvider, psiFile);
 
       PsiFile cachedPsiFile = documentManager.getCachedPsiFile(documentWindow);
       assert cachedPsiFile == psiFile : "Cached psi :"+ cachedPsiFile +" instead of "+psiFile;
@@ -285,6 +284,7 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
       assert place.isValid();
       assert viewProvider.isValid();
 
+      List<InjectedLanguageUtil.TokenInfo> newTokens = InjectedLanguageUtil.getHighlightTokens(psiFile);
       PsiFile newFile = registerDocument(documentWindow, psiFile, place, hostPsiFile, documentManager);
       boolean mergeHappened = newFile != psiFile;
       Place mergedPlace = place;
@@ -293,11 +293,12 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
         psiFile = newFile;
         viewProvider = (InjectedFileViewProvider)psiFile.getViewProvider();
         documentWindow = (DocumentWindowImpl)viewProvider.getDocument();
-        boolean shredsReused = !cacheEverything(place, documentWindow, viewProvider, psiFile, documentManager);
+        boolean shredsReused = !cacheEverything(place, documentWindow, viewProvider, psiFile);
         if (shredsReused) {
           place.dispose();
           mergedPlace = documentWindow.getShreds();
         }
+        InjectedLanguageUtil.setHighlightTokens(psiFile, newTokens);
       }
 
       assert psiFile.isValid();
@@ -364,8 +365,7 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
   private static boolean cacheEverything(@NotNull Place place,
                                          @NotNull DocumentWindowImpl documentWindow,
                                          @NotNull InjectedFileViewProvider viewProvider,
-                                         @NotNull PsiFile psiFile,
-                                         @NotNull PsiDocumentManagerBase documentManager) {
+                                         @NotNull PsiFile psiFile) {
     FileDocumentManagerImpl.registerDocument(documentWindow, viewProvider.getVirtualFile());
 
     DebugUtil.startPsiModification("MultiHostRegistrar cacheEverything");
@@ -378,7 +378,6 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
 
     SmartPsiElementPointer<PsiLanguageInjectionHost> pointer = ((ShredImpl)place.get(0)).getSmartPointer();
     psiFile.putUserData(FileContextUtil.INJECTED_IN_ELEMENT, pointer);
-    documentManager.associatePsi(documentWindow, psiFile);
 
     keepTreeFromChameleoningBack(psiFile);
 
@@ -521,7 +520,7 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
         try {
           final DiffLog diffLog = BlockSupportImpl.mergeTrees((PsiFileImpl)oldFile, oldFileNode, injectedNode, new DaemonProgressIndicator(),
                                                               oldFileNode.getText());
-          DocumentCommitThread.doActualPsiChange(oldFile, diffLog);
+          diffLog.doActualPsiChange(oldFile);
         }
         finally {
           DebugUtil.finishPsiModification();
@@ -549,7 +548,7 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
    *   (see call to {@link #parseFile(Language, Language, DocumentWindowImpl, VirtualFile, DocumentEx, PsiFile, Project, CharSequence, List, StringBuilder, String)} )
    * - feed two injections, the old and the new created fake to the standard tree diff
    *   (see call to {@link BlockSupportImpl#mergeTrees(PsiFileImpl, ASTNode, ASTNode, ProgressIndicator, CharSequence)} )
-   * - return continuation which performs actual PSI replace, just like {@link DocumentCommitThread#doCommit(DocumentCommitThread.CommitTask, PsiFile, FileASTNode, ProperTextRange, List)} does
+   * - return continuation which performs actual PSI replace, just like {@link com.intellij.psi.impl.DocumentCommitThread#doCommit(com.intellij.psi.impl.DocumentCommitThread.CommitTask, PsiFile, FileASTNode, ProperTextRange, List)} does
    *   {@code null} means we failed to reparse and will have to kill the injection.
    * </pre>
    */
@@ -626,9 +625,7 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
         oldInjectedPsiViewProvider.performNonPhysically(() -> {
           DebugUtil.startPsiModification("injected tree diff");
           try {
-            DocumentCommitThread.doActualPsiChange(oldInjectedPsi, diffLog);
-
-            PsiDocumentManagerBase documentManagerBase = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(project);
+            diffLog.doActualPsiChange(oldInjectedPsi);
 
             // create new shreds after commit is complete because otherwise the range markers will be changed in MarkerCache.updateMarkers
             Place newPlace = new Place();
@@ -644,7 +641,7 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
               newPlace.add(newShred);
             }
 
-            cacheEverything(newPlace, oldDocumentWindow, oldInjectedPsiViewProvider, oldInjectedPsi, documentManagerBase);
+            cacheEverything(newPlace, oldDocumentWindow, oldInjectedPsiViewProvider, oldInjectedPsi);
             String docText = oldDocumentWindow.getText();
             assert docText.equals(newText) : "=\n" + docText + "\n==\n" + newDocumentText + "\n===\n";
           }

@@ -50,7 +50,7 @@ public class WrapObjectWithOptionalOfNullableFix extends MethodArgumentFix imple
   @NotNull
   @Override
   public String getText() {
-    if (myArgList.getExpressions().length == 1) {
+    if (myArgList.getExpressionCount() == 1) {
       return QuickFixBundle.message("wrap.with.optional.single.parameter.text");
     }
     else {

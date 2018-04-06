@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.diagnostic.Dumpable;
@@ -37,6 +35,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -703,11 +702,17 @@ public final class EditorUtil {
     editor.getSelectionModel().setSelection(startOffset, endOffset);
   }
 
+  /**
+   * This returns a {@link java.awt.Font#PLAIN} font from family, used in editor, with size matching editor font size (except in
+   * presentation mode, when adjusted presentation mode font size is used). Returned font has fallback variants (i.e. if main font doesn't
+   * support certain Unicode characters, some other font may be used to display them), but fallback mechanism differs from the one used in
+   * editor.
+   */
   public static Font getEditorFont() {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     int size = UISettings.getInstance().getPresentationMode()
                ? UISettings.getInstance().getPresentationModeFontSize() - 4 : scheme.getEditorFontSize();
-    return new Font(scheme.getEditorFontName(), Font.PLAIN, size);
+    return UIUtil.getFontWithFallback(scheme.getEditorFontName(), Font.PLAIN, size);
   }
 
   /**

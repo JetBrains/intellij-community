@@ -36,7 +36,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.rt.coverage.data.ProjectData;
+import com.intellij.rt.coverage.data.TestDiscoveryProjectData;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
@@ -113,11 +113,11 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
       return;
     }
     StringBuilder argument = new StringBuilder("-javaagent:");
-    final String agentPath = PathUtil.getJarPathForClass(ProjectData.class);//todo spaces
+    final String agentPath = PathUtil.getJarPathForClass(TestDiscoveryProjectData.class);//todo spaces
     argument.append(agentPath);
     params.getVMParametersList().add(argument.toString());
     params.getClassPath().add(agentPath);
-    params.getVMParametersList().addProperty(ProjectData.TRACE_DIR, getTracesDirectory(configuration));
+    params.getVMParametersList().addProperty(TestDiscoveryProjectData.TRACE_DIR, getTracesDirectory(configuration));
   }
 
   @NotNull

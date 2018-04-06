@@ -550,6 +550,14 @@ public class TreeTraverserTest extends TestCase {
     assertEquals(Arrays.asList(37, 12, 4, 1), it2.backtrace().toList());
     assertEquals(Arrays.asList(37, 12, 4, 1), it3.backtrace().toList());
 
+    assertTrue(it1.hasNext());
+    assertFalse(it2.hasNext());
+    assertTrue(it3.hasNext());
+
+    assertEquals(Arrays.asList(37, 12, 4, 1), it1.backtrace().toList());
+    assertEquals(Arrays.asList(37, 12, 4, 1), it2.backtrace().toList());
+    assertEquals(Arrays.asList(37, 12, 4, 1), it3.backtrace().toList());
+
     assertEquals(new Integer(12), it1.parent());
     assertEquals(new Integer(12), it2.parent());
     assertEquals(new Integer(12), it3.parent());

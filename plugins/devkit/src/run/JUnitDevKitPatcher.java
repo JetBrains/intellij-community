@@ -68,7 +68,11 @@ public class JUnitDevKitPatcher extends JUnitPatcher {
     if (jdk == null) return;
 
     String libPath = jdk.getHomePath() + File.separator + "lib";
-    vm.add("-Xbootclasspath/a:" + libPath + File.separator + "boot.jar");
+    String bootJarPath = libPath + File.separator + "boot.jar";
+    if (new File(bootJarPath).exists()) {
+      //there is no need to add boot.jar in modern IDE builds (181.*)
+      vm.add("-Xbootclasspath/a:" + bootJarPath);
+    }
 
     if (!vm.hasProperty("idea.load.plugins.id") && module != null && PluginModuleType.isOfType(module)) {
       String id = DescriptorUtil.getPluginId(module);

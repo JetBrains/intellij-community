@@ -33,26 +33,24 @@ import java.io.File;
 import java.util.List;
 
 public class XsltConfigurationProducer extends RuntimeConfigurationProducer{
-  private XmlFile myFile;
-
   public XsltConfigurationProducer() {
     super(XsltRunConfigType.getInstance());
   }
 
   @Override
   public PsiElement getSourceElement() {
-    return myFile;
+    return restoreSourceElement();
   }
 
   @Override
   protected RunnerAndConfigurationSettings createConfigurationByElement(Location location, ConfigurationContext context) {
     final XmlFile file = PsiTreeUtil.getParentOfType(location.getPsiElement(), XmlFile.class, false);
     if (file != null && file.isPhysical() && XsltSupport.isXsltFile(file)) {
-      myFile = file;
-      final Project project = myFile.getProject();
+      storeSourceElement(file);
+      final Project project = file.getProject();
       final RunnerAndConfigurationSettings settings =
-        RunManager.getInstance(project).createRunConfiguration(myFile.getName(), getConfigurationFactory());
-      ((XsltRunConfiguration)settings.getConfiguration()).initFromFile(myFile);
+        RunManager.getInstance(project).createRunConfiguration(file.getName(), getConfigurationFactory());
+      ((XsltRunConfiguration)settings.getConfiguration()).initFromFile(file);
       return settings;
     }
     return null;

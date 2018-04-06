@@ -406,7 +406,7 @@ public class GroovyCompletionUtil {
     for (GroovyResolveResult result : constructors) {
       final PsiElement element = result.getElement();
       if (element instanceof PsiMethod) {
-        if (((PsiMethod)element).getParameterList().getParametersCount() > 0) {
+        if (!((PsiMethod)element).getParameterList().isEmpty()) {
           hasParameters = true;
         }
         if (result.isAccessible()) {

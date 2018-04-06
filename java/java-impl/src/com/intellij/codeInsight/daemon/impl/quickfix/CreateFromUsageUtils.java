@@ -116,7 +116,7 @@ public class CreateFromUsageUtils {
     if (argList == null) return false;
     if (candidate == null) {
       return targetClass != null && !targetClass.isInterface() && !(targetClass instanceof PsiTypeParameter) &&
-             !(argList.getExpressions().length == 0 && targetClass.getConstructors().length == 0);
+             !(argList.isEmpty() && targetClass.getConstructors().length == 0);
     }
     else {
       return !PsiUtil.isApplicable(candidate, PsiSubstitutor.EMPTY, argList);
@@ -601,7 +601,7 @@ public class CreateFromUsageUtils {
         if (someExpectedTypes.length > 0) {
           Comparator<ExpectedTypeInfo> comparator = expectedTypesComparator;
           if (expressionList != null) {
-            int argCount = expressionList.getExpressions().length;
+            int argCount = expressionList.getExpressionCount();
             Comparator<ExpectedTypeInfo> mostSuitableMethodComparator =
               Comparator.comparingInt(typeInfo -> typeInfo.getCalledMethod().getParameterList().getParametersCount() == argCount ? 0 : 1);
             comparator = mostSuitableMethodComparator.thenComparing(comparator);

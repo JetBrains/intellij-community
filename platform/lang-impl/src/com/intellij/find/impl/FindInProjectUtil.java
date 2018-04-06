@@ -203,7 +203,7 @@ public class FindInProjectUtil {
    * @deprecated to be removed in IDEA 16
    */
   @Nullable
-  public static Pattern createFileMaskRegExp(@Nullable String filter) {
+  public static Pattern createFileMaskRegExp(@Nullable String filter) throws PatternSyntaxException {
     if (filter == null) {
       return null;
     }

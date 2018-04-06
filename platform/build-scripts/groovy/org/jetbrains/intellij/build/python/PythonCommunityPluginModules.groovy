@@ -11,25 +11,25 @@ import org.jetbrains.intellij.build.impl.PluginLayout
  */
 class PythonCommunityPluginModules {
   static List<String> COMMUNITY_MODULES = [
-    "IntelliLang-python",
-    "ipnb",
-    "python-openapi",
-    "python-community-plugin-core",
-    "python-community-plugin-java",
-    "python-community-configure",
-    "python-community-plugin-minor",
-    "python-psi-api",
-    "python-pydev",
-    "python-community",
+    "intellij.python.langInjection",
+    "intellij.python.ipnb",
+    "intellij.python.community",
+    "intellij.python.community.plugin",
+    "intellij.python.community.plugin.java",
+    "intellij.python.configure",
+    "intellij.python.community.plugin.minor",
+    "intellij.python.psi",
+    "intellij.python.pydev",
+    "intellij.python.community.impl",
   ]
-  public static String PYTHON_COMMUNITY_PLUGIN_MODULE = "python-community-plugin-resources"
+  public static String PYTHON_COMMUNITY_PLUGIN_MODULE = "intellij.python.community.plugin.resources"
   static final List<String> PYCHARM_ONLY_PLUGIN_MODULES = [
-    "IntelliLang-python",
-    "ipnb",
+    "intellij.python.langInjection",
+    "intellij.python.ipnb",
   ]
 
   static PluginLayout pythonCommunityPluginLayout(@DelegatesTo(PluginLayout.PluginLayoutSpec) Closure body = {}) {
-    pythonPlugin(PYTHON_COMMUNITY_PLUGIN_MODULE, "python-ce", "python-community-plugin-build-patches",
+    pythonPlugin(PYTHON_COMMUNITY_PLUGIN_MODULE, "python-ce", "intellij.python.community.plugin.buildPatches",
                  COMMUNITY_MODULES) {
       withProjectLibrary("markdown4j-2.2")  // Required for ipnb
       PYCHARM_ONLY_PLUGIN_MODULES.each { module ->
@@ -50,7 +50,7 @@ class PythonCommunityPluginModules {
         withModule(module, mainJarName, null)
       }
       withModule(buildPatchesModule, mainJarName, null)
-      withResourceFromModule("python-helpers", "", "helpers")
+      withResourceFromModule("intellij.python.helpers", "", "helpers")
       withCustomVersion { BuildContext context ->
         // TODO: Make the Python plugin follow the conventional scheme for plugin versioning, build the plugin together with the IDE
         def pluginBuildNumber = getPluginBuildNumber()

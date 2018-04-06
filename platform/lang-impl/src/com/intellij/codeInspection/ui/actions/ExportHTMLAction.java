@@ -2,6 +2,7 @@
 
 package com.intellij.codeInspection.ui.actions;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeEditor.printing.ExportToHTMLSettings;
 import com.intellij.codeInspection.InspectionApplication;
 import com.intellij.codeInspection.InspectionsBundle;
@@ -11,7 +12,10 @@ import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.codeInspection.ex.Tools;
 import com.intellij.codeInspection.export.ExportToHTMLDialog;
 import com.intellij.codeInspection.export.InspectionTreeHtmlWriter;
-import com.intellij.codeInspection.ui.*;
+import com.intellij.codeInspection.ui.InspectionNode;
+import com.intellij.codeInspection.ui.InspectionResultsView;
+import com.intellij.codeInspection.ui.InspectionToolPresentation;
+import com.intellij.codeInspection.ui.InspectionTreeNode;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -29,7 +33,6 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashSet;
 import org.jdom.Document;
@@ -136,7 +139,7 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
             if (problems.getContentSize() != 0) {
               JDOMUtil.writeDocument(new Document(problems),
                                      outputDirectoryName + File.separator + toolWrapper.getShortName() + InspectionApplication.XML_EXTENSION,
-                                     CodeStyleSettingsManager.getSettings(null).getLineSeparator());
+                                     CodeStyle.getDefaultSettings().getLineSeparator());
             }
           }
           catch (IOException e) {
@@ -155,7 +158,7 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
       }
       JDOMUtil.write(element,
                      new File(outputDirectoryName, InspectionApplication.DESCRIPTIONS + InspectionApplication.XML_EXTENSION),
-                     CodeStyleSettingsManager.getSettings(null).getLineSeparator());
+                     CodeStyle.getDefaultSettings().getLineSeparator());
     }
     catch (IOException e) {
       ApplicationManager.getApplication().invokeLater(() -> Messages.showErrorDialog(myView, e.getMessage()));

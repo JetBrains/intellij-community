@@ -70,7 +70,7 @@ public class InlinePropertyHandler extends JavaInlineActionHandler {
         PsiElement element = psiReference.getElement();
         PsiElement parent = element.getParent();
         if (parent instanceof PsiExpressionList && parent.getParent() instanceof PsiMethodCallExpression) {
-          if (((PsiExpressionList)parent).getExpressions().length == 1) {
+          if (((PsiExpressionList)parent).getExpressionCount() == 1) {
             occurrences.add(parent.getParent());
             containingFiles.add(element.getContainingFile());
             return true;

@@ -42,5 +42,5 @@ target("default": "Run tests") {
     "-Dplugin.path=${home}/../../prebuilts/tools/common/kotlin-plugin/Kotlin",
   ]
 
-  TestingTasks.create(context, options).runTests(jvmArgs, "community-main", null)
+  TestingTasks.create(context, options).runTests(jvmArgs, "intellij.idea.community.main", null)
 }

@@ -116,7 +116,7 @@ public class GitIndexUtil {
   private static String hashObject(@NotNull GitRepository repository,
                                    @NotNull FilePath filePath,
                                    @NotNull InputStream content) throws VcsException {
-    GitSimpleHandler h = new GitSimpleHandler(repository.getProject(), repository.getRoot(), GitCommand.HASH_OBJECT);
+    GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.HASH_OBJECT);
     h.setSilent(true);
     h.addParameters("-w", "--stdin");
     h.addParameters("--path", VcsFileUtil.relativePath(repository.getRoot(), filePath));
@@ -129,7 +129,7 @@ public class GitIndexUtil {
       }
     });
     h.endOptions();
-    String output = h.run();
+    String output = Git.getInstance().runCommand(h).getOutputOrThrow();
 
     if (!h.errors().isEmpty()) {
       notNull(GitVcs.getInstance(repository.getProject())).showErrors(h.errors(), "Applying index modifications");
@@ -145,11 +145,11 @@ public class GitIndexUtil {
     String mode = isExecutable ? EXECUTABLE_MODE : DEFAULT_MODE;
     String path = VcsFileUtil.relativePath(repository.getRoot(), filePath);
 
-    GitSimpleHandler h = new GitSimpleHandler(repository.getProject(), repository.getRoot(), GitCommand.UPDATE_INDEX);
+    GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.UPDATE_INDEX);
     h.setSilent(true);
     h.addParameters("--cacheinfo", mode + "," + blobHash + "," + path);
     h.endOptions();
-    h.run();
+    Git.getInstance().runCommandWithoutCollectingOutput(h).getOutputOrThrow();
   }
 
   @NotNull

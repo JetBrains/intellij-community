@@ -15,12 +15,15 @@
  */
 package com.intellij.psi.codeStyle;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.psi.PsiFile;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -368,7 +371,15 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
     }
   }
 
+  public static JavaCodeStyleSettings getInstance(@NotNull PsiFile file) {
+    return CodeStyle.getCustomSettings(file, JavaCodeStyleSettings.class);
+  }
+
+  /**
+   * For production code use {@link #getInstance(PsiFile)}
+   */
+  @TestOnly
   public static JavaCodeStyleSettings getInstance(@NotNull Project project) {
-    return CodeStyleSettingsManager.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class);
+    return CodeStyle.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class);
   }
 }

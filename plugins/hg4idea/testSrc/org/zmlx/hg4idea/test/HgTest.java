@@ -37,7 +37,7 @@ import java.lang.reflect.Method;
 import static org.testng.Assert.assertTrue;
 
 /**
- * The ancestor of all hg4idea test cases.
+ * The ancestor of all intellij.vcs.hg test cases.
  *
  * @deprecated Use {@link HgPlatformTest}.
  */

@@ -15,8 +15,7 @@
  */
 package com.intellij.find.findUsages;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.NullableComputable;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiElement;
@@ -31,39 +30,33 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-public class FindUsagesHelper {
-  protected static boolean processUsagesInText(@NotNull final PsiElement element,
-                                               @NotNull Collection<String> stringToSearch,
-                                               @NotNull GlobalSearchScope searchScope,
-                                               @NotNull Processor<UsageInfo> processor) {
-    final TextRange elementTextRange = ApplicationManager.getApplication().runReadAction((NullableComputable<TextRange>)() -> {
-      if (!element.isValid() || element instanceof PsiCompiledElement) return null;
-      return element.getTextRange();
-    });
-    UsageInfoFactory factory = new UsageInfoFactory() {
-      @Override
-      public UsageInfo createUsageInfo(@NotNull PsiElement usage, int startOffset, int endOffset) {
-        if (!element.isValid()) return new UsageInfo(usage, startOffset, endOffset, true);
-        if (elementTextRange != null
-            && usage.getContainingFile() == element.getContainingFile()
-            && elementTextRange.contains(startOffset)
-            && elementTextRange.contains(endOffset)) {
-          return null;
-        }
+class FindUsagesHelper {
+  static boolean processUsagesInText(@NotNull final PsiElement element,
+                                     @NotNull Collection<String> stringToSearch,
+                                     @NotNull GlobalSearchScope searchScope,
+                                     @NotNull Processor<UsageInfo> processor) {
+    final TextRange elementTextRange = ReadAction.compute(() -> !element.isValid() || element instanceof PsiCompiledElement ? null : element.getTextRange());
+    UsageInfoFactory factory = (usage, startOffset, endOffset) -> {
+      if (!element.isValid()) return new UsageInfo(usage, startOffset, endOffset, true);
+      if (elementTextRange != null
+          && usage.getContainingFile() == element.getContainingFile()
+          && elementTextRange.contains(startOffset)
+          && elementTextRange.contains(endOffset)) {
+        return null;
+      }
 
-        PsiReference someReference = usage.findReferenceAt(startOffset);
-        if (someReference != null) {
-          PsiElement refElement = someReference.getElement();
-          for (PsiReference ref : PsiReferenceService.getService().getReferences(refElement, new PsiReferenceService.Hints(element, null))) {
-            if (element.getManager().areElementsEquivalent(ref.resolve(), element)) {
-              TextRange range = ref.getRangeInElement().shiftRight(refElement.getTextRange().getStartOffset() - usage.getTextRange().getStartOffset());
-              return new UsageInfo(usage, range.getStartOffset(), range.getEndOffset(), true);
-            }
+      PsiReference someReference = usage.findReferenceAt(startOffset);
+      if (someReference != null) {
+        PsiElement refElement = someReference.getElement();
+        for (PsiReference ref : PsiReferenceService.getService().getReferences(refElement, new PsiReferenceService.Hints(element, null))) {
+          if (element.getManager().areElementsEquivalent(ref.resolve(), element)) {
+            TextRange range = ref.getRangeInElement().shiftRight(refElement.getTextRange().getStartOffset() - usage.getTextRange().getStartOffset());
+            return new UsageInfo(usage, range.getStartOffset(), range.getEndOffset(), true);
           }
         }
-
-        return new UsageInfo(usage, startOffset, endOffset, true);
       }
+
+      return new UsageInfo(usage, startOffset, endOffset, true);
     };
     for (String s : stringToSearch) {
       if (!PsiSearchHelperImpl.processTextOccurrences(element, s, searchScope, processor, factory)) return false;

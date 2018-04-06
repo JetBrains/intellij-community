@@ -1,1 +1,1 @@
-skip: DMG_background.png
+skip: dmg_background.tiff

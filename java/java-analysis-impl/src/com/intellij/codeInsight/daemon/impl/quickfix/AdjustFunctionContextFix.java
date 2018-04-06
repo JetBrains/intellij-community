@@ -107,7 +107,7 @@ public class AdjustFunctionContextFix extends LocalQuickFixAndIntentionActionOnP
     PsiFunctionalExpression fn = PsiTreeUtil.getParentOfType(context, PsiFunctionalExpression.class, false);
     if (fn == null) return null;
     PsiExpressionList expressionList = ObjectUtils.tryCast(fn.getParent(), PsiExpressionList.class);
-    if (expressionList == null || expressionList.getExpressions().length != 1) return null;
+    if (expressionList == null || expressionList.getExpressionCount() != 1) return null;
     PsiMethodCallExpression call = ObjectUtils.tryCast(expressionList.getParent(), PsiMethodCallExpression.class);
     Function<PsiType, String> remapper = METHOD_NAME_ADJUSTER.mapFirst(call);
     if (remapper == null) return null;

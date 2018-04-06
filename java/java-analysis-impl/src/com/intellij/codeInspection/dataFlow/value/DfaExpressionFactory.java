@@ -220,7 +220,7 @@ public class DfaExpressionFactory {
           return method;
         }
       }
-      if (method.getParameterList().getParametersCount() == 0) {
+      if (method.getParameterList().isEmpty()) {
         if ((ControlFlowAnalyzer.isPure(method) ||
             AnnotationUtil.findAnnotation(method.getContainingClass(), "javax.annotation.concurrent.Immutable") != null) &&
             ControlFlowAnalyzer.getMethodCallContracts(method, null).isEmpty()) {

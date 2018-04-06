@@ -363,7 +363,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     return ModuleRootManager.getInstance(getModule(module));
   }
 
-  protected void importProject(@NotNull @Language("xml") String xml) {
+  protected void importProject(@NotNull @Language(value = "xml", prefix = "<project>", suffix = "</project>") String xml) {
     createProjectPom(xml);
     importProject();
   }

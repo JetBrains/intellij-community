@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
@@ -52,7 +50,7 @@ public class QuickFixPreviewPanelFactory {
       myWrapper = view.getTree().getSelectedToolWrapper(true);
       LOG.assertTrue(myWrapper != null);
       QuickFixAction[] commonFixes = view.getProvider().getCommonQuickFixes(myWrapper, view.getTree());
-      boolean multipleDescriptors = myView.getTree().getSelectedDescriptors(false, null, false, true).length > 1;
+      boolean multipleDescriptors = myView.getTree().getSelectedDescriptors().length > 1;
       QuickFixAction[] partialFixes = QuickFixAction.EMPTY;
       if (multipleDescriptors && commonFixes.length == 0) {
         partialFixes = view.getProvider().getPartialQuickFixes(myWrapper, view.getTree());

@@ -92,8 +92,7 @@ public interface Project extends ComponentManager, AreaInstance {
    * @return presentable project path
    */
   @Nullable
-  @SystemDependent
-  default String getPresentableUrl() {
+  default @SystemDependent String getPresentableUrl() {
     return null;
   }
 

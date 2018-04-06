@@ -53,8 +53,7 @@ public class AnonymousHasLambdaAlternativeInspection extends AbstractBaseJavaLoc
         super.visitAnonymousClass(aClass);
         PsiExpressionList argumentList = aClass.getArgumentList();
         if (AnonymousCanBeLambdaInspection.isLambdaForm(aClass, Collections.emptySet()) &&
-            argumentList != null &&
-            argumentList.getExpressions().length == 0) {
+            argumentList != null && argumentList.isEmpty()) {
           PsiMethod method = aClass.getMethods()[0];
           PsiClassType type = aClass.getBaseClassType();
           AnonymousLambdaAlternative alternative = getAlternative(type.resolve(), method);

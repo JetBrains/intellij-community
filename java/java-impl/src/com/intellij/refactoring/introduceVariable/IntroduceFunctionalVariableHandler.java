@@ -247,7 +247,7 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
       setDataFromInputVariables();
       return new ExtractMethodDialog(myProject, myTargetClass, myInputVariables, null, getTypeParameterList(),
                                      getThrownExceptions(), isStatic(), isCanBeStatic(), false,
-                                     IntroduceFunctionalVariableAction.REFACTORING_NAME, HelpID.INTRODUCE_VARIABLE, null, myElements) {
+                                     IntroduceFunctionalVariableAction.REFACTORING_NAME, HelpID.INTRODUCE_VARIABLE, null, myElements, 0) {
         @Override
         protected JComponent createNorthPanel() {
           if (!myInputVariables.hasInstanceFields()) {

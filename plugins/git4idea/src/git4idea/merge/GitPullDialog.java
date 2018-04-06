@@ -269,23 +269,11 @@ public class GitPullDialog extends DialogWrapper {
   @Nullable
   private static GitRemote getCurrentOrDefaultRemote(@NotNull GitRepository repository) {
     Collection<GitRemote> remotes = repository.getRemotes();
-    if (remotes.isEmpty()) {
-      return null;
-    }
+    if (remotes.isEmpty()) return null;
 
     GitBranchTrackInfo trackInfo = GitUtil.getTrackInfoForCurrentBranch(repository);
-    if (trackInfo != null) {
-      return trackInfo.getRemote();
-    }
-    else {
-      GitRemote origin = GitUtil.getDefaultRemote(remotes);
-      if (origin != null) {
-        return origin;
-      }
-      else {
-        return remotes.iterator().next();
-      }
-    }
+    if (trackInfo != null) return trackInfo.getRemote();
+    return GitUtil.getDefaultOrFirstRemote(remotes);
   }
 
   @Nullable

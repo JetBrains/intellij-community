@@ -47,7 +47,7 @@ public class SimplifyCollectorInspection extends AbstractBaseJavaLocalInspection
           return;
         }
         if (isCollectorMethod(downstream, "maxBy", "minBy", "reducing") &&
-            downstream.getArgumentList().getExpressions().length == 1) {
+            downstream.getArgumentList().getExpressionCount() == 1) {
           String replacement = nameElement.getText().equals("groupingBy") ? "toMap" : "toConcurrentMap";
           holder.registerProblem(nameElement, InspectionsBundle.message("inspection.simplify.collector.message", replacement),
                                  new SimplifyCollectorFix(replacement));
@@ -65,7 +65,7 @@ public class SimplifyCollectorInspection extends AbstractBaseJavaLocalInspection
       if (method != null && method.hasModifierProperty(PsiModifier.STATIC)) {
         PsiClass aClass = method.getContainingClass();
         return aClass != null && CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS.equals(aClass.getQualifiedName())
-               && method.getParameterList().getParametersCount() == call.getArgumentList().getExpressions().length;
+               && method.getParameterList().getParametersCount() == call.getArgumentList().getExpressionCount();
       }
     }
     return false;

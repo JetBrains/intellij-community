@@ -43,6 +43,7 @@ public class PyElementListCellRenderer extends PsiElementListCellRenderer {
     return null;
   }
 
+  @Override
   protected int getIconFlags() {
     return 0;
   }

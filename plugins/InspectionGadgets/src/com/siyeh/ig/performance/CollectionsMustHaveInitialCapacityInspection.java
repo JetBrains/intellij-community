@@ -113,7 +113,7 @@ public class CollectionsMustHaveInitialCapacityInspection
         return;
       }
       final PsiExpressionList argumentList = expression.getArgumentList();
-      if (argumentList == null || argumentList.getExpressions().length != 0) {
+      if (argumentList == null || !argumentList.isEmpty()) {
         return;
       }
       registerNewExpressionError(expression);

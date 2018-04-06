@@ -471,7 +471,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
   public static boolean hasDefaultConstructor(@NotNull final PsiClass psiClass) {
     final PsiMethod[] constructors = psiClass.getConstructors();
     for (PsiMethod method : constructors) {
-      if (method.getParameterList().getParametersCount() == 0) return true;
+      if (method.getParameterList().isEmpty()) return true;
     }
     return constructors.length == 0;
   }

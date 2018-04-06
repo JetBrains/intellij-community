@@ -70,7 +70,7 @@ public class ReplaceWithObjectsEqualsFix implements LocalQuickFix {
   public static ReplaceWithObjectsEqualsFix createFix(@NotNull PsiMethodCallExpression call,
                                                       @NotNull PsiReferenceExpression methodExpression) {
     if (!"equals".equals(methodExpression.getReferenceName()) ||
-        call.getArgumentList().getExpressions().length != 1 ||
+        call.getArgumentList().getExpressionCount() != 1 ||
         !PsiUtil.getLanguageLevel(call).isAtLeast(LanguageLevel.JDK_1_7)) {
       return null;
     }

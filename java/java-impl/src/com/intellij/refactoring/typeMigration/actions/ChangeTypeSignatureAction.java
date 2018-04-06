@@ -45,6 +45,7 @@ public class ChangeTypeSignatureAction extends BaseRefactoringAction {
     return true;
   }
 
+  @Override
   protected boolean isAvailableOnElementInEditorAndFile(@NotNull final PsiElement element, @NotNull final Editor editor, @NotNull PsiFile file, @NotNull DataContext context) {
     final int offset = TargetElementUtil.adjustOffset(file, editor.getDocument(), editor.getCaretModel().getOffset());
     final PsiElement psiElement = file.findElementAt(offset);

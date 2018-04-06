@@ -51,6 +51,7 @@ public class CodeStyle {
    */
   @NotNull
   public static CodeStyleSettings getSettings(@NotNull Project project) {
+    //noinspection deprecation
     return CodeStyleSettingsManager.getInstance(project).getCurrentSettings();
   }
 
@@ -64,6 +65,7 @@ public class CodeStyle {
   public static CodeStyleSettings getSettings(@NotNull PsiFile file) {
     if (file.isValid()) {
       Project project = file.getProject();
+      //noinspection deprecation
       return CodeStyleSettingsManager.getInstance(project).getCurrentSettings();
     }
     return getDefaultSettings();

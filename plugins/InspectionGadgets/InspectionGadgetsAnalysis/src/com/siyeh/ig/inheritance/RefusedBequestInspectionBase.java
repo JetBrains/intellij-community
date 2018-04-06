@@ -148,7 +148,7 @@ public class RefusedBequestInspectionBase extends BaseInspection {
       if (!"setUp".equals(name) && !"tearDown".equals(name)) {
         return false;
       }
-      if (method.getParameterList().getParametersCount() != 0) {
+      if (!method.getParameterList().isEmpty()) {
         return false;
       }
       final PsiClass aClass = method.getContainingClass();

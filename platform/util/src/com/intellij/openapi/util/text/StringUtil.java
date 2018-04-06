@@ -294,7 +294,6 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(value = "null -> null; !null -> !null", pure = true)
   public static String toLowerCase(@Nullable final String str) {
-    //noinspection ConstantConditions
     return str == null ? null : str.toLowerCase();
   }
 
@@ -2526,8 +2525,8 @@ public class StringUtil extends StringUtilRt {
       return 1;
     }
 
-    String[] part1 = v1.split("[\\.\\_\\-]");
-    String[] part2 = v2.split("[\\.\\_\\-]");
+    String[] part1 = v1.split("[._\\-]");
+    String[] part2 = v2.split("[._\\-]");
 
     int idx = 0;
     for (; idx < part1.length && idx < part2.length; idx++) {
@@ -2544,10 +2543,7 @@ public class StringUtil extends StringUtilRt {
       if (cmp != 0) return cmp;
     }
 
-    if (part1.length == part2.length) {
-      return 0;
-    }
-    else {
+    if (part1.length != part2.length) {
       boolean left = part1.length > idx;
       String[] parts = left ? part1 : part2;
 
@@ -2562,8 +2558,8 @@ public class StringUtil extends StringUtilRt {
         }
         if (cmp != 0) return left ? cmp : -cmp;
       }
-      return 0;
     }
+    return 0;
   }
 
   @Contract(pure = true)
@@ -2951,7 +2947,7 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static String formatLinks(@NotNull String message) {
-    Pattern linkPattern = Pattern.compile("http://[a-zA-Z0-9\\./\\-\\+]+");
+    Pattern linkPattern = Pattern.compile("http://[a-zA-Z0-9./\\-+]+");
     StringBuffer result = new StringBuffer();
     Matcher m = linkPattern.matcher(message);
     while (m.find()) {
@@ -3129,6 +3125,22 @@ public class StringUtil extends StringUtilRt {
   @Contract(pure = true)
   public static String getShortName(@NotNull String fqName, char separator) {
     return StringUtilRt.getShortName(fqName, separator);
+  }
+
+  /**
+   * Equivalent for {@code getShortName(fqName).equals(shortName)}, but could be faster.
+   *
+   * @param fqName    fully-qualified name (dot-separated)
+   * @param shortName a short name, must not contain dots
+   * @return true if specified short name is a short name of fully-qualified name
+   */
+  public static boolean isShortNameOf(@NotNull String fqName, @NotNull String shortName) {
+    final char separator = '.';
+    if (fqName.length() < shortName.length()) return false;
+    if (fqName.length() == shortName.length()) return fqName.equals(shortName);
+    int diff = fqName.length() - shortName.length();
+    if (fqName.charAt(diff - 1) != separator) return false;
+    return fqName.regionMatches(diff, shortName, 0, shortName.length());
   }
 
   /**

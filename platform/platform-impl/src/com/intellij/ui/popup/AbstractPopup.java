@@ -922,7 +922,12 @@ public class AbstractPopup implements JBPopup {
     window.setFocusableWindowState(myRequestFocus);
     window.setFocusable(myRequestFocus);
     // temporary w/a (will be brought back in jdk)
-    window.setType(Window.Type.POPUP);
+    if ("TRUE".equals(getContent().getClientProperty("BookmarkPopup"))) {
+      window.setType(Window.Type.NORMAL);
+    } else if (SystemInfo.isJetBrainsJvm) {
+      window.setType(Window.Type.POPUP);
+    }
+
     // Swing popup default always on top state is set in true
     window.setAlwaysOnTop(false);
 
@@ -1010,7 +1015,6 @@ public class AbstractPopup implements JBPopup {
       window.setAutoRequestFocus(myRequestFocus);
 
       SwingUtilities.invokeLater(afterShow);
-      delayKeyEventsUntilFocusSettlesDown();
     } else {
       //noinspection SSBasedInspection
       SwingUtilities.invokeLater(() -> {
@@ -1024,12 +1028,6 @@ public class AbstractPopup implements JBPopup {
     }
     debugState("popup shown", State.SHOWING);
     myState = State.SHOWN;
-  }
-
-  private void delayKeyEventsUntilFocusSettlesDown() {
-    ActionCallback typeAhead = new ActionCallback();
-    getFocusManager().typeAheadUntil(typeAhead, "AbstractPopup");
-    getFocusManager().doWhenFocusSettlesDown(() -> typeAhead.setDone());
   }
 
   public void focusPreferredComponent() {

@@ -46,7 +46,6 @@ import com.intellij.psi.search.PsiNonJavaFileReferenceProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -186,7 +185,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     if (!method.isConstructor()) return false;
     if (!method.hasModifierProperty(PsiModifier.PUBLIC)) return false;
     final PsiParameterList parameterList = method.getParameterList();
-    if (parameterList.getParametersCount() != 0) return false;
+    if (!parameterList.isEmpty()) return false;
     final PsiClass aClass = method.getContainingClass();
     return aClass == null || isExternalizable(aClass, refClass);
   }

@@ -11,10 +11,7 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
@@ -23,15 +20,13 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class AppletConfigurationProducer extends JavaRuntimeConfigurationProducerBase {
-  private PsiClass myPsiClass;
-
   protected AppletConfigurationProducer() {
     super(AppletConfigurationType.getInstance());
   }
 
   @Override
   public PsiElement getSourceElement() {
-    return myPsiClass;
+    return restoreSourceElement();
   }
 
   @Override
@@ -40,12 +35,13 @@ public class AppletConfigurationProducer extends JavaRuntimeConfigurationProduce
     if (location == null) return null;
     final Project project = location.getProject();
     final PsiElement element = location.getPsiElement();
-    myPsiClass = getAppletClass(element, PsiManager.getInstance(project));
-    if (myPsiClass == null) return null;
+    PsiClass psiClass = getAppletClass(element, PsiManager.getInstance(project));
+    if (psiClass == null) return null;
+    storeSourceElement(psiClass);
     RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(project, context);
     final AppletConfiguration configuration = (AppletConfiguration)settings.getConfiguration();
-    configuration.setMainClassName(JavaExecutionUtil.getRuntimeQualifiedName(myPsiClass));
-    configuration.setModule(myPsiClass.isValid() ? ModuleUtilCore.findModuleForPsiElement(myPsiClass) : null);
+    configuration.setMainClassName(JavaExecutionUtil.getRuntimeQualifiedName(psiClass));
+    configuration.setModule(psiClass.isValid() ? ModuleUtilCore.findModuleForPsiElement(psiClass) : null);
     configuration.setGeneratedName();
     return settings;
   }
@@ -53,7 +49,6 @@ public class AppletConfigurationProducer extends JavaRuntimeConfigurationProduce
   public int compareTo(Object o) {
     return PREFERED;
   }
-
 
   @Nullable
   private static PsiClass getAppletClass(PsiElement element, final PsiManager manager) {

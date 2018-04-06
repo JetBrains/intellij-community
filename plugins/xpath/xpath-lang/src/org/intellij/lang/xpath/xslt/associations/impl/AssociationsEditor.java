@@ -396,6 +396,7 @@ class AssociationsEditor {
       return "(" + psiElement.getVirtualFile().getParent().getPresentableUrl() + ")";
     }
 
+    @Override
     protected int getIconFlags() {
       return 0;
     }

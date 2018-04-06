@@ -1,23 +1,22 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.rt.debugger.agent;
 
 import sun.misc.JavaLangAccess;
 import sun.misc.SharedSecrets;
 
+import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author egor
  */
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class CaptureStorage {
-  private static final int MAX_STORED_STACKS = 1000;
-  private static final Map<WeakReference, CapturedStack> STORAGE = new ConcurrentHashMap<WeakReference, CapturedStack>();
-  private static final Deque<WeakReference> HISTORY = new ArrayDeque<WeakReference>(MAX_STORED_STACKS);
+  private static final ReferenceQueue KEY_REFERENCE_QUEUE = new ReferenceQueue();
+  private static final ConcurrentMap<WeakReference, CapturedStack> STORAGE = new ConcurrentHashMap<WeakReference, CapturedStack>();
 
   @SuppressWarnings("SSBasedInspection")
   private static final ThreadLocal<Deque<InsertMatch>> CURRENT_STACKS = new ThreadLocal<Deque<InsertMatch>>() {
@@ -42,21 +41,10 @@ public class CaptureStorage {
       if (DEBUG) {
         System.out.println("capture " + getCallerDescriptor(exception) + " - " + key);
       }
-      Deque<InsertMatch> currentStacks = CURRENT_STACKS.get();
-      CapturedStack stack = createCapturedStack(exception, currentStacks.isEmpty() ? null : currentStacks.getLast());
-      WeakKey keyRef = new WeakKey(key);
-      synchronized (HISTORY) {
-        CapturedStack old = STORAGE.put(keyRef, stack);
-        if (old == null) {
-          if (HISTORY.size() >= MAX_STORED_STACKS) {
-            STORAGE.remove(HISTORY.removeFirst());
-          }
-        }
-        else {
-          HISTORY.removeFirstOccurrence(keyRef); // must not happen often
-        }
-        HISTORY.addLast(keyRef);
-      }
+      CapturedStack stack = createCapturedStack(exception, CURRENT_STACKS.get().peekLast());
+      processQueue();
+      WeakKey keyRef = new WeakKey(key, stack, KEY_REFERENCE_QUEUE);
+      STORAGE.put(keyRef, stack);
     }
     catch (Exception e) {
       handleException(e);
@@ -69,11 +57,11 @@ public class CaptureStorage {
       return;
     }
     try {
-      CapturedStack stack = STORAGE.get(new WeakKey(key));
+      CapturedStack stack = STORAGE.get(new HardKey(key));
       Deque<InsertMatch> currentStacks = CURRENT_STACKS.get();
       if (stack != null) {
         Throwable exception = new Throwable();
-        currentStacks.add(new InsertMatch(stack, getStackTraceDepth(exception)));
+        currentStacks.add(new InsertMatch(stack, exception));
         if (DEBUG) {
           System.out.println("insert " + getCallerDescriptor(exception) + " -> " + key + ", stack saved (" + currentStacks.size() + ")");
         }
@@ -111,22 +99,56 @@ public class CaptureStorage {
 
   //// END - METHODS CALLED FROM THE USER PROCESS
 
-  private static class WeakKey extends WeakReference {
-    private final int myHashCode;
+  private static void processQueue() {
+    WeakKey key;
+    while ((key = (WeakKey)KEY_REFERENCE_QUEUE.poll()) != null) {
+      STORAGE.remove(key, key.myValue);
+    }
+  }
 
-    public WeakKey(Object referent) {
-      super(referent);
-      myHashCode = System.identityHashCode(referent);
+  // only for map queries
+  private static class HardKey {
+    private final Object myKey;
+    private final int myHash;
+
+    public HardKey(Object key) {
+      myKey = key;
+      myHash = System.identityHashCode(key);
     }
 
     @Override
     public boolean equals(Object o) {
-      return this == o || (o instanceof WeakKey && ((WeakKey)o).get() == get());
+      return this == o || (o instanceof WeakKey && ((WeakKey)o).get() == myKey);
+    }
+
+    public int hashCode() {
+      return myHash;
+    }
+  }
+
+  private static class WeakKey extends WeakReference {
+    private final int myHash;
+    private final CapturedStack myValue;
+
+    public WeakKey(Object key, CapturedStack value, ReferenceQueue q) {
+      super(key, q);
+      myHash = System.identityHashCode(key);
+      myValue = value;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof WeakKey)) return false;
+      Object t = get();
+      Object u = ((WeakKey)o).get();
+      if (t == null || u == null) return false;
+      return t == u;
     }
 
     @Override
     public int hashCode() {
-      return myHashCode;
+      return myHash;
     }
   }
 
@@ -165,7 +187,7 @@ public class CaptureStorage {
       }
       else {
         List<StackTraceElement> insertStack = myInsertMatch.myStack.getStackTrace();
-        int insertPos = stackTrace.length - myInsertMatch.myDepth + 2;
+        int insertPos = stackTrace.length - myInsertMatch.getDepth() + 2;
         ArrayList<StackTraceElement> res = new ArrayList<StackTraceElement>(insertPos + insertStack.size() + 1);
         res.addAll(Arrays.asList(stackTrace).subList(1, insertPos));
         res.add(null);
@@ -177,20 +199,29 @@ public class CaptureStorage {
 
   private static class InsertMatch {
     private final CapturedStack myStack;
-    private final int myDepth;
+    private final Throwable myException;
 
-    static final InsertMatch EMPTY = new InsertMatch(null, 0);
+    static final InsertMatch EMPTY = new InsertMatch(null, null) {
+      @Override
+      int getDepth() {
+        return 0;
+      }
+    };
 
-    private InsertMatch(CapturedStack stack, int depth) {
+    private InsertMatch(CapturedStack stack, Throwable exception) {
       myStack = stack;
-      myDepth = depth;
+      myException = exception;
+    }
+
+    int getDepth() {
+      return getStackTraceDepth(myException);
     }
   }
 
   // to be run from the debugger
   @SuppressWarnings("unused")
   public static Object[][] getRelatedStack(Object key) {
-    CapturedStack stack = STORAGE.get(new WeakKey(key));
+    CapturedStack stack = STORAGE.get(new HardKey(key));
     if (stack == null) {
       return null;
     }

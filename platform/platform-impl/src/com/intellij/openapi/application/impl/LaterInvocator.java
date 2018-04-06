@@ -24,10 +24,8 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -46,7 +44,8 @@ public class LaterInvocator {
     @NotNull private final Condition<?> expired;
     @Nullable private final ActionCallback callback;
 
-    RunnableInfo(@Debugger.Capture @NotNull Runnable runnable,
+    @Debugger.Capture
+    RunnableInfo(@NotNull Runnable runnable,
                  @NotNull ModalityState modalityState,
                  @NotNull Condition<?> expired,
                  @Nullable ActionCallback callback) {
@@ -313,7 +312,8 @@ public class LaterInvocator {
     requestFlush();
   }
 
-  public static Object[] getCurrentModalEntitiesForProject(Project project) {
+  @NotNull
+  private static Object[] getCurrentModalEntitiesForProject(Project project) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (project == null || !ourModalEntities.isEmpty()) {
       return ArrayUtil.toObjectArray(ourModalEntities);
@@ -428,7 +428,7 @@ public class LaterInvocator {
 
       if (lastInfo != null) {
         try {
-          doRun(lastInfo.runnable);
+          doRun(lastInfo);
           lastInfo.markDone();
         }
         catch (ProcessCanceledException ignored) { }
@@ -443,8 +443,8 @@ public class LaterInvocator {
     }
 
     // Extracted to have a capture point
-    private static void doRun(@Debugger.Insert Runnable runnable) {
-      runnable.run();
+    private static void doRun(@Debugger.Insert RunnableInfo info) {
+      info.runnable.run();
     }
 
     @Override
@@ -454,9 +454,11 @@ public class LaterInvocator {
   }
 
   @TestOnly
-  public static List<RunnableInfo> getLaterInvocatorQueue() {
+  public static Collection<RunnableInfo> getLaterInvocatorQueue() {
+    // used by leak hunter as root, so we must not copy it here to another list 
+    // to avoid walking over obsolete queue 
     synchronized (LOCK) {
-      return ContainerUtil.newArrayList(ourQueue);
+      return ourQueue;
     }
   }
 

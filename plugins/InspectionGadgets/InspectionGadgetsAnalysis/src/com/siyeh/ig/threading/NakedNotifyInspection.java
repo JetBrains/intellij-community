@@ -86,7 +86,7 @@ public class NakedNotifyInspection extends BaseInspection {
       }
       final PsiExpressionList argumentList =
         methodCallExpression.getArgumentList();
-      if (argumentList.getExpressions().length != 0) {
+      if (!argumentList.isEmpty()) {
         return;
       }
       registerMethodCallError(methodCallExpression);

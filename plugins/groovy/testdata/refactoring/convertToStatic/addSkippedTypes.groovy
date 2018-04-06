@@ -1,5 +1,5 @@
 class Foo {
-    private field1 = ""
+    private field1 = bar1()
 
     static def bar1() {
         ""

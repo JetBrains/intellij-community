@@ -226,11 +226,13 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
   @Override
   @Nullable
   public Charset getEncoding(@Nullable VirtualFile virtualFile, boolean useParentDefaults) {
-    Project project = guessProject(virtualFile);
-    if (project == null) return null;
-    EncodingProjectManager encodingManager = EncodingProjectManager.getInstance(project);
-    if (encodingManager == null) return null; //tests
-    return encodingManager.getEncoding(virtualFile, useParentDefaults);
+    return ReadAction.compute(() -> {
+      Project project = guessProject(virtualFile);
+      if (project == null) return null;
+      EncodingProjectManager encodingManager = EncodingProjectManager.getInstance(project);
+      if (encodingManager == null) return null; //tests
+      return encodingManager.getEncoding(virtualFile, useParentDefaults);
+    });
   }
 
   public void clearDocumentQueue() {
@@ -256,11 +258,6 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
   public void setEncoding(@Nullable VirtualFile virtualFileOrDir, @Nullable Charset charset) {
     Project project = guessProject(virtualFileOrDir);
     EncodingProjectManager.getInstance(project).setEncoding(virtualFileOrDir, charset);
-  }
-
-  @Override
-  public boolean isUseUTFGuessing(final VirtualFile virtualFile) {
-    return true;
   }
 
   @Override

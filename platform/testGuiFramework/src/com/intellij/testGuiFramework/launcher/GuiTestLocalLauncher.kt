@@ -55,7 +55,7 @@ object GuiTestLocalLauncher {
 
   var process: Process? = null
 
-  private val TEST_GUI_FRAMEWORK_MODULE_NAME = "testGuiFramework"
+  private val TEST_GUI_FRAMEWORK_MODULE_NAME = "intellij.platform.testGuiFramework"
 
   val project: JpsProject by lazy {
     val home = PathManager.getHomePath()
@@ -249,7 +249,7 @@ object GuiTestLocalLauncher {
 
 
   /**
-   * return union of classpaths for current test (get from classloader) and classpaths of main and testGuiFramework modules*
+   * return union of classpaths for current test (get from classloader) and classpaths of main and intellij.platform.testGuiFramework modules*
    */
   private fun getFullClasspath(moduleName: String, testClassNames: List<String>): List<File> {
     val classpath: MutableSet<File> = substituteAllMacro(getExtendedClasspath(moduleName))
@@ -349,7 +349,7 @@ object GuiTestLocalLauncher {
 
 
   /**
-   * return union of classpaths for @moduleName and testGuiFramework modules
+   * return union of classpaths for @moduleName and intellij.platform.testGuiFramework modules
    */
   private fun getExtendedClasspath(moduleName: String): MutableSet<File> {
     // here we trying to analyze output path for project from classloader path and from modules classpath.

@@ -59,7 +59,7 @@ public class JavaFxRelatedItemLineMarkerProvider extends RelatedItemLineMarkerPr
           final PsiMethod[] constructors = containingClass.getConstructors();
           boolean defaultConstructor = constructors.length == 0;
           for (PsiMethod constructor : constructors) {
-            if (constructor.getParameterList().getParametersCount() == 0) {
+            if (constructor.getParameterList().isEmpty()) {
               defaultConstructor = true;
               break;
             }

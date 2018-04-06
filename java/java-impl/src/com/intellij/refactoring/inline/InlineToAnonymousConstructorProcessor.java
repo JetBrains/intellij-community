@@ -127,7 +127,7 @@ class InlineToAnonymousConstructorProcessor {
     int fieldCount = myClass.getFields().length;
     int processedFields = 0;
     PsiElement token = anonymousClass.getRBrace();
-    if (initializerBlock.getBody().getStatements().length > 0 && fieldCount == 0) {
+    if (!initializerBlock.getBody().isEmpty() && fieldCount == 0) {
       insertInitializerBefore(initializerBlock, anonymousClass, token);
     }
 
@@ -148,7 +148,7 @@ class InlineToAnonymousConstructorProcessor {
           field.setInitializer(initializer);
         }
         processedFields++;
-        if (processedFields == fieldCount && initializerBlock.getBody().getStatements().length > 0) {
+        if (processedFields == fieldCount && !initializerBlock.getBody().isEmpty()) {
           insertInitializerBefore(initializerBlock, anonymousClass, token);
         }
       }

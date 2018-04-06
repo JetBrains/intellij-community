@@ -374,7 +374,7 @@ public class EnvironmentUtil {
   }
 
   public static void inlineParentOccurrences(@NotNull Map<String, String> envs) {
-    inlineParentOccurrences(envs, new HashMap<String, String>(System.getenv()));
+    inlineParentOccurrences(envs, getEnvironmentMap());
   }
 
   public static void inlineParentOccurrences(@NotNull Map<String, String> envs, @NotNull Map<String, String> parentEnv) {

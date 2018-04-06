@@ -1,6 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+/*
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package org.jetbrains.plugins.groovy.refactoring.convertToStatic;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -15,9 +15,11 @@ import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.annotator.VisitorCallback;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -77,7 +79,6 @@ public class ConvertToStaticProcessor extends BaseRefactoringProcessor {
     for (GroovyFile file : myFiles) {
       counter++;
       commitFile(file);
-      if (file.isScript()) continue;
       progressIndicator.setText2(file.getName());
       progressIndicator.setFraction(counter / (double)myFiles.length);
       try {
@@ -111,12 +112,6 @@ public class ConvertToStaticProcessor extends BaseRefactoringProcessor {
   }
 
   private void putCompileAnnotations(@NotNull GroovyFile file) {
-    GrTypeDefinition[] classes = file.getTypeDefinitions();
-
-    for (GrTypeDefinition typeDef : classes) {
-      addAnnotation(typeDef, true);
-    }
-
     Set<GrTypeDefinition> classesWithUnresolvedRef = new HashSet<>();
     Set<GrMethod> methodsWithUnresolvedRef = new HashSet<>();
 
@@ -129,37 +124,43 @@ public class ConvertToStaticProcessor extends BaseRefactoringProcessor {
       GrTypeDefinition containingClass = PsiTreeUtil.getParentOfType(element, GrTypeDefinition.class);
       if (containingClass != null) classesWithUnresolvedRef.add(containingClass);
     };
+
     file.accept(new DynamicFeaturesVisitor(file, myProject, callback));
 
 
-    for (GrTypeDefinition typeDef : classes) {
-      processDefinitions(typeDef, classesWithUnresolvedRef, methodsWithUnresolvedRef, false);
+    file.accept(new GroovyRecursiveElementVisitor() {
+      @Override
+      public void visitTypeDefinition(@NotNull GrTypeDefinition typeDef) {
+        processDefinitions(typeDef, classesWithUnresolvedRef);
+        super.visitTypeDefinition(typeDef);
+      }
+
+      @Override
+      public void visitMethod(@NotNull GrMethod method) {
+        processMethods(method, methodsWithUnresolvedRef);
+      }
+    });
+  }
+
+  private void processMethods(@NotNull GrMethod method, Set<GrMethod> dynamicMethods) {
+    boolean isOuterStatic = PsiUtil.isCompileStatic(method.getContainingClass());
+    boolean isStatic = dynamicMethods.stream().noneMatch(method::isEquivalentTo);
+
+    if (isOuterStatic != isStatic) {
+       addAnnotation(method, isStatic);
     }
   }
 
   private void processDefinitions(GrTypeDefinition typeDef,
-                                  Set<GrTypeDefinition> dynamicClasses,
-                                  Set<GrMethod> dynamicMethods,
-                                  boolean isOuterStatic) {
+                                  Set<GrTypeDefinition> dynamicClasses) {
+    boolean isOuterStatic = PsiUtil.isCompileStatic(typeDef.getContainingClass());
+
     boolean isStatic = !dynamicClasses.contains(typeDef);
     if (isOuterStatic && !isStatic) {
       addAnnotation(typeDef, false);
     }
     if (!isOuterStatic && isStatic) {
       addAnnotation(typeDef, true);
-    }
-    if (!isOuterStatic && !isStatic) {
-      removeAnnotation(typeDef);
-    }
-
-    for (GrMethod method : typeDef.getCodeMethods()) {
-      if (dynamicMethods.stream().anyMatch(method::isEquivalentTo) == isStatic) {
-        addAnnotation(method, !isStatic);
-      }
-    }
-
-    for (GrTypeDefinition definition : typeDef.getCodeInnerClasses()) {
-      processDefinitions(definition, dynamicClasses, dynamicMethods, isStatic);
     }
   }
 
@@ -195,11 +196,10 @@ public class ConvertToStaticProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  void removeAnnotation(@NotNull PsiModifierListOwner owner) {
+  @Nullable
+  PsiAnnotation findAnnotation(@Nullable PsiModifierListOwner owner, @NotNull String annotation) {
+    if (owner == null) return null;
     PsiModifierList modifierList = owner.getModifierList();
-    if (modifierList != null) {
-      PsiAnnotation psiAnnotation = modifierList.findAnnotation(GROOVY_TRANSFORM_COMPILE_STATIC);
-      if (psiAnnotation != null) psiAnnotation.delete();
-    }
+    return modifierList != null ? modifierList.findAnnotation(annotation) : null;
   }
 }

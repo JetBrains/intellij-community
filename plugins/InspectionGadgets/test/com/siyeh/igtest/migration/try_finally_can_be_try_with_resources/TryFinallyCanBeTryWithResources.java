@@ -3,6 +3,7 @@ package com.siyeh.igtest.migration.try_finally_can_be_try_with_resources;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.*;
 
 class TryFinallyCanBeTryWithResources {
 
@@ -60,6 +61,18 @@ class TryFinallyCanBeTryWithResources {
     } finally {
       bufferedInputStream.close();
       fileInputStream.close();
+    }
+  }
+}
+
+class Java9 {
+  void test() throws FileNotFoundException {
+    PrintStream printStream = new PrintStream("");
+    printStream.print(false);
+    <warning descr="'try' can use automatic resource management">try</warning> {
+      printStream.print(true);
+    } finally {
+      printStream.close();
     }
   }
 }

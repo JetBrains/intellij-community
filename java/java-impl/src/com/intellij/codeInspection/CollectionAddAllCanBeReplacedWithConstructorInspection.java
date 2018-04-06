@@ -154,7 +154,7 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends
       return false;
     }
     final PsiExpressionList argumentList = newExpression.getArgumentList();
-    return argumentList != null && argumentList.getExpressions().length == 0;
+    return argumentList != null && argumentList.isEmpty();
   }
 
   private static boolean hasProperConstructor(PsiClass psiClass) {

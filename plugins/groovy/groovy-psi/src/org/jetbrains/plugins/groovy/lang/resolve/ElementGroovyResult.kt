@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.PsiElement
@@ -6,11 +6,11 @@ import com.intellij.psi.PsiSubstitutor
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState
 
-open class ElementGroovyResult<out T : PsiElement>(protected val myElement: T) : GroovyResolveResult {
+open class ElementGroovyResult<out T : PsiElement>(private val element: T) : GroovyResolveResult {
 
-  override fun getElement(): T = myElement
+  final override fun getElement(): T = element
 
-  override fun isValidResult(): Boolean = myElement.isValid && isStaticsOK && isAccessible && isApplicable
+  override fun isValidResult(): Boolean = element.isValid && isStaticsOK && isAccessible && isApplicable
 
   override fun isStaticsOK(): Boolean = true
 
@@ -30,8 +30,8 @@ open class ElementGroovyResult<out T : PsiElement>(protected val myElement: T) :
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
     other as ElementGroovyResult<*>
-    return myElement == other.myElement
+    return element == other.element
   }
 
-  override fun hashCode(): Int = myElement.hashCode()
+  override fun hashCode(): Int = element.hashCode()
 }

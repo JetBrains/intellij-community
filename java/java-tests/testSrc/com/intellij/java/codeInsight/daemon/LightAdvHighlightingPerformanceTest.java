@@ -125,7 +125,7 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
   }
 
   public void testAThinlet() {
-    List<HighlightInfo> errors = doTest(2000);
+    List<HighlightInfo> errors = doTest(8_000);
     if (1170 != errors.size()) {
       doTest(getFilePath("_hl"), false, false);
       fail("Actual: " + errors.size());
@@ -133,7 +133,7 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
   }
 
   public void testAClassLoader() {
-    List<HighlightInfo> errors = doTest(150);
+    List<HighlightInfo> errors = doTest(800);
     if (92 != errors.size()) {
       doTest(getFilePath("_hl"), false, false);
       fail("Actual: " + errors.size());
@@ -148,7 +148,7 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
     text.append("}");
     configureFromFileText("x.java", text.toString());
 
-    List<HighlightInfo> infos = startTest(800);
+    List<HighlightInfo> infos = startTest(2_500);
     assertEmpty(infos);
   }
 }

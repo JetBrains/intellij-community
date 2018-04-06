@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename;
 
 import com.intellij.openapi.editor.Editor;
@@ -37,8 +23,9 @@ public class RenamePsiDirectoryProcessor extends RenamePsiElementProcessor {
     return element instanceof PsiDirectory;
   }
 
+  @NotNull
   @Override
-  public RenameDialog createRenameDialog(Project project, PsiElement element, PsiElement nameSuggestionContext, Editor editor) {
+  public RenameDialog createRenameDialog(@NotNull Project project, @NotNull PsiElement element, PsiElement nameSuggestionContext, Editor editor) {
     return new RenameWithOptionalReferencesDialog(project, element, nameSuggestionContext, editor) {
       protected boolean getSearchForReferences() {
         return RefactoringSettings.getInstance().RENAME_SEARCH_FOR_REFERENCES_FOR_DIRECTORY;
@@ -50,7 +37,7 @@ public class RenamePsiDirectoryProcessor extends RenamePsiElementProcessor {
     };
   }
 
-  public String getQualifiedNameAfterRename(final PsiElement element, final String newName, final boolean nonJava) {
+  public String getQualifiedNameAfterRename(@NotNull final PsiElement element, @NotNull final String newName, final boolean nonJava) {
     PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)element));
     if (psiPackage != null) {
       return RenamePsiPackageProcessor.getPackageQualifiedNameAfterRename(psiPackage, newName, nonJava);
@@ -60,7 +47,7 @@ public class RenamePsiDirectoryProcessor extends RenamePsiElementProcessor {
 
   @NotNull
   @Override
-  public Collection<PsiReference> findReferences(PsiElement element) {
+  public Collection<PsiReference> findReferences(@NotNull PsiElement element) {
     if (!RefactoringSettings.getInstance().RENAME_SEARCH_FOR_REFERENCES_FOR_DIRECTORY) {
       return Collections.emptyList();
     }
@@ -69,7 +56,7 @@ public class RenamePsiDirectoryProcessor extends RenamePsiElementProcessor {
 
   @Nullable
   @Override
-  public PsiElement getElementToSearchInStringsAndComments(PsiElement element) {
+  public PsiElement getElementToSearchInStringsAndComments(@NotNull PsiElement element) {
     final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory) element);
     if (aPackage != null) return aPackage;
     return null;
@@ -81,26 +68,26 @@ public class RenamePsiDirectoryProcessor extends RenamePsiElementProcessor {
     return HelpID.RENAME_DIRECTORY;
   }
 
-  public boolean isToSearchInComments(PsiElement element) {
+  public boolean isToSearchInComments(@NotNull PsiElement element) {
     element = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)element));
     if (element == null) return false;
     return JavaRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_PACKAGE;
   }
 
-  public void setToSearchInComments(PsiElement element, final boolean enabled) {
+  public void setToSearchInComments(@NotNull PsiElement element, final boolean enabled) {
     element = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)element));
     if (element != null) {
       JavaRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_PACKAGE = enabled;
     }
   }
 
-  public boolean isToSearchForTextOccurrences(PsiElement element) {
+  public boolean isToSearchForTextOccurrences(@NotNull PsiElement element) {
     element = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)element));
     if (element == null) return false;
     return JavaRefactoringSettings.getInstance().RENAME_SEARCH_FOR_TEXT_FOR_PACKAGE;
   }
 
-  public void setToSearchForTextOccurrences(PsiElement element, final boolean enabled) {
+  public void setToSearchForTextOccurrences(@NotNull PsiElement element, final boolean enabled) {
     element = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)element));
     if (element != null) {
       JavaRefactoringSettings.getInstance().RENAME_SEARCH_FOR_TEXT_FOR_PACKAGE = enabled;

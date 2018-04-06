@@ -19,6 +19,7 @@ import com.intellij.refactoring.util.duplicates.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +40,7 @@ public class JavaDuplicatesExtractMethodProcessor extends ExtractMethodProcessor
   }
 
   public void applyFrom(@NotNull ExtractMethodProcessor from, @NotNull Map<PsiVariable, PsiVariable> variablesMapping) {
-    myMethodName = from.myMethodName;
+    myMethodName = from.myMethodName != null ? from.myMethodName : "dummyMethodName";
     myStatic = from.myStatic;
     myIsChainedConstructor = from.myIsChainedConstructor;
     myMethodVisibility = from.myMethodVisibility;
@@ -68,6 +69,23 @@ public class JavaDuplicatesExtractMethodProcessor extends ExtractMethodProcessor
       }
     }
     myVariableDatum = variableDatum.toArray(new VariableData[0]);
+  }
+
+  public void applyFromSnapshot(@NotNull ExtractMethodSnapshot from) {
+    myMethodName = from.myMethodName;
+    myStatic = from.myStatic;
+    myIsChainedConstructor = from.myIsChainedConstructor;
+    myMethodVisibility = from.myMethodVisibility;
+    myNullness = from.myNullness;
+    myReturnType = from.myReturnType.getType();
+    myOutputVariables = StreamEx.of(from.myOutputVariables).map(SmartPsiElementPointer::getElement).toArray(new PsiVariable[0]);
+    LOG.assertTrue(!ArrayUtil.contains(null, myOutputVariables));
+
+    myOutputVariable = ArrayUtil.getFirstElement(myOutputVariables);
+    myArtificialOutputVariable = from.myArtificialOutputVariable != null ? from.myArtificialOutputVariable.getElement() : null;
+
+    myVariableDatum = StreamEx.of(from.myVariableDatum).map(VariableDataSnapshot::getData).toArray(new VariableData[0]);
+    LOG.assertTrue(!ArrayUtil.contains(null, myVariableDatum));
   }
 
   private boolean isReferenced(@Nullable PsiVariable variable, PsiVariable fromVariable) {

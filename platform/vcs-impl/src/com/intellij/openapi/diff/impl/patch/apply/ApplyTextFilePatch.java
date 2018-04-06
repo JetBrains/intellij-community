@@ -49,12 +49,7 @@ public class ApplyTextFilePatch extends ApplyFilePatchBase<TextFilePatch> {
       }
       document.setText(applier.getAfter());
       FileDocumentManager.getInstance().saveDocument(document);
-      return new Result(applier.getStatus()) {
-        @Override
-        public ApplyPatchForBaseRevisionTexts getMergeData() {
-          return null;
-        }
-      };
+      return new Result(applier.getStatus());
     }
     applier.trySolveSomehow();
     return new Result(ApplyPatchStatus.FAILURE) {

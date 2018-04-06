@@ -15,6 +15,7 @@
  */
 package com.intellij.usages.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.usages.UsageView;
 import com.intellij.util.BitUtil;
 import com.intellij.util.Consumer;
@@ -30,7 +31,7 @@ import java.util.Vector;
 public abstract class Node extends DefaultMutableTreeNode {
   private int myCachedTextHash;
 
-  private byte myCachedFlags; // bit packed flags below:
+  private byte myCachedFlags; // guarded by this; bit packed flags below:
   static final byte EXCLUDED_MASK = 1<<3;
   private static final byte UPDATED_MASK = 1<<4;
 
@@ -41,11 +42,11 @@ public abstract class Node extends DefaultMutableTreeNode {
   @MagicConstant(intValues = {CACHED_INVALID_MASK, CACHED_READ_ONLY_MASK, READ_ONLY_COMPUTED_MASK, EXCLUDED_MASK, UPDATED_MASK})
   private @interface FlagConstant {}
 
-  private boolean isFlagSet(@FlagConstant byte mask) {
+  private synchronized boolean isFlagSet(@FlagConstant byte mask) {
     return BitUtil.isSet(myCachedFlags, mask);
   }
 
-  private void setFlag(@FlagConstant byte mask, boolean value) {
+  private synchronized void setFlag(@FlagConstant byte mask, boolean value) {
     myCachedFlags = BitUtil.set(myCachedFlags, mask, value);
   }
 
@@ -92,6 +93,8 @@ public abstract class Node extends DefaultMutableTreeNode {
   }
 
   final synchronized void update(@NotNull UsageView view, @NotNull Consumer<Node> edtNodeChangedQueue) {
+    // performance: always update in background because smart pointer' isValid() can cause PSI chameleons expansion which is ridiculously expensive in cpp
+    assert !ApplicationManager.getApplication().isDispatchThread();
     boolean isDataValid = isDataValid();
     boolean isReadOnly = isDataReadOnly();
     String text = getText(view);
@@ -127,9 +130,11 @@ public abstract class Node extends DefaultMutableTreeNode {
 
   // same as DefaultMutableTreeNode.insert() except it doesn't try to remove the newChild from its parent since we know it's new
   void insertNewNode(@NotNull Node newChild, int childIndex) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (children == null) {
       children = new Vector();
     }
+    //noinspection unchecked
     children.insertElementAt(newChild, childIndex);
   }
 

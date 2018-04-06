@@ -22,7 +22,7 @@ import com.intellij.openapi.module.StdModuleTypes;
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
 import org.junit.Test;
 
-import static com.intellij.openapi.roots.DependencyScope.COMPILE;
+import static com.intellij.openapi.roots.DependencyScope.*;
 
 /**
  * @author Vladislav.Soroka
@@ -84,6 +84,162 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
     assertModuleModuleDepScope("my-app_main", "string-utils_main", COMPILE);
     assertModuleLibDepScope("my-app_main", "Gradle: org.apache.commons:commons-lang3:3.4", COMPILE);
   }
+
+  @Test
+  @TargetVersions("3.3+")
+  public void testCompositeBuildWithNestedModules() throws Exception {
+    createSettingsFile("rootProject.name = 'app'\n" +
+                       "includeBuild 'lib'");
+
+    createProjectSubFile("lib/settings.gradle", "rootProject.name = 'lib'\n" +
+                                                "include 'runtime'\n" +
+                                                "include 'runtime:runtime-mod'");
+    createProjectSubFile("lib/runtime/runtime-mod/build.gradle",
+                         "apply plugin: 'java'\n" +
+                         "group = 'my.group'");
+
+    importProject("apply plugin: 'java'\n" +
+                                                  "dependencies {\n" +
+                                                  "  compile 'my.group:runtime-mod'\n" +
+                                                  "}");
+
+    assertModules("app", "app_main", "app_test",
+                  "lib",
+                  "runtime",
+                  "runtime-mod", "runtime-mod_main", "runtime-mod_test");
+
+    assertModuleModuleDepScope("app_main", "runtime-mod_main", COMPILE);
+  }
+
+
+  @Test
+  @TargetVersions("3.3+")
+  public void testCompositeBuildWithNestedModulesSingleModulePerProject() throws Exception {
+    createSettingsFile("rootProject.name = 'app'\n" +
+                       "includeBuild 'lib'");
+
+    createProjectSubFile("lib/settings.gradle", "rootProject.name = 'lib'\n" +
+                                                "include 'runtime'\n" +
+                                                "include 'runtime:runtime-mod'");
+    createProjectSubFile("lib/runtime/runtime-mod/build.gradle",
+                         "apply plugin: 'java'\n" +
+                         "group = 'my.group'");
+
+    importProjectUsingSingeModulePerGradleProject("apply plugin: 'java'\n" +
+                  "dependencies {\n" +
+                  "  compile 'my.group:runtime-mod'\n" +
+                  "}");
+
+    assertModules("app",
+                  "lib",
+                  "runtime",
+                  "runtime-mod");
+
+    assertModuleModuleDepScope("app", "runtime-mod", PROVIDED, TEST, RUNTIME);
+  }
+
+
+  @Test
+  @TargetVersions("4.0+")
+  public void testCompositeBuildWithGradleProjectDuplicates() throws Exception {
+    createSettingsFile("rootProject.name = 'app'\n" +
+                       "include 'runtime'\n" +
+                       "includeBuild 'lib1'\n" +
+                       "includeBuild 'lib2'");
+
+    createProjectSubFile("runtime/build.gradle",
+                         "apply plugin: 'java'");
+
+
+    createProjectSubFile("lib1/settings.gradle", "rootProject.name = 'lib1'\n" +
+                                                "include 'runtime'");
+    createProjectSubFile("lib1/runtime/build.gradle",
+                         "apply plugin: 'java'\n" +
+                         "group = 'my.group.lib_1'");
+
+
+    createProjectSubFile("lib2/settings.gradle", "rootProject.name = 'lib2'\n" +
+                                                 "include 'runtime'");
+    createProjectSubFile("lib2/runtime/build.gradle",
+                         "apply plugin: 'java'\n" +
+                         "group = 'my.group.lib_2'");
+
+
+
+    importProjectUsingSingeModulePerGradleProject("apply plugin: 'java'\n" +
+                  "dependencies {\n" +
+                  "  compile project(':runtime')\n" +
+                  "  compile 'my.group.lib_1:runtime'\n" +
+                  "  compile 'my.group.lib_2:runtime'\n" +
+                  "}");
+
+    assertModules("app", "app-runtime",
+                  "lib1", "lib1-runtime",
+                  "lib2", "lib2-runtime");
+
+    assertModuleModuleDepScope("app", "app-runtime", PROVIDED, TEST, RUNTIME);
+    assertModuleModuleDepScope("app", "lib1-runtime", PROVIDED, TEST, RUNTIME);
+    assertModuleModuleDepScope("app", "lib2-runtime", PROVIDED, TEST, RUNTIME);
+  }
+
+
+  @Test
+  @TargetVersions("3.3+")
+  // @SuppressWarnings("Duplicates")
+  public void testCompositeBuildWithGradleProjectDuplicatesModulePerSourceSet() throws Exception {
+    createSettingsFile("rootProject.name = 'app'\n" +
+                       "include 'runtime'\n" +
+                       "includeBuild 'lib1'\n" +
+                       "includeBuild 'lib2'");
+
+    createProjectSubFile("runtime/build.gradle",
+                         "apply plugin: 'java'");
+
+
+    createProjectSubFile("lib1/settings.gradle", "rootProject.name = 'lib1'\n" +
+                                                 "include 'runtime'");
+    createProjectSubFile("lib1/runtime/build.gradle",
+                         "apply plugin: 'java'\n" +
+                         "group = 'my.group.lib_1'");
+
+
+    createProjectSubFile("lib2/settings.gradle", "rootProject.name = 'lib2'\n" +
+                                                 "include 'runtime'");
+    createProjectSubFile("lib2/runtime/build.gradle",
+                         "apply plugin: 'java'\n" +
+                         "group = 'my.group.lib_2'");
+
+
+    importProject("apply plugin: 'java'\n" +
+                  "dependencies {\n" +
+                  "  compile project(':runtime')\n" +
+                  "  compile 'my.group.lib_1:runtime'\n" +
+                  "  compile 'my.group.lib_2:runtime'\n" +
+                  "}");
+
+    if (isGradle40orNewer()) {
+      assertModules("app", "app_main", "app_test",
+                    "app-runtime", "app-runtime_main", "app-runtime_test",
+                    "lib1", "lib1-runtime", "lib1-runtime_main", "lib1-runtime_test",
+                    "lib2", "lib2-runtime", "lib2-runtime_main", "lib2-runtime_test");
+    } else {
+      assertModules("app", "app_main", "app_test",
+                    "runtime", "runtime_main", "runtime_test",
+                    "lib1", "lib1-runtime", "lib1-runtime_main", "lib1-runtime_test",
+                    "lib2", "lib2-runtime", "lib2-runtime_main", "lib2-runtime_test");
+    }
+
+    if (isGradle40orNewer()) {
+      assertModuleModuleDepScope("app_main", "app-runtime_main", COMPILE);
+      assertModuleModuleDepScope("app_main", "lib1-runtime_main", COMPILE);
+      assertModuleModuleDepScope("app_main", "lib2-runtime_main", COMPILE);
+    } else {
+      assertModuleModuleDepScope("app_main", "runtime_main", COMPILE);
+      assertModuleModuleDepScope("app_main", "lib1-runtime_main", COMPILE);
+      assertModuleModuleDepScope("app_main", "lib2-runtime_main", COMPILE);
+    }
+  }
+
 
   @Test
   @TargetVersions("3.3+")

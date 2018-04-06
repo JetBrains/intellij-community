@@ -2,7 +2,6 @@
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThreeState;
@@ -312,6 +311,16 @@ public class BeanBinding extends NotNullDeserializeBinding {
     return accessors;
   }
 
+  private static class NameAndIsSetter {
+    final String name;
+    final boolean isSetter;
+
+    public NameAndIsSetter(String name, boolean isSetter) {
+      this.name = name;
+      this.isSetter = isSetter;
+    }
+  }
+
   @NotNull
   private static Map<String, Couple<Method>> collectPropertyAccessors(@NotNull Class<?> aClass, @NotNull List<MutableAccessor> accessors) {
     final Map<String, Couple<Method>> candidates = new TreeMap<String, Couple<Method>>(); // (name,(getter,setter))
@@ -320,36 +329,53 @@ public class BeanBinding extends NotNullDeserializeBinding {
         continue;
       }
 
-      Pair<String, Boolean> propertyData = getPropertyData(method.getName()); // (name,isSetter)
-      if (propertyData == null || propertyData.first.equals("class") ||
-          method.getParameterTypes().length != (propertyData.second ? 1 : 0)) {
+      NameAndIsSetter propertyData = getPropertyData(method.getName());
+      if (propertyData == null || propertyData.name.equals("class") ||
+          method.getParameterTypes().length != (propertyData.isSetter ? 1 : 0)) {
         continue;
       }
 
-      Couple<Method> candidate = candidates.get(propertyData.first);
+      Couple<Method> candidate = candidates.get(propertyData.name);
       if (candidate == null) {
         candidate = Couple.getEmpty();
       }
-      if ((propertyData.second ? candidate.second : candidate.first) != null) {
+      if ((propertyData.isSetter ? candidate.second : candidate.first) != null) {
         continue;
       }
-      candidate = Couple.of(propertyData.second ? candidate.first : method, propertyData.second ? method : candidate.second);
-      candidates.put(propertyData.first, candidate);
+      candidate = Couple.of(propertyData.isSetter ? candidate.first : method, propertyData.isSetter ? method : candidate.second);
+      candidates.put(propertyData.name, candidate);
     }
+
     for (Iterator<Map.Entry<String, Couple<Method>>> iterator = candidates.entrySet().iterator(); iterator.hasNext(); ) {
       Map.Entry<String, Couple<Method>> candidate = iterator.next();
-      Couple<Method> methods = candidate.getValue(); // (getter,setter)
-      if (methods.first != null && methods.second != null &&
-          methods.first.getReturnType().equals(methods.second.getParameterTypes()[0]) &&
-          methods.first.getAnnotation(Transient.class) == null &&
-          methods.second.getAnnotation(Transient.class) == null) {
-        accessors.add(new PropertyAccessor(candidate.getKey(), methods.first.getReturnType(), methods.first, methods.second));
+      Couple<Method> methods = candidate.getValue();
+      Method getter = methods.first;
+      Method setter = methods.second;
+      if (isAcceptableProperty(getter, setter)) {
+        accessors.add(new PropertyAccessor(candidate.getKey(), getter.getReturnType(), getter, setter));
       }
       else {
         iterator.remove();
       }
     }
     return candidates;
+  }
+
+  private static boolean isAcceptableProperty(@Nullable Method getter, @Nullable Method setter) {
+    if (getter == null || getter.getAnnotation(Transient.class) != null) {
+      return false;
+    }
+
+    if (setter == null) {
+      // check hasStoreAnnotations to ensure that this addition will not lead to regression (since there is a chance that there is some existing not-annotated list getters without setter)
+      return (List.class.isAssignableFrom(getter.getReturnType()) || Map.class.isAssignableFrom(getter.getReturnType())) && hasStoreAnnotations(getter);
+    }
+
+    if (setter.getAnnotation(Transient.class) != null || !getter.getReturnType().equals(setter.getParameterTypes()[0])) {
+      return false;
+    }
+
+    return true;
   }
 
   private static boolean hasStoreAnnotations(@NotNull AccessibleObject object) {
@@ -400,7 +426,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
   }
 
   @Nullable
-  private static Pair<String, Boolean> getPropertyData(@NotNull String methodName) {
+  private static NameAndIsSetter getPropertyData(@NotNull String methodName) {
     String part = "";
     boolean isSetter = false;
     if (methodName.startsWith("get")) {
@@ -423,7 +449,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
       // see XmlSerializerTest.internalVar
       part = part.substring(0, suffixIndex);
     }
-    return Pair.create(Introspector.decapitalize(part), isSetter);
+    return new NameAndIsSetter(Introspector.decapitalize(part), isSetter);
   }
 
   public String toString() {

@@ -38,6 +38,9 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+    if (!PsiUtil.isLanguageLevel8OrHigher(holder.getFile())) {
+      return PsiElementVisitor.EMPTY_VISITOR;
+    }
     return new JavaElementVisitor() {
       @SuppressWarnings("DialogTitleCapitalization")
       @Override

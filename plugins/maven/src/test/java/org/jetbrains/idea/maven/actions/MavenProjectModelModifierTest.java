@@ -195,8 +195,8 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
     assertEquals("maven-compiler-plugin", tag.getSubTagText("artifactId"));
     XmlTag configuration = tag.findFirstSubTag("configuration");
     assertNotNull(configuration);
-    assertEquals("1.8", configuration.getSubTagText("source"));
-    assertEquals("1.8", configuration.getSubTagText("target"));
+    assertEquals("8", configuration.getSubTagText("source"));
+    assertEquals("8", configuration.getSubTagText("target"));
 
     waitUntilImported(result);
     assertEquals(LanguageLevel.JDK_1_8, EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(module));

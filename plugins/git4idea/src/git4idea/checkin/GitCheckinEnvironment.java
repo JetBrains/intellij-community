@@ -53,6 +53,7 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.NullableFunction;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.concurrency.FutureResult;
 import com.intellij.util.textCompletion.DefaultTextCompletionValueDescriptor;
@@ -399,8 +400,20 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     List<PartialCommitHelper> helpers = result.first;
     List<Change> partialChanges = result.second;
 
+
+    List<FilePath> pathsToDelete = new ArrayList<>();
+    for (Change change : partialChanges) {
+      if (change.getType() == Change.Type.MOVED) {
+        ContentRevision beforeRevision = ObjectUtils.assertNotNull(change.getBeforeRevision());
+        pathsToDelete.add(beforeRevision.getFile());
+      }
+    }
+    GitFileUtils.delete(myProject, repository.getRoot(), pathsToDelete, "--ignore-unmatch");
+
+
     for (int i = 0; i < partialChanges.size(); i++) {
-      CurrentContentRevision revision = (CurrentContentRevision)partialChanges.get(i).getAfterRevision();
+      Change change = partialChanges.get(i);
+      CurrentContentRevision revision = (CurrentContentRevision)change.getAfterRevision();
       assert revision != null;
 
       FilePath path = revision.getFile();
@@ -408,7 +421,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       VirtualFile file = revision.getVirtualFile();
       if (file == null) throw new VcsException("Can't find file: " + path.getPath());
 
-      GitIndexUtil.StagedFile stagedFile = GitIndexUtil.list(repository, path);
+      GitIndexUtil.StagedFile stagedFile = getStagedFile(repository, change);
       boolean isExecutable = stagedFile != null && stagedFile.isExecutable();
 
       Pair.NonNull<Charset, byte[]> fileContent =
@@ -416,6 +429,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
       GitIndexUtil.write(repository, path, fileContent.second, isExecutable);
     }
+
 
     Runnable callback = () -> ApplicationManager.getApplication().invokeLater(() -> {
       for (PartialCommitHelper helper : helpers) {
@@ -429,6 +443,22 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     });
 
     return Pair.create(callback, partialChanges);
+  }
+
+  @Nullable
+  private static GitIndexUtil.StagedFile getStagedFile(@NotNull GitRepository repository, @NotNull Change change) throws VcsException {
+    FilePath bPath = getBeforePath(change);
+    if (bPath != null) {
+      GitIndexUtil.StagedFile file = GitIndexUtil.list(repository, bPath);
+      if (file != null) return file;
+    }
+
+    FilePath aPath = getAfterPath(change);
+    if (aPath != null) {
+      GitIndexUtil.StagedFile file = GitIndexUtil.list(repository, aPath);
+      if (file != null) return file;
+    }
+    return null;
   }
 
   @Nullable

@@ -116,7 +116,7 @@ public class PublicConstructorInNonPublicClassInspection extends BaseInspection 
       }
       if (SerializationUtils.isExternalizable(containingClass)) {
         final PsiParameterList parameterList = method.getParameterList();
-        if (parameterList.getParametersCount() == 0) {
+        if (parameterList.isEmpty()) {
           return;
         }
       }

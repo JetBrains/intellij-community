@@ -18,10 +18,11 @@ public interface UsageGroupingRuleProvider {
 
   @NotNull UsageGroupingRule[] getActiveRules(@NotNull Project project);
 
-  default @NotNull UsageGroupingRule[] getActiveRules(@NotNull Project project, @NotNull UsageViewSettings usageViewSettings) {
+  @NotNull
+  default UsageGroupingRule[] getActiveRules(@NotNull Project project, @NotNull UsageViewSettings usageViewSettings) {
     return getActiveRules(project);
   }
 
   @NotNull
-  AnAction[] createGroupingActions(UsageView view);
+  AnAction[] createGroupingActions(@NotNull UsageView view);
 }

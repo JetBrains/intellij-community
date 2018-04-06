@@ -381,7 +381,7 @@ public class JBScrollPane extends JScrollPane {
    * ScrollPaneLayout implementation that supports
    * ScrollBar flipping and non-opaque ScrollBars.
    */
-  private static class Layout extends ScrollPaneLayout {
+  protected static class Layout extends ScrollPaneLayout {
     private static final Insets EMPTY_INSETS = emptyInsets();
 
     @Override

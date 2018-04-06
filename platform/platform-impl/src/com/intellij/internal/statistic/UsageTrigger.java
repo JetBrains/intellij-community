@@ -4,6 +4,8 @@ package com.intellij.internal.statistic;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
+import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
+import com.intellij.internal.statistic.eventLog.FeatureUsageEventLogger;
 import com.intellij.openapi.components.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
@@ -17,7 +19,10 @@ import java.util.Set;
 
 @State(
   name = "UsageTrigger",
-  storages = @Storage(value = "statistics.application.usages.xml", roamingType = RoamingType.DISABLED)
+  storages = {
+    @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED),
+    @Storage(value = "statistics.application.usages.xml", roamingType = RoamingType.DISABLED, deprecated = true)
+  }
 )
 public class UsageTrigger implements PersistentStateComponent<UsageTrigger.State> {
   final static class State {
@@ -29,6 +34,7 @@ public class UsageTrigger implements PersistentStateComponent<UsageTrigger.State
   private State myState = new State();
 
   public static void trigger(@NotNull @NonNls String feature) {
+    FeatureUsageEventLogger.INSTANCE.log("feature-usage-stats", feature);
     getInstance().doTrigger(feature);
   }
 

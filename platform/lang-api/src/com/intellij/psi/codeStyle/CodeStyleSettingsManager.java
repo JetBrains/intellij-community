@@ -49,7 +49,11 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
   public volatile String PREFERRED_PROJECT_CODE_STYLE;
   private volatile CodeStyleSettings myTemporarySettings;
 
+  /**
+   * @deprecated see comments for {@link #getSettings(Project)}
+   */
   @SuppressWarnings("deprecation")
+  @Deprecated
   public static CodeStyleSettingsManager getInstance(@Nullable Project project) {
     if (project == null || project.isDefault()) return getInstance();
     ProjectCodeStyleSettingsManager projectSettingsManager = ServiceManager.getService(project, ProjectCodeStyleSettingsManager.class);

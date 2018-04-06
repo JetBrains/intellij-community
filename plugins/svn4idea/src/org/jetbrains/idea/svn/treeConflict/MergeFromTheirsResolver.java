@@ -214,7 +214,7 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
       }
 
       if (patches != null) {
-        new PatchApplier<BinaryFilePatch>(myVcs.getProject(), myBaseDir, patches, localList, null, null).execute(false, true);
+        new PatchApplier<BinaryFilePatch>(myVcs.getProject(), myBaseDir, patches, localList, null).execute(false, true);
         myThereAreCreations =
           patches.stream().anyMatch(patch -> patch.isNewFile() || !Comparing.equal(patch.getAfterName(), patch.getBeforeName()));
       }

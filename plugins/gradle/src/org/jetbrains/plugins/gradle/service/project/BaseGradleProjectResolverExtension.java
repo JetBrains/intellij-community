@@ -60,17 +60,20 @@ import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.GradleModuleVersion;
 import org.gradle.tooling.model.GradleTask;
 import org.gradle.tooling.model.UnsupportedMethodException;
+import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.gradle.GradleBuild;
 import org.gradle.tooling.model.idea.*;
+import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
+import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
 import org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataService;
 import org.jetbrains.plugins.gradle.service.project.data.GradleExtensionsDataService;
-import org.jetbrains.plugins.gradle.settings.GradleExecutionWorkspace;
+import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.tooling.builder.ModelBuildScriptClasspathBuilderImpl;
 import org.jetbrains.plugins.gradle.tooling.internal.init.Init;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
@@ -880,41 +883,38 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
                                                       @NotNull IdeaModuleDependency dependency,
                                                       @NotNull Map<String, ModuleData>  registeredModulesIndex)
     throws IllegalStateException {
-    IdeaModule module = dependency.getDependencyModule();
-    if (module == null) {
-      if (resolverContext.getSettings() != null) {
-        String moduleName = dependency.getTargetModuleName();
-        GradleExecutionWorkspace executionWorkspace = resolverContext.getSettings().getExecutionWorkspace();
-        ModuleData moduleData = executionWorkspace.findModuleDataByName(moduleName);
-        if (moduleData != null) {
-          return new ModuleDependencyData(ownerModule.getData(), moduleData);
-        }
-        else {
-          for (IdeaProject project : resolverContext.getModels().getIncludedBuilds()) {
-            moduleData = executionWorkspace.findModuleDataByName(project.getName()  + ':' + moduleName);
+
+    final GradleExecutionSettings gradleExecutionSettings = resolverContext.getSettings();
+    if (gradleExecutionSettings != null) {
+      final BuildEnvironment environment = GradleExecutionHelper.getBuildEnvironment(resolverContext);
+      if (environment != null) {
+        final GradleVersion projectGradleVersion = GradleVersion.version(environment.getGradle().getGradleVersion());
+        if (projectGradleVersion.compareTo(GradleVersion.version("4.0")) < 0) {
+          final IdeaModule dependencyModule = dependency.getDependencyModule();
+          if (dependencyModule != null) {
+            final ModuleData moduleData =
+              gradleExecutionSettings.getExecutionWorkspace().findModuleDataByModule(resolverContext, dependencyModule);
             if (moduleData != null) {
               return new ModuleDependencyData(ownerModule.getData(), moduleData);
             }
           }
         }
-        return new ModuleDependencyData(
-          ownerModule.getData(), new ModuleData("", GradleConstants.SYSTEM_ID, StdModuleTypes.JAVA.getId(), moduleName, "", ""));
       }
-      throw new IllegalStateException(
-        String.format("Can't parse gradle module dependency '%s'. Reason: referenced module is null", dependency)
-      );
     }
 
-    String moduleName = module.getName();
-    if (moduleName == null) {
-      throw new IllegalStateException(String.format(
-        "Can't parse gradle module dependency '%s'. Reason: referenced module name is undefined (module: '%s') ", dependency, module
-      ));
+
+    final String moduleName = dependency.getTargetModuleName();
+
+    if (gradleExecutionSettings != null) {
+      ModuleData moduleData = gradleExecutionSettings.getExecutionWorkspace().findModuleDataByGradleModuleName(moduleName);
+      if (moduleData != null) {
+        return new ModuleDependencyData(ownerModule.getData(), moduleData);
+      }
     }
 
-    ModuleData moduleData = registeredModulesIndex.get(moduleName);
-    if (moduleData != null) {
-      return new ModuleDependencyData(ownerModule.getData(), moduleData);
+    ModuleData registeredModuleData = registeredModulesIndex.get(moduleName);
+    if (registeredModuleData != null) {
+      return new ModuleDependencyData(ownerModule.getData(), registeredModuleData);
     }
 
     throw new IllegalStateException(String.format(

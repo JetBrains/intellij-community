@@ -158,7 +158,9 @@ public class PluginManagerCore {
           }
         }
       }
-      catch (IOException ignored) { }
+      catch (IOException e) {
+        LOG.info("Unable to load disabled plugins list from " + file, e);
+      }
     }
   }
 
@@ -279,6 +281,7 @@ public class PluginManagerCore {
       saveDisabledPlugins(disabledPlugins, false);
     }
     catch (IOException e) {
+      LOG.warn("Unable to save disabled plugins list", e);
       return false;
     }
     return true;
@@ -291,6 +294,7 @@ public class PluginManagerCore {
       saveDisabledPlugins(getDisabledPlugins(), false);
     }
     catch (IOException e) {
+      LOG.warn("Unable to save disabled plugins list", e);
       return false;
     }
     return true;

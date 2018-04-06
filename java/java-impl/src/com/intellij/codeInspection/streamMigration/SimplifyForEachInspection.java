@@ -259,7 +259,7 @@ public class SimplifyForEachInspection extends AbstractBaseJavaLocalInspectionTo
       PsiElement lambdaBody = lambda.getBody();
       if (lambdaBody == null) return null;
       PsiExpressionList parameters = tryCast(PsiUtil.skipParenthesizedExprUp(lambda.getParent()), PsiExpressionList.class);
-      if (parameters == null || parameters.getExpressions().length != 1) return null;
+      if (parameters == null || parameters.getExpressionCount() != 1) return null;
       PsiMethodCallExpression call = tryCast(parameters.getParent(), PsiMethodCallExpression.class);
       SimplifyForEachContext simplifyForEachContext = SimplifyForEachContext.from(call);
       if (simplifyForEachContext == null || simplifyForEachContext.myMigration instanceof ForEachMigration) return null;

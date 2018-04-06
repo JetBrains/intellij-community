@@ -62,7 +62,7 @@ public class ParameterNameDiffersFromOverriddenParameterInspectionBase extends B
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
       final PsiParameterList parameterList = method.getParameterList();
-      if (parameterList.getParametersCount() == 0) {
+      if (parameterList.isEmpty()) {
         return;
       }
       final PsiMethod superMethod = MethodUtils.getSuper(method);

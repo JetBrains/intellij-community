@@ -37,7 +37,7 @@ public abstract class FileEditorManager {
 
   /**
    * @param file file to open. Parameter cannot be null. File should be valid.
-   *
+   * Must be called from <a href="https://docs.oracle.com/javase/tutorial/uiswing/concurrency/dispatch.html">EDT</a>.
    * @return array of opened editors
    */
   @NotNull
@@ -45,8 +45,8 @@ public abstract class FileEditorManager {
 
 
   /**
-   * Opens a file
-   *
+   * Opens a file.
+   * Must be called from <a href="https://docs.oracle.com/javase/tutorial/uiswing/concurrency/dispatch.html">EDT</a>.
    *
    * @param file file to open
    * @param focusEditor {@code true} if need to focus
@@ -59,6 +59,7 @@ public abstract class FileEditorManager {
 
   /**
    * Closes all editors opened for the file.
+   * Must be called from <a href="https://docs.oracle.com/javase/tutorial/uiswing/concurrency/dispatch.html">EDT</a>.
    *
    * @param file file to be closed. Cannot be null.
    */
@@ -67,6 +68,7 @@ public abstract class FileEditorManager {
   /**
    * Works as {@link #openFile(VirtualFile, boolean)} but forces opening of text editor.
    * This method ignores {@link FileEditorPolicy#HIDE_DEFAULT_EDITOR} policy.
+   * Must be called from <a href="https://docs.oracle.com/javase/tutorial/uiswing/concurrency/dispatch.html">EDT</a>.
    *
    * @return opened text editor. The method returns {@code null} in case if text editor wasn't opened.
    */
@@ -74,8 +76,18 @@ public abstract class FileEditorManager {
   public abstract Editor openTextEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor);
 
   /**
+   * Same as {@link #openTextEditor(OpenFileDescriptor, boolean)}
+   * but potentially can be faster thanks to not checking for injected editor at the specified offset.
+   * Must be called from <a href="https://docs.oracle.com/javase/tutorial/uiswing/concurrency/dispatch.html">EDT</a>.
+   */
+  public void navigateToTextEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor) {
+    openTextEditor(descriptor, focusEditor);
+  }
+
+  /**
    * @return currently selected text editor. The method returns {@code null} in case
    * there is no selected editor at all or selected editor is not a text one.
+   * Must be called from <a href="https://docs.oracle.com/javase/tutorial/uiswing/concurrency/dispatch.html">EDT</a>.
    */
   @Nullable
   public abstract Editor getSelectedTextEditor();
@@ -195,6 +207,10 @@ public abstract class FileEditorManager {
    */
   public abstract void removeFileEditorManagerListener(@NotNull FileEditorManagerListener listener);
 
+  /**
+   * Must be called from <a href="https://docs.oracle.com/javase/tutorial/uiswing/concurrency/dispatch.html">EDT</a>.
+   * @return opened file editors
+   */
   @NotNull
   public abstract List<FileEditor> openEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor);
 

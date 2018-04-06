@@ -77,11 +77,13 @@ public class MavenRunner implements PersistentStateComponent<MavenRunnerSettings
           }
         }
 
+        @Override
         @Nullable
         public NotificationInfo getNotificationInfo() {
           return new NotificationInfo("Maven", "Maven Task Finished", "");
         }
 
+        @Override
         public boolean shouldStartInBackground() {
           return settings.isRunMavenInBackground();
         }

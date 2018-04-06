@@ -28,10 +28,10 @@ import java.util.List;
 
 public abstract class ListBackgroundUpdaterTask extends BackgroundUpdaterTask<JBList> {
   /**
-   * @deprecated, use {@link #ListBackgroundUpdaterTask(Project, String, Comparator)}
+   * @deprecated Use {@link #ListBackgroundUpdaterTask(Project, String, Comparator)}
    */
   public ListBackgroundUpdaterTask(@Nullable final Project project, @NotNull final String title) {
-    super(project, title);
+    this(project, title, null);
   }
   
   public ListBackgroundUpdaterTask(@Nullable final Project project, @NotNull final String title, @Nullable Comparator<PsiElement> comparator) {

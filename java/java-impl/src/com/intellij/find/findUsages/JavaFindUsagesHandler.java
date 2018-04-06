@@ -34,7 +34,10 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.PropertyUtilBase;
+import com.intellij.psi.util.PsiSuperMethodUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.util.JavaNonCodeSearchElementDescriptionProvider;
 import com.intellij.refactoring.util.NonCodeSearchDescriptionLocation;
 import com.intellij.usageView.UsageInfo;
@@ -265,7 +268,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
       }
       for (PsiMethod superMethod : superMethods) {
         if (resolveScope != null) {
-          superMethod = PsiSuperMethodUtil.correctMethodByScope(superMethod, resolveScope);
+          superMethod = PsiSuperMethodUtil.correctMethodByScope(superMethod, resolveScope).orElse(superMethod);
         }
         result.addAll(MethodReferencesSearch.search(superMethod, searchScope, true).findAll());
       }

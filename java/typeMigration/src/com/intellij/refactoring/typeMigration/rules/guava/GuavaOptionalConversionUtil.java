@@ -35,7 +35,7 @@ public class GuavaOptionalConversionUtil {
     final PsiElement maybeMethodCall = parent.getParent();
     if (!(maybeMethodCall instanceof PsiMethodCallExpression)) return false;
     final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)maybeMethodCall;
-    final int argumentLength = methodCall.getArgumentList().getExpressions().length;
+    final int argumentLength = methodCall.getArgumentList().getExpressionCount();
     if (argumentLength != 1) return false;
     final PsiMethod resolvedMethod = methodCall.resolveMethod();
     if (resolvedMethod == null || !"or".equals(resolvedMethod.getName())) return false;

@@ -513,7 +513,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     }
     //System.out.println("warming finished");
     final int readIterations = 100_000_000;
-    PlatformTestUtil.startPerformanceTest("RWLock/unlock", 1500, ()-> {
+    PlatformTestUtil.startPerformanceTest("RWLock/unlock", 13_000, ()-> {
       ReadMostlyRWLock lock = new ReadMostlyRWLock(Thread.currentThread());
 
       final int numOfThreads = JobSchedulerImpl.getJobPoolParallelism();

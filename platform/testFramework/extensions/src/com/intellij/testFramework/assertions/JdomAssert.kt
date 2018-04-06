@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.assertions
 
 import com.intellij.configurationStore.deserialize
@@ -55,7 +53,7 @@ class JdomAssert(actual: Element?) : AbstractAssert<JdomAssert, Element?>(actual
     return this
   }
 
-  fun isEqualTo(expected: String): JdomAssert {
+  fun isEqualTo(@Language("xml") expected: String): JdomAssert {
     isNotNull
 
     Objects.instance().assertEqual(

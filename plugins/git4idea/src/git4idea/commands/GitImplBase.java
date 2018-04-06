@@ -6,7 +6,6 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -20,7 +19,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.locks.ReadWriteLock;
-import java.util.function.Consumer;
 
 import static git4idea.commands.GitCommand.LockingPolicy.WRITE;
 
@@ -31,13 +29,18 @@ abstract class GitImplBase implements Git {
   @NotNull
   @Override
   public GitCommandResult runCommand(@NotNull GitLineHandler handler) {
-    return runCommand(() -> handler);
+    return run(handler, getCollectingCollector());
   }
 
   @Override
   @NotNull
   public GitCommandResult runCommand(@NotNull Computable<GitLineHandler> handlerConstructor) {
-    return run(handlerConstructor, () -> new OutputCollector() {
+    return run(handlerConstructor, GitImplBase::getCollectingCollector);
+  }
+
+  @NotNull
+  private static OutputCollector getCollectingCollector() {
+    return new OutputCollector() {
       @Override
       public void outputLineReceived(@NotNull String line) {
         addOutputLine(line);
@@ -52,12 +55,12 @@ abstract class GitImplBase implements Git {
           addErrorLine(line);
         }
       }
-    });
+    };
   }
 
   @NotNull
   public GitCommandResult runCommandWithoutCollectingOutput(@NotNull GitLineHandler handler) {
-    return run(() -> handler, () -> new OutputCollector() {
+    return run(handler, new OutputCollector() {
       @Override
       protected void outputLineReceived(@NotNull String line) {}
 
@@ -68,40 +71,61 @@ abstract class GitImplBase implements Git {
     });
   }
 
+  /**
+   * Run handler with retry on authentication failure
+   */
   @NotNull
   private static GitCommandResult run(@NotNull Computable<GitLineHandler> handlerConstructor,
                                       @NotNull Computable<OutputCollector> outputCollectorConstructor) {
-    @NotNull GitLineHandler handler;
-    @NotNull OutputCollector outputCollector;
-    @NotNull GitCommandResultListener resultListener;
+    @NotNull GitCommandResult result;
 
-    Ref<Boolean> authFailedRef = Ref.create(false);
     int authAttempt = 0;
     do {
-      handler = handlerConstructor.compute();
+      GitLineHandler handler = handlerConstructor.compute();
+      OutputCollector outputCollector = outputCollectorConstructor.compute();
 
-      outputCollector = outputCollectorConstructor.compute();
-      resultListener = new GitCommandResultListener(outputCollector);
+      result = run(handler, outputCollector);
+    }
+    while (result.isAuthenticationFailed() && authAttempt++ < 2);
+    return result;
+  }
 
-      handler.addLineListener(resultListener);
-
-      try (AccessToken locking = lock(handler);
-           AccessToken auth = remoteAuth(handler, authFailedRef::set)) {
-        writeOutputToConsole(handler);
-
-        handler.runInCurrentThread();
+  /**
+   * Run handler with per-project locking, logging and authentication
+   */
+  @NotNull
+  private static GitCommandResult run(@NotNull GitLineHandler handler, @NotNull OutputCollector outputCollector) {
+    Project project = handler.project();
+    if (project != null && handler.isRemote()) {
+      try {
+        GitHandlerAuthenticationManager authenticationManager = GitHandlerAuthenticationManager.prepare(project, handler);
+        return GitCommandResult.withAuthentication(doRun(handler, outputCollector), authenticationManager.isHttpAuthFailed());
       }
       catch (IOException e) {
-        resultListener.startFailed(e);
+        return GitCommandResult.startError("Failed to start Git process " + e.getLocalizedMessage());
       }
     }
-    while (authFailedRef.get() && authAttempt++ < 2);
-    return new GitCommandResult(
-      !resultListener.myStartFailed && (handler.isIgnoredErrorCode(resultListener.myExitCode) || resultListener.myExitCode == 0),
-      resultListener.myExitCode,
-      authFailedRef.get(),
-      outputCollector.myErrorOutput,
-      outputCollector.myOutput);
+
+    return doRun(handler, outputCollector);
+  }
+
+  /**
+   * Run handler with per-project locking, logging
+   */
+  @NotNull
+  private static GitCommandResult doRun(@NotNull GitLineHandler handler, @NotNull OutputCollector outputCollector) {
+    try (AccessToken ignored = lock(handler)) {
+      GitCommandResultListener resultListener = new GitCommandResultListener(outputCollector);
+      handler.addLineListener(resultListener);
+
+      writeOutputToConsole(handler);
+
+      handler.runInCurrentThread();
+      return new GitCommandResult(resultListener.myStartFailed,
+                                  resultListener.myExitCode,
+                                  outputCollector.myErrorOutput,
+                                  outputCollector.myOutput);
+    }
   }
 
   private static class GitCommandResultListener implements GitLineHandlerListener {
@@ -196,23 +220,6 @@ abstract class GitImplBase implements Git {
     }
     return AccessToken.EMPTY_ACCESS_TOKEN;
   }
-
-  @NotNull
-  private static AccessToken remoteAuth(@NotNull GitLineHandler handler, @NotNull Consumer<Boolean> authResultConsumer) throws IOException {
-    Project project = handler.project();
-    if (project != null && handler.isRemote()) {
-      GitHandlerAuthenticationManager authManager = GitHandlerAuthenticationManager.prepare(project, handler);
-      return new AccessToken() {
-        @Override
-        public void finish() {
-          authResultConsumer.accept(authManager.isHttpAuthFailed());
-          authManager.cleanup();
-        }
-      };
-    }
-    return AccessToken.EMPTY_ACCESS_TOKEN;
-  }
-
 
   private static boolean looksLikeError(@NotNull final String text) {
     return ContainerUtil.exists(ERROR_INDICATORS, indicator -> StringUtil.startsWithIgnoreCase(text.trim(), indicator));

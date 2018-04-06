@@ -63,7 +63,7 @@ public class AsyncResult<T> extends ActionCallback {
   }
 
   /**
-   * @deprecated Use {@link #doWhenDone(com.intellij.util.Consumer)} (to remove in IDEA 16)
+   * @deprecated Use {@link #doWhenDone(Consumer)} (to remove in IDEA 16)
    */
   @NotNull
   @Deprecated
@@ -113,7 +113,7 @@ public class AsyncResult<T> extends ActionCallback {
   }
 
   /**
-   * @deprecated Use {@link com.intellij.util.Consumer} (to remove in IDEA 16)
+   * @deprecated Use {@link Consumer} (to remove in IDEA 16)
    */
   @Deprecated
   public interface Handler<T> {
@@ -150,7 +150,7 @@ public class AsyncResult<T> extends ActionCallback {
   @NotNull
   @Deprecated
   public static <R> AsyncResult<R> rejected() {
-    //noinspection unchecked,deprecation
+    // noinspection unchecked
     return new Rejected();
   }
 

@@ -191,7 +191,7 @@ public class PsiElement2UsageTargetAdapter
   }
 
   @NotNull
-  public static PsiElement[] convertToPsiElements(PsiElement2UsageTargetAdapter[] adapters) {
+  static PsiElement[] convertToPsiElements(@NotNull PsiElement2UsageTargetAdapter[] adapters) {
     PsiElement[] targets = new PsiElement[adapters.length];
     for (int i = 0; i < targets.length; i++) {
       targets[i] = adapters[i].getElement();

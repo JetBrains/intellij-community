@@ -334,7 +334,7 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
         final PsiMethod[] constructors = aClass.getConstructors();
         if (constructors.length == 0) {
           PsiExpressionList newArgumentList = newExpression.getArgumentList();
-          if (newArgumentList != null && newArgumentList.getExpressions().length > 0) {
+          if (newArgumentList != null && !newArgumentList.isEmpty()) {
             return "Class cannot be inlined because a call to its constructor is unresolved";
           }
         }

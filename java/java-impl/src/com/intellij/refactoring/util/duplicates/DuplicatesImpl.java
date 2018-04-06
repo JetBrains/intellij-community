@@ -74,10 +74,11 @@ public class DuplicatesImpl {
     }
   }
 
-  public static void invoke(final Project project, final MatchProvider provider) {
+  public static void invoke(final Project project, final MatchProvider provider, boolean showDialog) {
     final List<Match> duplicates = provider.getDuplicates();
     int idx = 0;
     final Ref<Boolean> showAll = new Ref<>();
+    if (!showDialog) showAll.set(true);
     final String confirmDuplicatePrompt = getConfirmationPrompt(provider, duplicates);
     for (final Match match : duplicates) {
       final PsiFile file = match.getFile();

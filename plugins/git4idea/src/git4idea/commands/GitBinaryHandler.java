@@ -126,7 +126,7 @@ public class GitBinaryHandler extends GitHandler {
     addListener(new GitHandlerListener() {
       @Override
       public void processTerminated(int exitCode) {
-        if (exitCode != 0 && !isIgnoredErrorCode(exitCode)) {
+        if (exitCode != 0) {
           Charset cs = getCharset();
           String message = new String(myStderr.toByteArray(), cs);
           if (message.length() == 0) {

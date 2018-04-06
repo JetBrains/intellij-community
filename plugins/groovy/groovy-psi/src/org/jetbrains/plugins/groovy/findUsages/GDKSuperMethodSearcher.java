@@ -130,7 +130,7 @@ public class GDKSuperMethodSearcher implements QueryExecutor<MethodSignatureBack
 
   private static PsiMethod getRealMethod(PsiMethod method) {
     final PsiElement element = method.getNavigationElement();
-    if (element instanceof PsiMethod && ((PsiMethod)element).getParameterList().getParametersCount() > 0) {
+    if (element instanceof PsiMethod && !((PsiMethod)element).getParameterList().isEmpty()) {
       return (PsiMethod)element;
     }
     else {

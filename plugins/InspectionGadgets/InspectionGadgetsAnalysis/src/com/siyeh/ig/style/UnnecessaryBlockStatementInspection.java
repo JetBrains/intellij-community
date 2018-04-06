@@ -120,7 +120,7 @@ public class UnnecessaryBlockStatementInspection extends BaseInspection implemen
         return;
       }
       final PsiCodeBlock parentBlock = (PsiCodeBlock)parent;
-      if (parentBlock.getStatements().length > 1 &&
+      if (parentBlock.getStatementCount() > 1 &&
           DeclarationSearchUtils.containsConflictingDeclarations(codeBlock, parentBlock)) {
         return;
       }

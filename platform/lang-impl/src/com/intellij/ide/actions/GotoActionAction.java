@@ -25,6 +25,7 @@ import com.intellij.ide.util.gotoByName.GotoActionItemProvider;
 import com.intellij.ide.util.gotoByName.GotoActionModel;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.application.ApplicationManager;
@@ -329,8 +330,11 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
             }
           }
           else {
+            ActionManagerEx manager = ActionManagerEx.getInstanceEx();
+            manager.fireBeforeActionPerformed(action, context, event);
             ActionUtil.performActionDumbAware(action, event);
             if (callback != null) callback.run();
+            manager.fireAfterActionPerformed(action, context, event);
           }
         }
     });

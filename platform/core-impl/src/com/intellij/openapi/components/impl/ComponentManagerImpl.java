@@ -45,6 +45,7 @@ import com.intellij.util.messages.MessageBusFactory;
 import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import com.intellij.util.pico.DefaultPicoContainer;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -127,11 +128,9 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   @NotNull
   @Override
   public MessageBus getMessageBus() {
-    if (myDisposeCompleted || myDisposed) {
-      ProgressManager.checkCanceled();
-      throw new AssertionError("Already disposed");
+    if (myDisposed) {
+      throwAlreadyDisposed();
     }
-    assert myMessageBus != null : "Not initialized yet";
     return myMessageBus;
   }
 
@@ -160,25 +159,14 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   @Override
   public final <T> T getComponent(@NotNull Class<T> interfaceClass) {
-    if (myDisposeCompleted) {
-      ReadAction.run(() -> {
-        ProgressManager.checkCanceled();
-        throw new AssertionError("Already disposed: " + this);
-      });
-    }
-
-    ComponentAdapter adapter = getPicoContainer().getComponentAdapter(interfaceClass);
+    MutablePicoContainer picoContainer = getPicoContainer();
+    ComponentAdapter adapter = picoContainer.getComponentAdapter(interfaceClass);
     if (!(adapter instanceof ComponentConfigComponentAdapter)) {
       return null;
     }
 
-    if (myDisposed) {
-      // getComponent could be called during some component.dispose() call, in this case we don't attempt to instantiate component
-      //noinspection unchecked
-      return (T)((ComponentConfigComponentAdapter)adapter).myInitializedComponentInstance;
-    }
     //noinspection unchecked
-    return (T)adapter.getComponentInstance(getPicoContainer());
+    return (T)adapter.getComponentInstance(picoContainer);
   }
 
   @Override
@@ -256,12 +244,17 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   public MutablePicoContainer getPicoContainer() {
     MutablePicoContainer container = myPicoContainer;
     if (container == null || myDisposeCompleted) {
-      ReadAction.run(() -> {
-        ProgressManager.checkCanceled();
-        throw new AssertionError("Already disposed: "+toString());
-      });
+      throwAlreadyDisposed();
     }
     return container;
+  }
+
+  @Contract("->fail")
+  private void throwAlreadyDisposed() {
+    ReadAction.run(() -> {
+      ProgressManager.checkCanceled();
+      throw new AssertionError("Already disposed: "+toString());
+    });
   }
 
   @NotNull
@@ -457,7 +450,8 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     @Override
     public Object getComponentInstance(PicoContainer picoContainer) throws PicoInitializationException, PicoIntrospectionException, ProcessCanceledException {
       Object instance = myInitializedComponentInstance;
-      if (instance != null) {
+      // getComponent could be called during some component.dispose() call, in this case we don't attempt to instantiate component
+      if (instance != null || myDisposed) {
         return instance;
       }
 

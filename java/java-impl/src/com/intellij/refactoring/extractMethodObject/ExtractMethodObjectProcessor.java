@@ -489,9 +489,8 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
     final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
     if (staticqualifier != null) {
-      newReplacement = argumentList.getExpressions().length > 0
-                       ? "new " + staticqualifier + inferredTypeArguments + argumentList.getText() + "."
-                       : staticqualifier + ".";
+      newReplacement = argumentList.isEmpty() ? staticqualifier + "." :
+                       "new " + staticqualifier + inferredTypeArguments + argumentList.getText() + ".";
     } else {
       final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
       final String qualifier = qualifierExpression != null ? qualifierExpression.getText() + "." : "";
@@ -599,7 +598,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
   }
 
   private boolean notHasGeneratedFields() {
-    return !myMultipleExitPoints && getMethod().getParameterList().getParametersCount() == 0;
+    return !myMultipleExitPoints && getMethod().getParameterList().isEmpty();
   }
 
   private void createInnerClassConstructor(final PsiParameter[] parameters) throws IncorrectOperationException {

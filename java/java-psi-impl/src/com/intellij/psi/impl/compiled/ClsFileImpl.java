@@ -342,8 +342,8 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
 
   @Override
   @NotNull
-  @SuppressWarnings("deprecation")
   public PsiElement getNavigationElement() {
+    //noinspection deprecation
     for (ClsCustomNavigationPolicy customNavigationPolicy : Extensions.getExtensions(ClsCustomNavigationPolicy.EP_NAME)) {
       if (customNavigationPolicy instanceof ClsCustomNavigationPolicyEx) {
         try {

@@ -279,6 +279,8 @@
               icon="AllIcons.General.MessageHistory"/>
     </group>
 
+    <group id="Vcs.CommitExecutor.Actions"/>
+
     <group id="VcsToobarActions">
       <reference ref="Vcs.UpdateProject"/>
       <reference ref="CheckinProject"/>

@@ -24,7 +24,7 @@ fun main(args: Array<String>) {
   val home = File(homePath)
   val project = JpsSerializationManager.getInstance().loadModel(homePath, null).project
 
-  val util = project.modules.find { it.name == "util" } ?: throw IllegalStateException("Can't load module 'util'")
+  val util = project.modules.find { it.name == "intellij.platform.util" } ?: throw IllegalStateException("Can't load module 'util'")
 
   val generator = IconsClassGenerator(home, util)
   project.modules.forEach { module ->
