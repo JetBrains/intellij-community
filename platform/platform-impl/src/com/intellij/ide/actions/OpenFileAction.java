@@ -10,6 +10,7 @@ import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -43,6 +44,10 @@ import java.util.List;
 public class OpenFileAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
+    ApplicationManager.getApplication().invokeLater(() -> prepareFileChooserAndOpen(e));
+  }
+
+  private void prepareFileChooserAndOpen(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
     final boolean showFiles = project != null || PlatformProjectOpenProcessor.getInstanceIfItExists() != null;
     final FileChooserDescriptor descriptor = showFiles ? new ProjectOrFileChooserDescriptor() : new ProjectOnlyFileChooserDescriptor();
@@ -54,7 +59,7 @@ public class OpenFileAction extends AnAction implements DumbAware {
 
     descriptor.putUserData(PathChooserDialog.PREFER_LAST_OVER_EXPLICIT, toSelect == null && showFiles);
 
-    FileChooser.chooseFiles(descriptor, project, toSelect != null? toSelect : getPathToSelect(), files -> {
+    FileChooser.chooseFiles(descriptor, project, toSelect != null ? toSelect : getPathToSelect(), files -> {
       for (VirtualFile file : files) {
         if (!descriptor.isFileSelectable(file)) {
           String message = IdeBundle.message("error.dir.contains.no.project", file.getPresentableUrl());
