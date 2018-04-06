@@ -21,7 +21,7 @@ public class Json5FileType extends JsonFileType {
   @NotNull
   @Override
   public String getDescription() {
-    return "JSON5 files";
+    return "JSON5";
   }
 
   @NotNull

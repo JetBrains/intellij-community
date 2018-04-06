@@ -32,7 +32,7 @@ public class JsonFileType extends LanguageFileType{
   @NotNull
   @Override
   public String getDescription() {
-    return "JSON files";
+    return "JSON";
   }
 
   @NotNull
