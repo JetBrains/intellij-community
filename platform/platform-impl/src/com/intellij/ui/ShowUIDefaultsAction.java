@@ -26,6 +26,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -38,7 +39,8 @@ import java.awt.event.MouseEvent;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.EventObject;
-
+import java.util.List;
+import java.util.stream.Collectors;
 /**
  * @author Konstantin Bulenkov
  */
@@ -86,7 +88,9 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
           @Override
           public boolean isCellEditable(int row, int column) {
             Object value = getValueAt(row, column);
-            return column == 1 && (value instanceof Color || value instanceof Number);
+            return column == 1 && (value instanceof Color ||
+                                   value instanceof Integer ||
+                                   value instanceof Border);
           }
         }) {
           @Override
@@ -99,13 +103,27 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
                 Color newColor = ColorPicker.showDialog(this, "Choose Color", (Color)value, true, null, true);
                 if (newColor != null) {
                   final ColorUIResource colorUIResource = new ColorUIResource(newColor);
-                  UIManager.put(key, colorUIResource);
+
+                  // MultiUIDefaults overrides remove but does not override put.
+                  // So to avoid duplications we should first remove the value and then put it again.
+                  UIManager.getDefaults().remove(key);
+                  UIManager.getDefaults().put(key, colorUIResource);
                   setValueAt(colorUIResource, row, column);
                 }
               } else if (value instanceof Integer) {
                 Integer newValue = editNumber(key.toString(), value.toString());
                 if (newValue != null) {
-                  UIManager.put(key, newValue);
+                  UIManager.getDefaults().remove(key);
+                  UIManager.getDefaults().put(key, newValue);
+                  setValueAt(newValue, row, column);
+                }
+              } else if (value instanceof Border) {
+                Insets i = ((Border)value).getBorderInsets(null);
+                String oldBorder = String.format("%d,%d,%d,%d", i.top, i.left, i.bottom, i.right);
+                Border newValue = editBorder(key.toString(), oldBorder);
+                if (newValue != null) {
+                  UIManager.getDefaults().remove(key);
+                  UIManager.getDefaults().put(key, newValue);
                   setValueAt(newValue, row, column);
                 }
               }
@@ -181,6 +199,39 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
                                    });
 
         return newValue != null ? Integer.valueOf(newValue) : null;
+      }
+
+      private @Nullable Border editBorder(String key, String value) {
+        String newValue = Messages.showInputDialog(getRootPane(),
+           "Enter new value for " + key + "\nin form top,left,bottom,right",
+           "Border Editor", null, value,
+           new InputValidator() {
+             @Override
+             public boolean checkInput(String inputString) {
+               return parseBorder(inputString) != null;
+             }
+
+             @Override
+             public boolean canClose(String inputString) {
+               return checkInput(inputString);
+             }
+           });
+
+        return newValue != null ? parseBorder(newValue) : null;
+      }
+
+      private @Nullable Border parseBorder(String value) {
+        String[] parts = value.split(",");
+        if(parts.length != 4) {
+          return null;
+        }
+
+        try {
+          List<Integer> v = Arrays.stream(parts).map(p -> Integer.parseInt(p)).collect(Collectors.toList());
+          return JBUI.Borders.empty(v.get(0), v.get(1), v.get(2), v.get(3));
+        } catch (NumberFormatException nex) {
+          return null;
+        }
       }
     }.show();
   }

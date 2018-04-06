@@ -401,6 +401,8 @@ public class DarculaLaf extends BasicLookAndFeel {
       }
     } else if (key.endsWith("Size")) {
       return parseSize(value);
+    } else if (key.endsWith("Width")) {
+      return getInteger(value);
     } else {
       final Color color = parseColor(value);
       final Integer invVal = getInteger(value);
