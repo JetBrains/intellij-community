@@ -343,6 +343,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
           filter = prefix;
           rebuild(true).processed(ignore -> UIUtil.invokeLaterIfNeeded(() -> {
             if (isDisposed()) return;
+            TreeUtil.promiseExpandAll(myTree);
             if (isBackspace && handleBackspace(filter)) {
               return;
             }
