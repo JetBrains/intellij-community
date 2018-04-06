@@ -948,7 +948,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   private final class MySeparator extends JComponent {
     @Override
     public Dimension getPreferredSize() {
-      return (myOrientation == SwingConstants.HORIZONTAL) ? JBUI.size(6, 24) : JBUI.size(24, 6);
+      return (myOrientation == SwingConstants.HORIZONTAL) ? JBUI.size(7, 24) : JBUI.size(24, 7);
     }
 
     @Override
