@@ -207,3 +207,47 @@ TOML File
       PsiWhiteSpace(' ')
       TomlLiteral
         PsiElement(NUMBER)('2')
+  PsiWhiteSpace('\n\n')
+  PsiComment(COMMENT)('# INVALID don;t parse next table as an array')
+  PsiWhiteSpace('\n')
+  TomlTable
+    TomlTableHeader
+      PsiElement([)('[')
+      TomlKey
+        PsiElement(BARE_KEY)('table-a')
+      PsiElement(])(']')
+    PsiWhiteSpace('\n')
+    TomlKeyValue
+      TomlKey
+        PsiElement(BARE_KEY)('key')
+      PsiErrorElement:'=' expected, got '['
+        <empty list>
+  PsiWhiteSpace('\n')
+  TomlTable
+    TomlTableHeader
+      PsiElement([)('[')
+      TomlKey
+        PsiElement(BARE_KEY)('table-b')
+      PsiElement(])(']')
+  PsiWhiteSpace('\n\n')
+  TomlTable
+    TomlTableHeader
+      PsiElement([)('[')
+      TomlKey
+        PsiElement(BARE_KEY)('table-c')
+      PsiElement(])(']')
+    PsiWhiteSpace('\n')
+    TomlKeyValue
+      TomlKey
+        PsiElement(BARE_KEY)('key')
+      PsiWhiteSpace(' ')
+      PsiElement(=)('=')
+      PsiErrorElement:VALUE expected, got '['
+        <empty list>
+  PsiWhiteSpace('\n')
+  TomlTable
+    TomlTableHeader
+      PsiElement([)('[')
+      TomlKey
+        PsiElement(BARE_KEY)('table-d')
+      PsiElement(])(']')
