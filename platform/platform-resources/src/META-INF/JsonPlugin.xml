@@ -70,6 +70,10 @@
                      bundle="com.intellij.json.JsonBundle" key="inspection.duplicate.keys.name" groupKey="json.inspection.group"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.json.codeinsight.JsonDuplicatePropertyKeysInspection"/>
+    <localInspection language="JSON" shortName="JsonSchemaCompliance"
+                     bundle="com.intellij.json.JsonBundle" key="json.schema.inspection.compliance.name" groupKey="json.inspection.group"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.jsonSchema.impl.JsonSchemaComplianceInspection"/>
 
     <lang.elementManipulator forClass="com.intellij.json.psi.JsonStringLiteral"
                              implementationClass="com.intellij.json.psi.JsonStringLiteralManipulator"/>
@@ -81,7 +85,6 @@
                          instance="com.jetbrains.jsonSchema.JsonSchemaCatalogConfigurable" nonDefaultProject="true"/>
     <projectService serviceInterface="com.jetbrains.jsonSchema.ide.JsonSchemaService"
                     serviceImplementation="com.jetbrains.jsonSchema.impl.JsonSchemaServiceImpl"/>
-    <annotator language="JSON" implementationClass="com.jetbrains.jsonSchema.impl.JsonSchemaAnnotator"/>
     <completion.contributor order="last, before JsonCompletionContributor" language="JSON"
                             implementationClass="com.jetbrains.jsonSchema.impl.JsonSchemaCompletionContributor"/>
     <lang.documentationProvider language="JSON"

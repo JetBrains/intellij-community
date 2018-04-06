@@ -2,9 +2,6 @@
 package com.jetbrains.jsonSchema;
 
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
-import com.intellij.json.JsonLanguage;
-import com.intellij.lang.LanguageAnnotators;
-import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.AreaPicoContainer;
 import com.intellij.openapi.extensions.Extensions;
@@ -16,7 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
-import com.jetbrains.jsonSchema.impl.JsonSchemaAnnotator;
+import com.jetbrains.jsonSchema.impl.JsonSchemaComplianceInspection;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -575,16 +572,14 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   private void doTest(@NotNull final String schema, @NotNull final String text) throws Exception {
+    enableInspectionTool(new JsonSchemaComplianceInspection());
+
     final PsiFile file = createFile(myModule, "config.json", text);
 
-    final Annotator annotator = new JsonSchemaAnnotator();
-
     registerProvider(getProject(), schema);
-    LanguageAnnotators.INSTANCE.addExplicitExtension(JsonLanguage.INSTANCE, annotator);
     Disposer.register(getTestRootDisposable(), new Disposable() {
       @Override
       public void dispose() {
-        LanguageAnnotators.INSTANCE.removeExplicitExtension(JsonLanguage.INSTANCE, annotator);
         JsonSchemaTestServiceImpl.setProvider(null);
       }
     });

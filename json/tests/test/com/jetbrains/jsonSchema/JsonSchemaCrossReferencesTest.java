@@ -23,6 +23,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
 import com.jetbrains.jsonSchema.extension.JsonSchemaProjectSelfProviderFactory;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
+import com.jetbrains.jsonSchema.impl.JsonSchemaComplianceInspection;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import com.jetbrains.jsonSchema.impl.JsonSchemaReferenceContributor;
 import com.jetbrains.jsonSchema.schemaFile.TestJsonSchemaMappingsProjectConfiguration;
@@ -501,6 +502,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
 
   public void testNestedAllOneAnyWithInheritanceHighlighting() throws Exception {
     final String prefix = "nestedAllOneAnyWithInheritance/";
+    enableInspectionTool(new JsonSchemaComplianceInspection());
     skeleton(new Callback() {
       @Override
       public void registerSchemes() {
