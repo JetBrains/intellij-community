@@ -21,11 +21,14 @@ import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JavaSdkVersionUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.openapi.vfs.jrt.JrtFileSystem;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.PathsList;
 import com.intellij.util.text.VersionComparatorUtil;
 import org.intellij.lang.annotations.MagicConstant;
@@ -33,13 +36,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
-import java.util.Arrays;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
 
 public class JavaParameters extends SimpleJavaParameters {
   private static final Logger LOG = Logger.getInstance(JavaParameters.class);
   private static final String JAVA_LIBRARY_PATH_PROPERTY = "java.library.path";
+  public static final String JAVA__ENABLE_PREVIEW_PROPERTY = "--enable-preview";
   public static final DataKey<JavaParameters> JAVA_PARAMETERS = DataKey.create("javaParameters");
 
   public String getJdkPath() throws CantRunException {
@@ -81,6 +83,29 @@ public class JavaParameters extends SimpleJavaParameters {
     setDefaultCharset(module.getProject());
     configureEnumerator(OrderEnumerator.orderEntries(module).recursively(), classPathType, jdk).collectPaths(getClassPath());
     configureJavaLibraryPath(OrderEnumerator.orderEntries(module).recursively());
+    configureJavaEnablePreviewProperty(OrderEnumerator.orderEntries(module).recursively(), jdk);
+  }
+
+  private void configureJavaEnablePreviewProperty(OrderEnumerator orderEnumerator, Sdk jdk) {
+    if (getVMParametersList().hasParameter(JAVA__ENABLE_PREVIEW_PROPERTY)) return;
+    if (jdk != null) {
+      JavaSdkVersion javaSdkVersion = JavaSdkVersionUtil.getJavaSdkVersion(jdk);
+      if (javaSdkVersion == null || !javaSdkVersion.isAtLeast(JavaSdkVersion.JDK_11)) {
+        return;
+      }
+    }
+    List<Module> modules = new ArrayList<>();
+    orderEnumerator.forEachModule(modules::add);
+    for (Module m : modules) {
+      LanguageLevelModuleExtensionImpl moduleExtension = LanguageLevelModuleExtensionImpl.getInstance(m);
+      if (moduleExtension != null) {
+        LanguageLevel languageLevel = moduleExtension.getLanguageLevel();
+        if (languageLevel != null && languageLevel.isPreview()) {
+          getVMParametersList().add(JAVA__ENABLE_PREVIEW_PROPERTY);
+          break;
+        }
+      }
+    }
   }
 
   private void configureJavaLibraryPath(OrderEnumerator enumerator) {
@@ -175,6 +200,7 @@ public class JavaParameters extends SimpleJavaParameters {
     setDefaultCharset(project);
     configureEnumerator(OrderEnumerator.orderEntries(project).runtimeOnly(), classPathType, jdk).collectPaths(getClassPath());
     configureJavaLibraryPath(OrderEnumerator.orderEntries(project));
+    configureJavaEnablePreviewProperty(OrderEnumerator.orderEntries(project), jdk);
   }
 
   private static OrderRootsEnumerator configureEnumerator(OrderEnumerator enumerator, int classPathType, Sdk jdk) {
