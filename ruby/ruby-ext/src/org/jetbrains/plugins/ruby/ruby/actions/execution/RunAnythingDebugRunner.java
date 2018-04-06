@@ -121,7 +121,7 @@ public class RunAnythingDebugRunner extends GenericProgramRunner {
       new RubyDebuggerProxy(timeout, supportsNonSuspendedFramesReading, false, supportsCatchpointRemoval);
 
     final RubyProcessDispatcher acceptor = RubyDebugRunner
-      .getAcceptor(supportsNonSuspendedFramesReading, localHostString, supportsCatchpointRemoval, Integer.valueOf(dispatcher));
+      .getAcceptor(supportsNonSuspendedFramesReading, localHostString, supportsCatchpointRemoval, Integer.valueOf(dispatcher), true);
 
     rubyDebuggerProxy.setDebugTarget(
       RubyDebugRunner.getDebugTarget(null, serverProcessHandler, debuggerPort, rubyDebuggerProxy, localHostString));
