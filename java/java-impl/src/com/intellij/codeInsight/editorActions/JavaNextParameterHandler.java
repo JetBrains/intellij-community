@@ -18,10 +18,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
-public class JavaVarArgNextParameterHandler extends EditorActionHandler {
+public class JavaNextParameterHandler extends EditorActionHandler {
   private final EditorActionHandler myDelegate;
 
-  public JavaVarArgNextParameterHandler(EditorActionHandler delegate) {
+  public JavaNextParameterHandler(EditorActionHandler delegate) {
     myDelegate = delegate;
   }
 
@@ -58,10 +58,11 @@ public class JavaVarArgNextParameterHandler extends EditorActionHandler {
                   int currentIndex = highlighted == null ? 0 : Arrays.asList(objects).indexOf(highlighted);
                   if (currentIndex >= 0) {
                     PsiMethod currentMethod = (PsiMethod)((CandidateInfo)objects[currentIndex]).getElement();
-                    if (currentMethod.isVarArgs()) {
+                    if (currentMethod.isVarArgs() || actualParameterCount < currentMethod.getParameterList().getParametersCount() &&
+                                                     currentMethod.getParameterList().getParametersCount() > 1) {
                       int rParOffset = list.getTextRange().getEndOffset() - 1;
                       boolean lastParameterIsEmpty = CharArrayUtil.containsOnlyWhiteSpaces(text.subSequence(prev + 1, rParOffset));
-                      if (lastParameterIsEmpty) {
+                      if (lastParameterIsEmpty && currentMethod.isVarArgs()) {
                         if (prevChar == ',') {
                           WriteAction.run(() -> editor.getDocument().deleteString(prev, rParOffset));
                         }

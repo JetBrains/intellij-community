@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.codeInsight.completion.JavaMethodCallElement;
 import com.intellij.codeInsight.hint.ParameterInfoController;
 import com.intellij.codeInsight.hints.ParameterHintsPass;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -18,10 +19,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
-public class JavaVarArgPrevParameterHandler extends EditorActionHandler {
+public class JavaPrevParameterHandler extends EditorActionHandler {
   private final EditorActionHandler myDelegate;
 
-  public JavaVarArgPrevParameterHandler(EditorActionHandler delegate) {
+  public JavaPrevParameterHandler(EditorActionHandler delegate) {
     myDelegate = delegate;
   }
 
@@ -53,7 +54,9 @@ public class JavaVarArgPrevParameterHandler extends EditorActionHandler {
                 int currentIndex = highlighted == null ? 0 : Arrays.asList(objects).indexOf(highlighted);
                 if (currentIndex >= 0) {
                   PsiMethod currentMethod = (PsiMethod)((CandidateInfo)objects[currentIndex]).getElement();
-                  if (currentMethod.isVarArgs()) {
+                  if (currentMethod.isVarArgs() ||
+                      offset != rParOffset + 1 &&
+                      ((PsiExpressionList)exprList).getExpressionCount() > JavaMethodCallElement.getCompletionHintsLimit()) {
                     boolean toReturn = false;
                     if (offset == rParOffset + 1) {
                       WriteAction.run(() -> editor.getDocument().insertString(rParOffset, ", "));
