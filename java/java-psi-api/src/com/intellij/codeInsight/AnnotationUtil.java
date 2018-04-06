@@ -237,7 +237,7 @@ public class AnnotationUtil {
   public static final int CHECK_TYPE = 0x08;
 
   public static boolean isAnnotatedJvm(JvmAnnotatedElement member, String anno, int checkHierarchy) {
-    return Arrays.stream(member.getAnnotations()).allMatch(annotation -> Objects.equals(annotation.getQualifiedName(), anno));
+    return Arrays.stream(member.getAnnotations()).anyMatch(annotation -> Objects.equals(annotation.getQualifiedName(), anno));
   }
 
   @MagicConstant(flags = {CHECK_HIERARCHY, CHECK_EXTERNAL, CHECK_INFERRED, CHECK_TYPE})
