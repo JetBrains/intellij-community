@@ -46,6 +46,17 @@ public class YAMLScalarContentTest extends LightPlatformCodeInsightFixtureTestCa
     doTest();
   }
 
+  // Test presence of comment in literal style block scalar header
+  public void testLiteralStyleCommentInHeader() {
+    doTest();
+  }
+
+  // Test scalar value in case of invalid symbols in literal style block scalar header
+  // Now invalid symbols will be ignored in scalar value calculation
+  public void testLiteralStyleHeaderError() {
+    doTest();
+  }
+
   public void testFoldedStyle1() {
     doTest();
   }
@@ -71,6 +82,17 @@ public class YAMLScalarContentTest extends LightPlatformCodeInsightFixtureTestCa
   }
 
   public void testFoldedStyle6() {
+    doTest();
+  }
+
+  // Test presence of comment in folded style block scalar header
+  public void testFoldedStyleCommentInHeader() {
+    doTest();
+  }
+
+  // Test scalar value in case of invalid symbols in literal style block scalar header
+  // Now invalid symbols will be ignored in scalar value calculation
+  public void testFoldedStyleHeaderError() {
     doTest();
   }
 

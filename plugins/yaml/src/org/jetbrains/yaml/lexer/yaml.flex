@@ -159,24 +159,29 @@ C_TAG_HANDLE = "!" {NS_WORD_CHAR}+ "!" | "!" "!" | "!"
 C_NS_SHORTHAND_TAG = {C_TAG_HANDLE} {NS_TAG_CHAR}+
 C_NON_SPECIFIC_TAG = "!"
 C_NS_TAG_PROPERTY = {C_VERBATIM_TAG} | {C_NS_SHORTHAND_TAG} | {C_NON_SPECIFIC_TAG}
+
+SCALAR_BLOCK_ERR_WORD = [^ \t#\n] [^ \t\n]*
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////// STATES DECLARATIONS //////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-%xstate BRACES, VALUE, VALUE_OR_KEY, VALUE_BRACE, INDENT_VALUE
+%xstate BRACES, VALUE, VALUE_OR_KEY, VALUE_BRACE, INDENT_VALUE, SB_HEADER_TAIL
 
 %%
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////// RULES declarations ////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-<YYINITIAL, BRACES, VALUE, VALUE_BRACE, VALUE_OR_KEY> {
-
+<YYINITIAL, BRACES, VALUE, VALUE_BRACE, VALUE_OR_KEY, SB_HEADER_TAIL> {
 {COMMENT}                       {
                                   // YAML spec: when a comment follows another syntax element,
                                   //  it must be separated from it by space characters.
+                                  // See http://www.yaml.org/spec/1.2/spec.html#comment
                                   return (isAfterEol() || isAfterSpace()) ? COMMENT : TEXT;
                                 }
+}
+
+<YYINITIAL, BRACES, VALUE, VALUE_BRACE, VALUE_OR_KEY> {
 
 {EOL}                           {   if (braceCount == 0) {
                                       yyBegin(YYINITIAL);
@@ -247,7 +252,7 @@ C_NS_TAG_PROPERTY = {C_VERBATIM_TAG} | {C_NS_SHORTHAND_TAG} | {C_NON_SPECIFIC_TA
 }
 }
 
-<YYINITIAL, BRACES, VALUE, VALUE_BRACE, VALUE_OR_KEY> {
+<YYINITIAL, BRACES, VALUE, VALUE_BRACE, VALUE_OR_KEY, SB_HEADER_TAIL> {
 
 {WHITE_SPACE}                   { return getWhitespaceTypeAndUpdateIndent(); }
 
@@ -284,20 +289,25 @@ C_NS_TAG_PROPERTY = {C_VERBATIM_TAG} | {C_NS_SHORTHAND_TAG} | {C_NON_SPECIFIC_TA
 
 <YYINITIAL, VALUE, VALUE_BRACE, VALUE_OR_KEY>{
 
-">"("-"|"+")? / ({WHITE_SPACE} | {EOL})      {
-                                    yyBegin(INDENT_VALUE);
-                                    valueIndent = currentLineIndent;
+">"("-"|"+")?                   {   yyBegin(SB_HEADER_TAIL);
                                     valueTokenType = SCALAR_TEXT;
                                     return valueTokenType;
                                 }
 
-"|"("-"|"+")? / ({WHITE_SPACE} | {EOL})
-                                {   yyBegin(INDENT_VALUE);
-                                    valueIndent = currentLineIndent;
+"|"("-"|"+")?                   {   yyBegin(SB_HEADER_TAIL);
                                     valueTokenType = SCALAR_LIST;
                                     return valueTokenType;
                                 }
 
+}
+
+<SB_HEADER_TAIL>{
+([^ \t#\n] [^ \t\n]* [ \t]* )+  { return TEXT; }
+
+{EOL}                           {   yyBegin(INDENT_VALUE);
+                                    valueIndent = currentLineIndent;
+                                    return EOL;
+                                }
 }
 
 <YYINITIAL, VALUE, VALUE_OR_KEY> {
