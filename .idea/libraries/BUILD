@@ -1010,8 +1010,8 @@ java_library(
     name = "jediterm-pty",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/lib:jediterm-pty-2.6"],
-    runtime_deps = ["//tools/idea/lib:jediterm-pty-2.6"],
+    exports = ["//tools/idea/lib:jediterm-pty-2.7"],
+    runtime_deps = ["//tools/idea/lib:jediterm-pty-2.7"],
 )
 
 java_library(

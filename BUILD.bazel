@@ -592,6 +592,7 @@ iml_module(
         "//tools/idea/platform/built-in-server:intellij.platform.builtInServer.impl[module]",
         "//tools/idea/uast/uast-java:intellij.java.uast[module]",
         "//tools/idea/.idea/libraries:gson",
+        "//tools/idea/java/compiler/openapi:intellij.java.compiler[module]",
         "//tools/idea/lib:wadl-core",
     ],
 )
@@ -600,7 +601,7 @@ iml_module(
     name = "intellij.java.tests",
     exclude = [
         "java/java-tests/testSrc/com/intellij/index/IndexTestGenerator.scala",
-        "java/java-tests/testSrc/com/intellij/java/codeInspection/bytecodeAnalysis/classConflict/TestConflict.java",
+        "java/java-tests/testSrc/com/intellij/java/codeInspection/bytecodeAnalysis/precompiledData/TestConflict.java",
     ],
     iml_files = ["java/java-tests/intellij.java.tests.iml"],
     javacopts = ["-XepAllErrorsAsWarnings"],

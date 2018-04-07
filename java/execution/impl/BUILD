@@ -37,5 +37,6 @@ iml_module(
         "//tools/idea/platform/smRunner:intellij.platform.smRunner[module]",
         "//tools/idea/java/execution/jshell-protocol:intellij.java.jshell.protocol[module]",
         "//tools/idea/.idea/libraries:Coverage",
+        "//tools/idea/platform/external-system-api:intellij.platform.externalSystem[module]",
     ],
 )

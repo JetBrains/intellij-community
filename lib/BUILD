@@ -328,8 +328,8 @@ java_import(
 )
 
 java_import(
-    name = "jediterm-pty-2.6",
-    jars = ["jediterm-pty-2.6.jar"],
+    name = "jediterm-pty-2.7",
+    jars = ["jediterm-pty-2.7.jar"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )
