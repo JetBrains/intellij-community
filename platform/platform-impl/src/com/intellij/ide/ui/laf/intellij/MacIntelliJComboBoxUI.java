@@ -140,7 +140,7 @@ public class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
     int iconWidth = DEFAULT_ICON.getIconWidth() + i.right;
     int iconHeight = DEFAULT_ICON.getIconHeight() + i.top + i.bottom;
     int editorHeight = editor != null ? editor.getPreferredSize().height + i.top + i.bottom : 0;
-    int maxHeight = JBUI.scale(JBUI.isUseCorrectInputHeightOnMacOS(comboBox) ? MacIntelliJTextFieldUI.MACOS_LIGHT_INPUT_HEIGHT_TOTAL : 26);
+    int maxHeight = JBUI.scale(JBUI.isUseCorrectInputHeight(comboBox) ? MacIntelliJTextFieldUI.MACOS_LIGHT_INPUT_HEIGHT_TOTAL : 26);
     return new Dimension(Math.max(d.width + JBUI.scale(7), iconWidth),
                          Math.max(Math.max(iconHeight, editorHeight), maxHeight));
   }

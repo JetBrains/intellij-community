@@ -12,7 +12,6 @@ layoutConstraints:
   - {horizontal: true, unit: 0, value: 0.0}
   - {horizontal: false, unit: 0, value: 0.0}
   - {horizontal: true, unit: 0, value: 0.0}
-  visualPadding: false
 rowConstraints:
   constraints:
   - align: {horizontal: false, unit: 6, value: 0.0}
@@ -41,11 +40,11 @@ componentConstrains:
   'Database:':
     horizontal:
       gapBefore:
-        min: &id006 {horizontal: true, value: 23.0}
+        min: &id006 {horizontal: true, value: 17.0}
         preferred: *id006
     vertical:
       gapBefore:
-        max: &id007 {horizontal: false, value: 4.0}
+        max: &id007 {horizontal: false, value: 3.0}
         min: *id007
         preferred: *id007
   'JTextField #2':
@@ -61,11 +60,11 @@ componentConstrains:
   'Master Password:':
     horizontal:
       gapBefore:
-        min: &id009 {horizontal: true, value: 23.0}
+        min: &id009 {horizontal: true, value: 17.0}
         preferred: *id009
     vertical:
       gapBefore:
-        max: &id010 {horizontal: false, value: 4.0}
+        max: &id010 {horizontal: false, value: 3.0}
         min: *id010
         preferred: *id010
   'JBPasswordField #5': {spanX: 2097051, wrap: true}
@@ -78,18 +77,18 @@ componentConstrains:
     spanX: 2097051
     wrap: true
 cellBounds:
-- [0, 0, 480, 23]
-- [0, 33, 115, 32]
-- [121, 33, 351, 32]
-- [121, 33, 351, 32]
-- [0, 75, 115, 30]
-- [121, 75, 359, 30]
-- [121, 111, 359, 16]
+- [0, 0, 480, 22]
+- [0, 32, 109, 22]
+- [115, 32, 357, 22]
+- [115, 32, 357, 22]
+- [0, 64, 109, 23]
+- [115, 64, 365, 23]
+- [115, 93, 365, 16]
 componentBounds:
-  In KeePass: [0, 0, 78, 23]
-  'Database:': [23, 41, 51, 16]
-  'JTextField #2': [121, 33, 326, 32]
-  'JLabel #3': [451, 41, 21, 16]
-  'Master Password:': [23, 81, 92, 16]
-  'JBPasswordField #5': [121, 75, 250, 30]
-  Stored using weak encryption.: [122, 111, 159, 16]
+  In KeePass: [0, -1, 72, 24]
+  'Database:': [17, 35, 51, 16]
+  'JTextField #2': [114, 31, 334, 24]
+  'JLabel #3': [451, 35, 21, 16]
+  'Master Password:': [17, 67, 92, 16]
+  'JBPasswordField #5': [114, 63, 252, 25]
+  Stored using weak encryption.: [116, 93, 159, 16]

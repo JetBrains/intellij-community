@@ -4,6 +4,7 @@ package com.intellij.ui.layout.migLayout
 import com.intellij.ui.components.noteComponent
 import com.intellij.ui.layout.*
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.ui.JBUI
 import net.miginfocom.layout.*
 import net.miginfocom.layout.PlatformDefaults.VISUAL_PADDING_PROPERTY
 import net.miginfocom.layout.PlatformDefaults.setDefaultVisualPadding
@@ -11,6 +12,7 @@ import net.miginfocom.swing.MigLayout
 import java.awt.Component
 import java.awt.Container
 import javax.swing.ButtonGroup
+import javax.swing.JComponent
 import javax.swing.JDialog
 import javax.swing.JLabel
 
@@ -84,6 +86,10 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
   }
 
   override fun build(container: Container, layoutConstraints: Array<out LCFlags>) {
+    if (spacing.isCompensateVisualPaddings) {
+      (container as JComponent).putClientProperty(JBUI.COMPENSATE_VISUAL_PADDING_KEY, false)
+    }
+
     val lc = LC()
     lc.gridGapX = gapToBoundSize(0, true)
     lc.gridGapY = gapToBoundSize(spacing.verticalGap, false)

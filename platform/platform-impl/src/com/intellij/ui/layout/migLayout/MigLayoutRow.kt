@@ -275,7 +275,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     }
 
     val paddings = (border as? VisualPaddingsProvider)?.getVisualPaddings(originalComponent) ?: return
-    originalComponent.putClientProperty(PlatformDefaults.VISUAL_PADDING_PROPERTY, paddings)
+    originalComponent.putClientProperty(PlatformDefaults.VISUAL_PADDING_PROPERTY, intArrayOf(paddings.top, paddings.left, paddings.bottom, paddings.right))
   }
 
   private fun shareCellWithPreviousComponentIfNeed(component: JComponent, componentCC: Lazy<CC>): Boolean {

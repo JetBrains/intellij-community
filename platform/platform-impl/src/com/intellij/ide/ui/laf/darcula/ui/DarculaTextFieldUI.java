@@ -32,7 +32,7 @@ public class DarculaTextFieldUI extends TextFieldWithPopupHandlerUI {
       return JBUI.scale(JBUI.getInt("TextFieldUI.spinnerOrComboboxEditorHeight", 22));
     }
     else {
-      return JBUI.scale(JBUI.isUseCorrectInputHeightOnMacOS(c) ? getMinimumHeightForTextField() : 22) + i.top + i.bottom;
+      return JBUI.scale(JBUI.isUseCorrectInputHeight(c) ? getMinimumHeightForTextField() : 22) + i.top + i.bottom;
     }
   }
 

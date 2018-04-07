@@ -1,11 +1,14 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui;
 
+import com.intellij.ide.ui.laf.VisualPaddingsProvider;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.IconCache;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
@@ -18,8 +21,14 @@ import java.awt.*;
 /**
  * @author Konstantin Bulenkov
  */
-public class DarculaRadioButtonUI extends MetalRadioButtonUI {
+public class DarculaRadioButtonUI extends MetalRadioButtonUI implements VisualPaddingsProvider {
   private static final Icon DEFAULT_ICON = JBUI.scale(EmptyIcon.create(19)).asUIResource();
+
+  @Nullable
+  @Override
+  public Insets getVisualPaddings(@NotNull Component component) {
+    return JBUI.insets(0, 2, 0, 0);
+  }
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {

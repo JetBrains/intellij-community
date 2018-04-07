@@ -1476,8 +1476,8 @@ public class JBUI {
    *
    * Correct input size is used now only for UI DSL.
    */
-  public static boolean isUseCorrectInputHeightOnMacOS(@NotNull Component component) {
-    if (!SystemInfoRt.isMac) {
+  public static boolean isUseCorrectInputHeight(@NotNull Component component) {
+    if (!(SystemInfoRt.isMac || UIUtil.isUnderWin10LookAndFeel())) {
       return false;
     }
 
@@ -1486,6 +1486,6 @@ public class JBUI {
   }
 
   public static boolean isCompensateVisualPaddingOnComponentLevel(@Nullable Component parent) {
-    return !(SystemInfoRt.isMac && parent instanceof JPanel && ((JPanel)parent).getClientProperty(COMPENSATE_VISUAL_PADDING_KEY) == Boolean.FALSE);
+    return !((SystemInfoRt.isMac || UIUtil.isUnderWin10LookAndFeel()) && parent instanceof JPanel && ((JPanel)parent).getClientProperty(COMPENSATE_VISUAL_PADDING_KEY) == Boolean.FALSE);
   }
 }

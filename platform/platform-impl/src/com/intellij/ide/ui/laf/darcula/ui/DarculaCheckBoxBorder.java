@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.plaf.ButtonUI;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
 
@@ -32,23 +33,14 @@ public class DarculaCheckBoxBorder implements Border, UIResource, VisualPaddings
   @Nullable
   @Override
   public Insets getVisualPaddings(@NotNull Component component) {
-    if (component instanceof JRadioButton) {
-      if (((JRadioButton)component).getUI().getClass() == DarculaRadioButtonUI.class) {
-        // darcula
-        return JBUI.insets(0, 2, 0, 0);
-      }
-      else {
-        // mac light
-        return JBUI.insets(3, 3, 2, 0);
+    if (component instanceof AbstractButton) {
+      ButtonUI ui = ((AbstractButton)component).getUI();
+      if (ui instanceof VisualPaddingsProvider) {
+        return ((VisualPaddingsProvider)ui).getVisualPaddings(component);
       }
     }
-    else if (component instanceof JCheckBox && ((JCheckBox)component).getUI().getClass() == DarculaCheckBoxUI.class) {
-      // darcula
-      return JBUI.insets(0, 2, 0, 0);
-    }
-    else {
-      // mac light
-      return JBUI.insets(3, 4, 2, 0);
-    }
+
+    // unrealistic
+    return JBUI.emptyInsets();
   }
 }

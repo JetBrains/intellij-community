@@ -1,9 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.layout
 
-import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.ui.components.Panel
-import com.intellij.util.ui.JBUI
 import javax.swing.JPanel
 
 /**
@@ -23,9 +21,6 @@ inline fun panel(vararg constraints: LCFlags, title: String? = null, init: Layou
   builder.init()
 
   val panel = Panel(title, layout = null)
-  if (SystemInfoRt.isMac) {
-    panel.putClientProperty(JBUI.COMPENSATE_VISUAL_PADDING_KEY, false)
-  }
   builder.builder.build(panel, constraints)
   return panel
 }
