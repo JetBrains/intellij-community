@@ -1177,6 +1177,14 @@ java_library(
 )
 
 java_library(
+    name = "aapt-proto-jarjar",
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    exports = ["//tools/base/sdk-common/aapt-proto-jar-generator:jarjar"],
+    runtime_deps = ["//tools/base/sdk-common/aapt-proto-jar-generator:jarjar"],
+)
+
+java_library(
     name = "aia-manifest-proto-1.0-jarjar",
     tags = ["managed"],
     visibility = ["//visibility:public"],

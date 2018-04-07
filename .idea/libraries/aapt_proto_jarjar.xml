@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="aapt-proto-jarjar">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../../bazel-genfiles/tools/base/sdk-common/aapt-proto-jar-generator/jarjar.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
