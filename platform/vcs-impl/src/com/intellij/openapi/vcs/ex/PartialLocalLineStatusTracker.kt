@@ -21,8 +21,6 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Separator
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.CommandEvent
 import com.intellij.openapi.command.CommandListener
@@ -265,11 +263,7 @@ class PartialLocalLineStatusTracker(project: Project,
     if (!affectedBlocks.isEmpty()) {
       dropExistingUndoActions()
 
-      runInEdt(ModalityState.any()) {
-        for (block in affectedBlocks) {
-          updateHighlighter(block)
-        }
-      }
+      updateHighlighters()
     }
   }
 
@@ -762,10 +756,10 @@ class PartialLocalLineStatusTracker(project: Project,
     assert(blocks.size == states.size)
     blocks.forEachIndexed { i, block ->
       block.marker = idToMarker[states[i].changelistId] ?: defaultMarker
-      updateHighlighter(block)
     }
 
     updateAffectedChangeLists()
+    updateHighlighters()
   }
 
 

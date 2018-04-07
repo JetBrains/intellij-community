@@ -17,7 +17,10 @@ package com.intellij.openapi.vcs.ex;
 
 import com.intellij.diff.util.DiffDrawUtil;
 import com.intellij.diff.util.DiffUtil;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffColors;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -26,27 +29,139 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.Update;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.intellij.diff.util.DiffDrawUtil.lineToY;
+import static com.intellij.diff.util.DiffDrawUtil.yToLine;
+import static com.intellij.openapi.diagnostic.Logger.getInstance;
+import static com.intellij.util.ui.update.MergingUpdateQueue.ANY_COMPONENT;
 
 public abstract class LineStatusMarkerRenderer {
+  private static final Logger LOG = getInstance(LineStatusMarkerRenderer.class);
+
   @NotNull protected final LineStatusTrackerBase<?> myTracker;
+  private final MarkupEditorFilter myEditorFilter;
+
+  @NotNull private final MergingUpdateQueue myUpdateQueue;
+  private boolean myDisposed = false;
+  @NotNull private final RangeHighlighter myHighlighter;
+  @NotNull private final List<RangeHighlighter> myTooltipHighlighters = new ArrayList<>();
 
   public LineStatusMarkerRenderer(@NotNull LineStatusTrackerBase<?> tracker) {
     myTracker = tracker;
+    myEditorFilter = getEditorFilter();
+
+    Document document = myTracker.getDocument();
+    MarkupModel markupModel = DocumentMarkupModel.forDocument(document, myTracker.getProject(), true);
+    myHighlighter = markupModel.addRangeHighlighter(0, document.getTextLength(), DiffDrawUtil.LST_LINE_MARKER_LAYER, null,
+                                                    HighlighterTargetArea.LINES_IN_RANGE);
+    myHighlighter.setGreedyToLeft(true);
+    myHighlighter.setGreedyToRight(true);
+
+    myHighlighter.setLineMarkerRenderer(new MyActiveGutterRenderer());
+
+    if (myEditorFilter != null) myHighlighter.setEditorFilter(myEditorFilter);
+
+    myUpdateQueue = new MergingUpdateQueue("LineStatusMarkerRenderer", 100, true, ANY_COMPONENT, myTracker.getDisposable());
+
+    Disposer.register(myTracker.getDisposable(), new Disposable() {
+      @Override
+      public void dispose() {
+        myDisposed = true;
+        destroyHighlighters();
+      }
+    });
+
+    scheduleUpdate();
   }
 
+  public void scheduleUpdate() {
+    myUpdateQueue.queue(new Update("update") {
+      @Override
+      public void run() {
+        updateHighlighters();
+      }
+    });
+  }
 
-  protected boolean canDoAction(@NotNull Range range, MouseEvent e) {
+  @CalledInAwt
+  private void updateHighlighters() {
+    if (myDisposed) return;
+
+    for (RangeHighlighter highlighter: myTooltipHighlighters) {
+      disposeHighlighter(highlighter);
+    }
+    myTooltipHighlighters.clear();
+
+    List<? extends Range> ranges = myTracker.getRanges();
+    if (ranges != null) {
+      MarkupModel markupModel = DocumentMarkupModel.forDocument(myTracker.getDocument(), myTracker.getProject(), true);
+      for (Range range: ranges) {
+        RangeHighlighter highlighter = createTooltipRangeHighlighter(range, markupModel);
+        if (myEditorFilter != null) highlighter.setEditorFilter(myEditorFilter);
+        myTooltipHighlighters.add(highlighter);
+      }
+    }
+  }
+
+  private void destroyHighlighters() {
+    disposeHighlighter(myHighlighter);
+
+    for (RangeHighlighter highlighter: myTooltipHighlighters) {
+      disposeHighlighter(highlighter);
+    }
+    myTooltipHighlighters.clear();
+  }
+
+  private static void disposeHighlighter(@NotNull RangeHighlighter highlighter) {
+    try {
+      highlighter.dispose();
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
+  }
+
+  private boolean canDoAction(@NotNull Editor editor, MouseEvent e) {
+    Range range = getSelectedRange(editor, e);
+    return range != null && canDoAction(editor, range, e);
+  }
+
+  private void doAction(@NotNull Editor editor, MouseEvent e) {
+    Range range = getSelectedRange(editor, e);
+    if (range != null) {
+      doAction(editor, range, e);
+    }
+  }
+
+  @Nullable
+  private Range getSelectedRange(@NotNull Editor editor, MouseEvent e) {
+    int line = yToLine(editor, e.getY());
+    Range range = myTracker.getRangeForLine(line);
+    if (range != null) return range;
+
+    // special handling for deletion at the end of file
+    int lineCount = DiffUtil.getLineCount(editor.getDocument());
+    if (line == lineCount - 1) {
+      return myTracker.getRangeForLine(lineCount);
+    }
+    return null;
+  }
+
+  protected boolean canDoAction(@NotNull Editor editor, @NotNull Range range, MouseEvent e) {
     return false;
   }
 
@@ -62,24 +177,9 @@ public abstract class LineStatusMarkerRenderer {
     return 0;
   }
 
-
   @NotNull
-  RangeHighlighter createHighlighter(@NotNull Range range) {
-    MarkupModel markupModel = DocumentMarkupModel.forDocument(myTracker.getDocument(), myTracker.getProject(), true);
-    RangeHighlighter highlighter = createRangeHighlighter(range, markupModel);
-
-    MarkupEditorFilter editorFilter = getEditorFilter();
-    if (editorFilter != null) highlighter.setEditorFilter(editorFilter);
-
-    highlighter.setLineMarkerRenderer(new MyActiveGutterRenderer(range));
-
-    return highlighter;
-  }
-
-
-  @NotNull
-  public static RangeHighlighter createRangeHighlighter(@NotNull Range range,
-                                                        @NotNull MarkupModel markupModel) {
+  public static RangeHighlighter createTooltipRangeHighlighter(@NotNull Range range,
+                                                               @NotNull MarkupModel markupModel) {
     TextRange textRange = DiffUtil.getLinesRange(markupModel.getDocument(), range.getLine1(), range.getLine2(), false);
     TextAttributes attributes = getTextAttributes(range);
 
@@ -94,9 +194,8 @@ public abstract class LineStatusMarkerRenderer {
     return highlighter;
   }
 
-
   @NotNull
-  private static TextAttributes getTextAttributes(@NotNull final Range range) {
+  private static TextAttributes getTextAttributes(@NotNull Range range) {
     return new TextAttributes() {
       @Override
       public Color getErrorStripeColor() {
@@ -108,6 +207,21 @@ public abstract class LineStatusMarkerRenderer {
   //
   // Gutter painting
   //
+
+  protected void paint(@NotNull Editor editor, @NotNull Graphics g) {
+    List<? extends Range> ranges = myTracker.getRanges();
+    if (ranges == null) return;
+
+    Rectangle area = editor.getScrollingModel().getVisibleArea();
+    int line1 = yToLine(editor, area.y);
+    int line2 = yToLine(editor, area.y + area.height);
+
+    for (Range range : ranges) {
+      if (range.getLine2() < line1) continue;
+      if (range.getLine1() > line2) return;
+      paint(editor, range, g);
+    }
+  }
 
   protected void paint(@NotNull Editor editor, @NotNull Range range, @NotNull Graphics g) {
     paintRange(g, editor, range, getFramingBorderSize());
@@ -322,25 +436,19 @@ public abstract class LineStatusMarkerRenderer {
 
 
   private class MyActiveGutterRenderer implements ActiveGutterRenderer {
-    @NotNull private final Range myRange;
-
-    public MyActiveGutterRenderer(@NotNull Range range) {
-      myRange = range;
-    }
-
     @Override
     public void paint(Editor editor, Graphics g, Rectangle r) {
-      LineStatusMarkerRenderer.this.paint(editor, myRange, g);
+      LineStatusMarkerRenderer.this.paint(editor, g);
     }
 
     @Override
-    public boolean canDoAction(MouseEvent e) {
-      return LineStatusMarkerRenderer.this.canDoAction(myRange, e);
+    public boolean canDoAction(Editor editor, MouseEvent e) {
+      return LineStatusMarkerRenderer.this.canDoAction(editor, e);
     }
 
     @Override
     public void doAction(Editor editor, MouseEvent e) {
-      LineStatusMarkerRenderer.this.doAction(editor, myRange, e);
+      LineStatusMarkerRenderer.this.doAction(editor, e);
     }
   }
 }

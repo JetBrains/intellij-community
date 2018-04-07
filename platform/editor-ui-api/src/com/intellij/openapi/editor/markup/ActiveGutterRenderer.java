@@ -45,5 +45,11 @@ public interface ActiveGutterRenderer extends LineMarkerRenderer {
    */
   void doAction(Editor editor, MouseEvent e);
 
-  boolean canDoAction(final MouseEvent e);
+  default boolean canDoAction(Editor editor, MouseEvent e) {
+    return canDoAction(e);
+  }
+
+  default boolean canDoAction(final MouseEvent e) {
+    return false;
+  }
 }

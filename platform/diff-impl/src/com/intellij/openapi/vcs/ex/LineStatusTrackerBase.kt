@@ -26,9 +26,7 @@ import com.intellij.openapi.command.undo.UndoConstants
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.impl.DocumentImpl
-import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.localVcs.UpToDateLineNumberProvider.ABSENT_LINE_NUMBER
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.VcsBundle
@@ -166,7 +164,6 @@ abstract class LineStatusTrackerBase<R : Range> {
       if (isReleased) return@Runnable
       isReleased = true
 
-      updateHighlighters()
       Disposer.dispose(disposable)
     }
 
@@ -180,10 +177,6 @@ abstract class LineStatusTrackerBase<R : Range> {
 
 
   protected open inner class MyDocumentTrackerHandler : DocumentTracker.Handler {
-    override fun onRangeRemoved(block: Block) {
-      destroyHighlighter(block)
-    }
-
     override fun onRangeShifted(before: Block, after: Block) {
       after.ourData.innerRanges = before.ourData.innerRanges
     }
@@ -191,22 +184,22 @@ abstract class LineStatusTrackerBase<R : Range> {
     override fun afterRefresh() {
       checkIfFileUnchanged()
       calcInnerRanges()
-      installMissingHighlighters()
+      updateHighlighters()
     }
 
     override fun afterRangeChange() {
-      installMissingHighlighters()
+      updateHighlighters()
     }
 
     override fun afterExplicitChange() {
       checkIfFileUnchanged()
       calcInnerRanges()
-      installMissingHighlighters()
+      updateHighlighters()
     }
 
     override fun onUnfreeze(side: Side) {
       calcInnerRanges()
-      installMissingHighlighters()
+      updateHighlighters()
     }
 
     private fun checkIfFileUnchanged() {
@@ -221,15 +214,8 @@ abstract class LineStatusTrackerBase<R : Range> {
         for (block in blocks) {
           if (block.ourData.innerRanges == null) {
             block.ourData.innerRanges = calcInnerRanges(block)
-            destroyHighlighter(block)
           }
         }
-      }
-    }
-
-    private fun installMissingHighlighters() {
-      for (block in blocks) {
-        installHighlighter(block)
       }
     }
   }
@@ -241,21 +227,8 @@ abstract class LineStatusTrackerBase<R : Range> {
                              vcsDocument.lineOffsets, document.lineOffsets)
   }
 
-  @CalledInAwt
   protected fun updateHighlighters() {
-    LOCK.write {
-      for (block in blocks) {
-        updateHighlighter(block)
-      }
-    }
-  }
-
-  @CalledInAwt
-  protected fun updateHighlighter(block: Block) {
-    LOCK.write {
-      destroyHighlighter(block)
-      installHighlighter(block)
-    }
+    renderer.scheduleUpdate()
   }
 
   @CalledInAwt
@@ -273,32 +246,6 @@ abstract class LineStatusTrackerBase<R : Range> {
       }
 
       updateHighlighters()
-    }
-  }
-
-  @CalledInAwt
-  private fun installHighlighter(block: Block) {
-    if (block.ourData.rangeHighlighter != null) return
-    if (!isValid() || block.range.isEmpty) return
-    try {
-      block.ourData.rangeHighlighter = renderer.createHighlighter(block.toRange())
-    }
-    catch (ignore: ProcessCanceledException) {
-    }
-    catch (e: Exception) {
-      LOG.error(e)
-    }
-  }
-
-  @CalledInAwt
-  private fun destroyHighlighter(block: Block) {
-    val highlighter = block.ourData.rangeHighlighter ?: return
-    try {
-      block.ourData.rangeHighlighter = null
-      highlighter.dispose()
-    }
-    catch (e: Exception) {
-      LOG.error(e)
     }
   }
 
@@ -456,8 +403,7 @@ abstract class LineStatusTrackerBase<R : Range> {
   }
 
 
-  protected open class BlockData(internal var innerRanges: List<Range.InnerRange>? = null,
-                                 internal var rangeHighlighter: RangeHighlighter? = null)
+  protected open class BlockData(internal var innerRanges: List<Range.InnerRange>? = null)
 
   open protected fun createBlockData(): BlockData = BlockData()
   open protected val Block.ourData: BlockData get() = getBlockData(this)

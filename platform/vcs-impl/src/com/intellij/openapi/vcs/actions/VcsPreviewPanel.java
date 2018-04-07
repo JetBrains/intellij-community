@@ -123,7 +123,7 @@ class VcsPreviewPanel implements PreviewPanel {
   }
 
   private void addHighlighter(@NotNull Range range, @NotNull ColorKey colorKey) {
-    RangeHighlighter highlighter = LineStatusMarkerRenderer.createRangeHighlighter(range, myEditor.getMarkupModel());
+    RangeHighlighter highlighter = LineStatusMarkerRenderer.createTooltipRangeHighlighter(range, myEditor.getMarkupModel());
     highlighter.setLineMarkerRenderer(new ActiveGutterRenderer() {
       @Override
       public void paint(Editor editor, Graphics g, Rectangle r) {
