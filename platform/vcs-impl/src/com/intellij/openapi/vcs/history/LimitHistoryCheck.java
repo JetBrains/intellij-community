@@ -19,16 +19,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
+import org.jetbrains.annotations.NotNull;
 
 public class LimitHistoryCheck {
-  private final Project myProject;
-  private final String myFilePath;
+  @NotNull private final Project myProject;
+  @NotNull private final String myFilePath;
   private int myLimit;
-  private int myCnt;
+  private int myCount;
   private boolean myWarningShown;
-  private boolean myOver;
 
-  public LimitHistoryCheck(final Project project, String filePath) {
+  public LimitHistoryCheck(@NotNull Project project, @NotNull String filePath) {
     myProject = project;
     myFilePath = filePath;
     myWarningShown = false;
@@ -36,18 +36,19 @@ public class LimitHistoryCheck {
   }
 
   private void init() {
-    final VcsConfiguration configuration = VcsConfiguration.getInstance(myProject);
+    VcsConfiguration configuration = VcsConfiguration.getInstance(myProject);
     myLimit = configuration.LIMIT_HISTORY ? configuration.MAXIMUM_HISTORY_ROWS : -1;
-    myCnt = 0;
+    myCount = 0;
   }
 
   public void checkNumber() {
     if (myLimit <= 0) return;
-    ++ myCnt;
+    ++myCount;
     if (isOver()) {
-      if (! myWarningShown) {
-        VcsBalloonProblemNotifier.showOverChangesView(myProject, "File History: only " + myLimit + " revisions were loaded for " + myFilePath +
-          "\nTo change the history limit, go to Settings | Version Control.", MessageType.WARNING);
+      if (!myWarningShown) {
+        VcsBalloonProblemNotifier
+          .showOverChangesView(myProject, "File History: only " + myLimit + " revisions were loaded for " + myFilePath +
+                                          "\nTo change the history limit, go to Settings | Version Control.", MessageType.WARNING);
         myWarningShown = true;
       }
       throw new VcsFileHistoryLimitReachedException();
@@ -59,7 +60,7 @@ public class LimitHistoryCheck {
   }
 
   public boolean isOver() {
-    return isOver(myCnt);
+    return isOver(myCount);
   }
 
   public boolean isOver(int count) {
