@@ -970,7 +970,7 @@ public class JBUI {
     public static ScaleContext create(@Nullable Component component, @Nullable Graphics graphics) {
       // Component is preferable to Graphics as a scale provider, as it lets the context stick
       // to the comp's actual scale via the update method.
-      if (component == null || component.getGraphicsConfiguration() == null) {
+      if (component == null || (component.getGraphicsConfiguration() == null && graphics instanceof Graphics2D)) {
         return create((Graphics2D)graphics);
       }
       else {
