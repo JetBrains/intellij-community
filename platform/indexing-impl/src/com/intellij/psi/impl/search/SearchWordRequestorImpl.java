@@ -62,17 +62,18 @@ final class SearchWordRequestorImpl implements SearchWordRequestor {
     });
   }
 
-  @Override
+  // TODO pull up to interface ?
   public void searchRequests(@NotNull TextOccurenceProcessor processor) {
     mySession.searchWord(createRequests(this), processor);
   }
 
   @Override
   public void search(@NotNull ModelElement target) {
-    setTargetHint(target).search(processor -> new SingleTargetOccurenceProcessor(target, processor));
+    setTargetHint(target);
+    search(processor -> new SingleTargetOccurenceProcessor(target, processor));
   }
 
-  @Override
+  // TODO pull up to interface ?
   public void search(@NotNull TextOccurenceProcessorProvider f) {
     mySession.searchWord(createRequests(this), f);
   }

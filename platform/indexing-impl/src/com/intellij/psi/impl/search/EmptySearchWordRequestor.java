@@ -4,8 +4,6 @@ package com.intellij.psi.impl.search;
 import com.intellij.model.ModelElement;
 import com.intellij.model.search.OccurenceSearchRequestor;
 import com.intellij.model.search.SearchWordRequestor;
-import com.intellij.model.search.TextOccurenceProcessorProvider;
-import com.intellij.psi.search.TextOccurenceProcessor;
 import org.jetbrains.annotations.NotNull;
 
 final class EmptySearchWordRequestor implements SearchWordRequestor {
@@ -31,13 +29,7 @@ final class EmptySearchWordRequestor implements SearchWordRequestor {
   }
 
   @Override
-  public void searchRequests(@NotNull TextOccurenceProcessor processor) {}
-
-  @Override
   public void searchRequests(@NotNull OccurenceSearchRequestor occurenceSearchRequestor) {}
-
-  @Override
-  public void search(@NotNull TextOccurenceProcessorProvider f) {}
 
   @Override
   public void search(@NotNull ModelElement target) {}
