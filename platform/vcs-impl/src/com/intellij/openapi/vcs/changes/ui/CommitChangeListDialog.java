@@ -298,6 +298,22 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     myAllOfDefaultChangeListChangesIncluded = newHashSet(changes).containsAll(newHashSet(defaultChangeList.getChanges()));
 
+    myHandlers.addAll(createCheckinHandlers(project, this, myCommitContext));
+
+    setTitle(myShowVcsCommit ? TITLE : trimEllipsis(executors.get(0).getActionText()));
+    myCommitActionName = getCommitActionName(myAffectedVcses);
+    myExecutorActions = createExecutorActions(executors);
+    if (myShowVcsCommit) {
+      myCommitAction = new CommitAction(myCommitActionName);
+      myCommitAction.setOptions(myExecutorActions);
+    }
+    else {
+      myCommitAction = null;
+      myExecutorActions.get(0).putValue(DEFAULT_ACTION, Boolean.TRUE);
+    }
+    myHelpId = myShowVcsCommit ? HELP_ID : getHelpId(executors);
+
+
     myCommitMessageArea = new CommitMessage(project, true, true, myShowVcsCommit);
 
     if (myIsAlien) {
@@ -353,22 +369,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       setComment(initialSelection, comment);
     }
 
-    myHandlers.addAll(createCheckinHandlers(project, this, myCommitContext));
     myCommitOptions = new CommitOptionsPanel(this, myHandlers, getAffectedVcses());
     restoreState();
-
-    setTitle(myShowVcsCommit ? TITLE : trimEllipsis(executors.get(0).getActionText()));
-    myCommitActionName = getCommitActionName(myAffectedVcses);
-    myExecutorActions = createExecutorActions(executors);
-    if (myShowVcsCommit) {
-      myCommitAction = new CommitAction(myCommitActionName);
-      myCommitAction.setOptions(myExecutorActions);
-    }
-    else {
-      myCommitAction = null;
-      myExecutorActions.get(0).putValue(DEFAULT_ACTION, Boolean.TRUE);
-    }
-    myHelpId = myShowVcsCommit ? HELP_ID : getHelpId(executors);
 
     myWarningLabel = new JBLabel();
     myWarningLabel.setForeground(JBColor.RED);
