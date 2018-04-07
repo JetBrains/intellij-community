@@ -17,7 +17,6 @@ package com.intellij.openapi.vcs.history;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -25,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.ItemLatestState;
+import com.intellij.openapi.vcs.history.LimitHistoryCheck.VcsFileHistoryLimitReachedException;
 import com.intellij.openapi.vcs.impl.BackgroundableActionLock;
 import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -93,8 +93,7 @@ public class VcsHistoryProviderBackgroundableProxy {
             try {
               myHistoryProvider.reportAppendableHistory(filePath, partner);
             }
-            catch (ProcessCanceledException e) {
-              if (!check.isOver()) throw e;
+            catch (VcsFileHistoryLimitReachedException ignored) {
             }
             session = partner.getSession();
             if (factory != null) {
@@ -222,6 +221,8 @@ public class VcsHistoryProviderBackgroundableProxy {
           else {
             myHistoryProvider.reportAppendableHistory(filePath, partner);
           }
+        }
+        catch (VcsFileHistoryLimitReachedException ignored) {
         }
         catch (VcsException e) {
           partner.reportException(e);

@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs.history;
 
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vcs.VcsConfiguration;
@@ -51,7 +50,7 @@ public class LimitHistoryCheck {
           "\nTo change the history limit, go to Settings | Version Control.", MessageType.WARNING);
         myWarningShown = true;
       }
-      throw new ProcessCanceledException();
+      throw new VcsFileHistoryLimitReachedException();
     }
   }
 
@@ -61,5 +60,8 @@ public class LimitHistoryCheck {
 
   public boolean isOver() {
     return myLimit > 0 && myLimit < myCnt;
+  }
+
+  public static class VcsFileHistoryLimitReachedException extends RuntimeException {
   }
 }
