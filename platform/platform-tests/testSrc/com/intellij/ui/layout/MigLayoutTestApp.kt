@@ -2,6 +2,7 @@
 package com.intellij.ui.layout
 
 import com.intellij.ide.ui.laf.IntelliJLaf
+import com.intellij.ide.ui.laf.darcula.DarculaLaf
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.ui.components.dialog
@@ -28,8 +29,8 @@ object MigLayoutTestApp {
 
     runInEdtAndWait {
       UIManager.setLookAndFeel(MetalLookAndFeel())
-      UIManager.setLookAndFeel(IntelliJLaf())
-//      UIManager.setLookAndFeel(DarculaLaf())
+//      UIManager.setLookAndFeel(IntelliJLaf())
+      UIManager.setLookAndFeel(DarculaLaf())
 
 //      val panel = visualPaddingsPanelOnlyButton()
 //      val panel = visualPaddingsPanelOnlyComboBox()

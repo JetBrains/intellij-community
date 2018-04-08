@@ -19,7 +19,7 @@ fun createIntelliJSpacingConfiguration(): SpacingConfiguration {
   return object : SpacingConfiguration {
     override val labelColumnVerticalTopGap = JBUI.scale(labelColumnVerticalTopGap)
 
-    override val isCompensateVisualPaddings = SystemInfoRt.isMac || isUnderWin10LookAndFeel
+    override val isCompensateVisualPaddings = !SystemInfoRt.isLinux
 
     override val horizontalGap = JBUI.scale(8)
     override val verticalGap = JBUI.scale(5 * 2)

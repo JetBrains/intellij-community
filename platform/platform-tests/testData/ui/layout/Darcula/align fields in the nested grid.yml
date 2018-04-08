@@ -12,7 +12,6 @@ layoutConstraints:
   - {horizontal: true, unit: 0, value: 0.0}
   - {horizontal: false, unit: 0, value: 0.0}
   - {horizontal: true, unit: 0, value: 0.0}
-  visualPadding: false
 rowConstraints:
   constraints:
   - align: {horizontal: false, unit: 6, value: 0.0}
@@ -41,7 +40,7 @@ componentConstrains:
   'Database:':
     horizontal:
       gapBefore:
-        min: &id006 {horizontal: true, value: 23.0}
+        min: &id006 {horizontal: true, value: 21.0}
         preferred: *id006
     vertical:
       gapBefore:
@@ -61,7 +60,7 @@ componentConstrains:
   'Master Password:':
     horizontal:
       gapBefore:
-        min: &id009 {horizontal: true, value: 23.0}
+        min: &id009 {horizontal: true, value: 21.0}
         preferred: *id009
     vertical:
       gapBefore:
@@ -78,18 +77,18 @@ componentConstrains:
     spanX: 2097051
     wrap: true
 cellBounds:
-- [0, 0, 480, 23]
-- [0, 33, 115, 32]
-- [121, 33, 351, 32]
-- [121, 33, 351, 32]
-- [0, 75, 115, 30]
-- [121, 75, 359, 30]
-- [121, 111, 359, 16]
+- [0, 0, 480, 24]
+- [0, 34, 113, 24]
+- [119, 34, 353, 24]
+- [119, 34, 353, 24]
+- [0, 68, 113, 25]
+- [119, 68, 361, 25]
+- [119, 99, 361, 16]
 componentBounds:
-  In KeePass: [0, 0, 78, 23]
-  'Database:': [23, 41, 51, 16]
-  'JTextField #2': [121, 33, 326, 32]
-  'JLabel #3': [451, 41, 21, 16]
-  'Master Password:': [23, 81, 92, 16]
-  'JBPasswordField #5': [121, 75, 250, 30]
-  Stored using weak encryption.: [122, 111, 159, 16]
+  In KeePass: [-2, 0, 78, 24]
+  'Database:': [21, 38, 51, 16]
+  'JTextField #2': [117, 32, 332, 28]
+  'JLabel #3': [451, 38, 21, 16]
+  'Master Password:': [21, 72, 92, 16]
+  'JBPasswordField #5': [117, 67, 254, 28]
+  Stored using weak encryption.: [120, 99, 159, 16]

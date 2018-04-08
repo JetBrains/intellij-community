@@ -456,6 +456,10 @@ public class AppUIUtil {
   public static void targetToDevice(@NotNull Component comp, @Nullable Component target) {
     if (comp.isShowing()) return;
     GraphicsConfiguration gc = target != null ? target.getGraphicsConfiguration() : null;
+    setGraphicsConfiguration(comp, gc);
+  }
+
+  public static void setGraphicsConfiguration(@NotNull Component comp, @Nullable GraphicsConfiguration gc) {
     AWTAccessor.getComponentAccessor().setGraphicsConfiguration(comp, gc);
   }
 }

@@ -13,12 +13,10 @@ import org.apache.batik.svggen.ImageHandlerBase64Encoder
 import org.apache.batik.svggen.SVGGeneratorContext
 import org.apache.batik.svggen.SVGGraphics2D
 import org.apache.batik.svggen.SVGSyntax
-import org.apache.xmlgraphics.java2d.GraphicsConfigurationWithTransparency
 import org.w3c.dom.Element
 import java.awt.Component
 import java.awt.GraphicsConfiguration
 import java.awt.Image
-import java.awt.Rectangle
 import java.io.StringWriter
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -28,13 +26,8 @@ import javax.xml.transform.dom.DOMSource
 import javax.xml.transform.stream.StreamResult
 
 // jFreeSvg produces not so compact and readable SVG as batik
-internal class SvgRenderer(val svgFileDir: Path) {
+internal class SvgRenderer(val svgFileDir: Path, private val deviceConfiguration: GraphicsConfiguration) {
   private val xmlTransformer = TransformerFactory.newInstance().newTransformer()
-
-  // todo check on Retina - does it works or not (is Retina disabled or not)
-  val deviceConfiguration = object : GraphicsConfigurationWithTransparency() {
-    override fun getBounds() = Rectangle(0, 0, 1000, 1000)
-  }
 
   private val xmlFactory = GenericDOMImplementation.getDOMImplementation().createDocument(SVGDOMImplementation.SVG_NAMESPACE_URI, "svg", null)
   private val context = SVGGeneratorContext.createDefault(xmlFactory)
@@ -84,8 +77,8 @@ internal class SvgRenderer(val svgFileDir: Path) {
       val index = outputPath.indexOf(moduleName)
       if (index > 0) {
         return FileUtilRt.toSystemIndependentName(svgFileDir
-          .relativize(Paths.get(PathManagerEx.getCommunityHomePath(), relativePath, outputPath.substring(index + moduleName.length + 1 /* slash */)))
-          .toString())
+                                                    .relativize(Paths.get(PathManagerEx.getCommunityHomePath(), relativePath, outputPath.substring(index + moduleName.length + 1 /* slash */)))
+                                                    .toString())
       }
     }
 

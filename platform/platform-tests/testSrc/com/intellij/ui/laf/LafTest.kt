@@ -6,7 +6,9 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
-import com.intellij.ui.*
+import com.intellij.ui.JBIntSpinner
+import com.intellij.ui.UiTestRule
+import com.intellij.ui.changeLafIfNeed
 import com.intellij.ui.components.CheckBox
 import com.intellij.ui.components.textFieldWithHistoryWithBrowseButton
 import com.intellij.ui.layout.*
@@ -34,7 +36,7 @@ class LafTest {
 
     @JvmField
     @ClassRule
-    val requireHeadlessMode = RequireHeadlessMode()
+    val uiRule = UiTestRule(Paths.get(PlatformTestUtil.getPlatformTestDataPath(), "ui", "laf"))
   }
 
   @Suppress("MemberVisibilityCanBePrivate")
@@ -77,7 +79,7 @@ class LafTest {
 
   private fun doTest(panelCreator: () -> JPanel) {
     invokeAndWaitIfNeed {
-      validatePanel(panelCreator(), Paths.get(PlatformTestUtil.getPlatformTestDataPath(), "ui", "laf"), testName.snapshotFileName, lafName)
+      uiRule.validate(panelCreator(), testName, lafName)
     }
   }
 }

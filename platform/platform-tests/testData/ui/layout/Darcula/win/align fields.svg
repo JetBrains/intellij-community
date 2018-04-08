@@ -8,19 +8,19 @@
         <path d="M0 0 L480 0 L480 320 L0 320 L0 0 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="clipPath2">
-        <path d="M0 0 L0 32 L350 32 L350 0 Z"/>
+        <path d="M0 0 L0 28 L352 28 L352 0 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="clipPath3">
-        <path d="M-1 -1 L-1 31 L349 31 L349 -1 Z"/>
+        <path d="M-1 -1 L-1 27 L351 27 L351 -1 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="clipPath4">
-        <path d="M9 5 L9 27 L341 27 L341 5 Z"/>
+        <path d="M9 2 L9 26 L345 26 L345 2 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="clipPath5">
         <path d="M0 0 L0 16 L123 16 L123 0 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="clipPath6">
-        <path d="M0 0 L0 22 L146 22 L146 0 Z"/>
+        <path d="M0 0 L0 24 L146 24 L146 0 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="clipPath7">
         <path d="M0 0 L0 16 L124 16 L124 0 Z"/>
@@ -29,26 +29,26 @@
     <g fill="rgb(60,63,65)" font-family="'Segoe UI'" stroke="rgb(60,63,65)">
       <rect x="0" width="480" height="320" y="0" clip-path="url(#clipPath1)" stroke="none"/>
     </g>
-    <g fill="rgb(60,63,65)" font-family="'Segoe UI'" transform="translate(130,32)" stroke="rgb(60,63,65)">
-      <rect x="0" width="350" height="32" y="0" clip-path="url(#clipPath2)" stroke="none"/>
+    <g fill="rgb(60,63,65)" font-family="'Segoe UI'" transform="translate(128,32)" stroke="rgb(60,63,65)">
+      <rect x="0" width="354" height="28" y="0" clip-path="url(#clipPath2)" stroke="none"/>
     </g>
-    <g fill="rgb(69,73,74)" text-rendering="optimizeLegibility" font-family="'Segoe UI'" transform="translate(131,33)" stroke="rgb(69,73,74)">
-      <rect x="2" y="2" clip-path="url(#clipPath3)" width="344" rx="0" ry="0" height="26" stroke="none"/>
+    <g fill="rgb(69,73,74)" text-rendering="optimizeLegibility" font-family="'Segoe UI'" transform="translate(129,33)" stroke="rgb(69,73,74)">
+      <rect x="2" y="2" clip-path="url(#clipPath3)" width="348" rx="0" ry="0" height="22" stroke="none"/>
     </g>
-    <g fill="rgb(187,187,187)" font-family="'Segoe UI'" transform="translate(130,32)" stroke="rgb(187,187,187)">
-      <text x="9" xml:space="preserve" y="21" clip-path="url(#clipPath4)" stroke="none">input</text>
+    <g fill="rgb(187,187,187)" font-family="'Segoe UI'" transform="translate(128,32)" stroke="rgb(187,187,187)">
+      <text x="9" xml:space="preserve" y="19" clip-path="url(#clipPath4)" stroke="none">input</text>
     </g>
-    <g fill="rgb(100,100,100)" text-rendering="optimizeLegibility" font-family="'Segoe UI'" transform="translate(131,33)" stroke="rgb(100,100,100)">
-      <path d="M2 2 L346 2 L346 28 L2 28 L2 2 ZM3 3 L345 3 L345 27 L3 27 L3 3 Z" fill-rule="evenodd" clip-path="url(#clipPath3)" stroke="none"/>
+    <g fill="rgb(100,100,100)" text-rendering="optimizeLegibility" font-family="'Segoe UI'" transform="translate(128,32)" stroke="rgb(100,100,100)">
+      <path d="M2 2 L352 2 L352 26 L2 26 L2 2 ZM3 3 L351 3 L351 25 L3 25 L3 3 Z" fill-rule="evenodd" clip-path="url(#clipPath2)" stroke="none"/>
     </g>
-    <g fill="rgb(187,187,187)" font-family="'Segoe UI'" transform="translate(0,36)" stroke="rgb(187,187,187)">
+    <g fill="rgb(187,187,187)" font-family="'Segoe UI'" transform="translate(0,38)" stroke="rgb(187,187,187)">
       <text x="0" xml:space="preserve" y="13" clip-path="url(#clipPath5)" stroke="none">Android module name:</text>
     </g>
-    <g fill="rgb(60,63,65)" font-family="'Segoe UI'" transform="translate(130,0)" stroke="rgb(60,63,65)">
-      <rect x="0" width="146" height="22" y="0" clip-path="url(#clipPath6)" stroke="none"/>
-      <rect x="0" width="146" height="22" y="0" clip-path="url(#clipPath6)" stroke="none"/>
-      <image x="0" y="2" clip-path="url(#clipPath6)" width="18" xlink:href="../../../../../../platform-impl/src/com/intellij/ide/ui/laf/icons/darcula/checkBox.png" height="18" preserveAspectRatio="none"/>
-      <text fill="rgb(187,187,187)" x="23" xml:space="preserve" y="16" clip-path="url(#clipPath6)" stroke="none">Android module name:</text>
+    <g fill="rgb(60,63,65)" font-family="'Segoe UI'" transform="translate(128,0)" stroke="rgb(60,63,65)">
+      <rect x="0" width="146" height="24" y="0" clip-path="url(#clipPath6)" stroke="none"/>
+      <rect x="0" width="146" height="24" y="0" clip-path="url(#clipPath6)" stroke="none"/>
+      <image x="0" y="3" clip-path="url(#clipPath6)" width="18" xlink:href="../../../../../../platform-impl/src/com/intellij/ide/ui/laf/icons/darcula/checkBox.png" height="18" preserveAspectRatio="none"/>
+      <text fill="rgb(187,187,187)" x="23" xml:space="preserve" y="17" clip-path="url(#clipPath6)" stroke="none">Android module name:</text>
     </g>
     <g fill="rgb(187,187,187)" font-family="'Segoe UI'" transform="translate(0,4)" stroke="rgb(187,187,187)">
       <text x="0" xml:space="preserve" y="13" clip-path="url(#clipPath7)" stroke="none">Create Android module</text>

@@ -563,7 +563,7 @@ public class JBUI {
    * An equivalent of {@code isHiDPI(scale(1f))}
    */
   public static boolean isUsrHiDPI() {
-      return isHiDPI(scale(1f));
+    return isHiDPI(scale(1f));
   }
 
   /**
@@ -1477,7 +1477,7 @@ public class JBUI {
    * Correct input size is used now only for UI DSL.
    */
   public static boolean isUseCorrectInputHeight(@NotNull Component component) {
-    if (!(SystemInfoRt.isMac || UIUtil.isUnderWin10LookAndFeel())) {
+    if (SystemInfoRt.isLinux) {
       return false;
     }
 
@@ -1486,6 +1486,6 @@ public class JBUI {
   }
 
   public static boolean isCompensateVisualPaddingOnComponentLevel(@Nullable Component parent) {
-    return !((SystemInfoRt.isMac || UIUtil.isUnderWin10LookAndFeel()) && parent instanceof JPanel && ((JPanel)parent).getClientProperty(COMPENSATE_VISUAL_PADDING_KEY) == Boolean.FALSE);
+    return SystemInfoRt.isLinux || !(parent instanceof JPanel && ((JPanel)parent).getClientProperty(COMPENSATE_VISUAL_PADDING_KEY) == Boolean.FALSE);
   }
 }

@@ -12,7 +12,6 @@ layoutConstraints:
   - {horizontal: true, unit: 0, value: 0.0}
   - {horizontal: false, unit: 0, value: 0.0}
   - {horizontal: true, unit: 0, value: 0.0}
-  visualPadding: false
 rowConstraints:
   constraints:
   - align: {horizontal: false, unit: 6, value: 0.0}
@@ -53,7 +52,7 @@ componentConstrains:
   Use File -> Settings Repository... to configure:
     horizontal:
       gapBefore:
-        min: &id008 {horizontal: true, value: 4.0}
+        min: &id008 {horizontal: true, value: 1.0}
         preferred: *id008
     skip: 1
     spanX: 2097051
@@ -65,14 +64,14 @@ componentConstrains:
     vertical: {grow: 100.0}
     wrap: true
 cellBounds:
-- [0, 0, 59, 30]
-- [65, 0, 407, 30]
-- [65, 0, 407, 30]
-- [65, 36, 415, 16]
-- [0, 62, 480, 248]
+- [0, 0, 59, 24]
+- [65, 0, 407, 24]
+- [65, 0, 407, 24]
+- [65, 30, 415, 16]
+- [0, 56, 480, 254]
 componentBounds:
   'Repository:': [0, 4, 59, 16]
-  'ComboBox #1': [65, 0, 41, 30]
-  Delete: [114, 0, 78, 30]
-  Use File -> Settings Repository... to configure: [69, 36, 237, 16]
-  'JBScrollPane #4': [0, 62, 480, 248]
+  'ComboBox #1': [62, -3, 41, 30]
+  Delete: [105, -3, 78, 30]
+  Use File -> Settings Repository... to configure: [66, 30, 237, 16]
+  'JBScrollPane #4': [0, 56, 480, 254]

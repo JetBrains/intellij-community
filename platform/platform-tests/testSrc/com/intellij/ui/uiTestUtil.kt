@@ -12,7 +12,6 @@ import com.intellij.ui.layout.*
 import com.intellij.util.io.exists
 import com.intellij.util.io.sanitizeFileName
 import com.intellij.util.io.write
-import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.TestScaleHelper
 import com.intellij.util.ui.UIUtil
 import io.netty.util.internal.SystemPropertyUtil
@@ -29,7 +28,6 @@ import java.io.File
 import java.nio.file.Path
 import javax.swing.AbstractButton
 import javax.swing.JLabel
-import javax.swing.JPanel
 import javax.swing.UIManager
 import javax.swing.plaf.metal.MetalLookAndFeel
 
@@ -47,7 +45,7 @@ class NoScaleRule : ExternalResource() {
   }
 }
 
-class RequireHeadlessMode : ExternalResource() {
+open class RequireHeadlessMode : ExternalResource() {
   override fun before() {
     // there is some difference if run as not headless (on retina monitor, at least), not yet clear why, so, just require to run in headless mode
     if (UsefulTestCase.IS_UNDER_TEAMCITY) {
@@ -166,30 +164,4 @@ internal fun getComponentKey(c: Component, index: Int): String {
   else {
     return "${c.javaClass.simpleName} #${index}"
   }
-}
-
-fun validatePanel(userPanel: JPanel, testDataRoot: Path, snapshotName: String, lafName: String) {
-  val svgRenderer = SvgRenderer(testDataRoot.resolve(getSnapshotRelativePath(lafName, isForImage = true)))
-
-  // to run tests on retina monitor (@2x images must be not used and so on)
-  // Graphics2D.getDeviceConfiguration is not enough because our IconLoader.paintIcon uses component.getGraphicsConfiguration() instead of g.getDeviceConfiguration()
-//  val panel = object : JComponent() {
-//    override fun getGraphicsConfiguration() = svgRenderer.deviceConfiguration
-//
-//    override fun paint(g: Graphics) {
-//      // paint userPanel directly to ensure that SVG doesn't contain this wrapper
-//      userPanel.paint(g)
-//    }
-//  }
-
-//  panel.add(userPanel)
-
-//  panel.addNotify()
-  val preferredSize = userPanel.preferredSize
-//  panel.setBounds(0, 0, Math.max(preferredSize.width, JBUI.scale(480)), Math.max(preferredSize.height, 320))
-  userPanel.setBounds(0, 0, Math.max(preferredSize.width, JBUI.scale(480)), Math.max(preferredSize.height, 320))
-  userPanel.doLayout()
-
-  validateUsingImage(userPanel, svgRenderer, snapshotName)
-  validateBounds(userPanel, testDataRoot.resolve(getSnapshotRelativePath(lafName, isForImage = false)), snapshotName)
 }
