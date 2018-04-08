@@ -280,8 +280,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   }
 
   @CalledInAwt
-  void scheduleRefresh(boolean canUseLastRevision) {
-    refreshUiAndScheduleDataRefresh(canUseLastRevision);
+  void scheduleRefresh() {
+    refreshUiAndScheduleDataRefresh(false);
   }
 
   @NotNull
