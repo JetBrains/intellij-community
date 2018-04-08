@@ -471,25 +471,25 @@ public class PatternCompiler {
 
     buf.append(text.substring(prevOffset));
 
-    PsiElement[] matchStatements;
+    PsiElement[] patternElements;
 
     try {
-      matchStatements = MatcherImplUtil.createTreeFromText(buf.toString(), PatternTreeContext.Block, options.getFileType(),
+      patternElements = MatcherImplUtil.createTreeFromText(buf.toString(), PatternTreeContext.Block, options.getFileType(),
                                                            options.getDialect(), options.getPatternContext(), project, false);
-      if (matchStatements.length==0) throw new MalformedPatternException();
+      if (patternElements.length == 0) throw new MalformedPatternException();
     } catch (IncorrectOperationException e) {
       throw new MalformedPatternException(e.getMessage());
     }
 
     NodeFilter filter = LexicalNodesFilter.getInstance();
     List<PsiElement> elements = new SmartList<>();
-    for (PsiElement matchStatement : matchStatements) {
-      if (!filter.accepts(matchStatement)) {
-        elements.add(matchStatement);
+    for (PsiElement element : patternElements) {
+      if (!filter.accepts(element)) {
+        elements.add(element);
       }
     }
 
-    GlobalCompilingVisitor compilingVisitor = new GlobalCompilingVisitor();
+    final GlobalCompilingVisitor compilingVisitor = new GlobalCompilingVisitor();
     compilingVisitor.compile(elements.toArray(PsiElement.EMPTY_ARRAY), context);
     new DeleteNodesAction(compilingVisitor.getLexicalNodes()).run();
     return elements;
