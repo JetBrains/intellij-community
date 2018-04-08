@@ -2755,8 +2755,24 @@ public class UIUtil {
       style.addRule("code { font-size: 100%; }"); // small by Swing's default
       style.addRule("small { font-size: small; }"); // x-small by Swing's default
       style.addRule("a { text-decoration: none;}");
+      // override too large default margin "ul {margin-left-ltr: 50; margin-right-rtl: 50}" from javax/swing/text/html/default.css
+      style.addRule("ul { margin-left-ltr: 10; margin-right-rtl: 10; }");
+      // override too large default margin "ol {margin-left-ltr: 50; margin-right-rtl: 50}" from javax/swing/text/html/default.css
+      // Select ol margin to have the same indentation as "ul li" and "ol li" elements (seems value 22 suites well)
+      style.addRule("ol { margin-left-ltr: 22; margin-right-rtl: 22; }");
+      String liImgUrl = getLiImgUrl();
+      if (liImgUrl != null) {
+        style.addRule("ul {list-style-image:url('" + liImgUrl + "');}");
+      }
 
       return style;
+    }
+
+    @Nullable
+    private static String getLiImgUrl() {
+      String liImgPath = isUnderDarcula() ? "/general/mdot-white.png" : "/general/mdot.png";
+      URL url = SystemInfo.class.getResource(liImgPath);
+      return url != null ? StringUtil.escapeCharCharacters(url.toExternalForm()) : null;
     }
 
     @Override
