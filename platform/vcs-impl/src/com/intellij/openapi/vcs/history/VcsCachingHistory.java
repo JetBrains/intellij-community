@@ -205,22 +205,10 @@ public class VcsCachingHistory {
   public static void collectInBackground(@NotNull AbstractVcs vcs,
                                          @NotNull FilePath filePath,
                                          @NotNull VcsAppendableHistorySessionPartner partner,
-                                         boolean canUseCache,
-                                         boolean canUseLastRevisionCheck) {
+                                         boolean canUseCache) {
     VcsCachingHistory history = new VcsCachingHistory(vcs, notNull(vcs.getVcsHistoryProvider()), vcs.getDiffProvider());
-
-    VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession> cacheableFactory = history.getCacheableFactory();
-    if (cacheableFactory != null && canUseCache) {
-      VcsAbstractHistorySession session = history.getHistoryCache().getFull(filePath, vcs.getKeyInstanceMethod(), cacheableFactory);
-      if (session != null) {
-        partner.reportCreatedEmptySession(session);
-        partner.finished();
-        return;
-      }
-    }
-
     BackgroundableActionLock lock = getHistoryLock(vcs, VcsBackgroundableActions.CREATE_HISTORY_SESSION, filePath);
-    history.reportHistoryInBackground(filePath, null, vcs.getKeyInstanceMethod(), lock, partner, canUseLastRevisionCheck);
+    history.reportHistoryInBackground(filePath, null, vcs.getKeyInstanceMethod(), lock, partner, canUseCache);
   }
 
   @CalledInAwt
@@ -233,6 +221,24 @@ public class VcsCachingHistory {
 
     VcsCachingHistory history = new VcsCachingHistory(vcs, notNull(vcs.getVcsHistoryProvider()), vcs.getDiffProvider());
     history.reportHistoryInBackground(filePath, startRevisionNumber, vcs.getKeyInstanceMethod(), lock, partner, false);
+  }
+
+  @CalledInAwt
+  public static boolean collectFromCache(@NotNull AbstractVcs vcs,
+                                         @NotNull FilePath filePath,
+                                         @NotNull VcsAppendableHistorySessionPartner partner) {
+    VcsCachingHistory history = new VcsCachingHistory(vcs, notNull(vcs.getVcsHistoryProvider()), vcs.getDiffProvider());
+
+    VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession> cacheableFactory = history.getCacheableFactory();
+    if (cacheableFactory != null) {
+      VcsAbstractHistorySession session = history.getHistoryCache().getFull(filePath, vcs.getKeyInstanceMethod(), cacheableFactory);
+      if (session != null) {
+        partner.reportCreatedEmptySession(session);
+        partner.finished();
+        return true;
+      }
+    }
+    return false;
   }
 
   @NotNull

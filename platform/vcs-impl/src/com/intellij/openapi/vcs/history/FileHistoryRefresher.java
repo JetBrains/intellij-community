@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Refreshes file history.
+ *
  * @author irengrig
  * @author Kirill Likhodedov
  */
@@ -72,23 +73,32 @@ public class FileHistoryRefresher implements FileHistoryRefresherI {
                                                    @NotNull FilePath path,
                                                    @NotNull AbstractVcs vcs,
                                                    @Nullable VcsRevisionNumber startingRevisionNumber) {
-    FileHistoryRefresherI refresher = FileHistorySessionPartner.findExistingHistoryRefresher(vcs.getProject(), path, startingRevisionNumber);
+    FileHistoryRefresherI refresher =
+      FileHistorySessionPartner.findExistingHistoryRefresher(vcs.getProject(), path, startingRevisionNumber);
     return refresher == null ? new FileHistoryRefresher(vcsHistoryProvider, path, startingRevisionNumber, vcs) : refresher;
   }
 
   /**
-   * @param canUseLastRevision
+   * @param canUseCache
    */
   @Override
-  public void run(boolean isRefresh, boolean canUseLastRevision) {
+  public void run(boolean isRefresh, boolean canUseCache) {
     myIsRefresh = isRefresh;
     mySessionPartner.beforeRefresh();
     if (myVcsHistoryProvider instanceof VcsHistoryProviderEx && myStartingRevisionNumber != null) {
       VcsCachingHistory.collectInBackground(myVcs, myPath, myStartingRevisionNumber, mySessionPartner);
     }
     else {
-      VcsCachingHistory.collectInBackground(myVcs, myPath, mySessionPartner, myFirstTime, canUseLastRevision);
+      boolean collectedFromCache = false;
+      if (myFirstTime) {
+        collectedFromCache = VcsCachingHistory.collectFromCache(myVcs, myPath, mySessionPartner);
+      }
+
+      if (!collectedFromCache) {
+        VcsCachingHistory.collectInBackground(myVcs, myPath, mySessionPartner, canUseCache);
+      }
     }
+
     myFirstTime = false;
   }
 

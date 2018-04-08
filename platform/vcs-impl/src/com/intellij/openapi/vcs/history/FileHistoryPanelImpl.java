@@ -436,7 +436,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     return result;
   }
 
-  private void refreshUiAndScheduleDataRefresh(boolean canUseLastRevisionCheck) {
+  private void refreshUiAndScheduleDataRefresh(boolean canUseCache) {
     ApplicationManager.getApplication().invokeAndWait(() -> {
       if (myInRefresh) return;
       myInRefresh = true;
@@ -445,7 +445,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
       mySplitter.revalidate();
       mySplitter.repaint();
 
-      myRefresherI.run(true, canUseLastRevisionCheck);
+      myRefresherI.run(true, canUseCache);
     });
   }
 
