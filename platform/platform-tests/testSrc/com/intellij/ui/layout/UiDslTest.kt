@@ -43,7 +43,7 @@ class UiDslTest {
 
   @Before
   fun beforeMethod() {
-    assumeTrue(!UsefulTestCase.IS_UNDER_TEAMCITY || SystemInfoRt.isMac)
+    assumeTrue(!UsefulTestCase.IS_UNDER_TEAMCITY || !SystemInfoRt.isLinux)
 
     System.setProperty("idea.ui.comment.copyable", "false")
     changeLafIfNeed(lafName)

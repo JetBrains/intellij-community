@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.layout
 
-import com.intellij.ide.ui.laf.IntelliJLaf
 import com.intellij.ide.ui.laf.darcula.DarculaLaf
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.testFramework.runInEdtAndWait
@@ -35,8 +34,9 @@ object MigLayoutTestApp {
 //      val panel = visualPaddingsPanelOnlyButton()
 //      val panel = visualPaddingsPanelOnlyComboBox()
 //      val panel = alignFieldsInTheNestedGrid()
+      val panel = labelRowShouldNotGrow()
 //      val panel = cellPanel()
-      val panel = visualPaddingsPanel()
+//      val panel = visualPaddingsPanel()
 
       val editableCombobox = JComboBox<String>(arrayOf("one", "two"))
       editableCombobox.isEditable = true

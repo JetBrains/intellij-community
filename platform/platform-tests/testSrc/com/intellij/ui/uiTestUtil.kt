@@ -78,7 +78,8 @@ fun changeLafIfNeed(lafName: String) {
   }
 }
 
-fun getSnapshotRelativePath(lafName: String, isForImage: Boolean): String {
+// even bounds snapshot cannot be for all OS, because width depends on font and font is different on each OS
+fun getSnapshotRelativePath(lafName: String): String {
   val platformName = when {
     SystemInfo.isWindows -> "win"
     SystemInfo.isMac -> "mac"
@@ -87,11 +88,9 @@ fun getSnapshotRelativePath(lafName: String, isForImage: Boolean): String {
 
   val result = StringBuilder()
   result.append(lafName)
-  if (lafName != "Darcula" || isForImage) {
-    // Darcula bounds are the same on all platforms, but images differ due to fonts (mostly)
-    result.append(File.separatorChar)
-    result.append(platformName)
-  }
+  // Darcula bounds are the same on all platforms, but images differ due to fonts (mostly)
+  result.append(File.separatorChar)
+  result.append(platformName)
 
   return result.toString()
 }

@@ -1,5 +1,4 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui
 
 import com.intellij.util.ui.JBUI
@@ -22,7 +21,8 @@ class UiTestRule(private val testDataRoot: Path) : RequireHeadlessMode() {
   }
 
   fun validate(panel: JPanel, snapshotName: String, lafName: String) {
-    val svgRenderer = SvgRenderer(testDataRoot.resolve(getSnapshotRelativePath(lafName, isForImage = true)), graphicsConfiguration)
+    val snapshotDir = testDataRoot.resolve(getSnapshotRelativePath(lafName))
+    val svgRenderer = SvgRenderer(snapshotDir, graphicsConfiguration)
 
     // to run tests on retina monitor (@2x images must be not used and so on)
     // actually, not required (IconUtil correctly uses graphics device configuration), but just to be sure
@@ -33,6 +33,6 @@ class UiTestRule(private val testDataRoot: Path) : RequireHeadlessMode() {
     panel.doLayout()
 
     validateUsingImage(panel, svgRenderer, snapshotName)
-    validateBounds(panel, testDataRoot.resolve(getSnapshotRelativePath(lafName, isForImage = false)), snapshotName)
+    validateBounds(panel, snapshotDir, snapshotName)
   }
 }
